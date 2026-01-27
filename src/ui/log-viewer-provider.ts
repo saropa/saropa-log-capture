@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { stripAnsi } from '../modules/ansi';
-import { getNonce, getViewerStyles, getViewerScript } from './viewer-content';
+import { getNonce, buildViewerHtml } from './viewer-content';
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -86,29 +86,6 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     }
 
     private buildHtml(): string {
-        const nonce = getNonce();
-        return /* html */ `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
-    <style nonce="${nonce}">
-        ${getViewerStyles()}
-    </style>
-</head>
-<body>
-    <div id="log-content"></div>
-    <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
-    <div id="footer">
-        <span id="footer-text">Waiting for debug session...</span>
-        <button id="wrap-toggle">No Wrap</button>
-    </div>
-    <script nonce="${nonce}">
-        ${getViewerScript()}
-    </script>
-</body>
-</html>`;
+        return buildViewerHtml(getNonce());
     }
 }
