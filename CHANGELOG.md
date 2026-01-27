@@ -23,6 +23,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Sidebar log viewer with real-time streaming, auto-scroll, and pause-on-scroll
 - Insert Marker command for visual separators in the log stream
 - ANSI stripping for clean viewer display (raw codes preserved in .log files)
+- Pause/resume indicator in sidebar viewer footer with visual styling
+- Collapsible stack traces in sidebar viewer (auto-detects `at` frames)
 
 ## 0.0.1
 
