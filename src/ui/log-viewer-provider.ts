@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { stripAnsi } from '../modules/ansi';
+import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { getNonce, buildViewerHtml } from './viewer-content';
 
 const BATCH_INTERVAL_MS = 200;
@@ -24,7 +24,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
 
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this.view = webviewView;
-        webviewView.webview.options = { enableScripts: true };
+        webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
         webviewView.webview.html = this.buildHtml();
 
         this.startBatchTimer();
@@ -37,7 +37,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
 
     /** Queue a log line for batched delivery to the webview. */
     addLine(text: string, isMarker: boolean, lineCount: number, category: string): void {
-        this.pendingLines.push({ text: stripAnsi(text), isMarker, lineCount, category });
+        const html = isMarker ? escapeHtml(text) : ansiToHtml(text);
+        this.pendingLines.push({ text: html, isMarker, lineCount, category });
     }
 
     /** Send a clear message to the webview. */
