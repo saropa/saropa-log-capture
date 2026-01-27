@@ -1,34 +1,179 @@
 /**
  * Client-side JavaScript for the log viewer webview.
- * Handles message reception, DOM rendering, auto-scroll,
- * stack trace collapsing, and word wrap toggle.
+ * Virtual scrolling: stores all lines in a JS array, renders only the
+ * visible window. Handles stack trace grouping, auto-scroll, word wrap.
  *
- * @param maxLines - Maximum lines retained in the viewer DOM.
+ * @param maxLines - Maximum lines retained in the data array.
  */
 export function getViewerScript(maxLines: number): string {
     return /* javascript */ `
 const logEl = document.getElementById('log-content');
+const spacerTop = document.getElementById('spacer-top');
+const viewportEl = document.getElementById('viewport');
+const spacerBottom = document.getElementById('spacer-bottom');
 const jumpBtn = document.getElementById('jump-btn');
 const footerEl = document.getElementById('footer');
 const footerTextEl = document.getElementById('footer-text');
 const wrapToggle = document.getElementById('wrap-toggle');
+
 const MAX_LINES = ${maxLines};
-let autoScroll = true;
+const ROW_HEIGHT = 20;
+const MARKER_HEIGHT = 28;
+const OVERSCAN = 30;
+
+const allLines = [];
+let totalHeight = 0;
 let lineCount = 0;
+let autoScroll = true;
 let isPaused = false;
 let wordWrap = true;
-let currentStackGroup = null;
+let nextGroupId = 0;
+let activeGroupHeader = null;
+let lastStart = -1;
+let lastEnd = -1;
+let rafPending = false;
+
+function stripTags(html) {
+    return html.replace(/<[^>]*>/g, '');
+}
+
+function isStackFrameText(html) {
+    return /^\\s+at\\s/.test(stripTags(html));
+}
+
+function addToData(html, isMarker, category) {
+    if (isMarker) {
+        activeGroupHeader = null;
+        allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1 });
+        totalHeight += MARKER_HEIGHT;
+        return;
+    }
+    if (isStackFrameText(html)) {
+        if (activeGroupHeader) {
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId });
+            activeGroupHeader.frameCount++;
+            return;
+        }
+        var gid = nextGroupId++;
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true };
+        allLines.push(hdr);
+        activeGroupHeader = hdr;
+        totalHeight += ROW_HEIGHT;
+        return;
+    }
+    activeGroupHeader = null;
+    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1 });
+    totalHeight += ROW_HEIGHT;
+}
+
+function toggleStackGroup(groupId) {
+    var header = null;
+    for (var i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        if (item.groupId !== groupId) continue;
+        if (item.type === 'stack-header') {
+            header = item;
+            header.collapsed = !header.collapsed;
+        } else if (item.type === 'stack-frame' && header) {
+            var newH = header.collapsed ? 0 : ROW_HEIGHT;
+            totalHeight += newH - item.height;
+            item.height = newH;
+        }
+    }
+    renderViewport(true);
+}
+
+function trimData() {
+    if (allLines.length <= MAX_LINES) return;
+    var excess = allLines.length - MAX_LINES;
+    for (var i = 0; i < excess; i++) { totalHeight -= allLines[i].height; }
+    allLines.splice(0, excess);
+    activeGroupHeader = null;
+}
+
+function renderItem(item) {
+    if (item.type === 'marker') {
+        return '<div class="marker">' + item.html + '</div>';
+    }
+    if (item.type === 'stack-header') {
+        var ch = item.collapsed ? '\\u25b6' : '\\u25bc';
+        var sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
+        return '<div class="stack-header" data-gid="' + item.groupId + '">' + ch + ' ' + item.html.trim() + sf + '</div>';
+    }
+    if (item.type === 'stack-frame') {
+        return '<div class="line stack-line">' + item.html + '</div>';
+    }
+    var cat = item.category === 'stderr' ? ' cat-stderr' : '';
+    return '<div class="line' + cat + '">' + item.html + '</div>';
+}
+
+function renderViewport(force) {
+    if (!logEl.clientHeight) return;
+    var scrollTop = logEl.scrollTop;
+    var viewH = logEl.clientHeight;
+    var bufferPx = OVERSCAN * ROW_HEIGHT;
+    var topTarget = Math.max(0, scrollTop - bufferPx);
+    var bottomTarget = scrollTop + viewH + bufferPx;
+
+    var cumH = 0;
+    var startIdx = 0;
+    var startOffset = 0;
+    for (var i = 0; i < allLines.length; i++) {
+        var h = allLines[i].height;
+        if (cumH + h > topTarget) { startIdx = i; startOffset = cumH; break; }
+        cumH += h;
+        if (i === allLines.length - 1) { startIdx = allLines.length; startOffset = cumH; }
+    }
+
+    var parts = [];
+    var renderH = 0;
+    var endIdx = startIdx;
+    for (var i = startIdx; i < allLines.length; i++) {
+        if (allLines[i].height === 0) { endIdx = i; continue; }
+        parts.push(renderItem(allLines[i]));
+        renderH += allLines[i].height;
+        endIdx = i;
+        if (startOffset + renderH > bottomTarget) break;
+    }
+
+    if (!force && startIdx === lastStart && endIdx === lastEnd) return;
+    lastStart = startIdx;
+    lastEnd = endIdx;
+
+    viewportEl.innerHTML = parts.join('');
+    spacerTop.style.height = startOffset + 'px';
+
+    var bottomH = 0;
+    for (var i = endIdx + 1; i < allLines.length; i++) { bottomH += allLines[i].height; }
+    spacerBottom.style.height = bottomH + 'px';
+}
+
+function handleScroll() {
+    var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
+    autoScroll = atBottom;
+    jumpBtn.style.display = atBottom ? 'none' : 'block';
+    renderViewport(false);
+}
+
+logEl.addEventListener('scroll', function() {
+    if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(function() { rafPending = false; handleScroll(); });
+    }
+});
+
+viewportEl.addEventListener('click', function(e) {
+    var header = e.target.closest('.stack-header');
+    if (header && header.dataset.gid !== undefined) {
+        toggleStackGroup(parseInt(header.dataset.gid));
+    }
+});
 
 wrapToggle.addEventListener('click', function() {
     wordWrap = !wordWrap;
     logEl.classList.toggle('nowrap', !wordWrap);
     wrapToggle.textContent = wordWrap ? 'No Wrap' : 'Wrap';
-});
-
-logEl.addEventListener('scroll', () => {
-    const atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
-    autoScroll = atBottom;
-    jumpBtn.style.display = atBottom ? 'none' : 'block';
+    renderViewport(true);
 });
 
 function jumpToBottom() {
@@ -37,98 +182,35 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
-function stripTags(html) {
-    return html.replace(/<[^>]*>/g, '');
-}
-
-function isStackFrame(html) {
-    return /^\\s+at\\s/.test(stripTags(html));
-}
-
 function updateFooterText() {
     footerTextEl.textContent = isPaused
         ? 'PAUSED \\u2014 ' + lineCount + ' lines'
         : 'Recording: ' + lineCount + ' lines';
 }
 
-function trimOldLines() {
-    while (logEl.children.length > MAX_LINES) {
-        logEl.removeChild(logEl.firstChild);
-    }
-}
-
-function createStackGroup(firstHtml) {
-    const group = document.createElement('div');
-    group.className = 'stack-group collapsed';
-    const header = document.createElement('div');
-    header.className = 'stack-header';
-    header.dataset.frameHtml = firstHtml.trim();
-    header.dataset.suffix = '';
-    header.innerHTML = '\\u25b6 ' + firstHtml.trim();
-    header.onclick = function() { toggleStack(group); };
-    group.appendChild(header);
-    const frames = document.createElement('div');
-    frames.className = 'stack-frames';
-    group.appendChild(frames);
-    return group;
-}
-
-function toggleStack(group) {
-    const collapsed = group.classList.toggle('collapsed');
-    const header = group.querySelector('.stack-header');
-    const chevron = collapsed ? '\\u25b6' : '\\u25bc';
-    header.innerHTML = chevron + ' ' + header.dataset.frameHtml + header.dataset.suffix;
-}
-
-function addStackFrame(group, html) {
-    const frames = group.querySelector('.stack-frames');
-    const el = document.createElement('div');
-    el.className = 'line stack-line';
-    el.innerHTML = html;
-    frames.appendChild(el);
-    const count = frames.children.length;
-    const header = group.querySelector('.stack-header');
-    const chevron = group.classList.contains('collapsed') ? '\\u25b6' : '\\u25bc';
-    const suffix = count > 1 ? '  [+' + (count - 1) + ' frames]' : '';
-    header.dataset.suffix = suffix;
-    header.innerHTML = chevron + ' ' + header.dataset.frameHtml + suffix;
-}
-
-function addLine(html, isMarker, category) {
-    const isStack = !isMarker && isStackFrame(html);
-    if (isStack) {
-        if (!currentStackGroup || !currentStackGroup.parentNode) {
-            currentStackGroup = createStackGroup(html);
-            logEl.appendChild(currentStackGroup);
-        }
-        addStackFrame(currentStackGroup, html);
-    } else {
-        currentStackGroup = null;
-        const el = document.createElement('div');
-        el.className = isMarker ? 'marker' : 'line';
-        if (category === 'stderr') { el.classList.add('cat-stderr'); }
-        el.innerHTML = html;
-        logEl.appendChild(el);
-    }
-}
-
-window.addEventListener('message', (event) => {
-    const msg = event.data;
+window.addEventListener('message', function(event) {
+    var msg = event.data;
     switch (msg.type) {
         case 'addLines':
-            for (const line of msg.lines) { addLine(line.text, line.isMarker, line.category); }
-            trimOldLines();
-            if (msg.lineCount !== undefined) { lineCount = msg.lineCount; }
-            if (autoScroll) { logEl.scrollTop = logEl.scrollHeight; }
+            for (var i = 0; i < msg.lines.length; i++) {
+                var ln = msg.lines[i];
+                addToData(ln.text, ln.isMarker, ln.category);
+            }
+            trimData();
+            if (msg.lineCount !== undefined) lineCount = msg.lineCount;
+            renderViewport(true);
+            if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
             updateFooterText();
             break;
         case 'clear':
-            logEl.innerHTML = '';
+            allLines.length = 0;
+            totalHeight = 0;
             lineCount = 0;
-            currentStackGroup = null;
+            activeGroupHeader = null;
             isPaused = false;
             footerEl.classList.remove('paused');
             footerTextEl.textContent = 'Cleared';
+            renderViewport(true);
             break;
         case 'updateFooter':
             footerTextEl.textContent = msg.text;
