@@ -37,8 +37,12 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
-function isStackFrame(text) {
-    return /^\\s+at\\s/.test(text);
+function stripTags(html) {
+    return html.replace(/<[^>]*>/g, '');
+}
+
+function isStackFrame(html) {
+    return /^\\s+at\\s/.test(stripTags(html));
 }
 
 function updateFooterText() {
@@ -53,12 +57,14 @@ function trimOldLines() {
     }
 }
 
-function createStackGroup(firstText) {
+function createStackGroup(firstHtml) {
     const group = document.createElement('div');
     group.className = 'stack-group collapsed';
     const header = document.createElement('div');
     header.className = 'stack-header';
-    header.textContent = '\\u25b6 ' + firstText.trim();
+    header.dataset.frameHtml = firstHtml.trim();
+    header.dataset.suffix = '';
+    header.innerHTML = '\\u25b6 ' + firstHtml.trim();
     header.onclick = function() { toggleStack(group); };
     group.appendChild(header);
     const frames = document.createElement('div');
@@ -70,36 +76,38 @@ function createStackGroup(firstText) {
 function toggleStack(group) {
     const collapsed = group.classList.toggle('collapsed');
     const header = group.querySelector('.stack-header');
-    header.textContent = (collapsed ? '\\u25b6' : '\\u25bc') + header.textContent.substring(1);
+    const chevron = collapsed ? '\\u25b6' : '\\u25bc';
+    header.innerHTML = chevron + ' ' + header.dataset.frameHtml + header.dataset.suffix;
 }
 
-function addStackFrame(group, text) {
+function addStackFrame(group, html) {
     const frames = group.querySelector('.stack-frames');
     const el = document.createElement('div');
     el.className = 'line stack-line';
-    el.textContent = text;
+    el.innerHTML = html;
     frames.appendChild(el);
     const count = frames.children.length;
-    const firstLine = frames.firstChild.textContent.trim();
-    const arrow = group.classList.contains('collapsed') ? '\\u25b6' : '\\u25bc';
+    const header = group.querySelector('.stack-header');
+    const chevron = group.classList.contains('collapsed') ? '\\u25b6' : '\\u25bc';
     const suffix = count > 1 ? '  [+' + (count - 1) + ' frames]' : '';
-    group.querySelector('.stack-header').textContent = arrow + ' ' + firstLine + suffix;
+    header.dataset.suffix = suffix;
+    header.innerHTML = chevron + ' ' + header.dataset.frameHtml + suffix;
 }
 
-function addLine(text, isMarker, category) {
-    const isStack = !isMarker && isStackFrame(text);
+function addLine(html, isMarker, category) {
+    const isStack = !isMarker && isStackFrame(html);
     if (isStack) {
         if (!currentStackGroup || !currentStackGroup.parentNode) {
-            currentStackGroup = createStackGroup(text);
+            currentStackGroup = createStackGroup(html);
             logEl.appendChild(currentStackGroup);
         }
-        addStackFrame(currentStackGroup, text);
+        addStackFrame(currentStackGroup, html);
     } else {
         currentStackGroup = null;
         const el = document.createElement('div');
         el.className = isMarker ? 'marker' : 'line';
         if (category === 'stderr') { el.classList.add('cat-stderr'); }
-        el.textContent = text;
+        el.innerHTML = html;
         logEl.appendChild(el);
     }
 }
