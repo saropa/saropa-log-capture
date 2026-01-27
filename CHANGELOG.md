@@ -4,7 +4,7 @@ All notable changes to the "saropa-log-capture" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## 0.1.0
 
 ### Added
 
@@ -18,13 +18,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - ANSI escape code preservation in `.log` files
 - Context header with launch.json config, VS Code version, OS, adapter type
 - Status bar with live line counter, recording indicator, pause/resume toggle
-- Extension wiring: 7 commands (start, stop, pause, open, openFolder, clear, delete)
+- 8 commands: start, stop, pause, open, openFolder, clear, delete, insertMarker
 - Environment variable redaction support in context headers
-
-### Changed
-
-- Updated plan document with Stage 1 implementation status
+- Sidebar log viewer with real-time streaming, auto-scroll, and pause-on-scroll
+- Insert Marker command for visual separators in the log stream
+- ANSI stripping for clean viewer display (raw codes preserved in .log files)
 
 ## 0.0.1
 
-- Initial release
+- Initial scaffold via yo code

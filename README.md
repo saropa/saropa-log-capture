@@ -1,71 +1,62 @@
-# saropa-log-capture README
+# Saropa Log Capture
 
-This is the README for your extension "saropa-log-capture". After writing up a brief description, we recommend including the following sections.
+Automatically capture VS Code Debug Console output to persistent log files on disk, with a real-time sidebar viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, etc.).
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Auto-capture** -- Debug Console output is saved to `.log` files automatically when you start debugging. No configuration needed.
+- **Live sidebar viewer** -- Watch captured output in real time in a sidebar panel with auto-scroll and pause-on-scroll.
+- **Insert markers** -- Add visual separators to the log stream to mark test phases or debug attempts.
+- **Context header** -- Every log file starts with session metadata: launch config, VS Code version, OS, debug adapter type.
+- **Deduplication** -- Identical rapid lines are grouped as `Message (x54)` instead of bloating the file.
+- **File retention** -- Oldest log files auto-deleted when the configurable limit is exceeded.
+- **Gitignore safety** -- On first run, offers to add the log directory to `.gitignore`.
+- **ANSI preservation** -- Raw ANSI escape codes are kept in `.log` files for external tools like `less -R`.
+- **Status bar** -- Live line counter with pause/resume toggle.
 
-For example if there is an image subfolder under your extension project workspace:
+## Getting Started
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Install the extension
+2. Start a debug session (F5)
+3. Output is automatically captured to the `reports/` directory
+4. Open the **Saropa Log Capture** sidebar to view output in real time
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Commands
 
-## Requirements
+| Command | Description |
+|---------|-------------|
+| `Saropa Log Capture: Start Capture` | Start capturing to a new log file |
+| `Saropa Log Capture: Stop Capture` | Stop capturing and finalize the file |
+| `Saropa Log Capture: Pause/Resume Capture` | Toggle capture on/off |
+| `Saropa Log Capture: Insert Marker` | Insert a visual separator into the log |
+| `Saropa Log Capture: Open Active Log File` | Open the current log file in the editor |
+| `Saropa Log Capture: Open Log Folder` | Reveal the log directory in the file explorer |
+| `Saropa Log Capture: Clear Current Session` | Reset the line counter |
+| `Saropa Log Capture: Delete Log File` | Delete log files from the reports directory |
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Settings
 
-## Extension Settings
+All settings are prefixed with `saropaLogCapture.`.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `enabled` | `true` | Enable/disable automatic log capture |
+| `categories` | `["console","stdout","stderr"]` | DAP output categories to capture |
+| `maxLines` | `100000` | Maximum lines per log file |
+| `includeTimestamp` | `true` | Prefix each line with a timestamp |
+| `format` | `"plaintext"` | Output format (plaintext only for now) |
+| `logDirectory` | `"reports"` | Where to save log files (relative to workspace root) |
+| `autoOpen` | `false` | Open log file when debug session ends |
+| `maxLogFiles` | `10` | Max log files to retain (0 = unlimited) |
+| `gitignoreCheck` | `true` | Offer to add log directory to .gitignore on first run |
+| `redactEnvVars` | `[]` | Env var patterns to redact from headers (e.g. `"API_KEY"`, `"SECRET_*"`) |
 
-For example:
+## Known Limitations
 
-This extension contributes the following settings:
+- The sidebar viewer caps at 5,000 lines for performance (the file on disk keeps all lines up to `maxLines`)
+- ANSI color codes are stripped in the sidebar viewer (preserved in the `.log` file)
+- HTML output format is not yet implemented
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## License
 
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+UNLICENSED (proprietary)
