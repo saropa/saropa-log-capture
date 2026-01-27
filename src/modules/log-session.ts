@@ -164,11 +164,13 @@ export class LogSession {
 }
 
 function generateFileName(projectName: string, date: Date): string {
-    const dateStr = date.toISOString().slice(0, 10);
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const y = date.getFullYear();
+    const mo = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const mi = String(date.getMinutes()).padStart(2, '0');
     const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    return `${safeName}_${dateStr}_${hours}-${minutes}.log`;
+    return `${y}${mo}${d}_${h}-${mi}_${safeName}.log`;
 }
 
 function formatLine(
