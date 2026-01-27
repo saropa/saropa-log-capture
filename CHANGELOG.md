@@ -4,6 +4,13 @@ All notable changes to the "saropa-log-capture" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## Unreleased
+
+### Changed
+
+- Log filenames now use date-first format (`YYYYMMDD_HH-MM_name.log`) for chronological sorting
+- Disable noisy extensions in F5 launch config to reduce Debug Console clutter
+
 ## 0.1.0
 
 ### Added
