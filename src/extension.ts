@@ -6,6 +6,7 @@ import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 
 let sessionManager: SessionManagerImpl;
+let viewerProvider: LogViewerProvider;
 
 export function activate(context: vscode.ExtensionContext): void {
     const outputChannel = vscode.window.createOutputChannel('Saropa Log Capture');
@@ -15,7 +16,7 @@ export function activate(context: vscode.ExtensionContext): void {
     sessionManager = new SessionManagerImpl(statusBar, outputChannel);
 
     // Sidebar viewer.
-    const viewerProvider = new LogViewerProvider(context.extensionUri);
+    viewerProvider = new LogViewerProvider(context.extensionUri);
     context.subscriptions.push(viewerProvider);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Debug session lifecycle.
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
+            viewerProvider.setPaused(false);
             await sessionManager.startSession(session, context);
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
@@ -65,7 +67,10 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.pause', () => {
-            sessionManager.togglePause();
+            const paused = sessionManager.togglePause();
+            if (paused !== undefined) {
+                viewerProvider.setPaused(paused);
+            }
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.open', async () => {
