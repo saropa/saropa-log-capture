@@ -166,6 +166,15 @@ export class SessionManagerImpl implements SessionManager {
         return this.sessions.get(active.id);
     }
 
+    /** Get the log filename for the active session (basename only). */
+    getActiveFilename(): string | undefined {
+        const session = this.getActiveSession();
+        if (!session) {
+            return undefined;
+        }
+        return session.fileUri.fsPath.split(/[\\/]/).pop();
+    }
+
     /** Check if a debug session already has an active log session. */
     hasSession(sessionId: string): boolean {
         return this.sessions.has(sessionId);
