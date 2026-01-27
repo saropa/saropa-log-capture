@@ -89,6 +89,27 @@ export class LogSession {
         this.onLineCountChanged(this._lineCount);
     }
 
+    /**
+     * Insert a visual marker/separator into the log file.
+     * Bypasses deduplication — markers should never be grouped.
+     * @returns The marker text written, or undefined if not recording.
+     */
+    appendMarker(customText?: string): string | undefined {
+        if (this._state === 'stopped' || !this.writeStream) {
+            return undefined;
+        }
+
+        const now = new Date();
+        const ts = now.toLocaleTimeString();
+        const label = customText ? `${ts} — ${customText}` : ts;
+        const markerLine = `\n--- MARKER: ${label} ---\n`;
+
+        this.writeStream.write(markerLine + '\n');
+        this._lineCount++;
+        this.onLineCountChanged(this._lineCount);
+        return markerLine.trim();
+    }
+
     pause(): void {
         if (this._state === 'recording') {
             this._state = 'paused';
