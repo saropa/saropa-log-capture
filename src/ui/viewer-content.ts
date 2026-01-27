@@ -1,8 +1,8 @@
 import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
 
-/** Maximum lines retained in the viewer (file on disk keeps all). */
-export const MAX_VIEWER_LINES = 5000;
+/** Maximum lines retained in the viewer data array (file on disk keeps all). */
+export const MAX_VIEWER_LINES = 50000;
 
 /** Generate a random nonce for Content Security Policy. */
 export function getNonce(): string {
@@ -28,7 +28,11 @@ export function buildViewerHtml(nonce: string): string {
     </style>
 </head>
 <body>
-    <div id="log-content"></div>
+    <div id="log-content">
+        <div id="spacer-top"></div>
+        <div id="viewport"></div>
+        <div id="spacer-bottom"></div>
+    </div>
     <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
