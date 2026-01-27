@@ -1,23 +1,140 @@
 {
   "name": "saropa-log-capture",
-  "displayName": "saropa-log-capture",
+  "displayName": "Saropa Log Capture",
   "description": "Automatically capture VS Code Debug Console output to persistent log files",
   "version": "0.0.1",
+  "license": "UNLICENSED",
+  "publisher": "saropa",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.108.1"
   },
   "categories": [
+    "Debuggers",
     "Other"
   ],
-  "activationEvents": [],
+  "keywords": [
+    "debug",
+    "log",
+    "capture",
+    "console",
+    "output",
+    "save",
+    "persist"
+  ],
+  "activationEvents": [
+    "onDebugAdapterProtocolTracker"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "saropa-log-capture.helloWorld",
-        "title": "Hello World"
+        "command": "saropaLogCapture.start",
+        "title": "Saropa Log Capture: Start Capture",
+        "icon": "$(play)"
+      },
+      {
+        "command": "saropaLogCapture.stop",
+        "title": "Saropa Log Capture: Stop Capture",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "saropaLogCapture.pause",
+        "title": "Saropa Log Capture: Pause/Resume Capture",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "saropaLogCapture.open",
+        "title": "Saropa Log Capture: Open Active Log File",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "saropaLogCapture.openFolder",
+        "title": "Saropa Log Capture: Open Log Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "saropaLogCapture.clear",
+        "title": "Saropa Log Capture: Clear Current Session",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "saropaLogCapture.delete",
+        "title": "Saropa Log Capture: Delete Log File",
+        "icon": "$(trash)"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Saropa Log Capture",
+      "properties": {
+        "saropaLogCapture.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable automatic log capture during debug sessions."
+        },
+        "saropaLogCapture.categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "console",
+            "stdout",
+            "stderr"
+          ],
+          "description": "DAP output categories to capture. Common values: console, stdout, stderr, telemetry."
+        },
+        "saropaLogCapture.maxLines": {
+          "type": "number",
+          "default": 100000,
+          "minimum": 1000,
+          "description": "Maximum lines per log file. Oldest lines dropped when exceeded."
+        },
+        "saropaLogCapture.includeTimestamp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prefix each captured line with a timestamp."
+        },
+        "saropaLogCapture.format": {
+          "type": "string",
+          "enum": [
+            "plaintext",
+            "html"
+          ],
+          "default": "plaintext",
+          "description": "Output file format. Currently only plaintext is supported."
+        },
+        "saropaLogCapture.logDirectory": {
+          "type": "string",
+          "default": "reports",
+          "description": "Directory for log files, relative to workspace root."
+        },
+        "saropaLogCapture.autoOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open the log file in the editor when a debug session ends."
+        },
+        "saropaLogCapture.maxLogFiles": {
+          "type": "number",
+          "default": 10,
+          "minimum": 0,
+          "description": "Maximum number of log files to retain. 0 = unlimited. Oldest deleted when exceeded."
+        },
+        "saropaLogCapture.gitignoreCheck": {
+          "type": "boolean",
+          "default": true,
+          "description": "On first run, check if the log directory is in .gitignore and offer to add it."
+        },
+        "saropaLogCapture.redactEnvVars": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Environment variable name patterns to redact from context headers. Supports * wildcards (e.g. API_KEY, SECRET_*)."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
