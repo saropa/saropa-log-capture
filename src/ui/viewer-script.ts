@@ -16,6 +16,7 @@ const footerEl = document.getElementById('footer');
 const footerTextEl = document.getElementById('footer-text');
 const wrapToggle = document.getElementById('wrap-toggle');
 
+const vscodeApi = acquireVsCodeApi();
 const MAX_LINES = ${maxLines};
 const ROW_HEIGHT = 20;
 const MARKER_HEIGHT = 28;
@@ -32,6 +33,7 @@ let activeGroupHeader = null;
 let lastStart = -1;
 let lastEnd = -1;
 let rafPending = false;
+let currentFilename = '';
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
@@ -183,9 +185,10 @@ function jumpToBottom() {
 }
 
 function updateFooterText() {
+    var suffix = currentFilename ? ' | ' + currentFilename : '';
     footerTextEl.textContent = isPaused
-        ? 'PAUSED \\u2014 ' + lineCount + ' lines'
-        : 'Recording: ' + lineCount + ' lines';
+        ? 'PAUSED \\u2014 ' + lineCount + ' lines' + suffix
+        : 'Recording: ' + lineCount + ' lines' + suffix;
 }
 
 window.addEventListener('message', function(event) {
@@ -220,6 +223,17 @@ window.addEventListener('message', function(event) {
             footerEl.classList.toggle('paused', isPaused);
             updateFooterText();
             break;
+        case 'setFilename':
+            currentFilename = msg.filename || '';
+            updateFooterText();
+            break;
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.key === 'm' || e.key === 'M') {
+        vscodeApi.postMessage({ type: 'insertMarker' });
     }
 });
 `;

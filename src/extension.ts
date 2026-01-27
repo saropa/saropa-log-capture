@@ -24,6 +24,9 @@ export function activate(context: vscode.ExtensionContext): void {
     sessionManager.addLineListener((line, isMarker, lineCount, category) => {
         viewerProvider.addLine(line, isMarker, lineCount, category);
     });
+    viewerProvider.setMarkerHandler(() => {
+        sessionManager.insertMarker();
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
@@ -38,6 +41,10 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.debug.onDidStartDebugSession(async (session) => {
             viewerProvider.setPaused(false);
             await sessionManager.startSession(session, context);
+            const filename = sessionManager.getActiveFilename();
+            if (filename) {
+                viewerProvider.setFilename(filename);
+            }
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
             await sessionManager.stopSession(session);
