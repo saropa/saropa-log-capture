@@ -10,7 +10,9 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--disable-extension", "google.gcloud-code",
+				"--disable-extension", "anthropic.claude-code-usage"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
