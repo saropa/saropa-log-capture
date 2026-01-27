@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { stripAnsi } from '../ansi';
+import { stripAnsi } from '../modules/ansi';
 import { getNonce, getViewerStyles, getViewerScript } from './viewer-content';
 
 const BATCH_INTERVAL_MS = 200;
@@ -7,6 +7,8 @@ const BATCH_INTERVAL_MS = 200;
 interface PendingLine {
     readonly text: string;
     readonly isMarker: boolean;
+    readonly lineCount: number;
+    readonly category: string;
 }
 
 /**
@@ -34,8 +36,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     }
 
     /** Queue a log line for batched delivery to the webview. */
-    addLine(text: string, isMarker: boolean): void {
-        this.pendingLines.push({ text: stripAnsi(text), isMarker });
+    addLine(text: string, isMarker: boolean, lineCount: number, category: string): void {
+        this.pendingLines.push({ text: stripAnsi(text), isMarker, lineCount, category });
     }
 
     /** Send a clear message to the webview. */
@@ -75,7 +77,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
             return;
         }
         const lines = this.pendingLines.splice(0);
-        this.postMessage({ type: 'addLines', lines });
+        const lineCount = lines[lines.length - 1].lineCount;
+        this.postMessage({ type: 'addLines', lines, lineCount });
     }
 
     private postMessage(message: unknown): void {
@@ -98,7 +101,10 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
 <body>
     <div id="log-content"></div>
     <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
-    <div id="footer">Waiting for debug session...</div>
+    <div id="footer">
+        <span id="footer-text">Waiting for debug session...</span>
+        <button id="wrap-toggle">No Wrap</button>
+    </div>
     <script nonce="${nonce}">
         ${getViewerScript()}
     </script>

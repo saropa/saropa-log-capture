@@ -5,10 +5,10 @@ import { SessionManager, DapOutputBody } from './tracker';
 import { LogSession, SessionContext } from './log-session';
 import { enforceFileRetention } from './file-retention';
 import { checkGitignore } from './gitignore-checker';
-import { StatusBar } from './ui/status-bar';
+import { StatusBar } from '../ui/status-bar';
 
 /** Callback for lines written to the log file (used by the viewer). */
-export type LineListener = (line: string, isMarker: boolean) => void;
+export type LineListener = (line: string, isMarker: boolean, lineCount: number, category: string) => void;
 
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
@@ -16,6 +16,7 @@ export type LineListener = (line: string, isMarker: boolean) => void;
  */
 export class SessionManagerImpl implements SessionManager {
     private readonly sessions = new Map<string, LogSession>();
+    private readonly ownerSessionIds = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
 
     constructor(
@@ -24,7 +25,7 @@ export class SessionManagerImpl implements SessionManager {
     ) {}
 
     get activeSessionCount(): number {
-        return this.sessions.size;
+        return this.ownerSessionIds.size;
     }
 
     /** Register a listener that receives every line written to the log. */
@@ -63,7 +64,7 @@ export class SessionManagerImpl implements SessionManager {
         }
 
         session.appendLine(text, category, new Date());
-        this.broadcastLine(text, false);
+        this.broadcastLine(text, false, session.lineCount, category);
     }
 
     /** Start capturing a debug session. */
@@ -77,6 +78,8 @@ export class SessionManagerImpl implements SessionManager {
         }
 
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
+            this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
+            this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
             return;
         }
 
@@ -114,6 +117,7 @@ export class SessionManagerImpl implements SessionManager {
         try {
             await logSession.start();
             this.sessions.set(session.id, logSession);
+            this.ownerSessionIds.add(session.id);
             this.statusBar.show();
             this.outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
         } catch (err) {
@@ -128,6 +132,14 @@ export class SessionManagerImpl implements SessionManager {
             return;
         }
 
+        this.sessions.delete(session.id);
+
+        // Child alias — just remove the mapping, don't close the log file.
+        if (!this.ownerSessionIds.has(session.id)) {
+            return;
+        }
+        this.ownerSessionIds.delete(session.id);
+
         try {
             await logSession.stop();
             this.outputChannel.appendLine(`Session stopped: ${logSession.fileUri.fsPath}`);
@@ -135,9 +147,7 @@ export class SessionManagerImpl implements SessionManager {
             this.outputChannel.appendLine(`Error stopping log session: ${err}`);
         }
 
-        this.sessions.delete(session.id);
-
-        if (this.sessions.size === 0) {
+        if (this.ownerSessionIds.size === 0) {
             this.statusBar.hide();
         }
 
@@ -169,7 +179,7 @@ export class SessionManagerImpl implements SessionManager {
         }
         const markerText = logSession.appendMarker(customText);
         if (markerText) {
-            this.broadcastLine(markerText, true);
+            this.broadcastLine(markerText, true, logSession.lineCount, 'marker');
         }
     }
 
@@ -203,15 +213,20 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Stop all sessions (called on deactivate). */
     async stopAll(): Promise<void> {
+        const stopped = new Set<LogSession>();
         for (const [, session] of this.sessions) {
-            await session.stop().catch(() => {});
+            if (!stopped.has(session)) {
+                stopped.add(session);
+                await session.stop().catch(() => {});
+            }
         }
         this.sessions.clear();
+        this.ownerSessionIds.clear();
     }
 
-    private broadcastLine(text: string, isMarker: boolean): void {
+    private broadcastLine(text: string, isMarker: boolean, lineCount: number, category: string): void {
         for (const listener of this.lineListeners) {
-            listener(text, isMarker);
+            listener(text, isMarker, lineCount, category);
         }
     }
 }
