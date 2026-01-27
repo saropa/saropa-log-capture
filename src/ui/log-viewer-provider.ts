@@ -19,6 +19,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private view: vscode.WebviewView | undefined;
     private pendingLines: PendingLine[] = [];
     private batchTimer: ReturnType<typeof setInterval> | undefined;
+    private onMarkerRequest?: () => void;
 
     constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -27,12 +28,23 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
         webviewView.webview.html = this.buildHtml();
 
+        webviewView.webview.onDidReceiveMessage((msg: { type: string }) => {
+            if (msg.type === 'insertMarker' && this.onMarkerRequest) {
+                this.onMarkerRequest();
+            }
+        });
+
         this.startBatchTimer();
 
         webviewView.onDidDispose(() => {
             this.stopBatchTimer();
             this.view = undefined;
         });
+    }
+
+    /** Set a callback invoked when the webview requests a marker insertion. */
+    setMarkerHandler(handler: () => void): void {
+        this.onMarkerRequest = handler;
     }
 
     /** Queue a log line for batched delivery to the webview. */
@@ -55,6 +67,11 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Update the pause/resume indicator in the viewer footer. */
     setPaused(paused: boolean): void {
         this.postMessage({ type: 'setPaused', paused });
+    }
+
+    /** Set the active log filename displayed in the footer. */
+    setFilename(filename: string): void {
+        this.postMessage({ type: 'setFilename', filename });
     }
 
     dispose(): void {
