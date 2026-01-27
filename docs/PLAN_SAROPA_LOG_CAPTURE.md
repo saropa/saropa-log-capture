@@ -69,7 +69,7 @@ The name should contain at least one of: `debug`, `log`, `console`, `capture`, `
 ---
 
 ## Design Principles
-
+<!-- cspell:ignore Wireshark -->
 Derived from studying what makes legendary dev tools (Wireshark, Chrome DevTools, Charles Proxy, Postman, Sentry, Datadog, GitLens, Prettier) successful:
 
 1. **Zero Friction** — Works immediately on install. No config file to create, no project setup, no onboarding wizard. Install → start debugging → logs appear. The extension activates lazily via `onDebugAdapterProtocolTracker` and auto-captures with sane defaults. Log files are stored in a root-level `/reports/` directory (not hidden in `.vscode/`) — easily accessible via the OS file explorer. On first run, the extension checks for `.gitignore` presence and offers to add `/reports/` to prevent accidental version control commits.
@@ -86,6 +86,7 @@ Derived from studying what makes legendary dev tools (Wireshark, Chrome DevTools
 
 7. **Power User Escape Hatch** — Every automated behavior has a manual override. Auto-scroll? Scroll up to pause. Auto-capture? Pause command. Auto-naming? Rename command. Default keywords? Add custom ones. Default file format? Switch to HTML. Default split rules? Configure every parameter.
 
+<!-- cspell:ignore laggy -->
 8. **Performance is a Feature** — Virtual scrolling for 100K+ lines. Batched UI updates (200ms). Streaming file writes (no buffering entire session in memory). The extension must NEVER slow down the debug session or make VS Code laggy.
 
 ---
@@ -283,6 +284,7 @@ Click any log line to jump directly to the source file and line that generated i
 - Click opens the file at that line in the editor via `vscode.window.showTextDocument()` + `TextEditor.revealRange()`
 - Ctrl+Click opens in a split editor (side by side with the log viewer)
 
+<!-- cspell:ignore parseable -->
 **Fallback for logs without source info:**
 - Lines with no source data are still clickable — they copy the line text to clipboard
 - Stack trace lines always have parseable `file:line` — those are always navigable
@@ -512,6 +514,7 @@ Copy log selections in multiple formats for different destinations.
 - Single-key shortcut: `Ctrl+C` copies plain, `Ctrl+Shift+C` copies as markdown
 - The bug report template includes: extension version, VS Code version, debug adapter type, OS, session duration, error count
 
+<!-- cspell:ignore sparkline -->
 ### 18. Error Rate Alerts
 
 Go beyond keyword occurrence — detect error RATE patterns and alert on anomalies.
@@ -655,6 +658,7 @@ launch.json:    Flutter (debug mode)
 - Deduplicated rapid lines shown as: `Error: Connection Refused (x54)`
 - Opens in any terminal or text editor
 
+<!-- cspell:ignore Cascadia -->
 ### HTML (.html) — Option
 
 ```html
@@ -836,6 +840,7 @@ These turn "nice to have" into "can't work without it."
 | 17 | Keyword watch with counters | Real-time "how many errors so far?" at a glance |
 | 18 | HTML output option | Shareable, colorful, paste in bug reports |
 
+<!-- cspell:ignore dedup -->
 ### Tier 3: Power Tool (Makes power users love it)
 
 These are the features that earn 5-star reviews and word-of-mouth.
@@ -875,6 +880,7 @@ These are the "wow" features that no competing tool has.
 | 42 | Session import/export (.slc bundles) | Share complete debug sessions with teammates |
 | 43 | Auto-tag rules | Sessions auto-tagged based on content — zero manual effort |
 
+<!-- cspell:ignore Logz -->
 ### Tier 5: Ecosystem (Long-term growth)
 
 Features for mature adoption and enterprise use.
@@ -902,24 +908,26 @@ Three stability-focused stages, each delivering a complete, testable milestone. 
 
 **Focus:** Stability & Data Integrity. No UI other than a status bar indicator.
 
+**Status: In Progress** — 12 of 14 tasks complete. Core capture pipeline fully implemented. Remaining: cross-adapter testing and packaging.
+
 The extension silently captures all debug output to disk with maximum reliability. If this stage has bugs, nothing else matters.
 
-| # | Task | Delivers |
-|---|---|---|
-| 1 | Scaffold project (`yo code`), `tsconfig.json`, npm setup | Project skeleton |
-| 2 | `package.json` — activation events (`onDebugAdapterProtocolTracker`), settings, commands | Extension manifest |
-| 3 | `config.ts` — settings reader with defaults (`logDirectory: "reports"`, `maxLogFiles: 10`) | Configuration |
-| 4 | `tracker.ts` — `DebugAdapterTrackerFactory`, intercept DAP `output` events | Core capture |
-| 5 | `deduplication.ts` — debounce & group identical rapid log lines (`Error (x54)`) | Spam protection |
-| 6 | `log-session.ts` — session lifecycle, immediate-append file writer, context header generation | File persistence |
-| 7 | Context header — dump `launch.json` config (program, args, env vars) as first lines of every log file | Session context |
-| 8 | `file-retention.ts` — enforce `maxLogFiles` setting, delete oldest when limit exceeded | Disk cleanup |
-| 9 | `gitignore-checker.ts` — check for `.gitignore` presence, offer to add `/reports/` on first run | Safety |
-| 10 | ANSI preservation — write raw ANSI codes to `.log` files (no stripping) | External tool compat |
-| 11 | `status-bar.ts` — live line counter, recording indicator, pause/resume toggle | Status bar |
-| 12 | `extension.ts` — wire tracker + session + dedup + retention + status bar + commands | Activation |
-| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation |
-| 14 | Package with `vsce package` | Distributable |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 1 | Scaffold project (`yo code`), `tsconfig.json`, npm setup | Project skeleton | Done |
+| 2 | `package.json` — activation events (`onDebugAdapterProtocolTracker`), settings, commands | Extension manifest | Done |
+| 3 | `config.ts` — settings reader with defaults (`logDirectory: "reports"`, `maxLogFiles: 10`) | Configuration | Done |
+| 4 | `tracker.ts` — `DebugAdapterTrackerFactory`, intercept DAP `output` events | Core capture | Done |
+| 5 | `deduplication.ts` — debounce & group identical rapid log lines (`Error (x54)`) | Spam protection | Done |
+| 6 | `log-session.ts` — session lifecycle, immediate-append file writer, context header generation | File persistence | Done |
+| 7 | Context header — dump `launch.json` config (program, args, env vars) as first lines of every log file | Session context | Done |
+| 8 | `file-retention.ts` — enforce `maxLogFiles` setting, delete oldest when limit exceeded | Disk cleanup | Done |
+| 9 | `gitignore-checker.ts` — check for `.gitignore` presence, offer to add `/reports/` on first run | Safety | Done |
+| 10 | ANSI preservation — write raw ANSI codes to `.log` files (no stripping) | External tool compat | Done |
+| 11 | `status-bar.ts` — live line counter, recording indicator, pause/resume toggle | Status bar | Done |
+| 12 | `extension.ts` — wire tracker + session + dedup + retention + status bar + commands | Activation | Done |
+| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | Not started |
+| 14 | Package with `vsce package` | Distributable | Not started |
 
 **Exit criteria for Stage 1:**
 - Extension silently captures to `/reports/` for any debug adapter
@@ -936,6 +944,8 @@ The extension silently captures all debug output to disk with maximum reliabilit
 ---
 
 ### Stage 2: "The Window" (Live View)
+
+**Status: Not started** — Blocked on Stage 1 completion.
 
 **Focus:** Visibility. Make the captured data viewable in real time.
 
@@ -968,6 +978,8 @@ The extension silently captures all debug output to disk with maximum reliabilit
 ---
 
 ### Stage 3: "The Navigator" (Interaction)
+
+**Status: Not started** — Blocked on Stage 2 completion.
 
 **Focus:** Usability. Make the viewer interactive and navigable.
 
