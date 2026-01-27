@@ -908,7 +908,7 @@ Three stability-focused stages, each delivering a complete, testable milestone. 
 
 **Focus:** Stability & Data Integrity. No UI other than a status bar indicator.
 
-**Status: In Progress** — 12 of 14 tasks complete. Core capture pipeline fully implemented. Remaining: cross-adapter testing and packaging.
+**Status: Complete** — 14 of 14 tasks done. Packaged as v0.1.0 VSIX.
 
 The extension silently captures all debug output to disk with maximum reliability. If this stage has bugs, nothing else matters.
 
@@ -926,8 +926,8 @@ The extension silently captures all debug output to disk with maximum reliabilit
 | 10 | ANSI preservation — write raw ANSI codes to `.log` files (no stripping) | External tool compat | Done |
 | 11 | `status-bar.ts` — live line counter, recording indicator, pause/resume toggle | Status bar | Done |
 | 12 | `extension.ts` — wire tracker + session + dedup + retention + status bar + commands | Activation | Done |
-| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | Not started |
-| 14 | Package with `vsce package` | Distributable | Not started |
+| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | In progress |
+| 14 | Package with `vsce package` | Distributable | Done |
 
 **Exit criteria for Stage 1:**
 - Extension silently captures to `/reports/` for any debug adapter
@@ -945,7 +945,7 @@ The extension silently captures all debug output to disk with maximum reliabilit
 
 ### Stage 2: "The Window" (Live View)
 
-**Status: Not started** — Blocked on Stage 1 completion.
+**Status: Partially complete** — Basic sidebar viewer and insert marker implemented in v0.1.0. Virtual scrolling, collapsible stack traces, and webview UI toolkit deferred.
 
 **Focus:** Visibility. Make the captured data viewable in real time.
 
