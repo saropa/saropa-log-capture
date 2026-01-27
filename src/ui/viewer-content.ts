@@ -37,6 +37,18 @@ body {
     line-height: 1.5;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
+.line.cat-stderr {
+    color: var(--vscode-debugConsole-errorForeground, #f44);
+}
+#log-content.nowrap {
+    overflow-x: auto;
+}
+#log-content.nowrap .line,
+#log-content.nowrap .stack-header,
+#log-content.nowrap .stack-frames .line {
+    white-space: pre;
+    word-break: normal;
+}
 .marker {
     border-top: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
     border-bottom: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
@@ -87,10 +99,27 @@ body {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 #footer.paused {
     color: var(--vscode-statusBarItem-warningForeground, #fc0);
     background: var(--vscode-statusBarItem-warningBackground, rgba(252, 192, 0, 0.15));
+}
+#wrap-toggle {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-left: auto;
+}
+#wrap-toggle:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
 }
 `;
 }
@@ -101,11 +130,20 @@ export function getViewerScript(): string {
 const logEl = document.getElementById('log-content');
 const jumpBtn = document.getElementById('jump-btn');
 const footerEl = document.getElementById('footer');
+const footerTextEl = document.getElementById('footer-text');
+const wrapToggle = document.getElementById('wrap-toggle');
 const MAX_LINES = ${MAX_VIEWER_LINES};
 let autoScroll = true;
 let lineCount = 0;
 let isPaused = false;
+let wordWrap = true;
 let currentStackGroup = null;
+
+wrapToggle.addEventListener('click', function() {
+    wordWrap = !wordWrap;
+    logEl.classList.toggle('nowrap', !wordWrap);
+    wrapToggle.textContent = wordWrap ? 'No Wrap' : 'Wrap';
+});
 
 logEl.addEventListener('scroll', () => {
     const atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
@@ -124,7 +162,7 @@ function isStackFrame(text) {
 }
 
 function updateFooterText() {
-    footerEl.textContent = isPaused
+    footerTextEl.textContent = isPaused
         ? 'PAUSED \\u2014 ' + lineCount + ' lines'
         : 'Recording: ' + lineCount + ' lines';
 }
@@ -168,7 +206,7 @@ function addStackFrame(group, text) {
     group.querySelector('.stack-header').textContent = arrow + ' ' + firstLine + suffix;
 }
 
-function addLine(text, isMarker) {
+function addLine(text, isMarker, category) {
     const isStack = !isMarker && isStackFrame(text);
     if (isStack) {
         if (!currentStackGroup || !currentStackGroup.parentNode) {
@@ -180,18 +218,19 @@ function addLine(text, isMarker) {
         currentStackGroup = null;
         const el = document.createElement('div');
         el.className = isMarker ? 'marker' : 'line';
+        if (category === 'stderr') { el.classList.add('cat-stderr'); }
         el.textContent = text;
         logEl.appendChild(el);
     }
-    lineCount++;
 }
 
 window.addEventListener('message', (event) => {
     const msg = event.data;
     switch (msg.type) {
         case 'addLines':
-            for (const line of msg.lines) { addLine(line.text, line.isMarker); }
+            for (const line of msg.lines) { addLine(line.text, line.isMarker, line.category); }
             trimOldLines();
+            if (msg.lineCount !== undefined) { lineCount = msg.lineCount; }
             if (autoScroll) { logEl.scrollTop = logEl.scrollHeight; }
             updateFooterText();
             break;
@@ -201,10 +240,10 @@ window.addEventListener('message', (event) => {
             currentStackGroup = null;
             isPaused = false;
             footerEl.classList.remove('paused');
-            footerEl.textContent = 'Cleared';
+            footerTextEl.textContent = 'Cleared';
             break;
         case 'updateFooter':
-            footerEl.textContent = msg.text;
+            footerTextEl.textContent = msg.text;
             break;
         case 'setPaused':
             isPaused = msg.paused;
