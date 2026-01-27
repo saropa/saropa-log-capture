@@ -115,24 +115,29 @@ Debug Adapter
 ```
 saropa-log-capture/
   src/
-    extension.ts            # Activation, wiring, command registration
-    tracker.ts              # DebugAdapterTracker + Factory
-    log-session.ts          # Session state, in-memory buffer, file writer
-    deduplication.ts        # Debounce & group identical rapid log lines
-    ansi-formatter.ts       # ANSI-to-HTML conversion for viewer (raw ANSI preserved in .log files)
-    config.ts               # Settings reader with defaults
-    keyword-watcher.ts      # Watch list matching, counters, alert triggers
-    file-splitter.ts        # Auto file split rule engine + seamless rotation
-    file-retention.ts       # Max log file rotation (delete oldest when limit exceeded)
-    gitignore-checker.ts    # Check/offer to add /reports/ to .gitignore
+    extension.ts              # Activation, wiring, command registration
+    modules/
+      tracker.ts              # DebugAdapterTracker + Factory
+      log-session.ts          # Session state, in-memory buffer, file writer
+      session-manager.ts      # Session lifecycle coordinator
+      deduplication.ts        # Debounce & group identical rapid log lines
+      ansi.ts                 # ANSI escape code utilities (strip for viewer, raw preserved in .log files)
+      config.ts               # Settings reader with defaults
+      file-retention.ts       # Max log file rotation (delete oldest when limit exceeded)
+      gitignore-checker.ts    # Check/offer to add /reports/ to .gitignore
+      keyword-watcher.ts      # Watch list matching, counters, alert triggers (post-MVP)
+      file-splitter.ts        # Auto file split rule engine + seamless rotation (post-MVP)
     ui/
-      status-bar.ts         # Status bar item (live counter, watch hits, flash)
+      status-bar.ts           # Status bar item (live counter, watch hits, flash)
       log-viewer-provider.ts  # WebviewViewProvider for sidebar panel
-      session-history.ts    # TreeDataProvider for past session list
+      viewer-content.ts       # Webview HTML content generation
+      session-history.ts      # TreeDataProvider for past session list (Stage 3)
+    test/
+      extension.test.ts      # Extension tests
   media/
-    log-viewer.html         # Webview HTML template
-    log-viewer.css          # Webview styles (uses --vscode-* CSS variables)
-    log-viewer.js           # Webview client-side logic (scroll, search, filter)
+    log-viewer.html           # Webview HTML template
+    log-viewer.css            # Webview styles (uses --vscode-* CSS variables)
+    log-viewer.js             # Webview client-side logic (scroll, search, filter)
   package.json
   tsconfig.json
 ```
@@ -926,7 +931,7 @@ The extension silently captures all debug output to disk with maximum reliabilit
 | 10 | ANSI preservation — write raw ANSI codes to `.log` files (no stripping) | External tool compat | Done |
 | 11 | `status-bar.ts` — live line counter, recording indicator, pause/resume toggle | Status bar | Done |
 | 12 | `extension.ts` — wire tracker + session + dedup + retention + status bar + commands | Activation | Done |
-| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | In progress |
+| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | Done |
 | 14 | Package with `vsce package` | Distributable | Done |
 
 **Exit criteria for Stage 1:**

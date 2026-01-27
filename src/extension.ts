@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './config';
-import { SaropaTrackerFactory } from './tracker';
-import { SessionManagerImpl, handleDeleteCommand } from './session-manager';
+import { getLogDirectoryUri } from './modules/config';
+import { SaropaTrackerFactory } from './modules/tracker';
+import { SessionManagerImpl, handleDeleteCommand } from './modules/session-manager';
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 
@@ -21,8 +21,8 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
     );
-    sessionManager.addLineListener((line, isMarker) => {
-        viewerProvider.addLine(line, isMarker);
+    sessionManager.addLineListener((line, isMarker, lineCount, category) => {
+        viewerProvider.addLine(line, isMarker, lineCount, category);
     });
 
     // DAP tracker for all debug adapters.

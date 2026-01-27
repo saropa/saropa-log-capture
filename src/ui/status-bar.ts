@@ -42,7 +42,7 @@ export class StatusBar implements vscode.Disposable {
             this.item.text = `$(debug-pause) Paused (${this.lineCount} lines)`;
             this.item.tooltip = 'Saropa Log Capture: Paused. Click to resume.';
         } else {
-            this.item.text = `$(debug) ${this.lineCount} lines`;
+            this.item.text = `$(record) ${this.lineCount} lines`;
             this.item.tooltip = 'Saropa Log Capture: Recording. Click to pause.';
         }
     }
