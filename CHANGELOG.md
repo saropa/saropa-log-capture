@@ -6,10 +6,21 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added
+
+- ANSI-to-HTML color rendering in sidebar viewer (bold, dim, italic, underline, 16 fg/bg colors)
+- Virtual scrolling for 100K+ lines without lag (data-model-driven, renders only visible rows)
+- `M` keyboard shortcut in viewer to insert timestamp-only marker
+- Active log filename displayed in viewer footer
+- `localResourceRoots: []` CSP hardening on webview
+- Webview-to-extension messaging for viewer keyboard commands
+
 ### Changed
 
 - Log filenames now use date-first format (`YYYYMMDD_HH-MM_name.log`) for chronological sorting
 - Disable noisy extensions in F5 launch config to reduce Debug Console clutter
+- Viewer DOM cap increased from 5,000 to 50,000 lines (backed by JS array, not DOM nodes)
+- Split viewer-content.ts into viewer-styles.ts + viewer-script.ts for maintainability
 
 ## 0.1.0
 

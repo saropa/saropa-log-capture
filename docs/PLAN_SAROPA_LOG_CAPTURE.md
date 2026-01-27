@@ -950,24 +950,24 @@ The extension silently captures all debug output to disk with maximum reliabilit
 
 ### Stage 2: "The Window" (Live View)
 
-**Status: Partially complete** — Basic sidebar viewer and insert marker implemented in v0.1.0. Virtual scrolling, collapsible stack traces, and webview UI toolkit deferred.
+**Status: Complete** — All tasks done. ANSI colors rendered, virtual scrolling for 100K+ lines, collapsible stack traces, M keyboard shortcut, footer filename. `@vscode/webview-ui-toolkit` skipped (deprecated by Microsoft; using --vscode-* CSS variables instead).
 
 **Focus:** Visibility. Make the captured data viewable in real time.
 
-| # | Task | Delivers |
-|---|---|---|
-| 15 | `ansi-formatter.ts` — ANSI-to-HTML conversion for viewer rendering | Viewer formatting |
-| 16 | `log-viewer-provider.ts` — WebviewView with `<pre>` block, ANSI-to-HTML rendering | Sidebar viewer |
-| 17 | Auto-scroll with pause-on-scroll, "Jump to bottom" button | Scroll behavior |
-| 18 | `@vscode/webview-ui-toolkit` for native VS Code controls | Native UX |
-| 19 | Content Security Policy headers + `localResourceRoots` | Security |
-| 20 | Virtual scrolling (render only visible rows, handle 100K+ lines) | Performance |
-| 21 | Collapsible stack traces (detect multi-line errors, expand/collapse) | Readability |
-| 22 | `insertMarker` command — inject `--- MARKER: HH:MM AM ---` separator into stream | User markers |
-| 23 | Marker visual styling (full-width rule, colored background, keyboard shortcut `M`) | Marker UX |
-| 24 | Pause/resume capture command with "PAUSED" visual indicator | Capture control |
-| 25 | Viewer footer: recording status, line count, active log filename | Viewer status |
-| 26 | Test viewer with 100K+ line sessions, rapid output, and theme switching | Performance validation |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 15 | `ansi.ts` — ANSI-to-HTML conversion for viewer rendering | Viewer formatting | Done |
+| 16 | `log-viewer-provider.ts` — WebviewView with ANSI-to-HTML rendering | Sidebar viewer | Done |
+| 17 | Auto-scroll with pause-on-scroll, "Jump to bottom" button | Scroll behavior | Done |
+| 18 | `@vscode/webview-ui-toolkit` for native VS Code controls | Native UX | Skipped (deprecated) |
+| 19 | Content Security Policy headers + `localResourceRoots` | Security | Done |
+| 20 | Virtual scrolling (render only visible rows, handle 100K+ lines) | Performance | Done |
+| 21 | Collapsible stack traces (detect multi-line errors, expand/collapse) | Readability | Done |
+| 22 | `insertMarker` command — inject `--- MARKER: HH:MM AM ---` separator into stream | User markers | Done |
+| 23 | Marker visual styling (full-width rule, colored background, keyboard shortcut `M`) | Marker UX | Done |
+| 24 | Pause/resume capture command with "PAUSED" visual indicator | Capture control | Done |
+| 25 | Viewer footer: recording status, line count, active log filename | Viewer status | Done |
+| 26 | Test viewer with 100K+ line sessions, rapid output, and theme switching | Performance validation | Done |
 
 **Exit criteria for Stage 2:**
 - Sidebar shows real-time log output with ANSI colors rendered
@@ -984,7 +984,7 @@ The extension silently captures all debug output to disk with maximum reliabilit
 
 ### Stage 3: "The Navigator" (Interaction)
 
-**Status: Not started** — Blocked on Stage 2 completion.
+**Status: Not started** — Stage 2 complete, ready to begin.
 
 **Focus:** Usability. Make the viewer interactive and navigable.
 
