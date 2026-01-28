@@ -158,6 +158,11 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         this.postMessage({ type: 'setFilename', filename });
     }
 
+    /** Toggle elapsed time display in the viewer. */
+    setShowElapsed(show: boolean): void {
+        this.postMessage({ type: 'setShowElapsed', show });
+    }
+
     dispose(): void {
         this.stopBatchTimer();
     }
