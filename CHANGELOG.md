@@ -6,7 +6,22 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
-### Added
+### Added (Stage 3 — The Navigator)
+
+- Click-to-source navigation: click `file.ts:42` patterns in log output to open source at that line
+- Ctrl+Click opens source in split editor (`ViewColumn.Beside`)
+- Source link regex module with whitelist of ~25 file extensions (ts, js, dart, py, go, etc.)
+- Search bar (Ctrl+F): regex matching with `<mark>` highlighting, F3/Shift+F3 navigation
+- Category filter dropdown in viewer footer (multi-select, filters by DAP output category)
+- Keyboard shortcuts: Space (pause), W (wrap), Home/End (scroll), Escape (close search)
+- Session history tree view in sidebar with metadata (adapter type, file size, date)
+- File system watcher auto-refreshes session history on file changes
+- HTML export: converts .log files to styled HTML with ANSI colors and collapsible context header
+- Export as HTML command in session history context menu
+- Delete session command with confirmation dialog
+- Marketplace metadata: gallery banner, expanded categories and keywords
+
+### Added (Stage 2 — The Window)
 
 - ANSI-to-HTML color rendering in sidebar viewer (bold, dim, italic, underline, 16 fg/bg colors)
 - Virtual scrolling for 100K+ lines without lag (data-model-driven, renders only visible rows)
@@ -21,6 +36,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Disable noisy extensions in F5 launch config to reduce Debug Console clutter
 - Viewer DOM cap increased from 5,000 to 50,000 lines (backed by JS array, not DOM nodes)
 - Split viewer-content.ts into viewer-styles.ts + viewer-script.ts for maintainability
+- README rewritten with full feature list, keyboard shortcuts table, and updated limitations
 
 ## 0.1.0
 
