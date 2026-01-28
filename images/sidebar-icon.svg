@@ -1,18 +1,96 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="24"
+   height="24"
+   viewBox="0 0 24 24"
+   fill="none"
+   version="1.1"
+   id="svg6"
+   sodipodi:docname="sidebar-icon.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     id="namedview6"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="49.541667"
+     inkscape:cx="11.989907"
+     inkscape:cy="11.818335"
+     inkscape:window-width="2256"
+     inkscape:window-height="1433"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6" />
   <!-- Streaming lines flowing in from left -->
-  <line x1="1" y1="4" x2="13" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="3" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="1" y1="12" x2="13" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-
+  <line
+     x1="1.0213064"
+     y1="4"
+     x2="13.362209"
+     y2="4"
+     stroke="currentColor"
+     stroke-width="1.52116"
+     stroke-linecap="round"
+     id="line1" />
+  <line
+     x1="2.4211531"
+     y1="8"
+     x2="13.556979"
+     y2="8"
+     stroke="currentColor"
+     stroke-width="1.44498"
+     stroke-linecap="round"
+     id="line2" />
+  <line
+     x1="1.0414915"
+     y1="12"
+     x2="13.705355"
+     y2="12"
+     stroke="currentColor"
+     stroke-width="1.54093"
+     stroke-linecap="round"
+     id="line3" />
   <!-- Funnel shape: lines converge into capture point -->
-  <path d="M14 3 L20 10 L20 14 L14 14 L14 3Z" fill="currentColor" opacity="0.15"/>
-  <path d="M14 3 L21 10 V14 H14 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-
+  <path
+     d="m 14,3 6.544996,7 v 4 H 14 Z"
+     fill="currentColor"
+     opacity="0.15"
+     id="path3"
+     style="stroke-width:1.04443" />
+  <path
+     d="M14 3 L21 10 V14 H14 Z"
+     stroke="currentColor"
+     stroke-width="1.5"
+     stroke-linejoin="round"
+     fill="none"
+     id="path4" />
   <!-- Captured output: solid block dropping down -->
-  <rect x="15" y="16" width="6" height="2.5" rx="1" fill="currentColor"/>
-  <rect x="15" y="20" width="4.5" height="2.5" rx="1" fill="currentColor" opacity="0.6"/>
-
+  <rect
+     x="15"
+     y="16"
+     width="6"
+     height="2.5"
+     rx="1"
+     fill="currentColor"
+     id="rect4" />
+  <rect
+     x="15"
+     y="20"
+     width="4.5"
+     height="2.5"
+     rx="1"
+     fill="currentColor"
+     opacity="0.6"
+     id="rect5" />
   <!-- Pulse rings around funnel opening (capture active) -->
-  <path d="M11 2 Q8 4 11 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.5"/>
-  <path d="M10 0.5 Q6 4 10 7.5" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.3"/>
 </svg>
