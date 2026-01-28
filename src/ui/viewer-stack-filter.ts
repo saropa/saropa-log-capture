@@ -3,7 +3,7 @@
  * When enabled, framework/library stack frames are hidden in expanded groups.
  */
 export function getStackFilterScript(): string {
-    return /* javascript */ `
+  return /* javascript */ `
 var appOnlyMode = false;
 
 function toggleAppOnly() {
@@ -21,6 +21,9 @@ function toggleAppOnly() {
     }
     var btn = document.getElementById('app-only-toggle');
     if (btn) btn.textContent = appOnlyMode ? 'App Only: ON' : 'App Only: OFF';
+    if (typeof vscodeApi !== 'undefined') {
+        vscodeApi.postMessage({ type: 'setCaptureAll', value: !appOnlyMode });
+    }
     renderViewport(true);
 }
 

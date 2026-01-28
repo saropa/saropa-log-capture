@@ -285,7 +285,9 @@
             "media": {
               "markdown": "media/walkthrough/start-debugging.md"
             },
-            "completionEvents": ["onCommand:workbench.action.debug.start"]
+            "completionEvents": [
+              "onCommand:workbench.action.debug.start"
+            ]
           },
           {
             "id": "saropaLogCapture.openViewer",
@@ -294,7 +296,9 @@
             "media": {
               "markdown": "media/walkthrough/open-viewer.md"
             },
-            "completionEvents": ["onView:saropaLogCapture.logViewer"]
+            "completionEvents": [
+              "onView:saropaLogCapture.logViewer"
+            ]
           },
           {
             "id": "saropaLogCapture.useKeyboardShortcuts",
@@ -311,7 +315,9 @@
             "media": {
               "markdown": "media/walkthrough/session-history.md"
             },
-            "completionEvents": ["onView:saropaLogCapture.sessionHistory"]
+            "completionEvents": [
+              "onView:saropaLogCapture.sessionHistory"
+            ]
           },
           {
             "id": "saropaLogCapture.configureSettings",
@@ -385,6 +391,11 @@
           "default": true,
           "description": "On first run, check if the log directory is in .gitignore and offer to add it."
         },
+        "saropaLogCapture.captureAll": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, capture all Debug Console output (no category or exclusion filtering). Overrides 'categories' and 'exclusions'."
+        },
         "saropaLogCapture.redactEnvVars": {
           "type": "array",
           "items": {
@@ -412,17 +423,32 @@
               },
               "alert": {
                 "type": "string",
-                "enum": ["flash", "badge", "none"],
+                "enum": [
+                  "flash",
+                  "badge",
+                  "none"
+                ],
                 "default": "flash",
                 "description": "Alert type: flash (visual pulse), badge (sidebar count), none (counter only)."
               }
             },
-            "required": ["keyword"]
+            "required": [
+              "keyword"
+            ]
           },
           "default": [
-            { "keyword": "error", "alert": "flash" },
-            { "keyword": "exception", "alert": "flash" },
-            { "keyword": "warning", "alert": "badge" }
+            {
+              "keyword": "error",
+              "alert": "flash"
+            },
+            {
+              "keyword": "exception",
+              "alert": "flash"
+            },
+            {
+              "keyword": "warning",
+              "alert": "badge"
+            }
           ],
           "description": "Keywords to watch for in log output. Each entry has a keyword (string or /regex/) and alert type."
         },
@@ -454,7 +480,9 @@
             },
             "keywords": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "default": [],
               "description": "Keywords that trigger a split (e.g., 'HOT RESTART', '/SPLIT/')."
             },
@@ -494,7 +522,10 @@
                 "description": "Tag to apply when pattern matches."
               }
             },
-            "required": ["pattern", "tag"]
+            "required": [
+              "pattern",
+              "tag"
+            ]
           },
           "default": [],
           "description": "Rules for automatically tagging sessions based on content patterns."
@@ -531,12 +562,26 @@
                 "description": "Apply italic styling to matching lines."
               }
             },
-            "required": ["pattern"]
+            "required": [
+              "pattern"
+            ]
           },
           "default": [
-            { "pattern": "/\\b(error|exception|fail(ed|ure)?|fatal)\\b/i", "color": "var(--vscode-errorForeground)", "label": "Error" },
-            { "pattern": "/\\b(warn(ing)?|caution)\\b/i", "color": "var(--vscode-editorWarning-foreground)", "label": "Warning" },
-            { "pattern": "/\\b(success|passed|ok)\\b/i", "color": "var(--vscode-debugConsole-sourceForeground)", "label": "Success" }
+            {
+              "pattern": "/\\b(error|exception|fail(ed|ure)?|fatal)\\b/i",
+              "color": "var(--vscode-errorForeground)",
+              "label": "Error"
+            },
+            {
+              "pattern": "/\\b(warn(ing)?|caution)\\b/i",
+              "color": "var(--vscode-editorWarning-foreground)",
+              "label": "Warning"
+            },
+            {
+              "pattern": "/\\b(success|passed|ok)\\b/i",
+              "color": "var(--vscode-debugConsole-sourceForeground)",
+              "label": "Success"
+            }
           ],
           "description": "Pattern-based highlighting rules for coloring log lines. Each rule specifies a pattern and visual styling."
         },
@@ -551,7 +596,9 @@
               },
               "categories": {
                 "type": "array",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "description": "DAP categories to show (empty = all)."
               },
               "searchPattern": {
@@ -563,7 +610,9 @@
                 "description": "Whether exclusions should be enabled."
               }
             },
-            "required": ["name"]
+            "required": [
+              "name"
+            ]
           },
           "default": [],
           "description": "Saved filter presets for quick application. Each preset saves category filters, search pattern, and exclusion state."
