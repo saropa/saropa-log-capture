@@ -6,6 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration I — Custom Highlights)
+
+- Pattern-based highlighting: color log lines matching patterns in real-time
+- Configure rules in settings: `saropaLogCapture.highlightRules`
+- Pattern formats: plain string (case-insensitive) or `/regex/flags`
+- Style options: `color`, `backgroundColor`, `bold`, `italic`, `label`
+- Stackable rules: multiple patterns can match the same line (first wins for conflicts)
+- Default rules highlight errors (red), warnings (yellow), success (green)
+- Tooltips show matching rule labels on hover
+- Uses VS Code CSS variables for theme-consistent colors
+
 ### Added (Iteration H — Auto-Tags)
 
 - Auto-tag rule engine: automatically tag sessions based on content patterns

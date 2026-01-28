@@ -13,6 +13,7 @@ import { getStackDedupScript } from './viewer-stack-dedup';
 import { getSourcePreviewScript } from './viewer-source-preview';
 import { getSplitNavScript } from './viewer-split-nav';
 import { getJsonScript } from './viewer-json';
+import { getHighlightScript } from './viewer-highlight';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -85,6 +86,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getSplitNavScript()}
         ${getJsonScript()}
         ${getSearchScript()}
+        ${getHighlightScript()}
     </script>
 </body>
 </html>`;

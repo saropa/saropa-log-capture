@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { SplitRules, defaultSplitRules } from './file-splitter';
 import { AutoTagRule } from './auto-tagger';
+import { HighlightRule } from './highlight-rules';
 
 /** Watch pattern entry from user settings. */
 export interface WatchPatternSetting {
@@ -26,9 +27,23 @@ export interface SaropaLogCaptureConfig {
     readonly watchPatterns: readonly WatchPatternSetting[];
     readonly splitRules: SplitRules;
     readonly autoTagRules: readonly AutoTagRule[];
+    /** Pattern-based highlight rules for coloring matching log lines. */
+    readonly highlightRules: readonly HighlightRule[];
 }
 
 const SECTION = 'saropaLogCapture';
+
+/**
+ * Default highlight rules for common log patterns.
+ * These provide sensible coloring out of the box while being easily overridable.
+ */
+function defaultHighlightRules(): HighlightRule[] {
+    return [
+        { pattern: '/\\b(error|exception|fail(ed|ure)?|fatal)\\b/i', color: 'var(--vscode-errorForeground)', label: 'Error' },
+        { pattern: '/\\b(warn(ing)?|caution)\\b/i', color: 'var(--vscode-editorWarning-foreground)', label: 'Warning' },
+        { pattern: '/\\b(success|passed|ok)\\b/i', color: 'var(--vscode-debugConsole-sourceForeground)', label: 'Success' },
+    ];
+}
 
 export function getConfig(): SaropaLogCaptureConfig {
     const cfg = vscode.workspace.getConfiguration(SECTION);
@@ -53,6 +68,7 @@ export function getConfig(): SaropaLogCaptureConfig {
         ]),
         splitRules: parseSplitRules(cfg.get('splitRules', {})),
         autoTagRules: cfg.get<AutoTagRule[]>('autoTagRules', []),
+        highlightRules: cfg.get<HighlightRule[]>('highlightRules', defaultHighlightRules()),
     };
 }
 
