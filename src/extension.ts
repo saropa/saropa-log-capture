@@ -5,6 +5,7 @@ import { SessionManagerImpl, handleDeleteCommand } from './modules/session-manag
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
+import { exportToHtml } from './modules/html-export';
 
 let sessionManager: SessionManagerImpl;
 let viewerProvider: LogViewerProvider;
@@ -157,6 +158,14 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 await vscode.workspace.fs.delete(item.uri);
                 historyProvider.refresh();
             }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.exportHtml', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const htmlUri = await exportToHtml(item.uri);
+            await vscode.env.openExternal(htmlUri);
         }),
     );
 }
