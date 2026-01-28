@@ -271,6 +271,9 @@ window.addEventListener('message', function(event) {
         case 'setShowElapsed':
             if (typeof handleSetShowElapsed === 'function') handleSetShowElapsed(msg);
             break;
+        case 'sourcePreview':
+            if (typeof handleSourcePreviewResponse === 'function') handleSourcePreviewResponse(msg);
+            break;
     }
 });
 

@@ -3,6 +3,7 @@ import { getConfig, getLogDirectoryUri } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
 import { SessionManagerImpl } from './modules/session-manager';
 import { handleDeleteCommand } from './modules/delete-command';
+import { resolveSourceUri } from './modules/source-resolver';
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
@@ -210,13 +211,17 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return;
             }
             const name = await vscode.window.showInputBox({
-                prompt: 'Enter display name for this session',
-                value: item.filename.replace(/\.log$/, ''),
+                prompt: 'Enter new name for this session (also renames file)',
+                value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_\d{2}-\d{2}_/, ''),
             });
-            if (name === undefined) {
+            if (name === undefined || name.trim() === '') {
                 return;
             }
-            await historyProvider.getMetaStore().setDisplayName(item.uri, name);
+            // Rename the file on disk
+            const metaStore = historyProvider.getMetaStore();
+            const newUri = await metaStore.renameLogFile(item.uri, name.trim());
+            // Update display name in metadata (uses new URI if renamed)
+            await metaStore.setDisplayName(newUri, name.trim());
             historyProvider.refresh();
         }),
 
@@ -260,20 +265,3 @@ async function openSourceFile(filePath: string, line: number, col: number, split
     }
 }
 
-/** Resolve a file path from log output to a workspace URI. */
-function resolveSourceUri(filePath: string): vscode.Uri | undefined {
-    if (!filePath) {
-        return undefined;
-    }
-    // Absolute path or drive letter (C:\...).
-    if (filePath.match(/^([/\\]|[a-zA-Z]:)/)) {
-        return vscode.Uri.file(filePath);
-    }
-    // Dart package URI (package:foo/bar.dart) — strip prefix, resolve relative.
-    const stripped = filePath.replace(/^package:[^/]+\//, '');
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (folder) {
-        return vscode.Uri.joinPath(folder.uri, stripped);
-    }
-    return undefined;
-}

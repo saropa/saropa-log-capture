@@ -69,4 +69,68 @@ export class SessionMetadataStore {
         const meta = await this.loadMetadata(logUri);
         return meta.annotations ?? [];
     }
+
+    /**
+     * Rename the log file on disk to match the display name.
+     * Preserves the date/time prefix from the original filename.
+     * Also renames the sidecar .meta.json file.
+     * @returns The new URI of the renamed log file, or the original if rename failed.
+     */
+    async renameLogFile(logUri: vscode.Uri, newDisplayName: string): Promise<vscode.Uri> {
+        const oldPath = logUri.fsPath;
+        const separator = oldPath.includes('\\') ? '\\' : '/';
+        const lastSepIndex = oldPath.lastIndexOf(separator);
+        const dirPath = oldPath.substring(0, lastSepIndex + 1);
+        const oldFilename = oldPath.substring(lastSepIndex + 1);
+
+        // Extract date/time prefix (YYYYMMDD_HH-MM_) from original filename
+        const prefixMatch = oldFilename.match(/^(\d{8}_\d{2}-\d{2}_)/);
+        const prefix = prefixMatch ? prefixMatch[1] : '';
+
+        // Sanitize the new display name for use as filename
+        const safeName = newDisplayName.replace(/[^a-zA-Z0-9_\- ]/g, '_').trim();
+        if (!safeName) {
+            return logUri; // No valid name, keep original
+        }
+
+        const newFilename = `${prefix}${safeName}.log`;
+
+        // Don't rename if filename hasn't changed
+        if (newFilename === oldFilename) {
+            return logUri;
+        }
+
+        const newLogUri = vscode.Uri.file(`${dirPath}${newFilename}`);
+        const oldMetaUri = this.getMetaUri(logUri);
+        const newMetaUri = this.getMetaUri(newLogUri);
+
+        try {
+            // Check if target already exists
+            try {
+                await vscode.workspace.fs.stat(newLogUri);
+                // File exists, don't overwrite
+                vscode.window.showWarningMessage(`Cannot rename: "${newFilename}" already exists.`);
+                return logUri;
+            } catch {
+                // Good, target doesn't exist
+            }
+
+            // Rename the log file
+            await vscode.workspace.fs.rename(logUri, newLogUri);
+
+            // Rename the meta file if it exists
+            try {
+                await vscode.workspace.fs.stat(oldMetaUri);
+                await vscode.workspace.fs.rename(oldMetaUri, newMetaUri);
+            } catch {
+                // Meta file doesn't exist, that's fine
+            }
+
+            return newLogUri;
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Failed to rename log file: ${msg}`);
+            return logUri;
+        }
+    }
 }

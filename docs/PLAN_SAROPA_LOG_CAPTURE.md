@@ -8,66 +8,6 @@ VS Code's Debug Console is ephemeral. When a debug session ends, the output is g
 
 A VS Code extension that automatically captures Debug Console output to persistent log files on the developer machine, with a rich real-time log viewer built into the sidebar. Works with **any** debug adapter (Dart, Node, Python, C++, Go, etc.).
 
-## Name Candidates
-
-**Confirmed name: Saropa Log Capture**. Other candidates considered:
-
-| Name | Search Keywords Hit | Pros | Cons |
-|---|---|---|---|
-| **Saropa Log Capture** | log, capture | Clear verb, describes the action | "Log" could mean logging framework |
-| **Saropa Debug Capture** | debug, capture | Directly says "debug output" | Slightly less searchable than "log" |
-| **Saropa Console Capture** | console, capture | "Console" matches VS Code terminology | People search "debug" more than "console" |
-| **Saropa Debug Recorder** | debug, recorder | Implies persistence/recording | "Recorder" is unusual for dev tools |
-| **Saropa Debug Logger** | debug, logger | "Logger" is a highly searched term | Could be confused with logging libraries |
-| **Saropa Session Logger** | session, logger | Emphasizes session-based capture | Less obvious what "session" means |
-| **Saropa Debug Tape** | debug, tape | Memorable metaphor (tape recorder) | Abstract, not immediately clear |
-| **Saropa Debug Archive** | debug, archive | Implies persistence and history | "Archive" sounds heavy/enterprise |
-| **Saropa Output Capture** | output, capture | Generic, covers all output types | Less specific than "debug" |
-| **Saropa Debug Vault** | debug, vault | Implies safe storage, memorable | "Vault" sounds like security tool |
-| **Saropa Debug Scribe** | debug, scribe | Literary, implies faithful recording | Too clever, not discoverable |
-| **Saropa Console Persist** | console, persist | Exactly describes the problem solved | "Persist" is technical jargon |
-
-**Discoverability analysis**: Users searching the VS Code marketplace would type things like:
-- "save debug console output"
-- "debug log file"
-- "persist debug output"
-- "capture debug console"
-- "debug session log"
-
-The name should contain at least one of: `debug`, `log`, `console`, `capture`, `save`, `persist`.
-
-**Shortlist (top 4):**
-
-1. **Saropa Debug Capture** — "Debug" is what users search for. "Capture" accurately describes recording existing output (vs "Logger" which implies generating output). Strongest marketplace SEO.
-2. **Saropa Log Capture** — Current working title. "Log" is the most common term for this kind of output. Simple, clear.
-3. **Saropa Console Capture** — Matches VS Code's "Debug Console" terminology exactly. The most technically precise name.
-4. **Saropa Debug Logger** — "Logger" is the most searched term in this category. Risk: could be confused with logging frameworks (Winston, Pino, etc.) that generate logs.
-
-**Note**: VS Code marketplace allows a display name + subtitle. The subtitle can carry keywords the name doesn't. Example:
-- **Name**: Saropa Debug Capture
-- **Subtitle**: Save VS Code Debug Console output to persistent log files
-
-## Competitive Landscape
-
-| Extension | Installs | What It Does | Gap |
-|---|---|---|---|
-| Console Ninja | 1.3M | Inline console.log for JS only | No file persistence, JS-only, 3-star reviews |
-| Turbo Console Log | 2M | Inserts console.log statements | Doesn't capture output at all |
-| Log File Highlighter | 518K | Syntax highlighting for .log files | Requires existing files, no capture |
-| Log Viewer | 201K | Watches existing log files | No capture from Debug Console |
-| Output Colorizer | - | Colors output panel text | View-only, no persistence |
-| **This extension** | - | **Captures + persists + views debug output** | **Nothing like it exists** |
-
-## Project Setup
-
-- **Repo**: New standalone repo `saropa-log-capture`
-- **Language**: TypeScript
-- **Scaffold**: `yo code` (Yeoman VS Code extension generator)
-- **UI Toolkit**: `@vscode/webview-ui-toolkit` (native-looking VS Code components)
-- **Dependencies**: `ansi-to-html` (ANSI escape codes to HTML spans)
-
----
-
 ## Design Principles
 <!-- cspell:ignore Wireshark -->
 Derived from studying what makes legendary dev tools (Wireshark, Chrome DevTools, Charles Proxy, Postman, Sentry, Datadog, GitLens, Prettier) successful:
@@ -905,118 +845,15 @@ Features for mature adoption and enterprise use.
 
 ## Implementation Roadmap
 
-Three stability-focused stages, each delivering a complete, testable milestone. Each stage must be **fully stable** before advancing to the next. This replaces the previous all-at-once phased approach.
+### Completed
+
+**Stages 1-3 (MVP):** Complete. Headless capture, live sidebar viewer, search/filter, click-to-source, session history.
+
+**Iterations A-D:** Complete. Keyword watch, pinning, exclusions, copy formats, session tagging, timing markers, stack trace intelligence, file rename on session rename, stack frame hover preview.
 
 ---
 
-### Stage 1: "The Black Box" (Headless Capture)
-
-**Focus:** Stability & Data Integrity. No UI other than a status bar indicator.
-
-**Status: Complete** — 14 of 14 tasks done. Packaged as v0.1.0 VSIX.
-
-The extension silently captures all debug output to disk with maximum reliability. If this stage has bugs, nothing else matters.
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 1 | Scaffold project (`yo code`), `tsconfig.json`, npm setup | Project skeleton | Done |
-| 2 | `package.json` — activation events (`onDebugAdapterProtocolTracker`), settings, commands | Extension manifest | Done |
-| 3 | `config.ts` — settings reader with defaults (`logDirectory: "reports"`, `maxLogFiles: 10`) | Configuration | Done |
-| 4 | `tracker.ts` — `DebugAdapterTrackerFactory`, intercept DAP `output` events | Core capture | Done |
-| 5 | `deduplication.ts` — debounce & group identical rapid log lines (`Error (x54)`) | Spam protection | Done |
-| 6 | `log-session.ts` — session lifecycle, immediate-append file writer, context header generation | File persistence | Done |
-| 7 | Context header — dump `launch.json` config (program, args, env vars) as first lines of every log file | Session context | Done |
-| 8 | `file-retention.ts` — enforce `maxLogFiles` setting, delete oldest when limit exceeded | Disk cleanup | Done |
-| 9 | `gitignore-checker.ts` — check for `.gitignore` presence, offer to add `/reports/` on first run | Safety | Done |
-| 10 | ANSI preservation — write raw ANSI codes to `.log` files (no stripping) | External tool compat | Done |
-| 11 | `status-bar.ts` — live line counter, recording indicator, pause/resume toggle | Status bar | Done |
-| 12 | `extension.ts` — wire tracker + session + dedup + retention + status bar + commands | Activation | Done |
-| 13 | Test with Dart + Node.js + Python debug sessions | Cross-adapter validation | Done |
-| 14 | Package with `vsce package` | Distributable | Done |
-
-**Exit criteria for Stage 1:**
-- Extension silently captures to `/reports/` for any debug adapter
-- Context header present in every log file
-- Deduplication handles tight-loop spam without file bloat
-- File retention auto-cleans oldest files
-- `.gitignore` check works on first run
-- ANSI codes preserved in `.log` — verified with `less -R` and `cat`
-- Status bar shows line count and recording indicator
-- *No UI beyond status bar*
-
-**After Stage 1**: Rock-solid data capture. Log files appear in `/reports/` with context headers, spam protection, and automatic cleanup. Zero user interaction required.
-
----
-
-### Stage 2: "The Window" (Live View)
-
-**Status: Complete** — All tasks done. ANSI colors rendered, virtual scrolling for 100K+ lines, collapsible stack traces, M keyboard shortcut, footer filename. `@vscode/webview-ui-toolkit` skipped (deprecated by Microsoft; using --vscode-* CSS variables instead).
-
-**Focus:** Visibility. Make the captured data viewable in real time.
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 15 | `ansi.ts` — ANSI-to-HTML conversion for viewer rendering | Viewer formatting | Done |
-| 16 | `log-viewer-provider.ts` — WebviewView with ANSI-to-HTML rendering | Sidebar viewer | Done |
-| 17 | Auto-scroll with pause-on-scroll, "Jump to bottom" button | Scroll behavior | Done |
-| 18 | `@vscode/webview-ui-toolkit` for native VS Code controls | Native UX | Skipped (deprecated) |
-| 19 | Content Security Policy headers + `localResourceRoots` | Security | Done |
-| 20 | Virtual scrolling (render only visible rows, handle 100K+ lines) | Performance | Done |
-| 21 | Collapsible stack traces (detect multi-line errors, expand/collapse) | Readability | Done |
-| 22 | `insertMarker` command — inject `--- MARKER: HH:MM AM ---` separator into stream | User markers | Done |
-| 23 | Marker visual styling (full-width rule, colored background, keyboard shortcut `M`) | Marker UX | Done |
-| 24 | Pause/resume capture command with "PAUSED" visual indicator | Capture control | Done |
-| 25 | Viewer footer: recording status, line count, active log filename | Viewer status | Done |
-| 26 | Test viewer with 100K+ line sessions, rapid output, and theme switching | Performance validation | Done |
-
-**Exit criteria for Stage 2:**
-- Sidebar shows real-time log output with ANSI colors rendered
-- Auto-scroll pauses when user scrolls up, resumes at bottom
-- Virtual scrolling handles 100K+ lines without lag
-- Stack traces collapse/expand correctly
-- Markers inject and display with distinctive visual style
-- Viewer adapts to light/dark/high-contrast themes
-- *No search, no filtering, no history — just viewing*
-
-**After Stage 2**: Developers can watch their debug output in real time with a performant, theme-aware viewer. Markers let them separate test attempts visually.
-
----
-
-### Stage 3: "The Navigator" (Interaction)
-
-**Status: Complete** — All tasks implemented.
-
-**Focus:** Usability. Make the viewer interactive and navigable.
-
-| # | Task | Delivers |
-|---|---|---|
-| 27 | Regex-first click-to-source — scan log lines for `file:line` patterns, generate clickable links | Source navigation |
-| 28 | DAP `source` + `line` field augmentation for click-to-source | DAP metadata |
-| 29 | Click log line → open source file at line in editor, Ctrl+Click → split editor | Navigation |
-| 30 | Search with regex + match highlighting + F3/Shift+F3 navigation | Search |
-| 31 | Level/category filter dropdown (Info, Warning, Error, stdout, stderr) | Filtering |
-| 32 | Word wrap toggle | Preference |
-| 33 | `session-history.ts` — TreeDataProvider for past sessions in `/reports/` | Session list |
-| 34 | Session metadata (line count, error count, duration, project name) | Context |
-| 35 | Open in Editor / Open in Browser (HTML) / Delete inline actions | Session actions |
-| 36 | HTML output option (ANSI-to-HTML conversion, styled export, context header) | Shareable output |
-| 37 | All core keyboard shortcuts in webview (F3, Space, W, M, Home, End) | Shortcuts |
-| 38 | Marketplace publishing (icon, README, screenshots, changelog) | Distribution |
-
-**Exit criteria for Stage 3:**
-- Click-to-source works via regex parsing across all tested adapters (Dart, Node, Python)
-- Search finds matches, highlights them, navigates with F3
-- Level filter hides/shows by category
-- Session history lists past sessions with metadata
-- HTML export renders with colors and context header
-- Keyboard shortcuts work in webview
-- *Extension is marketplace-ready*
-
-**After Stage 3**: Full MVP. Capture + View + Navigate. Ready for marketplace release.
-
----
-
-### Marketplace Icon Requirements (Task 38)
+### Marketplace Icon Requirements
 
 The extension has two icons with different purposes:
 
@@ -1077,54 +914,7 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 
 ---
 
-### Post-MVP: Tier 3-5 Features
-
-After the 3-stage MVP is stable and published, additional features are implemented in focused iterations. Each iteration should be independently releasable.
-
-#### Iteration A: Keyword Watch (Tier 2-3) — Complete
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 39 | `keyword-watcher.ts` — match log lines against watch list (string + regex) | Watch engine | Done |
-| 40 | Watch counters in viewer footer (clickable to filter) | Live counters | Done |
-| 41 | Watch keyword chips in toolbar (add/remove on the fly, click to filter) | Chip UI | Done |
-| 42 | Status bar watch hit counts (`$(error) 3 \| $(warning) 1`) | Status bar | Done |
-| 43 | Status bar flash on new watch hits (red/yellow pulse via theme colors) | Attention | Done |
-| 44 | View badge API — unread watch hit count on sidebar icon | Badge | Done |
-
-#### Iteration B: Pinning + Exclusions + Copy (Tier 3) — Complete
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 45 | Pin/unpin log entries to sticky top section | Bookmarking | Done |
-| 46 | Pinned entries persist in webview state, export at top of file | Persistence | Done |
-| 47 | Exclusion filter engine — string, regex, category-based rules | Noise reduction | Done |
-| 48 | "Always Hide Lines Like This" right-click action | Quick exclude | Done |
-| 49 | Exclusion toggle button in toolbar + "N hidden" counter | Visibility | Done |
-| 50 | Copy as formatted — plain text, markdown, HTML, bug report template | Copy formats | Done |
-| 51 | Ctrl+Shift+C for markdown copy shortcut | Quick copy | Done |
-
-#### Iteration C: Session Management (Tier 3) — Complete
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 52 | Session renaming (command, inline F2, footer click) | Naming | Done |
-| 53 | Session tagging (add/remove tags, filter history by tag) | Tagging | Done |
-| 54 | Renamed sessions update the log filename on disk | File naming | Deferred |
-| 55 | Log line annotations — right-click "Add Note", persistent in session metadata | Notes | Done |
-| 56 | Annotation export (plain text + HTML output includes notes) | Note export | Done |
-
-#### Iteration D: Timing + Stack Intelligence (Tier 3) — Complete
-
-| # | Task | Delivers | Status |
-|---|---|---|---|
-| 57 | Elapsed time column — `+0ms`, `+12ms`, `+1.2s` between entries | Timing | Done |
-| 58 | Slow gap highlighting — visual separator bar when gap > threshold | Gap visibility | Done |
-| 59 | Duration extraction — auto-detect timing mentions in log text | Duration tags | Done |
-| 60 | Stack trace parser — framework vs app code per adapter (Dart, Node, Python, Go) | Smart traces | Done |
-| 61 | App-only mode toggle — filter framework frames | Noise reduction | Done |
-| 62 | Stack frame hover preview — 3-5 lines of source in tooltip | Peek | Deferred |
-| 63 | Stack trace deduplication — count badge: `NullPointerException (x50)` | Dedup | Done |
+### Remaining Iterations
 
 #### Iteration E: Auto File Split (Tier 3)
 
@@ -1177,57 +967,11 @@ After the 3-stage MVP is stable and published, additional features are implement
 
 ---
 
-## Verification
+## Verification (Remaining Features)
 
-Organized by stage. Each stage's tests must pass before advancing.
+### Iteration E: Auto File Split
 
-### Stage 1 Verification: "The Black Box"
-
-1. Run extension in Extension Development Host (`F5`)
-2. Open a Flutter project, start debug session
-3. Confirm log file created in `/reports/` directory (not `.vscode/logs/`)
-4. Confirm first lines of log file contain context header (launch.json config, VS Code version, OS, adapter type)
-5. Confirm ANSI escape codes are preserved in `.log` file (verify with `less -R` or `cat` in terminal)
-6. Trigger a tight loop / rapid duplicate output — confirm deduplication groups identical lines as `Message (x N)` instead of writing every line
-7. Confirm `maxLogFiles` enforcement: create 12 sessions, verify only 10 log files remain in `/reports/`
-8. On first run in a new workspace, confirm `.gitignore` check prompts to add `/reports/` if not present
-9. Test pause/resume mid-session via status bar
-10. Stop debug session, confirm file is finalized
-11. Test with Node.js debug session (adapter-agnostic)
-12. Test with Python debug session (adapter-agnostic)
-13. Confirm status bar shows live line count and recording indicator
-
-### Stage 2 Verification: "The Window"
-
-14. Confirm sidebar viewer shows output in real time with ANSI colors rendered as HTML
-15. Confirm auto-scroll pauses when scrolling up, resumes at bottom
-16. Generate 100K+ lines of output — confirm virtual scrolling handles it without lag
-17. Trigger a multi-line stack trace — confirm it collapses and expands
-18. Insert a marker via command/keyboard (`M`) — confirm visual separator appears in viewer and is written to log file
-19. Insert multiple markers to separate test attempts — confirm they display with timestamp and distinctive styling
-20. Switch between light/dark/high-contrast themes, confirm viewer adapts via `--vscode-*` CSS variables
-21. Confirm viewer footer shows recording status, line count, and filename
-
-### Stage 3 Verification: "The Navigator"
-
-22. Click-to-source from a log line containing a file path — confirm editor opens at correct file and line
-23. Verify regex parsing finds `file:line` patterns across Dart, Node.js, and Python stack traces
-24. Ctrl+Click a log line with source info — confirm it opens in split editor
-25. Use search bar with a regex pattern — confirm matches highlighted and F3/Shift+F3 navigates between them
-26. Use level filter dropdown — confirm hiding/showing by category (Info, Warning, Error, stdout, stderr)
-27. Toggle word wrap — confirm behavior
-28. Confirm session appears in history tree with metadata (line count, error count, duration)
-29. Open a past session from history — confirm it loads in viewer
-30. Switch to HTML format, confirm colors and context header render in browser
-31. Test all keyboard shortcuts (F3, Space, W, M, Home, End)
-
-### Post-MVP Verification
-
-32. Add a custom watch keyword, trigger it in app code, confirm counter increments
-33. Confirm status bar flashes on error watch hit
-34. Click a watch chip in toolbar, confirm viewer filters to those matches
-35. Confirm view badge shows unread watch count on sidebar icon
-36. Configure file split with max 100 lines, confirm split occurs and creates `_001`, `_002` files
-37. Configure keyword split on "HOT RESTART", trigger hot restart, confirm new file starts
-38. Confirm split session appears as expandable parent in session history
-39. Confirm cross-part search finds matches across all split files
+1. Configure file split with max 100 lines, confirm split occurs and creates `_001`, `_002` files
+2. Configure keyword split on "HOT RESTART", trigger hot restart, confirm new file starts
+3. Confirm split session appears as expandable parent in session history
+4. Confirm cross-part search finds matches across all split files

@@ -10,6 +10,7 @@ import { getAnnotationScript } from './viewer-annotations';
 import { getTimingScript } from './viewer-timing';
 import { getStackFilterScript } from './viewer-stack-filter';
 import { getStackDedupScript } from './viewer-stack-dedup';
+import { getSourcePreviewScript } from './viewer-source-preview';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -45,6 +46,7 @@ export function buildViewerHtml(nonce: string): string {
         <div id="spacer-bottom"></div>
     </div>
     <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
+    <div id="source-preview"></div>
     <div id="search-bar" style="display:none">
         <input id="search-input" type="text" placeholder="Search..." />
         <span id="match-count"></span>
@@ -72,6 +74,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getTimingScript()}
         ${getStackDedupScript()}
         ${getStackFilterScript()}
+        ${getSourcePreviewScript()}
         ${getSearchScript()}
     </script>
 </body>
