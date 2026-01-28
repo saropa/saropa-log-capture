@@ -80,6 +80,13 @@ suite('StackParser', () => {
         assert.strictEqual(isAppFrame('  at lib/main.dart:10'), true);
     });
 
+    // --- Workspace priority over framework patterns ---
+
+    test('should treat workspace runtime/ directory as app code', () => {
+        const ws = '/home/user/myapp';
+        assert.strictEqual(isFrameworkFrame('  at /home/user/myapp/src/runtime/handler.go:42', ws), false);
+    });
+
     // --- Edge cases ---
 
     test('should return false for empty string', () => {

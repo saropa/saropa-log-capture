@@ -7,7 +7,7 @@
 const frameworkPatterns: RegExp[] = [
     // Dart / Flutter
     /package:flutter\//,
-    /\bdart:/,
+    /\bdart:[a-z]/i,  // dart:async, dart:core — not file.dart:42
     // Node.js
     /\bnode_modules\//,
     /\bnode:internal\//,
@@ -37,13 +37,18 @@ const frameworkPatterns: RegExp[] = [
  * Returns true if the frame line appears to come from a framework or library,
  * rather than the user's own application code.
  *
- * Checks against known framework path patterns first. If the workspace path
- * is provided and the frame contains an absolute path, frames outside the
- * workspace are treated as framework code.
+ * Absolute paths under the workspace take priority over framework patterns
+ * to avoid false positives (e.g., a user's `src/runtime/` directory matching
+ * the Go runtime pattern). Relative paths fall through to pattern matching.
  */
 export function isFrameworkFrame(frameLine: string, workspacePath?: string): boolean {
     const text = frameLine.trim();
     if (!text) {
+        return false;
+    }
+    // Absolute paths containing the workspace root are always app code,
+    // even if they match a framework pattern like /runtime/.
+    if (workspacePath && containsWorkspacePath(text, workspacePath)) {
         return false;
     }
     for (const pat of frameworkPatterns) {
@@ -57,15 +62,17 @@ export function isFrameworkFrame(frameLine: string, workspacePath?: string): boo
     return false;
 }
 
+/** Returns true if the frame text contains the workspace path (slash-normalised). */
+function containsWorkspacePath(text: string, workspacePath: string): boolean {
+    return text.toLowerCase().replace(/\\/g, '/').includes(
+        workspacePath.toLowerCase().replace(/\\/g, '/'),
+    );
+}
+
 /** Returns true if the frame appears to reference a path within the workspace. */
 function isUnderWorkspace(frameLine: string, workspacePath: string): boolean {
-    const lower = frameLine.toLowerCase();
-    const wsLower = workspacePath.toLowerCase().replace(/\\/g, '/');
-    // Check forward-slash normalised path.
-    if (lower.replace(/\\/g, '/').includes(wsLower)) {
-        return true;
-    }
-    // Relative paths (no drive letter or leading /) are assumed to be app code.
+    // containsWorkspacePath is already checked by the caller;
+    // here we only handle relative paths (assumed to be app code).
     if (!hasAbsolutePath(frameLine)) {
         return true;
     }
