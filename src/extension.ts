@@ -30,6 +30,12 @@ export function activate(context: vscode.ExtensionContext): void {
     viewerProvider.setLinkClickHandler((filePath, line, col, split) => {
         openSourceFile(filePath, line, col, split);
     });
+    viewerProvider.setTogglePauseHandler(() => {
+        const paused = sessionManager.togglePause();
+        if (paused !== undefined) {
+            viewerProvider.setPaused(paused);
+        }
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
