@@ -34,7 +34,6 @@ let lastStart = -1;
 let lastEnd = -1;
 let rafPending = false;
 let currentFilename = '';
-var activeFilters = null;
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
@@ -202,40 +201,6 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
-function applyFilter() {
-    totalHeight = 0;
-    for (var i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        var hidden = activeFilters && !activeFilters.has(item.category) && item.type !== 'marker';
-        item.filteredOut = !!hidden;
-        if (!hidden) {
-            var defaultH = item.type === 'marker' ? MARKER_HEIGHT : ROW_HEIGHT;
-            if (item.type === 'stack-frame' && item.groupId >= 0) {
-                var hdr = allLines.find(function(x) { return x.groupId === item.groupId && x.type === 'stack-header'; });
-                item.height = (hdr && hdr.collapsed) ? 0 : defaultH;
-            } else {
-                item.height = defaultH;
-            }
-        } else {
-            item.height = 0;
-        }
-        totalHeight += item.height;
-    }
-    renderViewport(true);
-}
-
-function handleFilterChange() {
-    var sel = document.getElementById('filter-select');
-    if (!sel) return;
-    var opts = sel.options;
-    var selected = [];
-    for (var i = 0; i < opts.length; i++) {
-        if (opts[i].selected) selected.push(opts[i].value);
-    }
-    activeFilters = selected.length === opts.length ? null : new Set(selected);
-    applyFilter();
-}
-
 function updateFooterText() {
     var suffix = currentFilename ? ' | ' + currentFilename : '';
     footerTextEl.textContent = isPaused
@@ -279,23 +244,9 @@ window.addEventListener('message', function(event) {
             currentFilename = msg.filename || '';
             updateFooterText();
             break;
-        case 'setCategories': {
-            var sel = document.getElementById('filter-select');
-            if (sel && msg.categories) {
-                var existing = new Set();
-                for (var ci = 0; ci < sel.options.length; ci++) existing.add(sel.options[ci].value);
-                for (var ci = 0; ci < msg.categories.length; ci++) {
-                    if (!existing.has(msg.categories[ci])) {
-                        var opt = document.createElement('option');
-                        opt.value = msg.categories[ci];
-                        opt.textContent = msg.categories[ci];
-                        opt.selected = true;
-                        sel.appendChild(opt);
-                    }
-                }
-            }
+        case 'setCategories':
+            handleSetCategories(msg);
             break;
-        }
     }
 });
 

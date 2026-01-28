@@ -1,5 +1,6 @@
 import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
+import { getFilterScript } from './viewer-filter';
 import { getSearchScript } from './viewer-search';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
@@ -49,6 +50,7 @@ export function buildViewerHtml(nonce: string): string {
     </div>
     <script nonce="${nonce}">
         ${getViewerScript(MAX_VIEWER_LINES)}
+        ${getFilterScript()}
         ${getSearchScript()}
     </script>
 </body>
