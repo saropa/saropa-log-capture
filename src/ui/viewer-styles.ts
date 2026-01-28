@@ -287,5 +287,10 @@ mark {
     cursor: pointer;
     border-radius: 3px;
 }
+.stack-dedup-badge {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-left: 4px;
+}
 `;
 }
