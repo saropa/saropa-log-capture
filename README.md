@@ -19,6 +19,9 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Gitignore safety** -- On first run, offers to add the log directory to `.gitignore`.
 - **ANSI preservation** -- Raw ANSI escape codes are kept in `.log` files for external tools like `less -R`.
 - **Keyword watch** -- Track configurable keywords (error, exception, warning, or custom patterns) with live counters in the viewer footer and status bar. Flash animation alerts you to new hits.
+- **Pin lines** -- Press P to pin important log lines to a sticky section above the scroll area. Click a pinned line to jump to it.
+- **Exclusion filter** -- Hide lines matching string or regex patterns. Toggle exclusions on/off; hidden count shown in footer.
+- **Multi-format copy** -- Shift+click to select lines, Ctrl+C for plain text, Ctrl+Shift+C for markdown fenced code block.
 - **Status bar** -- Live line counter, keyword watch hit counts, and pause/resume toggle.
 
 ## Getting Started
@@ -38,6 +41,10 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 | Space | Toggle pause/resume |
 | W | Toggle word wrap |
 | M | Insert marker |
+| P | Pin/unpin center line |
+| Shift+Click | Select line range |
+| Ctrl+C | Copy selection as plain text |
+| Ctrl+Shift+C | Copy selection as markdown |
 | Home | Scroll to top |
 | End | Scroll to bottom |
 
@@ -70,6 +77,7 @@ All settings are prefixed with `saropaLogCapture.`.
 | `maxLogFiles` | `10` | Max log files to retain (0 = unlimited) |
 | `gitignoreCheck` | `true` | Offer to add log directory to .gitignore on first run |
 | `redactEnvVars` | `[]` | Env var patterns to redact from headers (e.g. `"API_KEY"`, `"SECRET_*"`) |
+| `exclusions` | `[]` | Patterns to exclude from viewer (string or `/regex/`) |
 | `watchPatterns` | `[{keyword:"error"},{keyword:"exception"},{keyword:"warning"}]` | Keywords to watch for with alert type (flash, badge, none) |
 
 ## Known Limitations
