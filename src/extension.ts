@@ -4,9 +4,11 @@ import { SaropaTrackerFactory } from './modules/tracker';
 import { SessionManagerImpl, handleDeleteCommand } from './modules/session-manager';
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
+import { SessionHistoryProvider } from './ui/session-history-provider';
 
 let sessionManager: SessionManagerImpl;
 let viewerProvider: LogViewerProvider;
+let historyProvider: SessionHistoryProvider;
 
 export function activate(context: vscode.ExtensionContext): void {
     const outputChannel = vscode.window.createOutputChannel('Saropa Log Capture');
@@ -21,6 +23,13 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
     );
+    // Session history tree.
+    historyProvider = new SessionHistoryProvider();
+    context.subscriptions.push(historyProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('saropaLogCapture.sessionHistory', historyProvider),
+    );
+
     sessionManager.addLineListener((line, isMarker, lineCount, category, sourcePath, sourceLine) => {
         viewerProvider.addLine(line, isMarker, lineCount, category, sourcePath, sourceLine);
     });
@@ -54,9 +63,13 @@ export function activate(context: vscode.ExtensionContext): void {
             if (filename) {
                 viewerProvider.setFilename(filename);
             }
+            historyProvider.setActiveUri(sessionManager.getActiveSession()?.fileUri);
+            historyProvider.refresh();
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
             await sessionManager.stopSession(session);
+            historyProvider.setActiveUri(undefined);
+            historyProvider.refresh();
         }),
     );
 
@@ -121,6 +134,29 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return; // User pressed Escape.
             }
             sessionManager.insertMarker(text || undefined);
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.refreshHistory', () => {
+            historyProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.openSession', async (item: { uri: vscode.Uri }) => {
+            if (item?.uri) {
+                await vscode.window.showTextDocument(item.uri);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.deleteSession', async (item: { uri: vscode.Uri; filename: string }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const answer = await vscode.window.showWarningMessage(
+                `Delete ${item.filename}?`, { modal: true }, 'Delete',
+            );
+            if (answer === 'Delete') {
+                await vscode.workspace.fs.delete(item.uri);
+                historyProvider.refresh();
+            }
         }),
     );
 }
