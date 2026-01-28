@@ -265,6 +265,17 @@
             { "keyword": "warning", "alert": "badge" }
           ],
           "description": "Keywords to watch for in log output. Each entry has a keyword (string or /regex/) and alert type."
+        },
+        "saropaLogCapture.showElapsedTime": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show elapsed time (+Nms) between consecutive log lines in the viewer."
+        },
+        "saropaLogCapture.slowGapThreshold": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 100,
+          "description": "Elapsed time threshold (ms) for highlighting slow gaps between lines."
         }
       }
     }

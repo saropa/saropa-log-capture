@@ -19,6 +19,8 @@ export interface SaropaLogCaptureConfig {
     readonly gitignoreCheck: boolean;
     readonly redactEnvVars: readonly string[];
     readonly exclusions: readonly string[];
+    readonly showElapsedTime: boolean;
+    readonly slowGapThreshold: number;
     readonly watchPatterns: readonly WatchPatternSetting[];
 }
 
@@ -38,6 +40,8 @@ export function getConfig(): SaropaLogCaptureConfig {
         gitignoreCheck: cfg.get<boolean>('gitignoreCheck', true),
         redactEnvVars: cfg.get<string[]>('redactEnvVars', []),
         exclusions: cfg.get<string[]>('exclusions', []),
+        showElapsedTime: cfg.get<boolean>('showElapsedTime', false),
+        slowGapThreshold: cfg.get<number>('slowGapThreshold', 1000),
         watchPatterns: cfg.get<WatchPatternSetting[]>('watchPatterns', [
             { keyword: 'error', alert: 'flash' },
             { keyword: 'exception', alert: 'flash' },
