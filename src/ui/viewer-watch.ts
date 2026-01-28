@@ -23,8 +23,26 @@ function updateWatchDisplay() {
 
 function handleUpdateWatchCounts(msg) {
     if (msg.counts) {
+        var prev = watchCounts;
         watchCounts = msg.counts;
         updateWatchDisplay();
+        for (var label in msg.counts) {
+            if (msg.counts[label] > (prev[label] || 0)) {
+                flashWatch(label);
+            }
+        }
+    }
+}
+
+function flashWatch(label) {
+    if (!watchCountsEl) return;
+    var chips = watchCountsEl.querySelectorAll('.watch-chip');
+    for (var i = 0; i < chips.length; i++) {
+        if (chips[i].textContent.indexOf(label) >= 0) {
+            chips[i].classList.remove('flash');
+            void chips[i].offsetWidth;
+            chips[i].classList.add('flash');
+        }
     }
 }
 `;
