@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './modules/config';
+import { getConfig, getLogDirectoryUri } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
 import { SessionManagerImpl } from './modules/session-manager';
 import { handleDeleteCommand } from './modules/delete-command';
@@ -50,6 +50,13 @@ export function activate(context: vscode.ExtensionContext): void {
             viewerProvider.setPaused(paused);
         }
     });
+    viewerProvider.setExclusionAddedHandler(async (pattern) => {
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const current = cfg.get<string[]>('exclusions', []);
+        if (!current.includes(pattern)) {
+            await cfg.update('exclusions', [...current, pattern], vscode.ConfigurationTarget.Workspace);
+        }
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
@@ -67,6 +74,10 @@ export function activate(context: vscode.ExtensionContext): void {
             const filename = sessionManager.getActiveFilename();
             if (filename) {
                 viewerProvider.setFilename(filename);
+            }
+            const exclusions = getConfig().exclusions;
+            if (exclusions.length > 0) {
+                viewerProvider.setExclusions(exclusions);
             }
             historyProvider.setActiveUri(sessionManager.getActiveSession()?.fileUri);
             historyProvider.refresh();

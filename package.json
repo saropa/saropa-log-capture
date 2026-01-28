@@ -215,6 +215,14 @@
           "default": [],
           "description": "Environment variable name patterns to redact from context headers. Supports * wildcards (e.g. API_KEY, SECRET_*)."
         },
+        "saropaLogCapture.exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Patterns to exclude from the viewer. Plain strings match case-insensitively; /regex/ patterns are supported."
+        },
         "saropaLogCapture.watchPatterns": {
           "type": "array",
           "items": {

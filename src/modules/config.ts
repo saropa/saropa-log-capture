@@ -18,6 +18,7 @@ export interface SaropaLogCaptureConfig {
     readonly maxLogFiles: number;
     readonly gitignoreCheck: boolean;
     readonly redactEnvVars: readonly string[];
+    readonly exclusions: readonly string[];
     readonly watchPatterns: readonly WatchPatternSetting[];
 }
 
@@ -36,6 +37,7 @@ export function getConfig(): SaropaLogCaptureConfig {
         maxLogFiles: cfg.get<number>('maxLogFiles', 10),
         gitignoreCheck: cfg.get<boolean>('gitignoreCheck', true),
         redactEnvVars: cfg.get<string[]>('redactEnvVars', []),
+        exclusions: cfg.get<string[]>('exclusions', []),
         watchPatterns: cfg.get<WatchPatternSetting[]>('watchPatterns', [
             { keyword: 'error', alert: 'flash' },
             { keyword: 'exception', alert: 'flash' },
