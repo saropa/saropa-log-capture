@@ -43,28 +43,28 @@ function isStackFrameText(html) {
     return /^\\s+at\\s/.test(stripTags(html));
 }
 
-function addToData(html, isMarker, category) {
+function addToData(html, isMarker, category, ts) {
     if (isMarker) {
         activeGroupHeader = null;
-        allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1 });
+        allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts });
         totalHeight += MARKER_HEIGHT;
         return;
     }
     if (isStackFrameText(html)) {
         if (activeGroupHeader) {
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true };
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts };
         allLines.push(hdr);
         activeGroupHeader = hdr;
         totalHeight += ROW_HEIGHT;
         return;
     }
     activeGroupHeader = null;
-    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1 });
+    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts });
     totalHeight += ROW_HEIGHT;
 }
 
@@ -109,8 +109,9 @@ function renderItem(item, idx) {
         return '<div class="line stack-line' + matchCls + '">' + html + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
+    var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
-    return '<div class="line' + cat + matchCls + '">' + html + '</div>' + annHtml;
+    return '<div class="line' + cat + matchCls + '">' + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
@@ -225,7 +226,7 @@ window.addEventListener('message', function(event) {
         case 'addLines':
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
@@ -234,14 +235,9 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'clear':
-            allLines.length = 0;
-            totalHeight = 0;
-            lineCount = 0;
-            activeGroupHeader = null;
-            isPaused = false;
-            footerEl.classList.remove('paused');
-            footerTextEl.textContent = 'Cleared';
-            renderViewport(true);
+            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null;
+            isPaused = false; footerEl.classList.remove('paused');
+            footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
         case 'updateFooter':
             footerTextEl.textContent = msg.text;
@@ -269,6 +265,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'setAnnotation':
             if (typeof setAnnotation === 'function') setAnnotation(msg.lineIndex, msg.text);
+            break;
+        case 'setShowElapsed':
+            if (typeof handleSetShowElapsed === 'function') handleSetShowElapsed(msg);
             break;
     }
 });
