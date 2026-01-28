@@ -16,6 +16,7 @@ import { InlineDecorationsProvider } from './ui/inline-decorations';
 import { extractSourceReference } from './modules/source-linker';
 import { getComparisonPanel, disposeComparisonPanel } from './ui/session-comparison';
 import { pickTemplate, promptSaveTemplate, applyTemplate } from './modules/session-templates';
+import { exportToCsv, exportToJson, exportToJsonl } from './modules/export-formats';
 
 let sessionManager: SessionManagerImpl;
 /** URI of session marked for comparison (first selection). */
@@ -424,6 +425,48 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => {
             await promptSaveTemplate();
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.exportCsv', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const csvUri = await exportToCsv(item.uri);
+            const action = await vscode.window.showInformationMessage(
+                `Exported to ${csvUri.fsPath.split(/[\\/]/).pop()}`,
+                'Open',
+            );
+            if (action === 'Open') {
+                await vscode.window.showTextDocument(csvUri);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.exportJson', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const jsonUri = await exportToJson(item.uri);
+            const action = await vscode.window.showInformationMessage(
+                `Exported to ${jsonUri.fsPath.split(/[\\/]/).pop()}`,
+                'Open',
+            );
+            if (action === 'Open') {
+                await vscode.window.showTextDocument(jsonUri);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.exportJsonl', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const jsonlUri = await exportToJsonl(item.uri);
+            const action = await vscode.window.showInformationMessage(
+                `Exported to ${jsonlUri.fsPath.split(/[\\/]/).pop()}`,
+                'Open',
+            );
+            if (action === 'Open') {
+                await vscode.window.showTextDocument(jsonlUri);
+            }
         }),
     );
 }

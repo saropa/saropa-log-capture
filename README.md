@@ -4,6 +4,14 @@
 
 Automatically capture VS Code Debug Console output to persistent log files on disk, with a real-time sidebar viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, etc.).
 
+## The Problem
+
+VS Code's Debug Console is ephemeral. When a debug session ends, the output is gone. There is no built-in way to save it to a file. This has been [requested](https://github.com/microsoft/vscode/issues/77849) and [closed as out-of-scope](https://github.com/microsoft/vscode/issues/140859). No existing extension fills this gap.
+
+## The Solution
+
+This extension automatically captures Debug Console output to persistent `.log` files with a rich real-time viewer. Zero configuration required — it just works when you start debugging.
+
 ## Features
 
 - **Auto-capture** -- Debug Console output is saved to `.log` files automatically when you start debugging. No configuration needed.
