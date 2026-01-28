@@ -143,6 +143,31 @@
         "command": "saropaLogCapture.toggleInlineDecorations",
         "title": "Saropa Log Capture: Toggle Inline Log Decorations",
         "icon": "$(symbol-event)"
+      },
+      {
+        "command": "saropaLogCapture.compareSessions",
+        "title": "Saropa Log Capture: Compare Sessions",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "saropaLogCapture.markForComparison",
+        "title": "Mark for Comparison",
+        "icon": "$(bookmark)"
+      },
+      {
+        "command": "saropaLogCapture.compareWithMarked",
+        "title": "Compare with Marked Session",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "saropaLogCapture.applyTemplate",
+        "title": "Saropa Log Capture: Apply Session Template",
+        "icon": "$(package)"
+      },
+      {
+        "command": "saropaLogCapture.saveTemplate",
+        "title": "Saropa Log Capture: Save Settings as Template",
+        "icon": "$(save-as)"
       }
     ],
     "viewsContainers": {
@@ -204,6 +229,16 @@
         {
           "command": "saropaLogCapture.copyDeepLink",
           "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.markForComparison",
+          "when": "viewItem == session",
+          "group": "compare"
+        },
+        {
+          "command": "saropaLogCapture.compareWithMarked",
+          "when": "viewItem == session",
+          "group": "compare"
         }
       ]
     },
