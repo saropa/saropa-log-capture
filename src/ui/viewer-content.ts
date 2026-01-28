@@ -4,6 +4,7 @@ import { getFilterScript } from './viewer-filter';
 import { getSearchScript } from './viewer-search';
 import { getWatchScript } from './viewer-watch';
 import { getPinScript } from './viewer-pin';
+import { getExclusionScript } from './viewer-exclusions';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -49,6 +50,8 @@ export function buildViewerHtml(nonce: string): string {
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
         <span id="watch-counts"></span>
+        <span id="exclusion-count"></span>
+        <button id="exclusion-toggle" style="display:none" onclick="toggleExclusions()">Excl: ON</button>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="wrap-toggle">No Wrap</button>
     </div>
@@ -57,6 +60,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getFilterScript()}
         ${getWatchScript()}
         ${getPinScript()}
+        ${getExclusionScript()}
         ${getSearchScript()}
     </script>
 </body>
