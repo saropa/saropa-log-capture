@@ -45,7 +45,7 @@ function isStackFrameText(html) {
 
 function addToData(html, isMarker, category, ts, fw) {
     if (isMarker) {
-        activeGroupHeader = null;
+        if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
         allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts });
         totalHeight += MARKER_HEIGHT;
         return;
@@ -63,7 +63,7 @@ function addToData(html, isMarker, category, ts, fw) {
         totalHeight += ROW_HEIGHT;
         return;
     }
-    activeGroupHeader = null;
+    if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
     allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts });
     totalHeight += ROW_HEIGHT;
 }
@@ -103,7 +103,8 @@ function renderItem(item, idx) {
     if (item.type === 'stack-header') {
         var ch = item.collapsed ? '\\u25b6' : '\\u25bc';
         var sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
-        return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + sf + '</div>';
+        var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
+        return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
     if (item.type === 'stack-frame') {
         return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '">' + html + '</div>';
