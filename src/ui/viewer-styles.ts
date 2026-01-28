@@ -238,6 +238,9 @@ mark {
     flex: 1;
     overflow: hidden;
 }
+.line.selected, .stack-header.selected, .marker.selected {
+    background: var(--vscode-editor-selectionBackground, rgba(38, 79, 120, 0.5));
+}
 #exclusion-count {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
