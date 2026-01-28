@@ -4,6 +4,11 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- **Full Debug Console Capture:** Added `saropaLogCapture.captureAll` setting and UI toggle ("App Only: OFF") to capture all Debug Console output, bypassing category and exclusion filters. When enabled, all system, framework, and app logs are captured. Toggle via the viewer or settings.
+
 ## [0.1.0] - 2026-01-28
 
 First public release on the VS Code Marketplace.
