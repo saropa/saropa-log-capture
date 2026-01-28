@@ -70,6 +70,21 @@
         "command": "saropaLogCapture.insertMarker",
         "title": "Saropa Log Capture: Insert Marker",
         "icon": "$(horizontal-rule)"
+      },
+      {
+        "command": "saropaLogCapture.refreshHistory",
+        "title": "Refresh Session History",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "saropaLogCapture.openSession",
+        "title": "Open Log File",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "saropaLogCapture.deleteSession",
+        "title": "Delete Log File",
+        "icon": "$(trash)"
       }
     ],
     "viewsContainers": {
@@ -87,6 +102,30 @@
           "type": "webview",
           "id": "saropaLogCapture.logViewer",
           "name": "Log Viewer"
+        },
+        {
+          "id": "saropaLogCapture.sessionHistory",
+          "name": "Session History"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "saropaLogCapture.refreshHistory",
+          "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "saropaLogCapture.openSession",
+          "when": "viewItem == session",
+          "group": "inline"
+        },
+        {
+          "command": "saropaLogCapture.deleteSession",
+          "when": "viewItem == session"
         }
       ]
     },
