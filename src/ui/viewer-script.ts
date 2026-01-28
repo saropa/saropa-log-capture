@@ -269,6 +269,16 @@ document.addEventListener('keydown', function(e) {
     else if (e.key === 'Home') { logEl.scrollTop = 0; autoScroll = false; }
     else if (e.key === 'End') { jumpToBottom(); }
     else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
+    else if (e.key === 'p' || e.key === 'P') {
+        if (typeof togglePin === 'function') {
+            var scrollMid = logEl.scrollTop + logEl.clientHeight / 2;
+            var cumH = 0;
+            for (var pi = 0; pi < allLines.length; pi++) {
+                cumH += allLines[pi].height;
+                if (cumH >= scrollMid) { togglePin(pi); break; }
+            }
+        }
+    }
 });
 `;
 }

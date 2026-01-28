@@ -3,6 +3,7 @@ import { getViewerScript } from './viewer-script';
 import { getFilterScript } from './viewer-filter';
 import { getSearchScript } from './viewer-search';
 import { getWatchScript } from './viewer-watch';
+import { getPinScript } from './viewer-pin';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -31,6 +32,7 @@ export function buildViewerHtml(nonce: string): string {
     </style>
 </head>
 <body>
+    <div id="pinned-section" style="display:none"></div>
     <div id="log-content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
@@ -54,6 +56,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getViewerScript(MAX_VIEWER_LINES)}
         ${getFilterScript()}
         ${getWatchScript()}
+        ${getPinScript()}
         ${getSearchScript()}
     </script>
 </body>
