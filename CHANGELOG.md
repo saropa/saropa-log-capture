@@ -27,6 +27,19 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Toggle decorations via `Saropa Log Capture: Toggle Inline Log Decorations` command
 - Decorations auto-clear when debug session ends
 
+### Added (Iteration K — Comparison & Templates)
+
+- Multi-session comparison: view two sessions side by side with color diff
+- Color diff highlighting: unique lines highlighted in red (A) / green (B)
+- Synchronized scrolling: toggle to scroll both panes together
+- Commands: `compareSessions`, `markForComparison`, `compareWithMarked`
+- Context menu: "Mark for Comparison" and "Compare with Marked Session"
+- Session templates: save project-specific configuration bundles
+- Built-in templates: Flutter, Node.js, Python with optimized settings
+- Templates include: watch patterns, exclusions, highlights, split rules
+- Templates stored in `.vscode/saropaLogCapture/templates/`
+- Commands: `applyTemplate`, `saveTemplate`
+
 ### Added (Iteration I — Custom Highlights)
 
 - Pattern-based highlighting: color log lines matching patterns in real-time
