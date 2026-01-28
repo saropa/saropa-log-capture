@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
+import { linkifyHtml } from '../modules/source-linker';
 import { getNonce, buildViewerHtml } from './viewer-content';
 
 const BATCH_INTERVAL_MS = 200;
@@ -9,6 +10,8 @@ interface PendingLine {
     readonly isMarker: boolean;
     readonly lineCount: number;
     readonly category: string;
+    readonly sourcePath?: string;
+    readonly sourceLine?: number;
 }
 
 /**
@@ -20,6 +23,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private pendingLines: PendingLine[] = [];
     private batchTimer: ReturnType<typeof setInterval> | undefined;
     private onMarkerRequest?: () => void;
+    private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
 
     constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -28,9 +32,16 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
         webviewView.webview.html = this.buildHtml();
 
-        webviewView.webview.onDidReceiveMessage((msg: { type: string }) => {
+        webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => {
             if (msg.type === 'insertMarker' && this.onMarkerRequest) {
                 this.onMarkerRequest();
+            } else if (msg.type === 'linkClicked' && this.onLinkClick) {
+                this.onLinkClick(
+                    String(msg.path ?? ''),
+                    Number(msg.line ?? 1),
+                    Number(msg.col ?? 1),
+                    Boolean(msg.splitEditor),
+                );
             }
         });
 
@@ -47,10 +58,22 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         this.onMarkerRequest = handler;
     }
 
+    /** Set a callback invoked when the webview requests source navigation. */
+    setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void {
+        this.onLinkClick = handler;
+    }
+
     /** Queue a log line for batched delivery to the webview. */
-    addLine(text: string, isMarker: boolean, lineCount: number, category: string): void {
-        const html = isMarker ? escapeHtml(text) : ansiToHtml(text);
-        this.pendingLines.push({ text: html, isMarker, lineCount, category });
+    addLine(
+        text: string,
+        isMarker: boolean,
+        lineCount: number,
+        category: string,
+        sourcePath?: string,
+        sourceLine?: number,
+    ): void {
+        const html = isMarker ? escapeHtml(text) : linkifyHtml(ansiToHtml(text));
+        this.pendingLines.push({ text: html, isMarker, lineCount, category, sourcePath, sourceLine });
     }
 
     /** Send a clear message to the webview. */

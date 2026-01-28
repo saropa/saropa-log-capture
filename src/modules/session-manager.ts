@@ -8,7 +8,14 @@ import { checkGitignore } from './gitignore-checker';
 import { StatusBar } from '../ui/status-bar';
 
 /** Callback for lines written to the log file (used by the viewer). */
-export type LineListener = (line: string, isMarker: boolean, lineCount: number, category: string) => void;
+export type LineListener = (
+    line: string,
+    isMarker: boolean,
+    lineCount: number,
+    category: string,
+    sourcePath?: string,
+    sourceLine?: number,
+) => void;
 
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
@@ -64,7 +71,7 @@ export class SessionManagerImpl implements SessionManager {
         }
 
         session.appendLine(text, category, new Date());
-        this.broadcastLine(text, false, session.lineCount, category);
+        this.broadcastLine(text, false, session.lineCount, category, body.source?.path, body.line);
     }
 
     /** Start capturing a debug session. */
@@ -233,9 +240,16 @@ export class SessionManagerImpl implements SessionManager {
         this.ownerSessionIds.clear();
     }
 
-    private broadcastLine(text: string, isMarker: boolean, lineCount: number, category: string): void {
+    private broadcastLine(
+        text: string,
+        isMarker: boolean,
+        lineCount: number,
+        category: string,
+        sourcePath?: string,
+        sourceLine?: number,
+    ): void {
         for (const listener of this.lineListeners) {
-            listener(text, isMarker, lineCount, category);
+            listener(text, isMarker, lineCount, category, sourcePath, sourceLine);
         }
     }
 }
