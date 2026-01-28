@@ -257,6 +257,12 @@ window.addEventListener('message', function(event) {
 });
 
 document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && typeof copyAsPlainText === 'function') {
+        if (selectionStart >= 0) { e.preventDefault(); copyAsPlainText(); return; }
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && typeof copyAsMarkdown === 'function') {
+        e.preventDefault(); copyAsMarkdown(); return;
+    }
     if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
         e.preventDefault();
         if (typeof openSearch === 'function') openSearch();

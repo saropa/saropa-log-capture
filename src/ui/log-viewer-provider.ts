@@ -41,6 +41,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                 this.onMarkerRequest();
             } else if (msg.type === 'togglePause' && this.onTogglePause) {
                 this.onTogglePause();
+            } else if (msg.type === 'copyToClipboard') {
+                vscode.env.clipboard.writeText(String(msg.text ?? ''));
             } else if (msg.type === 'exclusionAdded') {
                 this.onExclusionAdded?.(String(msg.pattern ?? ''));
             } else if (msg.type === 'linkClicked' && this.onLinkClick) {
