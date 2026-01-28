@@ -109,7 +109,8 @@ function renderItem(item, idx) {
         return '<div class="line stack-line' + matchCls + '">' + html + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
-    return '<div class="line' + cat + matchCls + '">' + html + '</div>';
+    var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
+    return '<div class="line' + cat + matchCls + '">' + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
@@ -195,6 +196,16 @@ function toggleWrap() {
 
 wrapToggle.addEventListener('click', toggleWrap);
 
+function getCenterIdx() {
+    var mid = logEl.scrollTop + logEl.clientHeight / 2;
+    var h = 0;
+    for (var ci = 0; ci < allLines.length; ci++) {
+        h += allLines[ci].height;
+        if (h >= mid) return ci;
+    }
+    return allLines.length - 1;
+}
+
 function jumpToBottom() {
     logEl.scrollTop = logEl.scrollHeight;
     autoScroll = true;
@@ -253,6 +264,12 @@ window.addEventListener('message', function(event) {
         case 'setExclusions':
             if (typeof handleSetExclusions === 'function') handleSetExclusions(msg);
             break;
+        case 'loadAnnotations':
+            if (typeof handleLoadAnnotations === 'function') handleLoadAnnotations(msg);
+            break;
+        case 'setAnnotation':
+            if (typeof setAnnotation === 'function') setAnnotation(msg.lineIndex, msg.text);
+            break;
     }
 });
 
@@ -268,26 +285,15 @@ document.addEventListener('keydown', function(e) {
         if (typeof openSearch === 'function') openSearch();
         return;
     }
-    if (e.key === 'Escape') {
-        if (typeof closeSearch === 'function') closeSearch();
-        return;
-    }
+    if (e.key === 'Escape') { if (typeof closeSearch === 'function') closeSearch(); return; }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
     else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
     else if (e.key === 'Home') { logEl.scrollTop = 0; autoScroll = false; }
     else if (e.key === 'End') { jumpToBottom(); }
     else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
-    else if (e.key === 'p' || e.key === 'P') {
-        if (typeof togglePin === 'function') {
-            var scrollMid = logEl.scrollTop + logEl.clientHeight / 2;
-            var cumH = 0;
-            for (var pi = 0; pi < allLines.length; pi++) {
-                cumH += allLines[pi].height;
-                if (cumH >= scrollMid) { togglePin(pi); break; }
-            }
-        }
-    }
+    else if ((e.key === 'p' || e.key === 'P') && typeof togglePin === 'function') { togglePin(getCenterIdx()); }
+    else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
 });
 `;
 }

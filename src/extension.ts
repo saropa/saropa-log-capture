@@ -57,6 +57,25 @@ export function activate(context: vscode.ExtensionContext): void {
             await cfg.update('exclusions', [...current, pattern], vscode.ConfigurationTarget.Workspace);
         }
     });
+    viewerProvider.setAnnotationPromptHandler(async (lineIndex, current) => {
+        const text = await vscode.window.showInputBox({
+            prompt: `Annotate line ${lineIndex + 1}`,
+            value: current,
+        });
+        if (text === undefined) {
+            return;
+        }
+        viewerProvider.setAnnotation(lineIndex, text);
+        const logSession = sessionManager.getActiveSession();
+        if (logSession) {
+            const store = historyProvider.getMetaStore();
+            await store.addAnnotation(logSession.fileUri, {
+                lineIndex,
+                text,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(

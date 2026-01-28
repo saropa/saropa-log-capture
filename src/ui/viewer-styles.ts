@@ -255,5 +255,12 @@ mark {
     cursor: pointer;
     border-radius: 3px;
 }
+.annotation {
+    padding: 1px 8px 1px 24px;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editor-inactiveSelectionBackground, rgba(255,255,255,0.04));
+}
 `;
 }
