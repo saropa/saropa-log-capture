@@ -39,6 +39,14 @@ export function activate(context: vscode.ExtensionContext): void {
             viewerProvider.updateWatchCounts(sessionManager.getWatcher().getCounts());
         }
     });
+    sessionManager.addSplitListener((_newUri, _partNumber, totalParts) => {
+        viewerProvider.setSplitInfo(totalParts, totalParts);
+        const filename = sessionManager.getActiveFilename();
+        if (filename) {
+            viewerProvider.setFilename(filename);
+        }
+        historyProvider.refresh();
+    });
     viewerProvider.setMarkerHandler(() => {
         sessionManager.insertMarker();
     });
@@ -91,10 +99,13 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.debug.onDidStartDebugSession(async (session) => {
             viewerProvider.setPaused(false);
             await sessionManager.startSession(session, context);
+            const activeSession = sessionManager.getActiveSession();
             const filename = sessionManager.getActiveFilename();
             if (filename) {
                 viewerProvider.setFilename(filename);
             }
+            // Initialize split info (part 1 of 1)
+            viewerProvider.setSplitInfo(1, 1);
             const cfg = getConfig();
             if (cfg.exclusions.length > 0) {
                 viewerProvider.setExclusions(cfg.exclusions);
@@ -102,7 +113,7 @@ export function activate(context: vscode.ExtensionContext): void {
             if (cfg.showElapsedTime) {
                 viewerProvider.setShowElapsed(true);
             }
-            historyProvider.setActiveUri(sessionManager.getActiveSession()?.fileUri);
+            historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
@@ -173,6 +184,17 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return; // User pressed Escape.
             }
             sessionManager.insertMarker(text || undefined);
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.splitNow', async () => {
+            const session = sessionManager.getActiveSession();
+            if (!session) {
+                vscode.window.showWarningMessage('No active debug session to split.');
+                return;
+            }
+            await session.splitNow();
+            historyProvider.refresh();
+            vscode.window.showInformationMessage(`Log file split. Now on part ${session.partNumber + 1}.`);
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.refreshHistory', () => {

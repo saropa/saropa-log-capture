@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { SaropaLogCaptureConfig, shouldRedactEnvVar } from './config';
 import { Deduplicator } from './deduplication';
+import { FileSplitter, SplitReason, formatSplitReason } from './file-splitter';
 
 export interface SessionContext {
     readonly date: Date;
@@ -21,6 +22,9 @@ export type SessionState = 'recording' | 'paused' | 'stopped';
 
 export type LineCountCallback = (count: number) => void;
 
+/** Callback for when a split occurs. */
+export type SplitCallback = (newUri: vscode.Uri, partNumber: number, reason: SplitReason) => void;
+
 export class LogSession {
     private _state: SessionState = 'recording';
     private _lineCount = 0;
@@ -28,6 +32,15 @@ export class LogSession {
     private writeStream: fs.WriteStream | undefined;
     private maxLinesReached = false;
     private readonly deduplicator: Deduplicator;
+    private readonly splitter: FileSplitter;
+
+    // Split tracking
+    private _partNumber = 0;
+    private _bytesWritten = 0;
+    private _partStartTime = Date.now();
+    private _lastLineTime = 0;
+    private _baseFileName = '';
+    private onSplit?: SplitCallback;
 
     get state(): SessionState {
         return this._state;
@@ -41,12 +54,22 @@ export class LogSession {
         return this._fileUri!;
     }
 
+    get partNumber(): number {
+        return this._partNumber;
+    }
+
     constructor(
         private readonly context: SessionContext,
         private readonly config: SaropaLogCaptureConfig,
         private readonly onLineCountChanged: LineCountCallback
     ) {
         this.deduplicator = new Deduplicator();
+        this.splitter = new FileSplitter(config.splitRules);
+    }
+
+    /** Set a callback for when the file splits. */
+    setSplitCallback(callback: SplitCallback): void {
+        this.onSplit = callback;
     }
 
     async start(): Promise<void> {
@@ -55,7 +78,9 @@ export class LogSession {
 
         await fs.promises.mkdir(logDirPath, { recursive: true });
 
-        const fileName = generateFileName(this.context.projectName, this.context.date);
+        // Generate base filename (without part suffix)
+        this._baseFileName = generateBaseFileName(this.context.projectName, this.context.date);
+        const fileName = this.getPartFileName();
         const filePath = path.join(logDirPath, fileName);
         this._fileUri = vscode.Uri.file(filePath);
 
@@ -66,11 +91,25 @@ export class LogSession {
 
         const header = generateContextHeader(this.context, this.config);
         this.writeStream.write(header);
+        this._bytesWritten = Buffer.byteLength(header, 'utf-8');
+        this._partStartTime = Date.now();
     }
 
     appendLine(text: string, category: string, timestamp: Date): void {
         if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream) {
             return;
+        }
+
+        // Check split conditions before writing
+        const splitResult = this.splitter.evaluate({
+            lineCount: this._lineCount,
+            bytesWritten: this._bytesWritten,
+            startTime: this._partStartTime,
+            lastLineTime: this._lastLineTime,
+        }, text);
+
+        if (splitResult.shouldSplit && splitResult.reason) {
+            this.performSplit(splitResult.reason).catch(() => {});
         }
 
         const formatted = formatLine(text, category, timestamp, this.config.includeTimestamp);
@@ -82,10 +121,13 @@ export class LogSession {
                 this.writeStream.write(`\n--- MAX LINES REACHED (${this.config.maxLines}) ---\n`);
                 return;
             }
-            this.writeStream.write(line + '\n');
+            const lineData = line + '\n';
+            this.writeStream.write(lineData);
+            this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
             this._lineCount++;
         }
 
+        this._lastLineTime = Date.now();
         this.onLineCountChanged(this._lineCount);
     }
 
@@ -108,6 +150,70 @@ export class LogSession {
         this._lineCount++;
         this.onLineCountChanged(this._lineCount);
         return markerLine.trim();
+    }
+
+    /** Manually trigger a file split. */
+    async splitNow(): Promise<void> {
+        if (this._state === 'stopped' || !this.writeStream) {
+            return;
+        }
+        await this.performSplit({ type: 'manual' });
+    }
+
+    /** Perform a file split - close current file, open new one. */
+    private async performSplit(reason: SplitReason): Promise<void> {
+        if (!this.writeStream) {
+            return;
+        }
+
+        // Write split marker to current file
+        const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${this._partNumber + 2} ===\n`;
+        this.writeStream.write(splitMarker);
+
+        // Close current file
+        await new Promise<void>((resolve, reject) => {
+            this.writeStream!.end(() => resolve());
+            this.writeStream!.on('error', reject);
+        });
+
+        // Increment part number and reset counters
+        this._partNumber++;
+        this._bytesWritten = 0;
+        this._partStartTime = Date.now();
+        this._lastLineTime = 0;
+
+        // Open new file
+        const logDirPath = this.getLogDirUri().fsPath;
+        const newFileName = this.getPartFileName();
+        const newFilePath = path.join(logDirPath, newFileName);
+        this._fileUri = vscode.Uri.file(newFilePath);
+
+        this.writeStream = fs.createWriteStream(newFilePath, {
+            flags: 'a',
+            encoding: 'utf-8',
+        });
+
+        // Write continuation header
+        const header = generateContinuationHeader(
+            this.context,
+            this._partNumber,
+            reason,
+            this._baseFileName
+        );
+        this.writeStream.write(header);
+        this._bytesWritten = Buffer.byteLength(header, 'utf-8');
+
+        // Notify callback
+        this.onSplit?.(this._fileUri, this._partNumber, reason);
+    }
+
+    /** Get the filename for the current part. */
+    private getPartFileName(): string {
+        if (this._partNumber === 0) {
+            return `${this._baseFileName}.log`;
+        }
+        const partSuffix = String(this._partNumber + 1).padStart(3, '0');
+        return `${this._baseFileName}_${partSuffix}.log`;
     }
 
     pause(): void {
@@ -163,14 +269,15 @@ export class LogSession {
     }
 }
 
-function generateFileName(projectName: string, date: Date): string {
+/** Generate base filename without .log extension (for split naming). */
+function generateBaseFileName(projectName: string, date: Date): string {
     const y = date.getFullYear();
     const mo = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     const h = String(date.getHours()).padStart(2, '0');
     const mi = String(date.getMinutes()).padStart(2, '0');
     const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    return `${y}${mo}${d}_${h}-${mi}_${safeName}.log`;
+    return `${y}${mo}${d}_${h}-${mi}_${safeName}`;
 }
 
 function formatLine(
@@ -187,6 +294,23 @@ function formatLine(
         '.' +
         String(timestamp.getMilliseconds()).padStart(3, '0');
     return `[${ts}] [${category}] ${text}`;
+}
+
+function generateContinuationHeader(
+    ctx: SessionContext,
+    partNumber: number,
+    reason: SplitReason,
+    baseFileName: string
+): string {
+    const lines: string[] = [];
+    lines.push(`=== SAROPA LOG CAPTURE — PART ${partNumber + 1} ===`);
+    lines.push(`Continuation of: ${baseFileName}.log`);
+    lines.push(`Split reason:    ${formatSplitReason(reason)}`);
+    lines.push(`Date:            ${new Date().toISOString()}`);
+    lines.push(`Project:         ${ctx.projectName}`);
+    lines.push('==========================================');
+    lines.push('');
+    return lines.join('\n') + '\n';
 }
 
 function generateContextHeader(

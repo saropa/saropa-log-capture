@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { SplitRules, defaultSplitRules } from './file-splitter';
 
 /** Watch pattern entry from user settings. */
 export interface WatchPatternSetting {
@@ -22,6 +23,7 @@ export interface SaropaLogCaptureConfig {
     readonly showElapsedTime: boolean;
     readonly slowGapThreshold: number;
     readonly watchPatterns: readonly WatchPatternSetting[];
+    readonly splitRules: SplitRules;
 }
 
 const SECTION = 'saropaLogCapture';
@@ -47,6 +49,18 @@ export function getConfig(): SaropaLogCaptureConfig {
             { keyword: 'exception', alert: 'flash' },
             { keyword: 'warning', alert: 'badge' },
         ]),
+        splitRules: parseSplitRules(cfg.get('splitRules', {})),
+    };
+}
+
+function parseSplitRules(raw: Record<string, unknown>): SplitRules {
+    const defaults = defaultSplitRules();
+    return {
+        maxLines: typeof raw.maxLines === 'number' ? raw.maxLines : defaults.maxLines,
+        maxSizeKB: typeof raw.maxSizeKB === 'number' ? raw.maxSizeKB : defaults.maxSizeKB,
+        keywords: Array.isArray(raw.keywords) ? raw.keywords.filter(k => typeof k === 'string') : defaults.keywords,
+        maxDurationMinutes: typeof raw.maxDurationMinutes === 'number' ? raw.maxDurationMinutes : defaults.maxDurationMinutes,
+        silenceMinutes: typeof raw.silenceMinutes === 'number' ? raw.silenceMinutes : defaults.silenceMinutes,
     };
 }
 
