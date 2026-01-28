@@ -26,6 +26,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
     private onTogglePause?: () => void;
     private readonly seenCategories = new Set<string>();
+    private unreadWatchHits = 0;
 
     constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -50,6 +51,13 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         });
 
         this.startBatchTimer();
+
+        webviewView.onDidChangeVisibility(() => {
+            if (webviewView.visible) {
+                this.unreadWatchHits = 0;
+                this.updateBadge();
+            }
+        });
 
         webviewView.onDidDispose(() => {
             this.stopBatchTimer();
@@ -101,13 +109,19 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         this.postMessage({ type: 'setPaused', paused });
     }
 
-    /** Send keyword watch hit counts to the webview footer. */
+    /** Send keyword watch hit counts to the webview footer and update badge. */
     updateWatchCounts(counts: ReadonlyMap<string, number>): void {
         const obj: Record<string, number> = {};
+        let total = 0;
         for (const [label, count] of counts) {
             obj[label] = count;
+            total += count;
         }
         this.postMessage({ type: 'updateWatchCounts', counts: obj });
+        if (total > this.unreadWatchHits) {
+            this.unreadWatchHits = total;
+            this.updateBadge();
+        }
     }
 
     /** Set the active log filename displayed in the footer. */
@@ -151,6 +165,14 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         }
         if (newCats.length > 0) {
             this.postMessage({ type: 'setCategories', categories: newCats });
+        }
+    }
+
+    private updateBadge(): void {
+        if (this.view) {
+            this.view.badge = this.unreadWatchHits > 0
+                ? { value: this.unreadWatchHits, tooltip: `${this.unreadWatchHits} watch hits` }
+                : undefined;
         }
     }
 
