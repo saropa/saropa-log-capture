@@ -26,6 +26,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
     private onTogglePause?: () => void;
     private onExclusionAdded?: (pattern: string) => void;
+    private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
     private readonly seenCategories = new Set<string>();
     private unreadWatchHits = 0;
 
@@ -45,6 +46,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                 vscode.env.clipboard.writeText(String(msg.text ?? ''));
             } else if (msg.type === 'exclusionAdded') {
                 this.onExclusionAdded?.(String(msg.pattern ?? ''));
+            } else if (msg.type === 'promptAnnotation') {
+                this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ''));
             } else if (msg.type === 'linkClicked' && this.onLinkClick) {
                 this.onLinkClick(
                     String(msg.path ?? ''),
@@ -88,6 +91,21 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Push exclusion patterns to the webview. */
     setExclusions(patterns: readonly string[]): void {
         this.postMessage({ type: 'setExclusions', patterns });
+    }
+
+    /** Set a callback for annotation prompts from the webview. */
+    setAnnotationPromptHandler(handler: (lineIndex: number, current: string) => void): void {
+        this.onAnnotationPrompt = handler;
+    }
+
+    /** Send annotation text to the webview for a specific line. */
+    setAnnotation(lineIndex: number, text: string): void {
+        this.postMessage({ type: 'setAnnotation', lineIndex, text });
+    }
+
+    /** Load all annotations into the webview. */
+    loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void {
+        this.postMessage({ type: 'loadAnnotations', annotations });
     }
 
     /** Set a callback invoked when the webview requests source navigation. */
