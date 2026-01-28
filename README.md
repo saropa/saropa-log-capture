@@ -25,6 +25,9 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Session renaming** -- Right-click a session to give it a display name.
 - **Session tagging** -- Add tags to sessions; displayed as `#tag` in the tree view.
 - **Line annotations** -- Press N to annotate a log line. Annotations are shown inline and exported to HTML.
+- **Elapsed time** -- Show `+Nms` between consecutive lines. Slow gaps highlighted with a dashed separator.
+- **App-only stack traces** -- Press A to hide framework/library frames. Works with Dart, Node, Python, Go, Java, .NET.
+- **Stack deduplication** -- Identical stack traces collapsed with `(xN)` count badge.
 - **Status bar** -- Live line counter, keyword watch hit counts, and pause/resume toggle.
 
 ## Getting Started
@@ -49,6 +52,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 | Ctrl+C | Copy selection as plain text |
 | Ctrl+Shift+C | Copy selection as markdown |
 | N | Annotate center line |
+| A | Toggle app-only stack trace mode |
 | Home | Scroll to top |
 | End | Scroll to bottom |
 
@@ -83,6 +87,8 @@ All settings are prefixed with `saropaLogCapture.`.
 | `redactEnvVars` | `[]` | Env var patterns to redact from headers (e.g. `"API_KEY"`, `"SECRET_*"`) |
 | `exclusions` | `[]` | Patterns to exclude from viewer (string or `/regex/`) |
 | `watchPatterns` | `[{keyword:"error"},{keyword:"exception"},{keyword:"warning"}]` | Keywords to watch for with alert type (flash, badge, none) |
+| `showElapsedTime` | `false` | Show elapsed time between consecutive log lines |
+| `slowGapThreshold` | `1000` | Elapsed time threshold (ms) for highlighting slow gaps |
 
 ## Known Limitations
 
