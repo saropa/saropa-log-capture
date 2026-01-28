@@ -43,7 +43,7 @@ function isStackFrameText(html) {
     return /^\\s+at\\s/.test(stripTags(html));
 }
 
-function addToData(html, isMarker, category, ts) {
+function addToData(html, isMarker, category, ts, fw) {
     if (isMarker) {
         activeGroupHeader = null;
         allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts });
@@ -52,12 +52,12 @@ function addToData(html, isMarker, category, ts) {
     }
     if (isStackFrameText(html)) {
         if (activeGroupHeader) {
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts };
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw };
         allLines.push(hdr);
         activeGroupHeader = hdr;
         totalHeight += ROW_HEIGHT;
@@ -106,7 +106,7 @@ function renderItem(item, idx) {
         return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + sf + '</div>';
     }
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + matchCls + '">' + html + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '">' + html + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
@@ -227,7 +227,7 @@ window.addEventListener('message', function(event) {
         case 'addLines':
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;

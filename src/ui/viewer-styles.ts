@@ -277,5 +277,15 @@ mark {
     display: inline-block;
     opacity: 0.7;
 }
+.framework-frame { opacity: 0.4; }
+#app-only-toggle {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+}
 `;
 }

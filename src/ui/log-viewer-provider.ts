@@ -3,6 +3,7 @@ import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { linkifyHtml } from '../modules/source-linker';
 import { getNonce, buildViewerHtml } from './viewer-content';
 import { LineData } from '../modules/session-manager';
+import { isFrameworkFrame } from '../modules/stack-parser';
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -12,6 +13,7 @@ interface PendingLine {
     readonly lineCount: number;
     readonly category: string;
     readonly timestamp: number;
+    readonly fw?: boolean;
 }
 
 /**
@@ -116,9 +118,10 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Queue a log line for batched delivery to the webview. */
     addLine(data: LineData): void {
         const html = data.isMarker ? escapeHtml(data.text) : linkifyHtml(ansiToHtml(data.text));
+        const fw = this.classifyFrame(data.text);
         this.pendingLines.push({
             text: html, isMarker: data.isMarker, lineCount: data.lineCount,
-            category: data.category, timestamp: data.timestamp.getTime(),
+            category: data.category, timestamp: data.timestamp.getTime(), fw,
         });
     }
 
@@ -212,6 +215,15 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
 
     private postMessage(message: unknown): void {
         this.view?.webview.postMessage(message);
+    }
+
+    /** Classify a line as framework code if it looks like a stack frame. */
+    private classifyFrame(text: string): boolean | undefined {
+        if (!/^\s+at\s/.test(text)) {
+            return undefined;
+        }
+        const ws = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        return isFrameworkFrame(text, ws);
     }
 
     private buildHtml(): string {

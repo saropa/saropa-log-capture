@@ -8,6 +8,7 @@ import { getExclusionScript } from './viewer-exclusions';
 import { getCopyScript } from './viewer-copy';
 import { getAnnotationScript } from './viewer-annotations';
 import { getTimingScript } from './viewer-timing';
+import { getStackFilterScript } from './viewer-stack-filter';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -55,6 +56,7 @@ export function buildViewerHtml(nonce: string): string {
         <span id="watch-counts"></span>
         <span id="exclusion-count"></span>
         <button id="exclusion-toggle" style="display:none" onclick="toggleExclusions()">Excl: ON</button>
+        <button id="app-only-toggle" onclick="toggleAppOnly()">App Only: OFF</button>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="wrap-toggle">No Wrap</button>
     </div>
@@ -67,6 +69,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getCopyScript()}
         ${getAnnotationScript()}
         ${getTimingScript()}
+        ${getStackFilterScript()}
         ${getSearchScript()}
     </script>
 </body>
