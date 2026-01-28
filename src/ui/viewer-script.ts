@@ -93,27 +93,57 @@ function trimData() {
     activeGroupHeader = null;
 }
 
+/**
+ * Renders a single log item to HTML.
+ * Handles markers, stack frames, and regular lines with appropriate styling.
+ * Applies search highlighting, pattern highlights, and category styling.
+ *
+ * @param {Object} item - The line data object from allLines array
+ * @param {number} idx - Index of this item in allLines (for search matching)
+ * @returns {string} HTML string for the line element
+ */
 function renderItem(item, idx) {
+    // Apply search term highlighting first
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
+
+    // Determine search match styling
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
         : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
+
+    // Markers render without highlight rules (they're visual separators)
     if (item.type === 'marker') {
         return '<div class="marker">' + html + '</div>';
     }
+
+    // Stack headers show collapse indicator and frame count
     if (item.type === 'stack-header') {
         var ch = item.collapsed ? '\\u25b6' : '\\u25bc';
         var sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
         return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
+
+    // Stack frames don't get pattern highlights (reduces noise)
     if (item.type === 'stack-frame') {
         return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '">' + html + '</div>';
     }
+
+    // Regular line: apply pattern-based highlight rules
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
-    return gap + '<div class="line' + cat + matchCls + '">' + elapsed + html + '</div>' + annHtml;
+
+    // Apply highlight rules if function is available (loaded from viewer-highlight.ts)
+    var titleAttr = '';
+    if (typeof applyHighlightStyles === 'function') {
+        var plainText = stripTags(item.html);
+        var hl = applyHighlightStyles(html, plainText);
+        html = hl.html;
+        titleAttr = hl.titleAttr;
+    }
+
+    return gap + '<div class="line' + cat + matchCls + '"' + titleAttr + '>' + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {

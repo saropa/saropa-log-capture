@@ -5,6 +5,7 @@ import { resolveSourceUri } from '../modules/source-resolver';
 import { getNonce, buildViewerHtml } from './viewer-content';
 import { LineData } from '../modules/session-manager';
 import { isFrameworkFrame } from '../modules/stack-parser';
+import { HighlightRule } from '../modules/highlight-rules';
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -15,6 +16,20 @@ interface PendingLine {
     readonly category: string;
     readonly timestamp: number;
     readonly fw?: boolean;
+}
+
+/**
+ * Serialized highlight rule format for sending to the webview.
+ * Pattern and flags are separated since RegExp can't be serialized via postMessage.
+ */
+interface SerializedHighlightRule {
+    readonly pattern: string;
+    readonly flags: string;
+    readonly color?: string;
+    readonly backgroundColor?: string;
+    readonly fontWeight?: string;
+    readonly fontStyle?: string;
+    readonly label: string;
 }
 
 /**
@@ -183,6 +198,73 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Toggle elapsed time display in the viewer. */
     setShowElapsed(show: boolean): void {
         this.postMessage({ type: 'setShowElapsed', show });
+    }
+
+    /**
+     * Send highlight rules to the webview.
+     * Rules are serialized with pattern and flags separated for webview-side
+     * RegExp compilation (since RegExp objects can't be sent via postMessage).
+     *
+     * @param rules - Array of highlight rules from configuration
+     */
+    setHighlightRules(rules: readonly HighlightRule[]): void {
+        const serialized = this.serializeHighlightRules(rules);
+        this.postMessage({ type: 'setHighlightRules', rules: serialized });
+    }
+
+    /**
+     * Serialize highlight rules for transmission to the webview.
+     * Converts pattern strings to { pattern, flags } format and includes style info.
+     * Invalid patterns are filtered out.
+     */
+    private serializeHighlightRules(rules: readonly HighlightRule[]): SerializedHighlightRule[] {
+        const result: SerializedHighlightRule[] = [];
+
+        for (const rule of rules) {
+            if (!rule.pattern) {
+                continue;
+            }
+
+            // Parse the pattern to extract regex source and flags
+            const parsed = this.parsePatternForSerialization(rule.pattern);
+            if (!parsed) {
+                continue;
+            }
+
+            result.push({
+                pattern: parsed.source,
+                flags: parsed.flags,
+                color: rule.color,
+                backgroundColor: rule.backgroundColor,
+                fontWeight: rule.bold ? 'bold' : undefined,
+                fontStyle: rule.italic ? 'italic' : undefined,
+                label: rule.label ?? rule.pattern,
+            });
+        }
+
+        return result;
+    }
+
+    /**
+     * Parse a pattern string into regex source and flags.
+     * Handles both /regex/flags format and plain strings.
+     */
+    private parsePatternForSerialization(pattern: string): { source: string; flags: string } | undefined {
+        // Check for regex literal format: /pattern/flags
+        const regexMatch = pattern.match(/^\/(.+)\/([gimsuy]*)$/);
+        if (regexMatch) {
+            try {
+                // Validate the regex is valid
+                new RegExp(regexMatch[1], regexMatch[2]);
+                return { source: regexMatch[1], flags: regexMatch[2] };
+            } catch {
+                return undefined;
+            }
+        }
+
+        // Plain string: escape special chars for case-insensitive match
+        const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return { source: escaped, flags: 'i' };
     }
 
     dispose(): void {

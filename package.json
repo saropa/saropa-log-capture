@@ -366,6 +366,47 @@
           },
           "default": [],
           "description": "Rules for automatically tagging sessions based on content patterns."
+        },
+        "saropaLogCapture.highlightRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pattern": {
+                "type": "string",
+                "description": "Text or /regex/ pattern to match against log lines."
+              },
+              "color": {
+                "type": "string",
+                "description": "Text color (CSS color, hex, or VS Code CSS variable)."
+              },
+              "backgroundColor": {
+                "type": "string",
+                "description": "Background color (CSS color, hex, or VS Code CSS variable)."
+              },
+              "label": {
+                "type": "string",
+                "description": "Label shown in tooltips explaining the highlight."
+              },
+              "bold": {
+                "type": "boolean",
+                "default": false,
+                "description": "Apply bold styling to matching lines."
+              },
+              "italic": {
+                "type": "boolean",
+                "default": false,
+                "description": "Apply italic styling to matching lines."
+              }
+            },
+            "required": ["pattern"]
+          },
+          "default": [
+            { "pattern": "/\\b(error|exception|fail(ed|ure)?|fatal)\\b/i", "color": "var(--vscode-errorForeground)", "label": "Error" },
+            { "pattern": "/\\b(warn(ing)?|caution)\\b/i", "color": "var(--vscode-editorWarning-foreground)", "label": "Warning" },
+            { "pattern": "/\\b(success|passed|ok)\\b/i", "color": "var(--vscode-debugConsole-sourceForeground)", "label": "Success" }
+          ],
+          "description": "Pattern-based highlighting rules for coloring log lines. Each rule specifies a pattern and visual styling."
         }
       }
     }
