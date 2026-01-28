@@ -6,6 +6,31 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration G — Search + Analytics)
+
+- Cross-session search: `Saropa Log Capture: Search Log Files` command (Ctrl+Shift+P) with Quick Pick UI
+- Search across all log files with regex support, case sensitivity option, and debounced input
+- JSON log detection: embedded JSON objects/arrays are detected and rendered as collapsible elements
+- Click expand arrow (▶) to view pretty-printed JSON, click again to collapse
+- End-of-session summary: notification shows stats when debug session ends (duration, lines, size, watch hits)
+- Error rate alert engine: monitors error frequency and can alert when rate exceeds threshold (utility module)
+- Search index manager: tracks file metadata for optimized search (utility module)
+
+### Added (Iteration E — Auto File Split)
+
+- Automatic file splitting based on configurable rules (lines, size, keywords, duration, silence)
+- `splitRules` setting with `maxLines`, `maxSizeKB`, `keywords`, `maxDurationMinutes`, `silenceMinutes`
+- Manual split command: `Saropa Log Capture: Split Log File Now`
+- Split file navigation breadcrumb in viewer (Part 1 of N)
+- Split groups in session history tree (collapsible parent with child parts)
+- Continuation headers in split files with split reason
+
+### Added (Deferred Tasks)
+
+- File rename on session rename: renaming a session also renames the .log file on disk
+- Stack frame hover preview: hover over source links to see code context (3 lines before/after)
+- Source preview tooltip with VS Code theme integration
+
 ### Added
 
 - Automatic flood protection: detects and suppresses rapid repeated messages (>100/sec) to prevent lockups

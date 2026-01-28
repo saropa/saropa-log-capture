@@ -9,6 +9,7 @@ import { StatusBar } from '../ui/status-bar';
 import { KeywordWatcher } from './keyword-watcher';
 import { FloodGuard } from './flood-guard';
 import { ExclusionRule, parseExclusionPattern, testExclusion } from './exclusion-matcher';
+import { generateSummary, showSummaryNotification, SessionStats } from './session-summary';
 
 /** Data object passed to line listeners for each log line. */
 export interface LineData {
@@ -40,6 +41,9 @@ export class SessionManagerImpl implements SessionManager {
     private watcher: KeywordWatcher;
     private readonly floodGuard = new FloodGuard();
     private exclusionRules: ExclusionRule[] = [];
+    private categoryCounts: Record<string, number> = {};
+    private sessionStartTime = 0;
+    private floodSuppressedTotal = 0;
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -115,6 +119,7 @@ export class SessionManagerImpl implements SessionManager {
 
         // If we suppressed messages, log a summary instead
         if (floodResult.suppressedCount) {
+            this.floodSuppressedTotal += floodResult.suppressedCount;
             const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
             session.appendLine(summary, 'system', now);
             this.broadcastLine({
@@ -124,6 +129,7 @@ export class SessionManagerImpl implements SessionManager {
         }
 
         session.appendLine(text, category, now);
+        this.categoryCounts[category] = (this.categoryCounts[category] ?? 0) + 1;
         this.broadcastLine({
             text, isMarker: false, lineCount: session.lineCount,
             category, timestamp: now, sourcePath: body.source?.path, sourceLine: body.line,
@@ -193,6 +199,9 @@ export class SessionManagerImpl implements SessionManager {
             this.sessions.set(session.id, logSession);
             this.ownerSessionIds.add(session.id);
             this.floodGuard.reset();
+            this.categoryCounts = {};
+            this.sessionStartTime = Date.now();
+            this.floodSuppressedTotal = 0;
             this.statusBar.show();
             this.outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
         } catch (err) {
@@ -215,6 +224,22 @@ export class SessionManagerImpl implements SessionManager {
         }
         this.ownerSessionIds.delete(session.id);
 
+        // Capture stats before stopping
+        const watchCounts: Record<string, number> = {};
+        for (const [key, value] of this.watcher.getCounts()) {
+            watchCounts[key] = value;
+        }
+        const stats: SessionStats = {
+            lineCount: logSession.lineCount,
+            bytesWritten: logSession.bytesWritten,
+            durationMs: Date.now() - this.sessionStartTime,
+            partCount: logSession.partNumber + 1,
+            categoryCounts: { ...this.categoryCounts },
+            watchHitCounts: watchCounts,
+            floodSuppressedCount: this.floodSuppressedTotal,
+            exclusionsApplied: 0,
+        };
+
         try {
             await logSession.stop();
             this.outputChannel.appendLine(`Session stopped: ${logSession.fileUri.fsPath}`);
@@ -225,6 +250,11 @@ export class SessionManagerImpl implements SessionManager {
         if (this.ownerSessionIds.size === 0) {
             this.statusBar.hide();
         }
+
+        // Show session summary
+        const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
+        const summary = generateSummary(filename, stats);
+        showSummaryNotification(summary);
 
         const config = getConfig();
         if (config.autoOpen) {

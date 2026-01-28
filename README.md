@@ -32,6 +32,11 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **App-only stack traces** -- Press A to hide framework/library frames. Works with Dart, Node, Python, Go, Java, .NET.
 - **Stack deduplication** -- Identical stack traces collapsed with `(xN)` count badge.
 - **Status bar** -- Live line counter, keyword watch hit counts, and pause/resume toggle.
+- **Cross-session search** -- Search across all log files via Quick Pick. Supports regex and case sensitivity.
+- **JSON rendering** -- Embedded JSON objects/arrays are detected and shown as collapsible elements with pretty-printing.
+- **Auto file split** -- Configure rules to automatically split log files by line count, size, keywords, duration, or silence.
+- **Session summary** -- End-of-session notification shows stats: duration, lines, file size, watch hits.
+- **Source hover preview** -- Hover over source links to see code context (3 lines before/after).
 
 ## Getting Started
 
@@ -71,6 +76,8 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 | `Saropa Log Capture: Open Log Folder` | Reveal the log directory in the file explorer |
 | `Saropa Log Capture: Clear Current Session` | Reset the line counter |
 | `Saropa Log Capture: Delete Log File` | Delete log files from the reports directory |
+| `Saropa Log Capture: Split Log File Now` | Manually split the current log file |
+| `Saropa Log Capture: Search Log Files` | Search across all log files with Quick Pick |
 
 ## Settings
 
@@ -92,6 +99,11 @@ All settings are prefixed with `saropaLogCapture.`.
 | `watchPatterns` | `[{keyword:"error"},{keyword:"exception"},{keyword:"warning"}]` | Keywords to watch for with alert type (flash, badge, none) |
 | `showElapsedTime` | `false` | Show elapsed time between consecutive log lines |
 | `slowGapThreshold` | `1000` | Elapsed time threshold (ms) for highlighting slow gaps |
+| `splitRules.maxLines` | `0` | Split file after N lines (0 = disabled) |
+| `splitRules.maxSizeKB` | `0` | Split file after N KB (0 = disabled) |
+| `splitRules.keywords` | `[]` | Split when keyword or `/regex/` matched |
+| `splitRules.maxDurationMinutes` | `0` | Split after N minutes (0 = disabled) |
+| `splitRules.silenceMinutes` | `0` | Split after N minutes of silence (0 = disabled) |
 
 ## Known Limitations
 
