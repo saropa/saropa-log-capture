@@ -1016,54 +1016,115 @@ The extension silently captures all debug output to disk with maximum reliabilit
 
 ---
 
+### Marketplace Icon Requirements (Task 38)
+
+The extension has two icons with different purposes:
+
+#### 1. Sidebar Icon (`images/sidebar-icon.svg`)
+
+This is the **activity bar icon** — the small icon shown in VS Code's sidebar when the extension's view container is open. It is defined in `package.json` under `viewsContainers.activitybar[].icon`.
+
+- **Format:** SVG (required by VS Code for activity bar icons)
+- **Size:** 24x24 viewBox (VS Code renders it at this size)
+- **Color:** Must use `currentColor` as the fill/stroke color — VS Code applies the correct theme color automatically (light foreground on dark themes, dark foreground on light themes)
+- **Style:** Monochrome, simple, recognizable at small sizes. No color fills.
+- **Current design:** Streaming lines flowing into a funnel shape with captured output blocks below — represents log capture conceptually
+
+This icon is **already implemented** and does not need replacement.
+
+#### 2. Marketplace Icon (`images/icon.png`) — TODO
+
+This is the **extension icon** shown on the VS Code Marketplace listing page, in search results, and in the Extensions sidebar when browsing/installing. It is defined in `package.json` under the top-level `"icon"` field.
+
+**Format requirements:**
+- **PNG only.** The VS Code Marketplace does not accept SVG, WebP, or other formats for the extension icon. This is enforced server-side.
+- **Minimum size:** 128x128 pixels
+- **Recommended size:** 256x256 pixels (renders sharply on Retina/HiDPI displays)
+- **Background:** Use a **solid background**, not transparent. The marketplace renders icons against varying surfaces (white in light theme, dark in dark theme, gallery banner color on the detail page). A transparent icon risks becoming invisible or unreadable in at least one context. A solid background guarantees consistent appearance everywhere.
+- **Color depth:** 24-bit RGB (no alpha needed given solid background)
+
+**Design guidance:**
+- The marketplace icon **should be colorful** and visually distinct — it competes with hundreds of other extensions in search results and needs to stand out at small thumbnail sizes (~50px in search results, ~128px on detail page)
+- It should **not** be a direct render of the sidebar SVG. The sidebar icon is monochrome and optimized for 24x24 at `currentColor` — it would look bland and indistinct as a marketplace icon
+- Use a **solid dark background** (e.g. `#1e1e1e` or `#252526` to match the gallery banner) with a colorful foreground symbol. This creates a seamless look on the marketplace detail page header and reads well on both light and dark VS Code themes.
+- Common patterns in successful marketplace extensions:
+  - Rounded square or circular shape with a contrasting foreground symbol
+  - Simple, bold shapes that read well at 50px thumbnail size
+  - Avoid fine detail, thin lines, or text smaller than ~18pt equivalent
+- The icon should convey the extension's purpose: **log capture / recording / debug output**
+- Suggested approach: Use the funnel/capture motif from the SVG but rendered in color on a solid background (e.g., dark background matching `#1e1e1e` gallery banner, with a colored icon in greens/blues)
+
+**Relationship between the two icons:**
+- They serve different contexts but should feel like they belong to the same product
+- The sidebar icon is a stripped-down, monochrome version of the concept
+- The marketplace icon is the full-color, branded version
+- They do **not** need to be pixel-identical — they need to be **conceptually related**
+
+**Package.json integration:**
+```json
+{
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  }
+}
+```
+
+The `galleryBanner.color` sets the header background on the marketplace page. The icon should look good against this color. With `"theme": "dark"`, the marketplace renders white text on the banner, so the banner color should be dark.
+
+**Action required:** Create `images/icon.png` (256x256, colorful, PNG) and add `"icon": "images/icon.png"` to `package.json`. This must be done manually (image creation) before publishing.
+
+---
+
 ### Post-MVP: Tier 3-5 Features
 
 After the 3-stage MVP is stable and published, additional features are implemented in focused iterations. Each iteration should be independently releasable.
 
-#### Iteration A: Keyword Watch (Tier 2-3)
+#### Iteration A: Keyword Watch (Tier 2-3) — Complete
 
-| # | Task | Delivers |
-|---|---|---|
-| 39 | `keyword-watcher.ts` — match log lines against watch list (string + regex) | Watch engine |
-| 40 | Watch counters in viewer footer (clickable to filter) | Live counters |
-| 41 | Watch keyword chips in toolbar (add/remove on the fly, click to filter) | Chip UI |
-| 42 | Status bar watch hit counts (`$(error) 3 \| $(warning) 1`) | Status bar |
-| 43 | Status bar flash on new watch hits (red/yellow pulse via theme colors) | Attention |
-| 44 | View badge API — unread watch hit count on sidebar icon | Badge |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 39 | `keyword-watcher.ts` — match log lines against watch list (string + regex) | Watch engine | Done |
+| 40 | Watch counters in viewer footer (clickable to filter) | Live counters | Done |
+| 41 | Watch keyword chips in toolbar (add/remove on the fly, click to filter) | Chip UI | Done |
+| 42 | Status bar watch hit counts (`$(error) 3 \| $(warning) 1`) | Status bar | Done |
+| 43 | Status bar flash on new watch hits (red/yellow pulse via theme colors) | Attention | Done |
+| 44 | View badge API — unread watch hit count on sidebar icon | Badge | Done |
 
-#### Iteration B: Pinning + Exclusions + Copy (Tier 3)
+#### Iteration B: Pinning + Exclusions + Copy (Tier 3) — Complete
 
-| # | Task | Delivers |
-|---|---|---|
-| 45 | Pin/unpin log entries to sticky top section | Bookmarking |
-| 46 | Pinned entries persist in webview state, export at top of file | Persistence |
-| 47 | Exclusion filter engine — string, regex, category-based rules | Noise reduction |
-| 48 | "Always Hide Lines Like This" right-click action | Quick exclude |
-| 49 | Exclusion toggle button in toolbar + "N hidden" counter | Visibility |
-| 50 | Copy as formatted — plain text, markdown, HTML, bug report template | Copy formats |
-| 51 | Ctrl+Shift+C for markdown copy shortcut | Quick copy |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 45 | Pin/unpin log entries to sticky top section | Bookmarking | Done |
+| 46 | Pinned entries persist in webview state, export at top of file | Persistence | Done |
+| 47 | Exclusion filter engine — string, regex, category-based rules | Noise reduction | Done |
+| 48 | "Always Hide Lines Like This" right-click action | Quick exclude | Done |
+| 49 | Exclusion toggle button in toolbar + "N hidden" counter | Visibility | Done |
+| 50 | Copy as formatted — plain text, markdown, HTML, bug report template | Copy formats | Done |
+| 51 | Ctrl+Shift+C for markdown copy shortcut | Quick copy | Done |
 
-#### Iteration C: Session Management (Tier 3)
+#### Iteration C: Session Management (Tier 3) — Complete
 
-| # | Task | Delivers |
-|---|---|---|
-| 52 | Session renaming (command, inline F2, footer click) | Naming |
-| 53 | Session tagging (add/remove tags, filter history by tag) | Tagging |
-| 54 | Renamed sessions update the log filename on disk | File naming |
-| 55 | Log line annotations — right-click "Add Note", persistent in session metadata | Notes |
-| 56 | Annotation export (plain text + HTML output includes notes) | Note export |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 52 | Session renaming (command, inline F2, footer click) | Naming | Done |
+| 53 | Session tagging (add/remove tags, filter history by tag) | Tagging | Done |
+| 54 | Renamed sessions update the log filename on disk | File naming | Deferred |
+| 55 | Log line annotations — right-click "Add Note", persistent in session metadata | Notes | Done |
+| 56 | Annotation export (plain text + HTML output includes notes) | Note export | Done |
 
-#### Iteration D: Timing + Stack Intelligence (Tier 3)
+#### Iteration D: Timing + Stack Intelligence (Tier 3) — Complete
 
-| # | Task | Delivers |
-|---|---|---|
-| 57 | Elapsed time column — `+0ms`, `+12ms`, `+1.2s` between entries | Timing |
-| 58 | Slow gap highlighting — visual separator bar when gap > threshold | Gap visibility |
-| 59 | Duration extraction — auto-detect timing mentions in log text | Duration tags |
-| 60 | Stack trace parser — framework vs app code per adapter (Dart, Node, Python, Go) | Smart traces |
-| 61 | App-only mode toggle — filter framework frames | Noise reduction |
-| 62 | Stack frame hover preview — 3-5 lines of source in tooltip | Peek |
-| 63 | Stack trace deduplication — count badge: `NullPointerException (x50)` | Dedup |
+| # | Task | Delivers | Status |
+|---|---|---|---|
+| 57 | Elapsed time column — `+0ms`, `+12ms`, `+1.2s` between entries | Timing | Done |
+| 58 | Slow gap highlighting — visual separator bar when gap > threshold | Gap visibility | Done |
+| 59 | Duration extraction — auto-detect timing mentions in log text | Duration tags | Done |
+| 60 | Stack trace parser — framework vs app code per adapter (Dart, Node, Python, Go) | Smart traces | Done |
+| 61 | App-only mode toggle — filter framework frames | Noise reduction | Done |
+| 62 | Stack frame hover preview — 3-5 lines of source in tooltip | Peek | Deferred |
+| 63 | Stack trace deduplication — count badge: `NullPointerException (x50)` | Dedup | Done |
 
 #### Iteration E: Auto File Split (Tier 3)
 
