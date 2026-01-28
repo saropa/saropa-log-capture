@@ -955,7 +955,7 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 | 85 | Session templates (save project-specific config bundles) + starter templates | Templates |
 | 86 | First-run walkthrough (VS Code Walkthrough API, 6 steps) | Onboarding |
 | 87 | Quick actions context menu (search codebase, create GitHub issue, add to watch) | Context menu |
-| 88 | Log entry deep links (`vscode://saropa.log-capture/session/<id>/line/<n>`) | Deep links |
+| 88 | ~~Log entry deep links (`vscode://saropa.log-capture/session/<id>/line/<n>`)~~ | ✅ Done |
 | 89 | Tail mode for workspace .log files (file watcher, configurable globs) | File tailing |
 | 90 | Remote workspace / SSH support | Remote |
 | 91 | Inline code decorations (show log output next to source line) | Inline logs |
