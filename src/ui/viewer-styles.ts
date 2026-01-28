@@ -238,5 +238,19 @@ mark {
     flex: 1;
     overflow: hidden;
 }
+#exclusion-count {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+}
+#exclusion-toggle {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+}
 `;
 }
