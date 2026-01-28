@@ -292,5 +292,55 @@ mark {
     opacity: 0.7;
     margin-left: 4px;
 }
+#source-preview {
+    position: fixed;
+    display: none;
+    background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-editorHoverWidget-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+    max-width: 500px;
+    min-width: 200px;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+#source-preview.visible { display: block; }
+#source-preview .preview-header {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#source-preview .preview-code {
+    font-family: var(--vscode-editor-font-family, monospace);
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.4;
+}
+#source-preview .preview-line {
+    padding: 0 4px;
+}
+#source-preview .preview-line.target {
+    background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 0, 0.1));
+    border-left: 2px solid var(--vscode-editorLineNumber-activeForeground, #c6c6c6);
+}
+#source-preview .line-num {
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+    display: inline-block;
+    min-width: 30px;
+    text-align: right;
+    margin-right: 8px;
+    user-select: none;
+}
+#source-preview .preview-loading {
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
 `;
 }
