@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration B — Pinning, Exclusions, Copy)
+
+- Pin/unpin log entries: press `P` to pin the center line, pinned lines appear in a sticky section above the scroll area
+- Exclusion filter engine: hide lines matching string or `/regex/` patterns without removing from data
+- `exclusions` setting for persistent exclusion patterns (string or regex)
+- Exclusion toggle button and hidden line counter in viewer footer
+- Multi-format copy: Shift+click to select lines, Ctrl+C for plain text, Ctrl+Shift+C for markdown
+- Selection highlighting with VS Code theme colors
+- Exclusion matcher module with unit tests
+
 ### Added (Iteration A — Keyword Watch)
 
 - Keyword watcher: configurable patterns (string or `/regex/`) matched against every log line
