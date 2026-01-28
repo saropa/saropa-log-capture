@@ -44,6 +44,7 @@ export function buildViewerHtml(nonce: string): string {
     </div>
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
+        <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">

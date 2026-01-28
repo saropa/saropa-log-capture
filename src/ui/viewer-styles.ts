@@ -110,6 +110,15 @@ body {
     border-radius: 3px;
     margin-left: auto;
 }
+#filter-select {
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    font-size: 10px;
+    padding: 1px 4px;
+    max-width: 120px;
+    cursor: pointer;
+}
 #wrap-toggle:hover {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
