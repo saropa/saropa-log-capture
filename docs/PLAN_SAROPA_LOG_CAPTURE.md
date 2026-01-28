@@ -951,7 +951,7 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 |---|---|---|
 | 82 | Custom regex highlight rules (pattern → color, stackable, persisted) | Highlight |
 | 83 | Saved filter presets (level + keyword + category as named preset) | Presets |
-| 84 | Auto-tag rule engine (content pattern → automatic tag) | Auto-tagging |
+| 84 | ~~Auto-tag rule engine (content pattern → automatic tag)~~ | ✅ Done |
 | 85 | Session templates (save project-specific config bundles) + starter templates | Templates |
 | 86 | First-run walkthrough (VS Code Walkthrough API, 6 steps) | Onboarding |
 | 87 | Quick actions context menu (search codebase, create GitHub issue, add to watch) | Context menu |

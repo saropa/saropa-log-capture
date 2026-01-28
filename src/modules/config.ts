@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { SplitRules, defaultSplitRules } from './file-splitter';
+import { AutoTagRule } from './auto-tagger';
 
 /** Watch pattern entry from user settings. */
 export interface WatchPatternSetting {
@@ -24,6 +25,7 @@ export interface SaropaLogCaptureConfig {
     readonly slowGapThreshold: number;
     readonly watchPatterns: readonly WatchPatternSetting[];
     readonly splitRules: SplitRules;
+    readonly autoTagRules: readonly AutoTagRule[];
 }
 
 const SECTION = 'saropaLogCapture';
@@ -50,6 +52,7 @@ export function getConfig(): SaropaLogCaptureConfig {
             { keyword: 'warning', alert: 'badge' },
         ]),
         splitRules: parseSplitRules(cfg.get('splitRules', {})),
+        autoTagRules: cfg.get<AutoTagRule[]>('autoTagRules', []),
     };
 }
 
