@@ -30,6 +30,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private onTogglePause?: () => void;
     private onExclusionAdded?: (pattern: string) => void;
     private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
+    private onPartNavigate?: (part: number) => void;
     private readonly seenCategories = new Set<string>();
     private unreadWatchHits = 0;
 
@@ -63,6 +64,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                     String(msg.path ?? ''),
                     Number(msg.line ?? 1),
                 );
+            } else if (msg.type === 'navigatePart' && this.onPartNavigate) {
+                this.onPartNavigate(Number(msg.part ?? 1));
             }
         });
 
@@ -119,6 +122,16 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Set a callback invoked when the webview requests source navigation. */
     setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void {
         this.onLinkClick = handler;
+    }
+
+    /** Set a callback for split part navigation requests. */
+    setPartNavigateHandler(handler: (part: number) => void): void {
+        this.onPartNavigate = handler;
+    }
+
+    /** Update the split breadcrumb in the viewer. */
+    setSplitInfo(currentPart: number, totalParts: number): void {
+        this.postMessage({ type: 'splitInfo', currentPart, totalParts });
     }
 
     /** Queue a log line for batched delivery to the webview. */
