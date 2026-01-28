@@ -128,6 +128,21 @@
         "command": "saropaLogCapture.copyDeepLink",
         "title": "Copy Deep Link",
         "icon": "$(link)"
+      },
+      {
+        "command": "saropaLogCapture.applyPreset",
+        "title": "Saropa Log Capture: Apply Filter Preset",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "saropaLogCapture.savePreset",
+        "title": "Saropa Log Capture: Save Current Filters as Preset",
+        "icon": "$(save)"
+      },
+      {
+        "command": "saropaLogCapture.toggleInlineDecorations",
+        "title": "Saropa Log Capture: Toggle Inline Log Decorations",
+        "icon": "$(symbol-event)"
       }
     ],
     "viewsContainers": {
@@ -192,6 +207,58 @@
         }
       ]
     },
+    "walkthroughs": [
+      {
+        "id": "saropaLogCapture.getStarted",
+        "title": "Get Started with Log Capture",
+        "description": "Learn how to capture and analyze your debug output with Saropa Log Capture.",
+        "steps": [
+          {
+            "id": "saropaLogCapture.startDebugging",
+            "title": "Start a Debug Session",
+            "description": "Log capture starts automatically when you debug. Press **F5** or use the **Run and Debug** panel to start.\n\n[Start Debugging](command:workbench.action.debug.start)",
+            "media": {
+              "markdown": "media/walkthrough/start-debugging.md"
+            },
+            "completionEvents": ["onCommand:workbench.action.debug.start"]
+          },
+          {
+            "id": "saropaLogCapture.openViewer",
+            "title": "Open the Log Viewer",
+            "description": "Click the **Saropa Log Capture** icon in the Activity Bar to see live log output with colors, collapsible stacks, and search.\n\n[Open Log Viewer](command:saropaLogCapture.logViewer.focus)",
+            "media": {
+              "markdown": "media/walkthrough/open-viewer.md"
+            },
+            "completionEvents": ["onView:saropaLogCapture.logViewer"]
+          },
+          {
+            "id": "saropaLogCapture.useKeyboardShortcuts",
+            "title": "Master Keyboard Shortcuts",
+            "description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers.",
+            "media": {
+              "markdown": "media/walkthrough/keyboard-shortcuts.md"
+            }
+          },
+          {
+            "id": "saropaLogCapture.browseHistory",
+            "title": "Browse Session History",
+            "description": "All sessions are saved in the **Session History** tree. Right-click to rename, tag, export, or share deep links.\n\n[View Session History](command:saropaLogCapture.sessionHistory.focus)",
+            "media": {
+              "markdown": "media/walkthrough/session-history.md"
+            },
+            "completionEvents": ["onView:saropaLogCapture.sessionHistory"]
+          },
+          {
+            "id": "saropaLogCapture.configureSettings",
+            "title": "Customize Your Setup",
+            "description": "Configure watch patterns, highlight rules, exclusions, and split rules in **Settings**.\n\n[Open Settings](command:workbench.action.openSettings?%22saropaLogCapture%22)",
+            "media": {
+              "markdown": "media/walkthrough/configure-settings.md"
+            }
+          }
+        ]
+      }
+    ],
     "configuration": {
       "title": "Saropa Log Capture",
       "properties": {
@@ -407,6 +474,34 @@
             { "pattern": "/\\b(success|passed|ok)\\b/i", "color": "var(--vscode-debugConsole-sourceForeground)", "label": "Success" }
           ],
           "description": "Pattern-based highlighting rules for coloring log lines. Each rule specifies a pattern and visual styling."
+        },
+        "saropaLogCapture.filterPresets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for the preset."
+              },
+              "categories": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "DAP categories to show (empty = all)."
+              },
+              "searchPattern": {
+                "type": "string",
+                "description": "Search pattern to apply (string or /regex/)."
+              },
+              "exclusionsEnabled": {
+                "type": "boolean",
+                "description": "Whether exclusions should be enabled."
+              }
+            },
+            "required": ["name"]
+          },
+          "default": [],
+          "description": "Saved filter presets for quick application. Each preset saves category filters, search pattern, and exclusion state."
         }
       }
     }

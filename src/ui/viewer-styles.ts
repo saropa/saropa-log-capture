@@ -401,5 +401,49 @@ mark {
 }
 .json-expanded.hidden { display: none; }
 .json-preview.hidden { display: none; }
+#preset-select {
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    font-size: 10px;
+    padding: 1px 4px;
+    max-width: 140px;
+    cursor: pointer;
+}
+/* Context menu styles */
+.context-menu {
+    display: none;
+    position: fixed;
+    z-index: 200;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+    padding: 4px 0;
+}
+.context-menu.visible { display: block; }
+.context-menu-item {
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+}
+.context-menu-item:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, inherit);
+}
+.context-menu-item .codicon {
+    font-size: 14px;
+    opacity: 0.8;
+}
+.context-menu-separator {
+    height: 1px;
+    background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    margin: 4px 8px;
+}
 `;
 }

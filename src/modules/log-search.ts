@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri } from './config';
+import { getLogDirectoryUri } from './config';
 
 /** A single search match within a log file. */
 export interface SearchMatch {
@@ -159,13 +159,18 @@ interface SearchQuickPickItem extends vscode.QuickPickItem {
 /**
  * Show a Quick Pick UI for cross-session log search.
  * Returns the selected match or undefined if cancelled.
+ *
+ * @param initialQuery - Optional initial search query to pre-fill
  */
-export async function showSearchQuickPick(): Promise<SearchMatch | undefined> {
+export async function showSearchQuickPick(initialQuery?: string): Promise<SearchMatch | undefined> {
     const quickPick = vscode.window.createQuickPick<SearchQuickPickItem>();
     quickPick.title = 'Search Log Files';
     quickPick.placeholder = 'Type to search across all log files...';
     quickPick.matchOnDescription = true;
     quickPick.matchOnDetail = true;
+    if (initialQuery) {
+        quickPick.value = initialQuery;
+    }
 
     let searchTimeout: NodeJS.Timeout | undefined;
 
@@ -248,10 +253,23 @@ export async function showSearchQuickPick(): Promise<SearchMatch | undefined> {
         }, 200);
     });
 
-    quickPick.items = [{
-        label: '$(info) Type at least 2 characters to search',
-        isHeader: true,
-    }];
+    // Show initial prompt or trigger search if initialQuery provided
+    if (initialQuery && initialQuery.length >= 2) {
+        quickPick.busy = true;
+        quickPick.items = [{
+            label: '$(sync~spin) Searching...',
+            isHeader: true,
+        }];
+        searchLogFiles(initialQuery).then((results) => {
+            updateItems(results);
+            quickPick.busy = false;
+        });
+    } else {
+        quickPick.items = [{
+            label: '$(info) Type at least 2 characters to search',
+            isHeader: true,
+        }];
+    }
 
     return new Promise<SearchMatch | undefined>((resolve) => {
         quickPick.onDidAccept(() => {
