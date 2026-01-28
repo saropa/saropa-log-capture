@@ -18,7 +18,8 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **File retention** -- Oldest log files auto-deleted when the configurable limit is exceeded.
 - **Gitignore safety** -- On first run, offers to add the log directory to `.gitignore`.
 - **ANSI preservation** -- Raw ANSI escape codes are kept in `.log` files for external tools like `less -R`.
-- **Status bar** -- Live line counter with pause/resume toggle.
+- **Keyword watch** -- Track configurable keywords (error, exception, warning, or custom patterns) with live counters in the viewer footer and status bar. Flash animation alerts you to new hits.
+- **Status bar** -- Live line counter, keyword watch hit counts, and pause/resume toggle.
 
 ## Getting Started
 
@@ -69,11 +70,11 @@ All settings are prefixed with `saropaLogCapture.`.
 | `maxLogFiles` | `10` | Max log files to retain (0 = unlimited) |
 | `gitignoreCheck` | `true` | Offer to add log directory to .gitignore on first run |
 | `redactEnvVars` | `[]` | Env var patterns to redact from headers (e.g. `"API_KEY"`, `"SECRET_*"`) |
+| `watchPatterns` | `[{keyword:"error"},{keyword:"exception"},{keyword:"warning"}]` | Keywords to watch for with alert type (flash, badge, none) |
 
 ## Known Limitations
 
 - The sidebar viewer caps at 50,000 lines for performance (the file on disk keeps all lines up to `maxLines`).
-- Marketplace icon (PNG) must be added manually before publishing.
 - Screenshots must be added manually before publishing.
 
 ## License
