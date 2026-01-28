@@ -6,6 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration D — Timing & Stack Intelligence)
+
+- LineData interface refactor: replaced 7 positional parameters with a single typed object
+- Elapsed time column: `+Nms` prefix on each log line when enabled via `showElapsedTime` setting
+- Slow gap highlighting: dashed separator when gap between lines exceeds `slowGapThreshold` (default 1000ms)
+- Duration extraction module: parses timing values from log text (e.g., `500ms`, `2.5s`, `duration=3000`)
+- Stack frame classifier: detects framework vs app code across Dart, Node, Python, Go, Java, .NET
+- App-only stack trace mode: press `A` to hide framework frames in expanded stack groups
+- Stack trace deduplication: identical traces collapsed with `(xN)` count badge on the header
+- `showElapsedTime` and `slowGapThreshold` settings
+
 ### Added (Iteration C — Session Management)
 
 - Session metadata stored as sidecar `.meta.json` files alongside `.log` files
