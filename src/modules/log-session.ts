@@ -58,6 +58,14 @@ export class LogSession {
         return this._partNumber;
     }
 
+    get bytesWritten(): number {
+        return this._bytesWritten;
+    }
+
+    get startTime(): number {
+        return this._partStartTime;
+    }
+
     constructor(
         private readonly context: SessionContext,
         private readonly config: SaropaLogCaptureConfig,

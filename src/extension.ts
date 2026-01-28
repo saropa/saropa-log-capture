@@ -4,6 +4,7 @@ import { SaropaTrackerFactory } from './modules/tracker';
 import { SessionManagerImpl } from './modules/session-manager';
 import { handleDeleteCommand } from './modules/delete-command';
 import { resolveSourceUri } from './modules/source-resolver';
+import { showSearchQuickPick, openLogAtLine } from './modules/log-search';
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
@@ -263,6 +264,13 @@ function registerCommands(context: vscode.ExtensionContext): void {
             const tags = input.split(',').map(t => t.trim()).filter(t => t.length > 0);
             await historyProvider.getMetaStore().setTags(item.uri, tags);
             historyProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
+            const match = await showSearchQuickPick();
+            if (match) {
+                await openLogAtLine(match);
+            }
         }),
     );
 }
