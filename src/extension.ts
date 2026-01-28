@@ -10,6 +10,7 @@ import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
 import { exportToHtml } from './modules/html-export';
 import { exportToInteractiveHtml } from './modules/html-export-interactive';
+import { createUriHandler, copyDeepLinkToClipboard } from './modules/deep-links';
 
 let sessionManager: SessionManagerImpl;
 let viewerProvider: LogViewerProvider;
@@ -33,6 +34,11 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(historyProvider);
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider('saropaLogCapture.sessionHistory', historyProvider),
+    );
+
+    // Deep links URI handler.
+    context.subscriptions.push(
+        vscode.window.registerUriHandler(createUriHandler()),
     );
 
     sessionManager.addLineListener((data) => {
@@ -280,6 +286,13 @@ function registerCommands(context: vscode.ExtensionContext): void {
             if (match) {
                 await openLogAtLine(match);
             }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.copyDeepLink', async (item: { uri: vscode.Uri; filename: string }) => {
+            if (!item?.filename) {
+                return;
+            }
+            await copyDeepLinkToClipboard(item.filename);
         }),
     );
 }

@@ -37,6 +37,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Auto file split** -- Configure rules to automatically split log files by line count, size, keywords, duration, or silence.
 - **Session summary** -- End-of-session notification shows stats: duration, lines, file size, watch hits.
 - **Source hover preview** -- Hover over source links to see code context (3 lines before/after).
+- **Deep links** -- Share `vscode://` URLs that open specific log sessions and lines. Copy from context menu.
 
 ## Getting Started
 
