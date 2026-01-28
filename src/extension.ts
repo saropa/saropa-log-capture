@@ -9,6 +9,7 @@ import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
 import { exportToHtml } from './modules/html-export';
+import { exportToInteractiveHtml } from './modules/html-export-interactive';
 
 let sessionManager: SessionManagerImpl;
 let viewerProvider: LogViewerProvider;
@@ -226,6 +227,14 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return;
             }
             const htmlUri = await exportToHtml(item.uri);
+            await vscode.env.openExternal(htmlUri);
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.exportHtmlInteractive', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const htmlUri = await exportToInteractiveHtml(item.uri);
             await vscode.env.openExternal(htmlUri);
         }),
 

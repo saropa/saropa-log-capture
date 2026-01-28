@@ -14,7 +14,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Insert markers** -- Add visual separators to the log stream to mark test phases or debug attempts. Press M in the viewer.
 - **Collapsible stack traces** -- Stack frames are grouped and collapsed by default. Click to expand.
 - **Session history** -- Browse past log sessions in the sidebar tree view with metadata (adapter type, file size).
-- **HTML export** -- Export any log session to a styled HTML file with ANSI colors preserved.
+- **HTML export** -- Export any log session to a styled HTML file with ANSI colors preserved. Choose Interactive mode for search, filter, expand/collapse, and dark/light theme toggle.
 - **Context header** -- Every log file starts with session metadata: launch config, VS Code version, OS, debug adapter type.
 - **Deduplication** -- Identical rapid lines are grouped as `Message (x54)` instead of bloating the file.
 - **Flood protection** -- Automatic suppression of rapid repeated messages (>100/sec) prevents lockups from noisy debug adapters.
