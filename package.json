@@ -98,6 +98,16 @@
         "command": "saropaLogCapture.exportHtml",
         "title": "Export as HTML",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "saropaLogCapture.renameSession",
+        "title": "Rename Session",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "saropaLogCapture.tagSession",
+        "title": "Tag Session",
+        "icon": "$(tag)"
       }
     ],
     "viewsContainers": {
@@ -142,6 +152,14 @@
         },
         {
           "command": "saropaLogCapture.exportHtml",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.renameSession",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.tagSession",
           "when": "viewItem == session"
         }
       ]

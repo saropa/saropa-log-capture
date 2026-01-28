@@ -182,6 +182,39 @@ function registerCommands(context: vscode.ExtensionContext): void {
             const htmlUri = await exportToHtml(item.uri);
             await vscode.env.openExternal(htmlUri);
         }),
+
+        vscode.commands.registerCommand('saropaLogCapture.renameSession', async (item: { uri: vscode.Uri; filename: string }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const name = await vscode.window.showInputBox({
+                prompt: 'Enter display name for this session',
+                value: item.filename.replace(/\.log$/, ''),
+            });
+            if (name === undefined) {
+                return;
+            }
+            await historyProvider.getMetaStore().setDisplayName(item.uri, name);
+            historyProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.tagSession', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) {
+                return;
+            }
+            const meta = await historyProvider.getMetaStore().loadMetadata(item.uri);
+            const current = (meta.tags ?? []).join(', ');
+            const input = await vscode.window.showInputBox({
+                prompt: 'Enter tags (comma-separated)',
+                value: current,
+            });
+            if (input === undefined) {
+                return;
+            }
+            const tags = input.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            await historyProvider.getMetaStore().setTags(item.uri, tags);
+            historyProvider.refresh();
+        }),
     );
 }
 

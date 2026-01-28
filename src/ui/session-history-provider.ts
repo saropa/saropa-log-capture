@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../modules/config';
+import { SessionMetadataStore } from '../modules/session-metadata';
 
 interface SessionMetadata {
     readonly uri: vscode.Uri;
@@ -9,6 +10,8 @@ interface SessionMetadata {
     readonly adapter?: string;
     readonly lineCount?: number;
     readonly size: number;
+    readonly displayName?: string;
+    readonly tags?: string[];
 }
 
 /** Tree data provider for listing past log sessions from the reports directory. */
@@ -17,6 +20,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<SessionMe
     readonly onDidChangeTreeData = this._onDidChange.event;
     private watcher: vscode.FileSystemWatcher | undefined;
     private activeUri: vscode.Uri | undefined;
+    private readonly metaStore = new SessionMetadataStore();
 
     constructor() {
         this.setupWatcher();
@@ -33,13 +37,19 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<SessionMe
 
     getTreeItem(item: SessionMetadata): vscode.TreeItem {
         const isActive = this.activeUri?.toString() === item.uri.toString();
-        const ti = new vscode.TreeItem(item.filename, vscode.TreeItemCollapsibleState.None);
+        const label = item.displayName ?? item.filename;
+        const ti = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
         ti.tooltip = buildTooltip(item);
         ti.description = buildDescription(item);
         ti.iconPath = new vscode.ThemeIcon(isActive ? 'record' : 'file');
         ti.command = { command: 'saropaLogCapture.openSession', title: 'Open', arguments: [item] };
         ti.contextValue = 'session';
         return ti;
+    }
+
+    /** Expose the metadata store for use by commands. */
+    getMetaStore(): SessionMetadataStore {
+        return this.metaStore;
     }
 
     async getChildren(): Promise<SessionMetadata[]> {
@@ -79,8 +89,16 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<SessionMe
     private async loadMetadata(logDir: vscode.Uri, filename: string): Promise<SessionMetadata> {
         const uri = vscode.Uri.joinPath(logDir, filename);
         const stat = await vscode.workspace.fs.stat(uri);
-        const meta: SessionMetadata = { uri, filename, size: stat.size };
-        return parseHeader(uri, meta);
+        let meta: SessionMetadata = { uri, filename, size: stat.size };
+        meta = await parseHeader(uri, meta);
+        const sidecar = await this.metaStore.loadMetadata(uri);
+        if (sidecar.displayName) {
+            meta = { ...meta, displayName: sidecar.displayName };
+        }
+        if (sidecar.tags && sidecar.tags.length > 0) {
+            meta = { ...meta, tags: sidecar.tags };
+        }
+        return meta;
     }
 }
 
@@ -119,6 +137,9 @@ function buildDescription(item: SessionMetadata): string {
         parts.push(item.adapter);
     }
     parts.push(formatSize(item.size));
+    if (item.tags && item.tags.length > 0) {
+        parts.push(item.tags.map(t => `#${t}`).join(' '));
+    }
     return parts.join(' · ');
 }
 
