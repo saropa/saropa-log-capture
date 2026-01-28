@@ -1,27 +1,53 @@
 /**
- * Interactive HTML export with embedded JavaScript.
- * Creates a self-contained, shareable HTML file with:
- * - Search (Ctrl+F, F3/Shift+F3 navigation)
- * - Category filter dropdown
- * - Collapsible stack traces and JSON
- * - Light/Dark theme toggle
+ * Interactive HTML export module.
+ *
+ * Creates a self-contained, shareable HTML file with embedded JavaScript that
+ * works completely offline. Unlike the static HTML export, this version includes
+ * interactive features:
+ *
+ * - **Search**: Ctrl+F to open, F3/Shift+F3 for next/previous match
+ * - **Category filter**: Multi-select dropdown to show/hide stdout/stderr/console
+ * - **Collapsible stack traces**: Click to expand/collapse error frames
+ * - **Collapsible JSON**: Inline JSON objects expand to pretty-printed view
+ * - **Theme toggle**: Switch between dark and light themes
+ * - **Word wrap toggle**: Toggle between wrapped and horizontal scroll
+ *
+ * The HTML file embeds all CSS and JavaScript inline - no external dependencies.
+ * This makes it perfect for sharing via email, Slack, or archiving.
+ *
+ * @example
+ * // Right-click a session in history -> "Export as HTML (Interactive)"
+ * // Opens the generated HTML file in the default browser
  */
 
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from './ansi';
 import { SessionMetadataStore } from './session-metadata';
 
-/** Line data parsed from log file. */
+/**
+ * Parsed representation of a log line with metadata for rendering.
+ * Used internally during HTML generation.
+ */
 interface ParsedLine {
+    /** Raw line text from the log file */
     readonly text: string;
+    /** HTML-rendered version with ANSI colors converted */
     readonly html: string;
+    /** DAP output category (stdout, stderr, console) */
     readonly category: string;
+    /** True if this line starts a stack trace (matches /^\s+at\s/) */
     readonly isStackFrame: boolean;
 }
 
 /**
- * Export a .log file to an interactive .html file.
- * Returns the URI of the generated HTML file.
+ * Export a log file to an interactive HTML file.
+ *
+ * Reads the .log file, converts ANSI codes to HTML, wraps JSON in collapsible
+ * elements, groups stack traces, and generates a complete HTML document with
+ * embedded CSS and JavaScript.
+ *
+ * @param logUri - URI of the .log file to export
+ * @returns URI of the generated .html file (same location, .html extension)
  */
 export async function exportToInteractiveHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
     const raw = await vscode.workspace.fs.readFile(logUri);
@@ -46,21 +72,42 @@ export async function exportToInteractiveHtml(logUri: vscode.Uri): Promise<vscod
     return htmlUri;
 }
 
+/**
+ * Split log content into header and body sections.
+ *
+ * Log files start with a context header (session metadata) followed by a
+ * divider line of "====...". This function separates them so the header
+ * can be rendered as a collapsible details element.
+ *
+ * @param lines - All lines from the log file
+ * @returns Object with headerLines (metadata) and bodyLines (actual log output)
+ */
 function splitHeader(lines: string[]): { headerLines: string[]; bodyLines: string[] } {
+    // Find the divider line that separates metadata from log output
     const divider = lines.findIndex(l => l.startsWith('===================='));
     if (divider < 0) {
+        // No header found - treat entire file as body
         return { headerLines: [], bodyLines: lines };
     }
     return {
-        headerLines: lines.slice(0, divider + 1),
+        headerLines: lines.slice(0, divider + 1),  // Include divider in header
         bodyLines: lines.slice(divider + 1),
     };
 }
 
-/** Parse lines to extract category and detect stack frames. */
+/**
+ * Parse all log lines into structured data for rendering.
+ *
+ * Converts ANSI escape codes to HTML spans, extracts the DAP category,
+ * and detects stack trace frames (lines starting with whitespace + "at ").
+ *
+ * @param lines - Body lines from the log file (after header split)
+ * @returns Array of ParsedLine objects ready for HTML generation
+ */
 function parseLines(lines: string[]): ParsedLine[] {
     return lines.map(line => {
         const category = extractCategory(line);
+        // Stack frames in most languages start with "   at " or "\tat "
         const isStackFrame = /^\s+at\s/.test(line);
         return {
             text: line,
@@ -71,13 +118,29 @@ function parseLines(lines: string[]): ParsedLine[] {
     });
 }
 
-/** Extract category from line (e.g., [stdout], [stderr]). */
+/**
+ * Extract the DAP output category from a log line.
+ *
+ * Our log format prefixes lines with [category] when available.
+ * Falls back to 'console' if no category tag is found.
+ *
+ * @param line - A single log line
+ * @returns The category string (stdout, stderr, console, etc.)
+ */
 function extractCategory(line: string): string {
     const match = line.match(/^\[(\w+)\]/);
     return match ? match[1] : 'console';
 }
 
-/** Extract unique categories from parsed lines. */
+/**
+ * Collect unique categories from all parsed lines.
+ *
+ * Used to populate the filter dropdown with available options.
+ * Returns sorted array for consistent ordering.
+ *
+ * @param lines - All parsed log lines
+ * @returns Sorted array of unique category names
+ */
 function extractCategories(lines: ParsedLine[]): string[] {
     const cats = new Set<string>();
     for (const line of lines) {
@@ -86,7 +149,19 @@ function extractCategories(lines: ParsedLine[]): string[] {
     return Array.from(cats).sort();
 }
 
-/** Build body HTML with data attributes for interactivity. */
+/**
+ * Build the HTML body with interactive elements.
+ *
+ * Processes parsed lines to:
+ * 1. Group consecutive stack frames into collapsible sections
+ * 2. Wrap detected JSON in collapsible elements
+ * 3. Add data attributes for filtering (data-cat, data-idx)
+ * 4. Include any line annotations from session metadata
+ *
+ * @param lines - Parsed log lines
+ * @param annotations - Map of line index to annotation text
+ * @returns HTML string for the log content
+ */
 function buildInteractiveBody(lines: ParsedLine[], annotations: Map<number, string>): string {
     const parts: string[] = [];
     let groupId = 0;
@@ -128,7 +203,17 @@ function buildInteractiveBody(lines: ParsedLine[], annotations: Map<number, stri
     return parts.join('\n');
 }
 
-/** Wrap potential JSON in collapsible elements. */
+/**
+ * Wrap detected JSON in collapsible HTML elements.
+ *
+ * If JSON is found, wraps it in a structure that shows:
+ * - A toggle arrow (▶/▼)
+ * - A truncated preview (first 60 chars)
+ * - A hidden pre block with pretty-printed JSON
+ *
+ * @param html - HTML string that may contain JSON
+ * @returns Original html if no JSON, or html with JSON wrapped in collapsible
+ */
 function wrapJsonInLine(html: string): string {
     const jsonMatch = detectJsonInHtml(html);
     if (!jsonMatch) {
@@ -136,16 +221,32 @@ function wrapJsonInLine(html: string): string {
     }
 
     const { prefix, json, suffix, pretty } = jsonMatch;
+    // Show truncated preview for long JSON
     const preview = json.length > 60 ? json.slice(0, 57) + '...' : json;
 
     return `${prefix}<span class="json-collapsible"><span class="json-toggle">▶</span><span class="json-preview">${escapeHtml(preview)}</span><pre class="json-expanded hidden">${escapeHtml(pretty)}</pre></span>${suffix}`;
 }
 
-/** Detect JSON in HTML string. */
+/**
+ * Detect valid JSON within an HTML string.
+ *
+ * Handles the tricky case where log lines may contain JSON mixed with other
+ * text, like "[INFO] {"user": "john"} logged in". We need to find just the
+ * JSON part.
+ *
+ * Strategy: Find all potential JSON start characters ({ or [), try each
+ * until we find valid JSON. This handles lines like "[DEBUG] data: {...}"
+ * where the first [ is not JSON but a log prefix.
+ *
+ * @param html - HTML string to search for JSON
+ * @returns Object with prefix, json, suffix, and pretty-printed version, or null
+ */
 function detectJsonInHtml(html: string): { prefix: string; json: string; suffix: string; pretty: string } | null {
+    // Strip HTML tags to work with plain text
     const text = html.replace(/<[^>]*>/g, '');
-    const candidates: { start: number; closer: string }[] = [];
 
+    // Collect all potential JSON start positions
+    const candidates: { start: number; closer: string }[] = [];
     for (let i = 0; i < text.length; i++) {
         if (text[i] === '{') {
             candidates.push({ start: i, closer: '}' });
@@ -154,6 +255,7 @@ function detectJsonInHtml(html: string): { prefix: string; json: string; suffix:
         }
     }
 
+    // Try each candidate until we find valid JSON
     for (const { start, closer } of candidates) {
         const end = findMatchingBracket(text, start, closer);
         if (end < 0) {
@@ -163,6 +265,7 @@ function detectJsonInHtml(html: string): { prefix: string; json: string; suffix:
         const jsonStr = text.slice(start, end + 1);
         try {
             const parsed = JSON.parse(jsonStr);
+            // Only accept objects and arrays, not primitives
             if (typeof parsed !== 'object' || parsed === null) {
                 continue;
             }
@@ -173,12 +276,23 @@ function detectJsonInHtml(html: string): { prefix: string; json: string; suffix:
                 pretty: JSON.stringify(parsed, null, 2),
             };
         } catch {
-            // Not valid JSON
+            // Not valid JSON, try next candidate
         }
     }
     return null;
 }
 
+/**
+ * Find the matching closing bracket for an opening bracket.
+ *
+ * Handles nested brackets and properly ignores brackets inside strings.
+ * For example, in {"key": "value with { brace"}, the inner { is ignored.
+ *
+ * @param str - The string to search
+ * @param start - Position of the opening bracket
+ * @param closer - The closing bracket character to find (} or ])
+ * @returns Position of matching closer, or -1 if not found
+ */
 function findMatchingBracket(str: string, start: number, closer: string): number {
     const opener = str[start];
     let depth = 0;
