@@ -849,7 +849,7 @@ Features for mature adoption and enterprise use.
 
 **Stages 1-3 (MVP):** Complete. Headless capture, live sidebar viewer, search/filter, click-to-source, session history.
 
-**Iterations A-D:** Complete. Keyword watch, pinning, exclusions, copy formats, session tagging, timing markers, stack trace intelligence, file rename on session rename, stack frame hover preview.
+**Iterations A-E:** Complete. Keyword watch, pinning, exclusions, copy formats, session tagging, timing markers, stack trace intelligence, file rename on session rename, stack frame hover preview, auto file split with rule engine, split session history grouping, viewer breadcrumb navigation.
 
 ---
 
@@ -916,17 +916,6 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 
 ### Remaining Iterations
 
-#### Iteration E: Auto File Split (Tier 3)
-
-| # | Task | Delivers |
-|---|---|---|
-| 64 | `file-splitter.ts` — rule engine (size, lines, keyword, time, silence) | Split engine |
-| 65 | Seamless file rotation (new file before old closes, zero gap) | Reliability |
-| 66 | Split file naming + headers (part number, reason, continuation ref) | Organization |
-| 67 | Session history expandable parent/child for split sessions | Split history |
-| 68 | Viewer breadcrumb bar for split parts + cross-part search | Split navigation |
-| 69 | Manual split command (`splitNow`) | Manual control |
-
 #### Iteration F: Session Comparison + Portability (Tier 4)
 
 | # | Task | Delivers |
@@ -969,9 +958,4 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 
 ## Verification (Remaining Features)
 
-### Iteration E: Auto File Split
-
-1. Configure file split with max 100 lines, confirm split occurs and creates `_001`, `_002` files
-2. Configure keyword split on "HOT RESTART", trigger hot restart, confirm new file starts
-3. Confirm split session appears as expandable parent in session history
-4. Confirm cross-part search finds matches across all split files
+All completed iterations have been verified. Remaining verification items for Iterations F-H will be added when those features are implemented.
