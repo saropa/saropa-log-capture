@@ -2,6 +2,7 @@ import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
 import { getFilterScript } from './viewer-filter';
 import { getSearchScript } from './viewer-search';
+import { getWatchScript } from './viewer-watch';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -45,12 +46,14 @@ export function buildViewerHtml(nonce: string): string {
     </div>
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
+        <span id="watch-counts"></span>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">
         ${getViewerScript(MAX_VIEWER_LINES)}
         ${getFilterScript()}
+        ${getWatchScript()}
         ${getSearchScript()}
     </script>
 </body>

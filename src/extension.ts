@@ -32,8 +32,11 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.registerTreeDataProvider('saropaLogCapture.sessionHistory', historyProvider),
     );
 
-    sessionManager.addLineListener((line, isMarker, lineCount, category, sourcePath, sourceLine) => {
+    sessionManager.addLineListener((line, isMarker, lineCount, category, sourcePath, sourceLine, watchHits) => {
         viewerProvider.addLine(line, isMarker, lineCount, category, sourcePath, sourceLine);
+        if (watchHits && watchHits.length > 0) {
+            viewerProvider.updateWatchCounts(sessionManager.getWatcher().getCounts());
+        }
     });
     viewerProvider.setMarkerHandler(() => {
         sessionManager.insertMarker();
