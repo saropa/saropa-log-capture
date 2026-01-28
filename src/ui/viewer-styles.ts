@@ -188,5 +188,12 @@ mark {
     background: var(--vscode-inputValidation-warningBackground, rgba(255, 204, 0, 0.2));
     color: var(--vscode-editorWarning-foreground, #fc0);
 }
+@keyframes watch-flash {
+    0% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.watch-chip.flash {
+    animation: watch-flash 0.4s ease-out;
+}
 `;
 }
