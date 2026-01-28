@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration A — Keyword Watch)
+
+- Keyword watcher: configurable patterns (string or `/regex/`) matched against every log line
+- Watch hit counters in viewer footer as colored chips (red for error/exception, yellow for warning)
+- Watch hit counts in status bar alongside line counter
+- Flash animation on watch chips when new hits detected
+- View badge on sidebar icon showing unread watch hit count (resets on view focus)
+- `watchPatterns` setting with per-pattern alert type (flash, badge, none)
+- Marketplace icon (PNG) registered in package.json
+
 ### Added (Stage 3 — The Navigator)
 
 - Click-to-source navigation: click `file.ts:42` patterns in log output to open source at that line
