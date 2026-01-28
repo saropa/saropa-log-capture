@@ -195,5 +195,48 @@ mark {
 .watch-chip.flash {
     animation: watch-flash 0.4s ease-out;
 }
+#pinned-section {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    max-height: 30vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+.pinned-header {
+    font-size: 10px;
+    padding: 2px 8px;
+    color: var(--vscode-descriptionForeground);
+    font-weight: bold;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.pinned-item {
+    padding: 0 8px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    cursor: pointer;
+}
+.pinned-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.unpin-btn {
+    cursor: pointer;
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    flex-shrink: 0;
+}
+.unpin-btn:hover {
+    color: var(--vscode-errorForeground, #f44);
+}
+.pinned-text {
+    flex: 1;
+    overflow: hidden;
+}
 `;
 }
