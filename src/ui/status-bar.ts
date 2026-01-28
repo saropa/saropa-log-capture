@@ -4,6 +4,7 @@ export class StatusBar implements vscode.Disposable {
     private readonly item: vscode.StatusBarItem;
     private lineCount = 0;
     private paused = false;
+    private watchCounts = new Map<string, number>();
 
     constructor() {
         this.item = vscode.window.createStatusBarItem(
@@ -37,14 +38,31 @@ export class StatusBar implements vscode.Disposable {
         this.updateText();
     }
 
+    /** Update keyword watch hit counts shown in the status bar. */
+    updateWatchCounts(counts: ReadonlyMap<string, number>): void {
+        this.watchCounts = new Map(counts);
+        this.updateText();
+    }
+
     private updateText(): void {
+        const watchSuffix = this.buildWatchSuffix();
         if (this.paused) {
-            this.item.text = `$(debug-pause) Paused (${this.lineCount} lines)`;
+            this.item.text = `$(debug-pause) Paused (${this.lineCount} lines)${watchSuffix}`;
             this.item.tooltip = 'Saropa Log Capture: Paused. Click to resume.';
         } else {
-            this.item.text = `$(record) ${this.lineCount} lines`;
+            this.item.text = `$(record) ${this.lineCount} lines${watchSuffix}`;
             this.item.tooltip = 'Saropa Log Capture: Recording. Click to pause.';
         }
+    }
+
+    private buildWatchSuffix(): string {
+        const parts: string[] = [];
+        for (const [label, count] of this.watchCounts) {
+            if (count > 0) {
+                parts.push(`${label}: ${count}`);
+            }
+        }
+        return parts.length > 0 ? ` | ${parts.join(' | ')}` : '';
     }
 
     dispose(): void {
