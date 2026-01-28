@@ -8,6 +8,7 @@ import { checkGitignore } from './gitignore-checker';
 import { StatusBar } from '../ui/status-bar';
 import { KeywordWatcher } from './keyword-watcher';
 import { FloodGuard } from './flood-guard';
+import { ExclusionRule, parseExclusionPattern, testExclusion } from './exclusion-matcher';
 
 /** Data object passed to line listeners for each log line. */
 export interface LineData {
@@ -38,6 +39,7 @@ export class SessionManagerImpl implements SessionManager {
     private readonly splitListeners: SplitListener[] = [];
     private watcher: KeywordWatcher;
     private readonly floodGuard = new FloodGuard();
+    private exclusionRules: ExclusionRule[] = [];
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -98,8 +100,8 @@ export class SessionManagerImpl implements SessionManager {
             return;
         }
 
-        // Apply exclusions early to avoid processing noise
-        if (matchesExclusion(text, config.exclusions)) {
+        // Apply exclusions early to avoid processing noise (uses pre-compiled rules)
+        if (testExclusion(text, this.exclusionRules)) {
             return;
         }
 
@@ -180,6 +182,11 @@ export class SessionManagerImpl implements SessionManager {
             this.broadcastSplit(newUri, partNumber + 1);
             this.outputChannel.appendLine(`File split: Part ${partNumber + 1} at ${newUri.fsPath}`);
         });
+
+        // Pre-compile exclusion patterns for fast matching
+        this.exclusionRules = config.exclusions
+            .map(parseExclusionPattern)
+            .filter((r): r is ExclusionRule => r !== undefined);
 
         try {
             await logSession.start();
@@ -344,22 +351,4 @@ export class SessionManagerImpl implements SessionManager {
 
 function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
-}
-
-/**
- * Check if text matches any exclusion pattern.
- * Plain strings match case-insensitively; /regex/ patterns are supported.
- */
-function matchesExclusion(text: string, exclusions: readonly string[]): boolean {
-    for (const pattern of exclusions) {
-        if (pattern.startsWith('/') && pattern.endsWith('/')) {
-            const regex = new RegExp(pattern.slice(1, -1), 'i');
-            if (regex.test(text)) {
-                return true;
-            }
-        } else if (text.toLowerCase().includes(pattern.toLowerCase())) {
-            return true;
-        }
-    }
-    return false;
 }

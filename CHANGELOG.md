@@ -6,6 +6,16 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added
+
+- Automatic flood protection: detects and suppresses rapid repeated messages (>100/sec) to prevent lockups
+- Early exclusion filtering: exclusion patterns now applied at capture time, not just viewer display
+- Pre-compiled exclusion rules for better performance on high-volume output
+
+### Changed
+
+- License changed from UNLICENSED to MIT for public distribution
+
 ### Added (Iteration D — Timing & Stack Intelligence)
 
 - LineData interface refactor: replaced 7 positional parameters with a single typed object
