@@ -21,11 +21,14 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
     );
-    sessionManager.addLineListener((line, isMarker, lineCount, category) => {
-        viewerProvider.addLine(line, isMarker, lineCount, category);
+    sessionManager.addLineListener((line, isMarker, lineCount, category, sourcePath, sourceLine) => {
+        viewerProvider.addLine(line, isMarker, lineCount, category, sourcePath, sourceLine);
     });
     viewerProvider.setMarkerHandler(() => {
         sessionManager.insertMarker();
+    });
+    viewerProvider.setLinkClickHandler((filePath, line, col, split) => {
+        openSourceFile(filePath, line, col, split);
     });
 
     // DAP tracker for all debug adapters.
@@ -118,4 +121,38 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
     sessionManager?.stopAll();
+}
+
+/** Open a source file at a specific line, optionally in a split editor. */
+async function openSourceFile(filePath: string, line: number, col: number, split: boolean): Promise<void> {
+    const uri = resolveSourceUri(filePath);
+    if (!uri) {
+        return;
+    }
+    const pos = new vscode.Position(Math.max(0, line - 1), Math.max(0, col - 1));
+    const viewColumn = split ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active;
+    try {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc, { selection: new vscode.Range(pos, pos), viewColumn });
+    } catch {
+        // File may not exist on disk — ignore silently.
+    }
+}
+
+/** Resolve a file path from log output to a workspace URI. */
+function resolveSourceUri(filePath: string): vscode.Uri | undefined {
+    if (!filePath) {
+        return undefined;
+    }
+    // Absolute path or drive letter (C:\...).
+    if (filePath.match(/^([/\\]|[a-zA-Z]:)/)) {
+        return vscode.Uri.file(filePath);
+    }
+    // Dart package URI (package:foo/bar.dart) — strip prefix, resolve relative.
+    const stripped = filePath.replace(/^package:[^/]+\//, '');
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (folder) {
+        return vscode.Uri.joinPath(folder.uri, stripped);
+    }
+    return undefined;
 }
