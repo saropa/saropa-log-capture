@@ -26,8 +26,32 @@ function getElapsedPrefix(item, idx) {
     return '<span class="elapsed-time">' + formatElapsed(elapsed) + '</span> ';
 }
 
+var slowGapThreshold = 1000;
+
+function isSlowGap(item, idx) {
+    if (!showElapsed || !item.timestamp || idx === 0) return false;
+    for (var i = idx - 1; i >= 0; i--) {
+        if (allLines[i].timestamp) {
+            return (item.timestamp - allLines[i].timestamp) >= slowGapThreshold;
+        }
+    }
+    return false;
+}
+
+function getSlowGapHtml(item, idx) {
+    if (!isSlowGap(item, idx)) return '';
+    for (var i = idx - 1; i >= 0; i--) {
+        if (allLines[i].timestamp) {
+            var gap = item.timestamp - allLines[i].timestamp;
+            return '<div class="slow-gap">\\u2500\\u2500 ' + formatElapsed(gap) + ' gap \\u2500\\u2500</div>';
+        }
+    }
+    return '';
+}
+
 function handleSetShowElapsed(msg) {
     showElapsed = !!msg.show;
+    if (msg.threshold !== undefined) slowGapThreshold = msg.threshold;
     renderViewport(true);
 }
 `;

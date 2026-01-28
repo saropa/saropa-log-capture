@@ -109,9 +109,10 @@ function renderItem(item, idx) {
         return '<div class="line stack-line' + matchCls + '">' + html + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
+    var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
-    return '<div class="line' + cat + matchCls + '">' + elapsed + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + matchCls + '">' + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
