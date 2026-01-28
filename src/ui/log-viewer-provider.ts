@@ -24,6 +24,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private batchTimer: ReturnType<typeof setInterval> | undefined;
     private onMarkerRequest?: () => void;
     private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
+    private readonly seenCategories = new Set<string>();
 
     constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -120,6 +121,20 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         const lines = this.pendingLines.splice(0);
         const lineCount = lines[lines.length - 1].lineCount;
         this.postMessage({ type: 'addLines', lines, lineCount });
+        this.sendNewCategories(lines);
+    }
+
+    private sendNewCategories(lines: readonly PendingLine[]): void {
+        const newCats: string[] = [];
+        for (const ln of lines) {
+            if (!ln.isMarker && !this.seenCategories.has(ln.category)) {
+                this.seenCategories.add(ln.category);
+                newCats.push(ln.category);
+            }
+        }
+        if (newCats.length > 0) {
+            this.postMessage({ type: 'setCategories', categories: newCats });
+        }
     }
 
     private postMessage(message: unknown): void {
