@@ -25,6 +25,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private onMarkerRequest?: () => void;
     private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
     private onTogglePause?: () => void;
+    private onExclusionAdded?: (pattern: string) => void;
     private readonly seenCategories = new Set<string>();
     private unreadWatchHits = 0;
 
@@ -40,6 +41,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                 this.onMarkerRequest();
             } else if (msg.type === 'togglePause' && this.onTogglePause) {
                 this.onTogglePause();
+            } else if (msg.type === 'exclusionAdded') {
+                this.onExclusionAdded?.(String(msg.pattern ?? ''));
             } else if (msg.type === 'linkClicked' && this.onLinkClick) {
                 this.onLinkClick(
                     String(msg.path ?? ''),
@@ -73,6 +76,16 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Set a callback invoked when the webview requests pause toggle. */
     setTogglePauseHandler(handler: () => void): void {
         this.onTogglePause = handler;
+    }
+
+    /** Set a callback invoked when an exclusion rule is added from the webview. */
+    setExclusionAddedHandler(handler: (pattern: string) => void): void {
+        this.onExclusionAdded = handler;
+    }
+
+    /** Push exclusion patterns to the webview. */
+    setExclusions(patterns: readonly string[]): void {
+        this.postMessage({ type: 'setExclusions', patterns });
     }
 
     /** Set a callback invoked when the webview requests source navigation. */

@@ -250,6 +250,9 @@ window.addEventListener('message', function(event) {
         case 'updateWatchCounts':
             if (typeof handleUpdateWatchCounts === 'function') handleUpdateWatchCounts(msg);
             break;
+        case 'setExclusions':
+            if (typeof handleSetExclusions === 'function') handleSetExclusions(msg);
+            break;
     }
 });
 
