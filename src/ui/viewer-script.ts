@@ -165,6 +165,18 @@ logEl.addEventListener('scroll', function() {
 });
 
 viewportEl.addEventListener('click', function(e) {
+    var link = e.target.closest('.source-link');
+    if (link) {
+        e.preventDefault();
+        vscodeApi.postMessage({
+            type: 'linkClicked',
+            path: link.dataset.path || '',
+            line: parseInt(link.dataset.line || '1'),
+            col: parseInt(link.dataset.col || '1'),
+            splitEditor: e.ctrlKey || e.metaKey,
+        });
+        return;
+    }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         toggleStackGroup(parseInt(header.dataset.gid));

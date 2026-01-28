@@ -24,6 +24,12 @@ body {
     line-height: 1.5;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
+.source-link {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: none;
+    cursor: pointer;
+}
+.source-link:hover { text-decoration: underline; }
 .line.cat-stderr {
     color: var(--vscode-debugConsole-errorForeground, #f44);
 }
