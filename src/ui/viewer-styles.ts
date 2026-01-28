@@ -262,5 +262,12 @@ mark {
     color: var(--vscode-descriptionForeground);
     background: var(--vscode-editor-inactiveSelectionBackground, rgba(255,255,255,0.04));
 }
+.elapsed-time {
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    min-width: 50px;
+    display: inline-block;
+    opacity: 0.7;
+}
 `;
 }

@@ -7,6 +7,7 @@ import { getPinScript } from './viewer-pin';
 import { getExclusionScript } from './viewer-exclusions';
 import { getCopyScript } from './viewer-copy';
 import { getAnnotationScript } from './viewer-annotations';
+import { getTimingScript } from './viewer-timing';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -65,6 +66,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getExclusionScript()}
         ${getCopyScript()}
         ${getAnnotationScript()}
+        ${getTimingScript()}
         ${getSearchScript()}
     </script>
 </body>
