@@ -1,6 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+/** Watch pattern entry from user settings. */
+export interface WatchPatternSetting {
+    readonly keyword: string;
+    readonly alert?: 'flash' | 'badge' | 'none';
+}
+
 export interface SaropaLogCaptureConfig {
     readonly enabled: boolean;
     readonly categories: readonly string[];
@@ -12,6 +18,7 @@ export interface SaropaLogCaptureConfig {
     readonly maxLogFiles: number;
     readonly gitignoreCheck: boolean;
     readonly redactEnvVars: readonly string[];
+    readonly watchPatterns: readonly WatchPatternSetting[];
 }
 
 const SECTION = 'saropaLogCapture';
@@ -29,6 +36,11 @@ export function getConfig(): SaropaLogCaptureConfig {
         maxLogFiles: cfg.get<number>('maxLogFiles', 10),
         gitignoreCheck: cfg.get<boolean>('gitignoreCheck', true),
         redactEnvVars: cfg.get<string[]>('redactEnvVars', []),
+        watchPatterns: cfg.get<WatchPatternSetting[]>('watchPatterns', [
+            { keyword: 'error', alert: 'flash' },
+            { keyword: 'exception', alert: 'flash' },
+            { keyword: 'warning', alert: 'badge' },
+        ]),
     };
 }
 

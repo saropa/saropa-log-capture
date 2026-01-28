@@ -6,6 +6,7 @@ import { LogSession, SessionContext } from './log-session';
 import { enforceFileRetention } from './file-retention';
 import { checkGitignore } from './gitignore-checker';
 import { StatusBar } from '../ui/status-bar';
+import { KeywordWatcher } from './keyword-watcher';
 
 /** Callback for lines written to the log file (used by the viewer). */
 export type LineListener = (
@@ -15,6 +16,7 @@ export type LineListener = (
     category: string,
     sourcePath?: string,
     sourceLine?: number,
+    watchHits?: string[],
 ) => void;
 
 /**
@@ -25,11 +27,14 @@ export class SessionManagerImpl implements SessionManager {
     private readonly sessions = new Map<string, LogSession>();
     private readonly ownerSessionIds = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
+    private watcher: KeywordWatcher;
 
     constructor(
         private readonly statusBar: StatusBar,
         private readonly outputChannel: vscode.OutputChannel,
-    ) {}
+    ) {
+        this.watcher = this.createWatcher();
+    }
 
     get activeSessionCount(): number {
         return this.ownerSessionIds.size;
@@ -240,6 +245,16 @@ export class SessionManagerImpl implements SessionManager {
         this.ownerSessionIds.clear();
     }
 
+    /** Get the keyword watcher instance (for external access to counts). */
+    getWatcher(): KeywordWatcher {
+        return this.watcher;
+    }
+
+    /** Recreate the keyword watcher from current config. */
+    refreshWatcher(): void {
+        this.watcher = this.createWatcher();
+    }
+
     private broadcastLine(
         text: string,
         isMarker: boolean,
@@ -248,53 +263,26 @@ export class SessionManagerImpl implements SessionManager {
         sourcePath?: string,
         sourceLine?: number,
     ): void {
+        const hits = isMarker ? [] : this.watcher.testLine(text);
+        const hitLabels = hits.length > 0 ? hits.map(h => h.label) : undefined;
         for (const listener of this.lineListeners) {
-            listener(text, isMarker, lineCount, category, sourcePath, sourceLine);
+            listener(text, isMarker, lineCount, category, sourcePath, sourceLine, hitLabels);
         }
+        if (hits.some(h => h.alert === 'flash' || h.alert === 'badge')) {
+            this.statusBar.updateWatchCounts(this.watcher.getCounts());
+        }
+    }
+
+    private createWatcher(): KeywordWatcher {
+        const config = getConfig();
+        const patterns = config.watchPatterns.map(p => ({
+            keyword: p.keyword,
+            alert: p.alert ?? 'flash' as const,
+        }));
+        return new KeywordWatcher(patterns);
     }
 }
 
 function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
-}
-
-/** Show a quick pick to delete log files from the reports directory. */
-export async function handleDeleteCommand(): Promise<void> {
-    const folder = getWorkspaceFolder();
-    if (!folder) {
-        return;
-    }
-
-    const logDirUri = getLogDirectoryUri(folder);
-
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDirUri);
-    } catch {
-        vscode.window.showInformationMessage('No log files found.');
-        return;
-    }
-
-    const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'))
-        .map(([name]) => name)
-        .sort()
-        .reverse();
-
-    if (logFiles.length === 0) {
-        vscode.window.showInformationMessage('No log files found.');
-        return;
-    }
-
-    const selected = await vscode.window.showQuickPick(logFiles, {
-        placeHolder: 'Select log file(s) to delete',
-        canPickMany: true,
-    });
-
-    if (selected && selected.length > 0) {
-        for (const file of selected) {
-            await vscode.workspace.fs.delete(vscode.Uri.joinPath(logDirUri, file));
-        }
-        vscode.window.showInformationMessage(`Deleted ${selected.length} log file(s).`);
-    }
 }
