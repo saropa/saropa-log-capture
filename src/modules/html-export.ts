@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from './ansi';
+import { SessionMetadataStore } from './session-metadata';
 
 /**
  * Export a .log file to a styled .html file alongside it.
+ * Includes annotations from sidecar metadata if present.
  * Returns the URI of the generated HTML file.
  */
 export async function exportToHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
@@ -12,13 +14,29 @@ export async function exportToHtml(logUri: vscode.Uri): Promise<vscode.Uri> {
 
     const { headerLines, bodyLines } = splitHeader(lines);
     const headerHtml = headerLines.map(l => escapeHtml(l)).join('\n');
-    const bodyHtml = bodyLines.map(l => ansiToHtml(l)).join('\n');
+
+    const store = new SessionMetadataStore();
+    const annotations = await store.getAnnotations(logUri);
+    const annotationMap = new Map(annotations.map(a => [a.lineIndex, a.text]));
+    const bodyHtml = buildBodyWithAnnotations(bodyLines, annotationMap);
 
     const htmlPath = logUri.fsPath.replace(/\.log$/, '.html');
     const htmlUri = vscode.Uri.file(htmlPath);
     const content = buildHtmlDocument(headerHtml, bodyHtml);
     await vscode.workspace.fs.writeFile(htmlUri, Buffer.from(content, 'utf-8'));
     return htmlUri;
+}
+
+function buildBodyWithAnnotations(lines: string[], annotations: Map<number, string>): string {
+    const parts: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+        parts.push(ansiToHtml(lines[i]));
+        const ann = annotations.get(i);
+        if (ann) {
+            parts.push(`<span class="annotation">[Note: ${escapeHtml(ann)}]</span>`);
+        }
+    }
+    return parts.join('\n');
 }
 
 function splitHeader(lines: string[]): { headerLines: string[]; bodyLines: string[] } {
@@ -65,6 +83,7 @@ summary {
     color: #9cdcfe;
 }
 .body-block { padding: 0; }
+.annotation { color: #6a9955; font-style: italic; }
 </style>
 </head>
 <body>
