@@ -6,6 +6,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration C — Session Management)
+
+- Session metadata stored as sidecar `.meta.json` files alongside `.log` files
+- Rename session: right-click → Rename Session to set a display name
+- Tag session: right-click → Tag Session to add comma-separated tags (shown as `#tag` in tree)
+- Log line annotations: press `N` to annotate the center line, muted italic text shown below
+- Annotations persist in `.meta.json` and are included in HTML export
+- `renameSession` and `tagSession` commands with context menu entries
+
 ### Added (Iteration B — Pinning, Exclusions, Copy)
 
 - Pin/unpin log entries: press `P` to pin the center line, pinned lines appear in a sticky section above the scroll area
