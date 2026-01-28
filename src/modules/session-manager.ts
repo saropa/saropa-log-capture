@@ -8,16 +8,20 @@ import { checkGitignore } from './gitignore-checker';
 import { StatusBar } from '../ui/status-bar';
 import { KeywordWatcher } from './keyword-watcher';
 
+/** Data object passed to line listeners for each log line. */
+export interface LineData {
+    readonly text: string;
+    readonly isMarker: boolean;
+    readonly lineCount: number;
+    readonly category: string;
+    readonly timestamp: Date;
+    readonly sourcePath?: string;
+    readonly sourceLine?: number;
+    readonly watchHits?: string[];
+}
+
 /** Callback for lines written to the log file (used by the viewer). */
-export type LineListener = (
-    line: string,
-    isMarker: boolean,
-    lineCount: number,
-    category: string,
-    sourcePath?: string,
-    sourceLine?: number,
-    watchHits?: string[],
-) => void;
+export type LineListener = (data: LineData) => void;
 
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
@@ -75,8 +79,12 @@ export class SessionManagerImpl implements SessionManager {
             return;
         }
 
-        session.appendLine(text, category, new Date());
-        this.broadcastLine(text, false, session.lineCount, category, body.source?.path, body.line);
+        const now = new Date();
+        session.appendLine(text, category, now);
+        this.broadcastLine({
+            text, isMarker: false, lineCount: session.lineCount,
+            category, timestamp: now, sourcePath: body.source?.path, sourceLine: body.line,
+        });
     }
 
     /** Start capturing a debug session. */
@@ -200,7 +208,10 @@ export class SessionManagerImpl implements SessionManager {
         }
         const markerText = logSession.appendMarker(customText);
         if (markerText) {
-            this.broadcastLine(markerText, true, logSession.lineCount, 'marker');
+            this.broadcastLine({
+                text: markerText, isMarker: true, lineCount: logSession.lineCount,
+                category: 'marker', timestamp: new Date(),
+            });
         }
     }
 
@@ -255,18 +266,12 @@ export class SessionManagerImpl implements SessionManager {
         this.watcher = this.createWatcher();
     }
 
-    private broadcastLine(
-        text: string,
-        isMarker: boolean,
-        lineCount: number,
-        category: string,
-        sourcePath?: string,
-        sourceLine?: number,
-    ): void {
-        const hits = isMarker ? [] : this.watcher.testLine(text);
-        const hitLabels = hits.length > 0 ? hits.map(h => h.label) : undefined;
+    private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
+        const hits = data.isMarker ? [] : this.watcher.testLine(data.text);
+        const watchHits = hits.length > 0 ? hits.map(h => h.label) : undefined;
+        const lineData: LineData = { ...data, watchHits };
         for (const listener of this.lineListeners) {
-            listener(text, isMarker, lineCount, category, sourcePath, sourceLine, hitLabels);
+            listener(lineData);
         }
         if (hits.some(h => h.alert === 'flash' || h.alert === 'badge')) {
             this.statusBar.updateWatchCounts(this.watcher.getCounts());
