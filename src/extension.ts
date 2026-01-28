@@ -14,8 +14,12 @@ import { createUriHandler, copyDeepLinkToClipboard } from './modules/deep-links'
 import { loadPresets, promptSavePreset, pickPreset } from './modules/filter-presets';
 import { InlineDecorationsProvider } from './ui/inline-decorations';
 import { extractSourceReference } from './modules/source-linker';
+import { getComparisonPanel, disposeComparisonPanel } from './ui/session-comparison';
+import { pickTemplate, promptSaveTemplate, applyTemplate } from './modules/session-templates';
 
 let sessionManager: SessionManagerImpl;
+/** URI of session marked for comparison (first selection). */
+let comparisonMarkUri: vscode.Uri | undefined;
 let inlineDecorations: InlineDecorationsProvider;
 let viewerProvider: LogViewerProvider;
 let historyProvider: SessionHistoryProvider;
@@ -375,11 +379,106 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 `Inline log decorations ${enabled ? 'enabled' : 'disabled'}`,
             );
         }),
+
+        vscode.commands.registerCommand('saropaLogCapture.markForComparison', (item: { uri: vscode.Uri; filename: string }) => {
+            if (!item?.uri) {
+                return;
+            }
+            comparisonMarkUri = item.uri;
+            vscode.window.showInformationMessage(`Marked "${item.filename}" for comparison. Select another session to compare.`);
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.compareWithMarked', async (item: { uri: vscode.Uri; filename: string }) => {
+            if (!item?.uri) {
+                return;
+            }
+            if (!comparisonMarkUri) {
+                vscode.window.showWarningMessage('No session marked for comparison. Right-click a session and select "Mark for Comparison" first.');
+                return;
+            }
+            if (comparisonMarkUri.fsPath === item.uri.fsPath) {
+                vscode.window.showWarningMessage('Cannot compare a session with itself.');
+                return;
+            }
+            const panel = getComparisonPanel(context.extensionUri);
+            await panel.compare(comparisonMarkUri, item.uri);
+            comparisonMarkUri = undefined;
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.compareSessions', async () => {
+            // Quick pick to select two sessions
+            const sessions = await pickTwoSessions();
+            if (sessions) {
+                const panel = getComparisonPanel(context.extensionUri);
+                await panel.compare(sessions[0], sessions[1]);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.applyTemplate', async () => {
+            const template = await pickTemplate();
+            if (template) {
+                await applyTemplate(template);
+                vscode.window.showInformationMessage(`Template "${template.name}" applied.`);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => {
+            await promptSaveTemplate();
+        }),
     );
 }
 
 export function deactivate(): void {
     sessionManager?.stopAll();
+    disposeComparisonPanel();
+}
+
+/**
+ * Show Quick Pick to select two sessions for comparison.
+ */
+async function pickTwoSessions(): Promise<[vscode.Uri, vscode.Uri] | undefined> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+        return undefined;
+    }
+
+    const logDir = getLogDirectoryUri(folder);
+    let entries: [string, vscode.FileType][];
+    try {
+        entries = await vscode.workspace.fs.readDirectory(logDir);
+    } catch {
+        vscode.window.showWarningMessage('No log sessions found.');
+        return undefined;
+    }
+
+    const logFiles = entries
+        .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'))
+        .map(([name]) => ({ label: name, uri: vscode.Uri.joinPath(logDir, name) }))
+        .sort((a, b) => b.label.localeCompare(a.label));
+
+    if (logFiles.length < 2) {
+        vscode.window.showWarningMessage('Need at least 2 sessions to compare.');
+        return undefined;
+    }
+
+    const first = await vscode.window.showQuickPick(logFiles, {
+        placeHolder: 'Select FIRST session to compare',
+        title: 'Compare Sessions (1/2)',
+    });
+    if (!first) {
+        return undefined;
+    }
+
+    const remaining = logFiles.filter(f => f.uri.fsPath !== first.uri.fsPath);
+    const second = await vscode.window.showQuickPick(remaining, {
+        placeHolder: 'Select SECOND session to compare',
+        title: 'Compare Sessions (2/2)',
+    });
+    if (!second) {
+        return undefined;
+    }
+
+    return [first.uri, second.uri];
 }
 
 /** Open a source file at a specific line, optionally in a split editor. */
