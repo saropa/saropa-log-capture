@@ -101,6 +101,15 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         this.postMessage({ type: 'setPaused', paused });
     }
 
+    /** Send keyword watch hit counts to the webview footer. */
+    updateWatchCounts(counts: ReadonlyMap<string, number>): void {
+        const obj: Record<string, number> = {};
+        for (const [label, count] of counts) {
+            obj[label] = count;
+        }
+        this.postMessage({ type: 'updateWatchCounts', counts: obj });
+    }
+
     /** Set the active log filename displayed in the footer. */
     setFilename(filename: string): void {
         this.postMessage({ type: 'setFilename', filename });

@@ -247,6 +247,9 @@ window.addEventListener('message', function(event) {
         case 'setCategories':
             handleSetCategories(msg);
             break;
+        case 'updateWatchCounts':
+            if (typeof handleUpdateWatchCounts === 'function') handleUpdateWatchCounts(msg);
+            break;
     }
 });
 
