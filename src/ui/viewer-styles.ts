@@ -342,5 +342,36 @@ mark {
     color: var(--vscode-descriptionForeground);
     font-style: italic;
 }
+#split-breadcrumb {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+}
+#split-breadcrumb.visible { display: flex; }
+#split-breadcrumb .part-label {
+    font-weight: bold;
+}
+#split-breadcrumb button {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+#split-breadcrumb button:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
+#split-breadcrumb button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
 `;
 }

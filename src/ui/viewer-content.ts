@@ -11,6 +11,7 @@ import { getTimingScript } from './viewer-timing';
 import { getStackFilterScript } from './viewer-stack-filter';
 import { getStackDedupScript } from './viewer-stack-dedup';
 import { getSourcePreviewScript } from './viewer-source-preview';
+import { getSplitNavScript } from './viewer-split-nav';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -39,6 +40,11 @@ export function buildViewerHtml(nonce: string): string {
     </style>
 </head>
 <body>
+    <div id="split-breadcrumb">
+        <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>
+        <span class="part-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
+        <button id="split-next" title="Next part" disabled>&#x25B6;</button>
+    </div>
     <div id="pinned-section" style="display:none"></div>
     <div id="log-content">
         <div id="spacer-top"></div>
@@ -75,6 +81,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getStackDedupScript()}
         ${getStackFilterScript()}
         ${getSourcePreviewScript()}
+        ${getSplitNavScript()}
         ${getSearchScript()}
     </script>
 </body>

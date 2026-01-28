@@ -108,6 +108,11 @@
         "command": "saropaLogCapture.tagSession",
         "title": "Tag Session",
         "icon": "$(tag)"
+      },
+      {
+        "command": "saropaLogCapture.splitNow",
+        "title": "Saropa Log Capture: Split Log File Now",
+        "icon": "$(split-horizontal)"
       }
     ],
     "viewsContainers": {
@@ -276,6 +281,49 @@
           "default": 1000,
           "minimum": 100,
           "description": "Elapsed time threshold (ms) for highlighting slow gaps between lines."
+        },
+        "saropaLogCapture.splitRules": {
+          "type": "object",
+          "properties": {
+            "maxLines": {
+              "type": "number",
+              "minimum": 0,
+              "default": 0,
+              "description": "Split file after this many lines. 0 = disabled."
+            },
+            "maxSizeKB": {
+              "type": "number",
+              "minimum": 0,
+              "default": 0,
+              "description": "Split file after this size in KB. 0 = disabled."
+            },
+            "keywords": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "Keywords that trigger a split (e.g., 'HOT RESTART', '/SPLIT/')."
+            },
+            "maxDurationMinutes": {
+              "type": "number",
+              "minimum": 0,
+              "default": 0,
+              "description": "Split file after this many minutes. 0 = disabled."
+            },
+            "silenceMinutes": {
+              "type": "number",
+              "minimum": 0,
+              "default": 0,
+              "description": "Split file after this many minutes of silence. 0 = disabled."
+            }
+          },
+          "default": {
+            "maxLines": 0,
+            "maxSizeKB": 0,
+            "keywords": [],
+            "maxDurationMinutes": 0,
+            "silenceMinutes": 0
+          },
+          "description": "Rules for automatically splitting log files. All values of 0 disable that rule."
         }
       }
     }

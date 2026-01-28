@@ -274,6 +274,9 @@ window.addEventListener('message', function(event) {
         case 'sourcePreview':
             if (typeof handleSourcePreviewResponse === 'function') handleSourcePreviewResponse(msg);
             break;
+        case 'splitInfo':
+            if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
+            break;
     }
 });
 

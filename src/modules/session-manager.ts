@@ -7,6 +7,7 @@ import { enforceFileRetention } from './file-retention';
 import { checkGitignore } from './gitignore-checker';
 import { StatusBar } from '../ui/status-bar';
 import { KeywordWatcher } from './keyword-watcher';
+import { FloodGuard } from './flood-guard';
 
 /** Data object passed to line listeners for each log line. */
 export interface LineData {
@@ -23,6 +24,9 @@ export interface LineData {
 /** Callback for lines written to the log file (used by the viewer). */
 export type LineListener = (data: LineData) => void;
 
+/** Callback for split events (used to update viewer breadcrumb). */
+export type SplitListener = (newUri: vscode.Uri, partNumber: number, totalParts: number) => void;
+
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
  * and broadcasts written lines to registered listeners (e.g. sidebar viewer).
@@ -31,7 +35,9 @@ export class SessionManagerImpl implements SessionManager {
     private readonly sessions = new Map<string, LogSession>();
     private readonly ownerSessionIds = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
+    private readonly splitListeners: SplitListener[] = [];
     private watcher: KeywordWatcher;
+    private readonly floodGuard = new FloodGuard();
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -57,6 +63,19 @@ export class SessionManagerImpl implements SessionManager {
         }
     }
 
+    /** Register a listener for file split events. */
+    addSplitListener(listener: SplitListener): void {
+        this.splitListeners.push(listener);
+    }
+
+    /** Remove a previously registered split listener. */
+    removeSplitListener(listener: SplitListener): void {
+        const idx = this.splitListeners.indexOf(listener);
+        if (idx >= 0) {
+            this.splitListeners.splice(idx, 1);
+        }
+    }
+
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
         const session = this.sessions.get(sessionId);
@@ -79,7 +98,29 @@ export class SessionManagerImpl implements SessionManager {
             return;
         }
 
+        // Apply exclusions early to avoid processing noise
+        if (matchesExclusion(text, config.exclusions)) {
+            return;
+        }
+
+        // Auto-suppress flood of identical messages
+        const floodResult = this.floodGuard.check(text);
+        if (!floodResult.allow) {
+            return;
+        }
+
         const now = new Date();
+
+        // If we suppressed messages, log a summary instead
+        if (floodResult.suppressedCount) {
+            const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
+            session.appendLine(summary, 'system', now);
+            this.broadcastLine({
+                text: summary, isMarker: false, lineCount: session.lineCount,
+                category: 'system', timestamp: now,
+            });
+        }
+
         session.appendLine(text, category, now);
         this.broadcastLine({
             text, isMarker: false, lineCount: session.lineCount,
@@ -134,10 +175,17 @@ export class SessionManagerImpl implements SessionManager {
             this.statusBar.updateLineCount(count);
         });
 
+        // Set up split callback to notify listeners
+        logSession.setSplitCallback((newUri, partNumber) => {
+            this.broadcastSplit(newUri, partNumber + 1);
+            this.outputChannel.appendLine(`File split: Part ${partNumber + 1} at ${newUri.fsPath}`);
+        });
+
         try {
             await logSession.start();
             this.sessions.set(session.id, logSession);
             this.ownerSessionIds.add(session.id);
+            this.floodGuard.reset();
             this.statusBar.show();
             this.outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
         } catch (err) {
@@ -278,6 +326,12 @@ export class SessionManagerImpl implements SessionManager {
         }
     }
 
+    private broadcastSplit(newUri: vscode.Uri, totalParts: number): void {
+        for (const listener of this.splitListeners) {
+            listener(newUri, totalParts, totalParts);
+        }
+    }
+
     private createWatcher(): KeywordWatcher {
         const config = getConfig();
         const patterns = config.watchPatterns.map(p => ({
@@ -290,4 +344,22 @@ export class SessionManagerImpl implements SessionManager {
 
 function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
     return vscode.workspace.workspaceFolders?.[0];
+}
+
+/**
+ * Check if text matches any exclusion pattern.
+ * Plain strings match case-insensitively; /regex/ patterns are supported.
+ */
+function matchesExclusion(text: string, exclusions: readonly string[]): boolean {
+    for (const pattern of exclusions) {
+        if (pattern.startsWith('/') && pattern.endsWith('/')) {
+            const regex = new RegExp(pattern.slice(1, -1), 'i');
+            if (regex.test(text)) {
+                return true;
+            }
+        } else if (text.toLowerCase().includes(pattern.toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
 }
