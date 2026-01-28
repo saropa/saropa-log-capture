@@ -12,9 +12,13 @@
   "engines": {
     "vscode": "^1.108.1"
   },
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "categories": [
     "Debuggers",
-    "Other"
+    "Visualization"
   ],
   "keywords": [
     "debug",
@@ -23,7 +27,10 @@
     "console",
     "output",
     "save",
-    "persist"
+    "persist",
+    "trace",
+    "debug console",
+    "log viewer"
   ],
   "activationEvents": [
     "onDebugAdapterProtocolTracker"

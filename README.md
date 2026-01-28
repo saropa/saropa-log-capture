@@ -5,8 +5,14 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 ## Features
 
 - **Auto-capture** -- Debug Console output is saved to `.log` files automatically when you start debugging. No configuration needed.
-- **Live sidebar viewer** -- Watch captured output in real time in a sidebar panel with auto-scroll and pause-on-scroll.
-- **Insert markers** -- Add visual separators to the log stream to mark test phases or debug attempts.
+- **Live sidebar viewer** -- Watch captured output in real time with virtual scrolling, auto-scroll, and theme support.
+- **Click-to-source** -- Click `file.ts:42` patterns in log output to jump directly to the source line. Ctrl+Click opens in a split editor.
+- **Search** -- Press Ctrl+F to search log output with match highlighting and F3/Shift+F3 navigation.
+- **Category filter** -- Filter output by DAP category (stdout, stderr, console) using the dropdown in the viewer footer.
+- **Insert markers** -- Add visual separators to the log stream to mark test phases or debug attempts. Press M in the viewer.
+- **Collapsible stack traces** -- Stack frames are grouped and collapsed by default. Click to expand.
+- **Session history** -- Browse past log sessions in the sidebar tree view with metadata (adapter type, file size).
+- **HTML export** -- Export any log session to a styled HTML file with ANSI colors preserved.
 - **Context header** -- Every log file starts with session metadata: launch config, VS Code version, OS, debug adapter type.
 - **Deduplication** -- Identical rapid lines are grouped as `Message (x54)` instead of bloating the file.
 - **File retention** -- Oldest log files auto-deleted when the configurable limit is exceeded.
@@ -20,6 +26,19 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 2. Start a debug session (F5)
 3. Output is automatically captured to the `reports/` directory
 4. Open the **Saropa Log Capture** sidebar to view output in real time
+
+## Keyboard Shortcuts (in sidebar viewer)
+
+| Key | Action |
+|-----|--------|
+| Ctrl+F | Open search bar |
+| F3 / Shift+F3 | Next / previous search match |
+| Escape | Close search bar |
+| Space | Toggle pause/resume |
+| W | Toggle word wrap |
+| M | Insert marker |
+| Home | Scroll to top |
+| End | Scroll to bottom |
 
 ## Commands
 
@@ -53,9 +72,9 @@ All settings are prefixed with `saropaLogCapture.`.
 
 ## Known Limitations
 
-- The sidebar viewer caps at 5,000 lines for performance (the file on disk keeps all lines up to `maxLines`)
-- ANSI color codes are stripped in the sidebar viewer (preserved in the `.log` file)
-- HTML output format is not yet implemented
+- The sidebar viewer caps at 50,000 lines for performance (the file on disk keeps all lines up to `maxLines`).
+- Marketplace icon (PNG) must be added manually before publishing.
+- Screenshots must be added manually before publishing.
 
 ## License
 
