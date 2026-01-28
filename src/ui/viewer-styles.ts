@@ -373,5 +373,33 @@ mark {
     opacity: 0.4;
     cursor: default;
 }
+/* JSON collapsible styles */
+.json-collapsible { display: inline; }
+.json-toggle {
+    cursor: pointer;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    font-family: sans-serif;
+    font-size: 10px;
+    padding: 0 4px;
+    user-select: none;
+}
+.json-toggle:hover { color: var(--vscode-textLink-activeForeground, #3794ff); }
+.json-preview {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.95em;
+}
+.json-expanded {
+    display: block;
+    margin: 4px 0 4px 16px;
+    padding: 4px 8px;
+    background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.1));
+    border-left: 2px solid var(--vscode-textBlockQuote-border, #007acc);
+    font-size: 0.95em;
+    line-height: 1.4;
+    white-space: pre;
+    overflow-x: auto;
+}
+.json-expanded.hidden { display: none; }
+.json-preview.hidden { display: none; }
 `;
 }

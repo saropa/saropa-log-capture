@@ -113,6 +113,11 @@
         "command": "saropaLogCapture.splitNow",
         "title": "Saropa Log Capture: Split Log File Now",
         "icon": "$(split-horizontal)"
+      },
+      {
+        "command": "saropaLogCapture.searchLogs",
+        "title": "Saropa Log Capture: Search Log Files",
+        "icon": "$(search)"
       }
     ],
     "viewsContainers": {
