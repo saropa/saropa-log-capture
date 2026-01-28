@@ -22,6 +22,9 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Pin lines** -- Press P to pin important log lines to a sticky section above the scroll area. Click a pinned line to jump to it.
 - **Exclusion filter** -- Hide lines matching string or regex patterns. Toggle exclusions on/off; hidden count shown in footer.
 - **Multi-format copy** -- Shift+click to select lines, Ctrl+C for plain text, Ctrl+Shift+C for markdown fenced code block.
+- **Session renaming** -- Right-click a session to give it a display name.
+- **Session tagging** -- Add tags to sessions; displayed as `#tag` in the tree view.
+- **Line annotations** -- Press N to annotate a log line. Annotations are shown inline and exported to HTML.
 - **Status bar** -- Live line counter, keyword watch hit counts, and pause/resume toggle.
 
 ## Getting Started
@@ -45,6 +48,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 | Shift+Click | Select line range |
 | Ctrl+C | Copy selection as plain text |
 | Ctrl+Shift+C | Copy selection as markdown |
+| N | Annotate center line |
 | Home | Scroll to top |
 | End | Scroll to bottom |
 
