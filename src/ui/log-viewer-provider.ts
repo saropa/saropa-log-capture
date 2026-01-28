@@ -24,6 +24,7 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private batchTimer: ReturnType<typeof setInterval> | undefined;
     private onMarkerRequest?: () => void;
     private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
+    private onTogglePause?: () => void;
     private readonly seenCategories = new Set<string>();
 
     constructor(private readonly extensionUri: vscode.Uri) {}
@@ -36,6 +37,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
         webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => {
             if (msg.type === 'insertMarker' && this.onMarkerRequest) {
                 this.onMarkerRequest();
+            } else if (msg.type === 'togglePause' && this.onTogglePause) {
+                this.onTogglePause();
             } else if (msg.type === 'linkClicked' && this.onLinkClick) {
                 this.onLinkClick(
                     String(msg.path ?? ''),
@@ -57,6 +60,11 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Set a callback invoked when the webview requests a marker insertion. */
     setMarkerHandler(handler: () => void): void {
         this.onMarkerRequest = handler;
+    }
+
+    /** Set a callback invoked when the webview requests pause toggle. */
+    setTogglePauseHandler(handler: () => void): void {
+        this.onTogglePause = handler;
     }
 
     /** Set a callback invoked when the webview requests source navigation. */
