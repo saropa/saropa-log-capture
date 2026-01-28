@@ -123,6 +123,11 @@
         "command": "saropaLogCapture.searchLogs",
         "title": "Saropa Log Capture: Search Log Files",
         "icon": "$(search)"
+      },
+      {
+        "command": "saropaLogCapture.copyDeepLink",
+        "title": "Copy Deep Link",
+        "icon": "$(link)"
       }
     ],
     "viewsContainers": {
@@ -179,6 +184,10 @@
         },
         {
           "command": "saropaLogCapture.tagSession",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.copyDeepLink",
           "when": "viewItem == session"
         }
       ]

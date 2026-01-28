@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration H — Deep Links)
+
+- Deep links: share `vscode://saropa.saropa-log-capture/open?session=<filename>&line=<n>` URLs
+- Copy Deep Link command in session history context menu
+- Paste link in Slack/email → teammate opens exact log session and line in VS Code
+- Works across machines if both have the extension and same log file
+
 ### Added (Iteration F — Interactive HTML Export)
 
 - Interactive HTML export: self-contained HTML file with embedded JavaScript
