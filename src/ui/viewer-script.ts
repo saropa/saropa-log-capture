@@ -187,12 +187,14 @@ viewportEl.addEventListener('click', function(e) {
     }
 });
 
-wrapToggle.addEventListener('click', function() {
+function toggleWrap() {
     wordWrap = !wordWrap;
     logEl.classList.toggle('nowrap', !wordWrap);
     wrapToggle.textContent = wordWrap ? 'No Wrap' : 'Wrap';
     renderViewport(true);
-});
+}
+
+wrapToggle.addEventListener('click', toggleWrap);
 
 function jumpToBottom() {
     logEl.scrollTop = logEl.scrollHeight;
@@ -303,10 +305,16 @@ document.addEventListener('keydown', function(e) {
         if (typeof openSearch === 'function') openSearch();
         return;
     }
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    if (e.key === 'm' || e.key === 'M') {
-        vscodeApi.postMessage({ type: 'insertMarker' });
+    if (e.key === 'Escape') {
+        if (typeof closeSearch === 'function') closeSearch();
+        return;
     }
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
+    else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
+    else if (e.key === 'Home') { logEl.scrollTop = 0; autoScroll = false; }
+    else if (e.key === 'End') { jumpToBottom(); }
+    else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
 });
 `;
 }
