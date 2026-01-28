@@ -11,7 +11,10 @@ interface SessionMetadata {
     readonly lineCount?: number;
     readonly size: number;
     readonly displayName?: string;
+    /** Manually applied tags. */
     readonly tags?: string[];
+    /** Automatically applied tags from auto-tag rules. */
+    readonly autoTags?: string[];
     readonly partNumber?: number;
 }
 
@@ -143,6 +146,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (sidecar.tags && sidecar.tags.length > 0) {
             meta = { ...meta, tags: sidecar.tags };
         }
+        if (sidecar.autoTags && sidecar.autoTags.length > 0) {
+            meta = { ...meta, autoTags: sidecar.autoTags };
+        }
         return meta;
     }
 }
@@ -182,8 +188,13 @@ function buildDescription(item: SessionMetadata): string {
         parts.push(item.adapter);
     }
     parts.push(formatSize(item.size));
+    // Manual tags: #tag
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
+    }
+    // Auto-tags: ~tag (tilde prefix to distinguish from manual tags)
+    if (item.autoTags && item.autoTags.length > 0) {
+        parts.push(item.autoTags.map(t => `~${t}`).join(' '));
     }
     return parts.join(' · ');
 }

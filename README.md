@@ -38,6 +38,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **Session summary** -- End-of-session notification shows stats: duration, lines, file size, watch hits.
 - **Source hover preview** -- Hover over source links to see code context (3 lines before/after).
 - **Deep links** -- Share `vscode://` URLs that open specific log sessions and lines. Copy from context menu.
+- **Auto-tags** -- Automatically tag sessions based on content patterns like "BUILD FAILED" or `/Exception/`. Displayed as `~tag`.
 
 ## Getting Started
 

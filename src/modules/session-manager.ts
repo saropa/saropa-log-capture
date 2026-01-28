@@ -10,6 +10,8 @@ import { KeywordWatcher } from './keyword-watcher';
 import { FloodGuard } from './flood-guard';
 import { ExclusionRule, parseExclusionPattern, testExclusion } from './exclusion-matcher';
 import { generateSummary, showSummaryNotification, SessionStats } from './session-summary';
+import { AutoTagger } from './auto-tagger';
+import { SessionMetadataStore } from './session-metadata';
 
 /** Data object passed to line listeners for each log line. */
 export interface LineData {
@@ -44,6 +46,8 @@ export class SessionManagerImpl implements SessionManager {
     private categoryCounts: Record<string, number> = {};
     private sessionStartTime = 0;
     private floodSuppressedTotal = 0;
+    private autoTagger: AutoTagger | null = null;
+    private readonly metadataStore = new SessionMetadataStore();
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -194,6 +198,9 @@ export class SessionManagerImpl implements SessionManager {
             .map(parseExclusionPattern)
             .filter((r): r is ExclusionRule => r !== undefined);
 
+        // Initialize auto-tagger with rules from config
+        this.autoTagger = new AutoTagger(config.autoTagRules);
+
         try {
             await logSession.start();
             this.sessions.set(session.id, logSession);
@@ -245,6 +252,15 @@ export class SessionManagerImpl implements SessionManager {
             this.outputChannel.appendLine(`Session stopped: ${logSession.fileUri.fsPath}`);
         } catch (err) {
             this.outputChannel.appendLine(`Error stopping log session: ${err}`);
+        }
+
+        // Save auto-tags to session metadata
+        if (this.autoTagger?.hasTriggeredTags()) {
+            const autoTags = this.autoTagger.getTriggeredTags();
+            this.metadataStore.setAutoTags(logSession.fileUri, autoTags).catch(err => {
+                this.outputChannel.appendLine(`Failed to save auto-tags: ${err}`);
+            });
+            this.outputChannel.appendLine(`Auto-tags applied: ${autoTags.join(', ')}`);
         }
 
         if (this.ownerSessionIds.size === 0) {
@@ -360,6 +376,10 @@ export class SessionManagerImpl implements SessionManager {
         }
         if (hits.some(h => h.alert === 'flash' || h.alert === 'badge')) {
             this.statusBar.updateWatchCounts(this.watcher.getCounts());
+        }
+        // Process line for auto-tagging (non-blocking, fire-and-forget)
+        if (!data.isMarker && this.autoTagger) {
+            this.autoTagger.processLine(data.text);
         }
     }
 
