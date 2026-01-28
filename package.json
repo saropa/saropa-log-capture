@@ -168,6 +168,21 @@
         "command": "saropaLogCapture.saveTemplate",
         "title": "Saropa Log Capture: Save Settings as Template",
         "icon": "$(save-as)"
+      },
+      {
+        "command": "saropaLogCapture.exportCsv",
+        "title": "Export as CSV",
+        "icon": "$(file)"
+      },
+      {
+        "command": "saropaLogCapture.exportJson",
+        "title": "Export as JSON",
+        "icon": "$(json)"
+      },
+      {
+        "command": "saropaLogCapture.exportJsonl",
+        "title": "Export as JSONL",
+        "icon": "$(list-flat)"
       }
     ],
     "viewsContainers": {
@@ -217,6 +232,21 @@
         {
           "command": "saropaLogCapture.exportHtmlInteractive",
           "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.exportCsv",
+          "when": "viewItem == session",
+          "group": "export"
+        },
+        {
+          "command": "saropaLogCapture.exportJson",
+          "when": "viewItem == session",
+          "group": "export"
+        },
+        {
+          "command": "saropaLogCapture.exportJsonl",
+          "when": "viewItem == session",
+          "group": "export"
         },
         {
           "command": "saropaLogCapture.renameSession",
