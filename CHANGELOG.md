@@ -6,6 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration F — Interactive HTML Export)
+
+- Interactive HTML export: self-contained HTML file with embedded JavaScript
+- Search in exported HTML: Ctrl+F to open search, F3/Shift+F3 for next/previous match
+- Category filter dropdown: filter log lines by DAP category (stdout, stderr, console)
+- Collapsible stack traces: click header to expand/collapse stack frames
+- Collapsible JSON: inline JSON objects/arrays expand to pretty-printed view
+- Theme toggle: switch between dark and light themes in exported HTML
+- Context menu option: "Export as HTML (Interactive)" in session history
+- Standalone file: works offline, no external dependencies
+
 ### Added (Iteration G — Search + Analytics)
 
 - Cross-session search: `Saropa Log Capture: Search Log Files` command (Ctrl+Shift+P) with Quick Pick UI

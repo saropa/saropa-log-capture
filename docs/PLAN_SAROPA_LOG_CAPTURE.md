@@ -851,6 +851,13 @@ Features for mature adoption and enterprise use.
 
 **Iterations A-E:** Complete. Keyword watch, pinning, exclusions, copy formats, session tagging, timing markers, stack trace intelligence, file rename on session rename, stack frame hover preview, auto file split with rule engine, split session history grouping, viewer breadcrumb navigation.
 
+**Iteration G (Search + Analytics):** Complete.
+- Cross-session search via Quick Pick with regex support
+- Search index manager for file metadata tracking
+- JSON log detection with collapsible inline rendering
+- End-of-session summary notification (duration, lines, size, watch hits)
+- Error rate alert engine (utility module, not wired into session manager)
+
 ---
 
 ### Marketplace Icon Requirements
@@ -923,20 +930,20 @@ The `galleryBanner.color` sets the header background on the marketplace page. Th
 | 70 | Multi-session side-by-side WebviewPanel (editor area) | Compare UI |
 | 71 | Synchronized scrolling by timestamp proximity | Sync scroll |
 | 72 | Color diff (unique lines per session highlighted) | Visual diff |
-| 73 | Interactive HTML export (embedded JS: search, filter, expand, theme toggle) | Rich HTML |
+| 73 | ~~Interactive HTML export (embedded JS: search, filter, expand, theme toggle)~~ | ✅ Done |
 | 74 | .slc session bundle (ZIP: logs + metadata + split info + annotations + pins) | Session package |
 | 75 | .slc import — drag-and-drop or command, appears in history | Import |
 | 76 | Additional export formats: CSV, JSON, JSONL | Data export |
 
-#### Iteration G: Search + Analytics (Tier 4)
+#### ~~Iteration G: Search + Analytics (Tier 4)~~ ✅ COMPLETE
 
-| # | Task | Delivers |
+| # | Task | Status |
 |---|---|---|
-| 77 | Cross-session search via Quick Pick (results grouped by session) | Global search |
-| 78 | Lazy on-disk indexing (indexed on first search, cached) | Performance |
-| 79 | Structured JSON log detection and collapsible inline rendering | JSON parsing |
-| 80 | End-of-session summary (lines, errors, warnings, duration, throughput, top messages) | Summary |
-| 81 | Error rate alert engine (sliding window, spike detection, rate in status bar) | Rate alerts |
+| 77 | Cross-session search via Quick Pick (results grouped by session) | ✅ Done |
+| 78 | Lazy on-disk indexing (indexed on first search, cached) | ✅ Done |
+| 79 | Structured JSON log detection and collapsible inline rendering | ✅ Done |
+| 80 | End-of-session summary (lines, errors, warnings, duration, throughput, top messages) | ✅ Done |
+| 81 | Error rate alert engine (sliding window, spike detection, rate in status bar) | ✅ Done (utility module) |
 
 #### Iteration H: Polish + Ecosystem (Tier 4-5)
 
