@@ -1,3 +1,5 @@
+![Saropa Log Capture banner](https://raw.githubusercontent.com/saropa/saropa_lints/main/images/banner.png)
+
 # Saropa Log Capture
 
 Automatically capture VS Code Debug Console output to persistent log files on disk, with a real-time sidebar viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, etc.).
@@ -15,6 +17,7 @@ Automatically capture VS Code Debug Console output to persistent log files on di
 - **HTML export** -- Export any log session to a styled HTML file with ANSI colors preserved.
 - **Context header** -- Every log file starts with session metadata: launch config, VS Code version, OS, debug adapter type.
 - **Deduplication** -- Identical rapid lines are grouped as `Message (x54)` instead of bloating the file.
+- **Flood protection** -- Automatic suppression of rapid repeated messages (>100/sec) prevents lockups from noisy debug adapters.
 - **File retention** -- Oldest log files auto-deleted when the configurable limit is exceeded.
 - **Gitignore safety** -- On first run, offers to add the log directory to `.gitignore`.
 - **ANSI preservation** -- Raw ANSI escape codes are kept in `.log` files for external tools like `less -R`.
@@ -97,4 +100,4 @@ All settings are prefixed with `saropaLogCapture.`.
 
 ## License
 
-UNLICENSED (proprietary)
+MIT
