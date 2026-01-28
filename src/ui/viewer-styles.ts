@@ -168,5 +168,25 @@ mark {
 .search-match {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.1));
 }
+#watch-counts {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.watch-chip {
+    display: inline-block;
+    font-size: 10px;
+    padding: 0 5px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.watch-error {
+    background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.2));
+    color: var(--vscode-errorForeground, #f44);
+}
+.watch-warn {
+    background: var(--vscode-inputValidation-warningBackground, rgba(255, 204, 0, 0.2));
+    color: var(--vscode-editorWarning-foreground, #fc0);
+}
 `;
 }
