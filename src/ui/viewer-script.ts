@@ -93,20 +93,23 @@ function trimData() {
     activeGroupHeader = null;
 }
 
-function renderItem(item) {
+function renderItem(item, idx) {
+    var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
+    var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
+        : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
     if (item.type === 'marker') {
-        return '<div class="marker">' + item.html + '</div>';
+        return '<div class="marker">' + html + '</div>';
     }
     if (item.type === 'stack-header') {
         var ch = item.collapsed ? '\\u25b6' : '\\u25bc';
         var sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
-        return '<div class="stack-header" data-gid="' + item.groupId + '">' + ch + ' ' + item.html.trim() + sf + '</div>';
+        return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + sf + '</div>';
     }
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line">' + item.html + '</div>';
+        return '<div class="line stack-line' + matchCls + '">' + html + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
-    return '<div class="line' + cat + '">' + item.html + '</div>';
+    return '<div class="line' + cat + matchCls + '">' + html + '</div>';
 }
 
 function renderViewport(force) {
@@ -132,7 +135,7 @@ function renderViewport(force) {
     var endIdx = startIdx;
     for (var i = startIdx; i < allLines.length; i++) {
         if (allLines[i].height === 0) { endIdx = i; continue; }
-        parts.push(renderItem(allLines[i]));
+        parts.push(renderItem(allLines[i], i));
         renderH += allLines[i].height;
         endIdx = i;
         if (startOffset + renderH > bottomTarget) break;
@@ -243,6 +246,11 @@ window.addEventListener('message', function(event) {
 });
 
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
+        e.preventDefault();
+        if (typeof openSearch === 'function') openSearch();
+        return;
+    }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === 'm' || e.key === 'M') {
         vscodeApi.postMessage({ type: 'insertMarker' });
