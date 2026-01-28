@@ -262,6 +262,14 @@ mark {
     color: var(--vscode-descriptionForeground);
     background: var(--vscode-editor-inactiveSelectionBackground, rgba(255,255,255,0.04));
 }
+.slow-gap {
+    text-align: center;
+    color: var(--vscode-editorWarning-foreground, #fc0);
+    font-size: 10px;
+    padding: 2px 0;
+    opacity: 0.7;
+    border-top: 1px dashed var(--vscode-editorWarning-foreground, rgba(252, 192, 0, 0.3));
+}
 .elapsed-time {
     color: var(--vscode-descriptionForeground);
     font-size: 10px;

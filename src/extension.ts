@@ -94,9 +94,12 @@ export function activate(context: vscode.ExtensionContext): void {
             if (filename) {
                 viewerProvider.setFilename(filename);
             }
-            const exclusions = getConfig().exclusions;
-            if (exclusions.length > 0) {
-                viewerProvider.setExclusions(exclusions);
+            const cfg = getConfig();
+            if (cfg.exclusions.length > 0) {
+                viewerProvider.setExclusions(cfg.exclusions);
+            }
+            if (cfg.showElapsedTime) {
+                viewerProvider.setShowElapsed(true);
             }
             historyProvider.setActiveUri(sessionManager.getActiveSession()?.fileUri);
             historyProvider.refresh();
