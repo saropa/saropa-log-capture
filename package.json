@@ -85,6 +85,11 @@
         "command": "saropaLogCapture.deleteSession",
         "title": "Delete Log File",
         "icon": "$(trash)"
+      },
+      {
+        "command": "saropaLogCapture.exportHtml",
+        "title": "Export as HTML",
+        "icon": "$(file-code)"
       }
     ],
     "viewsContainers": {
@@ -125,6 +130,10 @@
         },
         {
           "command": "saropaLogCapture.deleteSession",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.exportHtml",
           "when": "viewItem == session"
         }
       ]
