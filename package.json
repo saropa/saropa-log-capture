@@ -214,6 +214,31 @@
           },
           "default": [],
           "description": "Environment variable name patterns to redact from context headers. Supports * wildcards (e.g. API_KEY, SECRET_*)."
+        },
+        "saropaLogCapture.watchPatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "description": "Text or /regex/ pattern to watch for in log output."
+              },
+              "alert": {
+                "type": "string",
+                "enum": ["flash", "badge", "none"],
+                "default": "flash",
+                "description": "Alert type: flash (visual pulse), badge (sidebar count), none (counter only)."
+              }
+            },
+            "required": ["keyword"]
+          },
+          "default": [
+            { "keyword": "error", "alert": "flash" },
+            { "keyword": "exception", "alert": "flash" },
+            { "keyword": "warning", "alert": "badge" }
+          ],
+          "description": "Keywords to watch for in log output. Each entry has a keyword (string or /regex/) and alert type."
         }
       }
     }
