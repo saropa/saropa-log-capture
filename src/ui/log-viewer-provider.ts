@@ -6,6 +6,7 @@ import { getNonce, buildViewerHtml } from './viewer-content';
 import { LineData } from '../modules/session-manager';
 import { isFrameworkFrame } from '../modules/stack-parser';
 import { HighlightRule } from '../modules/highlight-rules';
+import { FilterPreset } from '../modules/filter-presets';
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -45,7 +46,11 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     private onTogglePause?: () => void;
     private onExclusionAdded?: (pattern: string) => void;
     private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
+    private onSearchCodebase?: (text: string) => void;
+    private onSearchSessions?: (text: string) => void;
+    private onAddToWatch?: (text: string) => void;
     private onPartNavigate?: (part: number) => void;
+    private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
     private readonly seenCategories = new Set<string>();
     private unreadWatchHits = 0;
 
@@ -63,8 +68,15 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                 this.onTogglePause();
             } else if (msg.type === 'copyToClipboard') {
                 vscode.env.clipboard.writeText(String(msg.text ?? ''));
-            } else if (msg.type === 'exclusionAdded') {
-                this.onExclusionAdded?.(String(msg.pattern ?? ''));
+            } else if (msg.type === 'exclusionAdded' || msg.type === 'addToExclusion') {
+                const pattern = String(msg.pattern ?? msg.text ?? '');
+                this.onExclusionAdded?.(pattern);
+            } else if (msg.type === 'searchCodebase') {
+                this.onSearchCodebase?.(String(msg.text ?? ''));
+            } else if (msg.type === 'searchSessions') {
+                this.onSearchSessions?.(String(msg.text ?? ''));
+            } else if (msg.type === 'addToWatch') {
+                this.onAddToWatch?.(String(msg.text ?? ''));
             } else if (msg.type === 'promptAnnotation') {
                 this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ''));
             } else if (msg.type === 'linkClicked' && this.onLinkClick) {
@@ -81,6 +93,8 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                 );
             } else if (msg.type === 'navigatePart' && this.onPartNavigate) {
                 this.onPartNavigate(Number(msg.part ?? 1));
+            } else if (msg.type === 'savePresetRequest' && this.onSavePresetRequest) {
+                this.onSavePresetRequest(msg.filters as Record<string, unknown> ?? {});
             }
         });
 
@@ -122,6 +136,21 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     /** Set a callback for annotation prompts from the webview. */
     setAnnotationPromptHandler(handler: (lineIndex: number, current: string) => void): void {
         this.onAnnotationPrompt = handler;
+    }
+
+    /** Set a callback for searching the codebase from context menu. */
+    setSearchCodebaseHandler(handler: (text: string) => void): void {
+        this.onSearchCodebase = handler;
+    }
+
+    /** Set a callback for searching past sessions from context menu. */
+    setSearchSessionsHandler(handler: (text: string) => void): void {
+        this.onSearchSessions = handler;
+    }
+
+    /** Set a callback for adding a pattern to the watch list from context menu. */
+    setAddToWatchHandler(handler: (text: string) => void): void {
+        this.onAddToWatch = handler;
     }
 
     /** Send annotation text to the webview for a specific line. */
@@ -210,6 +239,25 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     setHighlightRules(rules: readonly HighlightRule[]): void {
         const serialized = this.serializeHighlightRules(rules);
         this.postMessage({ type: 'setHighlightRules', rules: serialized });
+    }
+
+    /**
+     * Send filter presets to the webview for the dropdown.
+     *
+     * @param presets - Array of filter presets from configuration
+     */
+    setPresets(presets: readonly FilterPreset[]): void {
+        this.postMessage({ type: 'setPresets', presets });
+    }
+
+    /** Apply a preset by name in the viewer. */
+    applyPreset(name: string): void {
+        this.postMessage({ type: 'applyPreset', name });
+    }
+
+    /** Set a callback for when the user requests to save current filters as preset. */
+    setSavePresetRequestHandler(handler: (filters: Record<string, unknown>) => void): void {
+        this.onSavePresetRequest = handler;
     }
 
     /**

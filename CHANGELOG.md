@@ -6,6 +6,27 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration J — Presets & Quick Actions)
+
+- Filter presets: save and apply combinations of category filters, search patterns, and exclusion states
+- Built-in presets: "Errors Only", "Warnings & Errors", "No Framework Noise"
+- Preset dropdown in viewer footer for quick filter switching
+- Save current filters as a new preset via context menu or command
+- Commands: `applyPreset`, `savePreset` for programmatic preset control
+- `filterPresets` setting for custom user-defined presets
+- Quick actions context menu: right-click log lines for common actions
+- Context menu actions: Copy Line, Search Codebase, Search Past Sessions
+- Context menu actions: Open Source File, Pin Line, Add Note
+- Context menu actions: Add to Watch List, Add to Exclusions
+- Codicon icons in context menu for visual clarity
+- First-run walkthrough: guided onboarding experience for new users
+- Walkthrough covers: starting debug, opening viewer, keyboard shortcuts, history, settings
+- Walkthrough accessible via Help > Get Started or Welcome tab
+- Inline code decorations: show log indicators next to source lines in the editor
+- Decorations show hit count (x3) and preview of last logged text
+- Toggle decorations via `Saropa Log Capture: Toggle Inline Log Decorations` command
+- Decorations auto-clear when debug session ends
+
 ### Added (Iteration I — Custom Highlights)
 
 - Pattern-based highlighting: color log lines matching patterns in real-time
