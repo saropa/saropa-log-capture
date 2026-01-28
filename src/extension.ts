@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
-import { SessionManagerImpl, handleDeleteCommand } from './modules/session-manager';
+import { SessionManagerImpl } from './modules/session-manager';
+import { handleDeleteCommand } from './modules/delete-command';
 import { StatusBar } from './ui/status-bar';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
