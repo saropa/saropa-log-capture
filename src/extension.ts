@@ -11,8 +11,12 @@ import { SessionHistoryProvider } from './ui/session-history-provider';
 import { exportToHtml } from './modules/html-export';
 import { exportToInteractiveHtml } from './modules/html-export-interactive';
 import { createUriHandler, copyDeepLinkToClipboard } from './modules/deep-links';
+import { loadPresets, promptSavePreset, pickPreset } from './modules/filter-presets';
+import { InlineDecorationsProvider } from './ui/inline-decorations';
+import { extractSourceReference } from './modules/source-linker';
 
 let sessionManager: SessionManagerImpl;
+let inlineDecorations: InlineDecorationsProvider;
 let viewerProvider: LogViewerProvider;
 let historyProvider: SessionHistoryProvider;
 
@@ -22,6 +26,10 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(statusBar, outputChannel);
 
     sessionManager = new SessionManagerImpl(statusBar, outputChannel);
+
+    // Inline code decorations.
+    inlineDecorations = new InlineDecorationsProvider();
+    context.subscriptions.push(inlineDecorations);
 
     // Sidebar viewer.
     viewerProvider = new LogViewerProvider(context.extensionUri);
@@ -45,6 +53,18 @@ export function activate(context: vscode.ExtensionContext): void {
         viewerProvider.addLine(data);
         if (data.watchHits && data.watchHits.length > 0) {
             viewerProvider.updateWatchCounts(sessionManager.getWatcher().getCounts());
+        }
+        // Extract source reference for inline decorations
+        if (!data.isMarker) {
+            const sourceRef = extractSourceReference(data.text);
+            if (sourceRef) {
+                inlineDecorations.recordLogLine(
+                    sourceRef.filePath,
+                    sourceRef.line,
+                    data.text,
+                    data.category,
+                );
+            }
         }
     });
     sessionManager.addSplitListener((_newUri, _partNumber, totalParts) => {
@@ -93,6 +113,38 @@ export function activate(context: vscode.ExtensionContext): void {
             });
         }
     });
+    viewerProvider.setSavePresetRequestHandler(async (filters) => {
+        const preset = await promptSavePreset(filters as {
+            categories?: string[];
+            searchPattern?: string;
+            exclusionsEnabled?: boolean;
+        });
+        if (preset) {
+            // Refresh presets in the viewer
+            viewerProvider.setPresets(loadPresets());
+        }
+    });
+    viewerProvider.setSearchCodebaseHandler(async (text) => {
+        // Open VS Code's built-in search with the text
+        await vscode.commands.executeCommand('workbench.action.findInFiles', { query: text });
+    });
+    viewerProvider.setSearchSessionsHandler(async (text) => {
+        const match = await showSearchQuickPick(text);
+        if (match) {
+            await openLogAtLine(match);
+        }
+    });
+    viewerProvider.setAddToWatchHandler(async (text) => {
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const current = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);
+        // Check if pattern already exists
+        if (current.some(p => p.pattern === text)) {
+            vscode.window.showInformationMessage(`"${text}" is already in watch list.`);
+            return;
+        }
+        await cfg.update('watchPatterns', [...current, { pattern: text }], vscode.ConfigurationTarget.Workspace);
+        vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
@@ -125,6 +177,8 @@ export function activate(context: vscode.ExtensionContext): void {
             if (cfg.highlightRules.length > 0) {
                 viewerProvider.setHighlightRules(cfg.highlightRules);
             }
+            // Initialize filter presets
+            viewerProvider.setPresets(loadPresets());
             historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();
         }),
@@ -132,6 +186,8 @@ export function activate(context: vscode.ExtensionContext): void {
             await sessionManager.stopSession(session);
             historyProvider.setActiveUri(undefined);
             historyProvider.refresh();
+            // Clear inline decorations when session ends
+            inlineDecorations.clearAll();
         }),
     );
 
@@ -297,6 +353,27 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return;
             }
             await copyDeepLinkToClipboard(item.filename);
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.applyPreset', async () => {
+            const preset = await pickPreset();
+            if (preset) {
+                viewerProvider.applyPreset(preset.name);
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.savePreset', async () => {
+            const preset = await promptSavePreset({});
+            if (preset) {
+                viewerProvider.setPresets(loadPresets());
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.toggleInlineDecorations', () => {
+            const enabled = inlineDecorations.toggle();
+            vscode.window.showInformationMessage(
+                `Inline log decorations ${enabled ? 'enabled' : 'disabled'}`,
+            );
         }),
     );
 }

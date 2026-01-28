@@ -14,6 +14,8 @@ import { getSourcePreviewScript } from './viewer-source-preview';
 import { getSplitNavScript } from './viewer-split-nav';
 import { getJsonScript } from './viewer-json';
 import { getHighlightScript } from './viewer-highlight';
+import { getPresetsScript } from './viewer-presets';
+import { getContextMenuScript, getContextMenuHtml } from './viewer-context-menu';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -55,6 +57,7 @@ export function buildViewerHtml(nonce: string): string {
     </div>
     <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
     <div id="source-preview"></div>
+    ${getContextMenuHtml()}
     <div id="search-bar" style="display:none">
         <input id="search-input" type="text" placeholder="Search..." />
         <span id="match-count"></span>
@@ -68,6 +71,9 @@ export function buildViewerHtml(nonce: string): string {
         <span id="exclusion-count"></span>
         <button id="exclusion-toggle" style="display:none" onclick="toggleExclusions()">Excl: ON</button>
         <button id="app-only-toggle" onclick="toggleAppOnly()">App Only: OFF</button>
+        <select id="preset-select" title="Filter Presets" onchange="onPresetSelectChange(event)">
+            <option value="">Preset: None</option>
+        </select>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="wrap-toggle">No Wrap</button>
     </div>
@@ -87,6 +93,8 @@ export function buildViewerHtml(nonce: string): string {
         ${getJsonScript()}
         ${getSearchScript()}
         ${getHighlightScript()}
+        ${getPresetsScript()}
+        ${getContextMenuScript()}
     </script>
 </body>
 </html>`;
