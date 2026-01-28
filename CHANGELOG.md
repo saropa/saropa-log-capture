@@ -6,6 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## Unreleased
 
+### Added (Iteration H — Auto-Tags)
+
+- Auto-tag rule engine: automatically tag sessions based on content patterns
+- Configure rules in settings: `saropaLogCapture.autoTagRules`
+- Pattern formats: plain string (case-insensitive) or `/regex/flags`
+- Auto-tags displayed with `~` prefix in session history (vs `#` for manual tags)
+- Tags evaluated during capture, stored in session metadata
+
 ### Added (Iteration H — Deep Links)
 
 - Deep links: share `vscode://saropa.saropa-log-capture/open?session=<filename>&line=<n>` URLs

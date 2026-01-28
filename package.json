@@ -347,6 +347,25 @@
             "silenceMinutes": 0
           },
           "description": "Rules for automatically splitting log files. All values of 0 disable that rule."
+        },
+        "saropaLogCapture.autoTagRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pattern": {
+                "type": "string",
+                "description": "Text or /regex/ pattern to match against log lines."
+              },
+              "tag": {
+                "type": "string",
+                "description": "Tag to apply when pattern matches."
+              }
+            },
+            "required": ["pattern", "tag"]
+          },
+          "default": [],
+          "description": "Rules for automatically tagging sessions based on content patterns."
         }
       }
     }

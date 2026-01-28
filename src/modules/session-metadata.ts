@@ -10,7 +10,10 @@ export interface Annotation {
 /** Metadata stored alongside a log file as a sidecar .meta.json. */
 export interface SessionMeta {
     displayName?: string;
+    /** Manually applied tags. */
     tags?: string[];
+    /** Automatically applied tags from auto-tag rules. */
+    autoTags?: string[];
     annotations?: Annotation[];
 }
 
@@ -47,10 +50,17 @@ export class SessionMetadataStore {
         await this.saveMetadata(logUri, meta);
     }
 
-    /** Set or update tags. */
+    /** Set or update manual tags. */
     async setTags(logUri: vscode.Uri, tags: string[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.tags = tags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set or update auto-tags (from auto-tag rules). */
+    async setAutoTags(logUri: vscode.Uri, autoTags: string[]): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.autoTags = autoTags;
         await this.saveMetadata(logUri, meta);
     }
 
