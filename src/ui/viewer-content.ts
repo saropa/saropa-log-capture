@@ -1,5 +1,6 @@
 import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
+import { getSearchScript } from './viewer-search';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -34,12 +35,20 @@ export function buildViewerHtml(nonce: string): string {
         <div id="spacer-bottom"></div>
     </div>
     <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
+    <div id="search-bar" style="display:none">
+        <input id="search-input" type="text" placeholder="Search..." />
+        <span id="match-count"></span>
+        <button id="search-prev" title="Previous (Shift+F3)">&#x25B2;</button>
+        <button id="search-next" title="Next (F3)">&#x25BC;</button>
+        <button id="search-close" title="Close (Escape)">&#x2715;</button>
+    </div>
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">
         ${getViewerScript(MAX_VIEWER_LINES)}
+        ${getSearchScript()}
     </script>
 </body>
 </html>`;

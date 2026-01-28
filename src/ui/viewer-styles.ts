@@ -114,5 +114,50 @@ body {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
+#search-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--vscode-sideBar-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+}
+#search-input {
+    flex: 1;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+}
+#search-input:focus { border-color: var(--vscode-focusBorder); }
+#match-count {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+}
+#search-bar button {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+}
+#search-bar button:hover { color: var(--vscode-foreground); }
+mark {
+    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
+    color: inherit;
+    border-radius: 2px;
+}
+.current-match mark {
+    background: var(--vscode-editor-findMatchBackground, rgba(255, 150, 50, 0.6));
+}
+.search-match {
+    background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.1));
+}
 `;
 }
