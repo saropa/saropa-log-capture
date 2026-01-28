@@ -221,6 +221,40 @@ def verify_compile() -> bool:
     return True
 
 
+# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
+MAX_FILE_LINES = 300
+
+
+def check_file_line_limits() -> bool:
+    """Enforce the 300-line hard limit on all TypeScript files in src/.
+
+    The project's quality standards require every file to be at most 300
+    lines.  This check catches violations early so they can be fixed
+    before committing.
+    """
+    src_dir = os.path.join(PROJECT_ROOT, "src")
+    violations: list[str] = []
+
+    for dirpath, _dirs, filenames in os.walk(src_dir):
+        for fname in filenames:
+            if not fname.endswith(".ts"):
+                continue
+            filepath = os.path.join(dirpath, fname)
+            with open(filepath, encoding="utf-8") as f:
+                count = sum(1 for _ in f)
+            if count > MAX_FILE_LINES:
+                rel = os.path.relpath(filepath, PROJECT_ROOT)
+                violations.append(f"{rel} ({count} lines)")
+
+    if violations:
+        fail(f"{len(violations)} file(s) exceed {MAX_FILE_LINES}-line limit:")
+        for v in violations:
+            print(f"         {v}")
+        return False
+    ok(f"All .ts files are within the {MAX_FILE_LINES}-line limit")
+    return True
+
+
 # ── Main ─────────────────────────────────────────────────────
 
 
@@ -262,6 +296,14 @@ def main() -> int:
 
     heading("Verify Compile")
     if not verify_compile():
+        return 1
+
+    heading("Quality Checks")
+    if not check_file_line_limits():
+        errors += 1
+
+    if errors > 0:
+        fail(f"\n{errors} quality check(s) failed. Fix the above and re-run.")
         return 1
 
     heading("Done")
