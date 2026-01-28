@@ -96,8 +96,13 @@
       },
       {
         "command": "saropaLogCapture.exportHtml",
-        "title": "Export as HTML",
+        "title": "Export as HTML (Static)",
         "icon": "$(file-code)"
+      },
+      {
+        "command": "saropaLogCapture.exportHtmlInteractive",
+        "title": "Export as HTML (Interactive)",
+        "icon": "$(browser)"
       },
       {
         "command": "saropaLogCapture.renameSession",
@@ -162,6 +167,10 @@
         },
         {
           "command": "saropaLogCapture.exportHtml",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.exportHtmlInteractive",
           "when": "viewItem == session"
         },
         {
