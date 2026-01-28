@@ -1,18 +1,23 @@
 ![Saropa Log Capture banner](https://raw.githubusercontent.com/saropa/saropa_lints/main/images/banner.png)
 
+
 # Saropa Log Capture
 
-Automatically capture VS Code Debug Console output to persistent log files on disk, with a real-time sidebar viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, etc.).
+> **Never lose your debug output again.**
 
-## The Problem
+Every developer knows the frustration: you restart a build, rerun a test, or your debug session ends—and suddenly, all your Debug Console output is gone. Critical logs, error traces, and hard-to-reproduce issues vanish with no way to recover them. VS Code offers no built-in way to persist this output, and existing extensions don't fill the gap.
 
-VS Code's Debug Console is ephemeral. When a debug session ends, the output is gone. There is no built-in way to save it to a file. This has been [requested](https://github.com/microsoft/vscode/issues/77849) and [closed as out-of-scope](https://github.com/microsoft/vscode/issues/140859). No existing extension fills this gap.
+Saropa Log Capture is built for real-world development. It automatically saves all Debug Console output to persistent log files, with a fast, feature-rich sidebar viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, and more). No setup required—just hit F5 and your logs are safe.
 
-## The Solution
 
-This extension automatically captures Debug Console output to persistent `.log` files with a rich real-time viewer. Zero configuration required — it just works when you start debugging.
+## Why Saropa Log Capture?
 
-## Features
+- **Debug Console output is ephemeral.** When a debug session ends, the output is gone. There is no built-in way to save it to a file. This has been [requested](https://github.com/microsoft/vscode/issues/77849) and [closed as out-of-scope](https://github.com/microsoft/vscode/issues/140859). No existing extension fills this gap.
+- **Lost output means lost time.** Whether it's a rare error, a flaky test, or a long-running process, losing logs can block progress and waste hours.
+- **This extension is the answer.** It captures everything, automatically, with zero config. Your logs are always safe, searchable, and exportable.
+
+
+## Features at a Glance
 
 - **Auto-capture** -- Debug Console output is saved to `.log` files automatically when you start debugging. No configuration needed.
 - **Live sidebar viewer** -- Watch captured output in real time with virtual scrolling, auto-scroll, and theme support.
@@ -48,14 +53,16 @@ This extension automatically captures Debug Console output to persistent `.log` 
 - **Deep links** -- Share `vscode://` URLs that open specific log sessions and lines. Copy from context menu.
 - **Auto-tags** -- Automatically tag sessions based on content patterns like "BUILD FAILED" or `/Exception/`. Displayed as `~tag`.
 
-## Getting Started
+
+## Get Started Instantly
 
 1. Install the extension
 2. Start a debug session (F5)
 3. Output is automatically captured to the `reports/` directory
 4. Open the **Saropa Log Capture** sidebar to view output in real time
 
-## Keyboard Shortcuts (in sidebar viewer)
+
+## Power Shortcuts (Sidebar Viewer)
 
 | Key | Action |
 |-----|--------|
