@@ -121,6 +121,10 @@ export function activate(context: vscode.ExtensionContext): void {
             if (cfg.showElapsedTime) {
                 viewerProvider.setShowElapsed(true);
             }
+            // Initialize highlight rules from config
+            if (cfg.highlightRules.length > 0) {
+                viewerProvider.setHighlightRules(cfg.highlightRules);
+            }
             historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();
         }),
