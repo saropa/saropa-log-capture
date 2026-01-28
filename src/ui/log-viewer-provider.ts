@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { linkifyHtml } from '../modules/source-linker';
+import { resolveSourceUri } from '../modules/source-resolver';
 import { getNonce, buildViewerHtml } from './viewer-content';
 import { LineData } from '../modules/session-manager';
 import { isFrameworkFrame } from '../modules/stack-parser';
@@ -56,6 +57,11 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
                     Number(msg.line ?? 1),
                     Number(msg.col ?? 1),
                     Boolean(msg.splitEditor),
+                );
+            } else if (msg.type === 'requestSourcePreview') {
+                this.handleSourcePreviewRequest(
+                    String(msg.path ?? ''),
+                    Number(msg.line ?? 1),
                 );
             }
         });
@@ -228,5 +234,36 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
 
     private buildHtml(): string {
         return buildViewerHtml(getNonce());
+    }
+
+    /** Handle a source preview request from the webview. */
+    private async handleSourcePreviewRequest(path: string, line: number): Promise<void> {
+        const CONTEXT_LINES = 2; // Show 2 lines before and after (total 5 lines)
+        try {
+            const uri = resolveSourceUri(path);
+            if (!uri) {
+                this.postMessage({ type: 'sourcePreview', path, line, error: 'Cannot resolve path' });
+                return;
+            }
+
+            const doc = await vscode.workspace.openTextDocument(uri);
+            const startLine = Math.max(0, line - CONTEXT_LINES - 1);
+            const endLine = Math.min(doc.lineCount, line + CONTEXT_LINES);
+            const lines: string[] = [];
+
+            for (let i = startLine; i < endLine; i++) {
+                lines.push(doc.lineAt(i).text);
+            }
+
+            this.postMessage({
+                type: 'sourcePreview',
+                path,
+                line,
+                lines,
+                startLine: startLine + 1, // 1-indexed for display
+            });
+        } catch {
+            this.postMessage({ type: 'sourcePreview', path, line, error: 'File not found' });
+        }
     }
 }
