@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { linkifyHtml } from '../modules/source-linker';
 import { getNonce, buildViewerHtml } from './viewer-content';
+import { LineData } from '../modules/session-manager';
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -10,8 +11,7 @@ interface PendingLine {
     readonly isMarker: boolean;
     readonly lineCount: number;
     readonly category: string;
-    readonly sourcePath?: string;
-    readonly sourceLine?: number;
+    readonly timestamp: number;
 }
 
 /**
@@ -114,16 +114,12 @@ export class LogViewerProvider implements vscode.WebviewViewProvider, vscode.Dis
     }
 
     /** Queue a log line for batched delivery to the webview. */
-    addLine(
-        text: string,
-        isMarker: boolean,
-        lineCount: number,
-        category: string,
-        sourcePath?: string,
-        sourceLine?: number,
-    ): void {
-        const html = isMarker ? escapeHtml(text) : linkifyHtml(ansiToHtml(text));
-        this.pendingLines.push({ text: html, isMarker, lineCount, category, sourcePath, sourceLine });
+    addLine(data: LineData): void {
+        const html = data.isMarker ? escapeHtml(data.text) : linkifyHtml(ansiToHtml(data.text));
+        this.pendingLines.push({
+            text: html, isMarker: data.isMarker, lineCount: data.lineCount,
+            category: data.category, timestamp: data.timestamp.getTime(),
+        });
     }
 
     /** Send a clear message to the webview. */
