@@ -54,26 +54,21 @@ function testExclusion(text) {
     return false;
 }
 
+/**
+ * Set excluded flag on lines matching exclusion rules.
+ * Delegates height recalculation to the shared recalcHeights() so that
+ * category and level filters are also respected. Markers are never excluded.
+ */
 function applyExclusions() {
     hiddenCount = 0;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         if (item.type === 'marker') continue;
-        var shouldHide = testExclusion(item.html);
-        var wasHidden = item.excluded || false;
-        item.excluded = shouldHide;
-        if (shouldHide && !wasHidden) {
-            totalHeight -= item.height;
-            item._savedHeight = item.height;
-            item.height = 0;
-        } else if (!shouldHide && wasHidden && item._savedHeight) {
-            item.height = item._savedHeight;
-            totalHeight += item.height;
-            delete item._savedHeight;
-        }
-        if (shouldHide) hiddenCount++;
+        item.excluded = testExclusion(item.html);
+        if (item.excluded) hiddenCount++;
     }
     updateExclusionDisplay();
+    recalcHeights();
     renderViewport(true);
 }
 

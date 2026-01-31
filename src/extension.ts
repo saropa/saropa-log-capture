@@ -54,8 +54,12 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.registerUriHandler(createUriHandler()),
     );
 
-    // Initialize filter presets eagerly so they're available before first debug session.
+    // Initialize config eagerly so it's available before first debug session.
     viewerProvider.setPresets(loadPresets());
+    const initCfg = getConfig();
+    if (initCfg.highlightRules.length > 0) {
+        viewerProvider.setHighlightRules(initCfg.highlightRules);
+    }
 
     sessionManager.addLineListener((data) => {
         viewerProvider.addLine(data);

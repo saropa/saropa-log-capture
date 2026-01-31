@@ -9,6 +9,7 @@ import { getCopyScript } from './viewer-copy';
 import { getAnnotationScript } from './viewer-annotations';
 import { getTimingScript } from './viewer-timing';
 import { getDecorationsScript } from './viewer-decorations';
+import { getDecoSettingsScript, getDecoSettingsHtml } from './viewer-deco-settings';
 import { getStackFilterScript } from './viewer-stack-filter';
 import { getStackDedupScript } from './viewer-stack-dedup';
 import { getSourcePreviewScript } from './viewer-source-preview';
@@ -69,6 +70,7 @@ export function buildViewerHtml(nonce: string): string {
         <button id="search-close" title="Close (Escape)">&#x2715;</button>
     </div>
     ${getContextModalHtml()}
+    ${getDecoSettingsHtml()}
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
         <span id="watch-counts"></span>
@@ -85,6 +87,7 @@ export function buildViewerHtml(nonce: string): string {
         </select>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
         <button id="deco-toggle" onclick="toggleDecorations()">Deco: OFF</button>
+        <button id="deco-settings-btn" onclick="toggleDecoSettings()" title="Decoration settings">&#x2699;</button>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">
@@ -97,6 +100,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getAnnotationScript()}
         ${getTimingScript()}
         ${getDecorationsScript()}
+        ${getDecoSettingsScript()}
         ${getStackDedupScript()}
         ${getStackFilterScript()}
         ${getSourcePreviewScript()}
