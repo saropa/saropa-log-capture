@@ -60,6 +60,7 @@ export class LogViewerProvider
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
+  private cachedPresets: readonly FilterPreset[] = [];
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
@@ -126,6 +127,13 @@ export class LogViewerProvider
     });
 
     this.startBatchTimer();
+
+    // Send cached presets to newly-created webview
+    if (this.cachedPresets.length > 0) {
+      queueMicrotask(() => {
+        this.postMessage({ type: "setPresets", presets: this.cachedPresets });
+      });
+    }
 
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
@@ -233,6 +241,35 @@ export class LogViewerProvider
     this.postMessage({ type: "clear" });
   }
 
+  /**
+   * Load a historical log file into the viewer.
+   * Reads the file, processes ANSI codes, and sends lines in batches.
+   */
+  async loadFromFile(uri: vscode.Uri): Promise<void> {
+    this.clear();
+    const raw = await vscode.workspace.fs.readFile(uri);
+    const text = Buffer.from(raw).toString("utf-8");
+    const rawLines = text.split(/\r?\n/);
+    const filename = uri.path.split("/").pop() ?? "";
+    this.setFilename(filename);
+    const batchSize = 1000;
+    for (let i = 0; i < rawLines.length; i += batchSize) {
+      const batch = rawLines.slice(i, i + batchSize).map((line, j) => ({
+        text: linkifyHtml(ansiToHtml(line)),
+        isMarker: false,
+        lineCount: i + j + 1,
+        category: "console",
+        timestamp: Date.now(),
+      }));
+      this.postMessage({
+        type: "addLines",
+        lines: batch,
+        lineCount: Math.min(i + batchSize, rawLines.length),
+      });
+    }
+    this.updateFooter(`Viewing: ${filename} (${rawLines.length} lines)`);
+  }
+
   /** Update the footer status text. */
   updateFooter(text: string): void {
     this.postMessage({ type: "updateFooter", text });
@@ -263,9 +300,24 @@ export class LogViewerProvider
     this.postMessage({ type: "setFilename", filename });
   }
 
+  /** Set the number of context lines for level filtering. */
+  setContextLines(count: number): void {
+    this.postMessage({ type: "setContextLines", count });
+  }
+
+  /** Set the number of context lines for the context view modal. */
+  setContextViewLines(count: number): void {
+    this.postMessage({ type: "setContextViewLines", count });
+  }
+
   /** Toggle elapsed time display in the viewer. */
   setShowElapsed(show: boolean): void {
     this.postMessage({ type: "setShowElapsed", show });
+  }
+
+  /** Toggle line decoration prefix display in the viewer. */
+  setShowDecorations(show: boolean): void {
+    this.postMessage({ type: "setShowDecorations", show });
   }
 
   /**
@@ -286,6 +338,7 @@ export class LogViewerProvider
    * @param presets - Array of filter presets from configuration
    */
   setPresets(presets: readonly FilterPreset[]): void {
+    this.cachedPresets = presets;
     this.postMessage({ type: "setPresets", presets });
   }
 

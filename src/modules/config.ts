@@ -29,8 +29,14 @@ export interface SaropaLogCaptureConfig {
   readonly autoTagRules: readonly AutoTagRule[];
   /** Pattern-based highlight rules for coloring matching log lines. */
   readonly highlightRules: readonly HighlightRule[];
+  /** Show decoration prefix (severity dot, counter, timestamp) in viewer. */
+  readonly showDecorations: boolean;
   /** If true, capture all output (no filtering). */
   readonly captureAll: boolean;
+  /** Number of preceding context lines shown when level filtering. */
+  readonly filterContextLines: number;
+  /** Number of lines before/after in context view modal. */
+  readonly contextViewLines: number;
 }
 
 const SECTION = "saropaLogCapture";
@@ -42,7 +48,13 @@ const SECTION = "saropaLogCapture";
 function defaultHighlightRules(): HighlightRule[] {
   return [
     {
-      pattern: "/\\b(error|exception|fail(ed|ure)?|fatal)\\b/i",
+      pattern: "/\\b(fatal|panic|critical)\\b/i",
+      color: "var(--vscode-errorForeground)",
+      bold: true,
+      label: "Fatal",
+    },
+    {
+      pattern: "/\\b(error|exception|fail(ed|ure)?)\\b/i",
       color: "var(--vscode-errorForeground)",
       label: "Error",
     },
@@ -52,9 +64,37 @@ function defaultHighlightRules(): HighlightRule[] {
       label: "Warning",
     },
     {
+      pattern: "/\\b(todo|fixme|xxx)\\b/i",
+      color: "var(--vscode-editorWarning-foreground)",
+      italic: true,
+      label: "TODO",
+    },
+    {
+      pattern: "/\\b(hack|workaround|kludge)\\b/i",
+      color: "var(--vscode-editorWarning-foreground)",
+      italic: true,
+      label: "Hack",
+    },
+    {
+      pattern: "/\\bdeprecated\\b/i",
+      color: "var(--vscode-descriptionForeground)",
+      italic: true,
+      label: "Deprecated",
+    },
+    {
       pattern: "/\\b(success|passed|ok)\\b/i",
       color: "var(--vscode-debugConsole-sourceForeground)",
       label: "Success",
+    },
+    {
+      pattern: "/\\b(info(rmation)?|notice)\\b/i",
+      color: "var(--vscode-debugConsole-infoForeground)",
+      label: "Info",
+    },
+    {
+      pattern: "/\\b(debug|trace|verbose)\\b/i",
+      color: "var(--vscode-descriptionForeground)",
+      label: "Debug",
     },
   ];
 }
@@ -78,6 +118,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     redactEnvVars: cfg.get<string[]>("redactEnvVars", []),
     exclusions: cfg.get<string[]>("exclusions", []),
     showElapsedTime: cfg.get<boolean>("showElapsedTime", false),
+    showDecorations: cfg.get<boolean>("showDecorations", false),
     slowGapThreshold: cfg.get<number>("slowGapThreshold", 1000),
     watchPatterns: cfg.get<WatchPatternSetting[]>("watchPatterns", [
       { keyword: "error", alert: "flash" },
@@ -91,6 +132,8 @@ export function getConfig(): SaropaLogCaptureConfig {
       defaultHighlightRules(),
     ),
     captureAll: cfg.get<boolean>("captureAll", false),
+    filterContextLines: cfg.get<number>("filterContextLines", 3),
+    contextViewLines: cfg.get<number>("contextViewLines", 10),
   };
 }
 

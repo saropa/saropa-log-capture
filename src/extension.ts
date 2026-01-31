@@ -54,6 +54,9 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.registerUriHandler(createUriHandler()),
     );
 
+    // Initialize filter presets eagerly so they're available before first debug session.
+    viewerProvider.setPresets(loadPresets());
+
     sessionManager.addLineListener((data) => {
         viewerProvider.addLine(data);
         if (data.watchHits && data.watchHits.length > 0) {
@@ -178,10 +181,16 @@ export function activate(context: vscode.ExtensionContext): void {
             if (cfg.showElapsedTime) {
                 viewerProvider.setShowElapsed(true);
             }
+            if (cfg.showDecorations) {
+                viewerProvider.setShowDecorations(true);
+            }
             // Initialize highlight rules from config
             if (cfg.highlightRules.length > 0) {
                 viewerProvider.setHighlightRules(cfg.highlightRules);
             }
+            // Initialize level filter and context view settings
+            viewerProvider.setContextLines(cfg.filterContextLines);
+            viewerProvider.setContextViewLines(cfg.contextViewLines);
             // Initialize filter presets
             viewerProvider.setPresets(loadPresets());
             historyProvider.setActiveUri(activeSession?.fileUri);
@@ -276,7 +285,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
         vscode.commands.registerCommand('saropaLogCapture.openSession', async (item: { uri: vscode.Uri }) => {
             if (item?.uri) {
-                await vscode.window.showTextDocument(item.uri);
+                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                await viewerProvider.loadFromFile(item.uri);
             }
         }),
 
