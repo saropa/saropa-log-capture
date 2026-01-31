@@ -45,6 +45,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Pin lines:** Press P to pin important lines above scroll area.
 - **Exclusion filter:** Hide lines matching string/regex patterns.
 - **Level filter:** All/Errors/Warn+ segmented buttons to filter by severity, with configurable context lines shown dimmed around matches.
+- **Source tag filter:** Collapsible "Sources" panel that auto-discovers logcat tags (e.g. `D/FlutterJNI`, `I/flutter`) and bracket prefixes (e.g. `[log]`). Click chips to toggle visibility by source.
 - **Line decorations:** Colored severity dots, sequential counters, and timestamps on each line. Gear button opens settings popover for toggling parts and whole-line coloring mode.
 - **Inline peek:** Double-click any log line to expand surrounding context inline. Press Escape to dismiss.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown.

@@ -16,20 +16,26 @@ function addToData(html, isMarker, category, ts, fw) {
     }
     if (isStackFrameText(html)) {
         if (activeGroupHeader) {
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error' });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, sourceFiltered: false });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++ };
+        var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(stripTags(html)) : null;
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, sourceFiltered: false };
         allLines.push(hdr);
+        if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         activeGroupHeader = hdr;
         totalHeight += ROW_HEIGHT;
         return;
     }
     if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
-    var lvl = (typeof classifyLevel === 'function') ? classifyLevel(stripTags(html), category) : 'info';
-    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++ });
+    var plain = stripTags(html);
+    var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
+    var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
+    var lineItem = { html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false };
+    allLines.push(lineItem);
+    if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
     totalHeight += ROW_HEIGHT;
 }
 
@@ -47,6 +53,9 @@ function toggleStackGroup(groupId) {
 function trimData() {
     if (allLines.length <= MAX_LINES) return;
     var excess = allLines.length - MAX_LINES;
+    if (typeof unregisterSourceTag === 'function') {
+        for (var i = 0; i < excess; i++) { unregisterSourceTag(allLines[i]); }
+    }
     for (var i = 0; i < excess; i++) { totalHeight -= allLines[i].height; }
     allLines.splice(0, excess);
     activeGroupHeader = null;
@@ -68,11 +77,12 @@ function recalcHeights() {
 
 /**
  * Determine the pixel height of a single line item.
- * Hidden (0) if any filter flag is set: filteredOut (category), excluded, levelFiltered.
+ * Hidden (0) if any filter flag is set: filteredOut (category), excluded,
+ * levelFiltered, or sourceFiltered (source tag toggle).
  * Stack frames inherit collapsed state from their group header.
  */
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'stack-frame' && item.groupId >= 0) {
         for (var k = 0; k < allLines.length; k++) {

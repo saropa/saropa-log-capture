@@ -21,6 +21,7 @@ import { getContextMenuScript, getContextMenuHtml } from './viewer-context-menu'
 import { getLevelFilterScript } from './viewer-level-filter';
 import { getContextModalScript, getContextModalHtml } from './viewer-context-modal';
 import { getViewerDataScript } from './viewer-data';
+import { getSourceTagsScript, getSourceTagsHtml } from './viewer-source-tags';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -55,6 +56,7 @@ export function buildViewerHtml(nonce: string): string {
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section" style="display:none"></div>
+    ${getSourceTagsHtml()}
     <div id="log-content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
@@ -110,6 +112,7 @@ export function buildViewerHtml(nonce: string): string {
         ${getJsonScript()}
         ${getSearchScript()}
         ${getLevelFilterScript()}
+        ${getSourceTagsScript()}
         ${getHighlightScript()}
         ${getPresetsScript()}
         ${getContextModalScript()}
