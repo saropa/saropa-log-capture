@@ -11,6 +11,7 @@
 import { getContentStyles } from './viewer-styles-content';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
+import { getTagStyles } from './viewer-styles-tags';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -76,5 +77,5 @@ body {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles();
 }
