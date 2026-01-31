@@ -1,18 +1,41 @@
-"""
-Saropa Log Capture — Development Environment Setup
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-Checks that all required tools and dependencies are installed,
-installs anything missing, then verifies the setup compiles cleanly.
+# ##############################################################################
+# Saropa Log Capture — Development Environment Setup
+# ##############################################################################
+#
+# .SYNOPSIS
+#   Checks that all required tools and dependencies are installed,
+#   installs anything missing, then verifies the setup compiles cleanly.
+#
+# .DESCRIPTION
+#   Pipeline: prerequisites → global npm → VS Code extensions →
+#   project deps → compile → quality checks → report.
+#   Each section is timed and logged. A summary report is saved to reports/.
+#
+# .NOTES
+#   Version:      1.1.0
+#   Requires:     Python 3.10+
+#                 Optional: colorama (`pip install colorama`) for colored output.
+#
+# .USAGE
+#   python scripts/init_environment.py
+#   python scripts/init_environment.py --skip-compile
+#   python scripts/init_environment.py --skip-extensions --skip-global-npm
+#
+# ##############################################################################
 
-Usage:
-    python scripts/init_environment.py
-"""
-
-import subprocess
-import sys
+import argparse
+import datetime
+import json
 import os
 import shutil
+import subprocess
+import sys
+import time
 
+# Resolve paths relative to this script so it works from any working directory.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
@@ -31,9 +54,160 @@ REQUIRED_GLOBAL_NPM_PACKAGES = [
     "generator-code",
 ]
 
+# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
+MAX_FILE_LINES = 300
+
+
+# ── Color Setup ──────────────────────────────────────────────
+# Uses ANSI escape codes directly. colorama is optional on Windows
+# to ensure the terminal interprets escape sequences correctly.
+
+
+class _AnsiColors:
+    """ANSI 256-color escape codes for terminal output."""
+    RESET: str = "\033[0m"
+    BOLD: str = "\033[1m"
+    DIM: str = "\033[2m"
+    GREEN: str = "\033[92m"
+    YELLOW: str = "\033[93m"
+    RED: str = "\033[91m"
+    BLUE: str = "\033[94m"
+    CYAN: str = "\033[96m"
+    MAGENTA: str = "\033[95m"
+    WHITE: str = "\033[97m"
+    # Extended 256-color palette for the Saropa logo gradient.
+    ORANGE_208: str = "\033[38;5;208m"
+    ORANGE_209: str = "\033[38;5;209m"
+    YELLOW_215: str = "\033[38;5;215m"
+    YELLOW_220: str = "\033[38;5;220m"
+    YELLOW_226: str = "\033[38;5;226m"
+    GREEN_190: str = "\033[38;5;190m"
+    GREEN_154: str = "\033[38;5;154m"
+    GREEN_118: str = "\033[38;5;118m"
+    CYAN_123: str = "\033[38;5;123m"
+    CYAN_87: str = "\033[38;5;87m"
+    BLUE_51: str = "\033[38;5;51m"
+    BLUE_45: str = "\033[38;5;45m"
+    BLUE_39: str = "\033[38;5;39m"
+    BLUE_33: str = "\033[38;5;33m"
+    BLUE_57: str = "\033[38;5;57m"
+    PINK_195: str = "\033[38;5;195m"
+    LIGHT_BLUE_117: str = "\033[38;5;117m"
+
+
+class _FallbackColors:
+    """No-op color strings for terminals that don't support ANSI codes."""
+    RESET = BOLD = DIM = ""
+    GREEN = YELLOW = RED = BLUE = CYAN = MAGENTA = WHITE = ""
+    ORANGE_208 = ORANGE_209 = ""
+    YELLOW_215 = YELLOW_220 = YELLOW_226 = ""
+    GREEN_190 = GREEN_154 = GREEN_118 = ""
+    CYAN_123 = CYAN_87 = ""
+    BLUE_51 = BLUE_45 = BLUE_39 = BLUE_33 = BLUE_57 = ""
+    PINK_195 = LIGHT_BLUE_117 = ""
+
+
+# Try to initialise colorama for Windows compatibility; fall back gracefully.
+try:
+    import colorama
+    colorama.init(autoreset=True)
+    C = _AnsiColors
+except ImportError:
+    # colorama is optional — ANSI codes still work on most modern terminals.
+    C = _FallbackColors
+
+
+# ── Display Helpers ──────────────────────────────────────────
+
+def heading(text: str) -> None:
+    """Print a bold section heading."""
+    bar = "=" * 60
+    print(f"\n{C.CYAN}{bar}{C.RESET}")
+    print(f"  {C.BOLD}{C.WHITE}{text}{C.RESET}")
+    print(f"{C.CYAN}{bar}{C.RESET}")
+
+
+def ok(text: str) -> None:
+    print(f"  {C.GREEN}[OK]{C.RESET}   {text}")
+
+
+def fix(text: str) -> None:
+    """An issue was found and automatically repaired."""
+    print(f"  {C.MAGENTA}[FIX]{C.RESET}  {text}")
+
+
+def fail(text: str) -> None:
+    print(f"  {C.RED}[FAIL]{C.RESET} {text}")
+
+
+def warn(text: str) -> None:
+    print(f"  {C.YELLOW}[WARN]{C.RESET} {text}")
+
+
+def info(text: str) -> None:
+    print(f"  {C.BLUE}[INFO]{C.RESET} {text}")
+
+
+def dim(text: str) -> str:
+    """Wrap text in dim ANSI codes for secondary information."""
+    return f"{C.DIM}{text}{C.RESET}"
+
+
+def ask_yn(question: str, default: bool = True) -> bool:
+    """Prompt the user with a yes/no question. Returns the boolean answer.
+
+    Handles EOF and Ctrl+C gracefully by returning the default.
+    """
+    hint = "Y/n" if default else "y/N"
+    try:
+        answer = input(
+            f"  {C.YELLOW}{question} [{hint}]: {C.RESET}",
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return default
+    if not answer:
+        return default
+    return answer in ("y", "yes")
+
+
+# cSpell:disable
+def show_logo(version: str) -> None:
+    """Print the Saropa rainbow-gradient logo and script version."""
+    logo = f"""
+{C.ORANGE_208}                               ....{C.RESET}
+{C.ORANGE_208}                       `-+shdmNMMMMNmdhs+-{C.RESET}
+{C.ORANGE_209}                    -odMMMNyo/-..````.++:+o+/-{C.RESET}
+{C.YELLOW_215}                 `/dMMMMMM/`            ````````{C.RESET}
+{C.YELLOW_220}                `dMMMMMMMMNdhhhdddmmmNmmddhs+-{C.RESET}
+{C.YELLOW_226}                QMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNhs{C.RESET}
+{C.GREEN_190}              . :sdmNNNNMMMMMNNNMMMMMMMMMMMMMMMMm+{C.RESET}
+{C.GREEN_154}              o     `..~~~::~+==+~:/+sdNMMMMMMMMMMMo{C.RESET}
+{C.GREEN_118}              m                        .+NMMMMMMMMMN{C.RESET}
+{C.CYAN_123}              m+                         :MMMMMMMMMm{C.RESET}
+{C.CYAN_87}              qN:                        :MMMMMMMMMF{C.RESET}
+{C.BLUE_51}               oNs.                    `+NMMMMMMMMo{C.RESET}
+{C.BLUE_45}                :dNy\\.              ./smMMMMMMMMm:{C.RESET}
+{C.BLUE_39}                 `TdMNmhyso+++oosydNNMMMMMMMMMdP+{C.RESET}
+{C.BLUE_33}                    .odMMMMMMMMMMMMMMMMMMMMdo-{C.RESET}
+{C.BLUE_57}                       `-+shdNNMMMMNNdhs+-{C.RESET}
+{C.BLUE_57}                               ````{C.RESET}
+
+  {C.PINK_195}Saropa Log Capture — Environment Setup{C.RESET}
+  {C.LIGHT_BLUE_117}Extension v{version}{C.RESET}
+"""
+    print(logo)
+    print(f"{C.CYAN}{'-' * 60}{C.RESET}")
+# cSpell:enable
+
+
+# ── Utilities ────────────────────────────────────────────────
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
-    """Run a command and return the result."""
+    """Run a shell command and return the result.
+
+    shell=True is needed on Windows so that npm/npx resolve via PATH.
+    """
     return subprocess.run(
         cmd,
         capture_output=True,
@@ -43,29 +217,27 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     )
 
 
-def heading(text: str) -> None:
-    print(f"\n{'='*60}")
-    print(f"  {text}")
-    print(f"{'='*60}")
+def read_package_version() -> str:
+    """Read the extension version from package.json."""
+    pkg_path = os.path.join(PROJECT_ROOT, "package.json")
+    try:
+        with open(pkg_path, encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("version", "unknown")
+    except (OSError, json.JSONDecodeError):
+        return "unknown"
 
 
-def ok(text: str) -> None:
-    print(f"  [OK]   {text}")
-
-
-def fix(text: str) -> None:
-    print(f"  [FIX]  {text}")
-
-
-def fail(text: str) -> None:
-    print(f"  [FAIL] {text}")
-
-
-def warn(text: str) -> None:
-    print(f"  [WARN] {text}")
+def elapsed_str(seconds: float) -> str:
+    """Format elapsed seconds as a human-readable string."""
+    if seconds < 1:
+        return f"{seconds * 1000:.0f}ms"
+    return f"{seconds:.1f}s"
 
 
 # ── Checks ───────────────────────────────────────────────────
+# Each check returns True on success, False on blocking failure.
+# Some checks are non-blocking (return True with a warning).
 
 
 def check_node() -> bool:
@@ -79,7 +251,7 @@ def check_node() -> bool:
     if major < 18:
         fail(f"Node.js {version} found — version 18+ required.")
         return False
-    ok(f"Node.js {version}")
+    ok(f"Node.js {C.WHITE}{version}{C.RESET}")
     return True
 
 
@@ -89,7 +261,7 @@ def check_npm() -> bool:
     if result.returncode != 0:
         fail("npm is not installed. It ships with Node.js — reinstall Node.")
         return False
-    ok(f"npm {result.stdout.strip()}")
+    ok(f"npm {C.WHITE}{result.stdout.strip()}{C.RESET}")
     return True
 
 
@@ -99,30 +271,32 @@ def check_git() -> bool:
     if result.returncode != 0:
         fail("git is not installed. Install from https://git-scm.com/")
         return False
-    ok(f"git — {result.stdout.strip()}")
+    ok(f"git — {C.WHITE}{result.stdout.strip()}{C.RESET}")
     return True
 
 
 def check_gh_cli() -> bool:
-    """Verify GitHub CLI is installed and authenticated."""
+    """Verify GitHub CLI is installed and authenticated (non-blocking)."""
     if not shutil.which("gh"):
         warn("GitHub CLI (gh) is not installed. Optional but recommended.")
-        warn("  Install from https://cli.github.com/")
+        info(f"  Install from {C.WHITE}https://cli.github.com/{C.RESET}")
         return True  # non-blocking
 
     result = run(["gh", "auth", "status"], check=False)
     if result.returncode != 0:
-        warn("GitHub CLI installed but not authenticated. Run: gh auth login")
+        warn(f"GitHub CLI installed but not authenticated. "
+             f"Run: {C.YELLOW}gh auth login{C.RESET}")
     else:
         ok("GitHub CLI — authenticated")
     return True
 
 
 def check_vscode_cli() -> bool:
-    """Verify the 'code' CLI is available."""
+    """Verify the 'code' CLI is available (non-blocking)."""
     if not shutil.which("code"):
         warn("VS Code CLI (code) not found on PATH.")
-        warn("  Open VS Code -> Ctrl+Shift+P -> 'Install code command in PATH'")
+        info(f"  Open VS Code → {C.YELLOW}Ctrl+Shift+P{C.RESET} → "
+             f"'{C.WHITE}Shell Command: Install code command in PATH{C.RESET}'")
         return True  # non-blocking
     ok("VS Code CLI (code) available on PATH")
     return True
@@ -133,9 +307,9 @@ def check_global_npm_packages() -> bool:
     all_ok = True
     result = run(["npm", "list", "-g", "--depth=0", "--json"], check=False)
 
+    # Parse the JSON output to see which packages are already installed.
     installed: set[str] = set()
     if result.returncode == 0:
-        import json
         try:
             data = json.loads(result.stdout)
             installed = set(data.get("dependencies", {}).keys())
@@ -144,15 +318,17 @@ def check_global_npm_packages() -> bool:
 
     for pkg in REQUIRED_GLOBAL_NPM_PACKAGES:
         if pkg in installed:
-            ok(f"npm global: {pkg}")
+            ok(f"npm global: {C.WHITE}{pkg}{C.RESET}")
         else:
-            fix(f"Installing global npm package: {pkg}")
-            install_result = run(["npm", "install", "-g", pkg], check=False)
+            fix(f"Installing global npm package: {C.WHITE}{pkg}{C.RESET}")
+            install_result = run(
+                ["npm", "install", "-g", pkg], check=False,
+            )
             if install_result.returncode != 0:
                 fail(f"Failed to install {pkg}: {install_result.stderr.strip()}")
                 all_ok = False
             else:
-                ok(f"Installed: {pkg}")
+                ok(f"Installed: {C.WHITE}{pkg}{C.RESET}")
     return all_ok
 
 
@@ -172,17 +348,17 @@ def check_vscode_extensions() -> bool:
     all_ok = True
     for ext in REQUIRED_VSCODE_EXTENSIONS:
         if ext.lower() in installed:
-            ok(f"VS Code extension: {ext}")
+            ok(f"VS Code extension: {C.WHITE}{ext}{C.RESET}")
         else:
-            fix(f"Installing VS Code extension: {ext}")
+            fix(f"Installing VS Code extension: {C.WHITE}{ext}{C.RESET}")
             install_result = run(
-                ["code", "--install-extension", ext], check=False
+                ["code", "--install-extension", ext], check=False,
             )
             if install_result.returncode != 0:
                 fail(f"Failed to install {ext}: {install_result.stderr.strip()}")
                 all_ok = False
             else:
-                ok(f"Installed: {ext}")
+                ok(f"Installed: {C.WHITE}{ext}{C.RESET}")
     return all_ok
 
 
@@ -209,6 +385,7 @@ def check_node_modules() -> bool:
 
 def verify_compile() -> bool:
     """Run the full compile (type-check + lint + esbuild) and verify success."""
+    info("Running npm run compile...")
     result = run(["npm", "run", "compile"], cwd=PROJECT_ROOT, check=False)
     if result.returncode != 0:
         fail("Compile failed:")
@@ -221,15 +398,11 @@ def verify_compile() -> bool:
     return True
 
 
-# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
-MAX_FILE_LINES = 300
-
-
 def check_file_line_limits() -> bool:
     """Enforce the 300-line hard limit on all TypeScript files in src/.
 
     The project's quality standards require every file to be at most 300
-    lines.  This check catches violations early so they can be fixed
+    lines. This check catches violations early so they can be fixed
     before committing.
     """
     src_dir = os.path.join(PROJECT_ROOT, "src")
@@ -249,65 +422,212 @@ def check_file_line_limits() -> bool:
     if violations:
         fail(f"{len(violations)} file(s) exceed {MAX_FILE_LINES}-line limit:")
         for v in violations:
-            print(f"         {v}")
+            print(f"         {C.RED}{v}{C.RESET}")
         return False
     ok(f"All .ts files are within the {MAX_FILE_LINES}-line limit")
     return True
 
 
+# ── Report ───────────────────────────────────────────────────
+
+def save_report(
+    step_results: list[tuple[str, bool, float]],
+    version: str,
+) -> str | None:
+    """Save an environment check report to reports/. Returns the path."""
+    reports_dir = os.path.join(PROJECT_ROOT, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_path = os.path.join(reports_dir, f"env_setup_report_{ts}.txt")
+
+    total_time = sum(t for _, _, t in step_results)
+    passed = sum(1 for _, ok_flag, _ in step_results if ok_flag)
+    failed = len(step_results) - passed
+
+    lines = [
+        "Saropa Log Capture — Environment Setup Report",
+        f"Generated: {datetime.datetime.now().isoformat()}",
+        f"Extension version: {version}",
+        "",
+        f"Results: {passed} passed, {failed} failed",
+        f"Total time: {elapsed_str(total_time)}",
+        "",
+        "Step Details:",
+    ]
+    for name, ok_flag, secs in step_results:
+        status = "PASS" if ok_flag else "FAIL"
+        lines.append(f"  [{status}] {name:<25s} {elapsed_str(secs):>8s}")
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+    return report_path
+
+
+# ── CLI ──────────────────────────────────────────────────────
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Set up the development environment for Saropa Log Capture.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python scripts/init_environment.py
+  python scripts/init_environment.py --skip-compile
+  python scripts/init_environment.py --skip-extensions --skip-global-npm
+        """,
+    )
+    parser.add_argument(
+        "--skip-compile",
+        action="store_true",
+        help="Skip the compile verification step without prompting.",
+    )
+    parser.add_argument(
+        "--skip-extensions",
+        action="store_true",
+        help="Skip VS Code extension installation without prompting.",
+    )
+    parser.add_argument(
+        "--skip-global-npm",
+        action="store_true",
+        help="Skip global npm package installation without prompting.",
+    )
+    parser.add_argument(
+        "--no-logo",
+        action="store_true",
+        help="Suppress the Saropa ASCII art logo.",
+    )
+    return parser.parse_args()
+
+
 # ── Main ─────────────────────────────────────────────────────
+# Pipeline: prerequisites → global npm → VS Code extensions →
+# project deps → compile → quality checks → report.
+# Exits with code 0 on success, 1 on any failure.
+
+
+def run_step(
+    name: str,
+    fn: object,
+    results: list[tuple[str, bool, float]],
+) -> bool:
+    """Time and record a single check step. Returns its pass/fail status."""
+    t0 = time.time()
+    passed = fn()  # type: ignore[operator]
+    elapsed = time.time() - t0
+    results.append((name, passed, elapsed))
+    return passed
 
 
 def main() -> int:
-    print("Saropa Log Capture — Development Environment Setup")
-    print(f"Project root: {PROJECT_ROOT}")
-
+    args = parse_args()
+    version = read_package_version()
+    results: list[tuple[str, bool, float]] = []
     errors = 0
 
+    # -- Banner --
+    if not args.no_logo:
+        show_logo(version)
+    else:
+        print(f"\n  {C.BOLD}Saropa Log Capture — Environment Setup{C.RESET}"
+              f"  {dim(f'v{version}')}")
+    print(f"  Project root: {dim(PROJECT_ROOT)}")
+
+    # -- Prerequisites (blocking) --
     heading("Prerequisites")
-    if not check_node():
+    if not run_step("Node.js", check_node, results):
         errors += 1
-    if not check_npm():
+    if not run_step("npm", check_npm, results):
         errors += 1
-    if not check_git():
+    if not run_step("git", check_git, results):
         errors += 1
-    check_gh_cli()
-    check_vscode_cli()
+    run_step("GitHub CLI", check_gh_cli, results)
+    run_step("VS Code CLI", check_vscode_cli, results)
 
     if errors > 0:
         fail(f"\n{errors} prerequisite(s) missing. Fix the above and re-run.")
         return 1
 
-    heading("Global npm Packages")
-    if not check_global_npm_packages():
-        errors += 1
+    # -- Global npm packages --
+    # CLI flag skips without asking; otherwise prompt the user.
+    skip_global = args.skip_global_npm or not ask_yn(
+        "Check global npm packages (yo, generator-code)?",
+    )
+    if skip_global:
+        heading("Global npm Packages (skipped)")
+    else:
+        heading("Global npm Packages")
+        if not run_step("Global npm pkgs", check_global_npm_packages, results):
+            errors += 1
 
-    heading("VS Code Extensions")
-    if not check_vscode_extensions():
-        errors += 1
+    # -- VS Code extensions --
+    skip_ext = args.skip_extensions or not ask_yn(
+        "Check VS Code extensions?",
+    )
+    if skip_ext:
+        heading("VS Code Extensions (skipped)")
+    else:
+        heading("VS Code Extensions")
+        if not run_step("VS Code extensions", check_vscode_extensions, results):
+            errors += 1
 
+    # -- Project dependencies --
     heading("Project Dependencies")
-    if not check_node_modules():
+    if not run_step("node_modules", check_node_modules, results):
         errors += 1
 
     if errors > 0:
         fail(f"\n{errors} step(s) failed. Fix the above and re-run.")
         return 1
 
-    heading("Verify Compile")
-    if not verify_compile():
-        return 1
+    # -- Compile verification --
+    skip_compile = args.skip_compile or not ask_yn(
+        "Run compile verification?",
+    )
+    if skip_compile:
+        heading("Verify Compile (skipped)")
+    else:
+        heading("Verify Compile")
+        if not run_step("Compile", verify_compile, results):
+            return 1
 
+    # -- Quality checks --
     heading("Quality Checks")
-    if not check_file_line_limits():
+    if not run_step("File line limits", check_file_line_limits, results):
         errors += 1
 
     if errors > 0:
         fail(f"\n{errors} quality check(s) failed. Fix the above and re-run.")
         return 1
 
+    # -- Report (always saved) --
+    report_path = save_report(results, version)
+    if report_path:
+        rel = os.path.relpath(report_path, PROJECT_ROOT)
+        ok(f"Report saved: {C.WHITE}{rel}{C.RESET}")
+
+    # -- Timing summary --
+    total = sum(t for _, _, t in results)
+    heading("Timing")
+    for name, passed, secs in results:
+        icon = f"{C.GREEN}✓{C.RESET}" if passed else f"{C.RED}✗{C.RESET}"
+        bar_len = int(min(secs / max(total, 0.001) * 30, 30))
+        bar = f"{C.GREEN}{'█' * bar_len}{C.RESET}" if bar_len else ""
+        print(f"  {icon} {name:<25s} {elapsed_str(secs):>8s}  {bar}")
+    print(f"  {'─' * 45}")
+    print(f"    {'Total':<23s} {C.BOLD}{elapsed_str(total)}{C.RESET}")
+
+    # -- Done --
+    passed_count = sum(1 for _, p, _ in results if p)
     heading("Done")
-    ok("Environment is ready. Press F5 to launch the Extension Development Host.")
+    ok(f"{C.BOLD}Environment is ready.{C.RESET} "
+       f"{dim(f'{passed_count}/{len(results)} checks passed')}")
+    print()
+    info(f"Press {C.YELLOW}F5{C.RESET} in VS Code to launch the "
+         f"Extension Development Host.")
+    print()
     return 0
 
 

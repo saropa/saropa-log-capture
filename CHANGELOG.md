@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- **Panel Location:** Moved the Log Viewer and Session History from the sidebar (Activity Bar) to the bottom panel, next to Output and Terminal tabs. Provides more horizontal space for log lines.
+
 ### Added
 - **Full Debug Console Capture:** Added `saropaLogCapture.captureAll` setting and UI toggle ("App Only: OFF") to capture all Debug Console output, bypassing category and exclusion filters. When enabled, all system, framework, and app logs are captured. Toggle via the viewer or settings.
 - **Line Decorations:** Added `saropaLogCapture.showDecorations` setting and footer "Deco" toggle to show a decoration prefix on each log line in the viewer. Each line displays a colored severity dot (green/orange/red), sequential counter, and wall-clock timestamp. Viewer-only — log files are not modified.
+- **Level Filter:** Added All/Errors/Warn+ segmented buttons in the footer to filter log lines by severity. Configurable context lines (`saropaLogCapture.filterContextLines`) shown dimmed around matches.
+- **Inline Peek:** Double-click any log line to expand an inline peek showing surrounding context lines. Press Escape to dismiss. Configurable range via `saropaLogCapture.contextViewLines`.
+- **Expanded Highlight Rules:** Default highlight patterns now include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, and Debug in addition to Error, Warning, and Success.
+- **Historical Log Viewing:** Opening a session from Session History now loads it into the panel viewer instead of as a raw text file.
+- **Build & Install script** (`scripts/build_and_install.py`): Compiles the extension, packages a `.vsix` file, automatically saves a build report to `reports/`, and offers interactive CLI installation. Prompts for optional steps; CLI flags (`--skip-compile`, `--auto-install`, `--no-logo`) available for automation.
+- **Environment setup improvements** (`scripts/init_environment.py`): Added colored terminal output, Saropa ASCII art logo, per-step timing with bar chart summary, and automatic setup report to `reports/`. Optional steps prompt interactively; CLI flags (`--skip-compile`, `--skip-extensions`, `--skip-global-npm`, `--no-logo`) available for automation.
 
 ## [0.1.0] - 2026-01-28
 
