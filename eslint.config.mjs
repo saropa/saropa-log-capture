@@ -23,5 +23,6 @@ export default [{
         eqeqeq: "warn",
         "no-throw-literal": "warn",
         semi: "warn",
+        "max-lines": ["warn", { max: 300, skipBlankLines: false, skipComments: false }],
     },
 }];
