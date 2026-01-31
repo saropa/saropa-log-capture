@@ -119,6 +119,7 @@ export class SessionManagerImpl implements SessionManager {
         session: vscode.DebugSession,
         context: vscode.ExtensionContext,
     ): Promise<void> {
+        if (!getConfig().enabled) { return; }
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
@@ -153,14 +154,14 @@ export class SessionManagerImpl implements SessionManager {
         if (!this.ownerSessionIds.has(session.id)) { return; }
         this.ownerSessionIds.delete(session.id);
 
-        const stats = buildSessionStats(
-            logSession, this.sessionStartTime, this.categoryCounts,
-            this.watcher, this.floodSuppressedTotal,
-        );
+        const stats = buildSessionStats({
+            logSession, sessionStartTime: this.sessionStartTime,
+            categoryCounts: this.categoryCounts,
+            watcher: this.watcher, floodSuppressedTotal: this.floodSuppressedTotal,
+        });
         await finalizeSession({
             logSession, outputChannel: this.outputChannel,
-            watcher: this.watcher, autoTagger: this.autoTagger,
-            metadataStore: this.metadataStore,
+            autoTagger: this.autoTagger, metadataStore: this.metadataStore,
         }, stats);
 
         if (this.ownerSessionIds.size === 0) { this.statusBar.hide(); }
