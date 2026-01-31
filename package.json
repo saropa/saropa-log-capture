@@ -186,11 +186,10 @@
       }
     ],
     "viewsContainers": {
-      "activitybar": [
+      "panel": [
         {
           "id": "saropaLogCapture",
-          "title": "Saropa Log Capture",
-          "icon": "images/sidebar-icon.svg"
+          "title": "Saropa Log Capture"
         }
       ]
     },
@@ -457,11 +456,30 @@
           "default": false,
           "description": "Show elapsed time (+Nms) between consecutive log lines in the viewer."
         },
+        "saropaLogCapture.showDecorations": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show decoration prefix (severity dot, counter, timestamp) on each log line in the viewer."
+        },
         "saropaLogCapture.slowGapThreshold": {
           "type": "number",
           "default": 1000,
           "minimum": 100,
           "description": "Elapsed time threshold (ms) for highlighting slow gaps between lines."
+        },
+        "saropaLogCapture.filterContextLines": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Number of preceding lines to show (dimmed) when filtering by log level."
+        },
+        "saropaLogCapture.contextViewLines": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Number of lines before and after to show in the context view modal."
         },
         "saropaLogCapture.splitRules": {
           "type": "object",
