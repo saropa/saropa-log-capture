@@ -16,8 +16,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Inline Peek:** Double-click any log line to expand an inline peek showing surrounding context lines. Press Escape to dismiss. Configurable range via `saropaLogCapture.contextViewLines`.
 - **Expanded Highlight Rules:** Default highlight patterns now include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, and Debug in addition to Error, Warning, and Success.
 - **Historical Log Viewing:** Opening a session from Session History now loads it into the panel viewer instead of as a raw text file.
-- **Build & Install script** (`scripts/build_and_install.py`): Compiles the extension, packages a `.vsix` file, automatically saves a build report to `reports/`, and offers interactive CLI installation. Prompts for optional steps; CLI flags (`--skip-compile`, `--auto-install`, `--no-logo`) available for automation.
-- **Environment setup improvements** (`scripts/init_environment.py`): Added colored terminal output, Saropa ASCII art logo, per-step timing with bar chart summary, and automatic setup report to `reports/`. Optional steps prompt interactively; CLI flags (`--skip-compile`, `--skip-extensions`, `--skip-global-npm`, `--no-logo`) available for automation.
+- **Developer Toolkit** (`scripts/dev.py`): Unified interactive script replacing `init_environment.py` and `build_and_install.py`. Presents a menu with three workflows: Setup (check tools, install deps, compile, quality checks), Build (compile, package .vsix, offer install), or Full (both). Features Saropa ASCII logo, colored output, per-step timing with bar chart, and automatic reports to `reports/`. CLI flags available for automation.
+
+### Fixed
+- **Historical Log Viewing:** Skips context header block, parses `[category]` prefixes for proper stderr coloring, detects markers, and sends lines in async batches to avoid UI freezing. Footer shows "Viewing:" instead of "Recording:" for historical files.
+- **Filter Coordination:** Category, exclusion, and level filters now respect each other's state via shared `recalcHeights()`. Previously, applying one filter could override another's visibility decisions.
+- **Inline Peek on Double-Click:** Fixed DOM index mapping when lines have gap markers or annotations — `querySelectorAll` now counts only line-level elements.
+- **Inline Peek on Clear:** Peek is now closed when the viewer is cleared, preventing stale content.
+- **Context Line Settings:** Setting `filterContextLines` or `contextViewLines` to 0 is now honored (previously treated as default due to falsy-zero).
+- **Success Highlight:** Pattern now matches "successfully" and "successful" in addition to "success", "passed", and "succeeded".
+- **Config Timing:** Highlight rules and presets are cached and sent when the webview initializes, so historical file views get proper coloring even without a prior debug session.
 
 ## [0.1.0] - 2026-01-28
 
