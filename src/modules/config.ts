@@ -43,7 +43,9 @@ const SECTION = "saropaLogCapture";
 
 /**
  * Default highlight rules for common log patterns.
- * These provide sensible coloring out of the box while being easily overridable.
+ * Priority-ordered: first match wins when multiple rules could apply.
+ * Users can override via the `saropaLogCapture.highlightRules` setting.
+ * Uses VS Code theme variables so colors adapt to light/dark themes.
  */
 function defaultHighlightRules(): HighlightRule[] {
   return [
@@ -82,7 +84,7 @@ function defaultHighlightRules(): HighlightRule[] {
       label: "Deprecated",
     },
     {
-      pattern: "/\\b(success|passed|ok)\\b/i",
+      pattern: "/\\b(success(ful(ly)?)?|passed|succeeded)\\b/i",
       color: "var(--vscode-debugConsole-sourceForeground)",
       label: "Success",
     },
