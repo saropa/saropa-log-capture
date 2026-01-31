@@ -1,36 +1,10 @@
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../modules/config';
 import { SessionMetadataStore } from '../modules/session-metadata';
-
-interface SessionMetadata {
-    readonly uri: vscode.Uri;
-    readonly filename: string;
-    readonly date?: string;
-    readonly project?: string;
-    readonly adapter?: string;
-    readonly lineCount?: number;
-    readonly size: number;
-    readonly displayName?: string;
-    /** Manually applied tags. */
-    readonly tags?: string[];
-    /** Automatically applied tags from auto-tag rules. */
-    readonly autoTags?: string[];
-    readonly partNumber?: number;
-}
-
-/** Tree item representing either a single session or a split parent group. */
-type TreeItem = SessionMetadata | SplitGroup;
-
-interface SplitGroup {
-    readonly type: 'split-group';
-    readonly baseFilename: string;
-    readonly parts: SessionMetadata[];
-    readonly totalSize: number;
-    readonly date?: string;
-    readonly project?: string;
-    readonly adapter?: string;
-    readonly displayName?: string;
-}
+import {
+    SessionMetadata, SplitGroup, TreeItem,
+    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize,
+} from './session-history-grouping';
 
 /** Tree data provider for listing past log sessions from the reports directory. */
 export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable {
@@ -88,12 +62,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     }
 
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
-        // If element is a split group, return its parts
         if (element && isSplitGroup(element)) {
             return element.parts.sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
         }
 
-        // Top level: load all sessions and group splits
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (!folder) {
             return [];
@@ -104,7 +76,6 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             const logFiles = entries.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'));
             const items = await Promise.all(logFiles.map(([name]) => this.loadMetadata(logDir, name)));
 
-            // Group split files
             const grouped = groupSplitFiles(items);
             return grouped.sort((a, b) => {
                 const dateA = isSplitGroup(a) ? (a.date ?? a.baseFilename) : (a.date ?? a.filename);
@@ -188,11 +159,9 @@ function buildDescription(item: SessionMetadata): string {
         parts.push(item.adapter);
     }
     parts.push(formatSize(item.size));
-    // Manual tags: #tag
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
     }
-    // Auto-tags: ~tag (tilde prefix to distinguish from manual tags)
     if (item.autoTags && item.autoTags.length > 0) {
         parts.push(item.autoTags.map(t => `~${t}`).join(' '));
     }
@@ -211,102 +180,5 @@ function buildTooltip(item: SessionMetadata): string {
         parts.push(`Adapter: ${item.adapter}`);
     }
     parts.push(`Size: ${formatSize(item.size)}`);
-    return parts.join('\n');
-}
-
-function formatSize(bytes: number): string {
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-    if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function isSplitGroup(item: TreeItem): item is SplitGroup {
-    return (item as SplitGroup).type === 'split-group';
-}
-
-/** Pattern to detect split file parts: _001.log, _002.log, etc. */
-const SPLIT_PART_PATTERN = /^(.+)_(\d{3})\.log$/;
-
-/** Extract base filename and part number from a filename. */
-function parseSplitFilename(filename: string): { base: string; part: number } | null {
-    const match = filename.match(SPLIT_PART_PATTERN);
-    if (match) {
-        return { base: match[1], part: parseInt(match[2], 10) };
-    }
-    return null;
-}
-
-/** Group split files under their parent session. */
-function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
-    const groups = new Map<string, SessionMetadata[]>();
-    const standalone: SessionMetadata[] = [];
-
-    for (const item of items) {
-        const parsed = parseSplitFilename(item.filename);
-        if (parsed) {
-            // This is a split part (e.g., _002.log, _003.log)
-            const key = parsed.base;
-            if (!groups.has(key)) {
-                groups.set(key, []);
-            }
-            groups.get(key)!.push({ ...item, partNumber: parsed.part });
-        } else if (item.filename.endsWith('.log')) {
-            // Check if this is a base file that has split parts
-            const base = item.filename.replace(/\.log$/, '');
-            const hasParts = items.some(i => parseSplitFilename(i.filename)?.base === base);
-            if (hasParts) {
-                // This is the first part of a split session
-                if (!groups.has(base)) {
-                    groups.set(base, []);
-                }
-                groups.get(base)!.unshift({ ...item, partNumber: 1 });
-            } else {
-                standalone.push(item);
-            }
-        }
-    }
-
-    const result: TreeItem[] = [...standalone];
-
-    for (const [base, parts] of groups) {
-        if (parts.length === 1) {
-            // Only one file, no grouping needed
-            result.push(parts[0]);
-        } else {
-            // Create a split group
-            const firstPart = parts.find(p => p.partNumber === 1) ?? parts[0];
-            const group: SplitGroup = {
-                type: 'split-group',
-                baseFilename: base + '.log',
-                parts,
-                totalSize: parts.reduce((sum, p) => sum + p.size, 0),
-                date: firstPart.date,
-                project: firstPart.project,
-                adapter: firstPart.adapter,
-                displayName: firstPart.displayName,
-            };
-            result.push(group);
-        }
-    }
-
-    return result;
-}
-
-function buildSplitGroupTooltip(group: SplitGroup): string {
-    const parts = [`${group.parts.length} split parts`];
-    if (group.date) {
-        parts.push(`Date: ${group.date}`);
-    }
-    if (group.project) {
-        parts.push(`Project: ${group.project}`);
-    }
-    if (group.adapter) {
-        parts.push(`Adapter: ${group.adapter}`);
-    }
-    parts.push(`Total size: ${formatSize(group.totalSize)}`);
     return parts.join('\n');
 }

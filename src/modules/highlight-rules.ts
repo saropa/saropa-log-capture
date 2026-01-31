@@ -21,46 +21,8 @@
  * { pattern: "success", color: "#00ff00", backgroundColor: "#002200" }
  */
 
-/**
- * A single highlight rule mapping a pattern to visual styling.
- * Patterns can be plain strings or regex (e.g., "/pattern/flags").
- */
-export interface HighlightRule {
-    /** The pattern to match - plain string or /regex/flags format. */
-    readonly pattern: string;
-
-    /**
-     * Text color for matching lines.
-     * Can be a CSS color name, hex value, or VS Code CSS variable.
-     * @example "red", "#ff0000", "var(--vscode-errorForeground)"
-     */
-    readonly color?: string;
-
-    /**
-     * Background color for matching lines.
-     * Can be a CSS color name, hex value, or VS Code CSS variable.
-     * @example "yellow", "#ffff00", "var(--vscode-editor-findMatchHighlightBackground)"
-     */
-    readonly backgroundColor?: string;
-
-    /**
-     * Optional label shown in tooltips to explain why the line is highlighted.
-     * If not provided, the pattern is used as the label.
-     */
-    readonly label?: string;
-
-    /**
-     * Whether to apply bold styling to matching text.
-     * @default false
-     */
-    readonly bold?: boolean;
-
-    /**
-     * Whether to apply italic styling to matching text.
-     * @default false
-     */
-    readonly italic?: boolean;
-}
+import { HighlightRule, HighlightMatch, HighlightStyles } from './highlight-rules-types';
+export { HighlightRule, HighlightMatch, HighlightStyles };
 
 /**
  * A compiled highlight rule with the regex pre-built for efficient matching.
@@ -75,35 +37,6 @@ interface CompiledRule {
 
     /** Display label (rule.label or rule.pattern). */
     readonly label: string;
-}
-
-/**
- * Result of matching a line against highlight rules.
- * Contains the styles to apply and the labels of all matching rules.
- */
-export interface HighlightMatch {
-    /**
-     * CSS styles to apply to the line.
-     * Combined from all matching rules (first match wins for conflicts).
-     */
-    readonly styles: HighlightStyles;
-
-    /**
-     * Labels of all rules that matched this line.
-     * Useful for tooltips showing why a line is highlighted.
-     */
-    readonly matchedLabels: string[];
-}
-
-/**
- * CSS styles extracted from matching highlight rules.
- * These are applied directly to the line element in the viewer.
- */
-export interface HighlightStyles {
-    color?: string;
-    backgroundColor?: string;
-    fontWeight?: string;
-    fontStyle?: string;
 }
 
 /**

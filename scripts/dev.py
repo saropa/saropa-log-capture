@@ -542,6 +542,7 @@ def prompt_open_report(report_path: str) -> None:
     if not ask_yn("Open build report?", default=False):
         return
 
+    # cspell:ignore startfile
     abs_path = os.path.abspath(report_path)
     if sys.platform == "win32":
         os.startfile(abs_path)  # type: ignore[attr-defined]
