@@ -9,7 +9,7 @@
 import * as vscode from 'vscode';
 
 /** A session file's metadata used by the history tree. */
-interface SessionMetadata {
+export interface SessionMetadata {
     readonly uri: vscode.Uri;
     readonly filename: string;
     readonly date?: string;
