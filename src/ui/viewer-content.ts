@@ -8,6 +8,7 @@ import { getExclusionScript } from './viewer-exclusions';
 import { getCopyScript } from './viewer-copy';
 import { getAnnotationScript } from './viewer-annotations';
 import { getTimingScript } from './viewer-timing';
+import { getDecorationsScript } from './viewer-decorations';
 import { getStackFilterScript } from './viewer-stack-filter';
 import { getStackDedupScript } from './viewer-stack-dedup';
 import { getSourcePreviewScript } from './viewer-source-preview';
@@ -16,6 +17,8 @@ import { getJsonScript } from './viewer-json';
 import { getHighlightScript } from './viewer-highlight';
 import { getPresetsScript } from './viewer-presets';
 import { getContextMenuScript, getContextMenuHtml } from './viewer-context-menu';
+import { getLevelFilterScript } from './viewer-level-filter';
+import { getContextModalScript, getContextModalHtml } from './viewer-context-modal';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -65,16 +68,23 @@ export function buildViewerHtml(nonce: string): string {
         <button id="search-next" title="Next (F3)">&#x25BC;</button>
         <button id="search-close" title="Close (Escape)">&#x2715;</button>
     </div>
+    ${getContextModalHtml()}
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
         <span id="watch-counts"></span>
         <span id="exclusion-count"></span>
         <button id="exclusion-toggle" style="display:none" onclick="toggleExclusions()">Excl: ON</button>
         <button id="app-only-toggle" onclick="toggleAppOnly()">App Only: OFF</button>
+        <span class="level-btn-group">
+            <button id="level-all" class="level-btn active" onclick="setLevelFilter('all')">All</button>
+            <button id="level-error" class="level-btn" onclick="setLevelFilter('error')">Errors</button>
+            <button id="level-warn" class="level-btn" onclick="setLevelFilter('warn')">Warn+</button>
+        </span>
         <select id="preset-select" title="Filter Presets" onchange="onPresetSelectChange(event)">
             <option value="">Preset: None</option>
         </select>
         <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
+        <button id="deco-toggle" onclick="toggleDecorations()">Deco: OFF</button>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">
@@ -86,14 +96,17 @@ export function buildViewerHtml(nonce: string): string {
         ${getCopyScript()}
         ${getAnnotationScript()}
         ${getTimingScript()}
+        ${getDecorationsScript()}
         ${getStackDedupScript()}
         ${getStackFilterScript()}
         ${getSourcePreviewScript()}
         ${getSplitNavScript()}
         ${getJsonScript()}
         ${getSearchScript()}
+        ${getLevelFilterScript()}
         ${getHighlightScript()}
         ${getPresetsScript()}
+        ${getContextModalScript()}
         ${getContextMenuScript()}
     </script>
 </body>
