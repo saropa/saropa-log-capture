@@ -34,6 +34,7 @@ let lastStart = -1;
 let lastEnd = -1;
 let rafPending = false;
 let currentFilename = '';
+var nextSeq = 1;
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
@@ -52,19 +53,20 @@ function addToData(html, isMarker, category, ts, fw) {
     }
     if (isStackFrameText(html)) {
         if (activeGroupHeader) {
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error' });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw };
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++ };
         allLines.push(hdr);
         activeGroupHeader = hdr;
         totalHeight += ROW_HEIGHT;
         return;
     }
     if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
-    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts });
+    var lvl = (typeof classifyLevel === 'function') ? classifyLevel(stripTags(html), category) : 'info';
+    allLines.push({ html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++ });
     totalHeight += ROW_HEIGHT;
 }
 
@@ -132,6 +134,7 @@ function renderItem(item, idx) {
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
+    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
 
     // Apply highlight rules if function is available (loaded from viewer-highlight.ts)
@@ -143,7 +146,8 @@ function renderItem(item, idx) {
         titleAttr = hl.titleAttr;
     }
 
-    return gap + '<div class="line' + cat + matchCls + '"' + titleAttr + '>' + elapsed + html + '</div>' + annHtml;
+    var ctxCls = item.isContext ? ' context-line' : '';
+    return gap + '<div class="line' + cat + ctxCls + matchCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
@@ -220,6 +224,28 @@ viewportEl.addEventListener('click', function(e) {
     }
 });
 
+viewportEl.addEventListener('dblclick', function(e) {
+    var lineEl = e.target.closest('.line, .stack-header, .marker');
+    if (!lineEl) { return; }
+    // Find the index of this element within the viewport children
+    var children = viewportEl.children;
+    var visIdx = -1;
+    for (var ci = 0; ci < children.length; ci++) {
+        if (children[ci] === lineEl || children[ci].contains(lineEl)) { visIdx = ci; break; }
+    }
+    if (visIdx < 0) { return; }
+    // Map visible element index to allLines index
+    var count = 0;
+    for (var ai = lastStart; ai <= lastEnd && ai < allLines.length; ai++) {
+        if (allLines[ai].height === 0) { continue; }
+        if (count === visIdx) {
+            if (typeof openContextModal === 'function') { openContextModal(ai); }
+            return;
+        }
+        count++;
+    }
+});
+
 function toggleWrap() {
     wordWrap = !wordWrap;
     logEl.classList.toggle('nowrap', !wordWrap);
@@ -267,7 +293,7 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'clear':
-            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null;
+            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
             isPaused = false; footerEl.classList.remove('paused');
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
@@ -300,6 +326,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'setShowElapsed':
             if (typeof handleSetShowElapsed === 'function') handleSetShowElapsed(msg);
+            break;
+        case 'setShowDecorations':
+            if (typeof handleSetShowDecorations === 'function') handleSetShowDecorations(msg);
             break;
         case 'sourcePreview':
             if (typeof handleSourcePreviewResponse === 'function') handleSourcePreviewResponse(msg);
