@@ -93,19 +93,22 @@ export async function initializeSession(
 export interface FinalizeSessionParams {
     readonly logSession: LogSession;
     readonly outputChannel: vscode.OutputChannel;
-    readonly watcher: KeywordWatcher;
     readonly autoTagger: AutoTagger | null;
     readonly metadataStore: SessionMetadataStore;
 }
 
+/** Parameters for building session statistics. */
+export interface BuildStatsParams {
+    readonly logSession: LogSession;
+    readonly sessionStartTime: number;
+    readonly categoryCounts: Record<string, number>;
+    readonly watcher: KeywordWatcher;
+    readonly floodSuppressedTotal: number;
+}
+
 /** Build session statistics for the summary notification. */
-export function buildSessionStats(
-    logSession: LogSession,
-    sessionStartTime: number,
-    categoryCounts: Record<string, number>,
-    watcher: KeywordWatcher,
-    floodSuppressedTotal: number,
-): SessionStats {
+export function buildSessionStats(params: BuildStatsParams): SessionStats {
+    const { logSession, sessionStartTime, categoryCounts, watcher, floodSuppressedTotal } = params;
     const watchCounts: Record<string, number> = {};
     for (const [key, value] of watcher.getCounts()) {
         watchCounts[key] = value;
