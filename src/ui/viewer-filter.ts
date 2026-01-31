@@ -5,27 +5,20 @@
  */
 export function getFilterScript(): string {
     return /* javascript */ `
+/** Set of allowed categories, or null to show all. */
 var activeFilters = null;
 
+/**
+ * Set filteredOut flag on each line based on category membership.
+ * Delegates height recalculation to the shared recalcHeights() so that
+ * exclusion and level filters are also respected.
+ */
 function applyFilter() {
-    totalHeight = 0;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
-        var hidden = activeFilters && !activeFilters.has(item.category) && item.type !== 'marker';
-        item.filteredOut = !!hidden;
-        if (!hidden) {
-            var defaultH = item.type === 'marker' ? MARKER_HEIGHT : ROW_HEIGHT;
-            if (item.type === 'stack-frame' && item.groupId >= 0) {
-                var hdr = allLines.find(function(x) { return x.groupId === item.groupId && x.type === 'stack-header'; });
-                item.height = (hdr && hdr.collapsed) ? 0 : defaultH;
-            } else {
-                item.height = defaultH;
-            }
-        } else {
-            item.height = 0;
-        }
-        totalHeight += item.height;
+        item.filteredOut = !!(activeFilters && !activeFilters.has(item.category) && item.type !== 'marker');
     }
+    recalcHeights();
     renderViewport(true);
 }
 

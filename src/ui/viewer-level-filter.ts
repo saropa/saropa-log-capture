@@ -89,30 +89,7 @@ function applyLevelFilter() {
         }
     }
 
-    // Third pass: recalculate heights
-    totalHeight = 0;
-    for (var i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        var hidden = item.levelFiltered || item.filteredOut || item.excluded;
-        if (hidden) {
-            item.height = 0;
-        } else {
-            var defaultH = item.type === 'marker' ? MARKER_HEIGHT : ROW_HEIGHT;
-            if (item.type === 'stack-frame' && item.groupId >= 0) {
-                var hdr = null;
-                for (var k = 0; k < allLines.length; k++) {
-                    if (allLines[k].groupId === item.groupId && allLines[k].type === 'stack-header') {
-                        hdr = allLines[k]; break;
-                    }
-                }
-                item.height = (hdr && hdr.collapsed) ? 0 : defaultH;
-            } else {
-                item.height = defaultH;
-            }
-        }
-        totalHeight += item.height;
-    }
-
+    recalcHeights();
     renderViewport(true);
 }
 
@@ -142,7 +119,7 @@ function setLevelFilter(level) {
  * Handle setContextLines message from extension.
  */
 function handleSetContextLines(msg) {
-    contextLinesBefore = msg.count || 3;
+    contextLinesBefore = typeof msg.count === 'number' ? msg.count : 3;
     if (activeLevelFilter !== 'all') {
         applyLevelFilter();
     }

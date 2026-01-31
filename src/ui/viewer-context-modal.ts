@@ -88,7 +88,7 @@ function closeContextModal() {
  * Handle setContextViewLines message from extension.
  */
 function handleSetContextViewLines(msg) {
-    contextViewLines = msg.count || 10;
+    contextViewLines = typeof msg.count === 'number' ? msg.count : 10;
 }
 
 // Register message handler

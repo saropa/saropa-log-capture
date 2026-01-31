@@ -27,6 +27,8 @@ let totalHeight = 0;
 let lineCount = 0;
 let autoScroll = true;
 let isPaused = false;
+/** True when viewing a historical log file (disables "Recording:" footer). */
+let isViewingFile = false;
 let wordWrap = true;
 let nextGroupId = 0;
 let activeGroupHeader = null;
@@ -71,19 +73,13 @@ function addToData(html, isMarker, category, ts, fw) {
 }
 
 function toggleStackGroup(groupId) {
-    var header = null;
     for (var i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        if (item.groupId !== groupId) continue;
-        if (item.type === 'stack-header') {
-            header = item;
-            header.collapsed = !header.collapsed;
-        } else if (item.type === 'stack-frame' && header) {
-            var newH = header.collapsed ? 0 : ROW_HEIGHT;
-            totalHeight += newH - item.height;
-            item.height = newH;
+        if (allLines[i].groupId === groupId && allLines[i].type === 'stack-header') {
+            allLines[i].collapsed = !allLines[i].collapsed;
+            break;
         }
     }
+    recalcHeights();
     renderViewport(true);
 }
 
@@ -93,6 +89,38 @@ function trimData() {
     for (var i = 0; i < excess; i++) { totalHeight -= allLines[i].height; }
     allLines.splice(0, excess);
     activeGroupHeader = null;
+}
+
+/**
+ * Recalculate all line heights from scratch.
+ * Called by every filter (category, exclusion, level) after setting their flags,
+ * and by toggleStackGroup after toggling collapsed state. This is the single
+ * source of truth for height — individual filters never manipulate heights directly.
+ */
+function recalcHeights() {
+    totalHeight = 0;
+    for (var i = 0; i < allLines.length; i++) {
+        allLines[i].height = calcItemHeight(allLines[i]);
+        totalHeight += allLines[i].height;
+    }
+}
+
+/**
+ * Determine the pixel height of a single line item.
+ * Hidden (0) if any filter flag is set: filteredOut (category), excluded, levelFiltered.
+ * Stack frames inherit collapsed state from their group header.
+ */
+function calcItemHeight(item) {
+    if (item.filteredOut || item.excluded || item.levelFiltered) return 0;
+    if (item.type === 'marker') return MARKER_HEIGHT;
+    if (item.type === 'stack-frame' && item.groupId >= 0) {
+        for (var k = 0; k < allLines.length; k++) {
+            if (allLines[k].groupId === item.groupId && allLines[k].type === 'stack-header') {
+                return allLines[k].collapsed ? 0 : ROW_HEIGHT;
+            }
+        }
+    }
+    return ROW_HEIGHT;
 }
 
 /**
@@ -147,7 +175,8 @@ function renderItem(item, idx) {
     }
 
     var ctxCls = item.isContext ? ' context-line' : '';
-    return gap + '<div class="line' + cat + ctxCls + matchCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
+    var tintCls = (typeof getLineTintClass === 'function') ? getLineTintClass(item) : '';
+    return gap + '<div class="line' + cat + ctxCls + matchCls + tintCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
@@ -227,14 +256,15 @@ viewportEl.addEventListener('click', function(e) {
 viewportEl.addEventListener('dblclick', function(e) {
     var lineEl = e.target.closest('.line, .stack-header, .marker');
     if (!lineEl) { return; }
-    // Find the index of this element within the viewport children
-    var children = viewportEl.children;
+    // Use querySelectorAll for line-level elements only — renderItem() can emit
+    // sibling gap/annotation divs that would throw off a raw children[] count.
+    var lineEls = viewportEl.querySelectorAll(':scope > .line, :scope > .stack-header, :scope > .marker');
     var visIdx = -1;
-    for (var ci = 0; ci < children.length; ci++) {
-        if (children[ci] === lineEl || children[ci].contains(lineEl)) { visIdx = ci; break; }
+    for (var ci = 0; ci < lineEls.length; ci++) {
+        if (lineEls[ci] === lineEl) { visIdx = ci; break; }
     }
     if (visIdx < 0) { return; }
-    // Map visible element index to allLines index
+    // Map the Nth visible DOM element back to the corresponding allLines index.
     var count = 0;
     for (var ai = lastStart; ai <= lastEnd && ai < allLines.length; ai++) {
         if (allLines[ai].height === 0) { continue; }
@@ -271,8 +301,13 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
+/** Update footer to reflect current mode: Viewing (historical) / PAUSED / Recording. */
 function updateFooterText() {
     var suffix = currentFilename ? ' | ' + currentFilename : '';
+    if (isViewingFile) {
+        footerTextEl.textContent = 'Viewing: ' + lineCount + ' lines' + suffix;
+        return;
+    }
     footerTextEl.textContent = isPaused
         ? 'PAUSED \\u2014 ' + lineCount + ' lines' + suffix
         : 'Recording: ' + lineCount + ' lines' + suffix;
@@ -294,7 +329,8 @@ window.addEventListener('message', function(event) {
             break;
         case 'clear':
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
-            isPaused = false; footerEl.classList.remove('paused');
+            isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
+            if (typeof closeContextModal === 'function') { closeContextModal(); }
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
         case 'updateFooter':
@@ -303,6 +339,10 @@ window.addEventListener('message', function(event) {
         case 'setPaused':
             isPaused = msg.paused;
             footerEl.classList.toggle('paused', isPaused);
+            updateFooterText();
+            break;
+        case 'setViewingMode':
+            isViewingFile = !!msg.viewing;
             updateFooterText();
             break;
         case 'setFilename':
