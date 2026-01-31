@@ -22,7 +22,6 @@
 #   python scripts/build_and_install.py
 #   python scripts/build_and_install.py --skip-compile
 #   python scripts/build_and_install.py --auto-install
-#   python scripts/build_and_install.py --no-report
 #
 # ##############################################################################
 
@@ -128,6 +127,24 @@ def warn(text: str) -> None:
 def dim(text: str) -> str:
     """Wrap text in dim ANSI codes for secondary information."""
     return f"{C.DIM}{text}{C.RESET}"
+
+
+def ask_yn(question: str, default: bool = True) -> bool:
+    """Prompt the user with a yes/no question. Returns the boolean answer.
+
+    Handles EOF and Ctrl+C gracefully by returning the default.
+    """
+    hint = "Y/n" if default else "y/N"
+    try:
+        answer = input(
+            f"  {C.YELLOW}{question} [{hint}]: {C.RESET}",
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return default
+    if not answer:
+        return default
+    return answer in ("y", "yes")
 
 
 # cSpell:disable
@@ -396,24 +413,18 @@ def parse_args() -> argparse.Namespace:
 Examples:
   python scripts/build_and_install.py
   python scripts/build_and_install.py --skip-compile
-  python scripts/build_and_install.py --auto-install
-  python scripts/build_and_install.py --no-report --no-logo
+  python scripts/build_and_install.py --auto-install --no-logo
         """,
     )
     parser.add_argument(
         "--skip-compile",
         action="store_true",
-        help="Skip the compile step (use existing dist/ output).",
+        help="Skip the compile step without prompting.",
     )
     parser.add_argument(
         "--auto-install",
         action="store_true",
         help="Install via 'code' CLI without prompting.",
-    )
-    parser.add_argument(
-        "--no-report",
-        action="store_true",
-        help="Do not save a build report to reports/.",
     )
     parser.add_argument(
         "--no-logo",
@@ -449,9 +460,11 @@ def main() -> int:
     step_times.append(("Dependencies", time.time() - t0))
 
     # -- Compile --
-    if args.skip_compile:
+    # CLI flag skips without asking; otherwise prompt the user.
+    skip_compile = args.skip_compile or not ask_yn("Run compile step?")
+    if skip_compile:
         heading("Compile (skipped)")
-        info("--skip-compile flag set; using existing dist/ output.")
+        info("Using existing dist/ output.")
         step_times.append(("Compile", 0.0))
     else:
         heading("Compile")
@@ -468,12 +481,11 @@ def main() -> int:
         return 1
     step_times.append(("Package", time.time() - t0))
 
-    # -- Report --
-    if not args.no_report:
-        report_path = save_report(vsix_path, version, step_times)
-        if report_path:
-            rel = os.path.relpath(report_path, PROJECT_ROOT)
-            ok(f"Report saved: {rel}")
+    # -- Report (always saved) --
+    report_path = save_report(vsix_path, version, step_times)
+    if report_path:
+        rel = os.path.relpath(report_path, PROJECT_ROOT)
+        ok(f"Report saved: {C.WHITE}{rel}{C.RESET}")
 
     # -- Timing summary --
     total = sum(t for _, t in step_times)
@@ -486,13 +498,11 @@ def main() -> int:
     print(f"  {'Total':<20s} {C.BOLD}{elapsed_str(total)}{C.RESET}")
 
     # -- Install --
+    print_install_instructions(vsix_path)
+    # CLI flag auto-installs; otherwise the prompt inside asks the user.
     if args.auto_install:
-        heading("Install")
-        prompt_auto_install(vsix_path)
-    else:
-        print_install_instructions(vsix_path)
-        # Offer interactive install after showing instructions.
-        prompt_auto_install(vsix_path)
+        heading("Auto-Install")
+    prompt_auto_install(vsix_path)
 
     # -- Done --
     heading("Done")
