@@ -14,7 +14,9 @@
     "esbuild",
     "linecap",
     "linejoin",
+    "logcat",
     "Logz",
+    "recalc",
     "RGBA",
     "stackable",
     "Wireshark"

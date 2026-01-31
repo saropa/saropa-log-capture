@@ -564,7 +564,7 @@ def save_report(
     os.makedirs(reports_dir, exist_ok=True)
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(reports_dir, f"dev_report_{ts}.txt")
+    report_path = os.path.join(reports_dir, f"dev_report_{ts}.log")
 
     total_time = sum(t for _, _, t in results)
     passed = sum(1 for _, p, _ in results if p)
