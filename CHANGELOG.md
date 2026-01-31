@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 - **Full Debug Console Capture:** Added `saropaLogCapture.captureAll` setting and UI toggle ("App Only: OFF") to capture all Debug Console output, bypassing category and exclusion filters. When enabled, all system, framework, and app logs are captured. Toggle via the viewer or settings.
+- **Line Decorations:** Added `saropaLogCapture.showDecorations` setting and footer "Deco" toggle to show a decoration prefix on each log line in the viewer. Each line displays a colored severity dot (green/orange/red), sequential counter, and wall-clock timestamp. Viewer-only — log files are not modified.
 
 ## [0.1.0] - 2026-01-28
 

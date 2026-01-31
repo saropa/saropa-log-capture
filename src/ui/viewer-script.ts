@@ -351,7 +351,10 @@ document.addEventListener('keydown', function(e) {
         if (typeof openSearch === 'function') openSearch();
         return;
     }
-    if (e.key === 'Escape') { if (typeof closeSearch === 'function') closeSearch(); return; }
+    if (e.key === 'Escape') {
+        if (typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0 && typeof closeContextModal === 'function') { closeContextModal(); return; }
+        if (typeof closeSearch === 'function') closeSearch(); return;
+    }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
     else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
