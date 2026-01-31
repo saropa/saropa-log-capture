@@ -6,18 +6,17 @@
 # ##############################################################################
 #
 # .SYNOPSIS
-#   Interactive script for environment setup, building, and installing
-#   the Saropa Log Capture VS Code extension.
+#   One-click setup, build, and install for the Saropa Log Capture extension.
 #
 # .DESCRIPTION
-#   Presents a menu with three workflows:
-#     [1] Setup  — check tools, install deps, compile, quality checks
-#     [2] Build  — compile, package .vsix, offer install
-#     [3] Full   — setup then build (recommended for first run)
+#   Runs the full pipeline automatically:
+#     prerequisites → global npm → VS Code extensions → project deps →
+#     compile → quality checks → package .vsix → report → offer install.
 #   Each step is timed. A summary report is always saved to reports/.
+#   Interactive prompts only appear at the end (install, open report).
 #
 # .NOTES
-#   Version:      2.0.0
+#   Version:      2.1.0
 #   Requires:     Python 3.10+
 #                 Optional: colorama (`pip install colorama`) for colored output.
 #
@@ -170,29 +169,6 @@ def ask_yn(question: str, default: bool = True) -> bool:
     if not answer:
         return default
     return answer in ("y", "yes")
-
-
-def ask_menu() -> str:
-    """Show the workflow menu and return the user's choice."""
-    key = C.YELLOW
-    rst = C.RESET
-    print(f"""
-  {C.BOLD}{C.WHITE}What would you like to do?{rst}
-
-    {key}[1]{rst} Setup  — check tools, install deps, compile, quality checks
-    {key}[2]{rst} Build  — compile, package .vsix, offer install
-    {key}[3]{rst} Full   — setup + build {dim('(recommended for first run)')}
-""")
-    try:
-        choice = input(f"  {key}Choose [1/2/3]: {rst}").strip()
-    except (EOFError, KeyboardInterrupt):
-        print()
-        sys.exit(0)
-    if choice in ("1", "2", "3"):
-        return choice
-    # Default to full pipeline on invalid input.
-    info("Defaulting to full pipeline.")
-    return "3"
 
 
 # cSpell:disable
@@ -538,17 +514,16 @@ def print_install_instructions(vsix_path: str) -> None:
 """)
 
 
-def prompt_auto_install(vsix_path: str) -> bool:
+def prompt_install(vsix_path: str) -> None:
     """Ask the user whether to install the .vsix via the code CLI."""
     if not shutil.which("code"):
-        warn("VS Code CLI (code) not found on PATH — skipping auto-install.")
+        warn("VS Code CLI (code) not found on PATH — cannot auto-install.")
         info("Add it via: VS Code → Ctrl+Shift+P → "
              "'Shell Command: Install code command in PATH'")
-        return False
+        return
 
     if not ask_yn("Install via CLI now?", default=False):
-        info("Skipped auto-install.")
-        return False
+        return
 
     vsix_name = os.path.basename(vsix_path)
     info(f"Running: code --install-extension {vsix_name}")
@@ -557,16 +532,28 @@ def prompt_auto_install(vsix_path: str) -> bool:
     )
     if result.returncode != 0:
         fail(f"Install failed: {result.stderr.strip()}")
-        return False
+        return
     ok("Extension installed successfully!")
     info("Reload VS Code to activate the updated extension.")
-    return True
+
+
+def prompt_open_report(report_path: str) -> None:
+    """Ask the user whether to open the build report."""
+    if not ask_yn("Open build report?", default=False):
+        return
+
+    abs_path = os.path.abspath(report_path)
+    if sys.platform == "win32":
+        os.startfile(abs_path)  # type: ignore[attr-defined]
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", abs_path])
+    else:
+        subprocess.Popen(["xdg-open", abs_path])
 
 
 # ── Report ───────────────────────────────────────────────────
 
 def save_report(
-    mode: str,
     results: list[tuple[str, bool, float]],
     version: str,
     vsix_path: str | None = None,
@@ -576,14 +563,14 @@ def save_report(
     os.makedirs(reports_dir, exist_ok=True)
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(reports_dir, f"dev_{mode}_{ts}.txt")
+    report_path = os.path.join(reports_dir, f"dev_report_{ts}.txt")
 
     total_time = sum(t for _, _, t in results)
     passed = sum(1 for _, p, _ in results if p)
     failed = len(results) - passed
 
     lines = [
-        f"Saropa Log Capture — Dev Report ({mode})",
+        "Saropa Log Capture — Dev Report",
         f"Generated: {datetime.datetime.now().isoformat()}",
         f"Extension version: {version}",
         "",
@@ -622,140 +609,21 @@ def print_timing(results: list[tuple[str, bool, float]]) -> None:
     print(f"    {'Total':<23s} {C.BOLD}{elapsed_str(total)}{C.RESET}")
 
 
-# ── Workflows ────────────────────────────────────────────────
-
-def workflow_setup(
-    args: argparse.Namespace,
-    results: list[tuple[str, bool, float]],
-) -> bool:
-    """Run the environment setup workflow. Returns True if all passed."""
-    errors = 0
-
-    # -- Prerequisites (blocking) --
-    heading("Prerequisites")
-    if not run_step("Node.js", check_node, results):
-        errors += 1
-    if not run_step("npm", check_npm, results):
-        errors += 1
-    if not run_step("git", check_git, results):
-        errors += 1
-    run_step("GitHub CLI", check_gh_cli, results)
-    run_step("VS Code CLI", check_vscode_cli, results)
-
-    if errors > 0:
-        fail(f"\n{errors} prerequisite(s) missing. Fix the above and re-run.")
-        return False
-
-    # -- Global npm packages (prompt) --
-    skip_global = args.skip_global_npm or not ask_yn(
-        "Check global npm packages (yo, generator-code)?",
-    )
-    if skip_global:
-        heading("Global npm Packages (skipped)")
-    else:
-        heading("Global npm Packages")
-        if not run_step("Global npm pkgs", check_global_npm_packages, results):
-            errors += 1
-
-    # -- VS Code extensions (prompt) --
-    skip_ext = args.skip_extensions or not ask_yn(
-        "Check VS Code extensions?",
-    )
-    if skip_ext:
-        heading("VS Code Extensions (skipped)")
-    else:
-        heading("VS Code Extensions")
-        if not run_step("VS Code extensions", check_vscode_extensions, results):
-            errors += 1
-
-    # -- Project dependencies --
-    heading("Project Dependencies")
-    if not run_step("node_modules", check_node_modules, results):
-        errors += 1
-
-    if errors > 0:
-        fail(f"\n{errors} step(s) failed. Fix the above and re-run.")
-        return False
-
-    # -- Compile --
-    if args.skip_compile:
-        heading("Compile (skipped)")
-    else:
-        heading("Compile")
-        if not run_step("Compile", step_compile, results):
-            return False
-
-    # -- Quality checks --
-    heading("Quality Checks")
-    if not run_step("File line limits", check_file_line_limits, results):
-        fail("Quality check(s) failed. Fix the above and re-run.")
-        return False
-
-    return True
-
-
-def workflow_build(
-    args: argparse.Namespace,
-    results: list[tuple[str, bool, float]],
-) -> str | None:
-    """Run the build workflow. Returns the .vsix path or None on failure."""
-    # -- Dependencies --
-    heading("Dependencies")
-    if not run_step("node_modules", check_node_modules, results):
-        return None
-
-    # -- Compile --
-    if args.skip_compile:
-        heading("Compile (skipped)")
-    else:
-        heading("Compile")
-        if not run_step("Compile", step_compile, results):
-            return None
-
-    # -- Package --
-    heading("Package")
-    t0 = time.time()
-    vsix_path = step_package()
-    elapsed = time.time() - t0
-    results.append(("Package", vsix_path is not None, elapsed))
-    if not vsix_path:
-        return None
-
-    # -- Install instructions + prompt --
-    print_install_instructions(vsix_path)
-    if args.auto_install:
-        prompt_auto_install(vsix_path)
-    else:
-        prompt_auto_install(vsix_path)
-
-    return vsix_path
-
-
 # ── CLI ──────────────────────────────────────────────────────
 
 def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments (all optional — interactive by default)."""
+    """Parse command-line arguments (all optional — for CI automation)."""
     parser = argparse.ArgumentParser(
-        description="Saropa Log Capture developer toolkit.",
+        description="Saropa Log Capture — one-click setup, build, and install.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Runs interactively by default. CLI flags are available for automation:
+Runs the full pipeline by default. Flags are for CI automation only:
 
-  python scripts/dev.py                   # interactive menu
-  python scripts/dev.py --setup           # run setup without menu
-  python scripts/dev.py --build           # run build without menu
-  python scripts/dev.py --full            # run both without menu
+  python scripts/dev.py                        # full pipeline
+  python scripts/dev.py --skip-compile         # skip compile step
+  python scripts/dev.py --auto-install         # install without prompting
         """,
     )
-    # Mode selection (skip the menu).
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--setup", action="store_true",
-                       help="Run setup workflow without menu.")
-    mode.add_argument("--build", action="store_true",
-                       help="Run build workflow without menu.")
-    mode.add_argument("--full", action="store_true",
-                       help="Run full pipeline without menu.")
-    # Granular skips.
     parser.add_argument("--skip-compile", action="store_true",
                         help="Skip the compile step.")
     parser.add_argument("--skip-extensions", action="store_true",
@@ -770,11 +638,15 @@ Runs interactively by default. CLI flags are available for automation:
 
 
 # ── Main ─────────────────────────────────────────────────────
+# Full pipeline: setup → build → report → interactive prompts.
+# Exits with code 0 on success, 1 on any failure.
+
 
 def main() -> int:
     args = parse_args()
     version = read_package_version()
     results: list[tuple[str, bool, float]] = []
+    errors = 0
 
     # -- Banner --
     if not args.no_logo:
@@ -784,49 +656,105 @@ def main() -> int:
               f"  {dim(f'v{version}')}")
     print(f"  Project root: {dim(PROJECT_ROOT)}")
 
-    # -- Pick workflow --
-    if args.setup:
-        mode = "1"
-    elif args.build:
-        mode = "2"
-    elif args.full:
-        mode = "3"
+    # ── SETUP ────────────────────────────────────────────────
+
+    # -- Prerequisites (blocking) --
+    heading("Prerequisites")
+    if not run_step("Node.js", check_node, results):
+        errors += 1
+    if not run_step("npm", check_npm, results):
+        errors += 1
+    if not run_step("git", check_git, results):
+        errors += 1
+    run_step("GitHub CLI", check_gh_cli, results)
+    run_step("VS Code CLI", check_vscode_cli, results)
+
+    if errors > 0:
+        fail(f"\n{errors} prerequisite(s) missing. Fix the above and re-run.")
+        return 1
+
+    # -- Global npm packages --
+    if args.skip_global_npm:
+        heading("Global npm Packages (skipped)")
     else:
-        mode = ask_menu()
+        heading("Global npm Packages")
+        if not run_step("Global npm pkgs", check_global_npm_packages, results):
+            errors += 1
 
-    vsix_path: str | None = None
+    # -- VS Code extensions --
+    if args.skip_extensions:
+        heading("VS Code Extensions (skipped)")
+    else:
+        heading("VS Code Extensions")
+        if not run_step("VS Code extensions", check_vscode_extensions, results):
+            errors += 1
 
-    # -- Run workflow(s) --
-    if mode in ("1", "3"):
-        if not workflow_setup(args, results):
+    # -- Project dependencies --
+    heading("Project Dependencies")
+    if not run_step("node_modules", check_node_modules, results):
+        errors += 1
+
+    if errors > 0:
+        fail(f"\n{errors} step(s) failed. Fix the above and re-run.")
+        return 1
+
+    # -- Compile --
+    if args.skip_compile:
+        heading("Compile (skipped)")
+    else:
+        heading("Compile")
+        if not run_step("Compile", step_compile, results):
             return 1
 
-    if mode in ("2", "3"):
-        vsix_path = workflow_build(args, results)
-        if not vsix_path:
-            return 1
+    # -- Quality checks --
+    heading("Quality Checks")
+    if not run_step("File line limits", check_file_line_limits, results):
+        fail("Quality check(s) failed. Fix the above and re-run.")
+        return 1
 
-    # -- Report (always saved) --
-    mode_label = {"1": "setup", "2": "build", "3": "full"}[mode]
-    report_path = save_report(mode_label, results, version, vsix_path)
+    # ── BUILD ────────────────────────────────────────────────
+
+    # -- Package .vsix --
+    heading("Package")
+    t0 = time.time()
+    vsix_path = step_package()
+    elapsed = time.time() - t0
+    results.append(("Package", vsix_path is not None, elapsed))
+    if not vsix_path:
+        return 1
+
+    # ── REPORT & TIMING ─────────────────────────────────────
+
+    report_path = save_report(results, version, vsix_path)
     if report_path:
         rel = os.path.relpath(report_path, PROJECT_ROOT)
         ok(f"Report saved: {C.WHITE}{rel}{C.RESET}")
 
-    # -- Timing --
-    if results:
-        print_timing(results)
+    print_timing(results)
 
-    # -- Done --
+    # ── DONE + INTERACTIVE PROMPTS ───────────────────────────
+
     passed = sum(1 for _, p, _ in results if p)
     heading("Done")
-    ok(f"{C.BOLD}All done.{C.RESET} "
+    ok(f"{C.BOLD}Build complete!{C.RESET} "
        f"{dim(f'{passed}/{len(results)} steps passed')}")
-    if vsix_path:
-        ok(f"VSIX: {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}")
-    elif mode == "1":
-        info(f"Press {C.YELLOW}F5{C.RESET} in VS Code to launch the "
-             f"Extension Development Host.")
+    ok(f"VSIX: {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}")
+    print()
+
+    # -- Install instructions --
+    print_install_instructions(vsix_path)
+    if args.auto_install:
+        # CI mode: install without asking.
+        vsix_name = os.path.basename(vsix_path)
+        info(f"Running: code --install-extension {vsix_name}")
+        run(["code", "--install-extension", os.path.abspath(vsix_path)])
+    else:
+        prompt_install(vsix_path)
+
+    # -- Offer to open report --
+    if report_path:
+        prompt_open_report(report_path)
+
     print()
     return 0
 
