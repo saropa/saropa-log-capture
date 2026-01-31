@@ -644,61 +644,38 @@ mark {
 .line.context-line { opacity: 0.4; }
 
 /* ===================================================================
-   Context Modal
-   Full-viewport overlay for showing surrounding context around
-   a log line. Opened via context menu "Show Context".
+   Inline Peek
+   Expandable context view inserted inline after the viewport.
+   Shows surrounding lines around a double-clicked target line.
    =================================================================== */
-.context-modal-backdrop {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 300;
+.inline-peek {
+    border-top: 2px solid var(--vscode-focusBorder, #007acc);
+    border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
+    background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
+    margin: 4px 0;
 }
-.context-modal-backdrop.visible { display: block; }
-.context-modal {
-    display: none;
-    position: fixed;
-    top: 5%; left: 5%; right: 5%; bottom: 5%;
-    background: var(--vscode-editor-background);
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 6px;
-    z-index: 301;
-    flex-direction: column;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-.context-modal.visible { display: flex; }
-.context-modal-header {
+.peek-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--vscode-foreground);
-    flex-shrink: 0;
 }
-.context-modal-close {
+.peek-close {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 16px;
+    font-size: 14px;
     cursor: pointer;
-    padding: 2px 6px;
+    padding: 0 4px;
 }
-.context-modal-close:hover {
-    color: var(--vscode-errorForeground, #f44);
-}
-.context-modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 4px 0;
-}
-/* Highlighted target line inside the context modal */
-.context-target {
-    background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 0, 0.1));
+.peek-close:hover { color: var(--vscode-errorForeground, #f44); }
+.peek-target {
+    background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 0, 0.15));
     border-left: 3px solid var(--vscode-editorLineNumber-activeForeground, #c6c6c6);
 }
+.peek-context { opacity: 0.7; }
 `;
 }
