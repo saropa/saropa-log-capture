@@ -80,7 +80,7 @@ function sessionLifecycleCommands(deps: CommandDeps): vscode.Disposable[] {
 function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
     const { sessionManager, historyProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.delete', () => handleDeleteCommand()),
+        vscode.commands.registerCommand('saropaLogCapture.delete', async () => { await handleDeleteCommand(); }),
         vscode.commands.registerCommand('saropaLogCapture.insertMarker', async () => {
             const text = await vscode.window.showInputBox({
                 prompt: 'Marker text (leave empty for timestamp only)',
@@ -264,7 +264,7 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
                 vscode.window.showInformationMessage(`Template "${template.name}" applied.`);
             }
         }),
-        vscode.commands.registerCommand('saropaLogCapture.saveTemplate', () => promptSaveTemplate()),
+        vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
     ];
 }
 
