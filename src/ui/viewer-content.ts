@@ -20,6 +20,7 @@ import { getPresetsScript } from './viewer-presets';
 import { getContextMenuScript, getContextMenuHtml } from './viewer-context-menu';
 import { getLevelFilterScript } from './viewer-level-filter';
 import { getContextModalScript, getContextModalHtml } from './viewer-context-modal';
+import { getViewerDataScript } from './viewer-data';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -91,6 +92,7 @@ export function buildViewerHtml(nonce: string): string {
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">
+        ${getViewerDataScript()}
         ${getViewerScript(MAX_VIEWER_LINES)}
         ${getFilterScript()}
         ${getWatchScript()}
