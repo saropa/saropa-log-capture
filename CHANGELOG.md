@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Inline Peek:** Double-click any log line to expand an inline peek showing surrounding context lines. Press Escape to dismiss. Configurable range via `saropaLogCapture.contextViewLines`.
 - **Expanded Highlight Rules:** Default highlight patterns now include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, and Debug in addition to Error, Warning, and Success.
 - **Historical Log Viewing:** Opening a session from Session History now loads it into the panel viewer instead of as a raw text file.
-- **Developer Toolkit** (`scripts/dev.py`): Unified interactive script replacing `init_environment.py` and `build_and_install.py`. Presents a menu with three workflows: Setup (check tools, install deps, compile, quality checks), Build (compile, package .vsix, offer install), or Full (both). Features Saropa ASCII logo, colored output, per-step timing with bar chart, and automatic reports to `reports/`. CLI flags available for automation.
+- **Developer Toolkit** (`scripts/dev.py`): One-click script replacing `init_environment.py` and `build_and_install.py`. Runs the full pipeline automatically: prerequisites, deps, compile, quality checks, package .vsix. Interactive prompts only at the end (install via CLI, open report). Features Saropa ASCII logo, colored output, per-step timing bar chart, and automatic reports to `reports/`.
 
 ### Fixed
 - **Historical Log Viewing:** Skips context header block, parses `[category]` prefixes for proper stderr coloring, detects markers, and sends lines in async batches to avoid UI freezing. Footer shows "Viewing:" instead of "Recording:" for historical files.
