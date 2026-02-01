@@ -89,7 +89,7 @@ function extractContext(plainText) {
  * Calculate the height of a log item based on its type and filter state.
  */
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.searchFiltered) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.searchFiltered || item.errorSuppressed) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'stack-frame' && item.groupId >= 0) {
         for (var k = 0; k < allLines.length; k++) {
@@ -179,6 +179,12 @@ function renderItem(item, idx) {
     var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
 
+    // Add error classification badge if applicable
+    var badge = '';
+    if (typeof getErrorBadge === 'function' && item.errorClass) {
+        badge = getErrorBadge(item.errorClass);
+    }
+
     var titleAttr = '';
     if (typeof applyHighlightStyles === 'function') {
         var plainText = stripTags(item.html);
@@ -222,7 +228,7 @@ function renderItem(item, idx) {
         }
     }
 
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }
 `;
 }

@@ -232,6 +232,9 @@ window.addEventListener('message', function(event) {
         case 'setShowDecorations':
             if (typeof handleSetShowDecorations === 'function') handleSetShowDecorations(msg);
             break;
+        case 'errorClassificationSettings':
+            if (typeof handleErrorClassificationSettings === 'function') handleErrorClassificationSettings(msg);
+            break;
         case 'sourcePreview':
             if (typeof handleSourcePreviewResponse === 'function') handleSourcePreviewResponse(msg);
             break;

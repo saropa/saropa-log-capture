@@ -141,6 +141,8 @@ export class LogViewerProvider
 
   /** Toggle line decoration prefix display. */
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
+  /** Send error classification settings. */
+  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical }); }
 
   /** Apply a preset by name. */
   applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }

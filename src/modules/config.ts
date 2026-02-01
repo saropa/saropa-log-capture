@@ -37,6 +37,10 @@ export interface SaropaLogCaptureConfig {
   readonly filterContextLines: number;
   /** Number of lines before/after in context view modal. */
   readonly contextViewLines: number;
+  /** Hide expected transient errors (TimeoutException, SocketException, etc.). */
+  readonly suppressTransientErrors: boolean;
+  /** Show notification when critical errors appear (NullPointerException, AssertionError, etc.). */
+  readonly breakOnCritical: boolean;
 }
 
 const SECTION = "saropaLogCapture";
@@ -136,6 +140,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     captureAll: cfg.get<boolean>("captureAll", false),
     filterContextLines: cfg.get<number>("filterContextLines", 3),
     contextViewLines: cfg.get<number>("contextViewLines", 10),
+    suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
+    breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
   };
 }
 
