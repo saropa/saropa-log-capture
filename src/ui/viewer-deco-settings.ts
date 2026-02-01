@@ -34,6 +34,14 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-timestamp" checked />
         Timestamp
     </label>
+    <label class="deco-settings-row deco-indent">
+        <input type="checkbox" id="deco-opt-milliseconds" />
+        Show milliseconds
+    </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-elapsed" />
+        Elapsed time (+Nms)
+    </label>
     <div class="deco-settings-separator"></div>
     <div class="deco-settings-row">
         <span>Line coloring</span>
@@ -42,6 +50,10 @@ export function getDecoSettingsHtml(): string {
             <option value="line">Whole line</option>
         </select>
     </div>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-bar" />
+        Severity bar (left border)
+    </label>
 </div>`;
 }
 
@@ -54,8 +66,12 @@ var decoShowDot = true;
 var decoShowCounter = true;
 /** Sub-toggle: show wall-clock timestamp in decoration prefix. */
 var decoShowTimestamp = true;
+/** Sub-toggle: show elapsed time (+Nms) between log lines. */
+var showElapsed = false;
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
+/** Show severity bar (colored left border). */
+var decoShowBar = false;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
@@ -106,10 +122,16 @@ function syncDecoSettingsUi() {
     var dot = document.getElementById('deco-opt-dot');
     var ctr = document.getElementById('deco-opt-counter');
     var ts = document.getElementById('deco-opt-timestamp');
+    var ms = document.getElementById('deco-opt-milliseconds');
+    var elapsed = document.getElementById('deco-opt-elapsed');
+    var bar = document.getElementById('deco-opt-bar');
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
     if (ctr) ctr.checked = decoShowCounter;
     if (ts) ts.checked = decoShowTimestamp;
+    if (ms) ms.checked = showMilliseconds;
+    if (elapsed) elapsed.checked = showElapsed;
+    if (bar) bar.checked = decoShowBar;
     if (mode) mode.value = decoLineColorMode;
 }
 
@@ -123,12 +145,18 @@ function onDecoOptionChange() {
     var dot = document.getElementById('deco-opt-dot');
     var ctr = document.getElementById('deco-opt-counter');
     var ts = document.getElementById('deco-opt-timestamp');
+    var ms = document.getElementById('deco-opt-milliseconds');
+    var elapsed = document.getElementById('deco-opt-elapsed');
+    var bar = document.getElementById('deco-opt-bar');
     var mode = document.getElementById('deco-line-color-mode');
     decoShowDot = dot ? dot.checked : true;
     decoShowCounter = ctr ? ctr.checked : true;
     decoShowTimestamp = ts ? ts.checked : true;
+    showMilliseconds = ms ? ms.checked : false;
+    showElapsed = elapsed ? elapsed.checked : false;
+    decoShowBar = bar ? bar.checked : false;
     decoLineColorMode = mode ? mode.value : 'none';
-    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && decoLineColorMode === 'none';
+    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowBar && decoLineColorMode === 'none';
     if (allOff) {
         showDecorations = false;
         closeDecoSettings();
@@ -143,6 +171,9 @@ var decoCloseBtn = document.querySelector('.deco-settings-close');
 var decoOptDot = document.getElementById('deco-opt-dot');
 var decoOptCounter = document.getElementById('deco-opt-counter');
 var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
+var decoOptMilliseconds = document.getElementById('deco-opt-milliseconds');
+var decoOptElapsed = document.getElementById('deco-opt-elapsed');
+var decoOptBar = document.getElementById('deco-opt-bar');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
 
 if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSettings);
@@ -150,6 +181,9 @@ if (decoCloseBtn) decoCloseBtn.addEventListener('click', closeDecoSettings);
 if (decoOptDot) decoOptDot.addEventListener('change', onDecoOptionChange);
 if (decoOptCounter) decoOptCounter.addEventListener('change', onDecoOptionChange);
 if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionChange);
+if (decoOptMilliseconds) decoOptMilliseconds.addEventListener('change', onDecoOptionChange);
+if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange);
+if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
 
 /* Close panel when clicking outside it or the gear button. */

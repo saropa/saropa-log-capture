@@ -1,115 +1,14 @@
 /**
  * CSS styles for overlay and popup elements in the viewer webview.
  *
- * Covers decoration settings panel, source preview popup,
- * split breadcrumb, JSON collapsible blocks, and context menu.
+ * Covers source preview popup, split breadcrumb, JSON collapsible blocks,
+ * and context menu. Decoration and modal styles are in separate modules.
  */
-export function getOverlayStyles(): string {
-    return /* css */ `
+import { getDecorationStyles } from './viewer-styles-decoration';
+import { getModalStyles } from './viewer-styles-modal';
 
-/* ===================================================================
-   Decoration Prefix & Settings
-   Line decoration prefix (severity dot, counter, timestamp) and
-   the settings popover panel for toggling individual parts.
-   =================================================================== */
-/* Decoration prefix (severity dot, counter, timestamp) */
-.line-decoration {
-    font-size: 11px;
-    opacity: 0.85;
-    white-space: nowrap;
-    user-select: none;
-}
-#deco-toggle {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-#deco-settings-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 4px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-/* Decoration settings popover panel */
-.deco-settings-panel {
-    display: none;
-    position: fixed;
-    z-index: 180;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    min-width: 180px;
-    padding: 4px 0;
-    font-size: 12px;
-}
-.deco-settings-panel.visible { display: block; }
-.deco-settings-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 8px;
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--vscode-foreground);
-    border-bottom: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
-}
-.deco-settings-close {
-    background: none;
-    border: none;
-    color: var(--vscode-descriptionForeground);
-    font-size: 14px;
-    cursor: pointer;
-    padding: 0 4px;
-}
-.deco-settings-close:hover { color: var(--vscode-errorForeground, #f44); }
-.deco-settings-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
-    cursor: default;
-}
-.deco-settings-row:hover {
-    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
-}
-.deco-settings-row input[type="checkbox"] {
-    accent-color: var(--vscode-button-background);
-}
-.deco-settings-row select {
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
-    padding: 1px 4px;
-    border-radius: 2px;
-}
-.deco-settings-separator {
-    height: 1px;
-    background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
-    margin: 4px 8px;
-}
-/* Whole-line severity tinting (subtle backgrounds) */
-.line.line-tint-error {
-    background-color: rgba(255, 0, 0, 0.08);
-}
-.line.line-tint-error:hover {
-    background-color: rgba(255, 0, 0, 0.14);
-}
-.line.line-tint-warning {
-    background-color: rgba(255, 204, 0, 0.08);
-}
-.line.line-tint-warning:hover {
-    background-color: rgba(255, 204, 0, 0.14);
-}
+export function getOverlayStyles(): string {
+    return getDecorationStyles() + getModalStyles() + /* css */ `
 
 /* ===================================================================
    Source Preview Popup
@@ -292,6 +191,20 @@ export function getOverlayStyles(): string {
     height: 1px;
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
+}
+
+#export-btn {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+    padding: 1px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+#export-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
 }
 `;
 }

@@ -41,7 +41,7 @@ var sourceTagStripExpanded = false;
 var otherKey = '__other__';
 
 /**
- * Regex to parse source tags from plain text.
+ * Regex to parse source tags from plain text (start of line only).
  * Group 1: logcat level (V/D/I/W/E/F/A) — captured but ignored for grouping.
  * Group 2: logcat tag name (e.g. "FlutterJNI", "flutter").
  * Group 3: bracket tag name (e.g. "log" from "[log]").
@@ -49,16 +49,33 @@ var otherKey = '__other__';
 var sourceTagPattern = /^(?:([VDIWEFA])\\/([^(:\\s]+)\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[([^\\]]+)\\]\\s)/;
 
 /**
+ * Regex to parse inline tags anywhere in the line (e.g. "[TagName]").
+ * Matches bracket patterns that are not at the start of the line.
+ */
+var inlineTagPattern = /\\[([A-Za-z][A-Za-z0-9_-]*)\\]/g;
+
+/**
  * Parse a source tag from the plain text of a log line.
+ * First tries to match start-of-line patterns (logcat, bracket prefix).
+ * If no match, searches for inline [TagName] patterns anywhere in the line.
  * @param {string} plainText - HTML-stripped line content
  * @returns {string|null} Lowercase tag name, or null if unrecognized
  */
 function parseSourceTag(plainText) {
+    // Try start-of-line patterns first
     var m = sourceTagPattern.exec(plainText);
     if (m) {
         var raw = m[2] || m[3];
         return raw ? raw.toLowerCase() : null;
     }
+
+    // Search for inline [TagName] patterns anywhere in the line
+    inlineTagPattern.lastIndex = 0; // Reset regex state
+    var inlineMatch = inlineTagPattern.exec(plainText);
+    if (inlineMatch && inlineMatch[1]) {
+        return inlineMatch[1].toLowerCase();
+    }
+
     return null;
 }
 

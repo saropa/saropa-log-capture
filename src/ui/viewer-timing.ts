@@ -5,7 +5,7 @@
  */
 export function getTimingScript(): string {
     return /* javascript */ `
-var showElapsed = false;
+// showElapsed is declared in viewer-deco-settings.ts
 
 function formatElapsed(ms) {
     if (ms < 0) return '';

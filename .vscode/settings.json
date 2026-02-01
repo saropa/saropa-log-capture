@@ -20,6 +20,7 @@
     "recalc",
     "RGBA",
     "stackable",
+    "Toggleable",
     "Wireshark"
   ],
   "chat.tools.terminal.autoApprove": {

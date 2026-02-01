@@ -15,6 +15,9 @@ const jumpBtn = document.getElementById('jump-btn');
 const footerEl = document.getElementById('footer');
 const footerTextEl = document.getElementById('footer-text');
 const wrapToggle = document.getElementById('wrap-toggle');
+const viewerHeader = document.getElementById('viewer-header');
+const headerFilename = document.getElementById('header-filename');
+const headerToggle = document.getElementById('header-toggle');
 
 const vscodeApi = acquireVsCodeApi();
 const MAX_LINES = ${maxLines};
@@ -37,6 +40,7 @@ let lastEnd = -1;
 let rafPending = false;
 let currentFilename = '';
 var nextSeq = 1;
+let headerCollapsed = false;
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
@@ -59,6 +63,13 @@ logEl.addEventListener('scroll', function() {
         requestAnimationFrame(function() { rafPending = false; handleScroll(); });
     }
 });
+
+logEl.addEventListener('wheel', function(e) {
+    // Reduce wheel scroll sensitivity by applying a multiplier
+    var scrollAmount = e.deltaY * 0.5;
+    logEl.scrollTop += scrollAmount;
+    e.preventDefault();
+}, { passive: false });
 
 viewportEl.addEventListener('click', function(e) {
     var link = e.target.closest('.source-link');
@@ -111,6 +122,7 @@ function toggleWrap() {
 
 wrapToggle.addEventListener('click', toggleWrap);
 jumpBtn.addEventListener('click', jumpToBottom);
+if (headerToggle) headerToggle.addEventListener('click', toggleHeader);
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
@@ -128,16 +140,30 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
+/** Update header filename display. */
+function updateHeaderFilename() {
+    if (headerFilename) {
+        headerFilename.textContent = currentFilename || '';
+    }
+}
+
+/** Toggle header visibility. */
+function toggleHeader() {
+    headerCollapsed = !headerCollapsed;
+    if (viewerHeader) {
+        viewerHeader.classList.toggle('collapsed', headerCollapsed);
+    }
+}
+
 /** Update footer to reflect current mode: Viewing (historical) / PAUSED / Recording. */
 function updateFooterText() {
-    var suffix = currentFilename ? ' | ' + currentFilename : '';
     if (isViewingFile) {
-        footerTextEl.textContent = 'Viewing: ' + lineCount + ' lines' + suffix;
+        footerTextEl.textContent = 'Viewing: ' + lineCount + ' lines';
         return;
     }
     footerTextEl.textContent = isPaused
-        ? 'PAUSED \\u2014 ' + lineCount + ' lines' + suffix
-        : 'Recording: ' + lineCount + ' lines' + suffix;
+        ? 'PAUSED \\u2014 ' + lineCount + ' lines'
+        : 'Recording: ' + lineCount + ' lines';
 }
 
 window.addEventListener('message', function(event) {
@@ -159,6 +185,13 @@ window.addEventListener('message', function(event) {
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') { closeContextModal(); }
             if (typeof resetSourceTags === 'function') { resetSourceTags(); }
+            if (typeof repeatTracker !== 'undefined') {
+                repeatTracker.lastHash = null;
+                repeatTracker.lastPlainText = null;
+                repeatTracker.lastLevel = null;
+                repeatTracker.count = 0;
+                repeatTracker.lastTimestamp = 0;
+            }
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
         case 'updateFooter':
@@ -175,6 +208,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';
+            updateHeaderFilename();
             updateFooterText();
             break;
         case 'setCategories':
@@ -214,14 +248,23 @@ document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && typeof copyAsMarkdown === 'function') {
         e.preventDefault(); copyAsMarkdown(); return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A' && typeof copyAllToClipboard === 'function') {
+        e.preventDefault(); copyAllToClipboard(); return;
+    }
     if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
         e.preventDefault();
         if (typeof openSearch === 'function') openSearch();
         return;
     }
     if (e.key === 'Escape') {
-        if (typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0 && typeof closeContextModal === 'function') { closeContextModal(); return; }
-        if (typeof closeSearch === 'function') closeSearch(); return;
+        if (typeof closeContextModal === 'function' && typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0) {
+            closeContextModal();
+            return;
+        }
+        if (typeof closeSearch === 'function') {
+            closeSearch();
+        }
+        return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }

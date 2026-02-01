@@ -76,6 +76,11 @@ function applyPreset(presetName) {
         setExclusionsEnabled(preset.exclusionsEnabled);
     }
 
+    // Apply app-only mode toggle
+    if (preset.appOnlyMode !== undefined && typeof setAppOnlyMode === 'function') {
+        setAppOnlyMode(preset.appOnlyMode);
+    }
+
     updatePresetDropdown();
     vscodeApi.postMessage({ type: 'presetApplied', name: preset.name });
 }

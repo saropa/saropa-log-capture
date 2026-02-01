@@ -48,6 +48,10 @@ function handleSetCategories(msg) {
                 sel.appendChild(opt);
             }
         }
+        // Show the filter dropdown now that it has content
+        if (sel.options.length > 0) {
+            sel.style.display = '';
+        }
     }
 }
 
