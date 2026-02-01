@@ -169,5 +169,35 @@ export function getDecorationStyles(): string {
     border-left: 3px solid var(--vscode-terminal-ansiGreen, #4ec9b0);
     padding-left: 5px;
 }
+
+/* Error classification badges */
+.error-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+.error-badge-critical {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: var(--vscode-errorForeground, #f48771);
+    border: 1px solid var(--vscode-errorForeground, #f48771);
+}
+
+.error-badge-transient {
+    background-color: rgba(255, 165, 0, 0.15);
+    color: var(--vscode-debugConsole-warningForeground, #cca700);
+    border: 1px solid var(--vscode-debugConsole-warningForeground, #cca700);
+}
+
+.error-badge-bug {
+    background-color: rgba(255, 105, 180, 0.15);
+    color: var(--vscode-debugConsole-errorForeground, #f48771);
+    border: 1px solid var(--vscode-debugConsole-errorForeground, #f48771);
+}
 `;
 }

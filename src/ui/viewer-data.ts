@@ -87,10 +87,18 @@ function addToData(html, isMarker, category, ts, fw) {
         repeatTracker.lastTimestamp = now;
 
         // Add the original line normally
-        var lineItem = { html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false, isSeparator: isSep };
+        var errorClass = (typeof classifyError === 'function') ? classifyError(plain) : null;
+        var errorSuppressed = (typeof suppressTransientErrors !== 'undefined' && suppressTransientErrors && errorClass === 'transient');
+
+        // Check for critical errors
+        if (typeof checkCriticalError === 'function') {
+            checkCriticalError(plain);
+        }
+
+        var lineItem = { html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed };
         allLines.push(lineItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
-        totalHeight += ROW_HEIGHT;
+        totalHeight += (errorSuppressed ? 0 : ROW_HEIGHT);
     }
 }
 
