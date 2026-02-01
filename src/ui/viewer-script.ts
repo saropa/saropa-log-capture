@@ -110,6 +110,7 @@ function toggleWrap() {
 }
 
 wrapToggle.addEventListener('click', toggleWrap);
+jumpBtn.addEventListener('click', jumpToBottom);
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;

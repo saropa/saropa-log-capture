@@ -20,24 +20,24 @@ export function getDecoSettingsHtml(): string {
     return `<div id="deco-settings" class="deco-settings-panel">
     <div class="deco-settings-header">
         Decoration Settings
-        <button class="deco-settings-close" onclick="closeDecoSettings()">&times;</button>
+        <button class="deco-settings-close">&times;</button>
     </div>
     <label class="deco-settings-row">
-        <input type="checkbox" id="deco-opt-dot" checked onchange="onDecoOptionChange()" />
+        <input type="checkbox" id="deco-opt-dot" checked />
         Severity dot
     </label>
     <label class="deco-settings-row">
-        <input type="checkbox" id="deco-opt-counter" checked onchange="onDecoOptionChange()" />
+        <input type="checkbox" id="deco-opt-counter" checked />
         Counter (#N)
     </label>
     <label class="deco-settings-row">
-        <input type="checkbox" id="deco-opt-timestamp" checked onchange="onDecoOptionChange()" />
+        <input type="checkbox" id="deco-opt-timestamp" checked />
         Timestamp
     </label>
     <div class="deco-settings-separator"></div>
     <div class="deco-settings-row">
         <span>Line coloring</span>
-        <select id="deco-line-color-mode" onchange="onDecoOptionChange()">
+        <select id="deco-line-color-mode">
             <option value="none">None</option>
             <option value="line">Whole line</option>
         </select>
@@ -136,6 +136,21 @@ function onDecoOptionChange() {
     }
     renderViewport(true);
 }
+
+/* Register event listeners for settings panel controls. */
+var decoSettingsBtn = document.getElementById('deco-settings-btn');
+var decoCloseBtn = document.querySelector('.deco-settings-close');
+var decoOptDot = document.getElementById('deco-opt-dot');
+var decoOptCounter = document.getElementById('deco-opt-counter');
+var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
+var decoLineColorSelect = document.getElementById('deco-line-color-mode');
+
+if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSettings);
+if (decoCloseBtn) decoCloseBtn.addEventListener('click', closeDecoSettings);
+if (decoOptDot) decoOptDot.addEventListener('change', onDecoOptionChange);
+if (decoOptCounter) decoOptCounter.addEventListener('change', onDecoOptionChange);
+if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionChange);
+if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
 
 /* Close panel when clicking outside it or the gear button. */
 document.addEventListener('click', function(e) {

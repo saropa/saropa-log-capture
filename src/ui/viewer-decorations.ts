@@ -123,5 +123,11 @@ function toggleDecorations() {
     updateDecoButton();
     renderViewport(true);
 }
+
+// Register decoration button click handlers
+var decoToggleBtn = document.getElementById('deco-toggle');
+if (decoToggleBtn) {
+    decoToggleBtn.addEventListener('click', toggleDecorations);
+}
 `;
 }

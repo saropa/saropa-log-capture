@@ -44,7 +44,7 @@ export function buildViewerHtml(nonce: string): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}' 'unsafe-inline';">
     <style nonce="${nonce}">
         ${getViewerStyles()}
     </style>
@@ -62,7 +62,7 @@ export function buildViewerHtml(nonce: string): string {
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
     </div>
-    <button id="jump-btn" onclick="jumpToBottom()">Jump to Bottom</button>
+    <button id="jump-btn">Jump to Bottom</button>
     <div id="source-preview"></div>
     ${getContextMenuHtml()}
     <div id="search-bar" style="display:none">
@@ -78,19 +78,19 @@ export function buildViewerHtml(nonce: string): string {
         <span id="footer-text">Waiting for debug session...</span>
         <span id="watch-counts"></span>
         <span id="exclusion-count"></span>
-        <button id="exclusion-toggle" style="display:none" onclick="toggleExclusions()">Excl: ON</button>
-        <button id="app-only-toggle" onclick="toggleAppOnly()">App Only: OFF</button>
+        <button id="exclusion-toggle" style="display:none">Excl: ON</button>
+        <button id="app-only-toggle">App Only: OFF</button>
         <span class="level-btn-group">
-            <button id="level-all" class="level-btn active" onclick="setLevelFilter('all')">All</button>
-            <button id="level-error" class="level-btn" onclick="setLevelFilter('error')">Errors</button>
-            <button id="level-warn" class="level-btn" onclick="setLevelFilter('warn')">Warn+</button>
+            <button id="level-all" class="level-btn active">All</button>
+            <button id="level-error" class="level-btn">Errors</button>
+            <button id="level-warn" class="level-btn">Warn+</button>
         </span>
-        <select id="preset-select" title="Filter Presets" onchange="onPresetSelectChange(event)">
+        <select id="preset-select" title="Filter Presets">
             <option value="">Preset: None</option>
         </select>
-        <select id="filter-select" multiple title="Filter by category" onchange="handleFilterChange()"></select>
-        <button id="deco-toggle" onclick="toggleDecorations()">Deco: OFF</button>
-        <button id="deco-settings-btn" onclick="toggleDecoSettings()" title="Decoration settings">&#x2699;</button>
+        <select id="filter-select" multiple title="Filter by category"></select>
+        <button id="deco-toggle">Deco: OFF</button>
+        <button id="deco-settings-btn" title="Decoration settings">&#x2699;</button>
         <button id="wrap-toggle">No Wrap</button>
     </div>
     <script nonce="${nonce}">

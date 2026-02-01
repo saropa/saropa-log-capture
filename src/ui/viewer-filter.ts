@@ -50,5 +50,11 @@ function handleSetCategories(msg) {
         }
     }
 }
+
+// Register filter change handler
+var filterSelect = document.getElementById('filter-select');
+if (filterSelect) {
+    filterSelect.addEventListener('change', handleFilterChange);
+}
 `;
 }

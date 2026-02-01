@@ -102,7 +102,7 @@ export class SessionComparisonPanel implements vscode.Disposable {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}' 'unsafe-inline';">
     <style nonce="${nonce}">
         ${this.getStyles()}
     </style>
@@ -114,21 +114,20 @@ export class SessionComparisonPanel implements vscode.Disposable {
             <span class="stat"><span class="unique-b-dot"></span> ${sessionB.uniqueCount} unique to B</span>
             <span class="stat">${commonCount} common</span>
         </div>
-        <button id="sync-btn" class="sync-btn ${this.syncScrolling ? 'active' : ''}"
-                onclick="toggleSync()">
+        <button id="sync-btn" class="sync-btn ${this.syncScrolling ? 'active' : ''}">
             Sync Scroll: ${this.syncScrolling ? 'ON' : 'OFF'}
         </button>
     </div>
     <div class="comparison">
         <div class="pane pane-a">
             <div class="pane-header">${escapeHtml(nameA)}</div>
-            <div class="pane-content" id="pane-a" onscroll="onScrollA()">
+            <div class="pane-content" id="pane-a">
                 ${this.renderLines(sessionA.lines, 'a')}
             </div>
         </div>
         <div class="pane pane-b">
             <div class="pane-header">${escapeHtml(nameB)}</div>
-            <div class="pane-content" id="pane-b" onscroll="onScrollB()">
+            <div class="pane-content" id="pane-b">
                 ${this.renderLines(sessionB.lines, 'b')}
             </div>
         </div>
@@ -181,6 +180,15 @@ function onScrollB() {
     paneA.scrollTop = ratio * (paneA.scrollHeight - paneA.clientHeight);
     setTimeout(() => { scrolling = false; }, 50);
 }
+
+// Register event listeners
+const syncBtn = document.getElementById('sync-btn');
+const paneA = document.getElementById('pane-a');
+const paneB = document.getElementById('pane-b');
+
+if (syncBtn) syncBtn.addEventListener('click', toggleSync);
+if (paneA) paneA.addEventListener('scroll', onScrollA);
+if (paneB) paneB.addEventListener('scroll', onScrollB);
 
 window.addEventListener('message', function(event) {
     const msg = event.data;
