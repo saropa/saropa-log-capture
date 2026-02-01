@@ -121,6 +121,7 @@ function renderItem(item, idx) {
     }
 
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
+    var levelCls = item.level ? ' level-' + item.level : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
     var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item) : '';
@@ -136,7 +137,7 @@ function renderItem(item, idx) {
 
     var ctxCls = item.isContext ? ' context-line' : '';
     var tintCls = (typeof getLineTintClass === 'function') ? getLineTintClass(item) : '';
-    return gap + '<div class="line' + cat + ctxCls + matchCls + tintCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + ctxCls + matchCls + tintCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {

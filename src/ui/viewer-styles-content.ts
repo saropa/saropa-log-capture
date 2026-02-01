@@ -32,7 +32,7 @@ export function getContentStyles(): string {
 .stack-header {
     padding: 0 8px;
     cursor: pointer;
-    color: var(--vscode-errorForeground, #f44);
+    color: var(--vscode-debugConsole-errorForeground, #f48771);
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-all;
