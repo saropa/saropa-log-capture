@@ -68,13 +68,6 @@ logEl.addEventListener('scroll', function() {
     }
 });
 
-logEl.addEventListener('wheel', function(e) {
-    // Reduce wheel scroll sensitivity by applying a multiplier
-    var scrollAmount = e.deltaY * 0.5;
-    logEl.scrollTop += scrollAmount;
-    e.preventDefault();
-}, { passive: false });
-
 viewportEl.addEventListener('click', function(e) {
     var link = e.target.closest('.source-link');
     if (link) {
