@@ -21,6 +21,7 @@ export interface SessionMetadata {
     readonly tags?: string[];
     readonly autoTags?: string[];
     readonly partNumber?: number;
+    readonly mtime: number; // File modification time (epoch ms)
 }
 
 /** Group of split files under a single parent session. */
@@ -33,6 +34,7 @@ export interface SplitGroup {
     readonly project?: string;
     readonly adapter?: string;
     readonly displayName?: string;
+    readonly mtime: number; // Most recent part's mtime
 }
 
 /** Tree item representing either a single session or a split parent group. */
@@ -89,6 +91,7 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
             result.push(parts[0]);
         } else {
             const firstPart = parts.find(p => p.partNumber === 1) ?? parts[0];
+            const mostRecentMtime = Math.max(...parts.map(p => p.mtime));
             const group: SplitGroup = {
                 type: 'split-group',
                 baseFilename: base + '.log',
@@ -98,6 +101,7 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
                 project: firstPart.project,
                 adapter: firstPart.adapter,
                 displayName: firstPart.displayName,
+                mtime: mostRecentMtime,
             };
             result.push(group);
         }
