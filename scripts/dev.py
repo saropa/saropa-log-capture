@@ -450,24 +450,31 @@ def update_changelog(new_version: str) -> bool:
         warn("No [Unreleased] section found in CHANGELOG.md")
         return False
 
+    # Check if [Unreleased] section has any content
+    # (look for non-blank lines before the next ## heading)
+    has_content = False
+    next_heading_idx = len(lines)
+    for i in range(unreleased_idx + 1, len(lines)):
+        if lines[i].startswith("## "):
+            next_heading_idx = i
+            break
+        if lines[i].strip():  # Non-blank line found
+            has_content = True
+
+    if not has_content:
+        warn("No changes in [Unreleased] section — skipping CHANGELOG.md update")
+        return True
+
     # Replace [Unreleased] with [version] - date
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     lines[unreleased_idx] = f"## [{new_version}] - {today}\n"
 
-    # Insert new [Unreleased] section at the top
-    # Find where to insert (after the intro paragraph)
-    insert_idx = unreleased_idx
-    for i in range(len(lines)):
-        if lines[i].startswith("## "):
-            insert_idx = i
-            break
-
-    # Add new unreleased section
+    # Insert new blank [Unreleased] section at the top
     new_section = [
         "## [Unreleased]\n",
         "\n",
     ]
-    lines[insert_idx:insert_idx] = new_section
+    lines[unreleased_idx:unreleased_idx] = new_section
 
     try:
         with open(changelog_path, "w", encoding="utf-8") as f:

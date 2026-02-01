@@ -29,6 +29,9 @@ export interface FilterPreset {
 
     /** Whether exclusions should be enabled when preset is applied. */
     readonly exclusionsEnabled?: boolean;
+
+    /** Whether app-only mode (hide framework logs) should be enabled. */
+    readonly appOnlyMode?: boolean;
 }
 
 /**
@@ -47,7 +50,7 @@ export const builtInPresets: readonly FilterPreset[] = [
     },
     {
         name: 'No Framework Noise',
-        exclusionsEnabled: true,
+        appOnlyMode: true,
     },
 ];
 

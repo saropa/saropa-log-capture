@@ -167,6 +167,11 @@ export function activate(context: vscode.ExtensionContext): void {
             if (filename) {
                 viewerProvider.setFilename(filename);
             }
+            // Track session state for edit line functionality
+            viewerProvider.setSessionActive(true);
+            if (activeSession?.fileUri) {
+                viewerProvider.setCurrentFile(activeSession.fileUri);
+            }
             viewerProvider.setSplitInfo(1, 1);
             const cfg = getConfig();
             if (cfg.exclusions.length > 0) {
@@ -189,6 +194,7 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
             await sessionManager.stopSession(session);
+            viewerProvider.setSessionActive(false);
             historyProvider.setActiveUri(undefined);
             historyProvider.refresh();
             inlineDecorations.clearAll();

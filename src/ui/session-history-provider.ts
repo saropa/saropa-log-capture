@@ -37,10 +37,18 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private getSessionTreeItem(item: SessionMetadata): vscode.TreeItem {
         const isActive = this.activeUri?.toString() === item.uri.toString();
         const label = item.displayName ?? item.filename;
-        const ti = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+        // Add visual indicator for active session
+        const displayLabel = isActive ? `● ${label}` : label;
+        const ti = new vscode.TreeItem(displayLabel, vscode.TreeItemCollapsibleState.None);
         ti.tooltip = buildTooltip(item);
-        ti.description = buildDescription(item);
-        ti.iconPath = new vscode.ThemeIcon(isActive ? 'record' : 'file');
+        // Prepend "ACTIVE" to description for active session
+        const baseDescription = buildDescription(item);
+        ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
+        // Use colored icon for active session
+        ti.iconPath = new vscode.ThemeIcon(
+            isActive ? 'record' : 'file',
+            isActive ? new vscode.ThemeColor('charts.red') : undefined
+        );
         ti.command = { command: 'saropaLogCapture.openSession', title: 'Open', arguments: [item] };
         ti.contextValue = 'session';
         return ti;
