@@ -6,10 +6,9 @@
 export function getExclusionScript(): string {
     return /* javascript */ `
 var exclusionRules = [];
-var exclusionsEnabled = true;
+var exclusionsEnabled = false;
 var hiddenCount = 0;
 var exclusionCountEl = document.getElementById('exclusion-count');
-var exclusionToggleEl = document.getElementById('exclusion-toggle');
 
 function addExclusion(pattern) {
     if (!pattern || pattern.trim() === '') return;
@@ -77,13 +76,15 @@ function toggleExclusions() {
     applyExclusions();
 }
 
+/** Set exclusions enabled/disabled to a specific value. */
+function setExclusionsEnabled(enabled) {
+    exclusionsEnabled = !!enabled;
+    applyExclusions();
+}
+
 function updateExclusionDisplay() {
     if (exclusionCountEl) {
         exclusionCountEl.textContent = hiddenCount > 0 ? '(' + hiddenCount + ' hidden)' : '';
-    }
-    if (exclusionToggleEl) {
-        exclusionToggleEl.textContent = exclusionsEnabled ? 'Excl: ON' : 'Excl: OFF';
-        exclusionToggleEl.style.display = exclusionRules.length > 0 ? 'inline-block' : 'none';
     }
 }
 
@@ -98,8 +99,5 @@ function handleSetExclusions(msg) {
     }
 }
 
-if (exclusionToggleEl) {
-    exclusionToggleEl.addEventListener('click', toggleExclusions);
-}
 `;
 }

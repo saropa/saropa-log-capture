@@ -2,12 +2,14 @@
  * HTML template for the options panel.
  *
  * Provides a slide-out panel with organized sections for all viewer settings:
+ *   - Quick Filters (presets + reset)
+ *   - Output Channels (DAP category checkboxes)
+ *   - Log Tags (source tag chips)
+ *   - Noise Reduction (exclusions + app-only)
  *   - Display options (word wrap, decorations, font size, line height)
- *   - Level filters
- *   - Search and filtering
- *   - Exclusions and watch
  *   - Layout (visual spacing)
  *   - Audio alerts
+ *   - Actions (export)
  */
 
 /** Returns the HTML for the options panel element. */
@@ -19,6 +21,48 @@ export function getOptionsPanelHtml(): string {
     </div>
 
     <div class="options-content">
+        <!-- Quick Filters Section -->
+        <div class="options-section">
+            <h3 class="options-section-title">Quick Filters</h3>
+            <div class="options-row">
+                <select id="preset-select" title="Quick Filters" style="flex:1">
+                    <option value="">None</option>
+                </select>
+            </div>
+            <div class="options-row">
+                <button id="reset-all-filters" class="options-action-btn">Reset all filters</button>
+            </div>
+        </div>
+
+        <!-- Output Channels Section (populated dynamically) -->
+        <div class="options-section" id="output-channels-section" style="display:none">
+            <h3 class="options-section-title">Output Channels</h3>
+            <div id="output-channels-list"></div>
+        </div>
+
+        <!-- Log Tags Section (populated dynamically) -->
+        <div class="options-section" id="log-tags-section" style="display:none">
+            <h3 class="options-section-title">Log Tags</h3>
+            <div class="options-row">
+                <span id="source-tag-summary" class="source-tag-summary"></span>
+            </div>
+            <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
+        </div>
+
+        <!-- Noise Reduction Section -->
+        <div class="options-section">
+            <h3 class="options-section-title">Noise Reduction</h3>
+            <label class="options-row">
+                <input type="checkbox" id="opt-exclusions" />
+                <span>Enable exclusions</span>
+            </label>
+            <div class="options-hint" id="exclusion-count"></div>
+            <label class="options-row">
+                <input type="checkbox" id="opt-app-only" />
+                <span>App only (hide framework)</span>
+            </label>
+        </div>
+
         <!-- Display Section -->
         <div class="options-section">
             <h3 class="options-section-title">Display</h3>
@@ -26,13 +70,13 @@ export function getOptionsPanelHtml(): string {
                 <span>Font size: <span id="font-size-label">13px</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="font-size-slider" min="10" max="20" value="13" style="width: 100%;" />
+                <input type="range" id="font-size-slider" min="8" max="22" value="13" style="width: 100%;" />
             </div>
             <div class="options-row">
                 <span>Line height: <span id="line-height-label">1.5</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="line-height-slider" min="10" max="25" value="15" style="width: 100%;" />
+                <input type="range" id="line-height-slider" min="5" max="40" value="15" style="width: 100%;" />
             </div>
             <label class="options-row">
                 <input type="checkbox" id="opt-wrap" checked />
@@ -40,7 +84,7 @@ export function getOptionsPanelHtml(): string {
             </label>
             <label class="options-row">
                 <input type="checkbox" id="opt-decorations" />
-                <span>Line prefix (&#x1F7E2; #N T00:00:00)</span>
+                <span>Line prefix (&#x1F7E2; N T00:00:00)</span>
             </label>
             <label class="options-row">
                 <input type="checkbox" id="opt-inline-context" />
@@ -57,7 +101,7 @@ export function getOptionsPanelHtml(): string {
                 </label>
                 <label class="options-row">
                     <input type="checkbox" id="opt-deco-counter" checked />
-                    <span>Counter (#N)</span>
+                    <span>Counter</span>
                 </label>
                 <label class="options-row">
                     <input type="checkbox" id="opt-deco-timestamp" checked />
@@ -79,56 +123,10 @@ export function getOptionsPanelHtml(): string {
                     </select>
                 </div>
                 <label class="options-row">
-                    <input type="checkbox" id="opt-deco-bar" />
+                    <input type="checkbox" id="opt-deco-bar" checked />
                     <span>Severity bar (left border)</span>
                 </label>
             </div>
-        </div>
-
-        <!-- Level Filters Section -->
-        <div class="options-section">
-            <h3 class="options-section-title">Level Filters</h3>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-info" checked />
-                <span>🟢 Info</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-warning" checked />
-                <span>🟠 Warning</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-error" checked />
-                <span>🔴 Error</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-perf" checked />
-                <span>🟣 Performance</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-todo" checked />
-                <span>⚪ TODO/FIXME</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-debug" checked />
-                <span>🟤 Debug/Trace</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-level-notice" checked />
-                <span>🟦 Notice</span>
-            </label>
-        </div>
-
-        <!-- Filtering Section -->
-        <div class="options-section">
-            <h3 class="options-section-title">Filtering</h3>
-            <label class="options-row">
-                <input type="checkbox" id="opt-exclusions" />
-                <span>Enable exclusions</span>
-            </label>
-            <label class="options-row">
-                <input type="checkbox" id="opt-app-only" />
-                <span>App only (hide framework)</span>
-            </label>
         </div>
 
         <!-- Layout Section -->
@@ -170,6 +168,14 @@ export function getOptionsPanelHtml(): string {
                     <button id="preview-error-sound" class="preview-sound-btn">🔴 Error</button>
                     <button id="preview-warning-sound" class="preview-sound-btn">🟠 Warning</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="options-section">
+            <h3 class="options-section-title">Actions</h3>
+            <div class="options-row">
+                <button id="export-btn" class="options-action-btn" title="Export logs">Export</button>
             </div>
         </div>
     </div>

@@ -36,11 +36,8 @@ function closeOptionsPanel() {
     optionsPanelOpen = false;
 }
 
-/**
- * Sync all options panel checkboxes/selects from current state variables.
- */
-function syncOptionsPanelUi() {
-    // Display options
+/** Sync display checkboxes and sliders from state. */
+function syncDisplayUi() {
     var wrapCheck = document.getElementById('opt-wrap');
     var decoCheck = document.getElementById('opt-decorations');
     var inlineCtxCheck = document.getElementById('opt-inline-context');
@@ -51,22 +48,22 @@ function syncOptionsPanelUi() {
     if (decoIndent) decoIndent.style.display = showDecorations ? 'block' : 'none';
     var minimapCheck = document.getElementById('opt-minimap');
     if (minimapCheck && typeof minimapEnabled !== 'undefined') minimapCheck.checked = minimapEnabled;
-
-    // Font size and line height
-    var fontSizeSlider = document.getElementById('font-size-slider');
-    var fontSizeLabel = document.getElementById('font-size-label');
-    var lineHeightSlider = document.getElementById('line-height-slider');
-    var lineHeightLabel = document.getElementById('line-height-label');
-    if (fontSizeSlider && typeof logFontSize !== 'undefined') {
-        fontSizeSlider.value = logFontSize;
-        if (fontSizeLabel) fontSizeLabel.textContent = logFontSize + 'px';
+    var fSlider = document.getElementById('font-size-slider');
+    var fLabel = document.getElementById('font-size-label');
+    if (fSlider && typeof logFontSize !== 'undefined') {
+        fSlider.value = logFontSize;
+        if (fLabel) fLabel.textContent = logFontSize + 'px';
     }
-    if (lineHeightSlider && typeof logLineHeight !== 'undefined') {
-        lineHeightSlider.value = Math.round(logLineHeight * 10);
-        if (lineHeightLabel) lineHeightLabel.textContent = logLineHeight.toFixed(1);
+    var lhSlider = document.getElementById('line-height-slider');
+    var lhLabel = document.getElementById('line-height-label');
+    if (lhSlider && typeof logLineHeight !== 'undefined') {
+        lhSlider.value = Math.round(logLineHeight * 10);
+        if (lhLabel) lhLabel.textContent = logLineHeight.toFixed(1);
     }
+}
 
-    // Decoration sub-options
+/** Sync decoration sub-option checkboxes from state. */
+function syncDecoUi() {
     var decoDot = document.getElementById('opt-deco-dot');
     var decoCtr = document.getElementById('opt-deco-counter');
     var decoTs = document.getElementById('opt-deco-timestamp');
@@ -81,50 +78,36 @@ function syncOptionsPanelUi() {
     if (decoElapsed) decoElapsed.checked = showElapsed;
     if (lineColor) lineColor.value = decoLineColorMode;
     if (decoBar && typeof decoShowBar !== 'undefined') decoBar.checked = decoShowBar;
+}
 
-    // Level filters
-    var levelInfo = document.getElementById('opt-level-info');
-    var levelWarn = document.getElementById('opt-level-warning');
-    var levelError = document.getElementById('opt-level-error');
-    var levelPerf = document.getElementById('opt-level-perf');
-    var levelTodo = document.getElementById('opt-level-todo');
-    var levelDebug = document.getElementById('opt-level-debug');
-    var levelNotice = document.getElementById('opt-level-notice');
-    if (levelInfo && typeof enabledLevels !== 'undefined') levelInfo.checked = enabledLevels.has('info');
-    if (levelWarn && typeof enabledLevels !== 'undefined') levelWarn.checked = enabledLevels.has('warning');
-    if (levelError && typeof enabledLevels !== 'undefined') levelError.checked = enabledLevels.has('error');
-    if (levelPerf && typeof enabledLevels !== 'undefined') levelPerf.checked = enabledLevels.has('performance');
-    if (levelTodo && typeof enabledLevels !== 'undefined') levelTodo.checked = enabledLevels.has('todo');
-    if (levelDebug && typeof enabledLevels !== 'undefined') levelDebug.checked = enabledLevels.has('debug');
-    if (levelNotice && typeof enabledLevels !== 'undefined') levelNotice.checked = enabledLevels.has('notice');
+/** Sync audio checkboxes and sliders from state. */
+function syncAudioUi() {
+    var audioCheck = document.getElementById('opt-audio');
+    var audioOpts = document.getElementById('audio-options');
+    if (audioCheck && typeof audioEnabled !== 'undefined') audioCheck.checked = audioEnabled;
+    if (audioOpts) audioOpts.style.display = audioEnabled ? 'block' : 'none';
+    var volSlider = document.getElementById('audio-volume-slider');
+    var volLabel = document.getElementById('audio-volume-label');
+    if (volSlider && typeof audioVolume !== 'undefined') {
+        volSlider.value = Math.round(audioVolume * 100);
+        if (volLabel) volLabel.textContent = Math.round(audioVolume * 100) + '%';
+    }
+    var rl = document.getElementById('audio-rate-limit');
+    if (rl && typeof audioRateLimit !== 'undefined') rl.value = audioRateLimit.toString();
+}
 
-    // Filtering options
+/** Sync all options panel controls from current state variables. */
+function syncOptionsPanelUi() {
+    syncDisplayUi();
+    syncDecoUi();
     var exclCheck = document.getElementById('opt-exclusions');
     var appOnlyCheck = document.getElementById('opt-app-only');
-    if (exclCheck && typeof exclusionsActive !== 'undefined') exclCheck.checked = exclusionsActive;
+    if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
-
-    // Layout options
-    var visualSpacingCheck = document.getElementById('opt-visual-spacing');
-    if (visualSpacingCheck && typeof visualSpacingEnabled !== 'undefined') visualSpacingCheck.checked = visualSpacingEnabled;
-
-    // Audio
-    var audioCheck = document.getElementById('opt-audio');
-    var audioOptions = document.getElementById('audio-options');
-    if (audioCheck && typeof audioEnabled !== 'undefined') audioCheck.checked = audioEnabled;
-    if (audioOptions) audioOptions.style.display = audioEnabled ? 'block' : 'none';
-
-    // Audio sub-options
-    var volumeSlider = document.getElementById('audio-volume-slider');
-    var volumeLabel = document.getElementById('audio-volume-label');
-    var rateLimit = document.getElementById('audio-rate-limit');
-    if (volumeSlider && typeof audioVolume !== 'undefined') {
-        volumeSlider.value = Math.round(audioVolume * 100);
-        if (volumeLabel) volumeLabel.textContent = Math.round(audioVolume * 100) + '%';
-    }
-    if (rateLimit && typeof audioRateLimit !== 'undefined') {
-        rateLimit.value = audioRateLimit.toString();
-    }
+    var vsCheck = document.getElementById('opt-visual-spacing');
+    if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
+    syncAudioUi();
+    if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
 }
 
 /* Register event listeners for options panel controls. */
@@ -179,40 +162,32 @@ if (optMinimap) optMinimap.addEventListener('change', function(e) {
     syncOptionsPanelUi();
 });
 
-// Decoration sub-options — checkbox toggles that re-render viewport
-var decoChecks = {
-    'opt-deco-dot': 'decoShowDot', 'opt-deco-counter': 'decoShowCounter',
-    'opt-deco-timestamp': 'decoShowTimestamp', 'opt-deco-milliseconds': 'showMilliseconds',
-    'opt-deco-elapsed': 'showElapsed', 'opt-deco-bar': 'decoShowBar'
-};
-Object.keys(decoChecks).forEach(function(id) {
+// Decoration sub-options — sync to deco settings panel and delegate to onDecoOptionChange
+var decoCheckIds = [
+    'opt-deco-dot', 'opt-deco-counter', 'opt-deco-timestamp',
+    'opt-deco-milliseconds', 'opt-deco-elapsed', 'opt-deco-bar'
+];
+decoCheckIds.forEach(function(id) {
     var el = document.getElementById(id);
-    var varName = decoChecks[id];
+    var decoId = id.replace('opt-deco-', 'deco-opt-');
     if (el) el.addEventListener('change', function(e) {
-        window[varName] = e.target.checked;
-        renderViewport(true);
+        var decoEl = document.getElementById(decoId);
+        if (decoEl) decoEl.checked = e.target.checked;
+        if (typeof onDecoOptionChange === 'function') onDecoOptionChange();
     });
 });
 var optLineColor = document.getElementById('opt-line-color');
 if (optLineColor) optLineColor.addEventListener('change', function(e) {
-    decoLineColorMode = e.target.value;
-    renderViewport(true);
+    var decoMode = document.getElementById('deco-line-color-mode');
+    if (decoMode) decoMode.value = e.target.value;
+    if (typeof onDecoOptionChange === 'function') onDecoOptionChange();
 });
 
-// Level filters — data-driven registration
-var levelMap = {info:'opt-level-info', warning:'opt-level-warning', error:'opt-level-error', performance:'opt-level-perf', todo:'opt-level-todo', debug:'opt-level-debug', notice:'opt-level-notice'};
-Object.keys(levelMap).forEach(function(lvl) {
-    var el = document.getElementById(levelMap[lvl]);
-    if (el) el.addEventListener('change', function() {
-        if (typeof toggleLevel === 'function') toggleLevel(lvl);
-    });
-});
-
-// Filtering options
+// Noise reduction options
 var optExcl = document.getElementById('opt-exclusions');
 var optAppOnly = document.getElementById('opt-app-only');
 if (optExcl) optExcl.addEventListener('change', function(e) {
-    if (typeof toggleExclusions === 'function') toggleExclusions();
+    if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(e.target.checked);
     syncOptionsPanelUi();
 });
 if (optAppOnly) optAppOnly.addEventListener('change', function(e) {
@@ -268,12 +243,23 @@ if (previewWarningBtn) {
     });
 }
 
+// Reset all filters button
+var resetBtn = document.getElementById('reset-all-filters');
+if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+        if (typeof resetAllFilters === 'function') resetAllFilters();
+    });
+}
+
 /* Close panel when clicking outside it. */
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
     var optionsBtn = document.getElementById('options-panel-btn');
-    if (panel && !panel.contains(e.target) && optionsBtn !== e.target && !optionsBtn?.contains(e.target)) {
+    var badgeBtn = document.getElementById('filter-badge');
+    if (panel && !panel.contains(e.target)
+        && optionsBtn !== e.target && !optionsBtn?.contains(e.target)
+        && badgeBtn !== e.target) {
         closeOptionsPanel();
     }
 });

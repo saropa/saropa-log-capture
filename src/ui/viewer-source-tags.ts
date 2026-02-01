@@ -3,8 +3,8 @@
  *
  * Parses source tags from Android logcat prefixes (e.g. "D/FlutterJNI( 3861):")
  * and bracket prefixes (e.g. "[log]"). Tags are grouped by name only, ignoring
- * the level prefix. A collapsible strip above the log lines shows chips with
- * counts; clicking a chip toggles visibility of that source's lines.
+ * the level prefix. Chips in the options panel Log Tags section show tag names
+ * and counts; clicking a chip toggles visibility of that tag's lines.
  *
  * Integration points:
  * - addToData() calls parseSourceTag() and registerSourceTag() for each line
@@ -13,16 +13,9 @@
  * - trimData() calls unregisterSourceTag() for removed lines
  */
 
-/** Returns the HTML for the collapsible source tag strip. */
+/** Returns empty HTML — log tags now live inside the options panel. */
 export function getSourceTagsHtml(): string {
-    return /* html */ `<div id="source-tag-strip" class="source-tag-strip collapsed" style="display:none">
-    <div class="source-tag-header">
-        <span class="source-tag-chevron">&#x25B6;</span>
-        <span>Sources</span>
-        <span id="source-tag-summary" class="source-tag-summary"></span>
-    </div>
-    <div id="source-tag-chips" class="source-tag-chips"></div>
-</div>`;
+    return '';
 }
 
 /** Returns the JavaScript for source tag parsing, tracking, and filtering. */
@@ -33,9 +26,6 @@ var sourceTagCounts = {};
 
 /** Set of tag keys currently hidden (toggled off). */
 var hiddenSourceTags = {};
-
-/** Whether the tag strip is expanded (showing chips). */
-var sourceTagStripExpanded = false;
 
 /** Sentinel key for lines with no recognized source tag. */
 var otherKey = '__other__';
@@ -140,21 +130,7 @@ function deselectAllTags() {
     rebuildTagChips();
 }
 
-/** Toggle collapse/expand of the source tag strip. */
-function toggleTagStrip() {
-    sourceTagStripExpanded = !sourceTagStripExpanded;
-    var strip = document.getElementById('source-tag-strip');
-    if (!strip) { return; }
-    strip.classList.toggle('collapsed', !sourceTagStripExpanded);
-    strip.classList.toggle('expanded', sourceTagStripExpanded);
-    var chevron = strip.querySelector('.source-tag-chevron');
-    if (chevron) {
-        chevron.innerHTML = sourceTagStripExpanded ? '&#x25BC;' : '&#x25B6;';
-    }
-    if (sourceTagStripExpanded) { rebuildTagChips(); }
-}
-
-/** Update the summary text in the strip header ("12 tags (3 hidden)"). */
+/** Update the summary text in the log tags section. */
 function updateTagSummary() {
     var el = document.getElementById('source-tag-summary');
     if (!el) { return; }
@@ -164,10 +140,10 @@ function updateTagSummary() {
     for (var hi = 0; hi < hiddenKeys.length; hi++) {
         if (sourceTagCounts[hiddenKeys[hi]]) { hidden++; }
     }
-    el.textContent = total + ' source' + (total !== 1 ? 's' : '')
+    el.textContent = total + ' tag' + (total !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
-    var strip = document.getElementById('source-tag-strip');
-    if (strip) { strip.style.display = total > 0 ? '' : 'none'; }
+    var section = document.getElementById('log-tags-section');
+    if (section) { section.style.display = total > 0 ? '' : 'none'; }
 }
 
 /** Escape HTML special characters for safe insertion into chip labels. */
@@ -175,7 +151,7 @@ function escapeTagHtml(text) {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Rebuild the chip HTML inside the tag strip. Sorted by count descending. */
+/** Rebuild the chip HTML inside the log tags section. Sorted by count descending. */
 function rebuildTagChips() {
     var container = document.getElementById('source-tag-chips');
     if (!container) { return; }
@@ -222,24 +198,11 @@ function rebuildTagChips() {
 function resetSourceTags() {
     sourceTagCounts = {};
     hiddenSourceTags = {};
-    sourceTagStripExpanded = false;
-    var strip = document.getElementById('source-tag-strip');
-    if (strip) {
-        strip.classList.add('collapsed');
-        strip.classList.remove('expanded');
-        strip.style.display = 'none';
-        var chevron = strip.querySelector('.source-tag-chevron');
-        if (chevron) { chevron.innerHTML = '&#x25B6;'; }
-    }
+    var section = document.getElementById('log-tags-section');
+    if (section) { section.style.display = 'none'; }
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
-}
-
-// Register click handler for tag strip header
-var tagHeader = document.querySelector('.source-tag-header');
-if (tagHeader) {
-    tagHeader.addEventListener('click', toggleTagStrip);
 }
 `;
 }

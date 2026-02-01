@@ -1,17 +1,15 @@
 /**
- * CSS styles for the source tag filter strip in the viewer webview.
+ * CSS styles for source tag chips in the viewer webview.
  *
- * A collapsible panel above the log area showing discovered source tags
- * (e.g. logcat tags like "flutter", "FirebaseSessions") as clickable chips.
+ * Chips appear in the Log Tags section of the options panel, showing
+ * discovered source tags (e.g. logcat tags like "flutter", "FirebaseSessions").
  * Each chip shows the tag name and line count; clicking toggles visibility.
  */
 export function getTagStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Source Tag Strip
-   Collapsible panel above the log area. Hidden until at least one
-   source tag is discovered from incoming lines.
+   Source Tag Strip (legacy container, kept for reusable chip styles)
    =================================================================== */
 .source-tag-strip {
     background: var(--vscode-panel-background);
@@ -42,16 +40,17 @@ export function getTagStyles(): string {
     margin-left: auto;
 }
 
-/* --- Chip container: hidden when collapsed, flex-wrap when expanded --- */
+/* --- Chip container: flex-wrap, shown when tags exist --- */
 .source-tag-chips {
-    display: none;
+    display: flex;
     flex-wrap: wrap;
     gap: 4px;
     padding: 4px 8px 6px;
     align-items: center;
 }
-.source-tag-strip.expanded .source-tag-chips {
-    display: flex;
+/* Inside options panel, use tighter padding */
+.source-tag-chips.options-tags {
+    padding: 4px 0 2px;
 }
 
 /* --- Individual tag chip: pill-shaped toggle button --- */

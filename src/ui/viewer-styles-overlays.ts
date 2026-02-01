@@ -160,17 +160,6 @@ export function getOverlayStyles(): string {
 .json-expanded.hidden { display: none; }
 .json-preview.hidden { display: none; }
 
-/* --- Export preset dropdown in footer --- */
-#preset-select {
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
-    padding: 1px 4px;
-    max-width: 140px;
-    cursor: pointer;
-}
-
 /* ===================================================================
    Context Menu
    Right-click menu for log lines. Provides actions like copy,

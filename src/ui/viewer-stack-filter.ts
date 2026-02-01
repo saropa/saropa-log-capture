@@ -24,8 +24,6 @@ function toggleAppOnly() {
         totalHeight += newH - item.height;
         item.height = newH;
     }
-    var btn = document.getElementById('app-only-toggle');
-    if (btn) btn.textContent = appOnlyMode ? 'App Only: ON' : 'App Only: OFF';
     if (typeof vscodeApi !== 'undefined') {
         vscodeApi.postMessage({ type: 'setCaptureAll', value: !appOnlyMode });
     }
@@ -51,9 +49,5 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'a' || e.key === 'A') toggleAppOnly();
 });
 
-var appOnlyBtn = document.getElementById('app-only-toggle');
-if (appOnlyBtn) {
-    appOnlyBtn.addEventListener('click', toggleAppOnly);
-}
 `;
 }

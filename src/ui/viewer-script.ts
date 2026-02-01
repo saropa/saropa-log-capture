@@ -113,11 +113,10 @@ viewportEl.addEventListener('dblclick', function(e) {
 function toggleWrap() {
     wordWrap = !wordWrap;
     logEl.classList.toggle('nowrap', !wordWrap);
-    wrapToggle.textContent = wordWrap ? 'No Wrap' : 'Wrap';
     renderViewport(true);
 }
 
-wrapToggle.addEventListener('click', toggleWrap);
+if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 jumpBtn.addEventListener('click', jumpToBottom);
 if (headerToggle) headerToggle.addEventListener('click', toggleHeader);
 

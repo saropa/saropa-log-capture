@@ -2,8 +2,8 @@
  * Viewer Layout Script
  *
  * Provides dynamic layout adjustments for the log viewer:
- * - Font size control (10-20px)
- * - Line height control (1.0-2.5)
+ * - Font size control (8-22px)
+ * - Line height control (0.5-4.0)
  * - Updates CSS variables and triggers viewport recalculation
  */
 
@@ -23,10 +23,10 @@ var visualSpacingEnabled = false;
 
 /**
  * Set the font size for all log lines.
- * @param {number} size - Font size in pixels (10-20)
+ * @param {number} size - Font size in pixels (8-22)
  */
 function setFontSize(size) {
-    logFontSize = Math.max(10, Math.min(20, size));
+    logFontSize = Math.max(8, Math.min(22, size));
     document.documentElement.style.setProperty('--log-font-size', logFontSize + 'px');
 
     // Recalculate heights and re-render viewport
@@ -40,10 +40,10 @@ function setFontSize(size) {
 
 /**
  * Set the line height for all log lines.
- * @param {number} height - Line height multiplier (1.0-2.5)
+ * @param {number} height - Line height multiplier (0.5-4.0)
  */
 function setLineHeight(height) {
-    logLineHeight = Math.max(1.0, Math.min(2.5, height));
+    logLineHeight = Math.max(0.5, Math.min(4.0, height));
     document.documentElement.style.setProperty('--log-line-height', logLineHeight.toString());
 
     // Recalculate heights and re-render viewport
