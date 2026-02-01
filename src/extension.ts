@@ -183,6 +183,10 @@ export function activate(context: vscode.ExtensionContext): void {
             if (cfg.showDecorations) {
                 viewerProvider.setShowDecorations(true);
             }
+            viewerProvider.setErrorClassificationSettings(
+                cfg.suppressTransientErrors ?? false,
+                cfg.breakOnCritical ?? false
+            );
             if (cfg.highlightRules.length > 0) {
                 viewerProvider.setHighlightRules(cfg.highlightRules);
             }

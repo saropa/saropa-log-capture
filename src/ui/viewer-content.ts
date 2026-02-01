@@ -31,6 +31,7 @@ import { getScrollbarMinimapHtml, getScrollbarMinimapScript } from './viewer-scr
 import { getSessionHeaderHtml, getSessionHeaderScript } from './viewer-session-header';
 import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
+import { getErrorClassificationScript } from './viewer-error-classification';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -159,6 +160,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
         ${getScrollbarMinimapScript()}
         ${getSessionHeaderScript()}
         ${getExportScript()}
+        ${getErrorClassificationScript()}
     </script>
 </body>
 </html>`;

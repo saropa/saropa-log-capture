@@ -2,7 +2,7 @@
   "name": "saropa-log-capture",
   "displayName": "Saropa Log Capture",
   "description": "Automatically capture VS Code Debug Console output to persistent log files",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "publisher": "saropa",
   "repository": {
@@ -637,6 +637,16 @@
           },
           "default": [],
           "description": "Saved filter presets for quick application. Each preset saves category filters, search pattern, and exclusion state."
+        },
+        "saropaLogCapture.suppressTransientErrors": {
+          "type": "boolean",
+          "default": false,
+          "description": "Hide expected transient errors (TimeoutException, SocketException, ECONNREFUSED, etc.). Filtered lines can be expanded if needed."
+        },
+        "saropaLogCapture.breakOnCritical": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.)."
         }
       }
     }
