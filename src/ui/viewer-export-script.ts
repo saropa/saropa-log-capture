@@ -249,9 +249,9 @@ function performExport() {
         // Strip decorations if needed
         if (!exportOptions.includeDecorations) {
             // Remove counter, timestamp, severity dot, etc.
-            text = text.replace(/^\\\\s*[🔴🟠🟢🟣⚪🟤🟦🔵]?\\\\s*#\\\\d+\\\\s*/, '');
-            text = text.replace(/^\\\\s*\\\\d{2}:\\\\d{2}:\\\\d{2}(\\\\.\\\\d{3})?\\\\s*/, '');
-            text = text.replace(/^\\\\s*\\\\[\\\\+\\\\d+(\\\\.\\\\d+)?[smh]\\\\]\\\\s*/, '');
+            text = text.replace(/^\\s*[🔴🟠🟢🟣⚪🟤🟦🔵]?\\s*#\\d+\\s*/, '');
+            text = text.replace(/^\\s*\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?\\s*/, '');
+            text = text.replace(/^\\s*\\[\\+\\d+(\\.\\d+)?[smh]\\]\\s*/, '');
         }
 
         lines.push(text);
@@ -266,7 +266,7 @@ function performExport() {
         return;
     }
 
-    var exportText = lines.join('\\\\n');
+    var exportText = lines.join('\\n');
 
     // Send export request to extension
     vscodeApi.postMessage({

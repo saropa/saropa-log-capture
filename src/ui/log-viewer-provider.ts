@@ -270,6 +270,11 @@ export class LogViewerProvider
           vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`);
         });
         break;
+      case "scriptError":
+        for (const e of (msg.errors as { message: string }[]) ?? []) {
+          console.warn("[SLC Webview]", e.message);
+        }
+        break;
     }
   }
 
@@ -278,10 +283,7 @@ export class LogViewerProvider
     this.batchTimer = helpers.startBatchTimer(BATCH_INTERVAL_MS, () => this.flushBatch(), () => this.stopBatchTimer());
   }
 
-  private stopBatchTimer(): void {
-    helpers.stopBatchTimer(this.batchTimer);
-    this.batchTimer = undefined;
-  }
+  private stopBatchTimer(): void { helpers.stopBatchTimer(this.batchTimer); this.batchTimer = undefined; }
 
   private flushBatch(): void {
     helpers.flushBatch(
