@@ -8,20 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [0.1.13]  - Current
 
 ### Changed
-- **Footer UI cleanup:** Standardized all footer buttons to a single `.footer-btn` style (consistent 11px font, borders, padding). Removed four distinct button styles in favor of one.
-- **Merged stats + level filters:** The separate stats counters (🔴 4, 🟠 95) and level filter circles (🟢🟠🔴🟣⚪🟤🟦) are now a single set of circles that show counts AND act as toggle filters. Eliminates confusing duplicate colored dots.
-- **Moved infrequent toggles to Options panel:** Decorations (🎨), audio (🔔), and minimap (🗺️) toggle buttons removed from footer. These settings are now in the Options panel with full checkbox controls.
-- **Clearer footer status text:** Replaced ambiguous "Viewing: 24 lines" with just "24 lines". Recording shows "● 24 lines" (red dot), paused shows "⏸ 24 lines".
+- **Footer UI consolidation:** Slimmed footer to just: line count, level circles, filter badge, search button, and options button. Removed 7 toggle buttons (wrap, exclusions, app-only, decorations, audio, minimap, export) that are now in the options panel.
+- **Category filter redesign:** Replaced the `<select multiple>` dropdown with dynamic checkboxes in the new Output Channels section of the options panel.
+- **Source tags moved to options panel:** Source tag chip strip removed from above the log content. Tags now live in a Log Tags section inside the options panel with the same All/None toggle and count chips.
+- **Options panel reorganized:** Consolidated all settings into logical sections — Quick Filters (presets + reset), Output Channels, Log Tags, Noise Reduction (exclusions + app-only), Display, Layout, Audio, and Actions (export).
 - **Footer buttons use text labels:** Export and Search buttons now show text instead of emoji (💾 → "Export", 🔍 → "Search").
+- **Clearer footer status text:** Replaced ambiguous "Viewing: 24 lines" with just "24 lines". Recording shows "● 24 lines" (red dot), paused shows "⏸ 24 lines".
+- **Merged stats + level filters:** The separate stats counters (🔴 4, 🟠 95) and level filter circles (🟢🟠🔴🟣⚪🟤🟦) are now a single set of circles that show counts AND act as toggle filters.
 
 ### Added
+- **Filter badge:** Footer shows an active filter count badge (e.g. "3 filters") that opens the options panel when clicked. Auto-updates via hooks on `recalcHeights()` and `toggleAppOnly()`.
+- **Reset all filters button:** Quick Filters section includes a "Reset all filters" button that clears every filter type (levels, categories, exclusions, app-only, source tags, search) in one click.
+- **`setExclusionsEnabled()` function:** Presets can now programmatically enable/disable exclusions (was missing, causing presets to silently fail for exclusion state).
 - **Scrollbar minimap option in Options panel:** New "Scrollbar minimap" checkbox in the Display section.
 - **Decoration sub-options in Options panel:** Added "Show milliseconds" and "Severity bar (left border)" checkboxes for feature parity with the decoration settings popover.
 - **STYLE_GUIDE.md:** Documents UI patterns, font sizes, button styles, spacing, color conventions, and anti-patterns for the log viewer webview.
 
 ### Fixed
+- **Options panel reading undefined `exclusionsActive`:** The exclusion checkbox was reading a non-existent `exclusionsActive` variable instead of `exclusionsEnabled`, causing the checkbox to never reflect actual state.
+- **Preset "None" not resetting filters:** Selecting "None" in the preset dropdown now calls `resetAllFilters()` instead of just clearing the preset name.
 - **Duplicate `#export-btn` CSS:** Was defined in both `viewer-styles-modal.ts` (14px) and `viewer-styles-overlays.ts` (10px). Consolidated into a single `.footer-btn` class.
 - **Mouse wheel scroll hijacking:** A custom `wheel` event listener intercepted native scrolling, applied a 0.5x multiplier, and called `preventDefault()` — killing browser-native smooth/inertia scrolling and causing choppy, erratic scroll behavior. Removed the handler so `#log-content` uses standard `overflow-y: auto` scrolling.
+
+### Removed
+- **Dead code:** Removed unused `exclusionsActive` variable, dead `getPresetDropdownHtml()` export, and orphaned `#preset-select` CSS from overlay styles.
 
 ---
 ## [0.1.12]  - 2026-02-01

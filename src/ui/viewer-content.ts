@@ -21,7 +21,8 @@ import { getContextMenuScript, getContextMenuHtml } from './viewer-context-menu'
 import { getLevelFilterScript } from './viewer-level-filter';
 import { getContextModalScript, getContextModalHtml } from './viewer-context-modal';
 import { getViewerDataScript } from './viewer-data';
-import { getSourceTagsScript, getSourceTagsHtml } from './viewer-source-tags';
+import { getSourceTagsScript } from './viewer-source-tags';
+import { getFilterBadgeScript } from './viewer-filter-badge';
 import { getAudioScript } from './viewer-audio';
 import { getOptionsPanelHtml, getOptionsPanelScript } from './viewer-options-panel';
 import { getErrorBreakpointHtml, getErrorBreakpointScript } from './viewer-error-breakpoint';
@@ -78,7 +79,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section" style="display:none"></div>
-    ${getSourceTagsHtml()}
     <div id="log-content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
@@ -98,9 +98,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span id="footer-text">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
         <span id="watch-counts"></span>
-        <span id="exclusion-count"></span>
-        <button id="exclusion-toggle" class="footer-btn" style="display:none" title="Toggle exclusion filters">Excl: ON</button>
-        <button id="app-only-toggle" class="footer-btn" title="Toggle capture all vs. app-only mode">App Only: OFF</button>
         <span class="level-filter-group">
             <button id="level-info-toggle" class="level-circle active" title="Info">🟢</button>
             <button id="level-warn-toggle" class="level-circle active" title="Warning">🟠</button>
@@ -110,12 +107,8 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace">🟤</button>
             <button id="level-notice-toggle" class="level-circle active" title="Notice">🟦</button>
         </span>
-        <select id="preset-select" title="Filter Presets">
-            <option value="">Preset: None</option>
-        </select>
-        <select id="filter-select" multiple title="Filter by category" style="display:none"></select>
-        <button id="wrap-toggle" class="footer-btn" title="Toggle word wrap">No Wrap</button>
-        <button id="export-btn" class="footer-btn" title="Export logs">Export</button>
+        <span id="filter-badge" class="filter-badge" style="display:none" title="Active filters — click to open options"></span>
+        <span class="footer-spacer"></span>
         <button id="search-panel-btn" class="footer-btn" title="Search (Ctrl+F)">Search</button>
         <button id="options-panel-btn" class="footer-btn" title="All options">&#x2630;</button>
     </div>
@@ -141,6 +134,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSourceTagsScript())}
     ${scriptTag(nonce, getHighlightScript())}
     ${scriptTag(nonce, getPresetsScript())}
+    ${scriptTag(nonce, getFilterBadgeScript())}
     ${scriptTag(nonce, getContextModalScript())}
     ${scriptTag(nonce, getContextMenuScript())}
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}

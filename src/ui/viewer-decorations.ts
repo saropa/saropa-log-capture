@@ -3,7 +3,7 @@
  *
  * Prefixes each line with a configurable combination of:
  *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error, 🟣 performance, 🔵 framework)
- *   - Sequential counter (#1, #2, ...)
+ *   - Sequential counter (1, 2, ...)
  *   - Wall-clock timestamp (T07:23:36)
  *   - Separator (»)
  *
@@ -69,6 +69,7 @@ function resetDecoDefaults() {
     decoShowCounter = true;
     decoShowTimestamp = true;
     decoLineColorMode = 'none';
+    decoShowBar = true;
 }
 
 /** Update the Deco button style and tooltip to reflect the master toggle state. */
@@ -121,7 +122,7 @@ function formatInlineContext(item) {
  * Only includes parts whose sub-toggle is enabled.
  * Returns empty string for markers, stack-frame sub-lines, or when off.
  *
- * Example output: <span class="line-decoration">🟢 #1 T07:23:36 » </span>
+ * Example output: <span class="line-decoration">🟢 <span class="deco-counter">    1</span> T07:23:36 » </span>
  */
 function getDecorationPrefix(item) {
     if (!showDecorations && !showInlineContext) return '';
@@ -135,7 +136,7 @@ function getDecorationPrefix(item) {
         if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
         if (decoShowCounter) {
             var seqStr = item.seq !== undefined ? String(item.seq) : '?';
-            parts.push('#' + seqStr.padStart(5, '\\u00a0'));
+            parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
         }
         if (decoShowTimestamp) {
             var ts = formatDecoTimestamp(item.timestamp);

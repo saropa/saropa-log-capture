@@ -20,6 +20,9 @@ export function getDecorationStyles(): string {
     white-space: nowrap;
     user-select: none;
 }
+.deco-counter {
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+}
 
 /* Inline context metadata (file path and function name breadcrumb) */
 .inline-context {

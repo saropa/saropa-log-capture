@@ -77,8 +77,8 @@ export function getContentStyles(): string {
 
 /* ===================================================================
    Footer Bar
-   Sticky bar at the bottom showing line count, watch chips, and
-   toggle buttons (wrap, exclusions, app-only, level filter).
+   Sticky bar at the bottom showing line count, watch chips, level
+   circles, filter badge, and action buttons (search, options).
    Uses --vscode-panel-background to match the VS Code bottom panel.
    =================================================================== */
 #footer {
@@ -117,17 +117,21 @@ export function getContentStyles(): string {
     color: var(--vscode-button-foreground);
 }
 /* Push right-aligned group to the end of footer */
-#wrap-toggle { margin-left: auto; }
+.footer-spacer { flex: 1; }
 
-/* --- Filter preset dropdown in footer --- */
-#filter-select {
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
-    padding: 1px 4px;
-    max-width: 120px;
+/* --- Active filter badge in footer --- */
+.filter-badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: var(--vscode-badge-background, #007acc);
+    color: var(--vscode-badge-foreground, #fff);
     cursor: pointer;
+    white-space: nowrap;
+    font-weight: bold;
+}
+.filter-badge:hover {
+    opacity: 0.85;
 }
 
 /* ===================================================================
