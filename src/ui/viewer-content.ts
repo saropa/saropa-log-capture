@@ -47,7 +47,7 @@ export function getNonce(): string {
 }
 
 /** Build the complete HTML document for the log viewer webview. */
-export function buildViewerHtml(nonce: string, extensionUri?: string): string {
+export function buildViewerHtml(nonce: string, extensionUri?: string, version?: string): string {
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,6 +62,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
 <body>
     <div id="viewer-header">
         <span id="header-filename"></span>
+        <span id="header-version">${version ? `v${version}` : ''}</span>
         <button id="header-toggle" title="Toggle header">&#x25B2;</button>
     </div>
     <div id="split-breadcrumb">
@@ -95,7 +96,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getOptionsPanelHtml()}
-    ${getErrorBreakpointHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
     <div id="footer">
