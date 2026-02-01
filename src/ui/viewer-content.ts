@@ -32,9 +32,15 @@ import { getSessionHeaderHtml, getSessionHeaderScript } from './viewer-session-h
 import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getErrorClassificationScript } from './viewer-error-classification';
+import { getErrorHandlerScript } from './viewer-error-handler';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
+
+/** Wrap script content in a nonce-tagged script element for fault isolation. */
+function scriptTag(nonce: string, ...parts: string[]): string {
+    return `<script nonce="${nonce}">${parts.join('\n')}</script>`;
+}
 
 /** Generate a random nonce for Content Security Policy. */
 export function getNonce(): string {
@@ -127,41 +133,38 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <button id="export-btn" title="Export logs to file">&#x1F4BE;</button>
         <button id="options-panel-btn" title="All options">&#x2630;</button>
     </div>
-    <script nonce="${nonce}">
-        ${getLayoutScript()}
-        ${getViewerDataScript()}
-        ${getViewerScript(MAX_VIEWER_LINES)}
-        ${getFilterScript()}
-        ${getWatchScript()}
-        ${getPinScript()}
-        ${getExclusionScript()}
-        ${getCopyScript()}
-        ${getAnnotationScript()}
-        ${getTimingScript()}
-        ${getDecorationsScript()}
-        ${getDecoSettingsScript()}
-        ${getStackDedupScript()}
-        ${getStackFilterScript()}
-        ${getSourcePreviewScript()}
-        ${getSplitNavScript()}
-        ${getJsonScript()}
-        ${getSearchScript()}
-        ${getLevelFilterScript()}
-        ${getSourceTagsScript()}
-        ${getHighlightScript()}
-        ${getPresetsScript()}
-        ${getContextModalScript()}
-        ${getContextMenuScript()}
-        ${getAudioScript(extensionUri || '')}
-        ${getOptionsPanelScript()}
-        ${getErrorBreakpointScript()}
-        ${getStatsScript()}
-        ${getEditModalScript()}
-        ${getScrollbarMinimapScript()}
-        ${getSessionHeaderScript()}
-        ${getExportScript()}
-        ${getErrorClassificationScript()}
-    </script>
+    ${scriptTag(nonce, getErrorHandlerScript())}
+    ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES))}
+    ${scriptTag(nonce, getFilterScript())}
+    ${scriptTag(nonce, getWatchScript())}
+    ${scriptTag(nonce, getPinScript())}
+    ${scriptTag(nonce, getExclusionScript())}
+    ${scriptTag(nonce, getCopyScript())}
+    ${scriptTag(nonce, getAnnotationScript())}
+    ${scriptTag(nonce, getTimingScript())}
+    ${scriptTag(nonce, getDecorationsScript())}
+    ${scriptTag(nonce, getDecoSettingsScript())}
+    ${scriptTag(nonce, getStackDedupScript())}
+    ${scriptTag(nonce, getStackFilterScript())}
+    ${scriptTag(nonce, getSourcePreviewScript())}
+    ${scriptTag(nonce, getSplitNavScript())}
+    ${scriptTag(nonce, getJsonScript())}
+    ${scriptTag(nonce, getSearchScript())}
+    ${scriptTag(nonce, getLevelFilterScript())}
+    ${scriptTag(nonce, getSourceTagsScript())}
+    ${scriptTag(nonce, getHighlightScript())}
+    ${scriptTag(nonce, getPresetsScript())}
+    ${scriptTag(nonce, getContextModalScript())}
+    ${scriptTag(nonce, getContextMenuScript())}
+    ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
+    ${scriptTag(nonce, getOptionsPanelScript())}
+    ${scriptTag(nonce, getErrorBreakpointScript())}
+    ${scriptTag(nonce, getStatsScript())}
+    ${scriptTag(nonce, getEditModalScript())}
+    ${scriptTag(nonce, getScrollbarMinimapScript())}
+    ${scriptTag(nonce, getSessionHeaderScript())}
+    ${scriptTag(nonce, getExportScript())}
+    ${scriptTag(nonce, getErrorClassificationScript())}
 </body>
 </html>`;
 }
