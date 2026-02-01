@@ -74,7 +74,10 @@ function handleSourcePreviewResponse(msg) {
     }
 
     var filename = msg.path.split(/[\\\\/]/).pop() || msg.path;
-    var html = '<div class="preview-header">' + escapeHtmlPreview(filename) + ':' + msg.line + '</div>';
+    var html = '<div class="preview-header">'
+        + '<span>' + escapeHtmlPreview(filename) + ':' + msg.line + '</span>'
+        + '<button class="preview-close" onclick="hidePreview()">&#x2715;</button>'
+        + '</div>';
     html += '<div class="preview-code">';
 
     for (var i = 0; i < msg.lines.length; i++) {
@@ -129,6 +132,20 @@ previewEl.addEventListener('mouseenter', function() {
 
 previewEl.addEventListener('mouseleave', function() {
     previewHideTimer = setTimeout(hidePreview, 200);
+});
+
+// Escape key closes the preview
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && previewEl.classList.contains('visible')) {
+        hidePreview();
+    }
+});
+
+// Click outside closes the preview
+document.addEventListener('click', function(e) {
+    if (!previewEl.contains(e.target) && previewEl.classList.contains('visible')) {
+        hidePreview();
+    }
 });
 
 `;

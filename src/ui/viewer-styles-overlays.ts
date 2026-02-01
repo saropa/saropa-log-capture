@@ -31,14 +31,32 @@ export function getOverlayStyles(): string {
 }
 #source-preview.visible { display: block; }
 #source-preview .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     margin-bottom: 4px;
     border-bottom: 1px solid var(--vscode-panel-border);
     padding-bottom: 4px;
+}
+#source-preview .preview-header span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+#source-preview .preview-close {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 2px;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+#source-preview .preview-close:hover {
+    color: var(--vscode-errorForeground, #f44);
 }
 #source-preview .preview-code {
     font-family: var(--vscode-editor-font-family, monospace);
