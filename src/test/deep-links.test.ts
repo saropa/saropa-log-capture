@@ -42,10 +42,10 @@ suite('DeepLinks', () => {
         });
 
         test('should handle URL-encoded session names', () => {
-            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=20260128_14-32_my%20app.log&line=1');
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=20260128_143200_my%20app.log&line=1');
             const params = parseDeepLinkUri(uri);
             assert.ok(params);
-            assert.strictEqual(params.session, '20260128_14-32_my app.log');
+            assert.strictEqual(params.session, '20260128_143200_my app.log');
             assert.strictEqual(params.line, 1);
         });
     });

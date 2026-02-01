@@ -131,7 +131,7 @@ function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             const name = await vscode.window.showInputBox({
                 prompt: 'Enter new name for this session (also renames file)',
-                value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_\d{2}-\d{2}(-\d{2})?_/, ''),
+                value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_(?:\d{6}|\d{2}-\d{2}(?:-\d{2})?)_/, ''),
             });
             if (!name || name.trim() === '') { return; }
             const metaStore = historyProvider.getMetaStore();

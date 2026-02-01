@@ -30,7 +30,7 @@ export function generateBaseFileName(projectName: string, date: Date): string {
     const mi = String(date.getMinutes()).padStart(2, '0');
     const s = String(date.getSeconds()).padStart(2, '0');
     const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    return `${y}${mo}${d}_${h}-${mi}-${s}_${safeName}`;
+    return `${y}${mo}${d}_${h}${mi}${s}_${safeName}`;
 }
 
 /** Format a log line with optional timestamp and category prefix. */

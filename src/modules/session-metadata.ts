@@ -93,8 +93,8 @@ export class SessionMetadataStore {
         const dirPath = oldPath.substring(0, lastSepIndex + 1);
         const oldFilename = oldPath.substring(lastSepIndex + 1);
 
-        // Extract date/time prefix (YYYYMMDD_HH-MM-SS_ or legacy YYYYMMDD_HH-MM_)
-        const prefixMatch = oldFilename.match(/^(\d{8}_\d{2}-\d{2}(?:-\d{2})?_)/);
+        // Extract date/time prefix (YYYYMMDD_HHMMSS_ or legacy YYYYMMDD_HH-MM[-SS]_)
+        const prefixMatch = oldFilename.match(/^(\d{8}_(?:\d{6}|\d{2}-\d{2}(?:-\d{2})?)_)/);
         const prefix = prefixMatch ? prefixMatch[1] : '';
 
         // Sanitize the new display name for use as filename
