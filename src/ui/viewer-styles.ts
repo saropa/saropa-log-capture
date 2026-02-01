@@ -90,6 +90,15 @@ body {
     color: var(--vscode-foreground);
 }
 
+#header-version {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.7;
+    margin-left: auto;
+    margin-right: 6px;
+    white-space: nowrap;
+}
+
 /* ===================================================================
    Log Content Area
    Main scrollable region holding all log lines. Uses flex:1 to fill

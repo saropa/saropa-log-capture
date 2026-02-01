@@ -41,20 +41,26 @@ export class LogViewerProvider
   private cachedHighlightRules: SerializedHighlightRule[] = [];
   private currentFileUri: vscode.Uri | undefined;
   private isSessionActive = false;
+  private pendingLoadUri: vscode.Uri | undefined;
+  private loadGeneration = 0;
 
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly version: string,
+  ) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
     const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
     webviewView.webview.options = { enableScripts: true, localResourceRoots: [audioUri] };
     const audioWebviewUri = webviewView.webview.asWebviewUri(audioUri).toString();
-    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri);
+    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri, this.version);
     webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
       this.handleMessage(msg),
     );
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg)));
+    if (this.pendingLoadUri) { queueMicrotask(() => { void this.loadFromFile(this.pendingLoadUri!); }); }
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
         this.unreadWatchHits = 0;
@@ -178,29 +184,25 @@ export class LogViewerProvider
   }
 
   /** Set whether a debug session is currently active. */
-  setSessionActive(active: boolean): void {
-    this.isSessionActive = active;
-    this.postMessage({ type: "sessionState", active });
-  }
+  setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
   /** Send a clear message to the webview. */
-  clear(): void {
-    this.pendingLines = [];
-    this.currentFileUri = undefined; // Clear file reference when clearing viewer
-    this.postMessage({ type: "clear" });
-  }
+  clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.postMessage({ type: "clear" }); }
 
   /** Load a historical log file into the viewer. */
   async loadFromFile(uri: vscode.Uri): Promise<void> {
-    this.view?.show?.(true); // Trigger view creation
-    for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); } // Wait
-    if (!this.view) { return; } // View not ready
+    const gen = ++this.loadGeneration; this.pendingLoadUri = uri;
+    this.view?.show?.(true);
+    for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
+    if (!this.view || gen !== this.loadGeneration) { return; }
     this.clear(); this.seenCategories.clear(); this.currentFileUri = uri;
     const raw = await vscode.workspace.fs.readFile(uri);
+    if (gen !== this.loadGeneration) { return; }
     const text = Buffer.from(raw).toString("utf-8"), rawLines = text.split(/\r?\n/);
-    this.postMessage({ type: "setViewingMode", viewing: true });
-    this.setFilename(uri.path.split("/").pop() ?? "");
-    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), (t) => helpers.classifyFrame(t), (msg) => this.postMessage(msg), this.seenCategories);
+    this.postMessage({ type: "setViewingMode", viewing: true }); this.setFilename(uri.path.split("/").pop() ?? "");
+    const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
+    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), (t) => helpers.classifyFrame(t), post, this.seenCategories);
+    if (gen === this.loadGeneration) { this.pendingLoadUri = undefined; }
   }
   /** Send keyword watch hit counts to the webview footer and update badge. */
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {

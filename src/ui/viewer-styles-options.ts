@@ -13,7 +13,10 @@ export function getOptionsStyles(): string {
    =================================================================== */
 .options-panel {
     position: fixed;
-    right: -25%;
+    /* Must be -100% (not -25%) to fully hide off-screen: min-width 280px
+       exceeds 25% in narrow sidebar viewports, leaving the panel partially
+       visible and blocking clicks on footer buttons underneath. */
+    right: -100%;
     top: 0;
     bottom: 0;
     width: 25%;
@@ -27,10 +30,12 @@ export function getOptionsStyles(): string {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    pointer-events: none;
 }
 
 .options-panel.visible {
     right: 0;
+    pointer-events: auto;
 }
 
 .options-header {

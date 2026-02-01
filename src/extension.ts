@@ -32,7 +32,10 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(inlineDecorations);
 
     // Sidebar viewer.
-    viewerProvider = new LogViewerProvider(context.extensionUri);
+    // BUG FIX: `as string` made TypeScript treat the value as always a string,
+    // so the `?? ''` fallback was unreachable. Use String() for safe conversion.
+    const version = String(context.extension.packageJSON.version ?? '');
+    viewerProvider = new LogViewerProvider(context.extensionUri, version);
     context.subscriptions.push(viewerProvider);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
@@ -73,8 +76,10 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         }
     });
-    sessionManager.addSplitListener((_newUri, _partNumber, totalParts) => {
-        viewerProvider.setSplitInfo(totalParts, totalParts);
+    // BUG FIX: was passing totalParts as both arguments, so the breadcrumb
+    // always showed "Part N of N" after a split instead of the actual current part.
+    sessionManager.addSplitListener((_newUri, partNumber, totalParts) => {
+        viewerProvider.setSplitInfo(partNumber, totalParts);
         const filename = sessionManager.getActiveFilename();
         if (filename) {
             viewerProvider.setFilename(filename);
