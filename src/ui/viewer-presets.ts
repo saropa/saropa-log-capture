@@ -2,8 +2,9 @@
  * Viewer Presets Script
  *
  * Provides filter preset functionality in the webview including:
- * - Dropdown to select and apply presets
+ * - Dropdown to select and apply presets (in options panel)
  * - Save current filters as a new preset
+ * - Reset all filters to defaults
  * - Message handling for preset data from extension
  */
 
@@ -50,14 +51,9 @@ function applyPreset(presetName) {
 
     // Apply category filter
     if (preset.categories && preset.categories.length > 0) {
-        // Set filter dropdown to first category (simplified)
-        var filterSelect = document.getElementById('filter-select');
-        if (filterSelect && preset.categories[0]) {
-            filterSelect.value = preset.categories[0];
-            if (typeof applyFilter === 'function') {
-                applyFilter(preset.categories[0]);
-            }
-        }
+        activeFilters = new Set(preset.categories);
+        syncChannelCheckboxes();
+        applyFilter();
     }
 
     // Apply search pattern
@@ -86,6 +82,16 @@ function applyPreset(presetName) {
 }
 
 /**
+ * Sync output channel checkboxes with activeFilters set.
+ */
+function syncChannelCheckboxes() {
+    var boxes = document.querySelectorAll('#output-channels-list input[type="checkbox"]');
+    for (var i = 0; i < boxes.length; i++) {
+        boxes[i].checked = !activeFilters || activeFilters.has(boxes[i].dataset.category);
+    }
+}
+
+/**
  * Update the preset dropdown to reflect current state.
  */
 function updatePresetDropdown() {
@@ -94,16 +100,13 @@ function updatePresetDropdown() {
         return;
     }
 
-    // Clear existing options
     dropdown.innerHTML = '';
 
-    // Add default "None" option
     var noneOpt = document.createElement('option');
     noneOpt.value = '';
-    noneOpt.textContent = 'Preset: None';
+    noneOpt.textContent = 'None';
     dropdown.appendChild(noneOpt);
 
-    // Add preset options
     for (var i = 0; i < filterPresets.length; i++) {
         var opt = document.createElement('option');
         opt.value = filterPresets[i].name;
@@ -111,13 +114,11 @@ function updatePresetDropdown() {
         dropdown.appendChild(opt);
     }
 
-    // Add "Save current..." option
     var saveOpt = document.createElement('option');
     saveOpt.value = '__save__';
     saveOpt.textContent = '+ Save current filters...';
     dropdown.appendChild(saveOpt);
 
-    // Set current selection
     dropdown.value = activePresetName || '';
 }
 
@@ -128,16 +129,14 @@ function onPresetSelectChange(e) {
     var value = e.target.value;
 
     if (value === '__save__') {
-        // Request extension to prompt for save
         vscodeApi.postMessage({ type: 'savePresetRequest', filters: getCurrentFilters() });
-        // Reset dropdown to previous value
         e.target.value = activePresetName || '';
         return;
     }
 
     if (value === '') {
-        // Clear preset
         activePresetName = null;
+        resetAllFilters();
         return;
     }
 
@@ -150,10 +149,9 @@ function onPresetSelectChange(e) {
 function getCurrentFilters() {
     var filters = {};
 
-    // Get category filter
-    var filterSelect = document.getElementById('filter-select');
-    if (filterSelect && filterSelect.value && filterSelect.value !== 'all') {
-        filters.categories = [filterSelect.value];
+    // Get category filter from checkboxes
+    if (activeFilters) {
+        filters.categories = Array.from(activeFilters);
     }
 
     // Get search pattern
@@ -178,6 +176,45 @@ function markPresetDirty() {
         activePresetName = null;
         updatePresetDropdown();
     }
+}
+
+/** Re-enable all level filters and update footer circle buttons. */
+function resetLevelFilters() {
+    if (typeof enabledLevels !== 'undefined') {
+        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
+    }
+    var ids = ['info', 'warn', 'error', 'perf', 'todo', 'debug', 'notice'];
+    for (var li = 0; li < ids.length; li++) {
+        var btn = document.getElementById('level-' + ids[li] + '-toggle');
+        if (btn) btn.classList.add('active');
+    }
+}
+
+/** Clear the search input and re-run to remove any active search filter. */
+function clearSearchFilter() {
+    var input = document.getElementById('search-input');
+    if (input && input.value) {
+        input.value = '';
+        if (typeof runSearch === 'function') runSearch();
+    }
+}
+
+/** Reset all filters back to defaults. */
+function resetAllFilters() {
+    resetLevelFilters();
+    activeFilters = null;
+    syncChannelCheckboxes();
+    if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
+    if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
+    if (typeof selectAllTags === 'function') selectAllTags();
+    clearSearchFilter();
+    activePresetName = null;
+    updatePresetDropdown();
+    if (typeof applyLevelFilter === 'function') applyLevelFilter();
+    if (typeof applyExclusions === 'function') applyExclusions();
+    applyFilter();
+    if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+    if (typeof updateFilterBadge === 'function') updateFilterBadge();
 }
 
 // Hook into filter changes to mark preset as dirty
@@ -207,11 +244,3 @@ if (presetSelect) {
 `;
 }
 
-/**
- * Returns the HTML for the preset dropdown control.
- */
-export function getPresetDropdownHtml(): string {
-    return `<select id="preset-select" title="Filter Presets">
-        <option value="">Preset: None</option>
-    </select>`;
-}

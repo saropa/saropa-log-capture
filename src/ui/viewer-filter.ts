@@ -1,7 +1,9 @@
 /**
  * Client-side JavaScript for the category filter in the log viewer webview.
- * Provides filter state, apply/toggle logic, and setCategories message handling.
- * Concatenated into the same script scope as viewer-script.ts.
+ *
+ * Categories (DAP output channels like stdout, stderr, console) are shown
+ * as checkboxes in the Output Channels section of the options panel.
+ * Dynamically populated when categories arrive from the extension.
  */
 export function getFilterScript(): string {
     return /* javascript */ `
@@ -22,43 +24,55 @@ function applyFilter() {
     renderViewport(true);
 }
 
-function handleFilterChange() {
-    var sel = document.getElementById('filter-select');
-    if (!sel) return;
-    var opts = sel.options;
+/**
+ * Handle channel checkbox changes — rebuild activeFilters set.
+ */
+function handleChannelChange() {
+    var boxes = document.querySelectorAll('#output-channels-list input[type="checkbox"]');
     var selected = [];
-    for (var i = 0; i < opts.length; i++) {
-        if (opts[i].selected) selected.push(opts[i].value);
+    var total = 0;
+    for (var i = 0; i < boxes.length; i++) {
+        total++;
+        if (boxes[i].checked) selected.push(boxes[i].dataset.category);
     }
-    activeFilters = selected.length === opts.length ? null : new Set(selected);
+    activeFilters = selected.length === total ? null : new Set(selected);
     applyFilter();
 }
 
+/**
+ * Handle setCategories message from extension.
+ * Creates checkboxes in the Output Channels section of the options panel.
+ */
 function handleSetCategories(msg) {
-    var sel = document.getElementById('filter-select');
-    if (sel && msg.categories) {
-        var existing = new Set();
-        for (var ci = 0; ci < sel.options.length; ci++) existing.add(sel.options[ci].value);
-        for (var ci = 0; ci < msg.categories.length; ci++) {
-            if (!existing.has(msg.categories[ci])) {
-                var opt = document.createElement('option');
-                opt.value = msg.categories[ci];
-                opt.textContent = msg.categories[ci];
-                opt.selected = true;
-                sel.appendChild(opt);
-            }
-        }
-        // Show the filter dropdown now that it has content
-        if (sel.options.length > 0) {
-            sel.style.display = '';
-        }
-    }
-}
+    var container = document.getElementById('output-channels-list');
+    var section = document.getElementById('output-channels-section');
+    if (!container || !msg.categories) return;
 
-// Register filter change handler
-var filterSelect = document.getElementById('filter-select');
-if (filterSelect) {
-    filterSelect.addEventListener('change', handleFilterChange);
+    for (var ci = 0; ci < msg.categories.length; ci++) {
+        var cat = msg.categories[ci];
+        if (document.getElementById('channel-' + cat)) continue;
+
+        var label = document.createElement('label');
+        label.className = 'options-row';
+
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.id = 'channel-' + cat;
+        cb.checked = true;
+        cb.dataset.category = cat;
+        cb.addEventListener('change', handleChannelChange);
+
+        var span = document.createElement('span');
+        span.textContent = cat;
+
+        label.appendChild(cb);
+        label.appendChild(span);
+        container.appendChild(label);
+    }
+
+    if (container.children.length > 0 && section) {
+        section.style.display = '';
+    }
 }
 `;
 }

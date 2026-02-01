@@ -121,6 +121,29 @@ export function getOptionsStyles(): string {
     border-left: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
 }
 
+/* Action buttons in options panel (Export, Reset) */
+.options-action-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    font-size: 11px;
+    padding: 4px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    width: 100%;
+}
+.options-action-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Hint/status text under a control */
+.options-hint {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.8;
+    padding: 0 0 4px 24px;
+}
+
 /* Audio preview buttons */
 .preview-sound-btn {
     background: var(--vscode-button-secondaryBackground);

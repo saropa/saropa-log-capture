@@ -28,7 +28,7 @@ export function getDecoSettingsHtml(): string {
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-counter" checked />
-        Counter (#N)
+        Counter
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-timestamp" checked />
@@ -51,7 +51,7 @@ export function getDecoSettingsHtml(): string {
         </select>
     </div>
     <label class="deco-settings-row">
-        <input type="checkbox" id="deco-opt-bar" />
+        <input type="checkbox" id="deco-opt-bar" checked />
         Severity bar (left border)
     </label>
 </div>`;
@@ -62,7 +62,7 @@ export function getDecoSettingsScript(): string {
     return /* javascript */ `
 /** Sub-toggle: show colored severity dot in decoration prefix. */
 var decoShowDot = true;
-/** Sub-toggle: show sequential counter (#N) in decoration prefix. */
+/** Sub-toggle: show sequential counter in decoration prefix. */
 var decoShowCounter = true;
 /** Sub-toggle: show wall-clock timestamp in decoration prefix. */
 var decoShowTimestamp = true;
@@ -71,7 +71,7 @@ var showElapsed = false;
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
 /** Show severity bar (colored left border). */
-var decoShowBar = false;
+var decoShowBar = true;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
