@@ -85,11 +85,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             const items = await Promise.all(logFiles.map(([name]) => this.loadMetadata(logDir, name)));
 
             const grouped = groupSplitFiles(items);
-            return grouped.sort((a, b) => {
-                const dateA = isSplitGroup(a) ? (a.date ?? a.baseFilename) : (a.date ?? a.filename);
-                const dateB = isSplitGroup(b) ? (b.date ?? b.baseFilename) : (b.date ?? b.filename);
-                return dateB.localeCompare(dateA);
-            });
+            return grouped.sort((a, b) => b.mtime - a.mtime); // Sort by modification time, newest first
         } catch {
             return [];
         }
@@ -116,7 +112,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private async loadMetadata(logDir: vscode.Uri, filename: string): Promise<SessionMetadata> {
         const uri = vscode.Uri.joinPath(logDir, filename);
         const stat = await vscode.workspace.fs.stat(uri);
-        let meta: SessionMetadata = { uri, filename, size: stat.size };
+        let meta: SessionMetadata = { uri, filename, size: stat.size, mtime: stat.mtime };
         meta = await parseHeader(uri, meta);
         const sidecar = await this.metaStore.loadMetadata(uri);
         if (sidecar.displayName) {

@@ -130,10 +130,8 @@ export function getUiStyles(): string {
 .level-circle:hover {
     transform: scale(1.15);
 }
-/* Inactive (disabled) circles are dimmed */
-.level-circle:not(.active) {
-    opacity: 0.3;
-}
+/* Inactive (disabled) circles are dimmed, desaturated, and struck through */
+.level-circle:not(.active) { opacity: 0.25; filter: grayscale(0.8); text-decoration: line-through; }
 /* Lines outside the active level filter are dimmed as context */
 .line.context-line { opacity: 0.4; }
 
