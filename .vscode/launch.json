@@ -11,9 +11,11 @@
 			"request": "launch",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extension", "google.gcloud-code",
-				"--disable-extension", "anthropic.claude-code-usage"
+				"--disable-extensions"
 			],
+			"env": {
+				"NODE_OPTIONS": "--no-deprecation"
+			},
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
 			],

@@ -7,6 +7,19 @@
 export function getViewerDataHelpers(): string {
     return /* javascript */ `
 /**
+ * Escape HTML special characters to prevent XSS in rendered content.
+ * Used by repeat notifications, edit modal, and session header.
+ */
+function escapeHtml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
  * Real-time repeat detection for duplicate log lines.
  * Tracks recent message hashes and shows repeat notifications.
  */
@@ -39,7 +52,7 @@ function isSeparatorLine(plainText) {
 
     // Expanded pattern to include box-drawing and common ASCII art characters
     // Includes: = - + * _ # ~ | / \\\\ < > [ ] { } ( ) ^ v and Unicode box chars
-    var artChars = /[=\\\\-+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬]/;
+    var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬\\\\-]/;
     var artCount = 0;
     for (var i = 0; i < trimmed.length; i++) {
         if (artChars.test(trimmed[i]) || trimmed[i] === ' ') artCount++;
@@ -63,7 +76,7 @@ var showInlineContext = false;
  */
 function extractContext(plainText) {
     // Pattern: "at functionName (file.js:123:45)" or "at file.js:123:45"
-    var atMatch = /at\\\\s+(?:(.+?)\\\\s+\\\\()?([^\\\\s()]+?):(\\\\d+)(?::(\\\\d+))?\\\\)?/.exec(plainText);
+    var atMatch = /at\\s+(?:(.+?)\\s+\\()?([^\\s()]+?):(\\d+)(?::(\\d+))?\\)?/.exec(plainText);
     if (atMatch) {
         return {
             file: atMatch[2] || '',
@@ -73,7 +86,7 @@ function extractContext(plainText) {
     }
 
     // Pattern: "functionName@file.js:123:45"
-    var mozMatch = /([^@]+)@([^:]+):(\\\\d+)(?::(\\\\d+))?/.exec(plainText);
+    var mozMatch = /([^@]+)@([^:]+):(\\d+)(?::(\\d+))?/.exec(plainText);
     if (mozMatch) {
         return {
             file: mozMatch[2] || '',

@@ -278,5 +278,14 @@ document.addEventListener('keydown', function(e) {
     else if ((e.key === 'p' || e.key === 'P') && typeof togglePin === 'function') { togglePin(getCenterIdx()); }
     else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
 });
+
+// Retry rendering when viewport element receives dimensions after layout
+var _logResizeObs = new ResizeObserver(function() {
+    if (allLines.length > 0 && logEl.clientHeight > 0) {
+        renderViewport(true);
+        if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
+    }
+});
+_logResizeObs.observe(logEl);
 `;
 }

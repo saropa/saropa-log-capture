@@ -13,9 +13,6 @@ export function getAudioScript(extensionUri: string): string {
 /** Whether audio notifications are enabled. */
 var audioEnabled = false;
 
-/** Whether audio is currently muted (temporary silence without disabling). */
-var audioMuted = false;
-
 /** Volume level for audio playback (0.0 to 1.0). */
 var audioVolume = 0.3;
 
@@ -38,10 +35,13 @@ var audioElements = {
  * Initialize audio elements with sound files from extension.
  * Audio files are loaded from the extension's audio directory.
  */
+// BUG FIX: extensionUri already points to the audio/ directory
+// (built via joinPath(extensionUri, 'audio')), so appending /audio/ again
+// created a doubled path like audio/audio/swipe_low.mp3.
 function initAudio() {
     try {
-        audioElements.error = new Audio('${extensionUri}/audio/swipe_low.mp3');
-        audioElements.warning = new Audio('${extensionUri}/audio/pop.mp3');
+        audioElements.error = new Audio('${extensionUri}/swipe_low.mp3');
+        audioElements.warning = new Audio('${extensionUri}/pop.mp3');
     } catch (e) {
         console.error('Failed to initialize audio:', e);
     }
@@ -71,10 +71,10 @@ function updateAudioButton() {
 /**
  * Play a sound for a specific log level.
  * Called automatically when new lines are added.
- * Respects mute state, volume setting, and rate limiting.
+ * Respects volume setting and rate limiting.
  */
 function playAudioForLevel(level) {
-    if (!audioEnabled || audioMuted || !audioElements[level]) return;
+    if (!audioEnabled || !audioElements[level]) return;
 
     // Rate limiting: check if enough time has passed since last play
     var now = Date.now();
@@ -97,25 +97,6 @@ function playAudioForLevel(level) {
  */
 function setAudioVolume(value) {
     audioVolume = Math.max(0, Math.min(100, value)) / 100;
-}
-
-/**
- * Toggle mute state (temporary silence without disabling).
- */
-function toggleAudioMute() {
-    audioMuted = !audioMuted;
-    updateAudioMuteButton();
-}
-
-/**
- * Update the mute button label to reflect current state.
- */
-function updateAudioMuteButton() {
-    var btn = document.getElementById('audio-mute-toggle');
-    if (btn) {
-        btn.textContent = audioMuted ? '🔇' : '🔊';
-        btn.title = audioMuted ? 'Unmute audio' : 'Mute audio';
-    }
 }
 
 /**
