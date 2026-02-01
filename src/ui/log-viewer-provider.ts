@@ -192,21 +192,15 @@ export class LogViewerProvider
 
   /** Load a historical log file into the viewer. */
   async loadFromFile(uri: vscode.Uri): Promise<void> {
-    this.view?.show?.(true); // Reveal the view if hidden
-    this.clear();
-    this.seenCategories.clear();
-    this.currentFileUri = uri; // Track the loaded file
+    this.view?.show?.(true); // Trigger view creation
+    for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); } // Wait
+    if (!this.view) { return; } // View not ready
+    this.clear(); this.seenCategories.clear(); this.currentFileUri = uri;
     const raw = await vscode.workspace.fs.readFile(uri);
-    const text = Buffer.from(raw).toString("utf-8");
-    const rawLines = text.split(/\r?\n/);
+    const text = Buffer.from(raw).toString("utf-8"), rawLines = text.split(/\r?\n/);
     this.postMessage({ type: "setViewingMode", viewing: true });
     this.setFilename(uri.path.split("/").pop() ?? "");
-    await sendFileLines(
-      rawLines.slice(findHeaderEnd(rawLines)),
-      (t) => helpers.classifyFrame(t),
-      (msg) => this.postMessage(msg),
-      this.seenCategories,
-    );
+    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), (t) => helpers.classifyFrame(t), (msg) => this.postMessage(msg), this.seenCategories);
   }
   /** Send keyword watch hit counts to the webview footer and update badge. */
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
