@@ -295,7 +295,11 @@ def check_gh_cli() -> bool:
         info(f"  Install from {C.WHITE}https://cli.github.com/{C.RESET}")
         return True  # non-blocking
 
-    result = run(["gh", "auth", "status"], check=False)
+    try:
+        result = run(["gh", "auth", "status"], check=False, timeout=10)
+    except subprocess.TimeoutExpired:
+        warn("GitHub CLI auth check timed out — skipping.")
+        return True
     if result.returncode != 0:
         warn(f"GitHub CLI installed but not authenticated. "
              f"Run: {C.YELLOW}gh auth login{C.RESET}")
@@ -422,6 +426,100 @@ def check_file_line_limits() -> bool:
 
 
 # ── Build Steps ──────────────────────────────────────────────
+
+
+def update_changelog(new_version: str) -> bool:
+    """Update CHANGELOG.md: convert [Unreleased] to versioned release."""
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        warn("Could not read CHANGELOG.md")
+        return False
+
+    # Find the [Unreleased] line
+    unreleased_idx = -1
+    for i, line in enumerate(lines):
+        if line.strip() == "## [Unreleased]":
+            unreleased_idx = i
+            break
+
+    if unreleased_idx == -1:
+        warn("No [Unreleased] section found in CHANGELOG.md")
+        return False
+
+    # Replace [Unreleased] with [version] - date
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    lines[unreleased_idx] = f"## [{new_version}] - {today}\n"
+
+    # Insert new [Unreleased] section at the top
+    # Find where to insert (after the intro paragraph)
+    insert_idx = unreleased_idx
+    for i in range(len(lines)):
+        if lines[i].startswith("## "):
+            insert_idx = i
+            break
+
+    # Add new unreleased section
+    new_section = [
+        "## [Unreleased]\n",
+        "\n",
+    ]
+    lines[insert_idx:insert_idx] = new_section
+
+    try:
+        with open(changelog_path, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+    except OSError:
+        warn("Could not write CHANGELOG.md")
+        return False
+
+    ok(f"CHANGELOG.md updated: [Unreleased] → [{new_version}]")
+    return True
+
+
+def bump_patch_version() -> str | None:
+    """Increment the patch version in package.json. Returns new version."""
+    pkg_path = os.path.join(PROJECT_ROOT, "package.json")
+    try:
+        with open(pkg_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        fail("Could not read package.json")
+        return None
+
+    old_version = data.get("version", "0.0.0")
+    parts = old_version.split(".")
+    if len(parts) != 3:
+        fail(f"Unexpected version format: {old_version}")
+        return None
+
+    try:
+        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        fail(f"Non-numeric version parts: {old_version}")
+        return None
+
+    new_version = f"{major}.{minor}.{patch + 1}"
+    data["version"] = new_version
+
+    try:
+        with open(pkg_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+    except OSError:
+        fail("Could not write package.json")
+        return None
+
+    fix(f"package.json: {C.WHITE}{old_version}{C.RESET} → {C.WHITE}{new_version}{C.RESET}")
+
+    # Update CHANGELOG.md
+    update_changelog(new_version)
+
+    return new_version
+
 
 def step_compile() -> bool:
     """Run the full compile: type-check + lint + esbuild bundle."""
@@ -564,7 +662,8 @@ def save_report(
     os.makedirs(reports_dir, exist_ok=True)
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(reports_dir, f"dev_report_{ts}.log")
+    
+    report_path = os.path.join(reports_dir, f"{ts}_dev_report.log")
 
     total_time = sum(t for _, _, t in results)
     passed = sum(1 for _, p, _ in results if p)
@@ -697,6 +796,17 @@ def main() -> int:
 
     if errors > 0:
         fail(f"\n{errors} step(s) failed. Fix the above and re-run.")
+        return 1
+
+    # -- Bump version --
+    heading("Version Bump")
+    t0 = time.time()
+    new_version = bump_patch_version()
+    elapsed = time.time() - t0
+    results.append(("Version bump", new_version is not None, elapsed))
+    if new_version:
+        version = new_version
+    else:
         return 1
 
     # -- Compile --
