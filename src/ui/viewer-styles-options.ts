@@ -121,22 +121,6 @@ export function getOptionsStyles(): string {
     border-left: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
 }
 
-/* Button to open options panel */
-#options-panel-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-#options-panel-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
-
 /* Audio preview buttons */
 .preview-sound-btn {
     background: var(--vscode-button-secondaryBackground);

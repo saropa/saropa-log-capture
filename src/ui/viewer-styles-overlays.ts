@@ -165,7 +165,7 @@ export function getOverlayStyles(): string {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 10px;
+    font-size: 11px;
     padding: 1px 4px;
     max-width: 140px;
     cursor: pointer;
@@ -209,20 +209,6 @@ export function getOverlayStyles(): string {
     height: 1px;
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
-}
-
-#export-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 14px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-#export-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
 }
 `;
 }

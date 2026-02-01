@@ -44,7 +44,11 @@ export function getOptionsPanelHtml(): string {
             </label>
             <label class="options-row">
                 <input type="checkbox" id="opt-inline-context" />
-                <span>Show inline context (file » function)</span>
+                <span>Show inline context (file &raquo; function)</span>
+            </label>
+            <label class="options-row">
+                <input type="checkbox" id="opt-minimap" checked />
+                <span>Scrollbar minimap</span>
             </label>
             <div class="options-indent" id="decoration-options">
                 <label class="options-row">
@@ -60,8 +64,12 @@ export function getOptionsPanelHtml(): string {
                     <span>Timestamp</span>
                 </label>
                 <label class="options-row">
+                    <input type="checkbox" id="opt-deco-milliseconds" />
+                    <span>Show milliseconds</span>
+                </label>
+                <label class="options-row">
                     <input type="checkbox" id="opt-deco-elapsed" />
-                    <span>Elapsed time</span>
+                    <span>Elapsed time (+Nms)</span>
                 </label>
                 <div class="options-row">
                     <span>Line coloring</span>
@@ -70,6 +78,10 @@ export function getOptionsPanelHtml(): string {
                         <option value="line">Whole line</option>
                     </select>
                 </div>
+                <label class="options-row">
+                    <input type="checkbox" id="opt-deco-bar" />
+                    <span>Severity bar (left border)</span>
+                </label>
             </div>
         </div>
 

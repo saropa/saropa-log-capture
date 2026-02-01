@@ -25,7 +25,7 @@ import { getSourceTagsScript, getSourceTagsHtml } from './viewer-source-tags';
 import { getAudioScript } from './viewer-audio';
 import { getOptionsPanelHtml, getOptionsPanelScript } from './viewer-options-panel';
 import { getErrorBreakpointHtml, getErrorBreakpointScript } from './viewer-error-breakpoint';
-import { getStatsHtml, getStatsScript } from './viewer-stats';
+import { getStatsScript } from './viewer-stats';
 import { getEditModalHtml, getEditModalScript } from './viewer-edit-modal';
 import { getScrollbarMinimapHtml, getScrollbarMinimapScript } from './viewer-scrollbar-minimap';
 import { getSessionInfoButtonHtml, getSessionInfoModalHtml, getSessionHeaderScript } from './viewer-session-header';
@@ -97,11 +97,10 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <div id="footer">
         <span id="footer-text">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
-        ${getStatsHtml()}
         <span id="watch-counts"></span>
         <span id="exclusion-count"></span>
-        <button id="exclusion-toggle" style="display:none" title="Toggle exclusion filters">Excl: ON</button>
-        <button id="app-only-toggle" title="Toggle capture all vs. app-only mode">App Only: OFF</button>
+        <button id="exclusion-toggle" class="footer-btn" style="display:none" title="Toggle exclusion filters">Excl: ON</button>
+        <button id="app-only-toggle" class="footer-btn" title="Toggle capture all vs. app-only mode">App Only: OFF</button>
         <span class="level-filter-group">
             <button id="level-info-toggle" class="level-circle active" title="Info">🟢</button>
             <button id="level-warn-toggle" class="level-circle active" title="Warning">🟠</button>
@@ -115,14 +114,10 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             <option value="">Preset: None</option>
         </select>
         <select id="filter-select" multiple title="Filter by category" style="display:none"></select>
-        <button id="deco-toggle" class="emoji-toggle toggle-inactive" title="Decorations OFF (click to toggle)">&#x1F3A8;</button>
-        <button id="deco-settings-btn" title="Decoration settings">&#x2699;</button>
-        <button id="audio-toggle" class="emoji-toggle toggle-inactive" title="Audio OFF (click to unmute)">&#x1F514;</button>
-        <button id="minimap-toggle" class="emoji-toggle" title="Minimap ON (click to hide)">&#x1F5FA;&#xFE0F;</button>
-        <button id="wrap-toggle" title="Toggle word wrap">No Wrap</button>
-        <button id="export-btn" title="Export logs to file">&#x1F4BE;</button>
-        <button id="search-panel-btn" title="Search (Ctrl+F)">&#x1F50D;</button>
-        <button id="options-panel-btn" title="All options">&#x2630;</button>
+        <button id="wrap-toggle" class="footer-btn" title="Toggle word wrap">No Wrap</button>
+        <button id="export-btn" class="footer-btn" title="Export logs">Export</button>
+        <button id="search-panel-btn" class="footer-btn" title="Search (Ctrl+F)">Search</button>
+        <button id="options-panel-btn" class="footer-btn" title="All options">&#x2630;</button>
     </div>
     ${getSessionInfoModalHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
