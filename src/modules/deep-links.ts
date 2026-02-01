@@ -20,7 +20,7 @@ import { getLogDirectoryUri } from './config';
  * Session is required (identifies the log file), line is optional.
  */
 export interface DeepLinkParams {
-    /** Log filename, e.g., "20260128_14-32-05_myapp.log" */
+    /** Log filename, e.g., "20260128_143205_myapp.log" */
     readonly session: string;
     /** 1-based line number to navigate to (optional) */
     readonly line?: number;
@@ -78,7 +78,7 @@ export function parseDeepLinkUri(uri: vscode.Uri): DeepLinkParams | undefined {
  * Uses URLSearchParams for proper URL encoding of special characters
  * in filenames (spaces, unicode, etc.).
  *
- * @param sessionFilename - The log filename (e.g., "20260128_14-32-05_myapp.log")
+ * @param sessionFilename - The log filename (e.g., "20260128_143205_myapp.log")
  * @param line - Optional 1-based line number to include in the link
  * @returns Complete vscode:// URI string ready to share
  *
