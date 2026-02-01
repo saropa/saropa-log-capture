@@ -51,6 +51,7 @@ function initMinimap() {
  * Uses a single O(n) pass to compute cumulative heights.
  */
 function updateMinimap() {
+    clearTimeout(minimapDebounceTimer);
     minimapDebounceTimer = 0;
     if (!minimapEl || !minimapEnabled) {
         if (minimapEl) minimapEl.innerHTML = '';
