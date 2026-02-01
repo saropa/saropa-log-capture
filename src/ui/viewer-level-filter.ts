@@ -132,5 +132,13 @@ window.addEventListener('message', function(event) {
         handleSetContextLines(msg);
     }
 });
+
+// Register click handlers for level filter buttons
+var levelAllBtn = document.getElementById('level-all');
+var levelErrorBtn = document.getElementById('level-error');
+var levelWarnBtn = document.getElementById('level-warn');
+if (levelAllBtn) levelAllBtn.addEventListener('click', function() { setLevelFilter('all'); });
+if (levelErrorBtn) levelErrorBtn.addEventListener('click', function() { setLevelFilter('error'); });
+if (levelWarnBtn) levelWarnBtn.addEventListener('click', function() { setLevelFilter('warn'); });
 `;
 }

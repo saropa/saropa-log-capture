@@ -16,7 +16,7 @@
 /** Returns the HTML for the collapsible source tag strip. */
 export function getSourceTagsHtml(): string {
     return /* html */ `<div id="source-tag-strip" class="source-tag-strip collapsed" style="display:none">
-    <div class="source-tag-header" onclick="toggleTagStrip()">
+    <div class="source-tag-header">
         <span class="source-tag-chevron">&#x25B6;</span>
         <span>Sources</span>
         <span id="source-tag-summary" class="source-tag-summary"></span>
@@ -217,6 +217,12 @@ function resetSourceTags() {
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
+}
+
+// Register click handler for tag strip header
+var tagHeader = document.querySelector('.source-tag-header');
+if (tagHeader) {
+    tagHeader.addEventListener('click', toggleTagStrip);
 }
 `;
 }
