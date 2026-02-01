@@ -101,31 +101,33 @@ export function getContentStyles(): string {
     background: var(--vscode-statusBarItem-warningBackground, rgba(252, 192, 0, 0.15));
 }
 
-/* --- Footer toggle buttons (word-wrap, exclusions, app-only) --- */
-#wrap-toggle {
+/* --- Shared footer button style --- */
+.footer-btn {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
     color: var(--vscode-descriptionForeground);
-    font-size: 10px;
+    font-size: 11px;
     padding: 1px 6px;
     cursor: pointer;
     border-radius: 3px;
-    margin-left: auto; /* push to right edge of footer */
+    white-space: nowrap;
 }
+.footer-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
+/* Push right-aligned group to the end of footer */
+#wrap-toggle { margin-left: auto; }
 
 /* --- Filter preset dropdown in footer --- */
 #filter-select {
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    font-size: 10px;
+    font-size: 11px;
     padding: 1px 4px;
     max-width: 120px;
     cursor: pointer;
-}
-#wrap-toggle:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
 }
 
 /* ===================================================================
@@ -166,16 +168,6 @@ export function getContentStyles(): string {
    =================================================================== */
 /* Framework/library frames are dimmed to highlight app code */
 .framework-frame { opacity: 0.4; }
-/* Toggle button to show/hide framework frames */
-#app-only-toggle {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
 /* Badge showing how many times a stack trace was repeated */
 .stack-dedup-badge {
     font-size: 10px;

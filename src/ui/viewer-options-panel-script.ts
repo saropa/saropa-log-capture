@@ -49,6 +49,8 @@ function syncOptionsPanelUi() {
     if (decoCheck) decoCheck.checked = showDecorations;
     if (inlineCtxCheck && typeof showInlineContext !== 'undefined') inlineCtxCheck.checked = showInlineContext;
     if (decoIndent) decoIndent.style.display = showDecorations ? 'block' : 'none';
+    var minimapCheck = document.getElementById('opt-minimap');
+    if (minimapCheck && typeof minimapEnabled !== 'undefined') minimapCheck.checked = minimapEnabled;
 
     // Font size and line height
     var fontSizeSlider = document.getElementById('font-size-slider');
@@ -68,13 +70,17 @@ function syncOptionsPanelUi() {
     var decoDot = document.getElementById('opt-deco-dot');
     var decoCtr = document.getElementById('opt-deco-counter');
     var decoTs = document.getElementById('opt-deco-timestamp');
+    var decoMs = document.getElementById('opt-deco-milliseconds');
     var decoElapsed = document.getElementById('opt-deco-elapsed');
     var lineColor = document.getElementById('opt-line-color');
+    var decoBar = document.getElementById('opt-deco-bar');
     if (decoDot) decoDot.checked = decoShowDot;
     if (decoCtr) decoCtr.checked = decoShowCounter;
     if (decoTs) decoTs.checked = decoShowTimestamp;
+    if (decoMs && typeof showMilliseconds !== 'undefined') decoMs.checked = showMilliseconds;
     if (decoElapsed) decoElapsed.checked = showElapsed;
     if (lineColor) lineColor.value = decoLineColorMode;
+    if (decoBar && typeof decoShowBar !== 'undefined') decoBar.checked = decoShowBar;
 
     // Level filters
     var levelInfo = document.getElementById('opt-level-info');
@@ -167,62 +173,39 @@ if (optInlineCtx) optInlineCtx.addEventListener('change', function(e) {
     if (typeof toggleInlineContext === 'function') toggleInlineContext();
     syncOptionsPanelUi();
 });
+var optMinimap = document.getElementById('opt-minimap');
+if (optMinimap) optMinimap.addEventListener('change', function(e) {
+    if (typeof toggleMinimap === 'function') toggleMinimap();
+    syncOptionsPanelUi();
+});
 
-// Decoration sub-options
-var optDecoDot = document.getElementById('opt-deco-dot');
-var optDecoCtr = document.getElementById('opt-deco-counter');
-var optDecoTs = document.getElementById('opt-deco-timestamp');
-var optDecoElapsed = document.getElementById('opt-deco-elapsed');
+// Decoration sub-options — checkbox toggles that re-render viewport
+var decoChecks = {
+    'opt-deco-dot': 'decoShowDot', 'opt-deco-counter': 'decoShowCounter',
+    'opt-deco-timestamp': 'decoShowTimestamp', 'opt-deco-milliseconds': 'showMilliseconds',
+    'opt-deco-elapsed': 'showElapsed', 'opt-deco-bar': 'decoShowBar'
+};
+Object.keys(decoChecks).forEach(function(id) {
+    var el = document.getElementById(id);
+    var varName = decoChecks[id];
+    if (el) el.addEventListener('change', function(e) {
+        window[varName] = e.target.checked;
+        renderViewport(true);
+    });
+});
 var optLineColor = document.getElementById('opt-line-color');
-if (optDecoDot) optDecoDot.addEventListener('change', function(e) {
-    decoShowDot = e.target.checked;
-    renderViewport(true);
-});
-if (optDecoCtr) optDecoCtr.addEventListener('change', function(e) {
-    decoShowCounter = e.target.checked;
-    renderViewport(true);
-});
-if (optDecoTs) optDecoTs.addEventListener('change', function(e) {
-    decoShowTimestamp = e.target.checked;
-    renderViewport(true);
-});
-if (optDecoElapsed) optDecoElapsed.addEventListener('change', function(e) {
-    showElapsed = e.target.checked;
-    renderViewport(true);
-});
 if (optLineColor) optLineColor.addEventListener('change', function(e) {
     decoLineColorMode = e.target.value;
     renderViewport(true);
 });
 
-// Level filters
-var optLevelInfo = document.getElementById('opt-level-info');
-var optLevelWarn = document.getElementById('opt-level-warning');
-var optLevelError = document.getElementById('opt-level-error');
-var optLevelPerf = document.getElementById('opt-level-perf');
-var optLevelTodo = document.getElementById('opt-level-todo');
-var optLevelDebug = document.getElementById('opt-level-debug');
-var optLevelNotice = document.getElementById('opt-level-notice');
-if (optLevelInfo) optLevelInfo.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('info');
-});
-if (optLevelWarn) optLevelWarn.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('warning');
-});
-if (optLevelError) optLevelError.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('error');
-});
-if (optLevelPerf) optLevelPerf.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('performance');
-});
-if (optLevelTodo) optLevelTodo.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('todo');
-});
-if (optLevelDebug) optLevelDebug.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('debug');
-});
-if (optLevelNotice) optLevelNotice.addEventListener('change', function(e) {
-    if (typeof toggleLevel === 'function') toggleLevel('notice');
+// Level filters — data-driven registration
+var levelMap = {info:'opt-level-info', warning:'opt-level-warning', error:'opt-level-error', performance:'opt-level-perf', todo:'opt-level-todo', debug:'opt-level-debug', notice:'opt-level-notice'};
+Object.keys(levelMap).forEach(function(lvl) {
+    var el = document.getElementById(levelMap[lvl]);
+    if (el) el.addEventListener('change', function() {
+        if (typeof toggleLevel === 'function') toggleLevel(lvl);
+    });
 });
 
 // Filtering options
