@@ -266,19 +266,5 @@ export function getModalStyles(): string {
 .modal-btn-primary:hover {
     background: var(--vscode-button-hoverBackground);
 }
-
-#export-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 14px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-#export-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
 `;
 }

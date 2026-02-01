@@ -118,20 +118,6 @@ export function getSearchStyles(): string {
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
 }
-#search-panel-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-#search-panel-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
-
 /* --- Search match highlighting --- */
 mark {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));

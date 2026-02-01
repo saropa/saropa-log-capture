@@ -5,7 +5,30 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.1.11]  - Current
+## [0.1.13]  - Current
+
+### Changed
+- **Footer UI cleanup:** Standardized all footer buttons to a single `.footer-btn` style (consistent 11px font, borders, padding). Removed four distinct button styles in favor of one.
+- **Merged stats + level filters:** The separate stats counters (🔴 4, 🟠 95) and level filter circles (🟢🟠🔴🟣⚪🟤🟦) are now a single set of circles that show counts AND act as toggle filters. Eliminates confusing duplicate colored dots.
+- **Moved infrequent toggles to Options panel:** Decorations (🎨), audio (🔔), and minimap (🗺️) toggle buttons removed from footer. These settings are now in the Options panel with full checkbox controls.
+- **Clearer footer status text:** Replaced ambiguous "Viewing: 24 lines" with just "24 lines". Recording shows "● 24 lines" (red dot), paused shows "⏸ 24 lines".
+- **Footer buttons use text labels:** Export and Search buttons now show text instead of emoji (💾 → "Export", 🔍 → "Search").
+
+### Added
+- **Scrollbar minimap option in Options panel:** New "Scrollbar minimap" checkbox in the Display section.
+- **Decoration sub-options in Options panel:** Added "Show milliseconds" and "Severity bar (left border)" checkboxes for feature parity with the decoration settings popover.
+- **STYLE_GUIDE.md:** Documents UI patterns, font sizes, button styles, spacing, color conventions, and anti-patterns for the log viewer webview.
+
+### Fixed
+- **Duplicate `#export-btn` CSS:** Was defined in both `viewer-styles-modal.ts` (14px) and `viewer-styles-overlays.ts` (10px). Consolidated into a single `.footer-btn` class.
+
+---
+## [0.1.12]  - 2026-02-01
+
+- Dev Build
+
+---
+## [0.1.11]  - 2026-02-01
 
 ### Fixed
 - **Source preview popup not dismissible:** The hover preview over stack trace source links had no close affordance — it only auto-hid when the mouse moved away. Added a close button (×), Escape key, and click-outside dismissal.

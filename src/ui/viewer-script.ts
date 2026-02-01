@@ -159,15 +159,15 @@ function toggleHeader() {
     }
 }
 
-/** Update footer to reflect current mode: Viewing (historical) / PAUSED / Recording. */
+/** Update footer to reflect current mode: historical / paused / recording. */
 function updateFooterText() {
     if (isViewingFile) {
-        footerTextEl.textContent = 'Viewing: ' + lineCount + ' lines';
+        footerTextEl.textContent = lineCount + ' lines';
         return;
     }
     footerTextEl.textContent = isPaused
-        ? 'PAUSED \\u2014 ' + lineCount + ' lines'
-        : 'Recording: ' + lineCount + ' lines';
+        ? '\\u23F8 ' + lineCount + ' lines'
+        : '\\u25CF ' + lineCount + ' lines';
 }
 
 window.addEventListener('message', function(event) {

@@ -69,69 +69,43 @@ export function getUiStyles(): string {
    Footer elements for the pattern-based line exclusion feature.
    =================================================================== */
 #exclusion-count {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
-}
-#exclusion-toggle {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-/* ===================================================================
-   Live Statistics Counters
-   Real-time running totals for errors, warnings, performance, and info.
-   =================================================================== */
-#stats-counters {
-    display: flex;
-    gap: 6px;
-    font-size: 10px;
-    font-weight: 500;
-    align-items: center;
-}
-.stat-error {
-    color: var(--vscode-errorForeground, #f44);
-}
-.stat-warning {
-    color: var(--vscode-editorWarning-foreground, #cca700);
-}
-.stat-performance {
-    color: var(--vscode-debugConsole-infoForeground, #b695f8);
-}
-.stat-info {
-    color: var(--vscode-terminal-ansiGreen, #4ec9b0);
 }
 
 /* ===================================================================
    Level Filter Circles
-   Independent toggles for each log level (info, warning, error).
-   All enabled by default, click to toggle on/off.
+   Interactive toggles for each log level. Each circle shows its
+   emoji plus a running count when > 0 (e.g. "🔴 4").
+   Click to toggle the level on/off.
    =================================================================== */
 .level-filter-group {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     align-items: center;
 }
 .level-circle {
     background: none;
-    border: none;
-    font-size: 14px;
-    padding: 2px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    padding: 1px 4px;
     cursor: pointer;
     opacity: 1;
-    transition: opacity 0.2s ease, transform 0.1s ease;
-    line-height: 1;
+    transition: opacity 0.2s ease, background 0.15s ease;
+    line-height: 1.2;
+    border-radius: 3px;
+    white-space: nowrap;
 }
 .level-circle:hover {
-    transform: scale(1.15);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    border-color: var(--vscode-descriptionForeground);
 }
-/* Inactive (disabled) circles are dimmed, desaturated, and struck through */
-.level-circle:not(.active) { opacity: 0.25; filter: grayscale(0.8); text-decoration: line-through; }
+/* Inactive (disabled) circles are dimmed and desaturated */
+.level-circle:not(.active) {
+    opacity: 0.25;
+    filter: grayscale(0.8);
+}
 /* Lines outside the active level filter are dimmed as context */
 .line.context-line { opacity: 0.4; }
 
