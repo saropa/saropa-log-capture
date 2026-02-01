@@ -50,6 +50,14 @@ function initContextMenu() {
             hideContextMenu();
         }
     });
+
+    // Handle menu item clicks via event delegation
+    contextMenuEl.addEventListener('click', function(e) {
+        var item = e.target.closest('.context-menu-item');
+        if (item && item.dataset.action) {
+            onContextMenuAction(item.dataset.action);
+        }
+    });
 }
 
 /**
@@ -200,31 +208,31 @@ if (document.readyState === 'loading') {
  */
 export function getContextMenuHtml(): string {
     return `<div id="context-menu" class="context-menu">
-    <div class="context-menu-item" data-action="copy" onclick="onContextMenuAction('copy')">
+    <div class="context-menu-item" data-action="copy">
         <span class="codicon codicon-copy"></span> Copy Line
     </div>
-    <div class="context-menu-item" data-action="search-codebase" onclick="onContextMenuAction('search-codebase')">
+    <div class="context-menu-item" data-action="search-codebase">
         <span class="codicon codicon-search"></span> Search Codebase
     </div>
-    <div class="context-menu-item" data-action="search-sessions" onclick="onContextMenuAction('search-sessions')">
+    <div class="context-menu-item" data-action="search-sessions">
         <span class="codicon codicon-history"></span> Search Past Sessions
     </div>
     <div class="context-menu-separator"></div>
-    <div class="context-menu-item" data-action="open-source" onclick="onContextMenuAction('open-source')">
+    <div class="context-menu-item" data-action="open-source">
         <span class="codicon codicon-go-to-file"></span> Open Source File
     </div>
     <div class="context-menu-separator"></div>
-    <div class="context-menu-item" data-action="pin" onclick="onContextMenuAction('pin')">
+    <div class="context-menu-item" data-action="pin">
         <span class="codicon codicon-pin"></span> Pin Line
     </div>
-    <div class="context-menu-item" data-action="annotate" onclick="onContextMenuAction('annotate')">
+    <div class="context-menu-item" data-action="annotate">
         <span class="codicon codicon-comment"></span> Add Note
     </div>
     <div class="context-menu-separator"></div>
-    <div class="context-menu-item" data-action="add-watch" onclick="onContextMenuAction('add-watch')">
+    <div class="context-menu-item" data-action="add-watch">
         <span class="codicon codicon-eye"></span> Add to Watch List
     </div>
-    <div class="context-menu-item" data-action="add-exclusion" onclick="onContextMenuAction('add-exclusion')">
+    <div class="context-menu-item" data-action="add-exclusion">
         <span class="codicon codicon-eye-closed"></span> Add to Exclusions
     </div>
 </div>`;

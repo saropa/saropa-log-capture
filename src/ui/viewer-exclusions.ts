@@ -97,5 +97,9 @@ function handleSetExclusions(msg) {
         applyExclusions();
     }
 }
+
+if (exclusionToggleEl) {
+    exclusionToggleEl.addEventListener('click', toggleExclusions);
+}
 `;
 }

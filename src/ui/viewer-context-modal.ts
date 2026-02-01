@@ -47,7 +47,7 @@ function openContextModal(lineIdx) {
 
     var html = '<div class="peek-header">Context: line ' +
         (lineIdx + 1) + ' (' + contextViewLines + ' before/after)' +
-        '<button class="peek-close" onclick="closeContextModal()">&#x2715;</button></div>';
+        '<button class="peek-close">&#x2715;</button></div>';
 
     for (var i = start; i < end; i++) {
         var item = allLines[i];
@@ -69,6 +69,12 @@ function openContextModal(lineIdx) {
     var viewport = document.getElementById('viewport');
     if (viewport && viewport.parentNode) {
         viewport.parentNode.insertBefore(peekEl, viewport.nextSibling);
+    }
+
+    // Attach close button handler
+    var closeBtn = peekEl.querySelector('.peek-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeContextModal);
     }
 
     // Scroll the peek into view

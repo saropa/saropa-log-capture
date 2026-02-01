@@ -45,5 +45,10 @@ document.addEventListener('keydown', function(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'a' || e.key === 'A') toggleAppOnly();
 });
+
+var appOnlyBtn = document.getElementById('app-only-toggle');
+if (appOnlyBtn) {
+    appOnlyBtn.addEventListener('click', toggleAppOnly);
+}
 `;
 }

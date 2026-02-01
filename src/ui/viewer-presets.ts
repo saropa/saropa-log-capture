@@ -193,6 +193,12 @@ window.addEventListener('message', function(event) {
         applyPreset(msg.name);
     }
 });
+
+// Register preset dropdown change handler
+var presetSelect = document.getElementById('preset-select');
+if (presetSelect) {
+    presetSelect.addEventListener('change', onPresetSelectChange);
+}
 `;
 }
 
@@ -200,7 +206,7 @@ window.addEventListener('message', function(event) {
  * Returns the HTML for the preset dropdown control.
  */
 export function getPresetDropdownHtml(): string {
-    return `<select id="preset-select" title="Filter Presets" onchange="onPresetSelectChange(event)">
+    return `<select id="preset-select" title="Filter Presets">
         <option value="">Preset: None</option>
     </select>`;
 }
