@@ -210,6 +210,9 @@ window.addEventListener('message', function(event) {
             isViewingFile = !!msg.viewing;
             updateFooterText();
             break;
+        case 'setSessionInfo':
+            if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);
+            break;
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateHeaderFilename();

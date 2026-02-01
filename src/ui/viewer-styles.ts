@@ -21,7 +21,7 @@ export function getViewerStyles(): string {
 /* ===================================================================
    Reset & Root Layout
    The webview body is a flex column filling the panel viewport.
-   Child sections (pinned, log-content, search-bar, footer) stack
+   Child sections (pinned, log-content, footer) stack
    vertically with log-content taking all remaining space.
    =================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -43,7 +43,6 @@ body {
 #viewer-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 4px 8px;
     background: var(--vscode-titleBar-activeBackground, var(--vscode-panel-background));
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -65,7 +64,8 @@ body {
 }
 
 #header-filename {
-    flex: 1;
+    flex: 0 1 auto;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -79,6 +79,8 @@ body {
     font-size: 10px;
     cursor: pointer;
     padding: 2px 4px;
+    margin-left: auto;
+    flex-shrink: 0;
     transition: transform 0.2s ease;
 }
 
@@ -94,8 +96,8 @@ body {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     opacity: 0.7;
-    margin-left: auto;
-    margin-right: 6px;
+    margin-left: 6px;
+    flex-shrink: 0;
     white-space: nowrap;
 }
 

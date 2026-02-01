@@ -21,129 +21,137 @@ var minimapEnabled = true;
 /** The minimap container element. */
 var minimapEl = null;
 
-/**
- * Initialize the scrollbar minimap.
- */
+/** Cached total height from last full updateMinimap call. */
+var minimapCachedHeight = 0;
+
+/** Pending debounce timer for full minimap rebuilds. */
+var minimapDebounceTimer = 0;
+
+/** Initialize the scrollbar minimap. */
 function initMinimap() {
     minimapEl = document.getElementById('scrollbar-minimap');
     if (!minimapEl) return;
 
-    // Update minimap on scroll
+    // RAF-debounced scroll listener — only moves the viewport indicator
     var logContent = document.getElementById('log-content');
     if (logContent) {
-        logContent.addEventListener('scroll', updateMinimapViewport);
+        var mmRaf = false;
+        logContent.addEventListener('scroll', function() {
+            if (!mmRaf) {
+                mmRaf = true;
+                requestAnimationFrame(function() { mmRaf = false; updateMinimapViewport(); });
+            }
+        });
     }
-
     updateMinimap();
 }
 
 /**
- * Update all minimap markers based on current search results and log levels.
+ * Rebuild all minimap markers from scratch.
+ * Uses a single O(n) pass to compute cumulative heights.
  */
 function updateMinimap() {
+    minimapDebounceTimer = 0;
     if (!minimapEl || !minimapEnabled) {
         if (minimapEl) minimapEl.innerHTML = '';
+        minimapCachedHeight = 0;
         return;
     }
 
     var logContent = document.getElementById('log-content');
     if (!logContent) return;
 
-    var totalHeight = 0;
+    // Single-pass cumulative height: O(n)
+    var cumH = new Array(allLines.length);
+    var running = 0;
     for (var i = 0; i < allLines.length; i++) {
-        totalHeight += allLines[i].height;
+        cumH[i] = running;
+        running += allLines[i].height;
     }
+    minimapCachedHeight = running;
 
-    if (totalHeight === 0) return;
+    if (running === 0) { minimapEl.innerHTML = ''; return; }
 
     var markers = [];
 
-    // Add search match markers
-    if (matchIndices && matchIndices.length > 0) {
+    // Search match markers — O(matchCount) using pre-computed cumH
+    if (typeof matchIndices !== 'undefined' && matchIndices && matchIndices.length > 0) {
         for (var i = 0; i < matchIndices.length; i++) {
             var idx = matchIndices[i];
-            var isCurrent = currentMatchIdx === i;
-            var cumHeight = 0;
-            for (var j = 0; j < idx; j++) {
-                cumHeight += allLines[j].height;
+            if (idx < cumH.length) {
+                var isCur = (typeof currentMatchIdx !== 'undefined') && currentMatchIdx === i;
+                markers.push({ p: (cumH[idx] / running) * 100, t: isCur ? 'current-match' : 'search-match' });
             }
-            var percent = (cumHeight / totalHeight) * 100;
-            markers.push({
-                percent: percent,
-                type: isCurrent ? 'current-match' : 'search-match'
-            });
         }
     }
 
-    // Add error/warning markers (optional - can be toggled)
+    // Error / warning markers — single pass, O(n)
     for (var i = 0; i < allLines.length; i++) {
-        var line = allLines[i];
-        if (line.level === 'error' || line.level === 'warning') {
-            var cumHeight = 0;
-            for (var j = 0; j < i; j++) {
-                cumHeight += allLines[j].height;
-            }
-            var percent = (cumHeight / totalHeight) * 100;
-            markers.push({
-                percent: percent,
-                type: line.level
-            });
+        var lvl = allLines[i].level;
+        if (lvl === 'error' || lvl === 'warning') {
+            markers.push({ p: (cumH[i] / running) * 100, t: lvl });
         }
     }
 
-    // Render markers
+    // Build HTML
     var html = '';
     for (var i = 0; i < markers.length; i++) {
-        var m = markers[i];
-        html += '<div class="minimap-marker minimap-' + m.type + '" style="top: ' + m.percent + '%;"></div>';
+        html += '<div class="minimap-marker minimap-' + markers[i].t + '" style="top:' + markers[i].p + '%"></div>';
     }
 
-    // Add viewport indicator
-    var scrollPercent = (logContent.scrollTop / totalHeight) * 100;
-    var viewportHeight = (logContent.clientHeight / totalHeight) * 100;
-    html += '<div class="minimap-viewport" style="top: ' + scrollPercent + '%; height: ' + viewportHeight + '%;"></div>';
+    // Viewport indicator
+    var sp = (logContent.scrollTop / running) * 100;
+    var vh = (logContent.clientHeight / running) * 100;
+    html += '<div class="minimap-viewport" style="top:' + sp + '%;height:' + vh + '%"></div>';
 
     minimapEl.innerHTML = html;
 }
 
 /**
- * Update just the viewport indicator position (called on scroll for performance).
+ * Schedule a debounced minimap rebuild.
+ * Batches rapid data changes into one DOM update.
+ */
+function scheduleMinimap() {
+    if (!minimapEnabled) return;
+    if (minimapDebounceTimer) return;
+    minimapDebounceTimer = setTimeout(updateMinimap, 120);
+}
+
+/**
+ * Move the viewport indicator — O(1) using cached height.
+ * Called on scroll; never rebuilds markers.
  */
 function updateMinimapViewport() {
-    if (!minimapEl || !minimapEnabled) return;
+    if (!minimapEl || !minimapEnabled || minimapCachedHeight === 0) return;
+
+    var indicator = minimapEl.querySelector('.minimap-viewport');
+    if (!indicator) return;
 
     var logContent = document.getElementById('log-content');
     if (!logContent) return;
 
-    var totalHeight = 0;
-    for (var i = 0; i < allLines.length; i++) {
-        totalHeight += allLines[i].height;
-    }
-
-    if (totalHeight === 0) return;
-
-    var viewportEl = minimapEl.querySelector('.minimap-viewport');
-    if (viewportEl) {
-        var scrollPercent = (logContent.scrollTop / totalHeight) * 100;
-        var viewportHeight = (logContent.clientHeight / totalHeight) * 100;
-        viewportEl.style.top = scrollPercent + '%';
-        viewportEl.style.height = viewportHeight + '%';
-    }
+    var sp = (logContent.scrollTop / minimapCachedHeight) * 100;
+    var vh = (logContent.clientHeight / minimapCachedHeight) * 100;
+    indicator.style.top = sp + '%';
+    indicator.style.height = vh + '%';
 }
 
-/**
- * Toggle minimap on/off.
- */
+/** Toggle minimap on/off. */
 function toggleMinimap() {
     minimapEnabled = !minimapEnabled;
     var btn = document.getElementById('minimap-toggle');
     if (btn) {
-        btn.textContent = 'Minimap: ' + (minimapEnabled ? 'ON' : 'OFF');
+        btn.title = minimapEnabled ? 'Minimap ON (click to hide)' : 'Minimap OFF (click to show)';
+        if (minimapEnabled) {
+            btn.classList.remove('toggle-inactive');
+        } else {
+            btn.classList.add('toggle-inactive');
+        }
     }
     if (minimapEnabled) {
         updateMinimap();
-    } else {
-        if (minimapEl) minimapEl.innerHTML = '';
+    } else if (minimapEl) {
+        minimapEl.innerHTML = '';
     }
 }
 
@@ -160,21 +168,21 @@ if (minimapToggleBtn) {
     minimapToggleBtn.addEventListener('click', toggleMinimap);
 }
 
-// Hook into search updates to refresh minimap
+// Hook into search updates — schedule a debounced rebuild
 var _originalUpdateSearch = updateSearch;
 if (typeof updateSearch === 'function') {
     updateSearch = function() {
         _originalUpdateSearch();
-        setTimeout(updateMinimap, 50);
+        scheduleMinimap();
     };
 }
 
-// Hook into viewport renders to refresh minimap
+// Hook into viewport renders — only rebuild when data changed (force=true)
 var _originalRenderViewport = renderViewport;
 if (typeof renderViewport === 'function') {
     renderViewport = function(force) {
         _originalRenderViewport(force);
-        setTimeout(updateMinimap, 50);
+        if (force) { scheduleMinimap(); }
     };
 }
 `;

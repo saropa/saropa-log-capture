@@ -130,6 +130,11 @@
         "icon": "$(link)"
       },
       {
+        "command": "saropaLogCapture.copyFilePath",
+        "title": "Copy File Path",
+        "icon": "$(copy)"
+      },
+      {
         "command": "saropaLogCapture.applyPreset",
         "title": "Saropa Log Capture: Apply Filter Preset",
         "icon": "$(filter)"
@@ -260,6 +265,10 @@
         },
         {
           "command": "saropaLogCapture.copyDeepLink",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.copyFilePath",
           "when": "viewItem == session"
         },
         {
@@ -461,7 +470,7 @@
         },
         "saropaLogCapture.showDecorations": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Show decoration prefix (severity dot, counter, timestamp) on each log line in the viewer."
         },
         "saropaLogCapture.slowGapThreshold": {
