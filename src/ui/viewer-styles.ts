@@ -64,8 +64,17 @@ body {
 
 /* --- stderr output lines (DAP category "stderr") --- */
 .line.cat-stderr {
-    color: var(--vscode-debugConsole-errorForeground, #f44);
+    color: var(--vscode-debugConsole-errorForeground, #f48771);
 }
+
+/* --- Log level styling (error/warning/info) --- */
+.line.level-error {
+    color: var(--vscode-debugConsole-errorForeground, #f48771);
+}
+.line.level-warning {
+    color: var(--vscode-debugConsole-warningForeground, #cca700);
+}
+/* info lines use default foreground color for consistency */
 
 /* --- No-wrap mode: horizontal scroll instead of wrapping --- */
 #log-content.nowrap {

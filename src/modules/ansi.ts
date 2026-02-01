@@ -1,28 +1,28 @@
 /** Regex matching ANSI escape sequences (SGR and cursor codes). */
 const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]/g;
 
-/** Standard foreground colors (SGR 30-37). */
+/** Standard foreground colors (SGR 30-37). Matched to VS Code terminal palette. */
 const standardFg: Record<number, string> = {
-    30: '#000', 31: '#c00', 32: '#0a0', 33: '#c50',
-    34: '#00c', 35: '#c0c', 36: '#0cc', 37: '#ccc',
+    30: '#000', 31: '#cd3131', 32: '#0dbc79', 33: '#e5e510',
+    34: '#2472c8', 35: '#bc3fbc', 36: '#11a8cd', 37: '#e5e5e5',
 };
 
-/** Bright foreground colors (SGR 90-97). */
+/** Bright foreground colors (SGR 90-97). Matched to VS Code terminal bright palette. */
 const brightFg: Record<number, string> = {
-    90: '#555', 91: '#f55', 92: '#5f5', 93: '#ff5',
-    94: '#55f', 95: '#f5f', 96: '#5ff', 97: '#fff',
+    90: '#666', 91: '#f14c4c', 92: '#23d18b', 93: '#f5f543',
+    94: '#3b8eea', 95: '#d670d6', 96: '#29b8db', 97: '#fff',
 };
 
-/** Standard background colors (SGR 40-47). */
+/** Standard background colors (SGR 40-47). Matched to VS Code terminal palette. */
 const standardBg: Record<number, string> = {
-    40: '#000', 41: '#c00', 42: '#0a0', 43: '#c50',
-    44: '#00c', 45: '#c0c', 46: '#0cc', 47: '#ccc',
+    40: '#000', 41: '#cd3131', 42: '#0dbc79', 43: '#e5e510',
+    44: '#2472c8', 45: '#bc3fbc', 46: '#11a8cd', 47: '#e5e5e5',
 };
 
-/** Bright background colors (SGR 100-107). */
+/** Bright background colors (SGR 100-107). Matched to VS Code terminal bright palette. */
 const brightBg: Record<number, string> = {
-    100: '#555', 101: '#f55', 102: '#5f5', 103: '#ff5',
-    104: '#55f', 105: '#f5f', 106: '#5ff', 107: '#fff',
+    100: '#666', 101: '#f14c4c', 102: '#23d18b', 103: '#f5f543',
+    104: '#3b8eea', 105: '#d670d6', 106: '#29b8db', 107: '#fff',
 };
 
 interface AnsiState {
