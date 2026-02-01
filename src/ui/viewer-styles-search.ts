@@ -1,63 +1,136 @@
 /**
- * CSS styles for search and watch features in the viewer webview.
+ * CSS styles for search panel and watch features in the viewer webview.
  *
- * Covers search bar, match highlighting, and keyword watch chips.
+ * Covers search slide-out panel, match highlighting, and keyword watch chips.
  */
 export function getSearchStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Search Bar
-   Inline find bar above the footer. Contains text input, match count,
-   and prev/next navigation buttons.
-   Uses --vscode-panel-background to match the VS Code bottom panel.
-   Compact by default, expands when focused.
+   Search Panel
+   Slide-out panel from the right edge. Contains search input, mode
+   toggles, match count, and prev/next navigation.
+   Mirrors the options panel pattern (position:fixed, .visible class).
    =================================================================== */
 #search-bar {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    bottom: 0;
+    width: 25%;
+    min-width: 280px;
+    max-width: 400px;
+    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: right 0.3s ease;
+    z-index: 260;
     display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    /* Panel background blends with the VS Code bottom panel chrome */
-    background: var(--vscode-panel-background);
-    border-top: 1px solid var(--vscode-panel-border);
-    flex-shrink: 0;
-    transition: padding 0.2s ease;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: none;
 }
-#search-bar:has(#search-input:focus) {
-    padding: 4px 8px;
+#search-bar.visible {
+    right: 0;
+    pointer-events: auto;
+}
+.search-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    font-weight: bold;
+    font-size: 13px;
+}
+.search-close {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+.search-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+}
+.search-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 #search-input {
-    flex: 1;
-    min-width: 200px;
+    width: 100%;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    padding: 1px 4px;
-    font-size: 11px;
+    padding: 4px 8px;
+    font-size: 12px;
     font-family: inherit;
     outline: none;
-    transition: padding 0.2s ease, font-size 0.2s ease;
 }
 #search-input:focus {
     border-color: var(--vscode-focusBorder);
+}
+.search-toggles {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.search-toggles button {
+    background: var(--vscode-button-secondaryBackground, transparent);
+    border: 1px solid var(--vscode-input-border, var(--vscode-descriptionForeground));
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 11px;
     padding: 2px 6px;
+    border-radius: 3px;
+}
+.search-toggles button:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
+.search-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.search-nav button {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
     font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.search-nav button:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
 }
 #match-count {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
 }
-#search-bar button {
+#search-panel-btn {
     background: none;
-    border: none;
+    border: 1px solid var(--vscode-descriptionForeground);
     color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 6px;
     cursor: pointer;
-    font-size: 12px;
-    padding: 2px 4px;
+    border-radius: 3px;
 }
-#search-bar button:hover { color: var(--vscode-foreground); }
+#search-panel-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
 
 /* --- Search match highlighting --- */
 mark {

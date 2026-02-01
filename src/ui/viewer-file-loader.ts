@@ -42,6 +42,36 @@ export function findHeaderEnd(lines: readonly string[]): number {
 }
 
 /**
+ * Extract key-value metadata from the context header block in a log file.
+ * Scans the first 50 lines for lines between the "=== SAROPA LOG CAPTURE"
+ * opener and the closing "===" divider. Returns an empty object if no header.
+ */
+export function parseHeaderFields(
+    lines: readonly string[],
+): Record<string, string> {
+    const result: Record<string, string> = {};
+    let inHeader = false;
+    const limit = Math.min(lines.length, 50);
+    for (let i = 0; i < limit; i++) {
+        const line = lines[i];
+        if (line.startsWith('=== SAROPA LOG CAPTURE')) {
+            inHeader = true;
+            continue;
+        }
+        if (inHeader && /^={10,}$/.test(line.trim())) {
+            break;
+        }
+        if (!inHeader) { continue; }
+        const colonIdx = line.indexOf(':');
+        if (colonIdx === -1) { continue; }
+        const key = line.substring(0, colonIdx).trim();
+        const value = line.substring(colonIdx + 1).trim();
+        if (key) { result[key] = value; }
+    }
+    return result;
+}
+
+/**
  * Send parsed file lines to the webview in async batches.
  * Yields 10ms between batches so the webview can process each one without freezing.
  * After all batches, sends discovered categories to populate the filter dropdown.

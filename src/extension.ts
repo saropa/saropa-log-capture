@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as vscode from 'vscode';
 import { getConfig } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
@@ -178,6 +179,15 @@ export function activate(context: vscode.ExtensionContext): void {
                 viewerProvider.setCurrentFile(activeSession.fileUri);
             }
             viewerProvider.setSplitInfo(1, 1);
+            viewerProvider.setSessionInfo({
+                'Date': new Date().toISOString(),
+                'Project': session.workspaceFolder?.name ?? 'Unknown',
+                'Debug Adapter': session.type,
+                'launch.json': session.configuration.name,
+                'VS Code': vscode.version,
+                'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
+                'OS': `${os.type()} ${os.release()} (${os.arch()})`,
+            });
             const cfg = getConfig();
             if (cfg.exclusions.length > 0) {
                 viewerProvider.setExclusions(cfg.exclusions);

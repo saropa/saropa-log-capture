@@ -71,10 +71,18 @@ function resetDecoDefaults() {
     decoLineColorMode = 'none';
 }
 
-/** Update the Deco button label to reflect the master toggle state. */
+/** Update the Deco button style and tooltip to reflect the master toggle state. */
 function updateDecoButton() {
     var btn = document.getElementById('deco-toggle');
-    if (btn) btn.textContent = showDecorations ? 'Deco: ON' : 'Deco: OFF';
+    if (!btn) return;
+    btn.title = showDecorations
+        ? 'Decorations ON (click to toggle)'
+        : 'Decorations OFF (click to toggle)';
+    if (showDecorations) {
+        btn.classList.remove('toggle-inactive');
+    } else {
+        btn.classList.add('toggle-inactive');
+    }
 }
 
 /**
@@ -127,7 +135,7 @@ function getDecorationPrefix(item) {
         if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
         if (decoShowCounter) {
             var seqStr = item.seq !== undefined ? String(item.seq) : '?';
-            parts.push('#' + seqStr.padStart(5, '&nbsp;'));
+            parts.push('#' + seqStr.padStart(5, '\\u00a0'));
         }
         if (decoShowTimestamp) {
             var ts = formatDecoTimestamp(item.timestamp);

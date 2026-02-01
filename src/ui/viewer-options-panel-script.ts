@@ -19,6 +19,7 @@ function toggleOptionsPanel() {
 
     optionsPanelOpen = !optionsPanelOpen;
     if (optionsPanelOpen) {
+        if (typeof closeSearch === 'function') closeSearch();
         syncOptionsPanelUi();
         panel.classList.add('visible');
     } else {

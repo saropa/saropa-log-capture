@@ -6,7 +6,7 @@ import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
 import {
-  PendingLine, findHeaderEnd, sendFileLines,
+  PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
 } from "./viewer-file-loader";
 import {
   SerializedHighlightRule, serializeHighlightRules,
@@ -105,9 +105,7 @@ export class LogViewerProvider
   setPartNavigateHandler(handler: (part: number) => void): void { this.onPartNavigate = handler; }
 
   /** Set a callback for saving current filters as a preset. */
-  setSavePresetRequestHandler(handler: (filters: Record<string, unknown>) => void): void {
-    this.onSavePresetRequest = handler;
-  }
+  setSavePresetRequestHandler(handler: (filters: Record<string, unknown>) => void): void { this.onSavePresetRequest = handler; }
 
   // -- Webview state methods --
 
@@ -118,9 +116,7 @@ export class LogViewerProvider
   setAnnotation(lineIndex: number, text: string): void { this.postMessage({ type: "setAnnotation", lineIndex, text }); }
 
   /** Load all annotations into the webview. */
-  loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void {
-    this.postMessage({ type: "loadAnnotations", annotations });
-  }
+  loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { this.postMessage({ type: "loadAnnotations", annotations }); }
 
   /** Update the split breadcrumb in the viewer. */
   setSplitInfo(currentPart: number, totalParts: number): void {
@@ -183,11 +179,14 @@ export class LogViewerProvider
     this.currentFileUri = uri;
   }
 
+  /** Send session metadata to the webview (for icon + compact prefix). */
+  setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
+
   /** Set whether a debug session is currently active. */
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
   /** Send a clear message to the webview. */
-  clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.postMessage({ type: "clear" }); }
+  clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.postMessage({ type: "clear" }); this.setSessionInfo(null); }
 
   /** Load a historical log file into the viewer. */
   async loadFromFile(uri: vscode.Uri): Promise<void> {
@@ -200,6 +199,8 @@ export class LogViewerProvider
     if (gen !== this.loadGeneration) { return; }
     const text = Buffer.from(raw).toString("utf-8"), rawLines = text.split(/\r?\n/);
     this.postMessage({ type: "setViewingMode", viewing: true }); this.setFilename(uri.path.split("/").pop() ?? "");
+    const fields = parseHeaderFields(rawLines);
+    if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
     await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), (t) => helpers.classifyFrame(t), post, this.seenCategories);
     if (gen === this.loadGeneration) { this.pendingLoadUri = undefined; }

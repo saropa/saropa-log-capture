@@ -1,8 +1,34 @@
 /**
- * Client-side JavaScript for the search bar in the log viewer webview.
+ * Client-side JavaScript and HTML for the search panel in the log viewer.
  * Provides regex search, match highlighting, and F3/Shift+F3 navigation.
- * Concatenated into the same script scope as viewer-script.ts.
+ * Panel slides in from the right, matching the options panel pattern.
  */
+
+/** Returns the HTML for the search slide-out panel. */
+export function getSearchPanelHtml(): string {
+    return /* html */ `<div id="search-bar">
+    <div class="search-header">
+        <span>Search</span>
+        <button class="search-close" id="search-close" title="Close (Escape)">&times;</button>
+    </div>
+    <div class="search-content">
+        <input id="search-input" type="text" placeholder="Search..." />
+        <div class="search-toggles">
+            <button id="search-regex-toggle" title="Literal mode (click for regex)">Aa</button>
+            <button id="search-case-toggle" title="Case insensitive (click for case sensitive)">Aa</button>
+            <button id="search-word-toggle" title="Match partial (click for whole word)">\\b</button>
+            <button id="search-mode-toggle" title="Toggle highlight/filter mode">Mode: Highlight</button>
+        </div>
+        <div class="search-nav">
+            <span id="match-count"></span>
+            <button id="search-prev" title="Previous (Shift+F3)">&#x25B2; Prev</button>
+            <button id="search-next" title="Next (F3)">&#x25BC; Next</button>
+        </div>
+    </div>
+</div>`;
+}
+
+/** Returns the JavaScript for the search panel logic. */
 export function getSearchScript(): string {
     return /* javascript */ `
 var searchBarEl = document.getElementById('search-bar');
@@ -22,7 +48,8 @@ var searchWholeWord = false;
 function openSearch() {
     if (searchOpen) { searchInputEl.focus(); return; }
     searchOpen = true;
-    searchBarEl.style.display = 'flex';
+    if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
+    searchBarEl.classList.add('visible');
     searchInputEl.value = '';
     searchInputEl.focus();
     clearSearchState();
@@ -31,12 +58,16 @@ function openSearch() {
 function closeSearch() {
     if (!searchOpen) return;
     searchOpen = false;
-    searchBarEl.style.display = 'none';
+    searchBarEl.classList.remove('visible');
     clearSearchState();
     if (searchFilterMode) {
         clearSearchFilter();
     }
     renderViewport(true);
+}
+
+function toggleSearchPanel() {
+    if (searchOpen) { closeSearch(); } else { openSearch(); }
 }
 
 function clearSearchState() {
@@ -62,11 +93,9 @@ function updateSearch() {
     }
     try {
         var pattern = searchRegexMode ? query : escapeForRegex(query);
-        // Add word boundaries if whole word mode is enabled
         if (searchWholeWord && !searchRegexMode) {
             pattern = '\\\\b' + pattern + '\\\\b';
         }
-        // Build flags: 'g' always, 'i' if case insensitive
         var flags = 'g' + (searchCaseSensitive ? '' : 'i');
         searchRegex = new RegExp(pattern, flags);
     } catch (e) {
@@ -234,5 +263,21 @@ if (searchWordToggleEl) {
 document.getElementById('search-next').addEventListener('click', searchNext);
 document.getElementById('search-prev').addEventListener('click', searchPrev);
 document.getElementById('search-close').addEventListener('click', closeSearch);
+
+/* Toggle button in footer toolbar. */
+var searchPanelBtn = document.getElementById('search-panel-btn');
+if (searchPanelBtn) {
+    searchPanelBtn.addEventListener('click', toggleSearchPanel);
+}
+
+/* Close search panel when clicking outside it. */
+document.addEventListener('click', function(e) {
+    if (!searchOpen) return;
+    var panel = document.getElementById('search-bar');
+    var searchBtn = document.getElementById('search-panel-btn');
+    if (panel && !panel.contains(e.target) && searchBtn !== e.target && !searchBtn?.contains(e.target)) {
+        closeSearch();
+    }
+});
 `;
 }

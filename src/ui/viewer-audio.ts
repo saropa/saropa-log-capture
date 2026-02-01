@@ -59,12 +59,20 @@ function toggleAudio() {
 }
 
 /**
- * Update the audio button label to reflect current state.
+ * Update the audio button style and tooltip to reflect current state.
+ * Swaps between bell (🔔) and muted bell (🔕) emoji.
  */
 function updateAudioButton() {
     var btn = document.getElementById('audio-toggle');
-    if (btn) {
-        btn.textContent = audioEnabled ? 'Audio: ON' : 'Audio: OFF';
+    if (!btn) return;
+    btn.innerHTML = audioEnabled ? '\\ud83d\\udd14' : '\\ud83d\\udd15';
+    btn.title = audioEnabled
+        ? 'Audio ON (click to mute)'
+        : 'Audio OFF (click to unmute)';
+    if (audioEnabled) {
+        btn.classList.remove('toggle-inactive');
+    } else {
+        btn.classList.add('toggle-inactive');
     }
 }
 
