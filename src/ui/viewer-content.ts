@@ -76,7 +76,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
-        <button id="jump-btn">⬇ Bottom</button>
+        <button id="jump-btn" title="Scroll to bottom">⬇ Bottom</button>
         ${getScrollbarMinimapHtml()}
     </div>
     <div id="source-preview"></div>
@@ -104,8 +104,8 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
         ${getStatsHtml()}
         <span id="watch-counts"></span>
         <span id="exclusion-count"></span>
-        <button id="exclusion-toggle" style="display:none">Excl: ON</button>
-        <button id="app-only-toggle">App Only: OFF</button>
+        <button id="exclusion-toggle" style="display:none" title="Toggle exclusion filters">Excl: ON</button>
+        <button id="app-only-toggle" title="Toggle capture all vs. app-only mode">App Only: OFF</button>
         <span class="level-filter-group">
             <button id="level-info-toggle" class="level-circle active" title="Info">🟢</button>
             <button id="level-warn-toggle" class="level-circle active" title="Warning">🟠</button>
@@ -119,11 +119,11 @@ export function buildViewerHtml(nonce: string, extensionUri?: string): string {
             <option value="">Preset: None</option>
         </select>
         <select id="filter-select" multiple title="Filter by category" style="display:none"></select>
-        <button id="deco-toggle">Deco: OFF</button>
+        <button id="deco-toggle" title="Toggle line decorations (counter, timestamp, severity dot)">Deco: OFF</button>
         <button id="deco-settings-btn" title="Decoration settings">&#x2699;</button>
-        <button id="audio-toggle">Audio: OFF</button>
-        <button id="minimap-toggle">Minimap: ON</button>
-        <button id="wrap-toggle">No Wrap</button>
+        <button id="audio-toggle" title="Toggle audio alerts for errors and warnings">Audio: OFF</button>
+        <button id="minimap-toggle" title="Toggle scrollbar minimap">Minimap: ON</button>
+        <button id="wrap-toggle" title="Toggle word wrap">No Wrap</button>
         <button id="export-btn" title="Export logs to file">&#x1F4BE;</button>
         <button id="options-panel-btn" title="All options">&#x2630;</button>
     </div>

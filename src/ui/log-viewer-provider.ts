@@ -192,6 +192,7 @@ export class LogViewerProvider
 
   /** Load a historical log file into the viewer. */
   async loadFromFile(uri: vscode.Uri): Promise<void> {
+    this.view?.show?.(true); // Reveal the view if hidden
     this.clear();
     this.seenCategories.clear();
     this.currentFileUri = uri; // Track the loaded file
@@ -207,7 +208,6 @@ export class LogViewerProvider
       this.seenCategories,
     );
   }
-
   /** Send keyword watch hit counts to the webview footer and update badge. */
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj: Record<string, number> = {};
