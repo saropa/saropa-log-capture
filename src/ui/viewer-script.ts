@@ -7,40 +7,44 @@
  */
 export function getViewerScript(maxLines: number): string {
     return /* javascript */ `
-const logEl = document.getElementById('log-content');
-const spacerTop = document.getElementById('spacer-top');
-const viewportEl = document.getElementById('viewport');
-const spacerBottom = document.getElementById('spacer-bottom');
-const jumpBtn = document.getElementById('jump-btn');
-const footerEl = document.getElementById('footer');
-const footerTextEl = document.getElementById('footer-text');
-const wrapToggle = document.getElementById('wrap-toggle');
-const viewerHeader = document.getElementById('viewer-header');
-const headerFilename = document.getElementById('header-filename');
-const headerToggle = document.getElementById('header-toggle');
+var logEl = document.getElementById('log-content');
+var spacerTop = document.getElementById('spacer-top');
+var viewportEl = document.getElementById('viewport');
+var spacerBottom = document.getElementById('spacer-bottom');
+var jumpBtn = document.getElementById('jump-btn');
+var footerEl = document.getElementById('footer');
+var footerTextEl = document.getElementById('footer-text');
+var wrapToggle = document.getElementById('wrap-toggle');
+var viewerHeader = document.getElementById('viewer-header');
+var headerFilename = document.getElementById('header-filename');
+var headerToggle = document.getElementById('header-toggle');
 
-const vscodeApi = acquireVsCodeApi();
-const MAX_LINES = ${maxLines};
-const ROW_HEIGHT = 20;
-const MARKER_HEIGHT = 28;
-const OVERSCAN = 30;
+var vscodeApi = acquireVsCodeApi();
+window._vscodeApi = vscodeApi;
+if (window._scriptErrors && window._scriptErrors.length) {
+    vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
+}
+var MAX_LINES = ${maxLines};
+var ROW_HEIGHT = 20;
+var MARKER_HEIGHT = 28;
+var OVERSCAN = 30;
 
-const allLines = [];
-let totalHeight = 0;
-let lineCount = 0;
-let autoScroll = true;
-let isPaused = false;
+var allLines = [];
+var totalHeight = 0;
+var lineCount = 0;
+var autoScroll = true;
+var isPaused = false;
 /** True when viewing a historical log file (disables "Recording:" footer). */
-let isViewingFile = false;
-let wordWrap = true;
-let nextGroupId = 0;
-let activeGroupHeader = null;
-let lastStart = -1;
-let lastEnd = -1;
-let rafPending = false;
-let currentFilename = '';
+var isViewingFile = false;
+var wordWrap = true;
+var nextGroupId = 0;
+var activeGroupHeader = null;
+var lastStart = -1;
+var lastEnd = -1;
+var rafPending = false;
+var currentFilename = '';
 var nextSeq = 1;
-let headerCollapsed = false;
+var headerCollapsed = false;
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
