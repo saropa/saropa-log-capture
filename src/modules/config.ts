@@ -124,7 +124,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     redactEnvVars: cfg.get<string[]>("redactEnvVars", []),
     exclusions: cfg.get<string[]>("exclusions", []),
     showElapsedTime: cfg.get<boolean>("showElapsedTime", false),
-    showDecorations: cfg.get<boolean>("showDecorations", false),
+    showDecorations: cfg.get<boolean>("showDecorations", true),
     slowGapThreshold: cfg.get<number>("slowGapThreshold", 1000),
     watchPatterns: cfg.get<WatchPatternSetting[]>("watchPatterns", [
       { keyword: "error", alert: "flash" },

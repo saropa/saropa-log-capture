@@ -134,7 +134,7 @@ function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             const name = await vscode.window.showInputBox({
                 prompt: 'Enter new name for this session (also renames file)',
-                value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_\d{2}-\d{2}_/, ''),
+                value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_\d{2}-\d{2}(-\d{2})?_/, ''),
             });
             if (!name || name.trim() === '') { return; }
             const metaStore = historyProvider.getMetaStore();
@@ -242,6 +242,11 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.copyDeepLink',
           async (item: { uri: vscode.Uri; filename: string }) => {
             if (item?.filename) { await copyDeepLinkToClipboard(item.filename); }
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) { return; }
+            await vscode.env.clipboard.writeText(item.uri.fsPath);
+            vscode.window.showInformationMessage('File path copied to clipboard');
         }),
         vscode.commands.registerCommand('saropaLogCapture.applyPreset', async () => {
             const preset = await pickPreset();

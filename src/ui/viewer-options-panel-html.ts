@@ -40,7 +40,7 @@ export function getOptionsPanelHtml(): string {
             </label>
             <label class="options-row">
                 <input type="checkbox" id="opt-decorations" />
-                <span>Show decorations</span>
+                <span>Line prefix (&#x1F7E2; #N T00:00:00)</span>
             </label>
             <label class="options-row">
                 <input type="checkbox" id="opt-inline-context" />

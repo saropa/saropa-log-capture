@@ -1,7 +1,7 @@
 import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
 import { getFilterScript } from './viewer-filter';
-import { getSearchScript } from './viewer-search';
+import { getSearchScript, getSearchPanelHtml } from './viewer-search';
 import { getWatchScript } from './viewer-watch';
 import { getPinScript } from './viewer-pin';
 import { getExclusionScript } from './viewer-exclusions';
@@ -28,7 +28,7 @@ import { getErrorBreakpointHtml, getErrorBreakpointScript } from './viewer-error
 import { getStatsHtml, getStatsScript } from './viewer-stats';
 import { getEditModalHtml, getEditModalScript } from './viewer-edit-modal';
 import { getScrollbarMinimapHtml, getScrollbarMinimapScript } from './viewer-scrollbar-minimap';
-import { getSessionHeaderHtml, getSessionHeaderScript } from './viewer-session-header';
+import { getSessionInfoButtonHtml, getSessionInfoModalHtml, getSessionHeaderScript } from './viewer-session-header';
 import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getErrorClassificationScript } from './viewer-error-classification';
@@ -69,6 +69,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <div id="viewer-header">
         <span id="header-filename"></span>
         <span id="header-version">${version ? `v${version}` : ''}</span>
+        ${getSessionInfoButtonHtml()}
         <button id="header-toggle" title="Toggle header">&#x25B2;</button>
     </div>
     <div id="split-breadcrumb">
@@ -76,7 +77,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span class="part-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
-    ${getSessionHeaderHtml()}
     <div id="pinned-section" style="display:none"></div>
     ${getSourceTagsHtml()}
     <div id="log-content">
@@ -88,17 +88,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     </div>
     <div id="source-preview"></div>
     ${getContextMenuHtml()}
-    <div id="search-bar" style="display:none">
-        <input id="search-input" type="text" placeholder="Search..." />
-        <button id="search-regex-toggle" title="Literal mode (click for regex)">Aa</button>
-        <button id="search-case-toggle" title="Case insensitive (click for case sensitive)">Aa</button>
-        <button id="search-word-toggle" title="Match partial (click for whole word)">\b</button>
-        <button id="search-mode-toggle" title="Toggle between highlight and filter mode">Mode: Highlight</button>
-        <span id="match-count"></span>
-        <button id="search-prev" title="Previous (Shift+F3)">&#x25B2;</button>
-        <button id="search-next" title="Next (F3)">&#x25BC;</button>
-        <button id="search-close" title="Close (Escape)">&#x2715;</button>
-    </div>
+    ${getSearchPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getOptionsPanelHtml()}
@@ -125,14 +115,16 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             <option value="">Preset: None</option>
         </select>
         <select id="filter-select" multiple title="Filter by category" style="display:none"></select>
-        <button id="deco-toggle" title="Toggle line decorations (counter, timestamp, severity dot)">Deco: OFF</button>
+        <button id="deco-toggle" class="emoji-toggle toggle-inactive" title="Decorations OFF (click to toggle)">&#x1F3A8;</button>
         <button id="deco-settings-btn" title="Decoration settings">&#x2699;</button>
-        <button id="audio-toggle" title="Toggle audio alerts for errors and warnings">Audio: OFF</button>
-        <button id="minimap-toggle" title="Toggle scrollbar minimap">Minimap: ON</button>
+        <button id="audio-toggle" class="emoji-toggle toggle-inactive" title="Audio OFF (click to unmute)">&#x1F514;</button>
+        <button id="minimap-toggle" class="emoji-toggle" title="Minimap ON (click to hide)">&#x1F5FA;&#xFE0F;</button>
         <button id="wrap-toggle" title="Toggle word wrap">No Wrap</button>
         <button id="export-btn" title="Export logs to file">&#x1F4BE;</button>
+        <button id="search-panel-btn" title="Search (Ctrl+F)">&#x1F50D;</button>
         <button id="options-panel-btn" title="All options">&#x2630;</button>
     </div>
+    ${getSessionInfoModalHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
     ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES))}
     ${scriptTag(nonce, getFilterScript())}

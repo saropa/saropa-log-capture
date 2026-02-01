@@ -219,61 +219,59 @@ export function getUiStyles(): string {
 }
 
 /* ===================================================================
-   Session Header
-   Collapsible info block showing session metadata (project, platform,
-   debug adapter, etc.). Parsed from context header in log files.
+   Session Info — compact prefix line + modal overlay
    =================================================================== */
-.session-header {
+.session-info-prefix {
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
     background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
     border-bottom: 1px solid var(--vscode-panel-border);
-    margin: 0;
-    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
 }
-
-.session-header-toggle {
+.session-info-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 500;
+    justify-content: center;
+    z-index: 500;
+}
+.session-info-modal-content {
+    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    min-width: 240px;
+    max-width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+}
+.session-info-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 12px;
+}
+.session-info-modal-header button {
+    background: none;
+    border: none;
     color: var(--vscode-foreground);
-    user-select: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
 }
-
-.session-header-toggle:hover {
-    background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
-}
-
-.session-chevron {
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    transition: transform 0.2s ease;
-}
-
-.session-title {
-    flex: 1;
-}
-
-.session-header-content {
-    max-height: 500px;
-    overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-    padding: 8px 12px;
-}
-
-.session-header.collapsed .session-header-content {
-    max-height: 0;
-    padding: 0 12px;
-}
-
 .session-info-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 4px;
 }
-
 .session-info-row {
     display: flex;
     align-items: baseline;
@@ -281,14 +279,12 @@ export function getUiStyles(): string {
     font-size: 11px;
     line-height: 1.4;
 }
-
 .session-info-key {
     color: var(--vscode-descriptionForeground);
     font-weight: 500;
-    min-width: 120px;
+    min-width: 100px;
     flex-shrink: 0;
 }
-
 .session-info-value {
     color: var(--vscode-foreground);
     word-break: break-word;

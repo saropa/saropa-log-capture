@@ -40,14 +40,24 @@ export function getDecorationStyles(): string {
     /* Pulled back to left edge by negative text-indent */
     margin-right: 0;
 }
-#deco-toggle {
+/* Emoji toggle buttons (decorations, audio, minimap) */
+.emoji-toggle {
     background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    padding: 1px 6px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    padding: 1px 4px;
     cursor: pointer;
     border-radius: 3px;
+    transition: opacity 0.15s;
+}
+.emoji-toggle.toggle-inactive {
+    opacity: 0.35;
+}
+.emoji-toggle:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+#deco-toggle {
+    /* inherits .emoji-toggle */
 }
 #deco-settings-btn {
     background: none;
