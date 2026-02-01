@@ -74,11 +74,26 @@ function openContextModal(lineIdx) {
     // Attach close button handler
     var closeBtn = peekEl.querySelector('.peek-close');
     if (closeBtn) {
-        closeBtn.addEventListener('click', closeContextModal);
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeContextModal();
+        });
     }
 
-    // Scroll the peek into view
-    peekEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // Scroll to show the peek - calculate position relative to log-content
+    setTimeout(function() {
+        var logContent = document.getElementById('log-content');
+        if (!logContent || !peekEl) return;
+
+        // Calculate cumulative height up to the peeked line
+        var cumHeight = 0;
+        for (var i = 0; i < lineIdx; i++) {
+            cumHeight += allLines[i].height;
+        }
+
+        // Scroll to position the peeked line near the top of the view
+        logContent.scrollTop = cumHeight - 50;
+    }, 50);
 }
 
 /**

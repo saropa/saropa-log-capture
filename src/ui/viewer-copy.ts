@@ -52,6 +52,17 @@ function copyAsMarkdown() {
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToMarkdown(lines) });
 }
 
+function copyAllToClipboard() {
+    var lines = [];
+    for (var i = 0; i < allLines.length; i++) {
+        if (allLines[i].height > 0 && allLines[i].type !== 'marker') {
+            lines.push(allLines[i]);
+        }
+    }
+    if (lines.length === 0) return;
+    vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToPlainText(lines) });
+}
+
 viewportEl.addEventListener('click', function(e) {
     if (!e.shiftKey) return;
     var lineEl = e.target.closest('.line, .stack-header, .marker');

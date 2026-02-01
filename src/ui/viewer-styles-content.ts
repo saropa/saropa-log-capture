@@ -49,25 +49,31 @@ export function getContentStyles(): string {
 
 /* ===================================================================
    Jump-to-Bottom Button
-   Floating action button shown when the user scrolls away from the
-   bottom of the log. Clicking it auto-scrolls to the latest output.
-   Positioned fixed at bottom-right within the webview viewport.
+   Inline button shown at bottom of log content when user scrolls away.
+   Positioned absolute within #log-content container.
    =================================================================== */
+#log-content {
+    position: relative;
+}
 #jump-btn {
     display: none;      /* shown via JS when not at bottom */
-    position: fixed;
-    bottom: 32px;       /* above the footer bar */
-    right: 12px;
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border: none;
-    padding: 4px 12px;
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    padding: 4px 10px;
     cursor: pointer;
     border-radius: 4px;
-    font-size: 12px;
-    z-index: 10;
+    font-size: 11px;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
 }
-#jump-btn:hover { background: var(--vscode-button-hoverBackground); }
+#jump-btn:hover {
+    opacity: 1;
+    background: var(--vscode-list-hoverBackground);
+}
 
 /* ===================================================================
    Footer Bar
@@ -175,6 +181,32 @@ export function getContentStyles(): string {
     font-size: 10px;
     opacity: 0.7;
     margin-left: 4px;
+}
+
+/* ===================================================================
+   Repeat Notifications
+   Real-time notifications when duplicate log lines are detected.
+   Shows count and preview of repeated message.
+   =================================================================== */
+.repeat-notification {
+    opacity: 0.75;
+    font-style: italic;
+    color: var(--vscode-descriptionForeground);
+}
+.repeat-preview {
+    font-size: 0.95em;
+    opacity: 0.9;
+}
+
+/* ===================================================================
+   Visual Spacing (Breathing Room)
+   Adds configurable margin before/after log sections for readability.
+   =================================================================== */
+.line.spacing-before {
+    margin-top: 8px;
+}
+.line.spacing-after {
+    margin-bottom: 8px;
 }
 `;
 }

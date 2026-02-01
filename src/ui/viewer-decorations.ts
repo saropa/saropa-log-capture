@@ -2,7 +2,7 @@
  * Client-side JavaScript for log line decoration prefixes in the viewer.
  *
  * Prefixes each line with a configurable combination of:
- *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error)
+ *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error, 🟣 performance, 🔵 framework)
  *   - Sequential counter (#1, #2, ...)
  *   - Wall-clock timestamp (T07:23:36)
  *   - Separator (»)
@@ -23,16 +23,26 @@ var showDecorations = false;
 
 /**
  * Map log level to a colored dot emoji.
- * 🔴 = error, 🟠 = warning, 🟢 = info (default).
+ * 🔴 = error, 🟠 = warning, 🟣 = performance, 🔵 = framework, 🟢 = info (default).
+ * @param {string} level - Log level ('error', 'warning', 'performance', 'info')
+ * @param {boolean} isFramework - Whether this is a framework log line
  */
-function getLevelDot(level) {
-    if (level === 'error') return '\\ud83d\\udd34';
-    if (level === 'warning') return '\\ud83d\\udfe0';
-    return '\\ud83d\\udfe2';
+function getLevelDot(level, isFramework) {
+    if (level === 'error') return '\\ud83d\\udd34'; // 🔴 Red
+    if (level === 'warning') return '\\ud83d\\udfe0'; // 🟠 Orange
+    if (level === 'performance') return '\\ud83d\\udfe3'; // 🟣 Purple
+    if (level === 'todo') return '\\u26aa'; // ⚪ White
+    if (level === 'debug') return '\\ud83d\\udfe4'; // 🟤 Brown
+    if (level === 'notice') return '\\ud83d\\udfe6'; // 🟦 Blue Square
+    if (isFramework) return '\\ud83d\\udd35'; // 🔵 Blue Circle
+    return '\\ud83d\\udfe2'; // 🟢 Green
 }
 
+/** Whether to show milliseconds in timestamps. */
+var showMilliseconds = false;
+
 /**
- * Format epoch ms to wall-clock time string (T07:23:36).
+ * Format epoch ms to wall-clock time string (T07:23:36 or T07:23:36.123).
  * Returns empty string if timestamp is falsy (e.g. markers).
  */
 function formatDecoTimestamp(ts) {
@@ -41,7 +51,12 @@ function formatDecoTimestamp(ts) {
     var h = ('0' + d.getHours()).slice(-2);
     var m = ('0' + d.getMinutes()).slice(-2);
     var s = ('0' + d.getSeconds()).slice(-2);
-    return 'T' + h + ':' + m + ':' + s;
+    var result = 'T' + h + ':' + m + ':' + s;
+    if (showMilliseconds) {
+        var ms = ('00' + d.getMilliseconds()).slice(-3);
+        result += '.' + ms;
+    }
+    return result;
 }
 
 /**
@@ -63,6 +78,37 @@ function updateDecoButton() {
 }
 
 /**
+ * Toggle inline context display on/off.
+ */
+function toggleInlineContext() {
+    showInlineContext = !showInlineContext;
+    renderViewport(true);
+}
+
+/**
+ * Format inline context metadata as a breadcrumb.
+ * Example: "src/utils/auth.ts:42 » login()"
+ */
+function formatInlineContext(item) {
+    if (!showInlineContext || !item.context) return '';
+    var parts = [];
+    if (item.context.file) {
+        // Shorten file path - show only last 2 segments
+        var segments = item.context.file.split(/[\\/]/);
+        var shortPath = segments.length > 2
+            ? segments.slice(-2).join('/')
+            : item.context.file;
+        parts.push(shortPath);
+        if (item.context.line) parts[0] += ':' + item.context.line;
+    }
+    if (item.context.func) {
+        parts.push(item.context.func + '()');
+    }
+    if (parts.length === 0) return '';
+    return '<span class="inline-context">' + parts.join(' \\u00BB ') + '</span>';
+}
+
+/**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
  * Returns empty string for markers, stack-frame sub-lines, or when off.
@@ -70,19 +116,37 @@ function updateDecoButton() {
  * Example output: <span class="line-decoration">🟢 #1 T07:23:36 » </span>
  */
 function getDecorationPrefix(item) {
-    if (!showDecorations) return '';
+    if (!showDecorations && !showInlineContext) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
-    var parts = [];
-    if (decoShowDot) parts.push(getLevelDot(item.level || 'info'));
-    if (decoShowCounter) parts.push('#' + (item.seq !== undefined ? item.seq : '?'));
-    if (decoShowTimestamp) {
-        var ts = formatDecoTimestamp(item.timestamp);
-        if (ts) parts.push(ts);
+
+    var result = '';
+
+    // Standard decoration prefix
+    if (showDecorations) {
+        var parts = [];
+        if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
+        if (decoShowCounter) {
+            var seqStr = item.seq !== undefined ? String(item.seq) : '?';
+            parts.push('#' + seqStr.padStart(5, '&nbsp;'));
+        }
+        if (decoShowTimestamp) {
+            var ts = formatDecoTimestamp(item.timestamp);
+            if (ts) parts.push(ts);
+        }
+        if (parts.length > 0) {
+            result += '<span class="line-decoration">'
+                + parts.join('&nbsp; ') + '&nbsp; \\u00BB '
+                + '</span>';
+        }
     }
-    if (parts.length === 0) return '';
-    return '<span class="line-decoration">'
-        + parts.join('&nbsp; ') + '&nbsp; \\u00BB '
-        + '</span>';
+
+    // Inline context breadcrumb
+    if (showInlineContext) {
+        var ctx = formatInlineContext(item);
+        if (ctx) result += ctx + '&nbsp; ';
+    }
+
+    return result;
 }
 
 /**

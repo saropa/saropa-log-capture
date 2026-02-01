@@ -3,15 +3,15 @@ import { ansiToHtml, escapeHtml } from "../modules/ansi";
 import { linkifyHtml } from "../modules/source-linker";
 import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
-import { isFrameworkFrame } from "../modules/stack-parser";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
 import {
-  PendingLine, findHeaderEnd, sendFileLines, loadSourcePreview,
+  PendingLine, findHeaderEnd, sendFileLines,
 } from "./viewer-file-loader";
 import {
   SerializedHighlightRule, serializeHighlightRules,
 } from "./viewer-highlight-serializer";
+import * as helpers from "./viewer-provider-helpers";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -39,22 +39,26 @@ export class LogViewerProvider
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
   private cachedHighlightRules: SerializedHighlightRule[] = [];
+  private currentFileUri: vscode.Uri | undefined;
+  private isSessionActive = false;
 
   constructor(private readonly extensionUri: vscode.Uri) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
-    webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
-    webviewView.webview.html = buildViewerHtml(getNonce());
+    const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
+    webviewView.webview.options = { enableScripts: true, localResourceRoots: [audioUri] };
+    const audioWebviewUri = webviewView.webview.asWebviewUri(audioUri).toString();
+    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri);
     webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
       this.handleMessage(msg),
     );
     this.startBatchTimer();
-    queueMicrotask(() => this.sendCachedConfig());
+    queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg)));
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
         this.unreadWatchHits = 0;
-        this.updateBadge();
+        helpers.updateBadge(this.view, this.unreadWatchHits);
       }
     });
     webviewView.onDidDispose(() => {
@@ -162,13 +166,25 @@ export class LogViewerProvider
       lineCount: data.lineCount,
       category: data.category,
       timestamp: data.timestamp.getTime(),
-      fw: this.classifyFrame(data.text),
+      fw: helpers.classifyFrame(data.text),
     });
+  }
+
+  /** Set the current log file URI (for live sessions). */
+  setCurrentFile(uri: vscode.Uri | undefined): void {
+    this.currentFileUri = uri;
+  }
+
+  /** Set whether a debug session is currently active. */
+  setSessionActive(active: boolean): void {
+    this.isSessionActive = active;
+    this.postMessage({ type: "sessionState", active });
   }
 
   /** Send a clear message to the webview. */
   clear(): void {
     this.pendingLines = [];
+    this.currentFileUri = undefined; // Clear file reference when clearing viewer
     this.postMessage({ type: "clear" });
   }
 
@@ -176,6 +192,7 @@ export class LogViewerProvider
   async loadFromFile(uri: vscode.Uri): Promise<void> {
     this.clear();
     this.seenCategories.clear();
+    this.currentFileUri = uri; // Track the loaded file
     const raw = await vscode.workspace.fs.readFile(uri);
     const text = Buffer.from(raw).toString("utf-8");
     const rawLines = text.split(/\r?\n/);
@@ -183,7 +200,7 @@ export class LogViewerProvider
     this.setFilename(uri.path.split("/").pop() ?? "");
     await sendFileLines(
       rawLines.slice(findHeaderEnd(rawLines)),
-      (t) => this.classifyFrame(t),
+      (t) => helpers.classifyFrame(t),
       (msg) => this.postMessage(msg),
       this.seenCategories,
     );
@@ -200,7 +217,7 @@ export class LogViewerProvider
     this.postMessage({ type: "updateWatchCounts", counts: obj });
     if (total > this.unreadWatchHits) {
       this.unreadWatchHits = total;
-      this.updateBadge();
+      helpers.updateBadge(this.view, this.unreadWatchHits);
     }
   }
 
@@ -225,7 +242,7 @@ export class LogViewerProvider
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
       case "requestSourcePreview":
-        this.handleSourcePreview(String(msg.path ?? ""), Number(msg.line ?? 1));
+        helpers.handleSourcePreview(String(msg.path ?? ""), Number(msg.line ?? 1), (m) => this.postMessage(m));
         break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
       case "savePresetRequest":
@@ -235,66 +252,47 @@ export class LogViewerProvider
         vscode.workspace.getConfiguration("saropaLogCapture")
           .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
         break;
-    }
-  }
-
-  private sendCachedConfig(): void {
-    if (this.cachedPresets.length > 0) {
-      this.postMessage({ type: "setPresets", presets: this.cachedPresets });
-    }
-    if (this.cachedHighlightRules.length > 0) {
-      this.postMessage({ type: "setHighlightRules", rules: this.cachedHighlightRules });
+      case "editLine":
+        helpers.handleEditLine(
+          this.currentFileUri,
+          this.isSessionActive,
+          Number(msg.lineIndex ?? 0),
+          String(msg.newText ?? ""),
+          Number(msg.timestamp ?? 0),
+          (uri) => this.loadFromFile(uri)
+        ).catch((err) => {
+          vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`);
+        });
+        break;
+      case "exportLogs":
+        helpers.handleExportLogs(
+          String(msg.text ?? ""),
+          (msg.options as Record<string, unknown>) ?? {},
+        ).catch((err) => {
+          vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`);
+        });
+        break;
     }
   }
 
   private startBatchTimer(): void {
-    this.stopBatchTimer();
-    this.batchTimer = setInterval(() => this.flushBatch(), BATCH_INTERVAL_MS);
+    helpers.stopBatchTimer(this.batchTimer);
+    this.batchTimer = helpers.startBatchTimer(BATCH_INTERVAL_MS, () => this.flushBatch(), () => this.stopBatchTimer());
   }
 
   private stopBatchTimer(): void {
-    if (this.batchTimer !== undefined) {
-      clearInterval(this.batchTimer);
-      this.batchTimer = undefined;
-    }
+    helpers.stopBatchTimer(this.batchTimer);
+    this.batchTimer = undefined;
   }
 
   private flushBatch(): void {
-    if (this.pendingLines.length === 0 || !this.view) { return; }
-    const lines = this.pendingLines.splice(0);
-    this.postMessage({ type: "addLines", lines, lineCount: lines[lines.length - 1].lineCount });
-    this.sendNewCategories(lines);
-  }
-
-  private sendNewCategories(lines: readonly PendingLine[]): void {
-    const newCats: string[] = [];
-    for (const ln of lines) {
-      if (!ln.isMarker && !this.seenCategories.has(ln.category)) {
-        this.seenCategories.add(ln.category);
-        newCats.push(ln.category);
-      }
-    }
-    if (newCats.length > 0) {
-      this.postMessage({ type: "setCategories", categories: newCats });
-    }
-  }
-
-  private updateBadge(): void {
-    if (!this.view) { return; }
-    this.view.badge = this.unreadWatchHits > 0
-      ? { value: this.unreadWatchHits, tooltip: `${this.unreadWatchHits} watch hits` }
-      : undefined;
+    helpers.flushBatch(
+      this.pendingLines,
+      this.view,
+      (msg) => this.postMessage(msg),
+      (lines) => helpers.sendNewCategories(lines, this.seenCategories, (msg) => this.postMessage(msg))
+    );
   }
 
   private postMessage(message: unknown): void { this.view?.webview.postMessage(message); }
-
-  /** Classify a line as framework code if it looks like a stack frame. */
-  private classifyFrame(text: string): boolean | undefined {
-    if (!/^\s+at\s/.test(text)) { return undefined; }
-    return isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
-  }
-
-  private async handleSourcePreview(filePath: string, line: number): Promise<void> {
-    this.postMessage({ type: "sourcePreview", ...await loadSourcePreview(filePath, line) });
-  }
 }

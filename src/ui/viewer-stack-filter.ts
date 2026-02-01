@@ -6,6 +6,11 @@ export function getStackFilterScript(): string {
   return /* javascript */ `
 var appOnlyMode = false;
 
+function setAppOnlyMode(enabled) {
+    if (appOnlyMode === enabled) return;
+    toggleAppOnly();
+}
+
 function toggleAppOnly() {
     appOnlyMode = !appOnlyMode;
     var headerByGroup = {};

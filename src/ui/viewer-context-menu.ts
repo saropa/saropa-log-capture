@@ -124,6 +124,16 @@ function onContextMenuAction(action) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText });
             break;
 
+        case 'copy-to-search':
+            if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
+                openSearch();
+                searchInputEl.value = plainText;
+                if (typeof updateSearch === 'function') {
+                    updateSearch();
+                }
+            }
+            break;
+
         case 'search-codebase':
             vscodeApi.postMessage({ type: 'searchCodebase', text: plainText });
             break;
@@ -160,6 +170,12 @@ function onContextMenuAction(action) {
                 if (lineEl) {
                     lineEl.click();
                 }
+            }
+            break;
+
+        case 'edit':
+            if (typeof openEditModal === 'function') {
+                openEditModal(lineIdx);
             }
             break;
     }
@@ -211,6 +227,10 @@ export function getContextMenuHtml(): string {
     <div class="context-menu-item" data-action="copy">
         <span class="codicon codicon-copy"></span> Copy Line
     </div>
+    <div class="context-menu-item" data-action="copy-to-search">
+        <span class="codicon codicon-search"></span> Copy to Search
+    </div>
+    <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-action="search-codebase">
         <span class="codicon codicon-search"></span> Search Codebase
     </div>
@@ -227,6 +247,9 @@ export function getContextMenuHtml(): string {
     </div>
     <div class="context-menu-item" data-action="annotate">
         <span class="codicon codicon-comment"></span> Add Note
+    </div>
+    <div class="context-menu-item" data-action="edit">
+        <span class="codicon codicon-edit"></span> Edit Line
     </div>
     <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-action="add-watch">

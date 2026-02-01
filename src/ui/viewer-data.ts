@@ -5,8 +5,11 @@
  * (recalcHeights, calcItemHeight), and the virtual scrolling renderer
  * (renderItem, renderViewport).
  */
+import { getViewerDataHelpers } from './viewer-data-helpers';
+
 export function getViewerDataScript(): string {
-    return /* javascript */ `
+    return getViewerDataHelpers() + /* javascript */ `
+
 function addToData(html, isMarker, category, ts, fw) {
     if (isMarker) {
         if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
@@ -15,14 +18,17 @@ function addToData(html, isMarker, category, ts, fw) {
         return;
     }
     if (isStackFrameText(html)) {
+        var plainFrame = stripTags(html);
+        var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
+
         if (activeGroupHeader) {
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, sourceFiltered: false });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, sourceFiltered: false, context: context });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
-        var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(stripTags(html)) : null;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: true, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, sourceFiltered: false };
+        var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, sourceFiltered: false, context: context };
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         activeGroupHeader = hdr;
@@ -31,18 +37,75 @@ function addToData(html, isMarker, category, ts, fw) {
     }
     if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
     var plain = stripTags(html);
+    var isSep = isSeparatorLine(plain);
     var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
-    var lineItem = { html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false };
-    allLines.push(lineItem);
-    if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
-    totalHeight += ROW_HEIGHT;
+
+    // Real-time repeat detection
+    var currentHash = generateRepeatHash(lvl, plain);
+    var now = ts || Date.now();
+    var isRepeat = false;
+
+    if (repeatTracker.lastHash === currentHash &&
+        (now - repeatTracker.lastTimestamp) < repeatWindowMs) {
+        // This is a repeat within the time window
+        isRepeat = true;
+        repeatTracker.count++;
+        repeatTracker.lastTimestamp = now;
+
+        // Create repeat notification line
+        var preview = repeatTracker.lastPlainText.substring(0, repeatPreviewLength);
+        if (repeatTracker.lastPlainText.length > repeatPreviewLength) {
+            preview += '...';
+        }
+        var levelDot = (typeof getLevelDot === 'function') ? getLevelDot(lvl) : '';
+        var repeatHtml = '<span class="repeat-notification">' + levelDot +
+            ' Repeated log #' + repeatTracker.count +
+            ' <span class="repeat-preview">(' + escapeHtml(preview) + ')</span></span>';
+        var repeatItem = {
+            html: repeatHtml,
+            type: 'repeat-notification',
+            height: ROW_HEIGHT,
+            category: category,
+            groupId: -1,
+            timestamp: ts,
+            level: lvl,
+            seq: nextSeq++,
+            sourceTag: sTag,
+            sourceFiltered: false,
+            isSeparator: false
+        };
+        allLines.push(repeatItem);
+        if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
+        totalHeight += ROW_HEIGHT;
+    } else {
+        // New unique message - reset tracker
+        repeatTracker.lastHash = currentHash;
+        repeatTracker.lastPlainText = plain;
+        repeatTracker.lastLevel = lvl;
+        repeatTracker.count = 1;
+        repeatTracker.lastTimestamp = now;
+
+        // Add the original line normally
+        var lineItem = { html: html, type: 'line', height: ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false, isSeparator: isSep };
+        allLines.push(lineItem);
+        if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
+        totalHeight += ROW_HEIGHT;
+    }
 }
 
 function toggleStackGroup(groupId) {
     for (var i = 0; i < allLines.length; i++) {
         if (allLines[i].groupId === groupId && allLines[i].type === 'stack-header') {
-            allLines[i].collapsed = !allLines[i].collapsed;
+            var header = allLines[i];
+            // Cycle: preview → expanded → collapsed → preview
+            if (header.collapsed === 'preview') {
+                header.collapsed = false; // Expand all
+            } else if (header.collapsed === false) {
+                header.collapsed = true; // Collapse all
+            } else {
+                header.collapsed = 'preview'; // Show preview
+            }
             break;
         }
     }
@@ -73,71 +136,6 @@ function recalcHeights() {
         allLines[i].height = calcItemHeight(allLines[i]);
         totalHeight += allLines[i].height;
     }
-}
-
-/**
- * Determine the pixel height of a single line item.
- * Hidden (0) if any filter flag is set: filteredOut (category), excluded,
- * levelFiltered, or sourceFiltered (source tag toggle).
- * Stack frames inherit collapsed state from their group header.
- */
-function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered) return 0;
-    if (item.type === 'marker') return MARKER_HEIGHT;
-    if (item.type === 'stack-frame' && item.groupId >= 0) {
-        for (var k = 0; k < allLines.length; k++) {
-            if (allLines[k].groupId === item.groupId && allLines[k].type === 'stack-header') {
-                return allLines[k].collapsed ? 0 : ROW_HEIGHT;
-            }
-        }
-    }
-    return ROW_HEIGHT;
-}
-
-/**
- * Renders a single log item to HTML.
- * Handles markers, stack frames, and regular lines with appropriate styling.
- * Applies search highlighting, pattern highlights, and category styling.
- */
-function renderItem(item, idx) {
-    var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
-
-    var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
-        : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
-
-    if (item.type === 'marker') {
-        return '<div class="marker">' + html + '</div>';
-    }
-
-    if (item.type === 'stack-header') {
-        var ch = item.collapsed ? '\\u25b6' : '\\u25bc';
-        var sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
-        var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
-    }
-
-    if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '">' + html + '</div>';
-    }
-
-    var cat = item.category === 'stderr' ? ' cat-stderr' : '';
-    var levelCls = item.level ? ' level-' + item.level : '';
-    var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
-    var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
-    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item) : '';
-    var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
-
-    var titleAttr = '';
-    if (typeof applyHighlightStyles === 'function') {
-        var plainText = stripTags(item.html);
-        var hl = applyHighlightStyles(html, plainText);
-        html = hl.html;
-        titleAttr = hl.titleAttr;
-    }
-
-    var ctxCls = item.isContext ? ' context-line' : '';
-    var tintCls = (typeof getLineTintClass === 'function') ? getLineTintClass(item) : '';
-    return gap + '<div class="line' + cat + levelCls + ctxCls + matchCls + tintCls + '"' + titleAttr + '>' + deco + elapsed + html + '</div>' + annHtml;
 }
 
 function renderViewport(force) {
