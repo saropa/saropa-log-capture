@@ -29,6 +29,10 @@ export interface SaropaLogCaptureConfig {
   readonly autoTagRules: readonly AutoTagRule[];
   /** Pattern-based highlight rules for coloring matching log lines. */
   readonly highlightRules: readonly HighlightRule[];
+  /** Include DAP source file path and line number in each log line. */
+  readonly includeSourceLocation: boolean;
+  /** Show elapsed time since the previous log line in the log file. */
+  readonly includeElapsedTime: boolean;
   /** Show decoration prefix (severity dot, counter, timestamp) in viewer. */
   readonly showDecorations: boolean;
   /** If true, capture all output (no filtering). */
@@ -41,6 +45,8 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   /** Show notification when critical errors appear (NullPointerException, AssertionError, etc.). */
   readonly breakOnCritical: boolean;
+  /** Log all raw DAP protocol messages (requests, responses, events) to the log file. */
+  readonly verboseDap: boolean;
 }
 
 const SECTION = "saropaLogCapture";
@@ -124,6 +130,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     redactEnvVars: cfg.get<string[]>("redactEnvVars", []),
     exclusions: cfg.get<string[]>("exclusions", []),
     showElapsedTime: cfg.get<boolean>("showElapsedTime", false),
+    includeSourceLocation: cfg.get<boolean>("includeSourceLocation", false),
+    includeElapsedTime: cfg.get<boolean>("includeElapsedTime", false),
     showDecorations: cfg.get<boolean>("showDecorations", true),
     slowGapThreshold: cfg.get<number>("slowGapThreshold", 1000),
     watchPatterns: cfg.get<WatchPatternSetting[]>("watchPatterns", [
@@ -142,6 +150,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     contextViewLines: cfg.get<number>("contextViewLines", 10),
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
     breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
+    verboseDap: cfg.get<boolean>("verboseDap", false),
   };
 }
 

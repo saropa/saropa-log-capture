@@ -33,21 +33,66 @@ export function generateBaseFileName(projectName: string, date: Date): string {
     return `${y}${mo}${d}_${h}${mi}${s}_${safeName}`;
 }
 
-/** Format a log line with optional timestamp and category prefix. */
+/** Source location from a DAP output event. */
+export interface SourceLocation {
+    readonly path?: string;
+    readonly line?: number;
+    readonly column?: number;
+}
+
+/** All context needed to format a single log line. */
+export interface LineFormatContext {
+    readonly timestamp: Date;
+    readonly includeTimestamp: boolean;
+    readonly sourceLocation?: SourceLocation;
+    readonly includeSourceLocation: boolean;
+    readonly elapsedMs?: number;
+    readonly includeElapsedTime: boolean;
+}
+
+/** Format a log line with optional timestamp, elapsed time, category, and source. */
 export function formatLine(
     text: string,
     category: string,
-    timestamp: Date,
-    includeTimestamp: boolean
+    ctx: LineFormatContext,
 ): string {
-    if (!includeTimestamp) {
-        return `[${category}] ${text}`;
+    const parts: string[] = [];
+    if (ctx.includeTimestamp) {
+        parts.push(`[${formatTimestamp(ctx.timestamp)}]`);
     }
-    const ts =
-        timestamp.toTimeString().slice(0, 8) +
-        '.' +
-        String(timestamp.getMilliseconds()).padStart(3, '0');
-    return `[${ts}] [${category}] ${text}`;
+    if (ctx.includeElapsedTime && ctx.elapsedMs !== undefined) {
+        parts.push(`[${formatElapsedMs(ctx.elapsedMs)}]`);
+    }
+    parts.push(`[${category}]`);
+    if (ctx.includeSourceLocation && ctx.sourceLocation?.path) {
+        parts.push(`[${formatSourceLocation(ctx.sourceLocation)}]`);
+    }
+    parts.push(text);
+    return parts.join(' ');
+}
+
+/** Format a Date as HH:MM:SS.mmm. */
+export function formatTimestamp(ts: Date): string {
+    return ts.toTimeString().slice(0, 8) + '.' +
+        String(ts.getMilliseconds()).padStart(3, '0');
+}
+
+/** Format source location as "filename:line" or "filename:line:col". */
+function formatSourceLocation(loc: SourceLocation): string {
+    const name = loc.path?.split(/[\\/]/).pop() ?? 'unknown';
+    if (loc.line === undefined) { return name; }
+    if (loc.column !== undefined && loc.column > 0) {
+        return `${name}:${loc.line}:${loc.column}`;
+    }
+    return `${name}:${loc.line}`;
+}
+
+/** Format elapsed ms as "+Nms", "+N.Ns", or "+Ns". */
+function formatElapsedMs(ms: number): string {
+    if (ms < 0) { return '+0ms'; }
+    if (ms < 1000) { return `+${ms}ms`; }
+    if (ms < 10000) { return `+${(ms / 1000).toFixed(1)}s`; }
+    return `+${Math.round(ms / 1000)}s`;
 }
 
 /** Generate a continuation header for split log files. */

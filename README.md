@@ -194,6 +194,8 @@ All settings are prefixed with `saropaLogCapture.`
 | `categories`                   | `["console","stdout","stderr"]` | DAP output categories to capture |
 | `maxLines`                     | `100000`    | Maximum lines per log file                               |
 | `includeTimestamp`             | `true`      | Prefix each line with a timestamp                        |
+| `includeSourceLocation`        | `false`     | Include source file and line number in log lines         |
+| `includeElapsedTime`           | `false`     | Show elapsed time since previous line in log files       |
 | `format`                       | `"plaintext"` | Output format (plaintext only for now)                |
 | `logDirectory`                 | `"reports"` | Where to save log files (relative to workspace root)     |
 | `autoOpen`                     | `false`     | Open log file when debug session ends                    |
@@ -210,6 +212,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `slowGapThreshold`             | `1000`      | Elapsed time threshold (ms) for highlighting slow gaps   |
 | `suppressTransientErrors`      | `false`     | Hide expected transient errors (timeout, socket, etc.)   |
 | `breakOnCritical`              | `false`     | Show notification when critical errors appear            |
+| `verboseDap`                   | `false`     | Log all raw DAP protocol messages to the log file        |
 | `highlightRules`               | *(3 built-in rules)* | Pattern-based line coloring rules               |
 | `filterPresets`                | `[]`        | Saved filter presets for quick application                |
 | `autoTagRules`                 | `[]`        | Rules for auto-tagging sessions by content patterns      |

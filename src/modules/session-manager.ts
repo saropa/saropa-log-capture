@@ -2,11 +2,13 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 import { SessionManager, DapOutputBody } from './tracker';
 import { LogSession } from './log-session';
+import { SourceLocation } from './log-session-helpers';
 import { StatusBar } from '../ui/status-bar';
 import { KeywordWatcher } from './keyword-watcher';
 import { FloodGuard } from './flood-guard';
 import { ExclusionRule, testExclusion } from './exclusion-matcher';
 import { AutoTagger } from './auto-tagger';
+import { DapMessage, DapDirection, formatDapMessage } from './dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
 import {
     initializeSession, finalizeSession, buildSessionStats,
@@ -105,13 +107,24 @@ export class SessionManagerImpl implements SessionManager {
             });
         }
 
-        session.appendLine(text, category, now);
+        const sourceLocation: SourceLocation | undefined =
+            body.source?.path ? { path: body.source.path, line: body.line, column: body.column } : undefined;
+        session.appendLine(text, category, now, sourceLocation);
         this.categoryCounts[category] = (this.categoryCounts[category] ?? 0) + 1;
         this.broadcastLine({
             text, isMarker: false, lineCount: session.lineCount,
             category, timestamp: now,
             sourcePath: body.source?.path, sourceLine: body.line,
         });
+    }
+
+    /** Called by the DAP tracker for all protocol messages (verbose mode). */
+    onDapMessage(sessionId: string, msg: unknown, direction: DapDirection): void {
+        if (!getConfig().verboseDap) { return; }
+        const session = this.sessions.get(sessionId);
+        if (!session) { return; }
+
+        session.appendDapLine(formatDapMessage(msg as DapMessage, direction, new Date()));
     }
 
     /** Start capturing a debug session. */

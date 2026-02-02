@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { DapDirection } from './dap-formatter';
 
 /** Shape of a DAP output event body. */
 export interface DapOutputBody {
@@ -12,6 +13,8 @@ export interface DapOutputBody {
 /** Interface for the object that receives captured output events. */
 export interface SessionManager {
     onOutputEvent(sessionId: string, body: DapOutputBody): void;
+    /** Optional handler for all raw DAP protocol messages (verbose mode). */
+    onDapMessage?(sessionId: string, msg: unknown, direction: DapDirection): void;
 }
 
 export class SaropaTrackerFactory implements vscode.DebugAdapterTrackerFactory {
@@ -30,11 +33,19 @@ class SaropaTracker implements vscode.DebugAdapterTracker {
         private readonly manager: SessionManager
     ) {}
 
+    /** Intercept messages sent from VS Code to the debug adapter (outgoing). */
+    onWillSendMessage(message: unknown): void {
+        this.manager.onDapMessage?.(this.session.id, message, 'outgoing');
+    }
+
+    /** Intercept messages received from the debug adapter (incoming). */
     onDidSendMessage(message: unknown): void {
         const msg = message as { type?: string; event?: string; body?: DapOutputBody };
         if (msg.type === 'event' && msg.event === 'output' && msg.body?.output) {
             this.manager.onOutputEvent(this.session.id, msg.body);
+            return; // Output events handled by onOutputEvent — skip onDapMessage
         }
+        this.manager.onDapMessage?.(this.session.id, message, 'incoming');
     }
 
     onError(error: Error): void {
