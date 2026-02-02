@@ -48,7 +48,8 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 
 ### Viewer
 - **Live panel viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (located in the bottom panel next to Output and Terminal).
-- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, and Options. Clicking an icon toggles its slide-out panel.
+- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel.
+- **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
 - **Source hover preview:** Hover source links for code context popup.
