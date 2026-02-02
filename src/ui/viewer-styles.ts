@@ -23,7 +23,7 @@ export function getViewerStyles(): string {
 /* ===================================================================
    Reset & Root Layout
    The webview body is a flex row: main content column + icon bar.
-   The #main-content div stacks children vertically (header, content,
+   The #main-content div stacks children vertically (breadcrumb, content,
    footer) with log-content taking all remaining space.
    =================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
