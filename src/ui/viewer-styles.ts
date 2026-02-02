@@ -52,6 +52,7 @@ body {
    Shows the current filename and can be toggled on/off.
    =================================================================== */
 #viewer-header {
+    position: relative;
     display: flex;
     align-items: center;
     padding: 4px 8px;

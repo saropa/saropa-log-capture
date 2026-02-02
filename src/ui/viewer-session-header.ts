@@ -11,16 +11,10 @@ export function getSessionInfoButtonHtml(): string {
     return /* html */ `<button id="session-info-btn" class="emoji-toggle" style="display:none" title="Session info">&#x2139;&#xFE0F;</button>`;
 }
 
-/** Returns the HTML for the session info modal overlay. */
+/** Returns the HTML for the session info popover (anchored to icon). */
 export function getSessionInfoModalHtml(): string {
-    return /* html */ `<div id="session-info-modal" class="session-info-modal" style="display:none">
-    <div class="session-info-modal-content">
-        <div class="session-info-modal-header">
-            <span>Session Info</span>
-            <button id="session-info-close" title="Close">&#x2715;</button>
-        </div>
-        <div id="session-info-grid" class="session-info-grid"></div>
-    </div>
+    return /* html */ `<div id="session-info-popover" class="session-info-popover" style="display:none">
+    <div id="session-info-grid" class="session-info-grid"></div>
 </div>`;
 }
 
@@ -76,13 +70,19 @@ function applySessionInfo(info) {
     prefix.textContent = buildSessionPrefix(info);
 }
 
-/** Populate and show the session info modal. */
-function showSessionInfoModal() {
+/** Toggle the session info popover open/closed. */
+function toggleSessionInfoPopover() {
     if (!sessionInfoData) return;
-    var modal = document.getElementById('session-info-modal');
-    var grid = document.getElementById('session-info-grid');
-    if (!modal || !grid) return;
+    var pop = document.getElementById('session-info-popover');
+    if (!pop) return;
 
+    if (pop.style.display !== 'none') {
+        hideSessionInfoModal();
+        return;
+    }
+
+    var grid = document.getElementById('session-info-grid');
+    if (!grid) return;
     var html = '';
     var keys = Object.keys(sessionInfoData);
     for (var i = 0; i < keys.length; i++) {
@@ -94,31 +94,29 @@ function showSessionInfoModal() {
         html += '</div>';
     }
     grid.innerHTML = html;
-    modal.style.display = '';
+    pop.style.display = '';
 }
 
-/** Hide the session info modal. */
+/** Hide the session info popover. */
 function hideSessionInfoModal() {
-    var modal = document.getElementById('session-info-modal');
-    if (modal) modal.style.display = 'none';
+    var pop = document.getElementById('session-info-popover');
+    if (pop) pop.style.display = 'none';
 }
 
-// Icon click → open modal
+// Icon click → toggle popover
 var _sInfoBtn = document.getElementById('session-info-btn');
 if (_sInfoBtn) {
-    _sInfoBtn.addEventListener('click', showSessionInfoModal);
-}
-
-// Close button and backdrop click → close modal
-var _sInfoClose = document.getElementById('session-info-close');
-if (_sInfoClose) {
-    _sInfoClose.addEventListener('click', hideSessionInfoModal);
-}
-var _sInfoModal = document.getElementById('session-info-modal');
-if (_sInfoModal) {
-    _sInfoModal.addEventListener('click', function(e) {
-        if (e.target === _sInfoModal) hideSessionInfoModal();
+    _sInfoBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSessionInfoPopover();
     });
 }
+
+// Click outside → close popover
+document.addEventListener('click', function(e) {
+    var pop = document.getElementById('session-info-popover');
+    if (!pop || pop.style.display === 'none') return;
+    if (!pop.contains(e.target)) hideSessionInfoModal();
+});
 `;
 }
