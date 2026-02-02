@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.2.1] - Current
+## [0.2.1] - 2026-02-02
 
 ### Fixed
 - **Icon bar icons invisible in dark mode:** The Content Security Policy blocked the codicon font from loading (`default-src 'none'` with no `font-src`). Now passes `webview.cspSource` to the CSP so VS Code can inject its icon font.
