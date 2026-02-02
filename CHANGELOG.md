@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [0.2.2] - 2026-02-02
 
 ### Fixed
+- **Line prefix sub-options misplaced:** Decoration sub-options (severity dot, counter, timestamp, etc.) appeared below the minimap checkbox instead of under their parent "Line prefix" checkbox. Moved to correct position and changed from show/hide to always-visible with disabled styling when line prefix is off.
+- **Inline context option non-functional:** Removed the "Show inline context (file >> function)" option — context data was only extracted for stack frames, so it never worked for regular log lines.
+- **Audio preview CSP blocked:** Preview sound buttons did nothing because the Content Security Policy `media-src` used the audio directory URI instead of the webview's `cspSource` authority. Fixed to use `cspSource` for consistent resource authorization.
 - **Codicon icons invisible in webview:** The v0.2.1 CSP fix added `font-src` but the codicon font was never loaded — webviews are sandboxed and don't inherit VS Code's fonts. Now bundles `@vscode/codicons` and loads the stylesheet via a `<link>` tag, with `style-src` extended to allow it. Fixes all icons in the icon bar, context menu, and session panel.
 
 ### Added

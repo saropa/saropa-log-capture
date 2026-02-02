@@ -72,7 +72,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${extensionUri || 'vscode-resource:'};">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${cspSource || extensionUri || 'vscode-resource:'};">
     ${codiconLink}
     <style nonce="${nonce}">
         ${getViewerStyles()}

@@ -113,16 +113,19 @@ function setAudioVolume(value) {
 function previewAudioSound(level) {
     if (!audioElements[level]) {
         if (!audioElements.error) initAudio();
-        if (!audioElements[level]) return;
+        if (!audioElements[level]) {
+            console.warn('Audio element not available for level:', level);
+            return;
+        }
     }
     try {
         var audio = audioElements[level].cloneNode();
         audio.volume = audioVolume;
         audio.play().catch(function(e) {
-            // Silently fail if audio playback is blocked
+            console.warn('Audio playback failed for', level + ':', e.message || e);
         });
     } catch (e) {
-        // Ignore audio errors
+        console.warn('Audio preview error:', e);
     }
 }
 

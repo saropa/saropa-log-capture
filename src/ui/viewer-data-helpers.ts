@@ -62,11 +62,6 @@ function isSeparatorLine(plainText) {
 }
 
 /**
- * Whether to show inline context metadata (file, function, line).
- */
-var showInlineContext = false;
-
-/**
  * Extract context metadata from stack frame text.
  * Parses patterns like:
  * - "at functionName (file.js:123:45)"
