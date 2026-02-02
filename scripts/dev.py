@@ -26,7 +26,7 @@
 #     → Package .vsix, show install instructions, offer local install
 #
 #   Publish phase (irreversible, needs confirmation):
-#     Step 11: Finalize CHANGELOG (- Current -> today's date)
+#     Step 11: Finalize CHANGELOG ([Unreleased] -> [version] - today's date)
 #     Step 12: Package .vsix
 #     Step 13: Git commit & push
 #     Step 14: Git tag (v{version})
