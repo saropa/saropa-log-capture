@@ -8,3 +8,5 @@ CLAUDE.md
 /reports
 nul
 *claude_temp*
+__pycache__/
+.github/copilot-instructions.md

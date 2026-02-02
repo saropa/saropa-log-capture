@@ -62,6 +62,59 @@ These principles guide all development decisions:
 6. Commit with descriptive message
 7. Open a Pull Request
 
+## Publishing Prerequisites
+
+To publish to the VS Code Marketplace, you need three things (in this order):
+
+1. A **marketplace publisher** on marketplace.visualstudio.com
+2. An **Azure DevOps organization** on dev.azure.com (same Microsoft account)
+3. A **Personal Access Token (PAT)** with Marketplace scope
+
+**Important:** The marketplace publisher and the Azure DevOps PAT must use the **same Microsoft account**. These are two separate Microsoft services that share a login.
+
+### Step 1: Create or verify the marketplace publisher
+
+1. Go to the [Marketplace publisher management page](https://marketplace.visualstudio.com/manage/publishers/)
+2. Sign in with your Microsoft account
+3. If the `saropa` publisher is listed, you're done with this step
+4. If you see a "Create Publisher" form, create it with:
+   - **Name:** `Saropa`
+   - **ID:** `saropa`
+
+### Step 2: Create a Personal Access Token (PAT)
+
+The PAT must be created under the **same Microsoft account** that owns the publisher above.
+
+1. Open the [Azure DevOps portal](https://go.microsoft.com/fwlink/?LinkId=307137) and sign in
+   - **Not** portal.azure.com (that's Azure cloud, a different service)
+   - Verify the account shown in the top right matches the publisher owner
+   - If prompted, create an Azure DevOps organization (accept the defaults)
+2. Click the **User Settings** icon (gear near your profile picture, top right)
+3. Select **Personal access tokens**
+4. Click **+ New Token**
+5. Configure:
+   - **Name:** `vsce-saropa` (or any descriptive name)
+   - **Organization:** All accessible organizations
+   - **Expiration:** your preference (max 1 year)
+   - **Scopes:** select **Custom defined**, click **Show all scopes**, scroll to **Marketplace**, check **Manage**
+6. Click **Create** and copy the token immediately (it won't be shown again)
+
+### Step 3: Register the PAT locally
+
+```bash
+npx @vscode/vsce login saropa
+```
+
+Paste the token when prompted. The PAT is stored in your system keychain.
+
+### Verifying the PAT
+
+```bash
+npx @vscode/vsce verify-pat saropa
+```
+
+The `dev.py` script checks this automatically during the prerequisite step.
+
 ## Commit Messages
 
 - Use present tense ("Add feature" not "Added feature")
