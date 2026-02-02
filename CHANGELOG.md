@@ -10,10 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 - **Codicon icons invisible in webview:** The v0.2.1 CSP fix added `font-src` but the codicon font was never loaded — webviews are sandboxed and don't inherit VS Code's fonts. Now bundles `@vscode/codicons` and loads the stylesheet via a `<link>` tag, with `style-src` extended to allow it. Fixes all icons in the icon bar, context menu, and session panel.
 
+### Added
+- **Source location in log files:** New `includeSourceLocation` setting (off by default) appends the originating file and line number to each log line, e.g. `[app.ts:42]`. Requires the debug adapter to supply source info in DAP OutputEvents.
+- **Elapsed time in log files:** New `includeElapsedTime` setting (off by default) prefixes each log line with the delta since the previous line, e.g. `[+125ms]`. Useful for spotting performance gaps.
+- **Verbose DAP protocol logging:** New `verboseDap` setting (off by default) logs all raw DAP protocol messages (requests, responses, events) to the log file. Directional prefixes distinguish outgoing (`[dap->]`), incoming (`[dap<-]`), and event (`[dap:event]`) messages. JSON payloads are truncated at 500 characters.
+
 ### Changed
 - **Session info moved to icon bar:** The ℹ️ session info button is now in the right-side icon bar (between Search and Options) instead of the header bar. Click to open a slide-out panel showing full session metadata. Uses the same mutual-exclusion pattern as the other icon bar panels. The compact prefix line at the top of the log content is unchanged.
 - **Header bar removed:** The viewer header bar (filename + collapse toggle) is removed entirely. The log filename and extension version now appear in the footer status text as `·`-separated segments (e.g., `● 42 lines · dart_session.log · v0.2.2`), reclaiming vertical space.
 - **Marketplace banner image 404:** README banner pointed to the wrong GitHub repository (`saropa_lints`). Corrected URL to `saropa-log-capture`.
+- **README: invite contributions:** Added GitHub activity badges (stars, forks, last commit, issues, license), a feedback callout linking to the issue tracker, an expanded Contributing section with quick-start steps and issue-reporting guidance, a Documentation table linking to CONTRIBUTING.md / CHANGELOG.md / ROADMAP.md / STYLE_GUIDE.md, and a footer with project links.
 
 ---
 ## [0.2.1] - 2026-02-02
