@@ -55,7 +55,7 @@ suite('ANSI Module', () => {
         test('should convert red foreground', () => {
             assert.strictEqual(
                 ansiToHtml('\x1b[31mred\x1b[0m'),
-                '<span style="color:#c00">red</span>',
+                '<span style="color:#cd3131">red</span>',
             );
         });
 
@@ -68,7 +68,7 @@ suite('ANSI Module', () => {
 
         test('should handle combined SGR parameters', () => {
             const result = ansiToHtml('\x1b[1;31mbold red\x1b[0m');
-            assert.ok(result.includes('color:#c00'));
+            assert.ok(result.includes('color:#cd3131'));
             assert.ok(result.includes('font-weight:bold'));
             assert.ok(result.includes('bold red'));
         });
@@ -76,19 +76,19 @@ suite('ANSI Module', () => {
         test('should close trailing open span', () => {
             const result = ansiToHtml('\x1b[32mgreen text');
             assert.ok(result.endsWith('</span>'));
-            assert.ok(result.includes('color:#0a0'));
+            assert.ok(result.includes('color:#0dbc79'));
         });
 
         test('should handle bright foreground colors', () => {
             assert.strictEqual(
                 ansiToHtml('\x1b[91mbright red\x1b[0m'),
-                '<span style="color:#f55">bright red</span>',
+                '<span style="color:#f14c4c">bright red</span>',
             );
         });
 
         test('should handle background colors', () => {
             const result = ansiToHtml('\x1b[41mred bg\x1b[0m');
-            assert.ok(result.includes('background-color:#c00'));
+            assert.ok(result.includes('background-color:#cd3131'));
         });
 
         test('should handle dim text', () => {
@@ -127,20 +127,20 @@ suite('ANSI Module', () => {
 
         test('should handle reset mid-stream', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[0m plain');
-            assert.strictEqual(result, '<span style="color:#c00">red</span> plain');
+            assert.strictEqual(result, '<span style="color:#cd3131">red</span> plain');
         });
 
         test('should handle color change without reset', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[32mgreen\x1b[0m');
-            assert.ok(result.includes('color:#c00'));
-            assert.ok(result.includes('color:#0a0'));
+            assert.ok(result.includes('color:#cd3131'));
+            assert.ok(result.includes('color:#0dbc79'));
             assert.ok(result.includes('red'));
             assert.ok(result.includes('green'));
         });
 
         test('should handle default foreground reset', () => {
             const result = ansiToHtml('\x1b[31mred\x1b[39mdefault');
-            assert.ok(result.includes('color:#c00'));
+            assert.ok(result.includes('color:#cd3131'));
             assert.ok(result.includes('red'));
             assert.ok(result.includes('default'));
         });
