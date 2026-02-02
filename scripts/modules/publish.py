@@ -31,7 +31,7 @@ def confirm_publish(version: str) -> bool:
     print(f"  Marketplace: {C.WHITE}saropa.saropa-log-capture{C.RESET}")
     print(f"  Repository:  {C.WHITE}{REPO_URL}{C.RESET}")
     print(f"\n  {C.YELLOW}This will:{C.RESET}")
-    print(f"    1. Finalize CHANGELOG.md (- Current -> today)")
+    print(f"    1. Finalize CHANGELOG.md ([Unreleased] -> [v{version}] - today)")
     print(f"    2. Build .vsix package")
     print(f"    3. Commit and push to origin")
     print(f"    4. Create git tag v{version}")
@@ -45,12 +45,12 @@ def confirm_publish(version: str) -> bool:
 
 
 def finalize_changelog(version: str) -> bool:
-    """Replace '- Current' with today's date in CHANGELOG.md.
+    """Replace '## [Unreleased]' with '## [version] - date' in CHANGELOG.md.
 
-    Transforms: ## [0.2.1] - Current
-    Into:       ## [0.2.1] - 2026-02-02
+    Transforms: ## [Unreleased]
+    Into:       ## [0.2.3] - 2026-02-02
 
-    Uses regex substitution to preserve the rest of the line and file.
+    Uses regex substitution to preserve the rest of the file.
     """
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     try:
@@ -61,12 +61,12 @@ def finalize_changelog(version: str) -> bool:
         return False
 
     today = datetime.datetime.now().strftime("%Y-%m-%d")
-    # Match the exact version header with "- Current" suffix
-    pattern = rf'(## \[{re.escape(version)}\])\s+-\s+[Cc]urrent'
-    updated, count = re.subn(pattern, rf'\1 - {today}', content)
+    pattern = r'## \[Unreleased\]'
+    replacement = f'## [{version}] - {today}'
+    updated, count = re.subn(pattern, replacement, content, flags=re.IGNORECASE)
 
     if count == 0:
-        fail(f"Could not find '## [{version}] - Current' in CHANGELOG.md")
+        fail("Could not find '## [Unreleased]' in CHANGELOG.md")
         return False
 
     try:
@@ -76,7 +76,7 @@ def finalize_changelog(version: str) -> bool:
         fail("Could not write CHANGELOG.md")
         return False
 
-    ok(f"CHANGELOG.md: - Current -> - {today}")
+    ok(f"CHANGELOG.md: [Unreleased] -> [{version}] - {today}")
     return True
 
 

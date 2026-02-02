@@ -5,7 +5,6 @@ These checks validate the git state, project dependencies, build output,
 and version consistency before we attempt any package or publish operations.
 """
 
-import json
 import os
 import re
 
@@ -209,26 +208,22 @@ def check_file_line_limits() -> bool:
 # ── Version ────────────────────────────────────────────────
 
 
-def read_changelog_current_version() -> str | None:
-    """If CHANGELOG.md has a '- Current' entry, return its version.
+def has_unreleased_section() -> bool:
+    """Check if CHANGELOG.md has an ## [Unreleased] section.
 
-    Scans for lines like: ## [0.2.1] - Current
-    The "- Current" marker indicates an in-progress version that hasn't
-    been published yet. During publish, this gets replaced with today's date.
+    The [Unreleased] heading (per Keep a Changelog convention) indicates
+    work-in-progress changes. During publish, it gets replaced with the
+    version number and today's date.
     """
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     try:
         with open(changelog_path, encoding="utf-8") as f:
             for line in f:
-                # Match "## [X.Y.Z] - Current" (case-insensitive "Current")
-                match = re.match(
-                    r'^## \[(\d+\.\d+\.\d+)\]\s+-\s+[Cc]urrent', line,
-                )
-                if match:
-                    return match.group(1)
+                if re.match(r'^## \[Unreleased\]', line, re.IGNORECASE):
+                    return True
     except OSError:
         pass
-    return None
+    return False
 
 
 def check_version_not_tagged(version: str) -> bool:
@@ -246,60 +241,26 @@ def check_version_not_tagged(version: str) -> bool:
     return True
 
 
-def _sync_package_version(target: str) -> bool:
-    """Update package.json version to match the target version.
-
-    Reads package.json, overwrites the "version" field, and writes back.
-    Returns True on success, False on any I/O or parse error.
-    """
-    pkg_path = os.path.join(PROJECT_ROOT, "package.json")
-    try:
-        with open(pkg_path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, json.JSONDecodeError):
-        fail("Could not read package.json for version sync")
-        return False
-
-    old_version = data.get("version", "unknown")
-    data["version"] = target
-    try:
-        with open(pkg_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-    except OSError:
-        fail("Could not write package.json")
-        return False
-
-    fix(f"package.json: {C.WHITE}{old_version}{C.RESET}"
-        f" → {C.WHITE}{target}{C.RESET}")
-    return True
-
 
 def validate_version_changelog() -> tuple[str, bool]:
-    """Sync and validate version between package.json and CHANGELOG.
+    """Validate version from package.json and CHANGELOG structure.
 
-    1. CHANGELOG.md must have a "- Current" entry with a version
-    2. If package.json version differs, auto-sync it to match CHANGELOG
+    1. package.json must have a valid version (source of truth)
+    2. CHANGELOG.md must have an ## [Unreleased] section
     3. The version must not already be tagged in git
     """
-    cl_version = read_changelog_current_version()
-    if cl_version is None:
-        fail("No '- Current' entry found in CHANGELOG.md")
-        info("Add a section like: ## [X.Y.Z] - Current")
-        return "unknown", False
-
     pkg_version = read_package_version()
     if pkg_version == "unknown":
         fail("Could not read version from package.json")
         return pkg_version, False
 
-    # Auto-sync: update package.json to match CHANGELOG if they differ
-    if cl_version != pkg_version:
-        if not _sync_package_version(cl_version):
-            return pkg_version, False
+    if not has_unreleased_section():
+        fail("No '## [Unreleased]' section found in CHANGELOG.md")
+        info("Add a section: ## [Unreleased]")
+        return pkg_version, False
 
-    if not check_version_not_tagged(cl_version):
-        return cl_version, False
+    if not check_version_not_tagged(pkg_version):
+        return pkg_version, False
 
-    ok(f"Version {C.WHITE}{cl_version}{C.RESET} validated")
-    return cl_version, True
+    ok(f"Version {C.WHITE}{pkg_version}{C.RESET} validated")
+    return pkg_version, True
