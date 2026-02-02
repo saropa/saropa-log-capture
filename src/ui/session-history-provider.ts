@@ -5,6 +5,10 @@ import {
     SessionMetadata, SplitGroup, TreeItem,
     isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize,
 } from './session-history-grouping';
+import {
+    formatMtime, applyDisplayOptions,
+    SessionDisplayOptions, defaultDisplayOptions,
+} from './session-display';
 
 /** Tree data provider for listing past log sessions from the reports directory. */
 export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable {
@@ -13,9 +17,15 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private watcher: vscode.FileSystemWatcher | undefined;
     private activeUri: vscode.Uri | undefined;
     private readonly metaStore = new SessionMetadataStore();
+    private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
 
     constructor() {
         this.setupWatcher();
+    }
+
+    /** Update display options used when rendering tree item labels. */
+    setDisplayOptions(options: SessionDisplayOptions): void {
+        this.displayOptions = options;
     }
 
     /** Mark the currently-recording session so it gets a distinct icon. */
@@ -41,12 +51,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
 
     private getSessionTreeItem(item: SessionMetadata): vscode.TreeItem {
         const isActive = this.activeUri?.toString() === item.uri.toString();
-        const label = item.displayName ?? item.filename;
-        // Add visual indicator for active session
+        const rawLabel = item.displayName ?? item.filename;
+        const label = applyDisplayOptions(rawLabel, this.displayOptions);
         const displayLabel = isActive ? `● ${label}` : label;
         const ti = new vscode.TreeItem(displayLabel, vscode.TreeItemCollapsibleState.None);
         ti.tooltip = buildTooltip(item);
-        // Prepend "ACTIVE" to description for active session
         const baseDescription = buildDescription(item);
         ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
         // Icon: active=record(red), with timestamps=history, without=output
@@ -60,7 +69,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     }
 
     private getSplitGroupTreeItem(group: SplitGroup): vscode.TreeItem {
-        const label = group.displayName ?? group.baseFilename;
+        const rawLabel = group.displayName ?? group.baseFilename;
+        const label = applyDisplayOptions(rawLabel, this.displayOptions);
         const ti = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
         ti.tooltip = buildSplitGroupTooltip(group);
         ti.description = `${group.parts.length} parts · ${formatSize(group.totalSize)}`;
@@ -176,6 +186,7 @@ function buildDescription(item: SessionMetadata): string {
     if (item.adapter) {
         parts.push(item.adapter);
     }
+    parts.push(formatMtime(item.mtime));
     parts.push(formatSize(item.size));
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
@@ -191,6 +202,7 @@ function buildTooltip(item: SessionMetadata): string {
     if (item.date) {
         parts.push(`Date: ${item.date}`);
     }
+    parts.push(`Modified: ${formatMtime(item.mtime)}`);
     if (item.project) {
         parts.push(`Project: ${item.project}`);
     }
