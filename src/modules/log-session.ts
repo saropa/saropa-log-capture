@@ -6,6 +6,7 @@ import { Deduplicator } from './deduplication';
 import { FileSplitter, SplitReason, formatSplitReason } from './file-splitter';
 import {
     SessionContext,
+    SourceLocation,
     generateBaseFileName,
     formatLine,
     generateContinuationHeader,
@@ -34,32 +35,16 @@ export class LogSession {
     private _bytesWritten = 0;
     private _partStartTime = Date.now();
     private _lastLineTime = 0;
+    private _previousTimestamp: Date | undefined;
     private _baseFileName = '';
     private onSplit?: SplitCallback;
 
-    get state(): SessionState {
-        return this._state;
-    }
-
-    get lineCount(): number {
-        return this._lineCount;
-    }
-
-    get fileUri(): vscode.Uri {
-        return this._fileUri!;
-    }
-
-    get partNumber(): number {
-        return this._partNumber;
-    }
-
-    get bytesWritten(): number {
-        return this._bytesWritten;
-    }
-
-    get startTime(): number {
-        return this._partStartTime;
-    }
+    get state(): SessionState { return this._state; }
+    get lineCount(): number { return this._lineCount; }
+    get fileUri(): vscode.Uri { return this._fileUri!; }
+    get partNumber(): number { return this._partNumber; }
+    get bytesWritten(): number { return this._bytesWritten; }
+    get startTime(): number { return this._partStartTime; }
 
     constructor(
         private readonly context: SessionContext,
@@ -98,7 +83,12 @@ export class LogSession {
         this._partStartTime = Date.now();
     }
 
-    appendLine(text: string, category: string, timestamp: Date): void {
+    appendLine(
+        text: string,
+        category: string,
+        timestamp: Date,
+        sourceLocation?: SourceLocation,
+    ): void {
         if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream) {
             return;
         }
@@ -115,7 +105,16 @@ export class LogSession {
             this.performSplit(splitResult.reason).catch(() => {});
         }
 
-        const formatted = formatLine(text, category, timestamp, this.config.includeTimestamp);
+        const elapsedMs = this.computeElapsed(timestamp);
+        const formatted = formatLine(text, category, {
+            timestamp,
+            includeTimestamp: this.config.includeTimestamp,
+            sourceLocation,
+            includeSourceLocation: this.config.includeSourceLocation,
+            elapsedMs,
+            includeElapsedTime: this.config.includeElapsedTime,
+        });
+        this._previousTimestamp = timestamp;
         const lines = this.deduplicator.process(formatted);
 
         for (const line of lines) {
@@ -153,6 +152,20 @@ export class LogSession {
         this._lineCount++;
         this.onLineCountChanged(this._lineCount);
         return markerLine.trim();
+    }
+
+    /**
+     * Append a pre-formatted DAP protocol line to the log file.
+     * Bypasses deduplication and does not increment _lineCount
+     * (DAP lines are diagnostic infrastructure, not user output).
+     */
+    appendDapLine(formatted: string): void {
+        if (this._state !== 'recording' || !this.writeStream) {
+            return;
+        }
+        const lineData = formatted + '\n';
+        this.writeStream.write(lineData);
+        this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
     }
 
     /** Manually trigger a file split. */
@@ -260,8 +273,17 @@ export class LogSession {
     clear(): void {
         this._lineCount = 0;
         this.maxLinesReached = false;
+        this._previousTimestamp = undefined;
         this.deduplicator.reset();
         this.onLineCountChanged(0);
+    }
+
+    /** Compute elapsed ms since previous line. */
+    private computeElapsed(current: Date): number | undefined {
+        if (!this.config.includeElapsedTime || !this._previousTimestamp) {
+            return undefined;
+        }
+        return current.getTime() - this._previousTimestamp.getTime();
     }
 
     private getLogDirUri(): vscode.Uri {

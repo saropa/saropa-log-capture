@@ -373,6 +373,16 @@
           "default": true,
           "description": "Prefix each captured line with a timestamp."
         },
+        "saropaLogCapture.includeSourceLocation": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include DAP source file path and line number in each log line (e.g. [app.ts:42])."
+        },
+        "saropaLogCapture.includeElapsedTime": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show elapsed time since the previous log line in the log file (e.g. [+125ms])."
+        },
         "saropaLogCapture.format": {
           "type": "string",
           "enum": [
@@ -657,6 +667,11 @@
           "type": "boolean",
           "default": false,
           "description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.)."
+        },
+        "saropaLogCapture.verboseDap": {
+          "type": "boolean",
+          "default": false,
+          "description": "Log all raw DAP protocol messages (requests, responses, events) to the log file. Produces high-volume output — use for debugging adapter communication issues."
         }
       }
     }
