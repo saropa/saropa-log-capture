@@ -77,6 +77,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span id="header-filename"></span>
         <span id="header-version">${version ? `v${version}` : ''}</span>
         ${getSessionInfoButtonHtml()}
+        ${getSessionInfoModalHtml()}
         <button id="header-toggle" title="Toggle header">&#x25B2;</button>
     </div>
     <div id="split-breadcrumb">
@@ -133,7 +134,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     </div>
     </div>
     ${getIconBarHtml()}
-    ${getSessionInfoModalHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
     ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES))}
     ${scriptTag(nonce, getFilterScript())}
