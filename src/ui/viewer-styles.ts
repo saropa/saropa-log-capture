@@ -48,64 +48,6 @@ body {
 }
 
 /* ===================================================================
-   Viewer Header
-   Shows the current filename and can be toggled on/off.
-   =================================================================== */
-#viewer-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 4px 8px;
-    background: var(--vscode-titleBar-activeBackground, var(--vscode-panel-background));
-    border-bottom: 1px solid var(--vscode-panel-border);
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    min-height: 24px;
-    transition: min-height 0.2s ease, padding 0.2s ease, border-bottom 0.2s ease;
-}
-
-#viewer-header.collapsed {
-    min-height: 0;
-    padding: 0;
-    overflow: hidden;
-    border-bottom: none;
-}
-
-#viewer-header.collapsed #header-filename {
-    display: none;
-}
-
-#header-filename {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 500;
-}
-
-#header-toggle {
-    background: none;
-    border: none;
-    color: var(--vscode-descriptionForeground);
-    font-size: 10px;
-    cursor: pointer;
-    padding: 2px 4px;
-    margin-left: auto;
-    flex-shrink: 0;
-    transition: transform 0.2s ease;
-}
-
-#viewer-header.collapsed #header-toggle {
-    transform: rotate(180deg);
-}
-
-#header-toggle:hover {
-    color: var(--vscode-foreground);
-}
-
-
-/* ===================================================================
    Log Content Wrapper
    Non-scrolling container for the log area and scrollbar minimap.
    Takes flex:1 so the minimap overlay stays viewport-fixed.

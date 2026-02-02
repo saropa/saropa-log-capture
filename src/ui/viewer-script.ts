@@ -10,9 +10,6 @@ var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
 var wrapToggle = document.getElementById('wrap-toggle');
-var viewerHeader = document.getElementById('viewer-header');
-var headerFilename = document.getElementById('header-filename');
-var headerToggle = document.getElementById('header-toggle');
 
 var vscodeApi = acquireVsCodeApi();
 window._vscodeApi = vscodeApi;
@@ -38,7 +35,6 @@ var lastEnd = -1;
 var rafPending = false;
 var currentFilename = '';
 var nextSeq = 1;
-var headerCollapsed = false;
 var scrollMemory = {};
 
 function stripTags(html) {
@@ -114,7 +110,6 @@ function toggleWrap() {
 
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 jumpBtn.addEventListener('click', jumpToBottom);
-if (headerToggle) headerToggle.addEventListener('click', toggleHeader);
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
@@ -132,18 +127,10 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
-function updateHeaderFilename() {
-    if (headerFilename) headerFilename.textContent = currentFilename || '';
-}
-
-function toggleHeader() {
-    headerCollapsed = !headerCollapsed;
-    if (viewerHeader) viewerHeader.classList.toggle('collapsed', headerCollapsed);
-}
-
 function updateFooterText() {
     var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
     var text = prefix + lineCount + ' lines';
+    if (currentFilename) text += ' \\u00b7 ' + currentFilename;
     if (footerVersion) text += ' \\u00b7 ' + footerVersion;
     footerTextEl.textContent = text;
 }
@@ -197,7 +184,6 @@ window.addEventListener('message', function(event) {
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';
-            updateHeaderFilename();
             updateFooterText();
             break;
         case 'setCategories':
