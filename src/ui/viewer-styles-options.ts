@@ -119,6 +119,12 @@ export function getOptionsStyles(): string {
     margin-left: 20px;
     padding-left: 12px;
     border-left: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
+    transition: opacity 0.15s ease;
+}
+
+.options-indent-disabled {
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .options-row input:disabled + span,

@@ -91,14 +91,6 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-decorations" />
                 <span>Line prefix (&#x1F7E2; N T00:00:00)</span>
             </label>
-            <label class="options-row" title="Display source file and function name inline with log output">
-                <input type="checkbox" id="opt-inline-context" />
-                <span>Show inline context (file &raquo; function)</span>
-            </label>
-            <label class="options-row" title="Show color-coded overview of errors and search matches on the scrollbar">
-                <input type="checkbox" id="opt-minimap" checked />
-                <span>Scrollbar minimap</span>
-            </label>
             <div class="options-indent" id="decoration-options">
                 <label class="options-row" title="Show colored circle indicating log severity">
                     <input type="checkbox" id="opt-deco-dot" checked />
@@ -132,6 +124,10 @@ export function getOptionsPanelHtml(): string {
                     <span>Severity bar (left border)</span>
                 </label>
             </div>
+            <label class="options-row" title="Show color-coded overview of errors and search matches on the scrollbar">
+                <input type="checkbox" id="opt-minimap" checked />
+                <span>Scrollbar minimap</span>
+            </label>
         </div>
 
         <!-- Layout Section -->

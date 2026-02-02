@@ -55,12 +55,14 @@ function closeOptionsPanel() {
 function syncDisplayUi() {
     var wrapCheck = document.getElementById('opt-wrap');
     var decoCheck = document.getElementById('opt-decorations');
-    var inlineCtxCheck = document.getElementById('opt-inline-context');
     var decoIndent = document.getElementById('decoration-options');
     if (wrapCheck) wrapCheck.checked = wordWrap;
     if (decoCheck) decoCheck.checked = showDecorations;
-    if (inlineCtxCheck && typeof showInlineContext !== 'undefined') inlineCtxCheck.checked = showInlineContext;
-    if (decoIndent) decoIndent.style.display = showDecorations ? 'block' : 'none';
+    if (decoIndent) {
+        decoIndent.classList.toggle('options-indent-disabled', !showDecorations);
+        var decoInputs = decoIndent.querySelectorAll('input, select');
+        for (var i = 0; i < decoInputs.length; i++) decoInputs[i].disabled = !showDecorations;
+    }
     var minimapCheck = document.getElementById('opt-minimap');
     if (minimapCheck && typeof minimapEnabled !== 'undefined') minimapCheck.checked = minimapEnabled;
     var fSlider = document.getElementById('font-size-slider');
@@ -87,11 +89,14 @@ function syncDecoUi() {
     var lineColor = document.getElementById('opt-line-color');
     var decoBar = document.getElementById('opt-deco-bar');
     var noTs = typeof timestampsAvailable !== 'undefined' && !timestampsAvailable;
+    // When decorations are off, all sub-options stay disabled (set by syncDisplayUi).
+    // Only apply timestamp-unavailable disabling when decorations are on.
+    var decoOff = !showDecorations;
     if (decoDot) decoDot.checked = decoShowDot;
     if (decoCtr) decoCtr.checked = decoShowCounter;
-    if (decoTs) { decoTs.checked = decoShowTimestamp; decoTs.disabled = noTs; }
-    if (decoMs) { decoMs.checked = (typeof showMilliseconds !== 'undefined') && showMilliseconds; decoMs.disabled = noTs; }
-    if (decoElapsed) { decoElapsed.checked = showElapsed; decoElapsed.disabled = noTs; }
+    if (decoTs) { decoTs.checked = decoShowTimestamp; decoTs.disabled = decoOff || noTs; }
+    if (decoMs) { decoMs.checked = (typeof showMilliseconds !== 'undefined') && showMilliseconds; decoMs.disabled = decoOff || noTs; }
+    if (decoElapsed) { decoElapsed.checked = showElapsed; decoElapsed.disabled = decoOff || noTs; }
     if (lineColor) lineColor.value = decoLineColorMode;
     if (decoBar && typeof decoShowBar !== 'undefined') decoBar.checked = decoShowBar;
 }
@@ -156,17 +161,12 @@ if (lineHeightSlider && lineHeightLabel) {
 // Display options
 var optWrap = document.getElementById('opt-wrap');
 var optDeco = document.getElementById('opt-decorations');
-var optInlineCtx = document.getElementById('opt-inline-context');
 if (optWrap) optWrap.addEventListener('change', function(e) {
     if (typeof toggleWrap === 'function') toggleWrap();
     syncOptionsPanelUi();
 });
 if (optDeco) optDeco.addEventListener('change', function(e) {
     if (typeof toggleDecorations === 'function') toggleDecorations();
-    syncOptionsPanelUi();
-});
-if (optInlineCtx) optInlineCtx.addEventListener('change', function(e) {
-    if (typeof toggleInlineContext === 'function') toggleInlineContext();
     syncOptionsPanelUi();
 });
 var optMinimap = document.getElementById('opt-minimap');

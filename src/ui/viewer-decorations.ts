@@ -87,37 +87,6 @@ function updateDecoButton() {
 }
 
 /**
- * Toggle inline context display on/off.
- */
-function toggleInlineContext() {
-    showInlineContext = !showInlineContext;
-    renderViewport(true);
-}
-
-/**
- * Format inline context metadata as a breadcrumb.
- * Example: "src/utils/auth.ts:42 » login()"
- */
-function formatInlineContext(item) {
-    if (!showInlineContext || !item.context) return '';
-    var parts = [];
-    if (item.context.file) {
-        // Shorten file path - show only last 2 segments
-        var segments = item.context.file.split(/[\\/]/);
-        var shortPath = segments.length > 2
-            ? segments.slice(-2).join('/')
-            : item.context.file;
-        parts.push(shortPath);
-        if (item.context.line) parts[0] += ':' + item.context.line;
-    }
-    if (item.context.func) {
-        parts.push(item.context.func + '()');
-    }
-    if (parts.length === 0) return '';
-    return '<span class="inline-context">' + parts.join(' \\u00BB ') + '</span>';
-}
-
-/**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
  * Returns empty string for markers, stack-frame sub-lines, or when off.
@@ -125,37 +94,23 @@ function formatInlineContext(item) {
  * Example output: <span class="line-decoration">🟢 <span class="deco-counter">    1</span> T07:23:36 » </span>
  */
 function getDecorationPrefix(item) {
-    if (!showDecorations && !showInlineContext) return '';
+    if (!showDecorations) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
 
-    var result = '';
-
-    // Standard decoration prefix
-    if (showDecorations) {
-        var parts = [];
-        if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
-        if (decoShowCounter) {
-            var seqStr = item.seq !== undefined ? String(item.seq) : '?';
-            parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
-        }
-        if (decoShowTimestamp) {
-            var ts = formatDecoTimestamp(item.timestamp);
-            if (ts) parts.push(ts);
-        }
-        if (parts.length > 0) {
-            result += '<span class="line-decoration">'
-                + parts.join('&nbsp; ') + '&nbsp; \\u00BB '
-                + '</span>';
-        }
+    var parts = [];
+    if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
+    if (decoShowCounter) {
+        var seqStr = item.seq !== undefined ? String(item.seq) : '?';
+        parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
     }
-
-    // Inline context breadcrumb
-    if (showInlineContext) {
-        var ctx = formatInlineContext(item);
-        if (ctx) result += ctx + '&nbsp; ';
+    if (decoShowTimestamp) {
+        var ts = formatDecoTimestamp(item.timestamp);
+        if (ts) parts.push(ts);
     }
-
-    return result;
+    if (parts.length === 0) return '';
+    return '<span class="line-decoration">'
+        + parts.join('&nbsp; ') + '&nbsp; \\u00BB '
+        + '</span>';
 }
 
 /**
