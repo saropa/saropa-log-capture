@@ -28,7 +28,7 @@ export function getErrorStyles(): string {
     border-radius: 3px;
     background: var(--vscode-errorBackground, rgba(244, 68, 68, 0.1));
     font-size: 10px;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease;
 }
 
 #error-badge:hover {

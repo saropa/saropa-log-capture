@@ -20,6 +20,7 @@ export interface SessionMetadata {
     readonly displayName?: string;
     readonly tags?: string[];
     readonly autoTags?: string[];
+    readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly mtime: number; // File modification time (epoch ms)
 }

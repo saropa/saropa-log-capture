@@ -153,37 +153,36 @@ function renderViewport(force) {
     var bufferPx = OVERSCAN * ROW_HEIGHT;
     var topTarget = Math.max(0, scrollTop - bufferPx);
     var bottomTarget = scrollTop + viewH + bufferPx;
-
-    var cumH = 0;
-    var startIdx = 0;
-    var startOffset = 0;
+    var cumH = 0, startIdx = 0, startOffset = 0;
     for (var i = 0; i < allLines.length; i++) {
-        var h = allLines[i].height;
-        if (cumH + h > topTarget) { startIdx = i; startOffset = cumH; break; }
-        cumH += h;
+        if (cumH + allLines[i].height > topTarget) { startIdx = i; startOffset = cumH; break; }
+        cumH += allLines[i].height;
         if (i === allLines.length - 1) { startIdx = allLines.length; startOffset = cumH; }
     }
-
-    var parts = [];
-    var renderH = 0;
-    var endIdx = startIdx;
+    // Lightweight end-index scan — no HTML generation yet
+    var endH = 0, endIdx = startIdx;
     for (var i = startIdx; i < allLines.length; i++) {
         if (allLines[i].height === 0) { endIdx = i; continue; }
-        parts.push(renderItem(allLines[i], i));
-        renderH += allLines[i].height;
-        endIdx = i;
-        if (startOffset + renderH > bottomTarget) break;
+        endH += allLines[i].height; endIdx = i;
+        if (startOffset + endH > bottomTarget) break;
     }
-
-    if (!force && startIdx === lastStart && endIdx === lastEnd) return;
-    lastStart = startIdx;
-    lastEnd = endIdx;
-
+    // Hysteresis: let the overscan buffer absorb small scroll movements
+    // natively. Only rebuild the DOM when the visible area shifts close to
+    // the edge of the previously rendered content.
+    var hyst = Math.floor(OVERSCAN / 2);
+    if (!force && lastStart >= 0 &&
+        Math.abs(startIdx - lastStart) < hyst &&
+        Math.abs(endIdx - lastEnd) < hyst) { return; }
+    lastStart = startIdx; lastEnd = endIdx;
+    var parts = [];
+    for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
+        if (allLines[i].height === 0) continue;
+        parts.push(renderItem(allLines[i], i));
+    }
     viewportEl.innerHTML = parts.join('');
     spacerTop.style.height = startOffset + 'px';
-
     var bottomH = 0;
-    for (var i = endIdx + 1; i < allLines.length; i++) { bottomH += allLines[i].height; }
+    for (var i = endIdx + 1; i < allLines.length; i++) bottomH += allLines[i].height;
     spacerBottom.style.height = bottomH + 'px';
 }
 `;

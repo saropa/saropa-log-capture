@@ -36,9 +36,9 @@ var levelEmojis = {
 /** Button ID lookup for each level. */
 var levelButtonIds = {
     info: 'level-info-toggle',
-    warning: 'level-warn-toggle',
+    warning: 'level-warning-toggle',
     error: 'level-error-toggle',
-    performance: 'level-perf-toggle',
+    performance: 'level-performance-toggle',
     todo: 'level-todo-toggle',
     debug: 'level-debug-toggle',
     notice: 'level-notice-toggle'

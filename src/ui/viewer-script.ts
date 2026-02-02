@@ -1,10 +1,4 @@
-/**
- * Client-side JavaScript for the log viewer webview.
- * Virtual scrolling: stores all lines in a JS array, renders only the
- * visible window. Handles stack trace grouping, auto-scroll, word wrap.
- *
- * @param maxLines - Maximum lines retained in the data array.
- */
+/** Client-side JS for the log viewer: virtual scrolling, stack traces, auto-scroll. */
 export function getViewerScript(maxLines: number): string {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
@@ -34,7 +28,6 @@ var totalHeight = 0;
 var lineCount = 0;
 var autoScroll = true;
 var isPaused = false;
-/** True when viewing a historical log file (disables "Recording:" footer). */
 var isViewingFile = false;
 var wordWrap = true;
 var nextGroupId = 0;
@@ -45,6 +38,7 @@ var rafPending = false;
 var currentFilename = '';
 var nextSeq = 1;
 var headerCollapsed = false;
+var scrollMemory = {};
 
 function stripTags(html) {
     return html.replace(/<[^>]*>/g, '');
@@ -57,8 +51,9 @@ function isStackFrameText(html) {
 function handleScroll() {
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
     autoScroll = atBottom;
-    jumpBtn.style.display = atBottom ? 'none' : 'block';
     renderViewport(false);
+    // DOM write after reads — avoids forced reflow inside renderViewport
+    jumpBtn.style.display = atBottom ? 'none' : 'block';
 }
 
 logEl.addEventListener('scroll', function() {
@@ -136,30 +131,18 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
-/** Update header filename display. */
 function updateHeaderFilename() {
-    if (headerFilename) {
-        headerFilename.textContent = currentFilename || '';
-    }
+    if (headerFilename) headerFilename.textContent = currentFilename || '';
 }
 
-/** Toggle header visibility. */
 function toggleHeader() {
     headerCollapsed = !headerCollapsed;
-    if (viewerHeader) {
-        viewerHeader.classList.toggle('collapsed', headerCollapsed);
-    }
+    if (viewerHeader) viewerHeader.classList.toggle('collapsed', headerCollapsed);
 }
 
-/** Update footer to reflect current mode: historical / paused / recording. */
 function updateFooterText() {
-    if (isViewingFile) {
-        footerTextEl.textContent = lineCount + ' lines';
-        return;
-    }
-    footerTextEl.textContent = isPaused
-        ? '\\u23F8 ' + lineCount + ' lines'
-        : '\\u25CF ' + lineCount + ' lines';
+    var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
+    footerTextEl.textContent = prefix + lineCount + ' lines';
 }
 
 window.addEventListener('message', function(event) {
@@ -177,9 +160,12 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'clear':
+            if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
+            lastStart = -1; lastEnd = -1;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') { closeContextModal(); }
+            if (typeof hideSessionInfoModal === 'function') { hideSessionInfoModal(); }
             if (typeof resetSourceTags === 'function') { resetSourceTags(); }
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null;
@@ -188,6 +174,7 @@ window.addEventListener('message', function(event) {
                 repeatTracker.count = 0;
                 repeatTracker.lastTimestamp = 0;
             }
+            if (typeof timestampsAvailable !== 'undefined') timestampsAvailable = true;
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
         case 'updateFooter':
@@ -240,6 +227,17 @@ window.addEventListener('message', function(event) {
         case 'splitInfo':
             if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
             break;
+        case 'setTimestampAvailability':
+            if (typeof handleTimestampAvailability === 'function') handleTimestampAvailability(msg);
+            break;
+        case 'loadComplete':
+            if (currentFilename && scrollMemory[currentFilename] !== undefined) {
+                logEl.scrollTop = scrollMemory[currentFilename];
+                autoScroll = false;
+                jumpBtn.style.display = 'block';
+                renderViewport(true);
+            }
+            break;
     }
 });
 
@@ -255,7 +253,8 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
         e.preventDefault();
-        if (typeof openSearch === 'function') openSearch();
+        if (typeof setActivePanel === 'function') setActivePanel('search');
+        else if (typeof openSearch === 'function') openSearch();
         return;
     }
     if (e.key === 'Escape') {
@@ -263,9 +262,9 @@ document.addEventListener('keydown', function(e) {
             closeContextModal();
             return;
         }
-        if (typeof closeSearch === 'function') {
-            closeSearch();
-        }
+        if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
+        if (typeof closeSessionPanel === 'function') closeSessionPanel();
         return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -278,12 +277,18 @@ document.addEventListener('keydown', function(e) {
     else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
 });
 
-// Retry rendering when viewport element receives dimensions after layout
+// Re-render on container resize; debounced + non-forced to avoid feedback loops.
+var _resizeRaf = false;
 var _logResizeObs = new ResizeObserver(function() {
-    if (allLines.length > 0 && logEl.clientHeight > 0) {
-        renderViewport(true);
-        if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
-    }
+    if (_resizeRaf) return;
+    _resizeRaf = true;
+    requestAnimationFrame(function() {
+        _resizeRaf = false;
+        if (allLines.length > 0 && logEl.clientHeight > 0) {
+            renderViewport(false);
+            if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
+        }
+    });
 });
 _logResizeObs.observe(logEl);
 `;

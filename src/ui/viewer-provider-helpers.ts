@@ -216,3 +216,27 @@ export function stopBatchTimer(timer: ReturnType<typeof setInterval> | undefined
 		clearInterval(timer);
 	}
 }
+
+const LEVEL_FILTERS_KEY = "slc.levelFilters";
+
+/** Save per-file level filter state to workspace storage. */
+export function saveLevelFilters(
+	context: vscode.ExtensionContext,
+	filename: string,
+	levels: string[],
+): void {
+	if (!filename) { return; }
+	const map = context.workspaceState.get<Record<string, string[]>>(LEVEL_FILTERS_KEY, {});
+	map[filename] = levels;
+	void context.workspaceState.update(LEVEL_FILTERS_KEY, map);
+}
+
+/** Retrieve saved level filter state for a file, or undefined if none. */
+export function getSavedLevelFilters(
+	context: vscode.ExtensionContext,
+	filename: string,
+): string[] | undefined {
+	if (!filename) { return undefined; }
+	const map = context.workspaceState.get<Record<string, string[]>>(LEVEL_FILTERS_KEY, {});
+	return map[filename];
+}

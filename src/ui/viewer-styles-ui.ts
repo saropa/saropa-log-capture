@@ -75,19 +75,70 @@ export function getUiStyles(): string {
 }
 
 /* ===================================================================
-   Level Filter Circles
-   Interactive toggles for each log level. Each circle shows its
-   emoji plus a running count when > 0 (e.g. "🔴 4").
-   Click to toggle the level on/off.
+   Level Filter — Compact Dot Summary (footer trigger)
+   Row of tiny colored dots that opens the level fly-up menu.
    =================================================================== */
-.level-filter-group {
-    display: flex;
-    gap: 2px;
+.level-summary {
+    display: inline-flex;
+    gap: 3px;
     align-items: center;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
 }
+.level-summary:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.level-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    transition: opacity 0.2s ease;
+}
+.level-dot:not(.active) { opacity: 0.2; }
+
+/* ===================================================================
+   Level Filter — Fly-up Menu
+   Popup positioned above the footer showing full level toggles
+   plus Select All / Select None. Stays open during toggling.
+   =================================================================== */
+#level-flyup {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    left: 8px;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    padding: 6px;
+    z-index: 150;
+    min-width: 120px;
+}
+#level-flyup.visible { display: flex; flex-direction: column; gap: 2px; }
+.level-flyup-header {
+    display: flex;
+    gap: 8px;
+    padding: 2px 4px 4px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 2px;
+    font-size: 11px;
+}
+.level-flyup-header a {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: none;
+    cursor: pointer;
+}
+.level-flyup-header a:hover { text-decoration: underline; }
+
+/* ===================================================================
+   Level Filter Circles (inside fly-up)
+   Interactive toggles for each log level.
+   =================================================================== */
 .level-circle {
     background: none;
     border: 1px solid transparent;
+    color: inherit;
     font-size: 11px;
     padding: 1px 4px;
     cursor: pointer;
@@ -192,76 +243,5 @@ export function getUiStyles(): string {
     z-index: 1;
 }
 
-/* ===================================================================
-   Session Info — compact prefix line + modal overlay
-   =================================================================== */
-.session-info-prefix {
-    padding: 3px 8px;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border-bottom: 1px solid var(--vscode-panel-border);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
-}
-.session-info-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 500;
-}
-.session-info-modal-content {
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 6px;
-    padding: 12px 16px;
-    min-width: 240px;
-    max-width: 90%;
-    max-height: 80%;
-    overflow-y: auto;
-}
-.session-info-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 12px;
-}
-.session-info-modal-header button {
-    background: none;
-    border: none;
-    color: var(--vscode-foreground);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 4px;
-}
-.session-info-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 4px;
-}
-.session-info-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    font-size: 11px;
-    line-height: 1.4;
-}
-.session-info-key {
-    color: var(--vscode-descriptionForeground);
-    font-weight: 500;
-    min-width: 100px;
-    flex-shrink: 0;
-}
-.session-info-value {
-    color: var(--vscode-foreground);
-    word-break: break-word;
-}
 `;
 }

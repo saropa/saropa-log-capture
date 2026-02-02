@@ -34,7 +34,7 @@ export function getOptionsStyles(): string {
 }
 
 .options-panel.visible {
-    right: 0;
+    right: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 
@@ -121,6 +121,11 @@ export function getOptionsStyles(): string {
     border-left: 2px solid var(--vscode-panel-border, rgba(255, 255, 255, 0.1));
 }
 
+.options-row input:disabled + span,
+.deco-settings-row input:disabled + span {
+    opacity: 0.4;
+}
+
 /* Action buttons in options panel (Export, Reset) */
 .options-action-btn {
     background: var(--vscode-button-secondaryBackground);
@@ -142,6 +147,58 @@ export function getOptionsStyles(): string {
     color: var(--vscode-descriptionForeground);
     opacity: 0.8;
     padding: 0 0 4px 24px;
+}
+
+/* --- Exclusion pattern chips: removable pills in noise-reduction section --- */
+.exclusion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 0 2px;
+}
+.exclusion-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--vscode-descriptionForeground);
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    white-space: nowrap;
+    max-width: 100%;
+    transition: opacity 0.15s;
+}
+.exclusion-chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+.exclusion-chip-remove {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+}
+.exclusion-chip-remove:hover {
+    color: var(--vscode-errorForeground, #f44);
+}
+.exclusion-chips-disabled .exclusion-chip {
+    opacity: 0.4;
+}
+
+/* Inline link within options panel (e.g. "Configure in Settings") */
+.options-link {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: none;
+    cursor: pointer;
+}
+.options-link:hover {
+    text-decoration: underline;
 }
 
 /* Audio preview buttons */

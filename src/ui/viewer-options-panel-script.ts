@@ -20,10 +20,24 @@ function toggleOptionsPanel() {
     optionsPanelOpen = !optionsPanelOpen;
     if (optionsPanelOpen) {
         if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeSessionPanel === 'function') closeSessionPanel();
         syncOptionsPanelUi();
         panel.classList.add('visible');
     } else {
         panel.classList.remove('visible');
+    }
+}
+
+/** Open the options panel (called from icon bar). */
+function openOptionsPanel() {
+    if (optionsPanelOpen) return;
+    optionsPanelOpen = true;
+    if (typeof closeSearch === 'function') closeSearch();
+    if (typeof closeSessionPanel === 'function') closeSessionPanel();
+    var panel = document.getElementById('options-panel');
+    if (panel) {
+        syncOptionsPanelUi();
+        panel.classList.add('visible');
     }
 }
 
@@ -34,6 +48,7 @@ function closeOptionsPanel() {
     var panel = document.getElementById('options-panel');
     if (panel) panel.classList.remove('visible');
     optionsPanelOpen = false;
+    if (typeof clearActivePanel === 'function') clearActivePanel('options');
 }
 
 /** Sync display checkboxes and sliders from state. */
@@ -71,11 +86,12 @@ function syncDecoUi() {
     var decoElapsed = document.getElementById('opt-deco-elapsed');
     var lineColor = document.getElementById('opt-line-color');
     var decoBar = document.getElementById('opt-deco-bar');
+    var noTs = typeof timestampsAvailable !== 'undefined' && !timestampsAvailable;
     if (decoDot) decoDot.checked = decoShowDot;
     if (decoCtr) decoCtr.checked = decoShowCounter;
-    if (decoTs) decoTs.checked = decoShowTimestamp;
-    if (decoMs && typeof showMilliseconds !== 'undefined') decoMs.checked = showMilliseconds;
-    if (decoElapsed) decoElapsed.checked = showElapsed;
+    if (decoTs) { decoTs.checked = decoShowTimestamp; decoTs.disabled = noTs; }
+    if (decoMs) { decoMs.checked = (typeof showMilliseconds !== 'undefined') && showMilliseconds; decoMs.disabled = noTs; }
+    if (decoElapsed) { decoElapsed.checked = showElapsed; decoElapsed.disabled = noTs; }
     if (lineColor) lineColor.value = decoLineColorMode;
     if (decoBar && typeof decoShowBar !== 'undefined') decoBar.checked = decoShowBar;
 }
@@ -103,6 +119,7 @@ function syncOptionsPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
     var appOnlyCheck = document.getElementById('opt-app-only');
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
+    if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
     if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
     var vsCheck = document.getElementById('opt-visual-spacing');
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
@@ -111,11 +128,7 @@ function syncOptionsPanelUi() {
 }
 
 /* Register event listeners for options panel controls. */
-var optionsPanelBtn = document.getElementById('options-panel-btn');
 var optionsCloseBtn = document.querySelector('.options-close');
-if (optionsPanelBtn) {
-    optionsPanelBtn.addEventListener('click', toggleOptionsPanel);
-}
 if (optionsCloseBtn) {
     optionsCloseBtn.addEventListener('click', closeOptionsPanel);
 }
@@ -188,6 +201,7 @@ var optExcl = document.getElementById('opt-exclusions');
 var optAppOnly = document.getElementById('opt-app-only');
 if (optExcl) optExcl.addEventListener('change', function(e) {
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(e.target.checked);
+    if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
     syncOptionsPanelUi();
 });
 if (optAppOnly) optAppOnly.addEventListener('change', function(e) {
@@ -255,10 +269,10 @@ if (resetBtn) {
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
-    var optionsBtn = document.getElementById('options-panel-btn');
+    var ibBtn = document.getElementById('ib-options');
     var badgeBtn = document.getElementById('filter-badge');
     if (panel && !panel.contains(e.target)
-        && optionsBtn !== e.target && !optionsBtn?.contains(e.target)
+        && ibBtn !== e.target && !ibBtn?.contains(e.target)
         && badgeBtn !== e.target) {
         closeOptionsPanel();
     }

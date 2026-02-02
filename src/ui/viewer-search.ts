@@ -12,7 +12,11 @@ export function getSearchPanelHtml(): string {
         <button class="search-close" id="search-close" title="Close (Escape)">&times;</button>
     </div>
     <div class="search-content">
-        <input id="search-input" type="text" placeholder="Search..." />
+        <div class="search-input-wrapper">
+            <input id="search-input" type="text" placeholder="Search..." />
+            <button id="search-clear" class="search-clear" title="Clear search">&times;</button>
+        </div>
+        <div id="search-history" class="search-history"></div>
         <div class="search-toggles">
             <button id="search-regex-toggle" title="Literal mode (click for regex)">Aa</button>
             <button id="search-case-toggle" title="Case insensitive (click for case sensitive)">Aa</button>
@@ -49,20 +53,23 @@ function openSearch() {
     if (searchOpen) { searchInputEl.focus(); return; }
     searchOpen = true;
     if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
+    if (typeof closeSessionPanel === 'function') closeSessionPanel();
     searchBarEl.classList.add('visible');
     searchInputEl.value = '';
     searchInputEl.focus();
     clearSearchState();
+    updateClearButton();
+    if (typeof renderSearchHistory === 'function') renderSearchHistory();
 }
 
 function closeSearch() {
     if (!searchOpen) return;
+    if (typeof addToSearchHistory === 'function' && searchInputEl.value.trim()) addToSearchHistory(searchInputEl.value.trim());
     searchOpen = false;
     searchBarEl.classList.remove('visible');
+    if (typeof clearActivePanel === 'function') clearActivePanel('search');
     clearSearchState();
-    if (searchFilterMode) {
-        clearSearchFilter();
-    }
+    clearSearchFilter();
     renderViewport(true);
 }
 
@@ -85,9 +92,7 @@ function updateSearch() {
     var query = searchInputEl.value;
     if (!query) {
         clearSearchState();
-        if (searchFilterMode) {
-            clearSearchFilter();
-        }
+        clearSearchFilter();
         renderViewport(true);
         return;
     }
@@ -240,7 +245,6 @@ function isCurrentMatch(idx) {
     return currentMatchIdx >= 0 && matchIndices[currentMatchIdx] === idx;
 }
 
-searchInputEl.addEventListener('input', updateSearch);
 searchInputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.shiftKey ? searchPrev() : searchNext(); e.preventDefault(); }
     if (e.key === 'Escape') { closeSearch(); e.preventDefault(); }
@@ -264,18 +268,28 @@ document.getElementById('search-next').addEventListener('click', searchNext);
 document.getElementById('search-prev').addEventListener('click', searchPrev);
 document.getElementById('search-close').addEventListener('click', closeSearch);
 
-/* Toggle button in footer toolbar. */
-var searchPanelBtn = document.getElementById('search-panel-btn');
-if (searchPanelBtn) {
-    searchPanelBtn.addEventListener('click', toggleSearchPanel);
+var searchClearBtn = document.getElementById('search-clear');
+var searchInputWrapper = searchInputEl ? searchInputEl.parentElement : null;
+function updateClearButton() {
+    if (searchInputWrapper) searchInputWrapper.classList.toggle('has-text', searchInputEl.value.length > 0);
+}
+if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        searchInputEl.value = '';
+        updateClearButton();
+        updateSearch();
+        searchInputEl.focus();
+    });
 }
 
 /* Close search panel when clicking outside it. */
 document.addEventListener('click', function(e) {
     if (!searchOpen) return;
     var panel = document.getElementById('search-bar');
-    var searchBtn = document.getElementById('search-panel-btn');
-    if (panel && !panel.contains(e.target) && searchBtn !== e.target && !searchBtn?.contains(e.target)) {
+    var ibBtn = document.getElementById('ib-search');
+    if (panel && !panel.contains(e.target)
+        && ibBtn !== e.target && !ibBtn?.contains(e.target)) {
         closeSearch();
     }
 });

@@ -183,7 +183,7 @@ function resetLevelFilters() {
     if (typeof enabledLevels !== 'undefined') {
         enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
     }
-    var ids = ['info', 'warn', 'error', 'perf', 'todo', 'debug', 'notice'];
+    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice'];
     for (var li = 0; li < ids.length; li++) {
         var btn = document.getElementById('level-' + ids[li] + '-toggle');
         if (btn) btn.classList.add('active');

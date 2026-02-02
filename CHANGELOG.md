@@ -5,7 +5,56 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.1.13]  - Current
+## [0.2.0]  - Current
+
+### Added
+- **Icon bar:** VS Code activity-bar-style vertical icon bar on the right edge of the log viewer with icons for Session History, Search, and Options. Clicking an icon toggles its slide-out panel with mutual exclusion (only one panel open at a time). Uses codicon icons with an active indicator bar matching VS Code's activity bar pattern.
+- **Session history panel:** New in-webview slide-out panel listing past log sessions from the reports directory. Shows filename, debug adapter, file size, and date. Clicking a session loads it into the viewer. Active (recording) sessions are highlighted. Panel refreshes on each open.
+
+### Changed
+- **Footer simplified:** Removed Search and Options buttons from the footer — these are now accessible from the icon bar. The footer retains line count, level filter dots, watch chips, and filter badge.
+- **Body layout restructured:** The webview body is now a flex-row containing the main content column and the icon bar column, instead of a single flex-column.
+
+### Added
+- **Historical log file timestamps:** Opening a log file from Session History now parses the `[HH:MM:SS.mmm]` timestamps from each line (using the `Date:` header for the date component), enabling elapsed time and timestamp decorations on historical files. Previously timestamps were discarded during file loading.
+- **Timestamp availability gating:** Time-related decoration options (Timestamp, Show milliseconds, Elapsed time) are automatically disabled and grayed out when viewing a log file that has no parsed timestamps. Re-enabled when switching to a file with timestamps or starting a live session.
+- **Session history timestamp icons:** Sessions in the history tree now show a `history` icon (clock) when the file contains timestamps, or an `output` icon (plain text) when it does not. Active recording sessions retain the red `record` icon. Tooltip includes "Timestamps: Yes/No".
+
+### Fixed
+- **Warning and Performance level toggles had no visual feedback:** The button IDs used abbreviated names (`level-warn-toggle`, `level-perf-toggle`) but `toggleLevel()` constructed IDs from the full level name (`level-warning-toggle`, `level-performance-toggle`). The `getElementById` returned null, so the `active` class never toggled. Also fixed the same stale IDs in `resetLevelFilters()`.
+- **Visual spacing option had no visible effect:** The spacing logic ran after early returns for markers, stack-headers, and stack-frames — so it never applied to those item types. CSS selectors were also scoped to `.line` only. Moved computation before early returns, broadened conditions to trigger on any level change, separator lines, markers, and new stack traces, and widened CSS selectors to all element types.
+- **Level circle counts invisible in dark mode:** The `.level-circle` buttons didn't set an explicit `color`, so count numbers used the browser default (black) instead of the VS Code theme foreground. Added `color: inherit` so counts adapt to light and dark themes.
+- **Session Info modal persists across session loads:** The `clear` handler dismissed the context peek but not the Session Info modal. Once opened, the modal stayed visible every time a new log was selected. Now `hideSessionInfoModal()` is called on clear.
+- **Search input unresponsive during typing:** `updateSearch()` ran synchronously on every keystroke — iterating all lines for regex matching, height recalculation, and DOM rendering — blocking the browser from repainting the input. Characters appeared not to register on large log files. Search is now debounced (150 ms) so characters appear instantly.
+- **Search filter persists after clearing text:** Removing all search text or closing the search panel while in highlight mode left stale `searchFiltered` flags on lines, hiding them until a manual filter reset. Now always clears the search filter regardless of search mode.
+
+### Changed
+- **Level filters moved to fly-up menu:** The 7 inline level-circle buttons in the footer are replaced by a compact row of colored dots. Clicking the dots opens a fly-up popup with the full toggle buttons plus Select All / Select None links. The popup stays open while toggling and closes on click-away or Escape.
+- **Exclusions UX overhaul:** Replaced the bare "Enable exclusions" checkbox with a richer section. The toggle label now shows the pattern count (e.g. "Exclusions (3)"). Each configured pattern is displayed as a removable chip below the toggle. Chips dim when exclusions are toggled off. When no patterns are configured, an empty state with a "Configure in Settings" link is shown. Removing a chip persists the change to workspace settings.
+
+### Added
+- **Per-file level filter persistence:** Level filter toggle state is saved per log file in workspace storage. When switching between files or reloading, each file's filter state is automatically restored.
+- **Tooltips on all options panel controls:** Every checkbox, slider, dropdown, and button in the Options panel now has a descriptive `title` attribute that explains what the option does on hover.
+- **Search clear button:** An × button appears inside the search input when text is present, following standard textbox conventions. Click to clear and reset the search.
+- **Search history:** Last 10 search terms shown below the input when the search panel opens. Click any term to re-run that search. Persists across webview reloads via webview state.
+- **Scroll position memory per file:** When switching between log files, the viewer remembers where you were scrolled to. Positions are saved when not at the bottom; files you were following at the bottom stay at the bottom on return.
+- **Whole-line coloring for all severity levels:** Previously only error and warning lines received a background tint; all other levels (info, performance, todo, debug, notice) were ignored, making the feature appear broken. Now all 7 levels get a distinct tint color. Opacity increased from 8% to 6–12% (14–20% on hover) so the effect is actually visible.
+
+---
+## [0.1.15]
+
+### Fixed
+- **Scroll flickering from ResizeObserver loop:** The `ResizeObserver` on `#log-content` called `renderViewport(true)` unconditionally, bypassing the visible-range bail-out check. Every DOM replacement triggered another resize observation, creating a feedback loop. Now RAF-debounced and uses `renderViewport(false)` so no-op re-renders are skipped.
+- **Layout thrashing in scroll handler:** `jumpBtn.style.display` write was sandwiched between DOM reads and `renderViewport`'s internal reads, forcing a synchronous reflow on every scroll frame. Moved the write after all reads complete.
+- **Broad `transition: all` causing render stutter:** `#viewer-header` and `#error-badge` used `transition: all 0.2s ease`, keeping the compositor busy animating layout properties during re-renders. Replaced with specific property transitions (`min-height`, `padding`, `border-bottom` for header; `background` for badge).
+
+---
+## [0.1.14]
+
+- Dev build
+
+---
+## [0.1.13]
 
 ### Changed
 - **Footer UI consolidation:** Slimmed footer to just: line count, level circles, filter badge, search button, and options button. Removed 7 toggle buttons (wrap, exclusions, app-only, decorations, audio, minimap, export) that are now in the options panel.
