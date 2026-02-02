@@ -7,9 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.2] - Current
 
-### Fixed
-- **Session info modal blocks entire UI:** The full-screen overlay modal with backdrop stole focus and required a click to dismiss. Replaced with a lightweight popover that drops down from the ℹ️ icon — no overlay, no blocking. Click the icon to toggle, click anywhere else to dismiss.
-- **Session info popover empty / off-screen:** The popover HTML was placed outside `#viewer-header`, so `position: absolute; top: 100%` had no positioned ancestor and rendered off the bottom of the viewport. Moved popover inside the header so it anchors directly below the ℹ️ button.
+### Changed
+- **Session info moved to icon bar:** The ℹ️ session info button is now in the right-side icon bar (between Search and Options) instead of the header bar. Click to open a slide-out panel showing full session metadata. Uses the same mutual-exclusion pattern as the other icon bar panels. The compact prefix line at the top of the log content is unchanged.
+- **Marketplace banner image 404:** README banner pointed to the wrong GitHub repository (`saropa_lints`). Corrected URL to `saropa-log-capture`.
 
 ---
 ## [0.2.1] - 2026-02-02
