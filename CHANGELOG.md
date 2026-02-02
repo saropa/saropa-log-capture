@@ -5,7 +5,20 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.2.0]  - Current
+## [0.2.1] - Current
+
+### Fixed
+- **Icon bar icons invisible in dark mode:** The Content Security Policy blocked the codicon font from loading (`default-src 'none'` with no `font-src`). Now passes `webview.cspSource` to the CSP so VS Code can inject its icon font.
+- **Search mode toggle resets search text:** Clicking the Mode: Filter/Highlight button replaced the button's text node, detaching the original click target from the DOM. The click-outside handler then saw the click as outside the search panel and closed it, clearing the input on reopen. Fixed by using `composedPath()` which preserves the original DOM path.
+- **Scrollbar minimap disappears on scroll:** The minimap was positioned absolute inside the scrollable `#log-content` container, causing it to scroll away with the content. Wrapped `#log-content` in a non-scrolling `#log-content-wrapper` and moved the minimap to the wrapper so it stays viewport-fixed.
+
+### Changed
+- **Native Session History tree view hidden:** The separate tree view below the Log Viewer is replaced by the in-webview Project Logs panel accessible from the icon bar.
+- **Session panel renamed:** "Sessions" panel renamed to "Project Logs" with matching icon bar tooltip.
+- **Icon bar sessions icon:** Changed from history (clock) to files icon to better represent project log files.
+
+---
+## [0.2.0] - 2026-02-02
 
 ### Added
 - **Icon bar:** VS Code activity-bar-style vertical icon bar on the right edge of the log viewer with icons for Session History, Search, and Options. Clicking an icon toggles its slide-out panel with mutual exclusion (only one panel open at a time). Uses codicon icons with an active indicator bar matching VS Code's activity bar pattern.

@@ -113,12 +113,23 @@ body {
 }
 
 /* ===================================================================
+   Log Content Wrapper
+   Non-scrolling container for the log area and scrollbar minimap.
+   Takes flex:1 so the minimap overlay stays viewport-fixed.
+   =================================================================== */
+#log-content-wrapper {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ===================================================================
    Log Content Area
-   Main scrollable region holding all log lines. Uses flex:1 to fill
-   available space between the pinned section above and footer below.
+   Main scrollable region holding all log lines. Fills the wrapper
+   height so the minimap can overlay without scrolling away.
    =================================================================== */
 #log-content {
-    flex: 1;
+    height: 100%;
     overflow-y: auto;
     padding: 4px 0;
     position: relative;
