@@ -30,7 +30,7 @@ export function getOptionsPanelHtml(): string {
                 </select>
             </div>
             <div class="options-row">
-                <button id="reset-all-filters" class="options-action-btn">Reset all filters</button>
+                <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and return to default view">Reset all filters</button>
             </div>
         </div>
 
@@ -52,12 +52,17 @@ export function getOptionsPanelHtml(): string {
         <!-- Noise Reduction Section -->
         <div class="options-section">
             <h3 class="options-section-title">Noise Reduction</h3>
-            <label class="options-row">
+            <label class="options-row" title="Hide log lines matching configured exclusion patterns">
                 <input type="checkbox" id="opt-exclusions" />
-                <span>Enable exclusions</span>
+                <span id="exclusion-label">Exclusions</span>
             </label>
+            <div id="exclusion-chips" class="exclusion-chips"></div>
+            <div class="options-hint" id="exclusion-empty" style="display:none">
+                No patterns configured.
+                <a href="#" id="exclusion-open-settings" class="options-link">Configure in Settings</a>
+            </div>
             <div class="options-hint" id="exclusion-count"></div>
-            <label class="options-row">
+            <label class="options-row" title="Show only application output, hiding framework and system messages">
                 <input type="checkbox" id="opt-app-only" />
                 <span>App only (hide framework)</span>
             </label>
@@ -70,59 +75,59 @@ export function getOptionsPanelHtml(): string {
                 <span>Font size: <span id="font-size-label">13px</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="font-size-slider" min="8" max="22" value="13" style="width: 100%;" />
+                <input type="range" id="font-size-slider" min="8" max="22" value="13" style="width: 100%;" title="Adjust the font size for log text" />
             </div>
             <div class="options-row">
                 <span>Line height: <span id="line-height-label">1.5</span></span>
             </div>
             <div class="options-row">
-                <input type="range" id="line-height-slider" min="5" max="40" value="15" style="width: 100%;" />
+                <input type="range" id="line-height-slider" min="5" max="40" value="15" style="width: 100%;" title="Adjust the spacing between log lines" />
             </div>
-            <label class="options-row">
+            <label class="options-row" title="Wrap long lines to fit the panel width">
                 <input type="checkbox" id="opt-wrap" checked />
                 <span>Word wrap</span>
             </label>
-            <label class="options-row">
+            <label class="options-row" title="Show severity dot, line number, and timestamp before each line">
                 <input type="checkbox" id="opt-decorations" />
                 <span>Line prefix (&#x1F7E2; N T00:00:00)</span>
             </label>
-            <label class="options-row">
+            <label class="options-row" title="Display source file and function name inline with log output">
                 <input type="checkbox" id="opt-inline-context" />
                 <span>Show inline context (file &raquo; function)</span>
             </label>
-            <label class="options-row">
+            <label class="options-row" title="Show color-coded overview of errors and search matches on the scrollbar">
                 <input type="checkbox" id="opt-minimap" checked />
                 <span>Scrollbar minimap</span>
             </label>
             <div class="options-indent" id="decoration-options">
-                <label class="options-row">
+                <label class="options-row" title="Show colored circle indicating log severity">
                     <input type="checkbox" id="opt-deco-dot" checked />
                     <span>Severity dot</span>
                 </label>
-                <label class="options-row">
+                <label class="options-row" title="Show the line number in the prefix">
                     <input type="checkbox" id="opt-deco-counter" checked />
                     <span>Counter</span>
                 </label>
-                <label class="options-row">
+                <label class="options-row" title="Show the time each line was logged">
                     <input type="checkbox" id="opt-deco-timestamp" checked />
                     <span>Timestamp</span>
                 </label>
-                <label class="options-row">
+                <label class="options-row" title="Include millisecond precision in timestamps">
                     <input type="checkbox" id="opt-deco-milliseconds" />
                     <span>Show milliseconds</span>
                 </label>
-                <label class="options-row">
+                <label class="options-row" title="Show time elapsed since the previous log line">
                     <input type="checkbox" id="opt-deco-elapsed" />
                     <span>Elapsed time (+Nms)</span>
                 </label>
-                <div class="options-row">
+                <div class="options-row" title="Apply background color to lines based on severity level">
                     <span>Line coloring</span>
                     <select id="opt-line-color">
                         <option value="none">None</option>
                         <option value="line">Whole line</option>
                     </select>
                 </div>
-                <label class="options-row">
+                <label class="options-row" title="Show colored left border based on log severity">
                     <input type="checkbox" id="opt-deco-bar" checked />
                     <span>Severity bar (left border)</span>
                 </label>
@@ -132,7 +137,7 @@ export function getOptionsPanelHtml(): string {
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
-            <label class="options-row">
+            <label class="options-row" title="Add extra vertical padding between log lines for easier reading">
                 <input type="checkbox" id="opt-visual-spacing" />
                 <span>Visual spacing (breathing room)</span>
             </label>
@@ -141,7 +146,7 @@ export function getOptionsPanelHtml(): string {
         <!-- Audio Section -->
         <div class="options-section">
             <h3 class="options-section-title">Audio</h3>
-            <label class="options-row">
+            <label class="options-row" title="Play an alert sound when errors or warnings are logged">
                 <input type="checkbox" id="opt-audio" />
                 <span>Play sounds for errors/warnings</span>
             </label>
@@ -150,9 +155,9 @@ export function getOptionsPanelHtml(): string {
                     <span>Volume: <span id="audio-volume-label">30%</span></span>
                 </div>
                 <div class="options-row">
-                    <input type="range" id="audio-volume-slider" min="0" max="100" value="30" style="width: 100%;" />
+                    <input type="range" id="audio-volume-slider" min="0" max="100" value="30" style="width: 100%;" title="Set the volume for alert sounds" />
                 </div>
-                <div class="options-row">
+                <div class="options-row" title="Minimum time between consecutive alert sounds">
                     <span>Rate limit (seconds between sounds)</span>
                     <select id="audio-rate-limit">
                         <option value="0">None</option>

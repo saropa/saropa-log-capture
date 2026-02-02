@@ -67,11 +67,12 @@ if (_origAppOnlyForBadge) {
     };
 }
 
-// Click badge to open options panel
+// Click badge to open options panel (via icon bar if available)
 var filterBadgeEl = document.getElementById('filter-badge');
 if (filterBadgeEl) {
     filterBadgeEl.addEventListener('click', function() {
-        if (typeof toggleOptionsPanel === 'function') toggleOptionsPanel();
+        if (typeof setActivePanel === 'function') setActivePanel('options');
+        else if (typeof toggleOptionsPanel === 'function') toggleOptionsPanel();
     });
 }
 `;

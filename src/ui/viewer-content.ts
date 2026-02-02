@@ -2,6 +2,7 @@ import { getViewerStyles } from './viewer-styles';
 import { getViewerScript } from './viewer-script';
 import { getFilterScript } from './viewer-filter';
 import { getSearchScript, getSearchPanelHtml } from './viewer-search';
+import { getSearchHistoryScript } from './viewer-search-history';
 import { getWatchScript } from './viewer-watch';
 import { getPinScript } from './viewer-pin';
 import { getExclusionScript } from './viewer-exclusions';
@@ -34,6 +35,8 @@ import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getErrorClassificationScript } from './viewer-error-classification';
 import { getErrorHandlerScript } from './viewer-error-handler';
+import { getIconBarHtml, getIconBarScript } from './viewer-icon-bar';
+import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -67,6 +70,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     </style>
 </head>
 <body>
+    <div id="main-content">
     <div id="viewer-header">
         <span id="header-filename"></span>
         <span id="header-version">${version ? `v${version}` : ''}</span>
@@ -89,6 +93,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <div id="source-preview"></div>
     ${getContextMenuHtml()}
     ${getSearchPanelHtml()}
+    ${getSessionPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getOptionsPanelHtml()}
@@ -98,20 +103,32 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span id="footer-text">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
         <span id="watch-counts"></span>
-        <span class="level-filter-group">
+        <span id="level-menu-btn" class="level-summary" title="Level filters">
+            <span class="level-dot active" data-level="info" style="background:#4caf50"></span>
+            <span class="level-dot active" data-level="warning" style="background:#ff9800"></span>
+            <span class="level-dot active" data-level="error" style="background:#f44336"></span>
+            <span class="level-dot active" data-level="performance" style="background:#9c27b0"></span>
+            <span class="level-dot active" data-level="todo" style="background:#bdbdbd"></span>
+            <span class="level-dot active" data-level="debug" style="background:#795548"></span>
+            <span class="level-dot active" data-level="notice" style="background:#2196f3"></span>
+        </span>
+        <div id="level-flyup">
+            <div class="level-flyup-header">
+                <a id="level-select-all" href="#">All</a>
+                <a id="level-select-none" href="#">None</a>
+            </div>
             <button id="level-info-toggle" class="level-circle active" title="Info">🟢</button>
-            <button id="level-warn-toggle" class="level-circle active" title="Warning">🟠</button>
+            <button id="level-warning-toggle" class="level-circle active" title="Warning">🟠</button>
             <button id="level-error-toggle" class="level-circle active" title="Error">🔴</button>
-            <button id="level-perf-toggle" class="level-circle active" title="Performance">🟣</button>
+            <button id="level-performance-toggle" class="level-circle active" title="Performance">🟣</button>
             <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME">⚪</button>
             <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace">🟤</button>
             <button id="level-notice-toggle" class="level-circle active" title="Notice">🟦</button>
-        </span>
+        </div>
         <span id="filter-badge" class="filter-badge" style="display:none" title="Active filters — click to open options"></span>
-        <span class="footer-spacer"></span>
-        <button id="search-panel-btn" class="footer-btn" title="Search (Ctrl+F)">Search</button>
-        <button id="options-panel-btn" class="footer-btn" title="All options">&#x2630;</button>
     </div>
+    </div>
+    ${getIconBarHtml()}
     ${getSessionInfoModalHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
     ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES))}
@@ -130,6 +147,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSplitNavScript())}
     ${scriptTag(nonce, getJsonScript())}
     ${scriptTag(nonce, getSearchScript())}
+    ${scriptTag(nonce, getSearchHistoryScript())}
     ${scriptTag(nonce, getLevelFilterScript())}
     ${scriptTag(nonce, getSourceTagsScript())}
     ${scriptTag(nonce, getHighlightScript())}
@@ -138,7 +156,9 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getContextModalScript())}
     ${scriptTag(nonce, getContextMenuScript())}
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
+    ${scriptTag(nonce, getSessionPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
+    ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}
     ${scriptTag(nonce, getStatsScript())}
     ${scriptTag(nonce, getEditModalScript())}

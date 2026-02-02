@@ -3,7 +3,7 @@
  *
  * Parses historical log files into PendingLine objects for display
  * in the webview. Handles context header detection, category extraction,
- * marker detection, and async batch sending to avoid UI freezing.
+ * marker detection, timestamp parsing, and async batch sending.
  */
 
 import * as vscode from 'vscode';
@@ -19,6 +19,12 @@ export interface PendingLine {
     readonly category: string;
     readonly timestamp: number;
     readonly fw?: boolean;
+}
+
+/** Context for parsing file lines — bundles parameters to stay within limits. */
+export interface FileParseContext {
+    readonly classifyFrame: (text: string) => boolean | undefined;
+    readonly sessionMidnightMs: number;
 }
 
 /**
@@ -72,30 +78,50 @@ export function parseHeaderFields(
 }
 
 /**
+ * Compute epoch ms for midnight (local time) of the given ISO date.
+ * Returns 0 if the date string is invalid or empty — timestamps will remain 0.
+ */
+export function computeSessionMidnight(isoDate: string): number {
+    if (!isoDate) { return 0; }
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) { return 0; }
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+}
+
+/** Parse a time string (HH:MM:SS or HH:MM:SS.mmm) into epoch ms. */
+function parseTimeToMs(timeStr: string, midnightMs: number): number {
+    if (midnightMs === 0) { return 0; }
+    const parts = timeStr.split(/[:.]/);
+    if (parts.length < 3) { return 0; }
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const s = parseInt(parts[2], 10);
+    const ms = parts.length > 3 ? parseInt(parts[3], 10) : 0;
+    return midnightMs + (h * 3600000) + (m * 60000) + (s * 1000) + ms;
+}
+
+/**
  * Send parsed file lines to the webview in async batches.
  * Yields 10ms between batches so the webview can process each one without freezing.
  * After all batches, sends discovered categories to populate the filter dropdown.
- *
- * @param lines - Content lines from the log file (after header)
- * @param classifyFrame - Function to classify stack frame lines
- * @param postMessage - Function to send messages to the webview
- * @param seenCategories - Set tracking previously seen categories
+ * @returns Whether any lines had parseable timestamps.
  */
 export async function sendFileLines(
     lines: readonly string[],
-    classifyFrame: (text: string) => boolean | undefined,
+    ctx: FileParseContext,
     postMessage: (msg: unknown) => void,
     seenCategories: Set<string>,
-): Promise<void> {
+): Promise<boolean> {
     const batchSize = 500;
     const cats = new Set<string>();
+    let hasTimestamps = false;
     for (let i = 0; i < lines.length; i += batchSize) {
         const chunk = lines.slice(i, i + batchSize);
-        const batch = chunk.map((line) => parseFileLine(line, classifyFrame));
+        const batch = chunk.map((line) => parseFileLine(line, ctx));
         for (const ln of batch) {
-            if (!ln.isMarker) {
-                cats.add(ln.category);
-            }
+            if (!ln.isMarker) { cats.add(ln.category); }
+            if (ln.timestamp !== 0) { hasTimestamps = true; }
         }
         postMessage({
             type: 'addLines',
@@ -113,17 +139,14 @@ export async function sendFileLines(
     if (newCats.length > 0) {
         postMessage({ type: 'setCategories', categories: newCats });
     }
+    return hasTimestamps;
 }
 
 /**
  * Parse a raw log file line into a PendingLine for the webview.
- * Detects markers (--- MARKER: ...) and session boundaries (=== SESSION END ...).
- * Extracts the [category] prefix from formatted lines.
+ * Detects markers, session boundaries, and extracts timestamps + category.
  */
-function parseFileLine(
-    raw: string,
-    classifyFrame: (text: string) => boolean | undefined,
-): PendingLine {
+function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (/^---\s*(MARKER:|MAX LINES)/.test(raw)) {
         const label = raw.replace(/^-+\s*/, '').replace(/\s*-+$/, '');
         return buildMarkerLine(label);
@@ -131,15 +154,16 @@ function parseFileLine(
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
         return buildMarkerLine(raw);
     }
-    const tsMatch = raw.match(/^\[[\d:.]+\]\s*\[(\w+)\]\s?(.*)/);
+    const tsMatch = raw.match(/^\[([\d:.]+)\]\s*\[(\w+)\]\s?(.*)/);
     if (tsMatch) {
-        return buildFileLine(tsMatch[2], tsMatch[1], classifyFrame);
+        const ts = parseTimeToMs(tsMatch[1], ctx.sessionMidnightMs);
+        return buildFileLine(tsMatch[3], tsMatch[2], ctx.classifyFrame, ts);
     }
     const catMatch = raw.match(/^\[(\w+)\]\s?(.*)/);
     if (catMatch) {
-        return buildFileLine(catMatch[2], catMatch[1], classifyFrame);
+        return buildFileLine(catMatch[2], catMatch[1], ctx.classifyFrame, 0);
     }
-    return buildFileLine(raw, 'console', classifyFrame);
+    return buildFileLine(raw, 'console', ctx.classifyFrame, 0);
 }
 
 /** Build a PendingLine for a visual separator (marker, session end, etc.). */
@@ -158,13 +182,14 @@ function buildFileLine(
     text: string,
     category: string,
     classifyFrame: (text: string) => boolean | undefined,
+    timestamp: number,
 ): PendingLine {
     return {
         text: linkifyHtml(ansiToHtml(text)),
         isMarker: false,
         lineCount: 0,
         category,
-        timestamp: 0,
+        timestamp,
         fw: classifyFrame(text),
     };
 }

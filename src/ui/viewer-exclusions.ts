@@ -86,6 +86,7 @@ function updateExclusionDisplay() {
     if (exclusionCountEl) {
         exclusionCountEl.textContent = hiddenCount > 0 ? '(' + hiddenCount + ' hidden)' : '';
     }
+    rebuildExclusionChips();
 }
 
 function handleSetExclusions(msg) {
@@ -98,6 +99,65 @@ function handleSetExclusions(msg) {
         applyExclusions();
     }
 }
+
+/** Escape HTML entities in pattern text for safe innerHTML. */
+function escapeExclHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/** Rebuild exclusion pattern chips in the options panel. */
+function rebuildExclusionChips() {
+    var container = document.getElementById('exclusion-chips');
+    var emptyHint = document.getElementById('exclusion-empty');
+    var label = document.getElementById('exclusion-label');
+    if (!container) return;
+
+    var count = exclusionRules.length;
+    if (label) {
+        label.textContent = count > 0 ? 'Exclusions (' + count + ')' : 'Exclusions';
+    }
+    if (emptyHint) {
+        emptyHint.style.display = count === 0 ? 'block' : 'none';
+    }
+    if (count === 0) { container.innerHTML = ''; container.className = 'exclusion-chips'; return; }
+
+    container.className = 'exclusion-chips' + (exclusionsEnabled ? '' : ' exclusion-chips-disabled');
+    var parts = [];
+    for (var i = 0; i < exclusionRules.length; i++) {
+        var src = escapeExclHtml(exclusionRules[i].source);
+        parts.push(
+            '<span class="exclusion-chip" data-idx="' + i + '">'
+            + '<span class="exclusion-chip-text">' + src + '</span>'
+            + '<button class="exclusion-chip-remove" data-idx="' + i + '" title="Remove">&times;</button>'
+            + '</span>'
+        );
+    }
+    container.innerHTML = parts.join('');
+}
+
+/* Wire exclusion chip removal and settings link via event delegation. */
+(function() {
+    var chipsEl = document.getElementById('exclusion-chips');
+    if (chipsEl) {
+        chipsEl.addEventListener('click', function(e) {
+            var btn = e.target.closest ? e.target.closest('.exclusion-chip-remove') : null;
+            if (!btn || btn.dataset.idx === undefined) return;
+            var idx = parseInt(btn.dataset.idx, 10);
+            var rule = exclusionRules[idx];
+            if (rule) {
+                vscodeApi.postMessage({ type: 'exclusionRemoved', pattern: rule.source });
+            }
+            removeExclusion(idx);
+        });
+    }
+    var settingsLink = document.getElementById('exclusion-open-settings');
+    if (settingsLink) {
+        settingsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaLogCapture.exclusions' });
+        });
+    }
+})();
 
 `;
 }

@@ -15,6 +15,7 @@ import { InlineDecorationsProvider } from './ui/inline-decorations';
 import { extractSourceReference } from './modules/source-linker';
 import { disposeComparisonPanel } from './ui/session-comparison';
 import { registerCommands } from './commands';
+import { TreeItem, isSplitGroup } from './ui/session-history-grouping';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -36,7 +37,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // BUG FIX: `as string` made TypeScript treat the value as always a string,
     // so the `?? ''` fallback was unreachable. Use String() for safe conversion.
     const version = String(context.extension.packageJSON.version ?? '');
-    viewerProvider = new LogViewerProvider(context.extensionUri, version);
+    viewerProvider = new LogViewerProvider(context.extensionUri, version, context);
     context.subscriptions.push(viewerProvider);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
@@ -106,6 +107,15 @@ export function activate(context: vscode.ExtensionContext): void {
             await cfg.update('exclusions', [...current, pattern], vscode.ConfigurationTarget.Workspace);
         }
     });
+    viewerProvider.setExclusionRemovedHandler(async (pattern) => {
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const current = cfg.get<string[]>('exclusions', []);
+        const updated = current.filter(p => p !== pattern);
+        if (updated.length !== current.length) {
+            await cfg.update('exclusions', updated, vscode.ConfigurationTarget.Workspace);
+            viewerProvider.setExclusions(updated);
+        }
+    });
     viewerProvider.setAnnotationPromptHandler(async (lineIndex, current) => {
         const text = await vscode.window.showInputBox({
             prompt: `Annotate line ${lineIndex + 1}`,
@@ -153,6 +163,16 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         await cfg.update('watchPatterns', [...current, { pattern: text }], vscode.ConfigurationTarget.Workspace);
         vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
+    });
+    viewerProvider.setSessionListHandler(async () => {
+        const items = await historyProvider.getChildren();
+        const sessions = buildSessionListPayload(items, historyProvider);
+        viewerProvider.sendSessionList(sessions);
+    });
+    viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
+        if (!uriString) { return; }
+        const uri = vscode.Uri.parse(uriString);
+        await viewerProvider.loadFromFile(uri);
     });
 
     // DAP tracker for all debug adapters.
@@ -229,6 +249,38 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
     sessionManager?.stopAll();
     disposeComparisonPanel();
+}
+
+/** Convert tree items to a flat session list for the webview panel. */
+function buildSessionListPayload(
+    items: readonly TreeItem[],
+    provider: SessionHistoryProvider,
+): Record<string, unknown>[] {
+    const activeUri = provider.getActiveUri();
+    return items.flatMap(item => {
+        if (isSplitGroup(item)) {
+            return item.parts.map(p => ({
+                filename: p.filename,
+                displayName: p.displayName ?? p.filename,
+                adapter: p.adapter,
+                size: p.size,
+                date: p.date,
+                hasTimestamps: p.hasTimestamps ?? false,
+                isActive: activeUri?.toString() === p.uri.toString(),
+                uriString: p.uri.toString(),
+            }));
+        }
+        return [{
+            filename: item.filename,
+            displayName: item.displayName ?? item.filename,
+            adapter: item.adapter,
+            size: item.size,
+            date: item.date,
+            hasTimestamps: item.hasTimestamps ?? false,
+            isActive: activeUri?.toString() === item.uri.toString(),
+            uriString: item.uri.toString(),
+        }];
+    });
 }
 
 /** Open a source file at a specific line, optionally in a split editor. */

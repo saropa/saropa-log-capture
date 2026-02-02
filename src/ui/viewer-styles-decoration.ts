@@ -135,18 +135,48 @@ export function getDecorationStyles(): string {
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
 }
-/* Whole-line severity tinting (subtle backgrounds) */
+/* Whole-line severity tinting (background colors by log level) */
 .line.line-tint-error {
-    background-color: rgba(255, 0, 0, 0.08);
+    background-color: rgba(255, 60, 60, 0.12);
 }
 .line.line-tint-error:hover {
-    background-color: rgba(255, 0, 0, 0.14);
+    background-color: rgba(255, 60, 60, 0.20);
 }
 .line.line-tint-warning {
-    background-color: rgba(255, 204, 0, 0.08);
+    background-color: rgba(255, 204, 0, 0.10);
 }
 .line.line-tint-warning:hover {
-    background-color: rgba(255, 204, 0, 0.14);
+    background-color: rgba(255, 204, 0, 0.18);
+}
+.line.line-tint-performance {
+    background-color: rgba(180, 140, 255, 0.10);
+}
+.line.line-tint-performance:hover {
+    background-color: rgba(180, 140, 255, 0.18);
+}
+.line.line-tint-todo {
+    background-color: rgba(200, 200, 200, 0.08);
+}
+.line.line-tint-todo:hover {
+    background-color: rgba(200, 200, 200, 0.16);
+}
+.line.line-tint-debug {
+    background-color: rgba(220, 220, 170, 0.08);
+}
+.line.line-tint-debug:hover {
+    background-color: rgba(220, 220, 170, 0.16);
+}
+.line.line-tint-notice {
+    background-color: rgba(79, 193, 255, 0.08);
+}
+.line.line-tint-notice:hover {
+    background-color: rgba(79, 193, 255, 0.16);
+}
+.line.line-tint-info {
+    background-color: rgba(78, 201, 176, 0.06);
+}
+.line.line-tint-info:hover {
+    background-color: rgba(78, 201, 176, 0.14);
 }
 
 /* Severity bar mode (colored left border) */
