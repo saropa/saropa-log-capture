@@ -2,26 +2,60 @@
 # -*- coding: utf-8 -*-
 
 # ##############################################################################
-# Saropa Log Capture — Developer Toolkit
+# Saropa Log Capture — Developer Toolkit & Publish Pipeline
 # ##############################################################################
 #
 # .SYNOPSIS
-#   One-click setup, build, and install for the Saropa Log Capture extension.
+#   Developer toolkit: setup, build, and local install for the extension.
+#   Publish pipeline: gated analyze-then-publish to VS Code Marketplace.
 #
 # .DESCRIPTION
-#   Runs the full pipeline automatically:
-#     prerequisites → global npm → VS Code extensions → project deps →
-#     compile → quality checks → package .vsix → report → offer install.
-#   Each step is timed. A summary report is always saved to reports/.
-#   Interactive prompts only appear at the end (install, open report).
+#   Analysis phase (all must pass):
+#     Step 1:  Prerequisites (Node 18+, npm, git, gh, VS Code CLI)
+#     Step 2:  Global npm packages (yo, generator-code)
+#     Step 3:  VS Code extensions (esbuild, eslint, test runner)
+#     Step 4:  Working tree (clean git state)
+#     Step 5:  Remote sync (fetch, pull if behind)
+#     Step 6:  Dependencies (npm install if needed)
+#     Step 7:  Compile (type-check + lint + esbuild)
+#     Step 8:  Tests (npm run test)
+#     Step 9:  Quality checks (300-line file limit)
+#     Step 10: Version sync & validation (CHANGELOG → package.json)
 #
-# .NOTES
-#   Version:      2.1.0
-#   Requires:     Python 3.10+
-#                 Optional: colorama (`pip install colorama`) for colored output.
+#   Analyze-only mode (--analyze-only):
+#     → Package .vsix, show install instructions, offer local install
+#
+#   Publish phase (irreversible, needs confirmation):
+#     Step 11: Finalize CHANGELOG (- Current -> today's date)
+#     Step 12: Package .vsix
+#     Step 13: Git commit & push
+#     Step 14: Git tag (v{version})
+#     Step 15: Publish to VS Code Marketplace
+#     Step 16: Create GitHub release (attach .vsix)
 #
 # .USAGE
-#   python scripts/dev.py
+#   python scripts/dev.py                   # full analyze + publish pipeline
+#   python scripts/dev.py --analyze-only    # build + package + local install
+#   python scripts/dev.py --skip-tests      # skip test step
+#   python scripts/dev.py --skip-extensions # skip VS Code extension checks
+#   python scripts/dev.py --skip-global-npm # skip global npm package checks
+#   python scripts/dev.py --auto-install    # auto-install .vsix (no prompt)
+#   python scripts/dev.py --no-logo         # suppress Saropa ASCII art
+#
+# .NOTES
+#   Version:      3.0.0
+#   Requires:     Python 3.10+
+#   Optional:     colorama (`pip install colorama`) for Windows color support
+#
+# Exit Codes:
+#    0  SUCCESS              8  VERSION_INVALID
+#    1  PREREQUISITE_FAILED  9  CHANGELOG_FAILED
+#    2  WORKING_TREE_DIRTY  10  PACKAGE_FAILED
+#    3  REMOTE_SYNC_FAILED  11  GIT_FAILED
+#    4  DEPENDENCY_FAILED   12  PUBLISH_FAILED
+#    5  COMPILE_FAILED      13  RELEASE_FAILED
+#    6  TEST_FAILED         14  USER_CANCELLED
+#    7  QUALITY_FAILED
 #
 # ##############################################################################
 
@@ -30,16 +64,27 @@ import datetime
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import time
+import webbrowser
 
 # Resolve paths relative to this script so it works from any working directory.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# cspell:ignore connor4312 dbaeumer
+# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
+MAX_FILE_LINES = 300
+
+MARKETPLACE_URL = (
+    "https://marketplace.visualstudio.com"
+    "/items?itemName=saropa.saropa-log-capture"
+)
+REPO_URL = "https://github.com/saropa/saropa-log-capture"
+
+# cspell:ignore urrent startfile unpushed pubdev connor4312 dbaeumer
 
 # VS Code extensions required for development.
 REQUIRED_VSCODE_EXTENSIONS = [
@@ -54,8 +99,27 @@ REQUIRED_GLOBAL_NPM_PACKAGES = [
     "generator-code",
 ]
 
-# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
-MAX_FILE_LINES = 300
+
+# ── Exit Codes ──────────────────────────────────────────────
+
+
+class ExitCode:
+    """Exit codes for each failure category."""
+    SUCCESS = 0
+    PREREQUISITE_FAILED = 1
+    WORKING_TREE_DIRTY = 2
+    REMOTE_SYNC_FAILED = 3
+    DEPENDENCY_FAILED = 4
+    COMPILE_FAILED = 5
+    TEST_FAILED = 6
+    QUALITY_FAILED = 7
+    VERSION_INVALID = 8
+    CHANGELOG_FAILED = 9
+    PACKAGE_FAILED = 10
+    GIT_FAILED = 11
+    PUBLISH_FAILED = 12
+    RELEASE_FAILED = 13
+    USER_CANCELLED = 14
 
 
 # ── Color Setup ──────────────────────────────────────────────
@@ -206,19 +270,27 @@ def show_logo(version: str) -> None:
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     """Run a shell command and return the result.
 
-    shell=True is needed on Windows so that npm/npx resolve via PATH.
+    shell=True is needed on Windows so that npm/npx/.cmd scripts resolve
+    via PATH through cmd.exe. On macOS/Linux, shell=False is safer and
+    avoids quoting issues.
     """
     return subprocess.run(
         cmd,
         capture_output=True,
         text=True,
+        # Windows needs shell=True because npm/npx are .cmd batch files
+        # that only resolve through cmd.exe's PATH lookup.
         shell=(sys.platform == "win32"),
         **kwargs,
     )
 
 
 def read_package_version() -> str:
-    """Read the extension version from package.json."""
+    """Read the extension version from package.json.
+
+    Returns "unknown" if the file can't be read or parsed, so callers
+    can still display a banner before failing more specifically.
+    """
     pkg_path = os.path.join(PROJECT_ROOT, "package.json")
     try:
         with open(pkg_path, encoding="utf-8") as f:
@@ -229,7 +301,10 @@ def read_package_version() -> str:
 
 
 def elapsed_str(seconds: float) -> str:
-    """Format elapsed seconds as a human-readable string."""
+    """Format elapsed seconds as a human-readable string.
+
+    Sub-second durations are shown in milliseconds for readability.
+    """
     if seconds < 1:
         return f"{seconds * 1000:.0f}ms"
     return f"{seconds:.1f}s"
@@ -240,7 +315,11 @@ def run_step(
     fn: object,
     results: list[tuple[str, bool, float]],
 ) -> bool:
-    """Time and record a single step. Returns its pass/fail status."""
+    """Time and record a single pipeline step.
+
+    Wraps any step function with timing. The (name, passed, elapsed) tuple
+    is appended to the results list for the timing chart and report.
+    """
     t0 = time.time()
     passed = fn()  # type: ignore[operator]
     elapsed = time.time() - t0
@@ -248,17 +327,23 @@ def run_step(
     return passed
 
 
-# ── Setup Checks ─────────────────────────────────────────────
+# ── Analysis: Prerequisites ──────────────────────────────────
 # Each check returns True on success, False on blocking failure.
-# Some checks are non-blocking (return True with a warning).
+# All prerequisites are blocking — the pipeline halts on the first failure
+# so the user gets a clear message about what to install.
 
 
 def check_node() -> bool:
-    """Verify Node.js is installed (>= 18)."""
+    """Verify Node.js is installed (>= 18).
+
+    VS Code extensions require Node 18+ for the vsce packaging tool
+    and for esbuild bundling.
+    """
     result = run(["node", "--version"], check=False)
     if result.returncode != 0:
         fail("Node.js is not installed. Install from https://nodejs.org/")
         return False
+    # node --version returns "vXX.YY.ZZ", strip the leading "v"
     version = result.stdout.strip().lstrip("v")
     major = int(version.split(".")[0])
     if major < 18:
@@ -269,7 +354,11 @@ def check_node() -> bool:
 
 
 def check_npm() -> bool:
-    """Verify npm is installed."""
+    """Verify npm is installed.
+
+    npm ships with Node.js, so a missing npm usually means a broken
+    Node installation rather than a separate install step.
+    """
     result = run(["npm", "--version"], check=False)
     if result.returncode != 0:
         fail("npm is not installed. It ships with Node.js — reinstall Node.")
@@ -279,7 +368,11 @@ def check_npm() -> bool:
 
 
 def check_git() -> bool:
-    """Verify git is installed."""
+    """Verify git is installed.
+
+    Required for working tree checks, commit, tag, and push operations
+    during the publish phase.
+    """
     result = run(["git", "--version"], check=False)
     if result.returncode != 0:
         fail("git is not installed. Install from https://git-scm.com/")
@@ -289,27 +382,74 @@ def check_git() -> bool:
 
 
 def check_gh_cli() -> bool:
-    """Verify GitHub CLI is installed and authenticated (non-blocking)."""
-    if not shutil.which("gh"):
-        warn("GitHub CLI (gh) is not installed. Optional but recommended.")
-        info(f"  Install from {C.WHITE}https://cli.github.com/{C.RESET}")
-        return True  # non-blocking
+    """Verify GitHub CLI is installed and authenticated.
 
+    Only called when publishing (not --analyze-only). Blocking because
+    Step 16 requires `gh release create` to attach the .vsix to a
+    GitHub release. Failing early here prevents discovering the issue
+    only after the marketplace publish has already succeeded.
+    """
+    if not shutil.which("gh"):
+        fail("GitHub CLI (gh) is not installed.")
+        info(f"  Install from {C.WHITE}https://cli.github.com/{C.RESET}")
+        return False
+
+    # Use a timeout because gh auth status can hang if the keyring is locked
     try:
         result = run(["gh", "auth", "status"], check=False, timeout=10)
     except subprocess.TimeoutExpired:
-        warn("GitHub CLI auth check timed out — skipping.")
-        return True
+        fail("GitHub CLI auth check timed out.")
+        return False
     if result.returncode != 0:
-        warn(f"GitHub CLI installed but not authenticated. "
+        fail(f"GitHub CLI not authenticated. "
              f"Run: {C.YELLOW}gh auth login{C.RESET}")
-    else:
-        ok("GitHub CLI — authenticated")
+        return False
+    ok("GitHub CLI — authenticated")
     return True
 
 
+def check_vsce_auth() -> bool:
+    """Verify vsce has valid marketplace credentials for 'saropa'.
+
+    Only called when --analyze-only is NOT set, since credentials are
+    only needed for the actual marketplace publish in Step 15.
+    Uses `vsce verify-pat` which validates the PAT without publishing.
+    """
+    info("Checking marketplace credentials...")
+    result = run(
+        ["npx", "@vscode/vsce", "verify-pat", "saropa"],
+        cwd=PROJECT_ROOT,
+        check=False,
+    )
+    if result.returncode == 0:
+        ok("Marketplace PAT verified for 'saropa'")
+        return True
+
+    # verify-pat may not exist in older vsce versions — treat as a
+    # non-blocking warning rather than failing the entire pipeline
+    stderr = (result.stderr or "").lower()
+    if "unknown command" in stderr or "not a vsce command" in stderr:
+        warn("Could not verify PAT (vsce verify-pat not available).")
+        info("Publish may fail if credentials are missing.")
+        return True
+
+    fail("No valid marketplace PAT found for publisher 'saropa'.")
+    info(f"  Run: {C.YELLOW}npx @vscode/vsce login saropa{C.RESET}")
+    return False
+
+
+# ── Analysis: Dev Environment ────────────────────────────────
+# VS Code CLI, global npm packages, and VS Code extensions are
+# developer conveniences — non-blocking warnings if unavailable,
+# but will auto-install if missing and the tools are reachable.
+
+
 def check_vscode_cli() -> bool:
-    """Verify the 'code' CLI is available (non-blocking)."""
+    """Verify the 'code' CLI is available (non-blocking).
+
+    The code CLI is needed for auto-installing .vsix files and
+    VS Code extensions. If missing, the user can still install manually.
+    """
     if not shutil.which("code"):
         warn("VS Code CLI (code) not found on PATH.")
         info(f"  Open VS Code → {C.YELLOW}Ctrl+Shift+P{C.RESET} → "
@@ -320,7 +460,11 @@ def check_vscode_cli() -> bool:
 
 
 def check_global_npm_packages() -> bool:
-    """Check and install required global npm packages."""
+    """Check and install required global npm packages.
+
+    Parses `npm list -g --json` to find what's already installed,
+    then auto-installs any missing packages from REQUIRED_GLOBAL_NPM_PACKAGES.
+    """
     all_ok = True
     result = run(["npm", "list", "-g", "--depth=0", "--json"], check=False)
 
@@ -342,7 +486,8 @@ def check_global_npm_packages() -> bool:
                 ["npm", "install", "-g", pkg], check=False,
             )
             if install_result.returncode != 0:
-                fail(f"Failed to install {pkg}: {install_result.stderr.strip()}")
+                fail(f"Failed to install {pkg}: "
+                     f"{install_result.stderr.strip()}")
                 all_ok = False
             else:
                 ok(f"Installed: {C.WHITE}{pkg}{C.RESET}")
@@ -350,7 +495,12 @@ def check_global_npm_packages() -> bool:
 
 
 def check_vscode_extensions() -> bool:
-    """Check and install required VS Code extensions."""
+    """Check and install required VS Code extensions.
+
+    Skips silently if the 'code' CLI isn't available. Otherwise lists
+    installed extensions and auto-installs any that are missing from
+    REQUIRED_VSCODE_EXTENSIONS.
+    """
     if not shutil.which("code"):
         warn("Skipping VS Code extension check — 'code' CLI not available.")
         return True
@@ -360,6 +510,7 @@ def check_vscode_extensions() -> bool:
         warn("Could not list VS Code extensions.")
         return True
 
+    # Case-insensitive comparison for extension IDs
     installed = set(result.stdout.strip().lower().splitlines())
 
     all_ok = True
@@ -372,36 +523,186 @@ def check_vscode_extensions() -> bool:
                 ["code", "--install-extension", ext], check=False,
             )
             if install_result.returncode != 0:
-                fail(f"Failed to install {ext}: {install_result.stderr.strip()}")
+                fail(f"Failed to install {ext}: "
+                     f"{install_result.stderr.strip()}")
                 all_ok = False
             else:
                 ok(f"Installed: {C.WHITE}{ext}{C.RESET}")
     return all_ok
 
 
-def check_node_modules() -> bool:
-    """Check and install project npm dependencies."""
-    node_modules = os.path.join(PROJECT_ROOT, "node_modules")
-    package_json = os.path.join(PROJECT_ROOT, "package.json")
+# ── Analysis: Git & Dependencies ─────────────────────────────
+# These checks validate the git state and project dependencies
+# before we attempt any build or publish operations.
 
-    if not os.path.isfile(package_json):
-        fail("package.json not found at project root.")
+
+def check_working_tree() -> bool:
+    """Verify git working tree is clean. Prompt if dirty.
+
+    A dirty working tree is allowed during analysis (user confirms),
+    but the publish phase will commit all staged changes, so the user
+    needs to be aware of what will be included in the release commit.
+    """
+    # --porcelain gives machine-readable output: one line per changed file
+    result = run(["git", "status", "--porcelain"], cwd=PROJECT_ROOT)
+    if result.returncode != 0:
+        fail("Could not check git status.")
+        return False
+    if not result.stdout.strip():
+        ok("Working tree is clean")
+        return True
+
+    # Show up to 10 changed files so the user knows what's uncommitted
+    changed = result.stdout.strip().splitlines()
+    warn(f"{len(changed)} uncommitted change(s):")
+    for line in changed[:10]:
+        print(f"         {C.DIM}{line}{C.RESET}")
+    if len(changed) > 10:
+        print(f"         {C.DIM}... and {len(changed) - 10} more{C.RESET}")
+    return ask_yn("Continue with dirty working tree?", default=False)
+
+
+def _check_if_behind() -> bool:
+    """Compare local HEAD against upstream. Pull if behind.
+
+    Uses merge-base to determine the relationship:
+    - If merge-base == local HEAD: local is behind, safe to fast-forward
+    - If merge-base == remote HEAD: local is ahead (unpushed commits)
+    - Otherwise: branches have diverged (fail — needs manual resolution)
+    """
+    local = run(["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT)
+    # @{u} resolves to the upstream tracking branch (e.g., origin/main)
+    remote = run(["git", "rev-parse", "@{u}"], cwd=PROJECT_ROOT)
+    if remote.returncode != 0:
+        warn("No upstream tracking branch. Skipping sync check.")
+        return True
+    if local.stdout.strip() == remote.stdout.strip():
+        ok("Local branch is up to date with origin")
+        return True
+
+    base = run(["git", "merge-base", "HEAD", "@{u}"], cwd=PROJECT_ROOT)
+    if base.stdout.strip() == local.stdout.strip():
+        # Local is an ancestor of remote — safe to fast-forward
+        fix("Local is behind origin. Pulling...")
+        pull = run(["git", "pull", "--ff-only"], cwd=PROJECT_ROOT)
+        if pull.returncode != 0:
+            fail("git pull --ff-only failed (branches diverged?)")
+            return False
+        ok("Pulled latest from origin")
+        return True
+    # Local has commits that remote doesn't — they'll be pushed in Step 13
+    ok("Local is ahead of origin (will push during publish)")
+    return True
+
+
+def check_remote_sync() -> bool:
+    """Fetch origin and ensure local branch is up to date.
+
+    Fetches first so that @{u} comparison in _check_if_behind()
+    uses the latest remote state.
+    """
+    info("Fetching origin...")
+    fetch = run(["git", "fetch", "origin"], cwd=PROJECT_ROOT)
+    if fetch.returncode != 0:
+        fail(f"git fetch failed: {fetch.stderr.strip()}")
+        return False
+    return _check_if_behind()
+
+
+def ensure_dependencies() -> bool:
+    """Run npm install if node_modules is stale or missing.
+
+    Compares package.json mtime against node_modules/.package-lock.json
+    to detect when dependencies need updating. This avoids running
+    npm install on every invocation (which is slow).
+    """
+    node_modules = os.path.join(PROJECT_ROOT, "node_modules")
+    pkg_json = os.path.join(PROJECT_ROOT, "package.json")
+
+    if not os.path.isfile(pkg_json):
+        fail("package.json not found.")
         return False
 
-    if os.path.isdir(node_modules):
-        ok("node_modules/ exists")
-    else:
-        fix("Running npm install...")
-        result = run(["npm", "install"], cwd=PROJECT_ROOT, check=False)
-        if result.returncode != 0:
-            fail(f"npm install failed:\n{result.stderr.strip()}")
-            return False
-        ok("npm install completed")
+    if not os.path.isdir(node_modules):
+        fix("node_modules/ missing — running npm install...")
+        return _run_npm_install()
+
+    # npm writes .package-lock.json inside node_modules after install.
+    # If package.json is newer, dependencies may have changed.
+    lock = os.path.join(node_modules, ".package-lock.json")
+    if os.path.isfile(lock):
+        if os.path.getmtime(pkg_json) > os.path.getmtime(lock):
+            fix("package.json newer than lockfile — running npm install...")
+            return _run_npm_install()
+
+    ok("node_modules/ up to date")
+    return True
+
+
+def _run_npm_install() -> bool:
+    """Run npm install and report result."""
+    result = run(["npm", "install"], cwd=PROJECT_ROOT, check=False)
+    if result.returncode != 0:
+        fail(f"npm install failed: {result.stderr.strip()}")
+        return False
+    ok("npm install completed")
+    return True
+
+
+# ── Analysis: Build & Quality ────────────────────────────────
+# These steps verify the code compiles, tests pass, and source files
+# meet the project's quality constraints before we package anything.
+
+
+def step_compile() -> bool:
+    """Run the full compile: type-check + lint + esbuild bundle.
+
+    This runs `npm run compile` which chains:
+      1. tsc --noEmit (type checking)
+      2. eslint src (linting)
+      3. node esbuild.js (bundle into dist/extension.js)
+    """
+    info("Running npm run compile...")
+    result = run(["npm", "run", "compile"], cwd=PROJECT_ROOT, check=False)
+    if result.returncode != 0:
+        fail("Compile failed:")
+        # Show both stdout and stderr — tsc errors go to stdout,
+        # while esbuild/eslint errors may go to stderr
+        if result.stdout.strip():
+            print(result.stdout)
+        if result.stderr.strip():
+            print(result.stderr)
+        return False
+    ok("Compile passed (type-check + lint + esbuild)")
+    return True
+
+
+def step_test() -> bool:
+    """Run the test suite via npm run test.
+
+    Uses @vscode/test-cli to launch tests inside VS Code's Extension
+    Development Host. Tests run in a headless VS Code instance.
+    """
+    info("Running npm run test...")
+    result = run(["npm", "run", "test"], cwd=PROJECT_ROOT, check=False)
+    if result.returncode != 0:
+        fail("Tests failed:")
+        if result.stdout.strip():
+            print(result.stdout)
+        if result.stderr.strip():
+            print(result.stderr)
+        return False
+    ok("Tests passed")
     return True
 
 
 def check_file_line_limits() -> bool:
-    """Enforce the 300-line hard limit on all TypeScript files in src/."""
+    """Enforce the 300-line hard limit on all TypeScript files in src/.
+
+    This is a project quality gate defined in CLAUDE.md. Keeping files
+    short encourages modular design and makes code review easier.
+    The limit counts total lines (code + comments + blanks).
+    """
     src_dir = os.path.join(PROJECT_ROOT, "src")
     violations: list[str] = []
 
@@ -410,6 +711,7 @@ def check_file_line_limits() -> bool:
             if not fname.endswith(".ts"):
                 continue
             filepath = os.path.join(dirpath, fname)
+            # Count lines by iterating the file (memory-efficient)
             with open(filepath, encoding="utf-8") as f:
                 count = sum(1 for _ in f)
             if count > MAX_FILE_LINES:
@@ -425,122 +727,181 @@ def check_file_line_limits() -> bool:
     return True
 
 
-# ── Build Steps ──────────────────────────────────────────────
+# ── Analysis: Version ────────────────────────────────────────
+# The CHANGELOG "- Current" entry is the source of truth for version.
+# If package.json differs, it's auto-synced to match. The version
+# must not already be tagged in git (would mean it's already published).
 
 
-def update_changelog(new_version: str) -> bool:
-    """Update CHANGELOG.md: convert [Unreleased] to versioned release."""
+def read_changelog_current_version() -> str | None:
+    """If CHANGELOG.md has a '- Current' entry, return its version.
+
+    Scans for lines like: ## [0.2.1] - Current
+    The "- Current" marker indicates an in-progress version that hasn't
+    been published yet. During publish, this gets replaced with today's date.
+    """
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
-
     try:
         with open(changelog_path, encoding="utf-8") as f:
-            lines = f.readlines()
+            for line in f:
+                # Match "## [X.Y.Z] - Current" (case-insensitive "Current")
+                match = re.match(
+                    r'^## \[(\d+\.\d+\.\d+)\]\s+-\s+[Cc]urrent', line,
+                )
+                if match:
+                    return match.group(1)
     except OSError:
-        warn("Could not read CHANGELOG.md")
+        pass
+    return None
+
+
+def check_version_not_tagged(version: str) -> bool:
+    """Verify the version tag does not already exist in git.
+
+    If the tag already exists, this version was already published.
+    The developer needs to bump the version before re-publishing.
+    """
+    tag = f"v{version}"
+    result = run(["git", "tag", "-l", tag], cwd=PROJECT_ROOT)
+    if result.stdout.strip():
+        fail(f"Git tag '{tag}' already exists. Bump the version first.")
         return False
-
-    # Find the [Unreleased] line
-    unreleased_idx = -1
-    for i, line in enumerate(lines):
-        if line.strip() == "## [Unreleased]":
-            unreleased_idx = i
-            break
-
-    if unreleased_idx == -1:
-        warn("No [Unreleased] section found in CHANGELOG.md")
-        return False
-
-    # Check if [Unreleased] section has any content
-    # (look for non-blank lines before the next ## heading)
-    has_content = False
-    next_heading_idx = len(lines)
-    for i in range(unreleased_idx + 1, len(lines)):
-        if lines[i].startswith("## "):
-            next_heading_idx = i
-            break
-        if lines[i].strip():  # Non-blank line found
-            has_content = True
-
-    if not has_content:
-        warn("No changes in [Unreleased] section — skipping CHANGELOG.md update")
-        return True
-
-    # Replace [Unreleased] with [version] - date
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    lines[unreleased_idx] = f"## [{new_version}] - {today}\n"
-
-    # Insert new blank [Unreleased] section at the top
-    new_section = [
-        "## [Unreleased]\n",
-        "\n",
-    ]
-    lines[unreleased_idx:unreleased_idx] = new_section
-
-    try:
-        with open(changelog_path, "w", encoding="utf-8") as f:
-            f.writelines(lines)
-    except OSError:
-        warn("Could not write CHANGELOG.md")
-        return False
-
-    ok(f"CHANGELOG.md updated: [Unreleased] → [{new_version}]")
+    ok(f"Tag '{tag}' is available")
     return True
 
 
-def bump_patch_version() -> str | None:
-    """Increment the patch version in package.json. Returns new version."""
+def _sync_package_version(target: str) -> bool:
+    """Update package.json version to match the target version.
+
+    Reads package.json, overwrites the "version" field, and writes back.
+    Returns True on success, False on any I/O or parse error.
+    """
     pkg_path = os.path.join(PROJECT_ROOT, "package.json")
     try:
         with open(pkg_path, encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, json.JSONDecodeError):
-        fail("Could not read package.json")
-        return None
+        fail("Could not read package.json for version sync")
+        return False
 
-    old_version = data.get("version", "0.0.0")
-    parts = old_version.split(".")
-    if len(parts) != 3:
-        fail(f"Unexpected version format: {old_version}")
-        return None
-
-    try:
-        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
-    except ValueError:
-        fail(f"Non-numeric version parts: {old_version}")
-        return None
-
-    new_version = f"{major}.{minor}.{patch + 1}"
-    data["version"] = new_version
-
+    old_version = data.get("version", "unknown")
+    data["version"] = target
     try:
         with open(pkg_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
             f.write("\n")
     except OSError:
         fail("Could not write package.json")
-        return None
-
-    fix(f"package.json: {C.WHITE}{old_version}{C.RESET} → {C.WHITE}{new_version}{C.RESET}")
-
-    # Update CHANGELOG.md
-    update_changelog(new_version)
-
-    return new_version
-
-
-def step_compile() -> bool:
-    """Run the full compile: type-check + lint + esbuild bundle."""
-    info("Running npm run compile...")
-    result = run(["npm", "run", "compile"], cwd=PROJECT_ROOT, check=False)
-    if result.returncode != 0:
-        fail("Compile failed:")
-        if result.stdout.strip():
-            print(result.stdout)
-        if result.stderr.strip():
-            print(result.stderr)
         return False
-    ok("Compile passed (type-check + lint + esbuild)")
+
+    fix(f"package.json: {C.WHITE}{old_version}{C.RESET}"
+        f" → {C.WHITE}{target}{C.RESET}")
     return True
+
+
+def validate_version_changelog() -> tuple[str, bool]:
+    """Sync and validate version between package.json and CHANGELOG.
+
+    1. CHANGELOG.md must have a "- Current" entry with a version
+    2. If package.json version differs, auto-sync it to match CHANGELOG
+    3. The version must not already be tagged in git
+    """
+    cl_version = read_changelog_current_version()
+    if cl_version is None:
+        fail("No '- Current' entry found in CHANGELOG.md")
+        info("Add a section like: ## [X.Y.Z] - Current")
+        return "unknown", False
+
+    pkg_version = read_package_version()
+    if pkg_version == "unknown":
+        fail("Could not read version from package.json")
+        return pkg_version, False
+
+    # Auto-sync: update package.json to match CHANGELOG if they differ
+    if cl_version != pkg_version:
+        if not _sync_package_version(cl_version):
+            return pkg_version, False
+
+    if not check_version_not_tagged(cl_version):
+        return cl_version, False
+
+    ok(f"Version {C.WHITE}{cl_version}{C.RESET} validated")
+    return cl_version, True
+
+
+# ── Publish: Confirmation ────────────────────────────────────
+# This is the critical gate between the read-only analysis phase and
+# the irreversible publish phase. The user must explicitly type "y"
+# (default is "n") to proceed.
+
+
+def confirm_publish(version: str) -> bool:
+    """Show publish summary and require explicit confirmation.
+
+    Lists every irreversible action that will happen, so the user
+    can make an informed decision. Defaults to "no" since marketplace
+    publishes cannot be undone.
+    """
+    print(f"\n  {C.BOLD}{C.YELLOW}Publish Summary{C.RESET}")
+    print(f"  {'─' * 40}")
+    print(f"  Version:     {C.WHITE}v{version}{C.RESET}")
+    print(f"  Marketplace: {C.WHITE}saropa.saropa-log-capture{C.RESET}")
+    print(f"  Repository:  {C.WHITE}{REPO_URL}{C.RESET}")
+    print(f"\n  {C.YELLOW}This will:{C.RESET}")
+    print(f"    1. Finalize CHANGELOG.md (- Current -> today)")
+    print(f"    2. Build .vsix package")
+    print(f"    3. Commit and push to origin")
+    print(f"    4. Create git tag v{version}")
+    print(f"    5. Publish to VS Code Marketplace")
+    print(f"    6. Create GitHub release with .vsix")
+    print(f"\n  {C.RED}These actions are irreversible.{C.RESET}")
+    return ask_yn("Proceed with publish?", default=False)
+
+
+# ── Publish: CHANGELOG ───────────────────────────────────────
+# The CHANGELOG uses "- Current" as a placeholder for the release date.
+# Finalization replaces this with today's date, marking the version
+# as officially released. Unlike publish_to_pubdev.py, we do NOT insert
+# a new [Unreleased] section — the developer creates the next entry manually.
+
+
+def finalize_changelog(version: str) -> bool:
+    """Replace '- Current' with today's date in CHANGELOG.md.
+
+    Transforms: ## [0.2.1] - Current
+    Into:       ## [0.2.1] - 2026-02-02
+
+    Uses regex substitution to preserve the rest of the line and file.
+    """
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        fail("Could not read CHANGELOG.md")
+        return False
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    # Match the exact version header with "- Current" suffix
+    pattern = rf'(## \[{re.escape(version)}\])\s+-\s+[Cc]urrent'
+    updated, count = re.subn(pattern, rf'\1 - {today}', content)
+
+    if count == 0:
+        fail(f"Could not find '## [{version}] - Current' in CHANGELOG.md")
+        return False
+
+    try:
+        with open(changelog_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+    except OSError:
+        fail("Could not write CHANGELOG.md")
+        return False
+
+    ok(f"CHANGELOG.md: - Current -> - {today}")
+    return True
+
+
+# ── Publish: Package ─────────────────────────────────────────
 
 
 def step_package() -> str | None:
@@ -577,10 +938,214 @@ def step_package() -> str | None:
     return vsix_path
 
 
-# ── Install ──────────────────────────────────────────────────
+# ── Publish: Git ─────────────────────────────────────────────
+# Git operations are split into commit+push (Step 13) and tag (Step 14)
+# so that a tag failure doesn't leave committed-but-untagged code.
+
+
+def git_commit_and_push(version: str) -> bool:
+    """Commit all staged changes and push to origin.
+
+    Stages everything with `git add -A` so the finalized CHANGELOG.md
+    and any other pending changes are included in the release commit.
+    If there's nothing to commit (e.g., CHANGELOG was already finalized),
+    this succeeds silently.
+    """
+    info("Staging changes...")
+    run(["git", "add", "-A"], cwd=PROJECT_ROOT)
+
+    # Check if there are staged changes after add -A
+    status = run(["git", "status", "--porcelain"], cwd=PROJECT_ROOT)
+    if not status.stdout.strip():
+        ok("No changes to commit")
+        return True
+
+    info(f"Committing release v{version}...")
+    commit = run(
+        ["git", "commit", "-m", f"release: v{version}"],
+        cwd=PROJECT_ROOT,
+    )
+    if commit.returncode != 0:
+        fail(f"git commit failed: {commit.stderr.strip()}")
+        return False
+
+    return _push_to_origin()
+
+
+def _push_to_origin() -> bool:
+    """Push current branch to origin.
+
+    Detects the current branch name dynamically rather than hardcoding
+    "main", so this works on feature branches too.
+    """
+    info("Pushing to origin...")
+    # Resolve current branch name (e.g., "main", "release/v1")
+    branch = run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=PROJECT_ROOT,
+    )
+    branch_name = branch.stdout.strip() or "main"
+    push = run(
+        ["git", "push", "origin", branch_name],
+        cwd=PROJECT_ROOT,
+    )
+    if push.returncode != 0:
+        fail(f"git push failed: {push.stderr.strip()}")
+        return False
+    ok(f"Pushed to origin/{branch_name}")
+    return True
+
+
+def create_git_tag(version: str) -> bool:
+    """Create and push an annotated git tag.
+
+    Uses annotated tags (-a) rather than lightweight tags because
+    annotated tags store the tagger, date, and message — useful for
+    `gh release create` which uses the tag message as the default body.
+    """
+    tag = f"v{version}"
+    info(f"Creating tag {tag}...")
+    result = run(
+        ["git", "tag", "-a", tag, "-m", f"Release {version}"],
+        cwd=PROJECT_ROOT,
+    )
+    if result.returncode != 0:
+        fail(f"git tag failed: {result.stderr.strip()}")
+        return False
+
+    info(f"Pushing tag {tag}...")
+    push = run(["git", "push", "origin", tag], cwd=PROJECT_ROOT)
+    if push.returncode != 0:
+        fail(f"git push tag failed: {push.stderr.strip()}")
+        return False
+
+    ok(f"Tag {tag} created and pushed")
+    return True
+
+
+# ── Publish: Marketplace ─────────────────────────────────────
+# Uses --packagePath to publish the exact .vsix we already built and
+# validated in Step 12, rather than letting vsce re-build from source
+# (which would trigger vscode:prepublish again unnecessarily).
+
+
+def publish_marketplace(vsix_path: str) -> bool:
+    """Publish the pre-built .vsix to VS Code Marketplace.
+
+    Requires a valid PAT (Personal Access Token) for the 'saropa' publisher.
+    The PAT is stored in the system keychain via `npx @vscode/vsce login`.
+    """
+    info(f"Publishing {os.path.basename(vsix_path)} to marketplace...")
+    # --packagePath skips the vscode:prepublish hook and publishes
+    # the exact artifact we already validated
+    result = run(
+        ["npx", "@vscode/vsce", "publish", "--packagePath", vsix_path],
+        cwd=PROJECT_ROOT,
+    )
+    if result.returncode != 0:
+        fail("Marketplace publish failed:")
+        if result.stdout.strip():
+            print(result.stdout)
+        if result.stderr.strip():
+            print(result.stderr)
+        return False
+    ok("Published to VS Code Marketplace")
+    return True
+
+
+# ── Publish: GitHub Release ──────────────────────────────────
+# Creates a GitHub release tagged with the version, using CHANGELOG
+# content as the release notes and attaching the .vsix as a download.
+
+
+def extract_changelog_section(version: str) -> str:
+    """Extract the CHANGELOG content for a specific version.
+
+    Reads everything between `## [X.Y.Z]` and the next `## [` header.
+    Returns a generic "Release X.Y.Z" message if the section is empty
+    or the file can't be read.
+    """
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            lines = f.readlines()
+    except OSError:
+        return f"Release {version}"
+
+    collecting = False
+    section: list[str] = []
+    for line in lines:
+        # Start collecting after the version header
+        if re.match(rf'^## \[{re.escape(version)}\]', line):
+            collecting = True
+            continue
+        # Stop at the next version header
+        if collecting and re.match(r'^## \[', line):
+            break
+        if collecting:
+            section.append(line)
+
+    notes = "".join(section).strip()
+    return notes if notes else f"Release {version}"
+
+
+def create_github_release(version: str, vsix_path: str) -> bool:
+    """Create a GitHub release with the .vsix attached.
+
+    Uses the `gh` CLI to create a release on GitHub. The .vsix file
+    is attached as a downloadable asset, making it available to users
+    who prefer to install from GitHub rather than the marketplace.
+    """
+    tag = f"v{version}"
+    notes = extract_changelog_section(version)
+
+    info(f"Creating GitHub release {tag}...")
+    # gh release create attaches files listed after the tag name
+    result = run(
+        [
+            "gh", "release", "create", tag,
+            os.path.abspath(vsix_path),
+            "--title", tag,
+            "--notes", notes,
+        ],
+        cwd=PROJECT_ROOT,
+    )
+    if result.returncode != 0:
+        fail("GitHub release failed:")
+        if result.stderr.strip():
+            print(f"         {result.stderr.strip()}")
+        _print_gh_troubleshooting()
+        return False
+
+    ok(f"GitHub release {tag} created")
+    return True
+
+
+def _print_gh_troubleshooting() -> None:
+    """Print troubleshooting hints for GitHub release failures.
+
+    The most common cause is a stale GITHUB_TOKEN env var that
+    overrides the gh CLI's keyring credentials.
+    """
+    info("Troubleshooting:")
+    info(f"  1. Check auth: {C.YELLOW}gh auth status{C.RESET}")
+    info(f"  2. If GITHUB_TOKEN is set, clear it:")
+    info(f"     PowerShell: {C.YELLOW}$env:GITHUB_TOKEN = \"\"{C.RESET}")
+    info(f"     Bash: {C.YELLOW}unset GITHUB_TOKEN{C.RESET}")
+
+
+# ── Install (analyze-only) ────────────────────────────────────
+# These functions support the local install workflow when running
+# in --analyze-only mode: show instructions, offer CLI install,
+# and offer to open the build report.
+
 
 def print_install_instructions(vsix_path: str) -> None:
-    """Print coloured instructions for installing the .vsix in VS Code."""
+    """Print coloured instructions for installing the .vsix in VS Code.
+
+    Shows three installation methods (Command Palette, CLI, drag-and-drop)
+    and a quick-start guide for the extension after installing.
+    """
     vsix_name = os.path.basename(vsix_path)
     abs_path = os.path.abspath(vsix_path)
 
@@ -620,7 +1185,10 @@ def print_install_instructions(vsix_path: str) -> None:
 
 
 def prompt_install(vsix_path: str) -> None:
-    """Ask the user whether to install the .vsix via the code CLI."""
+    """Ask the user whether to install the .vsix via the code CLI.
+
+    Falls back gracefully if the 'code' CLI isn't on PATH.
+    """
     if not shutil.which("code"):
         warn("VS Code CLI (code) not found on PATH — cannot auto-install.")
         info("Add it via: VS Code → Ctrl+Shift+P → "
@@ -643,7 +1211,11 @@ def prompt_install(vsix_path: str) -> None:
 
 
 def prompt_open_report(report_path: str) -> None:
-    """Ask the user whether to open the build report."""
+    """Ask the user whether to open the build report.
+
+    Uses the platform-appropriate file opener (startfile on Windows,
+    open on macOS, xdg-open on Linux).
+    """
     if not ask_yn("Open build report?", default=False):
         return
 
@@ -657,39 +1229,60 @@ def prompt_open_report(report_path: str) -> None:
         subprocess.Popen(["xdg-open", abs_path])
 
 
-# ── Report ───────────────────────────────────────────────────
+# ── Report & Display ─────────────────────────────────────────
+# Reports are saved to reports/ (which is gitignored) so the user
+# has a persistent record of each pipeline run. The timing chart
+# gives a visual breakdown of where time was spent.
+
+
+def _build_report_header(
+    results: list[tuple[str, bool, float]],
+    version: str,
+    is_publish: bool,
+) -> list[str]:
+    """Build the header lines for a report."""
+    total_time = sum(t for _, _, t in results)
+    passed = sum(1 for _, p, _ in results if p)
+    failed = len(results) - passed
+    kind = "Publish" if is_publish else "Analysis"
+
+    lines = [
+        f"Saropa Log Capture — {kind} Report",
+        f"Generated: {datetime.datetime.now().isoformat()}",
+        f"Extension version: {version}",
+        "",
+        f"Results: {passed} passed, {failed} failed" if failed else
+        f"Results: {passed} passed",
+        f"Total time: {elapsed_str(total_time)}",
+    ]
+    return lines
+
 
 def save_report(
     results: list[tuple[str, bool, float]],
     version: str,
     vsix_path: str | None = None,
+    is_publish: bool = False,
 ) -> str | None:
     """Save a summary report to reports/. Returns the report path."""
     reports_dir = os.path.join(PROJECT_ROOT, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    report_path = os.path.join(reports_dir, f"{ts}_dev_report.log")
+    kind = "publish" if is_publish else "analyze"
+    report_name = f"{ts}_saropa_log_capture_{kind}_report.log"
+    report_path = os.path.join(reports_dir, report_name)
 
-    total_time = sum(t for _, _, t in results)
-    passed = sum(1 for _, p, _ in results if p)
-    failed = len(results) - passed
-
-    lines = [
-        "Saropa Log Capture — Dev Report",
-        f"Generated: {datetime.datetime.now().isoformat()}",
-        f"Extension version: {version}",
-        "",
-        f"Results: {passed} passed, {failed} failed",
-        f"Total time: {elapsed_str(total_time)}",
-    ]
+    lines = _build_report_header(results, version, is_publish)
 
     if vsix_path and os.path.isfile(vsix_path):
         vsix_size = os.path.getsize(vsix_path) / 1024
         lines.append(f"VSIX file: {os.path.basename(vsix_path)}")
         lines.append(f"VSIX size: {vsix_size:.1f} KB")
-        lines.append(f"VSIX path: {os.path.abspath(vsix_path)}")
+
+    if is_publish:
+        lines.append(f"Marketplace: {MARKETPLACE_URL}")
+        lines.append(f"GitHub release: {REPO_URL}/releases/tag/v{version}")
 
     lines.append("")
     lines.append("Step Details:")
@@ -704,11 +1297,16 @@ def save_report(
 
 
 def print_timing(results: list[tuple[str, bool, float]]) -> None:
-    """Print a coloured timing bar chart for all recorded steps."""
+    """Print a coloured timing bar chart for all recorded steps.
+
+    Each step gets a proportional bar (max 30 chars wide) showing
+    its share of total time. Failed steps show a red ✗ instead of ✓.
+    """
     total = sum(t for _, _, t in results)
     heading("Timing")
     for name, passed, secs in results:
         icon = f"{C.GREEN}✓{C.RESET}" if passed else f"{C.RED}✗{C.RESET}"
+        # Scale bar length proportionally to total time (max 30 chars)
         bar_len = int(min(secs / max(total, 0.001) * 30, 30))
         bar = f"{C.GREEN}{'█' * bar_len}{C.RESET}" if bar_len else ""
         print(f"  {icon} {name:<25s} {elapsed_str(secs):>8s}  {bar}")
@@ -716,46 +1314,278 @@ def print_timing(results: list[tuple[str, bool, float]]) -> None:
     print(f"    {'Total':<23s} {C.BOLD}{elapsed_str(total)}{C.RESET}")
 
 
+def print_success_banner(version: str, vsix_path: str) -> None:
+    """Print the final success summary with links."""
+    heading("Published Successfully!")
+    print(f"""
+  {C.GREEN}{C.BOLD}v{version} is live!{C.RESET}
+
+  {C.CYAN}Marketplace:{C.RESET}
+    {C.WHITE}{MARKETPLACE_URL}{C.RESET}
+
+  {C.CYAN}GitHub Release:{C.RESET}
+    {C.WHITE}{REPO_URL}/releases/tag/v{version}{C.RESET}
+
+  {C.CYAN}VSIX:{C.RESET}
+    {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}
+""")
+    try:
+        webbrowser.open(MARKETPLACE_URL)
+    except Exception:
+        pass
+
+
 # ── CLI ──────────────────────────────────────────────────────
 
-def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments (all optional — for CI automation)."""
-    parser = argparse.ArgumentParser(
-        description="Saropa Log Capture — one-click setup, build, and install.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Runs the full pipeline by default. Flags are for CI automation only:
+# Argument definitions: (flag, help text)
+_CLI_FLAGS = [
+    ("--analyze-only", "Run analysis + build + package, offer local install. No publish."),
+    ("--skip-tests", "Skip the test step during analysis."),
+    ("--skip-extensions", "Skip VS Code extension checks."),
+    ("--skip-global-npm", "Skip global npm package checks."),
+    ("--auto-install", "Auto-install .vsix without prompting (for CI)."),
+    ("--no-logo", "Suppress the Saropa ASCII art logo."),
+]
 
-  python scripts/dev.py                        # full pipeline
-  python scripts/dev.py --skip-compile         # skip compile step
-  python scripts/dev.py --auto-install         # install without prompting
-        """,
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments.
+
+    All flags are boolean store_true. Definitions live in _CLI_FLAGS
+    to keep this function short.
+    """
+    parser = argparse.ArgumentParser(
+        description="Saropa Log Capture — Developer Toolkit & Publish Pipeline",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--skip-compile", action="store_true",
-                        help="Skip the compile step.")
-    parser.add_argument("--skip-extensions", action="store_true",
-                        help="Skip VS Code extension checks.")
-    parser.add_argument("--skip-global-npm", action="store_true",
-                        help="Skip global npm package checks.")
-    parser.add_argument("--auto-install", action="store_true",
-                        help="Auto-install .vsix without prompting.")
-    parser.add_argument("--no-logo", action="store_true",
-                        help="Suppress the Saropa ASCII art logo.")
+    for flag, help_text in _CLI_FLAGS:
+        parser.add_argument(flag, action="store_true", help=help_text)
     return parser.parse_args()
 
 
 # ── Main ─────────────────────────────────────────────────────
-# Full pipeline: setup → build → report → interactive prompts.
-# Exits with code 0 on success, 1 on any failure.
+# The pipeline is split into small orchestrator functions to keep each
+# under the 30-line limit. The flow is:
+#   main() → _run_analysis() → _run_build_and_validate()
+#                             → confirm_publish() → _run_publish()
 
 
-def main() -> int:
-    args = parse_args()
-    version = read_package_version()
-    results: list[tuple[str, bool, float]] = []
-    errors = 0
+def _run_prerequisites(
+    args: argparse.Namespace,
+    results: list[tuple[str, bool, float]],
+) -> bool:
+    """Step 1: Check all prerequisite tools. Returns True if all pass.
 
-    # -- Banner --
+    Checks Node, npm, git, gh CLI, and VS Code CLI. The vsce PAT
+    check is only added when we're doing a full publish (not --analyze-only).
+    """
+    heading("Step 1 · Prerequisites")
+    for name, fn in [
+        ("Node.js", check_node),
+        ("npm", check_npm),
+        ("git", check_git),
+        ("VS Code CLI", check_vscode_cli),
+    ]:
+        if not run_step(name, fn, results):
+            return False
+    # gh CLI and vsce PAT are only required for publishing.
+    # In analyze-only mode they're not needed at all.
+    if not args.analyze_only:
+        if not run_step("GitHub CLI", check_gh_cli, results):
+            return False
+        if not run_step("vsce PAT", check_vsce_auth, results):
+            return False
+    return True
+
+
+def _run_dev_checks(
+    args: argparse.Namespace,
+    results: list[tuple[str, bool, float]],
+) -> bool:
+    """Steps 2-6: Dev environment setup and git state checks.
+
+    Installs global npm packages and VS Code extensions (if not skipped),
+    then verifies git state and project dependencies.
+    """
+    # Step 2: Global npm packages (skippable)
+    if args.skip_global_npm:
+        heading("Step 2 · Global npm Packages (skipped)")
+    else:
+        heading("Step 2 · Global npm Packages")
+        if not run_step("Global npm pkgs",
+                        check_global_npm_packages, results):
+            return False
+
+    # Step 3: VS Code extensions (skippable)
+    if args.skip_extensions:
+        heading("Step 3 · VS Code Extensions (skipped)")
+    else:
+        heading("Step 3 · VS Code Extensions")
+        if not run_step("VS Code extensions",
+                        check_vscode_extensions, results):
+            return False
+
+    # Step 4: Verify no unexpected uncommitted changes
+    heading("Step 4 · Working Tree")
+    if not run_step("Working tree", check_working_tree, results):
+        return False
+
+    # Step 5: Ensure we're building on top of the latest remote code
+    heading("Step 5 · Remote Sync")
+    if not run_step("Remote sync", check_remote_sync, results):
+        return False
+
+    # Step 6: Install/update node_modules if needed
+    heading("Step 6 · Dependencies")
+    if not run_step("Dependencies", ensure_dependencies, results):
+        return False
+
+    return True
+
+
+def _run_analysis(
+    args: argparse.Namespace,
+    results: list[tuple[str, bool, float]],
+) -> tuple[str, bool]:
+    """Run all analysis steps (1-10). Returns (version, all_passed).
+
+    Steps are ordered to fail fast on the cheapest checks first:
+    prerequisites → dev env → git state → deps → compile → tests →
+    quality → version sync & validation.
+    """
+    if not _run_prerequisites(args, results):
+        return "", False
+    if not _run_dev_checks(args, results):
+        return "", False
+    return _run_build_and_validate(args, results)
+
+
+def _run_build_and_validate(
+    args: argparse.Namespace,
+    results: list[tuple[str, bool, float]],
+) -> tuple[str, bool]:
+    """Run compile, test, quality, and version steps (7-10).
+
+    Split from _run_analysis() to keep each orchestrator under 30 lines.
+    """
+    # Step 7: Full compile (type-check + lint + esbuild bundle)
+    heading("Step 7 · Compile")
+    if not run_step("Compile", step_compile, results):
+        return "", False
+
+    # Step 8: Tests (skippable for quick iteration during development)
+    if args.skip_tests:
+        heading("Step 8 · Tests (skipped)")
+    else:
+        heading("Step 8 · Tests")
+        if not run_step("Tests", step_test, results):
+            return "", False
+
+    # Step 9: Enforce the 300-line .ts file limit
+    heading("Step 9 · Quality Checks")
+    if not run_step("File line limits", check_file_line_limits, results):
+        return "", False
+
+    # Step 10: Sync package.json from CHANGELOG, verify tag is available.
+    # Uses manual timing because validate_version_changelog()
+    # returns a tuple rather than a simple bool.
+    heading("Step 10 · Version Sync & Validation")
+    t0 = time.time()
+    version, version_ok = validate_version_changelog()
+    elapsed = time.time() - t0
+    results.append(("Version validation", version_ok, elapsed))
+    if not version_ok:
+        return "", False
+
+    return version, True
+
+
+def _run_publish_steps(
+    version: str,
+    results: list[tuple[str, bool, float]],
+) -> str | None:
+    """Run publish steps 11-14 (CHANGELOG, package, commit, tag).
+
+    Returns the vsix_path on success, or None if any step fails.
+    Split from _run_publish() to keep each orchestrator under 30 lines.
+    """
+    # Step 11: Stamp the CHANGELOG with today's date
+    heading("Step 11 · Finalize CHANGELOG")
+    if not run_step("Finalize CHANGELOG",
+                    lambda: finalize_changelog(version), results):
+        return None
+
+    # Step 12: Build the .vsix package
+    heading("Step 12 · Package")
+    t0 = time.time()
+    vsix_path = step_package()
+    elapsed = time.time() - t0
+    results.append(("Package", vsix_path is not None, elapsed))
+    if not vsix_path:
+        return None
+
+    # Step 13: Commit the finalized CHANGELOG + any other changes
+    heading("Step 13 · Git Commit & Push")
+    if not run_step("Git commit & push",
+                    lambda: git_commit_and_push(version), results):
+        return None
+
+    # Step 14: Tag the release commit
+    heading("Step 14 · Git Tag")
+    if not run_step("Git tag",
+                    lambda: create_git_tag(version), results):
+        return None
+
+    return vsix_path
+
+
+def _run_publish(
+    version: str,
+    results: list[tuple[str, bool, float]],
+) -> bool:
+    """Run all publish steps (11-16). Returns True on success.
+
+    If the GitHub release (Step 16) fails but marketplace publish
+    (Step 15) succeeded, we warn but still consider the publish
+    successful — the extension is live, just missing its GH release.
+    """
+    vsix_path = _run_publish_steps(version, results)
+    if not vsix_path:
+        return False
+
+    # Step 15: Upload to VS Code Marketplace
+    heading("Step 15 · Publish to Marketplace")
+    if not run_step("Marketplace publish",
+                    lambda: publish_marketplace(vsix_path), results):
+        return False
+
+    # Step 16: Create GitHub release with .vsix attached
+    heading("Step 16 · GitHub Release")
+    if not run_step("GitHub release",
+                    lambda: create_github_release(version, vsix_path),
+                    results):
+        # Non-fatal: the extension is already live on the marketplace
+        warn("Marketplace publish succeeded but GitHub release failed.")
+        warn(f"Create manually: gh release create v{version}")
+
+    _finish_with_report(results, version, vsix_path)
+    return True
+
+
+def _finish_with_report(
+    results: list[tuple[str, bool, float]],
+    version: str,
+    vsix_path: str,
+) -> None:
+    """Save the publish report, print timing chart, and show success banner."""
+    report = save_report(results, version, vsix_path, is_publish=True)
+    print_timing(results)
+    print_success_banner(version, vsix_path)
+    _print_report_path(report)
+
+
+def _print_banner(args: argparse.Namespace, version: str) -> None:
+    """Print the script banner (logo or compact header)."""
     if not args.no_logo:
         show_logo(version)
     else:
@@ -763,118 +1593,150 @@ def main() -> int:
               f"  {dim(f'v{version}')}")
     print(f"  Project root: {dim(PROJECT_ROOT)}")
 
-    # ── SETUP ────────────────────────────────────────────────
 
-    # -- Prerequisites (blocking) --
-    heading("Prerequisites")
-    if not run_step("Node.js", check_node, results):
-        errors += 1
-    if not run_step("npm", check_npm, results):
-        errors += 1
-    if not run_step("git", check_git, results):
-        errors += 1
-    run_step("GitHub CLI", check_gh_cli, results)
-    run_step("VS Code CLI", check_vscode_cli, results)
+def _save_and_print_report(
+    results: list[tuple[str, bool, float]],
+    version: str,
+) -> None:
+    """Save an analysis report and print its path."""
+    report = save_report(results, version or "unknown")
+    _print_report_path(report)
 
-    if errors > 0:
-        fail(f"\n{errors} prerequisite(s) missing. Fix the above and re-run.")
-        return 1
 
-    # -- Global npm packages --
-    if args.skip_global_npm:
-        heading("Global npm Packages (skipped)")
-    else:
-        heading("Global npm Packages")
-        if not run_step("Global npm pkgs", check_global_npm_packages, results):
-            errors += 1
+def _print_report_path(report: str | None) -> None:
+    """Print the report file path if a report was saved."""
+    if report:
+        rel = os.path.relpath(report, PROJECT_ROOT)
+        ok(f"Report: {C.WHITE}{rel}{C.RESET}")
 
-    # -- VS Code extensions --
-    if args.skip_extensions:
-        heading("VS Code Extensions (skipped)")
-    else:
-        heading("VS Code Extensions")
-        if not run_step("VS Code extensions", check_vscode_extensions, results):
-            errors += 1
 
-    # -- Project dependencies --
-    heading("Project Dependencies")
-    if not run_step("node_modules", check_node_modules, results):
-        errors += 1
+def _finish_analyze_only(
+    args: argparse.Namespace,
+    results: list[tuple[str, bool, float]],
+    version: str,
+) -> int:
+    """Post-analysis: package .vsix and offer local install.
 
-    if errors > 0:
-        fail(f"\n{errors} step(s) failed. Fix the above and re-run.")
-        return 1
-
-    # -- Bump version --
-    heading("Version Bump")
-    t0 = time.time()
-    new_version = bump_patch_version()
-    elapsed = time.time() - t0
-    results.append(("Version bump", new_version is not None, elapsed))
-    if new_version:
-        version = new_version
-    else:
-        return 1
-
-    # -- Compile --
-    if args.skip_compile:
-        heading("Compile (skipped)")
-    else:
-        heading("Compile")
-        if not run_step("Compile", step_compile, results):
-            return 1
-
-    # -- Quality checks --
-    heading("Quality Checks")
-    if not run_step("File line limits", check_file_line_limits, results):
-        fail("Quality check(s) failed. Fix the above and re-run.")
-        return 1
-
-    # ── BUILD ────────────────────────────────────────────────
-
-    # -- Package .vsix --
+    This is the old dev.py "done" flow — build the package, print
+    install instructions, and prompt the user to install locally.
+    """
+    # Package the .vsix (same as the old dev.py build step)
     heading("Package")
     t0 = time.time()
     vsix_path = step_package()
     elapsed = time.time() - t0
     results.append(("Package", vsix_path is not None, elapsed))
-    if not vsix_path:
-        return 1
 
-    # ── REPORT & TIMING ─────────────────────────────────────
-
-    report_path = save_report(results, version, vsix_path)
-    if report_path:
-        rel = os.path.relpath(report_path, PROJECT_ROOT)
-        ok(f"Report saved: {C.WHITE}{rel}{C.RESET}")
-
+    report = save_report(results, version, vsix_path)
     print_timing(results)
 
-    # ── DONE + INTERACTIVE PROMPTS ───────────────────────────
+    # If packaging failed, report and exit with failure code
+    if not vsix_path:
+        _print_report_path(report)
+        return ExitCode.PACKAGE_FAILED
 
-    passed = sum(1 for _, p, _ in results if p)
     heading("Done")
+    passed_count = sum(1 for _, p, _ in results if p)
     ok(f"{C.BOLD}Build complete!{C.RESET} "
-       f"{dim(f'{passed}/{len(results)} steps passed')}")
+       f"{dim(f'{passed_count}/{len(results)} steps passed')}")
     ok(f"VSIX: {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}")
-    print()
 
-    # -- Install instructions --
     print_install_instructions(vsix_path)
     if args.auto_install:
-        # CI mode: install without asking.
-        vsix_name = os.path.basename(vsix_path)
-        info(f"Running: code --install-extension {vsix_name}")
-        run(["code", "--install-extension", os.path.abspath(vsix_path)])
+        _auto_install_vsix(vsix_path)
     else:
         prompt_install(vsix_path)
 
-    # -- Offer to open report --
-    if report_path:
-        prompt_open_report(report_path)
+    _print_report_path(report)
+    if report:
+        prompt_open_report(report)
 
-    print()
-    return 0
+    return ExitCode.SUCCESS
+
+
+def _auto_install_vsix(vsix_path: str) -> None:
+    """CI mode: install .vsix via code CLI without prompting."""
+    vsix_name = os.path.basename(vsix_path)
+    info(f"Running: code --install-extension {vsix_name}")
+    run(["code", "--install-extension", os.path.abspath(vsix_path)])
+
+
+def main() -> int:
+    """Main entry point — developer toolkit + publish pipeline.
+
+    Flow:
+    1. Run analysis phase (Steps 1-10) — all must pass
+    2. If --analyze-only: package .vsix, offer local install, exit
+    3. Otherwise: show confirmation gate, then publish (Steps 11-16)
+    """
+    args = parse_args()
+    version = read_package_version()
+    # Accumulates (name, passed, elapsed) tuples for timing and reporting
+    results: list[tuple[str, bool, float]] = []
+
+    _print_banner(args, version)
+
+    # ── ANALYSIS PHASE (read-only, idempotent) ──
+    version, passed = _run_analysis(args, results)
+    if not passed:
+        print_timing(results)
+        _save_and_print_report(results, version)
+        return _exit_code_from_results(results)
+
+    # ── ANALYZE-ONLY: package + local install (like old dev.py) ──
+    if args.analyze_only:
+        return _finish_analyze_only(args, results, version)
+
+    # ── PUBLISH PHASE (irreversible — requires explicit "y") ──
+    heading("Publish Confirmation")
+    if not confirm_publish(version):
+        info("Publish cancelled by user.")
+        return ExitCode.USER_CANCELLED
+
+    if not _run_publish(version, results):
+        return _exit_code_from_results(results)
+
+    return ExitCode.SUCCESS
+
+
+# Maps step names to exit codes for _exit_code_from_results().
+_STEP_EXIT_CODES = {
+    "Node.js": ExitCode.PREREQUISITE_FAILED,
+    "npm": ExitCode.PREREQUISITE_FAILED,
+    "git": ExitCode.PREREQUISITE_FAILED,
+    "GitHub CLI": ExitCode.PREREQUISITE_FAILED,
+    "VS Code CLI": ExitCode.PREREQUISITE_FAILED,
+    "vsce PAT": ExitCode.PREREQUISITE_FAILED,
+    "Global npm pkgs": ExitCode.PREREQUISITE_FAILED,
+    "VS Code extensions": ExitCode.PREREQUISITE_FAILED,
+    "Working tree": ExitCode.WORKING_TREE_DIRTY,
+    "Remote sync": ExitCode.REMOTE_SYNC_FAILED,
+    "Dependencies": ExitCode.DEPENDENCY_FAILED,
+    "Compile": ExitCode.COMPILE_FAILED,
+    "Tests": ExitCode.TEST_FAILED,
+    "File line limits": ExitCode.QUALITY_FAILED,
+    "Version validation": ExitCode.VERSION_INVALID,
+    "Finalize CHANGELOG": ExitCode.CHANGELOG_FAILED,
+    "Package": ExitCode.PACKAGE_FAILED,
+    "Git commit & push": ExitCode.GIT_FAILED,
+    "Git tag": ExitCode.GIT_FAILED,
+    "Marketplace publish": ExitCode.PUBLISH_FAILED,
+    "GitHub release": ExitCode.RELEASE_FAILED,
+}
+
+
+def _exit_code_from_results(
+    results: list[tuple[str, bool, float]],
+) -> int:
+    """Derive an exit code from the last failing step name.
+
+    Walks the results list in reverse to find the most recent failure,
+    then maps its step name to the corresponding ExitCode value.
+    """
+    for name, passed, _ in reversed(results):
+        if not passed:
+            return _STEP_EXIT_CODES.get(name, 1)
+    return 1
 
 
 if __name__ == "__main__":

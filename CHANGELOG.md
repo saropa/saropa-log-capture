@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Native Session History tree view hidden:** The separate tree view below the Log Viewer is replaced by the in-webview Project Logs panel accessible from the icon bar.
 - **Session panel renamed:** "Sessions" panel renamed to "Project Logs" with matching icon bar tooltip.
 - **Icon bar sessions icon:** Changed from history (clock) to files icon to better represent project log files.
+- **Dev script rewritten as publish pipeline:** `scripts/dev.py` now supports a gated analyze-then-publish workflow (16 steps) with `--analyze-only` for local dev builds and full publish to VS Code Marketplace + GitHub releases. Retains all original dev toolkit features (VS Code extension installs, global npm packages, version sync, local .vsix install prompts).
 
 ---
 ## [0.2.0] - 2026-02-02
