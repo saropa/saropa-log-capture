@@ -61,7 +61,7 @@ suite('ExportFormats', () => {
 
         test('should detect error from message content', () => {
             assert.strictEqual(inferLevel('Error: something failed', 'stdout'), 'error');
-            assert.strictEqual(inferLevel('NullPointerException', 'stdout'), 'error');
+            assert.strictEqual(inferLevel('Unhandled exception: null pointer', 'stdout'), 'error');
             assert.strictEqual(inferLevel('FATAL error occurred', 'stdout'), 'error');
         });
 
