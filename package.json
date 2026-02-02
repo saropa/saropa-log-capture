@@ -2,7 +2,7 @@
   "name": "saropa-log-capture",
   "displayName": "Saropa Log Capture",
   "description": "Automatically capture VS Code Debug Console output to persistent log files",
-  "version": "0.1.16",
+  "version": "0.2.0",
   "license": "MIT",
   "publisher": "saropa",
   "repository": {
@@ -210,7 +210,8 @@
         {
           "id": "saropaLogCapture.sessionHistory",
           "name": "Session History",
-          "icon": "$(history)"
+          "icon": "$(history)",
+          "when": "false"
         }
       ]
     },

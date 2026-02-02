@@ -9,8 +9,8 @@
 export function getIconBarHtml(): string {
     return /* html */ `
 <div id="icon-bar">
-    <button id="ib-sessions" class="ib-icon" title="Session History">
-        <span class="codicon codicon-history"></span>
+    <button id="ib-sessions" class="ib-icon" title="Project Logs">
+        <span class="codicon codicon-files"></span>
     </button>
     <button id="ib-search" class="ib-icon" title="Search (Ctrl+F)">
         <span class="codicon codicon-search"></span>
