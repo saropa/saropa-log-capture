@@ -13,11 +13,11 @@ export interface SessionDisplayOptions {
     readonly reverseSort: boolean;
 }
 
-/** Default display options (all transforms disabled). */
+/** Default display options. */
 export const defaultDisplayOptions: SessionDisplayOptions = {
-    stripDatetime: false,
-    normalizeNames: false,
-    showDayHeadings: false,
+    stripDatetime: true,
+    normalizeNames: true,
+    showDayHeadings: true,
     reverseSort: false,
 };
 
@@ -26,16 +26,29 @@ const shortMonths = [
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-/** Format an epoch-ms timestamp as a compact date string. */
+/** Format hours as 12-hour time with am/pm (e.g. "4:13pm"). */
+function formatTime12h(d: Date): string {
+    const h = d.getHours() % 12 || 12;
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const ampm = d.getHours() >= 12 ? 'pm' : 'am';
+    return `${h}:${m}${ampm}`;
+}
+
+/** Format an epoch-ms timestamp as a compact date+time string (e.g. "Feb 2, 4:13pm"). */
 export function formatMtime(epochMs: number): string {
     const d = new Date(epochMs);
     const month = shortMonths[d.getMonth()];
     const day = d.getDate();
-    const year = d.getFullYear();
-    if (year === new Date().getFullYear()) {
-        return `${month} ${day}`;
+    const time = formatTime12h(d);
+    if (d.getFullYear() === new Date().getFullYear()) {
+        return `${month} ${day}, ${time}`;
     }
-    return `${month} ${day}, ${year}`;
+    return `${month} ${day}, ${d.getFullYear()}, ${time}`;
+}
+
+/** Format an epoch-ms timestamp as time only (e.g. "4:13pm"). */
+export function formatMtimeTimeOnly(epochMs: number): string {
+    return formatTime12h(new Date(epochMs));
 }
 
 /**

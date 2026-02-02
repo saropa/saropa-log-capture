@@ -169,8 +169,9 @@ export function getSessionPanelStyles(): string {
     padding: 6px 12px 4px;
     font-size: 11px;
     font-weight: 600;
-    color: var(--vscode-descriptionForeground);
+    color: var(--vscode-textLink-foreground, #3794ff);
     border-bottom: 1px solid var(--vscode-panel-border);
+    border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     position: sticky;
     top: 0;
