@@ -2,8 +2,7 @@
  * CSS styles for log line decorations and settings panel.
  *
  * Covers decoration prefix (severity dot, counter, timestamp),
- * inline context metadata, decoration settings panel, severity bars,
- * and whole-line tinting.
+ * decoration settings panel, severity bars, and whole-line tinting.
  */
 export function getDecorationStyles(): string {
     return /* css */ `
@@ -22,16 +21,6 @@ export function getDecorationStyles(): string {
 }
 .deco-counter {
     color: var(--vscode-editorLineNumber-foreground, #858585);
-}
-
-/* Inline context metadata (file path and function name breadcrumb) */
-.inline-context {
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    opacity: 0.8;
-    font-style: italic;
-    white-space: nowrap;
-    user-select: none;
 }
 
 /* Hanging indent for decorated lines: overflow text aligns with content, not decoration */
