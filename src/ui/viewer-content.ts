@@ -3,6 +3,7 @@ import { getViewerScript } from './viewer-script';
 import { getFilterScript } from './viewer-filter';
 import { getSearchScript, getSearchPanelHtml } from './viewer-search';
 import { getSearchHistoryScript } from './viewer-search-history';
+import { getSearchTogglesScript } from './viewer-search-toggles';
 import { getWatchScript } from './viewer-watch';
 import { getPinScript } from './viewer-pin';
 import { getExclusionScript } from './viewer-exclusions';
@@ -84,12 +85,14 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section" style="display:none"></div>
+    <div id="log-content-wrapper">
     <div id="log-content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
         <button id="jump-btn" title="Scroll to bottom">⬇ Bottom</button>
-        ${getScrollbarMinimapHtml()}
+    </div>
+    ${getScrollbarMinimapHtml()}
     </div>
     <div id="source-preview"></div>
     ${getContextMenuHtml()}
@@ -148,6 +151,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSplitNavScript())}
     ${scriptTag(nonce, getJsonScript())}
     ${scriptTag(nonce, getSearchScript())}
+    ${scriptTag(nonce, getSearchTogglesScript())}
     ${scriptTag(nonce, getSearchHistoryScript())}
     ${scriptTag(nonce, getLevelFilterScript())}
     ${scriptTag(nonce, getSourceTagsScript())}
