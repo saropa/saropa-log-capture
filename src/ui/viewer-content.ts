@@ -38,6 +38,8 @@ import { getErrorClassificationScript } from './viewer-error-classification';
 import { getErrorHandlerScript } from './viewer-error-handler';
 import { getIconBarHtml, getIconBarScript } from './viewer-icon-bar';
 import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-panel';
+// Must be loaded before session panel script — defines transform functions it calls.
+import { getSessionTransformsScript } from './viewer-session-transforms';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -160,6 +162,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getContextModalScript())}
     ${scriptTag(nonce, getContextMenuScript())}
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
+    ${scriptTag(nonce, getSessionTransformsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}

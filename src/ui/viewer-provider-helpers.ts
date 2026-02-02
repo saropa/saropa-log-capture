@@ -8,7 +8,10 @@ import * as vscode from "vscode";
 import { findHeaderEnd } from "./viewer-file-loader";
 import { loadSourcePreview } from "./viewer-file-loader";
 import { isFrameworkFrame } from "../modules/stack-parser";
+import { resolveSourceUri } from "../modules/source-resolver";
+import { TreeItem, isSplitGroup } from "./session-history-grouping";
 import { PendingLine } from "./viewer-file-loader";
+import { formatMtime } from "./session-display";
 
 /**
  * Handle editing a log line in the current file.
@@ -129,11 +132,11 @@ export async function handleSourcePreview(
  */
 export function flushBatch(
 	pendingLines: PendingLine[],
-	view: vscode.WebviewView | undefined,
+	isReady: boolean,
 	postMessage: (msg: unknown) => void,
 	sendNewCategories: (lines: readonly PendingLine[]) => void
 ): void {
-	if (pendingLines.length === 0 || !view) { return; }
+	if (pendingLines.length === 0 || !isReady) { return; }
 	const lines = pendingLines.splice(0);
 	postMessage({ type: "addLines", lines, lineCount: lines[lines.length - 1].lineCount });
 	sendNewCategories(lines);
@@ -239,4 +242,58 @@ export function getSavedLevelFilters(
 	if (!filename) { return undefined; }
 	const map = context.workspaceState.get<Record<string, string[]>>(LEVEL_FILTERS_KEY, {});
 	return map[filename];
+}
+
+/** Convert tree items to a flat session list for the webview panel. */
+export function buildSessionListPayload(
+	items: readonly TreeItem[],
+	activeUri: vscode.Uri | undefined,
+): Record<string, unknown>[] {
+	return items.flatMap(item => {
+		if (isSplitGroup(item)) {
+			return item.parts.map(p => ({
+				filename: p.filename,
+				displayName: p.displayName ?? p.filename,
+				adapter: p.adapter,
+				size: p.size,
+				mtime: p.mtime,
+				formattedMtime: formatMtime(p.mtime),
+				date: p.date,
+				hasTimestamps: p.hasTimestamps ?? false,
+				isActive: activeUri?.toString() === p.uri.toString(),
+				uriString: p.uri.toString(),
+			}));
+		}
+		return [{
+			filename: item.filename,
+			displayName: item.displayName ?? item.filename,
+			adapter: item.adapter,
+			size: item.size,
+			mtime: item.mtime,
+			formattedMtime: formatMtime(item.mtime),
+			date: item.date,
+			hasTimestamps: item.hasTimestamps ?? false,
+			isActive: activeUri?.toString() === item.uri.toString(),
+			uriString: item.uri.toString(),
+		}];
+	});
+}
+
+/** Open a source file at a specific line, optionally in a split editor. */
+export async function openSourceFile(
+	filePath: string,
+	line: number,
+	col: number,
+	split: boolean,
+): Promise<void> {
+	const uri = resolveSourceUri(filePath);
+	if (!uri) { return; }
+	const pos = new vscode.Position(Math.max(0, line - 1), Math.max(0, col - 1));
+	const viewColumn = split ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active;
+	try {
+		const doc = await vscode.workspace.openTextDocument(uri);
+		await vscode.window.showTextDocument(doc, { selection: new vscode.Range(pos, pos), viewColumn });
+	} catch {
+		// File may not exist on disk — ignore silently.
+	}
 }

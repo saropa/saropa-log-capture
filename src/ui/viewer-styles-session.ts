@@ -80,6 +80,39 @@ export function getSessionPanelStyles(): string {
     color: var(--vscode-errorForeground, #f44);
 }
 
+/* --- Session panel display toggles --- */
+.session-panel-toggles {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.session-toggle-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.session-toggle-btn:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+
+.session-toggle-btn.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
+    border-color: var(--vscode-focusBorder);
+}
+
 .session-panel-content {
     flex: 1;
     overflow-y: auto;
@@ -129,6 +162,19 @@ export function getSessionPanelStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* --- Day headings --- */
+.session-day-heading {
+    padding: 6px 12px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 /* --- Empty / loading states --- */

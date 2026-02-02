@@ -18,6 +18,20 @@ export function getSessionPanelHtml(): string {
             <button id="session-close" class="session-panel-close" title="Close">&times;</button>
         </div>
     </div>
+    <div class="session-panel-toggles">
+        <button id="session-toggle-strip" class="session-toggle-btn" title="Strip date/time from names">
+            <span class="codicon codicon-calendar"></span> Dates
+        </button>
+        <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names (Title Case, no underscores)">
+            <span class="codicon codicon-text-size"></span> Tidy
+        </button>
+        <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day">
+            <span class="codicon codicon-list-tree"></span> Days
+        </button>
+        <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order (oldest first)">
+            <span class="codicon codicon-arrow-up"></span> Old
+        </button>
+    </div>
     <div class="session-panel-content">
         <div id="session-list"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>
@@ -35,6 +49,12 @@ export function getSessionPanelScript(): string {
     var sessionListEl = document.getElementById('session-list');
     var sessionEmptyEl = document.getElementById('session-empty');
     var sessionLoadingEl = document.getElementById('session-loading');
+    var cachedSessions = null;
+
+    var sessionDisplayOptions = {
+        stripDatetime: false, normalizeNames: false,
+        showDayHeadings: false, reverseSort: false,
+    };
 
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
@@ -56,6 +76,8 @@ export function getSessionPanelScript(): string {
         vscodeApi.postMessage({ type: 'requestSessionList' });
     }
 
+    /* ---- Rendering ---- */
+
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
@@ -65,25 +87,89 @@ export function getSessionPanelScript(): string {
             return;
         }
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
-        sessionListEl.innerHTML = sessions.map(function(s) {
-            var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
-            var activeClass = s.isActive ? ' session-item-active' : '';
-            var meta = buildSessionMeta(s);
-            return '<div class="session-item' + activeClass + '" data-uri="' + escapeAttr(s.uriString || '') + '">'
-                + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
-                + '<div class="session-item-info">'
-                + '<span class="session-item-name">' + escapeHtmlText(s.displayName || s.filename) + '</span>'
-                + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
-                + '</div></div>';
-        }).join('');
+        var sorted = sortSessions(sessions);
+        var html = sessionDisplayOptions.showDayHeadings
+            ? renderGrouped(sorted) : renderFlat(sorted);
+        sessionListEl.innerHTML = html;
     }
+
+    function sortSessions(sessions) {
+        var list = sessions.slice();
+        list.sort(function(a, b) {
+            return sessionDisplayOptions.reverseSort
+                ? (a.mtime || 0) - (b.mtime || 0)
+                : (b.mtime || 0) - (a.mtime || 0);
+        });
+        return list;
+    }
+
+    function renderFlat(sessions) {
+        return sessions.map(renderItem).join('');
+    }
+
+    function renderGrouped(sessions) {
+        var groups = [];
+        var currentKey = '';
+        for (var i = 0; i < sessions.length; i++) {
+            var key = toDateKey(sessions[i].mtime || 0);
+            if (key !== currentKey) {
+                currentKey = key;
+                groups.push(renderDayHeading(sessions[i].mtime || 0));
+            }
+            groups.push(renderItem(sessions[i]));
+        }
+        return groups.join('');
+    }
+
+    function renderItem(s) {
+        var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
+        var activeClass = s.isActive ? ' session-item-active' : '';
+        var name = applySessionDisplayOptions(s.displayName || s.filename);
+        var meta = buildSessionMeta(s);
+        return '<div class="session-item' + activeClass + '" data-uri="' + escapeAttr(s.uriString || '') + '">'
+            + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
+            + '<div class="session-item-info">'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
+            + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
+            + '</div></div>';
+    }
+
+    function renderDayHeading(epochMs) {
+        return '<div class="session-day-heading">' + escapeHtmlText(formatDayHeading(epochMs)) + '</div>';
+    }
+
+    /* ---- Day heading formatting ---- */
+
+    var shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    function ordinalSuffix(n) {
+        var s = ['th','st','nd','rd'];
+        var v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function formatDayHeading(epochMs) {
+        var d = new Date(epochMs);
+        return dayNames[d.getDay()] + ', ' + ordinalSuffix(d.getDate()) + ' '
+            + shortMonths[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    function toDateKey(epochMs) {
+        var d = new Date(epochMs);
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    /* ---- Meta line ---- */
 
     function buildSessionMeta(s) {
         var parts = [];
         if (s.adapter) parts.push(s.adapter);
+        if (s.formattedMtime) parts.push(s.formattedMtime);
         if (s.size) parts.push(formatSessionSize(s.size));
-        if (s.date) parts.push(s.date);
-        return parts.join(' · ');
+        return parts.join(' \\u00b7 ');
     }
 
     function formatSessionSize(bytes) {
@@ -91,6 +177,56 @@ export function getSessionPanelScript(): string {
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
+
+    /* Transform functions (stripSessionDatetime, normalizeSessionName)
+       are loaded from viewer-session-transforms.ts as a separate script. */
+
+    function applySessionDisplayOptions(name) {
+        var result = trimSessionSeconds(name);
+        if (sessionDisplayOptions.stripDatetime) result = stripSessionDatetime(result);
+        if (sessionDisplayOptions.normalizeNames) result = normalizeSessionName(result);
+        return result;
+    }
+
+    /* ---- Toggle buttons ---- */
+
+    function syncToggleButtons() {
+        var ids = {
+            'session-toggle-strip': sessionDisplayOptions.stripDatetime,
+            'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
+            'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
+            'session-toggle-reverse': sessionDisplayOptions.reverseSort,
+        };
+        for (var id in ids) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('active', ids[id]);
+        }
+    }
+
+    function toggleOption(key) {
+        var copy = {};
+        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+        copy[key] = !copy[key];
+        sessionDisplayOptions = copy;
+        syncToggleButtons();
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    }
+
+    function bindToggle(id, key) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleOption(key);
+        });
+    }
+
+    bindToggle('session-toggle-strip', 'stripDatetime');
+    bindToggle('session-toggle-normalize', 'normalizeNames');
+    bindToggle('session-toggle-headings', 'showDayHeadings');
+    bindToggle('session-toggle-reverse', 'reverseSort');
+
+    /* ---- Escaping helpers ---- */
 
     function escapeAttr(str) {
         return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -128,12 +264,21 @@ export function getSessionPanelScript(): string {
         closeSessionPanel();
     });
 
-    /* Listen for session list data from the extension. */
+    /* Listen for messages from the extension. */
     window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'sessionList') {
+        if (!e.data) return;
+        if (e.data.type === 'sessionList') {
+            cachedSessions = e.data.sessions;
             renderSessionList(e.data.sessions);
         }
+        if (e.data.type === 'sessionDisplayOptions') {
+            sessionDisplayOptions = e.data.options || sessionDisplayOptions;
+            syncToggleButtons();
+            if (cachedSessions) renderSessionList(cachedSessions);
+        }
     });
+
+    syncToggleButtons();
 })();
 `;
 }

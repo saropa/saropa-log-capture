@@ -21,6 +21,9 @@ export function getIconBarHtml(): string {
     <button id="ib-options" class="ib-icon" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
+    <button id="ib-popout" class="ib-icon" title="Pop Out to New Window">
+        <span class="codicon codicon-link-external"></span>
+    </button>
 </div>`;
 }
 
@@ -92,6 +95,13 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
+    }
+
+    var popoutBtn = document.getElementById('ib-popout');
+    if (popoutBtn) {
+        popoutBtn.addEventListener('click', function() {
+            vscodeApi.postMessage({ type: 'popOutViewer' });
+        });
     }
 })();
 `;
