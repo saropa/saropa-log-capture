@@ -57,10 +57,14 @@ export class LogViewerProvider
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
     const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
-    webviewView.webview.options = { enableScripts: true, localResourceRoots: [audioUri] };
+    const codiconsUri = vscode.Uri.joinPath(this.extensionUri, 'media', 'codicons');
+    webviewView.webview.options = { enableScripts: true, localResourceRoots: [audioUri, codiconsUri] };
     const audioWebviewUri = webviewView.webview.asWebviewUri(audioUri).toString();
+    const codiconCssUri = webviewView.webview.asWebviewUri(
+      vscode.Uri.joinPath(codiconsUri, 'codicon.css'),
+    ).toString();
     const cspSource = webviewView.webview.cspSource;
-    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri, this.version, cspSource);
+    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri, this.version, cspSource, codiconCssUri);
     webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
       this.handleMessage(msg),
     );

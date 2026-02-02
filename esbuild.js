@@ -1,7 +1,19 @@
 const esbuild = require("esbuild");
+const fs = require("fs");
+const path = require("path");
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
+
+/** Copy codicon font assets so the webview can load them at runtime. */
+function copyCodiconAssets() {
+	const src = path.join(__dirname, 'node_modules', '@vscode', 'codicons', 'dist');
+	const dest = path.join(__dirname, 'media', 'codicons');
+	fs.mkdirSync(dest, { recursive: true });
+	for (const file of ['codicon.css', 'codicon.ttf']) {
+		fs.copyFileSync(path.join(src, file), path.join(dest, file));
+	}
+}
 
 /**
  * @type {import('esbuild').Plugin}
@@ -42,6 +54,7 @@ async function main() {
 			esbuildProblemMatcherPlugin,
 		],
 	});
+	copyCodiconAssets();
 	if (watch) {
 		await ctx.watch();
 	} else {
