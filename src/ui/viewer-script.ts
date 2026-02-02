@@ -155,7 +155,7 @@ window.addEventListener('message', function(event) {
             lastStart = -1; lastEnd = -1;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') { closeContextModal(); }
-            if (typeof hideSessionInfoModal === 'function') { hideSessionInfoModal(); }
+            if (typeof closeInfoPanel === 'function') { closeInfoPanel(); }
             if (typeof resetSourceTags === 'function') { resetSourceTags(); }
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null;
@@ -252,6 +252,7 @@ document.addEventListener('keydown', function(e) {
             return;
         }
         if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
         return;
