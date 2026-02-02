@@ -18,6 +18,7 @@
     "linejoin",
     "logcat",
     "Logz",
+    "prereqs",
     "recalc",
     "RGBA",
     "stackable",

@@ -127,53 +127,6 @@ function updateSearch() {
     if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
 }
 
-function toggleSearchMode() {
-    searchFilterMode = !searchFilterMode;
-    if (searchModeToggleEl) {
-        searchModeToggleEl.textContent = searchFilterMode ? 'Mode: Filter' : 'Mode: Highlight';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
-}
-
-function toggleRegexMode() {
-    searchRegexMode = !searchRegexMode;
-    var btn = document.getElementById('search-regex-toggle');
-    if (btn) {
-        btn.textContent = searchRegexMode ? '.*' : 'Aa';
-        btn.title = searchRegexMode ? 'Regex mode (click for literal)' : 'Literal mode (click for regex)';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
-}
-
-function toggleCaseSensitive() {
-    searchCaseSensitive = !searchCaseSensitive;
-    var btn = document.getElementById('search-case-toggle');
-    if (btn) {
-        btn.textContent = searchCaseSensitive ? 'AA' : 'Aa';
-        btn.title = searchCaseSensitive ? 'Case sensitive (click for case insensitive)' : 'Case insensitive (click for case sensitive)';
-        btn.style.fontWeight = searchCaseSensitive ? 'bold' : 'normal';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
-}
-
-function toggleWholeWord() {
-    searchWholeWord = !searchWholeWord;
-    var btn = document.getElementById('search-word-toggle');
-    if (btn) {
-        btn.style.fontWeight = searchWholeWord ? 'bold' : 'normal';
-        btn.title = searchWholeWord ? 'Match whole word (click for partial)' : 'Match partial (click for whole word)';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
-}
-
 function applySearchFilter() {
     var matchSet = new Set(matchIndices);
     for (var i = 0; i < allLines.length; i++) {
@@ -249,21 +202,6 @@ searchInputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.shiftKey ? searchPrev() : searchNext(); e.preventDefault(); }
     if (e.key === 'Escape') { closeSearch(); e.preventDefault(); }
 });
-if (searchModeToggleEl) {
-    searchModeToggleEl.addEventListener('click', toggleSearchMode);
-}
-var searchRegexToggleEl = document.getElementById('search-regex-toggle');
-if (searchRegexToggleEl) {
-    searchRegexToggleEl.addEventListener('click', toggleRegexMode);
-}
-var searchCaseToggleEl = document.getElementById('search-case-toggle');
-if (searchCaseToggleEl) {
-    searchCaseToggleEl.addEventListener('click', toggleCaseSensitive);
-}
-var searchWordToggleEl = document.getElementById('search-word-toggle');
-if (searchWordToggleEl) {
-    searchWordToggleEl.addEventListener('click', toggleWholeWord);
-}
 document.getElementById('search-next').addEventListener('click', searchNext);
 document.getElementById('search-prev').addEventListener('click', searchPrev);
 document.getElementById('search-close').addEventListener('click', closeSearch);
@@ -283,15 +221,17 @@ if (searchClearBtn) {
     });
 }
 
-/* Close search panel when clicking outside it. */
+/* Close search panel when clicking outside it.
+   Uses composedPath() instead of e.target because toggle buttons
+   replace their text nodes via textContent, detaching the original
+   click target from the DOM and causing contains() to return false. */
 document.addEventListener('click', function(e) {
     if (!searchOpen) return;
     var panel = document.getElementById('search-bar');
     var ibBtn = document.getElementById('ib-search');
-    if (panel && !panel.contains(e.target)
-        && ibBtn !== e.target && !ibBtn?.contains(e.target)) {
-        closeSearch();
-    }
+    var path = e.composedPath();
+    if ((panel && path.indexOf(panel) >= 0) || (ibBtn && path.indexOf(ibBtn) >= 0)) return;
+    closeSearch();
 });
 `;
 }
