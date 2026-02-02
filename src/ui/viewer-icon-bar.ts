@@ -15,6 +15,9 @@ export function getIconBarHtml(): string {
     <button id="ib-search" class="ib-icon" title="Search (Ctrl+F)">
         <span class="codicon codicon-search"></span>
     </button>
+    <button id="ib-info" class="ib-icon" title="Session Info">
+        <span class="codicon codicon-info"></span>
+    </button>
     <button id="ib-options" class="ib-icon" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
@@ -29,11 +32,13 @@ export function getIconBarScript(): string {
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
         search: document.getElementById('ib-search'),
+        info: document.getElementById('ib-info'),
         options: document.getElementById('ib-options'),
     };
 
     function closeAllPanels() {
         if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
@@ -61,6 +66,8 @@ export function getIconBarScript(): string {
             openSessionPanel();
         } else if (name === 'search' && typeof openSearch === 'function') {
             openSearch();
+        } else if (name === 'info' && typeof openInfoPanel === 'function') {
+            openInfoPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
         }
@@ -79,6 +86,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.search) {
         iconButtons.search.addEventListener('click', function() { setActivePanel('search'); });
+    }
+    if (iconButtons.info) {
+        iconButtons.info.addEventListener('click', function() { setActivePanel('info'); });
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });

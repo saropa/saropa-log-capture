@@ -31,7 +31,7 @@ import { getErrorBreakpointHtml, getErrorBreakpointScript } from './viewer-error
 import { getStatsScript } from './viewer-stats';
 import { getEditModalHtml, getEditModalScript } from './viewer-edit-modal';
 import { getScrollbarMinimapHtml, getScrollbarMinimapScript } from './viewer-scrollbar-minimap';
-import { getSessionInfoButtonHtml, getSessionInfoModalHtml, getSessionHeaderScript } from './viewer-session-header';
+import { getSessionInfoPanelHtml, getSessionHeaderScript } from './viewer-session-header';
 import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getErrorClassificationScript } from './viewer-error-classification';
@@ -58,15 +58,20 @@ export function getNonce(): string {
 }
 
 /** Build the complete HTML document for the log viewer webview. */
-export function buildViewerHtml(nonce: string, extensionUri?: string, version?: string, cspSource?: string): string {
+export function buildViewerHtml(nonce: string, extensionUri?: string, version?: string, cspSource?: string, codiconCssUri?: string): string {
     const fontSrc = cspSource ? `font-src ${cspSource};` : '';
+    const styleSrc = cspSource
+        ? `style-src 'nonce-${nonce}' 'unsafe-inline' ${cspSource};`
+        : `style-src 'nonce-${nonce}' 'unsafe-inline';`;
+    const codiconLink = codiconCssUri ? `<link rel="stylesheet" href="${codiconCssUri}">` : '';
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-          content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}' 'unsafe-inline'; ${fontSrc} media-src ${extensionUri || 'vscode-resource:'};">
+          content="default-src 'none'; script-src 'nonce-${nonce}'; ${styleSrc} ${fontSrc} media-src ${extensionUri || 'vscode-resource:'};">
+    ${codiconLink}
     <style nonce="${nonce}">
         ${getViewerStyles()}
     </style>
@@ -76,8 +81,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <div id="viewer-header">
         <span id="header-filename"></span>
         <span id="header-version">${version ? `v${version}` : ''}</span>
-        ${getSessionInfoButtonHtml()}
-        ${getSessionInfoModalHtml()}
         <button id="header-toggle" title="Toggle header">&#x25B2;</button>
     </div>
     <div id="split-breadcrumb">
@@ -99,6 +102,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getContextMenuHtml()}
     ${getSearchPanelHtml()}
     ${getSessionPanelHtml()}
+    ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getOptionsPanelHtml()}

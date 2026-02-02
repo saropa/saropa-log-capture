@@ -206,7 +206,7 @@ export function getContentStyles(): string {
 }
 
 /* ===================================================================
-   Session Info — compact prefix line + modal overlay
+   Session Info — compact prefix line + slide-out panel
    =================================================================== */
 .session-info-prefix {
     padding: 3px 8px;
@@ -219,20 +219,60 @@ export function getContentStyles(): string {
     text-overflow: ellipsis;
     flex-shrink: 0;
 }
-.session-info-popover {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-panel-border);
-    border-radius: 4px;
+
+/* --- Info panel (slide-out, same pattern as session/options panels) --- */
+.info-panel {
+    position: fixed;
+    right: -100%;
+    top: 0;
+    bottom: 0;
+    width: 25%;
+    min-width: 240px;
+    max-width: 360px;
+    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: right 0.3s ease;
+    z-index: 240;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: none;
+}
+.info-panel.visible {
+    right: var(--icon-bar-width, 36px);
+    pointer-events: auto;
+}
+.info-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 8px 12px;
-    min-width: 220px;
-    max-width: 320px;
-    max-height: 50vh;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.info-panel-close {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.info-panel-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+}
+.info-panel-content {
+    flex: 1;
     overflow-y: auto;
-    z-index: 300;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+}
+.info-panel-empty {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    text-align: center;
+    padding: 16px 0;
 }
 .session-info-grid {
     display: grid;
