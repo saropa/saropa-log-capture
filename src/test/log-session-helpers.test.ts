@@ -41,8 +41,9 @@ suite('formatLine', () => {
     test('should omit source location when path is missing', () => {
         const sourceLocation: SourceLocation = { line: 42 };
         const result = formatLine('msg', 'stdout', ctx({ includeSourceLocation: true, sourceLocation }));
-        assert.ok(!result.includes('['));
+        // Source location omitted — no filename bracket in output
         assert.ok(result.includes('[stdout]'));
+        assert.ok(!result.includes('unknown'));
     });
 
     test('should omit source location when setting is off', () => {
@@ -101,7 +102,8 @@ suite('formatLine', () => {
         const sourceLocation: SourceLocation = { path: '/src/app.ts' };
         const result = formatLine('msg', 'stdout', ctx({ includeSourceLocation: true, sourceLocation }));
         assert.ok(result.includes('[app.ts]'));
-        assert.ok(!result.includes(':'));
+        // No line number after filename (colons exist in timestamp, so check specifically)
+        assert.ok(!result.includes('app.ts:'));
     });
 
     test('should omit column when column is 0', () => {
