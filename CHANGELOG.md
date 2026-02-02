@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session panel renamed:** "Sessions" panel renamed to "Project Logs" with matching icon bar tooltip.
 - **Icon bar sessions icon:** Changed from history (clock) to files icon to better represent project log files.
 - **Dev script rewritten as publish pipeline:** `scripts/dev.py` now supports a gated analyze-then-publish workflow (16 steps) with `--analyze-only` for local dev builds and full publish to VS Code Marketplace + GitHub releases. Retains all original dev toolkit features (VS Code extension installs, global npm packages, version sync, local .vsix install prompts).
+- **Dev script split into modules:** `scripts/dev.py` (1756 lines) refactored into 9 focused modules under `scripts/modules/` (constants, display, utils, checks_prereqs, checks_environment, checks_project, publish, report, install) with a layered dependency graph and no circular imports. `dev.py` remains the entry point with CLI parsing and orchestration.
 
 ---
 ## [0.2.0] - 2026-02-02
