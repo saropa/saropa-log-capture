@@ -7,8 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.2] - Current
 
+### Fixed
+- **Codicon icons invisible in webview:** The v0.2.1 CSP fix added `font-src` but the codicon font was never loaded — webviews are sandboxed and don't inherit VS Code's fonts. Now bundles `@vscode/codicons` and loads the stylesheet via a `<link>` tag, with `style-src` extended to allow it. Fixes all icons in the icon bar, context menu, and session panel.
+
 ### Changed
 - **Session info moved to icon bar:** The ℹ️ session info button is now in the right-side icon bar (between Search and Options) instead of the header bar. Click to open a slide-out panel showing full session metadata. Uses the same mutual-exclusion pattern as the other icon bar panels. The compact prefix line at the top of the log content is unchanged.
+- **Version moved to footer:** The extension version (e.g., `v0.2.2`) moved from the header bar to the footer status text, shown as a `·`-separated suffix after the line count.
 - **Marketplace banner image 404:** README banner pointed to the wrong GitHub repository (`saropa_lints`). Corrected URL to `saropa-log-capture`.
 
 ---

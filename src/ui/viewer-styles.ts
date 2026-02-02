@@ -104,14 +104,6 @@ body {
     color: var(--vscode-foreground);
 }
 
-#header-version {
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    opacity: 0.7;
-    margin-left: 6px;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
 
 /* ===================================================================
    Log Content Wrapper
