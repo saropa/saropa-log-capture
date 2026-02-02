@@ -74,6 +74,8 @@ var decoLineColorMode = 'none';
 var decoShowBar = true;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
+/** Whether the loaded data has parseable timestamps (false for files without). */
+var timestampsAvailable = true;
 
 /**
  * Position and show the settings panel above the gear button.
@@ -128,9 +130,9 @@ function syncDecoSettingsUi() {
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
     if (ctr) ctr.checked = decoShowCounter;
-    if (ts) ts.checked = decoShowTimestamp;
-    if (ms) ms.checked = showMilliseconds;
-    if (elapsed) elapsed.checked = showElapsed;
+    if (ts) { ts.checked = decoShowTimestamp; ts.disabled = !timestampsAvailable; }
+    if (ms) { ms.checked = showMilliseconds; ms.disabled = !timestampsAvailable; }
+    if (elapsed) { elapsed.checked = showElapsed; elapsed.disabled = !timestampsAvailable; }
     if (bar) bar.checked = decoShowBar;
     if (mode) mode.value = decoLineColorMode;
 }
@@ -162,6 +164,37 @@ function onDecoOptionChange() {
         closeDecoSettings();
         updateDecoButton();
     }
+    renderViewport(true);
+}
+
+/**
+ * Handle timestamp availability message from the extension.
+ * Disables time-related checkboxes when timestamps are unavailable.
+ */
+function handleTimestampAvailability(msg) {
+    timestampsAvailable = !!msg.available;
+    var tsIds = [
+        ['deco-opt-timestamp', 'opt-deco-timestamp'],
+        ['deco-opt-milliseconds', 'opt-deco-milliseconds'],
+        ['deco-opt-elapsed', 'opt-deco-elapsed']
+    ];
+    for (var i = 0; i < tsIds.length; i++) {
+        for (var j = 0; j < tsIds[i].length; j++) {
+            var el = document.getElementById(tsIds[i][j]);
+            if (el) {
+                el.disabled = !timestampsAvailable;
+                if (!timestampsAvailable && el.checked) {
+                    el.checked = false;
+                }
+            }
+        }
+    }
+    if (!timestampsAvailable) {
+        decoShowTimestamp = false;
+        showMilliseconds = false;
+        showElapsed = false;
+    }
+    if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
     renderViewport(true);
 }
 

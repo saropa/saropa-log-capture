@@ -3,6 +3,8 @@
  *
  * Covers search slide-out panel, match highlighting, and keyword watch chips.
  */
+import { getSearchHistoryStyles } from './viewer-search-history';
+
 export function getSearchStyles(): string {
     return /* css */ `
 
@@ -31,7 +33,7 @@ export function getSearchStyles(): string {
     pointer-events: none;
 }
 #search-bar.visible {
-    right: 0;
+    right: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 .search-header {
@@ -64,18 +66,42 @@ export function getSearchStyles(): string {
     flex-direction: column;
     gap: 8px;
 }
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
 #search-input {
     width: 100%;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    padding: 4px 8px;
+    padding: 4px 24px 4px 8px;
     font-size: 12px;
     font-family: inherit;
     outline: none;
 }
 #search-input:focus {
     border-color: var(--vscode-focusBorder);
+}
+.search-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+    display: none;
+    line-height: 1;
+}
+.search-clear:hover {
+    color: var(--vscode-foreground);
+}
+.search-input-wrapper.has-text .search-clear {
+    display: block;
 }
 .search-toggles {
     display: flex;
@@ -167,5 +193,5 @@ mark {
 .watch-chip.flash {
     animation: watch-flash 0.4s ease-out;
 }
-`;
+` + getSearchHistoryStyles();
 }

@@ -161,13 +161,11 @@ function getDecorationPrefix(item) {
 /**
  * Return a CSS class for whole-line severity tinting.
  * Only active when decoLineColorMode is 'line' and decorations are on.
- * Info-level lines get no tint to avoid visual noise.
  */
 function getLineTintClass(item) {
     if (decoLineColorMode !== 'line' || !showDecorations) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
-    if (item.level === 'error') return ' line-tint-error';
-    if (item.level === 'warning') return ' line-tint-warning';
+    if (item.level) return ' line-tint-' + item.level;
     return '';
 }
 

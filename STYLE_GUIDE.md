@@ -21,6 +21,7 @@ Design patterns and conventions for the log viewer webview UI.
 | Header filename | `11px` | `#viewer-header` |
 | Header version | `10px` | `#header-version`, dimmed |
 | Source tag chips | `11px` | `.source-tag-chip` |
+| Exclusion chips | `11px` | `.exclusion-chip` |
 | Annotations | `11px` | `.annotation` |
 | Small labels | `10px` | `.tag-count`, `.slow-gap`, decoration labels |
 
@@ -78,6 +79,35 @@ Pill-shaped toggles in the source tag strip:
 }
 ```
 
+### `.exclusion-chip` — Exclusion Pattern Pills
+
+Removable pills showing each configured exclusion pattern in the Noise Reduction section:
+
+```css
+.exclusion-chip {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--vscode-descriptionForeground);
+}
+```
+
+- Each chip has a `×` remove button (`.exclusion-chip-remove`) that persists removal to settings
+- Text truncated at 180px with ellipsis (`.exclusion-chip-text`)
+- Dimmed (`opacity: 0.4`) when exclusions toggle is off (`.exclusion-chips-disabled`)
+- Container shows "No patterns configured. Configure in Settings" when empty
+
+### `.options-link` — In-Panel Links
+
+Clickable text links inside the Options panel (e.g. "Configure in Settings"):
+
+```css
+.options-link {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: none;
+}
+```
+
 ### Options Panel Rows
 
 Standard layout for settings rows inside the Options panel:
@@ -89,6 +119,10 @@ Standard layout for settings rows inside the Options panel:
     gap: 8px;
 }
 ```
+
+### Options Panel Tooltips
+
+Every interactive control in the Options panel must have a `title` attribute with a short description of what it does. Place the `title` on the `<label>` for checkbox rows, on the `<input>` for sliders, and on the container `<div>` for dropdown rows.
 
 ## Footer Layout
 
@@ -135,6 +169,7 @@ All colors use VS Code theme variables with fallbacks:
 | Header | `4px 8px` | — |
 | Log lines | `0 8px` | — |
 | Source tag chips | `2px 8px` | `4px` |
+| Exclusion chips | `2px 6px` | `4px` |
 | Options panel rows | `4px 0` | `8px` |
 | Modals | `12px 16px` | `8px` |
 
@@ -146,3 +181,4 @@ All colors use VS Code theme variables with fallbacks:
 4. **No transparent borders** — buttons either have a visible border or no border at all
 5. **No mixed font sizes** — all elements in a region use the same base size
 6. **No feature toggles in footer** — infrequent settings belong in the Options panel
+7. **No options without tooltips** — every Options panel control needs a `title` attribute

@@ -23,6 +23,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         this.activeUri = uri;
     }
 
+    /** Return the URI of the currently active (recording) session. */
+    getActiveUri(): vscode.Uri | undefined {
+        return this.activeUri;
+    }
+
     refresh(): void {
         this._onDidChange.fire();
     }
@@ -44,9 +49,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         // Prepend "ACTIVE" to description for active session
         const baseDescription = buildDescription(item);
         ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
-        // Use colored icon for active session
+        // Icon: active=record(red), with timestamps=history, without=output
         ti.iconPath = new vscode.ThemeIcon(
-            isActive ? 'record' : 'file',
+            isActive ? 'record' : (item.hasTimestamps ? 'history' : 'output'),
             isActive ? new vscode.ThemeColor('charts.red') : undefined
         );
         ti.command = { command: 'saropaLogCapture.openSession', title: 'Open', arguments: [item] };
@@ -134,10 +139,19 @@ async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promise<Sess
         const text = Buffer.from(raw).toString('utf-8');
         const headerEnd = text.indexOf('==================');
         const block = headerEnd > 0 ? text.slice(0, headerEnd) : text.slice(0, 800);
-        return { ...base, ...extractFields(block) };
+        const hasTimestamps = detectTimestamps(text, headerEnd);
+        return { ...base, ...extractFields(block), hasTimestamps };
     } catch {
         return base;
     }
+}
+
+/** Check if the first content line after the header has a timestamp prefix. */
+function detectTimestamps(text: string, headerEnd: number): boolean {
+    if (headerEnd <= 0) { return /^\[[\d:.]+\]/.test(text); }
+    const after = text.slice(headerEnd).replace(/^=+\s*\n?\s*/, '');
+    const firstLine = after.split('\n').find(l => l.trim().length > 0);
+    return firstLine ? /^\[[\d:.]+\]/.test(firstLine) : false;
 }
 
 function extractFields(block: string): Partial<Pick<SessionMetadata, 'date' | 'project' | 'adapter' | 'lineCount'>> {
@@ -184,5 +198,6 @@ function buildTooltip(item: SessionMetadata): string {
         parts.push(`Adapter: ${item.adapter}`);
     }
     parts.push(`Size: ${formatSize(item.size)}`);
+    parts.push(`Timestamps: ${item.hasTimestamps ? 'Yes' : 'No'}`);
     return parts.join('\n');
 }

@@ -143,8 +143,30 @@ function renderItem(item, idx) {
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
         : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
 
+    // Compute visual spacing classes before early returns so all item types benefit
+    var spacingCls = '';
+    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
+        var spPrev = idx > 0 ? allLines[idx - 1] : null;
+        if (item.type === 'marker') {
+            if (spPrev) spacingCls += ' spacing-before';
+            spacingCls += ' spacing-after';
+        } else if (item.type === 'stack-header') {
+            if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') {
+                spacingCls += ' spacing-before';
+            }
+        } else if (item.type !== 'stack-frame' && item.type !== 'repeat-notification') {
+            if (spPrev && spPrev.type !== 'marker') {
+                if (item.level && spPrev.level && item.level !== spPrev.level) {
+                    spacingCls += ' spacing-before';
+                } else if (item.isSeparator && !spPrev.isSeparator) {
+                    spacingCls += ' spacing-before';
+                }
+            }
+        }
+    }
+
     if (item.type === 'marker') {
-        return '<div class="marker">' + html + '</div>';
+        return '<div class="marker' + spacingCls + '">' + html + '</div>';
     }
 
     if (item.type === 'repeat-notification') {
@@ -175,7 +197,7 @@ function renderItem(item, idx) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
+        return '<div class="stack-header' + matchCls + spacingCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
 
     if (item.type === 'stack-frame') {
@@ -216,28 +238,6 @@ function renderItem(item, idx) {
             barCls = ' level-bar-framework';
         } else {
             barCls = ' level-bar-' + item.level;
-        }
-    }
-
-    // Add visual spacing if enabled
-    var spacingCls = '';
-    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
-        var prev = idx > 0 ? allLines[idx - 1] : null;
-        var next = idx < allLines.length - 1 ? allLines[idx + 1] : null;
-
-        // Spacing before: level change to error/warning, or before markers
-        if (prev && prev.type !== 'marker' && item.type !== 'marker') {
-            if ((item.level === 'error' || item.level === 'warning') && prev.level !== item.level) {
-                spacingCls += ' spacing-before';
-            }
-        }
-        if (item.type === 'marker') {
-            spacingCls += ' spacing-before';
-        }
-
-        // Spacing after: markers, or after last stack frame
-        if (next && item.type === 'marker') {
-            spacingCls += ' spacing-after';
         }
     }
 

@@ -7,6 +7,7 @@ import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
 import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
+  computeSessionMidnight,
 } from "./viewer-file-loader";
 import {
   SerializedHighlightRule, serializeHighlightRules,
@@ -29,12 +30,15 @@ export class LogViewerProvider
   private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
   private onTogglePause?: () => void;
   private onExclusionAdded?: (pattern: string) => void;
+  private onExclusionRemoved?: (pattern: string) => void;
   private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
   private onSearchCodebase?: (text: string) => void;
   private onSearchSessions?: (text: string) => void;
   private onAddToWatch?: (text: string) => void;
   private onPartNavigate?: (part: number) => void;
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
+  private onSessionListRequest?: () => void;
+  private onOpenSessionFromPanel?: (uriString: string) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -47,6 +51,7 @@ export class LogViewerProvider
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly version: string,
+    private readonly context: vscode.ExtensionContext,
   ) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
@@ -73,39 +78,20 @@ export class LogViewerProvider
     });
   }
 
-  // -- Handler setters --
-
-  /** Set a callback for marker insertion requests. */
+  // -- Handler setters (one callback per webview action) --
   setMarkerHandler(handler: () => void): void { this.onMarkerRequest = handler; }
-
-  /** Set a callback for pause toggle requests. */
   setTogglePauseHandler(handler: () => void): void { this.onTogglePause = handler; }
-
-  /** Set a callback for exclusion rule additions. */
   setExclusionAddedHandler(handler: (pattern: string) => void): void { this.onExclusionAdded = handler; }
-
-  /** Set a callback for annotation prompts. */
+  setExclusionRemovedHandler(handler: (pattern: string) => void): void { this.onExclusionRemoved = handler; }
   setAnnotationPromptHandler(handler: (lineIndex: number, current: string) => void): void { this.onAnnotationPrompt = handler; }
-
-  /** Set a callback for codebase search requests. */
   setSearchCodebaseHandler(handler: (text: string) => void): void { this.onSearchCodebase = handler; }
-
-  /** Set a callback for session search requests. */
   setSearchSessionsHandler(handler: (text: string) => void): void { this.onSearchSessions = handler; }
-
-  /** Set a callback for watch list additions. */
   setAddToWatchHandler(handler: (text: string) => void): void { this.onAddToWatch = handler; }
-
-  /** Set a callback for source navigation. */
-  setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void {
-    this.onLinkClick = handler;
-  }
-
-  /** Set a callback for split part navigation. */
+  setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void { this.onLinkClick = handler; }
   setPartNavigateHandler(handler: (part: number) => void): void { this.onPartNavigate = handler; }
-
-  /** Set a callback for saving current filters as a preset. */
   setSavePresetRequestHandler(handler: (filters: Record<string, unknown>) => void): void { this.onSavePresetRequest = handler; }
+  setSessionListHandler(handler: () => void): void { this.onSessionListRequest = handler; }
+  setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
 
   // -- Webview state methods --
 
@@ -129,8 +115,12 @@ export class LogViewerProvider
   /** Update the pause/resume indicator. */
   setPaused(paused: boolean): void { this.postMessage({ type: "setPaused", paused }); }
 
-  /** Set the active log filename in the footer. */
-  setFilename(filename: string): void { this.postMessage({ type: "setFilename", filename }); }
+  /** Set the active log filename and restore saved level filters. */
+  setFilename(filename: string): void {
+    this.postMessage({ type: "setFilename", filename });
+    const levels = helpers.getSavedLevelFilters(this.context, filename);
+    if (levels) { this.postMessage({ type: "restoreLevelFilters", levels }); }
+  }
 
   /** Set context lines for level filtering. */
   setContextLines(count: number): void { this.postMessage({ type: "setContextLines", count }); }
@@ -182,6 +172,9 @@ export class LogViewerProvider
   /** Send session metadata to the webview (for icon + compact prefix). */
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
+  /** Send a list of session files to the webview session panel. */
+  sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
+
   /** Set whether a debug session is currently active. */
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
@@ -202,22 +195,18 @@ export class LogViewerProvider
     const fields = parseHeaderFields(rawLines);
     if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
-    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), (t) => helpers.classifyFrame(t), post, this.seenCategories);
-    if (gen === this.loadGeneration) { this.pendingLoadUri = undefined; }
+    const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
+    const hasTimestamps = await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
+    if (gen !== this.loadGeneration) { return; }
+    this.postMessage({ type: "setTimestampAvailability", available: hasTimestamps });
+    this.postMessage({ type: "loadComplete" }); this.pendingLoadUri = undefined;
   }
   /** Send keyword watch hit counts to the webview footer and update badge. */
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
-    const obj: Record<string, number> = {};
-    let total = 0;
-    for (const [label, count] of counts) {
-      obj[label] = count;
-      total += count;
-    }
+    const obj = Object.fromEntries(counts);
+    const total = [...counts.values()].reduce((s, n) => s + n, 0);
     this.postMessage({ type: "updateWatchCounts", counts: obj });
-    if (total > this.unreadWatchHits) {
-      this.unreadWatchHits = total;
-      helpers.updateBadge(this.view, this.unreadWatchHits);
-    }
+    if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
   }
 
   dispose(): void { this.stopBatchTimer(); }
@@ -231,6 +220,8 @@ export class LogViewerProvider
       case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
       case "exclusionAdded":
       case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
+      case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
+      case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
@@ -271,6 +262,11 @@ export class LogViewerProvider
           vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`);
         });
         break;
+      case "saveLevelFilters":
+        helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
+        break;
+      case "requestSessionList": this.onSessionListRequest?.(); break;
+      case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "scriptError":
         for (const e of (msg.errors as { message: string }[]) ?? []) {
           console.warn("[SLC Webview]", e.message);

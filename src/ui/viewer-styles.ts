@@ -14,15 +14,17 @@ import { getOverlayStyles } from './viewer-styles-overlays';
 import { getTagStyles } from './viewer-styles-tags';
 import { getOptionsStyles } from './viewer-styles-options';
 import { getErrorStyles } from './viewer-styles-errors';
+import { getIconBarStyles } from './viewer-styles-icon-bar';
+import { getSessionPanelStyles } from './viewer-styles-session';
 
 export function getViewerStyles(): string {
     return /* css */ `
 
 /* ===================================================================
    Reset & Root Layout
-   The webview body is a flex column filling the panel viewport.
-   Child sections (pinned, log-content, footer) stack
-   vertically with log-content taking all remaining space.
+   The webview body is a flex row: main content column + icon bar.
+   The #main-content div stacks children vertically (header, content,
+   footer) with log-content taking all remaining space.
    =================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -30,10 +32,19 @@ body {
     color: var(--vscode-editor-foreground);
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: var(--log-font-size, var(--vscode-editor-font-size, 13px));
-    overflow-y: auto;
+    overflow: hidden;
     height: 100vh;
     display: flex;
+    flex-direction: row;
+}
+
+#main-content {
+    flex: 1;
+    display: flex;
     flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* ===================================================================
@@ -49,7 +60,7 @@ body {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     min-height: 24px;
-    transition: all 0.2s ease;
+    transition: min-height 0.2s ease, padding 0.2s ease, border-bottom 0.2s ease;
 }
 
 #viewer-header.collapsed {
@@ -174,5 +185,5 @@ body {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles();
 }
