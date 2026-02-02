@@ -26,45 +26,81 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 <details>
 <summary><strong>Click to expand full feature list</strong></summary>
 
+### Capture & Storage
 - **Auto-capture:** Debug Console output is saved to `.log` files automatically.
-- **Live panel viewer:** Real-time output with virtual scrolling, auto-scroll, and theme support (located in the bottom panel next to Output and Terminal).
-- **Click-to-source:** Click `file.ts:42` in logs to jump to source.
-- **Search:** Ctrl+F to search, F3/Shift+F3 to navigate matches.
-- **Category filter:** Filter by DAP category (stdout, stderr, console).
-- **Insert markers:** Press M to add visual separators in logs.
-- **Collapsible stack traces:** Stack frames are grouped/collapsed by default.
-- **Session history:** Browse past log sessions with metadata.
-- **HTML export:** Export logs to styled HTML (interactive/static).
-- **Context header:** Each log file starts with session metadata.
 - **Deduplication:** Identical rapid lines grouped as `Message (x54)`.
 - **Flood protection:** Suppresses >100/sec repeated messages.
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
+- **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
+- **Context header:** Each log file starts with session metadata.
+- **ANSI preservation:** Raw ANSI codes kept in files for external tools.
 - **Gitignore safety:** Offers to add log dir to `.gitignore` on first run.
-- **ANSI preservation:** Raw ANSI codes kept for external tools.
-- **Keyword watch:** Track keywords (error, exception, etc.) with live counters and alerts.
-- **Pin lines:** Press P to pin important lines above scroll area.
-- **Exclusion filter:** Hide lines matching string/regex patterns.
-- **Level filter:** All/Errors/Warn+ segmented buttons to filter by severity, with configurable context lines shown dimmed around matches.
-- **Source tag filter:** Collapsible "Sources" panel that auto-discovers logcat tags (e.g. `D/FlutterJNI`, `I/flutter`) and bracket prefixes (e.g. `[log]`). Click chips to toggle visibility by source.
-- **Line decorations:** Colored severity dots, sequential counters, and timestamps on each line. Gear button opens settings popover for toggling parts and whole-line coloring mode.
+- **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
+
+### Viewer
+- **Live panel viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (located in the bottom panel next to Output and Terminal).
+- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, and Options. Clicking an icon toggles its slide-out panel.
+- **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
+- **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
+- **Source hover preview:** Hover source links for code context popup.
+- **Insert markers:** Press M to add visual separators in logs.
 - **Inline peek:** Double-click any log line to expand surrounding context inline. Press Escape to dismiss.
-- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown.
-- **Session renaming/tagging:** Right-click to rename or tag sessions.
-- **Historical log viewing:** Open sessions from Session History into the panel viewer with proper coloring and async loading.
+- **Pin lines:** Press P to pin important lines above scroll area.
 - **Line annotations:** Press N to annotate a log line.
-- **Elapsed time:** Show `+Nms` between lines, highlight slow gaps.
-- **Expanded highlight rules:** Default patterns include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, and Debug.
-- **Full Debug Console Capture:** Toggle "App Only: OFF" or set `saropaLogCapture.captureAll` to capture all output.
+- **JSON rendering:** Embedded JSON shown as collapsible pretty-printed blocks.
+- **ASCII art detection:** Box-drawing and separator characters styled for readability.
+- **Scroll position memory:** Viewer remembers scroll position per file when switching between logs.
+
+### Search & Filter
+- **Search panel:** Slide-out search with regex, case sensitivity, and whole word toggles. Search history (last 10 terms) shown on open. Clear button (×) in input.
+- **Category filter:** Filter by DAP category (stdout, stderr, console).
+- **Level filter:** Colored dots in footer open a fly-up menu with toggle buttons for all 7 severity levels, plus Select All / Select None. Per-file level state is persisted.
+- **Source tag filter:** Auto-discovers logcat tags (e.g. `D/FlutterJNI`) and bracket prefixes (e.g. `[log]`, `[API]`). Click chips to toggle visibility.
+- **Exclusion filter:** Patterns shown as removable chips in the Options panel. Chip count badge on the toggle label.
+- **Keyword watch:** Track patterns with live counters, flash alerts, and badges. Watch chips in the footer are clickable—opens search pre-filled with the keyword.
+- **Filter presets:** Save and apply filter combinations; built-in presets included.
+- **Cross-session search:** Search all log files via Quick Pick.
+
+### Error Intelligence
+- **Smart error classification:** Errors auto-classified as CRITICAL (NullPointerException, FATAL, etc.), TRANSIENT (TimeoutException, ECONNREFUSED, etc.), or BUG (TypeError, SyntaxError, etc.) with inline badges.
+- **Error breakpoints:** Visual and audio alerts when errors appear—flash border, sound, counter badge, optional modal popup.
+- **Multi-level classification:** Seven severity levels—Error, Warning, Info, Performance, TODO, Debug/Trace, and Notice—each auto-detected with dedicated colors and filters.
+
+### Display & Layout
+- **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), and whole-line coloring for all severity levels. Configurable in the Options panel.
+- **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
+- **Visual spacing:** Heuristic breathing room before/after level changes, markers, and stack traces.
+- **Font size / line height:** Adjustable via sliders in the Options panel.
+- **Elapsed time:** Show `+Nms` between lines; slow gaps highlighted.
+- **Scrollbar minimap:** Visual overview showing search matches, errors, warnings, and viewport position.
+- **Highlight rules:** Color lines matching patterns (configurable colors, labels). Defaults include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, Debug.
+
+### Session Management
+- **Project Logs panel:** In-webview slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Active sessions highlighted with a recording icon.
+- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading.
+- **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
+- **Session comparison:** Side-by-side diff view with color highlighting.
+- **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
+- **Deep links:** Share `vscode://` URLs to open logs/lines.
+
+### Export
+- **Per-level export:** Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
+- **HTML export:** Static or interactive with search, filters, and theme toggle.
+- **CSV / JSON / JSONL export:** Structured export formats for external tools.
+- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines.
+- **Copy to Search:** Right-click a line to open search pre-filled with its text.
+
+### Status Bar & Audio
+- **Status bar:** Two separate items—a pause/resume icon that toggles capture, and a text display (line count + watch counts) that focuses the viewer panel.
+- **Live statistics:** Real-time counters for errors, warnings, performance issues, and other levels in the footer.
+- **Audio alerts:** Configurable alert sounds for errors and warnings with volume slider, rate limiting, and preview buttons.
+- **Real-time repeat notifications:** Immediate notification when duplicate lines are detected, with message preview and repeat counter.
+
+### Infrastructure
+- **Script fault isolation:** Each viewer feature runs in a separate script block—a SyntaxError in one feature won't break the rest.
 - **App-only stack traces:** Press A to hide framework/library frames.
 - **Stack deduplication:** Identical stacks collapsed with count badge.
-- **Status bar:** Live line counter, keyword hits, pause/resume toggle.
-- **Cross-session search:** Search all logs via Quick Pick.
-- **JSON rendering:** Embedded JSON shown as collapsible pretty-printed blocks.
-- **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Session summary:** End-of-session stats notification.
-- **Source hover preview:** Hover source links for code context.
-- **Deep links:** Share `vscode://` URLs to open logs/lines.
-- **Auto-tags:** Sessions auto-tagged by content patterns.
 
 </details>
 
@@ -94,19 +130,20 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 | Key            | Action                                 |
 |----------------|----------------------------------------|
-| Ctrl+F         | Open search bar                        |
-| F3 / Shift+F3  | Next / previous search match            |
-| Escape         | Close search bar / inline peek         |
+| Ctrl+F         | Open search panel                      |
+| F3 / Shift+F3  | Next / previous search match           |
+| Escape         | Close search panel / inline peek       |
 | Space          | Toggle pause/resume                    |
 | W              | Toggle word wrap                       |
 | M              | Insert marker                          |
 | P              | Pin/unpin center line                  |
 | Shift+Click    | Select line range                      |
-| Ctrl+C         | Copy selection as plain text            |
-| Ctrl+Shift+C   | Copy selection as markdown              |
+| Ctrl+C         | Copy selection as plain text           |
+| Ctrl+Shift+C   | Copy selection as markdown             |
+| Ctrl+Shift+A   | Copy all visible lines to clipboard    |
 | N              | Annotate center line                   |
-| A              | Toggle app-only stack trace mode        |
-| Double-click   | Open inline peek with context lines     |
+| A              | Toggle app-only stack trace mode       |
+| Double-click   | Open inline peek with context lines    |
 | Home           | Scroll to top                          |
 | End            | Scroll to bottom                       |
 
@@ -114,18 +151,24 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 ## Key Commands
 
-| Command                                      | Description                                 |
-|----------------------------------------------|---------------------------------------------|
-| `Saropa Log Capture: Start Capture`          | Start capturing to a new log file           |
-| `Saropa Log Capture: Stop Capture`           | Stop capturing and finalize the file        |
-| `Saropa Log Capture: Pause/Resume Capture`   | Toggle capture on/off                       |
-| `Saropa Log Capture: Insert Marker`          | Insert a visual separator into the log      |
-| `Saropa Log Capture: Open Active Log File`   | Open the current log file in the editor     |
-| `Saropa Log Capture: Open Log Folder`        | Reveal the log directory in the file explorer |
-| `Saropa Log Capture: Clear Current Session`  | Reset the line counter                      |
-| `Saropa Log Capture: Delete Log File`        | Delete log files from the reports directory |
-| `Saropa Log Capture: Split Log File Now`     | Manually split the current log file         |
-| `Saropa Log Capture: Search Log Files`       | Search across all log files with Quick Pick |
+| Command                                              | Description                                      |
+|------------------------------------------------------|--------------------------------------------------|
+| `Saropa Log Capture: Start Capture`                  | Start capturing to a new log file                |
+| `Saropa Log Capture: Stop Capture`                   | Stop capturing and finalize the file             |
+| `Saropa Log Capture: Pause/Resume Capture`           | Toggle capture on/off                            |
+| `Saropa Log Capture: Insert Marker`                  | Insert a visual separator into the log           |
+| `Saropa Log Capture: Open Active Log File`           | Open the current log file in the editor          |
+| `Saropa Log Capture: Open Log Folder`                | Reveal the log directory in the file explorer    |
+| `Saropa Log Capture: Clear Current Session`          | Reset the line counter                           |
+| `Saropa Log Capture: Delete Log File`                | Delete log files from the reports directory      |
+| `Saropa Log Capture: Split Log File Now`             | Manually split the current log file              |
+| `Saropa Log Capture: Search Log Files`               | Search across all log files with Quick Pick      |
+| `Saropa Log Capture: Apply Filter Preset`            | Apply a saved filter preset                      |
+| `Saropa Log Capture: Save Current Filters as Preset` | Save current filter state as a named preset      |
+| `Saropa Log Capture: Toggle Inline Log Decorations`  | Toggle inline log decorations in the editor      |
+| `Saropa Log Capture: Compare Sessions`               | Side-by-side diff of two log sessions            |
+| `Saropa Log Capture: Apply Session Template`         | Apply a saved session template                   |
+| `Saropa Log Capture: Save Settings as Template`      | Save current settings as a reusable template     |
 
 ---
 
@@ -150,12 +193,17 @@ All settings are prefixed with `saropaLogCapture.`
 | `redactEnvVars`                | `[]`        | Env var patterns to redact from headers                  |
 | `captureAll`                   | `false`     | Capture all Debug Console output, bypassing filters      |
 | `exclusions`                   | `[]`        | Patterns to exclude from viewer (string or `/regex/`)    |
-| `showDecorations`              | `false`     | Show severity dots, counters, and timestamps on lines    |
-| `filterContextLines`           | `2`         | Context lines shown around level-filter matches          |
-| `contextViewLines`             | `5`         | Context lines shown in inline peek on double-click       |
-| `watchPatterns`                | `[{keyword:"error"},{keyword:"exception"},{keyword:"warning"}]` | Keywords to watch for with alert type |
+| `showDecorations`              | `true`      | Show severity dots, counters, and timestamps on lines    |
+| `filterContextLines`           | `3`         | Context lines shown around level-filter matches          |
+| `contextViewLines`             | `10`        | Context lines shown in inline peek on double-click       |
+| `watchPatterns`                | `[{keyword:"error",...},{keyword:"exception",...},{keyword:"warning",...}]` | Keywords to watch with alert type |
 | `showElapsedTime`              | `false`     | Show elapsed time between consecutive log lines          |
 | `slowGapThreshold`             | `1000`      | Elapsed time threshold (ms) for highlighting slow gaps   |
+| `suppressTransientErrors`      | `false`     | Hide expected transient errors (timeout, socket, etc.)   |
+| `breakOnCritical`              | `false`     | Show notification when critical errors appear            |
+| `highlightRules`               | *(3 built-in rules)* | Pattern-based line coloring rules               |
+| `filterPresets`                | `[]`        | Saved filter presets for quick application                |
+| `autoTagRules`                 | `[]`        | Rules for auto-tagging sessions by content patterns      |
 | `splitRules.maxLines`          | `0`         | Split file after N lines (0 = disabled)                  |
 | `splitRules.maxSizeKB`         | `0`         | Split file after N KB (0 = disabled)                     |
 | `splitRules.keywords`          | `[]`        | Split when keyword or `/regex/` matched                  |
@@ -169,7 +217,6 @@ All settings are prefixed with `saropaLogCapture.`
 ## Known Limitations
 
 - Panel viewer caps at 50,000 lines for performance (file on disk keeps all lines up to `maxLines`).
-- Screenshots must be added manually before publishing.
 
 ---
 
