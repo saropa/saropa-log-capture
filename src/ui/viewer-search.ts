@@ -212,8 +212,7 @@ function updateClearButton() {
     if (searchInputWrapper) searchInputWrapper.classList.toggle('has-text', searchInputEl.value.length > 0);
 }
 if (searchClearBtn) {
-    searchClearBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
+    searchClearBtn.addEventListener('click', function() {
         searchInputEl.value = '';
         updateClearButton();
         updateSearch();
@@ -221,16 +220,17 @@ if (searchClearBtn) {
     });
 }
 
-/* Close search panel when clicking outside it.
-   Uses composedPath() instead of e.target because toggle buttons
-   replace their text nodes via textContent, detaching the original
-   click target from the DOM and causing contains() to return false. */
+/* Prevent clicks inside the search panel from reaching the
+   document-level close handler. Toggle buttons replace their text
+   nodes via textContent which can detach the original e.target,
+   making contains() checks unreliable. */
+searchBarEl.addEventListener('click', function(e) { e.stopPropagation(); });
+
+/* Close search panel when clicking outside it. */
 document.addEventListener('click', function(e) {
     if (!searchOpen) return;
-    var panel = document.getElementById('search-bar');
     var ibBtn = document.getElementById('ib-search');
-    var path = e.composedPath();
-    if ((panel && path.indexOf(panel) >= 0) || (ibBtn && path.indexOf(ibBtn) >= 0)) return;
+    if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
     closeSearch();
 });
 `;
