@@ -78,10 +78,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
 </head>
 <body>
     <div id="main-content">
-    <div id="viewer-header">
-        <span id="header-filename"></span>
-        <button id="header-toggle" title="Toggle header">&#x25B2;</button>
-    </div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>
         <span class="part-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
