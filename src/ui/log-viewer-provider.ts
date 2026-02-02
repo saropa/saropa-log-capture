@@ -12,6 +12,8 @@ import {
 import {
   SerializedHighlightRule, serializeHighlightRules,
 } from "./viewer-highlight-serializer";
+import type { SessionDisplayOptions } from "./session-display";
+import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 
 const BATCH_INTERVAL_MS = 200;
@@ -21,7 +23,7 @@ const BATCH_INTERVAL_MS = 200;
  * debug output in real time with auto-scroll and theme support.
  */
 export class LogViewerProvider
-  implements vscode.WebviewViewProvider, vscode.Disposable
+  implements vscode.WebviewViewProvider, ViewerTarget, vscode.Disposable
 {
   private view: vscode.WebviewView | undefined;
   private pendingLines: PendingLine[] = [];
@@ -39,6 +41,8 @@ export class LogViewerProvider
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
   private onSessionListRequest?: () => void;
   private onOpenSessionFromPanel?: (uriString: string) => void;
+  private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
+  private onPopOutRequest?: () => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -97,16 +101,13 @@ export class LogViewerProvider
   setSavePresetRequestHandler(handler: (filters: Record<string, unknown>) => void): void { this.onSavePresetRequest = handler; }
   setSessionListHandler(handler: () => void): void { this.onSessionListRequest = handler; }
   setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
+  setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
+  setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
 
   // -- Webview state methods --
 
-  /** Push exclusion patterns to the webview. */
   setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
-
-  /** Send annotation text to the webview for a specific line. */
   setAnnotation(lineIndex: number, text: string): void { this.postMessage({ type: "setAnnotation", lineIndex, text }); }
-
-  /** Load all annotations into the webview. */
   loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { this.postMessage({ type: "loadAnnotations", annotations }); }
 
   /** Update the split breadcrumb in the viewer. */
@@ -136,9 +137,7 @@ export class LogViewerProvider
   /** Toggle elapsed time display. */
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
 
-  /** Toggle line decoration prefix display. */
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
-  /** Send error classification settings. */
   setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical }); }
 
   /** Apply a preset by name. */
@@ -177,10 +176,8 @@ export class LogViewerProvider
   /** Send session metadata to the webview (for icon + compact prefix). */
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
-  /** Send a list of session files to the webview session panel. */
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
-
-  /** Set whether a debug session is currently active. */
+  sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
   /** Send a clear message to the webview. */
@@ -272,6 +269,8 @@ export class LogViewerProvider
         break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
+      case "popOutViewer": this.onPopOutRequest?.(); break;
+      case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "scriptError":
         for (const e of (msg.errors as { message: string }[]) ?? []) {
           console.warn("[SLC Webview]", e.message);
@@ -290,7 +289,7 @@ export class LogViewerProvider
   private flushBatch(): void {
     helpers.flushBatch(
       this.pendingLines,
-      this.view,
+      !!this.view,
       (msg) => this.postMessage(msg),
       (lines) => helpers.sendNewCategories(lines, this.seenCategories, (msg) => this.postMessage(msg))
     );

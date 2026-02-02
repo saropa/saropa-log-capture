@@ -397,48 +397,36 @@ def _print_report_path(report: str | None) -> None:
         ok(f"Report: {C.WHITE}{rel}{C.RESET}")
 
 
-def _finish_analyze_only(
+def _package_and_install(
     args: argparse.Namespace,
     results: list[tuple[str, bool, float]],
     version: str,
-) -> int:
-    """Post-analysis: package .vsix and offer local install.
+) -> str | None:
+    """Package .vsix and offer local install. Returns vsix path.
 
-    This is the old dev.py "done" flow — build the package, print
-    install instructions, and prompt the user to install locally.
+    Always runs after analysis, regardless of whether the user
+    intends to publish. This ensures local testing before publishing.
     """
-    # Package the .vsix (same as the old dev.py build step)
     heading("Package")
     t0 = time.time()
     vsix_path = step_package()
     elapsed = time.time() - t0
     results.append(("Package", vsix_path is not None, elapsed))
 
-    report = save_report(results, version, vsix_path)
-    print_timing(results)
-
-    # If packaging failed, report and exit with failure code
     if not vsix_path:
-        _print_report_path(report)
-        return ExitCode.PACKAGE_FAILED
+        print_timing(results)
+        _save_and_print_report(results, version)
+        return None
 
-    heading("Done")
-    passed_count = sum(1 for _, p, _ in results if p)
-    ok(f"{C.BOLD}Build complete!{C.RESET} "
-       f"{dim(f'{passed_count}/{len(results)} steps passed')}")
+    heading("Local Install")
     ok(f"VSIX: {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}")
-
     print_install_instructions(vsix_path)
     if args.auto_install:
         _auto_install_vsix(vsix_path)
     else:
         prompt_install(vsix_path)
 
-    _print_report_path(report)
-    if report:
-        prompt_open_report(report)
-
-    return ExitCode.SUCCESS
+    return vsix_path
 
 
 def _auto_install_vsix(vsix_path: str) -> None:
@@ -453,8 +441,9 @@ def main() -> int:
 
     Flow:
     1. Run analysis phase (Steps 1-10) — all must pass
-    2. If --analyze-only: package .vsix, offer local install, exit
-    3. Otherwise: show confirmation gate, then publish (Steps 11-16)
+    2. Package .vsix and offer local install (always)
+    3. If --analyze-only: stop here
+    4. Otherwise: confirm → check credentials → publish (Steps 11-16)
     """
     args = parse_args()
     version = read_package_version()
@@ -470,9 +459,19 @@ def main() -> int:
         _save_and_print_report(results, version)
         return _exit_code_from_results(results)
 
-    # ── ANALYZE-ONLY: package + local install (like old dev.py) ──
+    # ── PACKAGE + LOCAL INSTALL (always, before publish) ──
+    vsix_path = _package_and_install(args, results, version)
+    if not vsix_path:
+        return ExitCode.PACKAGE_FAILED
+
+    # ── ANALYZE-ONLY: stop here ──
     if args.analyze_only:
-        return _finish_analyze_only(args, results, version)
+        report = save_report(results, version, vsix_path)
+        print_timing(results)
+        _print_report_path(report)
+        if report:
+            prompt_open_report(report)
+        return ExitCode.SUCCESS
 
     # ── PUBLISH PHASE (irreversible — requires explicit "y") ──
     heading("Publish Confirmation")

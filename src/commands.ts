@@ -13,6 +13,7 @@ import { exportToInteractiveHtml } from './modules/html-export-interactive';
 import { copyDeepLinkToClipboard } from './modules/deep-links';
 import { loadPresets, promptSavePreset, pickPreset } from './modules/filter-presets';
 import { InlineDecorationsProvider } from './ui/inline-decorations';
+import { PopOutPanel } from './ui/pop-out-panel';
 import { comparisonCommands } from './commands-comparison';
 import { applyTemplate } from './modules/session-templates';
 import { pickTemplate, promptSaveTemplate } from './modules/session-templates-ui';
@@ -25,6 +26,7 @@ export interface CommandDeps {
     readonly viewerProvider: LogViewerProvider;
     readonly historyProvider: SessionHistoryProvider;
     readonly inlineDecorations: InlineDecorationsProvider;
+    readonly popOutPanel: PopOutPanel;
 }
 
 /** Register all extension commands. */
@@ -192,8 +194,9 @@ function fileExportCmd(
 }
 
 function toolCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { viewerProvider, inlineDecorations } = deps;
+    const { viewerProvider, inlineDecorations, popOutPanel } = deps;
     return [
+        vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();
             if (match) { await openLogAtLine(match); }

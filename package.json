@@ -150,6 +150,11 @@
         "icon": "$(symbol-event)"
       },
       {
+        "command": "saropaLogCapture.popOutViewer",
+        "title": "Saropa Log Capture: Pop Out Viewer to New Window",
+        "icon": "$(link-external)"
+      },
+      {
         "command": "saropaLogCapture.compareSessions",
         "title": "Saropa Log Capture: Compare Sessions",
         "icon": "$(diff)"
@@ -220,6 +225,11 @@
         {
           "command": "saropaLogCapture.refreshHistory",
           "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.popOutViewer",
+          "when": "view == saropaLogCapture.logViewer",
           "group": "navigation"
         }
       ],
