@@ -7,6 +7,15 @@
 
 Saropa Log Capture automatically saves all VS Code Debug Console output to persistent log files, with a fast, feature-rich panel viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, and more). No setup required—just hit F5 and your logs are safe.
 
+<!-- GitHub Activity -->
+[![GitHub stars](https://img.shields.io/github/stars/saropa/saropa-log-capture?style=social)](https://github.com/saropa/saropa-log-capture)
+[![GitHub forks](https://img.shields.io/github/forks/saropa/saropa-log-capture?style=social)](https://github.com/saropa/saropa-log-capture)
+[![GitHub last commit](https://img.shields.io/github/last-commit/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/commits)
+[![GitHub issues](https://img.shields.io/github/issues/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+> Have feedback or ideas? Share them by [opening an issue](https://github.com/saropa/saropa-log-capture/issues/new) on GitHub!
+
 **Who is this for?**
 - Developers who need to keep, search, and export debug output
 - Anyone frustrated by losing Debug Console logs after a session ends
@@ -220,14 +229,56 @@ All settings are prefixed with `saropaLogCapture.`
 
 ---
 
-## Advanced & Development
+## Contributing
 
-- See [CLAUDE.md](CLAUDE.md) for architecture and workflow details
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup and contribution guidelines
-- See [CHANGELOG.md](CHANGELOG.md) for version history
+Great tools are built by communities, not companies. Contributions and feedback are welcome.
+
+If you think a feature is:
+
+- **Broken** — tell us what happened, we'll fix it
+- **Missing** — propose it, or better yet, submit a PR
+- **Confusing** — help us improve the docs or UX
+
+### How to contribute
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standards, and contribution guidelines.
+
+**Quick start:**
+
+1. Fork the repository
+2. Create a feature branch
+3. Run `npm run compile` to verify your changes
+4. Open a Pull Request
+
+**Reporting issues:**
+
+- Include steps to reproduce and your debug adapter (Dart, Node, Python, etc.)
+- Mention your VS Code version and OS
+- If possible, attach a sample log file
+
+### Discussing ideas
+
+Not sure if something is a bug or a feature request? [Open a discussion issue](https://github.com/saropa/saropa-log-capture/issues/new). We're happy to talk through ideas.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Developer setup, code standards, and how to contribute |
+| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
+| [ROADMAP.md](ROADMAP.md) | Planned features and project direction |
+| [STYLE_GUIDE.md](STYLE_GUIDE.md) | Code style conventions and patterns |
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE). Use it however you like.
+
+---
+
+Built by [Saropa](https://saropa.com). Questions? Ideas? [Open an issue](https://github.com/saropa/saropa-log-capture/issues) — we'd love to hear from you.
+
+[GitHub](https://github.com/saropa/saropa-log-capture) | [Issues](https://github.com/saropa/saropa-log-capture/issues) | [Saropa](https://saropa.com)
