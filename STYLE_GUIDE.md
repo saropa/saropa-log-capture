@@ -173,6 +173,61 @@ All colors use VS Code theme variables with fallbacks:
 | Options panel rows | `4px 0` | `8px` |
 | Modals | `12px 16px` | `8px` |
 
+## Status Bar UX
+
+The status bar uses two separate items, each with a single clear purpose:
+
+| Item | Priority | Click action | Text |
+|------|----------|-------------|------|
+| **Pause control** | 51 (right) | Toggle pause/resume | `$(record)` or `$(debug-pause)` icon |
+| **Status display** | 50 (left of pause) | Focus sidebar viewer | Line count + watch counts |
+
+### Design principles
+
+| Principle | Rule |
+|-----------|------|
+| **One item, one action** | Each status bar item does exactly one thing on click |
+| **Counts are promises** | If the status bar shows "error: 4", clicking must show those 4 errors |
+| **Live state only** | Counts reflect real-time data; never require manual clearing or dismissal |
+| **Tooltip describes action** | Tooltip says what clicking does, not just the current state |
+
+**Why split into two items?** VS Code status bar items support only one command each. Combining a count display with a pause toggle violates Nielsen's Heuristic #4 (Consistency and Standards) — users expect clicking a count to reveal details, not change operational state.
+
+## Interactive Affordances
+
+Every element that looks clickable must be clickable, and vice versa:
+
+| Element | Interactive? | Click action |
+|---------|-------------|-------------|
+| Watch chips (`.watch-chip`) | Yes | Opens search with keyword pre-filled |
+| Level dots (`.level-dot`) | Yes | Opens level filter fly-up menu |
+| Footer status text | No | Styled as plain text (no pointer, no hover) |
+| Filter badge | Yes | Opens options panel |
+
+**Rules:**
+- Interactive elements must have `cursor: pointer` and a hover effect
+- Non-interactive elements must have `cursor: default` and no hover effect
+- Badge-styled elements that look clickable must either be clickable or be visually distinct from interactive badges
+
+## Watch Chip Styles
+
+```css
+.watch-chip {
+    cursor: pointer;      /* signals interactivity */
+    border-radius: 8px;   /* badge shape */
+    font-size: 10px;
+}
+.watch-chip:hover {
+    filter: brightness(1.3);  /* hover feedback */
+}
+```
+
+- Error/exception chips: red background (`.watch-error`)
+- Warning chips: yellow background (`.watch-warn`)
+- Flash animation on new hits (`.watch-chip.flash`)
+- `title="Click to search"` for discoverability
+- `data-keyword` attribute carries the search term
+
 ## Anti-Patterns
 
 1. **No emoji in footer buttons** — use text labels instead (emoji only for level circles)
@@ -182,3 +237,6 @@ All colors use VS Code theme variables with fallbacks:
 5. **No mixed font sizes** — all elements in a region use the same base size
 6. **No feature toggles in footer** — infrequent settings belong in the Options panel
 7. **No options without tooltips** — every Options panel control needs a `title` attribute
+8. **No dead clicks** — if an element looks interactive (badge shape, colored background), it must have a click handler
+9. **No mode toggles on count displays** — status bar counts reveal content, they don't change operational state
+10. **No manual count clearing** — diagnostic counts reflect live state and update automatically

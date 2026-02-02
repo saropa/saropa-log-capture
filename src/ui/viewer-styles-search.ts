@@ -174,6 +174,10 @@ mark {
     padding: 0 5px;
     border-radius: 8px;
     white-space: nowrap;
+    cursor: pointer;
+}
+.watch-chip:hover {
+    filter: brightness(1.3);
 }
 /* Error-level watch chip (red) */
 .watch-error {

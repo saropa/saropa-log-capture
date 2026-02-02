@@ -2,18 +2,27 @@ import * as vscode from 'vscode';
 
 export class StatusBar implements vscode.Disposable {
     private readonly item: vscode.StatusBarItem;
+    private readonly pauseItem: vscode.StatusBarItem;
     private lineCount = 0;
     private paused = false;
     private watchCounts = new Map<string, number>();
 
     constructor() {
+        this.pauseItem = vscode.window.createStatusBarItem(
+            'saropaLogCapture.pauseControl',
+            vscode.StatusBarAlignment.Right,
+            51,
+        );
+        this.pauseItem.name = 'Saropa Log Capture: Pause';
+        this.pauseItem.command = 'saropaLogCapture.pause';
+
         this.item = vscode.window.createStatusBarItem(
             'saropaLogCapture.status',
             vscode.StatusBarAlignment.Right,
-            50
+            50,
         );
         this.item.name = 'Saropa Log Capture';
-        this.item.command = 'saropaLogCapture.pause';
+        this.item.command = 'saropaLogCapture.logViewer.focus';
         this.hide();
     }
 
@@ -21,10 +30,12 @@ export class StatusBar implements vscode.Disposable {
         this.lineCount = 0;
         this.paused = false;
         this.updateText();
+        this.pauseItem.show();
         this.item.show();
     }
 
     hide(): void {
+        this.pauseItem.hide();
         this.item.hide();
     }
 
@@ -47,11 +58,15 @@ export class StatusBar implements vscode.Disposable {
     private updateText(): void {
         const watchSuffix = this.buildWatchSuffix();
         if (this.paused) {
-            this.item.text = `$(debug-pause) Paused (${this.lineCount} lines)${watchSuffix}`;
-            this.item.tooltip = 'Saropa Log Capture: Paused. Click to resume.';
+            this.pauseItem.text = '$(debug-pause)';
+            this.pauseItem.tooltip = 'Saropa Log Capture: Click to resume.';
+            this.item.text = `Paused (${this.lineCount} lines)${watchSuffix}`;
+            this.item.tooltip = 'Saropa Log Capture: Paused. Click to show viewer.';
         } else {
-            this.item.text = `$(record) ${this.lineCount} lines${watchSuffix}`;
-            this.item.tooltip = 'Saropa Log Capture: Recording. Click to pause.';
+            this.pauseItem.text = '$(record)';
+            this.pauseItem.tooltip = 'Saropa Log Capture: Click to pause.';
+            this.item.text = `${this.lineCount} lines${watchSuffix}`;
+            this.item.tooltip = 'Saropa Log Capture: Recording. Click to show viewer.';
         }
     }
 
@@ -66,6 +81,7 @@ export class StatusBar implements vscode.Disposable {
     }
 
     dispose(): void {
+        this.pauseItem.dispose();
         this.item.dispose();
     }
 }

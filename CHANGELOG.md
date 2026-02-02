@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Scrollbar minimap disappears on scroll:** The minimap was positioned absolute inside the scrollable `#log-content` container, causing it to scroll away with the content. Wrapped `#log-content` in a non-scrolling `#log-content-wrapper` and moved the minimap to the wrapper so it stays viewport-fixed.
 
 ### Changed
+- **Status bar split into two items:** The status bar is now two separate clickable items: a pause/resume icon that toggles capture state, and a text display (line count + watch counts) that focuses the sidebar viewer panel. Follows the VS Code convention where clicking a count reveals the associated view.
+- **Watch chips are clickable:** Footer watch count chips (e.g., "error: 4") now open the search panel pre-filled with the keyword and navigate to the first match. Adds pointer cursor and hover effect to signal interactivity.
 - **Native Session History tree view hidden:** The separate tree view below the Log Viewer is replaced by the in-webview Project Logs panel accessible from the icon bar.
 - **Session panel renamed:** "Sessions" panel renamed to "Project Logs" with matching icon bar tooltip.
 - **Icon bar sessions icon:** Changed from history (clock) to files icon to better represent project log files.
