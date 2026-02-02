@@ -80,7 +80,6 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     <div id="main-content">
     <div id="viewer-header">
         <span id="header-filename"></span>
-        <span id="header-version">${version ? `v${version}` : ''}</span>
         <button id="header-toggle" title="Toggle header">&#x25B2;</button>
     </div>
     <div id="split-breadcrumb">
@@ -109,7 +108,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getExportModalHtml()}
     ${getEditModalHtml()}
     <div id="footer">
-        <span id="footer-text">Waiting for debug session...</span>
+        <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...${version ? ` \u00b7 v${version}` : ''}</span>
         ${getErrorBreakpointHtml()}
         <span id="watch-counts"></span>
         <span id="level-menu-btn" class="level-summary" title="Level filters">

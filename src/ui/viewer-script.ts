@@ -8,6 +8,7 @@ var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
+var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
 var wrapToggle = document.getElementById('wrap-toggle');
 var viewerHeader = document.getElementById('viewer-header');
 var headerFilename = document.getElementById('header-filename');
@@ -142,7 +143,9 @@ function toggleHeader() {
 
 function updateFooterText() {
     var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
-    footerTextEl.textContent = prefix + lineCount + ' lines';
+    var text = prefix + lineCount + ' lines';
+    if (footerVersion) text += ' \\u00b7 ' + footerVersion;
+    footerTextEl.textContent = text;
 }
 
 window.addEventListener('message', function(event) {
