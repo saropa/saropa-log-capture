@@ -219,40 +219,20 @@ export function getContentStyles(): string {
     text-overflow: ellipsis;
     flex-shrink: 0;
 }
-.session-info-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 500;
-}
-.session-info-modal-content {
+.session-info-popover {
+    position: absolute;
+    top: 100%;
+    left: 0;
     background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
     border: 1px solid var(--vscode-panel-border);
-    border-radius: 6px;
-    padding: 12px 16px;
-    min-width: 240px;
-    max-width: 90%;
-    max-height: 80%;
+    border-radius: 4px;
+    padding: 8px 12px;
+    min-width: 220px;
+    max-width: 320px;
+    max-height: 50vh;
     overflow-y: auto;
-}
-.session-info-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 12px;
-}
-.session-info-modal-header button {
-    background: none;
-    border: none;
-    color: var(--vscode-foreground);
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 4px;
+    z-index: 300;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .session-info-grid {
     display: grid;

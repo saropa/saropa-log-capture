@@ -5,6 +5,12 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [0.2.1] - Current
+
+### Fixed
+- **Session info modal blocks entire UI:** The full-screen overlay modal with backdrop stole focus and required a click to dismiss. Replaced with a lightweight popover that drops down from the ℹ️ icon — no overlay, no blocking. Click the icon to toggle, click anywhere else to dismiss.
+
+---
 ## [0.2.1] - 2026-02-02
 
 ### Fixed
