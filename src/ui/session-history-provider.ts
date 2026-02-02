@@ -6,7 +6,7 @@ import {
     isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize,
 } from './session-history-grouping';
 import {
-    formatMtime, applyDisplayOptions,
+    formatMtime, formatMtimeTimeOnly, applyDisplayOptions,
     SessionDisplayOptions, defaultDisplayOptions,
 } from './session-display';
 
@@ -56,7 +56,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         const displayLabel = isActive ? `● ${label}` : label;
         const ti = new vscode.TreeItem(displayLabel, vscode.TreeItemCollapsibleState.None);
         ti.tooltip = buildTooltip(item);
-        const baseDescription = buildDescription(item);
+        const baseDescription = buildDescription(item, this.displayOptions.showDayHeadings);
         ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
         // Icon: active=record(red), with timestamps=history, without=output
         ti.iconPath = new vscode.ThemeIcon(
@@ -181,12 +181,12 @@ function extractFields(block: string): Partial<Pick<SessionMetadata, 'date' | 'p
     return result;
 }
 
-function buildDescription(item: SessionMetadata): string {
+function buildDescription(item: SessionMetadata, timeOnly: boolean): string {
     const parts: string[] = [];
     if (item.adapter) {
         parts.push(item.adapter);
     }
-    parts.push(formatMtime(item.mtime));
+    parts.push(timeOnly ? formatMtimeTimeOnly(item.mtime) : formatMtime(item.mtime));
     parts.push(formatSize(item.size));
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));

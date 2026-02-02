@@ -1,9 +1,4 @@
-/**
- * Helper functions for LogViewerProvider.
- *
- * Extracted to keep the main provider class under 300 lines.
- * Contains message handlers and batch processing logic.
- */
+/** Helper functions for LogViewerProvider — message handlers and batch processing. */
 import * as vscode from "vscode";
 import { findHeaderEnd } from "./viewer-file-loader";
 import { loadSourcePreview } from "./viewer-file-loader";
@@ -11,7 +6,7 @@ import { isFrameworkFrame } from "../modules/stack-parser";
 import { resolveSourceUri } from "../modules/source-resolver";
 import { TreeItem, isSplitGroup } from "./session-history-grouping";
 import { PendingLine } from "./viewer-file-loader";
-import { formatMtime } from "./session-display";
+import { formatMtime, formatMtimeTimeOnly } from "./session-display";
 
 /**
  * Handle editing a log line in the current file.
@@ -258,6 +253,7 @@ export function buildSessionListPayload(
 				size: p.size,
 				mtime: p.mtime,
 				formattedMtime: formatMtime(p.mtime),
+				formattedTime: formatMtimeTimeOnly(p.mtime),
 				date: p.date,
 				hasTimestamps: p.hasTimestamps ?? false,
 				isActive: activeUri?.toString() === p.uri.toString(),
@@ -271,6 +267,7 @@ export function buildSessionListPayload(
 			size: item.size,
 			mtime: item.mtime,
 			formattedMtime: formatMtime(item.mtime),
+			formattedTime: formatMtimeTimeOnly(item.mtime),
 			date: item.date,
 			hasTimestamps: item.hasTimestamps ?? false,
 			isActive: activeUri?.toString() === item.uri.toString(),

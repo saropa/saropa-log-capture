@@ -19,7 +19,7 @@ export function getSessionPanelHtml(): string {
         </div>
     </div>
     <div class="session-panel-toggles">
-        <button id="session-toggle-strip" class="session-toggle-btn" title="Strip date/time from names">
+        <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames">
             <span class="codicon codicon-calendar"></span> Dates
         </button>
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names (Title Case, no underscores)">
@@ -29,7 +29,7 @@ export function getSessionPanelHtml(): string {
             <span class="codicon codicon-list-tree"></span> Days
         </button>
         <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order (oldest first)">
-            <span class="codicon codicon-arrow-up"></span> Old
+            <span class="codicon codicon-arrow-down"></span> Sort
         </button>
     </div>
     <div class="session-panel-content">
@@ -52,8 +52,8 @@ export function getSessionPanelScript(): string {
     var cachedSessions = null;
 
     var sessionDisplayOptions = {
-        stripDatetime: false, normalizeNames: false,
-        showDayHeadings: false, reverseSort: false,
+        stripDatetime: true, normalizeNames: true,
+        showDayHeadings: true, reverseSort: false,
     };
 
     window.openSessionPanel = function() {
@@ -167,7 +167,11 @@ export function getSessionPanelScript(): string {
     function buildSessionMeta(s) {
         var parts = [];
         if (s.adapter) parts.push(s.adapter);
-        if (s.formattedMtime) parts.push(s.formattedMtime);
+        /* When day headings are visible the date is redundant — show time only. */
+        var timeLabel = sessionDisplayOptions.showDayHeadings
+            ? (s.formattedTime || s.formattedMtime)
+            : s.formattedMtime;
+        if (timeLabel) parts.push(timeLabel);
         if (s.size) parts.push(formatSessionSize(s.size));
         return parts.join(' \\u00b7 ');
     }
@@ -192,7 +196,7 @@ export function getSessionPanelScript(): string {
 
     function syncToggleButtons() {
         var ids = {
-            'session-toggle-strip': sessionDisplayOptions.stripDatetime,
+            'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
             'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
             'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
             'session-toggle-reverse': sessionDisplayOptions.reverseSort,
@@ -200,6 +204,15 @@ export function getSessionPanelScript(): string {
         for (var id in ids) {
             var el = document.getElementById(id);
             if (el) el.classList.toggle('active', ids[id]);
+        }
+        /* Update sort arrow direction icon. */
+        var sortBtn = document.getElementById('session-toggle-reverse');
+        if (sortBtn) {
+            var icon = sortBtn.querySelector('.codicon');
+            if (icon) {
+                icon.className = sessionDisplayOptions.reverseSort
+                    ? 'codicon codicon-arrow-up' : 'codicon codicon-arrow-down';
+            }
         }
     }
 
@@ -244,7 +257,6 @@ export function getSessionPanelScript(): string {
             var uri = item.getAttribute('data-uri');
             if (uri) {
                 vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
-                closeSessionPanel();
             }
         });
     }
