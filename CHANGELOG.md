@@ -5,6 +5,9 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [0.2.3] - 2026-02-02
+
+---
 ## [0.2.2] - 2026-02-02
 
 ### Fixed
