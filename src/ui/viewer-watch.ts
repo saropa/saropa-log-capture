@@ -15,10 +15,32 @@ function updateWatchDisplay() {
         if (watchCounts[label] > 0) {
             var cls = label.toLowerCase().indexOf('error') >= 0 || label.toLowerCase().indexOf('exception') >= 0
                 ? 'watch-chip watch-error' : 'watch-chip watch-warn';
-            parts.push('<span class="' + cls + '">' + label + ': ' + watchCounts[label] + '</span>');
+            var safe = label.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+            parts.push('<span class="' + cls + '" data-keyword="' + safe + '" title="Click to search">' + label + ': ' + watchCounts[label] + '</span>');
         }
     }
     watchCountsEl.innerHTML = parts.join('');
+    var chips = watchCountsEl.querySelectorAll('.watch-chip');
+    for (var ci = 0; ci < chips.length; ci++) {
+        chips[ci].addEventListener('click', onWatchChipClick);
+    }
+}
+
+/** Open search panel pre-filled with the clicked watch keyword. */
+function onWatchChipClick(e) {
+    e.stopPropagation();
+    var keyword = e.currentTarget.getAttribute('data-keyword');
+    if (!keyword) return;
+    if (typeof searchOpen !== 'undefined' && !searchOpen) {
+        if (typeof setActivePanel === 'function') { setActivePanel('search'); }
+        else if (typeof openSearch === 'function') { openSearch(); }
+    }
+    if (typeof searchInputEl !== 'undefined' && searchInputEl) {
+        searchInputEl.value = keyword;
+        searchInputEl.focus();
+        if (typeof updateClearButton === 'function') updateClearButton();
+        if (typeof updateSearch === 'function') updateSearch();
+    }
 }
 
 function handleUpdateWatchCounts(msg) {
