@@ -10,7 +10,7 @@ export function getSessionPanelHtml(): string {
     return /* html */ `
 <div id="session-panel" class="session-panel">
     <div class="session-panel-header">
-        <span>Sessions</span>
+        <span>Project Logs</span>
         <div class="session-panel-actions">
             <button id="session-refresh" class="session-panel-action" title="Refresh">
                 <span class="codicon codicon-refresh"></span>
