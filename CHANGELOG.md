@@ -5,6 +5,48 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [UNRELEASED]
+
+### Added
+- **Right-click context menu:** Custom context menu on log lines with Copy (line text), Search Codebase, Search Past Sessions, Open Source File, Show Context, Pin Line, Add Note, Add to Watch List, and Add to Exclusions. Global actions (Copy selection, Select All) appear regardless of click target. Line-specific items auto-hide when right-clicking empty space.
+- **Show Context in context menu:** The inline peek (surrounding context lines) is now triggered via right-click → "Show Context" instead of double-click. Double-click now performs native word selection as expected.
+- **Go to Line (Ctrl+G):** Opens a VS Code input box to jump to a specific line number. Scrolls the virtual viewport to the target line.
+- **Page Up / Page Down:** PgUp and PgDn keys scroll the log content by 80% of the viewport height.
+- **Keyboard font zoom:** Ctrl+= / Ctrl+- adjust font size by 1px. Ctrl+0 resets to 13px default.
+- **Ctrl+scroll zoom:** Hold Ctrl and scroll the mouse wheel to increase/decrease font size.
+- **Ctrl+A scoped to log content:** Ctrl+A selects only the visible log lines in the viewport, not the entire webview UI (icon bar, panels, footer).
+- **Tab navigation and focus indicators:** Icon bar buttons are now keyboard-navigable via Tab. Focus-visible outlines use `--vscode-focusBorder` for accessibility.
+- **Search match persistence:** Closing the search panel no longer clears match positions. Reopening restores the previous query and match index, so F3 continues from where you left off.
+- **CSS animations throughout the viewer:** Context menu fades in with a subtle scale, level flyup slides up from the footer, log line hover backgrounds transition smoothly, footer buttons blend on hover, filter badges pop in when activated, search current-match pulses on navigation, minimap viewport glides instead of jumping, inline peek slides open, jump-to-bottom button fades in, and pinned items slide in from the left. All pure CSS with short durations (0.08–0.4s) to feel responsive without sluggishness.
+
+### Removed
+- **Source preview hover popup:** Removed the floating tooltip that appeared when hovering over source links in stack traces. The popup was easily triggered accidentally and obscured log content. Single-click on source links (or right-click → Open Source File) already navigates to the file.
+- **Watch count chips in footer:** Removed the red/yellow keyword watch chips from the viewer footer. They duplicated the level classification counts and confused the UX. Watch counts remain visible in the VS Code status bar.
+- **Minimap toggle:** The scrollbar minimap is now always on — there is no reason not to have it. Removed the `opt-minimap` checkbox from the Options panel, the `toggleMinimap()` function, and the `minimap-active` CSS class. Native scrollbar is always hidden; the minimap panel is the only scrollbar.
+
+### Changed
+- **Clickable level filter dots:** Each colored dot in the footer now directly toggles its level filter on click (e.g., click the red dot to hide/show errors). Previously, clicking anywhere on the dots opened the fly-up menu.
+- **Level dot counts:** Footer dots now show live counts next to each dot when > 0, so you can see at a glance how many errors, warnings, etc. exist.
+- **Fly-up menu trigger:** The fly-up filter menu (with Select All/None and text labels) is now opened by clicking the "All"/"3/7" label text instead of the dots.
+- **Status bar opens log file:** Clicking the status bar line count now opens the active log file in the editor instead of just focusing the sidebar viewer tab. Follows the "counts are promises" principle — if the bar shows a count, clicking reveals the underlying data.
+- **Inline exclusion input:** Exclusion patterns can now be added directly in the Options panel via a text input + Add button. Replaces the previous "Configure in Settings" link that opened VS Code's JSON settings.
+- **Visual spacing enabled by default:** Breathing room between log sections is now on by default for easier reading. Toggle off via the options panel.
+- **Word wrap disabled by default:** Log lines no longer wrap by default, preserving original formatting. Toggle on via the options panel or press W.
+- **Double-click restores native behavior:** Removed the double-click handler that opened the inline peek context modal. Double-click now selects words normally, matching standard text editor behavior.
+
+### Fixed
+- **App-only filter had no effect on regular log lines:** The "App only (hide framework)" toggle only hid framework stack frames (`    at ...` lines), ignoring regular output. Android logcat lines (`D/FlutterJNI`, `D/FirebaseSessions`, `I/Choreographer`, etc.) passed through unfiltered. Extended line classification to detect Android logcat tags and launch boilerplate, stored `fw` flag on all line items, and rewired the toggle to use `recalcHeights()` so it composes with all other filters. `I/flutter` lines (app output) remain visible while framework/system noise is hidden.
+- **Severity bar never showed framework color:** `renderItem()` checked `item.isFramework` (never set) instead of `item.fw` for the severity bar CSS class.
+- **Scrollbar minimap redesigned as always-on interactive panel:** The minimap was an invisible 8px overlay hidden behind the opaque native scrollbar. Redesigned as a 60px wide always-on flex-sibling panel that replaces the native scrollbar entirely. Supports click-to-scroll (centers viewport on clicked position), drag-to-scroll, and mouse wheel forwarding. Shows a draggable viewport indicator.
+- **Minimap markers for hidden lines:** Error/warning markers were generated for all lines regardless of filter state, creating phantom marks at wrong positions for lines with `height === 0` (filtered, collapsed). Now skips hidden lines and stack-frame lines (previously every frame in a stack trace generated its own red marker).
+- **Minimap missing performance markers:** Only errors and warnings were shown. Added purple markers for performance-level lines using `--vscode-editorOverviewRuler-infoForeground`.
+- **Scroll position redesign:** Complete rewrite of the virtual scrolling system. Toggling filters, collapsing stack traces, or changing font size no longer jumps the view to a random position — the first visible line stays anchored. Auto-scroll to bottom no longer causes double-render feedback loops. Prefix-sum array replaces O(n) linear scans with O(log n) binary search for viewport calculations. Stack frame height lookup is now O(1) via cached group headers instead of O(n²) nested scans. Row height is measured from the DOM instead of hardcoded, so spacer heights stay correct after font/line-height changes. Trimming old lines (50K limit) now adjusts scroll position by the removed height.
+- **Footer level label blank:** The static "Levels" label next to the filter dots gave no indication of active state. Now shows "All" when all 7 levels are enabled, "N/7" when partially filtered, or "None" when all disabled. Footer dots also gained `flex-shrink: 0` to prevent collapsing in the flex layout.
+- **"All" not highlighted in level flyup:** The All/None links in the level flyup had no active state, making it unclear whether all levels were enabled. Both links now highlight (using VS Code button colors) when their respective state is active.
+- **Level flyup text center-aligned:** Button text in the level flyup defaulted to browser center alignment, making labels hard to scan. Added explicit left alignment (`justify-content: flex-start`, `text-align: left`) while keeping counts right-aligned.
+- **Level flyup missing title:** The flyup opened directly into All/None links with no context. Added a "Level Filters" title header above the links to clarify purpose and resolve "levels vs filters" terminology confusion.
+
+---
 ## [0.2.4] - 2026-02-02
 
 ### Changed

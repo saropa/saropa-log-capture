@@ -54,8 +54,9 @@ export function getContentStyles(): string {
 #log-content {
     position: relative;
 }
+@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 0.85; transform: translateY(0); } }
 #jump-btn {
-    display: none;      /* shown via JS when not at bottom */
+    display: none;
     position: absolute;
     bottom: 8px;
     right: 8px;
@@ -68,6 +69,7 @@ export function getContentStyles(): string {
     font-size: 11px;
     opacity: 0.85;
     transition: opacity 0.2s ease;
+    animation: fade-in 0.2s ease-out;
 }
 #jump-btn:hover {
     opacity: 1;
@@ -110,6 +112,7 @@ export function getContentStyles(): string {
     cursor: pointer;
     border-radius: 3px;
     white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 .footer-btn:hover {
     background: var(--vscode-button-hoverBackground);
@@ -119,6 +122,7 @@ export function getContentStyles(): string {
 .footer-spacer { flex: 1; }
 
 /* --- Active filter badge in footer --- */
+@keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .filter-badge {
     font-size: 10px;
     padding: 1px 6px;
@@ -129,6 +133,7 @@ export function getContentStyles(): string {
     white-space: nowrap;
     font-weight: bold;
     line-height: 1;
+    animation: badge-pop 0.2s ease-out;
 }
 .filter-badge:hover {
     opacity: 0.85;
@@ -268,12 +273,7 @@ export function getContentStyles(): string {
     overflow-y: auto;
     padding: 8px 12px;
 }
-.info-panel-empty {
-    font-size: 12px;
-    color: var(--vscode-descriptionForeground);
-    text-align: center;
-    padding: 16px 0;
-}
+.info-panel-empty { font-size: 12px; color: var(--vscode-descriptionForeground); text-align: center; padding: 16px 0; }
 .session-info-grid {
     display: grid;
     grid-template-columns: 1fr;
