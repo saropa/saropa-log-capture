@@ -5,6 +5,20 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Unformatted line counts:** Footer line count, level filter dot counts, fly-up circle counts, and VS Code status bar now display comma-separated numbers (e.g., `12,868` instead of `12868`).
+- **Level filter dots hard to see:** Increased dot size from 9px to 10px with `min-width`/`min-height` guarantees and wider gap (1px → 3px) between dot and count for clearer visibility.
+- **Footer filename not actionable:** Clicking the log filename in the footer now reveals and selects the file in the Session History tree view. The filename shows a dotted underline and turns blue on hover to indicate it is clickable.
+- **Minimap markers not updating:** Markers now show for all non-info severity levels (error, warning, performance, todo, debug, notice) with distinct colors. Added direct `scheduleMinimap()` calls in the data flow so the minimap rebuilds reliably when new lines arrive or data is cleared, independent of the monkey-patch hook on `renderViewport`.
+- **Minimap click vs drag:** Clicking the minimap immediately entered drag mode, so any mouse movement after a click caused unwanted scrolling. Now a single click navigates to that position and stops; drag mode only activates after 3px of movement while holding the mouse button.
+- **Minimap drag scrolling broken:** Dragging the minimap caused erratic viewer movement because `suppressScroll` was reset immediately, allowing the RAF-debounced scroll handler to fire mid-drag and trigger `renderViewport` DOM changes that destabilized the scroll position. Now `suppressScroll` stays true for the entire drag operation, with viewport rendering done synchronously in `scrollToMinimapY`.
+- **Minimap scroll mapping used stale height:** Click and drag positions were mapped using `minimapCachedHeight` which could be 120ms stale. Now uses a `mmHeight()` helper that falls back to the always-current `totalHeight` global.
+- **Minimap wheel deltaMode not handled:** Forwarded `deltaY` as raw pixels regardless of `e.deltaMode`, so line-mode or page-mode scroll events barely moved the content. Now multiplies by `ROW_HEIGHT` or `clientHeight` for modes 1 and 2.
+- **Minimap markers hidden behind viewport indicator:** Added `z-index: 1` to `.minimap-marker` so colored severity markers paint above the semi-transparent viewport overlay.
+
+---
 ## [0.2.5] - 2026-02-02
 
 ### Added

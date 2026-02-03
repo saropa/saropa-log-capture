@@ -55,17 +55,22 @@ export class StatusBar implements vscode.Disposable {
         this.updateText();
     }
 
+    private formatCount(n: number): string {
+        return n.toLocaleString('en-US');
+    }
+
     private updateText(): void {
         const watchSuffix = this.buildWatchSuffix();
+        const count = this.formatCount(this.lineCount);
         if (this.paused) {
             this.pauseItem.text = '$(debug-pause)';
             this.pauseItem.tooltip = 'Saropa Log Capture: Click to resume.';
-            this.item.text = `Paused (${this.lineCount} lines)${watchSuffix}`;
+            this.item.text = `Paused (${count} lines)${watchSuffix}`;
             this.item.tooltip = 'Saropa Log Capture: Paused. Click to open log file.';
         } else {
             this.pauseItem.text = '$(record)';
             this.pauseItem.tooltip = 'Saropa Log Capture: Click to pause.';
-            this.item.text = `${this.lineCount} lines${watchSuffix}`;
+            this.item.text = `${count} lines${watchSuffix}`;
             this.item.tooltip = 'Saropa Log Capture: Recording. Click to open log file.';
         }
     }

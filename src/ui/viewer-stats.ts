@@ -53,7 +53,7 @@ function updateLevelCircle(level) {
     var countEl = btn.querySelector('.level-count');
     if (!countEl) return;
     var count = statsCounters[level] || 0;
-    countEl.textContent = count > 0 ? String(count) : '';
+    countEl.textContent = count > 0 ? formatNumber(count) : '';
 }
 
 /**
@@ -66,7 +66,7 @@ function updateDotCounts() {
         var countEl = groups[i].querySelector('.dot-count');
         if (!countEl || !lvl) continue;
         var c = statsCounters[lvl] || 0;
-        countEl.textContent = c > 0 ? String(c) : '';
+        countEl.textContent = c > 0 ? formatNumber(c) : '';
     }
 }
 

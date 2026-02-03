@@ -10,9 +10,10 @@ var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
 if (footerTextEl) {
-    footerTextEl.style.cursor = 'pointer';
-    footerTextEl.addEventListener('click', function() {
-        if (typeof setActivePanel === 'function') setActivePanel('sessions');
+    footerTextEl.addEventListener('click', function(e) {
+        if (e.target && e.target.classList && e.target.classList.contains('footer-filename')) {
+            vscodeApi.postMessage({ type: 'revealLogFile' });
+        }
     });
 }
 var wrapToggle = document.getElementById('wrap-toggle');
@@ -117,12 +118,21 @@ function jumpToBottom() {
     jumpBtn.style.display = 'none';
 }
 
+function formatNumber(n) {
+    return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
+}
+
 function updateFooterText() {
     var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
-    var text = prefix + lineCount + ' lines';
-    if (currentFilename) text += ' \\u00b7 ' + currentFilename;
-    if (footerVersion) text += ' \\u00b7 ' + footerVersion;
-    footerTextEl.textContent = text;
+    footerTextEl.textContent = '';
+    footerTextEl.appendChild(document.createTextNode(prefix + formatNumber(lineCount) + ' lines'));
+    if (currentFilename) {
+        footerTextEl.appendChild(document.createTextNode(' \\u00b7 '));
+        var fn = document.createElement('span');
+        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Reveal in Session History';
+        footerTextEl.appendChild(fn);
+    }
+    if (footerVersion) footerTextEl.appendChild(document.createTextNode(' \\u00b7 ' + footerVersion));
 }
 
 window.addEventListener('message', function(event) {
@@ -137,6 +147,7 @@ window.addEventListener('message', function(event) {
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
             if (typeof buildPrefixSums === 'function') buildPrefixSums();
             renderViewport(true);
+            if (typeof scheduleMinimap === 'function') scheduleMinimap();
             if (autoScroll) {
                 suppressScroll = true;
                 logEl.scrollTop = logEl.scrollHeight;
@@ -155,6 +166,7 @@ window.addEventListener('message', function(event) {
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
             if (typeof timestampsAvailable !== 'undefined') timestampsAvailable = true;
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
+            if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
             footerTextEl.textContent = msg.text;

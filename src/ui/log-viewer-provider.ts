@@ -43,6 +43,7 @@ export class LogViewerProvider
   private onOpenSessionFromPanel?: (uriString: string) => void;
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onPopOutRequest?: () => void;
+  private onRevealLogFile?: (uriString: string) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -103,6 +104,7 @@ export class LogViewerProvider
   setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
   setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
   setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
+  setRevealLogFileHandler(handler: (uriString: string) => void): void { this.onRevealLogFile = handler; }
 
   // -- Webview state methods --
 
@@ -263,6 +265,9 @@ export class LogViewerProvider
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "popOutViewer": this.onPopOutRequest?.(); break;
+      case "revealLogFile":
+        if (this.currentFileUri && this.onRevealLogFile) { Promise.resolve(this.onRevealLogFile(this.currentFileUri.toString())).catch(() => {}); }
+        break;
       case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "promptGoToLine":
         vscode.window.showInputBox({ prompt: "Go to line number", validateInput: (v) => /^\d+$/.test(v) ? null : "Enter a number" })

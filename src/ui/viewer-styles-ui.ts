@@ -90,7 +90,7 @@ export function getUiStyles(): string {
 .level-dot-group {
     display: inline-flex;
     align-items: center;
-    gap: 1px;
+    gap: 3px;
     cursor: pointer;
     padding: 2px;
     border-radius: 4px;
@@ -99,8 +99,11 @@ export function getUiStyles(): string {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .level-dot {
-    width: 9px;
-    height: 9px;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
     transition: opacity 0.2s ease;
@@ -264,12 +267,15 @@ export function getUiStyles(): string {
     overflow: hidden; cursor: pointer;
     border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
-.minimap-marker { position: absolute; left: 0; right: 0; height: 2px; pointer-events: none; }
+.minimap-marker { position: absolute; left: 0; right: 0; height: 2px; pointer-events: none; z-index: 1; }
 .minimap-search-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(234, 92, 0, 0.8)); }
 .minimap-current-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(255, 150, 50, 1)); height: 3px; z-index: 2; }
 .minimap-error { background: var(--vscode-editorOverviewRuler-errorForeground, rgba(244, 68, 68, 0.8)); }
 .minimap-warning { background: var(--vscode-editorOverviewRuler-warningForeground, rgba(204, 167, 0, 0.8)); }
 .minimap-performance { background: var(--vscode-editorOverviewRuler-infoForeground, rgba(156, 39, 176, 0.8)); }
+.minimap-todo { background: rgba(189, 189, 189, 0.6); }
+.minimap-debug { background: rgba(121, 85, 72, 0.6); }
+.minimap-notice { background: rgba(33, 150, 243, 0.6); }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
