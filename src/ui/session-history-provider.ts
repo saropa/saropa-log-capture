@@ -84,6 +84,18 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.metaStore;
     }
 
+    /** Find a top-level tree item whose URI matches (or whose split group contains it). */
+    async findByUri(uri: vscode.Uri): Promise<TreeItem | undefined> {
+        const uriStr = uri.toString();
+        const items = await this.getChildren();
+        for (const item of items) {
+            if (isSplitGroup(item)) {
+                if (item.parts.some(p => p.uri.toString() === uriStr)) { return item; }
+            } else if (item.uri.toString() === uriStr) { return item; }
+        }
+        return undefined;
+    }
+
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (element && isSplitGroup(element)) {
             return element.parts.sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));

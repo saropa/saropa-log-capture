@@ -55,9 +55,10 @@ export function activate(context: vscode.ExtensionContext): void {
     // Session history tree.
     historyProvider = new SessionHistoryProvider();
     context.subscriptions.push(historyProvider);
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider('saropaLogCapture.sessionHistory', historyProvider),
-    );
+    const historyTreeView = vscode.window.createTreeView('saropaLogCapture.sessionHistory', {
+        treeDataProvider: historyProvider,
+    });
+    context.subscriptions.push(historyTreeView);
 
     // Deep links URI handler.
     context.subscriptions.push(
@@ -123,6 +124,15 @@ export function activate(context: vscode.ExtensionContext): void {
         await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
     });
     viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
+    viewerProvider.setRevealLogFileHandler(async (uriString) => {
+        const uri = vscode.Uri.parse(uriString);
+        const item = await historyProvider.findByUri(uri);
+        if (item) {
+            await historyTreeView.reveal(item, { select: true, focus: true });
+        } else {
+            await vscode.commands.executeCommand('saropaLogCapture.sessionHistory.focus');
+        }
+    });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
