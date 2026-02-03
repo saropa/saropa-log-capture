@@ -49,26 +49,30 @@ body {
 
 /* ===================================================================
    Log Content Wrapper
-   Non-scrolling container for the log area and scrollbar minimap.
-   Takes flex:1 so the minimap overlay stays viewport-fixed.
+   Flex row containing the scrollable log area and the minimap panel.
    =================================================================== */
 #log-content-wrapper {
     position: relative;
     flex: 1;
     min-height: 0;
+    display: flex;
 }
 
 /* ===================================================================
    Log Content Area
-   Main scrollable region holding all log lines. Fills the wrapper
-   height so the minimap can overlay without scrolling away.
+   Main scrollable region. Native scrollbar is always hidden because
+   the minimap panel serves as the scrollbar replacement.
    =================================================================== */
 #log-content {
+    flex: 1;
+    min-width: 0;
     height: 100%;
     overflow-y: auto;
     padding: 4px 0;
     position: relative;
+    scrollbar-width: none;
 }
+#log-content::-webkit-scrollbar { display: none; }
 
 /* --- Individual log lines --- */
 .line {
@@ -76,6 +80,7 @@ body {
     word-break: break-all;
     padding: 0 8px;
     line-height: var(--log-line-height, 1.5);
+    transition: background 0.1s ease;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
 
@@ -86,6 +91,12 @@ body {
     cursor: pointer;
 }
 .source-link:hover { text-decoration: underline; }
+
+/* --- Focus indicators for keyboard navigation --- */
+button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder, #007acc);
+    outline-offset: -1px;
+}
 
 /* --- stderr output lines (DAP category "stderr") --- */
 .line.cat-stderr {

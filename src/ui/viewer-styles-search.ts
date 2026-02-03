@@ -1,7 +1,7 @@
 /**
  * CSS styles for search panel and watch features in the viewer webview.
  *
- * Covers search slide-out panel, match highlighting, and keyword watch chips.
+ * Covers search slide-out panel and match highlighting.
  */
 import { getSearchHistoryStyles } from './viewer-search-history';
 
@@ -163,52 +163,14 @@ mark {
     color: inherit;
     border-radius: 2px;
 }
-/* Currently focused match gets a brighter highlight */
+/* Currently focused match gets a brighter highlight + brief pulse on navigation */
+@keyframes match-pulse { 0% { box-shadow: 0 0 0 0 rgba(234, 92, 0, 0.4); } 100% { box-shadow: 0 0 0 4px transparent; } }
 .current-match mark {
     background: var(--vscode-editor-findMatchBackground, rgba(255, 150, 50, 0.6));
+    animation: match-pulse 0.4s ease-out;
 }
 .search-match {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.1));
-}
-
-/* ===================================================================
-   Keyword Watch Chips
-   Small badges in the footer showing hit counts for watched keywords.
-   Flash animation plays when a new match arrives.
-   =================================================================== */
-#watch-counts {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-.watch-chip {
-    display: inline-block;
-    font-size: 10px;
-    padding: 0 5px;
-    border-radius: 8px;
-    white-space: nowrap;
-    cursor: pointer;
-}
-.watch-chip:hover {
-    filter: brightness(1.3);
-}
-/* Error-level watch chip (red) */
-.watch-error {
-    background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.2));
-    color: var(--vscode-errorForeground, #f44);
-}
-/* Warning-level watch chip (yellow) */
-.watch-warn {
-    background: var(--vscode-inputValidation-warningBackground, rgba(255, 204, 0, 0.2));
-    color: var(--vscode-editorWarning-foreground, #fc0);
-}
-/* Brief scale-up animation on new watch hit */
-@keyframes watch-flash {
-    0% { opacity: 1; transform: scale(1.2); }
-    100% { opacity: 1; transform: scale(1); }
-}
-.watch-chip.flash {
-    animation: watch-flash 0.4s ease-out;
 }
 ` + getSearchHistoryStyles();
 }
