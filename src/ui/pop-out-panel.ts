@@ -50,6 +50,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onSessionListRequest?: () => void;
   private onOpenSessionFromPanel?: (uriString: string) => void;
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
+  private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -93,6 +94,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setSessionListHandler(h: () => void): void { this.onSessionListRequest = h; }
   setOpenSessionFromPanelHandler(h: (u: string) => void): void { this.onOpenSessionFromPanel = h; }
   setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = h; }
+  setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
 
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
@@ -176,6 +178,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation": this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? "")); break;
+      case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
