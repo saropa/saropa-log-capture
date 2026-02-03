@@ -286,3 +286,15 @@ export async function openSourceFile(
 		// File may not exist on disk — ignore silently.
 	}
 }
+
+/** Copy a source file path to clipboard (relative or full). */
+export function copySourcePath(filePath: string, mode: string): void {
+	if (mode === 'full') {
+		const uri = resolveSourceUri(filePath);
+		vscode.env.clipboard.writeText(uri ? uri.fsPath : filePath);
+		return;
+	}
+	const isAbsolute = /^([/\\]|[a-zA-Z]:)/.test(filePath);
+	const text = isAbsolute ? vscode.workspace.asRelativePath(filePath, false) : filePath.replace(/^package:[^/]+\//, '');
+	vscode.env.clipboard.writeText(text);
+}

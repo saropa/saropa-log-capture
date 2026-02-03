@@ -222,6 +222,9 @@ export class LogViewerProvider
       case "insertMarker": this.onMarkerRequest?.(); break;
       case "togglePause": this.onTogglePause?.(); break;
       case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
+      case "copySourcePath":
+        helpers.copySourcePath(String(msg.path ?? ""), String(msg.mode ?? "relative"));
+        break;
       case "exclusionAdded":
       case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
       case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
@@ -244,16 +247,9 @@ export class LogViewerProvider
           .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
         break;
       case "editLine":
-        helpers.handleEditLine(
-          this.currentFileUri,
-          this.isSessionActive,
-          Number(msg.lineIndex ?? 0),
-          String(msg.newText ?? ""),
-          Number(msg.timestamp ?? 0),
-          (uri) => this.loadFromFile(uri)
-        ).catch((err) => {
-          vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`);
-        });
+        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, Number(msg.lineIndex ?? 0),
+          String(msg.newText ?? ""), Number(msg.timestamp ?? 0), (uri) => this.loadFromFile(uri))
+          .catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
