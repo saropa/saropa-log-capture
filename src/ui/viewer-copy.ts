@@ -52,15 +52,51 @@ function copyAsMarkdown() {
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToMarkdown(lines) });
 }
 
-function copyAllToClipboard() {
+function getAllCopyableLines() {
     var lines = [];
     for (var i = 0; i < allLines.length; i++) {
         if (allLines[i].height > 0 && allLines[i].type !== 'marker') {
             lines.push(allLines[i]);
         }
     }
+    return lines;
+}
+
+function copyAllToClipboard() {
+    var lines = getAllCopyableLines();
     if (lines.length === 0) return;
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToPlainText(lines) });
+}
+
+function decorateLine(item) {
+    var text = stripTags(item.html || '');
+    var parts = [];
+    if (typeof getLevelDot === 'function') {
+        parts.push(getLevelDot(item.level || 'info', !!item.fw));
+    }
+    if (item.seq !== undefined) {
+        parts.push(String(item.seq).padStart(5, ' '));
+    }
+    if (typeof formatDecoTimestamp === 'function' && item.timestamp) {
+        var ts = formatDecoTimestamp(item.timestamp);
+        if (ts) parts.push(ts);
+    }
+    if (parts.length > 0) return parts.join('  ') + '  \\u00BB ' + text;
+    return text;
+}
+
+function linesToDecoratedText(lines) {
+    var parts = [];
+    for (var i = 0; i < lines.length; i++) {
+        parts.push(decorateLine(lines[i]));
+    }
+    return parts.join('\\n');
+}
+
+function copyAllDecorated() {
+    var lines = getAllCopyableLines();
+    if (lines.length === 0) return;
+    vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToDecoratedText(lines) });
 }
 
 viewportEl.addEventListener('click', function(e) {
