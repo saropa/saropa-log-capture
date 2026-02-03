@@ -5,6 +5,8 @@ These checks validate the git state, project dependencies, build output,
 and version consistency before we attempt any package or publish operations.
 """
 
+import datetime
+import json
 import os
 import re
 
@@ -226,28 +228,104 @@ def has_unreleased_section() -> bool:
     return False
 
 
-def check_version_not_tagged(version: str) -> bool:
-    """Verify the version tag does not already exist in git.
-
-    If the tag already exists, this version was already published.
-    The developer needs to bump the version before re-publishing.
-    """
+def _is_version_tagged(version: str) -> bool:
+    """Check whether a git tag already exists for this version."""
     tag = f"v{version}"
     result = run(["git", "tag", "-l", tag], cwd=PROJECT_ROOT)
-    if result.stdout.strip():
-        fail(f"Git tag '{tag}' already exists. Bump the version first.")
+    return bool(result.stdout.strip())
+
+
+def _bump_patch(version: str) -> str:
+    """Increment the patch component of a semver string."""
+    major, minor, patch = version.split(".")
+    return f"{major}.{minor}.{int(patch) + 1}"
+
+
+def _write_package_version(version: str) -> bool:
+    """Write a new version string into package.json."""
+    pkg_path = os.path.join(PROJECT_ROOT, "package.json")
+    try:
+        with open(pkg_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        fail("Could not read package.json")
         return False
-    ok(f"Tag '{tag}' is available")
+
+    data["version"] = version
+    try:
+        with open(pkg_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+    except OSError:
+        fail("Could not write package.json")
+        return False
     return True
 
 
+def _ensure_untagged_version(version: str) -> tuple[str, bool]:
+    """If the version is already tagged, offer to bump patch.
+
+    Keeps bumping until an available tag is found or the user declines.
+    Returns (resolved_version, success).
+    """
+    original = version
+    while _is_version_tagged(version):
+        next_ver = _bump_patch(version)
+        warn(f"Tag 'v{version}' already exists.")
+        if not ask_yn(f"Bump to {next_ver}?", default=True):
+            fail("Version already tagged. Bump manually.")
+            return version, False
+        version = next_ver
+
+    if version != original:
+        if not _write_package_version(version):
+            return version, False
+        fix(f"package.json: {original} → {C.WHITE}{version}{C.RESET}")
+    ok(f"Tag 'v{version}' is available")
+    return version, True
+
+
+def _stamp_changelog(version: str) -> bool:
+    """Replace '## [Unreleased]' with '## [version] - date' in CHANGELOG.
+
+    Called during validation so the CHANGELOG is finalized before
+    packaging. If publish is cancelled, the change is uncommitted
+    and easily reverted with git.
+    """
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        fail("Could not read CHANGELOG.md")
+        return False
+
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    pattern = r'## \[Unreleased\]'
+    replacement = f'## [{version}] - {today}'
+    updated, count = re.subn(pattern, replacement, content, re.IGNORECASE)
+    if count == 0:
+        fail("Could not find '## [Unreleased]' in CHANGELOG.md")
+        return False
+
+    try:
+        with open(changelog_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+    except OSError:
+        fail("Could not write CHANGELOG.md")
+        return False
+
+    ok(f"CHANGELOG: [Unreleased] → [{version}] - {today}")
+    return True
+
 
 def validate_version_changelog() -> tuple[str, bool]:
-    """Validate version from package.json and CHANGELOG structure.
+    """Validate version, resolve tag conflicts, and stamp CHANGELOG.
 
     1. package.json must have a valid version (source of truth)
     2. CHANGELOG.md must have an ## [Unreleased] section
-    3. The version must not already be tagged in git
+    3. The version must not already be tagged (auto-bumps if so)
+    4. Stamp CHANGELOG: [Unreleased] → [version] - today
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
@@ -259,8 +337,12 @@ def validate_version_changelog() -> tuple[str, bool]:
         info("Add a section: ## [Unreleased]")
         return pkg_version, False
 
-    if not check_version_not_tagged(pkg_version):
-        return pkg_version, False
+    version, tag_ok = _ensure_untagged_version(pkg_version)
+    if not tag_ok:
+        return version, False
 
-    ok(f"Version {C.WHITE}{pkg_version}{C.RESET} validated")
-    return pkg_version, True
+    if not _stamp_changelog(version):
+        return version, False
+
+    ok(f"Version {C.WHITE}{version}{C.RESET} validated")
+    return version, True

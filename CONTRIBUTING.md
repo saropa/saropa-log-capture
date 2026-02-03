@@ -113,7 +113,7 @@ Paste the token when prompted. The PAT is stored in your system keychain.
 npx @vscode/vsce verify-pat saropa
 ```
 
-The `dev.py` script checks this automatically during the prerequisite step.
+The `publish_to_vscode.py` script checks this automatically during the prerequisite step.
 
 ## Commit Messages
 
