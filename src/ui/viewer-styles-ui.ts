@@ -31,6 +31,7 @@ export function getUiStyles(): string {
     font-weight: bold;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
+@keyframes slide-in-left { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 .pinned-item {
     padding: 0 8px;
     line-height: 1.5;
@@ -40,6 +41,7 @@ export function getUiStyles(): string {
     align-items: baseline;
     gap: 4px;
     cursor: pointer;  /* click to scroll to original line */
+    animation: slide-in-left 0.15s ease-out;
 }
 .pinned-item:hover {
     background: var(--vscode-list-hoverBackground);
@@ -76,32 +78,50 @@ export function getUiStyles(): string {
 
 /* ===================================================================
    Level Filter — Compact Dot Summary (footer trigger)
-   Row of tiny colored dots that opens the level fly-up menu.
+   Clickable dot groups toggle levels; label opens fly-up menu.
    =================================================================== */
 .level-summary {
     display: inline-flex;
-    gap: 3px;
+    gap: 2px;
     align-items: center;
-    cursor: pointer;
-    padding: 2px 6px;
+    padding: 2px 4px;
     border-radius: 3px;
-    border: 1px solid transparent;
 }
-.level-summary:hover {
+.level-dot-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+}
+.level-dot-group:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-    border-color: var(--vscode-descriptionForeground);
 }
 .level-dot {
     width: 9px;
     height: 9px;
     border-radius: 50%;
+    flex-shrink: 0;
     transition: opacity 0.2s ease;
 }
 .level-dot:not(.active) { opacity: 0.3; }
+.dot-count {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1;
+}
+.dot-count:empty { display: none; }
 .level-trigger-label {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     margin-left: 2px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+.level-trigger-label:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 /* ===================================================================
@@ -122,7 +142,14 @@ export function getUiStyles(): string {
     z-index: 150;
     min-width: 120px;
 }
-#level-flyup.visible { display: flex; flex-direction: column; gap: 2px; }
+@keyframes flyup-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+#level-flyup.visible { display: flex; flex-direction: column; gap: 2px; animation: flyup-enter 0.15s ease-out; }
+.level-flyup-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    padding: 2px 4px;
+}
 .level-flyup-header {
     display: flex;
     gap: 8px;
@@ -140,6 +167,11 @@ export function getUiStyles(): string {
     cursor: pointer;
     border-radius: 3px;
     text-decoration: none;
+}
+.level-flyup-header a.active {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-background);
 }
 .level-flyup-header a:hover {
     background: var(--vscode-button-hoverBackground);
@@ -164,11 +196,13 @@ export function getUiStyles(): string {
     white-space: nowrap;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 6px;
     width: 100%;
+    text-align: left;
 }
 .level-emoji { flex-shrink: 0; }
-.level-label { flex: 1; }
+.level-label { flex: 1; text-align: left; }
 .level-count {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
@@ -190,13 +224,15 @@ export function getUiStyles(): string {
 /* ===================================================================
    Inline Peek
    Expandable context view inserted inline after the viewport.
-   Shows surrounding lines around a double-clicked target line.
+   Shows surrounding lines around a right-click → Show Context target.
    =================================================================== */
+@keyframes peek-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 .inline-peek {
     border-top: 2px solid var(--vscode-focusBorder, #007acc);
     border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
     background: var(--vscode-editorHoverWidget-background, var(--vscode-editor-background));
     margin: 4px 0;
+    animation: peek-reveal 0.2s ease-out;
 }
 .peek-header {
     display: flex;
@@ -222,53 +258,25 @@ export function getUiStyles(): string {
 }
 .peek-context { opacity: 0.7; }
 
-/* ===================================================================
-   Scrollbar Minimap
-   Visual overview of search matches, errors, and warnings on scrollbar.
-   =================================================================== */
+/* --- Scrollbar Minimap: interactive panel replacing native scrollbar --- */
 .scrollbar-minimap {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 8px;
-    height: 100%;
-    pointer-events: none;
-    z-index: 10;
+    width: 60px; flex-shrink: 0; position: relative;
+    overflow: hidden; cursor: pointer;
+    border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
-
-.minimap-marker {
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    pointer-events: none;
-}
-
-.minimap-search-match {
-    background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(234, 92, 0, 0.8));
-}
-
-.minimap-current-match {
-    background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(255, 150, 50, 1));
-    height: 3px;
-    z-index: 2;
-}
-
-.minimap-error {
-    background: var(--vscode-editorOverviewRuler-errorForeground, rgba(244, 68, 68, 0.8));
-}
-
-.minimap-warning {
-    background: var(--vscode-editorOverviewRuler-warningForeground, rgba(204, 167, 0, 0.8));
-}
-
+.minimap-marker { position: absolute; left: 0; right: 0; height: 2px; pointer-events: none; }
+.minimap-search-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(234, 92, 0, 0.8)); }
+.minimap-current-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(255, 150, 50, 1)); height: 3px; z-index: 2; }
+.minimap-error { background: var(--vscode-editorOverviewRuler-errorForeground, rgba(244, 68, 68, 0.8)); }
+.minimap-warning { background: var(--vscode-editorOverviewRuler-warningForeground, rgba(204, 167, 0, 0.8)); }
+.minimap-performance { background: var(--vscode-editorOverviewRuler-infoForeground, rgba(156, 39, 176, 0.8)); }
 .minimap-viewport {
-    position: absolute;
-    width: 100%;
+    position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
-    border: 1px solid var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.4));
-    pointer-events: none;
-    z-index: 1;
+    transition: top 0.08s linear;
 }
+.scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7)); }
+.scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.4)); }
 
 `;
 }
