@@ -83,19 +83,26 @@ export function getUiStyles(): string {
     gap: 3px;
     align-items: center;
     cursor: pointer;
-    padding: 2px 4px;
+    padding: 2px 6px;
     border-radius: 3px;
+    border: 1px solid transparent;
 }
 .level-summary:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+    border-color: var(--vscode-descriptionForeground);
 }
 .level-dot {
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     transition: opacity 0.2s ease;
 }
-.level-dot:not(.active) { opacity: 0.2; }
+.level-dot:not(.active) { opacity: 0.3; }
+.level-trigger-label {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    margin-left: 2px;
+}
 
 /* ===================================================================
    Level Filter — Fly-up Menu
@@ -125,11 +132,19 @@ export function getUiStyles(): string {
     font-size: 11px;
 }
 .level-flyup-header a {
-    color: var(--vscode-textLink-foreground, #3794ff);
-    text-decoration: none;
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    padding: 1px 8px;
     cursor: pointer;
+    border-radius: 3px;
+    text-decoration: none;
 }
-.level-flyup-header a:hover { text-decoration: underline; }
+.level-flyup-header a:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
 
 /* ===================================================================
    Level Filter Circles (inside fly-up)
@@ -140,13 +155,25 @@ export function getUiStyles(): string {
     border: 1px solid transparent;
     color: inherit;
     font-size: 11px;
-    padding: 1px 4px;
+    padding: 2px 6px;
     cursor: pointer;
     opacity: 1;
     transition: opacity 0.2s ease, background 0.15s ease;
     line-height: 1.2;
     border-radius: 3px;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+.level-emoji { flex-shrink: 0; }
+.level-label { flex: 1; }
+.level-count {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    min-width: 20px;
+    text-align: right;
 }
 .level-circle:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));

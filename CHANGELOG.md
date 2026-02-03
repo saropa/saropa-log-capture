@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.3] - 2026-02-02
 
+### Fixed
+- **Stats counters not resetting on file load:** Level counts (e.g., "125 info") accumulated across sessions because the stats script only listened for 'reset' messages, not 'clear'. Now resets on both, fixing phantom counts that misled users about current file content.
+- **Filter badge stretches footer:** Added `line-height: 1` to `.filter-badge` to prevent the badge from being taller than the footer bar.
+
+### Changed
+- **Level flyup redesigned:** Level filter circles now show left-aligned rows with emoji, text label, and count (e.g., `🔴 Error 2`). All/None links restyled as bordered buttons. Flyup min-width increased for labels.
+- **Level dot trigger visible:** Footer level dots enlarged from 7px to 9px, inactive opacity raised from 0.2 to 0.3, and "Levels" text label added for discoverability. Hover shows border to signal interactivity.
+- **Filter badge opens level flyup:** When the only active filter is a level filter, clicking the badge now opens the level flyup instead of the options panel. Mixed filters still open options.
+- **Footer filename opens Project Logs:** Clicking the footer text (line count + filename) now opens the Project Logs session panel.
+
 ---
 ## [0.2.2] - 2026-02-02
 
