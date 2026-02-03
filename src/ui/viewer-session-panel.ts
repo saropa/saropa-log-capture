@@ -23,7 +23,7 @@ export function getSessionPanelHtml(): string {
             <span class="codicon codicon-calendar"></span> Dates
         </button>
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names (Title Case, no underscores)">
-            <span class="codicon codicon-text-size"></span> Tidy
+            <span class="codicon codicon-edit"></span> Tidy
         </button>
         <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day">
             <span class="codicon codicon-list-tree"></span> Days
