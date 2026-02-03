@@ -16,7 +16,7 @@ export function getFindPanelHtml(): string {
     </div>
     <div class="find-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="find-input-wrapper">
-            <input id="find-input" type="text" placeholder="Search all log files..." />
+            <input id="find-input" type="text" placeholder="Search all session files..." />
             <div class="find-input-actions">
                 <button id="find-case-toggle" class="search-input-btn" title="Match Case">
                     <span class="codicon codicon-case-sensitive"></span>
@@ -31,7 +31,7 @@ export function getFindPanelHtml(): string {
         </div>
         <div id="find-summary" class="find-summary"></div>
         <div id="find-results" class="find-results"></div>
-        <div id="find-empty" class="find-empty">Type to search across all log files</div>
+        <div id="find-empty" class="find-empty">Type to search across all session files</div>
         <div id="find-loading" class="find-loading" style="display:none">Searching...</div>
     </div>
 </div>`;

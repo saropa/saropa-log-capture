@@ -46,14 +46,17 @@ export function isSplitGroup(item: TreeItem): item is SplitGroup {
     return (item as SplitGroup).type === 'split-group';
 }
 
-/** Pattern to detect split file parts: _001.log, _002.log, etc. */
-const SPLIT_PART_PATTERN = /^(.+)_(\d{3})\.log$/;
+/** Pattern to detect split file parts: _001.log, _001.txt, etc. */
+const SPLIT_PART_PATTERN = /^(.+)_(\d{3})\.(log|txt|md|csv|json|jsonl|html)$/;
 
-/** Extract base filename and part number from a filename. */
-function parseSplitFilename(filename: string): { base: string; part: number } | null {
+/** Known file extensions for splitting the extension from the base name. */
+const knownExtRe = /\.(log|txt|md|csv|json|jsonl|html)$/i;
+
+/** Extract base filename, part number, and extension from a split filename. */
+function parseSplitFilename(filename: string): { base: string; part: number; ext: string } | null {
     const match = filename.match(SPLIT_PART_PATTERN);
     if (match) {
-        return { base: match[1], part: parseInt(match[2], 10) };
+        return { base: match[1], part: parseInt(match[2], 10), ext: '.' + match[3] };
     }
     return null;
 }
@@ -71,8 +74,10 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
                 groups.set(key, []);
             }
             groups.get(key)!.push({ ...item, partNumber: parsed.part });
-        } else if (item.filename.endsWith('.log')) {
-            const base = item.filename.replace(/\.log$/, '');
+        } else {
+            const extMatch = item.filename.match(knownExtRe);
+            if (!extMatch) { continue; }
+            const base = item.filename.slice(0, extMatch.index);
             const hasParts = items.some(i => parseSplitFilename(i.filename)?.base === base);
             if (hasParts) {
                 if (!groups.has(base)) {
@@ -93,9 +98,10 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
         } else {
             const firstPart = parts.find(p => p.partNumber === 1) ?? parts[0];
             const mostRecentMtime = Math.max(...parts.map(p => p.mtime));
+            const firstExt = firstPart.filename.match(knownExtRe)?.[0] ?? '.log';
             const group: SplitGroup = {
                 type: 'split-group',
-                baseFilename: base + '.log',
+                baseFilename: base + firstExt,
                 parts,
                 totalSize: parts.reduce((sum, p) => sum + p.size, 0),
                 date: firstPart.date,

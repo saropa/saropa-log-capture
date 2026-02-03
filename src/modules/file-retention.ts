@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
+import { getConfig, isTrackedFile } from './config';
 
 let hasNotifiedThisSession = false;
 
 /**
- * Enforce the maxLogFiles limit. Deletes oldest .log files by mtime
+ * Enforce the maxLogFiles limit. Deletes oldest tracked files by mtime
  * in the given directory until file count <= maxLogFiles.
  *
  * @returns The number of files deleted.
@@ -24,8 +25,9 @@ export async function enforceFileRetention(
         return 0;
     }
 
+    const { fileTypes } = getConfig();
     const logFiles = entries.filter(
-        ([name, type]) => type === vscode.FileType.File && name.endsWith('.log')
+        ([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes)
     );
 
     if (logFiles.length <= maxLogFiles) {
@@ -66,7 +68,7 @@ export async function enforceFileRetention(
     if (deleted > 0 && !hasNotifiedThisSession) {
         hasNotifiedThisSession = true;
         vscode.window.showInformationMessage(
-            `Saropa Log Capture: Removed ${deleted} old log file(s) (maxLogFiles: ${maxLogFiles}).`
+            `Saropa Log Capture: Removed ${deleted} old file(s) (maxLogFiles: ${maxLogFiles}).`
         );
     }
 

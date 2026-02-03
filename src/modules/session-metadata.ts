@@ -21,8 +21,11 @@ export interface SessionMeta {
 export class SessionMetadataStore {
 
     /** Get the URI for the sidecar metadata file. */
-    getMetaUri(logUri: vscode.Uri): vscode.Uri {
-        return vscode.Uri.parse(logUri.toString().replace(/\.log$/, '.meta.json'));
+    getMetaUri(fileUri: vscode.Uri): vscode.Uri {
+        const str = fileUri.toString();
+        const dotIdx = str.lastIndexOf('.');
+        if (dotIdx === -1) { return vscode.Uri.parse(str + '.meta.json'); }
+        return vscode.Uri.parse(str.slice(0, dotIdx) + '.meta.json');
     }
 
     /** Load metadata from the sidecar file, returning empty object if missing. */
@@ -103,7 +106,9 @@ export class SessionMetadataStore {
             return logUri; // No valid name, keep original
         }
 
-        const newFilename = `${prefix}${safeName}.log`;
+        const extMatch = oldFilename.match(/\.[a-z]+$/i);
+        const ext = extMatch ? extMatch[0] : '.log';
+        const newFilename = `${prefix}${safeName}${ext}`;
 
         // Don't rename if filename hasn't changed
         if (newFilename === oldFilename) {

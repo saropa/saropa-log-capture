@@ -66,16 +66,19 @@ const leadingDatetime =
 const leadingShortDate = /^\d{6}[_T -]?(?:\d{6}[_ -]?)?/;
 
 /**
- * Trailing datetime patterns (before .log):
+ * Trailing datetime patterns (before file extension):
  * - _YYYYMMDD_HHMMSS or _YYYYMMDD
  * - _YYMMDD
  */
 const trailingDatetime = /[_ -]\d{4}-?\d{2}-?\d{2}(?:[_T -]?\d{2}[-:]?\d{2}(?:[-:]?\d{2})?)?$/;
 const trailingShortDate = /[_ -]\d{6}(?:[_T -]?\d{6})?$/;
 
+const knownExtRe = /\.(log|txt|md|csv|json|jsonl|html)$/i;
+
 /** Split a filename into [baseName, extension]. */
 function splitExt(name: string): [string, string] {
-    if (name.endsWith('.log')) { return [name.slice(0, -4), '.log']; }
+    const m = name.match(knownExtRe);
+    if (m) { return [name.slice(0, m.index), m[0]]; }
     return [name, ''];
 }
 

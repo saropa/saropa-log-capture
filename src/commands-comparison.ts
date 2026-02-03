@@ -1,7 +1,7 @@
 /** Session comparison command registrations. */
 
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './modules/config';
+import { getConfig, getLogDirectoryUri, isTrackedFile } from './modules/config';
 import { getComparisonPanel } from './ui/session-comparison';
 
 /** URI of session marked for comparison (first selection). */
@@ -57,8 +57,9 @@ async function pickTwoSessions(): Promise<[vscode.Uri, vscode.Uri] | undefined> 
         vscode.window.showWarningMessage('No log sessions found.');
         return undefined;
     }
+    const { fileTypes } = getConfig();
     const files = entries
-        .filter(([n, t]) => t === vscode.FileType.File && n.endsWith('.log'))
+        .filter(([n, t]) => t === vscode.FileType.File && isTrackedFile(n, fileTypes))
         .map(([n]) => ({ label: n, uri: vscode.Uri.joinPath(logDir, n) }))
         .sort((a, b) => b.label.localeCompare(a.label));
     if (files.length < 2) {

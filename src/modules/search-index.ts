@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getConfig, isTrackedFile } from './config';
 
 /** Index entry for a single log file. */
 export interface FileIndexEntry {
@@ -79,8 +80,9 @@ export class SearchIndexManager {
         try {
             const entries = await vscode.workspace.fs.readDirectory(this.logDirUri);
 
+            const { fileTypes } = getConfig();
             for (const [name, type] of entries) {
-                if (type !== vscode.FileType.File || !name.endsWith('.log')) {
+                if (type !== vscode.FileType.File || !isTrackedFile(name, fileTypes)) {
                     continue;
                 }
 

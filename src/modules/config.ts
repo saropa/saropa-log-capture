@@ -47,6 +47,8 @@ export interface SaropaLogCaptureConfig {
   readonly breakOnCritical: boolean;
   /** Log all raw DAP protocol messages (requests, responses, events) to the log file. */
   readonly verboseDap: boolean;
+  /** File extensions to include when listing sessions in the reports directory. */
+  readonly fileTypes: readonly string[];
 }
 
 const SECTION = "saropaLogCapture";
@@ -151,6 +153,9 @@ export function getConfig(): SaropaLogCaptureConfig {
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
     breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
     verboseDap: cfg.get<boolean>("verboseDap", false),
+    fileTypes: cfg.get<string[]>("fileTypes", [
+      ".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html",
+    ]),
   };
 }
 
@@ -185,10 +190,19 @@ export function getLogDirectoryUri(
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
 }
 
-/**
- * Returns true if the env var name matches any pattern in redactEnvVars.
- * Supports * wildcards (glob-style, case-insensitive).
- */
+/** Check if a filename matches any tracked file type. Excludes .meta.json sidecars and dotfiles. */
+export function isTrackedFile(name: string, fileTypes: readonly string[]): boolean {
+  if (name.endsWith('.meta.json') || name.startsWith('.')) { return false; }
+  return fileTypes.some(ext => name.endsWith(ext));
+}
+
+/** Build a glob pattern for file watchers, e.g. "*.{log,txt,md}". */
+export function getFileTypeGlob(fileTypes: readonly string[]): string {
+  const exts = fileTypes.map(e => e.replace(/^\./, ''));
+  return exts.length === 1 ? `*.${exts[0]}` : `*.{${exts.join(',')}}`;
+}
+
+/** Returns true if the env var name matches any pattern. Supports * wildcards (glob-style, case-insensitive). */
 export function shouldRedactEnvVar(
   name: string,
   patterns: readonly string[],
