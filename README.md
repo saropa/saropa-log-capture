@@ -99,6 +99,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines.
 - **Copy to Search:** Right-click a line to open search pre-filled with its text.
+- **Source link context menu:** Right-click a filename reference to Open File, Copy Relative Path, or Copy Full Path.
 
 ### Status Bar & Audio
 - **Status bar:** Two separate items—a pause/resume icon that toggles capture, and a text display (line count + watch counts) that focuses the viewer panel.
