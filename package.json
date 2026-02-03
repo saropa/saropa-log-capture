@@ -485,6 +485,22 @@
           "default": "reports",
           "description": "Directory for log files, relative to workspace root."
         },
+        "saropaLogCapture.fileTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".log",
+            ".txt",
+            ".md",
+            ".csv",
+            ".json",
+            ".jsonl",
+            ".html"
+          ],
+          "description": "File extensions to include when listing sessions in the reports directory. Reload window after changes."
+        },
         "saropaLogCapture.autoOpen": {
           "type": "boolean",
           "default": false,

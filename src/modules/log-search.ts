@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './config';
+import { getConfig, getLogDirectoryUri, isTrackedFile } from './config';
 
 /** A single search match within a log file. */
 export interface SearchMatch {
@@ -72,7 +72,7 @@ export async function searchLogFiles(
     let totalFiles = 0;
     let filesWithMatches = 0;
 
-    // List all .log files
+    // List all tracked files
     let entries: [string, vscode.FileType][];
     try {
         entries = await vscode.workspace.fs.readDirectory(logDir);
@@ -80,8 +80,9 @@ export async function searchLogFiles(
         return { query, matches: [], totalFiles: 0, filesWithMatches: 0 };
     }
 
+    const { fileTypes } = getConfig();
     const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'))
+        .filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes))
         .map(([name]) => vscode.Uri.joinPath(logDir, name))
         .sort((a, b) => b.fsPath.localeCompare(a.fsPath)); // Newest first
 
@@ -184,8 +185,9 @@ export async function searchLogFilesConcurrent(
         return empty;
     }
 
+    const { fileTypes } = getConfig();
     const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'))
+        .filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes))
         .map(([name]) => vscode.Uri.joinPath(logDir, name))
         .sort((a, b) => b.fsPath.localeCompare(a.fsPath));
 
