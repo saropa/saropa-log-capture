@@ -20,27 +20,25 @@
 #     Step 7:  Compile (type-check + lint + esbuild)
 #     Step 8:  Tests (npm run test)
 #     Step 9:  Quality checks (300-line file limit)
-#     Step 10: Version sync & validation (CHANGELOG → package.json)
+#     Step 10: Version & CHANGELOG (resolve version, stamp CHANGELOG)
 #
 #   Analyze-only mode (--analyze-only):
 #     → Package .vsix, show install instructions, offer local install
 #
 #   Publish phase (irreversible, needs confirmation):
-#     Step 11: Finalize CHANGELOG ([Unreleased] -> [version] - today's date)
-#     Step 12: Package .vsix
-#     Step 13: Git commit & push
-#     Step 14: Git tag (v{version})
-#     Step 15: Publish to VS Code Marketplace
-#     Step 16: Create GitHub release (attach .vsix)
+#     Step 11: Git commit & push
+#     Step 12: Git tag (v{version})
+#     Step 13: Publish to VS Code Marketplace
+#     Step 14: Create GitHub release (attach .vsix)
 #
 # .USAGE
-#   python scripts/dev.py                   # full analyze + publish pipeline
-#   python scripts/dev.py --analyze-only    # build + package + local install
-#   python scripts/dev.py --skip-tests      # skip test step
-#   python scripts/dev.py --skip-extensions # skip VS Code extension checks
-#   python scripts/dev.py --skip-global-npm # skip global npm package checks
-#   python scripts/dev.py --auto-install    # auto-install .vsix (no prompt)
-#   python scripts/dev.py --no-logo         # suppress Saropa ASCII art
+#   python scripts/publish_to_vscode.py                   # full analyze + publish pipeline
+#   python scripts/publish_to_vscode.py --analyze-only    # build + package + local install
+#   python scripts/publish_to_vscode.py --skip-tests      # skip test step
+#   python scripts/publish_to_vscode.py --skip-extensions # skip VS Code extension checks
+#   python scripts/publish_to_vscode.py --skip-global-npm # skip global npm package checks
+#   python scripts/publish_to_vscode.py --auto-install    # auto-install .vsix (no prompt)
+#   python scripts/publish_to_vscode.py --no-logo         # suppress Saropa ASCII art
 #
 # .NOTES
 #   Version:      3.0.0
@@ -93,7 +91,6 @@ from modules.publish import (
     confirm_publish,
     create_git_tag,
     create_github_release,
-    finalize_changelog,
     git_commit_and_push,
     publish_marketplace,
     step_package,
@@ -255,10 +252,10 @@ def _run_build_and_validate(
     if not run_step("File line limits", check_file_line_limits, results):
         return "", False
 
-    # Step 10: Sync package.json from CHANGELOG, verify tag is available.
+    # Step 10: Resolve version, bump if tagged, stamp CHANGELOG.
     # Uses manual timing because validate_version_changelog()
     # returns a tuple rather than a simple bool.
-    heading("Step 10 · Version Sync & Validation")
+    heading("Step 10 · Version & CHANGELOG")
     t0 = time.time()
     version, version_ok = validate_version_changelog()
     elapsed = time.time() - t0
@@ -271,41 +268,41 @@ def _run_build_and_validate(
 
 def _run_publish_steps(
     version: str,
+    vsix_path: str,
     results: list[tuple[str, bool, float]],
-) -> str | None:
-    """Run publish steps 11-14 (CHANGELOG, package, commit, tag).
+) -> bool:
+    """Commit, tag, and publish. Returns True on success.
 
-    Returns the vsix_path on success, or None if any step fails.
-    Split from _run_publish() to keep each orchestrator under 30 lines.
+    CHANGELOG is already stamped and .vsix already built during
+    the analysis phase, so publish just needs to commit and ship.
     """
-    # Step 11: Stamp the CHANGELOG with today's date
-    heading("Step 11 · Finalize CHANGELOG")
-    if not run_step("Finalize CHANGELOG",
-                    lambda: finalize_changelog(version), results):
-        return None
-
-    # Step 12: Build the .vsix package
-    heading("Step 12 · Package")
-    t0 = time.time()
-    vsix_path = step_package()
-    elapsed = time.time() - t0
-    results.append(("Package", vsix_path is not None, elapsed))
-    if not vsix_path:
-        return None
-
-    # Step 13: Commit the finalized CHANGELOG + any other changes
-    heading("Step 13 · Git Commit & Push")
+    # Step 11: Commit the stamped CHANGELOG + version bump
+    heading("Step 11 · Git Commit & Push")
     if not run_step("Git commit & push",
                     lambda: git_commit_and_push(version), results):
-        return None
+        return False
 
-    # Step 14: Tag the release commit
-    heading("Step 14 · Git Tag")
+    # Step 12: Tag the release commit
+    heading("Step 12 · Git Tag")
     if not run_step("Git tag",
                     lambda: create_git_tag(version), results):
-        return None
+        return False
 
-    return vsix_path
+    # Step 13: Upload to VS Code Marketplace
+    heading("Step 13 · Publish to Marketplace")
+    if not run_step("Marketplace publish",
+                    lambda: publish_marketplace(vsix_path), results):
+        return False
+
+    # Step 14: Create GitHub release with .vsix attached
+    heading("Step 14 · GitHub Release")
+    if not run_step("GitHub release",
+                    lambda: create_github_release(version, vsix_path),
+                    results):
+        warn("Marketplace publish succeeded but GitHub release failed.")
+        warn(f"Create manually: gh release create v{version}")
+
+    return True
 
 
 def _check_publish_credentials(
@@ -326,34 +323,19 @@ def _check_publish_credentials(
 
 def _run_publish(
     version: str,
+    vsix_path: str,
     results: list[tuple[str, bool, float]],
 ) -> bool:
-    """Run all publish steps (11-16). Returns True on success.
+    """Run publish steps (11-14). Returns True on success.
 
-    If the GitHub release (Step 16) fails but marketplace publish
-    (Step 15) succeeded, we warn but still consider the publish
-    successful — the extension is live, just missing its GH release.
+    CHANGELOG and .vsix are already finalized during analysis.
+    This phase commits, tags, publishes to marketplace, and
+    creates a GitHub release.
     """
     if not _check_publish_credentials(results):
         return False
-    vsix_path = _run_publish_steps(version, results)
-    if not vsix_path:
+    if not _run_publish_steps(version, vsix_path, results):
         return False
-
-    # Step 15: Upload to VS Code Marketplace
-    heading("Step 15 · Publish to Marketplace")
-    if not run_step("Marketplace publish",
-                    lambda: publish_marketplace(vsix_path), results):
-        return False
-
-    # Step 16: Create GitHub release with .vsix attached
-    heading("Step 16 · GitHub Release")
-    if not run_step("GitHub release",
-                    lambda: create_github_release(version, vsix_path),
-                    results):
-        # Non-fatal: the extension is already live on the marketplace
-        warn("Marketplace publish succeeded but GitHub release failed.")
-        warn(f"Create manually: gh release create v{version}")
 
     _finish_with_report(results, version, vsix_path)
     return True
@@ -441,9 +423,10 @@ def main() -> int:
 
     Flow:
     1. Run analysis phase (Steps 1-10) — all must pass
+       (Step 10 resolves version + stamps CHANGELOG)
     2. Package .vsix and offer local install (always)
     3. If --analyze-only: stop here
-    4. Otherwise: confirm → check credentials → publish (Steps 11-16)
+    4. Otherwise: confirm → credentials → publish (Steps 11-14)
     """
     args = parse_args()
     version = read_package_version()
@@ -479,7 +462,7 @@ def main() -> int:
         info("Publish cancelled by user.")
         return ExitCode.USER_CANCELLED
 
-    if not _run_publish(version, results):
+    if not _run_publish(version, vsix_path, results):
         return _exit_code_from_results(results)
 
     return ExitCode.SUCCESS
@@ -502,7 +485,6 @@ _STEP_EXIT_CODES = {
     "Tests": ExitCode.TEST_FAILED,
     "File line limits": ExitCode.QUALITY_FAILED,
     "Version validation": ExitCode.VERSION_INVALID,
-    "Finalize CHANGELOG": ExitCode.CHANGELOG_FAILED,
     "Package": ExitCode.PACKAGE_FAILED,
     "Git commit & push": ExitCode.GIT_FAILED,
     "Git tag": ExitCode.GIT_FAILED,

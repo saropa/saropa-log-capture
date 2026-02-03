@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Publish operations: confirmation, CHANGELOG, package, git, marketplace, GitHub.
+"""Publish operations: confirmation, package, git, marketplace, GitHub.
 
 All functions in this module perform irreversible mutations (write files,
 create git tags, publish to marketplace, create GitHub releases).
 """
 
-import datetime
 import glob
 import os
 import re
@@ -31,53 +30,16 @@ def confirm_publish(version: str) -> bool:
     print(f"  Marketplace: {C.WHITE}saropa.saropa-log-capture{C.RESET}")
     print(f"  Repository:  {C.WHITE}{REPO_URL}{C.RESET}")
     print(f"\n  {C.YELLOW}This will:{C.RESET}")
-    print(f"    1. Finalize CHANGELOG.md ([Unreleased] -> [v{version}] - today)")
-    print(f"    2. Build .vsix package")
-    print(f"    3. Commit and push to origin")
-    print(f"    4. Create git tag v{version}")
-    print(f"    5. Publish to VS Code Marketplace")
-    print(f"    6. Create GitHub release with .vsix")
+    print(f"    1. Commit and push to origin")
+    print(f"    2. Create git tag v{version}")
+    print(f"    3. Publish to VS Code Marketplace")
+    print(f"    4. Create GitHub release with .vsix")
     print(f"\n  {C.RED}These actions are irreversible.{C.RESET}")
     return ask_yn("Proceed with publish?", default=False)
 
 
 # ── Publish: CHANGELOG ───────────────────────────────────────
 
-
-def finalize_changelog(version: str) -> bool:
-    """Replace '## [Unreleased]' with '## [version] - date' in CHANGELOG.md.
-
-    Transforms: ## [Unreleased]
-    Into:       ## [0.2.3] - 2026-02-02
-
-    Uses regex substitution to preserve the rest of the file.
-    """
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
-    try:
-        with open(changelog_path, encoding="utf-8") as f:
-            content = f.read()
-    except OSError:
-        fail("Could not read CHANGELOG.md")
-        return False
-
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    pattern = r'## \[Unreleased\]'
-    replacement = f'## [{version}] - {today}'
-    updated, count = re.subn(pattern, replacement, content, flags=re.IGNORECASE)
-
-    if count == 0:
-        fail("Could not find '## [Unreleased]' in CHANGELOG.md")
-        return False
-
-    try:
-        with open(changelog_path, "w", encoding="utf-8") as f:
-            f.write(updated)
-    except OSError:
-        fail("Could not write CHANGELOG.md")
-        return False
-
-    ok(f"CHANGELOG.md: [Unreleased] -> [{version}] - {today}")
-    return True
 
 
 # ── Publish: Package ─────────────────────────────────────────
