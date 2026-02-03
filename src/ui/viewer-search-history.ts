@@ -1,8 +1,8 @@
 /**
  * Client-side JavaScript and CSS for search history in the log viewer.
  * Tracks recent search terms, persists in webview state, and provides
- * clickable history items. Also registers the debounced input handler
- * so typing stays responsive on large log files.
+ * clickable history items plus Up/Down arrow navigation. Also registers
+ * the debounced input handler so typing stays responsive on large logs.
  */
 
 /** Returns CSS styles for search history items. */
@@ -81,13 +81,47 @@ if (searchHistoryEl) {
     });
 }
 
-/* Debounced input handler — defers heavy search so typing stays responsive. */
+/* Debounced search — shared by input and history navigation. */
 var _searchTimer = null;
-searchInputEl.addEventListener('input', function() {
-    updateClearButton();
-    renderSearchHistory();
+function debouncedSearch() {
     if (_searchTimer) clearTimeout(_searchTimer);
     _searchTimer = setTimeout(updateSearch, 150);
+}
+
+/* Debounced input handler — defers heavy search so typing stays responsive. */
+var _histNavIdx = -1;
+var _histOrigVal = '';
+searchInputEl.addEventListener('input', function() {
+    _histNavIdx = -1;
+    updateClearButton();
+    renderSearchHistory();
+    debouncedSearch();
+});
+
+/* Up/Down arrow history navigation (like VS Code / terminal). */
+searchInputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowUp' && searchHistory.length > 0) {
+        e.preventDefault();
+        if (_histNavIdx < 0) _histOrigVal = searchInputEl.value;
+        if (_histNavIdx < searchHistory.length - 1) {
+            _histNavIdx++;
+            searchInputEl.value = searchHistory[_histNavIdx];
+            updateClearButton();
+            debouncedSearch();
+        }
+    }
+    if (e.key === 'ArrowDown' && _histNavIdx >= 0) {
+        e.preventDefault();
+        if (_histNavIdx > 0) {
+            _histNavIdx--;
+            searchInputEl.value = searchHistory[_histNavIdx];
+        } else {
+            _histNavIdx = -1;
+            searchInputEl.value = _histOrigVal;
+        }
+        updateClearButton();
+        debouncedSearch();
+    }
 });
 
 renderSearchHistory();

@@ -67,41 +67,54 @@ export function getSearchStyles(): string {
     gap: 8px;
 }
 .search-input-wrapper {
-    position: relative;
-    width: 100%;
-}
-#search-input {
+    display: flex;
+    align-items: center;
     width: 100%;
     background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
-    padding: 4px 24px 4px 8px;
+}
+.search-input-wrapper:focus-within {
+    border-color: var(--vscode-focusBorder);
+}
+#search-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: var(--vscode-input-foreground);
+    border: none;
+    padding: 4px 2px 4px 8px;
     font-size: 12px;
     font-family: inherit;
     outline: none;
 }
-#search-input:focus {
-    border-color: var(--vscode-focusBorder);
+.search-input-actions {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 1px 2px;
+    flex-shrink: 0;
 }
-.search-clear {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
+.search-input-btn {
+    background: transparent;
+    border: 1px solid transparent;
     color: var(--vscode-descriptionForeground);
-    font-size: 14px;
     cursor: pointer;
-    padding: 0 4px;
-    display: none;
-    line-height: 1;
+    padding: 1px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 20px;
+    font-size: 14px;
 }
-.search-clear:hover {
-    color: var(--vscode-foreground);
+.search-input-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
-.search-input-wrapper.has-text .search-clear {
-    display: block;
+.search-input-btn.active {
+    color: var(--vscode-inputOption-activeForeground, #fff);
+    background: var(--vscode-inputOption-activeBackground, rgba(0, 120, 215, 0.6));
+    border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder, #007fd4));
 }
 .search-toggles {
     display: flex;
