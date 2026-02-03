@@ -45,20 +45,13 @@ var currentFilename = '';
 var nextSeq = 1;
 var scrollMemory = {};
 
-function stripTags(html) {
-    return html.replace(/<[^>]*>/g, '');
-}
-
-function isStackFrameText(html) {
-    return /^\\s+at\\s/.test(stripTags(html));
-}
+function stripTags(html) { return html.replace(/<[^>]*>/g, ''); }
+function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
 
 function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
-    autoScroll = atBottom;
-    renderViewport(false);
-    // DOM write after reads — avoids forced reflow inside renderViewport
+    autoScroll = atBottom; renderViewport(false);
     jumpBtn.style.display = atBottom ? 'none' : 'block';
 }
 
@@ -88,12 +81,7 @@ viewportEl.addEventListener('click', function(e) {
     }
 });
 
-function toggleWrap() {
-    wordWrap = !wordWrap;
-    logEl.classList.toggle('nowrap', !wordWrap);
-    renderViewport(true);
-}
-
+function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 jumpBtn.addEventListener('click', jumpToBottom);
 
@@ -111,16 +99,11 @@ function getCenterIdx() {
 }
 
 function jumpToBottom() {
-    suppressScroll = true;
-    logEl.scrollTop = logEl.scrollHeight;
-    suppressScroll = false;
-    autoScroll = true;
-    jumpBtn.style.display = 'none';
+    suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false;
+    autoScroll = true; jumpBtn.style.display = 'none';
 }
 
-function formatNumber(n) {
-    return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',');
-}
+function formatNumber(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
 
 function updateFooterText() {
     var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
@@ -223,6 +206,12 @@ window.addEventListener('message', function(event) {
             suppressScroll = true; logEl.scrollTop = ch; suppressScroll = false;
             autoScroll = false; break;
         }
+        case 'setupFindSearch':
+            if (typeof setupFromFindInFiles === 'function') setupFromFindInFiles(msg);
+            break;
+        case 'findNextMatch':
+            if (typeof searchNext === 'function') searchNext();
+            break;
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined) {
                 suppressScroll = true;
@@ -246,6 +235,11 @@ document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A' && typeof copyAllToClipboard === 'function') {
         e.preventDefault(); copyAllToClipboard(); return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        if (typeof setActivePanel === 'function') setActivePanel('find');
+        return;
+    }
     if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
         e.preventDefault();
         if (typeof setActivePanel === 'function') setActivePanel('search');
@@ -259,6 +253,7 @@ document.addEventListener('keydown', function(e) {
         }
         if (typeof closeGotoLine === 'function') closeGotoLine(true);
         if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();

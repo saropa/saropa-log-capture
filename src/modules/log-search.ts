@@ -28,8 +28,25 @@ export interface SearchResults {
 export interface SearchOptions {
     readonly caseSensitive?: boolean;
     readonly useRegex?: boolean;
+    readonly wholeWord?: boolean;
     readonly maxResults?: number;
     readonly maxResultsPerFile?: number;
+}
+
+/** Per-file result for Find in Files (counts only, no line text). */
+export interface FileSearchResult {
+    readonly uri: vscode.Uri;
+    readonly uriString: string;
+    readonly filename: string;
+    readonly matchCount: number;
+}
+
+/** Aggregated results for Find in Files. */
+export interface FindInFilesResults {
+    readonly query: string;
+    readonly files: readonly FileSearchResult[];
+    readonly totalFiles: number;
+    readonly totalMatches: number;
 }
 
 const DEFAULT_MAX_RESULTS = 500;
@@ -104,9 +121,9 @@ function buildPattern(query: string, options: SearchOptions): RegExp | undefined
         if (options.useRegex) {
             return new RegExp(query, flags);
         }
-        // Escape special regex characters for literal search
         const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(escaped, flags);
+        const pattern = options.wholeWord ? `\\b${escaped}\\b` : escaped;
+        return new RegExp(pattern, flags);
     } catch {
         return undefined;
     }
@@ -150,9 +167,56 @@ async function searchFile(
     return matches;
 }
 
-/**
- * Open a log file at a specific line.
- */
+/** Search all log files concurrently, returning per-file match counts. */
+export async function searchLogFilesConcurrent(
+    query: string,
+    options: SearchOptions = {},
+): Promise<FindInFilesResults> {
+    const empty: FindInFilesResults = { query, files: [], totalFiles: 0, totalMatches: 0 };
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { return empty; }
+
+    const logDir = getLogDirectoryUri(folder);
+    let entries: [string, vscode.FileType][];
+    try {
+        entries = await vscode.workspace.fs.readDirectory(logDir);
+    } catch {
+        return empty;
+    }
+
+    const logFiles = entries
+        .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'))
+        .map(([name]) => vscode.Uri.joinPath(logDir, name))
+        .sort((a, b) => b.fsPath.localeCompare(a.fsPath));
+
+    const pattern = buildPattern(query, options);
+    if (!pattern) { return empty; }
+
+    const results = await Promise.all(logFiles.map(uri => countFileMatches(uri, pattern)));
+    const files = results.filter((r): r is FileSearchResult => r !== undefined);
+    const totalMatches = files.reduce((sum, f) => sum + f.matchCount, 0);
+    return { query, files, totalFiles: logFiles.length, totalMatches };
+}
+
+/** Count matches in a single file (no line text — lightweight). */
+async function countFileMatches(uri: vscode.Uri, pattern: RegExp): Promise<FileSearchResult | undefined> {
+    try {
+        const data = await vscode.workspace.fs.readFile(uri);
+        const lines = Buffer.from(data).toString('utf-8').split('\n');
+        let matchCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+            pattern.lastIndex = 0;
+            if (pattern.test(lines[i])) { matchCount++; }
+        }
+        if (matchCount === 0) { return undefined; }
+        const filename = uri.fsPath.split(/[\\/]/).pop() ?? '';
+        return { uri, uriString: uri.toString(), filename, matchCount };
+    } catch {
+        return undefined;
+    }
+}
+
+/** Open a log file at a specific line. */
 export async function openLogAtLine(match: SearchMatch): Promise<void> {
     const doc = await vscode.workspace.openTextDocument(match.uri);
     const pos = new vscode.Position(match.lineNumber - 1, match.matchStart);

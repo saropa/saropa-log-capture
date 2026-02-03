@@ -226,5 +226,16 @@ document.addEventListener('click', function(e) {
     if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
     closeSearch();
 });
+
+/** Activate in-file search from Find in Files without opening the search panel. */
+window.setupFromFindInFiles = function(msg) {
+    searchCaseSensitive = !!msg.caseSensitive;
+    searchRegexMode = !!msg.useRegex;
+    searchWholeWord = !!msg.wholeWord;
+    searchInputEl.value = msg.query || '';
+    searchFilterMode = false;
+    updateSearch();
+    if (currentMatchIdx >= 0) scrollToMatch();
+};
 `;
 }
