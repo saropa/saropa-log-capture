@@ -257,6 +257,7 @@ document.addEventListener('keydown', function(e) {
             closeContextModal();
             return;
         }
+        if (typeof closeGotoLine === 'function') closeGotoLine(true);
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
@@ -271,7 +272,7 @@ document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
     if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
     if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); vscodeApi.postMessage({ type: 'promptGoToLine' }); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
     else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
     else if (e.key === 'Home') { suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }

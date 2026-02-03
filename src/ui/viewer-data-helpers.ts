@@ -124,6 +124,7 @@ function calcItemHeight(item) {
  * Applies search highlighting, pattern highlights, and category styling.
  */
 function renderItem(item, idx) {
+    var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
 
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
@@ -152,11 +153,11 @@ function renderItem(item, idx) {
     }
 
     if (item.type === 'marker') {
-        return '<div class="marker' + spacingCls + '">' + html + '</div>';
+        return '<div class="marker' + spacingCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
     if (item.type === 'repeat-notification') {
-        return '<div class="line' + matchCls + '">' + html + '</div>';
+        return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
     if (item.type === 'stack-header') {
@@ -177,11 +178,11 @@ function renderItem(item, idx) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + spacingCls + '" data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
+        return '<div class="stack-header' + matchCls + spacingCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
 
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '">' + html + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
@@ -221,7 +222,7 @@ function renderItem(item, idx) {
         }
     }
 
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }
 `;
 }
