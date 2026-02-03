@@ -41,6 +41,7 @@ import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-pan
 // Must be loaded before session panel script — defines transform functions it calls.
 import { getSessionTransformsScript } from './viewer-session-transforms';
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
+import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -101,6 +102,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getContextMenuHtml()}
     ${getSearchPanelHtml()}
     ${getSessionPanelHtml()}
+    ${getFindPanelHtml()}
     ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
@@ -171,6 +173,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
     ${scriptTag(nonce, getSessionTransformsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
+    ${scriptTag(nonce, getFindPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}

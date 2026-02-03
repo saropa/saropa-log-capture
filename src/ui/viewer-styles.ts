@@ -16,6 +16,7 @@ import { getOptionsStyles } from './viewer-styles-options';
 import { getErrorStyles } from './viewer-styles-errors';
 import { getIconBarStyles } from './viewer-styles-icon-bar';
 import { getSessionPanelStyles } from './viewer-styles-session';
+import { getFindPanelStyles } from './viewer-styles-find';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -142,5 +143,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles();
 }

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { searchLogFiles } from '../modules/log-search';
+import { searchLogFiles, searchLogFilesConcurrent } from '../modules/log-search';
 
 suite('LogSearch', () => {
 
@@ -32,5 +32,41 @@ suite('LogSearch', () => {
         // Invalid regex should return empty results, not throw
         const results = await searchLogFiles('[invalid', { useRegex: true });
         assert.strictEqual(results.matches.length, 0);
+    });
+
+    test('should handle whole word option', async () => {
+        const results = await searchLogFiles('error', { wholeWord: true });
+        assert.strictEqual(results.query, 'error');
+    });
+});
+
+suite('LogSearch Concurrent', () => {
+
+    test('should return empty results when no workspace', async () => {
+        const results = await searchLogFilesConcurrent('test');
+        assert.strictEqual(results.files.length, 0);
+        assert.strictEqual(results.totalFiles, 0);
+        assert.strictEqual(results.totalMatches, 0);
+    });
+
+    test('should handle empty query gracefully', async () => {
+        const results = await searchLogFilesConcurrent('');
+        assert.strictEqual(results.files.length, 0);
+        assert.strictEqual(results.query, '');
+    });
+
+    test('should handle invalid regex gracefully', async () => {
+        const results = await searchLogFilesConcurrent('[invalid', { useRegex: true });
+        assert.strictEqual(results.files.length, 0);
+    });
+
+    test('should pass through search options', async () => {
+        const results = await searchLogFilesConcurrent('test', {
+            caseSensitive: true,
+            wholeWord: true,
+            useRegex: false,
+        });
+        assert.strictEqual(results.query, 'test');
+        assert.strictEqual(results.totalMatches, 0);
     });
 });
