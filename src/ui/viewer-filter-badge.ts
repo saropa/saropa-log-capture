@@ -67,12 +67,25 @@ if (_origAppOnlyForBadge) {
     };
 }
 
-// Click badge to open options panel (via icon bar if available)
+// Click badge: open level flyup if only level filters, else options panel
 var filterBadgeEl = document.getElementById('filter-badge');
 if (filterBadgeEl) {
     filterBadgeEl.addEventListener('click', function() {
-        if (typeof setActivePanel === 'function') setActivePanel('options');
-        else if (typeof toggleOptionsPanel === 'function') toggleOptionsPanel();
+        var hasLevel = (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7);
+        var other = 0;
+        if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
+            && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) other++;
+        if (typeof appOnlyMode !== 'undefined' && appOnlyMode) other++;
+        if (typeof hiddenSourceTags !== 'undefined'
+            && Object.keys(hiddenSourceTags).length > 0) other++;
+        if (typeof activeFilters !== 'undefined' && activeFilters !== null) other++;
+        if (typeof searchFilterMode !== 'undefined' && searchFilterMode
+            && typeof searchRegex !== 'undefined' && searchRegex) other++;
+        if (hasLevel && other === 0 && typeof toggleLevelMenu === 'function') {
+            toggleLevelMenu();
+        } else if (typeof setActivePanel === 'function') {
+            setActivePanel('options');
+        }
     });
 }
 `;

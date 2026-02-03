@@ -6,7 +6,6 @@
  */
 export function getContentStyles(): string {
     return /* css */ `
-
 /* ===================================================================
    Timing Markers
    User-inserted dividers that visually separate log sections.
@@ -129,6 +128,7 @@ export function getContentStyles(): string {
     cursor: pointer;
     white-space: nowrap;
     font-weight: bold;
+    line-height: 1;
 }
 .filter-badge:hover {
     opacity: 0.85;
