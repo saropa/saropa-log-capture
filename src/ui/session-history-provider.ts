@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from '../modules/config';
+import { getConfig, getFileTypeGlob, getLogDirectoryUri, isTrackedFile } from '../modules/config';
 import { SessionMetadataStore } from '../modules/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
@@ -108,7 +108,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         const logDir = getLogDirectoryUri(folder);
         try {
             const entries = await vscode.workspace.fs.readDirectory(logDir);
-            const logFiles = entries.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.log'));
+            const { fileTypes } = getConfig();
+            const logFiles = entries.filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes));
             const items = await Promise.all(logFiles.map(([name]) => this.loadMetadata(logDir, name)));
 
             const grouped = groupSplitFiles(items);
@@ -129,7 +130,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             return;
         }
         const logDir = getLogDirectoryUri(folder);
-        const pattern = new vscode.RelativePattern(logDir, '*.log');
+        const { fileTypes } = getConfig();
+        const pattern = new vscode.RelativePattern(logDir, getFileTypeGlob(fileTypes));
         this.watcher = vscode.workspace.createFileSystemWatcher(pattern);
         this.watcher.onDidCreate(() => this.refresh());
         this.watcher.onDidDelete(() => this.refresh());
