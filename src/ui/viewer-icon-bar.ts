@@ -16,16 +16,13 @@ export function getIconBarHtml(): string {
         <span class="codicon codicon-search"></span>
     </button>
     <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)">
-        <span class="codicon codicon-search-view"></span>
+        <span class="codicon codicon-list-filter"></span>
     </button>
     <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
     <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
         <span class="codicon codicon-settings-gear"></span>
-    </button>
-    <button id="ib-popout" class="ib-icon" tabindex="0" title="Pop Out to New Window">
-        <span class="codicon codicon-link-external"></span>
     </button>
 </div>`;
 }
@@ -107,12 +104,6 @@ export function getIconBarScript(): string {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
     }
 
-    var popoutBtn = document.getElementById('ib-popout');
-    if (popoutBtn) {
-        popoutBtn.addEventListener('click', function() {
-            vscodeApi.postMessage({ type: 'popOutViewer' });
-        });
-    }
 })();
 `;
 }
