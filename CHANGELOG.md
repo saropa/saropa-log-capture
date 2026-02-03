@@ -7,7 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Added
+- **Context lines slider in level flyup:** The level filter fly-up menu now includes a slider (0–10) to adjust how many preceding context lines are shown when filtering by level. Replaces the static VS Code setting default for real-time control.
+- **Source link context menu:** Right-clicking a filename/source reference (e.g. `lib/main.dart:42`) now shows file-specific actions: Open File, Copy Relative Path, and Copy Full Path. Previously showed the browser's default Cut/Copy/Paste menu.
+- **Copy Line and Copy All in context menu:** Right-click a log line to see Copy Line and Copy All at the top of the menu. Decorated variants (Copy Line Decorated, Copy All Decorated) include the level emoji, sequence counter, and timestamp prefix.
+- **Inline Go to Line (Ctrl+G):** Replaced the VS Code input box round-trip with an inline overlay that scrolls instantly while typing. Numbers-only input, Escape reverts to original position, Enter confirms. Animated slide-down appearance.
+
 ### Fixed
+- **Right-click line detection:** Log line elements were missing `data-idx` attributes, so the context menu could never identify which line was right-clicked. All line-specific menu items (Copy Line, Pin, etc.) now appear correctly.
+- **Ctrl+A selecting footer:** Added `user-select: none` to the footer bar so Ctrl+A only selects log content, not the status bar.
+- **False "performance" classification:** Removed overly generic `slow` and `lag` keywords from the performance-level regex. Words like "slow-cooked" in normal log data no longer trigger the performance filter.
 - **Unformatted line counts:** Footer line count, level filter dot counts, fly-up circle counts, and VS Code status bar now display comma-separated numbers (e.g., `12,868` instead of `12868`).
 - **Level filter dots hard to see:** Increased dot size from 9px to 10px with `min-width`/`min-height` guarantees and wider gap (1px → 3px) between dot and count for clearer visibility.
 - **Footer filename not actionable:** Clicking the log filename in the footer now reveals and selects the file in the Session History tree view. The filename shows a dotted underline and turns blue on hover to indicate it is clickable.
