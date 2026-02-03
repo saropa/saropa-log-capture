@@ -1,16 +1,7 @@
-/**
- * CSS styles for log content rendering in the viewer webview.
- *
- * Covers timing markers, stack trace groups, jump-to-bottom button,
- * footer bar, annotations/timing, and stack trace intelligence.
- */
+/** CSS for timing markers, stack traces, jump button, footer, annotations. */
 export function getContentStyles(): string {
     return /* css */ `
-/* ===================================================================
-   Timing Markers
-   User-inserted dividers that visually separate log sections.
-   Styled with green accent to stand out from regular log lines.
-   =================================================================== */
+/* --- Timing Markers --- */
 .marker {
     border-top: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
     border-bottom: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
@@ -22,11 +13,7 @@ export function getContentStyles(): string {
     line-height: 1.5;
 }
 
-/* ===================================================================
-   Stack Trace Groups
-   Collapsible groups: click the header (error message) to expand/
-   collapse the individual stack frames beneath it.
-   =================================================================== */
+/* --- Stack Trace Groups --- */
 .stack-group { margin: 0; }
 .stack-header {
     padding: 0 8px;
@@ -95,12 +82,20 @@ export function getContentStyles(): string {
     display: flex;
     align-items: center;
     gap: 4px;
+    user-select: none;
 }
 /* Warning style when capture is paused */
 #footer.paused {
     color: var(--vscode-statusBarItem-warningForeground, #fc0);
     background: var(--vscode-statusBarItem-warningBackground, rgba(252, 192, 0, 0.15));
 }
+
+/* --- Clickable filename in footer --- */
+.footer-filename {
+    cursor: pointer; transition: color 0.15s ease;
+    text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px;
+}
+.footer-filename:hover { color: var(--vscode-textLink-foreground, #3794ff); text-decoration-style: solid; }
 
 /* --- Shared footer button style --- */
 .footer-btn {
