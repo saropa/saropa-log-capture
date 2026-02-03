@@ -5,6 +5,16 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [Unreleased]
+
+### Changed
+- **Search toggles match VS Code:** Match Case, Match Whole Word, and Use Regular Expression buttons now use codicon icons (`codicon-case-sensitive`, `codicon-whole-word`, `codicon-regex`) positioned inline inside the search input, matching VS Code's native search layout. Active state uses VS Code's `--vscode-inputOption-*` theme variables.
+- **Search history arrow navigation:** Up/Down arrow keys in the search input cycle through recent search terms, matching VS Code and terminal conventions. Clickable history list below the input is retained.
+
+### Removed
+- **Clear search button:** Removed the `×` clear button from the search input. Use Escape to close (which clears), or select-all and delete.
+
+---
 ## [0.2.3] - 2026-02-02
 
 ### Fixed

@@ -2,7 +2,7 @@
  * Client-side JavaScript for search toggle buttons in the log viewer.
  *
  * Handles mode (highlight/filter), regex, case sensitivity, and
- * whole-word toggles. Each toggle updates its button label and
+ * whole-word toggles. Each toggle flips its active CSS class and
  * re-runs the current search via the shared updateSearch() function.
  */
 
@@ -22,38 +22,22 @@ function toggleSearchMode() {
 function toggleRegexMode() {
     searchRegexMode = !searchRegexMode;
     var btn = document.getElementById('search-regex-toggle');
-    if (btn) {
-        btn.textContent = searchRegexMode ? '.*' : 'Aa';
-        btn.title = searchRegexMode ? 'Regex mode (click for literal)' : 'Literal mode (click for regex)';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
+    if (btn) btn.classList.toggle('active', searchRegexMode);
+    if (searchInputEl.value) updateSearch();
 }
 
 function toggleCaseSensitive() {
     searchCaseSensitive = !searchCaseSensitive;
     var btn = document.getElementById('search-case-toggle');
-    if (btn) {
-        btn.textContent = searchCaseSensitive ? 'AA' : 'Aa';
-        btn.title = searchCaseSensitive ? 'Case sensitive (click for case insensitive)' : 'Case insensitive (click for case sensitive)';
-        btn.style.fontWeight = searchCaseSensitive ? 'bold' : 'normal';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
+    if (btn) btn.classList.toggle('active', searchCaseSensitive);
+    if (searchInputEl.value) updateSearch();
 }
 
 function toggleWholeWord() {
     searchWholeWord = !searchWholeWord;
     var btn = document.getElementById('search-word-toggle');
-    if (btn) {
-        btn.style.fontWeight = searchWholeWord ? 'bold' : 'normal';
-        btn.title = searchWholeWord ? 'Match whole word (click for partial)' : 'Match partial (click for whole word)';
-    }
-    if (searchInputEl.value) {
-        updateSearch();
-    }
+    if (btn) btn.classList.toggle('active', searchWholeWord);
+    if (searchInputEl.value) updateSearch();
 }
 
 if (searchModeToggleEl) {
