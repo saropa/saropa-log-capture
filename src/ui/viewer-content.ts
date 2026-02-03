@@ -40,6 +40,7 @@ import { getIconBarHtml, getIconBarScript } from './viewer-icon-bar';
 import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-panel';
 // Must be loaded before session panel script — defines transform functions it calls.
 import { getSessionTransformsScript } from './viewer-session-transforms';
+import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -76,6 +77,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${codiconLink}
     <style nonce="${nonce}">
         ${getViewerStyles()}
+        ${getGotoLineStyles()}
     </style>
 </head>
 <body>
@@ -94,6 +96,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <button id="jump-btn" title="Scroll to bottom">⬇ Bottom</button>
     </div>
     ${getScrollbarMinimapHtml()}
+    ${getGotoLineHtml()}
     </div>
     ${getContextMenuHtml()}
     ${getSearchPanelHtml()}
@@ -130,6 +133,10 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
             <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
             <button id="level-notice-toggle" class="level-circle active" title="Notice"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+            <div class="level-flyup-context">
+                <span class="level-flyup-context-label">Context: <span id="context-lines-label">3 lines</span></span>
+                <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
+            </div>
         </div>
         <span id="filter-badge" class="filter-badge" style="display:none" title="Active filters — click to open options"></span>
     </div>
@@ -173,6 +180,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSessionHeaderScript())}
     ${scriptTag(nonce, getExportScript())}
     ${scriptTag(nonce, getErrorClassificationScript())}
+    ${scriptTag(nonce, getGotoLineScript())}
 </body>
 </html>`;
 }
