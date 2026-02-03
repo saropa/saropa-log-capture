@@ -197,14 +197,41 @@ export function getOptionsStyles(): string {
     opacity: 0.4;
 }
 
-/* Inline link within options panel (e.g. "Configure in Settings") */
-.options-link {
-    color: var(--vscode-textLink-foreground, #3794ff);
-    text-decoration: none;
-    cursor: pointer;
+/* --- Inline exclusion add input --- */
+.exclusion-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
+    margin: 4px 0;
 }
-.options-link:hover {
-    text-decoration: underline;
+.exclusion-input-wrapper:focus-within {
+    border-color: var(--vscode-focusBorder);
+}
+#exclusion-add-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: var(--vscode-input-foreground);
+    border: none;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: inherit;
+    outline: none;
+}
+#exclusion-add-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-left: 1px solid var(--vscode-input-border, transparent);
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+#exclusion-add-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
 }
 
 /* Audio preview buttons */

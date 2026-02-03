@@ -9,19 +9,19 @@
 export function getIconBarHtml(): string {
     return /* html */ `
 <div id="icon-bar">
-    <button id="ib-sessions" class="ib-icon" title="Project Logs">
+    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs">
         <span class="codicon codicon-files"></span>
     </button>
-    <button id="ib-search" class="ib-icon" title="Search (Ctrl+F)">
+    <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)">
         <span class="codicon codicon-search"></span>
     </button>
-    <button id="ib-info" class="ib-icon" title="Session Info">
+    <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
-    <button id="ib-options" class="ib-icon" title="Options">
+    <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
-    <button id="ib-popout" class="ib-icon" title="Pop Out to New Window">
+    <button id="ib-popout" class="ib-icon" tabindex="0" title="Pop Out to New Window">
         <span class="codicon codicon-link-external"></span>
     </button>
 </div>`;

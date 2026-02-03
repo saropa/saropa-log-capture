@@ -97,8 +97,8 @@ function applySourceTagFilter() {
         var key = item.sourceTag || otherKey;
         item.sourceFiltered = !!hiddenSourceTags[key];
     }
-    recalcHeights();
-    renderViewport(true);
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
 }
 
 /** Toggle a single source tag on/off and re-apply the filter. */

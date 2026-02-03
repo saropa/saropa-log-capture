@@ -88,3 +88,31 @@ function hasAbsolutePath(text: string): boolean {
 export function isAppFrame(frameLine: string, workspacePath?: string): boolean {
     return !isFrameworkFrame(frameLine, workspacePath);
 }
+
+/** Android logcat pattern: LEVEL/TAG( PID): or LEVEL/TAG: */
+const logcatWithPid = /^[VDIWEF]\/(\S+?)\s*\(\s*\d+\):/;
+const logcatNoPid = /^[VDIWEF]\/(\S+?):\s/;
+
+/** Dart/Flutter launch and connection boilerplate. */
+const launchPatterns: RegExp[] = [
+    /^Connecting to VM Service at\s/,
+    /^Connected to the VM Service/,
+    /^Launching\s.+\sin (?:debug|profile|release) mode/,
+    /^[√✓] Built\s/,
+];
+
+/**
+ * Classify a regular (non-stack-frame) log line as framework or app.
+ * Returns true for framework/system output, false for app output,
+ * or undefined if the line format is unrecognised.
+ */
+export function isFrameworkLogLine(text: string): boolean | undefined {
+    const m = logcatWithPid.exec(text) ?? logcatNoPid.exec(text);
+    if (m) {
+        return m[1] !== 'flutter';
+    }
+    for (const pat of launchPatterns) {
+        if (pat.test(text)) { return true; }
+    }
+    return undefined;
+}

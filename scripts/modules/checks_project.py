@@ -303,7 +303,7 @@ def _stamp_changelog(version: str) -> bool:
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     pattern = r'## \[Unreleased\]'
     replacement = f'## [{version}] - {today}'
-    updated, count = re.subn(pattern, replacement, content, re.IGNORECASE)
+    updated, count = re.subn(pattern, replacement, content, flags=re.IGNORECASE)
     if count == 0:
         fail("Could not find '## [Unreleased]' in CHANGELOG.md")
         return False

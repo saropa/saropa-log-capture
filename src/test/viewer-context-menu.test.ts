@@ -23,6 +23,14 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'pin':"));
             assert.ok(script.includes("case 'annotate':"));
             assert.ok(script.includes("case 'open-source':"));
+            assert.ok(script.includes("case 'show-context':"));
+        });
+
+        test('should handle copy-selection and select-all global actions', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function handleGlobalAction'));
+            assert.ok(script.includes("'copy-selection'"));
+            assert.ok(script.includes("'select-all'"));
         });
     });
 
@@ -35,10 +43,13 @@ suite('ViewerContextMenu', () => {
 
         test('should include all menu items', () => {
             const html = getContextMenuHtml();
+            assert.ok(html.includes('> Copy\n'));
+            assert.ok(html.includes('Select All'));
             assert.ok(html.includes('Copy Line'));
             assert.ok(html.includes('Search Codebase'));
             assert.ok(html.includes('Search Past Sessions'));
             assert.ok(html.includes('Open Source File'));
+            assert.ok(html.includes('Show Context'));
             assert.ok(html.includes('Pin Line'));
             assert.ok(html.includes('Add Note'));
             assert.ok(html.includes('Add to Watch List'));
@@ -47,14 +58,27 @@ suite('ViewerContextMenu', () => {
 
         test('should include data-action attributes', () => {
             const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="copy-selection"'));
+            assert.ok(html.includes('data-action="select-all"'));
             assert.ok(html.includes('data-action="copy"'));
             assert.ok(html.includes('data-action="search-codebase"'));
             assert.ok(html.includes('data-action="search-sessions"'));
             assert.ok(html.includes('data-action="open-source"'));
+            assert.ok(html.includes('data-action="show-context"'));
             assert.ok(html.includes('data-action="pin"'));
             assert.ok(html.includes('data-action="annotate"'));
             assert.ok(html.includes('data-action="add-watch"'));
             assert.ok(html.includes('data-action="add-exclusion"'));
+        });
+
+        test('should mark line-specific items with data-line-action', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="copy" data-line-action'));
+            assert.ok(html.includes('data-action="pin" data-line-action'));
+            assert.ok(html.includes('data-action="add-watch" data-line-action'));
+            // Global items should NOT have data-line-action
+            assert.ok(!html.includes('data-action="copy-selection" data-line-action'));
+            assert.ok(!html.includes('data-action="select-all" data-line-action'));
         });
 
         test('should include codicon classes for icons', () => {

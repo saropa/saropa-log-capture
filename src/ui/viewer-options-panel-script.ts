@@ -63,8 +63,6 @@ function syncDisplayUi() {
         var decoInputs = decoIndent.querySelectorAll('input, select');
         for (var i = 0; i < decoInputs.length; i++) decoInputs[i].disabled = !showDecorations;
     }
-    var minimapCheck = document.getElementById('opt-minimap');
-    if (minimapCheck && typeof minimapEnabled !== 'undefined') minimapCheck.checked = minimapEnabled;
     var fSlider = document.getElementById('font-size-slider');
     var fLabel = document.getElementById('font-size-label');
     if (fSlider && typeof logFontSize !== 'undefined') {
@@ -169,12 +167,6 @@ if (optDeco) optDeco.addEventListener('change', function(e) {
     if (typeof toggleDecorations === 'function') toggleDecorations();
     syncOptionsPanelUi();
 });
-var optMinimap = document.getElementById('opt-minimap');
-if (optMinimap) optMinimap.addEventListener('change', function(e) {
-    if (typeof toggleMinimap === 'function') toggleMinimap();
-    syncOptionsPanelUi();
-});
-
 // Decoration sub-options — sync to deco settings panel and delegate to onDecoOptionChange
 var decoCheckIds = [
     'opt-deco-dot', 'opt-deco-counter', 'opt-deco-timestamp',
