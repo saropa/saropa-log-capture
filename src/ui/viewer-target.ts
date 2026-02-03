@@ -36,4 +36,5 @@ export interface ViewerTarget {
   sendDisplayOptions(options: SessionDisplayOptions): void;
   setSessionActive(active: boolean): void;
   updateWatchCounts(counts: ReadonlyMap<string, number>): void;
+  sendBookmarkList(files: Record<string, unknown>): void;
 }

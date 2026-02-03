@@ -18,8 +18,6 @@ import { PopOutPanel } from './ui/pop-out-panel';
 import { wireSharedHandlers } from './ui/viewer-handler-wiring';
 import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
-import { BookmarkProvider } from './ui/bookmark-provider';
-import { bookmarkCommands } from './commands-bookmarks';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -67,11 +65,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Bookmarks.
     const bookmarkStore = new BookmarkStore(context);
     context.subscriptions.push(bookmarkStore);
-    const bookmarkProvider = new BookmarkProvider(bookmarkStore);
-    context.subscriptions.push(bookmarkProvider);
-    context.subscriptions.push(vscode.window.createTreeView('saropaLogCapture.bookmarks', {
-        treeDataProvider: bookmarkProvider,
-    }));
+    bookmarkStore.onDidChange(() => { broadcaster.sendBookmarkList(bookmarkStore.getAll() as Record<string, unknown>); });
 
     // Deep links URI handler.
     context.subscriptions.push(
@@ -127,7 +121,11 @@ export function activate(context: vscode.ExtensionContext): void {
         historyProvider.refresh();
     });
     // Wire shared handlers on both viewer targets.
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore };
+    const onOpenBookmark = async (fileUri: string, lineIndex: number): Promise<void> => {
+        await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
+        viewerProvider.scrollToLine(lineIndex + 1);
+    };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, onOpenBookmark };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
@@ -227,7 +225,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
-    context.subscriptions.push(...bookmarkCommands({ bookmarkStore, bookmarkProvider, viewerProvider }));
 
     outputChannel.appendLine('Saropa Log Capture activated.');
 }

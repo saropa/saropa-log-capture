@@ -48,6 +48,7 @@ export class LogViewerProvider
   private onFindInFiles?: (query: string, options: Record<string, unknown>) => void;
   private onOpenFindResult?: (uriString: string, query: string, options: Record<string, unknown>) => void;
   private onFindNavigateMatch?: (uriString: string, matchIndex: number) => void;
+  private onBookmarkAction?: (msg: Record<string, unknown>) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -113,6 +114,7 @@ export class LogViewerProvider
   setFindInFilesHandler(handler: (query: string, options: Record<string, unknown>) => void): void { this.onFindInFiles = handler; }
   setOpenFindResultHandler(handler: (uriString: string, query: string, options: Record<string, unknown>) => void): void { this.onOpenFindResult = handler; }
   setFindNavigateMatchHandler(handler: (uriString: string, matchIndex: number) => void): void { this.onFindNavigateMatch = handler; }
+  setBookmarkActionHandler(handler: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = handler; }
 
   // -- Webview state methods --
 
@@ -164,6 +166,7 @@ export class LogViewerProvider
   setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
   findNextMatch(): void { this.postMessage({ type: "findNextMatch" }); }
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
+  sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
@@ -250,6 +253,8 @@ export class LogViewerProvider
       case "findNavigateMatch":
         this.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
         break;
+      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks":
+      case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "popOutViewer": this.onPopOutRequest?.(); break;

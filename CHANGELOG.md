@@ -5,12 +5,14 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [Unreleased]
+## [0.2.7] - 2026-02-03
 
 ### Fixed
 - **Find in Files icon missing:** Replaced invalid `codicon-search-view` (not in codicons 0.0.44) with `codicon-list-filter` so the icon bar button renders correctly.
 
 ### Changed
+- **Bookmarks panel moved to icon bar:** Bookmarks are now a slide-out panel inside the Log Viewer (accessible via the bookmark icon in the icon bar) instead of a separate native tree view. The native tree view, its commands, and menu entries have been removed.
+- **Pop Out moved to title bar only:** Removed the Pop Out button from the webview icon bar. Pop Out is now accessible only from the native view title bar action, matching standard VS Code panel conventions.
 - **Session panel Tidy icon:** Replaced `codicon-text-size` with `codicon-edit` on the Tidy toggle button. The "Aa" glyph had more visual mass than the calendar, tree, and arrow icons on adjacent buttons.
 
 ---
