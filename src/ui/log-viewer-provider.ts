@@ -44,6 +44,10 @@ export class LogViewerProvider
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onPopOutRequest?: () => void;
   private onRevealLogFile?: (uriString: string) => void;
+  private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
+  private onFindInFiles?: (query: string, options: Record<string, unknown>) => void;
+  private onOpenFindResult?: (uriString: string, query: string, options: Record<string, unknown>) => void;
+  private onFindNavigateMatch?: (uriString: string, matchIndex: number) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -105,59 +109,42 @@ export class LogViewerProvider
   setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
   setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
   setRevealLogFileHandler(handler: (uriString: string) => void): void { this.onRevealLogFile = handler; }
+  setAddBookmarkHandler(handler: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void { this.onAddBookmark = handler; }
+  setFindInFilesHandler(handler: (query: string, options: Record<string, unknown>) => void): void { this.onFindInFiles = handler; }
+  setOpenFindResultHandler(handler: (uriString: string, query: string, options: Record<string, unknown>) => void): void { this.onOpenFindResult = handler; }
+  setFindNavigateMatchHandler(handler: (uriString: string, matchIndex: number) => void): void { this.onFindNavigateMatch = handler; }
 
   // -- Webview state methods --
 
+  scrollToLine(line: number): void { this.postMessage({ type: "scrollToLine", line }); }
   setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
   setAnnotation(lineIndex: number, text: string): void { this.postMessage({ type: "setAnnotation", lineIndex, text }); }
   loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { this.postMessage({ type: "loadAnnotations", annotations }); }
 
-  /** Update the split breadcrumb in the viewer. */
-  setSplitInfo(currentPart: number, totalParts: number): void {
-    this.postMessage({ type: "splitInfo", currentPart, totalParts });
-  }
-
-  /** Update the footer status text. */
+  setSplitInfo(currentPart: number, totalParts: number): void { this.postMessage({ type: "splitInfo", currentPart, totalParts }); }
   updateFooter(text: string): void { this.postMessage({ type: "updateFooter", text }); }
-
-  /** Update the pause/resume indicator. */
   setPaused(paused: boolean): void { this.postMessage({ type: "setPaused", paused }); }
-
-  /** Set the active log filename and restore saved level filters. */
   setFilename(filename: string): void {
     this.postMessage({ type: "setFilename", filename });
     const levels = helpers.getSavedLevelFilters(this.context, filename);
     if (levels) { this.postMessage({ type: "restoreLevelFilters", levels }); }
   }
-
-  /** Set context lines for level filtering. */
   setContextLines(count: number): void { this.postMessage({ type: "setContextLines", count }); }
-
-  /** Set context lines for the context view modal. */
   setContextViewLines(count: number): void { this.postMessage({ type: "setContextViewLines", count }); }
-
-  /** Toggle elapsed time display. */
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
 
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
   setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical }); }
 
-  /** Apply a preset by name. */
   applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }
-
-  /** Send highlight rules to the webview (serialized for postMessage). */
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);
     this.postMessage({ type: "setHighlightRules", rules: this.cachedHighlightRules });
   }
-
-  /** Send filter presets to the webview dropdown. */
   setPresets(presets: readonly FilterPreset[]): void {
     this.cachedPresets = presets;
     this.postMessage({ type: "setPresets", presets });
   }
-
-  /** Queue a log line for batched delivery to the webview. */
   addLine(data: LineData): void {
     const html = data.isMarker ? escapeHtml(data.text) : linkifyHtml(ansiToHtml(data.text));
     this.pendingLines.push({
@@ -170,22 +157,18 @@ export class LogViewerProvider
     });
   }
 
-  /** Set the current log file URI (for live sessions). */
-  setCurrentFile(uri: vscode.Uri | undefined): void {
-    this.currentFileUri = uri;
-  }
-
-  /** Send session metadata to the webview (for icon + compact prefix). */
+  setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
+  sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
+  setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
+  findNextMatch(): void { this.postMessage({ type: "findNextMatch" }); }
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
-  /** Send a clear message to the webview. */
   clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.postMessage({ type: "clear" }); this.setSessionInfo(null); }
 
-  /** Load a historical log file into the viewer. */
   async loadFromFile(uri: vscode.Uri): Promise<void> {
     const gen = ++this.loadGeneration; this.pendingLoadUri = uri;
     this.view?.show?.(true);
@@ -205,7 +188,6 @@ export class LogViewerProvider
     this.postMessage({ type: "setTimestampAvailability", available: hasTimestamps });
     this.postMessage({ type: "loadComplete" }); this.pendingLoadUri = undefined;
   }
-  /** Send keyword watch hit counts to the webview footer and update badge. */
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj = Object.fromEntries(counts);
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
@@ -235,6 +217,7 @@ export class LogViewerProvider
       case "promptAnnotation":
         this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));
         break;
+      case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
@@ -257,6 +240,15 @@ export class LogViewerProvider
         break;
       case "saveLevelFilters":
         helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
+        break;
+      case "requestFindInFiles":
+        this.onFindInFiles?.(String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
+        break;
+      case "openFindResult":
+        this.onOpenFindResult?.(String(msg.uriString ?? ""), String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
+        break;
+      case "findNavigateMatch":
+        this.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
         break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;

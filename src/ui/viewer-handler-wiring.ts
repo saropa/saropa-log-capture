@@ -14,6 +14,7 @@ import { showSearchQuickPick } from "../modules/log-search-ui";
 import { openLogAtLine } from "../modules/log-search";
 import { loadPresets, promptSavePreset } from "../modules/filter-presets";
 import { buildSessionListPayload, openSourceFile } from "./viewer-provider-helpers";
+import type { BookmarkStore } from "../modules/bookmark-store";
 
 /** Object with handler setters common to both viewer targets. */
 interface HandlerTarget {
@@ -28,6 +29,7 @@ interface HandlerTarget {
   setAddToWatchHandler(h: (t: string) => void): void;
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
+  setAddBookmarkHandler(h: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void;
 }
 
 /** Dependencies needed by the shared handler wiring. */
@@ -35,6 +37,7 @@ export interface HandlerDeps {
   readonly sessionManager: SessionManagerImpl;
   readonly broadcaster: ViewerBroadcaster;
   readonly historyProvider: SessionHistoryProvider;
+  readonly bookmarkStore: BookmarkStore;
 }
 
 /** Wire common webview→extension handlers on a viewer target. */
@@ -99,5 +102,16 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   target.setSessionListHandler(async () => {
     const items = await historyProvider.getChildren();
     broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
+  });
+  target.setAddBookmarkHandler(async (lineIndex, text, fileUri) => {
+    const note = await vscode.window.showInputBox({
+      prompt: `Bookmark line ${lineIndex + 1} — add a note (optional)`,
+      placeHolder: 'Leave empty for no note',
+    });
+    if (note === undefined) { return; }
+    const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
+    if (!uri) { return; }
+    const filename = uri.path.split('/').pop() ?? '';
+    deps.bookmarkStore.add(uri.toString(), filename, lineIndex, text, note);
   });
 }
