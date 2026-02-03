@@ -15,6 +15,9 @@ export function getIconBarHtml(): string {
     <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)">
         <span class="codicon codicon-search"></span>
     </button>
+    <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)">
+        <span class="codicon codicon-search-view"></span>
+    </button>
     <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
@@ -35,12 +38,14 @@ export function getIconBarScript(): string {
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
         search: document.getElementById('ib-search'),
+        find: document.getElementById('ib-find'),
         info: document.getElementById('ib-info'),
         options: document.getElementById('ib-options'),
     };
 
     function closeAllPanels() {
         if (typeof closeSearch === 'function') closeSearch();
+        if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
@@ -69,6 +74,8 @@ export function getIconBarScript(): string {
             openSessionPanel();
         } else if (name === 'search' && typeof openSearch === 'function') {
             openSearch();
+        } else if (name === 'find' && typeof openFindPanel === 'function') {
+            openFindPanel();
         } else if (name === 'info' && typeof openInfoPanel === 'function') {
             openInfoPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
@@ -89,6 +96,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.search) {
         iconButtons.search.addEventListener('click', function() { setActivePanel('search'); });
+    }
+    if (iconButtons.find) {
+        iconButtons.find.addEventListener('click', function() { setActivePanel('find'); });
     }
     if (iconButtons.info) {
         iconButtons.info.addEventListener('click', function() { setActivePanel('info'); });

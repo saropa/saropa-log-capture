@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Find in Files panel (Ctrl+Shift+F):** New "Find in Files" icon in the activity bar searches all log files in the reports directory concurrently. Shows matched files with match count badges. Click a file to open it and jump to the first match; click again to cycle through subsequent matches. Supports case-sensitive, whole-word, and regex toggles matching the in-file search options. Results update with 300ms debounce as you type.
 - **Bookmarks panel:** New "Bookmarks" tab in the Saropa Log Capture panel. Right-click any log line and choose "Bookmark Line" to save it with an optional note. Bookmarks are grouped by file, persist across sessions via workspace state, and clicking a bookmark navigates back to that line. Includes search/filter, edit note, delete individual or all bookmarks with confirmation dialogs.
 - **Context lines slider in level flyup:** The level filter fly-up menu now includes a slider (0–10) to adjust how many preceding context lines are shown when filtering by level. Replaces the static VS Code setting default for real-time control.
 - **Source link context menu:** Right-clicking a filename/source reference (e.g. `lib/main.dart:42`) now shows file-specific actions: Open File, Copy Relative Path, and Copy Full Path. Previously showed the browser's default Cut/Copy/Paste menu.
