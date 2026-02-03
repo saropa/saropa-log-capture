@@ -32,6 +32,20 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("'copy-selection'"));
             assert.ok(script.includes("'select-all'"));
         });
+
+        test('should handle source-link actions', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function handleSourceAction'));
+            assert.ok(script.includes("'open-source-link'"));
+            assert.ok(script.includes("'copy-relative-path'"));
+            assert.ok(script.includes("'copy-full-path'"));
+        });
+
+        test('should detect source-link on right-click', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("e.target.closest('.source-link')"));
+            assert.ok(script.includes('contextMenuSourcePath'));
+        });
     });
 
     suite('getContextMenuHtml', () => {
@@ -79,6 +93,23 @@ suite('ViewerContextMenu', () => {
             // Global items should NOT have data-line-action
             assert.ok(!html.includes('data-action="copy-selection" data-line-action'));
             assert.ok(!html.includes('data-action="select-all" data-line-action'));
+        });
+
+        test('should include source-link menu items with data-source-action', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="open-source-link" data-source-action'));
+            assert.ok(html.includes('data-action="copy-relative-path" data-source-action'));
+            assert.ok(html.includes('data-action="copy-full-path" data-source-action'));
+            assert.ok(html.includes('Open File'));
+            assert.ok(html.includes('Copy Relative Path'));
+            assert.ok(html.includes('Copy Full Path'));
+        });
+
+        test('should not mark source-link items with data-line-action', () => {
+            const html = getContextMenuHtml();
+            assert.ok(!html.includes('data-action="open-source-link" data-line-action'));
+            assert.ok(!html.includes('data-action="copy-relative-path" data-line-action'));
+            assert.ok(!html.includes('data-action="copy-full-path" data-line-action'));
         });
 
         test('should include codicon classes for icons', () => {
