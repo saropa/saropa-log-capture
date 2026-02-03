@@ -105,16 +105,11 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const items = await historyProvider.getChildren();
     broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
   });
-  target.setAddBookmarkHandler(async (lineIndex, text, fileUri) => {
-    const note = await vscode.window.showInputBox({
-      prompt: `Bookmark line ${lineIndex + 1} — add a note (optional)`,
-      placeHolder: 'Leave empty for no note',
-    });
-    if (note === undefined) { return; }
+  target.setAddBookmarkHandler((lineIndex, text, fileUri) => {
     const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
     if (!uri) { return; }
     const filename = uri.path.split('/').pop() ?? '';
-    deps.bookmarkStore.add(uri.toString(), filename, lineIndex, text, note);
+    deps.bookmarkStore.add(uri.toString(), filename, lineIndex, text, '');
   });
   target.setBookmarkActionHandler((msg) => {
     const type = String(msg.type ?? '');

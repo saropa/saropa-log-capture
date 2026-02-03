@@ -86,6 +86,30 @@ body {
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
 
+/* --- Hover copy icon (appears on far right of each line) --- */
+.line, .stack-header { position: relative; }
+.copy-icon {
+    display: none;
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-editor-background);
+    border-radius: 3px;
+    user-select: none;
+    z-index: 1;
+}
+.line:hover .copy-icon,
+.stack-header:hover .copy-icon { display: flex; align-items: center; }
+.copy-icon:hover {
+    color: var(--vscode-editor-foreground);
+    background: var(--vscode-button-hoverBackground, rgba(90,93,94,0.31));
+}
+
 /* --- Clickable source file links within log lines --- */
 .source-link {
     color: var(--vscode-textLink-foreground, #3794ff);

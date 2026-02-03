@@ -14,6 +14,7 @@ export function getUiStyles(): string {
    Uses --vscode-panel-background to match the VS Code bottom panel.
    =================================================================== */
 #pinned-section {
+    display: none;
     position: sticky;
     top: 0;
     z-index: 5;
@@ -109,6 +110,13 @@ export function getUiStyles(): string {
     transition: opacity 0.2s ease;
 }
 .level-dot:not(.active) { opacity: 0.3; }
+.level-dot-info { background: #4caf50; }
+.level-dot-warning { background: #ff9800; }
+.level-dot-error { background: #f44336; }
+.level-dot-performance { background: #9c27b0; }
+.level-dot-todo { background: #bdbdbd; }
+.level-dot-debug { background: #795548; }
+.level-dot-notice { background: #2196f3; }
 .dot-count {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
@@ -268,7 +276,7 @@ export function getUiStyles(): string {
 /* --- Scrollbar Minimap: interactive panel replacing native scrollbar --- */
 .scrollbar-minimap {
     width: 60px; flex-shrink: 0; position: relative;
-    overflow: hidden; cursor: pointer;
+    height: 100%; overflow: hidden; cursor: pointer;
     border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
 .minimap-marker { position: absolute; left: 0; right: 0; height: 2px; pointer-events: none; z-index: 1; }
@@ -279,7 +287,7 @@ export function getUiStyles(): string {
 .minimap-performance { background: var(--vscode-editorOverviewRuler-infoForeground, rgba(156, 39, 176, 0.8)); }
 .minimap-todo { background: rgba(189, 189, 189, 0.6); }
 .minimap-debug { background: rgba(121, 85, 72, 0.6); }
-.minimap-notice { background: rgba(33, 150, 243, 0.6); }
+.minimap-notice { background: rgba(33, 150, 243, 0.6); } .minimap-info { background: rgba(78, 201, 176, 0.35); }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));

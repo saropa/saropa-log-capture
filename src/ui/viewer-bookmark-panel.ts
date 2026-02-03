@@ -206,10 +206,21 @@ export function getBookmarkPanelScript(): string {
 
     /* --- Message listener --- */
 
+    function updateBadge(data) {
+        var badge = document.getElementById('ib-bookmarks-badge');
+        if (!badge) return;
+        var total = 0;
+        var keys = Object.keys(data || {});
+        for (var i = 0; i < keys.length; i++) { total += (data[keys[i]].bookmarks || []).length; }
+        badge.textContent = total > 99 ? '99+' : String(total);
+        badge.style.display = total > 0 ? 'inline-block' : 'none';
+    }
+
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         if (e.data.type === 'bookmarkList') {
             renderBookmarks(e.data.files);
+            updateBadge(e.data.files);
         }
     });
 

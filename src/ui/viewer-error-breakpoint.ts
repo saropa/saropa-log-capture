@@ -152,7 +152,7 @@ window.addEventListener('message', function(event) {
 
 /** Returns the HTML for error breakpoint UI elements. */
 export function getErrorBreakpointHtml(): string {
-    return `<span id="error-badge" style="display:none; cursor:pointer; color: var(--vscode-errorForeground, #f44); font-weight: bold; margin-right: 4px;"></span>
+    return `<span id="error-badge"></span>
 <div id="error-modal" class="error-modal">
     <div class="error-modal-content">
         <h3>⚠️ Error Detected</h3>

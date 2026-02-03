@@ -24,6 +24,11 @@ export function getErrorStyles(): string {
    Shows count of new errors in footer.
    =================================================================== */
 #error-badge {
+    display: none;
+    cursor: pointer;
+    color: var(--vscode-errorForeground, #f44);
+    font-weight: bold;
+    margin-right: 4px;
     padding: 2px 6px;
     border-radius: 3px;
     background: var(--vscode-errorBackground, rgba(244, 68, 68, 0.1));

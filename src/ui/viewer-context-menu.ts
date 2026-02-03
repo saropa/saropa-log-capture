@@ -58,8 +58,11 @@ function positionContextMenu(x, y) {
     contextMenuEl.style.top = y + 'px';
     contextMenuEl.classList.add('visible');
     var rect = contextMenuEl.getBoundingClientRect();
-    if (rect.right > window.innerWidth) contextMenuEl.style.left = (x - rect.width) + 'px';
-    if (rect.bottom > window.innerHeight) contextMenuEl.style.top = (y - rect.height) + 'px';
+    if (rect.right > window.innerWidth) x = Math.max(0, x - rect.width);
+    if (rect.bottom > window.innerHeight) y = Math.max(0, y - rect.height);
+    contextMenuEl.style.left = x + 'px';
+    contextMenuEl.style.top = y + 'px';
+    contextMenuEl.style.maxHeight = (window.innerHeight - y - 4) + 'px';
 }
 
 function hideContextMenu() {
@@ -240,9 +243,6 @@ export function getContextMenuHtml(): string {
     </div>
     <div class="context-menu-item" data-action="bookmark" data-line-action>
         <span class="codicon codicon-bookmark"></span> Bookmark Line
-    </div>
-    <div class="context-menu-item" data-action="annotate" data-line-action>
-        <span class="codicon codicon-comment"></span> Add Note
     </div>
     <div class="context-menu-item" data-action="edit" data-line-action>
         <span class="codicon codicon-edit"></span> Edit Line

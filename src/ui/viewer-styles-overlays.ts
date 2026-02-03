@@ -100,6 +100,7 @@ export function getOverlayStyles(): string {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
     padding: 4px 0;
+    overflow-y: auto;
 }
 @keyframes menu-pop-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 .context-menu.visible { display: block; animation: menu-pop-in 0.12s ease-out; }
