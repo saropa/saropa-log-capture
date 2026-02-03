@@ -14,13 +14,14 @@ export function getSearchPanelHtml(): string {
     <div class="search-content">
         <div class="search-input-wrapper">
             <input id="search-input" type="text" placeholder="Search..." />
-            <button id="search-clear" class="search-clear" title="Clear search">&times;</button>
+            <div class="search-input-actions">
+                <button id="search-case-toggle" class="search-input-btn" title="Match Case"><span class="codicon codicon-case-sensitive"></span></button>
+                <button id="search-word-toggle" class="search-input-btn" title="Match Whole Word"><span class="codicon codicon-whole-word"></span></button>
+                <button id="search-regex-toggle" class="search-input-btn" title="Use Regular Expression"><span class="codicon codicon-regex"></span></button>
+            </div>
         </div>
         <div id="search-history" class="search-history"></div>
         <div class="search-toggles">
-            <button id="search-regex-toggle" title="Literal mode (click for regex)">Aa</button>
-            <button id="search-case-toggle" title="Case insensitive (click for case sensitive)">Aa</button>
-            <button id="search-word-toggle" title="Match partial (click for whole word)">\\b</button>
             <button id="search-mode-toggle" title="Toggle highlight/filter mode">Mode: Highlight</button>
         </div>
         <div class="search-nav">
@@ -206,24 +207,12 @@ document.getElementById('search-next').addEventListener('click', searchNext);
 document.getElementById('search-prev').addEventListener('click', searchPrev);
 document.getElementById('search-close').addEventListener('click', closeSearch);
 
-var searchClearBtn = document.getElementById('search-clear');
-var searchInputWrapper = searchInputEl ? searchInputEl.parentElement : null;
 function updateClearButton() {
-    if (searchInputWrapper) searchInputWrapper.classList.toggle('has-text', searchInputEl.value.length > 0);
-}
-if (searchClearBtn) {
-    searchClearBtn.addEventListener('click', function() {
-        searchInputEl.value = '';
-        updateClearButton();
-        updateSearch();
-        searchInputEl.focus();
-    });
+    /* no-op — retained for compatibility with search history input handler */
 }
 
 /* Prevent clicks inside the search panel from reaching the
-   document-level close handler. Toggle buttons replace their text
-   nodes via textContent which can detach the original e.target,
-   making contains() checks unreliable. */
+   document-level close handler that calls closeSearch(). */
 searchBarEl.addEventListener('click', function(e) { e.stopPropagation(); });
 
 /* Close search panel when clicking outside it. */
