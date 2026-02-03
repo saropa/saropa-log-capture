@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Fixed
+- **Find in Files icon missing:** Replaced invalid `codicon-search-view` (not in codicons 0.0.44) with `codicon-list-filter` so the icon bar button renders correctly.
+
 ### Changed
 - **Session panel Tidy icon:** Replaced `codicon-text-size` with `codicon-edit` on the Tidy toggle button. The "Aa" glyph had more visual mass than the calendar, tree, and arrow icons on adjacent buttons.
 
