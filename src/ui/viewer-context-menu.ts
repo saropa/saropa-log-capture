@@ -147,6 +147,7 @@ function onContextMenuAction(action) {
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
         case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); break;
         case 'annotate': if (typeof promptAnnotation === 'function') promptAnnotation(lineIdx); break;
+        case 'bookmark': vscodeApi.postMessage({ type: 'addBookmark', lineIndex: lineIdx, text: plainText }); break;
         case 'open-source':
             var viewport = document.getElementById('viewport');
             if (viewport) {
@@ -236,6 +237,9 @@ export function getContextMenuHtml(): string {
     <div class="context-menu-separator" data-line-action></div>
     <div class="context-menu-item" data-action="pin" data-line-action>
         <span class="codicon codicon-pin"></span> Pin Line
+    </div>
+    <div class="context-menu-item" data-action="bookmark" data-line-action>
+        <span class="codicon codicon-bookmark"></span> Bookmark Line
     </div>
     <div class="context-menu-item" data-action="annotate" data-line-action>
         <span class="codicon codicon-comment"></span> Add Note

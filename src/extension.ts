@@ -16,6 +16,10 @@ import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-displ
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
 import { PopOutPanel } from './ui/pop-out-panel';
 import { wireSharedHandlers } from './ui/viewer-handler-wiring';
+import { searchLogFilesConcurrent } from './modules/log-search';
+import { BookmarkStore } from './modules/bookmark-store';
+import { BookmarkProvider } from './ui/bookmark-provider';
+import { bookmarkCommands } from './commands-bookmarks';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -59,6 +63,15 @@ export function activate(context: vscode.ExtensionContext): void {
         treeDataProvider: historyProvider,
     });
     context.subscriptions.push(historyTreeView);
+
+    // Bookmarks.
+    const bookmarkStore = new BookmarkStore(context);
+    context.subscriptions.push(bookmarkStore);
+    const bookmarkProvider = new BookmarkProvider(bookmarkStore);
+    context.subscriptions.push(bookmarkProvider);
+    context.subscriptions.push(vscode.window.createTreeView('saropaLogCapture.bookmarks', {
+        treeDataProvider: bookmarkProvider,
+    }));
 
     // Deep links URI handler.
     context.subscriptions.push(
@@ -114,7 +127,7 @@ export function activate(context: vscode.ExtensionContext): void {
         historyProvider.refresh();
     });
     // Wire shared handlers on both viewer targets.
-    const handlerDeps = { sessionManager, broadcaster, historyProvider };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
@@ -133,6 +146,20 @@ export function activate(context: vscode.ExtensionContext): void {
             await vscode.commands.executeCommand('saropaLogCapture.sessionHistory.focus');
         }
     });
+    viewerProvider.setFindInFilesHandler(async (query, options) => {
+        const results = await searchLogFilesConcurrent(query, {
+            caseSensitive: Boolean(options.caseSensitive),
+            useRegex: Boolean(options.useRegex),
+            wholeWord: Boolean(options.wholeWord),
+        });
+        viewerProvider.sendFindResults(results);
+    });
+    viewerProvider.setOpenFindResultHandler(async (uriString, query, options) => {
+        if (!uriString) { return; }
+        await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
+        viewerProvider.setupFindSearch(query, options);
+    });
+    viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
 
     // DAP tracker for all debug adapters.
     context.subscriptions.push(
@@ -200,6 +227,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
+    context.subscriptions.push(...bookmarkCommands({ bookmarkStore, bookmarkProvider, viewerProvider }));
 
     outputChannel.appendLine('Saropa Log Capture activated.');
 }

@@ -193,6 +193,41 @@
         "command": "saropaLogCapture.exportJsonl",
         "title": "Export as JSONL",
         "icon": "$(list-flat)"
+      },
+      {
+        "command": "saropaLogCapture.openBookmark",
+        "title": "Open Bookmark",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "saropaLogCapture.deleteBookmark",
+        "title": "Delete Bookmark",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "saropaLogCapture.deleteFileBookmarks",
+        "title": "Delete File Bookmarks",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "saropaLogCapture.deleteAllBookmarks",
+        "title": "Delete All Bookmarks",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "saropaLogCapture.editBookmarkNote",
+        "title": "Edit Bookmark Note",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "saropaLogCapture.searchBookmarks",
+        "title": "Search Bookmarks",
+        "icon": "$(search)"
+      },
+      {
+        "command": "saropaLogCapture.refreshBookmarks",
+        "title": "Refresh Bookmarks",
+        "icon": "$(refresh)"
       }
     ],
     "viewsContainers": {
@@ -217,6 +252,11 @@
           "name": "Session History",
           "icon": "$(history)",
           "when": "false"
+        },
+        {
+          "id": "saropaLogCapture.bookmarks",
+          "name": "Bookmarks",
+          "icon": "$(bookmark)"
         }
       ]
     },
@@ -230,6 +270,21 @@
         {
           "command": "saropaLogCapture.popOutViewer",
           "when": "view == saropaLogCapture.logViewer",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.searchBookmarks",
+          "when": "view == saropaLogCapture.bookmarks",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.deleteAllBookmarks",
+          "when": "view == saropaLogCapture.bookmarks",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.refreshBookmarks",
+          "when": "view == saropaLogCapture.bookmarks",
           "group": "navigation"
         }
       ],
@@ -291,9 +346,32 @@
           "command": "saropaLogCapture.compareWithMarked",
           "when": "viewItem == session",
           "group": "compare"
+        },
+        {
+          "command": "saropaLogCapture.openBookmark",
+          "when": "viewItem == bookmark",
+          "group": "inline"
+        },
+        {
+          "command": "saropaLogCapture.editBookmarkNote",
+          "when": "viewItem == bookmark"
+        },
+        {
+          "command": "saropaLogCapture.deleteBookmark",
+          "when": "viewItem == bookmark"
+        },
+        {
+          "command": "saropaLogCapture.deleteFileBookmarks",
+          "when": "viewItem == bookmark-file"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "saropaLogCapture.bookmarks",
+        "contents": "No bookmarks yet.\n\nRight-click a line in the Log Viewer to bookmark it."
+      }
+    ],
     "walkthroughs": [
       {
         "id": "saropaLogCapture.getStarted",
