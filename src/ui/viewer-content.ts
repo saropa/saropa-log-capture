@@ -117,19 +117,20 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             <span class="level-dot active" data-level="todo" style="background:#bdbdbd"></span>
             <span class="level-dot active" data-level="debug" style="background:#795548"></span>
             <span class="level-dot active" data-level="notice" style="background:#2196f3"></span>
+            <span class="level-trigger-label">Levels</span>
         </span>
         <div id="level-flyup">
             <div class="level-flyup-header">
                 <a id="level-select-all" href="#">All</a>
                 <a id="level-select-none" href="#">None</a>
             </div>
-            <button id="level-info-toggle" class="level-circle active" title="Info">🟢</button>
-            <button id="level-warning-toggle" class="level-circle active" title="Warning">🟠</button>
-            <button id="level-error-toggle" class="level-circle active" title="Error">🔴</button>
-            <button id="level-performance-toggle" class="level-circle active" title="Performance">🟣</button>
-            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME">⚪</button>
-            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace">🟤</button>
-            <button id="level-notice-toggle" class="level-circle active" title="Notice">🟦</button>
+            <button id="level-info-toggle" class="level-circle active" title="Info"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
+            <button id="level-warning-toggle" class="level-circle active" title="Warning"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>
+            <button id="level-error-toggle" class="level-circle active" title="Error"><span class="level-emoji">🔴</span><span class="level-label">Error</span><span class="level-count"></span></button>
+            <button id="level-performance-toggle" class="level-circle active" title="Performance"><span class="level-emoji">🟣</span><span class="level-label">Perf</span><span class="level-count"></span></button>
+            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
+            <button id="level-notice-toggle" class="level-circle active" title="Notice"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
         </div>
         <span id="filter-badge" class="filter-badge" style="display:none" title="Active filters — click to open options"></span>
     </div>

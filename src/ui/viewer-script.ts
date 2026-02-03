@@ -9,6 +9,12 @@ var jumpBtn = document.getElementById('jump-btn');
 var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
+if (footerTextEl) {
+    footerTextEl.style.cursor = 'pointer';
+    footerTextEl.addEventListener('click', function() {
+        if (typeof setActivePanel === 'function') setActivePanel('sessions');
+    });
+}
 var wrapToggle = document.getElementById('wrap-toggle');
 
 var vscodeApi = acquireVsCodeApi();

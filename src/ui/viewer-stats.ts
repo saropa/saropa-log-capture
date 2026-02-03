@@ -45,15 +45,15 @@ var levelButtonIds = {
 };
 
 /**
- * Update a single level circle button to show emoji + count.
+ * Update the count span inside a level circle button.
  */
 function updateLevelCircle(level) {
     var btn = document.getElementById(levelButtonIds[level]);
     if (!btn) return;
+    var countEl = btn.querySelector('.level-count');
+    if (!countEl) return;
     var count = statsCounters[level] || 0;
-    btn.textContent = count > 0
-        ? levelEmojis[level] + ' ' + count
-        : levelEmojis[level];
+    countEl.textContent = count > 0 ? String(count) : '';
 }
 
 /**
@@ -97,7 +97,7 @@ window.addEventListener('message', function(event) {
     var msg = event.data;
     if (msg.type === 'addLines' && msg.lines) {
         updateStatsFromLines(msg.lines);
-    } else if (msg.type === 'reset') {
+    } else if (msg.type === 'reset' || msg.type === 'clear') {
         resetStats();
     }
 });
