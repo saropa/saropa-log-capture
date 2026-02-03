@@ -56,9 +56,9 @@ function openSearch() {
     if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
     if (typeof closeSessionPanel === 'function') closeSessionPanel();
     searchBarEl.classList.add('visible');
-    searchInputEl.value = '';
+    if (matchIndices.length === 0) { searchInputEl.value = ''; }
     searchInputEl.focus();
-    clearSearchState();
+    if (searchInputEl.value) { updateSearch(); } else { clearSearchState(); }
     updateClearButton();
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
 }
@@ -69,7 +69,7 @@ function closeSearch() {
     searchOpen = false;
     searchBarEl.classList.remove('visible');
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
-    clearSearchState();
+    searchRegex = null;
     clearSearchFilter();
     renderViewport(true);
 }
@@ -94,7 +94,6 @@ function updateSearch() {
     if (!query) {
         clearSearchState();
         clearSearchFilter();
-        renderViewport(true);
         return;
     }
     try {
@@ -123,8 +122,8 @@ function updateSearch() {
         applySearchFilter();
     } else {
         clearSearchFilter();
+        renderViewport(true);
     }
-    renderViewport(true);
     if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
 }
 
@@ -138,14 +137,16 @@ function applySearchFilter() {
             item.searchFiltered = !matchSet.has(i);
         }
     }
-    recalcHeights();
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); }
 }
 
 function clearSearchFilter() {
     for (var i = 0; i < allLines.length; i++) {
         allLines[i].searchFiltered = false;
     }
-    recalcHeights();
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); }
 }
 
 function updateMatchDisplay() {
@@ -175,9 +176,12 @@ function searchPrev() {
 function scrollToMatch() {
     if (currentMatchIdx < 0) return;
     var idx = matchIndices[currentMatchIdx];
-    var cumH = 0;
-    for (var i = 0; i < idx; i++) cumH += allLines[i].height;
+    var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
+        ? prefixSums[idx] : 0;
+    if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }
+    suppressScroll = true;
     logEl.scrollTop = cumH - logEl.clientHeight / 2;
+    suppressScroll = false;
     autoScroll = false;
 }
 

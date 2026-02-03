@@ -9,7 +9,6 @@
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { linkifyHtml } from '../modules/source-linker';
-import { resolveSourceUri } from '../modules/source-resolver';
 
 /** A parsed log line ready for the webview. */
 export interface PendingLine {
@@ -192,37 +191,4 @@ function buildFileLine(
         timestamp,
         fw: classifyFrame(text),
     };
-}
-
-/** Result of loading source preview lines around a target line. */
-export interface SourcePreviewResult {
-    readonly path: string;
-    readonly line: number;
-    readonly lines?: string[];
-    readonly startLine?: number;
-    readonly error?: string;
-}
-
-/** Load source code context around a target line for preview display. */
-export async function loadSourcePreview(
-    filePath: string,
-    line: number,
-): Promise<SourcePreviewResult> {
-    const contextLines = 2;
-    try {
-        const uri = resolveSourceUri(filePath);
-        if (!uri) {
-            return { path: filePath, line, error: 'Cannot resolve path' };
-        }
-        const doc = await vscode.workspace.openTextDocument(uri);
-        const start = Math.max(0, line - contextLines - 1);
-        const end = Math.min(doc.lineCount, line + contextLines);
-        const lines: string[] = [];
-        for (let i = start; i < end; i++) {
-            lines.push(doc.lineAt(i).text);
-        }
-        return { path: filePath, line, lines, startLine: start + 1 };
-    } catch {
-        return { path: filePath, line, error: 'File not found' };
-    }
 }

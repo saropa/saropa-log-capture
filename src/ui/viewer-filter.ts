@@ -20,8 +20,8 @@ function applyFilter() {
         var item = allLines[i];
         item.filteredOut = !!(activeFilters && !activeFilters.has(item.category) && item.type !== 'marker');
     }
-    recalcHeights();
-    renderViewport(true);
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
 }
 
 /**

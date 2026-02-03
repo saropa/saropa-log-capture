@@ -135,8 +135,8 @@ function handleErrorClassificationSettings(msg) {
     // Refilter when suppression changes
     if (msg.suppressTransientErrors !== undefined) {
         applyErrorSuppression();
-        recalcHeights();
-        renderViewport(true);
+        if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+        else { recalcHeights(); renderViewport(true); }
     }
 }
 

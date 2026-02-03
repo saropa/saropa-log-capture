@@ -56,11 +56,11 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-exclusions" />
                 <span id="exclusion-label">Exclusions</span>
             </label>
-            <div id="exclusion-chips" class="exclusion-chips"></div>
-            <div class="options-hint" id="exclusion-empty" style="display:none">
-                No patterns configured.
-                <a href="#" id="exclusion-open-settings" class="options-link">Configure in Settings</a>
+            <div class="exclusion-input-wrapper">
+                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" />
+                <button id="exclusion-add-btn" title="Add exclusion pattern">Add</button>
             </div>
+            <div id="exclusion-chips" class="exclusion-chips"></div>
             <div class="options-hint" id="exclusion-count"></div>
             <label class="options-row" title="Show only application output, hiding framework and system messages">
                 <input type="checkbox" id="opt-app-only" />
@@ -84,7 +84,7 @@ export function getOptionsPanelHtml(): string {
                 <input type="range" id="line-height-slider" min="5" max="40" value="15" style="width: 100%;" title="Adjust the spacing between log lines" />
             </div>
             <label class="options-row" title="Wrap long lines to fit the panel width">
-                <input type="checkbox" id="opt-wrap" checked />
+                <input type="checkbox" id="opt-wrap" />
                 <span>Word wrap</span>
             </label>
             <label class="options-row" title="Show severity dot, line number, and timestamp before each line">
@@ -124,17 +124,13 @@ export function getOptionsPanelHtml(): string {
                     <span>Severity bar (left border)</span>
                 </label>
             </div>
-            <label class="options-row" title="Show color-coded overview of errors and search matches on the scrollbar">
-                <input type="checkbox" id="opt-minimap" checked />
-                <span>Scrollbar minimap</span>
-            </label>
         </div>
 
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
             <label class="options-row" title="Add extra vertical padding between log lines for easier reading">
-                <input type="checkbox" id="opt-visual-spacing" />
+                <input type="checkbox" id="opt-visual-spacing" checked />
                 <span>Visual spacing (breathing room)</span>
             </label>
         </div>

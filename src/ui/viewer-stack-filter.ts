@@ -1,6 +1,7 @@
 /**
- * Client-side JavaScript for the app-only stack trace filter.
- * When enabled, framework/library stack frames are hidden in expanded groups.
+ * Client-side JavaScript for the app-only filter.
+ * When enabled, framework/system log lines and stack frames are hidden.
+ * Uses recalcHeights() so the filter composes with all other filters.
  */
 export function getStackFilterScript(): string {
   return /* javascript */ `
@@ -13,35 +14,12 @@ function setAppOnlyMode(enabled) {
 
 function toggleAppOnly() {
     appOnlyMode = !appOnlyMode;
-    var headerByGroup = {};
-    for (var i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        if (item.type === 'stack-header') { headerByGroup[item.groupId] = item; continue; }
-        if (item.type !== 'stack-frame') continue;
-        var hdr = headerByGroup[item.groupId];
-        if (!hdr || hdr.collapsed) continue;
-        var newH = (appOnlyMode && item.fw) ? 0 : ROW_HEIGHT;
-        totalHeight += newH - item.height;
-        item.height = newH;
-    }
+    recalcHeights();
     if (typeof vscodeApi !== 'undefined') {
         vscodeApi.postMessage({ type: 'setCaptureAll', value: !appOnlyMode });
     }
     renderViewport(true);
 }
-
-// Wrap toggleStackGroup to respect app-only mode when expanding groups.
-var _origToggleStack = toggleStackGroup;
-toggleStackGroup = function(groupId) {
-    _origToggleStack(groupId);
-    if (!appOnlyMode) return;
-    for (var i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        if (item.groupId !== groupId || item.type !== 'stack-frame' || !item.fw) continue;
-        if (item.height > 0) { totalHeight -= item.height; item.height = 0; }
-    }
-    renderViewport(true);
-};
 
 document.addEventListener('keydown', function(e) {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

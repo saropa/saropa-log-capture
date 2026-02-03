@@ -1,8 +1,7 @@
 /** Helper functions for LogViewerProvider — message handlers and batch processing. */
 import * as vscode from "vscode";
 import { findHeaderEnd } from "./viewer-file-loader";
-import { loadSourcePreview } from "./viewer-file-loader";
-import { isFrameworkFrame } from "../modules/stack-parser";
+import { isFrameworkFrame, isFrameworkLogLine } from "../modules/stack-parser";
 import { resolveSourceUri } from "../modules/source-resolver";
 import { TreeItem, isSplitGroup } from "./session-history-grouping";
 import { PendingLine } from "./viewer-file-loader";
@@ -112,17 +111,6 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 }
 
 /**
- * Load source preview for a file path and line number.
- */
-export async function handleSourcePreview(
-	filePath: string,
-	line: number,
-	postMessage: (msg: unknown) => void
-): Promise<void> {
-	postMessage({ type: "sourcePreview", ...await loadSourcePreview(filePath, line) });
-}
-
-/**
  * Flush batched lines to the webview.
  */
 export function flushBatch(
@@ -158,11 +146,15 @@ export function sendNewCategories(
 }
 
 /**
- * Classify a line as framework code if it looks like a stack frame.
+ * Classify a log line as framework or app code.
+ * Handles both stack frames ("    at ...") and regular output
+ * (e.g. Android logcat "D/TAG(PID): msg", launch boilerplate).
  */
 export function classifyFrame(text: string): boolean | undefined {
-	if (!/^\s+at\s/.test(text)) { return undefined; }
-	return isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+	if (/^\s+at\s/.test(text)) {
+		return isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+	}
+	return isFrameworkLogLine(text);
 }
 
 /**

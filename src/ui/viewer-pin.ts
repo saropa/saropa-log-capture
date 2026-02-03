@@ -53,9 +53,12 @@ if (pinnedSection) {
         var pinItem = e.target.closest('.pinned-item');
         if (pinItem && pinItem.dataset.pinIdx !== undefined) {
             var idx = parseInt(pinItem.dataset.pinIdx);
-            var cumH = 0;
-            for (var i = 0; i < idx; i++) cumH += allLines[i].height;
+            var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
+                ? prefixSums[idx] : 0;
+            if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }
+            suppressScroll = true;
             logEl.scrollTop = cumH - logEl.clientHeight / 2;
+            suppressScroll = false;
             autoScroll = false;
         }
     });

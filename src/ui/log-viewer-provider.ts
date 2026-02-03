@@ -233,9 +233,6 @@ export class LogViewerProvider
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
-      case "requestSourcePreview":
-        helpers.handleSourcePreview(String(msg.path ?? ""), Number(msg.line ?? 1), (m) => this.postMessage(m));
-        break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
       case "savePresetRequest":
         this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
@@ -257,12 +254,8 @@ export class LogViewerProvider
         });
         break;
       case "exportLogs":
-        helpers.handleExportLogs(
-          String(msg.text ?? ""),
-          (msg.options as Record<string, unknown>) ?? {},
-        ).catch((err) => {
-          vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`);
-        });
+        helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
+          .catch((err) => { vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`); });
         break;
       case "saveLevelFilters":
         helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
@@ -271,10 +264,12 @@ export class LogViewerProvider
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "popOutViewer": this.onPopOutRequest?.(); break;
       case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
+      case "promptGoToLine":
+        vscode.window.showInputBox({ prompt: "Go to line number", validateInput: (v) => /^\d+$/.test(v) ? null : "Enter a number" })
+          .then((v) => { if (v) { this.postMessage({ type: "scrollToLine", line: parseInt(v, 10) }); } });
+        break;
       case "scriptError":
-        for (const e of (msg.errors as { message: string }[]) ?? []) {
-          console.warn("[SLC Webview]", e.message);
-        }
+        ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
         break;
     }
   }

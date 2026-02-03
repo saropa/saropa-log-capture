@@ -27,7 +27,7 @@ export function getInteractiveScript(): string {
     var searchRegex = null;
     var matchElements = [];
     var currentMatchIdx = -1;
-    var wordWrap = true;
+    var wordWrap = false;
 
     // Count total lines
     var allLines = document.querySelectorAll('.line');
