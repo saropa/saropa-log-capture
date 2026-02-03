@@ -10,6 +10,7 @@
  * - Label text opens fly-up for Select All/None and text labels
  * - renderItem() applies context-line dimming via CSS class
  * - Extension sends contextLinesBefore count via setContextLines message
+ * - Fly-up slider adjusts contextLinesBefore at runtime (0–10)
  * - Extension sends restoreLevelFilters on file load
  */
 
@@ -37,7 +38,7 @@ var errorPattern = /\\b(error|exception|fail(ed|ure)?|fatal|panic|critical)\\b/i
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
 
 /** Performance-level pattern for heuristic classification. */
-var perfPattern = /\\b(performance|dropped\\s+frame|fps|framerate|slow|lag|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+pause|anr|application\\s+not\\s+responding)\\b/i;
+var perfPattern = /\\b(performance|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+pause|anr|application\\s+not\\s+responding)\\b/i;
 
 /** TODO-level pattern for task markers and code comments. */
 var todoPattern = /\\b(TODO|FIXME|HACK|XXX)\\b/i;
@@ -54,6 +55,7 @@ ${getToggleLevelFn()}
 ${getSyncLevelDotsFn()}
 ${getFlyupFns()}
 ${getSelectFns()}
+${getContextSliderFn()}
 ${getPersistenceFns()}
 ${getEventHandlers()}
 `;
@@ -148,6 +150,7 @@ function openLevelMenu() {
     var flyup = document.getElementById('level-flyup');
     if (flyup) flyup.classList.add('visible');
     levelMenuOpen = true;
+    syncContextSlider();
 }
 function closeLevelMenu() {
     var flyup = document.getElementById('level-flyup');
@@ -183,6 +186,17 @@ function syncAllLevelButtons(active) {
 }`;
 }
 
+/** Sync the context-lines slider value and label to current state. */
+function getContextSliderFn(): string {
+    return /* javascript */ `
+function syncContextSlider() {
+    var slider = document.getElementById('context-lines-slider');
+    var label = document.getElementById('context-lines-label');
+    if (slider) slider.value = contextLinesBefore;
+    if (label) label.textContent = contextLinesBefore + (contextLinesBefore === 1 ? ' line' : ' lines');
+}`;
+}
+
 /** Send/restore level filter state for per-file persistence. */
 function getPersistenceFns(): string {
     return /* javascript */ `
@@ -215,6 +229,7 @@ window.addEventListener('message', function(event) {
     var msg = event.data;
     if (msg.type === 'setContextLines') {
         contextLinesBefore = typeof msg.count === 'number' ? msg.count : 3;
+        syncContextSlider();
         if (enabledLevels.size < 7) applyLevelFilter();
     } else if (msg.type === 'restoreLevelFilters' && msg.levels) {
         restoreLevelState(msg.levels);
@@ -247,6 +262,16 @@ var selAll = document.getElementById('level-select-all');
 var selNone = document.getElementById('level-select-none');
 if (selAll) selAll.addEventListener('click', function(e) { e.preventDefault(); selectAllLevels(); });
 if (selNone) selNone.addEventListener('click', function(e) { e.preventDefault(); selectNoneLevels(); });
+
+// Context lines slider in fly-up
+var ctxSlider = document.getElementById('context-lines-slider');
+if (ctxSlider) {
+    ctxSlider.addEventListener('input', function(e) {
+        contextLinesBefore = parseInt(e.target.value, 10);
+        syncContextSlider();
+        if (enabledLevels.size < 7) applyLevelFilter();
+    });
+}
 
 // Level circle click handlers (inside fly-up)
 var levelIds = allLevelNames;
