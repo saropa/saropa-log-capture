@@ -2,8 +2,8 @@
  * Live Statistics Script
  *
  * Provides real-time running counters for log levels, displayed
- * directly on the level filter circle buttons in the footer.
- * Each circle shows its emoji plus a count when > 0 (e.g. "🔴 4").
+ * on both the footer dot groups and the fly-up circle buttons.
+ * Footer dots show compact counts; fly-up circles show full counts.
  *
  * Updates incrementally as new lines arrive via addLines message.
  */
@@ -57,13 +57,28 @@ function updateLevelCircle(level) {
 }
 
 /**
- * Update all level circle buttons with current counts.
+ * Update the compact dot counts in the footer.
+ */
+function updateDotCounts() {
+    var groups = document.querySelectorAll('.level-dot-group');
+    for (var i = 0; i < groups.length; i++) {
+        var lvl = groups[i].getAttribute('data-level');
+        var countEl = groups[i].querySelector('.dot-count');
+        if (!countEl || !lvl) continue;
+        var c = statsCounters[lvl] || 0;
+        countEl.textContent = c > 0 ? String(c) : '';
+    }
+}
+
+/**
+ * Update all level circle buttons and footer dots with current counts.
  */
 function updateStatsDisplay() {
     var levels = Object.keys(statsCounters);
     for (var i = 0; i < levels.length; i++) {
         updateLevelCircle(levels[i]);
     }
+    updateDotCounts();
 }
 
 /**

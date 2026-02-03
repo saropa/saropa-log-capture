@@ -33,9 +33,10 @@ var lineCount = 0;
 var autoScroll = true;
 var isPaused = false;
 var isViewingFile = false;
-var wordWrap = true;
+var wordWrap = false;
 var nextGroupId = 0;
 var activeGroupHeader = null;
+var groupHeaderMap = {};
 var lastStart = -1;
 var lastEnd = -1;
 var rafPending = false;
@@ -52,6 +53,7 @@ function isStackFrameText(html) {
 }
 
 function handleScroll() {
+    if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
     autoScroll = atBottom;
     renderViewport(false);
@@ -85,29 +87,6 @@ viewportEl.addEventListener('click', function(e) {
     }
 });
 
-viewportEl.addEventListener('dblclick', function(e) {
-    var lineEl = e.target.closest('.line, .stack-header, .marker');
-    if (!lineEl) { return; }
-    // Use querySelectorAll for line-level elements only — renderItem() can emit
-    // sibling gap/annotation divs that would throw off a raw children[] count.
-    var lineEls = viewportEl.querySelectorAll(':scope > .line, :scope > .stack-header, :scope > .marker');
-    var visIdx = -1;
-    for (var ci = 0; ci < lineEls.length; ci++) {
-        if (lineEls[ci] === lineEl) { visIdx = ci; break; }
-    }
-    if (visIdx < 0) { return; }
-    // Map the Nth visible DOM element back to the corresponding allLines index.
-    var count = 0;
-    for (var ai = lastStart; ai <= lastEnd && ai < allLines.length; ai++) {
-        if (allLines[ai].height === 0) { continue; }
-        if (count === visIdx) {
-            if (typeof openContextModal === 'function') { openContextModal(ai); }
-            return;
-        }
-        count++;
-    }
-});
-
 function toggleWrap() {
     wordWrap = !wordWrap;
     logEl.classList.toggle('nowrap', !wordWrap);
@@ -119,6 +98,9 @@ jumpBtn.addEventListener('click', jumpToBottom);
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
+    if (typeof findIndexAtOffset === 'function' && prefixSums) {
+        return findIndexAtOffset(mid).index;
+    }
     var h = 0;
     for (var ci = 0; ci < allLines.length; ci++) {
         h += allLines[ci].height;
@@ -128,7 +110,9 @@ function getCenterIdx() {
 }
 
 function jumpToBottom() {
+    suppressScroll = true;
     logEl.scrollTop = logEl.scrollHeight;
+    suppressScroll = false;
     autoScroll = true;
     jumpBtn.style.display = 'none';
 }
@@ -151,25 +135,24 @@ window.addEventListener('message', function(event) {
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
+            if (typeof buildPrefixSums === 'function') buildPrefixSums();
             renderViewport(true);
-            if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
+            if (autoScroll) {
+                suppressScroll = true;
+                logEl.scrollTop = logEl.scrollHeight;
+                suppressScroll = false;
+            }
             updateFooterText();
             break;
         case 'clear':
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
-            lastStart = -1; lastEnd = -1;
+            lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') { closeContextModal(); }
             if (typeof closeInfoPanel === 'function') { closeInfoPanel(); }
             if (typeof resetSourceTags === 'function') { resetSourceTags(); }
-            if (typeof repeatTracker !== 'undefined') {
-                repeatTracker.lastHash = null;
-                repeatTracker.lastPlainText = null;
-                repeatTracker.lastLevel = null;
-                repeatTracker.count = 0;
-                repeatTracker.lastTimestamp = 0;
-            }
+            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
             if (typeof timestampsAvailable !== 'undefined') timestampsAvailable = true;
             footerTextEl.textContent = 'Cleared'; renderViewport(true);
             break;
@@ -216,18 +199,23 @@ window.addEventListener('message', function(event) {
         case 'errorClassificationSettings':
             if (typeof handleErrorClassificationSettings === 'function') handleErrorClassificationSettings(msg);
             break;
-        case 'sourcePreview':
-            if (typeof handleSourcePreviewResponse === 'function') handleSourcePreviewResponse(msg);
-            break;
         case 'splitInfo':
             if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
             break;
         case 'setTimestampAvailability':
             if (typeof handleTimestampAvailability === 'function') handleTimestampAvailability(msg);
             break;
+        case 'scrollToLine': {
+            var li = Math.max(0, Math.min(Number(msg.line) - 1, allLines.length - 1));
+            var ch = 0; for (var si = 0; si < li; si++) ch += allLines[si].height;
+            suppressScroll = true; logEl.scrollTop = ch; suppressScroll = false;
+            autoScroll = false; break;
+        }
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined) {
+                suppressScroll = true;
                 logEl.scrollTop = scrollMemory[currentFilename];
+                suppressScroll = false;
                 autoScroll = false;
                 jumpBtn.style.display = 'block';
                 renderViewport(true);
@@ -264,28 +252,36 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault(); var r = document.createRange(); r.selectNodeContents(viewportEl);
+        var s = window.getSelection(); if (s) { s.removeAllRanges(); s.addRange(r); } return;
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); vscodeApi.postMessage({ type: 'promptGoToLine' }); return; }
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
     else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
-    else if (e.key === 'Home') { logEl.scrollTop = 0; autoScroll = false; }
+    else if (e.key === 'Home') { suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }
     else if (e.key === 'End') { jumpToBottom(); }
+    else if (e.key === 'PageUp') { logEl.scrollTop -= logEl.clientHeight * 0.8; autoScroll = false; }
+    else if (e.key === 'PageDown') { logEl.scrollTop += logEl.clientHeight * 0.8; }
     else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
     else if ((e.key === 'p' || e.key === 'P') && typeof togglePin === 'function') { togglePin(getCenterIdx()); }
     else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
 });
 
-// Re-render on container resize; debounced + non-forced to avoid feedback loops.
 var _resizeRaf = false;
-var _logResizeObs = new ResizeObserver(function() {
+new ResizeObserver(function() {
     if (_resizeRaf) return;
     _resizeRaf = true;
     requestAnimationFrame(function() {
         _resizeRaf = false;
         if (allLines.length > 0 && logEl.clientHeight > 0) {
             renderViewport(false);
-            if (autoScroll) logEl.scrollTop = logEl.scrollHeight;
+            if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
         }
     });
-});
-_logResizeObs.observe(logEl);
+}).observe(logEl);
 `;
 }

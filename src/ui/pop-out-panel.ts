@@ -179,9 +179,6 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
-      case "requestSourcePreview":
-        helpers.handleSourcePreview(String(msg.path ?? ""), Number(msg.line ?? 1), (m) => this.post(m));
-        break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
       case "savePresetRequest": this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {}); break;
       case "setCaptureAll":

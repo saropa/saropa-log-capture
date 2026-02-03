@@ -67,8 +67,8 @@ function applyExclusions() {
         if (item.excluded) hiddenCount++;
     }
     updateExclusionDisplay();
-    recalcHeights();
-    renderViewport(true);
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
 }
 
 function toggleExclusions() {
@@ -108,16 +108,12 @@ function escapeExclHtml(text) {
 /** Rebuild exclusion pattern chips in the options panel. */
 function rebuildExclusionChips() {
     var container = document.getElementById('exclusion-chips');
-    var emptyHint = document.getElementById('exclusion-empty');
     var label = document.getElementById('exclusion-label');
     if (!container) return;
 
     var count = exclusionRules.length;
     if (label) {
         label.textContent = count > 0 ? 'Exclusions (' + count + ')' : 'Exclusions';
-    }
-    if (emptyHint) {
-        emptyHint.style.display = count === 0 ? 'block' : 'none';
     }
     if (count === 0) { container.innerHTML = ''; container.className = 'exclusion-chips'; return; }
 
@@ -150,11 +146,22 @@ function rebuildExclusionChips() {
             removeExclusion(idx);
         });
     }
-    var settingsLink = document.getElementById('exclusion-open-settings');
-    if (settingsLink) {
-        settingsLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaLogCapture.exclusions' });
+    var exclInput = document.getElementById('exclusion-add-input');
+    var exclAddBtn = document.getElementById('exclusion-add-btn');
+    if (exclInput) {
+        exclInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                addExclusion(exclInput.value);
+                exclInput.value = '';
+                e.preventDefault();
+            }
+        });
+    }
+    if (exclAddBtn && exclInput) {
+        exclAddBtn.addEventListener('click', function() {
+            addExclusion(exclInput.value);
+            exclInput.value = '';
+            exclInput.focus();
         });
     }
 })();

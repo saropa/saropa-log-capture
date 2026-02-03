@@ -99,31 +99,22 @@ function extractContext(plainText) {
 function calcItemHeight(item) {
     if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.searchFiltered || item.errorSuppressed) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
+    var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
-        for (var k = 0; k < allLines.length; k++) {
-            if (allLines[k].groupId === item.groupId && allLines[k].type === 'stack-header') {
-                var header = allLines[k];
-                if (header.collapsed === true) return 0; // Fully collapsed
-                if (header.collapsed === false) return ROW_HEIGHT; // Fully expanded
-                // Preview mode: show first N non-framework frames
-                if (header.collapsed === 'preview') {
-                    var frameIdx = 0;
-                    var appFrameCount = 0;
-                    for (var j = 0; j < allLines.length; j++) {
-                        if (allLines[j].groupId === item.groupId && allLines[j].type === 'stack-frame') {
-                            if (allLines[j] === item) {
-                                // Show if we haven't hit preview limit or if it's an app frame within limit
-                                if (item.fw) return 0; // Framework frames hidden in preview
-                                return appFrameCount < (header.previewCount || 3) ? ROW_HEIGHT : 0;
-                            }
-                            if (!allLines[j].fw) appFrameCount++;
-                        }
-                    }
-                }
-                return 0;
-            }
+        var header = (typeof groupHeaderMap !== 'undefined') ? groupHeaderMap[item.groupId] : null;
+        if (!header) return 0;
+        if (header.collapsed === true) return 0;
+        if (header.collapsed === false) {
+            return (isAppOnly && item.fw) ? 0 : ROW_HEIGHT;
         }
+        if (header.collapsed === 'preview') {
+            if (item.fw) return 0;
+            var appIdx = (item._appFrameIdx !== undefined) ? item._appFrameIdx : -1;
+            return (appIdx >= 0 && appIdx < (header.previewCount || 3)) ? ROW_HEIGHT : 0;
+        }
+        return 0;
     }
+    if (isAppOnly && item.fw) return 0;
     return ROW_HEIGHT;
 }
 
@@ -179,15 +170,9 @@ function renderItem(item, idx) {
         } else {
             // Preview mode
             ch = '\\\\u25b7'; // Different arrow for preview
-            // Count how many frames are hidden
-            var appFrames = 0;
-            var fwFrames = 0;
-            for (var j = 0; j < allLines.length; j++) {
-                if (allLines[j].groupId === item.groupId && allLines[j].type === 'stack-frame') {
-                    if (allLines[j].fw) fwFrames++;
-                    else appFrames++;
-                }
-            }
+            var appFrames = item._appFrameCount || 0;
+            var totalFrames = item.frameCount || 0;
+            var fwFrames = totalFrames - appFrames;
             var hiddenCount = Math.max(0, appFrames - (item.previewCount || 3)) + fwFrames;
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
@@ -229,7 +214,7 @@ function renderItem(item, idx) {
     // Add severity bar class if enabled
     var barCls = '';
     if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level) {
-        if (item.isFramework) {
+        if (item.fw) {
             barCls = ' level-bar-framework';
         } else {
             barCls = ' level-bar-' + item.level;

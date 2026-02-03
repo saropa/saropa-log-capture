@@ -239,7 +239,7 @@ ${getInteractiveStyles()}
     <summary>Session Context</summary>
     <div class="header-block"><pre>${headerHtml}</pre></div>
 </details>
-<div id="log-content">
+<div id="log-content" class="nowrap">
 ${bodyHtml}
 </div>
 <div id="footer">

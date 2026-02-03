@@ -6,7 +6,8 @@
  *
  * Integration points:
  * - addToData() classifies each line's level (error/warning/info)
- * - Footer dot summary opens fly-up; fly-up buttons toggle levels
+ * - Footer dot groups are individually clickable to toggle levels
+ * - Label text opens fly-up for Select All/None and text labels
  * - renderItem() applies context-line dimming via CSS class
  * - Extension sends contextLinesBefore count via setContextLines message
  * - Extension sends restoreLevelFilters on file load
@@ -93,8 +94,8 @@ function applyLevelFilter() {
             }
         }
     }
-    recalcHeights();
-    renderViewport(true);
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
 }`;
 }
 
@@ -117,11 +118,23 @@ function toggleLevel(level) {
 function getSyncLevelDotsFn(): string {
     return /* javascript */ `
 function syncLevelDots() {
-    var dots = document.querySelectorAll('.level-dot');
-    for (var i = 0; i < dots.length; i++) {
-        var lvl = dots[i].getAttribute('data-level');
-        dots[i].classList.toggle('active', enabledLevels.has(lvl));
+    var groups = document.querySelectorAll('.level-dot-group');
+    for (var i = 0; i < groups.length; i++) {
+        var lvl = groups[i].getAttribute('data-level');
+        var dot = groups[i].querySelector('.level-dot');
+        if (dot) dot.classList.toggle('active', enabledLevels.has(lvl));
     }
+    var count = enabledLevels.size;
+    var label = document.getElementById('level-trigger-label');
+    if (label) {
+        if (count === 7) label.textContent = 'All';
+        else if (count === 0) label.textContent = 'None';
+        else label.textContent = count + '/7';
+    }
+    var selAll = document.getElementById('level-select-all');
+    var selNone = document.getElementById('level-select-none');
+    if (selAll) selAll.classList.toggle('active', count === 7);
+    if (selNone) selNone.classList.toggle('active', count === 0);
 }`;
 }
 
@@ -208,9 +221,26 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Fly-up trigger (compact dot summary)
-var levelMenuBtn = document.getElementById('level-menu-btn');
-if (levelMenuBtn) levelMenuBtn.addEventListener('click', toggleLevelMenu);
+// Individual dot group clicks toggle that level directly
+var dotGroups = document.querySelectorAll('.level-dot-group');
+for (var di = 0; di < dotGroups.length; di++) {
+    (function(group) {
+        group.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var lvl = group.getAttribute('data-level');
+            if (lvl) toggleLevel(lvl);
+        });
+    })(dotGroups[di]);
+}
+
+// Label text triggers the fly-up menu
+var triggerLabel = document.getElementById('level-trigger-label');
+if (triggerLabel) {
+    triggerLabel.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleLevelMenu();
+    });
+}
 
 // Select all / none links
 var selAll = document.getElementById('level-select-all');

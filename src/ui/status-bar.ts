@@ -22,7 +22,7 @@ export class StatusBar implements vscode.Disposable {
             50,
         );
         this.item.name = 'Saropa Log Capture';
-        this.item.command = 'saropaLogCapture.logViewer.focus';
+        this.item.command = 'saropaLogCapture.open';
         this.hide();
     }
 
@@ -61,12 +61,12 @@ export class StatusBar implements vscode.Disposable {
             this.pauseItem.text = '$(debug-pause)';
             this.pauseItem.tooltip = 'Saropa Log Capture: Click to resume.';
             this.item.text = `Paused (${this.lineCount} lines)${watchSuffix}`;
-            this.item.tooltip = 'Saropa Log Capture: Paused. Click to show viewer.';
+            this.item.tooltip = 'Saropa Log Capture: Paused. Click to open log file.';
         } else {
             this.pauseItem.text = '$(record)';
             this.pauseItem.tooltip = 'Saropa Log Capture: Click to pause.';
             this.item.text = `${this.lineCount} lines${watchSuffix}`;
-            this.item.tooltip = 'Saropa Log Capture: Recording. Click to show viewer.';
+            this.item.tooltip = 'Saropa Log Capture: Recording. Click to open log file.';
         }
     }
 
