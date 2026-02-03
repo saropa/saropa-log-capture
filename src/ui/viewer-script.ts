@@ -63,6 +63,7 @@ logEl.addEventListener('scroll', function() {
 });
 
 viewportEl.addEventListener('click', function(e) {
+    if (e.target.closest('.copy-icon')) return;
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();

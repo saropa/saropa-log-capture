@@ -89,7 +89,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span class="part-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
-    <div id="pinned-section" style="display:none"></div>
+    <div id="pinned-section"></div>
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap">
         <div id="spacer-top"></div>
@@ -115,13 +115,13 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...${version ? ` \u00b7 v${version}` : ''}</span>
         ${getErrorBreakpointHtml()}
         <span id="level-menu-btn" class="level-summary">
-            <span class="level-dot-group" data-level="info" title="Info"><span class="level-dot active" style="background:#4caf50"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="warning" title="Warning"><span class="level-dot active" style="background:#ff9800"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="error" title="Error"><span class="level-dot active" style="background:#f44336"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="performance" title="Perf"><span class="level-dot active" style="background:#9c27b0"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="todo" title="TODO"><span class="level-dot active" style="background:#bdbdbd"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="debug" title="Debug"><span class="level-dot active" style="background:#795548"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="notice" title="Notice"><span class="level-dot active" style="background:#2196f3"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="info" title="Info"><span class="level-dot active level-dot-info"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="warning" title="Warning"><span class="level-dot active level-dot-warning"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="error" title="Error"><span class="level-dot active level-dot-error"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="performance" title="Perf"><span class="level-dot active level-dot-performance"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="todo" title="TODO"><span class="level-dot active level-dot-todo"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="debug" title="Debug"><span class="level-dot active level-dot-debug"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="notice" title="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <div id="level-flyup">
@@ -142,7 +142,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
                 <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
             </div>
         </div>
-        <span id="filter-badge" class="filter-badge" style="display:none" title="Active filters — click to open options"></span>
+        <span id="filter-badge" class="filter-badge" title="Active filters — click to open options"></span>
     </div>
     </div>
     ${getIconBarHtml()}

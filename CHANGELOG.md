@@ -5,6 +5,23 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [0.2.8] - 2026-02-03
+
+### Added
+- **Bookmark count badge:** The bookmarks icon in the icon bar now displays a count badge showing the total number of bookmarks. Hidden when count is zero, caps at "99+".
+
+### Changed
+- **Instant bookmark adding:** "Bookmark Line" in the context menu now adds the bookmark immediately with no modal prompt. Notes can be added afterwards from the bookmarks panel via the edit button.
+- **Removed standalone "Add Note" from context menu:** The separate "Add Note" menu item has been removed. Notes are now exclusively managed through bookmarks — add a bookmark first, then edit its note from the bookmarks panel.
+
+### Fixed
+- **Minimap markers stacked at top:** All severity markers rendered at position 0 because percentage-based CSS `top` didn't resolve against the flex-stretched container height. Switched to pixel-based positioning computed from `clientHeight`, and added `height: 100%` to the minimap container.
+- **Minimap empty for info-level content:** Files where most lines lacked error/warning keywords (e.g. lint reports) produced no minimap markers because info-level lines were excluded. Info-level lines now show subtle green markers for files under 5,000 visible lines.
+- **Minimap not updating on panel resize:** Added a `ResizeObserver` on the minimap element so pixel positions recalculate when the panel is resized.
+- **Context menu clipped at top of viewport:** Right-clicking the top row pushed the menu above the webview (negative `top`), hiding most items. Menu position is now clamped to viewport edges, and `max-height` with `overflow-y: auto` ensures all items are scrollable when space is tight.
+- **Invisible footer level dots:** The footer's colored level indicators (info, warning, error, etc.) were invisible because CSP nonces in `style-src` silently disabled `'unsafe-inline'`, blocking inline `style` attributes. Moved all inline visual styles to CSS classes so they load via the nonce-tagged `<style>` block instead.
+
+---
 ## [0.2.7] - 2026-02-03
 
 ### Fixed

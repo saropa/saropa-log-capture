@@ -119,6 +119,7 @@ export function getContentStyles(): string {
 /* --- Active filter badge in footer --- */
 @keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .filter-badge {
+    display: none;
     font-size: 10px;
     padding: 1px 6px;
     border-radius: 8px;
