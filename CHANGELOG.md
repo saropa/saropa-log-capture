@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [Unreleased]
+## [0.2.6] - 2026-02-03
 
 ### Added
 - **Configurable file types (`saropaLogCapture.fileTypes`):** The session history, search, file retention, delete, and comparison features now recognize configurable file extensions beyond `.log`. Default: `.log`, `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`. Drop a `.txt` or `.md` into the reports directory and it appears in the session list. The setting is an array of dot-prefixed extensions; reload the window after changes.
