@@ -67,5 +67,23 @@ export function getIconBarStyles(): string {
 .ib-icon .codicon {
     font-size: 18px;
 }
+
+.ib-badge {
+    display: none;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 7px;
+    background: var(--vscode-activityBarBadge-background, #007acc);
+    color: var(--vscode-activityBarBadge-foreground, #fff);
+    pointer-events: none;
+}
 `;
 }

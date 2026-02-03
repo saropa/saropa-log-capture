@@ -135,6 +135,18 @@ function updateSelectionHighlight() {
     }
 }
 
+viewportEl.addEventListener('click', function(e) {
+    var icon = e.target.closest('.copy-icon');
+    if (!icon) return;
+    e.preventDefault();
+    var lineEl = icon.closest('[data-idx]');
+    if (!lineEl) return;
+    var ci = parseInt(lineEl.dataset.idx, 10);
+    if (ci >= 0 && ci < allLines.length) {
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: stripTags(allLines[ci].html) });
+    }
+});
+
 function clearSelection() {
     selectionStart = -1;
     selectionEnd = -1;

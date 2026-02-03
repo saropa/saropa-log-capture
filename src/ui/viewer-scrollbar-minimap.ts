@@ -3,7 +3,7 @@
  *
  * Always-on wide interactive panel replacing the native scrollbar. Shows:
  * - Level markers: error (red), warning (yellow), performance (purple),
- *   todo (gray), debug (brown), notice (blue) — info lines omitted
+ *   todo (gray), debug (brown), notice (blue), info (subtle green, <5 K lines)
  * - Search match (orange) and current match (bright orange) markers
  * - Draggable viewport indicator
  *
@@ -59,7 +59,6 @@ function initMinimap() {
     if (!minimapEl) return;
     var logContent = document.getElementById('log-content');
     if (!logContent) return;
-    // Sync viewport indicator on scroll (RAF-debounced)
     var mmRaf = false;
     logContent.addEventListener('scroll', function() {
         if (!mmRaf) {
@@ -68,7 +67,6 @@ function initMinimap() {
         }
     });
     initMinimapDrag();
-    // Forward wheel events to log content (handle all deltaModes)
     minimapEl.addEventListener('wheel', function(e) {
         e.preventDefault();
         var dy = e.deltaY;
@@ -76,6 +74,7 @@ function initMinimap() {
         else if (e.deltaMode === 2) dy *= logContent.clientHeight;
         logContent.scrollTop += dy;
     }, { passive: false });
+    new ResizeObserver(function() { scheduleMinimap(); }).observe(minimapEl);
     updateMinimap();
 }
 
@@ -98,28 +97,31 @@ function scrollToMinimapY(clientY) {
 /** Collect search-match and severity-level markers as {p, t} objects. */
 function collectMinimapMarkers(cumH, running) {
     var markers = [];
-    // Search match markers — skip hidden lines
     if (typeof matchIndices !== 'undefined' && matchIndices && matchIndices.length > 0) {
         for (var i = 0; i < matchIndices.length; i++) {
             var idx = matchIndices[i];
             if (idx >= 0 && idx < cumH.length && allLines[idx].height > 0) {
                 var isCur = (typeof currentMatchIdx !== 'undefined') && currentMatchIdx === i;
-                markers.push({ p: (cumH[idx] / running) * 100, t: isCur ? 'current-match' : 'search-match' });
+                markers.push({ p: cumH[idx] / running, t: isCur ? 'current-match' : 'search-match' });
             }
         }
     }
-    // Level markers — all non-info levels, skip hidden and stack-frame lines
+    var visibleCount = 0;
+    for (var i = 0; i < allLines.length; i++) {
+        if (allLines[i].height > 0) visibleCount++;
+    }
+    var showInfo = visibleCount < 5000;
     for (var i = 0; i < allLines.length; i++) {
         if (allLines[i].height === 0 || allLines[i].type === 'stack-frame') continue;
         var lvl = allLines[i].level;
-        if (lvl && lvl !== 'info') {
-            markers.push({ p: (cumH[i] / running) * 100, t: lvl });
-        }
+        if (!lvl) continue;
+        if (lvl === 'info' && !showInfo) continue;
+        markers.push({ p: cumH[i] / running, t: lvl });
     }
     return markers;
 }
 
-/** Rebuild all minimap markers from scratch. O(n) single pass. */
+/** Rebuild all minimap markers from scratch using pixel positioning. */
 function updateMinimap() {
     clearTimeout(minimapDebounceTimer);
     minimapDebounceTimer = 0;
@@ -131,18 +133,18 @@ function updateMinimap() {
         running += allLines[i].height;
     }
     minimapCachedHeight = running;
-    if (running === 0) { minimapEl.innerHTML = ''; return; }
+    var mmH = minimapEl.clientHeight;
+    if (running === 0 || mmH === 0) { minimapEl.innerHTML = ''; return; }
     var markers = collectMinimapMarkers(cumH, running);
     var html = '';
     for (var i = 0; i < markers.length; i++) {
-        html += '<div class="minimap-marker minimap-' + markers[i].t + '" style="top:' + markers[i].p + '%"></div>';
+        html += '<div class="minimap-marker minimap-' + markers[i].t + '" style="top:' + Math.round(markers[i].p * mmH) + 'px"></div>';
     }
-    // Viewport indicator (painted last, below markers via z-index)
     var logContent = document.getElementById('log-content');
     if (logContent && running > 0) {
-        var sp = (logContent.scrollTop / running) * 100;
-        var vh = Math.max((logContent.clientHeight / running) * 100, 1);
-        html += '<div class="minimap-viewport" style="top:' + sp + '%;height:' + vh + '%"></div>';
+        var spPx = Math.round((logContent.scrollTop / running) * mmH);
+        var vhPx = Math.max(Math.round((logContent.clientHeight / running) * mmH), 10);
+        html += '<div class="minimap-viewport" style="top:' + spPx + 'px;height:' + vhPx + 'px"></div>';
     }
     minimapEl.innerHTML = html;
 }
@@ -155,9 +157,10 @@ function updateMinimapViewport() {
     var logContent = document.getElementById('log-content');
     if (!logContent) return;
     var h = mmHeight();
-    if (h === 0) return;
-    vp.style.top = (logContent.scrollTop / h) * 100 + '%';
-    vp.style.height = Math.max((logContent.clientHeight / h) * 100, 1) + '%';
+    var mmH = minimapEl.clientHeight;
+    if (h === 0 || mmH === 0) return;
+    vp.style.top = Math.round((logContent.scrollTop / h) * mmH) + 'px';
+    vp.style.height = Math.max(Math.round((logContent.clientHeight / h) * mmH), 10) + 'px';
 }
 
 function scheduleMinimap() {

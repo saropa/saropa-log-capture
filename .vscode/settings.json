@@ -11,6 +11,7 @@
   // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
   "typescript.tsc.autoDetect": "off",
   "cSpell.words": [
+    "clippy",
     "Dedup",
     "ECONNREFUSED",
     "esbuild",
@@ -34,5 +35,25 @@
     "git add": true,
     "git commit": true
   },
-  "saropaLogCapture.captureAll": false
+  "saropaLogCapture.captureAll": false,
+  "saropaLogCapture.exclusions": [
+    "  [PASS] Dependencies                  1.9s"
+  ],
+  "saropaLogCapture.watchPatterns": [
+    {
+      "keyword": "error",
+      "alert": "flash"
+    },
+    {
+      "keyword": "exception",
+      "alert": "flash"
+    },
+    {
+      "keyword": "warning",
+      "alert": "badge"
+    },
+    {
+      "pattern": "  [PASS] Dependencies                  1.9s"
+    }
+  ]
 }

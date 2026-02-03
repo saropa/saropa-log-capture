@@ -20,6 +20,7 @@ export function getIconBarHtml(): string {
     </button>
     <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks">
         <span class="codicon codicon-bookmark"></span>
+        <span id="ib-bookmarks-badge" class="ib-badge"></span>
     </button>
     <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>

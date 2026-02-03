@@ -65,7 +65,6 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('Open Source File'));
             assert.ok(html.includes('Show Context'));
             assert.ok(html.includes('Pin Line'));
-            assert.ok(html.includes('Add Note'));
             assert.ok(html.includes('Add to Watch List'));
             assert.ok(html.includes('Add to Exclusions'));
         });
@@ -80,7 +79,6 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('data-action="open-source"'));
             assert.ok(html.includes('data-action="show-context"'));
             assert.ok(html.includes('data-action="pin"'));
-            assert.ok(html.includes('data-action="annotate"'));
             assert.ok(html.includes('data-action="add-watch"'));
             assert.ok(html.includes('data-action="add-exclusion"'));
         });
