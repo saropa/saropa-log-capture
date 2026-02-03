@@ -91,4 +91,7 @@ export class ViewerBroadcaster implements ViewerTarget {
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     for (const t of this.targets) { t.updateWatchCounts(counts); }
   }
+  sendBookmarkList(files: Record<string, unknown>): void {
+    for (const t of this.targets) { t.sendBookmarkList(files); }
+  }
 }

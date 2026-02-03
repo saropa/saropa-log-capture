@@ -51,6 +51,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onOpenSessionFromPanel?: (uriString: string) => void;
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
+  private onBookmarkAction?: (msg: Record<string, unknown>) => void;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -95,6 +96,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setOpenSessionFromPanelHandler(h: (u: string) => void): void { this.onOpenSessionFromPanel = h; }
   setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = h; }
   setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
+  setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = h; }
 
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
@@ -136,6 +138,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.post({ type: "sessionList", sessions }); }
+  sendBookmarkList(files: Record<string, unknown>): void { this.post({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.post({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.post({ type: "sessionState", active }); }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
@@ -200,6 +203,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "saveLevelFilters":
         helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
         break;
+      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks":
+      case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;

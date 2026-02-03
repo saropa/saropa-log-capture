@@ -42,6 +42,7 @@ import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-pan
 import { getSessionTransformsScript } from './viewer-session-transforms';
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
+import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -103,6 +104,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getSearchPanelHtml()}
     ${getSessionPanelHtml()}
     ${getFindPanelHtml()}
+    ${getBookmarkPanelHtml()}
     ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
@@ -174,6 +176,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSessionTransformsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
     ${scriptTag(nonce, getFindPanelScript())}
+    ${scriptTag(nonce, getBookmarkPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}

@@ -30,6 +30,7 @@ interface HandlerTarget {
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
   setAddBookmarkHandler(h: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void;
+  setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
 }
 
 /** Dependencies needed by the shared handler wiring. */
@@ -38,6 +39,7 @@ export interface HandlerDeps {
   readonly broadcaster: ViewerBroadcaster;
   readonly historyProvider: SessionHistoryProvider;
   readonly bookmarkStore: BookmarkStore;
+  readonly onOpenBookmark?: (fileUri: string, lineIndex: number) => void;
 }
 
 /** Wire common webview→extension handlers on a viewer target. */
@@ -114,4 +116,45 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const filename = uri.path.split('/').pop() ?? '';
     deps.bookmarkStore.add(uri.toString(), filename, lineIndex, text, note);
   });
+  target.setBookmarkActionHandler((msg) => {
+    const type = String(msg.type ?? '');
+    if (type === 'requestBookmarks') {
+      broadcaster.sendBookmarkList(deps.bookmarkStore.getAll() as Record<string, unknown>);
+    } else if (type === 'deleteBookmark') {
+      deps.bookmarkStore.remove(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''));
+    } else if (type === 'deleteFileBookmarks') {
+      void confirmDeleteFileBookmarks(deps.bookmarkStore, msg);
+    } else if (type === 'deleteAllBookmarks') {
+      void confirmDeleteAllBookmarks(deps.bookmarkStore);
+    } else if (type === 'editBookmarkNote') {
+      void promptEditBookmarkNote(deps.bookmarkStore, msg);
+    } else if (type === 'openBookmark') {
+      deps.onOpenBookmark?.(String(msg.fileUri ?? ''), Number(msg.lineIndex ?? 0));
+    }
+  });
+}
+
+async function confirmDeleteFileBookmarks(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
+  const filename = String(msg.filename ?? 'this file');
+  const answer = await vscode.window.showWarningMessage(
+    `Delete all bookmarks for ${filename}?`, { modal: true }, 'Delete All',
+  );
+  if (answer === 'Delete All') { store.removeAllForFile(String(msg.fileUri ?? '')); }
+}
+
+async function confirmDeleteAllBookmarks(store: BookmarkStore): Promise<void> {
+  const total = store.getTotalCount();
+  if (total === 0) { return; }
+  const answer = await vscode.window.showWarningMessage(
+    `Delete all ${total} bookmark${total === 1 ? '' : 's'}?`, { modal: true }, 'Delete All',
+  );
+  if (answer === 'Delete All') { store.removeAll(); }
+}
+
+async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
+  const note = await vscode.window.showInputBox({
+    prompt: 'Edit bookmark note', value: String(msg.currentNote ?? ''),
+  });
+  if (note === undefined) { return; }
+  store.updateNote(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''), note);
 }
