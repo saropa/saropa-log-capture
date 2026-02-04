@@ -53,6 +53,7 @@ function handleScroll() {
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
     autoScroll = atBottom; renderViewport(false);
     jumpBtn.style.display = atBottom ? 'none' : 'block';
+    viewportEl.style.setProperty('--copy-offset-x', logEl.scrollLeft + 'px');
 }
 
 logEl.addEventListener('scroll', function() {
@@ -61,6 +62,13 @@ logEl.addEventListener('scroll', function() {
         requestAnimationFrame(function() { rafPending = false; handleScroll(); });
     }
 });
+
+logEl.addEventListener('wheel', function(e) {
+    if (e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    var scale = e.deltaMode === 2 ? logEl.clientHeight : e.deltaMode === 1 ? ROW_HEIGHT : 1;
+    logEl.scrollTop += e.deltaY * scale;
+}, { passive: false });
 
 viewportEl.addEventListener('click', function(e) {
     if (e.target.closest('.copy-icon')) return;
@@ -88,14 +96,9 @@ jumpBtn.addEventListener('click', jumpToBottom);
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
-    if (typeof findIndexAtOffset === 'function' && prefixSums) {
-        return findIndexAtOffset(mid).index;
-    }
+    if (typeof findIndexAtOffset === 'function' && prefixSums) return findIndexAtOffset(mid).index;
     var h = 0;
-    for (var ci = 0; ci < allLines.length; ci++) {
-        h += allLines[ci].height;
-        if (h >= mid) return ci;
-    }
+    for (var ci = 0; ci < allLines.length; ci++) { h += allLines[ci].height; if (h >= mid) return ci; }
     return allLines.length - 1;
 }
 

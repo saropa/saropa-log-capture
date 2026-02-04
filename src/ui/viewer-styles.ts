@@ -62,19 +62,29 @@ body {
 
 /* ===================================================================
    Log Content Area
-   Main scrollable region. Native scrollbar is always hidden because
-   the minimap panel serves as the scrollbar replacement.
+   Main scrollable region. Vertical scrollbar is hidden because
+   the minimap panel serves as the vertical-scroll replacement.
+   Horizontal scrollbar is styled to match the VS Code theme.
    =================================================================== */
 #log-content {
     flex: 1;
     min-width: 0;
     height: 100%;
     overflow-y: auto;
-    padding: 4px 0;
+    overflow-x: hidden;
+    overflow-anchor: none;
+    padding: 4px 0 40px;
     position: relative;
-    scrollbar-width: none;
 }
-#log-content::-webkit-scrollbar { display: none; }
+#log-content::-webkit-scrollbar { width: 0; height: 10px; }
+#log-content::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-background);
+    border-radius: 4px;
+}
+#log-content::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+#log-content::-webkit-scrollbar-track { background: transparent; }
 
 /* --- Individual log lines --- */
 .line {
@@ -91,7 +101,7 @@ body {
 .copy-icon {
     display: none;
     position: absolute;
-    right: 4px;
+    right: calc(4px - var(--copy-offset-x, 0px));
     top: 50%;
     transform: translateY(-50%);
     font-size: 14px;
@@ -109,6 +119,23 @@ body {
     color: var(--vscode-editor-foreground);
     background: var(--vscode-button-hoverBackground, rgba(90,93,94,0.31));
 }
+.copy-toast {
+    position: fixed;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+    z-index: 300;
+}
+.copy-toast.visible { opacity: 1; }
 
 /* --- Clickable source file links within log lines --- */
 .source-link {

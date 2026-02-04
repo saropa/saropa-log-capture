@@ -279,7 +279,7 @@ export function getUiStyles(): string {
     height: 100%; overflow: hidden; cursor: pointer;
     border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
-.minimap-marker { position: absolute; left: 0; right: 0; height: 2px; pointer-events: none; z-index: 1; }
+.minimap-marker { position: absolute; left: 0; right: 0; height: 3px; pointer-events: none; z-index: 1; }
 .minimap-search-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(234, 92, 0, 0.8)); }
 .minimap-current-match { background: var(--vscode-editorOverviewRuler-findMatchForeground, rgba(255, 150, 50, 1)); height: 3px; z-index: 2; }
 .minimap-error { background: var(--vscode-editorOverviewRuler-errorForeground, rgba(244, 68, 68, 0.8)); }
@@ -287,7 +287,7 @@ export function getUiStyles(): string {
 .minimap-performance { background: var(--vscode-editorOverviewRuler-infoForeground, rgba(156, 39, 176, 0.8)); }
 .minimap-todo { background: rgba(189, 189, 189, 0.6); }
 .minimap-debug { background: rgba(121, 85, 72, 0.6); }
-.minimap-notice { background: rgba(33, 150, 243, 0.6); } .minimap-info { background: rgba(78, 201, 176, 0.35); }
+.minimap-notice { background: rgba(33, 150, 243, 0.6); } .minimap-info { background: rgba(78, 201, 176, 0.65); }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));

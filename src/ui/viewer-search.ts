@@ -46,6 +46,7 @@ var searchRegex = null;
 var matchIndices = [];
 var currentMatchIdx = -1;
 var searchFilterMode = false;
+var searchFilterDirty = false;
 var searchRegexMode = false;
 var searchCaseSensitive = false;
 var searchWholeWord = false;
@@ -56,7 +57,6 @@ function openSearch() {
     if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
     if (typeof closeSessionPanel === 'function') closeSessionPanel();
     searchBarEl.classList.add('visible');
-    if (matchIndices.length === 0) { searchInputEl.value = ''; }
     searchInputEl.focus();
     if (searchInputEl.value) { updateSearch(); } else { clearSearchState(); }
     updateClearButton();
@@ -71,7 +71,7 @@ function closeSearch() {
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
     clearSearchFilter();
-    renderViewport(true);
+    renderViewport(true); // clears match highlighting (and covers non-filter case)
 }
 
 function toggleSearchPanel() {
@@ -94,6 +94,7 @@ function updateSearch() {
     if (!query) {
         clearSearchState();
         clearSearchFilter();
+        renderViewport(true);
         return;
     }
     try {
@@ -137,11 +138,14 @@ function applySearchFilter() {
             item.searchFiltered = !matchSet.has(i);
         }
     }
+    searchFilterDirty = true;
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
     else { recalcHeights(); }
 }
 
 function clearSearchFilter() {
+    if (!searchFilterDirty) return;
+    searchFilterDirty = false;
     for (var i = 0; i < allLines.length; i++) {
         allLines[i].searchFiltered = false;
     }
