@@ -44,7 +44,9 @@ export function activate(context: vscode.ExtensionContext): void {
     viewerProvider = new LogViewerProvider(context.extensionUri, version, context);
     context.subscriptions.push(viewerProvider);
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider),
+        vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider, {
+            webviewOptions: { retainContextWhenHidden: true },
+        }),
     );
 
     // Broadcaster + pop-out panel.

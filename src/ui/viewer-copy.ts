@@ -135,6 +135,20 @@ function updateSelectionHighlight() {
     }
 }
 
+var copyToastEl = null;
+var copyToastTimer = 0;
+function showCopyToast() {
+    if (!copyToastEl) {
+        copyToastEl = document.createElement('div');
+        copyToastEl.className = 'copy-toast';
+        copyToastEl.textContent = 'Copied';
+        document.body.appendChild(copyToastEl);
+    }
+    clearTimeout(copyToastTimer);
+    copyToastEl.classList.add('visible');
+    copyToastTimer = setTimeout(function() { copyToastEl.classList.remove('visible'); }, 1500);
+}
+
 viewportEl.addEventListener('click', function(e) {
     var icon = e.target.closest('.copy-icon');
     if (!icon) return;
@@ -144,6 +158,7 @@ viewportEl.addEventListener('click', function(e) {
     var ci = parseInt(lineEl.dataset.idx, 10);
     if (ci >= 0 && ci < allLines.length) {
         vscodeApi.postMessage({ type: 'copyToClipboard', text: stripTags(allLines[ci].html) });
+        showCopyToast();
     }
 });
 

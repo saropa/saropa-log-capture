@@ -278,7 +278,9 @@ export async function openSourceFile(
 	const uri = resolveSourceUri(filePath);
 	if (!uri) { return; }
 	const pos = new vscode.Position(Math.max(0, line - 1), Math.max(0, col - 1));
-	const viewColumn = split ? vscode.ViewColumn.Beside : vscode.ViewColumn.Active;
+	const viewColumn = split
+		? vscode.ViewColumn.Beside
+		: (vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One);
 	try {
 		const doc = await vscode.workspace.openTextDocument(uri);
 		await vscode.window.showTextDocument(doc, { selection: new vscode.Range(pos, pos), viewColumn });
