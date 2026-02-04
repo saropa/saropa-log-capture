@@ -91,7 +91,7 @@ function addToData(html, isMarker, category, ts, fw) {
         repeatTracker.lastTimestamp = now;
 
         // Add the original line normally
-        var errorClass = (typeof classifyError === 'function') ? classifyError(plain) : null;
+        var errorClass = (typeof classifyError === 'function' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
         var errorSuppressed = (typeof suppressTransientErrors !== 'undefined' && suppressTransientErrors && errorClass === 'transient');
 
         // Check for critical errors

@@ -136,7 +136,7 @@ export class LogViewerProvider
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
 
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
-  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical }); }
+  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection }); }
 
   applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {

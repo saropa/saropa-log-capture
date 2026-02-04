@@ -205,7 +205,8 @@ export function activate(context: vscode.ExtensionContext): void {
             }
             broadcaster.setErrorClassificationSettings(
                 cfg.suppressTransientErrors ?? false,
-                cfg.breakOnCritical ?? false
+                cfg.breakOnCritical ?? false,
+                cfg.levelDetection ?? "strict"
             );
             if (cfg.highlightRules.length > 0) {
                 broadcaster.setHighlightRules(cfg.highlightRules);

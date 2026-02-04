@@ -72,7 +72,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Cross-session search:** Search all log files via Quick Pick.
 
 ### Error Intelligence
-- **Smart error classification:** Errors auto-classified as CRITICAL (NullPointerException, FATAL, etc.), TRANSIENT (TimeoutException, ECONNREFUSED, etc.), or BUG (TypeError, SyntaxError, etc.) with inline badges.
+- **Smart error classification:** Errors auto-classified as CRITICAL (NullPointerException, FATAL, etc.), TRANSIENT (TimeoutException, ECONNREFUSED, etc.), or BUG (TypeError, SyntaxError, etc.) with inline badges. Configurable detection mode (`strict` / `loose`) controls how aggressively keywords are matched.
 - **Error breakpoints:** Visual and audio alerts when errors appear—flash border, sound, counter badge, optional modal popup.
 - **Multi-level classification:** Seven severity levels—Error, Warning, Info, Performance, TODO, Debug/Trace, and Notice—each auto-detected with dedicated colors and filters.
 
@@ -214,6 +214,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `slowGapThreshold`             | `1000`      | Elapsed time threshold (ms) for highlighting slow gaps   |
 | `suppressTransientErrors`      | `false`     | Hide expected transient errors (timeout, socket, etc.)   |
 | `breakOnCritical`              | `false`     | Show notification when critical errors appear            |
+| `levelDetection`               | `"strict"`  | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere) |
 | `verboseDap`                   | `false`     | Log all raw DAP protocol messages to the log file        |
 | `highlightRules`               | *(3 built-in rules)* | Pattern-based line coloring rules               |
 | `filterPresets`                | `[]`        | Saved filter presets for quick application                |

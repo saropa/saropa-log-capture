@@ -26,7 +26,7 @@ export interface ViewerTarget {
   setContextViewLines(count: number): void;
   setShowElapsed(show: boolean): void;
   setShowDecorations(show: boolean): void;
-  setErrorClassificationSettings(suppress: boolean, breakOn: boolean): void;
+  setErrorClassificationSettings(suppress: boolean, breakOn: boolean, detection: string): void;
   applyPreset(name: string): void;
   setHighlightRules(rules: readonly HighlightRule[]): void;
   setPresets(presets: readonly FilterPreset[]): void;

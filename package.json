@@ -694,6 +694,12 @@
           "default": false,
           "description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.)."
         },
+        "saropaLogCapture.levelDetection": {
+          "type": "string",
+          "enum": ["strict", "loose"],
+          "default": "strict",
+          "markdownDescription": "How aggressively to classify lines as errors. `strict` requires keywords in label positions (e.g. `Error:`, `[ERROR]`). `loose` matches keywords anywhere in the text."
+        },
         "saropaLogCapture.verboseDap": {
           "type": "boolean",
           "default": false,
