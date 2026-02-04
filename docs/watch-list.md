@@ -1,5 +1,7 @@
 # Watch List (Keyword Watch)
 
+> Internal developer reference — covers configuration, matching behavior, data flow, and key source files for the Keyword Watch feature. Not user-facing documentation.
+
 Monitor incoming log lines for specific keywords or patterns and get notified when they appear.
 
 ## Configuration

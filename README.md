@@ -97,6 +97,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Per-level export:** Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
 - **HTML export:** Static or interactive with search, filters, and theme toggle.
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
+- **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines.
 - **Copy to Search:** Right-click a line to open search pre-filled with its text.
 - **Source link context menu:** Right-click a filename reference to Open File, Copy Relative Path, or Copy Full Path.

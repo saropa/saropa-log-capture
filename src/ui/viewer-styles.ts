@@ -99,7 +99,8 @@ body {
 /* --- Hover copy icon (appears on far right of each line) --- */
 .line, .stack-header { position: relative; }
 .copy-icon {
-    display: none;
+    visibility: hidden;
+    pointer-events: none;
     position: absolute;
     right: calc(4px - var(--copy-offset-x, 0px));
     top: 50%;
@@ -114,7 +115,7 @@ body {
     z-index: 1;
 }
 .line:hover .copy-icon,
-.stack-header:hover .copy-icon { display: flex; align-items: center; }
+.stack-header:hover .copy-icon { visibility: visible; pointer-events: auto; }
 .copy-icon:hover {
     color: var(--vscode-editor-foreground);
     background: var(--vscode-button-hoverBackground, rgba(90,93,94,0.31));
