@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - **Level detection mode (`saropaLogCapture.levelDetection`):** New setting to control how aggressively lines are classified as errors. `"strict"` (default) requires keywords in label positions (`Error:`, `[ERROR]`, `TypeError:`) and only applies bug/critical/transient badges to error-level lines. `"loose"` matches keywords anywhere in the text but excludes common descriptive compounds (e.g. "error handling", "error recovery"). Both modes are smarter than the previous behavior, which flagged lint descriptions like "complicates error handling" as errors.
 - **Double-click to solo a level filter:** Double-clicking a footer level dot now disables all other levels, isolating that single level.
-- **Hover copy icon on log lines:** A copy icon appears on the far right of each log line on hover. Clicking it copies the line's plain text to the clipboard and shows a brief "Copied" toast. Works on regular lines, stack headers, and stack frames (not markers).
+- **Hover copy icon on log lines:** A copy icon appears on the far right of each log line on hover. Clicking it copies the line's plain text to the clipboard and shows a brief "Copied" toast. Works on regular lines, stack headers, and stack frames (not markers). Uses `visibility`/`pointer-events` instead of `display` to avoid codicon CSS specificity conflicts.
 
 ### Changed
 - **Footer dots hidden when count is zero:** Level filter dots in the footer are now hidden for levels with no matching log lines, reducing visual noise.
