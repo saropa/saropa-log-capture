@@ -131,6 +131,9 @@ function handleErrorClassificationSettings(msg) {
     if (msg.breakOnCritical !== undefined) {
         breakOnCritical = !!msg.breakOnCritical;
     }
+    if (msg.levelDetection !== undefined) {
+        strictLevelDetection = msg.levelDetection === 'strict';
+    }
 
     // Refilter when suppression changes
     if (msg.suppressTransientErrors !== undefined) {
