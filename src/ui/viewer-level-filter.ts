@@ -1,22 +1,4 @@
-/**
- * Viewer Level Filter Script
- *
- * Provides fly-up menu with level toggle buttons, select all/none,
- * and per-file state persistence. Footer shows compact dot summary.
- *
- * Integration points:
- * - addToData() classifies each line's level (error/warning/info)
- * - Footer dot groups are individually clickable to toggle levels
- * - Label text opens fly-up for Select All/None and text labels
- * - renderItem() applies context-line dimming via CSS class
- * - Extension sends contextLinesBefore count via setContextLines message
- * - Fly-up slider adjusts contextLinesBefore at runtime (0–10)
- * - Extension sends restoreLevelFilters on file load
- */
-
-/**
- * Returns the JavaScript code for level filtering in the webview.
- */
+/** Fly-up level filter menu with dot summary, select all/none, and per-file persistence. */
 export function getLevelFilterScript(): string {
     return /* javascript */ `
 /** Set of currently enabled log levels. All enabled by default. */
@@ -31,22 +13,11 @@ var contextLinesBefore = 3;
 /** Whether the level fly-up menu is currently open. */
 var levelMenuOpen = false;
 
-/** Error-level pattern for heuristic classification. */
 var errorPattern = /\\b(error|exception|fail(ed|ure)?|fatal|panic|critical)\\b/i;
-
-/** Warning-level pattern for heuristic classification. */
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
-
-/** Performance-level pattern for heuristic classification. */
 var perfPattern = /\\b(performance|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+pause|anr|application\\s+not\\s+responding)\\b/i;
-
-/** TODO-level pattern for task markers and code comments. */
 var todoPattern = /\\b(TODO|FIXME|HACK|XXX)\\b/i;
-
-/** Debug/Breadcrumb-level pattern for trace logging. */
 var debugPattern = /\\b(breadcrumb|trace|debug)\\b/i;
-
-/** Notice-level pattern for important informational messages. */
 var noticePattern = /\\b(notice|note|important)\\b/i;
 
 ${getClassifyLevelFn()}
@@ -178,6 +149,16 @@ function selectNoneLevels() {
     saveLevelState();
     if (typeof markPresetDirty === 'function') markPresetDirty();
 }
+function soloLevel(level) {
+    enabledLevels = new Set([level]);
+    syncAllLevelButtons(false);
+    var btn = document.getElementById('level-' + level + '-toggle');
+    if (btn) btn.classList.add('active');
+    syncLevelDots();
+    applyLevelFilter();
+    saveLevelState();
+    if (typeof markPresetDirty === 'function') markPresetDirty();
+}
 function syncAllLevelButtons(active) {
     for (var i = 0; i < allLevelNames.length; i++) {
         var btn = document.getElementById('level-' + allLevelNames[i] + '-toggle');
@@ -236,7 +217,7 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Individual dot group clicks toggle that level directly
+// Individual dot group clicks toggle that level directly; double-click solos it
 var dotGroups = document.querySelectorAll('.level-dot-group');
 for (var di = 0; di < dotGroups.length; di++) {
     (function(group) {
@@ -244,6 +225,11 @@ for (var di = 0; di < dotGroups.length; di++) {
             e.stopPropagation();
             var lvl = group.getAttribute('data-level');
             if (lvl) toggleLevel(lvl);
+        });
+        group.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            var lvl = group.getAttribute('data-level');
+            if (lvl) soloLevel(lvl);
         });
     })(dotGroups[di]);
 }

@@ -67,6 +67,7 @@ function updateDotCounts() {
         if (!countEl || !lvl) continue;
         var c = statsCounters[lvl] || 0;
         countEl.textContent = c > 0 ? formatNumber(c) : '';
+        groups[i].style.display = c > 0 ? '' : 'none';
     }
 }
 

@@ -134,8 +134,14 @@ function updateMinimap() {
     }
     minimapCachedHeight = running;
     var mmH = minimapEl.clientHeight;
-    if (running === 0 || mmH === 0) { minimapEl.innerHTML = ''; return; }
+    if (running === 0 || mmH === 0) {
+        minimapEl.innerHTML = '';
+        if (running > 0) minimapDebounceTimer = setTimeout(updateMinimap, 250);
+        return;
+    }
     var markers = collectMinimapMarkers(cumH, running);
+    var lastP = markers.length > 0 ? markers[markers.length - 1].p : 0;
+    minimapEl.title = markers.length + ' markers, panel=' + mmH + 'px, content=' + running + 'px, last@' + Math.round(lastP * 100) + '%';
     var html = '';
     for (var i = 0; i < markers.length; i++) {
         html += '<div class="minimap-marker minimap-' + markers[i].t + '" style="top:' + Math.round(markers[i].p * mmH) + 'px"></div>';

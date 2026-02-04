@@ -5,6 +5,23 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [Unreleased]
+
+### Added
+- **Double-click to solo a level filter:** Double-clicking a footer level dot now disables all other levels, isolating that single level.
+- **Hover copy icon on log lines:** A copy icon appears on the far right of each log line on hover. Clicking it copies the line's plain text to the clipboard and shows a brief "Copied" toast. Works on regular lines, stack headers, and stack frames (not markers).
+
+### Changed
+- **Footer dots hidden when count is zero:** Level filter dots in the footer are now hidden for levels with no matching log lines, reducing visual noise.
+- **Bottom padding in log viewer:** Added padding below the last log line so it's easier to select text near the end of the content.
+
+### Fixed
+- **Sidebar state lost on tab switch:** Switching from the Saropa Log Capture panel to another bottom panel tab (Problems, Output, Terminal, etc.) and back reset the entire viewer — deselecting the file, clearing filters, losing scroll position, and resetting all options. The sidebar webview was being fully disposed and recreated on each tab switch. Added `retainContextWhenHidden` to the webview provider registration so VS Code keeps the DOM alive when the panel is hidden.
+- **Mousewheel scrolling jumps to start/end:** Fast mouse wheel scrolling with acceleration caused the log viewer to jump to the very start or end instead of scrolling naturally. Chromium's CSS scroll anchoring couldn't find stable anchor nodes after virtual scrolling DOM rebuilds, misadjusting `scrollTop`. Fixed by disabling `overflow-anchor` and intercepting wheel events with manual `scrollTop` control, matching the approach already used by the minimap.
+- **Click-to-source spawns new editor groups:** Clicking a source link in the sidebar log viewer opened the file in a new editor group each time because `ViewColumn.Active` resolved to the sidebar webview instead of an editor column. Now targets the last-focused text editor's group, falling back to the first group.
+- **Horizontal scrollbar hidden in no-wrap mode:** The log viewer's scrollbar-hiding CSS (`scrollbar-width: none`, `::-webkit-scrollbar { display: none }`) suppressed all scrollbars including horizontal. Vertical scrollbar is now hidden via `width: 0` (minimap replaces it) while the horizontal scrollbar is properly styled and visible when word-wrap is off.
+
+---
 ## [0.2.8] - 2026-02-03
 
 ### Added
