@@ -6,15 +6,20 @@
  */
 
 import type { BugReportData, StackFrame, CrossSessionMatch } from './bug-report-collector';
+import type { BlameLine } from './git-blame';
 import type { SourceCodePreview, GitCommit } from './workspace-analyzer';
 import type { DocScanResults } from './docs-scanner';
 import type { ImportResults } from './import-extractor';
 import type { SymbolResults } from './symbol-resolver';
+import { type SectionData, scoreRelevance } from './analysis-relevance';
+import { extractDateFromFilename } from './stack-parser';
 
 /** Format collected data into a complete markdown bug report. */
 export function formatBugReport(data: BugReportData): string {
+    const summary = formatExecutiveSummary(data);
     const sections = [
         formatHeader(),
+        ...(summary ? [summary] : []),
         formatError(data.errorLine, data.fingerprint),
         formatStackTrace(data.stackTrace),
         formatLogContext(data.logContext),
@@ -22,6 +27,7 @@ export function formatBugReport(data: BugReportData): string {
         formatDevEnvSection(data.devEnvironment),
     ];
     if (data.sourcePreview) { sections.push(formatSourceCode(data.sourcePreview)); }
+    if (data.blame) { sections.push(formatBlame(data.blame)); }
     if (data.gitHistory.length > 0) { sections.push(formatGitHistory(data.gitHistory)); }
     if (data.lineRangeHistory.length > 0) { sections.push(formatLineRangeHistory(data.lineRangeHistory)); }
     if (data.imports) { sections.push(formatImports(data.imports)); }
@@ -80,6 +86,10 @@ function formatSourceCode(preview: SourceCodePreview): string {
     return `## Source Code\n\n\`\`\`\n${lines.join('\n')}\n\`\`\``;
 }
 
+function formatBlame(blame: BlameLine): string {
+    return `## Git Blame\n\nLast changed by **${blame.author}** on ${blame.date} · \`${blame.hash}\` ${blame.message}`;
+}
+
 function formatGitHistory(commits: readonly GitCommit[]): string {
     return formatCommitTable('## Recent Git History', commits);
 }
@@ -131,6 +141,31 @@ function formatSymbolDefs(results: SymbolResults): string {
         '## Symbol Definitions',
         '| Kind | Name | Location | Container |\n|------|------|----------|-----------|\n' + rows.join('\n'),
     ].join('\n\n');
+}
+
+function formatExecutiveSummary(data: BugReportData): string | undefined {
+    const sectionData = extractSectionData(data);
+    const { findings } = scoreRelevance(sectionData);
+    const bullets = findings.filter(f => f.text && (f.level === 'high' || f.level === 'medium'));
+    if (bullets.length === 0) { return undefined; }
+    const lines = bullets.map(f => `- ${f.icon} ${f.text}`);
+    return `## Key Findings\n\n${lines.join('\n')}`;
+}
+
+function extractSectionData(data: BugReportData): SectionData {
+    return {
+        blame: data.blame ? { date: data.blame.date, author: data.blame.author, hash: data.blame.hash } : undefined,
+        lineCommits: data.lineRangeHistory.map(c => ({ date: c.date })),
+        annotations: [],
+        crossSession: data.crossSessionMatch ? { sessionCount: data.crossSessionMatch.sessionCount, totalOccurrences: data.crossSessionMatch.totalOccurrences, firstSeenDate: extractDateFromFilename(data.crossSessionMatch.firstSeen) } : undefined,
+        docMatchCount: data.docMatches?.matches.length ?? 0,
+        symbolCount: data.resolvedSymbols?.symbols.length ?? 0,
+        tokenMatchCount: 0,
+        tokenFileCount: 0,
+        importCount: data.imports?.imports.length ?? 0,
+        localImportCount: data.imports?.localCount ?? 0,
+        gitCommitCount: data.gitHistory.length,
+    };
 }
 
 function escapePipe(text: string): string { return text.replace(/\|/g, '\\|'); }

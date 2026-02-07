@@ -24,6 +24,7 @@ export interface RecurringError {
     readonly totalOccurrences: number;
     readonly firstSeen: string;
     readonly lastSeen: string;
+    readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
 /** Aggregated cross-session insights. */
@@ -87,30 +88,30 @@ function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {
         .slice(0, maxHotFiles);
 }
 
+type ErrorAccum = { n: string; e: string; total: number; timeline: { session: string; count: number }[] };
+
 function buildRecurringErrors(metas: readonly LoadedMeta[]): RecurringError[] {
-    const errorMap = new Map<string, { n: string; e: string; total: number; sessions: string[] }>();
+    const errorMap = new Map<string, ErrorAccum>();
     for (const { filename, meta } of metas) {
         for (const fp of meta.fingerprints ?? []) { accumulateFingerprint(fp, filename, errorMap); }
     }
     return [...errorMap.entries()]
-        .map(([hash, { n, e, total, sessions }]) => ({
+        .map(([hash, { n, e, total, timeline }]) => ({
             hash, normalizedText: n, exampleLine: e,
-            sessionCount: sessions.length, totalOccurrences: total,
-            firstSeen: sessions[0], lastSeen: sessions[sessions.length - 1],
+            sessionCount: timeline.length, totalOccurrences: total,
+            firstSeen: timeline[0].session, lastSeen: timeline[timeline.length - 1].session,
+            timeline,
         }))
         .sort((a, b) => b.sessionCount - a.sessionCount || b.totalOccurrences - a.totalOccurrences)
         .slice(0, maxErrors);
 }
 
-function accumulateFingerprint(
-    fp: FingerprintEntry, filename: string,
-    errorMap: Map<string, { n: string; e: string; total: number; sessions: string[] }>,
-): void {
+function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap: Map<string, ErrorAccum>): void {
     const existing = errorMap.get(fp.h);
     if (existing) {
         existing.total += fp.c;
-        if (!existing.sessions.includes(filename)) { existing.sessions.push(filename); }
+        if (!existing.timeline.some(t => t.session === filename)) { existing.timeline.push({ session: filename, count: fp.c }); }
     } else {
-        errorMap.set(fp.h, { n: fp.n, e: fp.e, total: fp.c, sessions: [filename] });
+        errorMap.set(fp.h, { n: fp.n, e: fp.e, total: fp.c, timeline: [{ session: filename, count: fp.c }] });
     }
 }

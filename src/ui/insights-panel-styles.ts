@@ -11,36 +11,36 @@ body {
 }
 .header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: var(--vscode-sideBar-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     position: sticky; top: 0; z-index: 10;
 }
 .header-left { display: flex; flex-direction: column; gap: 2px; }
-.title { font-size: 1.15em; font-weight: 600; }
-.summary { font-size: 0.85em; color: var(--vscode-descriptionForeground); }
+.title { font-size: 14px; font-weight: 600; }
+.summary { font-size: 11px; color: var(--vscode-descriptionForeground); }
 .refresh-btn {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border: none; border-radius: 3px;
-    padding: 4px 10px; cursor: pointer; font-size: 0.85em;
+    padding: 4px 10px; cursor: pointer; font-size: 11px;
 }
 .refresh-btn:hover { background: var(--vscode-button-hoverBackground); }
 .content { padding: 8px 16px; }
 .section { margin-bottom: 12px; }
 .section-header {
     font-weight: 600; cursor: pointer;
-    padding: 6px 0; font-size: 1.05em;
+    padding: 6px 0; font-size: 13px;
     list-style: none;
 }
 .section-header::-webkit-details-marker { display: none; }
 .section-header::before {
     content: '\\25B6'; display: inline-block; width: 16px;
-    font-size: 0.7em; transition: transform 0.15s;
+    font-size: 10px; transition: transform 0.15s;
 }
 details[open] > .section-header::before { transform: rotate(90deg); }
 .count {
-    font-weight: normal; font-size: 0.85em;
+    font-weight: normal; font-size: 11px;
     color: var(--vscode-descriptionForeground); margin-left: 6px;
 }
 .hot-file, .error-group {
@@ -54,16 +54,16 @@ details[open] > .section-header::before { transform: rotate(90deg); }
 .file-row { display: flex; align-items: center; gap: 6px; }
 .file-name { flex: 1; font-family: var(--vscode-editor-font-family, monospace); }
 .session-count {
-    font-size: 0.85em; color: var(--vscode-descriptionForeground);
+    font-size: 11px; color: var(--vscode-descriptionForeground);
     white-space: nowrap;
 }
 .error-text {
     font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     color: var(--vscode-errorForeground);
 }
 .error-meta {
-    font-size: 0.8em; color: var(--vscode-descriptionForeground); margin-top: 2px;
+    font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px;
 }
 .empty-state {
     padding: 8px 0; font-style: italic;
