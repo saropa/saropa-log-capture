@@ -13,6 +13,8 @@ import { aggregateInsights, type CrossSessionInsights, type HotFile, type Recurr
 import { findInWorkspace } from '../modules/workspace-analyzer';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { getInsightsStyles } from './insights-panel-styles';
+import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
+import { getDrillDownStyles } from './insights-drill-down-styles';
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -42,13 +44,23 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         const uri = await findInWorkspace(String(msg.filename));
         if (uri) { await vscode.window.showTextDocument(uri); }
         else { vscode.window.showWarningMessage(`Source file "${msg.filename}" not found in workspace.`); }
-    } else if (msg.type === 'searchError') {
-        const results = await searchLogFiles(String(msg.example), { maxResults: 20, maxResultsPerFile: 5 });
-        if (results.matches.length > 0) { await openLogAtLine(results.matches[0]); }
-        else { vscode.window.showInformationMessage('No matches found for this error pattern.'); }
+    } else if (msg.type === 'drillDownError') {
+        await handleDrillDown(String(msg.hash ?? ''), String(msg.normalized ?? ''));
+    } else if (msg.type === 'openMatch') {
+        const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
+        openLogAtLine(match).catch(() => {});
     } else if (msg.type === 'refresh') {
         showInsightsPanel().catch(() => {});
     }
+}
+
+async function handleDrillDown(hash: string, normalized: string): Promise<void> {
+    if (!panel || !normalized) { return; }
+    const pattern = buildFuzzyPattern(normalized);
+    const results = await searchLogFiles(pattern, { useRegex: true, maxResults: 200, maxResultsPerFile: 50 });
+    const groups = groupMatchesBySession(results.matches);
+    const html = renderDrillDownHtml(groups);
+    panel.webview.postMessage({ type: 'drillDownResults', hash, html });
 }
 
 function buildLoadingHtml(): string {
@@ -63,7 +75,7 @@ function buildResultsHtml(insights: CrossSessionInsights): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getInsightsStyles()}</style>
+<style nonce="${nonce}">${getInsightsStyles()}${getDrillDownStyles()}</style>
 </head><body>
 ${renderHeader(insights)}
 <div class="content">
@@ -117,8 +129,9 @@ function renderErrorItem(e: RecurringError): string {
     const sessions = e.sessionCount === 1 ? '1 session' : `${e.sessionCount} sessions`;
     const total = e.totalOccurrences === 1 ? '1 occurrence' : `${e.totalOccurrences} occurrences`;
     const example = escapeHtml(e.exampleLine);
-    return `<div class="error-group" data-action="searchError" data-example="${example}">
-<div class="error-text" title="${example}">${escapeHtml(e.normalizedText)}</div>
+    const normalized = escapeHtml(e.normalizedText);
+    return `<div class="error-group" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
+<div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${normalized}</div>
 <div class="error-meta">${sessions} &middot; ${total} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}</div>
 </div>`;
 }
@@ -130,13 +143,33 @@ function getScript(): string {
         vscode.postMessage({ type: 'refresh' });
     });
     document.addEventListener('click', (e) => {
-        const el = e.target.closest('[data-action]');
+        var match = e.target.closest('.drill-down-match');
+        if (match) { vscode.postMessage({ type: 'openMatch', uri: match.dataset.uri, filename: match.dataset.filename, line: parseInt(match.dataset.line) }); return; }
+        var el = e.target.closest('[data-action]');
         if (!el) return;
-        const action = el.dataset.action;
-        if (action === 'openFile') {
+        if (el.dataset.action === 'openFile') {
             vscode.postMessage({ type: 'openFile', filename: el.dataset.filename });
-        } else if (action === 'searchError') {
-            vscode.postMessage({ type: 'searchError', example: el.dataset.example });
+        } else if (el.dataset.action === 'drillDown') {
+            toggleDrillDown(el);
+        }
+    });
+    function toggleDrillDown(el) {
+        var existing = el.nextElementSibling;
+        if (existing && existing.classList.contains('drill-down-panel')) {
+            existing.remove(); el.classList.remove('expanded'); return;
+        }
+        var panel = document.createElement('div');
+        panel.className = 'drill-down-panel';
+        panel.dataset.hash = el.dataset.hash;
+        panel.innerHTML = '<div class="drill-down-loading">Searching across sessions...</div>';
+        el.after(panel); el.classList.add('expanded');
+        vscode.postMessage({ type: 'drillDownError', hash: el.dataset.hash, normalized: el.dataset.normalized });
+    }
+    window.addEventListener('message', (event) => {
+        var msg = event.data;
+        if (msg.type === 'drillDownResults') {
+            var panel = document.querySelector('.drill-down-panel[data-hash="' + msg.hash + '"]');
+            if (panel) panel.innerHTML = msg.html;
         }
     });
 })();`;

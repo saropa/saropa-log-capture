@@ -5,6 +5,7 @@ import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
+import { showBugReport } from "./bug-report-panel";
 import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
@@ -123,7 +124,6 @@ export class LogViewerProvider
   setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
 
   // -- Webview state methods --
-
   scrollToLine(line: number): void { this.postMessage({ type: "scrollToLine", line }); }
   setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
   setAnnotation(lineIndex: number, text: string): void { this.postMessage({ type: "setAnnotation", lineIndex, text }); }
@@ -142,10 +142,8 @@ export class LogViewerProvider
   setContextLines(count: number): void { this.postMessage({ type: "setContextLines", count }); }
   setContextViewLines(count: number): void { this.postMessage({ type: "setContextViewLines", count }); }
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
-
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
-  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection }); }
-
+  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
   applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);
@@ -223,6 +221,9 @@ export class LogViewerProvider
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
       case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? "")); break;
+      case "generateReport":
+        if (this.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), this.currentFileUri).catch(() => {}); }
+        break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation":
         this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));

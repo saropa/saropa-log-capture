@@ -13,6 +13,7 @@ import { getNonce, buildViewerHtml } from "./viewer-content";
 import type { LineData } from "../modules/session-manager";
 import type { HighlightRule } from "../modules/highlight-rules";
 import type { FilterPreset } from "../modules/filter-presets";
+import { showBugReport } from "./bug-report-panel";
 import { PendingLine } from "./viewer-file-loader";
 import {
   SerializedHighlightRule, serializeHighlightRules,
@@ -127,7 +128,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setContextViewLines(count: number): void { this.post({ type: "setContextViewLines", count }); }
   setShowElapsed(show: boolean): void { this.post({ type: "setShowElapsed", show }); }
   setShowDecorations(show: boolean): void { this.post({ type: "setShowDecorations", show }); }
-  setErrorClassificationSettings(s: boolean, b: boolean, d: string): void { this.post({ type: "errorClassificationSettings", suppressTransientErrors: s, breakOnCritical: b, levelDetection: d }); }
+  setErrorClassificationSettings(s: boolean, b: boolean, d: string, fw: boolean): void { this.post({ type: "errorClassificationSettings", suppressTransientErrors: s, breakOnCritical: b, levelDetection: d, deemphasizeFrameworkLevels: fw }); }
   applyPreset(name: string): void { this.post({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);
@@ -182,6 +183,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
       case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? "")); break;
+      case "generateReport":
+        if (this.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), this.currentFileUri).catch(() => {}); }
+        break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation": this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? "")); break;
       case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;

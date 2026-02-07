@@ -15,6 +15,9 @@ var suppressTransientErrors = false;
 /** Whether to trigger notifications for critical errors. */
 var breakOnCritical = false;
 
+/** Suppress error/warning text coloring on framework lines. */
+var deemphasizeFrameworkLevels = false;
+
 /**
  * Transient error patterns - expected, temporary failures.
  * Examples: network timeouts, connection refused, socket errors.
@@ -133,6 +136,14 @@ function handleErrorClassificationSettings(msg) {
     }
     if (msg.levelDetection !== undefined) {
         strictLevelDetection = msg.levelDetection === 'strict';
+    }
+    if (msg.deemphasizeFrameworkLevels !== undefined) {
+        var prev = deemphasizeFrameworkLevels;
+        deemphasizeFrameworkLevels = !!msg.deemphasizeFrameworkLevels;
+        if (prev !== deemphasizeFrameworkLevels) {
+            if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+            else { recalcHeights(); renderViewport(true); }
+        }
     }
 
     // Refilter when suppression changes
