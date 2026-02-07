@@ -146,6 +146,7 @@ function onContextMenuAction(action) {
             break;
         case 'search-codebase': vscodeApi.postMessage({ type: 'searchCodebase', text: plainText }); break;
         case 'search-sessions': vscodeApi.postMessage({ type: 'searchSessions', text: plainText }); break;
+        case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText }); break;
         case 'add-watch': vscodeApi.postMessage({ type: 'addToWatch', text: plainText }); break;
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
         case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); break;
@@ -229,6 +230,9 @@ export function getContextMenuHtml(): string {
     </div>
     <div class="context-menu-item" data-action="search-sessions" data-line-action>
         <span class="codicon codicon-history"></span> Search Past Sessions
+    </div>
+    <div class="context-menu-item" data-action="analyze-line" data-line-action>
+        <span class="codicon codicon-search-fuzzy"></span> Analyze Across Sessions
     </div>
     <div class="context-menu-separator" data-line-action></div>
     <div class="context-menu-item" data-action="open-source" data-line-action>

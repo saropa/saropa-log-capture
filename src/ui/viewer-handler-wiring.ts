@@ -12,6 +12,7 @@ import type { SessionHistoryProvider } from "./session-history-provider";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import { showSearchQuickPick } from "../modules/log-search-ui";
 import { openLogAtLine } from "../modules/log-search";
+import { showAnalysis } from "./analysis-panel";
 import { loadPresets, promptSavePreset } from "../modules/filter-presets";
 import { buildSessionListPayload, openSourceFile } from "./viewer-provider-helpers";
 import type { BookmarkStore } from "../modules/bookmark-store";
@@ -26,6 +27,7 @@ interface HandlerTarget {
   setAnnotationPromptHandler(h: (i: number, c: string) => void): void;
   setSearchCodebaseHandler(h: (t: string) => void): void;
   setSearchSessionsHandler(h: (t: string) => void): void;
+  setAnalyzeLineHandler(h: (t: string) => void): void;
   setAddToWatchHandler(h: (t: string) => void): void;
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
@@ -91,6 +93,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const m = await showSearchQuickPick(t);
     if (m) { await openLogAtLine(m); }
   });
+  target.setAnalyzeLineHandler(async (t) => { await showAnalysis(t); });
   target.setAddToWatchHandler(async (text) => {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);

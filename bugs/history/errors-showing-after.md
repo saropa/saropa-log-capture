@@ -1,0 +1,1 @@
+The context should be the records leading UP to the error and possible 1 after. Currently it looks like 3 records after only

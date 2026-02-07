@@ -1,23 +1,12 @@
 /** Fly-up level filter menu with dot summary, select all/none, and per-file persistence. */
 export function getLevelFilterScript(): string {
     return /* javascript */ `
-/** Set of currently enabled log levels. All enabled by default. */
 var enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
-
-/** All known level names (order matches footer dots). */
 var allLevelNames = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice'];
-
-/** Number of preceding context lines to show when filtering. */
 var contextLinesBefore = 3;
-
-/** Whether the level fly-up menu is currently open. */
 var levelMenuOpen = false;
-
-/** Loose: keyword anywhere, but excludes common descriptive compounds (error handling, exception safety, etc.). */
 var looseErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|\\b(?:fail(?:ed|ure)?|fatal|panic|critical)\\b/i;
-/** Strict: keyword must be in a label position (followed by colon/bracket) or be an unambiguous severity word. */
 var strictErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|\\b(?:fatal|panic|critical)\\b|\\bfail(?:ed|ure)\\b/i;
-/** Whether to use strict level detection (true) or loose (false). */
 var strictLevelDetection = true;
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
 var perfPattern = /\\b(performance|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+pause|anr|application\\s+not\\s+responding)\\b/i;
@@ -40,8 +29,23 @@ ${getEventHandlers()}
 /** Classification function — determines level from text + category. */
 function getClassifyLevelFn(): string {
     return /* javascript */ `
+/** Logcat prefix (E/, W/, I/, D/, V/, F/, A/) is an authoritative level signal. */
+var logcatLevelPattern = /^([VDIWEFA])\\//;
+
 function classifyLevel(plainText, category) {
     if (category === 'stderr') return 'error';
+    var lcm = logcatLevelPattern.exec(plainText);
+    if (lcm) {
+        var L = lcm[1];
+        if (L === 'E' || L === 'F' || L === 'A') return 'error';
+        if (L === 'W') return 'warning';
+        if (perfPattern.test(plainText)) return 'performance';
+        if (todoPattern.test(plainText)) return 'todo';
+        if (L === 'D') return 'debug';
+        if (debugPattern.test(plainText)) return 'debug';
+        if (noticePattern.test(plainText)) return 'notice';
+        return 'info';
+    }
     var ep = strictLevelDetection ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) return 'error';
     if (warnPattern.test(plainText)) return 'warning';

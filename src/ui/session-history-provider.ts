@@ -3,7 +3,7 @@ import { getConfig, getFileTypeGlob, getLogDirectoryUri, isTrackedFile } from '.
 import { SessionMetadataStore } from '../modules/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
-    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize,
+    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, matchesTagFilter,
 } from './session-history-grouping';
 import {
     formatMtime, formatMtimeTimeOnly, applyDisplayOptions,
@@ -18,6 +18,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private activeUri: vscode.Uri | undefined;
     private readonly metaStore = new SessionMetadataStore();
     private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
+    private tagFilter: ReadonlySet<string> | undefined;
 
     constructor() {
         this.setupWatcher();
@@ -27,6 +28,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     setDisplayOptions(options: SessionDisplayOptions): void {
         this.displayOptions = options;
     }
+
+    /** Set tag filter (undefined = show all). Refreshes tree automatically. */
+    setTagFilter(tags: ReadonlySet<string> | undefined): void { this.tagFilter = tags; this.refresh(); }
+    /** Get the current tag filter. */
+    getTagFilter(): ReadonlySet<string> | undefined { return this.tagFilter; }
 
     /** Mark the currently-recording session so it gets a distinct icon. */
     setActiveUri(uri: vscode.Uri | undefined): void {
@@ -142,7 +148,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             const items = await Promise.all(logFiles.map(([name]) => this.loadMetadata(logDir, name)));
 
             const grouped = groupSplitFiles(items);
-            return grouped.sort((a, b) => b.mtime - a.mtime); // Sort by modification time, newest first
+            const sorted = grouped.sort((a, b) => b.mtime - a.mtime);
+            if (this.tagFilter && this.tagFilter.size > 0) {
+                return sorted.filter(item => matchesTagFilter(item, this.tagFilter!));
+            }
+            return sorted;
         } catch {
             return [];
         }
@@ -181,6 +191,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         }
         if (sidecar.autoTags && sidecar.autoTags.length > 0) {
             meta = { ...meta, autoTags: sidecar.autoTags };
+        }
+        if (sidecar.correlationTags && sidecar.correlationTags.length > 0) {
+            meta = { ...meta, correlationTags: sidecar.correlationTags };
         }
         return meta;
     }
@@ -236,6 +249,9 @@ function buildDescription(item: SessionMetadata, timeOnly: boolean): string {
     }
     if (item.autoTags && item.autoTags.length > 0) {
         parts.push(item.autoTags.map(t => `~${t}`).join(' '));
+    }
+    if (item.correlationTags && item.correlationTags.length > 0) {
+        parts.push(item.correlationTags.slice(0, 3).map(t => `@${t}`).join(' '));
     }
     return parts.join(' · ');
 }

@@ -20,6 +20,7 @@ export interface SessionMetadata {
     readonly displayName?: string;
     readonly tags?: string[];
     readonly autoTags?: string[];
+    readonly correlationTags?: string[];
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly mtime: number; // File modification time (epoch ms)
@@ -135,11 +136,17 @@ export function buildSplitGroupTooltip(group: SplitGroup): string {
 
 /** Format bytes to a human-readable size string. */
 export function formatSize(bytes: number): string {
-    if (bytes < 1024) {
-        return `${bytes} B`;
-    }
-    if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
-    }
+    if (bytes < 1024) { return `${bytes} B`; }
+    if (bytes < 1024 * 1024) { return `${(bytes / 1024).toFixed(1)} KB`; }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/** Check if a tree item has any correlation tag in the filter set. */
+export function matchesTagFilter(item: TreeItem, filter: ReadonlySet<string>): boolean {
+    if (isSplitGroup(item)) { return item.parts.some(p => hasCorrelationTag(p, filter)); }
+    return hasCorrelationTag(item, filter);
+}
+
+function hasCorrelationTag(meta: SessionMetadata, filter: ReadonlySet<string>): boolean {
+    return meta.correlationTags?.some(t => filter.has(t)) ?? false;
 }
