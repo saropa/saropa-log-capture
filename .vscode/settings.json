@@ -29,6 +29,7 @@
     "sandboxed",
     "stackable",
     "Toggleable",
+    "unpushed",
     "Wireshark"
   ],
   "chat.tools.terminal.autoApprove": {

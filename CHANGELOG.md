@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [Unreleased]
+## [0.2.9] - 2026-02-05
 
 ### Added
 - **Level detection mode (`saropaLogCapture.levelDetection`):** New setting to control how aggressively lines are classified as errors. `"strict"` (default) requires keywords in label positions (`Error:`, `[ERROR]`, `TypeError:`) and only applies bug/critical/transient badges to error-level lines. `"loose"` matches keywords anywhere in the text but excludes common descriptive compounds (e.g. "error handling", "error recovery"). Both modes are smarter than the previous behavior, which flagged lint descriptions like "complicates error handling" as errors.
@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Bottom padding in log viewer:** Added padding below the last log line so it's easier to select text near the end of the content.
 
 ### Fixed
+- **Double-click solo level not toggleable:** Double-clicking a footer level dot to solo a level worked, but double-clicking the same dot again did not restore all levels. Now toggles back to all levels when the solo'd dot is double-clicked again.
 - **Sidebar state lost on tab switch:** Switching from the Saropa Log Capture panel to another bottom panel tab (Problems, Output, Terminal, etc.) and back reset the entire viewer — deselecting the file, clearing filters, losing scroll position, and resetting all options. The sidebar webview was being fully disposed and recreated on each tab switch. Added `retainContextWhenHidden` to the webview provider registration so VS Code keeps the DOM alive when the panel is hidden.
 - **Mousewheel scrolling jumps to start/end:** Fast mouse wheel scrolling with acceleration caused the log viewer to jump to the very start or end instead of scrolling naturally. Chromium's CSS scroll anchoring couldn't find stable anchor nodes after virtual scrolling DOM rebuilds, misadjusting `scrollTop`. Fixed by disabling `overflow-anchor` and intercepting wheel events with manual `scrollTop` control, matching the approach already used by the minimap.
 - **Click-to-source spawns new editor groups:** Clicking a source link in the sidebar log viewer opened the file in a new editor group each time because `ViewColumn.Active` resolved to the sidebar webview instead of an editor column. Now targets the last-focused text editor's group, falling back to the first group.

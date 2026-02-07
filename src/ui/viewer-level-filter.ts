@@ -157,6 +157,7 @@ function selectNoneLevels() {
     if (typeof markPresetDirty === 'function') markPresetDirty();
 }
 function soloLevel(level) {
+    if (enabledLevels.size === 1 && enabledLevels.has(level)) { selectAllLevels(); return; }
     enabledLevels = new Set([level]);
     syncAllLevelButtons(false);
     var btn = document.getElementById('level-' + level + '-toggle');
@@ -224,7 +225,7 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Individual dot group clicks toggle that level directly; double-click solos it
+// Single-click toggles a level; double-click solos it (or restores all if already solo)
 var dotGroups = document.querySelectorAll('.level-dot-group');
 for (var di = 0; di < dotGroups.length; di++) {
     (function(group) {
