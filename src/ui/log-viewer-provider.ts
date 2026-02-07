@@ -37,7 +37,7 @@ export class LogViewerProvider
   private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
   private onSearchCodebase?: (text: string) => void;
   private onSearchSessions?: (text: string) => void;
-  private onAnalyzeLine?: (text: string) => void;
+  private onAnalyzeLine?: (text: string, lineIndex: number, fileUri: vscode.Uri | undefined) => void;
   private onAddToWatch?: (text: string) => void;
   private onPartNavigate?: (part: number) => void;
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
@@ -105,7 +105,7 @@ export class LogViewerProvider
   setAnnotationPromptHandler(handler: (lineIndex: number, current: string) => void): void { this.onAnnotationPrompt = handler; }
   setSearchCodebaseHandler(handler: (text: string) => void): void { this.onSearchCodebase = handler; }
   setSearchSessionsHandler(handler: (text: string) => void): void { this.onSearchSessions = handler; }
-  setAnalyzeLineHandler(handler: (text: string) => void): void { this.onAnalyzeLine = handler; }
+  setAnalyzeLineHandler(handler: (text: string, lineIndex: number, fileUri: vscode.Uri | undefined) => void): void { this.onAnalyzeLine = handler; }
   setAddToWatchHandler(handler: (text: string) => void): void { this.onAddToWatch = handler; }
   setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void { this.onLinkClick = handler; }
   setPartNavigateHandler(handler: (part: number) => void): void { this.onPartNavigate = handler; }
@@ -220,7 +220,7 @@ export class LogViewerProvider
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
-      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? "")); break;
+      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? ""), Number(msg.lineIndex ?? -1), this.currentFileUri); break;
       case "generateReport":
         if (this.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), this.currentFileUri).catch(() => {}); }
         break;

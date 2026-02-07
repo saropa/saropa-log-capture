@@ -10,8 +10,9 @@ import * as vscode from 'vscode';
 import { stripAnsi } from './ansi';
 import { extractSourceReference } from './source-linker';
 import { normalizeLine, hashFingerprint } from './error-fingerprint';
-import { isFrameworkFrame } from './stack-parser';
+import { isFrameworkFrame, isStackFrameLine } from './stack-parser';
 import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
+import { getGitBlame, type BlameLine } from './git-blame';
 import { aggregateInsights } from './cross-session-aggregator';
 import { collectDevEnvironment, formatDevEnvironment } from './environment-collector';
 import { extractAnalysisTokens } from './line-analyzer';
@@ -42,6 +43,7 @@ export interface BugReportData {
     readonly environment: Record<string, string>;
     readonly devEnvironment: Record<string, string>;
     readonly sourcePreview?: SourceCodePreview;
+    readonly blame?: BlameLine;
     readonly gitHistory: readonly GitCommit[];
     readonly crossSessionMatch?: CrossSessionMatch;
     readonly lineRangeHistory: readonly GitCommit[];
@@ -83,11 +85,11 @@ export async function collectBugReportData(
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
         resolveSymbols(tokens).catch(() => undefined),
     ]);
-    const [sourcePreview, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
+    const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
 
     return {
         errorLine: cleanError, fingerprint, stackTrace, logContext,
-        environment, devEnvironment: devEnv, sourcePreview, gitHistory,
+        environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, logFilename, lineNumber: fileLineIndex + 1,
     };
@@ -126,18 +128,7 @@ function extractStackTrace(lines: readonly string[], errorIdx: number): StackFra
     return frames;
 }
 
-function isStackFrameLine(line: string): boolean {
-    const trimmed = line.trim();
-    if (!trimmed) { return false; }
-    if (/^\s+at\s/.test(line)) { return true; }
-    if (/^#\d+\s/.test(trimmed)) { return true; }
-    if (/^\s+File "/.test(line)) { return true; }
-    if (/^\s*\u2502\s/.test(line)) { return true; }
-    if (/^package:/.test(trimmed)) { return true; }
-    return /^\s+\S+\.\S+:\d+/.test(line);
-}
-
-type WsResult = [SourceCodePreview | undefined, GitCommit[], CrossSessionMatch | undefined, GitCommit[], ImportResults | undefined];
+type WsResult = [SourceCodePreview | undefined, BlameLine | undefined, GitCommit[], CrossSessionMatch | undefined, GitCommit[], ImportResults | undefined];
 
 async function collectWorkspaceData(
     filePath: string | undefined, crashLine: number | undefined, fingerprint: string,
@@ -145,8 +136,9 @@ async function collectWorkspaceData(
     const uri = filePath ? await findInWorkspace(filePath) : undefined;
     const lineStart = crashLine ? Math.max(1, crashLine - 2) : 0;
     const lineEnd = crashLine ? crashLine + 2 : 0;
-    const [preview, history, lineHistory, insights, imports] = await Promise.all([
+    const [preview, blame, history, lineHistory, insights, imports] = await Promise.all([
         uri && crashLine ? getSourcePreview(uri, crashLine) : Promise.resolve(undefined),
+        uri && crashLine ? getGitBlame(uri, crashLine).catch(() => undefined) : Promise.resolve(undefined),
         uri ? getGitHistory(uri, 10) : Promise.resolve([]),
         uri && crashLine ? getGitHistoryForLines(uri, lineStart, lineEnd) : Promise.resolve([]),
         aggregateInsights(),
@@ -157,5 +149,5 @@ async function collectWorkspaceData(
         sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences,
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,
     } : undefined;
-    return [preview, history, crossMatch, lineHistory, imports];
+    return [preview, blame, history, crossMatch, lineHistory, imports];
 }

@@ -146,7 +146,7 @@ function onContextMenuAction(action) {
             break;
         case 'search-codebase': vscodeApi.postMessage({ type: 'searchCodebase', text: plainText }); break;
         case 'search-sessions': vscodeApi.postMessage({ type: 'searchSessions', text: plainText }); break;
-        case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText }); break;
+        case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText, lineIndex: lineIdx }); break;
         case 'generate-report': vscodeApi.postMessage({ type: 'generateReport', text: plainText, lineIndex: lineIdx }); break;
         case 'add-watch': vscodeApi.postMessage({ type: 'addToWatch', text: plainText }); break;
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
