@@ -55,6 +55,8 @@ export interface SaropaLogCaptureConfig {
   readonly fileTypes: readonly string[];
   /** Directories to scan for project documentation references during analysis. */
   readonly docsScanDirs: readonly string[];
+  /** Include log files from subdirectories of the log directory. */
+  readonly includeSubfolders: boolean;
 }
 
 const SECTION = "saropaLogCapture";
@@ -133,7 +135,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     format: cfg.get<"plaintext" | "html">("format", "plaintext"),
     logDirectory: cfg.get<string>("logDirectory", "reports"),
     autoOpen: cfg.get<boolean>("autoOpen", false),
-    maxLogFiles: cfg.get<number>("maxLogFiles", 10),
+    maxLogFiles: cfg.get<number>("maxLogFiles", 0),
     gitignoreCheck: cfg.get<boolean>("gitignoreCheck", true),
     redactEnvVars: cfg.get<string[]>("redactEnvVars", []),
     exclusions: cfg.get<string[]>("exclusions", []),
@@ -165,6 +167,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       ".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html",
     ]),
     docsScanDirs: cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]),
+    includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
   };
 }
 
@@ -203,6 +206,41 @@ export function getLogDirectoryUri(
 export function isTrackedFile(name: string, fileTypes: readonly string[]): boolean {
   if (name.endsWith('.meta.json') || name.startsWith('.')) { return false; }
   return fileTypes.some(ext => name.endsWith(ext));
+}
+
+const maxScanDepth = 10;
+
+/** List tracked files, optionally recursing into subdirectories. Returns relative paths. */
+export async function readTrackedFiles(
+  dirUri: vscode.Uri,
+  fileTypes: readonly string[],
+  includeSubfolders: boolean,
+): Promise<string[]> {
+  const results: string[] = [];
+  await collectFiles(dirUri, fileTypes, includeSubfolders ? maxScanDepth : 0, '', results);
+  return results;
+}
+
+async function collectFiles(
+  dirUri: vscode.Uri,
+  fileTypes: readonly string[],
+  depth: number,
+  prefix: string,
+  out: string[],
+): Promise<void> {
+  let entries: [string, vscode.FileType][];
+  try {
+    entries = await vscode.workspace.fs.readDirectory(dirUri);
+  } catch { return; }
+  for (const [name, type] of entries) {
+    const rel = prefix ? `${prefix}/${name}` : name;
+    if (type === vscode.FileType.File && isTrackedFile(name, fileTypes)) {
+      out.push(rel);
+    } else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
+      // Skip dotfiles (.git, .vscode, etc.)
+      await collectFiles(vscode.Uri.joinPath(dirUri, name), fileTypes, depth - 1, rel, out);
+    }
+  }
 }
 
 /** Build a glob pattern for file watchers, e.g. "*.{log,txt,md}". */

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, isTrackedFile } from './config';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './config';
 
 /** A single search match within a log file. */
 export interface SearchMatch {
@@ -72,19 +72,11 @@ export async function searchLogFiles(
     let totalFiles = 0;
     let filesWithMatches = 0;
 
-    // List all tracked files
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDir);
-    } catch {
-        return { query, matches: [], totalFiles: 0, filesWithMatches: 0 };
-    }
-
-    const { fileTypes } = getConfig();
-    const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes))
-        .map(([name]) => vscode.Uri.joinPath(logDir, name))
-        .sort((a, b) => b.fsPath.localeCompare(a.fsPath)); // Newest first
+    const { fileTypes, includeSubfolders } = getConfig();
+    const tracked = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
+    const logFiles = tracked
+        .map(rel => vscode.Uri.joinPath(logDir, rel))
+        .sort((a, b) => b.fsPath.localeCompare(a.fsPath));
 
     // Build search pattern
     const pattern = buildPattern(query, options);
@@ -178,17 +170,10 @@ export async function searchLogFilesConcurrent(
     if (!folder) { return empty; }
 
     const logDir = getLogDirectoryUri(folder);
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDir);
-    } catch {
-        return empty;
-    }
-
-    const { fileTypes } = getConfig();
-    const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes))
-        .map(([name]) => vscode.Uri.joinPath(logDir, name))
+    const { fileTypes, includeSubfolders } = getConfig();
+    const tracked = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
+    const logFiles = tracked
+        .map(rel => vscode.Uri.joinPath(logDir, rel))
         .sort((a, b) => b.fsPath.localeCompare(a.fsPath));
 
     const pattern = buildPattern(query, options);

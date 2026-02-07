@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, isTrackedFile } from './config';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './config';
 
 /** Show a quick pick to delete session files from the reports directory. */
 export async function handleDeleteCommand(): Promise<void> {
@@ -10,18 +10,8 @@ export async function handleDeleteCommand(): Promise<void> {
 
     const logDirUri = getLogDirectoryUri(folder);
 
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDirUri);
-    } catch {
-        vscode.window.showInformationMessage('No session files found.');
-        return;
-    }
-
-    const { fileTypes } = getConfig();
-    const logFiles = entries
-        .filter(([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes))
-        .map(([name]) => name)
+    const { fileTypes, includeSubfolders } = getConfig();
+    const logFiles = (await readTrackedFiles(logDirUri, fileTypes, includeSubfolders))
         .sort()
         .reverse();
 

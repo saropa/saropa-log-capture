@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './config';
+import { getConfig, getLogDirectoryUri } from './config';
 import type { SessionMeta } from './session-metadata';
 import type { FingerprintEntry } from './error-fingerprint';
 
@@ -54,11 +54,26 @@ export async function aggregateInsights(): Promise<CrossSessionInsights> {
 
 interface LoadedMeta { readonly filename: string; readonly meta: SessionMeta }
 
+const maxScanDepth = 10;
+
 async function listMetaFiles(logDir: vscode.Uri): Promise<string[]> {
-    try {
-        const all = await vscode.workspace.fs.readDirectory(logDir);
-        return all.filter(([n, t]) => t === vscode.FileType.File && n.endsWith('.meta.json')).map(([n]) => n);
-    } catch { return []; }
+    const { includeSubfolders } = getConfig();
+    return collectMetaFiles(logDir, includeSubfolders ? maxScanDepth : 0, '');
+}
+
+async function collectMetaFiles(dir: vscode.Uri, depth: number, prefix: string): Promise<string[]> {
+    let entries: [string, vscode.FileType][];
+    try { entries = await vscode.workspace.fs.readDirectory(dir); } catch { return []; }
+    const results: string[] = [];
+    for (const [name, type] of entries) {
+        const rel = prefix ? `${prefix}/${name}` : name;
+        if (type === vscode.FileType.File && name.endsWith('.meta.json')) { results.push(rel); }
+        // Skip dotfiles (.git, .vscode, etc.)
+        else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
+            results.push(...await collectMetaFiles(vscode.Uri.joinPath(dir, name), depth - 1, rel));
+        }
+    }
+    return results;
 }
 
 async function loadMeta(logDir: vscode.Uri, filename: string): Promise<LoadedMeta | undefined> {
