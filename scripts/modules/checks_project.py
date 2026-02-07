@@ -6,7 +6,6 @@ and version consistency before we attempt any package or publish operations.
 """
 
 import datetime
-import json
 import os
 import re
 
@@ -214,6 +213,49 @@ def check_file_line_limits() -> bool:
 # ── Version ────────────────────────────────────────────────
 
 
+def _parse_semver(version: str) -> tuple[int, ...]:
+    """Parse a semver string into a tuple of ints for comparison."""
+    return tuple(int(x) for x in version.split("."))
+
+
+def _get_changelog_max_version() -> str | None:
+    """Return the highest versioned heading in CHANGELOG.md, or None."""
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    versions: list[str] = []
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            for line in f:
+                m = re.match(r'^## \[(\d+\.\d+\.\d+)\]', line)
+                if m:
+                    versions.append(m.group(1))
+    except OSError:
+        return None
+    if not versions:
+        return None
+    return max(versions, key=_parse_semver)
+
+
+def _ask_version(current: str) -> str | None:
+    """Prompt user to confirm or override the version. Returns version or None."""
+    try:
+        answer = input(
+            f"  {C.YELLOW}Publish as v{current}? "
+            f"[Y/n/version]: {C.RESET}",
+        ).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+    if not answer or answer.lower() in ("y", "yes"):
+        return current
+    if answer.lower() in ("n", "no"):
+        return None
+    # Treat as a version string — validate basic semver shape
+    if re.match(r'^\d+\.\d+\.\d+$', answer):
+        return answer
+    fail(f"Invalid version format: {answer} (expected x.y.z)")
+    return None
+
+
 def has_unreleased_section() -> bool:
     """Check if CHANGELOG.md has an ## [Unreleased] section.
 
@@ -246,20 +288,32 @@ def _bump_patch(version: str) -> str:
 
 
 def _write_package_version(version: str) -> bool:
-    """Write a new version string into package.json."""
+    """Write a new version string into package.json.
+
+    Uses regex replacement to preserve key order and formatting,
+    avoiding json.dump which alphabetizes keys.
+    """
     pkg_path = os.path.join(PROJECT_ROOT, "package.json")
     try:
         with open(pkg_path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (OSError, json.JSONDecodeError):
+            content = f.read()
+    except OSError:
         fail("Could not read package.json")
         return False
 
-    data["version"] = version
+    updated, count = re.subn(
+        r'("version"\s*:\s*")([^"]+)(")',
+        rf'\g<1>{version}\3',
+        content,
+        count=1,
+    )
+    if count == 0:
+        fail("Could not find 'version' field in package.json")
+        return False
+
     try:
         with open(pkg_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write("\n")
+            f.write(updated)
     except OSError:
         fail("Could not write package.json")
         return False
@@ -324,16 +378,26 @@ def _stamp_changelog(version: str) -> bool:
 
 
 def validate_version_changelog() -> tuple[str, bool]:
-    """Validate version, resolve tag conflicts, and stamp CHANGELOG.
+    """Validate version, resolve tag conflicts, confirm, and stamp CHANGELOG.
 
     1. package.json must have a valid version (source of truth)
-    2. CHANGELOG.md must have an ## [Unreleased] section
-    3. The version must not already be tagged (auto-bumps if so)
-    4. Stamp CHANGELOG: [Unreleased] → [version] - today
+    2. Version must be greater than the highest released version in CHANGELOG
+    3. CHANGELOG.md must have an ## [Unreleased] section
+    4. The version must not already be tagged (auto-bumps if so)
+    5. User confirms or overrides the final version
+    6. Stamp CHANGELOG: [Unreleased] → [version] - today
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
         fail("Could not read version from package.json")
+        return pkg_version, False
+
+    # Guard: prevent version downgrades
+    max_cl = _get_changelog_max_version()
+    if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
+        fail(
+            f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
+        info(f"Set package.json version higher than {max_cl}")
         return pkg_version, False
 
     if not has_unreleased_section():
@@ -344,6 +408,21 @@ def validate_version_changelog() -> tuple[str, bool]:
     version, tag_ok = _ensure_untagged_version(pkg_version)
     if not tag_ok:
         return version, False
+
+    # Let the user confirm or override the version
+    confirmed = _ask_version(version)
+    if confirmed is None:
+        fail("Version not confirmed.")
+        return version, False
+    if confirmed != version:
+        # User overrode — re-check tag availability
+        if _is_version_tagged(confirmed):
+            fail(f"Tag 'v{confirmed}' already exists.")
+            return confirmed, False
+        if not _write_package_version(confirmed):
+            return confirmed, False
+        fix(f"package.json: {version} → {C.WHITE}{confirmed}{C.RESET}")
+        version = confirmed
 
     if not _stamp_changelog(version):
         return version, False

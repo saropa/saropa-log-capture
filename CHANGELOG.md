@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.2.9] - 2026-02-07
+## [Unreleased]
 
 ### Added
 - **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
@@ -34,11 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Exclusions bypassed when `captureAll` enabled:** The `captureAll` setting previously bypassed both category filtering and exclusion filtering. Now it only bypasses category filtering — user-configured exclusions always apply independently.
 - **Early debug output missed on session start:** The DAP tracker activates synchronously but session initialization is async (disk I/O). Output events arriving during this window were silently dropped. Added an early event buffer that captures events before the session is registered and replays them once initialization completes.
 - **Timestamp/milliseconds/elapsed checkboxes disabled:** The Timestamp, Show milliseconds, and Elapsed time decoration toggles under Line prefix were non-interactive due to a `timestampsAvailable` flag that could disable them. Removed the mechanism so these toggles are always user-controllable.
-
----
-## [0.3.0] - 2026-02-06
-
-- **Version bump**
 
 ---
 ## [0.2.9] - 2026-02-05
