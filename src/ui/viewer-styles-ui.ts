@@ -233,8 +233,9 @@ export function getUiStyles(): string {
 .level-flyup-context { border-top: 1px solid var(--vscode-panel-border); margin-top: 4px; padding: 4px 4px 2px; }
 .level-flyup-context-label { font-size: 10px; color: var(--vscode-descriptionForeground); }
 .level-flyup-context input[type="range"] { width: 100%; margin-top: 2px; }
-/* Lines outside the active level filter are dimmed as context */
 .line.context-line { opacity: 0.4; }
+.line.context-first { position: relative; }
+.line.context-first::before { content: ''; position: absolute; top: 0; left: 8px; right: 8px; border-top: 1px dashed rgba(128,128,128,0.35); }
 
 /* ===================================================================
    Inline Peek

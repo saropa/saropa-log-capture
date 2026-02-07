@@ -105,6 +105,94 @@ Add a few toggle icons to the `view/title` bar for the most common operations, k
 ## Recommendation
 **Option D (Hybrid)** provides the best balance. Add 2-3 toggle icons to the view title bar for quick access to the most-used filters, while keeping the full slide-out panels for detailed configuration. This gives users the familiar "toolbar buttons" experience without trying to replicate a text input that the API doesn't support.
 
+## Implementation Spec (Option D)
+
+### New Commands
+
+| Command ID | Title | Icon | Purpose |
+|---|---|---|---|
+| `saropaLogCapture.toggleExclusions` | Toggle Exclusion Filters | `$(filter)` | Enable/disable all exclusion rules |
+| `saropaLogCapture.toggleAppOnly` | Toggle App-Only Mode | `$(telescope)` | Show only app lines, hide framework |
+| `saropaLogCapture.quickPickLevel` | Filter by Level... | `$(warning)` | Open quick pick with severity checkboxes |
+
+### Context Keys (for icon state)
+
+Set via `vscode.commands.executeCommand('setContext', key, value)` whenever filter state changes.
+
+| Context Key | Type | Set When |
+|---|---|---|
+| `saropaLogCapture.exclusionsActive` | `boolean` | Exclusion rules are enabled and at least one rule exists |
+| `saropaLogCapture.appOnlyActive` | `boolean` | App-only / framework filter is on |
+| `saropaLogCapture.levelFilterActive` | `boolean` | Any severity level is hidden |
+
+### package.json Changes
+
+**`contributes.commands`** — add the three commands above.
+
+**`contributes.menus.view/title`** — add entries (existing entries unchanged):
+
+```jsonc
+{
+  "command": "saropaLogCapture.toggleExclusions",
+  "when": "view == saropaLogCapture.logViewer",
+  "group": "navigation"
+},
+{
+  "command": "saropaLogCapture.toggleAppOnly",
+  "when": "view == saropaLogCapture.logViewer",
+  "group": "navigation"
+},
+{
+  "command": "saropaLogCapture.quickPickLevel",
+  "when": "view == saropaLogCapture.logViewer",
+  "group": "navigation"
+}
+```
+
+**Icon toggle appearance** — use `when` clauses on alternative command entries or the `enablement` property. VS Code does not natively toggle icon appearance, but you can register two menu entries with opposite `when` clauses to swap icons:
+
+```jsonc
+{
+  "command": "saropaLogCapture.toggleExclusions",
+  "when": "view == saropaLogCapture.logViewer && !saropaLogCapture.exclusionsActive",
+  "group": "navigation"
+},
+{
+  "command": "saropaLogCapture.toggleExclusionsOff",
+  "when": "view == saropaLogCapture.logViewer && saropaLogCapture.exclusionsActive",
+  "group": "navigation"
+}
+```
+
+Both commands call the same handler; only the icon differs (`$(filter)` vs `$(filter-filled)`). Same pattern for app-only toggle.
+
+### Extension ↔ Webview Round-Trip
+
+Title bar commands live in the extension host but filters live in webview state. The flow:
+
+1. User clicks title bar icon → extension command handler fires
+2. Handler calls `broadcaster.postMessage({ type: 'toggleExclusions' })`
+3. Webview receives message → calls existing `toggleExclusions()` function
+4. Webview posts back `{ type: 'filterStateChanged', exclusionsActive, appOnlyActive, levelFilterActive }`
+5. Extension updates context keys via `setContext`
+
+This reuses the existing webview filter functions (`toggleExclusions()`, `toggleAppOnly()`, `toggleLevelMenu()`) — no new filter logic needed.
+
+### Quick Pick for Levels
+
+`saropaLogCapture.quickPickLevel` opens `vscode.window.showQuickPick` with multi-select:
+
+- Items: `Verbose`, `Debug`, `Info`, `Warning`, `Error`, `Fatal`, `Unknown`
+- Pre-selected: currently visible levels (read from webview state via round-trip)
+- On accept: post `{ type: 'setLevelFilter', levels: [...] }` to webview
+- Last item: `Configure...` → opens the full level panel in the webview
+
+This loses the context lines slider but covers the most common use case (toggling levels). The `Configure...` escape hatch preserves access to the full UI.
+
+### Title Bar Icon Limit
+
+VS Code shows approximately 4-5 icons inline before overflowing to `...`. With the existing pop-out button plus 3 new icons (4 total), the bar stays within the comfortable limit. If more icons are added later, lower-priority ones should drop `"group": "navigation"` to move them into the overflow menu.
+
 ## Priority
 Low — the current filtering system is fully functional and more capable than native panels. This is a discoverability and convenience improvement.
 
