@@ -144,7 +144,7 @@ function formatAffectedFiles(analyses: readonly FileAnalysis[]): string[] {
 }
 
 function formatOneFileAnalysis(fa: FileAnalysis): string {
-    const name = fa.filePath.split(/[\\/]/).pop() ?? fa.filePath;
+    const name = shortName(fa.filePath);
     const lines = fa.frameLines.map(l => `L${l}`).join(', ');
     let md = `### ${name}\n\n**Stack trace lines:** ${lines}`;
     if (fa.blame) {
@@ -182,7 +182,7 @@ function formatDocMatches(results: DocScanResults): string {
 
 function formatSymbolDefs(results: SymbolResults): string {
     const rows = results.symbols.map(s => {
-        const file = s.uri.fsPath.split(/[\\/]/).pop() ?? '';
+        const file = shortName(s.uri.fsPath);
         return `| ${s.kind} | ${escapePipe(s.name)} | ${file}:${s.line} | ${escapePipe(s.containerName)} |`;
     });
     return [
