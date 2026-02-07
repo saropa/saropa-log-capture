@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from './ansi';
-import { extractSourceReference } from './source-linker';
+import { extractSourceReference, type SourceReference } from './source-linker';
 import { normalizeLine, hashFingerprint } from './error-fingerprint';
 import { isFrameworkFrame, isStackFrameLine } from './stack-parser';
 import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
@@ -20,10 +20,20 @@ import { scanDocsForTokens, type DocScanResults } from './docs-scanner';
 import { extractImports, type ImportResults } from './import-extractor';
 import { resolveSymbols, type SymbolResults } from './symbol-resolver';
 
-/** A classified stack frame. */
+/** A classified stack frame with optional parsed source reference. */
 export interface StackFrame {
     readonly text: string;
     readonly isApp: boolean;
+    readonly sourceRef?: SourceReference;
+}
+
+/** Git analysis data for a source file referenced in the stack trace. */
+export interface FileAnalysis {
+    readonly filePath: string;
+    readonly uri: vscode.Uri;
+    readonly blame?: BlameLine;
+    readonly recentCommits: readonly GitCommit[];
+    readonly frameLines: readonly number[];
 }
 
 /** Cross-session match data for the same error fingerprint. */
@@ -50,12 +60,14 @@ export interface BugReportData {
     readonly docMatches?: DocScanResults;
     readonly imports?: ImportResults;
     readonly resolvedSymbols?: SymbolResults;
+    readonly fileAnalyses: readonly FileAnalysis[];
     readonly logFilename: string;
     readonly lineNumber: number;
 }
 
 const maxContextLines = 15;
 const maxStackFrames = 100;
+const maxAnalyzedFiles = 5;
 const headerSeparator = '==================';
 
 /** Collect all bug report data for an error line. */
@@ -79,11 +91,12 @@ export async function collectBugReportData(
     const tokens = extractAnalysisTokens(cleanError);
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
-    const [wsData, devEnv, docMatches, resolvedSymbols] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
         resolveSymbols(tokens).catch(() => undefined),
+        collectFileAnalyses(stackTrace, sourceRef?.filePath),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
 
@@ -91,7 +104,7 @@ export async function collectBugReportData(
         errorLine: cleanError, fingerprint, stackTrace, logContext,
         environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
-        resolvedSymbols, logFilename, lineNumber: fileLineIndex + 1,
+        resolvedSymbols, fileAnalyses, logFilename, lineNumber: fileLineIndex + 1,
     };
 }
 
@@ -123,17 +136,30 @@ function extractStackTrace(lines: readonly string[], errorIdx: number): StackFra
         const line = lines[i];
         if (!isStackFrameLine(line)) { break; }
         const text = stripAnsi(line).trimEnd();
-        frames.push({ text, isApp: !isFrameworkFrame(text, wsPath) });
+        const sourceRef = extractSourceReference(text);
+        frames.push({ text, isApp: !isFrameworkFrame(text, wsPath), sourceRef });
     }
     return frames;
 }
 
 type WsResult = [SourceCodePreview | undefined, BlameLine | undefined, GitCommit[], CrossSessionMatch | undefined, GitCommit[], ImportResults | undefined];
 
+async function resolveSourceUri(path: string): Promise<vscode.Uri | undefined> {
+    if (/^[A-Za-z]:[\\/]|^\//.test(path)) {
+        try {
+            const uri = vscode.Uri.file(path);
+            await vscode.workspace.fs.stat(uri);
+            return uri;
+        } catch { /* fall through to workspace search */ }
+    }
+    const name = path.split(/[\\/]/).pop();
+    return name ? findInWorkspace(name) : undefined;
+}
+
 async function collectWorkspaceData(
     filePath: string | undefined, crashLine: number | undefined, fingerprint: string,
 ): Promise<WsResult> {
-    const uri = filePath ? await findInWorkspace(filePath) : undefined;
+    const uri = filePath ? await resolveSourceUri(filePath) : undefined;
     const lineStart = crashLine ? Math.max(1, crashLine - 2) : 0;
     const lineEnd = crashLine ? crashLine + 2 : 0;
     const [preview, blame, history, lineHistory, insights, imports] = await Promise.all([
@@ -150,4 +176,33 @@ async function collectWorkspaceData(
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,
     } : undefined;
     return [preview, blame, history, crossMatch, lineHistory, imports];
+}
+
+async function collectFileAnalyses(
+    frames: readonly StackFrame[], primaryFile?: string,
+): Promise<FileAnalysis[]> {
+    const fileMap = new Map<string, number[]>();
+    for (const f of frames) {
+        if (!f.isApp || !f.sourceRef) { continue; }
+        const key = f.sourceRef.filePath;
+        if (primaryFile && key === primaryFile) { continue; }
+        const arr = fileMap.get(key) ?? [];
+        arr.push(f.sourceRef.line);
+        fileMap.set(key, arr);
+    }
+    const entries = [...fileMap.entries()].slice(0, maxAnalyzedFiles);
+    const results = await Promise.all(entries.map(([p, lines]) => analyzeOneFile(p, lines)));
+    return results.filter((r): r is FileAnalysis => r !== undefined);
+}
+
+async function analyzeOneFile(
+    filePath: string, frameLines: readonly number[],
+): Promise<FileAnalysis | undefined> {
+    const uri = await resolveSourceUri(filePath);
+    if (!uri) { return undefined; }
+    const [blame, commits] = await Promise.all([
+        getGitBlame(uri, frameLines[0]).catch(() => undefined),
+        getGitHistory(uri, 5).catch(() => []),
+    ]);
+    return { filePath, uri, blame, recentCommits: commits, frameLines };
 }
