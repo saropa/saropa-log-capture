@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Error fingerprints:** Sessions are scanned for error lines on finalization. Errors are normalized (timestamps, UUIDs, numbers removed) and hashed for cross-session grouping. Stored in sidecar metadata.
 - **Analyze Across Sessions:** New context menu item on log lines. Extracts tokens (source files, error classes, URLs, etc.) from the line and searches all past sessions, showing results grouped by token type with workspace context (git history, source annotations).
 - **Cross-Session Insights panel:** New command in the session history toolbar. Aggregates data across all sessions to show hot files (most-referenced source files) and recurring error patterns with session/occurrence counts.
+- **Generate Bug Report:** Right-click an error line → "Generate Bug Report" packages all evidence into structured markdown: error + fingerprint, stack trace (app vs framework), log context, environment, source code, git history, and cross-session matches. Auto-copied to clipboard and shown in a preview panel.
+- **Insights drill-down:** Click a recurring error in the Insights Panel to expand all occurrences grouped by session. Uses fuzzy regex matching so errors with different timestamps/IDs match across sessions. Click any match to jump to that line.
+- **Session Timeline:** Right-click a session in Session History → "Show Timeline" to see an SVG chart plotting errors, warnings, and performance issues over time. Click a dot to navigate to that line. Auto-buckets dense sessions for smooth rendering.
+
+### Improved
+- **Logcat-aware level classification:** Android logcat prefixes (`E/`, `W/`, `I/`, `D/`, `V/`, `F/`) are now used as the primary level signal. Previously, text pattern matching could override the prefix — e.g. `I/CCodecConfig: query failed` was misclassified as 'error' due to the word "failed". Now the logcat prefix takes priority, preventing false error/warning classifications on framework info/debug lines. Content-type patterns (performance, TODO) still refine `D/`/`V/`/`I/` lines.
+
+### Added
+- **Deemphasize Framework Levels setting:** New `saropaLogCapture.deemphasizeFrameworkLevels` option (default: off). When enabled, framework log lines (`fw=true`) no longer show error/warning text coloring — resolving the visual mismatch where framework `E/` lines showed red text but a blue severity bar. The log level prefix is just the opinion of the code author; framework `E/` logs are often handled internally with no user impact.
 
 ### Fixed
 - **"App Only: OFF" not capturing all debug output:** With default settings, debug adapters that send output under non-standard DAP categories (e.g. Flutter system logs) were silently dropped because `captureAll` defaulted to `false`. Changed the default to `true` so all Debug Console output is captured regardless of category, matching the "never lose data" design principle.

@@ -189,7 +189,8 @@ function renderItem(item, idx) {
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     // Only apply level color when decorations are off (decorator shows level via colored dot)
     var hasDeco = (typeof showDecorations !== 'undefined' && showDecorations);
-    var levelCls = (item.level && !hasDeco && !item.isContext) ? ' level-' + item.level : '';
+    var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
+    var levelCls = (item.level && !hasDeco && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
     var sepCls = item.isSeparator ? ' separator-line' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';

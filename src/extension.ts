@@ -13,6 +13,8 @@ import { extractSourceReference } from './modules/source-linker';
 import { disposeComparisonPanel } from './ui/session-comparison';
 import { disposeAnalysisPanel } from './ui/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights-panel';
+import { disposeBugReportPanel } from './ui/bug-report-panel';
+import { disposeTimelinePanel } from './ui/timeline-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -225,7 +227,8 @@ export function activate(context: vscode.ExtensionContext): void {
             broadcaster.setErrorClassificationSettings(
                 cfg.suppressTransientErrors ?? false,
                 cfg.breakOnCritical ?? false,
-                cfg.levelDetection ?? "strict"
+                cfg.levelDetection ?? "strict",
+                cfg.deemphasizeFrameworkLevels ?? false
             );
             if (cfg.highlightRules.length > 0) {
                 broadcaster.setHighlightRules(cfg.highlightRules);
@@ -258,5 +261,7 @@ export function deactivate(): void {
     disposeComparisonPanel();
     disposeAnalysisPanel();
     disposeInsightsPanel();
+    disposeBugReportPanel();
+    disposeTimelinePanel();
 }
 

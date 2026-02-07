@@ -235,7 +235,6 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// Single-click toggles a level; double-click solos it (or restores all if already solo)
 var dotGroups = document.querySelectorAll('.level-dot-group');
 for (var di = 0; di < dotGroups.length; di++) {
     (function(group) {
@@ -252,7 +251,6 @@ for (var di = 0; di < dotGroups.length; di++) {
     })(dotGroups[di]);
 }
 
-// Label text triggers the fly-up menu
 var triggerLabel = document.getElementById('level-trigger-label');
 if (triggerLabel) {
     triggerLabel.addEventListener('click', function(e) {
@@ -286,7 +284,6 @@ for (var li = 0; li < levelIds.length; li++) {
     })(levelIds[li]);
 }
 
-// Close fly-up on click outside (but not inside fly-up or trigger)
 document.addEventListener('click', function(e) {
     if (!levelMenuOpen) return;
     var flyup = document.getElementById('level-flyup');
@@ -295,8 +292,6 @@ document.addEventListener('click', function(e) {
         closeLevelMenu();
     }
 });
-
-// Close fly-up on Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && levelMenuOpen) closeLevelMenu();
 });

@@ -45,6 +45,8 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   /** Show notification when critical errors appear (NullPointerException, AssertionError, etc.). */
   readonly breakOnCritical: boolean;
+  /** Suppress error/warning text coloring on framework log lines (fw=true). */
+  readonly deemphasizeFrameworkLevels: boolean;
   /** How aggressively to classify lines as errors: strict requires structural context, loose matches keywords anywhere. */
   readonly levelDetection: "strict" | "loose";
   /** Log all raw DAP protocol messages (requests, responses, events) to the log file. */
@@ -154,6 +156,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     contextViewLines: cfg.get<number>("contextViewLines", 10),
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
     breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
+    deemphasizeFrameworkLevels: cfg.get<boolean>("deemphasizeFrameworkLevels", false),
     levelDetection: cfg.get<string>("levelDetection", "strict") as "strict" | "loose",
     verboseDap: cfg.get<boolean>("verboseDap", false),
     fileTypes: cfg.get<string[]>("fileTypes", [
