@@ -218,6 +218,26 @@
         "command": "saropaLogCapture.exportJsonl",
         "title": "Export as JSONL",
         "icon": "$(list-flat)"
+      },
+      {
+        "command": "saropaLogCapture.trashSession",
+        "title": "Move to Trash",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "saropaLogCapture.restoreSession",
+        "title": "Restore from Trash",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "saropaLogCapture.emptyTrash",
+        "title": "Saropa Log Capture: Empty Trash",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "saropaLogCapture.toggleTrash",
+        "title": "Saropa Log Capture: Toggle Trash Visibility",
+        "icon": "$(eye)"
       }
     ],
     "viewsContainers": {
@@ -259,6 +279,16 @@
         },
         {
           "command": "saropaLogCapture.filterByTag",
+          "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.toggleTrash",
+          "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.emptyTrash",
           "when": "view == saropaLogCapture.sessionHistory",
           "group": "navigation"
         },
@@ -335,6 +365,21 @@
           "command": "saropaLogCapture.showTimeline",
           "when": "viewItem == session",
           "group": "analysis"
+        },
+        {
+          "command": "saropaLogCapture.trashSession",
+          "when": "viewItem == session",
+          "group": "trash"
+        },
+        {
+          "command": "saropaLogCapture.restoreSession",
+          "when": "viewItem == trashed-session",
+          "group": "trash"
+        },
+        {
+          "command": "saropaLogCapture.openSession",
+          "when": "viewItem == trashed-session",
+          "group": "inline"
         }
       ]
     },

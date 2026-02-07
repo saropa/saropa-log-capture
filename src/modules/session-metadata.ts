@@ -20,6 +20,8 @@ export interface SessionMeta {
     /** Error fingerprints extracted from log content. */
     fingerprints?: FingerprintEntry[];
     annotations?: Annotation[];
+    /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
+    trashed?: boolean;
 }
 
 /** Manages sidecar .meta.json files alongside .log files. */
@@ -83,6 +85,13 @@ export class SessionMetadataStore {
     async setFingerprints(logUri: vscode.Uri, fingerprints: FingerprintEntry[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.fingerprints = fingerprints;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Mark or unmark a session as trashed. */
+    async setTrashed(logUri: vscode.Uri, trashed: boolean): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        if (trashed) { meta.trashed = true; } else { delete meta.trashed; }
         await this.saveMetadata(logUri, meta);
     }
 

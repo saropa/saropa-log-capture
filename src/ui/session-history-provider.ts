@@ -19,6 +19,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private readonly metaCache = new Map<string, SessionMetadata>();
     private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
     private tagFilter: ReadonlySet<string> | undefined;
+    private showTrash = false;
     private refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor() {
@@ -34,6 +35,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     setTagFilter(tags: ReadonlySet<string> | undefined): void { this.tagFilter = tags; this.refresh(); }
     /** Get the current tag filter. */
     getTagFilter(): ReadonlySet<string> | undefined { return this.tagFilter; }
+
+    /** Toggle visibility of trashed sessions. Refreshes tree automatically. */
+    setShowTrash(show: boolean): void { this.showTrash = show; this.refresh(); }
+    /** Whether trashed sessions are currently visible. */
+    getShowTrash(): boolean { return this.showTrash; }
 
     /** Mark the currently-recording session so it gets a distinct icon. */
     setActiveUri(uri: vscode.Uri | undefined): void {
@@ -70,12 +76,16 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         ti.tooltip = buildTooltip(renderItem);
         const baseDescription = buildDescription(renderItem, this.displayOptions.showDayHeadings, isActive);
         ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
-        ti.iconPath = new vscode.ThemeIcon(
-            isActive ? 'record' : (item.hasTimestamps ? 'history' : 'output'),
-            isActive ? new vscode.ThemeColor('charts.red') : undefined,
-        );
+        if (item.trashed) {
+            ti.iconPath = new vscode.ThemeIcon('trash', new vscode.ThemeColor('disabledForeground'));
+        } else {
+            ti.iconPath = new vscode.ThemeIcon(
+                isActive ? 'record' : (item.hasTimestamps ? 'history' : 'output'),
+                isActive ? new vscode.ThemeColor('charts.red') : undefined,
+            );
+        }
         ti.command = { command: 'saropaLogCapture.openSession', title: 'Open', arguments: [item] };
-        ti.contextValue = 'session';
+        ti.contextValue = item.trashed ? 'trashed-session' : 'session';
         return ti;
     }
 
@@ -95,6 +105,14 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     /** Expose the metadata store for use by commands. */
     getMetaStore(): SessionMetadataStore {
         return this.metaStore;
+    }
+
+    /** Invalidate cached metadata for a URI (e.g. after sidecar change). */
+    invalidateMeta(uri: vscode.Uri): void {
+        const prefix = uri.toString() + '|';
+        for (const key of this.metaCache.keys()) {
+            if (key.startsWith(prefix)) { this.metaCache.delete(key); break; }
+        }
     }
 
     /** Find a top-level tree item whose URI matches (or whose split group contains it). */
@@ -153,7 +171,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
             const items = await Promise.all(logFiles.map(rel => this.loadMetadata(logDir, rel)));
             this.pruneCache(items);
-            const grouped = groupSplitFiles(items);
+            const visible = this.showTrash ? items : items.filter(i => !i.trashed);
+            const grouped = groupSplitFiles(visible);
             const sorted = grouped.sort((a, b) => b.mtime - a.mtime);
             if (this.tagFilter && this.tagFilter.size > 0) {
                 return sorted.filter(item => matchesTagFilter(item, this.tagFilter!));
@@ -222,6 +241,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (sidecar.correlationTags && sidecar.correlationTags.length > 0) {
             meta = { ...meta, correlationTags: sidecar.correlationTags };
         }
+        if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
         this.metaCache.set(cacheKey, meta);
         return meta;
     }
