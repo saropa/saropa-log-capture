@@ -5,7 +5,17 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [0.2.10] - 2026-02-06
+
+### Fixed
+- **"App Only: OFF" not capturing all debug output:** With default settings, debug adapters that send output under non-standard DAP categories (e.g. Flutter system logs) were silently dropped because `captureAll` defaulted to `false`. Changed the default to `true` so all Debug Console output is captured regardless of category, matching the "never lose data" design principle.
+- **Exclusions bypassed when `captureAll` enabled:** The `captureAll` setting previously bypassed both category filtering and exclusion filtering. Now it only bypasses category filtering — user-configured exclusions always apply independently.
+
+---
 ## [0.2.9] - 2026-02-05
+
+### Improved
+- **Context lines visual separation:** When level filtering shows context lines around matches, the first context line in each group now displays a subtle dashed separator. Context lines no longer show level coloring, tint, or severity bars — they appear uniformly dimmed to clearly distinguish them from matched lines.
 
 ### Added
 - **Level detection mode (`saropaLogCapture.levelDetection`):** New setting to control how aggressively lines are classified as errors. `"strict"` (default) requires keywords in label positions (`Error:`, `[ERROR]`, `TypeError:`) and only applies bug/critical/transient badges to error-level lines. `"loose"` matches keywords anywhere in the text but excludes common descriptive compounds (e.g. "error handling", "error recovery"). Both modes are smarter than the previous behavior, which flagged lint descriptions like "complicates error handling" as errors.

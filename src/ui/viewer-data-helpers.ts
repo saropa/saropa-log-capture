@@ -189,7 +189,7 @@ function renderItem(item, idx) {
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     // Only apply level color when decorations are off (decorator shows level via colored dot)
     var hasDeco = (typeof showDecorations !== 'undefined' && showDecorations);
-    var levelCls = (item.level && !hasDeco) ? ' level-' + item.level : '';
+    var levelCls = (item.level && !hasDeco && !item.isContext) ? ' level-' + item.level : '';
     var sepCls = item.isSeparator ? ' separator-line' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
@@ -210,12 +210,12 @@ function renderItem(item, idx) {
         titleAttr = hl.titleAttr;
     }
 
-    var ctxCls = item.isContext ? ' context-line' : '';
-    var tintCls = (typeof getLineTintClass === 'function') ? getLineTintClass(item) : '';
+    var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
+    var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
 
     // Add severity bar class if enabled
     var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level) {
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
         if (item.fw) {
             barCls = ' level-bar-framework';
         } else {
