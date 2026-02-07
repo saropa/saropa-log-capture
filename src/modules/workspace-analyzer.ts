@@ -32,6 +32,7 @@ export interface SourceCodePreview {
 export interface WorkspaceFileInfo {
     readonly uri: vscode.Uri;
     readonly gitCommits: readonly GitCommit[];
+    readonly lineCommits: readonly GitCommit[];
     readonly annotations: readonly SourceAnnotation[];
     readonly sourcePreview?: SourceCodePreview;
 }
@@ -99,12 +100,21 @@ export async function analyzeSourceFile(filename: string, crashLine?: number): P
         crashLine ? getSourcePreview(uri, crashLine) : Promise.resolve(undefined),
     ]);
     const allCommits = mergeCommits(gitCommits, lineCommits);
-    return { uri, gitCommits: allCommits, annotations, sourcePreview };
+    return { uri, gitCommits: allCommits, lineCommits, annotations, sourcePreview };
 }
 
 function mergeCommits(file: GitCommit[], line: GitCommit[]): GitCommit[] {
     const seen = new Set(file.map(c => c.hash));
     return [...file, ...line.filter(c => !seen.has(c.hash))];
+}
+
+/** Run a git command and return stdout. Returns empty string on error. */
+export function runGitCommand(args: string[], cwd: string): Promise<string> {
+    return new Promise((resolve) => {
+        execFile('git', args, { cwd, timeout: 5000 }, (err, stdout) => {
+            resolve(err ? '' : (stdout ?? '').trim());
+        });
+    });
 }
 
 function runGit(args: string[], cwd: string): Promise<GitCommit[]> {

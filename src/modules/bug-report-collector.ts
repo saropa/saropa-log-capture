@@ -11,8 +11,13 @@ import { stripAnsi } from './ansi';
 import { extractSourceReference } from './source-linker';
 import { normalizeLine, hashFingerprint } from './error-fingerprint';
 import { isFrameworkFrame } from './stack-parser';
-import { findInWorkspace, getSourcePreview, getGitHistory, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
+import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
 import { aggregateInsights } from './cross-session-aggregator';
+import { collectDevEnvironment, formatDevEnvironment } from './environment-collector';
+import { extractAnalysisTokens } from './line-analyzer';
+import { scanDocsForTokens, type DocScanResults } from './docs-scanner';
+import { extractImports, type ImportResults } from './import-extractor';
+import { resolveSymbols, type SymbolResults } from './symbol-resolver';
 
 /** A classified stack frame. */
 export interface StackFrame {
@@ -35,9 +40,14 @@ export interface BugReportData {
     readonly stackTrace: readonly StackFrame[];
     readonly logContext: readonly string[];
     readonly environment: Record<string, string>;
+    readonly devEnvironment: Record<string, string>;
     readonly sourcePreview?: SourceCodePreview;
     readonly gitHistory: readonly GitCommit[];
     readonly crossSessionMatch?: CrossSessionMatch;
+    readonly lineRangeHistory: readonly GitCommit[];
+    readonly docMatches?: DocScanResults;
+    readonly imports?: ImportResults;
+    readonly resolvedSymbols?: SymbolResults;
     readonly logFilename: string;
     readonly lineNumber: number;
 }
@@ -64,14 +74,22 @@ export async function collectBugReportData(
     const stackTrace = extractStackTrace(allLines, fileLineIndex);
     const sourceRef = extractSourceReference(cleanError);
 
-    const [sourcePreview, gitHistory, crossSessionMatch] = await collectWorkspaceData(
-        sourceRef?.filePath, sourceRef?.line, fingerprint,
-    );
+    const tokens = extractAnalysisTokens(cleanError);
+    const tokenNames = tokens.map(t => t.value);
+    const wsFolder = vscode.workspace.workspaceFolders?.[0];
+    const [wsData, devEnv, docMatches, resolvedSymbols] = await Promise.all([
+        collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
+        collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
+        wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
+        resolveSymbols(tokens).catch(() => undefined),
+    ]);
+    const [sourcePreview, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
 
     return {
         errorLine: cleanError, fingerprint, stackTrace, logContext,
-        environment, sourcePreview, gitHistory, crossSessionMatch,
-        logFilename, lineNumber: fileLineIndex + 1,
+        environment, devEnvironment: devEnv, sourcePreview, gitHistory,
+        crossSessionMatch, lineRangeHistory, docMatches, imports,
+        resolvedSymbols, logFilename, lineNumber: fileLineIndex + 1,
     };
 }
 
@@ -119,19 +137,25 @@ function isStackFrameLine(line: string): boolean {
     return /^\s+\S+\.\S+:\d+/.test(line);
 }
 
+type WsResult = [SourceCodePreview | undefined, GitCommit[], CrossSessionMatch | undefined, GitCommit[], ImportResults | undefined];
+
 async function collectWorkspaceData(
     filePath: string | undefined, crashLine: number | undefined, fingerprint: string,
-): Promise<[SourceCodePreview | undefined, GitCommit[], CrossSessionMatch | undefined]> {
+): Promise<WsResult> {
     const uri = filePath ? await findInWorkspace(filePath) : undefined;
-    const [preview, history, insights] = await Promise.all([
+    const lineStart = crashLine ? Math.max(1, crashLine - 2) : 0;
+    const lineEnd = crashLine ? crashLine + 2 : 0;
+    const [preview, history, lineHistory, insights, imports] = await Promise.all([
         uri && crashLine ? getSourcePreview(uri, crashLine) : Promise.resolve(undefined),
         uri ? getGitHistory(uri, 10) : Promise.resolve([]),
+        uri && crashLine ? getGitHistoryForLines(uri, lineStart, lineEnd) : Promise.resolve([]),
         aggregateInsights(),
+        uri ? extractImports(uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
     const match = insights.recurringErrors.find(e => e.hash === fingerprint);
     const crossMatch = match ? {
         sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences,
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,
     } : undefined;
-    return [preview, history, crossMatch];
+    return [preview, history, crossMatch, lineHistory, imports];
 }
