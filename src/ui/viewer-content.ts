@@ -15,6 +15,7 @@ import { getDecoSettingsScript, getDecoSettingsHtml } from './viewer-deco-settin
 import { getStackFilterScript } from './viewer-stack-filter';
 import { getStackDedupScript } from './viewer-stack-dedup';
 import { getSplitNavScript } from './viewer-split-nav';
+import { getSessionNavScript } from './viewer-session-nav';
 import { getJsonScript } from './viewer-json';
 import { getHighlightScript } from './viewer-highlight';
 import { getPresetsScript } from './viewer-presets';
@@ -84,9 +85,14 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
 </head>
 <body>
     <div id="main-content">
+    <div id="session-nav">
+        <button id="session-prev" title="Previous session (older)" disabled>&#x25C0; Prev</button>
+        <span class="nav-bar-label">Session <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
+        <button id="session-next" title="Next session (newer)" disabled>Next &#x25B6;</button>
+    </div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>
-        <span class="part-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
+        <span class="nav-bar-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
@@ -161,6 +167,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getStackDedupScript())}
     ${scriptTag(nonce, getStackFilterScript())}
     ${scriptTag(nonce, getSplitNavScript())}
+    ${scriptTag(nonce, getSessionNavScript())}
     ${scriptTag(nonce, getJsonScript())}
     ${scriptTag(nonce, getSearchScript())}
     ${scriptTag(nonce, getSearchTogglesScript())}

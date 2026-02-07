@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.10] - 2026-02-06
 
+### Added
+- **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
+
 ### Fixed
 - **"App Only: OFF" not capturing all debug output:** With default settings, debug adapters that send output under non-standard DAP categories (e.g. Flutter system logs) were silently dropped because `captureAll` defaulted to `false`. Changed the default to `true` so all Debug Console output is captured regardless of category, matching the "never lose data" design principle.
 - **Exclusions bypassed when `captureAll` enabled:** The `captureAll` setting previously bypassed both category filtering and exclusion filtering. Now it only bypasses category filtering — user-configured exclusions always apply independently.
