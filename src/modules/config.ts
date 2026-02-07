@@ -57,6 +57,8 @@ export interface SaropaLogCaptureConfig {
   readonly docsScanDirs: readonly string[];
   /** Include log files from subdirectories of the log directory. */
   readonly includeSubfolders: boolean;
+  /** Tree view refresh interval (seconds) during active recording. 0 = adaptive. */
+  readonly treeRefreshInterval: number;
 }
 
 const SECTION = "saropaLogCapture";
@@ -168,6 +170,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     ]),
     docsScanDirs: cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]),
     includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
+    treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
   };
 }
 

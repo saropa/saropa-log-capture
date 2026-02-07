@@ -456,6 +456,13 @@
           "default": true,
           "description": "Include log files from subdirectories of the log directory in the Project Logs panel, search, and analysis. Does not affect file retention."
         },
+        "saropaLogCapture.treeRefreshInterval": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 300,
+          "description": "Tree view refresh interval in seconds during active recording. 0 = adaptive (3s for small files, 10s for medium, 30s for large)."
+        },
         "saropaLogCapture.fileTypes": {
           "type": "array",
           "items": {
