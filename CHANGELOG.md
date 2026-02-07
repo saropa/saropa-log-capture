@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Improved
 - **Copy button:** Renamed from "Copy to Clipboard" to "Copy Markdown" for clarity.
-- **Save filename:** Default save filename now uses a date-timestamp prefix (e.g. `20260207_184603_bug_report.md`).
+- **Save filename:** Default save filename includes timestamp, `saropa_log_capture` branding, project name, and error subject (e.g. `20260207_184603_saropa_log_capture_contacts_email_panel_bug_report.md`).
 - **Preview link rendering:** Markdown `[text](url)` links now render as `<a>` tags in the bug report preview.
 - **Preview heading support:** Added `###` (h3) rendering for per-file subsection headings.
 

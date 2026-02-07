@@ -13,6 +13,7 @@ import { getBugReportStyles } from './bug-report-panel-styles';
 
 let panel: vscode.WebviewPanel | undefined;
 let lastMarkdown = '';
+let lastSubject = '';
 
 /** Generate a bug report and show it in the preview panel. */
 export async function showBugReport(
@@ -28,6 +29,7 @@ export async function showBugReport(
         },
     );
     lastMarkdown = formatBugReport(data);
+    lastSubject = deriveSubject(data.errorLine, data.fingerprint);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);
     vscode.window.showInformationMessage('Bug report markdown copied to clipboard.');
@@ -62,10 +64,18 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     }
 }
 
+function deriveSubject(errorLine: string, fingerprint: string): string {
+    const fileMatch = errorLine.match(/[\\/]([^\\/]+?)\.\w+:\d+/);
+    return (fileMatch ? fileMatch[1] : fingerprint).replace(/[^\w-]/g, '_').slice(0, 40);
+}
+
 function buildDefaultFilename(): string {
     const d = new Date();
     const p = (n: number): string => String(n).padStart(2, '0');
-    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}_bug_report.md`;
+    const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+    const project = vscode.workspace.workspaceFolders?.[0]?.name.replace(/[^\w-]/g, '_') ?? '';
+    const parts = [ts, 'saropa_log_capture', project, lastSubject, 'bug_report'].filter(Boolean);
+    return `${parts.join('_')}.md`;
 }
 
 function getNonce(): string {
