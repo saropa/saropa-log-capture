@@ -23,6 +23,7 @@ import { exportToCsv, exportToJson, exportToJsonl } from './modules/export-forma
 import { insightsCommands } from './commands-insights';
 import { bugReportCommands } from './commands-bug-report';
 import { timelineCommands } from './commands-timeline';
+import { trashCommands } from './commands-trash';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -48,6 +49,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...insightsCommands(),
         ...bugReportCommands(),
         ...timelineCommands(),
+        ...trashCommands(deps.historyProvider),
         ...toolCommands(deps),
     );
 }

@@ -23,6 +23,7 @@ export interface SessionMetadata {
     readonly correlationTags?: string[];
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
+    readonly trashed?: boolean;
     readonly mtime: number; // File modification time (epoch ms)
 }
 

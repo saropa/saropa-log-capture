@@ -58,7 +58,8 @@ export async function initializeSession(
     checkGitignore(context, workspaceFolder, config.logDirectory).catch((err) => {
         outputChannel.appendLine(`Gitignore check failed: ${err}`);
     });
-    enforceFileRetention(getLogDirectoryUri(workspaceFolder), config.maxLogFiles).catch((err) => {
+    const retentionStore = new SessionMetadataStore();
+    enforceFileRetention(getLogDirectoryUri(workspaceFolder), config.maxLogFiles, retentionStore).catch((err) => {
         outputChannel.appendLine(`File retention failed: ${err}`);
     });
 
