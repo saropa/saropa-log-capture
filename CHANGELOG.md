@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Added
+- **Line count in Project Logs tree:** Each session now shows its line count before the file size in the tree description (e.g. `Dart · 4:13pm · 1,234 lines · 24.5 KB`). Active sessions show a `●` indicator after the count. Count is parsed from the session footer when available, with a newline-count fallback. Tooltips and split group summaries also include line counts.
+- **Metadata cache:** Session history tree caches parsed file metadata keyed on URI+mtime+size, avoiding redundant file reads for unchanged log files.
+- **Adaptive tree refresh debounce:** File-change events during active recording are debounced (3s / 10s / 30s scaling with line count) to avoid excessive tree rebuilds. New `treeRefreshInterval` setting allows a fixed override.
+
+### Improved
+- **Code extraction:** Moved header parsing, description, and tooltip helpers from `session-history-provider.ts` into dedicated `session-history-helpers.ts` for better modularity and line budget.
+
 ### Fixed
 - **Bug report preview rendering:** Code blocks were broken in the preview panel because the inline code regex consumed backticks from triple-backtick fences. Fixed by processing code blocks before inline code and restricting inline code to single lines.
 - **Bug report source file resolution:** Absolute file paths (e.g. `D:\src\project\lib\file.dart`) were passed to a workspace glob search that never matched, silently preventing all source code, git blame, git history, import, and line-range sections from appearing. Now tries the absolute path directly before falling back to filename search.

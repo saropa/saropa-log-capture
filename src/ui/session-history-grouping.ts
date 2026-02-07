@@ -118,6 +118,11 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
     return result;
 }
 
+/** Sum line counts across all parts of a split group. */
+export function totalLineCount(group: SplitGroup): number {
+    return group.parts.reduce((sum, p) => sum + (p.lineCount ?? 0), 0);
+}
+
 /** Format a tooltip for a split group showing metadata. */
 export function buildSplitGroupTooltip(group: SplitGroup): string {
     const parts = [`${group.parts.length} split parts`];
@@ -130,6 +135,8 @@ export function buildSplitGroupTooltip(group: SplitGroup): string {
     if (group.adapter) {
         parts.push(`Adapter: ${group.adapter}`);
     }
+    const total = totalLineCount(group);
+    if (total > 0) { parts.push(`Total lines: ${total.toLocaleString('en-US')}`); }
     parts.push(`Total size: ${formatSize(group.totalSize)}`);
     return parts.join('\n');
 }
