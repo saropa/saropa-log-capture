@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type { FingerprintEntry } from './error-fingerprint';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -14,6 +15,10 @@ export interface SessionMeta {
     tags?: string[];
     /** Automatically applied tags from auto-tag rules. */
     autoTags?: string[];
+    /** Semantic tags extracted from log content (source files, error classes). */
+    correlationTags?: string[];
+    /** Error fingerprints extracted from log content. */
+    fingerprints?: FingerprintEntry[];
     annotations?: Annotation[];
 }
 
@@ -64,6 +69,20 @@ export class SessionMetadataStore {
     async setAutoTags(logUri: vscode.Uri, autoTags: string[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.autoTags = autoTags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set or update correlation tags (from content scanning). */
+    async setCorrelationTags(logUri: vscode.Uri, correlationTags: string[]): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.correlationTags = correlationTags;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set or update error fingerprints (from content scanning). */
+    async setFingerprints(logUri: vscode.Uri, fingerprints: FingerprintEntry[]): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.fingerprints = fingerprints;
         await this.saveMetadata(logUri, meta);
     }
 

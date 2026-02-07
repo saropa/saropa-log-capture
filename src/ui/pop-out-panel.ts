@@ -44,6 +44,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
   private onSearchCodebase?: (text: string) => void;
   private onSearchSessions?: (text: string) => void;
+  private onAnalyzeLine?: (text: string) => void;
   private onAddToWatch?: (text: string) => void;
   private onPartNavigate?: (part: number) => void;
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
@@ -88,6 +89,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setAnnotationPromptHandler(h: (i: number, c: string) => void): void { this.onAnnotationPrompt = h; }
   setSearchCodebaseHandler(h: (t: string) => void): void { this.onSearchCodebase = h; }
   setSearchSessionsHandler(h: (t: string) => void): void { this.onSearchSessions = h; }
+  setAnalyzeLineHandler(h: (t: string) => void): void { this.onAnalyzeLine = h; }
   setAddToWatchHandler(h: (t: string) => void): void { this.onAddToWatch = h; }
   setLinkClickHandler(h: (p: string, l: number, c: number, s: boolean) => void): void { this.onLinkClick = h; }
   setPartNavigateHandler(h: (p: number) => void): void { this.onPartNavigate = h; }
@@ -179,6 +181,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
+      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? "")); break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation": this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? "")); break;
       case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;

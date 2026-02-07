@@ -149,7 +149,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       "highlightRules",
       defaultHighlightRules(),
     ),
-    captureAll: cfg.get<boolean>("captureAll", false),
+    captureAll: cfg.get<boolean>("captureAll", true),
     filterContextLines: cfg.get<number>("filterContextLines", 3),
     contextViewLines: cfg.get<number>("contextViewLines", 10),
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),

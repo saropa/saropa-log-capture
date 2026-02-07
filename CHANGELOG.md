@@ -9,10 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 - **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
+- **Correlation tags:** Sessions are automatically scanned on finalization for source file references and error class names. Tags like `file:handler.dart` and `error:SocketException` appear in the session history description (prefixed with `@`). A manual "Rescan Correlation Tags" command is available in the session context menu.
+- **Filter sessions by tag:** New "Filter Sessions by Tag" command in the session history toolbar. Shows a multi-select quick pick of all correlation tags across sessions; selecting tags filters the history tree to only matching sessions.
+- **Error fingerprints:** Sessions are scanned for error lines on finalization. Errors are normalized (timestamps, UUIDs, numbers removed) and hashed for cross-session grouping. Stored in sidecar metadata.
+- **Analyze Across Sessions:** New context menu item on log lines. Extracts tokens (source files, error classes, URLs, etc.) from the line and searches all past sessions, showing results grouped by token type with workspace context (git history, source annotations).
+- **Cross-Session Insights panel:** New command in the session history toolbar. Aggregates data across all sessions to show hot files (most-referenced source files) and recurring error patterns with session/occurrence counts.
 
 ### Fixed
 - **"App Only: OFF" not capturing all debug output:** With default settings, debug adapters that send output under non-standard DAP categories (e.g. Flutter system logs) were silently dropped because `captureAll` defaulted to `false`. Changed the default to `true` so all Debug Console output is captured regardless of category, matching the "never lose data" design principle.
 - **Exclusions bypassed when `captureAll` enabled:** The `captureAll` setting previously bypassed both category filtering and exclusion filtering. Now it only bypasses category filtering — user-configured exclusions always apply independently.
+- **Early debug output missed on session start:** The DAP tracker activates synchronously but session initialization is async (disk I/O). Output events arriving during this window were silently dropped. Added an early event buffer that captures events before the session is registered and replays them once initialization completes.
 - **Timestamp/milliseconds/elapsed checkboxes disabled:** The Timestamp, Show milliseconds, and Elapsed time decoration toggles under Line prefix were non-interactive due to a `timestampsAvailable` flag that could disable them. Removed the mechanism so these toggles are always user-controllable.
 
 ---

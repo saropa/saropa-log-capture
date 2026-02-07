@@ -14,6 +14,8 @@ import {
     initializeSession, finalizeSession, buildSessionStats,
 } from './session-lifecycle';
 
+const MAX_EARLY_BUFFER = 500;
+
 /** Data object passed to line listeners for each log line. */
 export interface LineData {
     readonly text: string;
@@ -49,6 +51,7 @@ export class SessionManagerImpl implements SessionManager {
     private floodSuppressedTotal = 0;
     private autoTagger: AutoTagger | null = null;
     private readonly metadataStore = new SessionMetadataStore();
+    private readonly earlyOutputBuffer = new Map<string, DapOutputBody[]>();
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -80,7 +83,8 @@ export class SessionManagerImpl implements SessionManager {
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
         const session = this.sessions.get(sessionId);
-        if (!session) { return; }
+        // Buffer events arriving before async session init completes (race condition fix)
+        if (!session) { this.bufferEarlyEvent(sessionId, body); return; }
         const config = getConfig();
         if (!config.enabled) { return; }
 
@@ -88,10 +92,8 @@ export class SessionManagerImpl implements SessionManager {
         const text = body.output.replace(/\r?\n$/, '');
         if (text.length === 0) { return; }
 
-        if (!config.captureAll) {
-            if (!config.categories.includes(category)) { return; }
-            if (testExclusion(text, this.exclusionRules)) { return; }
-        }
+        if (!config.captureAll && !config.categories.includes(category)) { return; }
+        if (testExclusion(text, this.exclusionRules)) { return; }
 
         const floodResult = this.floodGuard.check(text);
         if (!floodResult.allow) { return; }
@@ -136,6 +138,7 @@ export class SessionManagerImpl implements SessionManager {
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
+            this.replayEarlyEvents(session.id);
             return;
         }
         const result = await initializeSession({
@@ -157,10 +160,12 @@ export class SessionManagerImpl implements SessionManager {
         this.sessionStartTime = Date.now();
         this.floodSuppressedTotal = 0;
         this.statusBar.show();
+        this.replayEarlyEvents(session.id);
     }
 
     /** Stop and finalize a debug session's log file. */
     async stopSession(session: vscode.DebugSession): Promise<void> {
+        this.earlyOutputBuffer.delete(session.id);
         const logSession = this.sessions.get(session.id);
         if (!logSession) { return; }
         this.sessions.delete(session.id);
@@ -234,6 +239,7 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Stop all sessions (called on deactivate). */
     async stopAll(): Promise<void> {
+        this.earlyOutputBuffer.clear();
         const stopped = new Set<LogSession>();
         for (const [, session] of this.sessions) {
             if (!stopped.has(session)) {
@@ -250,6 +256,20 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Recreate the keyword watcher from current config. */
     refreshWatcher(): void { this.watcher = this.createWatcher(); }
+
+    private bufferEarlyEvent(sessionId: string, body: DapOutputBody): void {
+        let buf = this.earlyOutputBuffer.get(sessionId);
+        if (!buf) { buf = []; this.earlyOutputBuffer.set(sessionId, buf); }
+        if (buf.length < MAX_EARLY_BUFFER) { buf.push(body); }
+    }
+
+    private replayEarlyEvents(sessionId: string): void {
+        const buffered = this.earlyOutputBuffer.get(sessionId);
+        this.earlyOutputBuffer.delete(sessionId);
+        if (!buffered || buffered.length === 0) { return; }
+        this.outputChannel.appendLine(`Replaying ${buffered.length} early output event(s)`);
+        for (const body of buffered) { this.onOutputEvent(sessionId, body); }
+    }
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
         const hits = data.isMarker ? [] : this.watcher.testLine(data.text);

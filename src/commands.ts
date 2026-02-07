@@ -8,6 +8,8 @@ import { showSearchQuickPick } from './modules/log-search-ui';
 import { openLogAtLine } from './modules/log-search';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
+import { isSplitGroup, type TreeItem } from './ui/session-history-grouping';
+import { scanForCorrelationTags } from './modules/correlation-scanner';
 import { exportToHtml } from './modules/html-export';
 import { exportToInteractiveHtml } from './modules/html-export-interactive';
 import { copyDeepLinkToClipboard } from './modules/deep-links';
@@ -18,6 +20,7 @@ import { comparisonCommands } from './commands-comparison';
 import { applyTemplate } from './modules/session-templates';
 import { pickTemplate, promptSaveTemplate } from './modules/session-templates-ui';
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export-formats';
+import { insightsCommands } from './commands-insights';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -39,6 +42,8 @@ export function registerCommands(deps: CommandDeps): void {
         ...historyEditCommands(deps),
         ...exportCommands(),
         ...comparisonCommands(context.extensionUri),
+        ...correlationCommands(deps),
+        ...insightsCommands(),
         ...toolCommands(deps),
     );
 }
@@ -191,6 +196,43 @@ function fileExportCmd(
         );
         if (action === 'Open') { await vscode.window.showTextDocument(outUri); }
     });
+}
+
+function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
+    const { historyProvider } = deps;
+    return [
+        vscode.commands.registerCommand('saropaLogCapture.filterByTag', async () => {
+            const items = await historyProvider.getChildren();
+            const allTags = collectCorrelationTags(items);
+            if (allTags.length === 0) {
+                vscode.window.showInformationMessage('No correlation tags found. Run a debug session first.');
+                return;
+            }
+            const current = historyProvider.getTagFilter();
+            const picks = allTags.map(t => ({ label: t, picked: current?.has(t) ?? false }));
+            const selected = await vscode.window.showQuickPick(picks, {
+                canPickMany: true, placeHolder: 'Select tags to filter sessions (empty = show all)',
+            });
+            if (selected === undefined) { return; }
+            historyProvider.setTagFilter(selected.length > 0 ? new Set(selected.map(s => s.label)) : undefined);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.rescanTags', async (item: { uri: vscode.Uri }) => {
+            if (!item?.uri) { return; }
+            const tags = await scanForCorrelationTags(item.uri);
+            await historyProvider.getMetaStore().setCorrelationTags(item.uri, tags);
+            historyProvider.refresh();
+            vscode.window.showInformationMessage(`Found ${tags.length} correlation tag${tags.length !== 1 ? 's' : ''}.`);
+        }),
+    ];
+}
+
+function collectCorrelationTags(items: TreeItem[]): string[] {
+    const tags = new Set<string>();
+    for (const item of items) {
+        const metas = isSplitGroup(item) ? item.parts : [item];
+        for (const m of metas) { for (const t of m.correlationTags ?? []) { tags.add(t); } }
+    }
+    return [...tags].sort();
 }
 
 function toolCommands(deps: CommandDeps): vscode.Disposable[] {

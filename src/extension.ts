@@ -11,6 +11,8 @@ import { loadPresets } from './modules/filter-presets';
 import { InlineDecorationsProvider } from './ui/inline-decorations';
 import { extractSourceReference } from './modules/source-linker';
 import { disposeComparisonPanel } from './ui/session-comparison';
+import { disposeAnalysisPanel } from './ui/analysis-panel';
+import { disposeInsightsPanel } from './ui/insights-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -254,5 +256,7 @@ export function deactivate(): void {
     sessionManager?.stopAll();
     popOutPanel?.dispose();
     disposeComparisonPanel();
+    disposeAnalysisPanel();
+    disposeInsightsPanel();
 }
 
