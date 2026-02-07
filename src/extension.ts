@@ -131,6 +131,22 @@ export function activate(context: vscode.ExtensionContext): void {
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
+    // Session navigation (prev/next session).
+    const updateSessionNav = async (): Promise<void> => {
+        const uri = viewerProvider.getCurrentFileUri();
+        if (!uri) { viewerProvider.setSessionNavInfo(false, false, 0, 0); return; }
+        const adj = await historyProvider.getAdjacentSessions(uri);
+        viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
+    };
+    viewerProvider.setFileLoadedHandler(() => { updateSessionNav().catch(() => {}); });
+    viewerProvider.setSessionNavigateHandler(async (direction) => {
+        const uri = viewerProvider.getCurrentFileUri();
+        if (!uri) { return; }
+        const adj = await historyProvider.getAdjacentSessions(uri);
+        const target = direction < 0 ? adj.prev : adj.next;
+        if (target) { await viewerProvider.loadFromFile(target); }
+    });
+
     // Sidebar-only handlers.
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
         if (!uriString) { return; }
@@ -180,6 +196,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 broadcaster.setFilename(filename);
             }
             broadcaster.setSessionActive(true);
+            viewerProvider.setSessionNavInfo(false, false, 0, 0);
             if (activeSession?.fileUri) {
                 broadcaster.setCurrentFile(activeSession.fileUri);
             }
@@ -223,6 +240,7 @@ export function activate(context: vscode.ExtensionContext): void {
             historyProvider.setActiveUri(undefined);
             historyProvider.refresh();
             inlineDecorations.clearAll();
+            updateSessionNav().catch(() => {});
         }),
     );
 

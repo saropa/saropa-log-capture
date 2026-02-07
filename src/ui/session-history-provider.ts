@@ -96,6 +96,35 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return undefined;
     }
 
+    /** Find the previous (older) and next (newer) session relative to a URI. */
+    async getAdjacentSessions(currentUri: vscode.Uri): Promise<{
+        prev?: vscode.Uri; next?: vscode.Uri; index: number; total: number;
+    }> {
+        const items = await this.getChildren();
+        const currentStr = currentUri.toString();
+        const idx = items.findIndex(item => {
+            if (isSplitGroup(item)) {
+                return item.parts.some(p => p.uri.toString() === currentStr);
+            }
+            return item.uri.toString() === currentStr;
+        });
+        const total = items.length;
+        if (idx < 0) { return { index: 0, total }; }
+        const getUri = (item: TreeItem): vscode.Uri => {
+            if (isSplitGroup(item)) {
+                const sorted = [...item.parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
+                return sorted[0].uri;
+            }
+            return item.uri;
+        };
+        return {
+            next: idx > 0 ? getUri(items[idx - 1]) : undefined,
+            prev: idx < total - 1 ? getUri(items[idx + 1]) : undefined,
+            index: total - idx,
+            total,
+        };
+    }
+
     async getChildren(element?: TreeItem): Promise<TreeItem[]> {
         if (element && isSplitGroup(element)) {
             return element.parts.sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));

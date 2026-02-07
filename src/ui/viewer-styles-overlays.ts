@@ -11,28 +11,23 @@ export function getOverlayStyles(): string {
     return getDecorationStyles() + getModalStyles() + /* css */ `
 
 /* ===================================================================
-   Split Breadcrumb
-   Navigation bar shown when viewing a sub-range of the log
-   (e.g. lines around a search result). Shows current position
-   and prev/next buttons.
-   Uses --vscode-panel-background to match the VS Code bottom panel.
+   Navigation Bars (Split Breadcrumb + Session Nav)
+   Shared styles for the split-part breadcrumb and session prev/next
+   navigation bar. Both use the same layout and button styling.
    =================================================================== */
-#split-breadcrumb {
+#split-breadcrumb, #session-nav {
     display: none;
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    /* Panel background blends with the VS Code bottom panel chrome */
     background: var(--vscode-panel-background);
     border-bottom: 1px solid var(--vscode-panel-border);
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
 }
-#split-breadcrumb.visible { display: flex; }
-#split-breadcrumb .part-label {
-    font-weight: bold;
-}
-#split-breadcrumb button {
+#split-breadcrumb.visible, #session-nav.visible { display: flex; }
+.nav-bar-label { font-weight: bold; }
+#split-breadcrumb button, #session-nav button {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
     color: var(--vscode-descriptionForeground);
@@ -41,11 +36,11 @@ export function getOverlayStyles(): string {
     cursor: pointer;
     border-radius: 3px;
 }
-#split-breadcrumb button:hover {
+#split-breadcrumb button:hover, #session-nav button:hover {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
-#split-breadcrumb button:disabled {
+#split-breadcrumb button:disabled, #session-nav button:disabled {
     opacity: 0.4;
     cursor: default;
 }

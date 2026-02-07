@@ -49,6 +49,8 @@ export class LogViewerProvider
   private onOpenFindResult?: (uriString: string, query: string, options: Record<string, unknown>) => void;
   private onFindNavigateMatch?: (uriString: string, matchIndex: number) => void;
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
+  private onSessionNavigate?: (direction: number) => void;
+  private onFileLoaded?: (uri: vscode.Uri) => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -115,6 +117,8 @@ export class LogViewerProvider
   setOpenFindResultHandler(handler: (uriString: string, query: string, options: Record<string, unknown>) => void): void { this.onOpenFindResult = handler; }
   setFindNavigateMatchHandler(handler: (uriString: string, matchIndex: number) => void): void { this.onFindNavigateMatch = handler; }
   setBookmarkActionHandler(handler: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = handler; }
+  setSessionNavigateHandler(handler: (direction: number) => void): void { this.onSessionNavigate = handler; }
+  setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
 
   // -- Webview state methods --
 
@@ -124,6 +128,8 @@ export class LogViewerProvider
   loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { this.postMessage({ type: "loadAnnotations", annotations }); }
 
   setSplitInfo(currentPart: number, totalParts: number): void { this.postMessage({ type: "splitInfo", currentPart, totalParts }); }
+  setSessionNavInfo(hasPrev: boolean, hasNext: boolean, index: number, total: number): void { this.postMessage({ type: "sessionNavInfo", hasPrev, hasNext, index, total }); }
+  getCurrentFileUri(): vscode.Uri | undefined { return this.currentFileUri; }
   updateFooter(text: string): void { this.postMessage({ type: "updateFooter", text }); }
   setPaused(paused: boolean): void { this.postMessage({ type: "setPaused", paused }); }
   setFilename(filename: string): void {
@@ -189,7 +195,7 @@ export class LogViewerProvider
     const hasTimestamps = await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
     this.postMessage({ type: "setTimestampAvailability", available: hasTimestamps });
-    this.postMessage({ type: "loadComplete" }); this.pendingLoadUri = undefined;
+    this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj = Object.fromEntries(counts);
@@ -225,6 +231,7 @@ export class LogViewerProvider
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
+      case "navigateSession": this.onSessionNavigate?.(Number(msg.direction ?? 0)); break;
       case "savePresetRequest":
         this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
         break;
