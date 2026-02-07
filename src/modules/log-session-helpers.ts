@@ -8,6 +8,7 @@
 import * as vscode from 'vscode';
 import { SaropaLogCaptureConfig, shouldRedactEnvVar } from './config';
 import { SplitReason, formatSplitReason } from './file-splitter';
+import type { DevEnvironment } from './environment-collector';
 
 export interface SessionContext {
     readonly date: Date;
@@ -19,6 +20,7 @@ export interface SessionContext {
     readonly extensionVersion: string;
     readonly os: string;
     readonly workspaceFolder: vscode.WorkspaceFolder;
+    readonly devEnvironment?: DevEnvironment;
 }
 
 /** Generate base filename without .log extension (for split naming). */
@@ -130,6 +132,7 @@ export function generateContextHeader(
     lines.push(`VS Code:        ${ctx.vscodeVersion}`);
     lines.push(`Extension:      saropa-log-capture v${ctx.extensionVersion}`);
     lines.push(`OS:             ${ctx.os}`);
+    appendDevEnvironment(lines, ctx.devEnvironment);
     lines.push('==========================================');
     lines.push('');
     return lines.join('\n') + '\n';
@@ -154,6 +157,15 @@ function appendLaunchConfig(
             lines.push(`  ${key}:${padding}${JSON.stringify(value)}`);
         }
     }
+}
+
+function appendDevEnvironment(lines: string[], env?: DevEnvironment): void {
+    if (!env) { return; }
+    if (env.gitBranch) { lines.push(`Git Branch:     ${env.gitBranch}`); }
+    if (env.gitCommit) { lines.push(`Git Commit:     ${env.gitCommit}${env.gitDirty ? ' (dirty)' : ''}`); }
+    if (env.gitRemote) { lines.push(`Git Remote:     ${env.gitRemote}`); }
+    lines.push(`Node:           ${env.nodeVersion}`);
+    if (env.remoteName) { lines.push(`Remote:         ${env.remoteName}`); }
 }
 
 /** Redact sensitive env vars using patterns from config. */

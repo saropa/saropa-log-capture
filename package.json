@@ -467,6 +467,12 @@
           ],
           "description": "File extensions to include when listing sessions in the reports directory. Reload window after changes."
         },
+        "saropaLogCapture.docsScanDirs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["bugs", "docs"],
+          "description": "Directories to scan for project documentation references during analysis (relative to workspace root)."
+        },
         "saropaLogCapture.autoOpen": {
           "type": "boolean",
           "default": false,

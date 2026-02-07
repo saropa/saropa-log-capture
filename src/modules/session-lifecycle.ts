@@ -18,6 +18,7 @@ import { scanForFingerprints } from './error-fingerprint';
 import {
     generateSummary, showSummaryNotification, SessionStats,
 } from './session-summary';
+import { collectDevEnvironment } from './environment-collector';
 
 /** Result of initializing a new log session. */
 export interface SessionSetupResult {
@@ -61,6 +62,8 @@ export async function initializeSession(
         outputChannel.appendLine(`File retention failed: ${err}`);
     });
 
+    const devEnvironment = await collectDevEnvironment().catch(() => undefined);
+
     const sessionContext: SessionContext = {
         date: new Date(),
         projectName: workspaceFolder.name,
@@ -71,6 +74,7 @@ export async function initializeSession(
         extensionVersion: context.extension.packageJSON.version ?? '0.0.0',
         os: `${os.type()} ${os.release()} (${os.arch()})`,
         workspaceFolder,
+        devEnvironment,
     };
 
     const logSession = new LogSession(sessionContext, config, onLineCount);
