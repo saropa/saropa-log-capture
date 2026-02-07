@@ -21,6 +21,8 @@ import { applyTemplate } from './modules/session-templates';
 import { pickTemplate, promptSaveTemplate } from './modules/session-templates-ui';
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export-formats';
 import { insightsCommands } from './commands-insights';
+import { bugReportCommands } from './commands-bug-report';
+import { timelineCommands } from './commands-timeline';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -44,6 +46,8 @@ export function registerCommands(deps: CommandDeps): void {
         ...comparisonCommands(context.extensionUri),
         ...correlationCommands(deps),
         ...insightsCommands(),
+        ...bugReportCommands(),
+        ...timelineCommands(),
         ...toolCommands(deps),
     );
 }

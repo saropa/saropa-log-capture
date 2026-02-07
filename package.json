@@ -170,6 +170,16 @@
         "icon": "$(graph)"
       },
       {
+        "command": "saropaLogCapture.generateReport",
+        "title": "Saropa Log Capture: Generate Bug Report",
+        "icon": "$(report)"
+      },
+      {
+        "command": "saropaLogCapture.showTimeline",
+        "title": "Saropa Log Capture: Show Session Timeline",
+        "icon": "$(graph-line)"
+      },
+      {
         "command": "saropaLogCapture.compareSessions",
         "title": "Saropa Log Capture: Compare Sessions",
         "icon": "$(diff)"
@@ -320,6 +330,11 @@
           "command": "saropaLogCapture.compareWithMarked",
           "when": "viewItem == session",
           "group": "compare"
+        },
+        {
+          "command": "saropaLogCapture.showTimeline",
+          "when": "viewItem == session",
+          "group": "analysis"
         }
       ]
     },
@@ -722,6 +737,11 @@
           "type": "boolean",
           "default": false,
           "description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.)."
+        },
+        "saropaLogCapture.deemphasizeFrameworkLevels": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix."
         },
         "saropaLogCapture.levelDetection": {
           "type": "string",

@@ -89,7 +89,7 @@ export function computeSessionMidnight(isoDate: string): number {
 }
 
 /** Parse a time string (HH:MM:SS or HH:MM:SS.mmm) into epoch ms. */
-function parseTimeToMs(timeStr: string, midnightMs: number): number {
+export function parseTimeToMs(timeStr: string, midnightMs: number): number {
     if (midnightMs === 0) { return 0; }
     const parts = timeStr.split(/[:.]/);
     if (parts.length < 3) { return 0; }
