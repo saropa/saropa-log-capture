@@ -147,13 +147,11 @@ window.addEventListener('message', function(event) {
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
-            if (typeof closeContextModal === 'function') { closeContextModal(); }
-            if (typeof closeInfoPanel === 'function') { closeInfoPanel(); }
-            if (typeof resetSourceTags === 'function') { resetSourceTags(); }
+            if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
             if (typeof timestampsAvailable !== 'undefined') timestampsAvailable = true;
-            footerTextEl.textContent = 'Cleared'; renderViewport(true);
-            if (typeof scheduleMinimap === 'function') scheduleMinimap();
+            footerTextEl.textContent = 'Cleared'; renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
             footerTextEl.textContent = msg.text;
@@ -200,6 +198,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'splitInfo':
             if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
+            break;
+        case 'sessionNavInfo':
+            if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
             break;
         case 'setTimestampAvailability':
             if (typeof handleTimestampAvailability === 'function') handleTimestampAvailability(msg);
