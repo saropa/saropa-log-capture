@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [0.2.10] - 2026-02-06
+## [0.3.0] - 2026-02-06
 
 ### Added
 - **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
@@ -17,6 +17,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Generate Bug Report:** Right-click an error line → "Generate Bug Report" packages all evidence into structured markdown: error + fingerprint, stack trace (app vs framework), log context, environment, source code, git history, and cross-session matches. Auto-copied to clipboard and shown in a preview panel.
 - **Insights drill-down:** Click a recurring error in the Insights Panel to expand all occurrences grouped by session. Uses fuzzy regex matching so errors with different timestamps/IDs match across sessions. Click any match to jump to that line.
 - **Session Timeline:** Right-click a session in Session History → "Show Timeline" to see an SVG chart plotting errors, warnings, and performance issues over time. Click a dot to navigate to that line. Auto-buckets dense sessions for smooth rendering.
+- **Executive summary:** Analysis panel now shows a "Key Findings" banner with 2–4 relevance-scored insights (recent blame, recurring error, nearby annotations, doc references). Low-relevance sections auto-collapse.
+- **Root cause correlation:** When a crash line was recently modified, the analysis compares the git blame date against the error's cross-session first appearance. A match within 3 days produces "Error likely introduced by commit `abc1234`".
+- **Stack trace deep-dive:** Stack frames below an error are parsed and displayed with APP/FW badges. Click an app-code frame to expand inline source preview and git blame. Framework frames are dimmed.
+- **Error trend chart:** Recurring errors show a compact SVG bar chart of occurrences per session, turning "Seen 5 times across 3 sessions" into a scannable timeline.
+- **Bug report blame section:** Generated bug reports now include a Git Blame section and use the error's cross-session first-seen date for root cause correlation scoring in the Key Findings summary.
 
 ### Improved
 - **Logcat-aware level classification:** Android logcat prefixes (`E/`, `W/`, `I/`, `D/`, `V/`, `F/`) are now used as the primary level signal. Previously, text pattern matching could override the prefix — e.g. `I/CCodecConfig: query failed` was misclassified as 'error' due to the word "failed". Now the logcat prefix takes priority, preventing false error/warning classifications on framework info/debug lines. Content-type patterns (performance, TODO) still refine `D/`/`V/`/`I/` lines.
