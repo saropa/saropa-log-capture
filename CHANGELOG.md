@@ -7,19 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
-### Added
-- **Line count in Project Logs tree:** Each session now shows its line count before the file size in the tree description (e.g. `Dart · 4:13pm · 1,234 lines · 24.5 KB`). Active sessions show a `●` indicator after the count. Count is parsed from the session footer when available, with a newline-count fallback. Tooltips and split group summaries also include line counts.
-- **Metadata cache:** Session history tree caches parsed file metadata keyed on URI+mtime+size, avoiding redundant file reads for unchanged log files.
-- **Adaptive tree refresh debounce:** File-change events during active recording are debounced (3s / 10s / 30s scaling with line count) to avoid excessive tree rebuilds. New `treeRefreshInterval` setting allows a fixed override.
-
-### Improved
-- **Code extraction:** Moved header parsing, description, and tooltip helpers from `session-history-provider.ts` into dedicated `session-history-helpers.ts` for better modularity and line budget.
-
 ### Fixed
 - **Bug report preview rendering:** Code blocks were broken in the preview panel because the inline code regex consumed backticks from triple-backtick fences. Fixed by processing code blocks before inline code and restricting inline code to single lines.
 - **Bug report source file resolution:** Absolute file paths (e.g. `D:\src\project\lib\file.dart`) were passed to a workspace glob search that never matched, silently preventing all source code, git blame, git history, import, and line-range sections from appearing. Now tries the absolute path directly before falling back to filename search.
 
 ### Added
+- **Subfolder scanning (`includeSubfolders`):** New setting (default true) makes the Project Logs panel, search, comparison, delete, insights, and file retention scan subdirectories under the reports directory. Shared `readTrackedFiles()` utility replaces per-module scanning logic. Depth-limited to 10 levels; dot-directories are skipped.
+- **Trash can for session files:** Sessions can be moved to trash (sidecar flag) instead of permanently deleted. Toggle trash visibility with the eye icon in the Session History toolbar. "Empty Trash" permanently deletes all trashed files after a modal confirmation. Context menu shows "Move to Trash" on live sessions and "Restore from Trash" on trashed ones.
+- **Retention uses trash:** File retention (`maxLogFiles`) now marks excess files as trashed instead of deleting them, and excludes already-trashed files from the count. Default changed from 10 to 0 (off) so auto-cleanup is opt-in.
+- **Line count in Project Logs tree:** Each session now shows its line count before the file size in the tree description (e.g. `Dart · 4:13pm · 1,234 lines · 24.5 KB`). Active sessions show a `●` indicator after the count. Count is parsed from the session footer when available, with a newline-count fallback. Tooltips and split group summaries also include line counts.
+- **Metadata cache:** Session history tree caches parsed file metadata keyed on URI+mtime+size, avoiding redundant file reads for unchanged log files.
+- **Adaptive tree refresh debounce:** File-change events during active recording are debounced (3s / 10s / 30s scaling with line count) to avoid excessive tree rebuilds. New `treeRefreshInterval` setting allows a fixed override.
 - **Affected Files section:** Bug reports now analyze up to 5 additional source files from the stack trace (beyond the primary error line). Each file shows git blame and recent commit history. Files are deduplicated and analyzed in parallel.
 - **Marketplace link:** Bug report header links to the VS Code Marketplace listing.
 - **Footer promotion:** Bug report footer recommends Saropa Lints and links to saropa.com.
@@ -27,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Sources section:** Bug report header now lists all file and web sources (log file, analyzed source files, referenced docs, git remote URL).
 
 ### Improved
+- **Code extraction:** Moved header parsing, description, and tooltip helpers from `session-history-provider.ts` into dedicated `session-history-helpers.ts` for better modularity and line budget.
 - **Copy button:** Renamed from "Copy to Clipboard" to "Copy Markdown" for clarity.
 - **Save filename:** Default save filename includes timestamp, `saropa_log_capture` branding, project name, and error subject (e.g. `20260207_184603_saropa_log_capture_contacts_email_panel_bug_report.md`).
 - **Preview link rendering:** Markdown `[text](url)` links now render as `<a>` tags in the bug report preview.
