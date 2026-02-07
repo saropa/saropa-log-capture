@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Marketplace link:** Bug report header links to the VS Code Marketplace listing.
 - **Footer promotion:** Bug report footer recommends Saropa Lints and links to saropa.com.
 - **Affected file count scoring:** Executive summary reports when an error spans 3+ source files.
+- **Sources section:** Bug report header now lists all file and web sources (log file, analyzed source files, referenced docs, git remote URL).
 
 ### Improved
 - **Copy button:** Renamed from "Copy to Clipboard" to "Copy Markdown" for clarity.

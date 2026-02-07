@@ -61,6 +61,7 @@ export interface BugReportData {
     readonly imports?: ImportResults;
     readonly resolvedSymbols?: SymbolResults;
     readonly fileAnalyses: readonly FileAnalysis[];
+    readonly primarySourcePath?: string;
     readonly logFilename: string;
     readonly lineNumber: number;
 }
@@ -104,7 +105,8 @@ export async function collectBugReportData(
         errorLine: cleanError, fingerprint, stackTrace, logContext,
         environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
-        resolvedSymbols, fileAnalyses, logFilename, lineNumber: fileLineIndex + 1,
+        resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
+        logFilename, lineNumber: fileLineIndex + 1,
     };
 }
 
