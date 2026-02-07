@@ -116,3 +116,21 @@ export function isFrameworkLogLine(text: string): boolean | undefined {
     }
     return undefined;
 }
+
+/** Detect whether a line is a continuation of a stack trace. Multi-language. */
+export function isStackFrameLine(line: string): boolean {
+    const trimmed = line.trim();
+    if (!trimmed) { return false; }
+    if (/^\s+at\s/.test(line)) { return true; }
+    if (/^#\d+\s/.test(trimmed)) { return true; }
+    if (/^\s+File "/.test(line)) { return true; }
+    if (/^\s*\u2502\s/.test(line)) { return true; }
+    if (/^package:/.test(trimmed)) { return true; }
+    return /^\s+\S+\.\S+:\d+/.test(line);
+}
+
+/** Extract YYYY-MM-DD date from a session filename like `20250207_143000_name.log`. */
+export function extractDateFromFilename(filename: string): string | undefined {
+    const m = /^(\d{4})(\d{2})(\d{2})_/.exec(filename);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : undefined;
+}

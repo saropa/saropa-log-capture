@@ -27,7 +27,7 @@ interface HandlerTarget {
   setAnnotationPromptHandler(h: (i: number, c: string) => void): void;
   setSearchCodebaseHandler(h: (t: string) => void): void;
   setSearchSessionsHandler(h: (t: string) => void): void;
-  setAnalyzeLineHandler(h: (t: string) => void): void;
+  setAnalyzeLineHandler(h: (t: string, i: number, u: vscode.Uri | undefined) => void): void;
   setAddToWatchHandler(h: (t: string) => void): void;
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
@@ -93,7 +93,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const m = await showSearchQuickPick(t);
     if (m) { await openLogAtLine(m); }
   });
-  target.setAnalyzeLineHandler(async (t) => { await showAnalysis(t); });
+  target.setAnalyzeLineHandler(async (t, idx, uri) => { await showAnalysis(t, idx, uri); });
   target.setAddToWatchHandler(async (text) => {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);

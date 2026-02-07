@@ -8,7 +8,9 @@ import type { BlameLine } from '../modules/git-blame';
 import type { DocScanResults } from '../modules/docs-scanner';
 import type { ImportResults } from '../modules/import-extractor';
 import type { SymbolResults } from '../modules/symbol-resolver';
+import type { CommitDiff } from '../modules/git-diff';
 import { getAnalysisStyles, getAnalysisScript } from './analysis-panel-styles';
+import { type StackFrameInfo, renderFrameSection } from './analysis-frame-render';
 
 export interface TokenResultGroup { readonly token: AnalysisToken; readonly results: SearchResults; }
 
@@ -18,9 +20,11 @@ const typeIcons: Record<string, string> = {
 };
 
 /** Build the initial progressive-loading HTML shell with spinner placeholders. */
-export function buildProgressiveShell(nonce: string, lineText: string, tokens: AnalysisToken[], hasSource: boolean): string {
+export function buildProgressiveShell(nonce: string, lineText: string, tokens: AnalysisToken[], hasSource: boolean, frames?: readonly StackFrameInfo[]): string {
     const tokenList = tokens.map(t => `<span class="token">${typeIcons[t.type] ?? '🔍'} ${escapeHtml(t.label)}</span>`).join('');
     let slots = '';
+    if (frames && frames.length > 0) { slots += renderFrameSection(frames); }
+    slots += loadingSlot('trend', '📊 Checking cross-session history...');
     if (hasSource) {
         slots += loadingSlot('source', '📄 Analyzing source file...');
         slots += loadingSlot('line-history', '🕐 Checking recent changes...');
@@ -30,18 +34,22 @@ export function buildProgressiveShell(nonce: string, lineText: string, tokens: A
     slots += loadingSlot('symbols', '🔎 Resolving symbol definitions...');
     slots += loadingSlot('tokens', `🔍 Searching ${tokens.length} token${tokens.length > 1 ? 's' : ''}... ${tokenList}`);
     return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
-        <div class="summary">Analyzing... <button class="cancel-btn" id="cancel-btn">Stop</button></div></div><div class="content">${slots}</div>`);
+        <div class="summary">Analyzing... <button class="cancel-btn" id="cancel-btn">Stop</button></div></div>
+        <div id="executive-summary"></div><div class="content">${slots}</div>`);
 }
 
 function loadingSlot(id: string, message: string): string {
     return `<div class="section-slot" id="section-${id}"><div class="section-loading"><span class="spinner"></span> ${message}</div></div>`;
 }
 
-/** Render the source + blame section (replaces spinner). */
-export function renderSourceSection(info: WorkspaceFileInfo, blame?: BlameLine): string {
+/** Render the source + blame + diff section (replaces spinner). */
+export function renderSourceSection(info: WorkspaceFileInfo, blame?: BlameLine, diff?: CommitDiff): string {
     let html = renderSourcePreview(info);
     if (blame) {
         html += `<div class="blame-line">Last changed by <strong>${escapeHtml(blame.author)}</strong> on ${escapeHtml(blame.date)} · <code>${escapeHtml(blame.hash)}</code> ${escapeHtml(blame.message)}</div>`;
+    }
+    if (diff) {
+        html += `<div class="diff-summary">${diff.filesChanged} file${diff.filesChanged !== 1 ? 's' : ''} changed · +${diff.insertions} -${diff.deletions}</div>`;
     }
     if (info.gitCommits.length > 0) {
         html += `<details class="group" open><summary class="group-header">🕐 Git History <span class="match-count">${info.gitCommits.length} commit${info.gitCommits.length !== 1 ? 's' : ''}</span></summary>`;
@@ -168,7 +176,7 @@ function renderSingleTokenGroup(group: TokenResultGroup): string {
 }
 
 /** Completed section wrapper. */
-function doneSlot(id: string, content: string): string {
+export function doneSlot(id: string, content: string): string {
     return `<div class="section-slot section-done" id="section-${id}">${content}</div>`;
 }
 
