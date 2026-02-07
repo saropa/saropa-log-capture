@@ -101,6 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
     sessionManager.addLineListener((data) => {
         broadcaster.addLine(data);
+        historyProvider.setActiveLineCount(data.lineCount);
         if (data.watchHits && data.watchHits.length > 0) {
             broadcaster.updateWatchCounts(sessionManager.getWatcher().getCounts());
         }
