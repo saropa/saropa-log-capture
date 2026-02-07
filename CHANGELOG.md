@@ -5,6 +5,25 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Bug report preview rendering:** Code blocks were broken in the preview panel because the inline code regex consumed backticks from triple-backtick fences. Fixed by processing code blocks before inline code and restricting inline code to single lines.
+- **Bug report source file resolution:** Absolute file paths (e.g. `D:\src\project\lib\file.dart`) were passed to a workspace glob search that never matched, silently preventing all source code, git blame, git history, import, and line-range sections from appearing. Now tries the absolute path directly before falling back to filename search.
+
+### Added
+- **Affected Files section:** Bug reports now analyze up to 5 additional source files from the stack trace (beyond the primary error line). Each file shows git blame and recent commit history. Files are deduplicated and analyzed in parallel.
+- **Marketplace link:** Bug report header links to the VS Code Marketplace listing.
+- **Footer promotion:** Bug report footer recommends Saropa Lints and links to saropa.com.
+- **Affected file count scoring:** Executive summary reports when an error spans 3+ source files.
+
+### Improved
+- **Copy button:** Renamed from "Copy to Clipboard" to "Copy Markdown" for clarity.
+- **Save filename:** Default save filename now uses a date-timestamp prefix (e.g. `20260207_184603_bug_report.md`).
+- **Preview link rendering:** Markdown `[text](url)` links now render as `<a>` tags in the bug report preview.
+- **Preview heading support:** Added `###` (h3) rendering for per-file subsection headings.
+
+---
 ## [0.3.1] - 2026-02-07
 
 ### Added

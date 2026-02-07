@@ -30,7 +30,7 @@ export async function showBugReport(
     lastMarkdown = formatBugReport(data);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);
-    vscode.window.showInformationMessage('Bug report copied to clipboard.');
+    vscode.window.showInformationMessage('Bug report markdown copied to clipboard.');
 }
 
 /** Dispose the singleton panel. */
@@ -49,10 +49,10 @@ function ensurePanel(): void {
 async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     if (msg.type === 'copy') {
         await vscode.env.clipboard.writeText(lastMarkdown);
-        vscode.window.showInformationMessage('Bug report copied to clipboard.');
+        vscode.window.showInformationMessage('Bug report markdown copied to clipboard.');
     } else if (msg.type === 'save') {
         const uri = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file('bug-report.md'),
+            defaultUri: vscode.Uri.file(buildDefaultFilename()),
             filters: { 'Markdown': ['md'], 'All Files': ['*'] },
         });
         if (uri) {
@@ -60,6 +60,12 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             vscode.window.showInformationMessage(`Report saved to ${uri.fsPath.split(/[\\/]/).pop()}`);
         }
     }
+}
+
+function buildDefaultFilename(): string {
+    const d = new Date();
+    const p = (n: number): string => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}_bug_report.md`;
 }
 
 function getNonce(): string {
@@ -83,7 +89,7 @@ function buildPreviewHtml(markdown: string): string {
 <style nonce="${nonce}">${getBugReportStyles()}</style>
 </head><body>
 <div class="toolbar">
-<button id="copy-btn">Copy to Clipboard</button>
+<button id="copy-btn">Copy Markdown</button>
 <button id="save-btn">Save to File</button>
 </div>
 ${html}
@@ -95,14 +101,16 @@ function markdownToHtml(md: string): string {
     return md
         .replace(/^# (.+)$/gm, '<h1>$1</h1>')
         .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
         .replace(/^---$/gm, '<hr>')
+        .replace(/```\n([\s\S]*?)```/g, (_, code) => `<pre>${escapeHtml(code.trimEnd())}</pre>`)
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
         .replace(/^- (.+)$/gm, '<li>$1</li>')
         .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
         .replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, convertTable)
-        .replace(/```\n([\s\S]*?)```/g, (_, code) => `<pre>${escapeHtml(code.trimEnd())}</pre>`)
         .replace(/\n{2,}/g, '\n')
         .replace(/^(?!<[huplo]|<\/|<li|<hr|<str|<em|<cod)(.+)$/gm, '<p>$1</p>');
 }
