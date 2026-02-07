@@ -150,7 +150,6 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
-            if (typeof timestampsAvailable !== 'undefined') timestampsAvailable = true;
             footerTextEl.textContent = 'Cleared'; renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
@@ -201,9 +200,6 @@ window.addEventListener('message', function(event) {
             break;
         case 'sessionNavInfo':
             if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
-            break;
-        case 'setTimestampAvailability':
-            if (typeof handleTimestampAvailability === 'function') handleTimestampAvailability(msg);
             break;
         case 'scrollToLine': {
             var li = Math.max(0, Math.min(Number(msg.line) - 1, allLines.length - 1));

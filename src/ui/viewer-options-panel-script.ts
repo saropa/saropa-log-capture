@@ -86,15 +86,11 @@ function syncDecoUi() {
     var decoElapsed = document.getElementById('opt-deco-elapsed');
     var lineColor = document.getElementById('opt-line-color');
     var decoBar = document.getElementById('opt-deco-bar');
-    var noTs = typeof timestampsAvailable !== 'undefined' && !timestampsAvailable;
-    // When decorations are off, all sub-options stay disabled (set by syncDisplayUi).
-    // Only apply timestamp-unavailable disabling when decorations are on.
-    var decoOff = !showDecorations;
     if (decoDot) decoDot.checked = decoShowDot;
     if (decoCtr) decoCtr.checked = decoShowCounter;
-    if (decoTs) { decoTs.checked = decoShowTimestamp; decoTs.disabled = decoOff || noTs; }
-    if (decoMs) { decoMs.checked = (typeof showMilliseconds !== 'undefined') && showMilliseconds; decoMs.disabled = decoOff || noTs; }
-    if (decoElapsed) { decoElapsed.checked = showElapsed; decoElapsed.disabled = decoOff || noTs; }
+    if (decoTs) decoTs.checked = decoShowTimestamp;
+    if (decoMs) decoMs.checked = (typeof showMilliseconds !== 'undefined') && showMilliseconds;
+    if (decoElapsed) decoElapsed.checked = showElapsed;
     if (lineColor) lineColor.value = decoLineColorMode;
     if (decoBar && typeof decoShowBar !== 'undefined') decoBar.checked = decoShowBar;
 }
