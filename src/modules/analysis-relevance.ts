@@ -23,6 +23,7 @@ export interface SectionData {
     readonly importCount?: number;
     readonly localImportCount?: number;
     readonly gitCommitCount?: number;
+    readonly affectedFileCount?: number;
 }
 
 /** Scoring output: summary findings + per-section relevance levels. */
@@ -48,6 +49,7 @@ export function scoreRelevance(data: SectionData): RelevanceResult {
     scoreTokens(data, levels);
     scoreImports(data, levels);
     scoreGitHistory(data, levels);
+    scoreAffectedFiles(data, findings);
 
     findings.sort((a, b) => levelOrder(a.level) - levelOrder(b.level));
     return { findings: findings.slice(0, 4), sectionLevels: levels };
@@ -132,6 +134,13 @@ function scoreImports(data: SectionData, levels: Map<string, RelevanceLevel>): v
 
 function scoreGitHistory(data: SectionData, levels: Map<string, RelevanceLevel>): void {
     if (!levels.has('source')) { levels.set('source', (data.gitCommitCount ?? 0) > 0 ? 'low' : 'none'); }
+}
+
+function scoreAffectedFiles(data: SectionData, findings: SectionFinding[]): void {
+    const count = data.affectedFileCount ?? 0;
+    if (count >= 3) {
+        findings.push({ icon: '📁', text: `Error spans ${count} source files`, level: 'medium', sectionId: 'affected-files' });
+    }
 }
 
 /** Parse YYYY-MM-DD and return days since today. Returns Infinity for unparseable dates. */
