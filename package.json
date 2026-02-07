@@ -2,7 +2,7 @@
   "name": "saropa-log-capture",
   "displayName": "Saropa Log Capture",
   "description": "Automatically capture VS Code Debug Console output to persistent log files",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "license": "MIT",
   "publisher": "saropa",
   "repository": {
@@ -696,7 +696,10 @@
         },
         "saropaLogCapture.levelDetection": {
           "type": "string",
-          "enum": ["strict", "loose"],
+          "enum": [
+            "strict",
+            "loose"
+          ],
           "default": "strict",
           "markdownDescription": "How aggressively to classify lines as errors. `strict` requires keywords in label positions (e.g. `Error:`, `[ERROR]`). `loose` matches keywords anywhere in the text."
         },
