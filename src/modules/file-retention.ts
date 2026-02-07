@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
-import { getConfig, isTrackedFile } from './config';
+import { getConfig, readTrackedFiles } from './config';
 
 let hasNotifiedThisSession = false;
 
 /**
  * Enforce the maxLogFiles limit. Deletes oldest tracked files by mtime
- * in the given directory until file count <= maxLogFiles.
- *
+ * until file count <= maxLogFiles. Includes subdirectories when enabled.
  * @returns The number of files deleted.
  */
 export async function enforceFileRetention(
@@ -17,26 +16,15 @@ export async function enforceFileRetention(
         return 0;
     }
 
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDirUri);
-    } catch {
-        // Directory doesn't exist yet — nothing to clean up.
-        return 0;
-    }
-
-    const { fileTypes } = getConfig();
-    const logFiles = entries.filter(
-        ([name, type]) => type === vscode.FileType.File && isTrackedFile(name, fileTypes)
-    );
+    const { fileTypes, includeSubfolders } = getConfig();
+    const logFiles = await readTrackedFiles(logDirUri, fileTypes, includeSubfolders);
 
     if (logFiles.length <= maxLogFiles) {
         return 0;
     }
 
-    // Get mtime for each file.
     const fileStats: { name: string; mtime: number }[] = [];
-    for (const [name] of logFiles) {
+    for (const name of logFiles) {
         try {
             const uri = vscode.Uri.joinPath(logDirUri, name);
             const stat = await vscode.workspace.fs.stat(uri);

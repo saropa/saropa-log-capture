@@ -1,7 +1,7 @@
 /** Session comparison command registrations. */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, isTrackedFile } from './modules/config';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config';
 import { getComparisonPanel } from './ui/session-comparison';
 
 /** URI of session marked for comparison (first selection). */
@@ -50,17 +50,10 @@ async function pickTwoSessions(): Promise<[vscode.Uri, vscode.Uri] | undefined> 
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return undefined; }
     const logDir = getLogDirectoryUri(folder);
-    let entries: [string, vscode.FileType][];
-    try {
-        entries = await vscode.workspace.fs.readDirectory(logDir);
-    } catch {
-        vscode.window.showWarningMessage('No log sessions found.');
-        return undefined;
-    }
-    const { fileTypes } = getConfig();
-    const files = entries
-        .filter(([n, t]) => t === vscode.FileType.File && isTrackedFile(n, fileTypes))
-        .map(([n]) => ({ label: n, uri: vscode.Uri.joinPath(logDir, n) }))
+    const { fileTypes, includeSubfolders } = getConfig();
+    const tracked = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
+    const files = tracked
+        .map(rel => ({ label: rel, uri: vscode.Uri.joinPath(logDir, rel) }))
         .sort((a, b) => b.label.localeCompare(a.label));
     if (files.length < 2) {
         vscode.window.showWarningMessage('Need at least 2 sessions to compare.');
