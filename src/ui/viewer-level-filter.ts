@@ -53,7 +53,7 @@ function classifyLevel(plainText, category) {
 }`;
 }
 
-/** Two-pass filter: mark filtered lines, then restore context lines. */
+/** Three-pass filter: mark filtered, restore context, mark context group boundaries. */
 function getApplyLevelFilterFn(): string {
     return /* javascript */ `
 function applyLevelFilter() {
@@ -61,6 +61,7 @@ function applyLevelFilter() {
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         item.isContext = false;
+        item.isContextFirst = false;
         if (item.type === 'marker') { item.levelFiltered = false; continue; }
         item.levelFiltered = allEnabled ? false : !enabledLevels.has(item.level);
     }
@@ -72,6 +73,11 @@ function applyLevelFilter() {
                 if (ctx.type === 'marker') continue;
                 if (ctx.levelFiltered) { ctx.levelFiltered = false; ctx.isContext = true; }
             }
+        }
+        for (var i = 0, pc = true; i < allLines.length; i++) {
+            if (allLines[i].levelFiltered) continue;
+            if (allLines[i].isContext && !pc) allLines[i].isContextFirst = true;
+            pc = allLines[i].isContext || allLines[i].type === 'marker';
         }
     }
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
