@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [Unreleased]
+## [0.3.1] - 2026-02-07
 
 ### Added
 - **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
