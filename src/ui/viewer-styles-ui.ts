@@ -277,7 +277,7 @@ export function getUiStyles(): string {
 /* --- Scrollbar Minimap: interactive panel replacing native scrollbar --- */
 .scrollbar-minimap {
     width: 60px; flex-shrink: 0; position: relative;
-    height: 100%; overflow: hidden; cursor: pointer;
+    align-self: stretch; overflow: hidden; cursor: pointer;
     border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
 .minimap-marker { position: absolute; left: 0; right: 0; height: 3px; pointer-events: none; z-index: 1; }

@@ -23,14 +23,26 @@ function mmHeight() {
     return (typeof totalHeight !== 'undefined' && totalHeight > 0) ? totalHeight : minimapCachedHeight;
 }
 
-/** Wire up click-to-navigate and click-drag-to-scroll on the minimap. */
+/** Clean up any active minimap drag state. */
+function mmCleanupDrag() {
+    if (mmDragging) {
+        mmDragging = false;
+        suppressScroll = false;
+        if (minimapEl) minimapEl.classList.remove('mm-dragging');
+    }
+}
+
+/** Wire up click-to-navigate and click-drag-to-scroll via pointer capture. */
 function initMinimapDrag() {
-    minimapEl.addEventListener('mousedown', function(e) {
+    minimapEl.addEventListener('pointerdown', function(e) {
         if (mmHeight() === 0) return;
         e.preventDefault();
+        minimapEl.setPointerCapture(e.pointerId);
         scrollToMinimapY(e.clientY);
         var startY = e.clientY;
+        var pid = e.pointerId;
         function onMove(ev) {
+            if (ev.pointerId !== pid) return;
             ev.preventDefault();
             if (!mmDragging && Math.abs(ev.clientY - startY) < 3) return;
             if (!mmDragging) {
@@ -40,18 +52,20 @@ function initMinimapDrag() {
             }
             scrollToMinimapY(ev.clientY);
         }
-        function onUp() {
-            if (mmDragging) {
-                mmDragging = false;
-                suppressScroll = false;
-                minimapEl.classList.remove('mm-dragging');
-            }
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
+        function onDone(ev) {
+            if (ev && ev.pointerId !== undefined && ev.pointerId !== pid) return;
+            mmCleanupDrag();
+            minimapEl.removeEventListener('pointermove', onMove);
+            minimapEl.removeEventListener('pointerup', onDone);
+            minimapEl.removeEventListener('pointercancel', onDone);
+            minimapEl.removeEventListener('lostpointercapture', onDone);
         }
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
+        minimapEl.addEventListener('pointermove', onMove);
+        minimapEl.addEventListener('pointerup', onDone);
+        minimapEl.addEventListener('pointercancel', onDone);
+        minimapEl.addEventListener('lostpointercapture', onDone);
     });
+    window.addEventListener('blur', mmCleanupDrag);
 }
 
 function initMinimap() {
@@ -75,7 +89,12 @@ function initMinimap() {
         logContent.scrollTop += dy;
     }, { passive: false });
     new ResizeObserver(function() { scheduleMinimap(); }).observe(minimapEl);
-    updateMinimap();
+    // Rebuild when webview tab becomes visible (panel height may have changed)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) scheduleMinimap();
+    });
+    // Double-RAF: wait for layout to settle before first measurement
+    requestAnimationFrame(function() { requestAnimationFrame(updateMinimap); });
 }
 
 /** Scroll log content so the clicked minimap Y position is centered. */
@@ -134,7 +153,7 @@ function updateMinimap() {
     }
     minimapCachedHeight = running;
     var mmH = minimapEl.clientHeight;
-    if (running === 0 || mmH === 0) {
+    if (running === 0 || mmH < 50) {
         minimapEl.innerHTML = '';
         if (running > 0) minimapDebounceTimer = setTimeout(updateMinimap, 250);
         return;
@@ -170,7 +189,7 @@ function updateMinimapViewport() {
 }
 
 function scheduleMinimap() {
-    if (minimapDebounceTimer) return;
+    clearTimeout(minimapDebounceTimer);
     minimapDebounceTimer = setTimeout(updateMinimap, 120);
 }
 
