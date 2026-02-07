@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 - **Bug report preview rendering:** Code blocks were broken in the preview panel because the inline code regex consumed backticks from triple-backtick fences. Fixed by processing code blocks before inline code and restricting inline code to single lines.
 - **Bug report source file resolution:** Absolute file paths (e.g. `D:\src\project\lib\file.dart`) were passed to a workspace glob search that never matched, silently preventing all source code, git blame, git history, import, and line-range sections from appearing. Now tries the absolute path directly before falling back to filename search.
+- **Minimap drag-stuck scrolling:** Dragging the minimap and releasing the mouse outside the webview left scroll handlers permanently attached, causing erratic scrolling on subsequent mouse movement. Replaced mouse events with Pointer Capture API so `pointerup` always fires regardless of cursor position.
+- **Minimap marker positioning:** Severity markers could cluster at the top of the minimap when the panel height was measured before layout settled. Added minimum-height guard (retries when panel < 50 px), trailing-edge debounce, visibility-change rebuild, double-RAF init, and replaced CSS `height: 100%` with `align-self: stretch` for reliable flex height resolution.
 
 ### Added
 - **Subfolder scanning (`includeSubfolders`):** New setting (default true) makes the Project Logs panel, search, comparison, delete, insights, and file retention scan subdirectories under the reports directory. Shared `readTrackedFiles()` utility replaces per-module scanning logic. Depth-limited to 10 levels; dot-directories are skipped.
