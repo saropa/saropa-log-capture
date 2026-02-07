@@ -13,6 +13,8 @@ import { ExclusionRule, parseExclusionPattern } from './exclusion-matcher';
 import { AutoTagger } from './auto-tagger';
 import { KeywordWatcher } from './keyword-watcher';
 import { SessionMetadataStore } from './session-metadata';
+import { scanForCorrelationTags } from './correlation-scanner';
+import { scanForFingerprints } from './error-fingerprint';
 import {
     generateSummary, showSummaryNotification, SessionStats,
 } from './session-summary';
@@ -146,6 +148,24 @@ export async function finalizeSession(
         });
         outputChannel.appendLine(`Auto-tags applied: ${autoTags.join(', ')}`);
     }
+
+    scanForCorrelationTags(logSession.fileUri).then(async (corrTags) => {
+        if (corrTags.length > 0) {
+            await metadataStore.setCorrelationTags(logSession.fileUri, corrTags);
+            outputChannel.appendLine(`Correlation tags: ${corrTags.join(', ')}`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan correlation tags: ${err}`);
+    });
+
+    scanForFingerprints(logSession.fileUri).then(async (fps) => {
+        if (fps.length > 0) {
+            await metadataStore.setFingerprints(logSession.fileUri, fps);
+            outputChannel.appendLine(`Error fingerprints: ${fps.length} patterns`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
+    });
 
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     showSummaryNotification(generateSummary(filename, stats));

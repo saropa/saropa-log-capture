@@ -115,6 +115,16 @@
         "icon": "$(tag)"
       },
       {
+        "command": "saropaLogCapture.filterByTag",
+        "title": "Saropa Log Capture: Filter Sessions by Tag",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "saropaLogCapture.rescanTags",
+        "title": "Rescan Correlation Tags",
+        "icon": "$(sync)"
+      },
+      {
         "command": "saropaLogCapture.splitNow",
         "title": "Saropa Log Capture: Split Log File Now",
         "icon": "$(split-horizontal)"
@@ -153,6 +163,11 @@
         "command": "saropaLogCapture.popOutViewer",
         "title": "Saropa Log Capture: Pop Out Viewer to New Window",
         "icon": "$(link-external)"
+      },
+      {
+        "command": "saropaLogCapture.showInsights",
+        "title": "Saropa Log Capture: Cross-Session Insights",
+        "icon": "$(graph)"
       },
       {
         "command": "saropaLogCapture.compareSessions",
@@ -228,6 +243,16 @@
           "group": "navigation"
         },
         {
+          "command": "saropaLogCapture.showInsights",
+          "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "saropaLogCapture.filterByTag",
+          "when": "view == saropaLogCapture.sessionHistory",
+          "group": "navigation"
+        },
+        {
           "command": "saropaLogCapture.popOutViewer",
           "when": "view == saropaLogCapture.logViewer",
           "group": "navigation"
@@ -272,6 +297,10 @@
         },
         {
           "command": "saropaLogCapture.tagSession",
+          "when": "viewItem == session"
+        },
+        {
+          "command": "saropaLogCapture.rescanTags",
           "when": "viewItem == session"
         },
         {
@@ -441,8 +470,8 @@
         },
         "saropaLogCapture.captureAll": {
           "type": "boolean",
-          "default": false,
-          "description": "If true, capture all Debug Console output (no category or exclusion filtering). Overrides 'categories' and 'exclusions'."
+          "default": true,
+          "description": "If true, capture all Debug Console output regardless of category. When false, only captures categories listed in 'categories'. Exclusions always apply independently."
         },
         "saropaLogCapture.redactEnvVars": {
           "type": "array",
