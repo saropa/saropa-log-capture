@@ -20,7 +20,13 @@ export async function showBugReport(
 ): Promise<void> {
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
-    const data = await collectBugReportData(errorText, lineIndex, fileUri);
+    const data = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Generating Bug Report', cancellable: false },
+        async (progress) => {
+            progress.report({ message: 'Collecting error context...' });
+            return collectBugReportData(errorText, lineIndex, fileUri);
+        },
+    );
     lastMarkdown = formatBugReport(data);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);

@@ -53,6 +53,8 @@ export interface SaropaLogCaptureConfig {
   readonly verboseDap: boolean;
   /** File extensions to include when listing sessions in the reports directory. */
   readonly fileTypes: readonly string[];
+  /** Directories to scan for project documentation references during analysis. */
+  readonly docsScanDirs: readonly string[];
 }
 
 const SECTION = "saropaLogCapture";
@@ -162,6 +164,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     fileTypes: cfg.get<string[]>("fileTypes", [
       ".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html",
     ]),
+    docsScanDirs: cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]),
   };
 }
 

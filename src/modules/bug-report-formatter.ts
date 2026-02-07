@@ -7,6 +7,9 @@
 
 import type { BugReportData, StackFrame, CrossSessionMatch } from './bug-report-collector';
 import type { SourceCodePreview, GitCommit } from './workspace-analyzer';
+import type { DocScanResults } from './docs-scanner';
+import type { ImportResults } from './import-extractor';
+import type { SymbolResults } from './symbol-resolver';
 
 /** Format collected data into a complete markdown bug report. */
 export function formatBugReport(data: BugReportData): string {
@@ -16,9 +19,14 @@ export function formatBugReport(data: BugReportData): string {
         formatStackTrace(data.stackTrace),
         formatLogContext(data.logContext),
         formatEnvironment(data.environment),
+        formatDevEnvSection(data.devEnvironment),
     ];
     if (data.sourcePreview) { sections.push(formatSourceCode(data.sourcePreview)); }
     if (data.gitHistory.length > 0) { sections.push(formatGitHistory(data.gitHistory)); }
+    if (data.lineRangeHistory.length > 0) { sections.push(formatLineRangeHistory(data.lineRangeHistory)); }
+    if (data.imports) { sections.push(formatImports(data.imports)); }
+    if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
+    if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     sections.push(formatFooter(data.logFilename, data.lineNumber));
     return sections.join('\n\n');
@@ -57,6 +65,13 @@ function formatEnvironment(env: Record<string, string>): string {
     return `## Environment\n\n| Field | Value |\n|-------|-------|\n${rows.join('\n')}`;
 }
 
+function formatDevEnvSection(env: Record<string, string>): string {
+    const keys = Object.keys(env);
+    if (keys.length === 0) { return '## Development Environment\n\n*No dev environment data available.*'; }
+    const rows = keys.map(k => `| ${k} | ${env[k]} |`);
+    return `## Development Environment\n\n| Field | Value |\n|-------|-------|\n${rows.join('\n')}`;
+}
+
 function formatSourceCode(preview: SourceCodePreview): string {
     const lines = preview.lines.map(l => {
         const marker = l.num === preview.targetLine ? '-->' : '   ';
@@ -66,11 +81,7 @@ function formatSourceCode(preview: SourceCodePreview): string {
 }
 
 function formatGitHistory(commits: readonly GitCommit[]): string {
-    const rows = commits.map(c => `| \`${c.hash}\` | ${c.date} | ${c.message} |`);
-    return [
-        '## Recent Git History',
-        '| Hash | Date | Message |\n|------|------|---------|\n' + rows.join('\n'),
-    ].join('\n\n');
+    return formatCommitTable('## Recent Git History', commits);
 }
 
 function formatCrossSession(match: CrossSessionMatch): string {
@@ -83,6 +94,46 @@ function formatCrossSession(match: CrossSessionMatch): string {
         `- Last seen: ${match.lastSeen}`,
     ].join('\n');
 }
+
+function formatLineRangeHistory(commits: readonly GitCommit[]): string {
+    return formatCommitTable('## Recent Changes Near Error', commits);
+}
+
+function formatCommitTable(heading: string, commits: readonly GitCommit[]): string {
+    const rows = commits.map(c => `| \`${c.hash}\` | ${c.date} | ${escapePipe(c.message)} |`);
+    return [heading, '| Hash | Date | Message |\n|------|------|---------|\n' + rows.join('\n')].join('\n\n');
+}
+
+function formatImports(results: ImportResults): string {
+    if (results.imports.length === 0) { return '## Dependencies\n\n*No imports detected.*'; }
+    const local = results.imports.filter(i => i.isLocal).map(i => `- \`${i.module}\` (L${i.line})`);
+    const pkg = results.imports.filter(i => !i.isLocal).map(i => `- \`${i.module}\` (L${i.line})`);
+    let md = `## Dependencies (${results.language})\n\n`;
+    if (local.length > 0) { md += `**Local** (${local.length}):\n${local.join('\n')}\n\n`; }
+    if (pkg.length > 0) { md += `**Packages** (${pkg.length}):\n${pkg.join('\n')}`; }
+    return md.trimEnd();
+}
+
+function formatDocMatches(results: DocScanResults): string {
+    const rows = results.matches.map(m => `| ${m.filename}:${m.lineNumber} | ${escapePipe(m.matchedToken)} | ${escapePipe(m.lineText.trim().slice(0, 80))} |`);
+    return [
+        `## Related Documentation (${results.matches.length} references)`,
+        '| Location | Token | Context |\n|----------|-------|---------|\n' + rows.join('\n'),
+    ].join('\n\n');
+}
+
+function formatSymbolDefs(results: SymbolResults): string {
+    const rows = results.symbols.map(s => {
+        const file = s.uri.fsPath.split(/[\\/]/).pop() ?? '';
+        return `| ${s.kind} | ${escapePipe(s.name)} | ${file}:${s.line} | ${escapePipe(s.containerName)} |`;
+    });
+    return [
+        '## Symbol Definitions',
+        '| Kind | Name | Location | Container |\n|------|------|----------|-----------|\n' + rows.join('\n'),
+    ].join('\n\n');
+}
+
+function escapePipe(text: string): string { return text.replace(/\|/g, '\\|'); }
 
 function formatFooter(filename: string, lineNumber: number): string {
     return `---\n*Report generated from \`${filename}\` at line ${lineNumber}*`;
