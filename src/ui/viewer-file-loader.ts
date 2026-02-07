@@ -104,23 +104,20 @@ function parseTimeToMs(timeStr: string, midnightMs: number): number {
  * Send parsed file lines to the webview in async batches.
  * Yields 10ms between batches so the webview can process each one without freezing.
  * After all batches, sends discovered categories to populate the filter dropdown.
- * @returns Whether any lines had parseable timestamps.
  */
 export async function sendFileLines(
     lines: readonly string[],
     ctx: FileParseContext,
     postMessage: (msg: unknown) => void,
     seenCategories: Set<string>,
-): Promise<boolean> {
+): Promise<void> {
     const batchSize = 500;
     const cats = new Set<string>();
-    let hasTimestamps = false;
     for (let i = 0; i < lines.length; i += batchSize) {
         const chunk = lines.slice(i, i + batchSize);
         const batch = chunk.map((line) => parseFileLine(line, ctx));
         for (const ln of batch) {
             if (!ln.isMarker) { cats.add(ln.category); }
-            if (ln.timestamp !== 0) { hasTimestamps = true; }
         }
         postMessage({
             type: 'addLines',
@@ -138,7 +135,6 @@ export async function sendFileLines(
     if (newCats.length > 0) {
         postMessage({ type: 'setCategories', categories: newCats });
     }
-    return hasTimestamps;
 }
 
 /**

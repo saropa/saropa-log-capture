@@ -36,6 +36,7 @@ export class LogViewerProvider
   private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
   private onSearchCodebase?: (text: string) => void;
   private onSearchSessions?: (text: string) => void;
+  private onAnalyzeLine?: (text: string) => void;
   private onAddToWatch?: (text: string) => void;
   private onPartNavigate?: (part: number) => void;
   private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
@@ -103,6 +104,7 @@ export class LogViewerProvider
   setAnnotationPromptHandler(handler: (lineIndex: number, current: string) => void): void { this.onAnnotationPrompt = handler; }
   setSearchCodebaseHandler(handler: (text: string) => void): void { this.onSearchCodebase = handler; }
   setSearchSessionsHandler(handler: (text: string) => void): void { this.onSearchSessions = handler; }
+  setAnalyzeLineHandler(handler: (text: string) => void): void { this.onAnalyzeLine = handler; }
   setAddToWatchHandler(handler: (text: string) => void): void { this.onAddToWatch = handler; }
   setLinkClickHandler(handler: (path: string, line: number, col: number, split: boolean) => void): void { this.onLinkClick = handler; }
   setPartNavigateHandler(handler: (part: number) => void): void { this.onPartNavigate = handler; }
@@ -192,9 +194,8 @@ export class LogViewerProvider
     if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
-    const hasTimestamps = await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
+    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
-    this.postMessage({ type: "setTimestampAvailability", available: hasTimestamps });
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
@@ -216,12 +217,12 @@ export class LogViewerProvider
       case "copySourcePath":
         helpers.copySourcePath(String(msg.path ?? ""), String(msg.mode ?? "relative"));
         break;
-      case "exclusionAdded":
-      case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
+      case "exclusionAdded": case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
       case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
+      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? "")); break;
       case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation":
         this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));
@@ -260,8 +261,7 @@ export class LogViewerProvider
       case "findNavigateMatch":
         this.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
         break;
-      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks":
-      case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
+      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "popOutViewer": this.onPopOutRequest?.(); break;
