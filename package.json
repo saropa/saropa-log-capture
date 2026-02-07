@@ -451,6 +451,11 @@
           "default": "reports",
           "description": "Directory for log files, relative to workspace root."
         },
+        "saropaLogCapture.includeSubfolders": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include log files from subdirectories of the log directory in the Project Logs panel, search, and analysis. Does not affect file retention."
+        },
         "saropaLogCapture.fileTypes": {
           "type": "array",
           "items": {
@@ -480,9 +485,9 @@
         },
         "saropaLogCapture.maxLogFiles": {
           "type": "number",
-          "default": 10,
+          "default": 0,
           "minimum": 0,
-          "description": "Maximum number of log files to retain. 0 = unlimited. Oldest deleted when exceeded."
+          "description": "Maximum number of log files to retain (including subdirectories when enabled). 0 = unlimited. Oldest deleted when exceeded."
         },
         "saropaLogCapture.gitignoreCheck": {
           "type": "boolean",

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, isTrackedFile } from './config';
+import { getConfig, readTrackedFiles } from './config';
 
 /** Index entry for a single log file. */
 export interface FileIndexEntry {
@@ -77,23 +77,11 @@ export class SearchIndexManager {
     async rebuild(): Promise<SearchIndex> {
         const files: FileIndexEntry[] = [];
 
-        try {
-            const entries = await vscode.workspace.fs.readDirectory(this.logDirUri);
-
-            const { fileTypes } = getConfig();
-            for (const [name, type] of entries) {
-                if (type !== vscode.FileType.File || !isTrackedFile(name, fileTypes)) {
-                    continue;
-                }
-
-                const fileUri = vscode.Uri.joinPath(this.logDirUri, name);
-                const entry = await this.indexFile(fileUri);
-                if (entry) {
-                    files.push(entry);
-                }
-            }
-        } catch {
-            // Directory doesn't exist or can't be read
+        const { fileTypes, includeSubfolders } = getConfig();
+        const tracked = await readTrackedFiles(this.logDirUri, fileTypes, includeSubfolders);
+        for (const rel of tracked) {
+            const entry = await this.indexFile(vscode.Uri.joinPath(this.logDirUri, rel));
+            if (entry) { files.push(entry); }
         }
 
         this.index = {

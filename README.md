@@ -1,7 +1,7 @@
 
 ![Saropa Log Capture banner](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/banner.png)
 
-# Saropa Log Capture
+<!-- # Saropa Log Capture -->
 
 > **Never lose your debug output again.**
 
