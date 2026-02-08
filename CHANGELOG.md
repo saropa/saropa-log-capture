@@ -5,7 +5,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
-## [Unreleased]
+## [1.0.1] - 2026-02-08
 
 ### Fixed
 - **Level text coloring lost when decorations enabled:** Line text coloring (error=red, warning=gold, etc.) was suppressed whenever decorations were on (the default). Decoupled text colors from the decoration toggle so both work together.
