@@ -28,6 +28,7 @@ import { getClassTagsScript } from './viewer-class-tags';
 import { getFilterBadgeScript } from './viewer-filter-badge';
 import { getAudioScript } from './viewer-audio';
 import { getOptionsPanelHtml, getOptionsPanelScript } from './viewer-options-panel';
+import { getFiltersPanelHtml, getFiltersPanelScript } from './viewer-filters-panel';
 import { getErrorBreakpointHtml, getErrorBreakpointScript } from './viewer-error-breakpoint';
 import { getStatsScript } from './viewer-stats';
 import { getEditModalHtml, getEditModalScript } from './viewer-edit-modal';
@@ -118,6 +119,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
+    ${getFiltersPanelHtml()}
     ${getOptionsPanelHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
@@ -153,7 +155,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
             </div>
         </div>
         <span id="line-count"></span>
-        <span id="filter-badge" class="filter-badge" title="Active filters — click to open options"></span>
+        <span id="filter-badge" class="filter-badge" title="Active filters — click to open filters"></span>
     </div>
     </div>
     ${getIconBarHtml()}
@@ -191,6 +193,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSessionContextMenuScript())}
     ${scriptTag(nonce, getFindPanelScript())}
     ${scriptTag(nonce, getBookmarkPanelScript())}
+    ${scriptTag(nonce, getFiltersPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}
