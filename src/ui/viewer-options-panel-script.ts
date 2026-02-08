@@ -29,7 +29,7 @@ function filterOptionsPanel(query) {
         var titleMatch = title && title.textContent.toLowerCase().indexOf(q) >= 0;
         if (!q || titleMatch) {
             sec.classList.remove('options-filtered-hidden');
-            var allItems = sec.querySelectorAll('.options-row, .options-indent, .exclusion-input-wrapper, .exclusion-chips, .options-hint');
+            var allItems = sec.querySelectorAll('.options-row, .options-indent');
             for (var i = 0; i < allItems.length; i++) allItems[i].classList.remove('options-filtered-hidden');
             continue;
         }
@@ -38,8 +38,6 @@ function filterOptionsPanel(query) {
         for (var r = 0; r < rows.length; r++) {
             if (matchRowAndIndent(rows[r], q)) anyVisible = true;
         }
-        var extras = sec.querySelectorAll(':scope > .exclusion-input-wrapper, :scope > .exclusion-chips, :scope > .options-hint');
-        for (var x = 0; x < extras.length; x++) extras[x].classList.toggle('options-filtered-hidden', !anyVisible);
         sec.classList.toggle('options-filtered-hidden', !anyVisible);
     }
 }
@@ -144,19 +142,14 @@ function syncAudioUi() {
 function syncOptionsPanelUi() {
     syncDisplayUi();
     syncDecoUi();
-    var exclCheck = document.getElementById('opt-exclusions');
-    var appOnlyCheck = document.getElementById('opt-app-only');
-    if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
-    if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
     var vsCheck = document.getElementById('opt-visual-spacing');
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
     syncAudioUi();
-    if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
+    if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
 }
 
 /* Register event listeners for options panel controls. */
-var optionsCloseBtn = document.querySelector('.options-close');
+var optionsCloseBtn = document.querySelector('#options-panel .options-close');
 if (optionsCloseBtn) optionsCloseBtn.addEventListener('click', closeOptionsPanel);
 
 // Options search filter
@@ -224,19 +217,6 @@ if (optLineColor) optLineColor.addEventListener('change', function(e) {
     if (typeof onDecoOptionChange === 'function') onDecoOptionChange();
 });
 
-// Noise reduction options
-var optExcl = document.getElementById('opt-exclusions');
-var optAppOnly = document.getElementById('opt-app-only');
-if (optExcl) optExcl.addEventListener('change', function(e) {
-    if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(e.target.checked);
-    if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    syncOptionsPanelUi();
-});
-if (optAppOnly) optAppOnly.addEventListener('change', function(e) {
-    if (typeof setAppOnlyMode === 'function') setAppOnlyMode(e.target.checked);
-    syncOptionsPanelUi();
-});
-
 // Layout options
 var optVisualSpacing = document.getElementById('opt-visual-spacing');
 if (optVisualSpacing) optVisualSpacing.addEventListener('change', function(e) {
@@ -279,19 +259,12 @@ if (previewWarningBtn) previewWarningBtn.addEventListener('click', function(e) {
     e.preventDefault(); if (typeof previewAudioSound === 'function') previewAudioSound('warning');
 });
 
-var resetBtn = document.getElementById('reset-all-filters');
-if (resetBtn) resetBtn.addEventListener('click', function() {
-    if (typeof resetAllFilters === 'function') resetAllFilters();
-});
-
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
     var ibBtn = document.getElementById('ib-options');
-    var badgeBtn = document.getElementById('filter-badge');
     if (panel && !panel.contains(e.target)
-        && ibBtn !== e.target && !ibBtn?.contains(e.target)
-        && badgeBtn !== e.target) {
+        && ibBtn !== e.target && !ibBtn?.contains(e.target)) {
         closeOptionsPanel();
     }
 });
