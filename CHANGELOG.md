@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [1.1.1] - 2026-02-08
 
 ### Fixed
 - **Session History panel hidden:** Removed `"when": "false"` that permanently hid the Session History tree view, preventing access to trash, tag filtering, and session management.
