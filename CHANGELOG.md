@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Session context menu:** Right-click any session in the Project Logs panel for Open, Rename, Tag, Export (HTML/CSV/JSON/JSONL), Copy Deep Link, Copy File Path, Move to Trash, Restore, and Delete Permanently.
+- **Trash section in Project Logs panel:** Trashed sessions appear in a visible "Trash" section with count badge, "Empty Trash" button, and a toggle to show/hide the section. Trash is visible by default.
 - **Options panel search filter:** Type-to-filter input at the top of the options panel to quickly find settings by keyword. Sections and rows that don't match are hidden in real time; clearing the input restores all options.
 
 ---

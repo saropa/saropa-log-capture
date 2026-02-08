@@ -54,6 +54,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
+  private onSessionAction?: (action: string, uriString: string, filename: string) => void;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -100,7 +101,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = h; }
   setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = h; }
-
+  setSessionActionHandler(h: (a: string, u: string, f: string) => void): void { this.onSessionAction = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
     if (!this.panel) { return; }
@@ -214,6 +215,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
+      case "sessionAction": this.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
       case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "scriptError":
         for (const e of (msg.errors as { message: string }[]) ?? []) { console.warn("[SLC PopOut]", e.message); }

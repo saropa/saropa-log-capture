@@ -160,18 +160,24 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (element && isSplitGroup(element)) {
             return element.parts.sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
         }
+        return this.fetchItems(this.showTrash);
+    }
 
+    /** Fetch all items including trashed (for the webview session panel). */
+    async getAllChildren(): Promise<TreeItem[]> {
+        return this.fetchItems(true);
+    }
+
+    private async fetchItems(includeTrash: boolean): Promise<TreeItem[]> {
         const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder) {
-            return [];
-        }
+        if (!folder) { return []; }
         const logDir = getLogDirectoryUri(folder);
         try {
             const { fileTypes, includeSubfolders } = getConfig();
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
             const items = await Promise.all(logFiles.map(rel => this.loadMetadata(logDir, rel)));
             this.pruneCache(items);
-            const visible = this.showTrash ? items : items.filter(i => !i.trashed);
+            const visible = includeTrash ? items : items.filter(i => !i.trashed);
             const grouped = groupSplitFiles(visible);
             const sorted = grouped.sort((a, b) => b.mtime - a.mtime);
             if (this.tagFilter && this.tagFilter.size > 0) {

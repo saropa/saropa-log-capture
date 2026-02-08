@@ -41,6 +41,7 @@ import { getIconBarHtml, getIconBarScript } from './viewer-icon-bar';
 import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-panel';
 // Must be loaded before session panel script — defines transform functions it calls.
 import { getSessionTransformsScript } from './viewer-session-transforms';
+import { getSessionContextMenuHtml, getSessionContextMenuScript } from './viewer-session-context-menu';
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
 import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-panel';
@@ -109,6 +110,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${getContextMenuHtml()}
     ${getSearchPanelHtml()}
     ${getSessionPanelHtml()}
+    ${getSessionContextMenuHtml()}
     ${getFindPanelHtml()}
     ${getBookmarkPanelHtml()}
     ${getSessionInfoPanelHtml()}
@@ -183,6 +185,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
     ${scriptTag(nonce, getSessionTransformsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
+    ${scriptTag(nonce, getSessionContextMenuScript())}
     ${scriptTag(nonce, getFindPanelScript())}
     ${scriptTag(nonce, getBookmarkPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
