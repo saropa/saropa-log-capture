@@ -148,6 +148,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
                 <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
             </div>
         </div>
+        <span id="line-count"></span>
         <span id="filter-badge" class="filter-badge" title="Active filters — click to open options"></span>
     </div>
     </div>
