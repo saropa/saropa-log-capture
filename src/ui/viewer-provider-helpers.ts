@@ -236,36 +236,17 @@ export function buildSessionListPayload(
 	items: readonly TreeItem[],
 	activeUri: vscode.Uri | undefined,
 ): Record<string, unknown>[] {
-	return items.flatMap(item => {
-		if (isSplitGroup(item)) {
-			return item.parts.map(p => ({
-				filename: p.filename,
-				displayName: p.displayName ?? p.filename,
-				adapter: p.adapter,
-				size: p.size,
-				mtime: p.mtime,
-				formattedMtime: formatMtime(p.mtime),
-				formattedTime: formatMtimeTimeOnly(p.mtime),
-				date: p.date,
-				hasTimestamps: p.hasTimestamps ?? false,
-				isActive: activeUri?.toString() === p.uri.toString(),
-				uriString: p.uri.toString(),
-			}));
-		}
-		return [{
-			filename: item.filename,
-			displayName: item.displayName ?? item.filename,
-			adapter: item.adapter,
-			size: item.size,
-			mtime: item.mtime,
-			formattedMtime: formatMtime(item.mtime),
-			formattedTime: formatMtimeTimeOnly(item.mtime),
-			date: item.date,
-			hasTimestamps: item.hasTimestamps ?? false,
-			isActive: activeUri?.toString() === item.uri.toString(),
-			uriString: item.uri.toString(),
-		}];
+	const activeStr = activeUri?.toString();
+	const toRecord = (m: { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; uri: { toString(): string }; trashed?: boolean; tags?: string[] }): Record<string, unknown> => ({
+		filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
+		size: m.size, mtime: m.mtime, formattedMtime: formatMtime(m.mtime),
+		formattedTime: formatMtimeTimeOnly(m.mtime), date: m.date,
+		hasTimestamps: m.hasTimestamps ?? false, isActive: activeStr === m.uri.toString(),
+		uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
 	});
+	return items.flatMap(item =>
+		isSplitGroup(item) ? item.parts.map(toRecord) : [toRecord(item)],
+	);
 }
 
 /** Open a source file at a specific line, optionally in a split editor. */
