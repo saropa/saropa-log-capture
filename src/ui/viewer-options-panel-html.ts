@@ -20,6 +20,11 @@ export function getOptionsPanelHtml(): string {
         <button class="options-close">&times;</button>
     </div>
 
+    <div class="options-search-wrapper">
+        <input id="options-search" type="text" placeholder="Filter options\u2026" />
+        <button id="options-search-clear" class="options-search-clear" title="Clear filter">&times;</button>
+    </div>
+
     <div class="options-content">
         <!-- Quick Filters Section -->
         <div class="options-section">
