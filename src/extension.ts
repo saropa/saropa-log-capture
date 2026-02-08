@@ -22,6 +22,7 @@ import { PopOutPanel } from './ui/pop-out-panel';
 import { wireSharedHandlers } from './ui/viewer-handler-wiring';
 import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
+import { buildSessionListPayload } from './ui/viewer-provider-helpers';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -60,13 +61,13 @@ export function activate(context: vscode.ExtensionContext): void {
     broadcaster.addTarget(popOutPanel);
     context.subscriptions.push(popOutPanel);
 
-    // Session history tree.
+    // Session history data provider (no tree view — Project Logs panel is the UI).
     historyProvider = new SessionHistoryProvider();
     context.subscriptions.push(historyProvider);
-    const historyTreeView = vscode.window.createTreeView('saropaLogCapture.sessionHistory', {
-        treeDataProvider: historyProvider,
+    historyProvider.onDidChangeTreeData(async () => {
+        const items = await historyProvider.getAllChildren();
+        broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
     });
-    context.subscriptions.push(historyTreeView);
 
     // Bookmarks.
     const bookmarkStore = new BookmarkStore(context);
@@ -158,14 +159,8 @@ export function activate(context: vscode.ExtensionContext): void {
         await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
     });
     viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
-    viewerProvider.setRevealLogFileHandler(async (uriString) => {
-        const uri = vscode.Uri.parse(uriString);
-        const item = await historyProvider.findByUri(uri);
-        if (item) {
-            await historyTreeView.reveal(item, { select: true, focus: true });
-        } else {
-            await vscode.commands.executeCommand('saropaLogCapture.sessionHistory.focus');
-        }
+    viewerProvider.setRevealLogFileHandler(async () => {
+        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
     });
     viewerProvider.setFindInFilesHandler(async (query, options) => {
         const results = await searchLogFilesConcurrent(query, {

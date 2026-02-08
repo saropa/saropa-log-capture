@@ -605,116 +605,7 @@
       "title": "Saropa Log Capture"
     },
     "menus": {
-      "view/item/context": [
-        {
-          "command": "saropaLogCapture.openSession",
-          "group": "inline",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.deleteSession",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.exportHtml",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.exportHtmlInteractive",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.exportCsv",
-          "group": "export",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.exportJson",
-          "group": "export",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.exportJsonl",
-          "group": "export",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.renameSession",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.tagSession",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.rescanTags",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.copyDeepLink",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.copyFilePath",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.markForComparison",
-          "group": "compare",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.compareWithMarked",
-          "group": "compare",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.showTimeline",
-          "group": "analysis",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.trashSession",
-          "group": "trash",
-          "when": "viewItem == session"
-        },
-        {
-          "command": "saropaLogCapture.restoreSession",
-          "group": "trash",
-          "when": "viewItem == trashed-session"
-        },
-        {
-          "command": "saropaLogCapture.openSession",
-          "group": "inline",
-          "when": "viewItem == trashed-session"
-        }
-      ],
       "view/title": [
-        {
-          "command": "saropaLogCapture.refreshHistory",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.sessionHistory"
-        },
-        {
-          "command": "saropaLogCapture.showInsights",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.sessionHistory"
-        },
-        {
-          "command": "saropaLogCapture.filterByTag",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.sessionHistory"
-        },
-        {
-          "command": "saropaLogCapture.toggleTrash",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.sessionHistory"
-        },
-        {
-          "command": "saropaLogCapture.emptyTrash",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.sessionHistory"
-        },
         {
           "command": "saropaLogCapture.trashSession",
           "group": "navigation",
@@ -734,11 +625,6 @@
           "id": "saropaLogCapture.logViewer",
           "name": "Log Viewer",
           "type": "webview"
-        },
-        {
-          "icon": "$(history)",
-          "id": "saropaLogCapture.sessionHistory",
-          "name": "Session History"
         }
       ]
     },
@@ -758,9 +644,9 @@
         "steps": [
           {
             "completionEvents": [
-              "onView:saropaLogCapture.sessionHistory"
+              "onView:saropaLogCapture.logViewer"
             ],
-            "description": "All sessions are saved in the **Session History** tree. Right-click to rename, tag, export, or share deep links.\n\n[View Session History](command:saropaLogCapture.sessionHistory.focus)",
+            "description": "All sessions are saved in the **Project Logs** panel. Click the sessions icon in the sidebar, then right-click to rename, tag, export, or share deep links.\n\n[Open Log Viewer](command:saropaLogCapture.logViewer.focus)",
             "id": "saropaLogCapture.browseHistory",
             "media": {
               "markdown": "media/walkthrough/session-history.md"
