@@ -6,21 +6,26 @@ import { SessionMetadataStore } from './modules/session-metadata';
 import { SessionHistoryProvider } from './ui/session-history-provider';
 
 /** Register trash-related commands. */
-export function trashCommands(historyProvider: SessionHistoryProvider): vscode.Disposable[] {
+export function trashCommands(
+    historyProvider: SessionHistoryProvider,
+    getCurrentFileUri: () => vscode.Uri | undefined,
+): vscode.Disposable[] {
     const metaStore = historyProvider.getMetaStore();
     return [
         vscode.commands.registerCommand('saropaLogCapture.trashSession',
-          async (item: { uri: vscode.Uri; filename: string }) => {
-            if (!item?.uri) { return; }
-            await metaStore.setTrashed(item.uri, true);
-            historyProvider.invalidateMeta(item.uri);
+          async (item?: { uri: vscode.Uri; filename: string }) => {
+            const uri = item?.uri ?? getCurrentFileUri();
+            if (!uri) { return; }
+            await metaStore.setTrashed(uri, true);
+            historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
         vscode.commands.registerCommand('saropaLogCapture.restoreSession',
-          async (item: { uri: vscode.Uri; filename: string }) => {
-            if (!item?.uri) { return; }
-            await metaStore.setTrashed(item.uri, false);
-            historyProvider.invalidateMeta(item.uri);
+          async (item?: { uri: vscode.Uri; filename: string }) => {
+            const uri = item?.uri ?? getCurrentFileUri();
+            if (!uri) { return; }
+            await metaStore.setTrashed(uri, false);
+            historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
         vscode.commands.registerCommand('saropaLogCapture.emptyTrash', async () => {

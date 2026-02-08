@@ -4,6 +4,22 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+**VS Code Marketplace** - [marketplace.visualstudio.com / saropa.saropa-log-capture](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture)
+
+**Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
+
+---
+## [Unreleased]
+
+### Fixed
+- **Session History panel hidden:** Removed `"when": "false"` that permanently hid the Session History tree view, preventing access to trash, tag filtering, and session management.
+
+### Added
+- **Trash button in Log Viewer:** Trash icon in the Log Viewer toolbar sends the currently-viewed file to trash directly, without needing the Session History context menu.
+
+### Changed
+- **Line count moved to right side of footer:** Line count now appears right-aligned next to the filter badge, preventing layout jumps when filename or status text changes. When filters are active, shows visible/total format (e.g. "4/500 lines").
+
 ---
 ## [1.1.0] - 2026-02-08
 
