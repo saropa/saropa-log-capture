@@ -1,26 +1,57 @@
-/**
- * JavaScript code for the options panel.
- *
- * Handles opening/closing the panel, syncing UI state with internal variables,
- * and wiring up event listeners for all controls.
- */
-
 /** Returns the JavaScript code for the options panel. */
 export function getOptionsPanelScript(): string {
     return /* javascript */ `
 var optionsPanelOpen = false;
 
-/**
- * Toggle the options panel open/closed.
- */
+/** Test if a row (and its indent sibling) matches the filter; toggle visibility. */
+function matchRowAndIndent(row, q) {
+    var match = row.textContent.toLowerCase().indexOf(q) >= 0;
+    row.classList.toggle('options-filtered-hidden', !match);
+    var next = row.nextElementSibling;
+    if (next && next.classList.contains('options-indent')) {
+        var indentMatch = next.textContent.toLowerCase().indexOf(q) >= 0;
+        next.classList.toggle('options-filtered-hidden', !match && !indentMatch);
+        if (indentMatch) row.classList.remove('options-filtered-hidden');
+        return match || indentMatch;
+    }
+    return match;
+}
+
+/** Filter options panel sections/rows by query string. */
+function filterOptionsPanel(query) {
+    var q = (query || '').toLowerCase().trim();
+    var clearBtn = document.getElementById('options-search-clear');
+    if (clearBtn) clearBtn.classList.toggle('visible', q.length > 0);
+    var sections = document.querySelectorAll('#options-panel .options-section');
+    for (var s = 0; s < sections.length; s++) {
+        var sec = sections[s];
+        var title = sec.querySelector('.options-section-title');
+        var titleMatch = title && title.textContent.toLowerCase().indexOf(q) >= 0;
+        if (!q || titleMatch) {
+            sec.classList.remove('options-filtered-hidden');
+            var allItems = sec.querySelectorAll('.options-row, .options-indent, .exclusion-input-wrapper, .exclusion-chips, .options-hint');
+            for (var i = 0; i < allItems.length; i++) allItems[i].classList.remove('options-filtered-hidden');
+            continue;
+        }
+        var rows = sec.querySelectorAll(':scope > .options-row');
+        var anyVisible = false;
+        for (var r = 0; r < rows.length; r++) {
+            if (matchRowAndIndent(rows[r], q)) anyVisible = true;
+        }
+        var extras = sec.querySelectorAll(':scope > .exclusion-input-wrapper, :scope > .exclusion-chips, :scope > .options-hint');
+        for (var x = 0; x < extras.length; x++) extras[x].classList.toggle('options-filtered-hidden', !anyVisible);
+        sec.classList.toggle('options-filtered-hidden', !anyVisible);
+    }
+}
+
 function toggleOptionsPanel() {
     var panel = document.getElementById('options-panel');
     if (!panel) return;
-
     optionsPanelOpen = !optionsPanelOpen;
     if (optionsPanelOpen) {
         if (typeof closeSearch === 'function') closeSearch();
-        if (typeof closeSessionPanel === 'function') closeSessionPanel();
+        var searchInput = document.getElementById('options-search');
+        if (searchInput) { searchInput.value = ''; filterOptionsPanel(''); }
         syncOptionsPanelUi();
         panel.classList.add('visible');
     } else {
@@ -33,7 +64,8 @@ function openOptionsPanel() {
     if (optionsPanelOpen) return;
     optionsPanelOpen = true;
     if (typeof closeSearch === 'function') closeSearch();
-    if (typeof closeSessionPanel === 'function') closeSessionPanel();
+    var searchInput = document.getElementById('options-search');
+    if (searchInput) { searchInput.value = ''; filterOptionsPanel(''); }
     var panel = document.getElementById('options-panel');
     if (panel) {
         syncOptionsPanelUi();
@@ -41,9 +73,6 @@ function openOptionsPanel() {
     }
 }
 
-/**
- * Close the options panel.
- */
 function closeOptionsPanel() {
     var panel = document.getElementById('options-panel');
     if (panel) panel.classList.remove('visible');
@@ -128,8 +157,19 @@ function syncOptionsPanelUi() {
 
 /* Register event listeners for options panel controls. */
 var optionsCloseBtn = document.querySelector('.options-close');
-if (optionsCloseBtn) {
-    optionsCloseBtn.addEventListener('click', closeOptionsPanel);
+if (optionsCloseBtn) optionsCloseBtn.addEventListener('click', closeOptionsPanel);
+
+// Options search filter
+var optionsSearchInput = document.getElementById('options-search');
+var optionsSearchClear = document.getElementById('options-search-clear');
+if (optionsSearchInput) {
+    optionsSearchInput.addEventListener('input', function(e) { filterOptionsPanel(e.target.value); });
+}
+if (optionsSearchClear) {
+    optionsSearchClear.addEventListener('click', function() {
+        if (optionsSearchInput) { optionsSearchInput.value = ''; optionsSearchInput.focus(); }
+        filterOptionsPanel('');
+    });
 }
 
 // Font size and line height sliders
@@ -232,28 +272,18 @@ if (audioRateLimitSelect) {
         }
     });
 }
-if (previewErrorBtn) {
-    previewErrorBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (typeof previewAudioSound === 'function') previewAudioSound('error');
-    });
-}
-if (previewWarningBtn) {
-    previewWarningBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (typeof previewAudioSound === 'function') previewAudioSound('warning');
-    });
-}
+if (previewErrorBtn) previewErrorBtn.addEventListener('click', function(e) {
+    e.preventDefault(); if (typeof previewAudioSound === 'function') previewAudioSound('error');
+});
+if (previewWarningBtn) previewWarningBtn.addEventListener('click', function(e) {
+    e.preventDefault(); if (typeof previewAudioSound === 'function') previewAudioSound('warning');
+});
 
-// Reset all filters button
 var resetBtn = document.getElementById('reset-all-filters');
-if (resetBtn) {
-    resetBtn.addEventListener('click', function() {
-        if (typeof resetAllFilters === 'function') resetAllFilters();
-    });
-}
+if (resetBtn) resetBtn.addEventListener('click', function() {
+    if (typeof resetAllFilters === 'function') resetAllFilters();
+});
 
-/* Close panel when clicking outside it. */
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
