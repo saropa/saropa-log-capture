@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Session metadata in Project Logs:** Each session item now shows line count (e.g. "2,645 lines") and all tag types (#manual, ~auto, @correlation) in the meta line, matching the Session History tree view.
+
+---
 ## [1.1.2] - 2026-02-08
 
 ### Added
