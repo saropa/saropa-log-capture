@@ -96,15 +96,11 @@ body {
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
 
-/* --- Hover copy icon (appears on far right of each line) --- */
+/* --- Floating copy icon (single overlay pinned to right edge of #log-content) --- */
 .line, .stack-header { position: relative; }
-.copy-icon {
-    visibility: hidden;
-    pointer-events: none;
+#copy-float {
+    display: none;
     position: absolute;
-    right: calc(4px - var(--copy-offset-x, 0px));
-    top: 50%;
-    transform: translateY(-50%);
     font-size: 14px;
     padding: 2px;
     cursor: pointer;
@@ -112,11 +108,9 @@ body {
     background: var(--vscode-editor-background);
     border-radius: 3px;
     user-select: none;
-    z-index: 1;
+    z-index: 10;
 }
-.line:hover .copy-icon,
-.stack-header:hover .copy-icon { visibility: visible; pointer-events: auto; }
-.copy-icon:hover {
+#copy-float:hover {
     color: var(--vscode-editor-foreground);
     background: var(--vscode-button-hoverBackground, rgba(90,93,94,0.31));
 }
