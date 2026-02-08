@@ -125,7 +125,6 @@ function calcItemHeight(item) {
  */
 function renderItem(item, idx) {
     var idxAttr = ' data-idx="' + idx + '"';
-    var copyBtn = '<span class="copy-icon codicon codicon-copy" title="Copy line"></span>';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
 
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
@@ -179,11 +178,11 @@ function renderItem(item, idx) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + spacingCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + copyBtn + '</div>';
+        return '<div class="stack-header' + matchCls + spacingCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
 
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + copyBtn + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
@@ -227,7 +226,7 @@ function renderItem(item, idx) {
         }
     }
 
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + copyBtn + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }
 `;
 }
