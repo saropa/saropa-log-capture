@@ -110,11 +110,54 @@ suite('SourceTagParser', () => {
 
     suite('parseSourceTag — edge cases', () => {
 
-        test('should handle Android: nested tag format', () => {
-            // "D/Android: [Awesome Notifications]( 3861): message"
-            // Tag is "Android" — the colon is the logcat separator, not part of the tag.
+        test('should extract sub-tag from generic Android logcat tag', () => {
+            // "android" is generic — sub-tag detection finds [Awesome Notifications]
             const result = parseSourceTag('D/Android: [Awesome Notifications]( 3861): message');
-            assert.strictEqual(result, 'android');
+            assert.strictEqual(result, 'awesome notifications');
+        });
+
+        test('should extract HERO-DEBUG sub-tag from flutter', () => {
+            assert.strictEqual(
+                parseSourceTag('I/flutter ( 9812): HERO-DEBUG ContactAvatar: building'),
+                'hero-debug',
+            );
+        });
+
+        test('should extract bracket sub-tag from flutter', () => {
+            assert.strictEqual(
+                parseSourceTag('I/flutter ( 9812): [Awesome Notifications] channel created'),
+                'awesome notifications',
+            );
+        });
+
+        test('should keep flutter when no sub-tag found', () => {
+            assert.strictEqual(
+                parseSourceTag('I/flutter ( 9812): normal log message'),
+                'flutter',
+            );
+        });
+
+        test('should extract sub-tag from system.err', () => {
+            assert.strictEqual(
+                parseSourceTag('W/system.err( 5432): RETROFIT Something failed'),
+                'retrofit',
+            );
+        });
+
+        test('should not extract sub-tag from specific logcat tags', () => {
+            // PlayCore is not generic — should NOT look for sub-tags
+            assert.strictEqual(
+                parseSourceTag('I/PlayCore( 9812): HERO-DEBUG something'),
+                'playcore',
+            );
+        });
+
+        test('should require ALL-CAPS prefix to be 3+ chars', () => {
+            // "OK " is only 2 chars — not a sub-tag
+            assert.strictEqual(
+                parseSourceTag('I/flutter ( 9812): OK something'),
+                'flutter',
+            );
         });
 
         test('should not match logcat-like pattern mid-line', () => {
