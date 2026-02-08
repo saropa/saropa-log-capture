@@ -1,6 +1,6 @@
 # Better Log Colors
 
-Status: **Implemented** (Parts 1-5)
+Status: **Implemented** (Parts 1-6)
 
 ## Issue 1: Empty lines at end of file
 
@@ -62,3 +62,9 @@ Lines like `I/flutter: HERO-DEBUG ContactAvatar: ...` were all tagged "flutter".
 - ALL-CAPS prefixes: `HERO-DEBUG ` -> tag = "hero-debug"
 
 Lines without sub-tags keep the original logcat tag (e.g., "flutter").
+
+## Issue 6: Tag link color not visible + logcat prefix tags not interactive
+
+Tag link inline `style="color:..."` was overridden by ANSI color spans and level CSS classes. Logcat prefix tags like `I/flutter` and `D/Android` disappeared from the tag system when sub-tag detection extracted a more specific tag.
+
+**Fix:** Tag colors now use CSS custom properties (`--tag-clr`) with `!important` to guarantee visibility over any parent color. Replaced `#dcdcaa` in the tag palette (conflicted with debug-level yellow). Added `parseLogcatTag()` to return the raw logcat prefix tag. Both the sub-tag and the parent logcat tag are now registered in the tag system, rendered as colored links, and independently filterable. A line is hidden only when ALL its associated tags are hidden.
