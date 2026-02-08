@@ -162,7 +162,12 @@ export function getSessionPanelScript(): string {
         if (s.adapter) parts.push(s.adapter);
         var timeLabel = sessionDisplayOptions.showDayHeadings ? (s.formattedTime || s.formattedMtime) : s.formattedMtime;
         if (timeLabel) parts.push(timeLabel);
+        if (s.lineCount > 0) parts.push(s.lineCount.toLocaleString('en-US') + ' lines');
         if (s.size) parts.push(formatSessionSize(s.size));
+        var allTags = (s.tags || []).map(function(t) { return '#' + t; })
+            .concat((s.autoTags || []).map(function(t) { return '~' + t; }))
+            .concat((s.correlationTags || []).slice(0, 3).map(function(t) { return '@' + t; }));
+        if (allTags.length > 0) parts.push(allTags.join(' '));
         return parts.join(' \\u00b7 ');
     }
 
