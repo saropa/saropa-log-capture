@@ -34,6 +34,10 @@ function updateFilterBadge() {
     if (typeof hiddenSourceTags !== 'undefined'
         && Object.keys(hiddenSourceTags).length > 0) count++;
 
+    // Class tags hidden
+    if (typeof hiddenClassTags !== 'undefined'
+        && Object.keys(hiddenClassTags).length > 0) count++;
+
     // Category filter active
     if (typeof activeFilters !== 'undefined' && activeFilters !== null) count++;
 
@@ -80,6 +84,8 @@ if (filterBadgeEl) {
         if (typeof appOnlyMode !== 'undefined' && appOnlyMode) other++;
         if (typeof hiddenSourceTags !== 'undefined'
             && Object.keys(hiddenSourceTags).length > 0) other++;
+        if (typeof hiddenClassTags !== 'undefined'
+            && Object.keys(hiddenClassTags).length > 0) other++;
         if (typeof activeFilters !== 'undefined' && activeFilters !== null) other++;
         if (typeof searchFilterMode !== 'undefined' && searchFilterMode
             && typeof searchRegex !== 'undefined' && searchRegex) other++;

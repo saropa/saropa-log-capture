@@ -97,7 +97,7 @@ function extractContext(plainText) {
  * Calculate the height of a log item based on its type and filter state.
  */
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.searchFiltered || item.errorSuppressed) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
