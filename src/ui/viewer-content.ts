@@ -105,6 +105,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
         <div id="spacer-bottom"></div>
         <button id="jump-btn" title="Scroll to bottom">⬇ Bottom</button>
     </div>
+    <div id="copy-float" class="codicon codicon-copy" title="Copy line"></div>
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     </div>
