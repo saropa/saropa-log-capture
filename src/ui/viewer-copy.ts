@@ -149,18 +149,56 @@ function showCopyToast() {
     copyToastTimer = setTimeout(function() { copyToastEl.classList.remove('visible'); }, 1500);
 }
 
-viewportEl.addEventListener('click', function(e) {
-    var icon = e.target.closest('.copy-icon');
-    if (!icon) return;
+var copyFloat = document.getElementById('copy-float');
+var copyFloatLineEl = null;
+var copyFloatHideTimer = 0;
+var wrapperEl = document.getElementById('log-content-wrapper');
+
+function showCopyFloat(lineEl) {
+    if (lineEl === copyFloatLineEl) return;
+    copyFloatLineEl = lineEl;
+    var wrapRect = wrapperEl.getBoundingClientRect();
+    var logRect = logEl.getBoundingClientRect();
+    var lineRect = lineEl.getBoundingClientRect();
+    copyFloat.style.right = (wrapRect.right - logRect.right + 4) + 'px';
+    copyFloat.style.top = (lineRect.top - wrapRect.top + 2) + 'px';
+    copyFloat.style.display = 'block';
+}
+
+function hideCopyFloat() {
+    copyFloat.style.display = 'none';
+    copyFloatLineEl = null;
+}
+
+viewportEl.addEventListener('mouseover', function(e) {
+    var lineEl = e.target.closest('.line, .stack-header');
+    if (!lineEl || lineEl.classList.contains('marker')) { return; }
+    clearTimeout(copyFloatHideTimer);
+    showCopyFloat(lineEl);
+});
+
+viewportEl.addEventListener('mouseleave', function() {
+    copyFloatHideTimer = setTimeout(hideCopyFloat, 150);
+});
+
+copyFloat.addEventListener('mouseenter', function() {
+    clearTimeout(copyFloatHideTimer);
+});
+copyFloat.addEventListener('mouseleave', hideCopyFloat);
+
+copyFloat.addEventListener('click', function(e) {
     e.preventDefault();
-    var lineEl = icon.closest('[data-idx]');
-    if (!lineEl) return;
-    var ci = parseInt(lineEl.dataset.idx, 10);
+    if (!copyFloatLineEl) return;
+    var ci = parseInt(copyFloatLineEl.dataset.idx, 10);
     if (ci >= 0 && ci < allLines.length) {
         vscodeApi.postMessage({ type: 'copyToClipboard', text: stripTags(allLines[ci].html) });
         showCopyToast();
     }
 });
+
+logEl.addEventListener('scroll', function() {
+    if (copyFloat.style.display !== 'none') hideCopyFloat();
+}, { passive: true });
 
 function clearSelection() {
     selectionStart = -1;
