@@ -41,7 +41,7 @@ function classifyLevel(plainText, category) {
         if (L === 'W') return 'warning';
         if (perfPattern.test(plainText)) return 'performance';
         if (todoPattern.test(plainText)) return 'todo';
-        if (L === 'D') return 'debug';
+        if (L === 'V' || L === 'D') return 'debug';
         if (debugPattern.test(plainText)) return 'debug';
         if (noticePattern.test(plainText)) return 'notice';
         return 'info';

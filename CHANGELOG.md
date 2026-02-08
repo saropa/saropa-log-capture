@@ -5,6 +5,20 @@ All notable changes to Saropa Log Capture will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Level text coloring lost when decorations enabled:** Line text coloring (error=red, warning=gold, etc.) was suppressed whenever decorations were on (the default). Decoupled text colors from the decoration toggle so both work together.
+
+### Added
+- **Level text colors toggle:** New "Level text colors" checkbox in decoration settings panel (on by default). Controls whether lines are colored by severity level.
+- **Info-level line color:** Lines classified as `info` (including logcat `I/` lines) now render in blue (`#3794ff`) instead of the default foreground.
+- **Logcat V/ reclassified as debug:** Verbose logcat lines now get the same dim yellow treatment as `D/` lines instead of being uncolored.
+- **Keyword-scope highlight rules:** Highlight rules now support `"scope": "keyword"` to color only the matched text within a line (instead of the entire line). Configure via `saropaLogCapture.highlightRules` in settings.
+- **Clickable inline tag links:** Source tags (logcat tags, bracket tags) are now rendered as colored, clickable elements directly in log lines. Hover to see the tag name; click to solo-filter the view to only that tag's lines (click again to clear). Colors are auto-assigned per tag from an 8-color palette.
+- **Sub-tag detection for generic logcat tags:** Lines from generic sources like `I/flutter` now extract more specific sub-tags from the message body. Patterns like `HERO-DEBUG` (ALL-CAPS prefix) and `[Awesome Notifications]` (bracket tag) are promoted to first-class filterable tags instead of being lumped under "flutter".
+
+---
 ## [1.0.0] - 2026-02-07
 
 ### Fixed
