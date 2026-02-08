@@ -57,6 +57,13 @@ function extractSubTag(body) {
     return null;
 }
 
+/** Return the raw logcat prefix tag (e.g. "flutter" from "I/flutter"). Null for non-logcat. */
+function parseLogcatTag(plainText) {
+    var m = sourceTagPattern.exec(plainText);
+    if (!m || !m[2]) return null;
+    return m[2].toLowerCase();
+}
+
 /** Parse a source tag from the plain text of a log line. */
 function parseSourceTag(plainText) {
     var m = sourceTagPattern.exec(plainText);
@@ -76,20 +83,29 @@ function parseSourceTag(plainText) {
     return null;
 }
 
-/** Increment the count for a line item's source tag. */
+/** Increment the count for a line item's source tag (and logcat parent tag if different). */
 function registerSourceTag(item) {
     var key = item.sourceTag || otherKey;
     sourceTagCounts[key] = (sourceTagCounts[key] || 0) + 1;
-    if (hiddenSourceTags[key]) { item.sourceFiltered = true; }
+    var lk = item.logcatTag;
+    if (lk && lk !== key) { sourceTagCounts[lk] = (sourceTagCounts[lk] || 0) + 1; }
+    var primaryHidden = !!hiddenSourceTags[key];
+    var parentHidden = lk ? !!hiddenSourceTags[lk] : true;
+    if (primaryHidden && (!lk || parentHidden)) { item.sourceFiltered = true; }
     updateTagSummary();
 }
 
-/** Decrement the count for a line item's source tag (used by trimData). */
+/** Decrement the count for a line item's source tag and logcat parent (used by trimData). */
 function unregisterSourceTag(item) {
     var key = item.sourceTag || otherKey;
     if (sourceTagCounts[key]) {
         sourceTagCounts[key]--;
         if (sourceTagCounts[key] <= 0) { delete sourceTagCounts[key]; }
+    }
+    var lk = item.logcatTag;
+    if (lk && lk !== key && sourceTagCounts[lk]) {
+        sourceTagCounts[lk]--;
+        if (sourceTagCounts[lk] <= 0) { delete sourceTagCounts[lk]; }
     }
 }
 
@@ -102,7 +118,10 @@ function applySourceTagFilter() {
         var item = allLines[i];
         if (item.type === 'marker') { continue; }
         var key = item.sourceTag || otherKey;
-        item.sourceFiltered = !!hiddenSourceTags[key];
+        var lk = item.logcatTag;
+        var primaryHidden = !!hiddenSourceTags[key];
+        var parentHidden = lk ? !!hiddenSourceTags[lk] : true;
+        item.sourceFiltered = primaryHidden && (!lk || parentHidden);
     }
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
     else { recalcHeights(); renderViewport(true); }
@@ -231,7 +250,7 @@ function soloSourceTag(tag) {
 }
 
 /** Deterministic color from 8-color palette via string hash. */
-var tagPalette = ['#4ec9b0','#ce9178','#dcdcaa','#9cdcfe','#c586c0','#d7ba7d','#b5cea8','#569cd6'];
+var tagPalette = ['#4ec9b0','#ce9178','#e0a370','#9cdcfe','#c586c0','#d7ba7d','#b5cea8','#569cd6'];
 function tagColor(tag) {
     var h = 0;
     for (var i = 0; i < tag.length; i++) h = ((h << 5) - h + tag.charCodeAt(i)) | 0;
@@ -252,7 +271,7 @@ function wrapTagLink(html, sourceTag) {
         var orig = text.substring(idx, idx + sourceTag.length);
         var safe = orig.replace(/"/g, '&quot;');
         return text.substring(0, idx)
-            + '<span class="tag-link" data-tag="' + sourceTag + '" title="Click to filter: ' + safe + '" style="color:' + color + '">' + orig + '</span>'
+            + '<span class="tag-link" data-tag="' + sourceTag + '" title="Click to filter: ' + safe + '" style="--tag-clr:' + color + '">' + orig + '</span>'
             + text.substring(idx + sourceTag.length);
     });
 }

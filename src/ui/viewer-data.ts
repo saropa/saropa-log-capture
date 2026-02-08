@@ -25,13 +25,15 @@ function addToData(html, isMarker, category, ts, fw) {
             if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
             var appIdx = fw ? -1 : activeGroupHeader._appFrameCount;
             if (!fw) activeGroupHeader._appFrameCount++;
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, sourceFiltered: false, context: context, _appFrameIdx: appIdx });
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, context: context, _appFrameIdx: appIdx });
             activeGroupHeader.frameCount++;
             return;
         }
         var gid = nextGroupId++;
         var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, sourceFiltered: false, context: context, _appFrameCount: (fw ? 0 : 1) };
+        var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
+        if (lTagH && lTagH === sTagH) lTagH = null;
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, context: context, _appFrameCount: (fw ? 0 : 1) };
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         groupHeaderMap[gid] = hdr;
@@ -44,6 +46,8 @@ function addToData(html, isMarker, category, ts, fw) {
     var isSep = isSeparatorLine(plain);
     var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
+    var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
+    if (lTag && lTag === sTag) lTag = null;
 
     // Real-time repeat detection
     var currentHash = generateRepeatHash(lvl, plain);
@@ -76,6 +80,7 @@ function addToData(html, isMarker, category, ts, fw) {
             level: lvl,
             seq: nextSeq++,
             sourceTag: sTag,
+            logcatTag: lTag,
             sourceFiltered: false,
             isSeparator: false
         };
@@ -101,7 +106,7 @@ function addToData(html, isMarker, category, ts, fw) {
 
         var appHidden = (typeof appOnlyMode !== 'undefined' && appOnlyMode && fw);
         var lineH = (errorSuppressed || appHidden) ? 0 : ROW_HEIGHT;
-        var lineItem = { html: html, type: 'line', height: lineH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, sourceFiltered: false, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw };
+        var lineItem = { html: html, type: 'line', height: lineH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw };
         allLines.push(lineItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         totalHeight += lineH;

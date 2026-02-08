@@ -209,8 +209,9 @@ function renderItem(item, idx) {
         html = hl.html;
         titleAttr = hl.titleAttr;
     }
-    if (typeof wrapTagLink === 'function' && item.sourceTag) {
-        html = wrapTagLink(html, item.sourceTag);
+    if (typeof wrapTagLink === 'function') {
+        if (item.logcatTag) { html = wrapTagLink(html, item.logcatTag); }
+        if (item.sourceTag) { html = wrapTagLink(html, item.sourceTag); }
     }
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
