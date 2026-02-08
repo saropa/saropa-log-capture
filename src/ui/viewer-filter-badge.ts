@@ -55,6 +55,7 @@ if (_origRecalcForBadge) {
     recalcHeights = function() {
         _origRecalcForBadge();
         updateFilterBadge();
+        if (typeof updateLineCount === 'function') updateLineCount();
     };
 }
 
@@ -64,6 +65,7 @@ if (_origAppOnlyForBadge) {
     toggleAppOnly = function() {
         _origAppOnlyForBadge();
         updateFilterBadge();
+        if (typeof updateLineCount === 'function') updateLineCount();
     };
 }
 
