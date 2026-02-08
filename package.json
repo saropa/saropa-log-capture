@@ -716,6 +716,11 @@
           "when": "view == saropaLogCapture.sessionHistory"
         },
         {
+          "command": "saropaLogCapture.trashSession",
+          "group": "navigation",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
           "command": "saropaLogCapture.popOutViewer",
           "group": "navigation",
           "when": "view == saropaLogCapture.logViewer"
@@ -733,8 +738,7 @@
         {
           "icon": "$(history)",
           "id": "saropaLogCapture.sessionHistory",
-          "name": "Session History",
-          "when": "false"
+          "name": "Session History"
         }
       ]
     },
@@ -864,5 +868,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "1.1.0"
+  "version": "1.1.1"
 }
