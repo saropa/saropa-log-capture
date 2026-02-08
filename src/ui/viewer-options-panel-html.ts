@@ -1,15 +1,13 @@
 /**
  * HTML template for the options panel.
  *
- * Provides a slide-out panel with organized sections for all viewer settings:
- *   - Quick Filters (presets + reset)
- *   - Output Channels (DAP category checkboxes)
- *   - Log Tags (source tag chips)
- *   - Noise Reduction (exclusions + app-only)
+ * Provides a slide-out panel with display and layout settings:
  *   - Display options (word wrap, decorations, font size, line height)
  *   - Layout (visual spacing)
  *   - Audio alerts
  *   - Actions (export)
+ *
+ * Filter controls (presets, tags, exclusions) live in the filters panel.
  */
 
 /** Returns the HTML for the options panel element. */
@@ -26,62 +24,6 @@ export function getOptionsPanelHtml(): string {
     </div>
 
     <div class="options-content">
-        <!-- Quick Filters Section -->
-        <div class="options-section">
-            <h3 class="options-section-title">Quick Filters</h3>
-            <div class="options-row">
-                <select id="preset-select" title="Quick Filters" style="flex:1">
-                    <option value="">None</option>
-                </select>
-            </div>
-            <div class="options-row">
-                <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and return to default view">Reset all filters</button>
-            </div>
-        </div>
-
-        <!-- Output Channels Section (populated dynamically) -->
-        <div class="options-section" id="output-channels-section" style="display:none">
-            <h3 class="options-section-title">Output Channels</h3>
-            <div id="output-channels-list"></div>
-        </div>
-
-        <!-- Log Tags Section (populated dynamically) -->
-        <div class="options-section" id="log-tags-section" style="display:none">
-            <h3 class="options-section-title">Log Tags</h3>
-            <div class="options-row">
-                <span id="source-tag-summary" class="source-tag-summary"></span>
-            </div>
-            <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
-        </div>
-
-        <!-- Class Tags Section (populated dynamically) -->
-        <div class="options-section" id="class-tags-section" style="display:none">
-            <h3 class="options-section-title">Class Tags</h3>
-            <div class="options-row">
-                <span id="class-tag-summary" class="source-tag-summary"></span>
-            </div>
-            <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
-        </div>
-
-        <!-- Noise Reduction Section -->
-        <div class="options-section">
-            <h3 class="options-section-title">Noise Reduction</h3>
-            <label class="options-row" title="Hide log lines matching configured exclusion patterns">
-                <input type="checkbox" id="opt-exclusions" />
-                <span id="exclusion-label">Exclusions</span>
-            </label>
-            <div class="exclusion-input-wrapper">
-                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" />
-                <button id="exclusion-add-btn" title="Add exclusion pattern">Add</button>
-            </div>
-            <div id="exclusion-chips" class="exclusion-chips"></div>
-            <div class="options-hint" id="exclusion-count"></div>
-            <label class="options-row" title="Show only application output, hiding framework and system messages">
-                <input type="checkbox" id="opt-app-only" />
-                <span>App only (hide framework)</span>
-            </label>
-        </div>
-
         <!-- Display Section -->
         <div class="options-section">
             <h3 class="options-section-title">Display</h3>

@@ -2,7 +2,7 @@
  * Filter badge script for the log viewer footer.
  *
  * Shows a count of active filters in the footer. Clicking the badge
- * opens the options panel so the user can see what's filtering.
+ * opens the filters panel so the user can see what's filtering.
  *
  * Hooks into recalcHeights() and toggleAppOnly() to auto-update.
  */
@@ -73,7 +73,7 @@ if (_origAppOnlyForBadge) {
     };
 }
 
-// Click badge: open level flyup if only level filters, else options panel
+// Click badge: open level flyup if only level filters, else filters panel
 var filterBadgeEl = document.getElementById('filter-badge');
 if (filterBadgeEl) {
     filterBadgeEl.addEventListener('click', function() {
@@ -92,7 +92,7 @@ if (filterBadgeEl) {
         if (hasLevel && other === 0 && typeof toggleLevelMenu === 'function') {
             toggleLevelMenu();
         } else if (typeof setActivePanel === 'function') {
-            setActivePanel('options');
+            setActivePanel('filters');
         }
     });
 }
