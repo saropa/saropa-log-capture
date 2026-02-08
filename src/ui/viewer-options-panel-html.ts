@@ -54,6 +54,15 @@ export function getOptionsPanelHtml(): string {
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         </div>
 
+        <!-- Class Tags Section (populated dynamically) -->
+        <div class="options-section" id="class-tags-section" style="display:none">
+            <h3 class="options-section-title">Class Tags</h3>
+            <div class="options-row">
+                <span id="class-tag-summary" class="source-tag-summary"></span>
+            </div>
+            <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
+        </div>
+
         <!-- Noise Reduction Section -->
         <div class="options-section">
             <h3 class="options-section-title">Noise Reduction</h3>

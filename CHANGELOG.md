@@ -12,9 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Class Tags filter:** Detects PascalCase class names (e.g. `AppBadgeService.load()`, `_EventBadgeWrapperState._loadBadgeCount`) in log lines and stack traces. Classes appearing 2+ times show as filterable chips in a new "Class Tags" section of the options panel, with toggle, solo, all/none controls matching the existing Log Tags UX.
 - **Session context menu:** Right-click any session in the Project Logs panel for Open, Rename, Tag, Export (HTML/CSV/JSON/JSONL), Copy Deep Link, Copy File Path, Move to Trash, Restore, and Delete Permanently.
 - **Trash section in Project Logs panel:** Trashed sessions appear in a visible "Trash" section with count badge, "Empty Trash" button, and a toggle to show/hide the section. Trash is visible by default.
 - **Options panel search filter:** Type-to-filter input at the top of the options panel to quickly find settings by keyword. Sections and rows that don't match are hidden in real time; clearing the input restores all options.
+
+### Changed
+- **Publish script version bump prompt:** When package.json version is not ahead of the CHANGELOG max, the script now offers to bump the patch version interactively instead of failing.
 
 ---
 ## [1.1.1] - 2026-02-08
