@@ -392,13 +392,18 @@ def validate_version_changelog() -> tuple[str, bool]:
         fail("Could not read version from package.json")
         return pkg_version, False
 
-    # Guard: prevent version downgrades
+    # Guard: prevent version downgrades — offer bump if needed
     max_cl = _get_changelog_max_version()
     if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
-        fail(
-            f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
-        info(f"Set package.json version higher than {max_cl}")
-        return pkg_version, False
+        next_ver = _bump_patch(max_cl)
+        warn(f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
+        if not ask_yn(f"Bump to v{next_ver}?", default=True):
+            fail(f"Set package.json version higher than {max_cl}")
+            return pkg_version, False
+        if not _write_package_version(next_ver):
+            return pkg_version, False
+        fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
+        pkg_version = next_ver
 
     if not has_unreleased_section():
         fail("No '## [Unreleased]' section found in CHANGELOG.md")

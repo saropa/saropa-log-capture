@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [1.1.2] - 2026-02-08
 
 ### Added
 - **Class Tags filter:** Detects PascalCase class names (e.g. `AppBadgeService.load()`, `_EventBadgeWrapperState._loadBadgeCount`) in log lines and stack traces. Classes appearing 2+ times show as filterable chips in a new "Class Tags" section of the options panel, with toggle, solo, all/none controls matching the existing Log Tags UX.
