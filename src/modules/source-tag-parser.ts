@@ -55,3 +55,10 @@ export function parseSourceTag(plainText: string): string | null {
     }
     return tag;
 }
+
+/** Return the raw logcat prefix tag (e.g. "flutter" from "I/flutter"). Null for non-logcat lines. */
+export function parseLogcatTag(plainText: string): string | null {
+    const m = sourceTagPattern.exec(plainText);
+    if (!m?.[2]) { return null; }
+    return m[2].toLowerCase();
+}
