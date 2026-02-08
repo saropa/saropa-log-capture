@@ -105,6 +105,7 @@ export function getTagStyles(): string {
 
 /* --- Inline tag links in rendered log lines --- */
 .tag-link {
+    color: var(--tag-clr) !important;
     cursor: pointer;
     border-radius: 2px;
     padding: 0 1px;

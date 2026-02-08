@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { parseSourceTag } from '../modules/source-tag-parser';
+import { parseSourceTag, parseLogcatTag } from '../modules/source-tag-parser';
 
 suite('SourceTagParser', () => {
 
@@ -166,6 +166,29 @@ suite('SourceTagParser', () => {
 
         test('should not match bracket pattern mid-line', () => {
             assert.strictEqual(parseSourceTag('some text [log] message'), null);
+        });
+    });
+
+    suite('parseLogcatTag', () => {
+
+        test('should return raw logcat tag for specific tags', () => {
+            assert.strictEqual(parseLogcatTag('D/FlutterJNI( 3861): message'), 'flutterjni');
+        });
+
+        test('should return raw logcat tag for generic tags', () => {
+            assert.strictEqual(parseLogcatTag('I/flutter ( 9812): HERO-DEBUG msg'), 'flutter');
+        });
+
+        test('should return null for bracket format', () => {
+            assert.strictEqual(parseLogcatTag('[log] some message'), null);
+        });
+
+        test('should return null for plain text', () => {
+            assert.strictEqual(parseLogcatTag('no tag here'), null);
+        });
+
+        test('should return android for generic android tag', () => {
+            assert.strictEqual(parseLogcatTag('D/Android: [Awesome Notifications]'), 'android');
         });
     });
 });
