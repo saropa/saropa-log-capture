@@ -116,6 +116,9 @@ export function getContentStyles(): string {
 /* Push right-aligned group to the end of footer */
 .footer-spacer { flex: 1; }
 
+/* Line count — right-aligned in footer, tabular digits prevent width jitter */
+#line-count { margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
 /* --- Active filter badge in footer --- */
 @keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .filter-badge {

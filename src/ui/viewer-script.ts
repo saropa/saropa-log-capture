@@ -9,13 +9,9 @@ var jumpBtn = document.getElementById('jump-btn');
 var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
-if (footerTextEl) {
-    footerTextEl.addEventListener('click', function(e) {
-        if (e.target && e.target.classList && e.target.classList.contains('footer-filename')) {
-            vscodeApi.postMessage({ type: 'revealLogFile' });
-        }
-    });
-}
+if (footerTextEl) footerTextEl.addEventListener('click', function(e) {
+    if (e.target && e.target.classList && e.target.classList.contains('footer-filename')) vscodeApi.postMessage({ type: 'revealLogFile' });
+});
 var wrapToggle = document.getElementById('wrap-toggle');
 
 var vscodeApi = acquireVsCodeApi();
@@ -28,22 +24,11 @@ var ROW_HEIGHT = 20;
 var MARKER_HEIGHT = 28;
 var OVERSCAN = 30;
 
-var allLines = [];
-var totalHeight = 0;
-var lineCount = 0;
-var autoScroll = true;
-var isPaused = false;
-var isViewingFile = false;
-var wordWrap = false;
-var nextGroupId = 0;
-var activeGroupHeader = null;
-var groupHeaderMap = {};
-var lastStart = -1;
-var lastEnd = -1;
-var rafPending = false;
-var currentFilename = '';
-var nextSeq = 1;
-var scrollMemory = {};
+var allLines = [], totalHeight = 0, lineCount = 0;
+var autoScroll = true, isPaused = false, isViewingFile = false, wordWrap = false;
+var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
+var lastStart = -1, lastEnd = -1, rafPending = false;
+var currentFilename = '', nextSeq = 1, scrollMemory = {};
 
 function stripTags(html) { return html.replace(/<[^>]*>/g, ''); }
 function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
@@ -110,16 +95,35 @@ function jumpToBottom() {
 function formatNumber(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
 
 function updateFooterText() {
-    var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
     footerTextEl.textContent = '';
-    footerTextEl.appendChild(document.createTextNode(prefix + formatNumber(lineCount) + ' lines'));
+    var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
+    if (prefix) footerTextEl.appendChild(document.createTextNode(prefix));
     if (currentFilename) {
-        footerTextEl.appendChild(document.createTextNode(' \\u00b7 '));
         var fn = document.createElement('span');
         fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Reveal in Session History';
         footerTextEl.appendChild(fn);
     }
-    if (footerVersion) footerTextEl.appendChild(document.createTextNode(' \\u00b7 ' + footerVersion));
+    if (footerVersion) {
+        footerTextEl.appendChild(document.createTextNode((currentFilename ? ' \\u00b7 ' : '') + footerVersion));
+    }
+    updateLineCount();
+}
+
+function updateLineCount() {
+    var el = document.getElementById('line-count');
+    if (!el) return;
+    if (lineCount <= 0) { el.textContent = ''; return; }
+    var badge = document.getElementById('filter-badge');
+    var isFiltered = badge && badge.style.display !== 'none';
+    if (isFiltered) {
+        var visible = 0;
+        for (var i = 0; i < allLines.length; i++) {
+            if (allLines[i].height > 0) visible++;
+        }
+        el.textContent = formatNumber(visible) + '/' + formatNumber(lineCount) + ' lines';
+    } else {
+        el.textContent = formatNumber(lineCount) + ' lines';
+    }
 }
 
 window.addEventListener('message', function(event) {
@@ -150,7 +154,7 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
-            footerTextEl.textContent = 'Cleared'; renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
+            footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
             footerTextEl.textContent = msg.text;
@@ -282,15 +286,8 @@ document.addEventListener('keydown', function(e) {
 
 var _resizeRaf = false;
 new ResizeObserver(function() {
-    if (_resizeRaf) return;
-    _resizeRaf = true;
-    requestAnimationFrame(function() {
-        _resizeRaf = false;
-        if (allLines.length > 0 && logEl.clientHeight > 0) {
-            renderViewport(false);
-            if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
-        }
-    });
+    if (_resizeRaf) return; _resizeRaf = true;
+    requestAnimationFrame(function() { _resizeRaf = false; if (allLines.length > 0 && logEl.clientHeight > 0) { renderViewport(false); if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; } } });
 }).observe(logEl);
 `;
 }
