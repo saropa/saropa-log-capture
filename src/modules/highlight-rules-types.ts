@@ -45,6 +45,13 @@ export interface HighlightRule {
      * @default false
      */
     readonly italic?: boolean;
+
+    /**
+     * How the highlight is applied:
+     * - 'line': colors the entire line (default)
+     * - 'keyword': colors only the matched text within the line
+     */
+    readonly scope?: 'line' | 'keyword';
 }
 
 /**

@@ -120,6 +120,12 @@ function defaultHighlightRules(): HighlightRule[] {
       color: "var(--vscode-descriptionForeground)",
       label: "Debug",
     },
+    {
+      pattern: "[Awesome Notifications]",
+      color: "var(--vscode-terminal-ansiGreen, #89d185)",
+      scope: "keyword",
+      label: "Awesome Notifications",
+    },
   ];
 }
 

@@ -187,10 +187,9 @@ function renderItem(item, idx) {
     }
 
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
-    // Only apply level color when decorations are off (decorator shows level via colored dot)
-    var hasDeco = (typeof showDecorations !== 'undefined' && showDecorations);
     var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
-    var levelCls = (item.level && !hasDeco && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
+    var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
+    var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
     var sepCls = item.isSeparator ? ' separator-line' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
@@ -209,6 +208,9 @@ function renderItem(item, idx) {
         var hl = applyHighlightStyles(html, plainText);
         html = hl.html;
         titleAttr = hl.titleAttr;
+    }
+    if (typeof wrapTagLink === 'function' && item.sourceTag) {
+        html = wrapTagLink(html, item.sourceTag);
     }
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';

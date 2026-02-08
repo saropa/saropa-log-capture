@@ -411,6 +411,15 @@
               "pattern": {
                 "description": "Text or /regex/ pattern to match against log lines.",
                 "type": "string"
+              },
+              "scope": {
+                "default": "line",
+                "description": "How the highlight is applied: 'line' colors the entire line, 'keyword' colors only the matched text.",
+                "enum": [
+                  "keyword",
+                  "line"
+                ],
+                "type": "string"
               }
             },
             "required": [
@@ -855,5 +864,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

@@ -50,6 +50,7 @@ function handleSetHighlightRules(msg) {
                 fontWeight: r.fontWeight,
                 fontStyle: r.fontStyle,
                 label: r.label || r.pattern,
+                scope: r.scope || 'line',
             });
         } catch (e) {
             // Invalid regex - skip this rule
@@ -87,6 +88,7 @@ function matchHighlightRules(text) {
 
     for (var i = 0; i < highlightRules.length; i++) {
         var rule = highlightRules[i];
+        if (rule.scope === 'keyword') continue;
         if (rule.regex.test(text)) {
             labels.push(rule.label);
             // First match wins for each style property
@@ -114,31 +116,49 @@ function matchHighlightRules(text) {
     };
 }
 
+/** Build inline CSS from a single rule's style properties. */
+function buildRuleStyle(rule) {
+    var parts = [];
+    if (rule.color) parts.push('color: ' + rule.color);
+    if (rule.backgroundColor) parts.push('background-color: ' + rule.backgroundColor);
+    if (rule.fontWeight) parts.push('font-weight: ' + rule.fontWeight);
+    if (rule.fontStyle) parts.push('font-style: ' + rule.fontStyle);
+    return parts.length > 0 ? parts.join('; ') + ';' : '';
+}
+
+/** Apply keyword-scope highlights: wrap only matched text, not the whole line. */
+function applyKeywordHighlights(html, plainText) {
+    for (var i = 0; i < highlightRules.length; i++) {
+        var rule = highlightRules[i];
+        if (rule.scope !== 'keyword') continue;
+        rule.regex.lastIndex = 0;
+        if (!rule.regex.test(plainText)) continue;
+        var style = buildRuleStyle(rule);
+        if (!style) continue;
+        rule.regex.lastIndex = 0;
+        html = html.replace(/(<[^>]*>)|([^<]+)/g, function(m, tag, text) {
+            if (tag) return tag;
+            rule.regex.lastIndex = 0;
+            return text.replace(rule.regex, '<span class="highlight-keyword" style="' + style + '">$&</span>');
+        });
+    }
+    return html;
+}
+
 /**
  * Applies highlight styles to a line element's HTML.
- * Called by renderItem() when building the line HTML.
- *
- * Wraps the content in a span with inline styles if any rules match.
- * Also adds a title attribute for tooltip showing matching rule labels.
- *
- * @param {string} html - The rendered HTML content of the line
- * @param {string} plainText - Plain text for pattern matching (HTML stripped)
- * @returns {Object} - { html: string, titleAttr: string } with modified html and title attribute
+ * Line-scope rules wrap the entire line; keyword-scope rules wrap only matches.
  */
 function applyHighlightStyles(html, plainText) {
     var match = matchHighlightRules(plainText);
-    if (!match || match.style === '') {
-        return { html: html, titleAttr: '' };
+    if (match && match.style) {
+        var escapedLabels = match.labels.join(', ').replace(/"/g, '&quot;');
+        html = '<span class="highlight-match" style="' + match.style + '">' + html + '</span>';
+        html = applyKeywordHighlights(html, plainText);
+        return { html: html, titleAttr: ' title="Highlights: ' + escapedLabels + '"' };
     }
-
-    // Wrap in styled span and add tooltip with matching rule labels
-    var escapedLabels = match.labels.join(', ').replace(/"/g, '&quot;');
-    var wrappedHtml = '<span class="highlight-match" style="' + match.style + '">' + html + '</span>';
-
-    return {
-        html: wrappedHtml,
-        titleAttr: ' title="Highlights: ' + escapedLabels + '"',
-    };
+    html = applyKeywordHighlights(html, plainText);
+    return { html: html, titleAttr: '' };
 }
 
 // Register message handler for highlight rules
