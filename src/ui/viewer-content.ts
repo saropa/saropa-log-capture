@@ -24,6 +24,7 @@ import { getLevelFilterScript } from './viewer-level-filter';
 import { getContextModalScript, getContextModalHtml } from './viewer-context-modal';
 import { getViewerDataScript } from './viewer-data';
 import { getSourceTagsScript } from './viewer-source-tags';
+import { getClassTagsScript } from './viewer-class-tags';
 import { getFilterBadgeScript } from './viewer-filter-badge';
 import { getAudioScript } from './viewer-audio';
 import { getOptionsPanelHtml, getOptionsPanelScript } from './viewer-options-panel';
@@ -177,6 +178,7 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSearchHistoryScript())}
     ${scriptTag(nonce, getLevelFilterScript())}
     ${scriptTag(nonce, getSourceTagsScript())}
+    ${scriptTag(nonce, getClassTagsScript())}
     ${scriptTag(nonce, getHighlightScript())}
     ${scriptTag(nonce, getPresetsScript())}
     ${scriptTag(nonce, getFilterBadgeScript())}
