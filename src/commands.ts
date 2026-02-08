@@ -49,7 +49,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...insightsCommands(),
         ...bugReportCommands(),
         ...timelineCommands(),
-        ...trashCommands(deps.historyProvider),
+        ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...toolCommands(deps),
     );
 }
