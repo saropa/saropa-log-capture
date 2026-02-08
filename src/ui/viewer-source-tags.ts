@@ -38,34 +38,41 @@ var otherKey = '__other__';
  */
 var sourceTagPattern = /^(?:([VDIWEFA])\\/([^(:\\s]+)\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[([^\\]]+)\\]\\s)/;
 
-/**
- * Regex to parse inline tags anywhere in the line (e.g. "[TagName]").
- * Matches bracket patterns that are not at the start of the line.
- */
-var inlineTagPattern = /\\[([A-Za-z][A-Za-z0-9_-]*)\\]/g;
+/** Bracket tag anywhere in text: [TagName] (allows spaces for multi-word tags). */
+var inlineTagPattern = /\\[([A-Za-z][A-Za-z0-9 _-]*)\\]/g;
 
-/**
- * Parse a source tag from the plain text of a log line.
- * First tries to match start-of-line patterns (logcat, bracket prefix).
- * If no match, searches for inline [TagName] patterns anywhere in the line.
- * @param {string} plainText - HTML-stripped line content
- * @returns {string|null} Lowercase tag name, or null if unrecognized
- */
+/** ALL-CAPS prefix at start of message body (e.g. HERO-DEBUG, MY_APP). */
+var capsPrefix = /^([A-Z][A-Z0-9_-]+) /;
+
+/** Generic logcat tags where sub-tag detection looks into the message body. */
+var genericLogcatTags = { 'flutter': 1, 'android': 1, 'system.err': 1 };
+
+/** Extract a sub-tag from the message body of a generic logcat line. */
+function extractSubTag(body) {
+    inlineTagPattern.lastIndex = 0;
+    var bm = inlineTagPattern.exec(body);
+    if (bm && bm[1]) return bm[1].toLowerCase();
+    var cm = capsPrefix.exec(body);
+    if (cm && cm[1] && cm[1].length >= 3) return cm[1].toLowerCase();
+    return null;
+}
+
+/** Parse a source tag from the plain text of a log line. */
 function parseSourceTag(plainText) {
-    // Try start-of-line patterns first
     var m = sourceTagPattern.exec(plainText);
     if (m) {
         var raw = m[2] || m[3];
-        return raw ? raw.toLowerCase() : null;
+        if (!raw) return null;
+        var tag = raw.toLowerCase();
+        if (m[2] && genericLogcatTags[tag]) {
+            var sub = extractSubTag(plainText.slice(m[0].length));
+            if (sub) return sub;
+        }
+        return tag;
     }
-
-    // Search for inline [TagName] patterns anywhere in the line
-    inlineTagPattern.lastIndex = 0; // Reset regex state
+    inlineTagPattern.lastIndex = 0;
     var inlineMatch = inlineTagPattern.exec(plainText);
-    if (inlineMatch && inlineMatch[1]) {
-        return inlineMatch[1].toLowerCase();
-    }
-
+    if (inlineMatch && inlineMatch[1]) return inlineMatch[1].toLowerCase();
     return null;
 }
 
@@ -204,5 +211,64 @@ function resetSourceTags() {
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
 }
+
+/** Solo a tag: show only lines with this tag. Click again to clear. */
+function soloSourceTag(tag) {
+    var keys = Object.keys(sourceTagCounts);
+    var hiddenCount = Object.keys(hiddenSourceTags).length;
+    var isSolo = hiddenCount === keys.length - 1 && !hiddenSourceTags[tag];
+    if (isSolo) {
+        hiddenSourceTags = {};
+    } else {
+        hiddenSourceTags = {};
+        for (var i = 0; i < keys.length; i++) {
+            if (keys[i] !== tag) hiddenSourceTags[keys[i]] = true;
+        }
+    }
+    applySourceTagFilter();
+    rebuildTagChips();
+    if (typeof markPresetDirty === 'function') { markPresetDirty(); }
+}
+
+/** Deterministic color from 8-color palette via string hash. */
+var tagPalette = ['#4ec9b0','#ce9178','#dcdcaa','#9cdcfe','#c586c0','#d7ba7d','#b5cea8','#569cd6'];
+function tagColor(tag) {
+    var h = 0;
+    for (var i = 0; i < tag.length; i++) h = ((h << 5) - h + tag.charCodeAt(i)) | 0;
+    return tagPalette[Math.abs(h) % tagPalette.length];
+}
+
+/** Wrap the first occurrence of the source tag in HTML with a clickable span. */
+function wrapTagLink(html, sourceTag) {
+    if (!sourceTag || sourceTag === otherKey) return html;
+    var color = tagColor(sourceTag);
+    var wrapped = false;
+    return html.replace(/(<[^>]*>)|([^<]+)/g, function(m, tag, text) {
+        if (tag || wrapped) return m;
+        var lower = text.toLowerCase();
+        var idx = lower.indexOf(sourceTag);
+        if (idx < 0) return text;
+        wrapped = true;
+        var orig = text.substring(idx, idx + sourceTag.length);
+        var safe = orig.replace(/"/g, '&quot;');
+        return text.substring(0, idx)
+            + '<span class="tag-link" data-tag="' + sourceTag + '" title="Click to filter: ' + safe + '" style="color:' + color + '">' + orig + '</span>'
+            + text.substring(idx + sourceTag.length);
+    });
+}
+
+/* Click handler for inline tag links in rendered log lines. */
+(function() {
+    var vp = document.getElementById('viewport');
+    if (!vp) return;
+    vp.addEventListener('click', function(e) {
+        var tagEl = e.target.closest('.tag-link');
+        if (tagEl && tagEl.dataset.tag) {
+            e.preventDefault();
+            e.stopPropagation();
+            soloSourceTag(tagEl.dataset.tag);
+        }
+    });
+})();
 `;
 }

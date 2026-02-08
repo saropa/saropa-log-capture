@@ -37,7 +37,7 @@ function classifyLogcat(prefix: string, plainText: string): SeverityLevel {
     if (prefix === 'W') { return 'warning'; }
     if (perfPattern.test(plainText)) { return 'performance'; }
     if (todoPattern.test(plainText)) { return 'todo'; }
-    if (prefix === 'D' || debugPattern.test(plainText)) { return 'debug'; }
+    if (prefix === 'V' || prefix === 'D' || debugPattern.test(plainText)) { return 'debug'; }
     if (noticePattern.test(plainText)) { return 'notice'; }
     return 'info';
 }

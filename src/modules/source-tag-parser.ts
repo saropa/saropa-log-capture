@@ -9,16 +9,33 @@
  * Tags are lowercased so "D/Flutter" and "I/Flutter" merge into "flutter".
  * The logcat level prefix (V/D/I/W/E/F/A) is captured but ignored for grouping.
  *
- * The same regex is inlined in viewer-source-tags.ts for webview-side use.
+ * For generic logcat tags (flutter, android, system.err), the parser looks
+ * deeper into the message body for sub-tags like [Awesome Notifications]
+ * or ALL-CAPS prefixes like HERO-DEBUG.
+ *
+ * The same logic is mirrored in viewer-source-tags.ts for webview-side use.
  */
 
-/**
- * Regex to parse source tags from plain text.
- * Group 1: logcat level (V/D/I/W/E/F/A) — captured but discarded.
- * Group 2: logcat tag name (e.g. "FlutterJNI", "FirebaseSessions").
- * Group 3: bracket tag name (e.g. "log" from "[log]").
- */
+/** Logcat/bracket source tag pattern. Groups: 1=level, 2=logcat tag, 3=bracket tag. */
 const sourceTagPattern = /^(?:([VDIWEFA])\/([^(:\s]+)\s*(?:\(\s*\d+\))?:\s|\[([^\]]+)\]\s)/;
+
+/** Generic logcat tags where sub-tag detection should look into the message body. */
+const genericTags = new Set(['flutter', 'android', 'system.err']);
+
+/** Bracket inline tag anywhere in text: [TagName]. */
+const inlineTagPattern = /\[([A-Za-z][A-Za-z0-9 _-]*)\]/;
+
+/** ALL-CAPS prefix at start of message body: HERO-DEBUG, MY_APP, etc. */
+const capsPrefix = /^([A-Z][A-Z0-9_-]+) /;
+
+/** Extract a sub-tag from the message body of a generic logcat line. */
+function extractSubTag(messageBody: string): string | null {
+    const bm = inlineTagPattern.exec(messageBody);
+    if (bm?.[1]) { return bm[1].toLowerCase(); }
+    const cm = capsPrefix.exec(messageBody);
+    if (cm?.[1] && cm[1].length >= 3) { return cm[1].toLowerCase(); }
+    return null;
+}
 
 /**
  * Parse a source tag from the plain text of a log line.
@@ -28,9 +45,13 @@ const sourceTagPattern = /^(?:([VDIWEFA])\/([^(:\s]+)\s*(?:\(\s*\d+\))?:\s|\[([^
  */
 export function parseSourceTag(plainText: string): string | null {
     const m = sourceTagPattern.exec(plainText);
-    if (m) {
-        const raw = m[2] ?? m[3];
-        return raw ? raw.toLowerCase() : null;
+    if (!m) { return null; }
+    const raw = m[2] ?? m[3];
+    if (!raw) { return null; }
+    const tag = raw.toLowerCase();
+    if (m[2] && genericTags.has(tag)) {
+        const body = plainText.slice(m[0].length);
+        return extractSubTag(body) ?? tag;
     }
-    return null;
+    return tag;
 }
