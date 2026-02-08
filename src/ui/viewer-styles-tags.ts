@@ -102,5 +102,17 @@ export function getTagStyles(): string {
 .tag-action-btn:hover {
     text-decoration: underline;
 }
+
+/* --- Inline tag links in rendered log lines --- */
+.tag-link {
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0 1px;
+    transition: background 0.1s, text-decoration 0.1s;
+}
+.tag-link:hover {
+    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.08);
+}
 `;
 }

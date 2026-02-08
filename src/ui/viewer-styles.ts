@@ -178,7 +178,9 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-notice {
     color: var(--vscode-terminal-ansiCyan, #4fc1ff);
 }
-/* info lines use default foreground color for consistency */
+.line.level-info {
+    color: var(--vscode-terminal-ansiBlue, #3794ff);
+}
 
 /* --- ASCII separator lines (===, ---, +---, etc.) --- */
 .line.separator-line {

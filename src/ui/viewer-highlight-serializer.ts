@@ -20,6 +20,7 @@ export interface SerializedHighlightRule {
     readonly fontWeight?: string;
     readonly fontStyle?: string;
     readonly label: string;
+    readonly scope?: 'line' | 'keyword';
 }
 
 /**
@@ -42,14 +43,21 @@ export function serializeHighlightRules(
             continue;
         }
 
+        // Keyword-scope rules need the global flag for replace()
+        let flags = parsed.flags;
+        if (rule.scope === 'keyword' && !flags.includes('g')) {
+            flags += 'g';
+        }
+
         result.push({
             pattern: parsed.source,
-            flags: parsed.flags,
+            flags,
             color: rule.color,
             backgroundColor: rule.backgroundColor,
             fontWeight: rule.bold ? 'bold' : undefined,
             fontStyle: rule.italic ? 'italic' : undefined,
             label: rule.label ?? rule.pattern,
+            scope: rule.scope,
         });
     }
 

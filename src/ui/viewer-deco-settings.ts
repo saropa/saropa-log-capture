@@ -43,6 +43,10 @@ export function getDecoSettingsHtml(): string {
         Elapsed time (+Nms)
     </label>
     <div class="deco-settings-separator"></div>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-line-colors" checked />
+        Level text colors
+    </label>
     <div class="deco-settings-row">
         <span>Line coloring</span>
         <select id="deco-line-color-mode">
@@ -72,6 +76,8 @@ var showElapsed = false;
 var decoLineColorMode = 'none';
 /** Show severity bar (colored left border). */
 var decoShowBar = true;
+/** Apply level-based text colors to log lines. */
+var lineColorsEnabled = true;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
@@ -125,6 +131,7 @@ function syncDecoSettingsUi() {
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
     var bar = document.getElementById('deco-opt-bar');
+    var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
     if (ctr) ctr.checked = decoShowCounter;
@@ -132,6 +139,7 @@ function syncDecoSettingsUi() {
     if (ms) ms.checked = showMilliseconds;
     if (elapsed) elapsed.checked = showElapsed;
     if (bar) bar.checked = decoShowBar;
+    if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
 }
 
@@ -148,6 +156,7 @@ function onDecoOptionChange() {
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
     var bar = document.getElementById('deco-opt-bar');
+    var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     decoShowDot = dot ? dot.checked : true;
     decoShowCounter = ctr ? ctr.checked : true;
@@ -155,6 +164,7 @@ function onDecoOptionChange() {
     showMilliseconds = ms ? ms.checked : false;
     showElapsed = elapsed ? elapsed.checked : false;
     decoShowBar = bar ? bar.checked : false;
+    lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
     var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowBar && decoLineColorMode === 'none';
     if (allOff) {
@@ -174,6 +184,7 @@ var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
 var decoOptMilliseconds = document.getElementById('deco-opt-milliseconds');
 var decoOptElapsed = document.getElementById('deco-opt-elapsed');
 var decoOptBar = document.getElementById('deco-opt-bar');
+var decoOptLineColors = document.getElementById('deco-opt-line-colors');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
 
 if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSettings);
@@ -184,6 +195,7 @@ if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionCh
 if (decoOptMilliseconds) decoOptMilliseconds.addEventListener('change', onDecoOptionChange);
 if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange);
 if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
+if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
 
 /* Close panel when clicking outside it or the gear button. */
