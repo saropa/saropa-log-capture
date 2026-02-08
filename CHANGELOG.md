@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [1.1.3] - 2026-02-08
 
 ### Added
 - **Filters panel:** Moved all filter controls (Quick Filters, Output Channels, Log Tags, Class Tags, Noise Reduction) from the Options panel into a dedicated Filters panel with its own icon bar button. Options panel now contains only Display, Layout, Audio, and Actions.
