@@ -12,13 +12,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Filters panel:** Moved all filter controls (Quick Filters, Output Channels, Log Tags, Class Tags, Noise Reduction) from the Options panel into a dedicated Filters panel with its own icon bar button. Options panel now contains only Display, Layout, Audio, and Actions.
+- **Tag search in Filters panel:** Search input at the top of the Filters panel filters tag chips by label text across both Log Tags and Class Tags sections, making it easy to find specific tags among many.
 - **Session metadata in Project Logs:** Each session item now shows line count (e.g. "2,645 lines") and all tag types (#manual, ~auto, @correlation) in the meta line, matching the Session History tree view.
+- **Tag filtering in Project Logs:** "Tags" button in the session panel toolbar opens the correlation tag QuickPick to filter sessions by tag.
+
+### Removed
+- **Session History tree view:** The native tree view has been removed. All session management (browse, rename, tag, trash, export, filter) is now in the Project Logs webview panel.
+
+### Fixed
+- **HERO-DIAG source tag detection:** ALL-CAPS prefixes (e.g. `HERO-DIAG`, `MY_APP`) in logcat message bodies are now detected before bracket tags, fixing cases where a bracket tag later in the line would shadow the prefix.
 
 ---
 ## [1.1.2] - 2026-02-08
 
 ### Added
-- **Class Tags filter:** Detects PascalCase class names (e.g. `AppBadgeService.load()`, `_EventBadgeWrapperState._loadBadgeCount`) in log lines and stack traces. Classes appearing 2+ times show as filterable chips in a new "Class Tags" section of the options panel, with toggle, solo, all/none controls matching the existing Log Tags UX.
+- **Class Tags filter:** Detects PascalCase class names (e.g. `AppBadgeService.load()`, `_EventBadgeWrapperState._loadBadgeCount`) in log lines and stack traces. Classes appearing 2+ times show as filterable chips in a new "Class Tags" section of the filters panel, with toggle, solo, all/none controls matching the existing Log Tags UX.
 - **Session context menu:** Right-click any session in the Project Logs panel for Open, Rename, Tag, Export (HTML/CSV/JSON/JSONL), Copy Deep Link, Copy File Path, Move to Trash, Restore, and Delete Permanently.
 - **Trash section in Project Logs panel:** Trashed sessions appear in a visible "Trash" section with count badge, "Empty Trash" button, and a toggle to show/hide the section. Trash is visible by default.
 - **Options panel search filter:** Type-to-filter input at the top of the options panel to quickly find settings by keyword. Sections and rows that don't match are hidden in real time; clearing the input restores all options.

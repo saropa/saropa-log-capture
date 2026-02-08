@@ -34,6 +34,9 @@ export function getSessionPanelHtml(): string {
         <button id="session-toggle-trash" class="session-toggle-btn active" title="Show/hide trashed sessions">
             <span class="codicon codicon-trash"></span> Trash <span id="session-trash-badge" class="session-toggle-badge"></span>
         </button>
+        <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag">
+            <span class="codicon codicon-filter"></span> Tags
+        </button>
     </div>
     <div class="session-panel-content">
         <div id="session-list"></div>
@@ -245,11 +248,16 @@ export function getSessionPanelScript(): string {
         });
     }
 
-    /* Close + refresh buttons. */
+    /* Close, refresh, and tag filter buttons. */
     var closeBtn = document.getElementById('session-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSessionPanel);
     var refreshBtn = document.getElementById('session-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', requestSessionList);
+    var tagsBtn = document.getElementById('session-filter-tags');
+    if (tagsBtn) tagsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        vscodeApi.postMessage({ type: 'sessionAction', action: 'filterByTag' });
+    });
 
     /* Close on outside click (skip context menu — it's a sibling element). */
     document.addEventListener('click', function(e) {
