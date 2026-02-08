@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Flood guard tests:** `FloodGuard` check/reset, suppression threshold, suppressed count reporting.
 - **Level classifier tests:** `classifyLevel` for stderr, logcat prefixes, strict/loose error detection, all severity levels. `isActionableLevel` for all levels.
 - **Error fingerprint tests:** `normalizeLine` (ANSI, timestamps, UUIDs, hex, paths), `hashFingerprint` determinism and format.
+- **Analysis relevance tests:** `scoreRelevance` for blame, line history, cross-session, correlation, docs, annotations, affected files, section levels. `daysAgo` parsing.
+- **Line analyzer tests:** `extractAnalysisTokens` for error classes, HTTP statuses, URL paths, quoted strings, class methods, source refs, deduplication. `extractAnalysisToken` convenience wrapper.
+- **Bug report formatter tests:** `formatBugReport` structure, stack trace formatting (app/fw frames), log context, environment tables, optional sections (blame, git history, cross-session, affected files), singular/plural.
 
 ### Changed
 - **Publish script version bump prompt:** When package.json version is not ahead of the CHANGELOG max, the script now offers to bump the patch version interactively instead of failing.
