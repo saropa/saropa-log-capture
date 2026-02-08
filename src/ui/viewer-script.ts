@@ -152,7 +152,7 @@ window.addEventListener('message', function(event) {
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
