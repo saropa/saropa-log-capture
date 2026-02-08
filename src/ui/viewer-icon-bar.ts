@@ -22,6 +22,9 @@ export function getIconBarHtml(): string {
         <span class="codicon codicon-bookmark"></span>
         <span id="ib-bookmarks-badge" class="ib-badge"></span>
     </button>
+    <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters">
+        <span class="codicon codicon-filter"></span>
+    </button>
     <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
@@ -41,6 +44,7 @@ export function getIconBarScript(): string {
         search: document.getElementById('ib-search'),
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
+        filters: document.getElementById('ib-filters'),
         info: document.getElementById('ib-info'),
         options: document.getElementById('ib-options'),
     };
@@ -49,6 +53,7 @@ export function getIconBarScript(): string {
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
+        if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
@@ -81,6 +86,8 @@ export function getIconBarScript(): string {
             openFindPanel();
         } else if (name === 'bookmarks' && typeof openBookmarkPanel === 'function') {
             openBookmarkPanel();
+        } else if (name === 'filters' && typeof openFiltersPanel === 'function') {
+            openFiltersPanel();
         } else if (name === 'info' && typeof openInfoPanel === 'function') {
             openInfoPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
@@ -107,6 +114,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.bookmarks) {
         iconButtons.bookmarks.addEventListener('click', function() { setActivePanel('bookmarks'); });
+    }
+    if (iconButtons.filters) {
+        iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
     }
     if (iconButtons.info) {
         iconButtons.info.addEventListener('click', function() { setActivePanel('info'); });

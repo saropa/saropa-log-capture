@@ -3,7 +3,7 @@
  *
  * Parses source tags from Android logcat prefixes (e.g. "D/FlutterJNI( 3861):")
  * and bracket prefixes (e.g. "[log]"). Tags are grouped by name only, ignoring
- * the level prefix. Chips in the options panel Log Tags section show tag names
+ * the level prefix. Chips in the filters panel Log Tags section show tag names
  * and counts; clicking a chip toggles visibility of that tag's lines.
  *
  * Integration points:
@@ -13,7 +13,7 @@
  * - trimData() calls unregisterSourceTag() for removed lines
  */
 
-/** Returns empty HTML — log tags now live inside the options panel. */
+/** Returns empty HTML — log tags now live inside the filters panel. */
 export function getSourceTagsHtml(): string {
     return '';
 }
@@ -49,11 +49,11 @@ var genericLogcatTags = { 'flutter': 1, 'android': 1, 'system.err': 1 };
 
 /** Extract a sub-tag from the message body of a generic logcat line. */
 function extractSubTag(body) {
+    var cm = capsPrefix.exec(body);
+    if (cm && cm[1] && cm[1].length >= 3) return cm[1].toLowerCase();
     inlineTagPattern.lastIndex = 0;
     var bm = inlineTagPattern.exec(body);
     if (bm && bm[1]) return bm[1].toLowerCase();
-    var cm = capsPrefix.exec(body);
-    if (cm && cm[1] && cm[1].length >= 3) return cm[1].toLowerCase();
     return null;
 }
 
