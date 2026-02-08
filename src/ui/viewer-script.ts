@@ -38,7 +38,6 @@ function handleScroll() {
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
     autoScroll = atBottom; renderViewport(false);
     jumpBtn.style.display = atBottom ? 'none' : 'block';
-    viewportEl.style.setProperty('--copy-offset-x', logEl.scrollLeft + 'px');
 }
 
 logEl.addEventListener('scroll', function() {
@@ -56,7 +55,6 @@ logEl.addEventListener('wheel', function(e) {
 }, { passive: false });
 
 viewportEl.addEventListener('click', function(e) {
-    if (e.target.closest('.copy-icon')) return;
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();
