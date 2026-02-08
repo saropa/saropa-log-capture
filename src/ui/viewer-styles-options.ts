@@ -63,6 +63,39 @@ export function getOptionsStyles(): string {
     color: var(--vscode-errorForeground, #f44);
 }
 
+.options-search-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--vscode-input-background);
+    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    padding: 4px 8px;
+}
+#options-search {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: var(--vscode-input-foreground);
+    border: none;
+    padding: 3px 4px;
+    font-size: 11px;
+    font-family: inherit;
+    outline: none;
+}
+.options-search-clear {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    visibility: hidden;
+}
+.options-search-clear.visible { visibility: visible; }
+.options-search-clear:hover { color: var(--vscode-errorForeground, #f44); }
+
+.options-filtered-hidden { display: none !important; }
+
 .options-content {
     flex: 1;
     overflow-y: auto;

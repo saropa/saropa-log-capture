@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Options panel search filter:** Type-to-filter input at the top of the options panel to quickly find settings by keyword. Sections and rows that don't match are hidden in real time; clearing the input restores all options.
+
+---
 ## [1.1.1] - 2026-02-08
 
 ### Fixed
