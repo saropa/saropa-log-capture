@@ -207,6 +207,7 @@ function resetAllFilters() {
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
     if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
     if (typeof selectAllTags === 'function') selectAllTags();
+    if (typeof selectAllClassTags === 'function') selectAllClassTags();
     clearSearchFilter();
     activePresetName = null;
     updatePresetDropdown();

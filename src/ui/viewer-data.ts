@@ -12,7 +12,11 @@ export function getViewerDataScript(): string {
 
 function addToData(html, isMarker, category, ts, fw) {
     if (isMarker) {
-        if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
+        if (activeGroupHeader) {
+            if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
+            if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
+            activeGroupHeader = null;
+        }
         allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts });
         totalHeight += MARKER_HEIGHT;
         return;
@@ -25,7 +29,13 @@ function addToData(html, isMarker, category, ts, fw) {
             if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
             var appIdx = fw ? -1 : activeGroupHeader._appFrameCount;
             if (!fw) activeGroupHeader._appFrameCount++;
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, context: context, _appFrameIdx: appIdx });
+            var cTagsF = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
+            if (cTagsF.length > 0 && activeGroupHeader.classTags) {
+                for (var ci = 0; ci < cTagsF.length; ci++) {
+                    if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
+                }
+            }
+            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx });
             activeGroupHeader.frameCount++;
             return;
         }
@@ -33,7 +43,8 @@ function addToData(html, isMarker, category, ts, fw) {
         var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
         var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
         if (lTagH && lTagH === sTagH) lTagH = null;
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, context: context, _appFrameCount: (fw ? 0 : 1) };
+        var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
+        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1) };
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         groupHeaderMap[gid] = hdr;
@@ -41,13 +52,18 @@ function addToData(html, isMarker, category, ts, fw) {
         totalHeight += ROW_HEIGHT;
         return;
     }
-    if (typeof finalizeStackGroup === 'function' && activeGroupHeader) finalizeStackGroup(activeGroupHeader); activeGroupHeader = null;
+    if (activeGroupHeader) {
+        if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
+        if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
+        activeGroupHeader = null;
+    }
     var plain = stripTags(html);
     var isSep = isSeparatorLine(plain);
     var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
+    var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
 
     // Real-time repeat detection
     var currentHash = generateRepeatHash(lvl, plain);
@@ -82,10 +98,13 @@ function addToData(html, isMarker, category, ts, fw) {
             sourceTag: sTag,
             logcatTag: lTag,
             sourceFiltered: false,
+            classFiltered: false,
+            classTags: cTags,
             isSeparator: false
         };
         allLines.push(repeatItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
+        if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
         totalHeight += ROW_HEIGHT;
     } else {
         // New unique message - reset tracker
@@ -105,10 +124,12 @@ function addToData(html, isMarker, category, ts, fw) {
         }
 
         var appHidden = (typeof appOnlyMode !== 'undefined' && appOnlyMode && fw);
-        var lineH = (errorSuppressed || appHidden) ? 0 : ROW_HEIGHT;
-        var lineItem = { html: html, type: 'line', height: lineH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw };
+        var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
+        var lineH = (errorSuppressed || appHidden || classHidden) ? 0 : ROW_HEIGHT;
+        var lineItem = { html: html, type: 'line', height: lineH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw };
         allLines.push(lineItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
+        if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
         totalHeight += lineH;
     }
 }
@@ -134,6 +155,7 @@ function trimData() {
     var removedHeight = 0;
     for (var i = 0; i < excess; i++) {
         if (typeof unregisterSourceTag === 'function') unregisterSourceTag(allLines[i]);
+        if (typeof unregisterClassTags === 'function') unregisterClassTags(allLines[i]);
         if (allLines[i].type === 'stack-header') delete groupHeaderMap[allLines[i].groupId];
         removedHeight += allLines[i].height;
         totalHeight -= allLines[i].height;
