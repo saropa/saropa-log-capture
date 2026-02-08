@@ -31,6 +31,7 @@ interface HandlerTarget {
   setAddToWatchHandler(h: (t: string) => void): void;
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
+  setSessionActionHandler(h: (action: string, uriString: string, filename: string) => void): void;
   setAddBookmarkHandler(h: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void;
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
 }
@@ -104,9 +105,13 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
     vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
   });
-  target.setSessionListHandler(async () => {
-    const items = await historyProvider.getChildren();
+  const refreshSessionList = async (): Promise<void> => {
+    const items = await historyProvider.getAllChildren();
     broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
+  };
+  target.setSessionListHandler(() => { void refreshSessionList(); });
+  target.setSessionActionHandler((action, uriString, filename) => {
+    void handleSessionAction(action, uriString, filename, historyProvider, refreshSessionList);
   });
   target.setAddBookmarkHandler((lineIndex, text, fileUri) => {
     const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
@@ -155,4 +160,55 @@ async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, 
   });
   if (note === undefined) { return; }
   store.updateNote(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''), note);
+}
+
+async function handleSessionAction(
+  action: string, uriString: string, filename: string,
+  historyProvider: SessionHistoryProvider, refreshList: () => Promise<void>,
+): Promise<void> {
+  const uri = uriString ? vscode.Uri.parse(uriString) : undefined;
+  const item = uri ? { uri, filename } : undefined;
+  const mutating = ['trash', 'restore', 'emptyTrash', 'deletePermanently', 'rename', 'tag'];
+  switch (action) {
+    case 'open':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.openSession', item); }
+      break;
+    case 'trash':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.trashSession', item); }
+      break;
+    case 'restore':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.restoreSession', item); }
+      break;
+    case 'emptyTrash':
+      await vscode.commands.executeCommand('saropaLogCapture.emptyTrash');
+      break;
+    case 'deletePermanently':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.deleteSession', item); }
+      break;
+    case 'rename':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.renameSession', item); }
+      break;
+    case 'tag':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.tagSession', item); }
+      break;
+    case 'exportHtml':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item); }
+      break;
+    case 'exportCsv':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportCsv', item); }
+      break;
+    case 'exportJson':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJson', item); }
+      break;
+    case 'exportJsonl':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJsonl', item); }
+      break;
+    case 'copyDeepLink':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyDeepLink', item); }
+      break;
+    case 'copyFilePath':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
+      break;
+  }
+  if (mutating.includes(action)) { await refreshList(); }
 }

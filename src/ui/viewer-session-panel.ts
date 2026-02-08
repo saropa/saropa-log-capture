@@ -31,6 +31,9 @@ export function getSessionPanelHtml(): string {
         <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order (oldest first)">
             <span class="codicon codicon-arrow-down"></span> Sort
         </button>
+        <button id="session-toggle-trash" class="session-toggle-btn active" title="Show/hide trashed sessions">
+            <span class="codicon codicon-trash"></span> Trash <span id="session-trash-badge" class="session-toggle-badge"></span>
+        </button>
     </div>
     <div class="session-panel-content">
         <div id="session-list"></div>
@@ -53,7 +56,7 @@ export function getSessionPanelScript(): string {
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true,
-        showDayHeadings: true, reverseSort: false,
+        showDayHeadings: true, reverseSort: false, showTrash: true,
     };
 
     window.openSessionPanel = function() {
@@ -84,49 +87,53 @@ export function getSessionPanelScript(): string {
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
             if (sessionEmptyEl) sessionEmptyEl.style.display = '';
+            updateTrashBadge(0);
             return;
         }
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
-        var sorted = sortSessions(sessions);
-        var html = sessionDisplayOptions.showDayHeadings
-            ? renderGrouped(sorted) : renderFlat(sorted);
+        var active = sessions.filter(function(s) { return !s.trashed; });
+        var trashed = sessions.filter(function(s) { return !!s.trashed; });
+        updateTrashBadge(trashed.length);
+        var sorted = sortSessions(active);
+        var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted) : renderFlat(sorted);
+        if (sessionDisplayOptions.showTrash && trashed.length > 0) {
+            html += renderTrashSection(sortSessions(trashed));
+        }
         sessionListEl.innerHTML = html;
+    }
+
+    function updateTrashBadge(count) {
+        var badge = document.getElementById('session-trash-badge');
+        if (badge) badge.textContent = count > 0 ? String(count) : '';
     }
 
     function sortSessions(sessions) {
         var list = sessions.slice();
         list.sort(function(a, b) {
             return sessionDisplayOptions.reverseSort
-                ? (a.mtime || 0) - (b.mtime || 0)
-                : (b.mtime || 0) - (a.mtime || 0);
+                ? (a.mtime || 0) - (b.mtime || 0) : (b.mtime || 0) - (a.mtime || 0);
         });
         return list;
     }
 
-    function renderFlat(sessions) {
-        return sessions.map(renderItem).join('');
-    }
+    function renderFlat(sessions) { return sessions.map(function(s) { return renderItem(s, false); }).join(''); }
 
     function renderGrouped(sessions) {
-        var groups = [];
-        var currentKey = '';
+        var groups = [], currentKey = '';
         for (var i = 0; i < sessions.length; i++) {
             var key = toDateKey(sessions[i].mtime || 0);
-            if (key !== currentKey) {
-                currentKey = key;
-                groups.push(renderDayHeading(sessions[i].mtime || 0));
-            }
-            groups.push(renderItem(sessions[i]));
+            if (key !== currentKey) { currentKey = key; groups.push(renderDayHeading(sessions[i].mtime || 0)); }
+            groups.push(renderItem(sessions[i], false));
         }
         return groups.join('');
     }
 
-    function renderItem(s) {
-        var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
-        var activeClass = s.isActive ? ' session-item-active' : '';
+    function renderItem(s, isTrashed) {
+        var icon = isTrashed ? 'codicon-trash' : (s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output'));
+        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (isTrashed ? ' session-item-trashed' : '');
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
-        return '<div class="session-item' + activeClass + '" data-uri="' + escapeAttr(s.uriString || '') + '">'
+        return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '" data-trashed="' + (isTrashed ? '1' : '') + '">'
             + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
@@ -134,56 +141,30 @@ export function getSessionPanelScript(): string {
             + '</div></div>';
     }
 
+    function renderTrashSection(trashed) {
+        var html = '<div class="session-trash-heading">'
+            + '<span class="session-trash-heading-label"><span class="codicon codicon-trash"></span> Trash <span class="session-trash-badge">(' + trashed.length + ')</span></span>'
+            + '<button class="session-trash-empty-btn" id="session-empty-trash">Empty Trash</button>'
+            + '</div>';
+        html += trashed.map(function(s) { return renderItem(s, true); }).join('');
+        return html;
+    }
+
     function renderDayHeading(epochMs) {
         return '<div class="session-day-heading">' + escapeHtmlText(formatDayHeading(epochMs)) + '</div>';
     }
 
-    /* ---- Day heading formatting ---- */
-
-    var shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-    function ordinalSuffix(n) {
-        var s = ['th','st','nd','rd'];
-        var v = n % 100;
-        return n + (s[(v - 20) % 10] || s[v] || s[0]);
-    }
-
-    function formatDayHeading(epochMs) {
-        var d = new Date(epochMs);
-        return dayNames[d.getDay()] + ', ' + ordinalSuffix(d.getDate()) + ' '
-            + shortMonths[d.getMonth()] + ' ' + d.getFullYear();
-    }
-
-    function toDateKey(epochMs) {
-        var d = new Date(epochMs);
-        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-    }
-
-    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
-
-    /* ---- Meta line ---- */
+    /* Day heading/formatting helpers and formatSessionSize are loaded
+       from viewer-session-transforms.ts as a separate script. */
 
     function buildSessionMeta(s) {
         var parts = [];
         if (s.adapter) parts.push(s.adapter);
-        /* When day headings are visible the date is redundant — show time only. */
-        var timeLabel = sessionDisplayOptions.showDayHeadings
-            ? (s.formattedTime || s.formattedMtime)
-            : s.formattedMtime;
+        var timeLabel = sessionDisplayOptions.showDayHeadings ? (s.formattedTime || s.formattedMtime) : s.formattedMtime;
         if (timeLabel) parts.push(timeLabel);
         if (s.size) parts.push(formatSessionSize(s.size));
         return parts.join(' \\u00b7 ');
     }
-
-    function formatSessionSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    /* Transform functions (stripSessionDatetime, normalizeSessionName)
-       are loaded from viewer-session-transforms.ts as a separate script. */
 
     function applySessionDisplayOptions(name) {
         var result = trimSessionSeconds(name);
@@ -200,19 +181,16 @@ export function getSessionPanelScript(): string {
             'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
             'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
             'session-toggle-reverse': sessionDisplayOptions.reverseSort,
+            'session-toggle-trash': sessionDisplayOptions.showTrash,
         };
         for (var id in ids) {
             var el = document.getElementById(id);
             if (el) el.classList.toggle('active', ids[id]);
         }
-        /* Update sort arrow direction icon. */
         var sortBtn = document.getElementById('session-toggle-reverse');
         if (sortBtn) {
             var icon = sortBtn.querySelector('.codicon');
-            if (icon) {
-                icon.className = sessionDisplayOptions.reverseSort
-                    ? 'codicon codicon-arrow-up' : 'codicon codicon-arrow-down';
-            }
+            if (icon) icon.className = sessionDisplayOptions.reverseSort ? 'codicon codicon-arrow-up' : 'codicon codicon-arrow-down';
         }
     }
 
@@ -228,35 +206,36 @@ export function getSessionPanelScript(): string {
 
     function bindToggle(id, key) {
         var btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleOption(key);
-        });
+        if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleOption(key); });
     }
 
     bindToggle('session-toggle-strip', 'stripDatetime');
     bindToggle('session-toggle-normalize', 'normalizeNames');
     bindToggle('session-toggle-headings', 'showDayHeadings');
     bindToggle('session-toggle-reverse', 'reverseSort');
+    bindToggle('session-toggle-trash', 'showTrash');
 
     /* ---- Escaping helpers ---- */
+    function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+    function escapeHtmlText(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-    function escapeAttr(str) {
-        return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    }
-
-    function escapeHtmlText(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-
-    /* Handle clicks on session items. */
+    /* Handle clicks on session items + empty trash button. */
     if (sessionListEl) {
         sessionListEl.addEventListener('click', function(e) {
+            if (e.target.closest('#session-empty-trash')) {
+                vscodeApi.postMessage({ type: 'sessionAction', action: 'emptyTrash' });
+                return;
+            }
             var item = e.target.closest('.session-item');
             if (!item) return;
-            var uri = item.getAttribute('data-uri');
-            if (uri) {
-                vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+            vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: item.getAttribute('data-uri') || '' });
+        });
+        sessionListEl.addEventListener('contextmenu', function(e) {
+            var item = e.target.closest('.session-item');
+            if (!item) return;
+            e.preventDefault();
+            if (typeof showSessionContextMenu === 'function') {
+                showSessionContextMenu(e.clientX, e.clientY, item.getAttribute('data-uri') || '', item.getAttribute('data-filename') || '', item.getAttribute('data-trashed') === '1');
             }
         });
     }
@@ -267,12 +246,14 @@ export function getSessionPanelScript(): string {
     var refreshBtn = document.getElementById('session-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', requestSessionList);
 
-    /* Close on outside click. */
+    /* Close on outside click (skip context menu — it's a sibling element). */
     document.addEventListener('click', function(e) {
         if (!sessionPanelOpen) return;
         if (sessionPanelEl && sessionPanelEl.contains(e.target)) return;
         var ibBtn = document.getElementById('ib-sessions');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
+        var ctxMenu = document.getElementById('session-context-menu');
+        if (ctxMenu && ctxMenu.contains(e.target)) return;
         closeSessionPanel();
     });
 
