@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Trash section in Project Logs panel:** Trashed sessions appear in a visible "Trash" section with count badge, "Empty Trash" button, and a toggle to show/hide the section. Trash is visible by default.
 - **Options panel search filter:** Type-to-filter input at the top of the options panel to quickly find settings by keyword. Sections and rows that don't match are hidden in real time; clearing the input restores all options.
 
+### Added (tests)
+- **Config tests:** `isTrackedFile`, `shouldRedactEnvVar`, `getFileTypeGlob` — file type matching, env var redaction patterns, glob generation.
+- **Deduplication tests:** `Deduplicator` process/flush/reset, time window expiry, count formatting.
+- **Flood guard tests:** `FloodGuard` check/reset, suppression threshold, suppressed count reporting.
+- **Level classifier tests:** `classifyLevel` for stderr, logcat prefixes, strict/loose error detection, all severity levels. `isActionableLevel` for all levels.
+- **Error fingerprint tests:** `normalizeLine` (ANSI, timestamps, UUIDs, hex, paths), `hashFingerprint` determinism and format.
+
 ### Changed
 - **Publish script version bump prompt:** When package.json version is not ahead of the CHANGELOG max, the script now offers to bump the patch version interactively instead of failing.
 
