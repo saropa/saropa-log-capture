@@ -123,7 +123,13 @@ details[open] > .group-header::before { content: '▼ '; }
 .fb-meta { font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; }
 .fb-console { padding: 6px 12px 6px 24px; cursor: pointer; font-size: 12px; color: var(--vscode-textLink-foreground); }
 .fb-console:hover { text-decoration: underline; }
-.fb-empty { padding: 6px 12px; font-size: 12px; color: var(--vscode-disabledForeground); font-style: italic; }`;
+.fb-empty { padding: 6px 12px; font-size: 12px; color: var(--vscode-disabledForeground); font-style: italic; }
+.crash-detail { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+.crash-detail.expanded { max-height: 2000px; padding: 4px 0; border-top: 1px solid var(--vscode-panel-border); }
+.crash-thread-header { padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); }
+.crash-loading { padding: 6px 24px; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--vscode-descriptionForeground); }
+.crash-expand-icon { float: right; font-size: 10px; color: var(--vscode-descriptionForeground); transition: transform 0.2s; }
+.fb-item.detail-open .crash-expand-icon { transform: rotate(90deg); }`;
 }
 
 /** Get the webview script with click handlers and progressive section updates. */
@@ -165,8 +171,16 @@ document.addEventListener('click', function(e) {
     if (fileCard) { vscodeApi.postMessage({ type: 'openSource', uri: fileCard.dataset.sourceUri, line: parseInt(fileCard.dataset.line || '1') }); return; }
     var ghItem = e.target.closest('.gh-item');
     if (ghItem && ghItem.dataset.url) { vscodeApi.postMessage({ type: 'openGitHubUrl', url: ghItem.dataset.url }); return; }
-    var fbItem = e.target.closest('.fb-item, .fb-console');
-    if (fbItem && fbItem.dataset.url) { vscodeApi.postMessage({ type: 'openFirebaseUrl', url: fbItem.dataset.url }); return; }
+    var fbConsole = e.target.closest('.fb-console');
+    if (fbConsole && fbConsole.dataset.url) { vscodeApi.postMessage({ type: 'openFirebaseUrl', url: fbConsole.dataset.url }); return; }
+    var fbItem = e.target.closest('.fb-item[data-issue-id]');
+    if (fbItem) {
+        var iid = fbItem.dataset.issueId;
+        var det = document.getElementById('crash-detail-' + iid);
+        if (det && det.classList.contains('expanded')) { det.classList.remove('expanded'); fbItem.classList.remove('detail-open'); }
+        else if (det) { if (!det.dataset.loaded) { det.innerHTML = '<div class="crash-loading"><span class="spinner"></span> Loading crash details\u2026</div>'; det.dataset.loaded = '1'; vscodeApi.postMessage({ type: 'fetchCrashDetail', issueId: iid }); } det.classList.add('expanded'); fbItem.classList.add('detail-open'); }
+        return;
+    }
     var frame = e.target.closest('.frame-app[data-frame-file]');
     if (frame && !frame.classList.contains('frame-loading')) {
         frame.classList.add('frame-loading');
@@ -194,6 +208,9 @@ window.addEventListener('message', function(e) {
     } else if (e.data.type === 'frameReady') {
         var frames = document.querySelectorAll('.frame-app[data-frame-file="' + e.data.file + '"][data-frame-line="' + e.data.line + '"]');
         frames.forEach(function(fr) { var d = fr.querySelector('.frame-detail'); if (d) { d.innerHTML = e.data.html; d.classList.add('expanded'); } fr.classList.remove('frame-loading'); });
+    } else if (e.data.type === 'crashDetailReady') {
+        var cd = document.getElementById('crash-detail-' + e.data.issueId);
+        if (cd) { cd.innerHTML = e.data.html; cd.classList.add('expanded'); }
     } else if (e.data.type === 'summaryReady') {
         var target = document.getElementById('executive-summary');
         if (target && e.data.html) { target.innerHTML = e.data.html; }
