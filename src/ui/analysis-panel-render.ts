@@ -36,7 +36,8 @@ export function buildProgressiveShell(nonce: string, lineText: string, tokens: A
     slots += loadingSlot('symbols', '🔎 Resolving symbol definitions...');
     slots += loadingSlot('tokens', `🔍 Searching ${tokens.length} token${tokens.length > 1 ? 's' : ''}... ${tokenList}`);
     slots += loadingSlot('github', '🔗 Querying GitHub...');
-    const sectionCount = (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 5;
+    slots += loadingSlot('firebase', '🔥 Querying Firebase Crashlytics...');
+    const sectionCount = (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 6;
     return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
         <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn">Stop</button></div>
         <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" data-total="${sectionCount}" style="width:0%"></div></div></div>
