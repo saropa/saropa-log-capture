@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
-import { linkifyHtml } from '../modules/source-linker';
+import { linkifyHtml, linkifyUrls } from '../modules/source-linker';
 
 /** A parsed log line ready for the webview. */
 export interface PendingLine {
@@ -18,6 +18,7 @@ export interface PendingLine {
     readonly category: string;
     readonly timestamp: number;
     readonly fw?: boolean;
+    readonly sourcePath?: string;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */
@@ -180,7 +181,7 @@ function buildFileLine(
     timestamp: number,
 ): PendingLine {
     return {
-        text: linkifyHtml(ansiToHtml(text)),
+        text: linkifyUrls(linkifyHtml(ansiToHtml(text))),
         isMarker: false,
         lineCount: 0,
         category,
