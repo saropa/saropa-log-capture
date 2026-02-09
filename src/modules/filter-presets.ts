@@ -24,6 +24,9 @@ export interface FilterPreset {
     /** DAP categories to show (empty = all). e.g., ["stderr", "console"] */
     readonly categories?: string[];
 
+    /** Severity levels to show (empty = all). e.g., ["error", "warning"] */
+    readonly levels?: string[];
+
     /** Search pattern to apply (string or /regex/). */
     readonly searchPattern?: string;
 
@@ -41,12 +44,11 @@ export interface FilterPreset {
 export const builtInPresets: readonly FilterPreset[] = [
     {
         name: 'Errors Only',
-        categories: ['stderr'],
-        searchPattern: '/error|exception|fatal|fail/i',
+        levels: ['error'],
     },
     {
         name: 'Warnings & Errors',
-        searchPattern: '/warn|error|exception|fatal/i',
+        levels: ['error', 'warning'],
     },
     {
         name: 'No Framework Noise',
@@ -171,19 +173,18 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
  */
 function buildPresetDescription(preset: FilterPreset): string {
     const parts: string[] = [];
-
+    if (preset.levels && preset.levels.length > 0) {
+        parts.push(`levels: ${preset.levels.join(', ')}`);
+    }
     if (preset.categories && preset.categories.length > 0) {
         parts.push(`categories: ${preset.categories.join(', ')}`);
     }
-
     if (preset.searchPattern) {
         parts.push(`search: ${preset.searchPattern}`);
     }
-
     if (preset.exclusionsEnabled !== undefined) {
         parts.push(`exclusions: ${preset.exclusionsEnabled ? 'on' : 'off'}`);
     }
-
     return parts.join(' · ') || 'No filters';
 }
 
@@ -195,6 +196,7 @@ function buildPresetDescription(preset: FilterPreset): string {
  */
 export async function promptSavePreset(currentFilters: {
     categories?: string[];
+    levels?: string[];
     searchPattern?: string;
     exclusionsEnabled?: boolean;
 }): Promise<FilterPreset | undefined> {

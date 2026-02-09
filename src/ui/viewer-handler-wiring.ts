@@ -83,7 +83,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   });
   target.setSavePresetRequestHandler(async (filters) => {
     const preset = await promptSavePreset(filters as {
-      categories?: string[]; searchPattern?: string; exclusionsEnabled?: boolean;
+      categories?: string[]; levels?: string[]; searchPattern?: string; exclusionsEnabled?: boolean;
     });
     if (preset) { broadcaster.setPresets(loadPresets()); }
   });

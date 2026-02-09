@@ -6,7 +6,7 @@
  *   - Quick Filters (presets + reset)
  *   - Output Channels (DAP category checkboxes)
  *   - Log Tags (source tag chips)
- *   - Class Tags (class tag chips)
+ *   - Code Tags (class/method tag chips)
  *   - Noise Reduction (exclusions + app-only)
  *
  * Tag search input at the top filters chip labels across both tag sections.
@@ -39,6 +39,21 @@ export function getFiltersPanelHtml(): string {
             </div>
         </div>
 
+        <!-- Source Scope Section -->
+        <div class="options-section" id="scope-section">
+            <h3 class="options-section-title">Source Scope</h3>
+            <div id="scope-status" class="options-hint">No active editor</div>
+            <label class="options-row"><input type="radio" name="scope" value="all" checked /> All logs</label>
+            <label class="options-row"><input type="radio" name="scope" value="workspace" disabled /> Workspace folder</label>
+            <label class="options-row"><input type="radio" name="scope" value="package" disabled /> Package</label>
+            <label class="options-row"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
+            <label class="options-row"><input type="radio" name="scope" value="file" disabled /> File</label>
+            <label class="options-row" title="Hide lines with no DAP source path when a scope filter is active">
+                <input type="checkbox" id="scope-hide-unattrib" />
+                <span>Hide unattributed</span>
+            </label>
+        </div>
+
         <!-- Output Channels Section (populated dynamically) -->
         <div class="options-section" id="output-channels-section" style="display:none">
             <h3 class="options-section-title">Output Channels</h3>
@@ -54,9 +69,9 @@ export function getFiltersPanelHtml(): string {
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         </div>
 
-        <!-- Class Tags Section (populated dynamically) -->
+        <!-- Code Tags Section (populated dynamically) -->
         <div class="options-section" id="class-tags-section" style="display:none">
-            <h3 class="options-section-title">Class Tags</h3>
+            <h3 class="options-section-title">Code Tags</h3>
             <div class="options-row">
                 <span id="class-tag-summary" class="source-tag-summary"></span>
             </div>
