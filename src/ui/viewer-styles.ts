@@ -32,13 +32,15 @@ export function getViewerStyles(): string {
 body {
     background: var(--vscode-editor-background);
     color: var(--vscode-editor-foreground);
-    font-family: var(--vscode-editor-font-family, monospace);
+    font-family: 'JetBrains Mono', var(--vscode-editor-font-family, monospace);
     font-size: var(--log-font-size, var(--vscode-editor-font-size, 13px));
     overflow: hidden;
     height: 100vh;
     display: flex;
     flex-direction: row;
+    user-select: none; /* Confine native text selection to #viewport only */
 }
+#viewport { user-select: text; }
 
 #main-content {
     flex: 1;
@@ -90,7 +92,7 @@ body {
 .line {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0 8px;
+    padding: 0 8px 0 16px;
     line-height: var(--log-line-height, 1.5);
     transition: background 0.1s ease;
 }
@@ -139,6 +141,10 @@ body {
     cursor: pointer;
 }
 .source-link:hover { text-decoration: underline; }
+
+/* --- Clickable URL links within log lines --- */
+.url-link { color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; text-decoration: underline; }
+.url-link:hover { opacity: 0.8; }
 
 /* --- Focus indicators for keyboard navigation --- */
 button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
