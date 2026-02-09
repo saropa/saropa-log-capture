@@ -98,7 +98,8 @@ export function renderFirebaseSection(ctx: FirebaseContext): string {
     let html = `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">${n} crash${n !== 1 ? 'es' : ''}</span></summary>`;
     for (const issue of ctx.issues) {
         const users = issue.userCount > 0 ? ` · ${issue.userCount} user${issue.userCount !== 1 ? 's' : ''}` : '';
-        html += `<div class="fb-item" data-url="${escapeHtml(ctx.consoleUrl ?? '')}"><div class="fb-title">${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}</div></div>`;
+        const eid = escapeHtml(issue.id);
+        html += `<div class="fb-item" data-issue-id="${eid}"><div class="fb-title"><span class="crash-expand-icon">▶</span>${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}</div><div class="crash-detail" id="crash-detail-${eid}"></div></div>`;
     }
     return doneSlot('firebase', html + consoleLink + '</details>');
 }
