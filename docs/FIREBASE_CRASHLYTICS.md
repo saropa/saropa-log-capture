@@ -96,16 +96,44 @@ For each matching issue:
 - **Subtitle** (e.g., `OutOfMemoryError thrown while trying to throw an exception`)
 - **Event count** (total crash occurrences)
 - **User count** (unique affected users)
+- **Expand chevron** — click to fetch and display the crash stack trace inline
 - **Console link** to open the issue in Firebase Console
+
+### Expandable crash detail
+
+Clicking an issue card fetches the latest crash event's stack trace:
+
+```
+GET https://firebasecrashlytics.googleapis.com/v1beta1/
+  projects/{projectId}/apps/{appId}/issues/{issueId}/events?pageSize=1
+```
+
+The response is parsed defensively (structured threads, raw string trace, or unknown shapes) and each frame is classified as **APP** or **FW** (framework) using the same `isFrameworkFrame()` logic as the log viewer. App frames matching workspace files are clickable and open the source file in the editor.
+
+If the events API fails or returns unexpected data, the card shows "Crash details not available" while the issue title and counts remain visible.
 
 ### What is NOT queried
 
-- Individual crash events or stack traces (would require per-issue API calls)
 - Firebase Analytics events
 - Firebase Performance traces
 - Crash-free statistics
 
 These are available in the Firebase Console via the deep link provided.
+
+## Caching
+
+Crash event detail is cached to disk to avoid repeated API calls for the same issue.
+
+| Aspect | Detail |
+|--------|--------|
+| Location | `{logDirectory}/.crashlytics/{issueId}.json` (default: `reports/.crashlytics/`) |
+| Format | JSON-serialized `CrashlyticsEventDetail` (crash thread + app threads with frames) |
+| Written | After a successful API fetch of crash event detail |
+| Read | Before making an API call — if cached file exists, returns immediately |
+| TTL | None — crash events are immutable historical records |
+| Failure | Cache read errors silently fall through to API; write errors are swallowed |
+
+To force a re-fetch, delete the cached JSON file for the issue ID. The `reports/.crashlytics/` directory is created automatically on first cache write.
 
 ## Troubleshooting
 
@@ -121,14 +149,23 @@ These are available in the Firebase Console via the deep link provided.
 
 ```
 analysis-panel.ts
-  └─ runFirebaseLookup()
+  ├─ runFirebaseLookup()                   issue list (during analysis)
+  │    └─ firebase-crashlytics.ts
+  │         ├─ isGcloudAvailable()         cached check
+  │         ├─ getAccessToken()            gcloud CLI → 30-min cache
+  │         ├─ detectFirebaseConfig()       settings or google-services.json
+  │         ├─ queryTopIssues()            REST POST → topIssues report
+  │         └─ matchIssues()               client-side token matching
+  │
+  └─ fetchCrashDetail()                    stack trace (on card click)
        └─ firebase-crashlytics.ts
-            ├─ isGcloudAvailable()          cached check
-            ├─ getAccessToken()             gcloud CLI → 30-min cache
-            ├─ detectFirebaseConfig()        settings or google-services.json
-            ├─ queryTopIssues()             REST POST → topIssues report
-            ├─ matchIssues()                client-side token matching
-            └─ fetchJson()                  raw HTTPS with Bearer auth
+            ├─ readCachedDetail()           reports/.crashlytics/{id}.json
+            ├─ getCrashEventDetail()        REST GET → events endpoint
+            ├─ parseEventResponse()         structured threads or raw trace
+            ├─ writeCacheDetail()           cache to disk
+            └─ analysis-crash-detail.ts
+                 ├─ classifyFrames()        APP vs FW via isFrameworkFrame()
+                 └─ renderCrashDetail()      HTML with frame badges
 ```
 
 No npm dependencies added. Uses Node.js `https` module and `child_process.execFile`.
