@@ -48,6 +48,7 @@ The extension needs your Firebase **project ID** and **app ID** to query the cor
 
 ### Auto-detection (recommended)
 
+<!-- cspell:ignore mobilesdk -->
 If your workspace contains a `google-services.json` file (standard for Android/Flutter projects), the extension reads `project_info.project_id` and the first client's `mobilesdk_app_id` automatically. No settings needed.
 
 ### Manual override
@@ -134,6 +135,8 @@ Crash event detail is cached to disk to avoid repeated API calls for the same is
 | Failure | Cache read errors silently fall through to API; write errors are swallowed |
 
 To force a re-fetch, delete the cached JSON file for the issue ID. The `reports/.crashlytics/` directory is created automatically on first cache write.
+
+> **Planned migration:** The cache location will move from `reports/.crashlytics/` to `.saropa/cache/crashlytics/` as part of the project indexer feature (see `docs/PLAN_PROJECT_INDEXER.md`). Existing cache files will be migrated automatically on upgrade.
 
 ## Troubleshooting
 
