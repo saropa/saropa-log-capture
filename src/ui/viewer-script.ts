@@ -55,6 +55,12 @@ logEl.addEventListener('wheel', function(e) {
 }, { passive: false });
 
 viewportEl.addEventListener('click', function(e) {
+    var urlLink = e.target.closest('.url-link');
+    if (urlLink) {
+        e.preventDefault();
+        vscodeApi.postMessage({ type: 'openUrl', url: urlLink.dataset.url || '' });
+        return;
+    }
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();
@@ -130,7 +136,7 @@ window.addEventListener('message', function(event) {
         case 'addLines':
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
@@ -150,7 +156,7 @@ window.addEventListener('message', function(event) {
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
@@ -224,6 +230,9 @@ window.addEventListener('message', function(event) {
                 jumpBtn.style.display = 'block';
                 renderViewport(true);
             }
+            break;
+        case 'setScopeContext':
+            if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
     }
 });

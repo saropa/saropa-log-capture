@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../modules/ansi";
-import { linkifyHtml } from "../modules/source-linker";
+import { linkifyHtml, linkifyUrls } from "../modules/source-linker";
 import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
@@ -10,10 +10,9 @@ import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
 } from "./viewer-file-loader";
-import {
-  SerializedHighlightRule, serializeHighlightRules,
-} from "./viewer-highlight-serializer";
+import { SerializedHighlightRule, serializeHighlightRules } from "./viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "./session-display";
+import type { ScopeContext } from "../modules/scope-context";
 import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 
@@ -154,18 +153,16 @@ export class LogViewerProvider
     this.postMessage({ type: "setPresets", presets });
   }
   addLine(data: LineData): void {
-    const html = data.isMarker ? escapeHtml(data.text) : linkifyHtml(ansiToHtml(data.text));
+    const html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     this.pendingLines.push({
-      text: html,
-      isMarker: data.isMarker,
-      lineCount: data.lineCount,
-      category: data.category,
-      timestamp: data.timestamp.getTime(),
-      fw: helpers.classifyFrame(data.text),
+      text: html, isMarker: data.isMarker, lineCount: data.lineCount,
+      category: data.category, timestamp: data.timestamp.getTime(),
+      fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
     });
   }
 
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
+  setScopeContext(ctx: ScopeContext): void { this.postMessage({ type: "setScopeContext", ...ctx }); }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
   sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
@@ -231,6 +228,7 @@ export class LogViewerProvider
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
+      case "openUrl": vscode.env.openExternal(vscode.Uri.parse(String(msg.url ?? ""))).then(undefined, () => {}); break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
       case "navigateSession": this.onSessionNavigate?.(Number(msg.direction ?? 0)); break;
       case "savePresetRequest":

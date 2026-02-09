@@ -125,10 +125,11 @@ export function getOptionsStyles(): string {
     cursor: pointer;
 }
 
-.options-row input[type="checkbox"] {
+.options-row input[type="checkbox"], .options-row input[type="radio"] {
     accent-color: var(--vscode-button-background);
     cursor: pointer;
 }
+.scope-disabled { opacity: 0.4; pointer-events: none; }
 
 .options-row select {
     background: var(--vscode-input-background);

@@ -9,6 +9,7 @@ import type * as vscode from "vscode";
 import type { LineData } from "../modules/session-manager";
 import type { HighlightRule } from "../modules/highlight-rules";
 import type { FilterPreset } from "../modules/filter-presets";
+import type { ScopeContext } from "../modules/scope-context";
 import type { SessionDisplayOptions } from "./session-display";
 import type { ViewerTarget } from "./viewer-target";
 
@@ -93,5 +94,8 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   sendBookmarkList(files: Record<string, unknown>): void {
     for (const t of this.targets) { t.sendBookmarkList(files); }
+  }
+  setScopeContext(context: ScopeContext): void {
+    for (const t of this.targets) { t.setScopeContext(context); }
   }
 }
