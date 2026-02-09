@@ -89,7 +89,6 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     const relatedMetrics: Partial<SectionData> = related ? { relatedLineCount: related.lines.length } : {};
     postFinalization(post, mergeResults(results, relatedMetrics), abort.signal);
 }
-
 /** Dispose the singleton panel. */
 export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(); panel = undefined; }
 function cancelAnalysis(): void { activeAbort?.abort(); activeAbort = undefined; }
@@ -240,7 +239,8 @@ async function runCrossSessionLookup(lineText: string): Promise<Partial<SectionD
 }
 
 async function runReferencedFiles(post: PostFn, signal: AbortSignal, related?: RelatedLinesResult): Promise<Partial<SectionData>> {
-    if (!related?.uniqueFiles.length) { post('files', emptySlot('files', '📁 No source files referenced')); return {}; }
+    if (!related) { return {}; }
+    if (!related.uniqueFiles.length) { post('files', emptySlot('files', '📁 No source files referenced')); return {}; }
     postProgress('files', '📁 Analyzing ' + related.uniqueFiles.length + ' source files...');
     const refs = related.lines.filter(l => l.sourceRef).map(l => l.sourceRef!);
     const uniqueRefs = [...new Map(refs.map(r => [r.file, r])).values()].slice(0, 5);

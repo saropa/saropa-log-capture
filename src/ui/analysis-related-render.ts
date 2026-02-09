@@ -1,7 +1,7 @@
 /** HTML rendering for related lines, referenced files, and GitHub context sections. */
 
 import { escapeHtml } from '../modules/ansi';
-import type { RelatedLinesResult } from '../modules/related-lines-scanner';
+import type { RelatedLine, RelatedLinesResult } from '../modules/related-lines-scanner';
 import type { WorkspaceFileInfo } from '../modules/workspace-analyzer';
 import type { BlameLine } from '../modules/git-blame';
 import type { GitHubContext } from '../modules/github-context';
@@ -15,25 +15,23 @@ export function renderRelatedLinesSection(result: RelatedLinesResult, analyzedId
     let html = `<details class="group" open><summary class="group-header">📋 Related Lines <span class="match-count">${n} ${escapeHtml(result.tag)} line${n !== 1 ? 's' : ''}${fileNote}</span></summary>`;
     const showAll = n <= 25;
     const visible = showAll ? result.lines : result.lines.slice(0, 10);
-    for (let i = 0; i < visible.length; i++) {
-        html += renderRelatedLine(visible[i].lineIndex, visible[i].text, visible[i].sourceRef, analyzedIdx);
-    }
+    for (const line of visible) { html += renderRelatedLine(line, analyzedIdx); }
     if (!showAll) {
         html += `<div class="related-overflow" id="related-overflow">${n - 10} more lines hidden · <a href="#" onclick="document.querySelectorAll('.related-hidden').forEach(e=>e.style.display='flex');this.parentElement.style.display='none';return false">Show all</a></div>`;
         for (let i = 10; i < result.lines.length; i++) {
-            html += renderRelatedLine(result.lines[i].lineIndex, result.lines[i].text, result.lines[i].sourceRef, analyzedIdx, true);
+            html += renderRelatedLine(result.lines[i], analyzedIdx, true);
         }
     }
     return doneSlot('related', html + '</details>');
 }
 
-function renderRelatedLine(lineIdx: number, text: string, sourceRef: { file: string; line: number } | undefined, analyzedIdx: number, hidden = false): string {
-    const cls = lineIdx === analyzedIdx ? 'related-line analyzed' : 'related-line';
+function renderRelatedLine(line: RelatedLine, analyzedIdx: number, hidden = false): string {
+    const cls = line.lineIndex === analyzedIdx ? 'related-line analyzed' : 'related-line';
     const style = hidden ? ' style="display:none"' : '';
     const hiddenCls = hidden ? ' related-hidden' : '';
-    const srcTag = sourceRef ? ` <span class="related-src">${escapeHtml(sourceRef.file)}:${sourceRef.line}</span>` : '';
-    const trimmed = text.length > 120 ? text.slice(0, 117) + '...' : text;
-    return `<div class="${cls}${hiddenCls}" data-line="${lineIdx}"${style}><span class="related-idx">${lineIdx + 1}</span><span class="line-text">${escapeHtml(trimmed)}</span>${srcTag}</div>`;
+    const srcTag = line.sourceRef ? ` <span class="related-src">${escapeHtml(line.sourceRef.file)}:${line.sourceRef.line}</span>` : '';
+    const trimmed = line.text.length > 120 ? line.text.slice(0, 117) + '...' : line.text;
+    return `<div class="${cls}${hiddenCls}" data-line="${line.lineIndex}"${style}><span class="related-idx">${line.lineIndex + 1}</span><span class="line-text">${escapeHtml(trimmed)}</span>${srcTag}</div>`;
 }
 
 /** Analysis result for a single referenced file. */

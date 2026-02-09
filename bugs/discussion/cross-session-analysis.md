@@ -33,14 +33,18 @@ The cross-session analysis system is **operational** across 28 files (14 modules
 | **Root cause correlation** | `analysis-relevance.ts` + `git-diff.ts` | Blame date vs error first-seen date → "Error likely introduced by commit" |
 | **Commit diff summary** | `git-diff.ts` (52 lines) | Parses `git show --stat` for files changed / insertions / deletions |
 | **Stack trace deep-dive** | `analysis-frame-render.ts` (65 lines) | Clickable frame list with APP/FW badges; click app frame → inline source + blame |
-| **Cross-session lookup** | `analysis-panel.ts` | 5th parallel stream: fingerprint → aggregator match → firstSeenDate for correlation |
+| **Cross-session lookup** | `analysis-panel.ts` | Parallel stream: fingerprint → aggregator match → firstSeenDate for correlation |
+| **Related lines** | `related-lines-scanner.ts` + `analysis-related-render.ts` | Scans log file for all lines sharing source tag, diagnostic timeline UI |
+| **Referenced files** | `analysis-panel.ts` + `analysis-related-render.ts` | Git blame + annotations for each source file across related lines |
+| **GitHub context** | `github-context.ts` + `analysis-related-render.ts` | `gh` CLI: blame-to-PR mapping, file PRs, issue search with auto-detection |
+| **Progress reporting** | `analysis-panel-render.ts` + styles | Progress bar, per-section spinner text, smooth CSS transitions |
 | **Bug report scoring** | `bug-report-formatter.ts` | Executive summary with key findings in markdown bug reports |
 
 ### Recently Completed
 
-**Executive Summary + Smart Relevance Hierarchy** — Three-layer presentation: executive summary banner (2-4 key findings), expanded HIGH/MEDIUM sections, collapsed LOW sections. Scoring engine in `analysis-relevance.ts` (153 lines), summary renderer in `analysis-panel-summary.ts`, full orchestration wiring with `Promise.allSettled()`.
+**Related Lines, Referenced Files, GitHub Context** — Two-wave execution: Wave 1 scans the log file for all lines sharing the analyzed line's source tag (fast, ~50ms), extracting enriched tokens from the group. Wave 2 runs seven parallel streams with the enriched tokens: source chain, docs, symbols, tokens, cross-session, referenced files, and GitHub context. Referenced files analyzes up to 5 source files with git blame and annotations. GitHub integration queries `gh` CLI for blame-to-PR mapping, file PRs, and issue search, with auto-detection of `gh` availability and actionable setup hints.
 
-**Root Cause Correlation** — When blame shows a recent change, `git-diff.ts` fetches the commit's diff summary (files changed, insertions, deletions). `scoreCorrelation()` compares blame date vs error fingerprint's cross-session first appearance (3-day window = "Error likely introduced by commit"). A 5th parallel stream (`runCrossSessionLookup`) fingerprints the analyzed line and matches against the aggregator.
+**Progress Reporting** — Header progress bar with "X/N complete" counter, per-section spinner text updates, smooth CSS transitions. Bar turns green and fades on completion.
 
 **Stack Trace Deep-Dive** — `extractFrames()` reads the log file below the error line, classifies frames as app vs framework. `analysis-frame-render.ts` renders a clickable frame list with APP/FW badges. Clicking an app frame sends `analyzeFrame` → extension runs `analyzeSourceFile()` + `getGitBlame()` → posts `frameReady` with inline source preview + blame. FW frames are grayed out, not clickable.
 
@@ -60,12 +64,17 @@ extractFrames(fileUri, lineIndex) → StackFrameInfo[] (reads log file for stack
     ↓
 buildProgressiveShell() → HTML with spinner placeholders + frame section
     ↓
-Five parallel streams, each posts HTML as it completes:
+Wave 1 — quick related-lines scan (~50ms):
+    scanRelatedLines(fileUri, sourceTag) → related lines, source refs, enhanced tokens
+    ↓
+Wave 2 — seven parallel streams with enriched tokens:
     ├─ runSourceChain() → source preview, blame, diff summary, line history, imports
-    ├─ runDocsScan() → documentation matches
-    ├─ runSymbolResolution() → symbol definitions
-    ├─ runTokenSearch() → cross-session token matches
-    └─ runCrossSessionLookup() → fingerprint match → sessionCount, firstSeenDate
+    ├─ runDocsScan(allTokens) → documentation matches
+    ├─ runSymbolResolution(allTokens) → symbol definitions
+    ├─ runTokenSearch(allTokens) → cross-session token matches
+    ├─ runCrossSessionLookup() → fingerprint match → sessionCount, firstSeenDate
+    ├─ runReferencedFiles(related) → git blame + annotations per source file
+    └─ runGitHubLookup(related, allTokens) → blame-to-PR, file PRs, issue search
     ↓
 Promise.allSettled() collects metrics from all streams
     ↓
@@ -79,12 +88,15 @@ User clicks app frame → 'analyzeFrame' → inline source preview + blame
 ### Module Dependency Map
 
 ```
-analysis-panel.ts (orchestrator, 244 lines)
+analysis-panel.ts (orchestrator, 300 lines)
 ├── line-analyzer.ts (token extraction)
 ├── source-linker.ts (file:line parsing)
+├── source-tag-parser.ts (source tag extraction)
+├── related-lines-scanner.ts (tag-based line grouping)
 ├── workspace-analyzer.ts (source + git + annotations)
 │   └── git-blame.ts
 ├── git-diff.ts (commit diff summary)
+├── github-context.ts (gh CLI: PRs, issues, blame-to-PR)
 ├── docs-scanner.ts (markdown search)
 ├── import-extractor.ts (dependency parsing)
 ├── symbol-resolver.ts (VS Code symbol API)
@@ -95,6 +107,8 @@ analysis-panel.ts (orchestrator, 244 lines)
 ├── analysis-relevance.ts (scoring + correlation)
 ├── analysis-panel-render.ts (HTML generation)
 │   └── analysis-frame-render.ts (frame list + mini-analysis)
+├── analysis-related-render.ts (related lines, files, GitHub HTML)
+├── analysis-frame-handler.ts (frame extraction + analysis)
 ├── analysis-panel-summary.ts (summary HTML)
 └── analysis-panel-styles.ts (CSS + webview script)
 
