@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Expanded code tag detection:** Detects method names (`_logDebugError`, `dbActivityAdd`) and constructor calls (`ResizeImage()`, `Image()`) in addition to class names. Generic lifecycle methods (`build`, `dispose`, `initState`, etc.) are blacklisted to reduce noise. Section renamed from "Class Tags" to "Code Tags".
 - **Tag chip "Show all" toggle:** Log Tags and Code Tags sections now show the top 20 chips by count, with a "Show all (N)" toggle to reveal the full list.
 
+### Changed
+- **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
+
 ### Fixed
 - **Tag chips not rendering:** Tag chip containers in the Filters panel were permanently empty — `syncFiltersPanelUi()` now calls `rebuildTagChips()` and `rebuildClassTagChips()` when opening the panel.
 - **Quick Filters presets broken:** "Errors Only" preset used DAP `categories: ['stderr']` which hides all Flutter output (category is `"console"`). Presets now use `levels` field for severity-based filtering. Also fixed monkey-patch on `applyFilter` that immediately reset the active preset during application.

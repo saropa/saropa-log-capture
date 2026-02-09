@@ -125,6 +125,7 @@ export function getIconBarScript(): string {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
     }
 
+    setActivePanel('sessions');
 })();
 `;
 }
