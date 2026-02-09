@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [1.2.0] - 2026-02-08
 
 ### Added
 - **Related lines:** When analyzing a tagged log line (e.g. HERO-DEBUG), all lines sharing that source tag are shown as a diagnostic timeline with clickable line navigation and source file references.
