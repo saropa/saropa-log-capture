@@ -1,9 +1,9 @@
 /**
- * Class Tag Filter for the log viewer webview.
+ * Code Tag Filter for the log viewer webview.
  *
- * Detects PascalCase class names followed by a dot (e.g. "AppBadgeService.load()")
- * in log lines and stack frames. Tracks per-class occurrence counts and provides
- * chip-based filtering in the options panel Class Tags section.
+ * Detects class names, method names, and constructor calls from log lines and
+ * stack frames. Patterns: "AppBadgeService.load()" → class + method,
+ * "ResizeImage()" → constructor. Generic lifecycle methods are blacklisted.
  *
  * Integration points:
  * - addToData() calls parseClassTags() and registerClassTags() for each line
@@ -15,42 +15,35 @@
 /** Returns the JavaScript for class tag parsing, tracking, and filtering. */
 export function getClassTagsScript(): string {
     return /* javascript */ `
-/** Class name -> line count. */
 var classTagCounts = {};
-
-/** Set of class tag keys currently hidden (toggled off). */
 var hiddenClassTags = {};
-
-/** Sentinel key for lines with no recognized class tag. */
 var classTagOtherKey = '__classother__';
-
-/** Minimum count for a class tag to appear as a chip. */
 var classTagMinChip = 2;
-
-/**
- * Regex: PascalCase or _PascalCase identifier (3+ chars) followed by dot+lowercase.
- * Boundary rejects preceding alphanumeric, underscore, or slash (paths).
- */
-var classTagPattern = /(?:^|[^a-zA-Z0-9_\\/])(_?[A-Z][a-zA-Z0-9_]{2,})\\.(?=[a-z_])/g;
+var classTagShowAll = false;
+var classTagMaxChips = 20;
 
 /** Known file extensions to reject as false positives. */
 var classTagExtensions = /^(?:dart|ts|tsx|js|jsx|py|java|go|cs|kt|swift|rb|rs|cpp|c|h|m|mm)$/;
 
-/** Parse class tags from plain text. Returns deduplicated array of class names. */
+/** Generic lifecycle methods that add no diagnostic value as tags. */
+var genericMethods = { build: 1, dispose: 1, initState: 1, createElement: 1, toString: 1, hashCode: 1, debugFillProperties: 1, didChangeDependencies: 1, didUpdateWidget: 1, deactivate: 1, activate: 1 };
+
+/** Parse code tags from plain text. Returns deduplicated array of class and method names. */
 function parseClassTags(plainText) {
-    classTagPattern.lastIndex = 0;
     var result = [];
     var seen = {};
     var m;
-    while ((m = classTagPattern.exec(plainText)) !== null) {
-        var name = m[1];
-        if (seen[name]) continue;
-        var afterDot = plainText.substring(m.index + m[0].length);
-        var word = /^([a-zA-Z0-9_]+)/.exec(afterDot);
-        if (word && classTagExtensions.test(word[1])) continue;
-        seen[name] = true;
-        result.push(name);
+    function add(name) { if (!seen[name]) { seen[name] = true; result.push(name); } }
+    var dotPat = /(?:^|[^a-zA-Z0-9_\\/])(_?[A-Z][a-zA-Z0-9_]{2,})\\.([a-z_][a-zA-Z0-9_]*)/g;
+    dotPat.lastIndex = 0;
+    while ((m = dotPat.exec(plainText)) !== null) {
+        if (classTagExtensions.test(m[2])) continue;
+        add(m[1]);
+        if (!genericMethods[m[2]]) add(m[2]);
     }
+    var ctorPat = /(?:^|[^a-zA-Z0-9_\\/])(_?[A-Z][a-zA-Z0-9_]{2,})\\(/g;
+    ctorPat.lastIndex = 0;
+    while ((m = ctorPat.exec(plainText)) !== null) { add(m[1]); }
     return result;
 }
 
@@ -171,13 +164,12 @@ function updateClassTagSummary() {
     for (var hi = 0; hi < hiddenKeys.length; hi++) {
         if (classTagCounts[hiddenKeys[hi]]) hidden++;
     }
-    el.textContent = chipCount + ' class' + (chipCount !== 1 ? 'es' : '')
+    el.textContent = chipCount + ' tag' + (chipCount !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
     var section = document.getElementById('class-tags-section');
     if (section) { section.style.display = chipCount > 0 ? '' : 'none'; }
 }
 
-/** Rebuild the chip HTML inside the class tags section. */
 function rebuildClassTagChips() {
     var container = document.getElementById('class-tag-chips');
     if (!container) return;
@@ -185,32 +177,27 @@ function rebuildClassTagChips() {
     var keys = Object.keys(classTagCounts);
     var chipKeys = [];
     for (var i = 0; i < keys.length; i++) {
-        if (keys[i] !== classTagOtherKey && classTagCounts[keys[i]] >= classTagMinChip) {
-            chipKeys.push(keys[i]);
-        }
+        if (keys[i] !== classTagOtherKey && classTagCounts[keys[i]] >= classTagMinChip) chipKeys.push(keys[i]);
     }
     chipKeys.sort(function(a, b) { return classTagCounts[b] - classTagCounts[a]; });
+    var limit = classTagShowAll ? chipKeys.length : Math.min(chipKeys.length, classTagMaxChips);
     var parts = [];
     if (chipKeys.length > 0) {
-        parts.push(
-            '<span class="source-tag-actions">'
+        parts.push('<span class="source-tag-actions">'
             + '<button class="tag-action-btn" data-classaction="all">All</button>'
-            + '<button class="tag-action-btn" data-classaction="none">None</button>'
-            + '</span>'
-        );
+            + '<button class="tag-action-btn" data-classaction="none">None</button></span>');
     }
-    for (var j = 0; j < chipKeys.length; j++) {
+    for (var j = 0; j < limit; j++) {
         var key = chipKeys[j];
-        var label = esc(key);
-        var count = classTagCounts[key];
         var active = !hiddenClassTags[key];
         var cls = 'source-tag-chip' + (active ? ' active' : '');
-        parts.push(
-            '<button class="' + cls + '" data-classtag="' + esc(key) + '">'
-            + '<span class="tag-label">' + label + '</span>'
-            + '<span class="tag-count">' + count + '</span>'
-            + '</button>'
-        );
+        parts.push('<button class="' + cls + '" data-classtag="' + esc(key) + '">'
+            + '<span class="tag-label">' + esc(key) + '</span>'
+            + '<span class="tag-count">' + classTagCounts[key] + '</span></button>');
+    }
+    if (chipKeys.length > classTagMaxChips) {
+        var showLabel = classTagShowAll ? 'Show less' : 'Show all (' + chipKeys.length + ')';
+        parts.push('<button class="tag-show-all-btn" data-classaction="toggle-all">' + showLabel + '</button>');
     }
     container.innerHTML = parts.join('');
     updateClassTagSummary();
@@ -224,8 +211,10 @@ function rebuildClassTagChips() {
         var chip = e.target.closest('[data-classtag]');
         if (chip && chip.dataset.classtag) { toggleClassTag(chip.dataset.classtag); return; }
         var btn = e.target.closest('[data-classaction]');
-        if (btn && btn.dataset.classaction === 'all') { selectAllClassTags(); }
-        if (btn && btn.dataset.classaction === 'none') { deselectAllClassTags(); }
+        if (!btn) return;
+        if (btn.dataset.classaction === 'all') { selectAllClassTags(); }
+        else if (btn.dataset.classaction === 'none') { deselectAllClassTags(); }
+        else if (btn.dataset.classaction === 'toggle-all') { classTagShowAll = !classTagShowAll; rebuildClassTagChips(); }
     });
 })();
 

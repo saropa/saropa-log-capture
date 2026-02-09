@@ -103,6 +103,19 @@ export function getTagStyles(): string {
     text-decoration: underline;
 }
 
+/* --- Show all / Show less toggle in tag sections --- */
+.tag-show-all-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    font-size: 10px;
+    cursor: pointer;
+    padding: 2px 8px;
+    width: 100%;
+    text-align: center;
+}
+.tag-show-all-btn:hover { text-decoration: underline; }
+
 /* --- Inline tag links in rendered log lines --- */
 .tag-link {
     color: var(--tag-clr) !important;
