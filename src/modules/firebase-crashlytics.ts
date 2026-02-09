@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
+import { getLogDirectoryUri } from './config';
 
 export interface CrashlyticsIssue {
     readonly id: string;
@@ -150,8 +151,32 @@ function fetchJson(url: string, token: string, body?: string): Promise<Record<st
     });
 }
 
+function getCacheUri(issueId: string): vscode.Uri | undefined {
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!ws) { return undefined; }
+    return vscode.Uri.joinPath(getLogDirectoryUri(ws), '.crashlytics', `${issueId}.json`);
+}
+
+async function readCachedDetail(issueId: string): Promise<CrashlyticsEventDetail | undefined> {
+    const uri = getCacheUri(issueId);
+    if (!uri) { return undefined; }
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        return JSON.parse(Buffer.from(raw).toString('utf-8')) as CrashlyticsEventDetail;
+    } catch { return undefined; }
+}
+
+async function writeCacheDetail(issueId: string, detail: CrashlyticsEventDetail): Promise<void> {
+    const uri = getCacheUri(issueId);
+    if (!uri) { return; }
+    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify(detail, null, 2)));
+}
+
 /** Fetch the latest crash event for a specific issue, returning parsed stack trace. */
 export async function getCrashEventDetail(issueId: string): Promise<CrashlyticsEventDetail | undefined> {
+    const cached = await readCachedDetail(issueId);
+    if (cached) { return cached; }
     const token = await getAccessToken();
     if (!token) { return undefined; }
     const config = await detectFirebaseConfig();
@@ -159,7 +184,9 @@ export async function getCrashEventDetail(issueId: string): Promise<CrashlyticsE
     const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/issues/${issueId}/events?pageSize=1`;
     const data = await fetchJson(url, token);
     if (!data) { return undefined; }
-    return parseEventResponse(issueId, data);
+    const detail = parseEventResponse(issueId, data);
+    if (detail) { writeCacheDetail(issueId, detail).catch(() => {}); }
+    return detail;
 }
 
 const maxFramesPerThread = 50;
