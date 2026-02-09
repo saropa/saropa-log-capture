@@ -91,7 +91,14 @@ details[open] > .group-header::before { content: '▼ '; }
 .trend-bar { fill: var(--vscode-editorWarning-foreground, #cca700); opacity: 0.8; }
 .trend-bar:hover { fill: var(--vscode-editorInfo-foreground, #3794ff); opacity: 1; }
 .trend-label { fill: var(--vscode-descriptionForeground); font-size: 10px; font-family: var(--vscode-font-family, sans-serif); }
-.trend-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }`;
+.trend-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
+.progress-bar-track { height: 2px; background: var(--vscode-panel-border); margin-top: 6px; border-radius: 1px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--vscode-progressBar-background, #0078d4); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 1px; }
+.progress-bar-fill.complete { background: var(--vscode-testing-iconPassed, #73c991); }
+@keyframes barFadeOut { from { opacity: 1; } to { opacity: 0; height: 0; margin: 0; } }
+.progress-bar-track.complete { animation: barFadeOut 1s ease 1s forwards; }
+.progress-msg { transition: opacity 0.2s ease; }
+.progress-msg.fading { opacity: 0; }`;
 }
 
 /** Get the webview script with click handlers and progressive section updates. */
@@ -101,6 +108,21 @@ var vscodeApi = acquireVsCodeApi();
 var cancelBtn = document.getElementById('cancel-btn');
 if (cancelBtn) { cancelBtn.addEventListener('click', function() { vscodeApi.postMessage({ type: 'cancelAnalysis' }); cancelBtn.textContent = 'Stopped'; cancelBtn.disabled = true; }); }
 var pendingCount = document.querySelectorAll('.section-loading:not(.section-done)').length;
+var progressFill = document.getElementById('progress-fill');
+var progressText = document.getElementById('progress-text');
+var totalSections = progressFill ? parseInt(progressFill.dataset.total || '0') : 0;
+function updateProgressBar() {
+    var done = totalSections - pendingCount;
+    if (progressFill) { progressFill.style.width = (totalSections > 0 ? Math.round((done / totalSections) * 100) : 0) + '%'; }
+    if (progressText) { progressText.textContent = 'Analyzing... ' + done + '/' + totalSections + ' complete'; }
+}
+function completeProgress() {
+    if (progressFill) { progressFill.style.width = '100%'; progressFill.classList.add('complete'); }
+    if (progressText) { progressText.textContent = '\u2713 Analysis complete'; }
+    var track = document.querySelector('.progress-bar-track');
+    if (track) { track.classList.add('complete'); }
+    if (cancelBtn) { cancelBtn.classList.add('hidden'); }
+}
 document.addEventListener('click', function(e) {
     var line = e.target.closest('.match-line');
     if (line) { vscodeApi.postMessage({ type: 'openMatch', uri: line.dataset.uri, filename: line.dataset.filename, line: parseInt(line.dataset.line) }); return; }
@@ -128,7 +150,14 @@ window.addEventListener('message', function(e) {
         var slot = document.getElementById('section-' + e.data.id);
         if (slot) { slot.outerHTML = e.data.html; }
         pendingCount--;
-        if (pendingCount <= 0 && cancelBtn) { cancelBtn.classList.add('hidden'); }
+        updateProgressBar();
+        if (pendingCount <= 0) { completeProgress(); }
+    } else if (e.data.type === 'sectionProgress') {
+        var pSlot = document.getElementById('section-' + e.data.id);
+        if (pSlot) {
+            var msg = pSlot.querySelector('.progress-msg');
+            if (msg) { msg.classList.add('fading'); setTimeout(function() { msg.textContent = e.data.message; msg.classList.remove('fading'); }, 200); }
+        }
     } else if (e.data.type === 'frameReady') {
         var frames = document.querySelectorAll('.frame-app[data-frame-file="' + e.data.file + '"][data-frame-line="' + e.data.line + '"]');
         frames.forEach(function(fr) { var d = fr.querySelector('.frame-detail'); if (d) { d.innerHTML = e.data.html; d.classList.add('expanded'); } fr.classList.remove('frame-loading'); });

@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Analysis panel timeout:** Line analysis spinners no longer hang indefinitely when VS Code APIs (symbol resolution, docs scan, token search) are unresponsive. Each analysis stream now has a 15-second timeout; timed-out sections show a clear "Analysis timed out" message instead of spinning forever.
 
 ### Added
+- **Analysis panel progress:** Header progress bar with "X/N complete" counter, per-section spinner text updates showing sub-step descriptions (e.g. "Running git blame...", "Querying language server..."), and smooth CSS transitions. Bar turns green and fades on completion.
 - **Filters panel:** Moved all filter controls (Quick Filters, Output Channels, Log Tags, Class Tags, Noise Reduction) from the Options panel into a dedicated Filters panel with its own icon bar button. Options panel now contains only Display, Layout, Audio, and Actions.
 - **Tag search in Filters panel:** Search input at the top of the Filters panel filters tag chips by label text across both Log Tags and Class Tags sections, making it easy to find specific tags among many.
 - **Session metadata in Project Logs:** Each session item now shows line count (e.g. "2,645 lines") and all tag types (#manual, ~auto, @correlation) in the meta line, matching the Session History tree view.
