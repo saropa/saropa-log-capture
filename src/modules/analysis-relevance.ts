@@ -29,6 +29,7 @@ export interface SectionData {
     readonly githubBlamePr?: boolean;
     readonly githubPrCount?: number;
     readonly githubIssueCount?: number;
+    readonly crashlyticsIssueCount?: number;
 }
 
 /** Scoring output: summary findings + per-section relevance levels. */
@@ -50,6 +51,7 @@ export function scoreRelevance(data: SectionData): RelevanceResult {
     scoreCorrelation(data, findings);
     scoreRelatedLines(data, findings, levels);
     scoreGitHub(data, findings, levels);
+    scoreFirebase(data, findings, levels);
     scoreDocs(data, findings, levels);
     scoreAnnotations(data, findings, levels);
     scoreSymbols(data, levels);
@@ -166,6 +168,14 @@ function scoreGitHub(data: SectionData, findings: SectionFinding[], levels: Map<
     } else if ((data.githubPrCount ?? 0) > 0) {
         levels.set('github', 'medium');
     } else { levels.set('github', 'none'); }
+}
+
+function scoreFirebase(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+    const count = data.crashlyticsIssueCount ?? 0;
+    if (count > 0) {
+        findings.push({ icon: '🔥', text: `${count} matching Crashlytics issue${count !== 1 ? 's' : ''} in production`, level: 'high', sectionId: 'firebase' });
+        levels.set('firebase', 'high');
+    } else { levels.set('firebase', 'none'); }
 }
 
 function scoreAffectedFiles(data: SectionData, findings: SectionFinding[]): void {

@@ -1,10 +1,11 @@
-/** HTML rendering for related lines, referenced files, and GitHub context sections. */
+/** HTML rendering for related lines, referenced files, GitHub, and Firebase sections. */
 
 import { escapeHtml } from '../modules/ansi';
 import type { RelatedLine, RelatedLinesResult } from '../modules/related-lines-scanner';
 import type { WorkspaceFileInfo } from '../modules/workspace-analyzer';
 import type { BlameLine } from '../modules/git-blame';
 import type { GitHubContext } from '../modules/github-context';
+import type { FirebaseContext } from '../modules/firebase-crashlytics';
 import { doneSlot, emptySlot } from './analysis-panel-render';
 
 /** Render related lines as a diagnostic timeline. */
@@ -82,4 +83,22 @@ export function renderGitHubSection(ctx: GitHubContext): string {
         html += `<div class="gh-item gh-issue" data-url="${escapeHtml(iss.url)}">Issue #${iss.number} · ${escapeHtml(iss.title)}${labels}</div>`;
     }
     return doneSlot('github', html + '</details>');
+}
+
+/** Render Firebase Crashlytics section with matching crash issues and console links. */
+export function renderFirebaseSection(ctx: FirebaseContext): string {
+    if (!ctx.available) {
+        const hint = ctx.setupHint ? ` ${escapeHtml(ctx.setupHint)}` : '';
+        return emptySlot('firebase', `🔥 Firebase not configured.${hint}`);
+    }
+    const n = ctx.issues.length;
+    const consoleLink = ctx.consoleUrl
+        ? `<div class="fb-console" data-url="${escapeHtml(ctx.consoleUrl)}">Open Firebase Console →</div>` : '';
+    if (n === 0) { return doneSlot('firebase', `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">0 matches</span></summary><div class="fb-empty">No matching Crashlytics issues found</div>${consoleLink}</details>`); }
+    let html = `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">${n} crash${n !== 1 ? 'es' : ''}</span></summary>`;
+    for (const issue of ctx.issues) {
+        const users = issue.userCount > 0 ? ` · ${issue.userCount} user${issue.userCount !== 1 ? 's' : ''}` : '';
+        html += `<div class="fb-item" data-url="${escapeHtml(ctx.consoleUrl ?? '')}"><div class="fb-title">${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}</div></div>`;
+    }
+    return doneSlot('firebase', html + consoleLink + '</details>');
 }

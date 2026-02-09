@@ -351,6 +351,16 @@
           },
           "type": "array"
         },
+        "saropaLogCapture.firebase.appId": {
+          "default": "",
+          "description": "Firebase app ID for Crashlytics queries (auto-detected from google-services.json if empty).",
+          "type": "string"
+        },
+        "saropaLogCapture.firebase.projectId": {
+          "default": "",
+          "description": "Firebase project ID for Crashlytics queries (auto-detected from google-services.json if empty).",
+          "type": "string"
+        },
         "saropaLogCapture.format": {
           "default": "plaintext",
           "description": "Output file format. Currently only plaintext is supported.",
@@ -754,5 +764,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "1.2.0"
+  "version": "1.2.1"
 }

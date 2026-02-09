@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Firebase Crashlytics:** Analysis panel queries Firebase Crashlytics REST API for matching production crashes. Shows crash issue title, event count, and affected users. Console deep link opens Firebase Console in browser. Auth via `gcloud` CLI with 30-minute token caching; config auto-detected from `google-services.json` or overridden via `saropaLogCapture.firebase.projectId` / `.appId` settings. Gracefully degrades with actionable setup hints when gcloud or config is missing.
+
+---
 ## [1.2.0] - 2026-02-08
 
 ### Added
