@@ -38,11 +38,13 @@ import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getScrollAnchorScript } from './viewer-scroll-anchor';
 import { getErrorClassificationScript } from './viewer-error-classification';
+import { getScopeFilterScript } from './viewer-scope-filter';
 import { getErrorHandlerScript } from './viewer-error-handler';
 import { getIconBarHtml, getIconBarScript } from './viewer-icon-bar';
 import { getSessionPanelHtml, getSessionPanelScript } from './viewer-session-panel';
 // Must be loaded before session panel script — defines transform functions it calls.
 import { getSessionTransformsScript } from './viewer-session-transforms';
+import { getSessionTagsScript } from './viewer-session-tags';
 import { getSessionContextMenuHtml, getSessionContextMenuScript } from './viewer-session-context-menu';
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
@@ -183,12 +185,14 @@ export function buildViewerHtml(nonce: string, extensionUri?: string, version?: 
     ${scriptTag(nonce, getSourceTagsScript())}
     ${scriptTag(nonce, getClassTagsScript())}
     ${scriptTag(nonce, getHighlightScript())}
+    ${scriptTag(nonce, getScopeFilterScript())}
     ${scriptTag(nonce, getPresetsScript())}
     ${scriptTag(nonce, getFilterBadgeScript())}
     ${scriptTag(nonce, getContextModalScript())}
     ${scriptTag(nonce, getContextMenuScript())}
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
     ${scriptTag(nonce, getSessionTransformsScript())}
+    ${scriptTag(nonce, getSessionTagsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
     ${scriptTag(nonce, getSessionContextMenuScript())}
     ${scriptTag(nonce, getFindPanelScript())}

@@ -8,11 +8,12 @@
 
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../modules/ansi";
-import { linkifyHtml } from "../modules/source-linker";
+import { linkifyHtml, linkifyUrls } from "../modules/source-linker";
 import { getNonce, buildViewerHtml } from "./viewer-content";
 import type { LineData } from "../modules/session-manager";
 import type { HighlightRule } from "../modules/highlight-rules";
 import type { FilterPreset } from "../modules/filter-presets";
+import type { ScopeContext } from "../modules/scope-context";
 import { showBugReport } from "./bug-report-panel";
 import { PendingLine } from "./viewer-file-loader";
 import {
@@ -105,11 +106,11 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
     if (!this.panel) { return; }
-    const html = data.isMarker ? escapeHtml(data.text) : linkifyHtml(ansiToHtml(data.text));
+    const html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     this.pendingLines.push({
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),
-      fw: helpers.classifyFrame(data.text),
+      fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
     });
   }
 
@@ -140,6 +141,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     this.post({ type: "setPresets", presets });
   }
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
+  setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.post({ type: "sessionList", sessions }); }
   sendBookmarkList(files: Record<string, unknown>): void { this.post({ type: "bookmarkList", files }); }
@@ -193,6 +195,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "linkClicked":
         this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
+      case "openUrl": vscode.env.openExternal(vscode.Uri.parse(String(msg.url ?? ""))).then(undefined, () => {}); break;
       case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
       case "savePresetRequest": this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {}); break;
       case "setCaptureAll":

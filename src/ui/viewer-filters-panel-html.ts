@@ -4,6 +4,7 @@
  * Slide-out panel from the right side with organized sections for all
  * viewer filter controls:
  *   - Quick Filters (presets + reset)
+ *   - Source Scope (file/directory/package/workspace radio buttons)
  *   - Output Channels (DAP category checkboxes)
  *   - Log Tags (source tag chips)
  *   - Code Tags (class/method tag chips)

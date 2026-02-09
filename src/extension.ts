@@ -23,6 +23,7 @@ import { wireSharedHandlers } from './ui/viewer-handler-wiring';
 import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
 import { buildSessionListPayload } from './ui/viewer-provider-helpers';
+import { buildScopeContext } from './modules/scope-context';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -247,6 +248,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
+
+    // Source scope: track active editor and broadcast context to webview.
+    const updateScopeContext = async (): Promise<void> => {
+        const ctx = await buildScopeContext(vscode.window.activeTextEditor);
+        broadcaster.setScopeContext(ctx);
+    };
+    context.subscriptions.push(
+        vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => {}); }),
+    );
+    updateScopeContext().catch(() => {});
 
     outputChannel.appendLine('Saropa Log Capture activated.');
 }

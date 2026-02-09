@@ -9,6 +9,7 @@ import type * as vscode from "vscode";
 import type { LineData } from "../modules/session-manager";
 import type { HighlightRule } from "../modules/highlight-rules";
 import type { FilterPreset } from "../modules/filter-presets";
+import type { ScopeContext } from "../modules/scope-context";
 import type { SessionDisplayOptions } from "./session-display";
 
 /** Contract for a webview that renders captured debug output. */
@@ -37,4 +38,5 @@ export interface ViewerTarget {
   setSessionActive(active: boolean): void;
   updateWatchCounts(counts: ReadonlyMap<string, number>): void;
   sendBookmarkList(files: Record<string, unknown>): void;
+  setScopeContext(context: ScopeContext): void;
 }
