@@ -6,8 +6,8 @@ import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
 import { extractSourceReference } from '../modules/source-linker';
 import { parseSourceTag } from '../modules/source-tag-parser';
-import { type WorkspaceFileInfo, analyzeSourceFile } from '../modules/workspace-analyzer';
-import { type BlameLine, getGitBlame } from '../modules/git-blame';
+import { analyzeSourceFile } from '../modules/workspace-analyzer';
+import { getGitBlame } from '../modules/git-blame';
 import { extractFrames, analyzeFrame } from './analysis-frame-handler';
 import { getCommitDiff } from '../modules/git-diff';
 import { scanDocsForTokens } from '../modules/docs-scanner';
@@ -16,12 +16,12 @@ import { resolveSymbols } from '../modules/symbol-resolver';
 import { normalizeLine, hashFingerprint } from '../modules/error-fingerprint';
 import { aggregateInsights } from '../modules/cross-session-aggregator';
 import { extractDateFromFilename } from '../modules/stack-parser';
-import { type SectionData, scoreRelevance } from '../modules/analysis-relevance';
+import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
-import { renderExecutiveSummary } from './analysis-panel-summary';
-import { renderTrendSection } from './analysis-trend-render';
-import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection } from './analysis-related-render';
+import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
+import { getFirebaseContext } from '../modules/firebase-crashlytics';
+import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
 import {
     type TokenResultGroup,
     buildProgressiveShell, renderSourceSection, renderLineHistorySection,
@@ -83,69 +83,18 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
         raceTimeout(runCrossSessionLookup(lineText), streamTimeout),
         raceTimeout(runReferencedFiles(post, abort.signal, related), streamTimeout),
         raceTimeout(runGitHubLookup(post, abort.signal, related, allTokens), streamTimeout),
+        raceTimeout(runFirebaseLookup(post, abort.signal, allTokens), streamTimeout),
     ]);
     if (abort.signal.aborted) { return; }
     postPendingSlots(posted, post, !!sourceRef, hasTag);
     const relatedMetrics: Partial<SectionData> = related ? { relatedLineCount: related.lines.length } : {};
-    postFinalization(post, mergeResults(results, relatedMetrics), abort.signal);
+    postFinalization(post, mergeResults(results, relatedMetrics), abort.signal, panel);
 }
 /** Dispose the singleton panel. */
 export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(); panel = undefined; }
 function cancelAnalysis(): void { activeAbort?.abort(); activeAbort = undefined; }
 function postProgress(id: string, message: string): void {
     panel?.webview.postMessage({ type: 'sectionProgress', id, message });
-}
-
-type PostFn = (id: string, html: string) => void;
-
-function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[], seed: Partial<SectionData> = {}): SectionData {
-    let merged: Partial<SectionData> = { ...seed };
-    for (const r of settled) {
-        if (r.status === 'fulfilled') { merged = { ...merged, ...r.value }; }
-    }
-    return merged as SectionData;
-}
-
-/** Post timeout errors for any sections that never completed. */
-function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, hasSource: boolean, hasTag = false): void {
-    const expected = ['docs', 'symbols', 'tokens', 'github',
-        ...(hasSource ? ['source', 'line-history', 'imports'] : []),
-        ...(hasTag ? ['related', 'files'] : [])];
-    for (const id of expected) {
-        if (!posted.has(id)) { post(id, errorSlot(id, '⏱ Analysis timed out')); }
-    }
-}
-
-/** Post trend section, score relevance, and send executive summary. */
-function postFinalization(post: PostFn, data: SectionData, signal: AbortSignal): void {
-    const trend = data.crossSession?.trend;
-    if (trend && trend.length > 1) {
-        post('trend', renderTrendSection(trend, data.crossSession!.sessionCount, data.crossSession!.totalOccurrences));
-    } else {
-        post('trend', emptySlot('trend', '📊 No cross-session history'));
-    }
-    const relevance = scoreRelevance(data);
-    const html = renderExecutiveSummary(relevance.findings);
-    const collapseSections = [...relevance.sectionLevels.entries()]
-        .filter(([, level]) => level === 'low').map(([id]) => id);
-    if (!signal.aborted) {
-        panel?.webview.postMessage({ type: 'summaryReady', html, collapseSections });
-    }
-}
-
-function postNoSource(post: PostFn, sourceLabel: string): void {
-    post('source', emptySlot('source', sourceLabel));
-    post('line-history', emptySlot('line-history', '🕐 No source context'));
-    post('imports', emptySlot('imports', '📦 No source context'));
-}
-
-function buildSourceMetrics(info: WorkspaceFileInfo, blame?: BlameLine): Partial<SectionData> {
-    return {
-        blame: blame ? { date: blame.date, author: blame.author, hash: blame.hash } : undefined,
-        lineCommits: info.lineCommits.map(c => ({ date: c.date })),
-        annotations: info.annotations.map(a => ({ type: a.type })),
-        gitCommitCount: info.gitCommits.length,
-    };
 }
 
 async function runSourceChain(post: PostFn, signal: AbortSignal, filename?: string, crashLine?: number): Promise<Partial<SectionData>> {
@@ -268,6 +217,14 @@ async function runGitHubLookup(post: PostFn, signal: AbortSignal, related?: Rela
     return { githubBlamePr: !!ctx.blamePr, githubPrCount: ctx.filePrs.length, githubIssueCount: ctx.issues.length };
 }
 
+async function runFirebaseLookup(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
+    postProgress('firebase', '🔥 Detecting Firebase config...');
+    const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
+    const ctx = await getFirebaseContext(errorTokens).catch(() => ({ available: false, setupHint: 'Firebase query failed', issues: [] as const }));
+    if (!signal.aborted) { post('firebase', renderFirebaseSection(ctx)); }
+    return { crashlyticsIssueCount: ctx.issues.length };
+}
+
 function postFrameResult(file: string, line: number, html: string): void {
     panel?.webview.postMessage({ type: 'frameReady', file, line, html });
 }
@@ -294,7 +251,7 @@ function handleMessage(msg: Record<string, unknown>): void {
     } else if (msg.type === 'openRelatedLine' && lastFileUri) {
         const ln = Number(msg.line ?? 0);
         vscode.window.showTextDocument(lastFileUri, { selection: new vscode.Range(ln, 0, ln, 0) });
-    } else if (msg.type === 'openGitHubUrl') {
+    } else if (msg.type === 'openGitHubUrl' || msg.type === 'openFirebaseUrl') {
         vscode.env.openExternal(vscode.Uri.parse(String(msg.url))).then(undefined, () => {});
     }
 }

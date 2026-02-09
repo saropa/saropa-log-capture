@@ -116,7 +116,14 @@ details[open] > .group-header::before { content: '▼ '; }
 .gh-blame-pr { background: var(--vscode-inputValidation-warningBackground, rgba(255, 200, 0, 0.1)); border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 21px; }
 .gh-pr-open { color: var(--vscode-testing-iconPassed, #73c991); }
 .gh-pr-merged { color: var(--vscode-editorInfo-foreground, #3794ff); }
-.gh-issue { color: var(--vscode-editorWarning-foreground, #cca700); }`;
+.gh-issue { color: var(--vscode-editorWarning-foreground, #cca700); }
+.fb-item { padding: 6px 12px 6px 24px; cursor: pointer; border-radius: 3px; }
+.fb-item:hover { background: var(--vscode-list-hoverBackground); }
+.fb-title { font-weight: 500; font-size: 12px; }
+.fb-meta { font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; }
+.fb-console { padding: 6px 12px 6px 24px; cursor: pointer; font-size: 12px; color: var(--vscode-textLink-foreground); }
+.fb-console:hover { text-decoration: underline; }
+.fb-empty { padding: 6px 12px; font-size: 12px; color: var(--vscode-disabledForeground); font-style: italic; }`;
 }
 
 /** Get the webview script with click handlers and progressive section updates. */
@@ -158,6 +165,8 @@ document.addEventListener('click', function(e) {
     if (fileCard) { vscodeApi.postMessage({ type: 'openSource', uri: fileCard.dataset.sourceUri, line: parseInt(fileCard.dataset.line || '1') }); return; }
     var ghItem = e.target.closest('.gh-item');
     if (ghItem && ghItem.dataset.url) { vscodeApi.postMessage({ type: 'openGitHubUrl', url: ghItem.dataset.url }); return; }
+    var fbItem = e.target.closest('.fb-item, .fb-console');
+    if (fbItem && fbItem.dataset.url) { vscodeApi.postMessage({ type: 'openFirebaseUrl', url: fbItem.dataset.url }); return; }
     var frame = e.target.closest('.frame-app[data-frame-file]');
     if (frame && !frame.classList.contains('frame-loading')) {
         frame.classList.add('frame-loading');
