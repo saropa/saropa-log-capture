@@ -34,6 +34,12 @@ import {
 
 let panel: vscode.WebviewPanel | undefined;
 let activeAbort: AbortController | undefined;
+/** Max wait per analysis stream — prevents indefinite spinner when VS Code APIs hang. */
+const streamTimeout = 15_000;
+
+function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
 
 /** Run analysis for a log line and show results in the panel. */
 export async function showAnalysis(lineText: string, lineIndex?: number, fileUri?: vscode.Uri): Promise<void> {
@@ -52,26 +58,22 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     const frames = await extractFrames(fileUri, lineIndex);
     panel!.webview.html = buildProgressiveShell(getNonce(), lineText, tokens, !!sourceRef, frames.length > 0 ? frames : undefined);
 
+    const posted = new Set<string>();
     const post = (id: string, html: string): void => {
+        posted.add(id);
         if (!abort.signal.aborted) { panel?.webview.postMessage({ type: 'sectionReady', id, html }); }
     };
 
     const results = await Promise.allSettled([
-        runSourceChain(post, abort.signal, sourceToken?.value, sourceRef?.line),
-        runDocsScan(post, abort.signal, tokens),
-        runSymbolResolution(post, abort.signal, tokens),
-        runTokenSearch(post, abort.signal, tokens),
-        runCrossSessionLookup(lineText),
+        raceTimeout(runSourceChain(post, abort.signal, sourceToken?.value, sourceRef?.line), streamTimeout),
+        raceTimeout(runDocsScan(post, abort.signal, tokens), streamTimeout),
+        raceTimeout(runSymbolResolution(post, abort.signal, tokens), streamTimeout),
+        raceTimeout(runTokenSearch(post, abort.signal, tokens), streamTimeout),
+        raceTimeout(runCrossSessionLookup(lineText), streamTimeout),
     ]);
     if (abort.signal.aborted) { return; }
-    const merged = mergeResults(results);
-    const trend = merged.crossSession?.trend;
-    if (trend && trend.length > 1) {
-        post('trend', renderTrendSection(trend, merged.crossSession!.sessionCount, merged.crossSession!.totalOccurrences));
-    } else {
-        post('trend', emptySlot('trend', '📊 No cross-session history'));
-    }
-    postSummary(merged, abort.signal);
+    postPendingSlots(posted, post, !!sourceRef);
+    postFinalization(post, mergeResults(results), abort.signal);
 }
 
 /** Dispose the singleton panel. */
@@ -89,7 +91,22 @@ function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[]): Se
     return merged as SectionData;
 }
 
-function postSummary(data: SectionData, signal: AbortSignal): void {
+/** Post timeout errors for any sections that never completed. */
+function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, hasSource: boolean): void {
+    const expected = ['docs', 'symbols', 'tokens', ...(hasSource ? ['source', 'line-history', 'imports'] : [])];
+    for (const id of expected) {
+        if (!posted.has(id)) { post(id, errorSlot(id, '⏱ Analysis timed out')); }
+    }
+}
+
+/** Post trend section, score relevance, and send executive summary. */
+function postFinalization(post: PostFn, data: SectionData, signal: AbortSignal): void {
+    const trend = data.crossSession?.trend;
+    if (trend && trend.length > 1) {
+        post('trend', renderTrendSection(trend, data.crossSession!.sessionCount, data.crossSession!.totalOccurrences));
+    } else {
+        post('trend', emptySlot('trend', '📊 No cross-session history'));
+    }
     const relevance = scoreRelevance(data);
     const html = renderExecutiveSummary(relevance.findings);
     const collapseSections = [...relevance.sectionLevels.entries()]
