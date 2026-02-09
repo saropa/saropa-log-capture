@@ -1,30 +1,27 @@
-/**
- * Cross-session analysis panel.
- *
- * Orchestrates data collection with progressive rendering — sections
- * appear independently as their data arrives. After all streams finish,
- * scores relevance and posts an executive summary with smart collapse.
- * Supports cancellation via AbortController.
- */
+/** Cross-session analysis panel — progressive rendering with cancellation. */
 
 import * as vscode from 'vscode';
 import { getNonce } from './viewer-content';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
 import { extractSourceReference } from '../modules/source-linker';
+import { parseSourceTag } from '../modules/source-tag-parser';
 import { type WorkspaceFileInfo, analyzeSourceFile } from '../modules/workspace-analyzer';
 import { type BlameLine, getGitBlame } from '../modules/git-blame';
+import { extractFrames, analyzeFrame } from './analysis-frame-handler';
 import { getCommitDiff } from '../modules/git-diff';
 import { scanDocsForTokens } from '../modules/docs-scanner';
 import { extractImports } from '../modules/import-extractor';
 import { resolveSymbols } from '../modules/symbol-resolver';
 import { normalizeLine, hashFingerprint } from '../modules/error-fingerprint';
 import { aggregateInsights } from '../modules/cross-session-aggregator';
-import { isStackFrameLine, extractDateFromFilename, isFrameworkFrame } from '../modules/stack-parser';
+import { extractDateFromFilename } from '../modules/stack-parser';
 import { type SectionData, scoreRelevance } from '../modules/analysis-relevance';
+import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
+import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderExecutiveSummary } from './analysis-panel-summary';
-import { type StackFrameInfo, renderFrameAnalysis } from './analysis-frame-render';
 import { renderTrendSection } from './analysis-trend-render';
+import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection } from './analysis-related-render';
 import {
     type TokenResultGroup,
     buildProgressiveShell, renderSourceSection, renderLineHistorySection,
@@ -34,7 +31,7 @@ import {
 
 let panel: vscode.WebviewPanel | undefined;
 let activeAbort: AbortController | undefined;
-/** Max wait per analysis stream — prevents indefinite spinner when VS Code APIs hang. */
+let lastFileUri: vscode.Uri | undefined;
 const streamTimeout = 15_000;
 
 function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -53,10 +50,13 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     activeAbort = abort;
 
     ensurePanel();
+    lastFileUri = fileUri;
     const sourceRef = extractSourceReference(lineText);
     const sourceToken = tokens.find(t => t.type === 'source-file');
+    const sourceTag = parseSourceTag(lineText);
     const frames = await extractFrames(fileUri, lineIndex);
-    panel!.webview.html = buildProgressiveShell(getNonce(), lineText, tokens, !!sourceRef, frames.length > 0 ? frames : undefined);
+    const hasTag = !!sourceTag;
+    panel!.webview.html = buildProgressiveShell(getNonce(), lineText, tokens, !!sourceRef, frames.length > 0 ? frames : undefined, hasTag);
 
     const posted = new Set<string>();
     const post = (id: string, html: string): void => {
@@ -64,31 +64,43 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
         if (!abort.signal.aborted) { panel?.webview.postMessage({ type: 'sectionReady', id, html }); }
     };
 
+    // Wave 1: quick related-lines scan enriches tokens for all subsequent streams
+    let related: RelatedLinesResult | undefined;
+    if (sourceTag && fileUri) {
+        related = await raceTimeout(scanRelatedLines(fileUri, sourceTag, lineIndex ?? -1), 5000).catch(() => undefined);
+    }
+    if (abort.signal.aborted) { return; }
+    const allTokens = related?.enhancedTokens?.length ? related.enhancedTokens : tokens;
+    if (related) { post('related', renderRelatedLinesSection(related, lineIndex ?? -1)); }
+    else if (hasTag) { post('related', emptySlot('related', '📋 No related lines found')); }
+
+    // Wave 2: all streams in parallel with enriched tokens
     const results = await Promise.allSettled([
         raceTimeout(runSourceChain(post, abort.signal, sourceToken?.value, sourceRef?.line), streamTimeout),
-        raceTimeout(runDocsScan(post, abort.signal, tokens), streamTimeout),
-        raceTimeout(runSymbolResolution(post, abort.signal, tokens), streamTimeout),
-        raceTimeout(runTokenSearch(post, abort.signal, tokens), streamTimeout),
+        raceTimeout(runDocsScan(post, abort.signal, allTokens), streamTimeout),
+        raceTimeout(runSymbolResolution(post, abort.signal, allTokens), streamTimeout),
+        raceTimeout(runTokenSearch(post, abort.signal, allTokens), streamTimeout),
         raceTimeout(runCrossSessionLookup(lineText), streamTimeout),
+        raceTimeout(runReferencedFiles(post, abort.signal, related), streamTimeout),
+        raceTimeout(runGitHubLookup(post, abort.signal, related, allTokens), streamTimeout),
     ]);
     if (abort.signal.aborted) { return; }
-    postPendingSlots(posted, post, !!sourceRef);
-    postFinalization(post, mergeResults(results), abort.signal);
+    postPendingSlots(posted, post, !!sourceRef, hasTag);
+    const relatedMetrics: Partial<SectionData> = related ? { relatedLineCount: related.lines.length } : {};
+    postFinalization(post, mergeResults(results, relatedMetrics), abort.signal);
 }
 
 /** Dispose the singleton panel. */
 export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(); panel = undefined; }
-
 function cancelAnalysis(): void { activeAbort?.abort(); activeAbort = undefined; }
-
 function postProgress(id: string, message: string): void {
     panel?.webview.postMessage({ type: 'sectionProgress', id, message });
 }
 
 type PostFn = (id: string, html: string) => void;
 
-function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[]): SectionData {
-    let merged: Partial<SectionData> = {};
+function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[], seed: Partial<SectionData> = {}): SectionData {
+    let merged: Partial<SectionData> = { ...seed };
     for (const r of settled) {
         if (r.status === 'fulfilled') { merged = { ...merged, ...r.value }; }
     }
@@ -96,8 +108,10 @@ function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[]): Se
 }
 
 /** Post timeout errors for any sections that never completed. */
-function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, hasSource: boolean): void {
-    const expected = ['docs', 'symbols', 'tokens', ...(hasSource ? ['source', 'line-history', 'imports'] : [])];
+function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, hasSource: boolean, hasTag = false): void {
+    const expected = ['docs', 'symbols', 'tokens', 'github',
+        ...(hasSource ? ['source', 'line-history', 'imports'] : []),
+        ...(hasTag ? ['related', 'files'] : [])];
     for (const id of expected) {
         if (!posted.has(id)) { post(id, errorSlot(id, '⏱ Analysis timed out')); }
     }
@@ -207,27 +221,6 @@ async function runTokenSearch(post: PostFn, signal: AbortSignal, tokens: readonl
     }
 }
 
-const maxFrameScan = 30;
-const separatorPattern = /^={10,}/;
-
-async function extractFrames(fileUri?: vscode.Uri, lineIndex?: number): Promise<StackFrameInfo[]> {
-    if (!fileUri || lineIndex === undefined || lineIndex < 0) { return []; }
-    try {
-        const raw = await vscode.workspace.fs.readFile(fileUri);
-        const lines = Buffer.from(raw).toString('utf-8').split('\n');
-        let start = lineIndex + 1;
-        while (start < lines.length && separatorPattern.test(lines[start].trim())) { start++; }
-        const frames: StackFrameInfo[] = [];
-        const wsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        for (let i = start; i < lines.length && frames.length < maxFrameScan; i++) {
-            if (!isStackFrameLine(lines[i])) { break; }
-            const ref = extractSourceReference(lines[i]);
-            frames.push({ text: lines[i].trimEnd(), isApp: !isFrameworkFrame(lines[i], wsPath), sourceRef: ref ?? undefined });
-        }
-        return frames;
-    } catch { return []; }
-}
-
 async function runCrossSessionLookup(lineText: string): Promise<Partial<SectionData>> {
     try {
         const normalized = normalizeLine(lineText);
@@ -246,19 +239,38 @@ async function runCrossSessionLookup(lineText: string): Promise<Partial<SectionD
     } catch { return {}; }
 }
 
-async function analyzeFrame(file: string, line: number): Promise<void> {
-    try {
-        const info = await analyzeSourceFile(file, line);
-        if (!info) { postFrameResult(file, line, '<div class="no-matches">Source not found</div>'); return; }
-        const blame = await getGitBlame(info.uri, line).catch(() => undefined);
-        postFrameResult(file, line, renderFrameAnalysis(info, blame));
-    } catch { postFrameResult(file, line, '<div class="no-matches">Analysis failed</div>'); }
+async function runReferencedFiles(post: PostFn, signal: AbortSignal, related?: RelatedLinesResult): Promise<Partial<SectionData>> {
+    if (!related?.uniqueFiles.length) { post('files', emptySlot('files', '📁 No source files referenced')); return {}; }
+    postProgress('files', '📁 Analyzing ' + related.uniqueFiles.length + ' source files...');
+    const refs = related.lines.filter(l => l.sourceRef).map(l => l.sourceRef!);
+    const uniqueRefs = [...new Map(refs.map(r => [r.file, r])).values()].slice(0, 5);
+    const analyses: FileAnalysis[] = [];
+    for (const ref of uniqueRefs) {
+        if (signal.aborted) { break; }
+        const info = await analyzeSourceFile(ref.file, ref.line).catch(() => undefined);
+        if (!info) { continue; }
+        const blame = await getGitBlame(info.uri, ref.line).catch(() => undefined);
+        analyses.push({ filename: ref.file, line: ref.line, info, blame });
+    }
+    if (!signal.aborted) { post('files', renderReferencedFilesSection(analyses)); }
+    return { relatedFileCount: analyses.length };
+}
+
+async function runGitHubLookup(post: PostFn, signal: AbortSignal, related?: RelatedLinesResult, tokens?: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
+    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!cwd) { post('github', emptySlot('github', '🔗 No workspace folder open')); return {}; }
+    postProgress('github', '🔗 Checking GitHub CLI...');
+    const files = related?.uniqueFiles ?? [];
+    const errorTokens = (tokens ?? []).filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
+    const fallback: GitHubContext = { available: false, setupHint: 'GitHub query failed', filePrs: [], issues: [] };
+    const ctx = await getGitHubContext({ files: [...files], errorTokens, cwd }).catch(() => fallback);
+    if (!signal.aborted) { post('github', renderGitHubSection(ctx)); }
+    return { githubBlamePr: !!ctx.blamePr, githubPrCount: ctx.filePrs.length, githubIssueCount: ctx.issues.length };
 }
 
 function postFrameResult(file: string, line: number, html: string): void {
     panel?.webview.postMessage({ type: 'frameReady', file, line, html });
 }
-
 function ensurePanel(): void {
     if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
     panel = vscode.window.createWebviewPanel(
@@ -271,7 +283,7 @@ function ensurePanel(): void {
 
 function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'cancelAnalysis') { cancelAnalysis(); return; }
-    if (msg.type === 'analyzeFrame') { analyzeFrame(String(msg.file ?? ''), Number(msg.line ?? 1)).catch(() => {}); return; }
+    if (msg.type === 'analyzeFrame') { analyzeFrame(String(msg.file ?? ''), Number(msg.line ?? 1), postFrameResult).catch(() => {}); return; }
     if (msg.type === 'openMatch') {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});
@@ -279,5 +291,10 @@ function handleMessage(msg: Record<string, unknown>): void {
         const uri = vscode.Uri.parse(String(msg.uri));
         const line = Number(msg.line ?? 1);
         vscode.window.showTextDocument(uri, { selection: new vscode.Range(line - 1, 0, line - 1, 0) });
+    } else if (msg.type === 'openRelatedLine' && lastFileUri) {
+        const ln = Number(msg.line ?? 0);
+        vscode.window.showTextDocument(lastFileUri, { selection: new vscode.Range(ln, 0, ln, 0) });
+    } else if (msg.type === 'openGitHubUrl') {
+        vscode.env.openExternal(vscode.Uri.parse(String(msg.url))).then(undefined, () => {});
     }
 }
