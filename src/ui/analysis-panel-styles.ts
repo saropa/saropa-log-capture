@@ -98,7 +98,25 @@ details[open] > .group-header::before { content: '▼ '; }
 @keyframes barFadeOut { from { opacity: 1; } to { opacity: 0; height: 0; margin: 0; } }
 .progress-bar-track.complete { animation: barFadeOut 1s ease 1s forwards; }
 .progress-msg { transition: opacity 0.2s ease; }
-.progress-msg.fading { opacity: 0; }`;
+.progress-msg.fading { opacity: 0; }
+.related-line { display: flex; gap: 8px; padding: 3px 8px 3px 24px; cursor: pointer; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; border-radius: 3px; }
+.related-line:hover { background: var(--vscode-list-hoverBackground); }
+.related-line.analyzed { background: var(--vscode-editor-findMatchHighlightBackground, rgba(255, 200, 0, 0.2)); border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 21px; }
+.related-idx { color: var(--vscode-editorLineNumber-foreground); min-width: 24px; flex-shrink: 0; }
+.related-src { color: var(--vscode-descriptionForeground); font-size: 11px; margin-left: auto; flex-shrink: 0; }
+.related-overflow { padding: 6px 24px; font-size: 12px; color: var(--vscode-descriptionForeground); }
+.related-overflow a { color: var(--vscode-textLink-foreground); }
+.ref-file-card { padding: 6px 12px 6px 24px; cursor: pointer; border-radius: 3px; }
+.ref-file-card:hover { background: var(--vscode-list-hoverBackground); }
+.ref-file-name { font-weight: 500; font-size: 12px; color: var(--vscode-textLink-foreground); }
+.ref-file-meta { font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; }
+.ref-file-urgent { color: var(--vscode-editorWarning-foreground, #cca700); font-weight: 600; }
+.gh-item { padding: 4px 12px 4px 24px; cursor: pointer; font-size: 12px; border-radius: 3px; }
+.gh-item:hover { background: var(--vscode-list-hoverBackground); }
+.gh-blame-pr { background: var(--vscode-inputValidation-warningBackground, rgba(255, 200, 0, 0.1)); border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 21px; }
+.gh-pr-open { color: var(--vscode-testing-iconPassed, #73c991); }
+.gh-pr-merged { color: var(--vscode-editorInfo-foreground, #3794ff); }
+.gh-issue { color: var(--vscode-editorWarning-foreground, #cca700); }`;
 }
 
 /** Get the webview script with click handlers and progressive section updates. */
@@ -134,6 +152,12 @@ document.addEventListener('click', function(e) {
     if (doc) { vscodeApi.postMessage({ type: 'openDoc', uri: doc.dataset.uri, line: parseInt(doc.dataset.line || '1') }); return; }
     var sym = e.target.closest('.symbol-entry');
     if (sym) { vscodeApi.postMessage({ type: 'openSource', uri: sym.dataset.uri, line: parseInt(sym.dataset.line || '1') }); return; }
+    var rel = e.target.closest('.related-line');
+    if (rel) { vscodeApi.postMessage({ type: 'openRelatedLine', line: parseInt(rel.dataset.line) }); return; }
+    var fileCard = e.target.closest('.ref-file-card');
+    if (fileCard) { vscodeApi.postMessage({ type: 'openSource', uri: fileCard.dataset.sourceUri, line: parseInt(fileCard.dataset.line || '1') }); return; }
+    var ghItem = e.target.closest('.gh-item');
+    if (ghItem && ghItem.dataset.url) { vscodeApi.postMessage({ type: 'openGitHubUrl', url: ghItem.dataset.url }); return; }
     var frame = e.target.closest('.frame-app[data-frame-file]');
     if (frame && !frame.classList.contains('frame-loading')) {
         frame.classList.add('frame-loading');

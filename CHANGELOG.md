@@ -9,13 +9,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [1.1.3] - 2026-02-08
+## [Unreleased]
+
+### Added
+- **Related lines:** When analyzing a tagged log line (e.g. HERO-DEBUG), all lines sharing that source tag are shown as a diagnostic timeline with clickable line navigation and source file references.
+- **Referenced files:** Source files referenced across related lines are analyzed with git blame, annotations, and recent change detection — providing multi-file context instead of single-file analysis.
+- **GitHub context:** Queries `gh` CLI for PRs touching affected files, issues matching error tokens, and blame-to-PR mapping that identifies which PR likely introduced the bug. Auto-detects `gh` availability with actionable setup hints.
+- **Enhanced token search:** Token search, docs scan, and symbol resolution now use enriched tokens from ALL related lines, not just the analyzed line.
+- **Analysis panel progress:** Header progress bar with "X/N complete" counter, per-section spinner text updates showing sub-step descriptions (e.g. "Running git blame...", "Querying language server..."), and smooth CSS transitions. Bar turns green and fades on completion.
 
 ### Fixed
 - **Analysis panel timeout:** Line analysis spinners no longer hang indefinitely when VS Code APIs (symbol resolution, docs scan, token search) are unresponsive. Each analysis stream now has a 15-second timeout; timed-out sections show a clear "Analysis timed out" message instead of spinning forever.
 
+---
+## [1.1.3] - 2026-02-08
+
 ### Added
-- **Analysis panel progress:** Header progress bar with "X/N complete" counter, per-section spinner text updates showing sub-step descriptions (e.g. "Running git blame...", "Querying language server..."), and smooth CSS transitions. Bar turns green and fades on completion.
 - **Filters panel:** Moved all filter controls (Quick Filters, Output Channels, Log Tags, Class Tags, Noise Reduction) from the Options panel into a dedicated Filters panel with its own icon bar button. Options panel now contains only Display, Layout, Audio, and Actions.
 - **Tag search in Filters panel:** Search input at the top of the Filters panel filters tag chips by label text across both Log Tags and Class Tags sections, making it easy to find specific tags among many.
 - **Session metadata in Project Logs:** Each session item now shows line count (e.g. "2,645 lines") and all tag types (#manual, ~auto, @correlation) in the meta line, matching the Session History tree view.
@@ -25,7 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session History tree view:** The native tree view has been removed. All session management (browse, rename, tag, trash, export, filter) is now in the Project Logs webview panel.
 
 ### Fixed
-- **HERO-DIAG source tag detection:** ALL-CAPS prefixes (e.g. `HERO-DIAG`, `MY_APP`) in logcat message bodies are now detected before bracket tags, fixing cases where a bracket tag later in the line would shadow the prefix.
+- **Logcat prefix tag detection:** ALL-CAPS prefixes (e.g. `MY_APP`, `NET_UTIL`) in logcat message bodies are now detected before bracket tags, fixing cases where a bracket tag later in the line would shadow the prefix.
 
 ---
 ## [1.1.2] - 2026-02-08

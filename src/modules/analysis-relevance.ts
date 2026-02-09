@@ -24,6 +24,11 @@ export interface SectionData {
     readonly localImportCount?: number;
     readonly gitCommitCount?: number;
     readonly affectedFileCount?: number;
+    readonly relatedLineCount?: number;
+    readonly relatedFileCount?: number;
+    readonly githubBlamePr?: boolean;
+    readonly githubPrCount?: number;
+    readonly githubIssueCount?: number;
 }
 
 /** Scoring output: summary findings + per-section relevance levels. */
@@ -43,6 +48,8 @@ export function scoreRelevance(data: SectionData): RelevanceResult {
     scoreLineHistory(data, findings, levels);
     scoreCrossSession(data, findings, levels);
     scoreCorrelation(data, findings);
+    scoreRelatedLines(data, findings, levels);
+    scoreGitHub(data, findings, levels);
     scoreDocs(data, findings, levels);
     scoreAnnotations(data, findings, levels);
     scoreSymbols(data, levels);
@@ -134,6 +141,31 @@ function scoreImports(data: SectionData, levels: Map<string, RelevanceLevel>): v
 
 function scoreGitHistory(data: SectionData, levels: Map<string, RelevanceLevel>): void {
     if (!levels.has('source')) { levels.set('source', (data.gitCommitCount ?? 0) > 0 ? 'low' : 'none'); }
+}
+
+function scoreRelatedLines(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+    const count = data.relatedLineCount ?? 0;
+    if (count >= 10) {
+        findings.push({ icon: '📋', text: `Active diagnostic area (${count} related lines)`, level: 'high', sectionId: 'related' });
+        levels.set('related', 'high');
+    } else if (count > 0) { levels.set('related', 'medium'); }
+    const files = data.relatedFileCount ?? 0;
+    if (files >= 3) {
+        findings.push({ icon: '📁', text: `Spans ${files} source files`, level: 'medium', sectionId: 'files' });
+        levels.set('files', 'medium');
+    } else { levels.set('files', files > 0 ? 'low' : 'none'); }
+}
+
+function scoreGitHub(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+    if (data.githubBlamePr) {
+        findings.push({ icon: '🔴', text: 'PR identified that likely introduced this error', level: 'high', sectionId: 'github' });
+        levels.set('github', 'high');
+    } else if ((data.githubIssueCount ?? 0) > 0) {
+        findings.push({ icon: '🟡', text: `${data.githubIssueCount} open issue${data.githubIssueCount !== 1 ? 's' : ''} match this error`, level: 'high', sectionId: 'github' });
+        levels.set('github', 'high');
+    } else if ((data.githubPrCount ?? 0) > 0) {
+        levels.set('github', 'medium');
+    } else { levels.set('github', 'none'); }
 }
 
 function scoreAffectedFiles(data: SectionData, findings: SectionFinding[]): void {
