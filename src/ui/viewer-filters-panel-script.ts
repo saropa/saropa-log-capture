@@ -85,6 +85,9 @@ function syncFiltersPanelUi() {
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
     if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
+    if (typeof rebuildTagChips === 'function') rebuildTagChips();
+    if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
+    if (typeof syncScopeUi === 'function') syncScopeUi();
     if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
 }
 

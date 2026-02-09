@@ -22,61 +22,60 @@ var filterPresets = [];
 /** Currently active preset name, or null if none/custom. */
 var activePresetName = null;
 
-/**
- * Handle preset list update from extension.
- * Rebuilds the preset dropdown with new options.
- */
+/** Guard: true while applying a preset, prevents markPresetDirty(). */
+var applyingPreset = false;
+
 function handleSetPresets(msg) {
     filterPresets = msg.presets || [];
     updatePresetDropdown();
 }
 
-/**
- * Apply a preset by name - sets filters and notifies extension.
- */
+/** Apply a preset by name — sets filters and notifies extension. */
 function applyPreset(presetName) {
     var preset = null;
     for (var i = 0; i < filterPresets.length; i++) {
-        if (filterPresets[i].name === presetName) {
-            preset = filterPresets[i];
-            break;
-        }
+        if (filterPresets[i].name === presetName) { preset = filterPresets[i]; break; }
     }
+    if (!preset) return;
 
-    if (!preset) {
-        return;
-    }
-
+    applyingPreset = true;
     activePresetName = preset.name;
 
-    // Apply category filter
     if (preset.categories && preset.categories.length > 0) {
         activeFilters = new Set(preset.categories);
         syncChannelCheckboxes();
         applyFilter();
     }
 
-    // Apply search pattern
+    // Apply level filter (e.g. "Errors Only" → show only error level)
+    if (preset.levels && preset.levels.length > 0 && typeof enabledLevels !== 'undefined') {
+        enabledLevels = new Set(preset.levels);
+        if (typeof syncAllLevelButtons === 'function') syncAllLevelButtons(false);
+        for (var li = 0; li < preset.levels.length; li++) {
+            var btn = document.getElementById('level-' + preset.levels[li] + '-toggle');
+            if (btn) btn.classList.add('active');
+        }
+        if (typeof syncLevelDots === 'function') syncLevelDots();
+        if (typeof applyLevelFilter === 'function') applyLevelFilter();
+    }
+
     if (preset.searchPattern) {
         var searchInput = document.getElementById('search-input');
         if (searchInput) {
             searchInput.value = preset.searchPattern;
-            if (typeof runSearch === 'function') {
-                runSearch();
-            }
+            if (typeof runSearch === 'function') runSearch();
         }
     }
 
-    // Apply exclusions toggle
     if (preset.exclusionsEnabled !== undefined && typeof setExclusionsEnabled === 'function') {
         setExclusionsEnabled(preset.exclusionsEnabled);
     }
 
-    // Apply app-only mode toggle
     if (preset.appOnlyMode !== undefined && typeof setAppOnlyMode === 'function') {
         setAppOnlyMode(preset.appOnlyMode);
     }
 
+    applyingPreset = false;
     updatePresetDropdown();
     vscodeApi.postMessage({ type: 'presetApplied', name: preset.name });
 }
@@ -148,23 +147,13 @@ function onPresetSelectChange(e) {
  */
 function getCurrentFilters() {
     var filters = {};
-
-    // Get category filter from checkboxes
-    if (activeFilters) {
-        filters.categories = Array.from(activeFilters);
+    if (activeFilters) { filters.categories = Array.from(activeFilters); }
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7) {
+        filters.levels = Array.from(enabledLevels);
     }
-
-    // Get search pattern
     var searchInput = document.getElementById('search-input');
-    if (searchInput && searchInput.value) {
-        filters.searchPattern = searchInput.value;
-    }
-
-    // Get exclusions state
-    if (typeof exclusionsEnabled !== 'undefined') {
-        filters.exclusionsEnabled = exclusionsEnabled;
-    }
-
+    if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
+    if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
     return filters;
 }
 
@@ -208,6 +197,7 @@ function resetAllFilters() {
     if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
     if (typeof selectAllTags === 'function') selectAllTags();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
+    if (typeof resetScopeFilter === 'function') resetScopeFilter();
     clearSearchFilter();
     activePresetName = null;
     updatePresetDropdown();
@@ -218,11 +208,11 @@ function resetAllFilters() {
     if (typeof updateFilterBadge === 'function') updateFilterBadge();
 }
 
-// Hook into filter changes to mark preset as dirty
+// Hook into filter changes to mark preset as dirty (skip during preset application)
 var _origApplyFilter = typeof applyFilter === 'function' ? applyFilter : null;
 if (_origApplyFilter) {
     applyFilter = function(cat) {
-        markPresetDirty();
+        if (!applyingPreset) markPresetDirty();
         return _origApplyFilter(cat);
     };
 }

@@ -21,14 +21,11 @@ export function getSourceTagsHtml(): string {
 /** Returns the JavaScript for source tag parsing, tracking, and filtering. */
 export function getSourceTagsScript(): string {
     return /* javascript */ `
-/** Tag -> line count. Key '__other__' represents lines with no recognized tag. */
 var sourceTagCounts = {};
-
-/** Set of tag keys currently hidden (toggled off). */
 var hiddenSourceTags = {};
-
-/** Sentinel key for lines with no recognized source tag. */
 var otherKey = '__other__';
+var sourceTagShowAll = false;
+var sourceTagMaxChips = 20;
 
 /**
  * Regex to parse source tags from plain text (start of line only).
@@ -172,36 +169,36 @@ function updateTagSummary() {
     if (section) { section.style.display = total > 0 ? '' : 'none'; }
 }
 
-/** Escape HTML special characters for safe insertion into chip labels. */
 function escapeTagHtml(text) {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-/** Rebuild the chip HTML inside the log tags section. Sorted by count descending. */
 function rebuildTagChips() {
     var container = document.getElementById('source-tag-chips');
     if (!container) { return; }
     var keys = Object.keys(sourceTagCounts);
     keys.sort(function(a, b) { return sourceTagCounts[b] - sourceTagCounts[a]; });
-    var parts = [];
-    parts.push(
+    var limit = sourceTagShowAll ? keys.length : Math.min(keys.length, sourceTagMaxChips);
+    var parts = [
         '<span class="source-tag-actions">'
         + '<button class="tag-action-btn" data-action="all">All</button>'
         + '<button class="tag-action-btn" data-action="none">None</button>'
         + '</span>'
-    );
-    for (var i = 0; i < keys.length; i++) {
+    ];
+    for (var i = 0; i < limit; i++) {
         var key = keys[i];
         var label = key === otherKey ? '(Other)' : escapeTagHtml(key);
-        var count = sourceTagCounts[key];
         var active = !hiddenSourceTags[key];
         var cls = 'source-tag-chip' + (active ? ' active' : '');
         parts.push(
             '<button class="' + cls + '" data-tag="' + escapeTagHtml(key) + '">'
             + '<span class="tag-label">' + label + '</span>'
-            + '<span class="tag-count">' + count + '</span>'
-            + '</button>'
+            + '<span class="tag-count">' + sourceTagCounts[key] + '</span></button>'
         );
+    }
+    if (keys.length > sourceTagMaxChips) {
+        var showLabel = sourceTagShowAll ? 'Show less' : 'Show all (' + keys.length + ')';
+        parts.push('<button class="tag-show-all-btn" data-action="toggle-all">' + showLabel + '</button>');
     }
     container.innerHTML = parts.join('');
     updateTagSummary();
@@ -214,9 +211,11 @@ function rebuildTagChips() {
     chipsEl.addEventListener('click', function(e) {
         var chip = e.target.closest('.source-tag-chip');
         if (chip && chip.dataset.tag) { toggleSourceTag(chip.dataset.tag); return; }
-        var btn = e.target.closest('.tag-action-btn');
-        if (btn && btn.dataset.action === 'all') { selectAllTags(); }
-        if (btn && btn.dataset.action === 'none') { deselectAllTags(); }
+        var btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        if (btn.dataset.action === 'all') { selectAllTags(); }
+        else if (btn.dataset.action === 'none') { deselectAllTags(); }
+        else if (btn.dataset.action === 'toggle-all') { sourceTagShowAll = !sourceTagShowAll; rebuildTagChips(); }
     });
 })();
 
@@ -249,7 +248,6 @@ function soloSourceTag(tag) {
     if (typeof markPresetDirty === 'function') { markPresetDirty(); }
 }
 
-/** Deterministic color from 8-color palette via string hash. */
 var tagPalette = ['#4ec9b0','#ce9178','#e0a370','#9cdcfe','#c586c0','#d7ba7d','#b5cea8','#569cd6'];
 function tagColor(tag) {
     var h = 0;
