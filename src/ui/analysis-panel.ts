@@ -12,8 +12,8 @@ import { getNonce } from './viewer-content';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
 import { extractSourceReference } from '../modules/source-linker';
-import { analyzeSourceFile } from '../modules/workspace-analyzer';
-import { getGitBlame } from '../modules/git-blame';
+import { type WorkspaceFileInfo, analyzeSourceFile } from '../modules/workspace-analyzer';
+import { type BlameLine, getGitBlame } from '../modules/git-blame';
 import { getCommitDiff } from '../modules/git-diff';
 import { scanDocsForTokens } from '../modules/docs-scanner';
 import { extractImports } from '../modules/import-extractor';
@@ -81,6 +81,10 @@ export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(
 
 function cancelAnalysis(): void { activeAbort?.abort(); activeAbort = undefined; }
 
+function postProgress(id: string, message: string): void {
+    panel?.webview.postMessage({ type: 'sectionProgress', id, message });
+}
+
 type PostFn = (id: string, html: string) => void;
 
 function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>[]): SectionData {
@@ -116,21 +120,27 @@ function postFinalization(post: PostFn, data: SectionData, signal: AbortSignal):
     }
 }
 
+function postNoSource(post: PostFn, sourceLabel: string): void {
+    post('source', emptySlot('source', sourceLabel));
+    post('line-history', emptySlot('line-history', '🕐 No source context'));
+    post('imports', emptySlot('imports', '📦 No source context'));
+}
+
+function buildSourceMetrics(info: WorkspaceFileInfo, blame?: BlameLine): Partial<SectionData> {
+    return {
+        blame: blame ? { date: blame.date, author: blame.author, hash: blame.hash } : undefined,
+        lineCommits: info.lineCommits.map(c => ({ date: c.date })),
+        annotations: info.annotations.map(a => ({ type: a.type })),
+        gitCommitCount: info.gitCommits.length,
+    };
+}
+
 async function runSourceChain(post: PostFn, signal: AbortSignal, filename?: string, crashLine?: number): Promise<Partial<SectionData>> {
-    if (!filename) {
-        post('source', emptySlot('source', '📄 No source file reference found'));
-        post('line-history', emptySlot('line-history', '🕐 No source context'));
-        post('imports', emptySlot('imports', '📦 No source context'));
-        return {};
-    }
+    if (!filename) { postNoSource(post, '📄 No source file reference found'); return {}; }
     const wsInfo = await analyzeSourceFile(filename, crashLine);
     if (signal.aborted) { return {}; }
-    if (!wsInfo) {
-        post('source', emptySlot('source', '📄 Source file not found in workspace'));
-        post('line-history', emptySlot('line-history', '🕐 No source context'));
-        post('imports', emptySlot('imports', '📦 No source context'));
-        return {};
-    }
+    if (!wsInfo) { postNoSource(post, '📄 Source file not found in workspace'); return {}; }
+    postProgress('source', '📄 Running git blame...');
     const blame = wsInfo.uri && crashLine
         ? await getGitBlame(wsInfo.uri, crashLine).catch(() => undefined)
         : undefined;
@@ -139,13 +149,9 @@ async function runSourceChain(post: PostFn, signal: AbortSignal, filename?: stri
     if (signal.aborted) { return {}; }
     post('source', renderSourceSection(wsInfo, blame, diff));
     post('line-history', renderLineHistorySection(wsInfo.lineCommits));
-    const metrics: Partial<SectionData> = {
-        blame: blame ? { date: blame.date, author: blame.author, hash: blame.hash } : undefined,
-        lineCommits: wsInfo.lineCommits.map(c => ({ date: c.date })),
-        annotations: wsInfo.annotations.map(a => ({ type: a.type })),
-        gitCommitCount: wsInfo.gitCommits.length,
-    };
+    const metrics = buildSourceMetrics(wsInfo, blame);
     try {
+        postProgress('imports', '📦 Parsing imports...');
         const imports = await extractImports(wsInfo.uri);
         if (!signal.aborted) { post('imports', renderImportsSection(imports)); }
         return { ...metrics, importCount: imports.imports.length, localImportCount: imports.localCount };
@@ -161,6 +167,7 @@ async function runDocsScan(post: PostFn, signal: AbortSignal, tokens: readonly A
     if (!wsFolder) { post('docs', emptySlot('docs', '📚 No workspace folder open')); return {}; }
     try {
         const names = tokens.map(t => t.value);
+        postProgress('docs', '📚 Scanning ' + names.length + ' tokens...');
         const results = await scanDocsForTokens(names, wsFolder);
         if (!signal.aborted) { post('docs', renderDocsSection(results)); }
         return { docMatchCount: results.matches.length };
@@ -173,6 +180,7 @@ async function runDocsScan(post: PostFn, signal: AbortSignal, tokens: readonly A
 async function runSymbolResolution(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
     if (signal.aborted) { return {}; }
     try {
+        postProgress('symbols', '🔎 Querying language server...');
         const results = await resolveSymbols(tokens);
         if (!signal.aborted) { post('symbols', renderSymbolsSection(results)); }
         return { symbolCount: results.symbols.length };
@@ -184,6 +192,7 @@ async function runSymbolResolution(post: PostFn, signal: AbortSignal, tokens: re
 
 async function runTokenSearch(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
     try {
+        postProgress('tokens', '🔍 Searching ' + tokens.length + ' token' + (tokens.length > 1 ? 's' : '') + ' across sessions...');
         const groups = await Promise.all(tokens.map(async (token): Promise<TokenResultGroup> => ({
             token, results: await searchLogFiles(token.value, { maxResults: 50, maxResultsPerFile: 10 }),
         })));
@@ -224,6 +233,7 @@ async function runCrossSessionLookup(lineText: string): Promise<Partial<SectionD
         const normalized = normalizeLine(lineText);
         if (normalized.length < 5) { return {}; }
         const hash = hashFingerprint(normalized);
+        postProgress('trend', '📊 Reading session metadata...');
         const insights = await aggregateInsights();
         const match = insights.recurringErrors.find(e => e.hash === hash);
         if (!match) { return {}; }

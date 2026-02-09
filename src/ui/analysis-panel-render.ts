@@ -33,13 +33,15 @@ export function buildProgressiveShell(nonce: string, lineText: string, tokens: A
     slots += loadingSlot('docs', '📚 Scanning project documentation...');
     slots += loadingSlot('symbols', '🔎 Resolving symbol definitions...');
     slots += loadingSlot('tokens', `🔍 Searching ${tokens.length} token${tokens.length > 1 ? 's' : ''}... ${tokenList}`);
+    const sectionCount = (hasSource ? 3 : 0) + 4;
     return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
-        <div class="summary">Analyzing... <button class="cancel-btn" id="cancel-btn">Stop</button></div></div>
+        <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn">Stop</button></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" data-total="${sectionCount}" style="width:0%"></div></div></div>
         <div id="executive-summary"></div><div class="content">${slots}</div>`);
 }
 
 function loadingSlot(id: string, message: string): string {
-    return `<div class="section-slot" id="section-${id}"><div class="section-loading"><span class="spinner"></span> ${message}</div></div>`;
+    return `<div class="section-slot" id="section-${id}"><div class="section-loading"><span class="spinner"></span> <span class="progress-msg">${message}</span></div></div>`;
 }
 
 /** Render the source + blame + diff section (replaces spinner). */
