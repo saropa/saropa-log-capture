@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
 
 ### Fixed
+- **Copy includes UI chrome:** Ctrl+C near the bottom of the log viewer included footer, search panel, and session history text. Native text selection is now confined to the viewport via CSS `user-select`, and native click-drag selections are routed through the VS Code clipboard API.
 - **Tag chips not rendering:** Tag chip containers in the Filters panel were permanently empty — `syncFiltersPanelUi()` now calls `rebuildTagChips()` and `rebuildClassTagChips()` when opening the panel.
 - **Quick Filters presets broken:** "Errors Only" preset used DAP `categories: ['stderr']` which hides all Flutter output (category is `"console"`). Presets now use `levels` field for severity-based filtering. Also fixed monkey-patch on `applyFilter` that immediately reset the active preset during application.
 - **Preset save losing levels:** `promptSavePreset()` parameter type now includes `levels` so saving a preset after applying a level-based filter preserves the level configuration.
