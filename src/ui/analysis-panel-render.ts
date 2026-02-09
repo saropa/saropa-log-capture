@@ -20,20 +20,23 @@ const typeIcons: Record<string, string> = {
 };
 
 /** Build the initial progressive-loading HTML shell with spinner placeholders. */
-export function buildProgressiveShell(nonce: string, lineText: string, tokens: AnalysisToken[], hasSource: boolean, frames?: readonly StackFrameInfo[]): string {
+export function buildProgressiveShell(nonce: string, lineText: string, tokens: AnalysisToken[], hasSource: boolean, frames?: readonly StackFrameInfo[], hasTag = false): string {
     const tokenList = tokens.map(t => `<span class="token">${typeIcons[t.type] ?? '🔍'} ${escapeHtml(t.label)}</span>`).join('');
     let slots = '';
     if (frames && frames.length > 0) { slots += renderFrameSection(frames); }
+    if (hasTag) { slots += loadingSlot('related', '📋 Scanning related lines...'); }
     slots += loadingSlot('trend', '📊 Checking cross-session history...');
     if (hasSource) {
         slots += loadingSlot('source', '📄 Analyzing source file...');
         slots += loadingSlot('line-history', '🕐 Checking recent changes...');
         slots += loadingSlot('imports', '📦 Extracting dependencies...');
     }
+    if (hasTag) { slots += loadingSlot('files', '📁 Analyzing referenced files...'); }
     slots += loadingSlot('docs', '📚 Scanning project documentation...');
     slots += loadingSlot('symbols', '🔎 Resolving symbol definitions...');
     slots += loadingSlot('tokens', `🔍 Searching ${tokens.length} token${tokens.length > 1 ? 's' : ''}... ${tokenList}`);
-    const sectionCount = (hasSource ? 3 : 0) + 4;
+    slots += loadingSlot('github', '🔗 Querying GitHub...');
+    const sectionCount = (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 5;
     return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
         <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn">Stop</button></div>
         <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" data-total="${sectionCount}" style="width:0%"></div></div></div>
