@@ -20,7 +20,8 @@ import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext } from '../modules/firebase-crashlytics';
+import { getFirebaseContext, getCrashEventDetail } from '../modules/firebase-crashlytics';
+import { renderCrashDetail } from './analysis-crash-detail';
 import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
 import {
     type TokenResultGroup,
@@ -225,6 +226,11 @@ async function runFirebaseLookup(post: PostFn, signal: AbortSignal, tokens: read
     return { crashlyticsIssueCount: ctx.issues.length };
 }
 
+async function fetchCrashDetail(issueId: string): Promise<void> {
+    const detail = await getCrashEventDetail(issueId).catch(() => undefined);
+    const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
+    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html });
+}
 function postFrameResult(file: string, line: number, html: string): void {
     panel?.webview.postMessage({ type: 'frameReady', file, line, html });
 }
@@ -241,6 +247,7 @@ function ensurePanel(): void {
 function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'cancelAnalysis') { cancelAnalysis(); return; }
     if (msg.type === 'analyzeFrame') { analyzeFrame(String(msg.file ?? ''), Number(msg.line ?? 1), postFrameResult).catch(() => {}); return; }
+    if (msg.type === 'fetchCrashDetail') { fetchCrashDetail(String(msg.issueId ?? '')).catch(() => {}); return; }
     if (msg.type === 'openMatch') {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});

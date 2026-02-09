@@ -18,6 +18,20 @@ export interface FirebaseContext {
     readonly consoleUrl?: string;
 }
 
+export interface CrashlyticsStackFrame {
+    readonly text: string;
+    readonly fileName?: string;
+    readonly lineNumber?: number;
+}
+
+interface CrashlyticsThread { readonly name: string; readonly frames: readonly CrashlyticsStackFrame[]; }
+
+export interface CrashlyticsEventDetail {
+    readonly issueId: string;
+    readonly crashThread?: CrashlyticsThread;
+    readonly appThreads: readonly CrashlyticsThread[];
+}
+
 interface FirebaseConfig { readonly projectId: string; readonly appId: string; }
 
 let gcloudAvailable: boolean | undefined;
@@ -116,13 +130,13 @@ function matchIssues(rows: Record<string, unknown>[], errorTokens: readonly stri
     return results.slice(0, 5);
 }
 
-function fetchJson(url: string, token: string, body: string): Promise<Record<string, unknown> | undefined> {
+function fetchJson(url: string, token: string, body?: string): Promise<Record<string, unknown> | undefined> {
     return new Promise((resolve) => {
         const https = require('https') as typeof import('https');
         const parsed = new URL(url);
         const req = https.request({
             hostname: parsed.hostname, path: parsed.pathname + parsed.search,
-            method: 'POST', timeout: apiTimeout,
+            method: body ? 'POST' : 'GET', timeout: apiTimeout,
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         }, (res) => {
             let data = '';
@@ -131,9 +145,83 @@ function fetchJson(url: string, token: string, body: string): Promise<Record<str
         });
         req.on('error', () => resolve(undefined));
         req.on('timeout', () => { req.destroy(); resolve(undefined); });
-        req.write(body);
+        if (body) { req.write(body); }
         req.end();
     });
+}
+
+/** Fetch the latest crash event for a specific issue, returning parsed stack trace. */
+export async function getCrashEventDetail(issueId: string): Promise<CrashlyticsEventDetail | undefined> {
+    const token = await getAccessToken();
+    if (!token) { return undefined; }
+    const config = await detectFirebaseConfig();
+    if (!config) { return undefined; }
+    const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/issues/${issueId}/events?pageSize=1`;
+    const data = await fetchJson(url, token);
+    if (!data) { return undefined; }
+    return parseEventResponse(issueId, data);
+}
+
+const maxFramesPerThread = 50;
+const frameLineRe = /^\s+at\s+(.+)/;
+const javaFrameRe = /^([\w.$]+)\(([\w.]+):(\d+)\)$/;
+
+function parseEventResponse(issueId: string, data: Record<string, unknown>): CrashlyticsEventDetail | undefined {
+    const events = data.events ?? data.crashEvents;
+    if (!Array.isArray(events) || events.length === 0) { return parseRawTrace(issueId, data); }
+    const event = events[0] as Record<string, unknown>;
+    const threads = event.threads ?? event.executionThreads;
+    if (Array.isArray(threads)) { return parseStructuredThreads(issueId, threads); }
+    const trace = event.stackTrace ?? event.exception;
+    if (typeof trace === 'string') { return parseRawTrace(issueId, { stackTrace: trace }); }
+    return parseRawTrace(issueId, data);
+}
+
+function parseStructuredThreads(issueId: string, threads: unknown[]): CrashlyticsEventDetail {
+    let crashThread: CrashlyticsThread | undefined;
+    const appThreads: CrashlyticsThread[] = [];
+    for (const t of threads) {
+        const thread = t as Record<string, unknown>;
+        const name = String(thread.name ?? thread.threadName ?? 'Unknown');
+        const rawFrames = (thread.frames ?? thread.stackFrames) as unknown[] | undefined;
+        if (!Array.isArray(rawFrames)) { continue; }
+        const frames = rawFrames.slice(0, maxFramesPerThread).map(parseStructuredFrame);
+        const parsed: CrashlyticsThread = { name, frames };
+        if (!crashThread && (thread.crashed === true || /fatal|exception/i.test(name))) { crashThread = parsed; }
+        else { appThreads.push(parsed); }
+    }
+    return { issueId, crashThread, appThreads };
+}
+
+function parseStructuredFrame(raw: unknown): CrashlyticsStackFrame {
+    const f = raw as Record<string, unknown>;
+    const symbol = String(f.symbol ?? f.className ?? '');
+    const method = f.methodName ? `.${f.methodName}` : '';
+    const file = f.file ?? f.fileName;
+    const line = Number(f.line ?? f.lineNumber ?? 0);
+    const text = file ? `at ${symbol}${method}(${file}:${line})` : `at ${symbol}${method}`;
+    return { text, fileName: file ? String(file) : undefined, lineNumber: line || undefined };
+}
+
+function parseRawTrace(issueId: string, data: Record<string, unknown>): CrashlyticsEventDetail | undefined {
+    const raw = String(data.stackTrace ?? '');
+    if (!raw || raw.length < 10) { return undefined; }
+    const lines = raw.split(/\r?\n/);
+    const frames: CrashlyticsStackFrame[] = [];
+    for (const line of lines) {
+        const m = frameLineRe.exec(line);
+        if (!m) { continue; }
+        const frameText = m[1].trim();
+        const jm = javaFrameRe.exec(frameText);
+        frames.push({
+            text: `at ${frameText}`,
+            fileName: jm?.[2],
+            lineNumber: jm ? Number(jm[3]) : undefined,
+        });
+        if (frames.length >= maxFramesPerThread) { break; }
+    }
+    if (frames.length === 0) { return undefined; }
+    return { issueId, crashThread: { name: 'Fatal Exception', frames }, appThreads: [] };
 }
 
 function runCmd(cmd: string, args: string[]): Promise<string> {
