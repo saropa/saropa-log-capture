@@ -41,10 +41,7 @@ function handleScroll() {
 }
 
 logEl.addEventListener('scroll', function() {
-    if (!rafPending) {
-        rafPending = true;
-        requestAnimationFrame(function() { rafPending = false; handleScroll(); });
-    }
+    if (!rafPending) { rafPending = true; requestAnimationFrame(function() { rafPending = false; handleScroll(); }); }
 });
 
 logEl.addEventListener('wheel', function(e) {
@@ -143,11 +140,7 @@ window.addEventListener('message', function(event) {
             if (typeof buildPrefixSums === 'function') buildPrefixSums();
             renderViewport(true);
             if (typeof scheduleMinimap === 'function') scheduleMinimap();
-            if (autoScroll) {
-                suppressScroll = true;
-                logEl.scrollTop = logEl.scrollHeight;
-                suppressScroll = false;
-            }
+            if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
             updateFooterText();
             break;
         case 'clear':
@@ -223,12 +216,8 @@ window.addEventListener('message', function(event) {
             break;
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined) {
-                suppressScroll = true;
-                logEl.scrollTop = scrollMemory[currentFilename];
-                suppressScroll = false;
-                autoScroll = false;
-                jumpBtn.style.display = 'block';
-                renderViewport(true);
+                suppressScroll = true; logEl.scrollTop = scrollMemory[currentFilename]; suppressScroll = false;
+                autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
             break;
         case 'setScopeContext':
@@ -240,6 +229,13 @@ window.addEventListener('message', function(event) {
 document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'c' && typeof copyAsPlainText === 'function') {
         if (selectionStart >= 0) { e.preventDefault(); copyAsPlainText(); return; }
+        var nSel = window.getSelection();
+        var nTxt = nSel ? nSel.toString() : '';
+        if (nTxt.trim()) {
+            e.preventDefault();
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: nTxt });
+            return;
+        }
     }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && typeof copyAsMarkdown === 'function') {
         e.preventDefault(); copyAsMarkdown(); return;
