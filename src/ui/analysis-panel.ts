@@ -21,7 +21,7 @@ import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext, getCrashEvents, getAccessToken } from '../modules/firebase-crashlytics';
+import { getFirebaseContext, getCrashEvents } from '../modules/firebase-crashlytics';
 import { getIssueStats } from '../modules/crashlytics-stats';
 import { renderCrashDetail, renderDeviceDistribution, renderApiDistribution } from './analysis-crash-detail';
 import { generateCrashSummary } from '../modules/crashlytics-ai-summary';
@@ -250,8 +250,8 @@ async function fetchCrashDetail(issueId: string, eventIndex = 0): Promise<void> 
     generateCrashSummary(detail).then(summary => {
         if (summary) { panel?.webview.postMessage({ type: 'crashAiSummary', issueId, html: `<div class="crash-ai-summary">${escapeHtml(summary)}</div>` }); }
     }).catch(() => {});
-    // Aggregate stats — async, arrives after the initial render.
-    getAccessToken().then(token => token ? getIssueStats(issueId, token) : undefined).then(stats => {
+    // Aggregate stats — async, cached per issue to avoid redundant API calls on event nav.
+    getIssueStats(issueId).then(stats => {
         if (stats) { panel?.webview.postMessage({ type: 'issueStatsReady', issueId, html: renderApiDistribution(stats) }); }
     }).catch(() => {});
 }
