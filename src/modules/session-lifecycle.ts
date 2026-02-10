@@ -16,6 +16,7 @@ import { SessionMetadataStore } from './session-metadata';
 import { scanForCorrelationTags } from './correlation-scanner';
 import { scanForFingerprints } from './error-fingerprint';
 import { scanAnrRisk } from './anr-risk-scorer';
+import { detectAppVersion } from './app-version';
 import { countSeverities, extractBody } from '../ui/session-severity-counts';
 import {
     generateSummary, showSummaryNotification, SessionStats,
@@ -175,6 +176,15 @@ export async function finalizeSession(
     });
 
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
+
+    detectAppVersion().then(async (version) => {
+        if (version) {
+            await metadataStore.setAppVersion(logSession.fileUri, version);
+            outputChannel.appendLine(`App version: ${version}`);
+        }
+    }).catch((err: unknown) => {
+        outputChannel.appendLine(`Failed to detect app version: ${err}`);
+    });
 
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     showSummaryNotification(generateSummary(filename, stats));

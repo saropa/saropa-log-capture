@@ -27,6 +27,8 @@ export interface SessionMeta {
     anrCount?: number;
     /** ANR risk level computed by anr-risk-scorer.ts on session finalization. */
     anrRiskLevel?: 'low' | 'medium' | 'high';
+    /** App version detected at session finalization (e.g. from pubspec.yaml). */
+    appVersion?: string;
     /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
 }
@@ -92,6 +94,13 @@ export class SessionMetadataStore {
     async setFingerprints(logUri: vscode.Uri, fingerprints: FingerprintEntry[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.fingerprints = fingerprints;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set the detected app version for this session. */
+    async setAppVersion(logUri: vscode.Uri, version: string): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.appVersion = version;
         await this.saveMetadata(logUri, meta);
     }
 
