@@ -318,7 +318,7 @@ AQI's right pane shows horizontal bar charts for device manufacturer distributio
 
 **Improvement ideas:**
 
-18. **Parse device/OS from Crashlytics events** — The Crashlytics event response includes device model, OS version, and orientation. When `getCrashEventDetail` fetches event data, parse and store these fields in `CrashlyticsEventDetail`. If multi-event fetching is added (see Crashlytics gap analysis item 7), aggregate across events to build distribution charts.
+18. **DONE — Parse device/OS from Crashlytics events** — `crashlytics-event-parser.ts` extracts device model and OS version from event responses. `crashlytics-stats.ts` fetches aggregate device/OS distribution via the stats API endpoint. `analysis-crash-detail.ts` renders both per-event metadata and collapsible bar charts for device model and OS version distribution.
     - *Priority:* Medium (depends on Crashlytics multi-event). *Complexity:* Medium (~30 lines parsing + ~80 lines chart rendering).
 
 19. **Local environment distribution across sessions** — Saropa captures environment metadata in session headers (`environment-collector.ts`). Aggregate across sessions to show which local configurations (VS Code version, debug adapter version, OS) correlate with the most errors. This is a Saropa-unique insight that AQI cannot provide.
@@ -419,12 +419,15 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 #### Phase 3: Strategic Features (High complexity, competitive differentiation)
 
+| # | Item | Status |
+|---|------|--------|
+| 18 | Parse device/OS from Crashlytics events + charts | DONE |
+
 | # | Item | Effort | Impact |
 |---|------|--------|--------|
 | 1 | Google Play Developer Reporting API integration | ~350 lines | Access production Vitals data in VS Code |
 | 16 | Thread grouping for ANR-style traces | ~100 lines | Multi-thread debugging |
 | 4 | Crash category sub-classification | ~70 lines | Fatal/ANR/OOM/native breakdown |
-| 18 | Parse device/OS from Crashlytics events + charts | ~110 lines | Device/OS analytics |
 | 3 | Package name auto-detection | ~30 lines | Enables Play API queries |
 
 #### Phase 4: Exploratory (Low priority, high ambition)
@@ -445,9 +448,9 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**Closed gaps since initial analysis:** All Phase 1 and Phase 2 items are complete. Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). The Crashlytics integration is comprehensive (see companion document for full status).
+**Closed gaps since initial analysis:** All Phase 1 and Phase 2 items are complete. Phase 3 item #18 (device/OS charts) is also done. Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). Phase 3 item #18 (device/OS from Crashlytics events + distribution charts) was implemented alongside the Crashlytics integration.
 
-**The highest-value gap to close** is now Phase 3: Google Play Developer Reporting API integration (item 1) and thread grouping for ANR-style traces (item 16). These would provide production Vitals data inside VS Code and multi-thread debugging support respectively.
+**The highest-value remaining gaps** are Phase 3: Google Play Developer Reporting API integration (item 1), thread grouping for ANR-style traces (item 16), crash category sub-classification (item 4), and package name auto-detection (item 3).
 
 **The proactive warning system is now operational.** ANR risk scoring (item 23) detects choreographer warnings, GC pauses, and thread blocking patterns during debugging and flags "this will become an ANR in production." The Crashlytics error bridge (item 24) connects debug-time errors to production crash data. Together, these shift ANR and error detection left in the development lifecycle, where fixes are cheaper and faster.
 

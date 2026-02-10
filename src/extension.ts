@@ -18,6 +18,7 @@ import { disposeTimelinePanel } from './ui/timeline-panel';
 import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
 import { RecurringErrorsPanelProvider } from './ui/recurring-errors-panel';
+import { VitalsPanelProvider } from './ui/vitals-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -73,6 +74,16 @@ export function activate(context: vscode.ExtensionContext): void {
     );
     context.subscriptions.push(vscode.commands.registerCommand(
         'saropaLogCapture.refreshRecurringErrors', () => recurringErrorsPanel.refresh(),
+    ));
+
+    // Google Play Vitals sidebar panel (opt-in).
+    const vitalsPanel = new VitalsPanelProvider();
+    context.subscriptions.push(vitalsPanel);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(VitalsPanelProvider.viewType, vitalsPanel),
+    );
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
     ));
 
     // Crashlytics CodeLens — show crash indicators on affected source files.
