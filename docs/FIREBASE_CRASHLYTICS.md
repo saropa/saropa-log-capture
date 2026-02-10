@@ -16,7 +16,7 @@ The extension authenticates via Google Cloud Application Default Credentials (AD
 
 ```bash
 # 1. Install gcloud CLI (if not already installed)
-#    https://cloud.google.com/sdk/docs/install
+#    https://docs.cloud.google.com/sdk/docs/install-sdk
 
 # 2. Log in and set application default credentials
 gcloud auth application-default login
@@ -142,7 +142,7 @@ To force a re-fetch, delete the cached JSON file for the issue ID. The `reports/
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "Install gcloud CLI" | `gcloud` not found on PATH | Install from https://cloud.google.com/sdk |
+| "Install gcloud CLI" | `gcloud` not found on PATH | Install from https://docs.cloud.google.com/sdk/docs/install-sdk |
 | "Run: gcloud auth application-default login" | No ADC credentials | Run the login command |
 | "Add google-services.json..." | Can't detect project/app | Add the file or set settings manually |
 | "0 matches" with Firebase available | No Crashlytics issues match the error tokens | Check Firebase Console directly via the link |
@@ -169,6 +169,13 @@ analysis-panel.ts
             └─ analysis-crash-detail.ts
                  ├─ classifyFrames()        APP vs FW via isFrameworkFrame()
                  └─ renderCrashDetail()      HTML with frame badges
+crashlytics-panel.ts                          sidebar panel (always visible)
+  ├─ buildSetupHtml()                          3-step setup wizard when not configured
+  │    ├─ Step 1: install link                 opens docs.cloud.google.com in browser
+  │    ├─ Step 2: runGcloudAuth()              opens VS Code terminal with auth command
+  │    └─ Step 3: browseGoogleServices()       file picker → copy to workspace root
+  └─ buildPanelHtml()                          issue list when configured
+       └─ same firebase-crashlytics.ts flow as analysis-panel
 ```
 
 No npm dependencies added. Uses Node.js `https` module and `child_process.execFile`.
