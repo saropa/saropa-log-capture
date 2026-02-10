@@ -356,6 +356,11 @@
           "description": "Firebase app ID for Crashlytics queries (auto-detected from google-services.json if empty).",
           "type": "string"
         },
+        "saropaLogCapture.firebase.packageName": {
+          "default": "",
+          "description": "Android package name (e.g. com.example.myapp). Auto-detected from google-services.json, AndroidManifest.xml, or pubspec.yaml if empty.",
+          "type": "string"
+        },
         "saropaLogCapture.firebase.projectId": {
           "default": "",
           "description": "Firebase project ID for Crashlytics queries (auto-detected from google-services.json if empty).",
@@ -389,6 +394,11 @@
           "default": "",
           "description": "Filter Crashlytics results to a specific app version. Leave empty to auto-detect from pubspec.yaml or build.gradle.",
           "type": "string"
+        },
+        "saropaLogCapture.playConsole.enabled": {
+          "default": false,
+          "description": "Enable Google Play Vitals panel. Requires Play Console access and the Play Developer Reporting API enabled in your GCP project.",
+          "type": "boolean"
         },
         "saropaLogCapture.format": {
           "default": "plaintext",
@@ -680,6 +690,13 @@
           "id": "saropaLogCapture.recurringErrorsPanel",
           "name": "Recurring Errors",
           "type": "webview"
+        },
+        {
+          "icon": "$(graph-line)",
+          "id": "saropaLogCapture.vitalsPanel",
+          "name": "Play Vitals",
+          "type": "webview",
+          "when": "config.saropaLogCapture.playConsole.enabled"
         }
       ]
     },
