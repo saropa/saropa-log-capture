@@ -153,7 +153,8 @@ export class LogViewerProvider
     this.postMessage({ type: "setPresets", presets });
   }
   addLine(data: LineData): void {
-    const html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
+    let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
+    if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     this.pendingLines.push({
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),

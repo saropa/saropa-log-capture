@@ -32,6 +32,12 @@ export function getContentStyles(): string {
     padding-left: 28px;
     color: var(--vscode-descriptionForeground);
 }
+/* Thread header lines from Android/Java thread dumps */
+.thread-header {
+    color: var(--vscode-textLink-foreground);
+    font-weight: 600;
+    font-style: italic;
+}
 
 /* ===================================================================
    Jump-to-Bottom Button

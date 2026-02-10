@@ -129,6 +129,38 @@ export function isStackFrameLine(line: string): boolean {
     return /^\s+\S+\.\S+:\d+/.test(line);
 }
 
+/** Parsed thread header metadata from Android/Java thread dumps. */
+export interface ThreadHeader {
+    readonly name: string;
+    readonly tid?: number;
+    readonly state?: string;
+}
+
+/** Thread header patterns for Java/Android/Dart thread dumps. */
+const threadHeaderPatterns: readonly { pattern: RegExp; groups: (m: RegExpExecArray) => ThreadHeader }[] = [
+    // "main" tid=1 Runnable  |  "AsyncTask #1" prio=5 tid=12 Waiting
+    {
+        pattern: /^"(.+?)"\s+(?:.*?tid=(\d+))?\s*([\w]+)?\s*$/,
+        groups: (m) => ({ name: m[1], tid: m[2] ? parseInt(m[2], 10) : undefined, state: m[3] }),
+    },
+    // --- main ---
+    {
+        pattern: /^---\s+(\S+)\s+---$/,
+        groups: (m) => ({ name: m[1] }),
+    },
+];
+
+/** Parse a thread header line. Returns undefined if not a thread header. */
+export function parseThreadHeader(line: string): ThreadHeader | undefined {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.length > 200) { return undefined; }
+    for (const { pattern, groups } of threadHeaderPatterns) {
+        const m = pattern.exec(trimmed);
+        if (m) { return groups(m); }
+    }
+    return undefined;
+}
+
 /** Extract YYYY-MM-DD date from a session filename like `20250207_143000_name.log`. */
 export function extractDateFromFilename(filename: string): string | undefined {
     const m = /^(\d{4})(\d{2})(\d{2})_/.exec(filename);

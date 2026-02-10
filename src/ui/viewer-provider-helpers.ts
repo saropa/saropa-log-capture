@@ -1,11 +1,12 @@
 /** Helper functions for LogViewerProvider — message handlers and batch processing. */
 import * as vscode from "vscode";
 import { findHeaderEnd } from "./viewer-file-loader";
-import { isFrameworkFrame, isFrameworkLogLine } from "../modules/stack-parser";
+import { isFrameworkFrame, isFrameworkLogLine, parseThreadHeader } from "../modules/stack-parser";
+import { stripAnsi } from "../modules/ansi";
 import { resolveSourceUri } from "../modules/source-resolver";
 import { TreeItem, isSplitGroup } from "./session-history-grouping";
 import { PendingLine } from "./viewer-file-loader";
-import { formatMtime, formatMtimeTimeOnly } from "./session-display";
+import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "./session-display";
 
 /** Input data for editing a log line. */
 export interface EditLineInput {
@@ -142,6 +143,19 @@ export function classifyFrame(text: string): boolean | undefined {
 	return isFrameworkLogLine(text);
 }
 
+/** If the raw text is a thread header, return styled HTML; otherwise return the original html. */
+export function tryFormatThreadHeader(rawText: string, html: string): string {
+	const parsed = parseThreadHeader(stripAnsi(rawText));
+	if (!parsed) { return html; }
+	const tid = parsed.tid !== undefined ? ` (tid=${parsed.tid})` : '';
+	const state = parsed.state ? ` \u2014 ${escapeForAttr(parsed.state)}` : '';
+	return `<span class="thread-header">${escapeForAttr(parsed.name)}${tid}${state}</span>`;
+}
+
+function escapeForAttr(s: string): string {
+	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /**
  * Send cached configuration (presets and highlight rules) to the webview.
  */
@@ -226,7 +240,7 @@ export function buildSessionListPayload(
 	const toRecord = (m: Meta): Record<string, unknown> => ({
 		filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
 		size: m.size, mtime: m.mtime, formattedMtime: formatMtime(m.mtime),
-		formattedTime: formatMtimeTimeOnly(m.mtime), date: m.date,
+		formattedTime: formatMtimeTimeOnly(m.mtime), relativeTime: formatRelativeTime(m.mtime), date: m.date,
 		hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
 		durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
 		warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
