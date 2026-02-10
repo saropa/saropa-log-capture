@@ -1,9 +1,9 @@
 /** Persistent Crashlytics sidebar panel — shows top crash issues from Firebase. */
 
 import * as vscode from 'vscode';
-import { escapeHtml } from '../modules/ansi';
+import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
 import { getNonce } from './viewer-content';
-import { getFirebaseContext, getCrashEvents, updateIssueState, type CrashlyticsIssue, type FirebaseContext } from '../modules/firebase-crashlytics';
+import { getFirebaseContext, getCrashEvents, updateIssueState, clearIssueListCache, type CrashlyticsIssue, type FirebaseContext } from '../modules/firebase-crashlytics';
 import { renderCrashDetail } from './analysis-crash-detail';
 
 let lastContext: FirebaseContext | undefined;
@@ -26,6 +26,7 @@ export class CrashlyticsPanelProvider implements vscode.WebviewViewProvider, vsc
     async refresh(): Promise<void> {
         if (!this.view) { return; }
         this.view.webview.html = buildLoadingHtml();
+        clearIssueListCache();
         const ctx = await getFirebaseContext([]).catch(() => undefined);
         lastContext = ctx ?? { available: false, setupHint: 'Query failed', issues: [] };
         if (this.view) { this.view.webview.html = buildPanelHtml(lastContext); }
@@ -73,7 +74,7 @@ function buildPanelHtml(ctx: FirebaseContext): string {
         const hint = ctx.setupHint ? escapeHtml(ctx.setupHint) : 'Firebase not configured';
         return `<!DOCTYPE html><html><body style="padding:8px;font-family:var(--vscode-font-family)"><p>${hint}</p></body></html>`;
     }
-    const refreshNote = ctx.queriedAt ? formatRefreshTime(ctx.queriedAt) : '';
+    const refreshNote = ctx.queriedAt ? `(${formatElapsedLabel(ctx.queriedAt)})` : '';
     let issueHtml = '';
     if (ctx.issues.length === 0) {
         issueHtml = '<p class="fb-empty">No open Crashlytics issues</p>';
@@ -105,12 +106,6 @@ function formatVersionRange(issue: CrashlyticsIssue): string {
         ? `${escapeHtml(issue.firstVersion)} → ${escapeHtml(issue.lastVersion)}`
         : escapeHtml(issue.firstVersion ?? issue.lastVersion ?? '');
     return ` · ${range}`;
-}
-
-function formatRefreshTime(queriedAt: number): string {
-    const ago = Math.round((Date.now() - queriedAt) / 1000);
-    const label = ago < 5 ? 'just now' : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
-    return `(${label})`;
 }
 
 function getPanelStyles(): string {
