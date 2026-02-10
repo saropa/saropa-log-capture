@@ -20,6 +20,8 @@ export interface CrashlyticsIssue {
 export interface FirebaseContext {
     readonly available: boolean;
     readonly setupHint?: string;
+    /** Which setup step failed — drives the wizard UI in the panel. */
+    readonly setupStep?: 'gcloud' | 'token' | 'config';
     readonly issues: readonly CrashlyticsIssue[];
     readonly consoleUrl?: string;
     readonly queriedAt?: number;
@@ -102,21 +104,28 @@ async function scanGoogleServicesJson(fallbackProject: string, fallbackApp: stri
     } catch { return undefined; }
 }
 
-/** Clear the cached issue list so the next query hits the API. */
-export function clearIssueListCache(): void { cachedIssueRows = undefined; }
+/** Clear all cached state so the next query re-checks gcloud, token, and issues. */
+export function clearIssueListCache(): void {
+    gcloudAvailable = undefined;
+    cachedToken = undefined;
+    cachedIssueRows = undefined;
+}
+
+/** Install page for the Google Cloud CLI (gcloud), required for Crashlytics API access. */
+export const gcloudInstallUrl = 'https://docs.cloud.google.com/sdk/docs/install-sdk';
 
 /** Query Firebase Crashlytics for issues matching error tokens. */
 export async function getFirebaseContext(errorTokens: readonly string[]): Promise<FirebaseContext> {
     if (!await isGcloudAvailable()) {
-        return { available: false, setupHint: 'Install gcloud CLI from https://cloud.google.com/sdk', issues: [] };
+        return { available: false, setupStep: 'gcloud', setupHint: `Install Google Cloud CLI from ${gcloudInstallUrl}`, issues: [] };
     }
     const token = await getAccessToken();
     if (!token) {
-        return { available: false, setupHint: 'Run: gcloud auth application-default login', issues: [] };
+        return { available: false, setupStep: 'token', setupHint: 'Run: gcloud auth application-default login', issues: [] };
     }
     const config = await detectFirebaseConfig();
     if (!config) {
-        return { available: false, setupHint: 'Add google-services.json to workspace or set firebase.projectId/appId', issues: [] };
+        return { available: false, setupStep: 'config', setupHint: 'Add google-services.json to workspace or set firebase.projectId/appId', issues: [] };
     }
     const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
     const issues = await queryTopIssues(config, token, errorTokens).catch(() => []);
