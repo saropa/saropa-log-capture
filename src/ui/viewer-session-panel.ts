@@ -142,7 +142,7 @@ export function getSessionPanelScript(): string {
         var parts = [];
         if (s.adapter) parts.push(s.adapter);
         var timeLabel = sessionDisplayOptions.showDayHeadings ? (s.formattedTime || s.formattedMtime) : s.formattedMtime;
-        if (timeLabel) parts.push(timeLabel);
+        if (timeLabel) parts.push(s.relativeTime ? timeLabel + ' ' + s.relativeTime : timeLabel);
         if (s.lineCount > 0) parts.push(s.lineCount.toLocaleString('en-US') + ' lines');
         if (s.durationMs > 0) parts.push(formatSessionDuration(s.durationMs));
         if (s.size) parts.push(formatSessionSize(s.size));
