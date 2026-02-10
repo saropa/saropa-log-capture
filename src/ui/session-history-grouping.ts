@@ -153,12 +153,3 @@ export function formatSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Check if a tree item has any correlation tag in the filter set. */
-export function matchesTagFilter(item: TreeItem, filter: ReadonlySet<string>): boolean {
-    if (isSplitGroup(item)) { return item.parts.some(p => hasCorrelationTag(p, filter)); }
-    return hasCorrelationTag(item, filter);
-}
-
-function hasCorrelationTag(meta: SessionMetadata, filter: ReadonlySet<string>): boolean {
-    return meta.correlationTags?.some(t => filter.has(t)) ?? false;
-}
