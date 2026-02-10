@@ -180,6 +180,7 @@ export class SessionManagerImpl implements SessionManager {
         await finalizeSession({
             logSession, outputChannel: this.outputChannel,
             autoTagger: this.autoTagger, metadataStore: this.metadataStore,
+            debugAdapterType: session.type,
         }, stats);
 
         if (this.ownerSessionIds.size === 0) { this.statusBar.hide(); }
