@@ -20,6 +20,10 @@ export interface SessionMeta {
     /** Error fingerprints extracted from log content. */
     fingerprints?: FingerprintEntry[];
     annotations?: Annotation[];
+    /** Cached severity line counts from content scanning. */
+    errorCount?: number;
+    warningCount?: number;
+    perfCount?: number;
     /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
 }
