@@ -54,7 +54,9 @@ interface FirebaseConfig { readonly projectId: string; readonly appId: string; }
 
 let gcloudAvailable: boolean | undefined;
 let cachedToken: { token: string; expires: number } | undefined;
+let cachedIssueRows: { rows: Record<string, unknown>[]; expires: number } | undefined;
 const tokenTtl = 30 * 60_000;
+const issueListTtl = 5 * 60_000;
 const apiTimeout = 10_000;
 const apiBase = 'https://firebasecrashlytics.googleapis.com/v1beta1';
 
@@ -98,6 +100,9 @@ async function scanGoogleServicesJson(fallbackProject: string, fallbackApp: stri
         return projectId && appId ? { projectId, appId } : undefined;
     } catch { return undefined; }
 }
+
+/** Clear the cached issue list so the next query hits the API. */
+export function clearIssueListCache(): void { cachedIssueRows = undefined; }
 
 /** Query Firebase Crashlytics for issues matching error tokens. */
 export async function getFirebaseContext(errorTokens: readonly string[]): Promise<FirebaseContext> {
@@ -150,6 +155,9 @@ export async function detectAppVersion(): Promise<string | undefined> {
 }
 
 async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
+    if (cachedIssueRows && Date.now() < cachedIssueRows.expires) {
+        return matchIssues(cachedIssueRows.rows, errorTokens);
+    }
     const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/reports/topIssues:query`;
     const filters: Record<string, unknown> = { issueErrorTypes: ['FATAL', 'NON_FATAL'] };
     const ver = await detectAppVersion();
@@ -161,7 +169,8 @@ async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens
     });
     const data = await fetchJson(url, token, body);
     if (!data?.rows || !Array.isArray(data.rows)) { return []; }
-    return matchIssues(data.rows as Record<string, unknown>[], errorTokens);
+    cachedIssueRows = { rows: data.rows as Record<string, unknown>[], expires: Date.now() + issueListTtl };
+    return matchIssues(cachedIssueRows.rows, errorTokens);
 }
 
 function parseIssueState(raw: unknown): CrashlyticsIssue['state'] {
