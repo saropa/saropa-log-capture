@@ -25,7 +25,7 @@ export function getSearchStyles(): string {
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: left 0.3s ease;
+    transition: left 0.15s ease;
     z-index: 260;
     display: flex;
     flex-direction: column;

@@ -22,7 +22,7 @@ export function getSessionPanelStyles(): string {
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: left 0.3s ease;
+    transition: left 0.15s ease;
     z-index: 240;
     display: flex;
     flex-direction: column;
@@ -187,34 +187,6 @@ export function getSessionPanelStyles(): string {
     position: sticky;
     top: 0;
     z-index: 1;
-}
-
-/* --- Trashed items (icon is already codicon-trash; section heading separates them) --- */
-.session-item-trashed .session-item-icon .codicon { color: var(--vscode-descriptionForeground); }
-
-/* --- Trash section heading --- */
-.session-trash-heading {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 12px 4px; font-size: 11px; font-weight: 600;
-    color: var(--vscode-descriptionForeground);
-    border-bottom: 1px solid var(--vscode-panel-border);
-    border-top: 2px solid var(--vscode-panel-border);
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    position: sticky; top: 0; z-index: 1;
-}
-.session-trash-heading-label { display: flex; align-items: center; gap: 4px; }
-.session-trash-badge { font-size: 10px; opacity: 0.8; }
-.session-trash-empty-btn {
-    background: none; border: none; cursor: pointer; font-size: 11px;
-    color: var(--vscode-errorForeground, #f44); padding: 0 4px;
-}
-.session-trash-empty-btn:hover { text-decoration: underline; }
-
-/* --- Trash toggle badge --- */
-.session-toggle-badge {
-    font-size: 9px; min-width: 14px; text-align: center; border-radius: 7px;
-    background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
-    padding: 0 3px; line-height: 14px;
 }
 
 /* --- Session context menu --- */
