@@ -70,7 +70,7 @@ function containsWorkspacePath(text: string, workspacePath: string): boolean {
 }
 
 /** Returns true if the frame appears to reference a path within the workspace. */
-function isUnderWorkspace(frameLine: string, workspacePath: string): boolean {
+function isUnderWorkspace(frameLine: string, _workspacePath: string): boolean {
     // containsWorkspacePath is already checked by the caller;
     // here we only handle relative paths (assumed to be app code).
     if (!hasAbsolutePath(frameLine)) {

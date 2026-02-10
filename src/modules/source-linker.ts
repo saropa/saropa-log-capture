@@ -52,6 +52,7 @@ export function linkifyHtml(html: string): string {
 /** Apply file:line regex to a single text segment (no HTML tags). */
 function linkifyTextSegment(text: string): string {
     fileLineRegex.lastIndex = 0;
+    // eslint-disable-next-line max-params -- regex capture groups
     return text.replace(fileLineRegex, (match, filePath: string, _ext: string, line: string, col: string | undefined) => {
         if (isUrlPort(match, text)) {
             return match;
@@ -104,6 +105,15 @@ export function extractSourceReference(text: string): SourceReference | undefine
         line: parseInt(match[3], 10),
         col: match[4] ? parseInt(match[4], 10) : undefined,
     };
+}
+
+/** Extract a package hint from a stack frame for workspace file disambiguation. */
+export function extractPackageHint(frameText: string): string | undefined {
+    const dart = frameText.match(/package:([^/]+)/);
+    if (dart) { return dart[1]; }
+    const java = frameText.match(/\b((?:[a-z]\w*\.){2,})[A-Z]/);
+    if (java) { return java[1].replace(/\.$/, ''); }
+    return undefined;
 }
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;

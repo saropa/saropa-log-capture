@@ -38,10 +38,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Improved
 - **Crashlytics crash detail loading feedback:** Clicking an issue card in the Crashlytics sidebar now shows a pulsing "Loading crash details..." message while the API call is in flight, replacing the previous silent wait.
+- **Parallelized file operations:** File retention enforcement, documentation token scanning, referenced file analysis, and session shutdown now use `Promise.all` instead of sequential loops. File retention startup with 100+ files improves from ~3s to ~200ms.
+- **Split failure logging:** Log file split errors are now logged to the extension host console instead of silently swallowed.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
 - **ESLint `max-lines` excludes blank lines and comments:** The 300-line file limit now uses `skipBlankLines: true` and `skipComments: true`, so readability is never sacrificed for the metric.
+- **ESLint config hardened:** Enforces `max-params: 4`, `max-depth: 3`, `no-explicit-any`, `no-unused-vars` (with `_` prefix pattern), `prefer-const`, and correctness rules. Functions exceeding 4 parameters refactored to use option objects (`FileLinkOptions`, `ViewerHtmlOptions`, `ShellOptions`, `BookmarkInput`, `EditLineInput`, `SessionActionContext`).
 
 ### Fixed
 - **Copy includes UI chrome:** Ctrl+C near the bottom of the log viewer included footer, search panel, and session history text. Native text selection is now confined to the viewport via CSS `user-select`, and native click-drag selections are routed through the VS Code clipboard API.

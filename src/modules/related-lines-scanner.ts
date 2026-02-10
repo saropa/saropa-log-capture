@@ -24,7 +24,7 @@ const maxScanLines = 5000;
 const maxRelatedLines = 200;
 
 /** Scan a log file for all lines sharing the given source tag. */
-export async function scanRelatedLines(fileUri: vscode.Uri, sourceTag: string, analyzedLineIndex: number): Promise<RelatedLinesResult> {
+export async function scanRelatedLines(fileUri: vscode.Uri, sourceTag: string, _analyzedLineIndex: number): Promise<RelatedLinesResult> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const allLines = Buffer.from(raw).toString('utf-8').split('\n');
     const scanLimit = Math.min(allLines.length, maxScanLines);

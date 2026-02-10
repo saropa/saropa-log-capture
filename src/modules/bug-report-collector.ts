@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from './ansi';
-import { extractSourceReference, type SourceReference } from './source-linker';
+import { extractSourceReference, extractPackageHint, type SourceReference } from './source-linker';
 import { normalizeLine, hashFingerprint } from './error-fingerprint';
 import { isFrameworkFrame, isStackFrameLine } from './stack-parser';
 import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
@@ -168,7 +168,7 @@ function extractStackTrace(lines: readonly string[], errorIdx: number): StackFra
 
 type WsResult = [SourceCodePreview | undefined, BlameLine | undefined, GitCommit[], CrossSessionMatch | undefined, GitCommit[], ImportResults | undefined];
 
-async function resolveSourceUri(path: string): Promise<vscode.Uri | undefined> {
+async function resolveSourceUri(path: string, hint?: string): Promise<vscode.Uri | undefined> {
     if (/^[A-Za-z]:[\\/]|^\//.test(path)) {
         try {
             const uri = vscode.Uri.file(path);
@@ -177,7 +177,7 @@ async function resolveSourceUri(path: string): Promise<vscode.Uri | undefined> {
         } catch { /* fall through to workspace search */ }
     }
     const name = path.split(/[\\/]/).pop();
-    return name ? findInWorkspace(name) : undefined;
+    return name ? findInWorkspace(name, hint) : undefined;
 }
 
 async function collectWorkspaceData(
@@ -205,24 +205,24 @@ async function collectWorkspaceData(
 async function collectFileAnalyses(
     frames: readonly StackFrame[], primaryFile?: string,
 ): Promise<FileAnalysis[]> {
-    const fileMap = new Map<string, number[]>();
+    const fileMap = new Map<string, { lines: number[]; hint?: string }>();
     for (const f of frames) {
         if (!f.isApp || !f.sourceRef) { continue; }
         const key = f.sourceRef.filePath;
         if (primaryFile && key === primaryFile) { continue; }
-        const arr = fileMap.get(key) ?? [];
-        arr.push(f.sourceRef.line);
-        fileMap.set(key, arr);
+        const entry = fileMap.get(key) ?? { lines: [], hint: extractPackageHint(f.text) };
+        entry.lines.push(f.sourceRef.line);
+        fileMap.set(key, entry);
     }
     const entries = [...fileMap.entries()].slice(0, maxAnalyzedFiles);
-    const results = await Promise.all(entries.map(([p, lines]) => analyzeOneFile(p, lines)));
+    const results = await Promise.all(entries.map(([p, v]) => analyzeOneFile(p, v.lines, v.hint)));
     return results.filter((r): r is FileAnalysis => r !== undefined);
 }
 
 async function analyzeOneFile(
-    filePath: string, frameLines: readonly number[],
+    filePath: string, frameLines: readonly number[], hint?: string,
 ): Promise<FileAnalysis | undefined> {
-    const uri = await resolveSourceUri(filePath);
+    const uri = await resolveSourceUri(filePath, hint);
     if (!uri) { return undefined; }
     const [blame, commits] = await Promise.all([
         getGitBlame(uri, frameLines[0]).catch(() => undefined),

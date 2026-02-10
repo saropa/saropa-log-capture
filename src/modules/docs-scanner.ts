@@ -32,9 +32,11 @@ export async function scanDocsForTokens(
     const matches: DocMatch[] = [];
     const lowerTokens = tokens.map(t => t.toLowerCase());
 
-    for (const uri of mdUris.slice(0, maxFiles)) {
+    const allFileMatches = await Promise.all(
+        mdUris.slice(0, maxFiles).map(uri => searchFileForTokens(uri, lowerTokens, tokens)),
+    );
+    for (const fileMatches of allFileMatches) {
         if (matches.length >= maxMatchesTotal) { break; }
-        const fileMatches = await searchFileForTokens(uri, lowerTokens, tokens);
         matches.push(...fileMatches.slice(0, maxMatchesPerFile));
     }
     return { matches: matches.slice(0, maxMatchesTotal), filesScanned: Math.min(mdUris.length, maxFiles) };
@@ -67,12 +69,8 @@ async function searchFileForTokens(uri: vscode.Uri, lowerTokens: string[], origi
         for (let i = 0; i < doc.lineCount && matches.length < maxMatchesPerFile; i++) {
             const lineText = doc.lineAt(i).text;
             const lower = lineText.toLowerCase();
-            for (let t = 0; t < lowerTokens.length; t++) {
-                if (lower.includes(lowerTokens[t])) {
-                    matches.push({ uri, filename, lineNumber: i + 1, lineText, matchedToken: originalTokens[t] });
-                    break;
-                }
-            }
+            const idx = lowerTokens.findIndex(t => lower.includes(t));
+            if (idx >= 0) { matches.push({ uri, filename, lineNumber: i + 1, lineText, matchedToken: originalTokens[idx] }); }
         }
         return matches;
     } catch { return []; }

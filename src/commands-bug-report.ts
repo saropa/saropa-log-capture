@@ -1,7 +1,6 @@
 /** Command registration for bug report generation. */
 
 import * as vscode from 'vscode';
-import { showBugReport } from './ui/bug-report-panel';
 
 /** Register bug report commands. */
 export function bugReportCommands(): vscode.Disposable[] {
