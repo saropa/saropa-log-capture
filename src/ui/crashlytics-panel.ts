@@ -86,7 +86,7 @@ function buildPanelHtml(ctx: FirebaseContext): string {
 <div class="toolbar"><span class="title">Crashlytics ${refreshNote}</span><button class="refresh-btn" onclick="postMsg('refresh')">Refresh</button></div>
 ${issueHtml}${consoleLink}
 <script nonce="${nonce}">const vscodeApi=acquireVsCodeApi();function postMsg(t,v,id){vscodeApi.postMessage({type:t,url:v,issueId:id})}
-document.addEventListener('click',e=>{const btn=e.target.closest('.fb-action-btn');if(btn){e.stopPropagation();vscodeApi.postMessage({type:btn.dataset.action,issueId:btn.dataset.issue});return}const con=e.target.closest('.fb-console');if(con&&con.dataset.url){postMsg('openFirebaseUrl',con.dataset.url);return}const item=e.target.closest('.fb-item');if(item){const id=item.dataset.issueId;const det=item.querySelector('.crash-detail');if(det&&!det.innerHTML){vscodeApi.postMessage({type:'fetchCrashDetail',issueId:id})}}});
+document.addEventListener('click',e=>{const btn=e.target.closest('.fb-action-btn');if(btn){e.stopPropagation();vscodeApi.postMessage({type:btn.dataset.action,issueId:btn.dataset.issue});return}const con=e.target.closest('.fb-console');if(con&&con.dataset.url){postMsg('openFirebaseUrl',con.dataset.url);return}const item=e.target.closest('.fb-item');if(item){const id=item.dataset.issueId;const det=item.querySelector('.crash-detail');if(det&&!det.innerHTML){det.innerHTML='<p class="fb-loading">Loading crash details\u2026</p>';vscodeApi.postMessage({type:'fetchCrashDetail',issueId:id})}}});
 window.addEventListener('message',e=>{const m=e.data;if(m.type==='crashDetailReady'){const el=document.getElementById('crash-detail-'+m.issueId);if(el)el.innerHTML=m.html}});</script></body></html>`;
 }
 
@@ -122,6 +122,8 @@ function getPanelStyles(): string {
 .fb-empty{opacity:0.7;font-style:italic}
 .crash-detail{margin-top:4px}
 .no-matches{opacity:0.6;font-style:italic;padding:4px 0}
+.fb-loading{opacity:0.6;font-style:italic;padding:4px 0;animation:fbpulse 1.5s ease-in-out infinite}
+@keyframes fbpulse{0%,100%{opacity:0.6}50%{opacity:0.2}}
 .fb-actions{display:flex;gap:4px;margin-top:4px}
 .fb-action-btn{background:var(--vscode-button-secondaryBackground);color:var(--vscode-button-secondaryForeground);border:none;padding:2px 8px;cursor:pointer;border-radius:2px;font-size:11px}
 .fb-action-btn:hover{background:var(--vscode-button-secondaryHoverBackground)}`;
