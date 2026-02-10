@@ -17,6 +17,7 @@ import { scanForCorrelationTags } from './correlation-scanner';
 import { scanForFingerprints } from './error-fingerprint';
 import { scanAnrRisk } from './anr-risk-scorer';
 import { detectAppVersion } from './app-version';
+import { detectTargetDevice } from './device-detector';
 import { countSeverities, extractBody } from '../ui/session-severity-counts';
 import {
     generateSummary, showSummaryNotification, SessionStats,
@@ -105,6 +106,7 @@ export interface FinalizeSessionParams {
     readonly outputChannel: vscode.OutputChannel;
     readonly autoTagger: AutoTagger | null;
     readonly metadataStore: SessionMetadataStore;
+    readonly debugAdapterType: string;
 }
 
 /** Parameters for building session statistics. */
@@ -186,6 +188,8 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to detect app version: ${err}`);
     });
 
+    storeSessionDeviceInfo(logSession.fileUri, params.debugAdapterType, metadataStore, outputChannel);
+
     // Refresh recurring errors sidebar after metadata scans complete.
     setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringErrors'), 3000);
 
@@ -216,5 +220,21 @@ function scanAnrRiskForSession(
         out.appendLine(`ANR risk: ${risk.level} (score ${risk.score}) — ${risk.signals.join(', ')}`);
     }).catch((err: unknown) => {
         out.appendLine(`Failed to scan ANR risk: ${err}`);
+    });
+}
+
+/** Store debug adapter type and detect target device from log file content. */
+function storeSessionDeviceInfo(
+    fileUri: vscode.Uri, adapterType: string,
+    store: SessionMetadataStore, out: vscode.OutputChannel,
+): void {
+    store.loadMetadata(fileUri).then(async (meta) => {
+        meta.debugAdapterType = adapterType;
+        const target = await detectTargetDevice(fileUri).catch(() => undefined);
+        if (target) { meta.debugTarget = target; }
+        await store.saveMetadata(fileUri, meta);
+        if (target) { out.appendLine(`Debug target: ${target}`); }
+    }).catch((err: unknown) => {
+        out.appendLine(`Failed to store device info: ${err}`);
     });
 }

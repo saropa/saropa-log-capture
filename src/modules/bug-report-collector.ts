@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { stripAnsi } from './ansi';
 import { extractSourceReference, extractPackageHint, type SourceReference } from './source-linker';
 import { normalizeLine, hashFingerprint } from './error-fingerprint';
-import { isFrameworkFrame, isStackFrameLine } from './stack-parser';
+import { isFrameworkFrame, isStackFrameLine, parseThreadHeader } from './stack-parser';
 import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from './workspace-analyzer';
 import { getGitBlame, type BlameLine } from './git-blame';
 import { aggregateInsights } from './cross-session-aggregator';
@@ -27,6 +27,7 @@ export interface StackFrame {
     readonly text: string;
     readonly isApp: boolean;
     readonly sourceRef?: SourceReference;
+    readonly threadName?: string;
 }
 
 /** Git analysis data for a source file referenced in the stack trace. */
@@ -156,12 +157,18 @@ function extractLogContext(lines: readonly string[], errorIdx: number): string[]
 function extractStackTrace(lines: readonly string[], errorIdx: number): StackFrame[] {
     const frames: StackFrame[] = [];
     const wsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    let currentThread: string | undefined;
     for (let i = errorIdx + 1; i < lines.length && frames.length < maxStackFrames; i++) {
         const line = lines[i];
-        if (!isStackFrameLine(line)) { break; }
-        const text = stripAnsi(line).trimEnd();
-        const sourceRef = extractSourceReference(text);
-        frames.push({ text, isApp: !isFrameworkFrame(text, wsPath), sourceRef });
+        if (isStackFrameLine(line)) {
+            const text = stripAnsi(line).trimEnd();
+            const sourceRef = extractSourceReference(text);
+            frames.push({ text, isApp: !isFrameworkFrame(text, wsPath), sourceRef, threadName: currentThread });
+        } else {
+            const header = parseThreadHeader(stripAnsi(line));
+            if (header) { currentThread = header.name; continue; }
+            break;
+        }
     }
     return frames;
 }

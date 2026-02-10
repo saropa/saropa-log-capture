@@ -67,4 +67,36 @@ suite('Thread Dump Grouping', () => {
         assert.ok(pending[0].isMarker, 'first should be summary');
         assert.ok(pending[3].isMarker, 'last should be the original marker');
     });
+
+    test('should detect ANR pattern: main Runnable + worker Waiting', () => {
+        const state = createThreadDumpState();
+        const pending: PendingLine[] = [];
+        processLineForThreadDump(state, makeLine('t1'), '"main" tid=1 Runnable', pending);
+        processLineForThreadDump(state, makeLine('f1'), '    at com.example.Main.run(Main.java:10)', pending);
+        processLineForThreadDump(state, makeLine('t2'), '"AsyncTask #1" tid=12 Waiting', pending);
+        processLineForThreadDump(state, makeLine('f2'), '    at java.lang.Object.wait(Native Method)', pending);
+        flushThreadDump(state, pending);
+        assert.ok(pending[0].text.includes('ANR pattern detected'), 'summary should flag ANR');
+        assert.ok(pending[3].text.includes('\u26a0'), 'blocking thread should have warning badge');
+    });
+
+    test('should not flag ANR when all threads are Waiting', () => {
+        const state = createThreadDumpState();
+        const pending: PendingLine[] = [];
+        processLineForThreadDump(state, makeLine('t1'), '"main" tid=1 Waiting', pending);
+        processLineForThreadDump(state, makeLine('t2'), '"worker" tid=2 Waiting', pending);
+        flushThreadDump(state, pending);
+        assert.ok(!pending[0].text.includes('ANR'), 'no ANR when main is not Runnable');
+    });
+
+    test('should not flag ANR for single thread dump', () => {
+        const state = createThreadDumpState();
+        const pending: PendingLine[] = [];
+        processLineForThreadDump(state, makeLine('t1'), '"main" tid=1 Runnable', pending);
+        processLineForThreadDump(state, makeLine('f1'), '    at com.example.Main.run(Main.java:10)', pending);
+        flushThreadDump(state, pending);
+        // Single thread — no summary, no ANR analysis
+        assert.strictEqual(pending.length, 2);
+        assert.ok(!pending[0].isMarker);
+    });
 });
