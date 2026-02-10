@@ -1,38 +1,40 @@
 # Correlation Tags
 
-Correlation tags are auto-extracted labels that help you find related log sessions. They identify **source files** and **error classes** that appear in your logs.
+Correlation tags are auto-extracted labels that help you find related log sessions. They identify **source files** and **error classes** mentioned in your logs.
+
+> Correlation tags are one of three tag types. Sessions can also have **manual tags** (user-applied) and **auto-tags** (rule-based). This document covers correlation tags only.
 
 ## What they look like
 
 Tags follow a `type:value` pattern:
 
-- `file:handler.dart` — the source file `handler.dart` appears in stack traces or references
-- `error:SocketException` — the error class `SocketException` was thrown
+- `file:handler.dart` — the filename `handler.dart` was referenced in a stack trace
+- `error:SocketException` — the exception class `SocketException` was thrown
 
-A session can have up to 20 tags, ranked by how often each entity appears.
+A session can have up to 20 tags. The top 20 are selected by frequency (most-mentioned first), then displayed in alphabetical order.
 
 ## How they're generated
 
-When a log session is saved, the extension scans up to 5,000 lines for recognizable tokens using `correlation-scanner.ts`. It looks for:
+When a debug session ends, the extension automatically scans up to 5,000 lines of the log file for recognizable tokens. It looks for:
 
-1. **Source file references** — filenames in stack traces, import paths, `at file:line` patterns
+1. **Source file references** — filenames referenced in stack traces, import paths, and `at file:line` patterns
 2. **Error class names** — exception types like `FormatException`, `HttpException`, `NullPointerException`
 
 Tags are stored in a `.meta.json` sidecar file next to each log file and persist across VS Code restarts.
 
 ## Filtering sessions by tag
 
-1. Open the **Project Logs** panel (click the folder icon in the icon bar)
-2. Click the **Tags** toggle button in the toolbar
-3. A chip bar appears showing all correlation tags across your sessions, with a count of how many sessions contain each tag
-4. Click a chip to deselect it — sessions without any selected tags are hidden
-5. Use **All** / **None** buttons to quickly toggle all chips
+1. Open the **Project Logs** panel
+2. Click the **Tags** button (filter icon) in the toolbar
+3. A chip bar appears showing correlation tags across your sessions, with a count of how many sessions contain each tag (up to 20 chips; additional tags show a "+N more" indicator)
+4. Click a chip to deselect it — a session stays visible if it matches **any** of the remaining selected tags
+5. Use **All** / **None** buttons to quickly select or deselect all chips
 
 This is useful when you have many sessions and want to find the ones that reference a specific file or error type.
 
 ## Rescanning tags
 
-If a session was saved before correlation scanning was added, or if you want to refresh the tags:
+Tags are generated automatically when a session ends. For older sessions saved before this feature existed, or to refresh tags after a scanner update:
 
 1. Right-click a session in the Project Logs panel
 2. Select **Rescan Tags**

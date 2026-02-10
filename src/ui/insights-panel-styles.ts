@@ -108,6 +108,33 @@ details[open] > .section-header::before { transform: rotate(90deg); }
 .cat-anr { background: #f57c00; color: #fff; }
 .cat-oom { background: #7b1fa2; color: #fff; }
 .cat-native { background: #757575; color: #fff; }
+.insights-search {
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    border-radius: 3px; padding: 3px 6px;
+    font-size: 11px; width: 120px;
+}
+.insights-search::placeholder { color: var(--vscode-input-placeholderForeground); }
+.insights-search:focus { outline: 1px solid var(--vscode-focusBorder); }
+.cat-chip-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 4px 0 6px 0;
+}
+.cat-chip-label { font-size: 11px; color: var(--vscode-descriptionForeground); margin-right: 2px; }
+.cat-chip {
+    border: none; cursor: pointer; border-radius: 3px;
+    padding: 1px 2px; opacity: 0.35; transition: opacity 0.15s;
+    background: transparent;
+}
+.cat-chip.active { opacity: 1; }
+.cat-chip-action {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none; padding: 1px 6px; cursor: pointer;
+    border-radius: 2px; font-size: 10px; margin-left: 2px;
+}
+.cat-chip-action:hover { background: var(--vscode-button-secondaryHoverBackground); }
 .env-group { margin: 4px 0 8px 0; }
 .env-group-label { font-weight: 600; font-size: 12px; margin-bottom: 2px; color: var(--vscode-foreground); }
 .env-stat { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 12px; }
