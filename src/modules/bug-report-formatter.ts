@@ -109,7 +109,7 @@ function formatLinkedFrames(frames: readonly StackFrame[], ctx: ReportCtx): stri
         const ref = f.sourceRef!;
         const display = `${ref.filePath}:${ref.line}${ref.col ? ':' + ref.col : ''}`;
         const gitCtx = makeGitCtx(ctx, ref.filePath);
-        return `- ${buildMarkdownFileLink(display, undefined, ref.line, ref.col, gitCtx)}`;
+        return `- ${buildMarkdownFileLink(display, undefined, { line: ref.line, col: ref.col, gitContext: gitCtx })}`;
     });
     return `**Linked app frames:**\n${items.join('\n')}`;
 }
@@ -191,7 +191,7 @@ function formatAffectedFiles(analyses: readonly FileAnalysis[], ctx: ReportCtx):
 function formatOneFileAnalysis(fa: FileAnalysis, ctx: ReportCtx): string {
     const name = shortName(fa.filePath);
     const gitCtx = makeGitCtx(ctx, fa.filePath);
-    const heading = buildMarkdownFileLink(name, fa.uri.fsPath, fa.frameLines[0], undefined, gitCtx);
+    const heading = buildMarkdownFileLink(name, fa.uri.fsPath, { line: fa.frameLines[0], gitContext: gitCtx });
     const lines = fa.frameLines.map(l => `L${l}`).join(', ');
     let md = `### ${heading}\n\n**Stack trace lines:** ${lines}`;
     if (fa.blame) {

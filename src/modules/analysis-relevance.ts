@@ -94,7 +94,7 @@ function scoreLineHistory(data: SectionData, findings: SectionFinding[], levels:
     }
 }
 
-function scoreCrossSession(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+function scoreCrossSession(data: SectionData, findings: SectionFinding[], _levels: Map<string, RelevanceLevel>): void {
     if (!data.crossSession) { return; }
     if (data.crossSession.sessionCount >= 2) {
         findings.push({ icon: '🟡', text: `Seen ${data.crossSession.totalOccurrences} times across ${data.crossSession.sessionCount} sessions`, level: 'high', sectionId: 'tokens' });

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { findClosestByTimestamp, DiffLine, LogLine } from '../modules/diff-engine';
+import { findClosestByTimestamp, DiffLine } from '../modules/diff-engine';
 
 suite('DiffEngine', () => {
 

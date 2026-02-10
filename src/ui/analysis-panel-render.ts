@@ -19,8 +19,18 @@ const typeIcons: Record<string, string> = {
     'url-path': '🔗', 'quoted-string': '💬', 'class-method': '🔧',
 };
 
+interface ShellOptions {
+    readonly nonce: string;
+    readonly lineText: string;
+    readonly tokens: readonly AnalysisToken[];
+    readonly hasSource: boolean;
+    readonly frames?: readonly StackFrameInfo[];
+    readonly hasTag?: boolean;
+}
+
 /** Build the initial progressive-loading HTML shell with spinner placeholders. */
-export function buildProgressiveShell(nonce: string, lineText: string, tokens: AnalysisToken[], hasSource: boolean, frames?: readonly StackFrameInfo[], hasTag = false): string {
+export function buildProgressiveShell(opts: ShellOptions): string {
+    const { nonce, lineText, tokens, hasSource, frames, hasTag = false } = opts;
     const tokenList = tokens.map(t => `<span class="token">${typeIcons[t.type] ?? '🔍'} ${escapeHtml(t.label)}</span>`).join('');
     let slots = '';
     if (frames && frames.length > 0) { slots += renderFrameSection(frames); }

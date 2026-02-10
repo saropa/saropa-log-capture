@@ -22,6 +22,15 @@ export interface FileBookmarks {
   readonly bookmarks: Bookmark[];
 }
 
+/** Input for adding a bookmark. */
+export interface BookmarkInput {
+  readonly fileUri: string;
+  readonly filename: string;
+  readonly lineIndex: number;
+  readonly lineText: string;
+  readonly note: string;
+}
+
 /** CRUD operations for bookmarks, persisted via workspaceState. */
 export class BookmarkStore implements vscode.Disposable {
   private readonly _onDidChange = new vscode.EventEmitter<void>();
@@ -32,7 +41,8 @@ export class BookmarkStore implements vscode.Disposable {
   dispose(): void { this._onDidChange.dispose(); }
 
   /** Add a bookmark for a line in the given file. */
-  add(fileUri: string, filename: string, lineIndex: number, lineText: string, note: string): void {
+  add(input: BookmarkInput): void {
+    const { fileUri, filename, lineIndex, lineText, note } = input;
     const map = this.load();
     const entry = map[fileUri] ?? { fileUri, filename, bookmarks: [] as Bookmark[] };
     const trimmed = lineText.length > MAX_LINE_TEXT ? lineText.slice(0, MAX_LINE_TEXT) + '...' : lineText;

@@ -26,18 +26,16 @@ export async function enforceFileRetention(
     }
 
     // Only count non-trashed files toward the limit.
-    const fileStats: { name: string; mtime: number }[] = [];
-    for (const name of logFiles) {
+    const results = await Promise.all(logFiles.map(async (name) => {
         try {
             const uri = vscode.Uri.joinPath(logDirUri, name);
             const meta = await metaStore.loadMetadata(uri);
-            if (meta.trashed) { continue; }
+            if (meta.trashed) { return undefined; }
             const stat = await vscode.workspace.fs.stat(uri);
-            fileStats.push({ name, mtime: stat.mtime });
-        } catch {
-            // Skip files we can't stat.
-        }
-    }
+            return { name, mtime: stat.mtime };
+        } catch { return undefined; }
+    }));
+    const fileStats = results.filter((r): r is { name: string; mtime: number } => r !== undefined);
 
     // Sort oldest first.
     fileStats.sort((a, b) => a.mtime - b.mtime);

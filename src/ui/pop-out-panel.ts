@@ -164,7 +164,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const wv = this.panel.webview;
     const audioWebviewUri = wv.asWebviewUri(audioUri).toString();
     const codiconCssUri = wv.asWebviewUri(vscode.Uri.joinPath(codiconsUri, 'codicon.css')).toString();
-    wv.html = buildViewerHtml(getNonce(), audioWebviewUri, this.version, wv.cspSource, codiconCssUri);
+    wv.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource: wv.cspSource, codiconCssUri });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
@@ -204,9 +204,10 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
           .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
         break;
       case "editLine":
-        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, Number(msg.lineIndex ?? 0),
-          String(msg.newText ?? ""), Number(msg.timestamp ?? 0), () => Promise.resolve(),
-        ).catch((err: Error) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
+        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, {
+          lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
+          timestamp: Number(msg.timestamp ?? 0), loadFromFile: () => Promise.resolve(),
+        }).catch((err: Error) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
