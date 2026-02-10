@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import { SessionMetadata, formatSize } from './session-history-grouping';
-import { formatMtime, formatMtimeTimeOnly } from './session-display';
+import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from './session-display';
 import { countSeverities, extractBody } from './session-severity-counts';
 
 /** Regex to extract line count from the SESSION END footer. */
@@ -114,7 +114,9 @@ export function formatCount(n: number): string {
 export function buildDescription(item: SessionMetadata, timeOnly: boolean, isActive: boolean): string {
     const parts: string[] = [];
     if (item.adapter) { parts.push(item.adapter); }
-    parts.push(timeOnly ? formatMtimeTimeOnly(item.mtime) : formatMtime(item.mtime));
+    const timeStr = timeOnly ? formatMtimeTimeOnly(item.mtime) : formatMtime(item.mtime);
+    const rel = formatRelativeTime(item.mtime);
+    parts.push(rel ? `${timeStr} ${rel}` : timeStr);
     if (item.lineCount !== undefined) {
         const countStr = `${formatCount(item.lineCount)} lines`;
         parts.push(isActive ? `${countStr} ●` : countStr);
