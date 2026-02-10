@@ -19,6 +19,14 @@ body {
 .header-left { display: flex; flex-direction: column; gap: 2px; }
 .title { font-size: 14px; font-weight: 600; }
 .summary { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.header-right { display: flex; align-items: center; gap: 6px; }
+.time-range-select {
+    background: var(--vscode-dropdown-background);
+    color: var(--vscode-dropdown-foreground);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 3px; padding: 3px 6px;
+    font-size: 11px; cursor: pointer;
+}
 .refresh-btn {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
