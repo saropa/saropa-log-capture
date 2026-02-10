@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.0] - 2026-02-10
 
 <!-- cspell:ignore SIGSEGV -->
 ### Added
