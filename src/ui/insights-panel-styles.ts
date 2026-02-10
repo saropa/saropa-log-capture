@@ -91,5 +91,14 @@ details[open] > .section-header::before { transform: rotate(90deg); }
     animation: pulse 1.5s ease-in-out infinite;
 }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.error-closed { opacity: 0.5; }
+.error-actions { display: flex; gap: 4px; margin-top: 3px; }
+.err-action {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none; padding: 1px 8px; cursor: pointer;
+    border-radius: 2px; font-size: 11px;
+}
+.err-action:hover { background: var(--vscode-button-secondaryHoverBackground); }
 `;
 }
