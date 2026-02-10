@@ -36,7 +36,7 @@ The extension already has more filtering power than any native panel:
 | Filter presets | None | Save/load named presets |
 | Filter status badge | None | Active filter count indicator |
 
-All filters are accessed via the right-edge icon bar (slide-out panels) and footer flyup menu.
+All filters are accessed via the icon bar (slide-out panels) and footer flyup menu.
 
 ## Options
 

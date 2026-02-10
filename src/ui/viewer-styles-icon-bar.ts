@@ -1,16 +1,17 @@
 /**
- * CSS styles for the right-side vertical icon bar.
+ * CSS styles for the vertical icon bar (configurable left/right).
  *
  * Mirrors VS Code's activity bar: narrow column, codicon icons,
- * active indicator bar on the left edge of the selected icon.
+ * active indicator bar on the inner edge of the selected icon.
+ * Default: left side. body[data-icon-bar="right"] overrides for right.
  */
 
-/** Return CSS for the icon bar and its icon buttons. */
+/** Return CSS for the icon bar, its buttons, and position overrides. */
 export function getIconBarStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Icon Bar — right-edge vertical activity bar
+   Icon Bar — vertical activity bar (default: left side)
    =================================================================== */
 :root {
     --icon-bar-width: 36px;
@@ -25,7 +26,7 @@ export function getIconBarStyles(): string {
     padding-top: 4px;
     gap: 2px;
     background: var(--vscode-activityBar-background, var(--vscode-sideBar-background, var(--vscode-panel-background)));
-    border-left: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
+    border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
 }
 
 .ib-icon {
@@ -52,11 +53,11 @@ export function getIconBarStyles(): string {
     color: var(--vscode-activityBar-foreground, var(--vscode-foreground));
 }
 
-/* Active indicator bar on the left edge, matching VS Code's activity bar. */
+/* Active indicator bar on inner edge (right when bar is on left). */
 .ib-icon.ib-active::before {
     content: '';
     position: absolute;
-    left: 0;
+    right: 0;
     top: 4px;
     bottom: 4px;
     width: 2px;
@@ -72,7 +73,7 @@ export function getIconBarStyles(): string {
     display: none;
     position: absolute;
     top: 2px;
-    right: 2px;
+    left: 2px;
     min-width: 14px;
     height: 14px;
     padding: 0 3px;
@@ -84,6 +85,47 @@ export function getIconBarStyles(): string {
     background: var(--vscode-activityBarBadge-background, #007acc);
     color: var(--vscode-activityBarBadge-foreground, #fff);
     pointer-events: none;
+}
+
+/* ===================================================================
+   Right-side overrides — icon bar
+   =================================================================== */
+body[data-icon-bar="right"] #icon-bar {
+    border-right: none;
+    border-left: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
+}
+body[data-icon-bar="right"] .ib-icon.ib-active::before {
+    right: auto; left: 0;
+}
+body[data-icon-bar="right"] .ib-badge {
+    left: auto; right: 2px;
+}
+
+/* ===================================================================
+   Right-side overrides — all slide-out panels
+   =================================================================== */
+body[data-icon-bar="right"] #search-bar,
+body[data-icon-bar="right"] .session-panel,
+body[data-icon-bar="right"] .options-panel,
+body[data-icon-bar="right"] .find-panel,
+body[data-icon-bar="right"] .bookmark-panel,
+body[data-icon-bar="right"] .info-panel {
+    left: auto; right: -100%;
+    border-right: none;
+    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: right 0.3s ease;
+}
+body[data-icon-bar="right"] #search-bar.visible,
+body[data-icon-bar="right"] .session-panel.visible,
+body[data-icon-bar="right"] .options-panel.visible,
+body[data-icon-bar="right"] .find-panel.visible,
+body[data-icon-bar="right"] .bookmark-panel.visible,
+body[data-icon-bar="right"] .info-panel.visible {
+    right: var(--icon-bar-width, 36px);
+}
+body[data-icon-bar="right"] .session-panel-resize {
+    left: -3px; right: auto;
 }
 `;
 }

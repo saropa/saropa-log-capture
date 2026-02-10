@@ -10,20 +10,19 @@ export function getSessionPanelStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Session Panel — slide-out from right (same pattern as search/options)
+   Session Panel — slide-out (same pattern as search/options)
    =================================================================== */
 .session-panel {
     position: fixed;
-    right: -100%;
+    left: -100%;
     top: 0;
     bottom: 0;
     width: 25%;
     min-width: 280px;
-    max-width: 400px;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.3s ease;
+    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
     z-index: 240;
     display: flex;
     flex-direction: column;
@@ -31,8 +30,18 @@ export function getSessionPanelStyles(): string {
     pointer-events: none;
 }
 
+.session-panel-resize {
+    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
+    cursor: col-resize; z-index: 1;
+}
+.session-panel-resize:hover,
+.session-panel-resize.dragging {
+    background: var(--vscode-focusBorder);
+    opacity: 0.5;
+}
+
 .session-panel.visible {
-    right: var(--icon-bar-width, 36px);
+    left: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 
@@ -164,6 +173,9 @@ export function getSessionPanelStyles(): string {
     white-space: nowrap;
 }
 
+/* --- Latest suffix --- */
+.session-latest { opacity: 0.5; font-style: italic; font-size: 11px; margin-left: 3px; }
+
 /* --- Day headings --- */
 .session-day-heading {
     padding: 6px 12px 4px;
@@ -171,7 +183,6 @@ export function getSessionPanelStyles(): string {
     font-weight: 600;
     color: var(--vscode-textLink-foreground, #3794ff);
     border-bottom: 1px solid var(--vscode-panel-border);
-    border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     position: sticky;
     top: 0;
@@ -215,6 +226,29 @@ export function getSessionPanelStyles(): string {
     padding: 4px 0; min-width: 180px; overflow-y: auto;
 }
 .session-context-menu.visible { display: block; }
+
+/* --- Severity dots --- */
+.sev-dots { font-size: 10px; color: var(--vscode-descriptionForeground); }
+.sev-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; margin-right: 2px; vertical-align: middle;
+}
+.sev-error { background: var(--vscode-charts-red, #f44336); }
+.sev-warning { background: var(--vscode-charts-yellow, #ffc107); }
+.sev-perf { background: var(--vscode-charts-blue, #2196f3); }
+.sev-bar { display: inline-flex; width: 40px; height: 6px; border-radius: 2px; overflow: hidden; vertical-align: middle; margin-left: 4px; background: var(--vscode-panel-border); }
+.sev-bar-e { background: var(--vscode-charts-red, #f44336); }
+.sev-bar-w { background: var(--vscode-charts-yellow, #ffc107); }
+.sev-bar-p { background: var(--vscode-charts-blue, #2196f3); }
+
+/* --- Session tag chips --- */
+.session-tags-section {
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.session-tag-chips {
+    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+}
 
 /* --- Empty / loading states --- */
 .session-empty,

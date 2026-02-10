@@ -59,6 +59,8 @@ export interface SaropaLogCaptureConfig {
   readonly includeSubfolders: boolean;
   /** Tree view refresh interval (seconds) during active recording. 0 = adaptive. */
   readonly treeRefreshInterval: number;
+  /** Which side of the log viewer to show the icon bar. */
+  readonly iconBarPosition: "left" | "right";
 }
 
 const SECTION = "saropaLogCapture";
@@ -177,6 +179,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     docsScanDirs: cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]),
     includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
     treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
+    iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
   };
 }
 
