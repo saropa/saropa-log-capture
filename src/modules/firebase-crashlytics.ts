@@ -122,17 +122,19 @@ function getTimeRange(): string {
     return cfg.get<string>('timeRange', 'LAST_7_DAYS');
 }
 
+let cachedVersion: { value: string | undefined; expires: number } | undefined;
 /** Auto-detect app version from pubspec.yaml or build.gradle in the workspace. */
 export async function detectAppVersion(): Promise<string | undefined> {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
     const manual = cfg.get<string>('versionFilter', '');
     if (manual) { return manual; }
+    if (cachedVersion && Date.now() < cachedVersion.expires) { return cachedVersion.value; }
     const pubspec = await vscode.workspace.findFiles('**/pubspec.yaml', '**/node_modules/**', 1);
     if (pubspec.length > 0) {
         try {
             const raw = Buffer.from(await vscode.workspace.fs.readFile(pubspec[0])).toString('utf-8');
             const match = raw.match(/^version:\s*(.+)/m);
-            if (match) { return match[1].trim().split('+')[0]; }
+            if (match) { const v = match[1].trim().split('+')[0]; cachedVersion = { value: v, expires: Date.now() + 5 * 60_000 }; return v; }
         } catch { /* ignore */ }
     }
     const gradle = await vscode.workspace.findFiles('**/app/build.gradle', '**/node_modules/**', 1);
@@ -140,9 +142,10 @@ export async function detectAppVersion(): Promise<string | undefined> {
         try {
             const raw = Buffer.from(await vscode.workspace.fs.readFile(gradle[0])).toString('utf-8');
             const match = raw.match(/versionName\s+["']([^"']+)["']/);
-            if (match) { return match[1]; }
+            if (match) { cachedVersion = { value: match[1], expires: Date.now() + 5 * 60_000 }; return match[1]; }
         } catch { /* ignore */ }
     }
+    cachedVersion = { value: undefined, expires: Date.now() + 5 * 60_000 };
     return undefined;
 }
 
@@ -170,15 +173,18 @@ function parseIssueState(raw: unknown): CrashlyticsIssue['state'] {
 }
 
 function matchIssues(rows: Record<string, unknown>[], errorTokens: readonly string[]): CrashlyticsIssue[] {
-    const lowerTokens = errorTokens.map(t => t.toLowerCase());
+    const lowerTokens = errorTokens.map(t => t.toLowerCase()).filter(t => t.length > 0);
     const results: CrashlyticsIssue[] = [];
     for (const row of rows) {
         const issue = row.issue as Record<string, unknown> | undefined;
         if (!issue) { continue; }
         const title = String(issue.title ?? '');
         const subtitle = String(issue.subtitle ?? '');
-        const combined = (title + ' ' + subtitle).toLowerCase();
-        if (!lowerTokens.some(t => combined.includes(t))) { continue; }
+        // When no tokens provided, include all issues (sidebar panel use case)
+        if (lowerTokens.length > 0) {
+            const combined = (title + ' ' + subtitle).toLowerCase();
+            if (!lowerTokens.some(t => combined.includes(t))) { continue; }
+        }
         const errorType = String(issue.type ?? issue.issueType ?? '').toUpperCase();
         results.push({
             id: String(issue.id ?? ''),

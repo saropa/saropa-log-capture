@@ -222,5 +222,11 @@ export function getDecorationStyles(): string {
     color: var(--vscode-debugConsole-errorForeground, #f48771);
     border: 1px solid var(--vscode-debugConsole-errorForeground, #f48771);
 }
+
+.error-badge-anr {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: var(--vscode-debugConsole-warningForeground, #ff9800);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
 `;
 }

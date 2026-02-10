@@ -80,12 +80,12 @@ function buildPanelHtml(ctx: FirebaseContext): string {
     }
     for (const issue of ctx.issues) { issueHtml += renderIssueCard(issue); }
     const consoleLink = ctx.consoleUrl
-        ? `<div class="fb-console" onclick="postMsg('openFirebaseUrl','${escapeHtml(ctx.consoleUrl)}')">Open Firebase Console</div>` : '';
+        ? `<div class="fb-console" data-url="${escapeHtml(ctx.consoleUrl)}">Open Firebase Console</div>` : '';
     return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getPanelStyles()}</style></head><body>
 <div class="toolbar"><span class="title">Crashlytics ${refreshNote}</span><button class="refresh-btn" onclick="postMsg('refresh')">Refresh</button></div>
 ${issueHtml}${consoleLink}
 <script nonce="${nonce}">const vscodeApi=acquireVsCodeApi();function postMsg(t,v,id){vscodeApi.postMessage({type:t,url:v,issueId:id})}
-document.querySelectorAll('.fb-item').forEach(el=>{el.addEventListener('click',()=>{const id=el.dataset.issueId;const detail=el.querySelector('.crash-detail');if(detail&&!detail.innerHTML){vscodeApi.postMessage({type:'fetchCrashDetail',issueId:id})}})});
+document.addEventListener('click',e=>{const btn=e.target.closest('.fb-action-btn');if(btn){e.stopPropagation();vscodeApi.postMessage({type:btn.dataset.action,issueId:btn.dataset.issue});return}const con=e.target.closest('.fb-console');if(con&&con.dataset.url){postMsg('openFirebaseUrl',con.dataset.url);return}const item=e.target.closest('.fb-item');if(item){const id=item.dataset.issueId;const det=item.querySelector('.crash-detail');if(det&&!det.innerHTML){vscodeApi.postMessage({type:'fetchCrashDetail',issueId:id})}}});
 window.addEventListener('message',e=>{const m=e.data;if(m.type==='crashDetailReady'){const el=document.getElementById('crash-detail-'+m.issueId);if(el)el.innerHTML=m.html}});</script></body></html>`;
 }
 
@@ -95,7 +95,7 @@ function renderIssueCard(issue: CrashlyticsIssue): string {
     const stateBadge = issue.state !== 'UNKNOWN' ? ` <span class="fb-badge fb-badge-${issue.state.toLowerCase()}">${issue.state}</span>` : '';
     const users = issue.userCount > 0 ? ` · ${issue.userCount} user${issue.userCount !== 1 ? 's' : ''}` : '';
     const versions = formatVersionRange(issue);
-    const actions = `<div class="fb-actions"><button class="fb-action-btn" onclick="event.stopPropagation();postMsg('closeIssue','','${eid}')">Close</button><button class="fb-action-btn" onclick="event.stopPropagation();postMsg('muteIssue','','${eid}')">Mute</button></div>`;
+    const actions = `<div class="fb-actions"><button class="fb-action-btn" data-action="closeIssue" data-issue="${eid}">Close</button><button class="fb-action-btn" data-action="muteIssue" data-issue="${eid}">Mute</button></div>`;
     return `<div class="fb-item" data-issue-id="${eid}"><div class="fb-title">${badge}${stateBadge} ${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} events${users}${versions}</div>${actions}<div class="crash-detail" id="crash-detail-${eid}"></div></div>`;
 }
 

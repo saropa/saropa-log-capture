@@ -26,15 +26,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Correlation tags documentation:** New `docs/correlation-tags.md` explaining what tags are, how they're generated, how to filter, and how to rescan.
 - **Configurable icon bar position:** New `saropaLogCapture.iconBarPosition` setting (`"left"` or `"right"`, default `"left"`). The icon bar and all slide-out panels now default to the left side of the viewer, matching VS Code's activity bar convention. Changes apply instantly without reload.
 - **Lint violation integration:** Bug reports now include a "Known Lint Issues" section sourced from Saropa Lints' structured export (`reports/.saropa_lints/violations.json`). Violations are matched to stack trace files, sorted by impact and proximity, and rendered as a markdown table with source attribution and staleness warning. Critical violations surface in the executive summary as high-relevance findings.
+- **ANR badge:** Performance-level log lines containing ANR-specific keywords (`ANR`, `Application Not Responding`, `Input dispatching timed out`) now display an orange stopwatch badge. Separates ANR signals from general jank/fps/choreographer noise. ANR count also tracked in session severity metadata.
+- **Time-windowed insights:** Cross-Session Insights panel now includes a time range dropdown (All time, Last 30 days, Last 7 days, Last 24 hours) that filters which sessions are included in the aggregation. Session dates are parsed from log filenames.
+- **Impact-weighted error sorting:** Recurring errors in the Insights panel are now sorted by impact score (sessions × occurrences) instead of session count alone, matching Android Vitals' event×user ranking.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
+- **ESLint `max-lines` excludes blank lines and comments:** The 300-line file limit now uses `skipBlankLines: true` and `skipComments: true`, so readability is never sacrificed for the metric.
 
 ### Fixed
 - **Copy includes UI chrome:** Ctrl+C near the bottom of the log viewer included footer, search panel, and session history text. Native text selection is now confined to the viewport via CSS `user-select`, and native click-drag selections are routed through the VS Code clipboard API.
 - **Tag chips not rendering:** Tag chip containers in the Filters panel were permanently empty — `syncFiltersPanelUi()` now calls `rebuildTagChips()` and `rebuildClassTagChips()` when opening the panel.
 - **Quick Filters presets broken:** "Errors Only" preset used DAP `categories: ['stderr']` which hides all Flutter output (category is `"console"`). Presets now use `levels` field for severity-based filtering. Also fixed monkey-patch on `applyFilter` that immediately reset the active preset during application.
 - **Preset save losing levels:** `promptSavePreset()` parameter type now includes `levels` so saving a preset after applying a level-based filter preserves the level configuration.
+- **Crashlytics sidebar shows no issues:** `matchIssues()` filtered out all results when called without error tokens (sidebar panel use case). Skips token filter when no tokens provided.
+- **CodeLens event counts always zero:** `buildIndexFromCache()` never incremented `totalEvents`. Fixed accumulation to properly count events per issue.
+- **AI summary model selection:** Hardcoded `gpt-4o` family name is not a VS Code Language Model API family. Uses `selectChatModels()` without family filter.
+- **XSS in Crashlytics panel:** Inline `onclick` handlers with interpolated issue IDs replaced with `data-*` attributes and delegated click handlers.
 
 ---
 ## [1.2.0] - 2026-02-08

@@ -10,12 +10,14 @@ const logcatErrorRe = /^[EFA]\//;
 const warnRe = /\b(?:warn(?:ing)?|caution)\b/i;
 const logcatWarnRe = /^W\//;
 const perfRe = /\b(?:performance|dropped\s+frame|fps|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+pause|anr|application\s+not\s+responding)\b/i;
+const anrRe = /\b(?:anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
 
 /** Severity counts extracted from a log file body. */
 export interface SeverityCounts {
     readonly errors: number;
     readonly warnings: number;
     readonly perfs: number;
+    readonly anrs: number;
 }
 
 /** Count error/warning/performance lines in the body text of a log file. */
@@ -23,6 +25,7 @@ export function countSeverities(bodyText: string): SeverityCounts {
     let errors = 0;
     let warnings = 0;
     let perfs = 0;
+    let anrs = 0;
     const lines = bodyText.split('\n');
     for (const line of lines) {
         if (line.length === 0 || line.startsWith('---') || line.startsWith('===')) { continue; }
@@ -30,9 +33,9 @@ export function countSeverities(bodyText: string): SeverityCounts {
         const msg = line.replace(/^\[[\d:.]+\]\s*\[\w+\]\s?/, '');
         if (looseErrorRe.test(msg) || logcatErrorRe.test(msg)) { errors++; }
         else if (warnRe.test(msg) || logcatWarnRe.test(msg)) { warnings++; }
-        else if (perfRe.test(msg)) { perfs++; }
+        else if (perfRe.test(msg)) { perfs++; if (anrRe.test(msg)) { anrs++; } }
     }
-    return { errors, warnings, perfs };
+    return { errors, warnings, perfs, anrs };
 }
 
 /** Extract the body text from a full log file (everything after the header separator). */

@@ -12,6 +12,7 @@ const logcatLevelPattern = /^([VDIWEFA])\//;
 const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|\bfail(?:ed|ure)\b/i;
 const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b/i;
 const warnPattern = /\b(warn(ing)?|caution)\b/i;
+const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
 const perfPattern = /\b(performance|dropped\s+frame|fps|framerate|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+pause|anr|application\s+not\s+responding)\b/i;
 const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
@@ -26,6 +27,9 @@ export function classifyLevel(plainText: string, category: string, strict: boole
     if (ep.test(plainText)) { return 'error'; }
     return classifyNonError(plainText);
 }
+
+/** Whether the text matches an ANR-specific pattern (subset of performance). */
+export function isAnrLine(plainText: string): boolean { return anrPattern.test(plainText); }
 
 /** Whether a level represents an actionable event (shown on timeline). */
 export function isActionableLevel(level: SeverityLevel): boolean {
