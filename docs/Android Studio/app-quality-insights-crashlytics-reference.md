@@ -253,7 +253,7 @@ AQI provides device and OS distribution bar charts, insight text, raw device met
 
 12. **DONE — Device/OS distribution from multi-event data** — `renderDeviceDistribution()` in `analysis-crash-detail.ts` aggregates `deviceModel` and `osVersion` across all fetched events. Renders horizontal bar charts with counts and percentages via `renderDistributionBar()`. Called from `fetchCrashDetail()` in `analysis-panel.ts`.
 
-13. **PARTIAL — Query Crashlytics issueStats endpoint** — `getIssueStats()` in `crashlytics-stats.ts` implements the API call with proper timeout and error handling. However, it has no callers — the function is defined but not wired into any UI rendering.
+13. **DONE — Query Crashlytics issueStats endpoint** — `getIssueStats()` in `crashlytics-stats.ts` queries aggregate device/OS stats. Wired into `fetchCrashDetail()` in `analysis-panel.ts` as an async progressive update (like AI summary). `renderApiDistribution()` in `analysis-crash-detail.ts` renders the stats using the existing `renderDistributionBar()` helper. Dedicated `<div id="crash-stats-{id}">` placeholder ensures deterministic placement.
 
 14. **DONE — Local cross-session device aggregation** — `buildEnvironmentStats()` in `cross-session-aggregator.ts` aggregates platform and SDK version tags across sessions. Returns `platforms` and `sdkVersions` arrays rendered in the Insights panel. This is a Saropa-unique insight that AQI cannot provide.
 
@@ -383,7 +383,7 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 |---|------|--------|
 | 3 | AI crash summary via VS Code LM API | DONE |
 | 6 | Close/Mute issue write-back to Firebase | DONE |
-| 13 | Query Crashlytics issueStats endpoint | PARTIAL (API function exists, no callers) |
+| 13 | Query Crashlytics issueStats endpoint | DONE |
 | 16 | Auto-detect app version for filtered queries | DONE |
 | 22 | Trend sparkline in session history tree | — |
 
@@ -392,8 +392,8 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 - **Phase 1:** 6/6 complete
 - **Phase 2:** 6/6 complete
 - **Phase 3:** 4/4 complete
-- **Phase 4:** 3/5 complete, 1 partial
-- **Overall:** 19/21 complete, 1 partial, 1 remaining
+- **Phase 4:** 4/5 complete, 1 remaining
+- **Overall:** 20/21 complete, 1 remaining
 
 ---
 

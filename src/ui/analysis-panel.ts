@@ -21,8 +21,9 @@ import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext, getCrashEvents } from '../modules/firebase-crashlytics';
-import { renderCrashDetail, renderDeviceDistribution } from './analysis-crash-detail';
+import { getFirebaseContext, getCrashEvents, getAccessToken } from '../modules/firebase-crashlytics';
+import { getIssueStats } from '../modules/crashlytics-stats';
+import { renderCrashDetail, renderDeviceDistribution, renderApiDistribution } from './analysis-crash-detail';
 import { generateCrashSummary } from '../modules/crashlytics-ai-summary';
 import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
 import {
@@ -243,10 +244,15 @@ async function fetchCrashDetail(issueId: string, eventIndex = 0): Promise<void> 
     const html = renderCrashDetail(detail);
     const dist = renderDeviceDistribution(multi);
     const nav = multi.events.length > 1 ? `<div class="crash-event-nav" data-issue-id="${issueId}"><button class="crash-nav-btn" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>&lt;</button> <span class="crash-nav-label">Event ${idx + 1} of ${multi.events.length}</span> <button class="crash-nav-btn" data-dir="1" ${idx >= multi.events.length - 1 ? 'disabled' : ''}>&gt;</button></div>` : '';
-    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: dist + nav + html });
+    const statsSlot = `<div id="crash-stats-${issueId}"></div>`;
+    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: statsSlot + dist + nav + html });
     // AI summary — async, arrives after the initial render.
     generateCrashSummary(detail).then(summary => {
         if (summary) { panel?.webview.postMessage({ type: 'crashAiSummary', issueId, html: `<div class="crash-ai-summary">${escapeHtml(summary)}</div>` }); }
+    }).catch(() => {});
+    // Aggregate stats — async, arrives after the initial render.
+    getAccessToken().then(token => token ? getIssueStats(issueId, token) : undefined).then(stats => {
+        if (stats) { panel?.webview.postMessage({ type: 'issueStatsReady', issueId, html: renderApiDistribution(stats) }); }
     }).catch(() => {});
 }
 function postFrameResult(file: string, line: number, html: string): void {
