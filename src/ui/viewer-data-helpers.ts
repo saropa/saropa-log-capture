@@ -30,6 +30,7 @@ var repeatTracker = {
     count: 0,
     lastTimestamp: 0
 };
+var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
 var repeatWindowMs = 3000; // 3 second window for detecting repeats
 var repeatPreviewLength = 85; // Characters to show in repeat preview
 
@@ -199,6 +200,9 @@ function renderItem(item, idx) {
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) {
         badge = getErrorBadge(item.errorClass);
+    }
+    if (!badge && item.isAnr) {
+        badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
     }
 
     var titleAttr = '';

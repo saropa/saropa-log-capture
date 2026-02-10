@@ -32,7 +32,7 @@ export class CrashlyticsCodeLensProvider implements vscode.CodeLensProvider {
         const info = index.get(filename);
         if (!info) { return []; }
         const range = new vscode.Range(0, 0, 0, 0);
-        const label = `Crashlytics: ${info.issueCount} issue${info.issueCount !== 1 ? 's' : ''}, ${info.totalEvents} events, ${info.totalUsers} users`;
+        const label = `Crashlytics: ${info.issueCount} issue${info.issueCount !== 1 ? 's' : ''}, ${info.totalEvents} cached event${info.totalEvents !== 1 ? 's' : ''}`;
         return [new vscode.CodeLens(range, { title: label, command: '' })];
     }
 }
@@ -62,13 +62,14 @@ async function buildIndexFromCache(): Promise<Map<string, CrashFileInfo>> {
             const raw = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(cacheDir, name));
             const data = JSON.parse(Buffer.from(raw).toString('utf-8'));
             const events = Array.isArray(data.events) ? data.events : [data];
-            for (const event of events) {
-                extractFilenames(event).forEach(fn => {
-                    const existing = index.get(fn);
-                    const prev = existing ?? { issueCount: 0, totalEvents: 0, totalUsers: 0 };
-                    index.set(fn, { issueCount: prev.issueCount + 1, totalEvents: prev.totalEvents, totalUsers: prev.totalUsers });
-                });
-            }
+            const eventCount = events.length;
+            // Collect all filenames touched by any event in this issue
+            const issueFiles = new Set<string>();
+            for (const event of events) { extractFilenames(event).forEach(fn => issueFiles.add(fn)); }
+            issueFiles.forEach(fn => {
+                const prev = index.get(fn) ?? { issueCount: 0, totalEvents: 0, totalUsers: 0 };
+                index.set(fn, { issueCount: prev.issueCount + 1, totalEvents: prev.totalEvents + eventCount, totalUsers: prev.totalUsers });
+            });
         } catch { /* skip corrupt cache files */ }
     }
     return index;
