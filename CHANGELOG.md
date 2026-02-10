@@ -11,19 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+<!-- cspell:ignore SIGSEGV -->
 ### Added
 - **Google Play Console deep link:** New `saropaLogCapture.playConsole.appUrl` setting for a custom Play Console URL. If set, the "Open Play Console" button in the Vitals panel navigates directly to your app's Vitals page instead of the generic homepage.
 - **Target device metadata:** Debug adapter type and target device are now stored in session `.meta.json`. Device is detected from Flutter launch output ("Launching ... on DEVICE") and launch config keys (`deviceId`, `device`, `deviceName`).
 - **Environment distribution in Insights:** Cross-Session Insights panel now shows debug adapter, platform, and SDK version distribution across sessions in a collapsible "Environment" section.
 - **ANR thread analysis:** Thread dump grouping now detects potential ANR patterns (main thread Runnable while other threads are Waiting/Blocked). Blocking threads get a warning badge and the summary line flags "ANR pattern detected".
 - **Thread-aware bug report export:** Bug report stack trace extraction now continues past thread headers instead of stopping. Multi-thread traces include `--- threadName ---` separators in the exported markdown.
-
-### Fixed
-- **Filter presets test:** Fixed "Errors Only" preset test to check `levels` instead of removed `searchPattern` field.
-
-### Added (continued)
 - **Package name auto-detection:** Detects Android package name from `google-services.json`, `AndroidManifest.xml`, or `pubspec.yaml`. Cached for 5 minutes. Override via `saropaLogCapture.firebase.packageName` setting. Enables scoping of Play Vitals and Crashlytics queries.
-<!-- cspell:ignore SIGSEGV -->
 - **Crash category sub-classification:** Fingerprinted errors are now classified into categories: FATAL, ANR, OOM, NATIVE, or non-fatal. Categories are detected from error text patterns (e.g. `OutOfMemoryError` → OOM, `SIGSEGV` → NATIVE). Colored badges appear in the Insights panel and Recurring Errors sidebar.
 - **Thread dump grouping:** When multiple consecutive thread headers are detected in log output (common in ANR dumps and `kill -3`), a "Thread dump (N threads)" summary marker is injected before the dump for visual grouping. Each thread's frames remain individually visible.
 - **Google Play Vitals panel:** New opt-in sidebar panel showing crash rate and ANR rate from the Google Play Developer Reporting API. Displays rates with color-coded good/bad indicators against Google Play's bad-behavior thresholds (crash > 1.09%, ANR > 0.47%). Enable via `saropaLogCapture.playConsole.enabled` setting. Requires Play Console access and gcloud auth.
@@ -72,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **ESLint config hardened:** Enforces `max-params: 4`, `max-depth: 3`, `no-explicit-any`, `no-unused-vars` (with `_` prefix pattern), `prefer-const`, and correctness rules. Functions exceeding 4 parameters refactored to use option objects (`FileLinkOptions`, `ViewerHtmlOptions`, `ShellOptions`, `BookmarkInput`, `EditLineInput`, `SessionActionContext`).
 
 ### Fixed
+- **Filter presets test:** Fixed "Errors Only" preset test to check `levels` instead of removed `searchPattern` field.
 - **Copy includes UI chrome:** Ctrl+C near the bottom of the log viewer included footer, search panel, and session history text. Native text selection is now confined to the viewport via CSS `user-select`, and native click-drag selections are routed through the VS Code clipboard API.
 - **Tag chips not rendering:** Tag chip containers in the Filters panel were permanently empty — `syncFiltersPanelUi()` now calls `rebuildTagChips()` and `rebuildClassTagChips()` when opening the panel.
 - **Quick Filters presets broken:** "Errors Only" preset used DAP `categories: ['stderr']` which hides all Flutter output (category is `"console"`). Presets now use `levels` field for severity-based filtering. Also fixed monkey-patch on `applyFilter` that immediately reset the active preset during application.
