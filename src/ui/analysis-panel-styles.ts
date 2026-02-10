@@ -241,6 +241,9 @@ window.addEventListener('message', function(e) {
     } else if (e.data.type === 'crashAiSummary') {
         var cd2 = document.getElementById('crash-detail-' + e.data.issueId);
         if (cd2) { cd2.insertAdjacentHTML('afterbegin', e.data.html); }
+    } else if (e.data.type === 'issueStatsReady') {
+        var cs = document.getElementById('crash-stats-' + e.data.issueId);
+        if (cs) { cs.innerHTML = e.data.html; }
     } else if (e.data.type === 'summaryReady') {
         var target = document.getElementById('executive-summary');
         if (target && e.data.html) { target.innerHTML = e.data.html; }
