@@ -180,13 +180,11 @@ Android Vitals is fundamentally different from Firebase Crashlytics: it is a sys
 
 **Improvement ideas:**
 
-1. **Google Play Developer Reporting API integration** — The Play Developer Reporting API v1beta1 (`playdeveloperreporting.googleapis.com`) exposes crash rate metrics, ANR rate metrics, and error reports. Add a new module (`google-play-vitals.ts`) that queries `apps/{package}/crashRateMetricSet:query` and `apps/{package}/anrRateMetricSet:query`. Auth can reuse the existing `gcloud` token flow since the API accepts Google OAuth tokens with the `androidpublisher` scope.
-   - *Priority:* High (unique differentiator — no VS Code extension does this). *Complexity:* High (~200 lines for API client + ~150 lines for UI rendering).
+1. **DONE — Google Play Developer Reporting API integration** — `google-play-vitals.ts` queries `crashRateMetricSet:query` and `anrRateMetricSet:query` via the Play Developer Reporting API v1beta1. `vitals-panel.ts` renders crash rate and ANR rate in a sidebar panel with good/bad threshold indicators (crash > 1.09%, ANR > 0.47%). Auth reuses `getAccessToken()` from `firebase-crashlytics.ts`. Gated behind `saropaLogCapture.playConsole.enabled` setting (default off). 15-minute cache with manual refresh.
 
 2. **DONE — ANR-specific detection and classification** — `isAnrLine()` in `level-classifier.ts` detects ANR keywords (`anr`, `application not responding`, `input dispatching timed out`). `countSeverities()` in `session-severity-counts.ts` counts ANRs separately from general performance lines. Orange ANR badge (`error-badge-anr`) with hourglass styling renders in the viewer via `viewer-styles-decoration.ts`.
 
-3. **Package name auto-detection for API queries** — AQI uses the package name from the Gradle build. Saropa should detect it from `google-services.json` (`client[0].client_info.android_client_info.package_name`), `AndroidManifest.xml`, or `pubspec.yaml` (`name` field for Flutter). This enables automatic scoping of both Crashlytics and Vitals queries to the correct app.
-   - *Priority:* Medium. *Complexity:* Low (~30 lines in `firebase-crashlytics.ts` or a new `app-identity.ts`).
+3. **DONE — Package name auto-detection for API queries** — `app-identity.ts` detects the package name from: (1) `saropaLogCapture.firebase.packageName` setting override, (2) `google-services.json` → `client[0].client_info.android_client_info.package_name`, (3) `AndroidManifest.xml` → `package="..."`, (4) `pubspec.yaml` → `name:`. 5-minute cache. Used by Google Play Vitals queries.
 
 ---
 
@@ -202,8 +200,7 @@ AQI provides separate toggle buttons for Crashes (fatal) and ANRs (freezes), let
 
 **Improvement ideas:**
 
-4. **Crash category sub-classification** — Extend `error-fingerprint.ts` to tag each fingerprinted error with a category: `fatal` (unhandled exception), `anr` (timeout/freeze patterns), `oom` (OutOfMemoryError, heap exhaustion), `native` (SIGSEGV, SIGABRT, `libflutter.so`), `non-fatal` (caught exceptions). Store in `.meta.json` sidecar alongside existing fingerprints. Surface as colored badges in the Insights panel and bug reports.
-   - *Priority:* Medium. *Complexity:* Medium (~50 lines in `error-fingerprint.ts` + ~20 lines in `insights-panel.ts`).
+4. **DONE — Crash category sub-classification** — `classifyCategory()` in `error-fingerprint.ts` tags each fingerprinted error as `fatal`, `anr`, `oom`, `native`, or `non-fatal` using regex patterns. Category stored as `cat` in `FingerprintEntry` and passed through to `RecurringError.category` in `cross-session-aggregator.ts`. Colored badges (red/orange/purple/gray) render in Insights panel and Recurring Errors sidebar.
 
 5. **Filterable crash categories in Insights drill-down** — When the Insights panel shows recurring errors, add toggle chips for each crash category so users can isolate ANRs from crashes from OOMs. Reuses the tag-chip pattern from `viewer-session-tags.ts`.
    - *Priority:* Low. *Complexity:* Low (~30 lines in `insights-drill-down.ts`).
@@ -297,8 +294,7 @@ AQI's stack trace view shows the crashing thread with full metadata (name, tid, 
 
 15. **DONE — Parse thread headers in stack traces** — `parseThreadHeader()` in `stack-parser.ts` recognizes quoted thread names with tid/state and dash-delimited format. `tryFormatThreadHeader()` in `viewer-provider-helpers.ts` wraps matches in `<span class="thread-header">` with link-colored, bold italic styling. Applied in both `log-viewer-provider.ts` and `pop-out-panel.ts`.
 
-16. **Thread grouping for ANR-style traces** — When a log file contains multiple consecutive stack traces (common in ANR dumps and `kill -3` thread dumps), group them under a collapsible "Threads (N)" section. Each thread shows its header and frame list. The "main" thread is expanded by default; others are collapsed. This mimics AQI's "Show all 134 threads" functionality for local debug output.
-    - *Priority:* Medium. *Complexity:* High (~100 lines across stack parser, viewer script, and styles).
+16. **DONE — Thread grouping for ANR-style traces** — `viewer-thread-grouping.ts` implements a state machine in the pending-line pipeline that detects consecutive thread headers and stack frames, buffers them, and emits a "Thread dump (N threads)" summary marker for 2+ thread groups. Single threads pass through unchanged. Wired into both `log-viewer-provider.ts` and `pop-out-panel.ts`. 5 test cases in `thread-grouping.test.ts`.
 
 17. **ANR thread analysis heuristic** — When multiple threads are grouped, automatically identify potential ANR patterns: main thread in `Runnable` state while a background thread holds a lock (`MONITOR`, `WAIT`). Highlight the blocking thread with a warning badge: "This thread may be blocking main". Uses thread state keywords from Android thread dumps.
     - *Priority:* Low (high impact, exploratory). *Complexity:* High (~80 lines for heuristic analysis + rendering).
@@ -417,18 +413,15 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 | 8 | Error status lifecycle (open/closed/muted) | DONE |
 | 10 | Always-visible error feed in sidebar | DONE |
 
-#### Phase 3: Strategic Features (High complexity, competitive differentiation)
+#### Phase 3: Strategic Features (High complexity, competitive differentiation) — ALL DONE
 
 | # | Item | Status |
 |---|------|--------|
+| 1 | Google Play Developer Reporting API integration | DONE |
+| 3 | Package name auto-detection | DONE |
+| 4 | Crash category sub-classification | DONE |
+| 16 | Thread grouping for ANR-style traces | DONE |
 | 18 | Parse device/OS from Crashlytics events + charts | DONE |
-
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Google Play Developer Reporting API integration | ~350 lines | Access production Vitals data in VS Code |
-| 16 | Thread grouping for ANR-style traces | ~100 lines | Multi-thread debugging |
-| 4 | Crash category sub-classification | ~70 lines | Fatal/ANR/OOM/native breakdown |
-| 3 | Package name auto-detection | ~30 lines | Enables Play API queries |
 
 #### Phase 4: Exploratory (Low priority, high ambition)
 
@@ -448,10 +441,8 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**Closed gaps since initial analysis:** All Phase 1 and Phase 2 items are complete. Phase 3 item #18 (device/OS charts) is also done. Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). Phase 3 item #18 (device/OS from Crashlytics events + distribution charts) was implemented alongside the Crashlytics integration.
-
-**The highest-value remaining gaps** are Phase 3: Google Play Developer Reporting API integration (item 1), thread grouping for ANR-style traces (item 16), crash category sub-classification (item 4), and package name auto-detection (item 3).
+**Closed gaps since initial analysis:** All Phase 1, Phase 2, and Phase 3 items are complete (20 items total). Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). Phase 3 delivered strategic features: Google Play Vitals sidebar panel (#1), package name auto-detection (#3), crash category sub-classification (#4), thread dump grouping (#16), and device/OS distribution charts (#18).
 
 **The proactive warning system is now operational.** ANR risk scoring (item 23) detects choreographer warnings, GC pauses, and thread blocking patterns during debugging and flags "this will become an ANR in production." The Crashlytics error bridge (item 24) connects debug-time errors to production crash data. Together, these shift ANR and error detection left in the development lifecycle, where fixes are cheaper and faster.
 
-**The most ambitious opportunity** is Google Play Developer Reporting API integration (item 1). No VS Code extension currently connects to Android Vitals. This would make Saropa the only tool that surfaces Play Store stability data inside VS Code, completing the trifecta: live debug capture + Crashlytics production crashes + Play Store system metrics.
+**The trifecta is complete.** Saropa now surfaces three data sources inside VS Code: live debug capture, Crashlytics production crashes, and Google Play Store system metrics (Vitals). No other VS Code extension connects to all three.
