@@ -80,5 +80,85 @@ function formatSessionSize(bytes) {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
+
+function formatSessionDuration(ms) {
+    if (ms >= 3600000) {
+        var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+        return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
+    }
+    if (ms >= 60000) {
+        var min = Math.floor(ms / 60000), s = Math.floor((ms % 60000) / 1000);
+        return s > 0 ? min + 'm ' + s + 's' : min + 'm';
+    }
+    return Math.round(ms / 1000) + 's';
+}
+
+function renderSeverityDots(s) {
+    var parts = [];
+    if (s.errorCount > 0) parts.push('<span class="sev-dot sev-error"></span>' + s.errorCount);
+    if (s.warningCount > 0) parts.push('<span class="sev-dot sev-warning"></span>' + s.warningCount);
+    if (s.perfCount > 0) parts.push('<span class="sev-dot sev-perf"></span>' + s.perfCount);
+    if (parts.length === 0) return '';
+    var total = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0);
+    var bar = total > 0 ? renderSeverityBar(s.errorCount || 0, s.warningCount || 0, s.perfCount || 0, total) : '';
+    return '<span class="sev-dots">' + parts.join(' ') + bar + '</span>';
+}
+
+function renderSeverityBar(err, warn, perf, total) {
+    var ePct = Math.round((err / total) * 100);
+    var wPct = Math.round((warn / total) * 100);
+    var pPct = 100 - ePct - wPct;
+    return '<span class="sev-bar" title="' + total + ' issues"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
+}
+
+/** Mark the newest session per unique display name as isLatestOfName. */
+function markLatestByName(sessions, applyOptions) {
+    var byName = {};
+    for (var i = 0; i < sessions.length; i++) {
+        var s = sessions[i];
+        if (s.trashed) continue;
+        var name = applyOptions(s.displayName || s.filename);
+        if (!byName[name] || (s.mtime || 0) > (byName[name].mtime || 0)) byName[name] = s;
+    }
+    var hasDupes = {};
+    for (var j = 0; j < sessions.length; j++) {
+        var sj = sessions[j];
+        if (sj.trashed) continue;
+        var nj = applyOptions(sj.displayName || sj.filename);
+        if (!hasDupes[nj]) hasDupes[nj] = 0;
+        hasDupes[nj]++;
+    }
+    for (var k = 0; k < sessions.length; k++) {
+        var sk = sessions[k];
+        var nk = applyOptions(sk.displayName || sk.filename);
+        sk.isLatestOfName = !sk.trashed && hasDupes[nk] > 1 && byName[nk] === sk;
+    }
+}
+
+/* --- Panel resize --- */
+function initSessionPanelResize(panelEl, saveWidth) {
+    var handle = document.getElementById('session-resize');
+    if (!handle || !panelEl) return;
+    var dragging = false;
+    handle.addEventListener('mousedown', function(e) {
+        e.preventDefault(); dragging = true;
+        handle.classList.add('dragging');
+        panelEl.style.transition = 'none';
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var vw = document.documentElement.clientWidth;
+        var isRight = document.body.dataset.iconBar === 'right';
+        var w = isRight ? vw - e.clientX : e.clientX;
+        panelEl.style.width = Math.max(280, Math.min(vw * 0.8, w)) + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove('dragging');
+        panelEl.style.transition = '';
+        saveWidth(parseInt(panelEl.style.width, 10) || 0);
+    });
+}
 `;
 }

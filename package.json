@@ -288,6 +288,11 @@
           "description": "Enable or disable automatic log capture during debug sessions.",
           "type": "boolean"
         },
+        "saropaLogCapture.ai.enabled": {
+          "default": false,
+          "description": "Enable AI-powered crash summaries in the analysis panel (requires VS Code Language Model API access).",
+          "type": "boolean"
+        },
         "saropaLogCapture.exclusions": {
           "default": [],
           "description": "Patterns to exclude from the viewer. Plain strings match case-insensitively; /regex/ patterns are supported.",
@@ -361,12 +366,50 @@
           "description": "Firebase project ID for Crashlytics queries (auto-detected from google-services.json if empty).",
           "type": "string"
         },
+        "saropaLogCapture.firebase.timeRange": {
+          "default": "LAST_7_DAYS",
+          "description": "Time window for Crashlytics issue queries.",
+          "enum": [
+            "LAST_24_HOURS",
+            "LAST_7_DAYS",
+            "LAST_30_DAYS",
+            "LAST_90_DAYS"
+          ],
+          "enumDescriptions": [
+            "Last 24 hours",
+            "Last 7 days",
+            "Last 30 days",
+            "Last 90 days"
+          ],
+          "type": "string"
+        },
+        "saropaLogCapture.firebase.refreshInterval": {
+          "default": 300,
+          "description": "Auto-refresh interval (seconds) for the Crashlytics sidebar panel. 0 to disable auto-refresh.",
+          "maximum": 3600,
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.firebase.versionFilter": {
+          "default": "",
+          "description": "Filter Crashlytics results to a specific app version. Leave empty to auto-detect from pubspec.yaml or build.gradle.",
+          "type": "string"
+        },
         "saropaLogCapture.format": {
           "default": "plaintext",
           "description": "Output file format. Currently only plaintext is supported.",
           "enum": [
             "html",
             "plaintext"
+          ],
+          "type": "string"
+        },
+        "saropaLogCapture.iconBarPosition": {
+          "default": "left",
+          "description": "Which side of the log viewer to show the icon bar: left or right.",
+          "enum": [
+            "left",
+            "right"
           ],
           "type": "string"
         },
@@ -634,6 +677,12 @@
           "icon": "$(output)",
           "id": "saropaLogCapture.logViewer",
           "name": "Log Viewer",
+          "type": "webview"
+        },
+        {
+          "icon": "$(flame)",
+          "id": "saropaLogCapture.crashlyticsPanel",
+          "name": "Crashlytics",
           "type": "webview"
         }
       ]
