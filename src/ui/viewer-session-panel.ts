@@ -95,6 +95,7 @@ export function getSessionPanelScript(): string {
         var trashed = sessions.filter(function(s) { return !!s.trashed; });
         updateTrashBadge(trashed.length);
         var sorted = sortSessions(active);
+        computeSparkWidths(sorted);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted) : renderFlat(sorted);
         if (sessionDisplayOptions.showTrash && trashed.length > 0) {
             html += renderTrashSection(sortSessions(trashed));
@@ -139,7 +140,7 @@ export function getSessionPanelScript(): string {
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
-            + dots + '</div></div>';
+            + dots + renderSparkBar(s) + '</div></div>';
     }
 
     function renderTrashSection(trashed) {
