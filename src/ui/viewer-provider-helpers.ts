@@ -237,11 +237,14 @@ export function buildSessionListPayload(
 	activeUri: vscode.Uri | undefined,
 ): Record<string, unknown>[] {
 	const activeStr = activeUri?.toString();
-	const toRecord = (m: { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[] }): Record<string, unknown> => ({
+	type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[] };
+	const toRecord = (m: Meta): Record<string, unknown> => ({
 		filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
 		size: m.size, mtime: m.mtime, formattedMtime: formatMtime(m.mtime),
 		formattedTime: formatMtimeTimeOnly(m.mtime), date: m.date,
 		hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
+		durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
+		warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
 		isActive: activeStr === m.uri.toString(),
 		uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
 		autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],

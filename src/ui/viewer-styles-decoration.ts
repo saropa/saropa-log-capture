@@ -168,39 +168,30 @@ export function getDecorationStyles(): string {
     background-color: rgba(78, 201, 176, 0.14);
 }
 
-/* Severity bar mode (colored left border) */
-.level-bar-error {
-    border-left: 3px solid var(--vscode-debugConsole-errorForeground, #f48771);
-    padding-left: 5px;
+/* Continuous timeline in log gutter */
+#viewport { position: relative; }
+#viewport::before {
+    content: ''; position: absolute; left: 6px;
+    top: 0; bottom: 0; width: 1px;
+    background: var(--vscode-panel-border);
+    pointer-events: none; z-index: 1;
 }
-.level-bar-warning {
-    border-left: 3px solid var(--vscode-debugConsole-warningForeground, #cca700);
-    padding-left: 5px;
+
+/* Severity dot mode (colored circle on timeline) */
+[class*="level-bar-"]::before {
+    content: ''; position: absolute; left: 3px;
+    top: 50%; transform: translateY(-50%);
+    width: 7px; height: 7px; border-radius: 50%;
+    pointer-events: none; z-index: 2;
 }
-.level-bar-performance {
-    border-left: 3px solid var(--vscode-debugConsole-infoForeground, #b695f8);
-    padding-left: 5px;
-}
-.level-bar-todo {
-    border-left: 3px solid var(--vscode-terminal-ansiWhite, #e5e5e5);
-    padding-left: 5px;
-}
-.level-bar-debug {
-    border-left: 3px solid var(--vscode-terminal-ansiYellow, #dcdcaa);
-    padding-left: 5px;
-}
-.level-bar-notice {
-    border-left: 3px solid var(--vscode-terminal-ansiCyan, #4fc1ff);
-    padding-left: 5px;
-}
-.level-bar-framework {
-    border-left: 3px solid var(--vscode-textLink-foreground, #3794ff);
-    padding-left: 5px;
-}
-.level-bar-info {
-    border-left: 3px solid var(--vscode-terminal-ansiGreen, #4ec9b0);
-    padding-left: 5px;
-}
+.level-bar-error::before { background: var(--vscode-debugConsole-errorForeground, #f48771); }
+.level-bar-warning::before { background: var(--vscode-debugConsole-warningForeground, #cca700); }
+.level-bar-performance::before { background: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.level-bar-todo::before { background: var(--vscode-terminal-ansiWhite, #e5e5e5); }
+.level-bar-debug::before { background: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+.level-bar-notice::before { background: var(--vscode-terminal-ansiCyan, #4fc1ff); }
+.level-bar-framework::before { background: var(--vscode-textLink-foreground, #3794ff); }
+.level-bar-info::before { background: var(--vscode-terminal-ansiGreen, #4ec9b0); }
 
 /* Error classification badges */
 .error-badge {

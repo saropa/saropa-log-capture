@@ -1,14 +1,13 @@
 /**
  * Session history panel HTML and script for the webview.
- *
  * Displays a list of past log sessions loaded from the extension host.
- * Follows the same slide-out pattern as the search and options panels.
  */
 
 /** Generate the session panel HTML. */
 export function getSessionPanelHtml(): string {
     return /* html */ `
 <div id="session-panel" class="session-panel">
+    <div id="session-resize" class="session-panel-resize"></div>
     <div class="session-panel-header">
         <span>Project Logs</span>
         <div class="session-panel-actions">
@@ -19,24 +18,16 @@ export function getSessionPanelHtml(): string {
         </div>
     </div>
     <div class="session-panel-toggles">
-        <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames">
-            <span class="codicon codicon-calendar"></span> Dates
-        </button>
-        <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names (Title Case, no underscores)">
-            <span class="codicon codicon-edit"></span> Tidy
-        </button>
-        <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day">
-            <span class="codicon codicon-list-tree"></span> Days
-        </button>
-        <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order (oldest first)">
-            <span class="codicon codicon-arrow-down"></span> Sort
-        </button>
-        <button id="session-toggle-trash" class="session-toggle-btn active" title="Show/hide trashed sessions">
-            <span class="codicon codicon-trash"></span> Trash <span id="session-trash-badge" class="session-toggle-badge"></span>
-        </button>
-        <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag">
-            <span class="codicon codicon-filter"></span> Tags
-        </button>
+        <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames"><span class="codicon codicon-calendar"></span> Dates</button>
+        <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
+        <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
+        <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order"><span class="codicon codicon-arrow-down"></span> Sort</button>
+        <button id="session-toggle-trash" class="session-toggle-btn active" title="Show/hide trashed"><span class="codicon codicon-trash"></span> Trash <span id="session-trash-badge" class="session-toggle-badge"></span></button>
+        <button id="session-toggle-latest" class="session-toggle-btn" title="Show only latest of each name"><span class="codicon codicon-pinned"></span> Latest</button>
+        <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag"><span class="codicon codicon-filter"></span> Tags</button>
+    </div>
+    <div id="session-tags-section" class="session-tags-section" style="display:none">
+        <div id="session-tag-chips" class="session-tag-chips"></div>
     </div>
     <div class="session-panel-content">
         <div id="session-list"></div>
@@ -58,13 +49,14 @@ export function getSessionPanelScript(): string {
     var cachedSessions = null;
 
     var sessionDisplayOptions = {
-        stripDatetime: true, normalizeNames: true,
-        showDayHeadings: true, reverseSort: false, showTrash: true,
+        stripDatetime: true, normalizeNames: true, showDayHeadings: true,
+        reverseSort: false, showTrash: true, showLatestOnly: false, panelWidth: 0,
     };
 
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
+        if (sessionDisplayOptions.panelWidth > 0) sessionPanelEl.style.width = sessionDisplayOptions.panelWidth + 'px';
         sessionPanelEl.classList.add('visible');
         requestSessionList();
     };
@@ -75,6 +67,7 @@ export function getSessionPanelScript(): string {
         sessionPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('sessions');
     };
+    window.rerenderSessionList = function() { if (cachedSessions) renderSessionList(cachedSessions); };
 
     function requestSessionList() {
         if (sessionLoadingEl) sessionLoadingEl.style.display = '';
@@ -94,7 +87,11 @@ export function getSessionPanelScript(): string {
             return;
         }
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
+        if (typeof rebuildSessionTagChips === 'function') rebuildSessionTagChips(sessions);
+        markLatestByName(sessions, applySessionDisplayOptions);
         var active = sessions.filter(function(s) { return !s.trashed; });
+        if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
+        if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
         var trashed = sessions.filter(function(s) { return !!s.trashed; });
         updateTrashBadge(trashed.length);
         var sorted = sortSessions(active);
@@ -136,12 +133,13 @@ export function getSessionPanelScript(): string {
         var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (isTrashed ? ' session-item-trashed' : '');
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
+        var dots = renderSeverityDots(s);
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '" data-trashed="' + (isTrashed ? '1' : '') + '">'
             + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
-            + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
+            + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
-            + '</div></div>';
+            + dots + '</div></div>';
     }
 
     function renderTrashSection(trashed) {
@@ -166,6 +164,7 @@ export function getSessionPanelScript(): string {
         var timeLabel = sessionDisplayOptions.showDayHeadings ? (s.formattedTime || s.formattedMtime) : s.formattedMtime;
         if (timeLabel) parts.push(timeLabel);
         if (s.lineCount > 0) parts.push(s.lineCount.toLocaleString('en-US') + ' lines');
+        if (s.durationMs > 0) parts.push(formatSessionDuration(s.durationMs));
         if (s.size) parts.push(formatSessionSize(s.size));
         var allTags = (s.tags || []).map(function(t) { return '#' + t; })
             .concat((s.autoTags || []).map(function(t) { return '~' + t; }))
@@ -190,6 +189,7 @@ export function getSessionPanelScript(): string {
             'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
             'session-toggle-reverse': sessionDisplayOptions.reverseSort,
             'session-toggle-trash': sessionDisplayOptions.showTrash,
+            'session-toggle-latest': sessionDisplayOptions.showLatestOnly,
         };
         for (var id in ids) {
             var el = document.getElementById(id);
@@ -222,6 +222,14 @@ export function getSessionPanelScript(): string {
     bindToggle('session-toggle-headings', 'showDayHeadings');
     bindToggle('session-toggle-reverse', 'reverseSort');
     bindToggle('session-toggle-trash', 'showTrash');
+    bindToggle('session-toggle-latest', 'showLatestOnly');
+
+    initSessionPanelResize(sessionPanelEl, function(w) {
+        if (w > 0) {
+            sessionDisplayOptions.panelWidth = w;
+            vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        }
+    });
 
     /* ---- Escaping helpers ---- */
     function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
@@ -256,7 +264,7 @@ export function getSessionPanelScript(): string {
     var tagsBtn = document.getElementById('session-filter-tags');
     if (tagsBtn) tagsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        vscodeApi.postMessage({ type: 'sessionAction', action: 'filterByTag' });
+        if (typeof toggleSessionTagsSection === 'function') toggleSessionTagsSection();
     });
 
     /* Close on outside click (skip context menu — it's a sibling element). */

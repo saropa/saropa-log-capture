@@ -129,7 +129,24 @@ details[open] > .group-header::before { content: '▼ '; }
 .crash-thread-header { padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); }
 .crash-loading { padding: 6px 24px; font-size: 12px; display: flex; align-items: center; gap: 8px; color: var(--vscode-descriptionForeground); }
 .crash-expand-icon { float: right; font-size: 10px; color: var(--vscode-descriptionForeground); transition: transform 0.2s; }
-.fb-item.detail-open .crash-expand-icon { transform: rotate(90deg); }`;
+.fb-item.detail-open .crash-expand-icon { transform: rotate(90deg); }
+.crash-event-nav { display: flex; align-items: center; gap: 8px; padding: 4px 12px; font-size: 12px; }
+.crash-nav-btn { background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 2px 8px; cursor: pointer; border-radius: 2px; font-size: 12px; }
+.crash-nav-btn:disabled { opacity: 0.4; cursor: default; }
+.crash-nav-label { color: var(--vscode-descriptionForeground); }
+.crash-device-meta { padding: 4px 12px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+.crash-keys-table { width: 100%; font-size: 12px; padding: 0 12px; }
+.crash-key-name { font-weight: 500; padding: 2px 8px; color: var(--vscode-descriptionForeground); }
+.crash-key-value { padding: 2px 8px; font-family: var(--vscode-editor-font-family, monospace); }
+.crash-log-entry { padding: 2px 12px; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; }
+.crash-log-ts { color: var(--vscode-descriptionForeground); }
+.crash-dist-label { padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--vscode-descriptionForeground); }
+.crash-dist-row { display: flex; align-items: center; gap: 8px; padding: 2px 12px; font-size: 11px; }
+.crash-dist-name { min-width: 100px; flex-shrink: 0; }
+.crash-dist-bar-bg { flex: 1; height: 10px; background: var(--vscode-panel-border); border-radius: 2px; overflow: hidden; }
+.crash-dist-bar-fill { height: 100%; background: var(--vscode-editorInfo-foreground, #3794ff); border-radius: 2px; }
+.crash-dist-count { min-width: 60px; text-align: right; color: var(--vscode-descriptionForeground); flex-shrink: 0; }
+.crash-ai-summary { padding: 8px 12px; margin: 4px 0; background: var(--vscode-editorWidget-background); border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border)); border-left: 3px solid var(--vscode-editorInfo-foreground, #3794ff); border-radius: 4px; font-size: 12px; line-height: 1.5; white-space: pre-wrap; animation: fadeIn 0.3s ease; }`;
 }
 
 /** Get the webview script with click handlers and progressive section updates. */
@@ -181,6 +198,16 @@ document.addEventListener('click', function(e) {
         else if (det) { if (!det.dataset.loaded) { det.innerHTML = '<div class="crash-loading"><span class="spinner"></span> Loading crash details\u2026</div>'; det.dataset.loaded = '1'; vscodeApi.postMessage({ type: 'fetchCrashDetail', issueId: iid }); } det.classList.add('expanded'); fbItem.classList.add('detail-open'); }
         return;
     }
+    var navBtn = e.target.closest('.crash-nav-btn');
+    if (navBtn && !navBtn.disabled) {
+        var nav = navBtn.closest('.crash-event-nav');
+        var iid = nav ? nav.dataset.issueId : '';
+        var lbl = nav ? nav.querySelector('.crash-nav-label') : null;
+        var cur = lbl ? parseInt(lbl.textContent.split(' ')[1]) - 1 : 0;
+        var dir = parseInt(navBtn.dataset.dir || '0');
+        vscodeApi.postMessage({ type: 'navigateCrashEvent', issueId: iid, eventIndex: cur + dir });
+        return;
+    }
     var frame = e.target.closest('.frame-app[data-frame-file]');
     if (frame && !frame.classList.contains('frame-loading')) {
         frame.classList.add('frame-loading');
@@ -211,6 +238,9 @@ window.addEventListener('message', function(e) {
     } else if (e.data.type === 'crashDetailReady') {
         var cd = document.getElementById('crash-detail-' + e.data.issueId);
         if (cd) { cd.innerHTML = e.data.html; cd.classList.add('expanded'); }
+    } else if (e.data.type === 'crashAiSummary') {
+        var cd2 = document.getElementById('crash-detail-' + e.data.issueId);
+        if (cd2) { cd2.insertAdjacentHTML('afterbegin', e.data.html); }
     } else if (e.data.type === 'summaryReady') {
         var target = document.getElementById('executive-summary');
         if (target && e.data.html) { target.innerHTML = e.data.html; }

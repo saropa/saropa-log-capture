@@ -105,3 +105,26 @@ export function extractSourceReference(text: string): SourceReference | undefine
         col: match[4] ? parseInt(match[4], 10) : undefined,
     };
 }
+
+const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;
+
+/**
+ * Wrap URL patterns in HTML text as clickable links with data attributes.
+ * Operates on already-HTML-escaped text, same tag-splitting as linkifyHtml.
+ */
+export function linkifyUrls(html: string): string {
+    if (!html.includes('://')) { return html; }
+    return html.replace(/(<[^>]*>)|([^<]+)/g, (_m, tag: string | undefined, text: string | undefined) => {
+        if (tag) { return tag; }
+        return linkifyUrlSegment(text!);
+    });
+}
+
+/** Input text is already HTML-escaped — no re-escaping needed. */
+function linkifyUrlSegment(text: string): string {
+    return text.replace(URL_PATTERN, (url) => {
+        const clean = url.replace(/[.,;:!?)]+$/, '');
+        const trailing = url.slice(clean.length);
+        return `<a class="url-link" data-url="${clean}">${clean}</a>${trailing}`;
+    });
+}

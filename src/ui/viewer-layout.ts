@@ -17,7 +17,7 @@ export function getLayoutScript(): string {
 var logFontSize = 13;
 
 /** Current line height multiplier. */
-var logLineHeight = 1.5;
+var logLineHeight = 2.0;
 
 /** Enable visual spacing (breathing room) between sections. */
 var visualSpacingEnabled = true;
