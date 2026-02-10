@@ -7,8 +7,9 @@ import type { CrashlyticsEventDetail } from './firebase-crashlytics';
 export async function generateCrashSummary(detail: CrashlyticsEventDetail): Promise<string | undefined> {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
     if (!cfg.get<boolean>('enabled', false)) { return undefined; }
-    const models = await Promise.resolve(vscode.lm.selectChatModels({ family: 'gpt-4o' })).catch(() => []);
-    const model = models[0] ?? (await Promise.resolve(vscode.lm.selectChatModels()).catch(() => []))[0];
+    // Select any available chat model — family names vary by provider
+    const models = await Promise.resolve(vscode.lm.selectChatModels()).catch(() => []);
+    const model = models[0];
     if (!model) { return undefined; }
     const prompt = buildPrompt(detail);
     const messages = [vscode.LanguageModelChatMessage.User(prompt)];

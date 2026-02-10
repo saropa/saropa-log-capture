@@ -9,7 +9,7 @@
 import * as vscode from 'vscode';
 import { escapeHtml } from '../modules/ansi';
 import { getNonce } from './viewer-content';
-import { aggregateInsights, type CrossSessionInsights, type HotFile, type RecurringError } from '../modules/cross-session-aggregator';
+import { aggregateInsights, type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../modules/cross-session-aggregator';
 import { findInWorkspace } from '../modules/workspace-analyzer';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { getInsightsStyles } from './insights-panel-styles';
@@ -17,12 +17,14 @@ import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from '.
 import { getDrillDownStyles } from './insights-drill-down-styles';
 
 let panel: vscode.WebviewPanel | undefined;
+let currentTimeRange: TimeRange = 'all';
 
 /** Show the cross-session insights panel. */
-export async function showInsightsPanel(): Promise<void> {
+export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
+    if (timeRange) { currentTimeRange = timeRange; }
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
-    const insights = await aggregateInsights();
+    const insights = await aggregateInsights(currentTimeRange);
     if (panel) { panel.webview.html = buildResultsHtml(insights); }
 }
 
@@ -49,6 +51,8 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     } else if (msg.type === 'openMatch') {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});
+    } else if (msg.type === 'setTimeRange') {
+        showInsightsPanel(String(msg.range) as TimeRange).catch(() => {});
     } else if (msg.type === 'refresh') {
         showInsightsPanel().catch(() => {});
     }
@@ -86,15 +90,22 @@ ${renderRecurringErrors(insights.recurringErrors)}
 </body></html>`;
 }
 
+function renderTimeRangeOption(value: string, label: string): string {
+    return `<option value="${value}"${currentTimeRange === value ? ' selected' : ''}>${label}</option>`;
+}
+
 function renderHeader(insights: CrossSessionInsights): string {
     const fileCount = insights.hotFiles.length;
     const errorCount = insights.recurringErrors.length;
+    const opts = renderTimeRangeOption('all', 'All time') + renderTimeRangeOption('30d', 'Last 30 days')
+        + renderTimeRangeOption('7d', 'Last 7 days') + renderTimeRangeOption('24h', 'Last 24 hours');
     return `<div class="header">
 <div class="header-left">
 <div class="title">Cross-Session Insights</div>
 <div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''}</div>
 </div>
-<button class="refresh-btn" id="refresh-btn">Refresh</button>
+<div class="header-right"><select id="time-range" class="time-range-select">${opts}</select>
+<button class="refresh-btn" id="refresh-btn">Refresh</button></div>
 </div>`;
 }
 
@@ -141,6 +152,9 @@ function getScript(): string {
     const vscode = acquireVsCodeApi();
     document.getElementById('refresh-btn')?.addEventListener('click', () => {
         vscode.postMessage({ type: 'refresh' });
+    });
+    document.getElementById('time-range')?.addEventListener('change', (e) => {
+        vscode.postMessage({ type: 'setTimeRange', range: e.target.value });
     });
     document.addEventListener('click', (e) => {
         var match = e.target.closest('.drill-down-match');

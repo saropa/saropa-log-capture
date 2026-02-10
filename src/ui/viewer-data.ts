@@ -102,7 +102,8 @@ function addToData(html, isMarker, category, ts, fw, sp) {
             classTags: cTags,
             isSeparator: false,
             sourcePath: sp || null,
-            scopeFiltered: false
+            scopeFiltered: false,
+            isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText))
         };
         allLines.push(repeatItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
@@ -130,7 +131,8 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         var lineH = (errorSuppressed || appHidden || classHidden) ? 0 : ROW_HEIGHT;
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
         var finalH = scopeFilt ? 0 : lineH;
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt };
+        var isAnr = (lvl === 'performance' && anrPattern.test(plain));
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr };
         allLines.push(lineItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }

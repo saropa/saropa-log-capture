@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 # App Quality Insights: Android Vitals Reference
 
 ## 1. Executive Summary
