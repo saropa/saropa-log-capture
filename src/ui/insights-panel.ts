@@ -157,8 +157,9 @@ function renderErrorItem(e: RecurringError, status: ErrorStatus): string {
     const actions = status === 'open'
         ? `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="closed">Close</span><span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="muted">Mute</span>`
         : `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="open">Re-open</span>`;
+    const catBadge = e.category ? `<span class="cat-badge cat-${e.category}">${e.category.toUpperCase()}</span> ` : '';
     return `<div class="error-group${dimCls}" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
-<div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${normalized}</div>
+<div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${catBadge}${normalized}</div>
 <div class="error-meta">${sessions} &middot; ${total}${ver} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
 <div class="error-actions">${actions}</div>
 </div>`;
