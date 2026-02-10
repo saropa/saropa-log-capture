@@ -38,6 +38,12 @@ export function getContentStyles(): string {
     font-weight: 600;
     font-style: italic;
 }
+/* Thread dump summary marker injected before multi-thread dumps */
+.thread-dump-summary {
+    color: var(--vscode-debugConsole-warningForeground, #ff9800);
+    font-weight: 700;
+    font-size: 0.95em;
+}
 
 /* ===================================================================
    Jump-to-Bottom Button
