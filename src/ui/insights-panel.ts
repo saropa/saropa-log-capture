@@ -136,6 +136,7 @@ function renderRecurringErrors(errors: readonly RecurringError[]): string {
         : errors.map(renderErrorItem).join('\n');
     return `<details class="section" open>
 <summary class="section-header">Recurring Errors<span class="count">${errors.length} patterns</span></summary>
+<div id="production-loading" class="production-loading" style="display:none">Checking production data&hellip;</div>
 ${items}
 </details>`;
 }
@@ -188,7 +189,12 @@ function getScript(): string {
         if (msg.type === 'drillDownResults') {
             var panel = document.querySelector('.drill-down-panel[data-hash="' + msg.hash + '"]');
             if (panel) panel.innerHTML = msg.html;
+        } else if (msg.type === 'productionBridgeLoading') {
+            var loadEl = document.getElementById('production-loading');
+            if (loadEl) loadEl.style.display = '';
         } else if (msg.type === 'productionBridgeResults') {
+            var loadEl2 = document.getElementById('production-loading');
+            if (loadEl2) loadEl2.style.display = 'none';
             var bridges = msg.bridges || {};
             Object.keys(bridges).forEach(function(hash) {
                 var badge = document.querySelector('.production-badge[data-badge-hash="' + hash + '"]');
@@ -202,13 +208,20 @@ function getScript(): string {
 /** Async: match recurring debug errors against Crashlytics production issues. */
 function bridgeErrorsToCrashlytics(errors: readonly RecurringError[]): void {
     if (errors.length === 0) { return; }
+    panel?.webview.postMessage({ type: 'productionBridgeLoading' });
+    const timer = setTimeout(() => {
+        panel?.webview.postMessage({ type: 'productionBridgeResults', bridges: {} });
+    }, 15_000);
     getFirebaseContext([]).then((ctx) => {
-        if (!ctx.available || ctx.issues.length === 0 || !panel) { return; }
-        const bridges = matchErrorsToIssues(errors, ctx.issues);
-        if (Object.keys(bridges).length > 0) {
-            panel.webview.postMessage({ type: 'productionBridgeResults', bridges });
-        }
-    }).catch(() => {});
+        clearTimeout(timer);
+        if (!panel) { return; }
+        const bridges = (ctx.available && ctx.issues.length > 0)
+            ? matchErrorsToIssues(errors, ctx.issues) : {};
+        panel.webview.postMessage({ type: 'productionBridgeResults', bridges });
+    }).catch(() => {
+        clearTimeout(timer);
+        panel?.webview.postMessage({ type: 'productionBridgeResults', bridges: {} });
+    });
 }
 
 function matchErrorsToIssues(
