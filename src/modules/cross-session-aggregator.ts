@@ -24,6 +24,8 @@ export interface RecurringError {
     readonly totalOccurrences: number;
     readonly firstSeen: string;
     readonly lastSeen: string;
+    readonly firstSeenVersion?: string;
+    readonly lastSeenVersion?: string;
     readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
@@ -132,31 +134,42 @@ function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {
         .slice(0, maxHotFiles);
 }
 
-type ErrorAccum = { n: string; e: string; total: number; timeline: { session: string; count: number }[] };
+type ErrorAccum = {
+    n: string; e: string; total: number;
+    timeline: { session: string; count: number }[];
+    firstVer?: string; lastVer?: string;
+};
 
 function buildRecurringErrors(metas: readonly LoadedMeta[]): RecurringError[] {
     const errorMap = new Map<string, ErrorAccum>();
     for (const { filename, meta } of metas) {
-        for (const fp of meta.fingerprints ?? []) { accumulateFingerprint(fp, filename, errorMap); }
+        const ver = meta.appVersion;
+        for (const fp of meta.fingerprints ?? []) { accumulateFingerprint(fp, filename, errorMap, ver); }
     }
     return [...errorMap.entries()]
-        .map(([hash, { n, e, total, timeline }]) => ({
+        .map(([hash, { n, e, total, timeline, firstVer, lastVer }]) => ({
             hash, normalizedText: n, exampleLine: e,
             sessionCount: timeline.length, totalOccurrences: total,
             firstSeen: timeline[0].session, lastSeen: timeline[timeline.length - 1].session,
+            firstSeenVersion: firstVer, lastSeenVersion: lastVer,
             timeline,
         }))
         .sort((a, b) => (b.sessionCount * b.totalOccurrences) - (a.sessionCount * a.totalOccurrences))
         .slice(0, maxErrors);
 }
 
-function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap: Map<string, ErrorAccum>): void {
+function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap: Map<string, ErrorAccum>, version?: string): void {
     const existing = errorMap.get(fp.h);
     if (existing) {
         existing.total += fp.c;
         if (!existing.timeline.some(t => t.session === filename)) { existing.timeline.push({ session: filename, count: fp.c }); }
+        if (version) { existing.lastVer = version; }
     } else {
-        errorMap.set(fp.h, { n: fp.n, e: fp.e, total: fp.c, timeline: [{ session: filename, count: fp.c }] });
+        errorMap.set(fp.h, {
+            n: fp.n, e: fp.e, total: fp.c,
+            timeline: [{ session: filename, count: fp.c }],
+            firstVer: version, lastVer: version,
+        });
     }
 }
 
