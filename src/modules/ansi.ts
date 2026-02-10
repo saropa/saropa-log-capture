@@ -39,6 +39,14 @@ export function stripAnsi(text: string): string {
     return text.replace(ANSI_REGEX, '');
 }
 
+/** Format a timestamp as a human-readable elapsed label ("just now", "42s ago", "3m ago"). */
+export function formatElapsedLabel(ts: number): string {
+    const s = Math.round((Date.now() - ts) / 1000);
+    if (s < 5) { return 'just now'; }
+    if (s < 60) { return `${s}s ago`; }
+    return `${Math.round(s / 60)}m ago`;
+}
+
 /** Escape HTML special characters to prevent XSS when using innerHTML. */
 export function escapeHtml(text: string): string {
     return text

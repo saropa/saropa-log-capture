@@ -40,6 +40,7 @@ export interface CrossSessionInsights {
     readonly sessionCount: number;
     readonly platforms: readonly EnvironmentStat[];
     readonly sdkVersions: readonly EnvironmentStat[];
+    readonly queriedAt: number;
 }
 
 /** Time window for filtering sessions by age. */
@@ -52,7 +53,7 @@ const timeRangeMs: Record<string, number> = { '24h': 86400000, '7d': 604800000, 
 /** Aggregate insights across all session metadata files. */
 export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
     const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [] }; }
+    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [], queriedAt: Date.now() }; }
     const logDir = getLogDirectoryUri(folder);
     const entries = await listMetaFiles(logDir);
     const metas = await Promise.all(entries.map(e => loadMeta(logDir, e)));
@@ -64,6 +65,7 @@ export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<C
         recurringErrors: buildRecurringErrors(filtered),
         sessionCount: filtered.length,
         ...envStats,
+        queriedAt: Date.now(),
     };
 }
 

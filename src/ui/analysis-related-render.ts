@@ -1,6 +1,6 @@
 /** HTML rendering for related lines, referenced files, GitHub, and Firebase sections. */
 
-import { escapeHtml } from '../modules/ansi';
+import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
 import type { RelatedLine, RelatedLinesResult } from '../modules/related-lines-scanner';
 import type { WorkspaceFileInfo } from '../modules/workspace-analyzer';
 import type { BlameLine } from '../modules/git-blame';
@@ -85,13 +85,6 @@ export function renderGitHubSection(ctx: GitHubContext): string {
     return doneSlot('github', html + '</details>');
 }
 
-function formatRefreshTime(queriedAt: number | undefined): string {
-    if (!queriedAt) { return ''; }
-    const ago = Math.round((Date.now() - queriedAt) / 1000);
-    const label = ago < 5 ? 'just now' : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
-    return ` <span class="fb-refresh-time">(${label})</span>`;
-}
-
 function renderIssueBadges(issue: FirebaseContext['issues'][number]): string {
     const parts: string[] = [];
     const severityClass = issue.isFatal ? 'fb-badge-fatal' : 'fb-badge-nonfatal';
@@ -119,7 +112,7 @@ export function renderFirebaseSection(ctx: FirebaseContext): string {
         return emptySlot('firebase', `🔥 Firebase not configured.${hint}`);
     }
     const n = ctx.issues.length;
-    const refreshNote = formatRefreshTime(ctx.queriedAt);
+    const refreshNote = ctx.queriedAt ? ` <span class="fb-refresh-time">(${formatElapsedLabel(ctx.queriedAt)})</span>` : '';
     const consoleLink = ctx.consoleUrl
         ? `<div class="fb-console" data-url="${escapeHtml(ctx.consoleUrl)}">Open Firebase Console →</div>` : '';
     if (n === 0) { return doneSlot('firebase', `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">0 matches</span>${refreshNote}</summary><div class="fb-empty">No matching Crashlytics issues found</div>${consoleLink}</details>`); }
