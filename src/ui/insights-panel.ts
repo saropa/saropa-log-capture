@@ -146,10 +146,20 @@ function renderErrorItem(e: RecurringError): string {
     const total = e.totalOccurrences === 1 ? '1 occurrence' : `${e.totalOccurrences} occurrences`;
     const example = escapeHtml(e.exampleLine);
     const normalized = escapeHtml(e.normalizedText);
+    const ver = formatVersionRange(e);
     return `<div class="error-group" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
 <div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${normalized}</div>
-<div class="error-meta">${sessions} &middot; ${total} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
+<div class="error-meta">${sessions} &middot; ${total}${ver} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
 </div>`;
+}
+
+function formatVersionRange(e: RecurringError): string {
+    if (!e.firstSeenVersion && !e.lastSeenVersion) { return ''; }
+    const v1 = e.firstSeenVersion ?? '?';
+    const v2 = e.lastSeenVersion ?? '?';
+    return v1 === v2
+        ? ` &middot; v${escapeHtml(v1)}`
+        : ` &middot; v${escapeHtml(v1)} &rarr; v${escapeHtml(v2)}`;
 }
 
 function getScript(): string {
