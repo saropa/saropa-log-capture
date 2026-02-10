@@ -8,7 +8,7 @@ _MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 SCRIPT_DIR = os.path.dirname(_MODULE_DIR)
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# Maximum lines allowed per TypeScript source file (from CLAUDE.md).
+# Maximum lines allowed per TypeScript source file.
 MAX_FILE_LINES = 300
 
 MARKETPLACE_URL = (
@@ -106,7 +106,7 @@ class _FallbackColors:
 
 # Try to initialise colorama for Windows compatibility; fall back gracefully.
 try:
-    import colorama
+    import colorama # type: ignore
     colorama.init(autoreset=True)
     C = _AnsiColors
 except ImportError:

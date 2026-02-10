@@ -178,7 +178,7 @@ def step_test() -> bool:
 def check_file_line_limits() -> bool:
     """Check the 300-line limit on all TypeScript files in src/.
 
-    This is a project quality guideline defined in CLAUDE.md. Keeping files
+    This is a project quality guideline. Keeping files
     short encourages modular design and makes code review easier.
     
     NOTE: This check triggers a WARNING only. It does not halt the build/publish
