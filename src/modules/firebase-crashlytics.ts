@@ -69,7 +69,8 @@ async function isGcloudAvailable(): Promise<boolean> {
     return gcloudAvailable;
 }
 
-async function getAccessToken(): Promise<string | undefined> {
+/** Get a gcloud access token (cached 30 min). */
+export async function getAccessToken(): Promise<string | undefined> {
     if (cachedToken && Date.now() < cachedToken.expires) { return cachedToken.token; }
     try {
         const token = await runCmd('gcloud', ['auth', 'application-default', 'print-access-token']);

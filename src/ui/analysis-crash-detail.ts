@@ -6,6 +6,7 @@ import { isFrameworkFrame } from '../modules/stack-parser';
 import { extractSourceReference } from '../modules/source-linker';
 import { type StackFrameInfo, renderFrameSection } from './analysis-frame-render';
 import type { CrashlyticsEventDetail, CrashlyticsStackFrame, CrashlyticsIssueEvents } from '../modules/firebase-crashlytics';
+import type { IssueStats } from '../modules/crashlytics-stats';
 
 /** Classify Crashlytics stack frames as app or framework using workspace context. */
 function classifyFrames(frames: readonly CrashlyticsStackFrame[]): StackFrameInfo[] {
@@ -101,6 +102,21 @@ export function renderDeviceDistribution(multi: CrashlyticsIssueEvents): string 
     let html = '<details class="group" open><summary class="group-header">Device Distribution <span class="match-count">' + multi.events.length + ' events</span></summary>';
     if (devices.size > 0) { html += renderDistributionBar('Devices', devices, multi.events.length); }
     if (osVersions.size > 0) { html += renderDistributionBar('OS Versions', osVersions, multi.events.length); }
+    return html + '</details>';
+}
+
+/** Render aggregate device/OS distribution from Crashlytics stats API. */
+export function renderApiDistribution(stats: IssueStats): string {
+    if (stats.deviceStats.length === 0 && stats.osStats.length === 0) { return ''; }
+    let html = '<details class="group" open><summary class="group-header">Aggregate Distribution <span class="match-count">all events</span></summary>';
+    if (stats.deviceStats.length > 0) {
+        const devices = new Map(stats.deviceStats.map(e => [e.name, e.count]));
+        html += renderDistributionBar('Devices', devices, stats.deviceStats.reduce((s, e) => s + e.count, 0));
+    }
+    if (stats.osStats.length > 0) {
+        const os = new Map(stats.osStats.map(e => [e.name, e.count]));
+        html += renderDistributionBar('OS Versions', os, stats.osStats.reduce((s, e) => s + e.count, 0));
+    }
     return html + '</details>';
 }
 
