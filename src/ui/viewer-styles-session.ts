@@ -241,6 +241,13 @@ export function getSessionPanelStyles(): string {
 .sev-bar-w { background: var(--vscode-charts-yellow, #ffc107); }
 .sev-bar-p { background: var(--vscode-charts-blue, #2196f3); }
 
+/* --- Spark density bar (relative error density across sessions) --- */
+.spark-bar { display: inline-block; width: 50px; height: 4px; background: var(--vscode-panel-border); border-radius: 2px; overflow: hidden; vertical-align: middle; margin-left: 6px; }
+.spark-fill { display: block; height: 100%; border-radius: 2px; transition: width 0.3s ease; }
+.spark-fill-error { background: var(--vscode-charts-red, #f44336); }
+.spark-fill-warning { background: var(--vscode-charts-yellow, #ffc107); }
+.spark-fill-perf { background: var(--vscode-charts-blue, #2196f3); }
+
 /* --- Session tag chips --- */
 .session-tags-section {
     padding: 4px 12px;
