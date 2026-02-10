@@ -8,20 +8,20 @@ export function getFindPanelStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Find Panel — slide-out from right (same pattern as session panel)
+   Find Panel — slide-out (same pattern as session panel)
    =================================================================== */
 .find-panel {
     position: fixed;
-    right: -100%;
+    left: -100%;
     top: 0;
     bottom: 0;
     width: 25%;
     min-width: 280px;
     max-width: 400px;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.3s ease;
+    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
     z-index: 240;
     display: flex;
     flex-direction: column;
@@ -30,7 +30,7 @@ export function getFindPanelStyles(): string {
 }
 
 .find-panel.visible {
-    right: var(--icon-bar-width, 36px);
+    left: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 

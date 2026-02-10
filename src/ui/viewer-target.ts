@@ -39,4 +39,5 @@ export interface ViewerTarget {
   updateWatchCounts(counts: ReadonlyMap<string, number>): void;
   sendBookmarkList(files: Record<string, unknown>): void;
   setScopeContext(context: ScopeContext): void;
+  setIconBarPosition(position: "left" | "right"): void;
 }

@@ -163,6 +163,7 @@ export class LogViewerProvider
 
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.postMessage({ type: "setScopeContext", ...ctx }); }
+  setIconBarPosition(position: "left" | "right"): void { this.postMessage({ type: "iconBarPosition", position }); }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
   sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }

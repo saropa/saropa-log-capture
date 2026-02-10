@@ -24,7 +24,8 @@ export function getViewerStyles(): string {
 
 /* ===================================================================
    Reset & Root Layout
-   The webview body is a flex row: main content column + icon bar.
+   The webview body is a flex row: icon bar + main content column.
+   Default: icon bar on left (row-reverse). data-icon-bar="right" flips it.
    The #main-content div stacks children vertically (breadcrumb, content,
    footer) with log-content taking all remaining space.
    =================================================================== */
@@ -37,9 +38,10 @@ body {
     overflow: hidden;
     height: 100vh;
     display: flex;
-    flex-direction: row;
+    flex-direction: row-reverse;
     user-select: none; /* Confine native text selection to #viewport only */
 }
+body[data-icon-bar="right"] { flex-direction: row; }
 #viewport { user-select: text; }
 
 #main-content {

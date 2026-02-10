@@ -16,6 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Firebase Crashlytics:** Analysis panel queries Firebase Crashlytics REST API for matching production crashes. Shows crash issue title, event count, and affected users. Clicking an issue card fetches the latest crash event and renders classified stack frames inline (APP/FW badges, clickable app frames open source). Console deep link opens Firebase Console in browser. Auth via `gcloud` CLI with 30-minute token caching; config auto-detected from `google-services.json` or overridden via `saropaLogCapture.firebase.projectId` / `.appId` settings. Crash event detail is cached to `reports/.crashlytics/` to avoid repeated API calls. Gracefully degrades with actionable setup hints when gcloud or config is missing.
 - **Expanded code tag detection:** Detects method names (`_logDebugError`, `dbActivityAdd`) and constructor calls (`ResizeImage()`, `Image()`) in addition to class names. Generic lifecycle methods (`build`, `dispose`, `initState`, etc.) are blacklisted to reduce noise. Section renamed from "Class Tags" to "Code Tags".
 - **Tag chip "Show all" toggle:** Log Tags and Code Tags sections now show the top 20 chips by count, with a "Show all (N)" toggle to reveal the full list.
+- **Session panel discoverability:** Six improvements to the Project Logs panel for better navigation when many sessions share similar names after datetime stripping:
+  - Drag-resizable panel width (handle on left edge, persisted in display options)
+  - Session duration in subtitle (computed from header Date and footer SESSION END timestamps)
+  - Error/warning/performance colored dot counts (scanned from file body, cached in `.meta.json` sidecar)
+  - Dim "(latest)" suffix on the newest session per unique display name
+  - "Latest only" toggle filters to one-per-name for quick access
+  - Inline correlation tag chips (replaces QuickPick) with All/None controls for filtering sessions by tag
+- **Correlation tags documentation:** New `docs/correlation-tags.md` explaining what tags are, how they're generated, how to filter, and how to rescan.
+- **Configurable icon bar position:** New `saropaLogCapture.iconBarPosition` setting (`"left"` or `"right"`, default `"left"`). The icon bar and all slide-out panels now default to the left side of the viewer, matching VS Code's activity bar convention. Changes apply instantly without reload.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.

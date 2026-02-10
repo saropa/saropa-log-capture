@@ -15,6 +15,8 @@ import { disposeAnalysisPanel } from './ui/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights-panel';
 import { disposeBugReportPanel } from './ui/bug-report-panel';
 import { disposeTimelinePanel } from './ui/timeline-panel';
+import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
+import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -55,6 +57,17 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     );
 
+    // Crashlytics sidebar panel.
+    const crashlyticsPanel = new CrashlyticsPanelProvider();
+    context.subscriptions.push(crashlyticsPanel);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(CrashlyticsPanelProvider.viewType, crashlyticsPanel),
+    );
+
+    // Crashlytics CodeLens — show crash indicators on affected source files.
+    const crashCodeLens = new CrashlyticsCodeLensProvider();
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
+
     // Broadcaster + pop-out panel.
     broadcaster = new ViewerBroadcaster();
     popOutPanel = new PopOutPanel(context.extensionUri, version, context, broadcaster);
@@ -86,6 +99,14 @@ export function activate(context: vscode.ExtensionContext): void {
     if (initCfg.highlightRules.length > 0) {
         broadcaster.setHighlightRules(initCfg.highlightRules);
     }
+    broadcaster.setIconBarPosition(initCfg.iconBarPosition);
+
+    // Live config changes for icon bar position.
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
+            broadcaster.setIconBarPosition(getConfig().iconBarPosition);
+        }
+    }));
 
     // Session display options (strip datetime, normalize names).
     const displayKey = 'slc.sessionDisplayOptions';

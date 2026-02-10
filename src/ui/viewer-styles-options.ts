@@ -8,7 +8,7 @@ export function getOptionsStyles(): string {
 
 /* ===================================================================
    Options Panel
-   Slide-out panel from the right side showing all viewer settings
+   Slide-out panel showing all viewer settings
    organized into logical sections.
    =================================================================== */
 .options-panel {
@@ -16,16 +16,16 @@ export function getOptionsStyles(): string {
     /* Must be -100% (not -25%) to fully hide off-screen: min-width 280px
        exceeds 25% in narrow sidebar viewports, leaving the panel partially
        visible and blocking clicks on footer buttons underneath. */
-    right: -100%;
+    left: -100%;
     top: 0;
     bottom: 0;
     width: 25%;
     min-width: 280px;
     max-width: 400px;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.3s ease;
+    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
     z-index: 250;
     display: flex;
     flex-direction: column;
@@ -34,7 +34,7 @@ export function getOptionsStyles(): string {
 }
 
 .options-panel.visible {
-    right: var(--icon-bar-width, 36px);
+    left: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 
