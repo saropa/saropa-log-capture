@@ -15,6 +15,7 @@ import type { SessionDisplayOptions } from "./session-display";
 import type { ScopeContext } from "../modules/scope-context";
 import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
+import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -28,6 +29,7 @@ export class LogViewerProvider
   private view: vscode.WebviewView | undefined;
   private pendingLines: PendingLine[] = [];
   private batchTimer: ReturnType<typeof setInterval> | undefined;
+  private threadDumpState: ThreadDumpState = createThreadDumpState();
   private onMarkerRequest?: () => void;
   private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
   private onTogglePause?: () => void;
@@ -155,11 +157,12 @@ export class LogViewerProvider
   addLine(data: LineData): void {
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
-    this.pendingLines.push({
+    const line: PendingLine = {
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),
       fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
-    });
+    };
+    processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
   }
 
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
@@ -175,7 +178,11 @@ export class LogViewerProvider
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
-  clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.postMessage({ type: "clear" }); this.setSessionInfo(null); }
+  clear(): void {
+    flushThreadDump(this.threadDumpState, this.pendingLines);
+    this.pendingLines = []; this.currentFileUri = undefined;
+    this.postMessage({ type: "clear" }); this.setSessionInfo(null);
+  }
   async loadFromFile(uri: vscode.Uri): Promise<void> {
     const gen = ++this.loadGeneration; this.pendingLoadUri = uri;
     this.view?.show?.(true);
