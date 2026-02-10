@@ -7,7 +7,7 @@ export function getContentStyles(): string {
     border-bottom: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
     background: var(--vscode-diffEditor-insertedLineBackground, rgba(40, 167, 69, 0.1));
     color: var(--vscode-editorGutter-addedBackground, #28a745);
-    padding: 4px 8px;
+    padding: 4px 8px 4px 16px;
     text-align: center;
     font-style: italic;
     line-height: 1.5;
@@ -16,7 +16,7 @@ export function getContentStyles(): string {
 /* --- Stack Trace Groups --- */
 .stack-group { margin: 0; }
 .stack-header {
-    padding: 0 8px;
+    padding: 0 8px 0 16px;
     cursor: pointer;
     color: var(--vscode-debugConsole-errorForeground, #f48771);
     line-height: 1.5;
@@ -29,7 +29,7 @@ export function getContentStyles(): string {
 .stack-group.collapsed .stack-frames { display: none; }
 /* Individual stack frames are indented and dimmed */
 .stack-frames .line {
-    padding-left: 20px;
+    padding-left: 28px;
     color: var(--vscode-descriptionForeground);
 }
 
@@ -145,7 +145,7 @@ export function getContentStyles(): string {
    =================================================================== */
 /* Dedup annotation: "Error (x54)" style inline note */
 .annotation {
-    padding: 1px 8px 1px 24px;
+    padding: 1px 8px 1px 32px;
     font-size: 11px;
     font-style: italic;
     color: var(--vscode-descriptionForeground);
@@ -227,16 +227,16 @@ export function getContentStyles(): string {
 /* --- Info panel (slide-out, same pattern as session/options panels) --- */
 .info-panel {
     position: fixed;
-    right: -100%;
+    left: -100%;
     top: 0;
     bottom: 0;
     width: 25%;
     min-width: 240px;
     max-width: 360px;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.3s ease;
+    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
     z-index: 240;
     display: flex;
     flex-direction: column;
@@ -244,7 +244,7 @@ export function getContentStyles(): string {
     pointer-events: none;
 }
 .info-panel.visible {
-    right: var(--icon-bar-width, 36px);
+    left: var(--icon-bar-width, 36px);
     pointer-events: auto;
 }
 .info-panel-header {

@@ -1,5 +1,5 @@
 /**
- * Icon bar HTML and script for the right-side vertical activity bar.
+ * Icon bar HTML and script for the vertical activity bar.
  *
  * Provides toggle buttons (sessions, search, info, options) that open
  * their corresponding slide-out panels with mutual exclusion.
