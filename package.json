@@ -202,6 +202,11 @@
         "command": "saropaLogCapture.toggleTrash",
         "icon": "$(eye)",
         "title": "Saropa Log Capture: Toggle Trash Visibility"
+      },
+      {
+        "command": "saropaLogCapture.resetAllSettings",
+        "icon": "$(clear-all)",
+        "title": "Saropa Log Capture: Reset All Settings to Defaults"
       }
     ],
     "configuration": {
@@ -831,5 +836,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "2.0.0"
+  "version": "2.0.1"
 }

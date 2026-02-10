@@ -110,5 +110,6 @@ try:
     colorama.init(autoreset=True)
     C = _AnsiColors
 except ImportError:
-    # colorama is optional — ANSI codes still work on most modern terminals.
-    C = _FallbackColors
+    # colorama is optional — ANSI codes work natively in VS Code terminal
+    # and Windows Terminal. _FallbackColors only needed for NO_COLOR.
+    C = _AnsiColors

@@ -9,9 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.1] - 2026-02-10
 
 ### Added
+- **Reset All Settings command:** New "Saropa Log Capture: Reset All Settings to Defaults" command in the command palette resets every extension setting to its default value in one step.
 - **Crashlytics setup wizard:** The Crashlytics sidebar panel now shows an interactive 3-step setup wizard instead of plain text hints. Step 1 links to the Google Cloud CLI install page, step 2 opens a VS Code terminal to run the auth command, and step 3 offers a file picker to locate `google-services.json` (or a link to configure settings manually). A billing tip reassures users that Crashlytics API access is free. "Check Again" button and auto-refresh on terminal close.
 - **Clickable URLs in setup hints:** Setup hint URLs in the analysis panel (GitHub CLI, Firebase) are now rendered as clickable links instead of plain text.
 - **Filterable crash categories in Insights:** Toggle chips (FATAL, ANR, OOM, NATIVE) above the recurring errors list let you isolate specific crash types. All/None buttons for quick toggling. Errors without a category are always visible.
