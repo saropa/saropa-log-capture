@@ -100,5 +100,13 @@ details[open] > .section-header::before { transform: rotate(90deg); }
     border-radius: 2px; font-size: 11px;
 }
 .err-action:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.cat-badge {
+    font-size: 0.7em; padding: 1px 4px; border-radius: 2px;
+    font-weight: 700; vertical-align: middle; margin-right: 4px;
+}
+.cat-fatal { background: #d32f2f; color: #fff; }
+.cat-anr { background: #f57c00; color: #fff; }
+.cat-oom { background: #7b1fa2; color: #fff; }
+.cat-native { background: #757575; color: #fff; }
 `;
 }
