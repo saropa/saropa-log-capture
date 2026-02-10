@@ -248,6 +248,14 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             meta = { ...meta, correlationTags: sidecar.correlationTags };
         }
         if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
+        if (sidecar.errorCount !== undefined) {
+            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount };
+        } else if (meta.errorCount !== undefined) {
+            sidecar.errorCount = meta.errorCount;
+            sidecar.warningCount = meta.warningCount;
+            sidecar.perfCount = meta.perfCount;
+            this.metaStore.saveMetadata(uri, sidecar).catch(() => {});
+        }
         this.metaCache.set(cacheKey, meta);
         return meta;
     }

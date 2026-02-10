@@ -1,6 +1,7 @@
 /** Cross-session analysis panel — progressive rendering with cancellation. */
 
 import * as vscode from 'vscode';
+import { escapeHtml } from '../modules/ansi';
 import { getNonce } from './viewer-content';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
@@ -20,8 +21,9 @@ import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext, getCrashEventDetail } from '../modules/firebase-crashlytics';
-import { renderCrashDetail } from './analysis-crash-detail';
+import { getFirebaseContext, getCrashEventDetail, getCrashEvents } from '../modules/firebase-crashlytics';
+import { renderCrashDetail, renderDeviceDistribution } from './analysis-crash-detail';
+import { generateCrashSummary } from '../modules/crashlytics-ai-summary';
 import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
 import {
     type TokenResultGroup,
@@ -223,13 +225,27 @@ async function runFirebaseLookup(post: PostFn, signal: AbortSignal, tokens: read
     const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
     const ctx = await getFirebaseContext(errorTokens).catch(() => ({ available: false, setupHint: 'Firebase query failed', issues: [] as const }));
     if (!signal.aborted) { post('firebase', renderFirebaseSection(ctx)); }
-    return { crashlyticsIssueCount: ctx.issues.length };
+    const top = ctx.issues[0];
+    const productionImpact = top ? { eventCount: top.eventCount, userCount: top.userCount, issueId: top.id } : undefined;
+    return { crashlyticsIssueCount: ctx.issues.length, productionImpact };
 }
 
-async function fetchCrashDetail(issueId: string): Promise<void> {
-    const detail = await getCrashEventDetail(issueId).catch(() => undefined);
-    const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
-    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html });
+async function fetchCrashDetail(issueId: string, eventIndex = 0): Promise<void> {
+    const multi = await getCrashEvents(issueId).catch(() => undefined);
+    if (!multi || multi.events.length === 0) {
+        panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
+        return;
+    }
+    const idx = Math.max(0, Math.min(eventIndex, multi.events.length - 1));
+    const detail = multi.events[idx];
+    const html = renderCrashDetail(detail);
+    const dist = renderDeviceDistribution(multi);
+    const nav = multi.events.length > 1 ? `<div class="crash-event-nav" data-issue-id="${issueId}"><button class="crash-nav-btn" data-dir="-1" ${idx === 0 ? 'disabled' : ''}>&lt;</button> <span class="crash-nav-label">Event ${idx + 1} of ${multi.events.length}</span> <button class="crash-nav-btn" data-dir="1" ${idx >= multi.events.length - 1 ? 'disabled' : ''}>&gt;</button></div>` : '';
+    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html: dist + nav + html });
+    // AI summary — async, arrives after the initial render.
+    generateCrashSummary(detail).then(summary => {
+        if (summary) { panel?.webview.postMessage({ type: 'crashAiSummary', issueId, html: `<div class="crash-ai-summary">${escapeHtml(summary)}</div>` }); }
+    }).catch(() => {});
 }
 function postFrameResult(file: string, line: number, html: string): void {
     panel?.webview.postMessage({ type: 'frameReady', file, line, html });
@@ -247,7 +263,8 @@ function ensurePanel(): void {
 function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'cancelAnalysis') { cancelAnalysis(); return; }
     if (msg.type === 'analyzeFrame') { analyzeFrame(String(msg.file ?? ''), Number(msg.line ?? 1), postFrameResult).catch(() => {}); return; }
-    if (msg.type === 'fetchCrashDetail') { fetchCrashDetail(String(msg.issueId ?? '')).catch(() => {}); return; }
+    if (msg.type === 'fetchCrashDetail') { fetchCrashDetail(String(msg.issueId ?? ''), Number(msg.eventIndex ?? 0)).catch(() => {}); return; }
+    if (msg.type === 'navigateCrashEvent') { fetchCrashDetail(String(msg.issueId ?? ''), Number(msg.eventIndex ?? 0)).catch(() => {}); return; }
     if (msg.type === 'openMatch') {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});

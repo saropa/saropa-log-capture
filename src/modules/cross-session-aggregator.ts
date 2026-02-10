@@ -27,11 +27,19 @@ export interface RecurringError {
     readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
+/** Environment distribution entry from session headers. */
+export interface EnvironmentStat {
+    readonly value: string;
+    readonly sessionCount: number;
+}
+
 /** Aggregated cross-session insights. */
 export interface CrossSessionInsights {
     readonly hotFiles: readonly HotFile[];
     readonly recurringErrors: readonly RecurringError[];
     readonly sessionCount: number;
+    readonly platforms: readonly EnvironmentStat[];
+    readonly sdkVersions: readonly EnvironmentStat[];
 }
 
 const maxHotFiles = 20;
@@ -40,15 +48,17 @@ const maxErrors = 30;
 /** Aggregate insights across all session metadata files. */
 export async function aggregateInsights(): Promise<CrossSessionInsights> {
     const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0 }; }
+    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [] }; }
     const logDir = getLogDirectoryUri(folder);
     const entries = await listMetaFiles(logDir);
     const metas = await Promise.all(entries.map(e => loadMeta(logDir, e)));
     const valid = metas.filter((m): m is LoadedMeta => m !== undefined);
+    const envStats = buildEnvironmentStats(valid);
     return {
         hotFiles: buildHotFiles(valid),
         recurringErrors: buildRecurringErrors(valid),
         sessionCount: valid.length,
+        ...envStats,
     };
 }
 
@@ -129,4 +139,30 @@ function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap:
     } else {
         errorMap.set(fp.h, { n: fp.n, e: fp.e, total: fp.c, timeline: [{ session: filename, count: fp.c }] });
     }
+}
+
+const platformTagRe = /^(?:platform|os|device|runtime)$/i;
+const sdkTagRe = /^(?:sdk|flutter|dart|node|python|java|go)/i;
+
+function buildEnvironmentStats(metas: readonly LoadedMeta[]): { platforms: EnvironmentStat[]; sdkVersions: EnvironmentStat[] } {
+    const platformMap = new Map<string, number>();
+    const sdkMap = new Map<string, number>();
+    for (const { meta } of metas) {
+        for (const tag of meta.autoTags ?? []) {
+            const lower = tag.toLowerCase();
+            if (platformTagRe.test(lower.split(':')[0] ?? '')) { incr(platformMap, tag); }
+            else if (sdkTagRe.test(lower.split(':')[0] ?? '') || sdkTagRe.test(lower)) { incr(sdkMap, tag); }
+        }
+        for (const tag of meta.tags ?? []) {
+            const lower = tag.toLowerCase();
+            if (lower.includes('android') || lower.includes('ios') || lower.includes('web') || lower.includes('linux') || lower.includes('macos') || lower.includes('windows')) { incr(platformMap, tag); }
+        }
+    }
+    return { platforms: toStats(platformMap), sdkVersions: toStats(sdkMap) };
+}
+
+function incr(map: Map<string, number>, key: string): void { map.set(key, (map.get(key) ?? 0) + 1); }
+
+function toStats(map: Map<string, number>): EnvironmentStat[] {
+    return [...map.entries()].map(([value, sessionCount]) => ({ value, sessionCount })).sort((a, b) => b.sessionCount - a.sessionCount).slice(0, 10);
 }

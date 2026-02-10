@@ -8,9 +8,12 @@
 import * as vscode from 'vscode';
 import { SessionMetadata, formatSize } from './session-history-grouping';
 import { formatMtime, formatMtimeTimeOnly } from './session-display';
+import { countSeverities, extractBody } from './session-severity-counts';
 
 /** Regex to extract line count from the SESSION END footer. */
 const footerCountRe = /===\s*SESSION END\b.*?(\d[\d,]*)\s+lines\s*===/;
+/** Regex to extract ISO date from the SESSION END footer. */
+const footerDateRe = /===\s*SESSION END[\s\u2014\u2013-]+(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)/;
 
 /** Parse header fields, footer line count, and timestamp presence from a log file. */
 export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promise<SessionMetadata> {
@@ -21,7 +24,13 @@ export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promi
         const block = headerEnd > 0 ? text.slice(0, headerEnd) : text.slice(0, 800);
         const hasTimestamps = detectTimestamps(text, headerEnd);
         const lineCount = parseLineCount(text);
-        return { ...base, ...extractFields(block), hasTimestamps, lineCount };
+        const fields = extractFields(block);
+        const durationMs = parseDuration(text, fields.date);
+        const sev = countSeverities(extractBody(text));
+        return {
+            ...base, ...fields, hasTimestamps, lineCount, durationMs,
+            errorCount: sev.errors, warningCount: sev.warnings, perfCount: sev.perfs,
+        };
     } catch {
         return base;
     }
@@ -58,6 +67,32 @@ function parseLineCount(text: string): number {
     return count;
 }
 
+function parseDuration(text: string, startDate: string | undefined): number | undefined {
+    if (!startDate) { return undefined; }
+    const startMs = new Date(startDate).getTime();
+    if (!Number.isFinite(startMs)) { return undefined; }
+    const endMatch = text.match(footerDateRe);
+    if (!endMatch) { return undefined; }
+    const endMs = new Date(endMatch[1]).getTime();
+    if (!Number.isFinite(endMs) || endMs <= startMs) { return undefined; }
+    return endMs - startMs;
+}
+
+/** Format a duration in ms as a human-readable string. */
+export function formatDuration(ms: number): string {
+    if (ms >= 3_600_000) {
+        const h = Math.floor(ms / 3_600_000);
+        const m = Math.floor((ms % 3_600_000) / 60_000);
+        return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    }
+    if (ms >= 60_000) {
+        const m = Math.floor(ms / 60_000);
+        const s = Math.floor((ms % 60_000) / 1000);
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    return `${Math.round(ms / 1000)}s`;
+}
+
 function extractFields(block: string): Partial<Pick<SessionMetadata, 'date' | 'project' | 'adapter'>> {
     const result: Record<string, string> = {};
     const dateMatch = block.match(/^Date:\s+(.+)$/m);
@@ -83,6 +118,7 @@ export function buildDescription(item: SessionMetadata, timeOnly: boolean, isAct
         const countStr = `${formatCount(item.lineCount)} lines`;
         parts.push(isActive ? `${countStr} ●` : countStr);
     }
+    if (item.durationMs) { parts.push(formatDuration(item.durationMs)); }
     parts.push(formatSize(item.size));
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
@@ -106,6 +142,7 @@ export function buildTooltip(item: SessionMetadata): string {
     if (item.lineCount !== undefined) {
         parts.push(`Lines: ${formatCount(item.lineCount)}`);
     }
+    if (item.durationMs) { parts.push(`Duration: ${formatDuration(item.durationMs)}`); }
     parts.push(`Size: ${formatSize(item.size)}`);
     parts.push(`Timestamps: ${item.hasTimestamps ? 'Yes' : 'No'}`);
     return parts.join('\n');

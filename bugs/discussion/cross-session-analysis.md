@@ -8,37 +8,37 @@ The cross-session analysis system is **operational** across 28 files (14 modules
 
 | Feature | Module(s) | Status |
 |---------|-----------|--------|
-| **"Analyze Line" context action** | `analysis-panel.ts`, `line-analyzer.ts` | Shipped. Right-click any log line → progressive analysis panel |
-| **Token extraction** | `line-analyzer.ts` (46 lines) | Extracts source files, error classes, HTTP status, URL paths, quoted strings, class.method patterns |
-| **Parallel session search** | `log-search.ts` | Concurrent scan of all session files for token matches, capped at 50 results |
-| **Source file lookup** | `source-linker.ts` + `workspace-analyzer.ts` | Finds referenced source files in workspace, reads code around crash line |
-| **Git blame** | `git-blame.ts` | Shows who last changed the crash line, and when |
-| **Git history (file-level)** | `workspace-analyzer.ts` | Last 10 commits touching the source file |
-| **Git history (line-range)** | `workspace-analyzer.ts` | Commits that changed the ±2 line region around the crash |
-| **Source annotations** | `workspace-analyzer.ts` | Finds TODO/FIXME/BUG/HACK/NOTE/XXX near the crash site |
-| **Documentation scan** | `docs-scanner.ts` (79 lines) | Searches project markdown files for references to analysis tokens |
-| **Import extraction** | `import-extractor.ts` (75 lines) | Parses imports from the crashing source file (Dart, TS, JS, Python, Go, Rust, Java, Kotlin, Swift, C/C++, C#, Ruby, PHP) |
-| **Symbol resolution** | `symbol-resolver.ts` (74 lines) | Resolves class/method names via VS Code's workspace symbol provider |
-| **Error fingerprinting** | `error-fingerprint.ts` (79 lines) | FNV-1a hash after normalizing timestamps, IDs, UUIDs, hex addresses, paths |
-| **Cross-session aggregation** | `cross-session-aggregator.ts` (116 lines) | Reads all `.meta.json` sidecars to build hot-file rankings + recurring error groups |
-| **Correlation tags** | `correlation-scanner.ts` (43 lines) | Extracts `file:` and `error:` tags from log content for session metadata |
-| **Bug report generation** | `bug-report-collector.ts` + `bug-report-formatter.ts` | One-click markdown report with error, stack trace, context, environment, dev environment, source code, git history, imports, docs, symbols, cross-session match |
-| **Insights panel** | `insights-panel.ts` (176 lines) | Hot files + recurring errors aggregated across all sessions |
-| **Insights drill-down** | `insights-drill-down.ts` (71 lines) | Click a recurring error → fuzzy regex search across sessions, results grouped by session |
-| **Session timeline** | `timeline-panel.ts` (214 lines) | SVG visualization of errors/warnings over time within a session |
-| **Session comparison** | `session-comparison.ts` (234 lines) | Side-by-side diff with color highlighting and optional synchronized scrolling |
-| **Progressive rendering** | `analysis-panel-render.ts` + styles | Sections appear independently as their data arrives — spinners → content |
-| **Cancellation** | `analysis-panel.ts` | AbortController-based; user can stop analysis mid-flight |
-| **Executive summary** | `analysis-relevance.ts` + `analysis-panel-summary.ts` | Relevance scoring → 2-4 key findings banner, smart section collapse |
-| **Root cause correlation** | `analysis-relevance.ts` + `git-diff.ts` | Blame date vs error first-seen date → "Error likely introduced by commit" |
-| **Commit diff summary** | `git-diff.ts` (52 lines) | Parses `git show --stat` for files changed / insertions / deletions |
-| **Stack trace deep-dive** | `analysis-frame-render.ts` (65 lines) | Clickable frame list with APP/FW badges; click app frame → inline source + blame |
-| **Cross-session lookup** | `analysis-panel.ts` | Parallel stream: fingerprint → aggregator match → firstSeenDate for correlation |
-| **Related lines** | `related-lines-scanner.ts` + `analysis-related-render.ts` | Scans log file for all lines sharing source tag, diagnostic timeline UI |
-| **Referenced files** | `analysis-panel.ts` + `analysis-related-render.ts` | Git blame + annotations for each source file across related lines |
-| **GitHub context** | `github-context.ts` + `analysis-related-render.ts` | `gh` CLI: blame-to-PR mapping, file PRs, issue search with auto-detection |
-| **Progress reporting** | `analysis-panel-render.ts` + styles | Progress bar, per-section spinner text, smooth CSS transitions |
-| **Bug report scoring** | `bug-report-formatter.ts` | Executive summary with key findings in markdown bug reports |
+| **"Analyze Line" context action** | [analysis-panel.ts](src/ui/analysis-panel.ts), [line-analyzer.ts](src/modules/line-analyzer.ts) | Shipped. Right-click any log line → progressive analysis panel |
+| **Token extraction** | [line-analyzer.ts](src/modules/line-analyzer.ts) (46 lines) | Extracts source files, error classes, HTTP status, URL paths, quoted strings, class.method patterns |
+| **Parallel session search** | [log-search.ts](src/modules/log-search.ts) | Concurrent scan of all session files for token matches, capped at 50 results |
+| **Source file lookup** | [source-linker.ts](src/modules/source-linker.ts) + [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | Finds referenced source files in workspace, reads code around crash line |
+| **Git blame** | [git-blame.ts](src/modules/git-blame.ts) | Shows who last changed the crash line, and when |
+| **Git history (file-level)** | [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | Last 10 commits touching the source file |
+| **Git history (line-range)** | [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | Commits that changed the ±2 line region around the crash |
+| **Source annotations** | [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | Finds TODO/FIXME/BUG/HACK/NOTE/XXX near the crash site |
+| **Documentation scan** | [docs-scanner.ts](src/modules/docs-scanner.ts) (79 lines) | Searches project markdown files for references to analysis tokens |
+| **Import extraction** | [import-extractor.ts](src/modules/import-extractor.ts) (75 lines) | Parses imports from the crashing source file (Dart, TS, JS, Python, Go, Rust, Java, Kotlin, Swift, C/C++, C#, Ruby, PHP) |
+| **Symbol resolution** | [symbol-resolver.ts](src/modules/symbol-resolver.ts) (74 lines) | Resolves class/method names via VS Code's workspace symbol provider |
+| **Error fingerprinting** | [error-fingerprint.ts](src/modules/error-fingerprint.ts) (79 lines) | FNV-1a hash after normalizing timestamps, IDs, UUIDs, hex addresses, paths |
+| **Cross-session aggregation** | [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) (116 lines) | Reads all `.meta.json` sidecars to build hot-file rankings + recurring error groups |
+| **Correlation tags** | [correlation-scanner.ts](src/modules/correlation-scanner.ts) (43 lines) | Extracts `file:` and `error:` tags from log content for session metadata |
+| **Bug report generation** | [bug-report-collector.ts](src/modules/bug-report-collector.ts) + [bug-report-formatter.ts](src/modules/bug-report-formatter.ts) | One-click markdown report with error, stack trace, context, environment, dev environment, source code, git history, imports, docs, symbols, cross-session match |
+| **Insights panel** | [insights-panel.ts](src/ui/insights-panel.ts) (176 lines) | Hot files + recurring errors aggregated across all sessions |
+| **Insights drill-down** | [insights-drill-down.ts](src/ui/insights-drill-down.ts) (71 lines) | Click a recurring error → fuzzy regex search across sessions, results grouped by session |
+| **Session timeline** | [timeline-panel.ts](src/ui/timeline-panel.ts) (214 lines) | SVG visualization of errors/warnings over time within a session |
+| **Session comparison** | [session-comparison.ts](src/ui/session-comparison.ts) (234 lines) | Side-by-side diff with color highlighting and optional synchronized scrolling |
+| **Progressive rendering** | [analysis-panel-render.ts](src/ui/analysis-panel-render.ts) + styles | Sections appear independently as their data arrives — spinners → content |
+| **Cancellation** | [analysis-panel.ts](src/ui/analysis-panel.ts) | AbortController-based; user can stop analysis mid-flight |
+| **Executive summary** | [analysis-relevance.ts](src/modules/analysis-relevance.ts) + [analysis-panel-summary.ts](src/ui/analysis-panel-summary.ts) | Relevance scoring → 2-4 key findings banner, smart section collapse |
+| **Root cause correlation** | [analysis-relevance.ts](src/modules/analysis-relevance.ts) + [git-diff.ts](src/modules/git-diff.ts) | Blame date vs error first-seen date → "Error likely introduced by commit" |
+| **Commit diff summary** | [git-diff.ts](src/modules/git-diff.ts) (52 lines) | Parses `git show --stat` for files changed / insertions / deletions |
+| **Stack trace deep-dive** | [analysis-frame-render.ts](src/ui/analysis-frame-render.ts) (65 lines) | Clickable frame list with APP/FW badges; click app frame → inline source + blame |
+| **Cross-session lookup** | [analysis-panel.ts](src/ui/analysis-panel.ts) | Parallel stream: fingerprint → aggregator match → firstSeenDate for correlation |
+| **Related lines** | [related-lines-scanner.ts](src/modules/related-lines-scanner.ts) + [analysis-related-render.ts](src/ui/analysis-related-render.ts) | Scans log file for all lines sharing source tag, diagnostic timeline UI |
+| **Referenced files** | [analysis-panel.ts](src/ui/analysis-panel.ts) + [analysis-related-render.ts](src/ui/analysis-related-render.ts) | Git blame + annotations for each source file across related lines |
+| **GitHub context** | [github-context.ts](src/modules/github-context.ts) + [analysis-related-render.ts](src/ui/analysis-related-render.ts) | `gh` CLI: blame-to-PR mapping, file PRs, issue search with auto-detection |
+| **Progress reporting** | [analysis-panel-render.ts](src/ui/analysis-panel-render.ts) + styles | Progress bar, per-section spinner text, smooth CSS transitions |
+| **Bug report scoring** | [bug-report-formatter.ts](src/modules/bug-report-formatter.ts) | Executive summary with key findings in markdown bug reports |
 
 ### Recently Completed
 
@@ -46,9 +46,9 @@ The cross-session analysis system is **operational** across 28 files (14 modules
 
 **Progress Reporting** — Header progress bar with "X/N complete" counter, per-section spinner text updates, smooth CSS transitions. Bar turns green and fades on completion.
 
-**Stack Trace Deep-Dive** — `extractFrames()` reads the log file below the error line, classifies frames as app vs framework. `analysis-frame-render.ts` renders a clickable frame list with APP/FW badges. Clicking an app frame sends `analyzeFrame` → extension runs `analyzeSourceFile()` + `getGitBlame()` → posts `frameReady` with inline source preview + blame. FW frames are grayed out, not clickable.
+**Stack Trace Deep-Dive** — `extractFrames()` reads the log file below the error line, classifies frames as app vs framework. [analysis-frame-render.ts](src/ui/analysis-frame-render.ts) renders a clickable frame list with APP/FW badges. Clicking an app frame sends `analyzeFrame` → extension runs `analyzeSourceFile()` + `getGitBlame()` → posts `frameReady` with inline source preview + blame. FW frames are grayed out, not clickable.
 
-**Bug Report Scoring** — `bug-report-formatter.ts` calls `scoreRelevance()` and renders high/medium findings as a "Key Findings" section in the markdown output.
+**Bug Report Scoring** — [bug-report-formatter.ts](src/modules/bug-report-formatter.ts) calls `scoreRelevance()` and renders high/medium findings as a "Key Findings" section in the markdown output.
 
 ---
 
@@ -146,7 +146,7 @@ session-comparison.ts
 | Question | Resolution |
 |----------|-----------|
 | QuickPick vs webview for Analyze Line? | **Webview panel** — richer, persistent, supports progressive loading |
-| Auto-tags: eager or lazy? | **Eager** — computed on session end via `correlation-scanner.ts` |
+| Auto-tags: eager or lazy? | **Eager** — computed on session end via [correlation-scanner.ts](src/modules/correlation-scanner.ts) |
 | Workspace scanning respect .gitignore? | **Yes** — `workspace.findFiles()` respects VS Code exclude patterns |
 | Git history cached or fresh? | **Fresh** — git is fast enough; no caching layer needed |
 | Non-git projects? | **Graceful skip** — git functions return empty arrays, sections show "no data" |
@@ -178,7 +178,7 @@ session-comparison.ts
 
 ### ~~1. Stack Trace Deep-Dive~~ — DONE
 
-Implemented in `analysis-frame-render.ts` (65 lines) + `analysis-panel.ts`. Clickable frame list with APP/FW badges. Click an app frame → inline source preview + blame via `analyzeFrame()`. Frames extracted from log file below the error line. FW frames grayed out.
+Implemented in [analysis-frame-render.ts](src/ui/analysis-frame-render.ts) (65 lines) + [analysis-panel.ts](src/ui/analysis-panel.ts). Clickable frame list with APP/FW badges. Click an app frame → inline source preview + blame via `analyzeFrame()`. Frames extracted from log file below the error line. FW frames grayed out.
 
 ### 2. Error Trend Chart
 
@@ -190,13 +190,13 @@ Sessions:  █ · █ ██ · · █ · ··
         first seen      still here
 ```
 
-**Data source:** `cross-session-aggregator.ts` already has `firstSeen`/`lastSeen` per error hash. Extend to include a per-session occurrence timeline.
+**Data source:** [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) already has `firstSeen`/`lastSeen` per error hash. Extend to include a per-session occurrence timeline.
 
-**Implementation:** Store session dates alongside counts in `RecurringError`. Render as a small inline SVG in the executive summary (similar pattern to `timeline-panel.ts`).
+**Implementation:** Store session dates alongside counts in `RecurringError`. Render as a small inline SVG in the executive summary (similar pattern to [timeline-panel.ts](src/ui/timeline-panel.ts)).
 
 ### ~~3. Root Cause Correlation~~ — DONE
 
-Implemented in `git-diff.ts` (52 lines) + `analysis-relevance.ts:scoreCorrelation()`. Shows commit diff summary (files changed, +insertions, -deletions) below blame. Correlates blame date with error fingerprint's cross-session first appearance via `runCrossSessionLookup()`. 3-day window = "Error likely introduced by commit".
+Implemented in [git-diff.ts](src/modules/git-diff.ts) (52 lines) + [analysis-relevance.ts](src/modules/analysis-relevance.ts):scoreCorrelation(). Shows commit diff summary (files changed, +insertions, -deletions) below blame. Correlates blame date with error fingerprint's cross-session first appearance via `runCrossSessionLookup()`. 3-day window = "Error likely introduced by commit".
 
 ### 4. Caller Graph
 
@@ -209,7 +209,7 @@ Who calls payment_handler.dart?
 └── test/payment_test.dart (L3: import 'payment_handler.dart')
 ```
 
-**Implementation:** `vscode.workspace.findFiles('**/*.{dart,ts,js,...}')` then grep each file for import/require of the crashing filename. Already have the pattern from `import-extractor.ts`.
+**Implementation:** `vscode.workspace.findFiles('**/*.{dart,ts,js,...}')` then grep each file for import/require of the crashing filename. Already have the pattern from [import-extractor.ts](src/modules/import-extractor.ts).
 
 ### 5. Smart Context Boundaries
 
@@ -223,7 +223,7 @@ Instead of always showing the 15 lines before an error, use blank lines and log-
 
 Right-click any source file in VS Code's Explorer → "Show Log References" → see every session that mentioned this file, with the specific lines.
 
-**Implementation:** New command registered in `package.json`. Uses `searchLogFilesConcurrent()` with the filename. Groups results by session, shows matching lines.
+**Implementation:** New command registered in [package.json](package.json). Uses `searchLogFilesConcurrent()` with the filename. Groups results by session, shows matching lines.
 
 ### 7. Session Annotations
 
@@ -269,7 +269,7 @@ After a debug session, automatically compare it against the previous session (or
 
 **The magic:** The developer runs the app, and without asking, the extension says: "Compared to your last run: 1 new error (`TimeoutException` in `api_client.dart`), 2 errors fixed, output volume +40%."
 
-**Implementation:** Extend `diff-engine.ts` to compute a session delta summary. Store the URI of the "comparison baseline" session. Run diff automatically on session end.
+**Implementation:** Extend [diff-engine.ts](src/modules/diff-engine.ts) to compute a session delta summary. Store the URI of the "comparison baseline" session. Run diff automatically on session end.
 
 ### 11. Ghost Errors — Intermittent Bug Tracker
 
@@ -298,7 +298,7 @@ api_client.dart         ████          15 mentions  🟡 changed 8 days a
 
 **The magic:** One glance shows where log noise meets code churn. That intersection is almost always where the bug lives.
 
-**Implementation:** Combine hot-file data from `cross-session-aggregator.ts` with `git log --format=%ai -1 -- <file>` for each hot file. Sort by combined score.
+**Implementation:** Combine hot-file data from [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) with `git log --format=%ai -1 -- <file>` for each hot file. Sort by combined score.
 
 ### 13. Semantic Error Grouping
 
@@ -343,7 +343,7 @@ When analyzing an error, show what the output looked like at the moment the erro
 14:32:07  Stack trace...
 ```
 
-**Implementation:** Already have log context extraction in `bug-report-collector.ts` (15 lines before error). Extend to use timestamp parsing for smarter boundaries (group by second, highlight time gaps).
+**Implementation:** Already have log context extraction in [bug-report-collector.ts](src/modules/bug-report-collector.ts) (15 lines before error). Extend to use timestamp parsing for smarter boundaries (group by second, highlight time gaps).
 
 ### 16. Environment Diff
 
@@ -351,7 +351,7 @@ When an error appears in session A but not session B, automatically diff the ses
 
 "This error appeared when using Dart SDK 3.2.1 but not when using 3.1.0. The SDK version may be relevant."
 
-**Implementation:** Session headers already contain environment data. `session-comparison.ts` already has diff logic. Cross-reference error presence with environment differences.
+**Implementation:** Session headers already contain environment data. [session-comparison.ts](src/ui/session-comparison.ts) already has diff logic. Cross-reference error presence with environment differences.
 
 ### 17. Error Attention Score
 
@@ -370,7 +370,7 @@ Not all errors deserve attention. Rank them by a composite score:
 
 **The magic:** The analysis panel re-orders errors by attention score. The most actionable error is always at the top.
 
-**Implementation:** Extend `analysis-relevance.ts` scoring to work on individual errors, not just sections. Run scoring against each error fingerprint in the session.
+**Implementation:** Extend [analysis-relevance.ts](src/modules/analysis-relevance.ts) scoring to work on individual errors, not just sections. Run scoring against each error fingerprint in the session.
 
 ### 18. "Why Did This Break?" Story Mode
 
@@ -476,39 +476,39 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 
 | File | Lines | Role |
 |------|-------|------|
-| `line-analyzer.ts` | 46 | Token extraction from log lines |
-| `source-linker.ts` | ~80 | Parse `file.dart:42` references from text |
-| `workspace-analyzer.ts` | 133 | Source lookup, git history, annotations |
-| `git-blame.ts` | ~50 | `git blame` for a specific line |
-| `git-diff.ts` | 52 | Commit diff summary (`git show --stat`) |
-| `error-fingerprint.ts` | 79 | Normalize + FNV-1a hash for error grouping |
-| `cross-session-aggregator.ts` | 116 | Hot files + recurring errors from metadata |
-| `correlation-scanner.ts` | 43 | Extract `file:` and `error:` tags |
-| `stack-parser.ts` | 136 | Frame classification, stack detection, date extraction |
-| `docs-scanner.ts` | 79 | Search markdown docs for tokens |
-| `import-extractor.ts` | 75 | Parse import statements (12 languages) |
-| `symbol-resolver.ts` | 74 | VS Code workspace symbol lookup |
-| `analysis-relevance.ts` | 153 | Relevance scoring + root cause correlation |
-| `bug-report-collector.ts` | 153 | Evidence collection orchestrator |
-| `bug-report-formatter.ts` | 168 | Markdown report formatter + executive summary |
-| `environment-collector.ts` | 87 | Git state, runtime, system info |
+| [line-analyzer.ts](src/modules/line-analyzer.ts) | 46 | Token extraction from log lines |
+| [source-linker.ts](src/modules/source-linker.ts) | ~80 | Parse `file.dart:42` references from text |
+| [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | 133 | Source lookup, git history, annotations |
+| [git-blame.ts](src/modules/git-blame.ts) | ~50 | `git blame` for a specific line |
+| [git-diff.ts](src/modules/git-diff.ts) | 52 | Commit diff summary (`git show --stat`) |
+| [error-fingerprint.ts](src/modules/error-fingerprint.ts) | 79 | Normalize + FNV-1a hash for error grouping |
+| [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) | 116 | Hot files + recurring errors from metadata |
+| [correlation-scanner.ts](src/modules/correlation-scanner.ts) | 43 | Extract `file:` and `error:` tags |
+| [stack-parser.ts](src/modules/stack-parser.ts) | 136 | Frame classification, stack detection, date extraction |
+| [docs-scanner.ts](src/modules/docs-scanner.ts) | 79 | Search markdown docs for tokens |
+| [import-extractor.ts](src/modules/import-extractor.ts) | 75 | Parse import statements (12 languages) |
+| [symbol-resolver.ts](src/modules/symbol-resolver.ts) | 74 | VS Code workspace symbol lookup |
+| [analysis-relevance.ts](src/modules/analysis-relevance.ts) | 153 | Relevance scoring + root cause correlation |
+| [bug-report-collector.ts](src/modules/bug-report-collector.ts) | 153 | Evidence collection orchestrator |
+| [bug-report-formatter.ts](src/modules/bug-report-formatter.ts) | 168 | Markdown report formatter + executive summary |
+| [environment-collector.ts](src/modules/environment-collector.ts) | 87 | Git state, runtime, system info |
 
 ### UI Panels (`src/ui/`)
 
 | File | Lines | Role |
 |------|-------|------|
-| `analysis-panel.ts` | 244 | Analysis panel orchestrator (5 parallel streams + frame analysis) |
-| `analysis-panel-render.ts` | 198 | Progressive HTML rendering + diff + frames |
-| `analysis-panel-styles.ts` | 141 | CSS + webview script (frame clicks, frameReady handler) |
-| `analysis-panel-summary.ts` | 16 | Executive summary HTML |
-| `analysis-frame-render.ts` | 65 | Stack frame list + inline mini-analysis |
-| `bug-report-panel.ts` | 125 | Bug report preview panel |
-| `bug-report-panel-styles.ts` | 49 | Bug report CSS |
-| `insights-panel.ts` | 176 | Cross-session insights dashboard |
-| `insights-panel-styles.ts` | 77 | Insights CSS |
-| `insights-drill-down.ts` | 71 | Recurring error detail view |
-| `insights-drill-down-styles.ts` | 18 | Drill-down CSS |
-| `session-comparison.ts` | 234 | Side-by-side session diff |
-| `session-comparison-styles.ts` | 107 | Comparison CSS |
-| `timeline-panel.ts` | 214 | SVG error/warning timeline |
-| `timeline-panel-styles.ts` | 29 | Timeline CSS |
+| [analysis-panel.ts](src/ui/analysis-panel.ts) | 244 | Analysis panel orchestrator (5 parallel streams + frame analysis) |
+| [analysis-panel-render.ts](src/ui/analysis-panel-render.ts) | 198 | Progressive HTML rendering + diff + frames |
+| [analysis-panel-styles.ts](src/ui/analysis-panel-styles.ts) | 141 | CSS + webview script (frame clicks, frameReady handler) |
+| [analysis-panel-summary.ts](src/ui/analysis-panel-summary.ts) | 16 | Executive summary HTML |
+| [analysis-frame-render.ts](src/ui/analysis-frame-render.ts) | 65 | Stack frame list + inline mini-analysis |
+| [bug-report-panel.ts](src/ui/bug-report-panel.ts) | 125 | Bug report preview panel |
+| [bug-report-panel-styles.ts](src/ui/bug-report-panel-styles.ts) | 49 | Bug report CSS |
+| [insights-panel.ts](src/ui/insights-panel.ts) | 176 | Cross-session insights dashboard |
+| [insights-panel-styles.ts](src/ui/insights-panel-styles.ts) | 77 | Insights CSS |
+| [insights-drill-down.ts](src/ui/insights-drill-down.ts) | 71 | Recurring error detail view |
+| [insights-drill-down-styles.ts](src/ui/insights-drill-down-styles.ts) | 18 | Drill-down CSS |
+| [session-comparison.ts](src/ui/session-comparison.ts) | 234 | Side-by-side session diff |
+| [session-comparison-styles.ts](src/ui/session-comparison-styles.ts) | 107 | Comparison CSS |
+| [timeline-panel.ts](src/ui/timeline-panel.ts) | 214 | SVG error/warning timeline |
+| [timeline-panel-styles.ts](src/ui/timeline-panel-styles.ts) | 29 | Timeline CSS |

@@ -85,6 +85,33 @@ export function renderGitHubSection(ctx: GitHubContext): string {
     return doneSlot('github', html + '</details>');
 }
 
+function formatRefreshTime(queriedAt: number | undefined): string {
+    if (!queriedAt) { return ''; }
+    const ago = Math.round((Date.now() - queriedAt) / 1000);
+    const label = ago < 5 ? 'just now' : ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+    return ` <span class="fb-refresh-time">(${label})</span>`;
+}
+
+function renderIssueBadges(issue: FirebaseContext['issues'][number]): string {
+    const parts: string[] = [];
+    const severityClass = issue.isFatal ? 'fb-badge-fatal' : 'fb-badge-nonfatal';
+    const severityLabel = issue.isFatal ? 'FATAL' : 'NON-FATAL';
+    parts.push(`<span class="fb-badge ${severityClass}">${severityLabel}</span>`);
+    if (issue.state !== 'UNKNOWN') {
+        const stateClass = issue.state === 'REGRESSION' ? 'fb-badge-regressed' : issue.state === 'CLOSED' ? 'fb-badge-closed' : 'fb-badge-open';
+        parts.push(`<span class="fb-badge ${stateClass}">${issue.state}</span>`);
+    }
+    return parts.join(' ');
+}
+
+function renderVersionRange(issue: FirebaseContext['issues'][number]): string {
+    if (!issue.firstVersion && !issue.lastVersion) { return ''; }
+    const range = issue.firstVersion && issue.lastVersion && issue.firstVersion !== issue.lastVersion
+        ? `${escapeHtml(issue.firstVersion)} → ${escapeHtml(issue.lastVersion)}`
+        : escapeHtml(issue.firstVersion ?? issue.lastVersion ?? '');
+    return ` · <span class="fb-versions">${range}</span>`;
+}
+
 /** Render Firebase Crashlytics section with matching crash issues and console links. */
 export function renderFirebaseSection(ctx: FirebaseContext): string {
     if (!ctx.available) {
@@ -92,14 +119,17 @@ export function renderFirebaseSection(ctx: FirebaseContext): string {
         return emptySlot('firebase', `🔥 Firebase not configured.${hint}`);
     }
     const n = ctx.issues.length;
+    const refreshNote = formatRefreshTime(ctx.queriedAt);
     const consoleLink = ctx.consoleUrl
         ? `<div class="fb-console" data-url="${escapeHtml(ctx.consoleUrl)}">Open Firebase Console →</div>` : '';
-    if (n === 0) { return doneSlot('firebase', `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">0 matches</span></summary><div class="fb-empty">No matching Crashlytics issues found</div>${consoleLink}</details>`); }
-    let html = `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">${n} crash${n !== 1 ? 'es' : ''}</span></summary>`;
+    if (n === 0) { return doneSlot('firebase', `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">0 matches</span>${refreshNote}</summary><div class="fb-empty">No matching Crashlytics issues found</div>${consoleLink}</details>`); }
+    let html = `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">${n} crash${n !== 1 ? 'es' : ''}</span>${refreshNote}</summary>`;
     for (const issue of ctx.issues) {
         const users = issue.userCount > 0 ? ` · ${issue.userCount} user${issue.userCount !== 1 ? 's' : ''}` : '';
         const eid = escapeHtml(issue.id);
-        html += `<div class="fb-item" data-issue-id="${eid}"><div class="fb-title"><span class="crash-expand-icon">▶</span>${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}</div><div class="crash-detail" id="crash-detail-${eid}"></div></div>`;
+        const badges = renderIssueBadges(issue);
+        const versions = renderVersionRange(issue);
+        html += `<div class="fb-item" data-issue-id="${eid}"><div class="fb-title">${badges} <span class="crash-expand-icon">▶</span>${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}${versions}</div><div class="crash-detail" id="crash-detail-${eid}"></div></div>`;
     }
     return doneSlot('firebase', html + consoleLink + '</details>');
 }

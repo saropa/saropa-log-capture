@@ -39,10 +39,14 @@ export interface WorkspaceFileInfo {
 
 const annotationPattern = /\b(TODO|FIXME|HACK|BUG|NOTE|XXX)\b[:\s]*(.*)/i;
 
-/** Find a source file in the workspace by filename. */
-export async function findInWorkspace(filename: string): Promise<vscode.Uri | undefined> {
-    const results = await vscode.workspace.findFiles(`**/${filename}`, '**/node_modules/**', 1);
-    return results[0];
+/** Find a source file in the workspace by filename, preferring app-code directories. */
+export async function findInWorkspace(filename: string, packageHint?: string): Promise<vscode.Uri | undefined> {
+    const results = await vscode.workspace.findFiles(`**/${filename}`, '**/node_modules/**', 5);
+    if (results.length === 0) { return undefined; }
+    if (results.length === 1 || !packageHint) { return results[0]; }
+    const hintParts = packageHint.split('.').slice(-2);
+    const preferred = results.find(r => hintParts.some(p => r.fsPath.includes(p)));
+    return preferred ?? results.find(r => /[/\\](?:lib|src|app)[/\\]/i.test(r.fsPath)) ?? results[0];
 }
 
 /** Get recent git commits that touched a file. Returns empty on error. */

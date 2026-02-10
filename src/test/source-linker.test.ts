@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { linkifyHtml } from '../modules/source-linker';
+import { linkifyHtml, linkifyUrls } from '../modules/source-linker';
 
 suite('linkifyHtml', () => {
     test('should linkify simple file:line pattern', () => {
@@ -108,7 +108,61 @@ suite('linkifyHtml', () => {
 
     test('should escape special characters in link text', () => {
         const result = linkifyHtml('at file.ts:42');
-        // The link text should be HTML-escaped (though file.ts:42 has no special chars)
         assert.ok(result.includes('>file.ts:42</a>'));
+    });
+});
+
+suite('linkifyUrls', () => {
+    test('should linkify HTTP URL', () => {
+        const result = linkifyUrls('visit http://example.com for info');
+        assert.ok(result.includes('class="url-link"'));
+        assert.ok(result.includes('data-url="http://example.com"'));
+    });
+
+    test('should linkify HTTPS URL', () => {
+        const result = linkifyUrls('see https://example.com/path?q=1');
+        assert.ok(result.includes('data-url="https://example.com/path?q=1"'));
+    });
+
+    test('should not linkify inside HTML tags', () => {
+        const result = linkifyUrls('<a href="https://example.com">text</a>');
+        assert.strictEqual(result, '<a href="https://example.com">text</a>');
+    });
+
+    test('should strip trailing punctuation from URL', () => {
+        const result = linkifyUrls('see https://example.com/page.');
+        assert.ok(result.includes('data-url="https://example.com/page"'));
+        assert.ok(result.includes('</a>.'));
+    });
+
+    test('should not double-escape HTML entities in URLs', () => {
+        const result = linkifyUrls('https://example.com?a=1&amp;b=2');
+        assert.ok(result.includes('data-url="https://example.com?a=1&amp;b=2"'));
+        assert.ok(!result.includes('&amp;amp;'));
+    });
+
+    test('should return unchanged text without URLs', () => {
+        const input = 'no urls here';
+        assert.strictEqual(linkifyUrls(input), input);
+    });
+
+    test('should return unchanged text without protocol', () => {
+        const input = 'no protocol://here';
+        assert.strictEqual(linkifyUrls(input), input);
+    });
+
+    test('should handle empty string', () => {
+        assert.strictEqual(linkifyUrls(''), '');
+    });
+
+    test('should linkify multiple URLs', () => {
+        const result = linkifyUrls('http://a.com and https://b.com');
+        const matches = result.match(/url-link/g);
+        assert.strictEqual(matches?.length, 2);
+    });
+
+    test('should not double-linkify existing source-link anchors', () => {
+        const input = '<a class="source-link" data-path="file.ts" data-line="1">file.ts:1</a>';
+        assert.strictEqual(linkifyUrls(input), input);
     });
 });

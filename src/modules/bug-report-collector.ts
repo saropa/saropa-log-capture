@@ -19,6 +19,7 @@ import { extractAnalysisTokens } from './line-analyzer';
 import { scanDocsForTokens, type DocScanResults } from './docs-scanner';
 import { extractImports, type ImportResults } from './import-extractor';
 import { resolveSymbols, type SymbolResults } from './symbol-resolver';
+import { getFirebaseContext } from './firebase-crashlytics';
 
 /** A classified stack frame with optional parsed source reference. */
 export interface StackFrame {
@@ -44,6 +45,16 @@ export interface CrossSessionMatch {
     readonly lastSeen: string;
 }
 
+/** Firebase Crashlytics match for the bug report. */
+export interface FirebaseMatch {
+    readonly issueTitle: string;
+    readonly eventCount: number;
+    readonly userCount: number;
+    readonly consoleUrl?: string;
+    readonly firstVersion?: string;
+    readonly lastVersion?: string;
+}
+
 /** All data gathered for a bug report. */
 export interface BugReportData {
     readonly errorLine: string;
@@ -64,6 +75,7 @@ export interface BugReportData {
     readonly primarySourcePath?: string;
     readonly logFilename: string;
     readonly lineNumber: number;
+    readonly firebaseMatch?: FirebaseMatch;
 }
 
 const maxContextLines = 15;
@@ -92,21 +104,28 @@ export async function collectBugReportData(
     const tokens = extractAnalysisTokens(cleanError);
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses] = await Promise.all([
+    const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
         resolveSymbols(tokens).catch(() => undefined),
         collectFileAnalyses(stackTrace, sourceRef?.filePath),
+        getFirebaseContext(errorTokens).catch(() => undefined),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
+    const topIssue = fbCtx?.issues[0];
+    const firebaseMatch: FirebaseMatch | undefined = topIssue ? {
+        issueTitle: topIssue.title, eventCount: topIssue.eventCount, userCount: topIssue.userCount,
+        consoleUrl: fbCtx?.consoleUrl, firstVersion: topIssue.firstVersion, lastVersion: topIssue.lastVersion,
+    } : undefined;
 
     return {
         errorLine: cleanError, fingerprint, stackTrace, logContext,
         environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
-        logFilename, lineNumber: fileLineIndex + 1,
+        logFilename, lineNumber: fileLineIndex + 1, firebaseMatch,
     };
 }
 
