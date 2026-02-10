@@ -371,11 +371,9 @@ These are capabilities that Saropa has which the Android Vitals view does not of
 
 **Improvement ideas for existing advantages:**
 
-23. **Pre-production ANR risk scoring** — Combine existing performance-level detections (choreographer, jank, frame drops, GC pauses) within a session to compute an "ANR risk score". If a session has 5+ choreographer warnings, 3+ GC pauses, and 1+ "doing too much work" message, show a warning badge on the session: "ANR Risk: High". This turns reactive production data (what Vitals provides) into proactive development intelligence.
-    - *Priority:* High (unique differentiator). *Complexity:* Medium (~50 lines in a new `anr-risk-scorer.ts` + ~20 lines in session display).
+23. **DONE — Pre-production ANR risk scoring** — `anr-risk-scorer.ts` scans session body text for 5 weighted signal patterns (choreographer warnings, GC pauses, jank, dropped frames, ANR keywords) and produces a 0-100 risk score with low/medium/high level. Score is computed fire-and-forget during session finalization and stored as `anrRiskLevel` in `.meta.json` sidecar. Sessions with ANR patterns show `ANR: N` badge in the Project Logs tree.
 
-24. **Bridge debug ANR patterns to Vitals crashes** — When a debug session contains ANR-pattern keywords, and a matching Crashlytics issue exists (same exception class or stack trace pattern), link them: "This performance issue in your debug session matches a production ANR affecting 4 users". This is the debug-to-production bridge for ANRs, extending the existing Crashlytics cross-reference to the ANR domain.
-    - *Priority:* High (highest-value gap to close). *Complexity:* Medium (~40 lines across `cross-session-aggregator.ts` + `firebase-crashlytics.ts`).
+24. **DONE — Bridge debug error patterns to Crashlytics** — `bridgeErrorsToCrashlytics()` in `insights-panel.ts` matches ALL recurring error patterns (not just ANRs) against Crashlytics production issues using word extraction from example lines and normalized text. Matching errors show a "Production: N events, M users" badge via progressive webview update with pulsing loading indicator and 15-second timeout guard.
 
 25. **Thread-aware stack trace export** — When bug reports include stack traces from ANR-like dumps, preserve thread grouping in the markdown output. Format as collapsible sections per thread, with the main thread expanded and blocking threads flagged. This goes beyond AQI's flat thread list.
     - *Priority:* Low (depends on items 15-16). *Complexity:* Low (~25 lines in `bug-report-formatter.ts`).
@@ -411,15 +409,18 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 #### Phase 2: High-Impact Features (Medium complexity, strong differentiators)
 
+| # | Item | Status |
+|---|------|--------|
+| 23 | Pre-production ANR risk scoring | DONE |
+| 24 | Bridge debug error patterns to Crashlytics | DONE |
+
 | # | Item | Effort | Impact |
 |---|------|--------|--------|
-| 23 | Pre-production ANR risk scoring | ~70 lines | Proactive ANR prevention |
-| 24 | Bridge debug ANR patterns to Crashlytics | ~40 lines | Debug-to-production bridge |
-| 10 | Always-visible error feed in sidebar | ~100 lines | Persistent issue awareness |
 | 7 | App version capture in session metadata | ~55 lines | Enables version filtering |
 | 13 | Version range on recurring errors | ~25 lines | Track error lifespan |
 | 15 | Parse thread headers in stack traces | ~55 lines | ANR investigation support |
 | 8 | Error status lifecycle (open/closed/muted) | ~70 lines | Lightweight triage workflow |
+| 10 | Always-visible error feed in sidebar | ~100 lines | Persistent issue awareness |
 
 #### Phase 3: Strategic Features (High complexity, competitive differentiation)
 
@@ -449,10 +450,10 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**Closed gaps since initial analysis:** All Phase 1 quick wins are complete (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). The Crashlytics integration is now comprehensive (see companion document for full status). Cross-session insights support time range filtering with dropdown UI.
+**Closed gaps since initial analysis:** All Phase 1 quick wins are complete (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 items 23 (ANR risk scoring) and 24 (debug-to-Crashlytics error bridging) are complete, establishing a pre-production ANR detection pipeline and a debug-to-production error bridge. The Crashlytics integration is comprehensive (see companion document for full status).
 
-**The highest-value gap to close** is ANR-specific intelligence beyond detection. ANR patterns are now detected and badged (item 2 done), but pre-production ANR risk scoring (item 23), thread header parsing (item 15), and debug-to-production ANR bridging (item 24) remain. These would create a continuous ANR detection pipeline from development through production.
+**The highest-value gap to close** is the always-visible error feed (item 10) and error status lifecycle (item 8), which together create a persistent triage workflow in the sidebar. Thread header parsing (item 15) and version tracking (items 7, 13) round out the remaining Phase 2 feature set.
 
-**The highest-value gap to widen** is the proactive warning system. AQI is purely reactive — it reports what already happened in production. Saropa can detect choreographer warnings, GC pauses, and thread blocking patterns during debugging and flag "this will become an ANR in production." This shifts ANR detection left in the development lifecycle, where fixes are cheaper and faster.
+**The proactive warning system is now operational.** ANR risk scoring (item 23) detects choreographer warnings, GC pauses, and thread blocking patterns during debugging and flags "this will become an ANR in production." The Crashlytics error bridge (item 24) connects debug-time errors to production crash data. Together, these shift ANR and error detection left in the development lifecycle, where fixes are cheaper and faster.
 
 **The most ambitious opportunity** is Google Play Developer Reporting API integration (item 1). No VS Code extension currently connects to Android Vitals. This would make Saropa the only tool that surfaces Play Store stability data inside VS Code, completing the trifecta: live debug capture + Crashlytics production crashes + Play Store system metrics.
