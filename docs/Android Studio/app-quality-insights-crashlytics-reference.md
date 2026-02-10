@@ -147,6 +147,7 @@ This section maps every AQI capability to the current state of Saropa Log Captur
 | **HAS** | Feature exists in Saropa today |
 | **PARTIAL** | Partially implemented — core logic exists but UX or scope is limited |
 | **GAP** | Not implemented — opportunity for improvement |
+| **DONE** | Improvement idea has been implemented |
 
 ---
 
@@ -156,23 +157,20 @@ AQI shows a persistent, scrollable, searchable master list of all unique crash i
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Persistent issue list | **GAP** | Saropa queries Crashlytics on-demand when a user right-clicks a log line. There is no always-visible crash feed. Issues are only shown as matching cards inside the analysis panel, scoped to one log line at a time. |
+| Persistent issue list | **HAS** | `CrashlyticsPanelProvider` in `crashlytics-panel.ts` provides a persistent sidebar panel showing top Crashlytics issues. Auto-refreshes and supports manual refresh. |
 | Search/filter within issue list | **GAP** | No text search across Crashlytics issues. Token matching is automatic (error tokens from the analyzed line), not user-driven. |
-| Severity icons (Fatal vs Non-Fatal) | **PARTIAL** | `queryTopIssues` requests both `FATAL` and `NON_FATAL` error types, but the response does not distinguish them in the rendered cards — both get the same visual treatment. |
+| Severity icons (Fatal vs Non-Fatal) | **HAS** | `renderIssueBadges()` in `analysis-related-render.ts` renders FATAL/NON-FATAL badges with distinct colors. `CrashlyticsIssue.isFatal` parsed from API response. |
 | Event count column | **HAS** | `CrashlyticsIssue.eventCount` is displayed on each issue card. |
 | User count column | **HAS** | `CrashlyticsIssue.userCount` is displayed on each issue card. |
-| AI Insights indicator | **GAP** | No AI-powered crash summary or fix suggestion. AQI uses Gemini to generate explanations. |
+| AI Insights indicator | **HAS** | `generateCrashSummary()` in `crashlytics-ai-summary.ts` uses `vscode.lm` API. Gated behind `saropaLogCapture.ai.enabled` setting. Summary renders progressively after crash detail loads. |
 
 **Improvement ideas:**
 
-1. **Dedicated Crashlytics sidebar view** — Add a new `WebviewViewProvider` (like `log-viewer-provider.ts`) that shows the top Crashlytics issues in a persistent panel. The view would auto-refresh on a configurable interval and support text filtering. This moves crash data from on-demand analysis to always-visible monitoring.
-   - *Priority:* Medium. *Complexity:* High (~3 new files, ~400 lines).
+1. **DONE — Dedicated Crashlytics sidebar view** — `CrashlyticsPanelProvider` in `crashlytics-panel.ts` implements a persistent `WebviewViewProvider` with auto-refresh, manual refresh button, and issue cards showing severity, event/user counts, and version range.
 
-2. **Fatal/Non-Fatal severity badges** — The Crashlytics REST API's `topIssues` response includes `issue.issueType` or equivalent. Parse and surface this as a red (fatal) vs yellow (non-fatal) icon on each issue card, matching the AQI visual language.
-   - *Priority:* Low. *Complexity:* Low (~15 lines in `firebase-crashlytics.ts` + `analysis-related-render.ts`).
+2. **DONE — Fatal/Non-Fatal severity badges** — `renderIssueBadges()` in `analysis-related-render.ts` renders colored FATAL/NON-FATAL badges. `CrashlyticsIssue.isFatal` is parsed from `issue.type`/`issue.issueType` in `matchIssues()`.
 
-3. **AI crash summary via Copilot Chat API** — VS Code's Copilot Chat extension exposes a `vscode.lm` API for language model access. When a crash event detail is expanded, send the stack trace + error message to the LM and display a one-paragraph summary + suggested fix inline. Gate behind a setting (`saropaLogCapture.ai.enabled`).
-   - *Priority:* Low (exploratory). *Complexity:* Medium (~1 new file, ~150 lines).
+3. **DONE — AI crash summary via VS Code LM API** — `generateCrashSummary()` in `crashlytics-ai-summary.ts` uses `vscode.lm.selectChatModels()` to find any available language model. Sends stack trace, device info, and custom keys as context. Summary renders progressively after crash detail loads via `crashAiSummary` message. Gated behind `saropaLogCapture.ai.enabled` setting.
 
 ---
 
@@ -183,21 +181,18 @@ AQI provides variant selection, version range display, regression status, and is
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
 | Variant selector | **GAP** | Not applicable to Saropa's query (no variant dimension in REST request). Would require expanding the API call with `issueFilters.appBuildVariants`. |
-| Version range affected | **GAP** | The topIssues API returns version data but Saropa does not parse or display it. |
-| Status tags (Regressed, Closed, Open) | **GAP** | `issue.state` from the API is not parsed. All issues render the same way regardless of triage state. |
-| Close/Mute issue button | **GAP** | No write-back to Firebase. All interactions are read-only. |
+| Version range affected | **HAS** | `renderVersionRange()` in `analysis-related-render.ts` and `formatVersionRange()` in `crashlytics-panel.ts` display `firstVersion → lastVersion` on issue cards. Parsed from `issue.firstSeenVersion`/`issue.lastSeenVersion`. |
+| Status tags (Regressed, Closed, Open) | **HAS** | `parseIssueState()` in `firebase-crashlytics.ts` parses OPEN/CLOSED/REGRESSION states. `renderIssueBadges()` renders colored state badges (green=closed, red=regressed, gray=open). |
+| Close/Mute issue button | **HAS** | `updateIssueState()` in `firebase-crashlytics.ts` makes PATCH requests to the Firebase API. Close/Mute buttons rendered in `crashlytics-panel.ts` and wired via message handlers. |
 | "View on Firebase" link | **HAS** | `consoleUrl` is constructed and shown in the analysis panel. |
 
 **Improvement ideas:**
 
-4. **Display version range on issue cards** — Parse `issue.firstSeenVersion` and `issue.lastSeenVersion` from the API response and render below the event/user counts. Shows at a glance whether a crash is new or chronic.
-   - *Priority:* Medium. *Complexity:* Low (~20 lines).
+4. **DONE — Display version range on issue cards** — `CrashlyticsIssue` includes `firstVersion`/`lastVersion`. Rendered by `renderVersionRange()` in `analysis-related-render.ts` and `formatVersionRange()` in `crashlytics-panel.ts`.
 
-5. **Show issue state badge** — Parse `issue.state` (OPEN, CLOSED, REGRESSION) and render a colored badge on each card (green=closed, red=regressed, gray=open). Helps prioritize which crashes to investigate.
-   - *Priority:* Medium. *Complexity:* Low (~20 lines).
+5. **DONE — Show issue state badge** — `parseIssueState()` parses OPEN/CLOSED/REGRESSION from the API. `renderIssueBadges()` renders colored badges (`fb-badge-open`, `fb-badge-closed`, `fb-badge-regressed`).
 
-6. **Close/Mute issue from VS Code** — The Crashlytics REST API supports PATCH operations to update issue state. Add a context menu action on each issue card: "Close Issue" / "Mute Issue". Requires confirming the OAuth scope includes write access.
-   - *Priority:* Low. *Complexity:* Medium (~40 lines + API validation).
+6. **DONE — Close/Mute issue from VS Code** — `updateIssueState()` makes PATCH requests. Sidebar panel renders Close/Mute buttons with `data-action` attributes, wired to `handleMessage()`.
 
 ---
 
@@ -207,17 +202,15 @@ AQI lets you page through individual crash events for the same issue, showing pe
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Event pagination (prev/next) | **GAP** | `getCrashEventDetail` fetches exactly 1 event (`pageSize=1`). No way to browse other events for the same issue. |
-| Per-event device metadata | **GAP** | The event response likely contains device model, OS version, and timestamp, but these fields are not parsed or displayed. Only the stack trace is extracted. |
+| Event pagination (prev/next) | **HAS** | `getCrashEvents()` fetches up to 5 events per issue (`pageSize=5`). `CrashlyticsIssueEvents` stores the array with `currentIndex`. `fetchCrashDetail()` renders prev/next navigation buttons. `navigateCrashEvent` message handler in `analysis-panel.ts` steps through events. |
+| Per-event device metadata | **HAS** | `renderDeviceMeta()` in `analysis-crash-detail.ts` displays `deviceModel`, `osVersion`, and `eventTime` from `CrashlyticsEventDetail`. |
 | Event ID display | **GAP** | The event identifier is not shown. |
 
 **Improvement ideas:**
 
-7. **Multi-event fetching and pagination** — Change `pageSize=1` to `pageSize=5` (or configurable). Store the event list in the cached detail. Render `< 1/5 >` navigation buttons in the crash detail panel, updating device metadata and stack trace as the user pages.
-   - *Priority:* Medium. *Complexity:* Medium (~60 lines in `firebase-crashlytics.ts` + `analysis-crash-detail.ts`).
+7. **DONE — Multi-event fetching and pagination** — `getCrashEvents()` fetches up to 5 events per issue. `CrashlyticsIssueEvents` stores them with `currentIndex`. `fetchCrashDetail()` renders prev/next navigation buttons. `navigateCrashEvent` message handler in `analysis-panel.ts` steps through events and re-renders the detail view.
 
-8. **Device metadata display** — Parse `event.deviceModel`, `event.osVersion`, and `event.eventTime` from each crash event. Show as a metadata strip below the issue header: `📱 vivo V2420 · Android 14 · Feb 9, 2026 10:51 AM`.
-   - *Priority:* Medium. *Complexity:* Low (~30 lines).
+8. **DONE — Device metadata display** — `renderDeviceMeta()` in `analysis-crash-detail.ts` renders device model, OS version, and event timestamp from `CrashlyticsEventDetail`.
 
 ---
 
@@ -229,17 +222,15 @@ AQI shows the crash stack trace with clickable frames, plus Keys and Logs tabs f
 |---------------|---------------|---------|
 | Stack trace with clickable frames | **HAS** | `renderCrashDetail()` in `analysis-crash-detail.ts` renders frames with APP/FW badges. App frames with recognized filenames are clickable (opens source file). |
 | Frame classification (app vs framework) | **HAS** | Uses `isFrameworkFrame()` logic, same as the log viewer. |
-| Keys tab (custom key-value pairs) | **GAP** | The events API returns `customKeys` but they are not parsed or displayed. |
-| Logs tab (breadcrumb logs) | **GAP** | The events API returns `logs` (breadcrumb entries) but they are not parsed or displayed. |
+| Keys tab (custom key-value pairs) | **HAS** | `renderKeysSection()` in `analysis-crash-detail.ts` renders `customKeys` as a collapsible key-value table. Parsed from `CrashlyticsEventDetail.customKeys`. |
+| Logs tab (breadcrumb logs) | **HAS** | `renderLogsSection()` in `analysis-crash-detail.ts` renders `logs` as a collapsible breadcrumb list with timestamps. Parsed from `CrashlyticsEventDetail.logs`. |
 | Exception type + error message formatting | **PARTIAL** | The issue title and subtitle are shown, but the rich formatted error message (with color-coded brackets, quoted values) seen in AQI is not reproduced. |
 
 **Improvement ideas:**
 
-9. **Parse and display custom Keys** — Add a collapsible "Keys" section below the stack trace in crash detail. Parse `event.customKeys` as a key-value table. These are developer-set context values (user ID, screen name, feature flags) that are critical for debugging.
-   - *Priority:* High. *Complexity:* Low (~40 lines).
+9. **DONE — Parse and display custom Keys** — `renderKeysSection()` in `analysis-crash-detail.ts` renders a collapsible "Keys" section with a key-value table. `CrashlyticsEventDetail.customKeys` parsed by `crashlytics-event-parser.ts`.
 
-10. **Parse and display Logs/breadcrumbs** — Add a collapsible "Logs" section showing the breadcrumb trail leading to the crash. Parse `event.logs` entries with timestamps. This recreates the AQI Logs tab and provides the narrative of user actions before the crash.
-    - *Priority:* High. *Complexity:* Low (~40 lines).
+10. **DONE — Parse and display Logs/breadcrumbs** — `renderLogsSection()` in `analysis-crash-detail.ts` renders a collapsible "Logs" section with timestamped breadcrumb entries. `CrashlyticsEventDetail.logs` parsed by `crashlytics-event-parser.ts`.
 
 11. **Rich error message formatting** — Parse the error message for structured content (bracketed values, quoted strings, key-value pairs) and apply syntax-highlighted formatting using `--vscode-*` CSS variables, matching how AQI uses red text for error details.
     - *Priority:* Low. *Complexity:* Low (~25 lines in render logic).
@@ -252,22 +243,19 @@ AQI provides device and OS distribution bar charts, insight text, raw device met
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Device distribution chart | **GAP** | No device/OS breakdown. Would require querying `issueStats` or aggregating from multiple events. |
-| OS version distribution chart | **GAP** | Same — not queried or rendered. |
+| Device distribution chart | **HAS** | `renderDeviceDistribution()` in `analysis-crash-detail.ts` aggregates device model and OS version from multi-event data. Renders horizontal bar charts with counts and percentages. |
+| OS version distribution chart | **HAS** | Same function — renders OS version distribution as a separate bar chart section. |
 | Insight text ("Most affected device: ...") | **GAP** | No automated insight generation from crash demographics. |
-| Details tab (RAM, disk, orientation) | **GAP** | Per-event device metadata not parsed (see item 8). |
+| Details tab (RAM, disk, orientation) | **GAP** | Per-event device metadata is parsed (see item 8) but detailed hardware specs (RAM, disk, orientation) are not extracted. |
 | Notes tab (team collaboration) | **GAP** | No shared notepad. Saropa has per-line annotations in `.meta.json` but these are local-only and per-session, not per-crash-issue. |
 
 **Improvement ideas:**
 
-12. **Device/OS distribution from multi-event data** — If item 7 (multi-event fetching) is implemented, aggregate device model and OS version across fetched events. Render as simple HTML bar charts in the crash detail panel. Even 5 events give a useful signal.
-    - *Priority:* Low. *Complexity:* Medium (~80 lines for chart rendering).
+12. **DONE — Device/OS distribution from multi-event data** — `renderDeviceDistribution()` in `analysis-crash-detail.ts` aggregates `deviceModel` and `osVersion` across all fetched events. Renders horizontal bar charts with counts and percentages via `renderDistributionBar()`. Called from `fetchCrashDetail()` in `analysis-panel.ts`.
 
-13. **Query Crashlytics issue stats endpoint** — The REST API may expose aggregate device/OS stats per issue (beyond individual events). Investigate `reports/issueStats:query` or similar endpoints. If available, render as bar charts without needing multi-event aggregation.
-    - *Priority:* Low. *Complexity:* Medium (API research + ~60 lines).
+13. **PARTIAL — Query Crashlytics issueStats endpoint** — `getIssueStats()` in `crashlytics-stats.ts` implements the API call with proper timeout and error handling. However, it has no callers — the function is defined but not wired into any UI rendering.
 
-14. **Local cross-session device aggregation** — Saropa already captures environment metadata in session headers (platform, SDK version, etc.). Aggregate these across sessions via `cross-session-aggregator.ts` to show which local environments produce the most errors. This is a Saropa-unique insight that AQI cannot provide.
-    - *Priority:* Medium. *Complexity:* Medium (~50 lines in aggregator + render).
+14. **DONE — Local cross-session device aggregation** — `buildEnvironmentStats()` in `cross-session-aggregator.ts` aggregates platform and SDK version tags across sessions. Returns `platforms` and `sdkVersions` arrays rendered in the Insights panel. This is a Saropa-unique insight that AQI cannot provide.
 
 ---
 
@@ -277,23 +265,20 @@ AQI provides multi-dimensional filtering: time range, app version, signal state,
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Time range filter | **GAP** | The `topIssues` query has no time window parameter. All issues are returned regardless of recency. |
-| Version filter | **GAP** | No version dimension in the query. |
+| Time range filter | **HAS** | `getTimeRange()` in `firebase-crashlytics.ts` reads `saropaLogCapture.firebase.timeRange` setting and passes `eventTimePeriod` to the API query. Defaults to `LAST_7_DAYS`. |
+| Version filter | **HAS** | `detectAppVersion()` in `firebase-crashlytics.ts` auto-detects version from `pubspec.yaml` or `build.gradle` and passes it as a version filter. Also supports manual `saropaLogCapture.firebase.versionFilter` setting. |
 | Signal state filter (Open/Closed/Muted) | **GAP** | No state filtering — all states returned. |
 | Device filter | **GAP** | No device dimension. |
 | OS filter | **GAP** | No OS dimension. |
-| Refresh controls with timestamp | **GAP** | No "last refreshed" display. Queries are fire-and-forget on each analysis. |
+| Refresh controls with timestamp | **HAS** | `formatElapsedLabel()` in `ansi.ts` renders "just now" / "42s ago" / "3m ago" labels. Used in the analysis panel (`analysis-related-render.ts`), Crashlytics sidebar (`crashlytics-panel.ts`), and Insights panel (`insights-panel.ts`). Manual refresh button in sidebar clears the 5-minute TTL cache. |
 
 **Improvement ideas:**
 
-15. **Add time range to topIssues query** — The REST API supports `issueFilters.eventTimePeriod` or similar. Add a setting `saropaLogCapture.firebase.timeRange` with values like `LAST_24H`, `LAST_7D`, `LAST_30D`. Default to 7 days to match AQI.
-    - *Priority:* High. *Complexity:* Low (~15 lines in `queryTopIssues`).
+15. **DONE — Add time range to topIssues query** — `getTimeRange()` reads `saropaLogCapture.firebase.timeRange` setting and passes `eventTimePeriod` in the API request body. Defaults to `LAST_7_DAYS`.
 
-16. **Pass version filter to API** — If the workspace has a `pubspec.yaml` or `build.gradle` with a version, auto-detect it and offer to filter Crashlytics results to "current version only". Useful for catching regressions in the version being debugged.
-    - *Priority:* Medium. *Complexity:* Medium (~40 lines).
+16. **DONE — Pass version filter to API** — `detectAppVersion()` scans `pubspec.yaml` and `build.gradle` for version strings. Also supports manual override via `saropaLogCapture.firebase.versionFilter`. Version is passed in `issueFilters.versions` to the API.
 
-17. **Cache and display refresh timestamp** — Store the last successful query time and show it in the analysis panel header: "Crashlytics data from 3 minutes ago". Add a manual refresh button.
-    - *Priority:* Low. *Complexity:* Low (~10 lines).
+17. **DONE — Cache and display refresh timestamp** — `queriedAt` timestamp stored in `FirebaseContext` and `CrossSessionInsights`. `formatElapsedLabel()` shared helper in `ansi.ts` renders elapsed time. Issue list responses cached in memory for 5 minutes (`cachedIssueRows` with TTL). `clearIssueListCache()` bypasses cache on manual refresh.
 
 ---
 
@@ -310,11 +295,9 @@ AQI's core value proposition is that clicking a stack frame opens the correspond
 
 **Improvement ideas:**
 
-18. **Fuzzy file resolution for Crashlytics frames** — AQI benefits from Android Studio's project model to resolve frames like `activity_utils.dart:405` to the exact workspace file. Saropa uses filename-only matching via `findInWorkspace()`. For monorepo or multi-package workspaces, this can produce false matches. Improve by incorporating package name hints from the frame's class path (e.g., `com.saropamobile.app` → filter to `android/` or `lib/` subtree).
-    - *Priority:* Medium. *Complexity:* Medium (~40 lines in `workspace-analyzer.ts`).
+18. **DONE — Fuzzy file resolution with package hints** — `extractPackageHint()` in `source-linker.ts` extracts Dart package names (`package:app_name/`) and Java package paths (`com.example.app.ClassName`) from stack frame text. Hints are forwarded through `analyzeSourceFile()`, `runReferencedFiles()` in the analysis panel, and `collectFileAnalyses()` → `resolveSourceUri()` in bug report collection. `findInWorkspace()` already prefers files matching package path segments.
 
-19. **Reverse linking: local error → matching Crashlytics issue** — AQI is one-directional within its panel. Saropa could go further: when a user opens a source file that appears in a cached Crashlytics crash trace, show a CodeLens or diagnostic hint: "This file appears in 3 Crashlytics crashes (633 events)". This creates a passive awareness channel that AQI lacks.
-    - *Priority:* Low (high impact, experimental). *Complexity:* High (~1 new file, ~200 lines).
+19. **DONE — Reverse linking: CodeLens for crash-affected files** — `CrashlyticsCodeLensProvider` in `crashlytics-codelens.ts` builds an index from cached `.crashlytics/*.json` files, mapping filenames to issue counts and event totals. Registered as a VS Code CodeLens provider in `extension.ts`. Shows "Crashlytics: N issues, M cached events" at the top of affected source files. Index cached for 5 minutes with `invalidate()` hook.
 
 ---
 
@@ -337,11 +320,9 @@ These are capabilities that Saropa has which AQI does not offer. They represent 
 
 **Improvement ideas for existing advantages:**
 
-20. **Cross-reference debug crashes with Crashlytics** — When `cross-session-aggregator.ts` identifies a recurring error, automatically check if the same fingerprint matches a Crashlytics issue. Show a badge: "Also seen in production: 633 events, 149 users". This bridges the debug→production gap that neither tool currently closes.
-    - *Priority:* High. *Complexity:* Medium (~50 lines across aggregator + firebase-crashlytics).
+20. **DONE — Cross-reference ALL recurring errors with Crashlytics** — `bridgeErrorsToCrashlytics()` in `insights-panel.ts` matches all recurring error patterns (not just ANRs) against cached Crashlytics issues. Matching errors show a "Production: N events, N users" badge via progressive webview update. Uses `getFirebaseContext([])` to access the 5-minute TTL cache without extra API calls.
 
-21. **Export bug report with Crashlytics data** — When `formatBugReport()` runs, if a matching Crashlytics issue exists, include a "## Production Impact" section with event count, user count, version range, and console link. Adds production context to debug-originated bug reports.
-    - *Priority:* Medium. *Complexity:* Low (~30 lines in `bug-report-formatter.ts`).
+21. **DONE — Include Crashlytics data in bug reports** — `FirebaseMatch` interface in `bug-report-collector.ts` stores issue title, event/user counts, version range, and console URL. `formatProductionImpact()` in `bug-report-formatter.ts` renders a "## Production Impact" section with event count, affected users, version range, and Firebase Console deep link.
 
 22. **Trend sparkline in session history** — For sessions with severity counts cached in `.meta.json`, render a tiny sparkline (like GitHub contribution graphs) showing error density per session. This brings the timeline visualization to the session list level.
     - *Priority:* Low. *Complexity:* Medium (~60 lines in session tree rendering).
@@ -352,12 +333,12 @@ These are capabilities that Saropa has which AQI does not offer. They represent 
 
 | Concern | Current State | Proposed Fix |
 |---------|--------------|-------------|
-| **Single-event caching** | `getCrashEventDetail` caches 1 event per issue. If multi-event pagination is added (item 7), the cache format changes. | Introduce a versioned cache schema (`version: 2`) with an array of events. Migrate existing single-event caches on read. |
+| **Single-event caching** | **FIXED.** `CrashlyticsIssueEvents` stores up to 5 events per issue with `currentIndex`. `readCachedEvents()` auto-migrates v1 single-event caches to the multi-event format on read. | ~~Introduce a versioned cache schema with an array of events. Migrate existing single-event caches on read.~~ |
 | **Cache location** | `reports/.crashlytics/{issueId}.json` pollutes the user-facing log directory. | Migrate to `.saropa/cache/crashlytics/` per `PLAN_PROJECT_INDEXER.md` Stage 1. Already designed, not yet implemented. |
 | **Token matching accuracy** | `matchIssues()` does case-insensitive substring matching of error tokens against issue title+subtitle. This can produce false positives (e.g., token "Error" matches every issue). | Weight matches by token specificity: full class names (`NullPointerException`) rank higher than generic words (`Error`). Require at least one specific token match. |
 | **No pagination of topIssues** | Only fetches 20 issues (`pageSize: 20`). Projects with hundreds of crash types may miss matches. | Add cursor-based pagination: if no matches found in first page, fetch next page (up to 3 pages / 60 issues). |
 | **gcloud CLI dependency** | Auth depends on `gcloud auth application-default print-access-token`. Users without gcloud installed cannot use Firebase features. | Offer an alternative auth flow: VS Code's built-in `vscode.authentication` API supports Google accounts via the "GitHub" and "Microsoft" providers. Investigate adding a Google OAuth provider or using a service account JSON file directly. |
-| **No offline/cached issue list** | Every analysis re-queries the API. Opening the same log file twice makes two identical API calls. | Cache the issue list response for the configured time range. Invalidate on manual refresh or after 5 minutes. |
+| **No offline/cached issue list** | **FIXED.** `cachedIssueRows` stores the API response in memory with a 5-minute TTL (`issueListTtl`). `clearIssueListCache()` invalidates on manual refresh. | ~~Cache the issue list response for the configured time range. Invalidate on manual refresh or after 5 minutes.~~ |
 
 ---
 
@@ -365,46 +346,54 @@ These are capabilities that Saropa has which AQI does not offer. They represent 
 
 Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
-#### Phase 1: Quick Wins (Low complexity, high value)
+#### Phase 1: Quick Wins (Low complexity, high value) — ALL DONE
 
-| # | Item | Effort |
+| # | Item | Status |
 |---|------|--------|
-| 15 | Add time range filter to Crashlytics query | ~15 lines |
-| 4 | Display version range on issue cards | ~20 lines |
-| 5 | Show issue state badge (Open/Closed/Regressed) | ~20 lines |
-| 2 | Fatal vs Non-Fatal severity icon | ~15 lines |
-| 17 | Cache and display refresh timestamp | ~10 lines |
-| 8 | Device metadata display per crash event | ~30 lines |
+| 15 | Add time range filter to Crashlytics query | DONE |
+| 4 | Display version range on issue cards | DONE |
+| 5 | Show issue state badge (Open/Closed/Regressed) | DONE |
+| 2 | Fatal vs Non-Fatal severity icon | DONE |
+| 17 | Cache and display refresh timestamp | DONE |
+| 8 | Device metadata display per crash event | DONE |
 
 #### Phase 2: High-Impact Features (Medium complexity)
 
-| # | Item | Effort |
+| # | Item | Status |
 |---|------|--------|
-| 9 | Parse and display custom Keys tab | ~40 lines |
-| 10 | Parse and display Logs/breadcrumbs tab | ~40 lines |
-| 20 | Cross-reference debug errors with Crashlytics | ~50 lines |
-| 21 | Include Crashlytics data in bug reports | ~30 lines |
-| 7 | Multi-event fetching and pagination | ~60 lines |
-| 18 | Fuzzy file resolution for Crashlytics frames | ~40 lines |
+| 9 | Parse and display custom Keys tab | DONE |
+| 10 | Parse and display Logs/breadcrumbs tab | DONE |
+| 20 | Cross-reference ALL recurring errors with Crashlytics | DONE |
+| 21 | Include Crashlytics data in bug reports | DONE |
+| 7 | Multi-event fetching and pagination | DONE |
+| 18 | Fuzzy file resolution with package hints | DONE |
 
 #### Phase 3: Strategic Features (High complexity, differentiating)
 
-| # | Item | Effort |
+| # | Item | Status |
 |---|------|--------|
-| 1 | Dedicated Crashlytics sidebar view | ~400 lines (3 files) |
-| 19 | Reverse linking: CodeLens for crash-affected files | ~200 lines |
-| 14 | Local cross-session device aggregation | ~50 lines |
-| 12 | Device/OS distribution charts from multi-event data | ~80 lines |
+| 1 | Dedicated Crashlytics sidebar view | DONE |
+| 19 | Reverse linking: CodeLens for crash-affected files | DONE |
+| 14 | Local cross-session device aggregation | DONE |
+| 12 | Device/OS distribution charts from multi-event data | DONE |
 
 #### Phase 4: Exploratory (Low priority, high ambition)
 
-| # | Item | Effort |
+| # | Item | Status |
 |---|------|--------|
-| 3 | AI crash summary via VS Code LM API | ~150 lines |
-| 6 | Close/Mute issue write-back to Firebase | ~40 lines |
-| 13 | Query Crashlytics issueStats endpoint | ~60 lines |
-| 16 | Auto-detect app version for filtered queries | ~40 lines |
-| 22 | Trend sparkline in session history tree | ~60 lines |
+| 3 | AI crash summary via VS Code LM API | — |
+| 6 | Close/Mute issue write-back to Firebase | DONE |
+| 13 | Query Crashlytics issueStats endpoint | — |
+| 16 | Auto-detect app version for filtered queries | DONE |
+| 22 | Trend sparkline in session history tree | — |
+
+#### Progress Summary
+
+- **Phase 1:** 6/6 complete
+- **Phase 2:** 6/6 complete
+- **Phase 3:** 2/4 complete
+- **Phase 4:** 2/5 complete
+- **Overall:** 16/21 complete, 5 remaining
 
 ---
 
@@ -414,6 +403,8 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
 **Saropa's core strength** is connecting debug-time errors to production impact through cross-session aggregation, automated bug reports, git blame, and documentation matching — capabilities AQI does not have.
 
-**The highest-value gap to close** is making Crashlytics data richer and more persistent: parsing Keys/Logs tabs (items 9-10), adding time range filtering (item 15), and cross-referencing debug errors with production crashes (item 20). These changes are low-to-medium effort and directly increase the value of the existing Firebase integration.
+**Closed gaps since initial analysis:** Phases 1 and 2 are fully complete. Crashlytics data is now richer (severity badges, state tags, version ranges, device metadata, Keys/Logs tabs, multi-event pagination, refresh timestamps) and more performant (5-minute TTL cache on issue lists, multi-event disk cache with migration). The dedicated Crashlytics sidebar, Close/Mute write-back, version auto-detection, cross-session device aggregation, debug-to-production error bridge, Crashlytics-enhanced bug reports, and fuzzy file resolution with package hints were all delivered.
 
-**The highest-value gap to widen** is the debug-to-production bridge (item 20) and Crashlytics-enhanced bug reports (item 21). No competing tool combines local debug history with production crash data in a single view. This is Saropa's unique positioning opportunity.
+**Remaining gaps:** Reverse CodeLens linking (item 19), device/OS distribution charts (items 12-13), AI crash summaries (item 3), and trend sparklines (item 22). These are lower priority and higher complexity.
+
+**Saropa's unique positioning** — the debug-to-production bridge — is now fully realized: recurring debug errors are cross-referenced with Crashlytics issues (item 20), and bug reports include production impact data (item 21). No competing tool combines local debug history with production crash data in a single view.
