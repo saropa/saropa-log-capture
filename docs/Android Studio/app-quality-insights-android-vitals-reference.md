@@ -227,11 +227,9 @@ AQI's toolbar provides 5 simultaneous filter dimensions: time range, visibility/
 
 6. **DONE — Time-windowed cross-session aggregation** — `aggregateInsights(timeRange: TimeRange)` in `cross-session-aggregator.ts` accepts `'24h' | '7d' | '30d' | 'all'`. `filterByTime()` filters sessions by parsed date against the time window. Insights panel header has a `<select>` dropdown and refresh button.
 
-7. **App version capture in session metadata** — During session creation, attempt to read the app version from workspace files: `pubspec.yaml` (`version` field), `build.gradle` (`versionName`), `package.json` (`version`). Store as `appVersion` in the session header and `.meta.json`. Show in session display and allow filtering.
-   - *Priority:* Medium. *Complexity:* Medium (~40 lines in `log-session.ts` or `environment-collector.ts` + ~15 lines in `session-metadata.ts`).
+7. **DONE — App version capture in session metadata** — `app-version.ts` detects version from `pubspec.yaml`, `build.gradle`, or `package.json` with 5-minute cache. Called during session finalization in `session-lifecycle.ts`. Version stored in `.meta.json` via `SessionMetadataStore.setAppVersion()`. Extracted from `firebase-crashlytics.ts` to fix its 300-line limit.
 
-8. **Error status lifecycle** — Add an `errorStatus` field to fingerprinted errors in `.meta.json`: `open` (default), `closed`, `muted`. Provide context menu actions in the Insights panel: "Close Error", "Mute Error". Closed errors are visually dimmed; muted errors are hidden. This creates a lightweight triage workflow without requiring a backend.
-   - *Priority:* Medium. *Complexity:* Medium (~40 lines in `error-fingerprint.ts` + ~30 lines in `insights-drill-down.ts`).
+8. **DONE — Error status lifecycle** — `error-status-store.ts` persists open/closed/muted status per error fingerprint hash in `.error-status.json`. Insights panel and Recurring Errors sidebar show Close/Mute/Re-open action buttons. Closed errors are dimmed; muted errors are hidden. Re-opening deletes the entry to keep the file small.
 
 9. **Target device metadata from DAP** — Some debug adapters (Flutter's) include device info in DAP events. Parse `runInTerminal` requests and custom DAP events for device model and OS version. Store in session metadata. Not all adapters provide this, so fail gracefully.
    - *Priority:* Low. *Complexity:* Medium (~40 lines in `tracker.ts` + ~10 lines in `session-metadata.ts`).
@@ -253,8 +251,7 @@ AQI's left pane is a persistent, sortable, searchable master list of all issue c
 
 **Improvement ideas:**
 
-10. **Always-visible error feed in sidebar** — Add a "Recurring Errors" section to the Project Logs panel (or a new icon bar tab) that shows the top N recurring error fingerprints across all sessions, updated when sessions are finalized. Unlike the Insights panel (which requires a manual command), this would be passively visible. Reuse `buildRecurringErrors` from `cross-session-aggregator.ts`.
-    - *Priority:* High (closes the biggest UX gap with AQI). *Complexity:* Medium (~80 lines in session panel rendering + ~20 lines wiring in `viewer-session-panel.ts`).
+10. **DONE — Always-visible error feed in sidebar** — `recurring-errors-panel.ts` implements a `RecurringErrorsPanelProvider` (WebviewViewProvider) registered as `saropaLogCapture.recurringErrorsPanel` in the icon bar. Shows compact error cards with normalized text, session/occurrence counts, and triage actions. Auto-refreshes 3 seconds after session finalization. "Open Full Insights" footer link opens the full Insights panel.
 
 11. **Search in Insights panel** — Add a text input at the top of the Insights panel that filters both hot files and recurring errors by keyword. Match against `normalizedText`, `exampleLine`, and `filename`. Reuses the search input pattern from the Filters panel.
     - *Priority:* Low. *Complexity:* Low (~25 lines in `insights-panel.ts`).
@@ -277,8 +274,7 @@ AQI shows the version range an issue spans, an event navigator to page through i
 
 **Improvement ideas:**
 
-13. **Version range on recurring errors** — If item 7 (app version capture) is implemented, extend `RecurringError` with `firstSeenVersion` and `lastSeenVersion` fields. Display as `v1.2.0 → v1.4.1` in the Insights panel, matching AQI's format. This answers "has this error been present since before my fix?"
-    - *Priority:* Medium (depends on item 7). *Complexity:* Low (~15 lines in `cross-session-aggregator.ts` + ~10 lines rendering).
+13. **DONE — Version range on recurring errors** — `RecurringError` in `cross-session-aggregator.ts` now includes `firstSeenVersion` and `lastSeenVersion`. `accumulateFingerprint()` tracks versions from session metadata. Insights panel renders `v1.2.0 → v1.4.1` (or single version) via `formatVersionRange()` in the error meta line.
 
 14. **Google Play Console deep link** — For apps with a known package name (item 3), construct the Play Console URL: `https://play.google.com/console/developers/{devId}/app/{appId}/vitals/crashes`. Even without API integration, a clickable link to the Vitals dashboard in the Insights panel provides quick access to production data.
     - *Priority:* Low. *Complexity:* Low (~10 lines).
@@ -299,8 +295,7 @@ AQI's stack trace view shows the crashing thread with full metadata (name, tid, 
 
 **Improvement ideas:**
 
-15. **Parse thread headers in stack traces** — Extend `stack-parser.ts` to recognize thread header patterns: `"thread-name" tid=N State`, `Thread-N (daemon)`, `--- thread_name ---`. Store thread name, tid, and state as metadata on the stack group. Display in the viewer as a styled header above the frames: `main (tid=1) — Runnable`.
-    - *Priority:* Medium. *Complexity:* Medium (~40 lines in `stack-parser.ts` + ~15 lines in rendering).
+15. **DONE — Parse thread headers in stack traces** — `parseThreadHeader()` in `stack-parser.ts` recognizes quoted thread names with tid/state and dash-delimited format. `tryFormatThreadHeader()` in `viewer-provider-helpers.ts` wraps matches in `<span class="thread-header">` with link-colored, bold italic styling. Applied in both `log-viewer-provider.ts` and `pop-out-panel.ts`.
 
 16. **Thread grouping for ANR-style traces** — When a log file contains multiple consecutive stack traces (common in ANR dumps and `kill -3` thread dumps), group them under a collapsible "Threads (N)" section. Each thread shows its header and frame list. The "main" thread is expanded by default; others are collapsed. This mimics AQI's "Show all 134 threads" functionality for local debug output.
     - *Priority:* Medium. *Complexity:* High (~100 lines across stack parser, viewer script, and styles).
@@ -407,20 +402,20 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 | 21 | Refresh timestamp on remote data panels | DONE |
 | 22 | TTL on Crashlytics issue list cache | DONE |
 
-#### Phase 2: High-Impact Features (Medium complexity, strong differentiators)
+#### Phase 2: High-Impact Features (Medium complexity, strong differentiators) — ALL DONE
 
 | # | Item | Status |
 |---|------|--------|
 | 23 | Pre-production ANR risk scoring | DONE |
 | 24 | Bridge debug error patterns to Crashlytics | DONE |
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 7 | App version capture in session metadata | ~55 lines | Enables version filtering |
-| 13 | Version range on recurring errors | ~25 lines | Track error lifespan |
-| 15 | Parse thread headers in stack traces | ~55 lines | ANR investigation support |
-| 8 | Error status lifecycle (open/closed/muted) | ~70 lines | Lightweight triage workflow |
-| 10 | Always-visible error feed in sidebar | ~100 lines | Persistent issue awareness |
+| # | Item | Status |
+|---|------|--------|
+| 7 | App version capture in session metadata | DONE |
+| 13 | Version range on recurring errors | DONE |
+| 15 | Parse thread headers in stack traces | DONE |
+| 8 | Error status lifecycle (open/closed/muted) | DONE |
+| 10 | Always-visible error feed in sidebar | DONE |
 
 #### Phase 3: Strategic Features (High complexity, competitive differentiation)
 
@@ -450,9 +445,9 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**Closed gaps since initial analysis:** All Phase 1 quick wins are complete (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 items 23 (ANR risk scoring) and 24 (debug-to-Crashlytics error bridging) are complete, establishing a pre-production ANR detection pipeline and a debug-to-production error bridge. The Crashlytics integration is comprehensive (see companion document for full status).
+**Closed gaps since initial analysis:** All Phase 1 and Phase 2 items are complete. Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). The Crashlytics integration is comprehensive (see companion document for full status).
 
-**The highest-value gap to close** is the always-visible error feed (item 10) and error status lifecycle (item 8), which together create a persistent triage workflow in the sidebar. Thread header parsing (item 15) and version tracking (items 7, 13) round out the remaining Phase 2 feature set.
+**The highest-value gap to close** is now Phase 3: Google Play Developer Reporting API integration (item 1) and thread grouping for ANR-style traces (item 16). These would provide production Vitals data inside VS Code and multi-thread debugging support respectively.
 
 **The proactive warning system is now operational.** ANR risk scoring (item 23) detects choreographer warnings, GC pauses, and thread blocking patterns during debugging and flags "this will become an ANR in production." The Crashlytics error bridge (item 24) connects debug-time errors to production crash data. Together, these shift ANR and error detection left in the development lifecycle, where fixes are cheaper and faster.
 
