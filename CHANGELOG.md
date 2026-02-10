@@ -33,6 +33,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Impact-weighted error sorting:** Recurring errors in the Insights panel are now sorted by impact score (sessions × occurrences) instead of session count alone, matching Android Vitals' event×user ranking.
 - **Insights refresh timestamp:** Cross-Session Insights panel header now shows data age ("just now", "42s ago", "3m ago") alongside the session/file/error summary, giving confidence in data freshness.
 - **Crashlytics issue list cache:** Top issues API response is cached in memory for 5 minutes to avoid redundant API calls during repeated analyses. Explicit refresh (sidebar button or auto-refresh timer) bypasses the cache.
+- **Generalized production error bridge:** Cross-Session Insights panel now matches ALL recurring error patterns against Crashlytics production issues (previously ANR-only). Uses word extraction from both example lines and normalized text for broader matching.
+- **Package-hint file resolution:** Stack frame file resolution now extracts Dart package names and Java package paths from frame text and passes them to `findInWorkspace()` for more accurate disambiguation in monorepo/multi-package workspaces. Wired through the analysis panel and bug report collector.
+
+### Improved
+- **Crashlytics crash detail loading feedback:** Clicking an issue card in the Crashlytics sidebar now shows a pulsing "Loading crash details..." message while the API call is in flight, replacing the previous silent wait.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
