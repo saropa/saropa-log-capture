@@ -22,7 +22,6 @@ export function getSessionPanelHtml(): string {
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
         <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
         <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order"><span class="codicon codicon-arrow-down"></span> Sort</button>
-        <button id="session-toggle-trash" class="session-toggle-btn active" title="Show/hide trashed"><span class="codicon codicon-trash"></span> Trash <span id="session-trash-badge" class="session-toggle-badge"></span></button>
         <button id="session-toggle-latest" class="session-toggle-btn" title="Show only latest of each name"><span class="codicon codicon-pinned"></span> Latest</button>
         <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag"><span class="codicon codicon-filter"></span> Tags</button>
     </div>
@@ -50,7 +49,7 @@ export function getSessionPanelScript(): string {
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
-        reverseSort: false, showTrash: true, showLatestOnly: false, panelWidth: 0,
+        reverseSort: false, showLatestOnly: false, panelWidth: 0,
     };
 
     window.openSessionPanel = function() {
@@ -83,7 +82,6 @@ export function getSessionPanelScript(): string {
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
             if (sessionEmptyEl) sessionEmptyEl.style.display = '';
-            updateTrashBadge(0);
             return;
         }
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
@@ -92,20 +90,10 @@ export function getSessionPanelScript(): string {
         var active = sessions.filter(function(s) { return !s.trashed; });
         if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
-        var trashed = sessions.filter(function(s) { return !!s.trashed; });
-        updateTrashBadge(trashed.length);
         var sorted = sortSessions(active);
         computeSparkWidths(sorted);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted) : renderFlat(sorted);
-        if (sessionDisplayOptions.showTrash && trashed.length > 0) {
-            html += renderTrashSection(sortSessions(trashed));
-        }
         sessionListEl.innerHTML = html;
-    }
-
-    function updateTrashBadge(count) {
-        var badge = document.getElementById('session-trash-badge');
-        if (badge) badge.textContent = count > 0 ? String(count) : '';
     }
 
     function sortSessions(sessions) {
@@ -117,39 +105,30 @@ export function getSessionPanelScript(): string {
         return list;
     }
 
-    function renderFlat(sessions) { return sessions.map(function(s) { return renderItem(s, false); }).join(''); }
+    function renderFlat(sessions) { return sessions.map(renderItem).join(''); }
 
     function renderGrouped(sessions) {
         var groups = [], currentKey = '';
         for (var i = 0; i < sessions.length; i++) {
             var key = toDateKey(sessions[i].mtime || 0);
             if (key !== currentKey) { currentKey = key; groups.push(renderDayHeading(sessions[i].mtime || 0)); }
-            groups.push(renderItem(sessions[i], false));
+            groups.push(renderItem(sessions[i]));
         }
         return groups.join('');
     }
 
-    function renderItem(s, isTrashed) {
-        var icon = isTrashed ? 'codicon-trash' : (s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output'));
-        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (isTrashed ? ' session-item-trashed' : '');
+    function renderItem(s) {
+        var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
+        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '');
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
         var dots = renderSeverityDots(s);
-        return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '" data-trashed="' + (isTrashed ? '1' : '') + '">'
+        return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
             + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
             + dots + renderSparkBar(s) + '</div></div>';
-    }
-
-    function renderTrashSection(trashed) {
-        var html = '<div class="session-trash-heading">'
-            + '<span class="session-trash-heading-label"><span class="codicon codicon-trash"></span> Trash <span class="session-trash-badge">(' + trashed.length + ')</span></span>'
-            + '<button class="session-trash-empty-btn" id="session-empty-trash">Empty Trash</button>'
-            + '</div>';
-        html += trashed.map(function(s) { return renderItem(s, true); }).join('');
-        return html;
     }
 
     function renderDayHeading(epochMs) {
@@ -189,7 +168,6 @@ export function getSessionPanelScript(): string {
             'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
             'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
             'session-toggle-reverse': sessionDisplayOptions.reverseSort,
-            'session-toggle-trash': sessionDisplayOptions.showTrash,
             'session-toggle-latest': sessionDisplayOptions.showLatestOnly,
         };
         for (var id in ids) {
@@ -222,7 +200,6 @@ export function getSessionPanelScript(): string {
     bindToggle('session-toggle-normalize', 'normalizeNames');
     bindToggle('session-toggle-headings', 'showDayHeadings');
     bindToggle('session-toggle-reverse', 'reverseSort');
-    bindToggle('session-toggle-trash', 'showTrash');
     bindToggle('session-toggle-latest', 'showLatestOnly');
 
     initSessionPanelResize(sessionPanelEl, function(w) {
@@ -236,13 +213,9 @@ export function getSessionPanelScript(): string {
     function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
     function escapeHtmlText(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-    /* Handle clicks on session items + empty trash button. */
+    /* Handle clicks on session items. */
     if (sessionListEl) {
         sessionListEl.addEventListener('click', function(e) {
-            if (e.target.closest('#session-empty-trash')) {
-                vscodeApi.postMessage({ type: 'sessionAction', action: 'emptyTrash' });
-                return;
-            }
             var item = e.target.closest('.session-item');
             if (!item) return;
             vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: item.getAttribute('data-uri') || '' });
@@ -252,7 +225,7 @@ export function getSessionPanelScript(): string {
             if (!item) return;
             e.preventDefault();
             if (typeof showSessionContextMenu === 'function') {
-                showSessionContextMenu(e.clientX, e.clientY, item.getAttribute('data-uri') || '', item.getAttribute('data-filename') || '', item.getAttribute('data-trashed') === '1');
+                showSessionContextMenu(e.clientX, e.clientY, item.getAttribute('data-uri') || '', item.getAttribute('data-filename') || '', false);
             }
         });
     }
