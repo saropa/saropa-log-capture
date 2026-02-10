@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Improved
 - **Crashlytics crash detail loading feedback:** Clicking an issue card in the Crashlytics sidebar now shows a pulsing "Loading crash details..." message while the API call is in flight, replacing the previous silent wait.
-- **Parallelized file operations:** File retention enforcement, documentation token scanning, referenced file analysis, and session shutdown now use `Promise.all` instead of sequential loops. File retention startup with 100+ files improves from ~3s to ~200ms.
+- **Parallelized file operations:** File retention enforcement, documentation token scanning, referenced file analysis, and session shutdown now run concurrently (`Promise.all` / `Promise.allSettled`) instead of sequential loops. File retention startup with 100+ files improves from ~3s to ~200ms.
 - **Split failure logging:** Log file split errors are now logged to the extension host console instead of silently swallowed.
 
 ### Changed

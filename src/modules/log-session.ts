@@ -102,7 +102,7 @@ export class LogSession {
         }, text);
 
         if (splitResult.shouldSplit && splitResult.reason) {
-            this.performSplit(splitResult.reason).catch(() => {});
+            this.performSplit(splitResult.reason).catch((e) => { console.error('Log split failed:', e); });
         }
 
         const elapsedMs = this.computeElapsed(timestamp);

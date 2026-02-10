@@ -240,13 +240,8 @@ export class SessionManagerImpl implements SessionManager {
     /** Stop all sessions (called on deactivate). */
     async stopAll(): Promise<void> {
         this.earlyOutputBuffer.clear();
-        const stopped = new Set<LogSession>();
-        for (const [, session] of this.sessions) {
-            if (!stopped.has(session)) {
-                stopped.add(session);
-                await session.stop().catch(() => {});
-            }
-        }
+        const unique = new Set<LogSession>(this.sessions.values());
+        await Promise.allSettled([...unique].map(s => s.stop()));
         this.sessions.clear();
         this.ownerSessionIds.clear();
     }
