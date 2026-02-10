@@ -236,8 +236,16 @@ Tokens are extracted from file content to enable fast keyword matching without r
 5. Deduplicate per file
 6. Cap at 500 tokens per file (prioritize headings, code blocks, and bold text)
 
-**Markdown-aware extraction:**
-- Headings get 2x weight (stored separately in `headings` array)
+**Parser selection by file type:**
+
+| Extension | Parser | Notes |
+|-----------|--------|-------|
+| `.md` | Markdown-aware | Headings, code blocks, bold/italic, links, front matter |
+| `.txt` | Whitespace-split | Plain tokenization only |
+| `.yml`, `.yaml`, `.rst`, `.rdoc`, `.adoc` | Whitespace-split (v1) | Falls back to plain tokenization until specialized parsers ship (see `ECOSYSTEM_KNOWLEDGE_FILES.md` Tier 2/3) |
+
+**Markdown-aware extraction details:**
+- Headings get 2x weight (stored separately in `headings` array, H1-H3 only)
 - Code blocks (```` ``` ````) — extract identifiers (camelCase split, dot-notation split)
 - Bold/italic text — extract as-is
 - Links — extract link text, ignore URLs
