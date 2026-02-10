@@ -16,6 +16,7 @@ import { getInsightsStyles } from './insights-panel-styles';
 import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
 import { getDrillDownStyles } from './insights-drill-down-styles';
 import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
+import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../modules/error-status-store';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentTimeRange: TimeRange = 'all';
@@ -26,8 +27,9 @@ export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
     const insights = await aggregateInsights(currentTimeRange);
+    const statuses = await getErrorStatusBatch(insights.recurringErrors.map(e => e.hash));
     if (panel) {
-        panel.webview.html = buildResultsHtml(insights);
+        panel.webview.html = buildResultsHtml(insights, statuses);
         bridgeErrorsToCrashlytics(insights.recurringErrors);
     }
 }
@@ -59,6 +61,9 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         showInsightsPanel(String(msg.range) as TimeRange).catch(() => {});
     } else if (msg.type === 'refresh') {
         showInsightsPanel().catch(() => {});
+    } else if (msg.type === 'setErrorStatus') {
+        await setErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open') as ErrorStatus);
+        showInsightsPanel().catch(() => {});
     }
 }
 
@@ -79,7 +84,7 @@ function buildLoadingHtml(): string {
 </head><body><div class="loading">Analyzing sessions...</div></body></html>`;
 }
 
-function buildResultsHtml(insights: CrossSessionInsights): string {
+function buildResultsHtml(insights: CrossSessionInsights, statuses: Record<string, ErrorStatus>): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
@@ -88,7 +93,7 @@ function buildResultsHtml(insights: CrossSessionInsights): string {
 ${renderHeader(insights)}
 <div class="content">
 ${renderHotFiles(insights.hotFiles)}
-${renderRecurringErrors(insights.recurringErrors)}
+${renderRecurringErrors(insights.recurringErrors, statuses)}
 </div>
 <script nonce="${nonce}">${getScript()}</script>
 </body></html>`;
@@ -130,10 +135,11 @@ function renderHotFileItem(f: HotFile): string {
 <span class="session-count">${sessions}</span></div></div>`;
 }
 
-function renderRecurringErrors(errors: readonly RecurringError[]): string {
-    const items = errors.length === 0
+function renderRecurringErrors(errors: readonly RecurringError[], statuses: Record<string, ErrorStatus>): string {
+    const visible = errors.filter(e => statuses[e.hash] !== 'muted');
+    const items = visible.length === 0
         ? '<div class="empty-state">No recurring error patterns found.</div>'
-        : errors.map(renderErrorItem).join('\n');
+        : visible.map(e => renderErrorItem(e, statuses[e.hash] ?? 'open')).join('\n');
     return `<details class="section" open>
 <summary class="section-header">Recurring Errors<span class="count">${errors.length} patterns</span></summary>
 <div id="production-loading" class="production-loading" style="display:none">Checking production data&hellip;</div>
@@ -141,15 +147,20 @@ ${items}
 </details>`;
 }
 
-function renderErrorItem(e: RecurringError): string {
+function renderErrorItem(e: RecurringError, status: ErrorStatus): string {
     const sessions = e.sessionCount === 1 ? '1 session' : `${e.sessionCount} sessions`;
     const total = e.totalOccurrences === 1 ? '1 occurrence' : `${e.totalOccurrences} occurrences`;
     const example = escapeHtml(e.exampleLine);
     const normalized = escapeHtml(e.normalizedText);
     const ver = formatVersionRange(e);
-    return `<div class="error-group" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
+    const dimCls = status === 'closed' ? ' error-closed' : '';
+    const actions = status === 'open'
+        ? `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="closed">Close</span><span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="muted">Mute</span>`
+        : `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="open">Re-open</span>`;
+    return `<div class="error-group${dimCls}" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
 <div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${normalized}</div>
 <div class="error-meta">${sessions} &middot; ${total}${ver} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
+<div class="error-actions">${actions}</div>
 </div>`;
 }
 
@@ -172,6 +183,8 @@ function getScript(): string {
         vscode.postMessage({ type: 'setTimeRange', range: e.target.value });
     });
     document.addEventListener('click', (e) => {
+        var act = e.target.closest('.err-action');
+        if (act) { e.stopPropagation(); vscode.postMessage({ type: 'setErrorStatus', hash: act.dataset.hash, status: act.dataset.status }); return; }
         var match = e.target.closest('.drill-down-match');
         if (match) { vscode.postMessage({ type: 'openMatch', uri: match.dataset.uri, filename: match.dataset.filename, line: parseInt(match.dataset.line) }); return; }
         var el = e.target.closest('[data-action]');
