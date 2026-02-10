@@ -16,8 +16,8 @@ import { getInsightsStyles } from './insights-panel-styles';
 import { renderEnvironmentSection } from './insights-panel-environment';
 import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
 import { getDrillDownStyles } from './insights-drill-down-styles';
-import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../modules/error-status-store';
+import { startCrashlyticsBridge } from './insights-crashlytics-bridge';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentTimeRange: TimeRange = 'all';
@@ -31,7 +31,7 @@ export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
     const statuses = await getErrorStatusBatch(insights.recurringErrors.map(e => e.hash));
     if (panel) {
         panel.webview.html = buildResultsHtml(insights, statuses);
-        bridgeErrorsToCrashlytics(insights.recurringErrors);
+        startCrashlyticsBridge(panel, insights.recurringErrors);
     }
 }
 
@@ -115,7 +115,8 @@ function renderHeader(insights: CrossSessionInsights): string {
 <div class="title">Cross-Session Insights</div>
 <div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''} &middot; ${formatElapsedLabel(insights.queriedAt)}</div>
 </div>
-<div class="header-right"><select id="time-range" class="time-range-select">${opts}</select>
+<div class="header-right"><input id="insights-search" class="insights-search" type="text" placeholder="Filter..." />
+<select id="time-range" class="time-range-select">${opts}</select>
 <button class="refresh-btn" id="refresh-btn">Refresh</button></div>
 </div>`;
 }
@@ -132,7 +133,7 @@ ${items}
 
 function renderHotFileItem(f: HotFile): string {
     const sessions = f.sessionCount === 1 ? '1 session' : `${f.sessionCount} sessions`;
-    return `<div class="hot-file" data-action="openFile" data-filename="${escapeHtml(f.filename)}">
+    return `<div class="hot-file" data-action="openFile" data-filename="${escapeHtml(f.filename)}" data-search-text="${escapeHtml(f.filename.toLowerCase())}">
 <div class="file-row"><span class="file-name">${escapeHtml(f.filename)}</span>
 <span class="session-count">${sessions}</span></div></div>`;
 }
@@ -142,11 +143,24 @@ function renderRecurringErrors(errors: readonly RecurringError[], statuses: Reco
     const items = visible.length === 0
         ? '<div class="empty-state">No recurring error patterns found.</div>'
         : visible.map(e => renderErrorItem(e, statuses[e.hash] ?? 'open')).join('\n');
+    const chips = renderCategoryChips(visible);
     return `<details class="section" open>
 <summary class="section-header">Recurring Errors<span class="count">${errors.length} patterns</span></summary>
-<div id="production-loading" class="production-loading" style="display:none">Checking production data&hellip;</div>
+${chips}<div id="production-loading" class="production-loading" style="display:none">Checking production data&hellip;</div>
 ${items}
 </details>`;
+}
+
+function renderCategoryChips(errors: readonly RecurringError[]): string {
+    const cats = new Set(errors.map(e => e.category).filter(Boolean) as string[]);
+    if (cats.size === 0) { return ''; }
+    const sorted = [...cats].sort();
+    const chips = sorted.map(c =>
+        `<button class="cat-chip active" data-cat-chip="${c}"><span class="cat-badge cat-${c}">${c.toUpperCase()}</span></button>`,
+    ).join('');
+    return `<div class="cat-chip-bar"><span class="cat-chip-label">Categories:</span>${chips}
+<button class="cat-chip-action" data-cat-action="all">All</button>
+<button class="cat-chip-action" data-cat-action="none">None</button></div>`;
 }
 
 function renderErrorItem(e: RecurringError, status: ErrorStatus): string {
@@ -160,7 +174,9 @@ function renderErrorItem(e: RecurringError, status: ErrorStatus): string {
         ? `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="closed">Close</span><span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="muted">Mute</span>`
         : `<span class="err-action" data-hash="${escapeHtml(e.hash)}" data-status="open">Re-open</span>`;
     const catBadge = e.category ? `<span class="cat-badge cat-${e.category}">${e.category.toUpperCase()}</span> ` : '';
-    return `<div class="error-group${dimCls}" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
+    const catAttr = e.category ? ` data-cat="${e.category}"` : '';
+    const searchText = escapeHtml((e.normalizedText + ' ' + e.exampleLine).toLowerCase());
+    return `<div class="error-group${dimCls}" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}"${catAttr} data-search-text="${searchText}">
 <div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${catBadge}${normalized}</div>
 <div class="error-meta">${sessions} &middot; ${total}${ver} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
 <div class="error-actions">${actions}</div>
@@ -210,6 +226,55 @@ function getScript(): string {
         el.after(panel); el.classList.add('expanded');
         vscode.postMessage({ type: 'drillDownError', hash: el.dataset.hash, normalized: el.dataset.normalized });
     }
+    // --- Category chip filtering ---
+    var excludedCats = {};
+    var chipBar = document.querySelector('.cat-chip-bar');
+    if (chipBar) chipBar.addEventListener('click', function(ev) {
+        var chip = ev.target.closest('[data-cat-chip]');
+        if (chip) {
+            var cat = chip.dataset.catChip;
+            excludedCats[cat] = !excludedCats[cat];
+            chip.classList.toggle('active', !excludedCats[cat]);
+            applyFilters(); return;
+        }
+        var action = ev.target.closest('[data-cat-action]');
+        if (!action) return;
+        var allChips = chipBar.querySelectorAll('[data-cat-chip]');
+        var isNone = action.dataset.catAction === 'none';
+        for (var i = 0; i < allChips.length; i++) {
+            excludedCats[allChips[i].dataset.catChip] = isNone;
+            allChips[i].classList.toggle('active', !isNone);
+        }
+        applyFilters();
+    });
+
+    // --- Search input filtering ---
+    var searchInput = document.getElementById('insights-search');
+    var searchTimer = null;
+    if (searchInput) searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(applyFilters, 150);
+    });
+
+    function applyFilters() {
+        var query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        var anyExcluded = Object.keys(excludedCats).some(function(k) { return excludedCats[k]; });
+        // Filter hot files by search only
+        var hotFiles = document.querySelectorAll('.hot-file');
+        for (var i = 0; i < hotFiles.length; i++) {
+            var show = !query || (hotFiles[i].dataset.searchText || '').indexOf(query) !== -1;
+            hotFiles[i].style.display = show ? '' : 'none';
+        }
+        // Filter error groups by search + category
+        var errors = document.querySelectorAll('.error-group');
+        for (var j = 0; j < errors.length; j++) {
+            var el = errors[j];
+            var matchSearch = !query || (el.dataset.searchText || '').indexOf(query) !== -1;
+            var matchCat = !anyExcluded || !el.dataset.cat || !excludedCats[el.dataset.cat];
+            el.style.display = (matchSearch && matchCat) ? '' : 'none';
+        }
+    }
+
     window.addEventListener('message', (event) => {
         var msg = event.data;
         if (msg.type === 'drillDownResults') {
@@ -231,43 +296,3 @@ function getScript(): string {
 })();`;
 }
 
-/** Async: match recurring debug errors against Crashlytics production issues. */
-function bridgeErrorsToCrashlytics(errors: readonly RecurringError[]): void {
-    if (errors.length === 0) { return; }
-    panel?.webview.postMessage({ type: 'productionBridgeLoading' });
-    const timer = setTimeout(() => {
-        panel?.webview.postMessage({ type: 'productionBridgeResults', bridges: {} });
-    }, 15_000);
-    getFirebaseContext([]).then((ctx) => {
-        clearTimeout(timer);
-        if (!panel) { return; }
-        const bridges = (ctx.available && ctx.issues.length > 0)
-            ? matchErrorsToIssues(errors, ctx.issues) : {};
-        panel.webview.postMessage({ type: 'productionBridgeResults', bridges });
-    }).catch(() => {
-        clearTimeout(timer);
-        panel?.webview.postMessage({ type: 'productionBridgeResults', bridges: {} });
-    });
-}
-
-function matchErrorsToIssues(
-    errors: readonly RecurringError[], issues: readonly CrashlyticsIssue[],
-): Record<string, string> {
-    const bridges: Record<string, string> = {};
-    for (const err of errors) {
-        const words = extractMatchWords(err);
-        for (const issue of issues) {
-            const combined = (issue.title + ' ' + issue.subtitle).toLowerCase();
-            if (words.some(w => combined.includes(w))) {
-                bridges[err.hash] = `${issue.eventCount} events, ${issue.userCount} users`;
-                break;
-            }
-        }
-    }
-    return bridges;
-}
-
-function extractMatchWords(err: RecurringError): string[] {
-    const text = (err.exampleLine + ' ' + err.normalizedText).toLowerCase();
-    return text.split(/\s+/).filter(w => w.length > 5 && !/^[<[\d]/.test(w));
-}

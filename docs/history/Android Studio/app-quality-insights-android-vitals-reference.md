@@ -202,8 +202,7 @@ AQI provides separate toggle buttons for Crashes (fatal) and ANRs (freezes), let
 
 4. **DONE — Crash category sub-classification** — `classifyCategory()` in `error-fingerprint.ts` tags each fingerprinted error as `fatal`, `anr`, `oom`, `native`, or `non-fatal` using regex patterns. Category stored as `cat` in `FingerprintEntry` and passed through to `RecurringError.category` in `cross-session-aggregator.ts`. Colored badges (red/orange/purple/gray) render in Insights panel and Recurring Errors sidebar.
 
-5. **Filterable crash categories in Insights drill-down** — When the Insights panel shows recurring errors, add toggle chips for each crash category so users can isolate ANRs from crashes from OOMs. Reuses the tag-chip pattern from `viewer-session-tags.ts`.
-   - *Priority:* Low. *Complexity:* Low (~30 lines in `insights-drill-down.ts`).
+5. **DONE — Filterable crash categories in Insights panel** — Toggle chips (FATAL, ANR, OOM, NATIVE) above the recurring errors list. Clicking a chip dims it and hides matching errors. All/None buttons for bulk toggling. Uncategorized errors always visible. Reuses the tag-chip pattern from `viewer-session-tags.ts`.
 
 ---
 
@@ -240,7 +239,7 @@ AQI's left pane is a persistent, sortable, searchable master list of all issue c
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
 | Persistent issue list with impact ranking | **PARTIAL** | The Insights panel shows recurring errors ranked by `sessionCount * totalOccurrences`. But this is a one-shot aggregation command, not a persistent always-visible panel. The session panel shows sessions, not issues. |
-| Search/filter within issue list | **GAP** | The Insights panel has no text search. Errors are listed in rank order with no way to filter by keyword. |
+| Search/filter within issue list | **HAS** | Filter input in the Insights panel header filters both hot files and recurring errors by keyword (debounced 150ms). Composes with category chip filtering. |
 | Events column (occurrence count) | **HAS** | `RecurringError.totalOccurrences` is displayed in the Insights panel. |
 | Users/sessions column | **HAS** | `RecurringError.sessionCount` is displayed (sessions rather than users, since Saropa is debug-local). |
 | Impact sort (events × users) | **HAS** | `buildRecurringErrors()` in `cross-session-aggregator.ts` sorts by `(sessionCount * totalOccurrences)` descending. |
@@ -250,8 +249,7 @@ AQI's left pane is a persistent, sortable, searchable master list of all issue c
 
 10. **DONE — Always-visible error feed in sidebar** — `recurring-errors-panel.ts` implements a `RecurringErrorsPanelProvider` (WebviewViewProvider) registered as `saropaLogCapture.recurringErrorsPanel` in the icon bar. Shows compact error cards with normalized text, session/occurrence counts, and triage actions. Auto-refreshes 3 seconds after session finalization. "Open Full Insights" footer link opens the full Insights panel.
 
-11. **Search in Insights panel** — Add a text input at the top of the Insights panel that filters both hot files and recurring errors by keyword. Match against `normalizedText`, `exampleLine`, and `filename`. Reuses the search input pattern from the Filters panel.
-    - *Priority:* Low. *Complexity:* Low (~25 lines in `insights-panel.ts`).
+11. **DONE — Search in Insights panel** — Filter input in the header filters both hot files and recurring errors by keyword (debounced 150ms). Matches against `normalizedText`, `exampleLine`, and `filename`. Composes with category chip filtering.
 
 12. **DONE — Impact-weighted sort** — `buildRecurringErrors()` sorts by `(b.sessionCount * b.totalOccurrences) - (a.sessionCount * a.totalOccurrences)` descending, matching AQI's impact-first ranking.
 
