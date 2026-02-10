@@ -94,8 +94,8 @@ export async function getSourcePreview(uri: vscode.Uri, targetLine: number, cont
 }
 
 /** Analyze a source file: find it, get git history, annotations, and source preview. */
-export async function analyzeSourceFile(filename: string, crashLine?: number): Promise<WorkspaceFileInfo | undefined> {
-    const uri = await findInWorkspace(filename);
+export async function analyzeSourceFile(filename: string, crashLine?: number, packageHint?: string): Promise<WorkspaceFileInfo | undefined> {
+    const uri = await findInWorkspace(filename, packageHint);
     if (!uri) { return undefined; }
     const [gitCommits, lineCommits, annotations, sourcePreview] = await Promise.all([
         getGitHistory(uri),

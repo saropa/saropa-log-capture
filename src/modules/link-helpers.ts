@@ -43,21 +43,27 @@ export function buildGitHubCommitUrl(remoteUrl: string, hash: string): string | 
     return `https://github.com/${slug}/commit/${hash}`;
 }
 
+/** Options for building a markdown file link. */
+export interface FileLinkOptions {
+    readonly line?: number;
+    readonly col?: number;
+    readonly gitContext?: GitLinkContext;
+}
+
 /** Build a markdown file link with optional vscode:// and GitHub links. */
 export function buildMarkdownFileLink(
-    displayText: string, absolutePath: string | undefined,
-    line?: number, col?: number, gitContext?: GitLinkContext,
+    displayText: string, absolutePath: string | undefined, opts?: FileLinkOptions,
 ): string {
     let md: string;
     if (absolutePath) {
-        const vsUri = buildVscodeFileUri(absolutePath, line, col);
+        const vsUri = buildVscodeFileUri(absolutePath, opts?.line, opts?.col);
         md = `[${displayText}](${vsUri})`;
     } else {
         md = `\`${displayText}\``;
     }
-    if (gitContext) {
+    if (opts?.gitContext) {
         const ghUrl = buildGitHubFileUrl(
-            gitContext.remoteUrl, gitContext.branch, gitContext.relativePath, line,
+            opts.gitContext.remoteUrl, opts.gitContext.branch, opts.gitContext.relativePath, opts.line,
         );
         if (ghUrl) { md += ` [[GIT]](${ghUrl})`; }
     }

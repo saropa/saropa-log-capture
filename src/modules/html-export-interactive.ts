@@ -172,7 +172,6 @@ function buildInteractiveBody(lines: ParsedLine[], annotations: Map<number, stri
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const escapedText = escapeHtml(line.text);
         const cls = line.category === 'stderr' ? 'line cat-stderr' : 'line';
 
         if (line.isStackFrame) {

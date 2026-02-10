@@ -47,7 +47,7 @@ export async function findLintMatches(
         return undefined;
     }
 
-    const stackFiles = collectStackFiles(stackTrace, wsRoot);
+    const stackFiles = collectStackFiles(stackTrace);
     if (stackFiles.size === 0) { return undefined; }
 
     const fileIndex: Record<string, number> = raw.summary?.issuesByFile ?? {};
@@ -95,17 +95,17 @@ function isCompatibleSchema(schema: unknown): boolean {
 }
 
 /** Collect unique relative forward-slash file paths from app stack frames. */
-function collectStackFiles(frames: readonly StackFrame[], wsRoot: vscode.Uri): Set<string> {
+function collectStackFiles(frames: readonly StackFrame[]): Set<string> {
     const files = new Set<string>();
     for (const f of frames) {
         if (!f.isApp || !f.sourceRef) { continue; }
-        const rel = toRelativeForwardSlash(f.sourceRef.filePath, wsRoot);
+        const rel = toRelativeForwardSlash(f.sourceRef.filePath);
         if (rel) { files.add(rel.toLowerCase()); }
     }
     return files;
 }
 
-function toRelativeForwardSlash(filePath: string, wsRoot: vscode.Uri): string | undefined {
+function toRelativeForwardSlash(filePath: string): string | undefined {
     if (/^[A-Za-z]:[\\/]|^\//.test(filePath)) {
         const uri = vscode.Uri.file(filePath);
         const rel = vscode.workspace.asRelativePath(uri, false);
@@ -116,13 +116,11 @@ function toRelativeForwardSlash(filePath: string, wsRoot: vscode.Uri): string | 
 
 /** Pre-filter: only keep stack files that have at least one violation. */
 function filterRelevantFiles(stackFiles: Set<string>, fileIndex: Record<string, number>): Set<string> {
+    const lowered = new Map<string, number>();
+    for (const key of Object.keys(fileIndex)) { lowered.set(key.toLowerCase(), fileIndex[key] ?? 0); }
     const result = new Set<string>();
     for (const sf of stackFiles) {
-        for (const key of Object.keys(fileIndex)) {
-            if (key.toLowerCase() === sf && (fileIndex[key] ?? 0) > 0) {
-                result.add(sf);
-            }
-        }
+        if ((lowered.get(sf) ?? 0) > 0) { result.add(sf); }
     }
     return result;
 }

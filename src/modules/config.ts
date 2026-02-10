@@ -228,31 +228,24 @@ export async function readTrackedFiles(
   fileTypes: readonly string[],
   includeSubfolders: boolean,
 ): Promise<string[]> {
-  const results: string[] = [];
-  await collectFiles(dirUri, fileTypes, includeSubfolders ? maxScanDepth : 0, '', results);
-  return results;
+  return collectFiles(dirUri, fileTypes, includeSubfolders ? maxScanDepth : 0, '');
 }
 
-async function collectFiles(
-  dirUri: vscode.Uri,
-  fileTypes: readonly string[],
-  depth: number,
-  prefix: string,
-  out: string[],
-): Promise<void> {
+async function collectFiles(dir: vscode.Uri, fileTypes: readonly string[], depth: number, prefix: string): Promise<string[]> {
   let entries: [string, vscode.FileType][];
   try {
-    entries = await vscode.workspace.fs.readDirectory(dirUri);
-  } catch { return; }
+    entries = await vscode.workspace.fs.readDirectory(dir);
+  } catch { return []; }
+  const results: string[] = [];
   for (const [name, type] of entries) {
     const rel = prefix ? `${prefix}/${name}` : name;
     if (type === vscode.FileType.File && isTrackedFile(name, fileTypes)) {
-      out.push(rel);
+      results.push(rel);
     } else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
-      // Skip dotfiles (.git, .vscode, etc.)
-      await collectFiles(vscode.Uri.joinPath(dirUri, name), fileTypes, depth - 1, rel, out);
+      results.push(...await collectFiles(vscode.Uri.joinPath(dir, name), fileTypes, depth - 1, rel));
     }
   }
+  return results;
 }
 
 /** Build a glob pattern for file watchers, e.g. "*.{log,txt,md}". */

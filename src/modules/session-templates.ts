@@ -154,29 +154,22 @@ export async function loadTemplates(): Promise<SessionTemplate[]> {
 
     // Load user templates
     const dir = getTemplatesDir();
-    if (dir) {
-        try {
-            const entries = await vscode.workspace.fs.readDirectory(dir);
-            for (const [name, type] of entries) {
-                if (type === vscode.FileType.File && name.endsWith('.json')) {
-                    try {
-                        const uri = vscode.Uri.joinPath(dir, name);
-                        const data = await vscode.workspace.fs.readFile(uri);
-                        const template = JSON.parse(Buffer.from(data).toString('utf-8')) as SessionTemplate;
-                        if (template.name) {
-                            templates.set(template.name.toLowerCase(), template);
-                        }
-                    } catch {
-                        // Skip invalid template files
-                    }
-                }
-            }
-        } catch {
-            // Templates directory doesn't exist yet
-        }
-    }
+    if (dir) { await loadUserTemplates(dir, templates); }
 
     return Array.from(templates.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function loadUserTemplates(dir: vscode.Uri, templates: Map<string, SessionTemplate>): Promise<void> {
+    let entries: [string, vscode.FileType][];
+    try { entries = await vscode.workspace.fs.readDirectory(dir); } catch { return; }
+    for (const [name, type] of entries) {
+        if (type !== vscode.FileType.File || !name.endsWith('.json')) { continue; }
+        try {
+            const data = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(dir, name));
+            const template = JSON.parse(Buffer.from(data).toString('utf-8')) as SessionTemplate;
+            if (template.name) { templates.set(template.name.toLowerCase(), template); }
+        } catch { /* skip invalid template files */ }
+    }
 }
 
 /**

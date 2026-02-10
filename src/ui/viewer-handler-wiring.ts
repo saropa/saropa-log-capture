@@ -111,13 +111,13 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   };
   target.setSessionListHandler(() => { void refreshSessionList(); });
   target.setSessionActionHandler((action, uriString, filename) => {
-    void handleSessionAction(action, uriString, filename, historyProvider, refreshSessionList);
+    void handleSessionAction(action, uriString, filename, { historyProvider, refreshList: refreshSessionList });
   });
   target.setAddBookmarkHandler((lineIndex, text, fileUri) => {
     const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
     if (!uri) { return; }
     const filename = uri.path.split('/').pop() ?? '';
-    deps.bookmarkStore.add(uri.toString(), filename, lineIndex, text, '');
+    deps.bookmarkStore.add({ fileUri: uri.toString(), filename, lineIndex, lineText: text, note: '' });
   });
   target.setBookmarkActionHandler((msg) => {
     const type = String(msg.type ?? '');
@@ -162,9 +162,13 @@ async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, 
   store.updateNote(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''), note);
 }
 
+interface SessionActionContext {
+  readonly historyProvider: SessionHistoryProvider;
+  readonly refreshList: () => Promise<void>;
+}
+
 async function handleSessionAction(
-  action: string, uriString: string, filename: string,
-  historyProvider: SessionHistoryProvider, refreshList: () => Promise<void>,
+  action: string, uriString: string, filename: string, ctx: SessionActionContext,
 ): Promise<void> {
   const uri = uriString ? vscode.Uri.parse(uriString) : undefined;
   const item = uri ? { uri, filename } : undefined;
@@ -210,5 +214,5 @@ async function handleSessionAction(
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
       break;
   }
-  if (mutating.includes(action)) { await refreshList(); }
+  if (mutating.includes(action)) { await ctx.refreshList(); }
 }
