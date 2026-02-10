@@ -81,22 +81,22 @@ suite('buildGitHubCommitUrl', () => {
 
 suite('buildMarkdownFileLink', () => {
     test('should build vscode:// link with absolute path', () => {
-        const result = buildMarkdownFileLink('file.ts:42', '/home/file.ts', 42);
+        const result = buildMarkdownFileLink('file.ts:42', '/home/file.ts', { line: 42 });
         assert.ok(result.includes('[file.ts:42](vscode://file//home/file.ts:42)'));
     });
     test('should fall back to backticks without absolute path', () => {
-        const result = buildMarkdownFileLink('file.ts:42', undefined, 42);
+        const result = buildMarkdownFileLink('file.ts:42', undefined, { line: 42 });
         assert.strictEqual(result, '`file.ts:42`');
     });
     test('should add [GIT] suffix with git context', () => {
         const ctx = { remoteUrl: 'https://github.com/o/r', branch: 'main', relativePath: 'src/file.ts' };
-        const result = buildMarkdownFileLink('file.ts:10', '/abs/file.ts', 10, undefined, ctx);
+        const result = buildMarkdownFileLink('file.ts:10', '/abs/file.ts', { line: 10, gitContext: ctx });
         assert.ok(result.includes('[[GIT]]'));
         assert.ok(result.includes('github.com/o/r/blob/main/src/file.ts#L10'));
     });
     test('should skip [GIT] for non-GitHub remote', () => {
         const ctx = { remoteUrl: 'https://gitlab.com/o/r', branch: 'main', relativePath: 'f.ts' };
-        const result = buildMarkdownFileLink('f.ts:1', '/abs/f.ts', 1, undefined, ctx);
+        const result = buildMarkdownFileLink('f.ts:1', '/abs/f.ts', { line: 1, gitContext: ctx });
         assert.ok(!result.includes('[GIT]'));
     });
 });

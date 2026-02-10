@@ -6,7 +6,6 @@
  * marker detection, timestamp parsing, and async batch sending.
  */
 
-import * as vscode from 'vscode';
 import { ansiToHtml, escapeHtml } from '../modules/ansi';
 import { linkifyHtml, linkifyUrls } from '../modules/source-linker';
 

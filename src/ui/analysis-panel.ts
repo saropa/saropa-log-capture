@@ -5,7 +5,7 @@ import { escapeHtml } from '../modules/ansi';
 import { getNonce } from './viewer-content';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
-import { extractSourceReference } from '../modules/source-linker';
+import { extractSourceReference, extractPackageHint } from '../modules/source-linker';
 import { parseSourceTag } from '../modules/source-tag-parser';
 import { analyzeSourceFile } from '../modules/workspace-analyzer';
 import { getGitBlame } from '../modules/git-blame';
@@ -21,7 +21,7 @@ import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
 import { type GitHubContext, getGitHubContext } from '../modules/github-context';
 import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext, getCrashEventDetail, getCrashEvents } from '../modules/firebase-crashlytics';
+import { getFirebaseContext, getCrashEvents } from '../modules/firebase-crashlytics';
 import { renderCrashDetail, renderDeviceDistribution } from './analysis-crash-detail';
 import { generateCrashSummary } from '../modules/crashlytics-ai-summary';
 import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
@@ -59,7 +59,10 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     const sourceTag = parseSourceTag(lineText);
     const frames = await extractFrames(fileUri, lineIndex);
     const hasTag = !!sourceTag;
-    panel!.webview.html = buildProgressiveShell(getNonce(), lineText, tokens, !!sourceRef, frames.length > 0 ? frames : undefined, hasTag);
+    panel!.webview.html = buildProgressiveShell({
+        nonce: getNonce(), lineText, tokens, hasSource: !!sourceRef,
+        frames: frames.length > 0 ? frames : undefined, hasTag,
+    });
 
     const posted = new Set<string>();
     const post = (id: string, html: string): void => {
@@ -194,16 +197,15 @@ async function runReferencedFiles(post: PostFn, signal: AbortSignal, related?: R
     if (!related) { return {}; }
     if (!related.uniqueFiles.length) { post('files', emptySlot('files', '📁 No source files referenced')); return {}; }
     postProgress('files', '📁 Analyzing ' + related.uniqueFiles.length + ' source files...');
-    const refs = related.lines.filter(l => l.sourceRef).map(l => l.sourceRef!);
+    const refs = related.lines.filter(l => l.sourceRef).map(l => ({ ...l.sourceRef!, text: l.text }));
     const uniqueRefs = [...new Map(refs.map(r => [r.file, r])).values()].slice(0, 5);
-    const analyses: FileAnalysis[] = [];
-    for (const ref of uniqueRefs) {
-        if (signal.aborted) { break; }
-        const info = await analyzeSourceFile(ref.file, ref.line).catch(() => undefined);
-        if (!info) { continue; }
+    const analyses = (await Promise.all(uniqueRefs.map(async (ref): Promise<FileAnalysis | undefined> => {
+        if (signal.aborted) { return undefined; }
+        const info = await analyzeSourceFile(ref.file, ref.line, extractPackageHint(ref.text)).catch(() => undefined);
+        if (!info || signal.aborted) { return undefined; }
         const blame = await getGitBlame(info.uri, ref.line).catch(() => undefined);
-        analyses.push({ filename: ref.file, line: ref.line, info, blame });
-    }
+        return signal.aborted ? undefined : { filename: ref.file, line: ref.line, info, blame };
+    }))).filter((a): a is FileAnalysis => a !== undefined);
     if (!signal.aborted) { post('files', renderReferencedFilesSection(analyses)); }
     return { relatedFileCount: analyses.length };
 }

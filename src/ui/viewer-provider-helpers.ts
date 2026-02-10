@@ -7,24 +7,25 @@ import { TreeItem, isSplitGroup } from "./session-history-grouping";
 import { PendingLine } from "./viewer-file-loader";
 import { formatMtime, formatMtimeTimeOnly } from "./session-display";
 
-/**
- * Handle editing a log line in the current file.
- */
+/** Input data for editing a log line. */
+export interface EditLineInput {
+	readonly lineIndex: number;
+	readonly newText: string;
+	readonly timestamp: number;
+	readonly loadFromFile: (uri: vscode.Uri) => Promise<void>;
+}
+
+/** Handle editing a log line in the current file. */
 export async function handleEditLine(
 	currentFileUri: vscode.Uri | undefined,
 	isSessionActive: boolean,
-	lineIndex: number,
-	newText: string,
-	timestamp: number,
-	loadFromFile: (uri: vscode.Uri) => Promise<void>
+	input: EditLineInput,
 ): Promise<void> {
-	// Check if we have a file to edit
 	if (!currentFileUri) {
 		vscode.window.showWarningMessage("No log file is currently loaded for editing.");
 		return;
 	}
 
-	// Warn if session is active
 	if (isSessionActive) {
 		const choice = await vscode.window.showWarningMessage(
 			"A debug session is active. Editing the log file now may cause data loss or corruption.",
@@ -32,42 +33,26 @@ export async function handleEditLine(
 			"Edit Anyway",
 			"Cancel"
 		);
-		if (choice !== "Edit Anyway") {
-			return;
-		}
+		if (choice !== "Edit Anyway") { return; }
 	}
 
 	try {
-		// Read the current file
 		const raw = await vscode.workspace.fs.readFile(currentFileUri);
 		const text = Buffer.from(raw).toString("utf-8");
 		const lines = text.split(/\r?\n/);
+		const dataStartIndex = findHeaderEnd(lines);
+		const targetIndex = dataStartIndex + input.lineIndex;
 
-		// Find the header end
-		const headerEnd = findHeaderEnd(lines);
-		const dataStartIndex = headerEnd;
-		const targetIndex = dataStartIndex + lineIndex;
-
-		// Validate index
 		if (targetIndex < dataStartIndex || targetIndex >= lines.length) {
-			vscode.window.showErrorMessage(`Line index ${lineIndex} is out of range.`);
+			vscode.window.showErrorMessage(`Line index ${input.lineIndex} is out of range.`);
 			return;
 		}
 
-		// Replace the line
-		lines[targetIndex] = newText;
-
-		// Write back to file
+		lines[targetIndex] = input.newText;
 		const newContent = lines.join('\n');
-		await vscode.workspace.fs.writeFile(
-			currentFileUri,
-			Buffer.from(newContent, 'utf-8')
-		);
-
-		vscode.window.showInformationMessage(`Line ${lineIndex + 1} updated successfully.`);
-
-		// Reload the file in the viewer to show the change
-		await loadFromFile(currentFileUri);
+		await vscode.workspace.fs.writeFile(currentFileUri, Buffer.from(newContent, 'utf-8'));
+		vscode.window.showInformationMessage(`Line ${input.lineIndex + 1} updated successfully.`);
+		await input.loadFromFile(currentFileUri);
 	} catch (err) {
 		throw new Error(`File edit failed: ${err instanceof Error ? err.message : String(err)}`);
 	}

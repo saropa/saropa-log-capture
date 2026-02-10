@@ -68,8 +68,17 @@ export function getNonce(): string {
     return result;
 }
 
+interface ViewerHtmlOptions {
+    readonly nonce: string;
+    readonly extensionUri?: string;
+    readonly version?: string;
+    readonly cspSource?: string;
+    readonly codiconCssUri?: string;
+}
+
 /** Build the complete HTML document for the log viewer webview. */
-export function buildViewerHtml(nonce: string, extensionUri?: string, version?: string, cspSource?: string, codiconCssUri?: string): string {
+export function buildViewerHtml(opts: ViewerHtmlOptions): string {
+    const { nonce, extensionUri, version, cspSource, codiconCssUri } = opts;
     const fontSrc = cspSource ? `font-src ${cspSource};` : '';
     const styleSrc = cspSource
         ? `style-src 'nonce-${nonce}' 'unsafe-inline' ${cspSource};`

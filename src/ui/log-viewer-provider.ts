@@ -78,7 +78,7 @@ export class LogViewerProvider
       vscode.Uri.joinPath(codiconsUri, 'codicon.css'),
     ).toString();
     const cspSource = webviewView.webview.cspSource;
-    webviewView.webview.html = buildViewerHtml(getNonce(), audioWebviewUri, this.version, cspSource, codiconCssUri);
+    webviewView.webview.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource, codiconCssUri });
     webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
       this.handleMessage(msg),
     );
@@ -240,9 +240,10 @@ export class LogViewerProvider
           .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
         break;
       case "editLine":
-        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, Number(msg.lineIndex ?? 0),
-          String(msg.newText ?? ""), Number(msg.timestamp ?? 0), (uri) => this.loadFromFile(uri))
-          .catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
+        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, {
+          lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
+          timestamp: Number(msg.timestamp ?? 0), loadFromFile: (uri) => this.loadFromFile(uri),
+        }).catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
