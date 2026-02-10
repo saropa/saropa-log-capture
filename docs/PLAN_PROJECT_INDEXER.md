@@ -41,9 +41,16 @@ Build a **lightweight, delta-aware project indexer** that:
 
 ```
 Workspace
-├── docs/           ← scanned (project indexer — content tokenization)
-├── bugs/           ← scanned (project indexer — content tokenization)
-├── reports/        ← scanned (project indexer — sidecar metadata only)
+├── docs/           ← scanned (content tokenization)
+├── doc/            ← scanned (content tokenization)
+├── bugs/           ← scanned (content tokenization)
+├── .github/        ← scanned (templates, config)
+├── adr/            ← scanned (architecture decisions)
+├── rfcs/           ← scanned (proposals)
+├── design/         ← scanned (specs)
+├── wiki/           ← scanned (knowledge base)
+├── guides/         ← scanned (how-to docs)
+├── reports/        ← scanned (sidecar metadata only)
 │   ├── *.log + *.meta.json   ← session files (unchanged)
 │   └── (no more .crashlytics/ subfolder — moved to .saropa/)
 ├── README.md       ← scanned (root files)
@@ -251,14 +258,34 @@ Tokens are extracted from file content to enable fast keyword matching without r
     "description": "Enable project-wide indexing of documentation and knowledge files for faster analysis searches."
   },
 
-  // Which directories to index (replaces/extends docsScanDirs)
+  // Which directories to index (replaces/extends docsScanDirs).
+  // See docs/ECOSYSTEM_KNOWLEDGE_FILES.md for a full catalog of
+  // ecosystem-specific folders and file types users may want to add.
   "saropaLogCapture.projectIndex.sources": {
     "type": "array",
     "default": [
+      // Universal — nearly every project has one or both
       { "path": "docs", "fileTypes": [".md", ".txt"] },
-      { "path": "bugs", "fileTypes": [".md", ".txt"] }
+      { "path": "doc", "fileTypes": [".md", ".txt", ".rst", ".rdoc"] },
+
+      // Issue tracking / internal knowledge
+      { "path": "bugs", "fileTypes": [".md", ".txt"] },
+
+      // GitHub — issue/PR templates, CONTRIBUTING, SECURITY, CODEOWNERS
+      { "path": ".github", "fileTypes": [".md", ".yml", ".yaml"] },
+
+      // Architecture decision records — common in larger codebases
+      { "path": "adr", "fileTypes": [".md"] },
+
+      // Design specs, proposals, RFCs
+      { "path": "rfcs", "fileTypes": [".md"] },
+      { "path": "design", "fileTypes": [".md", ".txt"] },
+
+      // Guides, wikis, handbooks
+      { "path": "wiki", "fileTypes": [".md"] },
+      { "path": "guides", "fileTypes": [".md"] }
     ],
-    "description": "Directories to index for project knowledge. Each entry specifies a path (relative to workspace root) and file types to include.",
+    "description": "Directories to index for project knowledge. Each entry specifies a path (relative to workspace root) and file types to include. Non-existent directories are silently skipped.",
     "items": {
       "type": "object",
       "properties": {

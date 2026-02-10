@@ -381,9 +381,9 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
 | # | Item | Status |
 |---|------|--------|
-| 3 | AI crash summary via VS Code LM API | — |
+| 3 | AI crash summary via VS Code LM API | DONE |
 | 6 | Close/Mute issue write-back to Firebase | DONE |
-| 13 | Query Crashlytics issueStats endpoint | — |
+| 13 | Query Crashlytics issueStats endpoint | PARTIAL (API function exists, no callers) |
 | 16 | Auto-detect app version for filtered queries | DONE |
 | 22 | Trend sparkline in session history tree | — |
 
@@ -391,9 +391,9 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
 - **Phase 1:** 6/6 complete
 - **Phase 2:** 6/6 complete
-- **Phase 3:** 2/4 complete
-- **Phase 4:** 2/5 complete
-- **Overall:** 16/21 complete, 5 remaining
+- **Phase 3:** 4/4 complete
+- **Phase 4:** 3/5 complete, 1 partial
+- **Overall:** 19/21 complete, 1 partial, 1 remaining
 
 ---
 
@@ -403,8 +403,8 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
 **Saropa's core strength** is connecting debug-time errors to production impact through cross-session aggregation, automated bug reports, git blame, and documentation matching — capabilities AQI does not have.
 
-**Closed gaps since initial analysis:** Phases 1 and 2 are fully complete. Crashlytics data is now richer (severity badges, state tags, version ranges, device metadata, Keys/Logs tabs, multi-event pagination, refresh timestamps) and more performant (5-minute TTL cache on issue lists, multi-event disk cache with migration). The dedicated Crashlytics sidebar, Close/Mute write-back, version auto-detection, cross-session device aggregation, debug-to-production error bridge, Crashlytics-enhanced bug reports, and fuzzy file resolution with package hints were all delivered.
+**Closed gaps since initial analysis:** Phases 1, 2, and 3 are fully complete. Phase 4 is 3/5 with 1 partial. Crashlytics integration now includes: severity badges, state tags, version ranges, device metadata, Keys/Logs/AI summary tabs, multi-event pagination with device/OS distribution charts, CodeLens crash indicators on source files, debug-to-production error bridge, Crashlytics-enhanced bug reports, fuzzy file resolution with package hints, and refresh timestamps with 5-minute TTL caching.
 
-**Remaining gaps:** Reverse CodeLens linking (item 19), device/OS distribution charts (items 12-13), AI crash summaries (item 3), and trend sparklines (item 22). These are lower priority and higher complexity.
+**Remaining:** Wire `getIssueStats()` into the UI (item 13 — code exists, needs caller) and trend sparklines in session history (item 22 — new feature).
 
-**Saropa's unique positioning** — the debug-to-production bridge — is now fully realized: recurring debug errors are cross-referenced with Crashlytics issues (item 20), and bug reports include production impact data (item 21). No competing tool combines local debug history with production crash data in a single view.
+**Saropa's unique positioning** — the debug-to-production bridge — is fully realized across multiple surfaces: CodeLens indicators on source files (item 19), production badges on recurring errors (item 20), AI-powered crash summaries (item 3), and production impact sections in bug reports (item 21). No competing tool combines local debug history with production crash data in a single view.
