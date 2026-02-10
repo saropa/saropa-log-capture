@@ -18,7 +18,7 @@ suite('FilterPresets', () => {
         test('should include Errors Only preset', () => {
             const errorsOnly = builtInPresets.find(p => p.name === 'Errors Only');
             assert.ok(errorsOnly, 'Should have Errors Only preset');
-            assert.ok(errorsOnly.searchPattern, 'Errors Only should have search pattern');
+            assert.ok(errorsOnly.levels, 'Errors Only should have levels filter');
         });
     });
 

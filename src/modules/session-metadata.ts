@@ -29,6 +29,10 @@ export interface SessionMeta {
     anrRiskLevel?: 'low' | 'medium' | 'high';
     /** App version detected at session finalization (e.g. from pubspec.yaml). */
     appVersion?: string;
+    /** Debug adapter type used for this session (e.g. "dart", "node", "python"). */
+    debugAdapterType?: string;
+    /** Target device or emulator detected from launch config or output. */
+    debugTarget?: string;
     /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
 }

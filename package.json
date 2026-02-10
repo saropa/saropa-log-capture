@@ -400,6 +400,11 @@
           "description": "Enable Google Play Vitals panel. Requires Play Console access and the Play Developer Reporting API enabled in your GCP project.",
           "type": "boolean"
         },
+        "saropaLogCapture.playConsole.appUrl": {
+          "default": "",
+          "description": "Full URL to your app in Google Play Console (e.g. https://play.google.com/console/u/0/developers/12345/app/67890/vitals/overview). If empty, opens the Play Console homepage.",
+          "type": "string"
+        },
         "saropaLogCapture.format": {
           "default": "plaintext",
           "description": "Output file format. Currently only plaintext is supported.",

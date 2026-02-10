@@ -42,8 +42,9 @@ export class VitalsPanelProvider implements vscode.WebviewViewProvider, vscode.D
     private async handleMessage(msg: Record<string, unknown>): Promise<void> {
         if (msg.type === 'refresh') { await this.refresh(); }
         else if (msg.type === 'openPlayConsole') {
-            // Play Console URLs require developer account ID which we don't have — open the console home.
-            vscode.env.openExternal(vscode.Uri.parse('https://play.google.com/console')).then(undefined, () => {});
+            const custom = vscode.workspace.getConfiguration('saropaLogCapture.playConsole').get<string>('appUrl', '');
+            const url = custom || 'https://play.google.com/console';
+            vscode.env.openExternal(vscode.Uri.parse(url)).then(undefined, () => {});
         }
     }
 }
