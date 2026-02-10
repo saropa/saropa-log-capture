@@ -123,6 +123,8 @@ details[open] > .group-header::before { content: '▼ '; }
 .fb-meta { font-size: 11px; color: var(--vscode-descriptionForeground); margin-top: 2px; }
 .fb-console { padding: 6px 12px 6px 24px; cursor: pointer; font-size: 12px; color: var(--vscode-textLink-foreground); }
 .fb-console:hover { text-decoration: underline; }
+.url-link { color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; text-decoration: underline; }
+.url-link:hover { opacity: 0.8; }
 .fb-empty { padding: 6px 12px; font-size: 12px; color: var(--vscode-disabledForeground); font-style: italic; }
 .crash-detail { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
 .crash-detail.expanded { max-height: 2000px; padding: 4px 0; border-top: 1px solid var(--vscode-panel-border); }
@@ -186,6 +188,8 @@ document.addEventListener('click', function(e) {
     if (rel) { vscodeApi.postMessage({ type: 'openRelatedLine', line: parseInt(rel.dataset.line) }); return; }
     var fileCard = e.target.closest('.ref-file-card');
     if (fileCard) { vscodeApi.postMessage({ type: 'openSource', uri: fileCard.dataset.sourceUri, line: parseInt(fileCard.dataset.line || '1') }); return; }
+    var urlLink = e.target.closest('.url-link');
+    if (urlLink && urlLink.dataset.url) { vscodeApi.postMessage({ type: 'openFirebaseUrl', url: urlLink.dataset.url }); return; }
     var ghItem = e.target.closest('.gh-item');
     if (ghItem && ghItem.dataset.url) { vscodeApi.postMessage({ type: 'openGitHubUrl', url: ghItem.dataset.url }); return; }
     var fbConsole = e.target.closest('.fb-console');
