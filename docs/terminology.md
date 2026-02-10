@@ -1,3 +1,5 @@
+NOTE: For maintainability we also have to rename files and methods. 
+
 # Terminology Standard
 
 Consistent vocabulary for all user-facing text in Saropa Log Capture.
