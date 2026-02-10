@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Generalized production error bridge:** Cross-Session Insights panel now matches ALL recurring error patterns against Crashlytics production issues (previously ANR-only). Uses word extraction from both example lines and normalized text for broader matching.
 - **Package-hint file resolution:** Stack frame file resolution now extracts Dart package names and Java package paths from frame text and passes them to `findInWorkspace()` for more accurate disambiguation in monorepo/multi-package workspaces. Wired through the analysis panel and bug report collector.
 - **Crashlytics aggregate device/OS distribution:** Crash detail cards now query the Crashlytics stats endpoint for aggregate device model and OS version distribution across all events, rendered as a collapsible bar chart. Fetched asynchronously after the initial crash detail render.
+- **Session error density sparklines:** Project Logs panel now shows a tiny relative heat bar per session indicating error density (total issues / line count) compared to sibling sessions. Color reflects dominant severity (red for errors, yellow for warnings, blue for performance). Width normalizes against the densest session in the list.
 
 ### Improved
 - **Crashlytics crash detail loading feedback:** Clicking an issue card in the Crashlytics sidebar now shows a pulsing "Loading crash details..." message while the API call is in flight, replacing the previous silent wait.
