@@ -6,7 +6,7 @@
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri } from './config';
 import type { SessionMeta } from './session-metadata';
-import type { FingerprintEntry } from './error-fingerprint';
+import type { CrashCategory, FingerprintEntry } from './error-fingerprint';
 
 /** A source file mentioned across multiple sessions. */
 export interface HotFile {
@@ -26,6 +26,7 @@ export interface RecurringError {
     readonly lastSeen: string;
     readonly firstSeenVersion?: string;
     readonly lastSeenVersion?: string;
+    readonly category?: CrashCategory;
     readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
@@ -138,6 +139,7 @@ type ErrorAccum = {
     n: string; e: string; total: number;
     timeline: { session: string; count: number }[];
     firstVer?: string; lastVer?: string;
+    cat?: CrashCategory;
 };
 
 function buildRecurringErrors(metas: readonly LoadedMeta[]): RecurringError[] {
@@ -147,12 +149,12 @@ function buildRecurringErrors(metas: readonly LoadedMeta[]): RecurringError[] {
         for (const fp of meta.fingerprints ?? []) { accumulateFingerprint(fp, filename, errorMap, ver); }
     }
     return [...errorMap.entries()]
-        .map(([hash, { n, e, total, timeline, firstVer, lastVer }]) => ({
+        .map(([hash, { n, e, total, timeline, firstVer, lastVer, cat }]) => ({
             hash, normalizedText: n, exampleLine: e,
             sessionCount: timeline.length, totalOccurrences: total,
             firstSeen: timeline[0].session, lastSeen: timeline[timeline.length - 1].session,
             firstSeenVersion: firstVer, lastSeenVersion: lastVer,
-            timeline,
+            category: cat, timeline,
         }))
         .sort((a, b) => (b.sessionCount * b.totalOccurrences) - (a.sessionCount * a.totalOccurrences))
         .slice(0, maxErrors);
@@ -168,7 +170,7 @@ function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap:
         errorMap.set(fp.h, {
             n: fp.n, e: fp.e, total: fp.c,
             timeline: [{ session: filename, count: fp.c }],
-            firstVer: version, lastVer: version,
+            firstVer: version, lastVer: version, cat: fp.cat,
         });
     }
 }

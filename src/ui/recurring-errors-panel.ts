@@ -69,8 +69,9 @@ function renderCard(e: RecurringError, status: ErrorStatus): string {
     const actions = status === 'open'
         ? `<span class="re-action" data-hash="${escapeHtml(e.hash)}" data-status="closed">Close</span><span class="re-action" data-hash="${escapeHtml(e.hash)}" data-status="muted">Mute</span>`
         : `<span class="re-action" data-hash="${escapeHtml(e.hash)}" data-status="open">Re-open</span>`;
+    const catBadge = e.category ? `<span class="cat-badge cat-${e.category}">${e.category.toUpperCase()}</span> ` : '';
     return `<div class="re-card${dimCls}">
-<div class="re-text" title="${escapeHtml(e.exampleLine)}">${escapeHtml(e.normalizedText)}</div>
+<div class="re-text" title="${escapeHtml(e.exampleLine)}">${catBadge}${escapeHtml(e.normalizedText)}</div>
 <div class="re-meta">${sessions} &middot; ${total}</div>
 <div class="re-actions">${actions}</div></div>`;
 }
@@ -89,5 +90,7 @@ function getStyles(): string {
 .re-action{background:var(--vscode-button-secondaryBackground);color:var(--vscode-button-secondaryForeground);border:none;padding:1px 8px;cursor:pointer;border-radius:2px;font-size:11px}
 .re-action:hover{background:var(--vscode-button-secondaryHoverBackground)}
 .re-empty{opacity:0.7;font-style:italic}
-.re-footer{margin-top:8px;text-align:center;cursor:pointer;color:var(--vscode-textLink-foreground);font-size:12px}`;
+.re-footer{margin-top:8px;text-align:center;cursor:pointer;color:var(--vscode-textLink-foreground);font-size:12px}
+.cat-badge{font-size:0.7em;padding:1px 4px;border-radius:2px;font-weight:700;vertical-align:middle;margin-right:4px}
+.cat-fatal{background:#d32f2f;color:#fff}.cat-anr{background:#f57c00;color:#fff}.cat-oom{background:#7b1fa2;color:#fff}.cat-native{background:#757575;color:#fff}`;
 }
