@@ -28,6 +28,10 @@ export function getIconBarHtml(): string {
     <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
+    <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash">
+        <span class="codicon codicon-trash"></span>
+        <span id="ib-trash-badge" class="ib-badge"></span>
+    </button>
     <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
@@ -46,6 +50,7 @@ export function getIconBarScript(): string {
         bookmarks: document.getElementById('ib-bookmarks'),
         filters: document.getElementById('ib-filters'),
         info: document.getElementById('ib-info'),
+        trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
     };
 
@@ -56,6 +61,7 @@ export function getIconBarScript(): string {
         if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
+        if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
 
@@ -90,6 +96,8 @@ export function getIconBarScript(): string {
             openFiltersPanel();
         } else if (name === 'info' && typeof openInfoPanel === 'function') {
             openInfoPanel();
+        } else if (name === 'trash' && typeof openTrashPanel === 'function') {
+            openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
         }
@@ -120,6 +128,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.info) {
         iconButtons.info.addEventListener('click', function() { setActivePanel('info'); });
+    }
+    if (iconButtons.trash) {
+        iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });

@@ -109,18 +109,20 @@ body[data-icon-bar="right"] .session-panel,
 body[data-icon-bar="right"] .options-panel,
 body[data-icon-bar="right"] .find-panel,
 body[data-icon-bar="right"] .bookmark-panel,
+body[data-icon-bar="right"] .trash-panel,
 body[data-icon-bar="right"] .info-panel {
     left: auto; right: -100%;
     border-right: none;
     border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.3s ease;
+    transition: right 0.15s ease;
 }
 body[data-icon-bar="right"] #search-bar.visible,
 body[data-icon-bar="right"] .session-panel.visible,
 body[data-icon-bar="right"] .options-panel.visible,
 body[data-icon-bar="right"] .find-panel.visible,
 body[data-icon-bar="right"] .bookmark-panel.visible,
+body[data-icon-bar="right"] .trash-panel.visible,
 body[data-icon-bar="right"] .info-panel.visible {
     right: var(--icon-bar-width, 36px);
 }

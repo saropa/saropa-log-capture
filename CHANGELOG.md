@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Dedicated Trash panel:** Trash is now a standalone icon bar panel (between Info and Options) instead of a toggle inside the Project Logs panel. Shows trashed sessions with metadata and severity dots, supports right-click context menu (restore, delete permanently), and has an "Empty Trash" header button. Badge on the icon bar shows the trashed session count. Removed the confusing trashcan icon from the VS Code view title bar.
 - **Pre-production ANR risk scoring:** New `anr-risk-scorer.ts` module scans debug session body text for patterns that predict ANRs (choreographer warnings, GC pauses, jank, dropped frames, ANR keywords) and produces a 0-100 risk score with low/medium/high levels. Score is computed on session finalization and stored in `.meta.json` sidecar. Sessions with ANR patterns show `ANR: N` in the Project Logs tree description and tooltip.
 - **Debug-to-Crashlytics error bridge:** Cross-Session Insights panel now automatically matches recurring error patterns against production Crashlytics issues. Matching errors show a production impact badge (`Production: N events, N users`) via progressive webview update. Bridges the gap between development-time error detection and production crash data.
 - **Source Scope filter:** Android Studio-style scope filtering in the Filters panel. Narrow log output by Workspace folder, Package, Directory, or File based on the active editor. DAP source paths are threaded from the debug adapter through to the webview. Package detection walks up from the file to find the nearest manifest (`pubspec.yaml`, `package.json`, `Cargo.toml`, etc.). Scope context updates automatically when switching editor tabs. "Hide unattributed" checkbox controls visibility of lines without DAP source paths. Integrates with filter badge count, preset reset, and panel sync.
@@ -39,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session error density sparklines:** Project Logs panel now shows a tiny relative heat bar per session indicating error density (total issues / line count) compared to sibling sessions. Color reflects dominant severity (red for errors, yellow for warnings, blue for performance). Width normalizes against the densest session in the list.
 
 ### Improved
+- **Snappier panel transitions:** All slide-out panel animations reduced from 300ms to 150ms for a more responsive feel.
 - **Crashlytics crash detail loading feedback:** Clicking an issue card in the Crashlytics sidebar now shows a pulsing "Loading crash details..." message while the API call is in flight, replacing the previous silent wait.
 - **Parallelized file operations:** File retention enforcement, documentation token scanning, referenced file analysis, and session shutdown now run concurrently (`Promise.all` / `Promise.allSettled`) instead of sequential loops. File retention startup with 100+ files improves from ~3s to ~200ms.
 - **Split failure logging:** Log file split errors are now logged to the extension host console instead of silently swallowed.

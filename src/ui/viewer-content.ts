@@ -49,6 +49,7 @@ import { getSessionContextMenuHtml, getSessionContextMenuScript } from './viewer
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
 import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-panel';
+import { getTrashPanelHtml, getTrashPanelScript } from './viewer-trash-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -127,6 +128,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getSessionContextMenuHtml()}
     ${getFindPanelHtml()}
     ${getBookmarkPanelHtml()}
+    ${getTrashPanelHtml()}
     ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
@@ -204,6 +206,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getSessionTagsScript())}
     ${scriptTag(nonce, getSessionPanelScript())}
     ${scriptTag(nonce, getSessionContextMenuScript())}
+    ${scriptTag(nonce, getTrashPanelScript())}
     ${scriptTag(nonce, getFindPanelScript())}
     ${scriptTag(nonce, getBookmarkPanelScript())}
     ${scriptTag(nonce, getFiltersPanelScript())}
