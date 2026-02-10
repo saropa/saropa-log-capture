@@ -186,6 +186,9 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to detect app version: ${err}`);
     });
 
+    // Refresh recurring errors sidebar after metadata scans complete.
+    setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringErrors'), 3000);
+
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     showSummaryNotification(generateSummary(filename, stats));
 

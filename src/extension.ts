@@ -17,6 +17,7 @@ import { disposeBugReportPanel } from './ui/bug-report-panel';
 import { disposeTimelinePanel } from './ui/timeline-panel';
 import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
+import { RecurringErrorsPanelProvider } from './ui/recurring-errors-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -63,6 +64,16 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(CrashlyticsPanelProvider.viewType, crashlyticsPanel),
     );
+
+    // Recurring Errors sidebar panel.
+    const recurringErrorsPanel = new RecurringErrorsPanelProvider();
+    context.subscriptions.push(recurringErrorsPanel);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(RecurringErrorsPanelProvider.viewType, recurringErrorsPanel),
+    );
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'saropaLogCapture.refreshRecurringErrors', () => recurringErrorsPanel.refresh(),
+    ));
 
     // Crashlytics CodeLens — show crash indicators on affected source files.
     const crashCodeLens = new CrashlyticsCodeLensProvider();
