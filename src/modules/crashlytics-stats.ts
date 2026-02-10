@@ -1,8 +1,10 @@
 /** Aggregate stats for a Crashlytics issue — device/OS distribution from the stats endpoint. */
 
-import { detectFirebaseConfig } from './firebase-crashlytics';
+import { detectFirebaseConfig, getAccessToken } from './firebase-crashlytics';
 
 const apiBase = 'https://firebasecrashlytics.googleapis.com/v1beta1';
+const statsTtl = 5 * 60_000;
+let statsCache: Map<string, { stats: IssueStats; expires: number }> | undefined;
 
 export interface StatEntry { readonly name: string; readonly count: number; }
 
@@ -12,8 +14,12 @@ export interface IssueStats {
     readonly osStats: readonly StatEntry[];
 }
 
-/** Query aggregate device/OS stats for a specific Crashlytics issue. */
-export async function getIssueStats(issueId: string, token: string): Promise<IssueStats | undefined> {
+/** Query aggregate device/OS stats for a specific Crashlytics issue (cached 5 min per issue). */
+export async function getIssueStats(issueId: string): Promise<IssueStats | undefined> {
+    const cached = statsCache?.get(issueId);
+    if (cached && Date.now() < cached.expires) { return cached.stats; }
+    const token = await getAccessToken();
+    if (!token) { return undefined; }
     const config = await detectFirebaseConfig();
     if (!config) { return undefined; }
     const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/issues/${issueId}:getStats`;
@@ -21,11 +27,14 @@ export async function getIssueStats(issueId: string, token: string): Promise<Iss
         const https = require('https') as typeof import('https');
         const data = await fetchStatsJson(https, url, token);
         if (!data) { return undefined; }
-        return {
+        const stats: IssueStats = {
             issueId,
             deviceStats: parseStatEntries(data.deviceStats ?? data.devices),
             osStats: parseStatEntries(data.osStats ?? data.osVersions),
         };
+        if (!statsCache) { statsCache = new Map(); }
+        statsCache.set(issueId, { stats, expires: Date.now() + statsTtl });
+        return stats;
     } catch { return undefined; }
 }
 
