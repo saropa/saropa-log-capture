@@ -85,5 +85,11 @@ details[open] > .section-header::before { transform: rotate(90deg); }
     display: inline-block; font-size: 11px; margin-top: 2px;
     color: var(--vscode-debugConsole-warningForeground, #ff9800);
 }
+.production-loading {
+    font-size: 11px; padding: 4px 8px; font-style: italic;
+    color: var(--vscode-descriptionForeground);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 `;
 }
