@@ -84,11 +84,6 @@
         "title": "Tag Session"
       },
       {
-        "command": "saropaLogCapture.filterByTag",
-        "icon": "$(filter)",
-        "title": "Saropa Log Capture: Filter Sessions by Tag"
-      },
-      {
         "command": "saropaLogCapture.rescanTags",
         "icon": "$(sync)",
         "title": "Rescan Correlation Tags"
