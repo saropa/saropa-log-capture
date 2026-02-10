@@ -674,6 +674,12 @@
           "id": "saropaLogCapture.crashlyticsPanel",
           "name": "Crashlytics",
           "type": "webview"
+        },
+        {
+          "icon": "$(bug)",
+          "id": "saropaLogCapture.recurringErrorsPanel",
+          "name": "Recurring Errors",
+          "type": "webview"
         }
       ]
     },
