@@ -23,6 +23,7 @@ import type { SessionDisplayOptions } from "./session-display";
 import type { ViewerTarget } from "./viewer-target";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import * as helpers from "./viewer-provider-helpers";
+import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -31,6 +32,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
   private pendingLines: PendingLine[] = [];
   private batchTimer: ReturnType<typeof setInterval> | undefined;
+  private threadDumpState: ThreadDumpState = createThreadDumpState();
   private readonly seenCategories = new Set<string>();
   private cachedPresets: readonly FilterPreset[] = [];
   private cachedHighlightRules: SerializedHighlightRule[] = [];
@@ -108,14 +110,19 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     if (!this.panel) { return; }
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
-    this.pendingLines.push({
+    const line: PendingLine = {
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),
       fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
-    });
+    };
+    processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
   }
 
-  clear(): void { this.pendingLines = []; this.currentFileUri = undefined; this.post({ type: "clear" }); this.setSessionInfo(null); }
+  clear(): void {
+    flushThreadDump(this.threadDumpState, this.pendingLines);
+    this.pendingLines = []; this.currentFileUri = undefined;
+    this.post({ type: "clear" }); this.setSessionInfo(null);
+  }
   setPaused(paused: boolean): void { this.post({ type: "setPaused", paused }); }
   setFilename(filename: string): void {
     this.post({ type: "setFilename", filename });
