@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import { escapeHtml } from '../modules/ansi';
+import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
 import { getNonce } from './viewer-content';
 import { aggregateInsights, type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../modules/cross-session-aggregator';
 import { findInWorkspace } from '../modules/workspace-analyzer';
@@ -102,7 +102,7 @@ function renderHeader(insights: CrossSessionInsights): string {
     return `<div class="header">
 <div class="header-left">
 <div class="title">Cross-Session Insights</div>
-<div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''}</div>
+<div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''} &middot; ${formatElapsedLabel(insights.queriedAt)}</div>
 </div>
 <div class="header-right"><select id="time-range" class="time-range-select">${opts}</select>
 <button class="refresh-btn" id="refresh-btn">Refresh</button></div>

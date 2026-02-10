@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **ANR badge:** Performance-level log lines containing ANR-specific keywords (`ANR`, `Application Not Responding`, `Input dispatching timed out`) now display an orange stopwatch badge. Separates ANR signals from general jank/fps/choreographer noise. ANR count also tracked in session severity metadata.
 - **Time-windowed insights:** Cross-Session Insights panel now includes a time range dropdown (All time, Last 30 days, Last 7 days, Last 24 hours) that filters which sessions are included in the aggregation. Session dates are parsed from log filenames.
 - **Impact-weighted error sorting:** Recurring errors in the Insights panel are now sorted by impact score (sessions × occurrences) instead of session count alone, matching Android Vitals' event×user ranking.
+- **Insights refresh timestamp:** Cross-Session Insights panel header now shows data age ("just now", "42s ago", "3m ago") alongside the session/file/error summary, giving confidence in data freshness.
+- **Crashlytics issue list cache:** Top issues API response is cached in memory for 5 minutes to avoid redundant API calls during repeated analyses. Explicit refresh (sidebar button or auto-refresh timer) bypasses the cache.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
