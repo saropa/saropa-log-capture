@@ -20,6 +20,7 @@ import { scanDocsForTokens, type DocScanResults } from './docs-scanner';
 import { extractImports, type ImportResults } from './import-extractor';
 import { resolveSymbols, type SymbolResults } from './symbol-resolver';
 import { getFirebaseContext } from './firebase-crashlytics';
+import { findLintMatches, type LintReportData } from './lint-violation-reader';
 
 /** A classified stack frame with optional parsed source reference. */
 export interface StackFrame {
@@ -76,6 +77,7 @@ export interface BugReportData {
     readonly logFilename: string;
     readonly lineNumber: number;
     readonly firebaseMatch?: FirebaseMatch;
+    readonly lintMatches?: LintReportData;
 }
 
 const maxContextLines = 15;
@@ -105,13 +107,14 @@ export async function collectBugReportData(
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
         resolveSymbols(tokens).catch(() => undefined),
         collectFileAnalyses(stackTrace, sourceRef?.filePath),
         getFirebaseContext(errorTokens).catch(() => undefined),
+        wsFolder ? findLintMatches(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
     const topIssue = fbCtx?.issues[0];
@@ -125,7 +128,7 @@ export async function collectBugReportData(
         environment, devEnvironment: devEnv, sourcePreview, blame, gitHistory,
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
-        logFilename, lineNumber: fileLineIndex + 1, firebaseMatch,
+        logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
     };
 }
 

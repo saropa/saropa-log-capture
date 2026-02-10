@@ -26,6 +26,8 @@ export interface SectionData {
     readonly affectedFileCount?: number;
     readonly relatedLineCount?: number;
     readonly relatedFileCount?: number;
+    readonly lintViolationCount?: number;
+    readonly lintCriticalCount?: number;
     readonly githubBlamePr?: boolean;
     readonly githubPrCount?: number;
     readonly githubIssueCount?: number;
@@ -64,6 +66,7 @@ export function scoreRelevance(data: SectionData): RelevanceResult {
     scoreImports(data, levels);
     scoreGitHistory(data, levels);
     scoreAffectedFiles(data, findings);
+    scoreLint(data, findings, levels);
 
     findings.sort((a, b) => levelOrder(a.level) - levelOrder(b.level));
     return { findings: findings.slice(0, 4), sectionLevels: levels };
@@ -192,6 +195,18 @@ function scoreAffectedFiles(data: SectionData, findings: SectionFinding[]): void
     if (count >= 3) {
         findings.push({ icon: '📁', text: `Error spans ${count} source files`, level: 'medium', sectionId: 'affected-files' });
     }
+}
+
+function scoreLint(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+    const count = data.lintViolationCount ?? 0;
+    const critical = data.lintCriticalCount ?? 0;
+    if (critical > 0) {
+        findings.push({ icon: '🔴', text: `${critical} critical lint violation${critical !== 1 ? 's' : ''} in stack trace files`, level: 'high', sectionId: 'lint' });
+        levels.set('lint', 'high');
+    } else if (count > 0) {
+        findings.push({ icon: '⚠️', text: `${count} lint violation${count !== 1 ? 's' : ''} in stack trace files`, level: 'medium', sectionId: 'lint' });
+        levels.set('lint', 'medium');
+    } else { levels.set('lint', 'none'); }
 }
 
 /** Parse YYYY-MM-DD and return days since today. Returns Infinity for unparseable dates. */

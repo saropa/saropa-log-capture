@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   - Inline correlation tag chips (replaces QuickPick) with All/None controls for filtering sessions by tag
 - **Correlation tags documentation:** New `docs/correlation-tags.md` explaining what tags are, how they're generated, how to filter, and how to rescan.
 - **Configurable icon bar position:** New `saropaLogCapture.iconBarPosition` setting (`"left"` or `"right"`, default `"left"`). The icon bar and all slide-out panels now default to the left side of the viewer, matching VS Code's activity bar convention. Changes apply instantly without reload.
+- **Lint violation integration:** Bug reports now include a "Known Lint Issues" section sourced from Saropa Lints' structured export (`reports/.saropa_lints/violations.json`). Violations are matched to stack trace files, sorted by impact and proximity, and rendered as a markdown table with source attribution and staleness warning. Critical violations surface in the executive summary as high-relevance findings.
 
 ### Changed
 - **Project Logs panel auto-opens** when the sidebar first loads, so the session list is immediately visible alongside the active log.
