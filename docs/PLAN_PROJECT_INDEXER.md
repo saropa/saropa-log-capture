@@ -519,6 +519,136 @@ The existing `search-index.ts` indexes `reports/` file metadata (lineCount, size
 
 ---
 
+## Performance & UX
+
+Indexing must never block the editor. Every operation falls into one of three performance tiers:
+
+### Tier 1: Invisible (< 50ms, no UI feedback)
+
+| Operation | Why it's fast |
+|-----------|---------------|
+| Inline upsert/remove | Single JSON read → patch → write. No file scanning. |
+| Index query (token lookup) | In-memory set intersection against loaded index. |
+| Load manifest from disk | Single small JSON file on extension activation. |
+| Mark source dirty | Set a boolean flag. No I/O. |
+
+These run synchronously (or near-synchronously) on the extension host. No spinner, no progress bar, no user awareness needed.
+
+### Tier 2: Background with status (50ms–5s)
+
+| Operation | Expected duration | UX |
+|-----------|-------------------|-----|
+| Lazy delta rebuild (small) | 200–500ms for 20 changed files | Status bar text: "Indexing docs..." with spinner icon |
+| Sidecar scan (reports) | 100–300ms for 50 `.meta.json` reads | Status bar text: "Indexing sessions..." |
+| Crashlytics cache migration | 50–500ms depending on file count | One-time, runs during activation |
+
+These use VS Code's `window.withProgress` API with `ProgressLocation.Window` (status bar):
+
+```typescript
+await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Window, title: 'Indexing docs...' },
+    async (progress) => {
+        for (const [i, file] of files.entries()) {
+            progress.report({ message: `${i + 1}/${files.length}` });
+            await indexFile(file);
+        }
+    },
+);
+```
+
+Key behaviours:
+- **Non-blocking** — editor remains fully interactive during indexing
+- **Auto-dismiss** — status bar text clears when done (no notification to close)
+- **Incremental progress** — `X/N` counter updates as files are processed
+- **Cancellable** — if triggered by analysis, the calling code can pass a `CancellationToken` to abort mid-rebuild
+
+### Tier 3: Foreground with progress (> 5s)
+
+| Operation | When | UX |
+|-----------|------|-----|
+| Full rebuild (manual command) | "Rebuild Project Index" from command palette | `ProgressLocation.Notification` with cancel button |
+| First-ever index build | Large project, no existing index — triggered automatically on first query | Same as above |
+
+These use a notification-level progress bar because the operation is long enough to warrant explicit feedback:
+
+```typescript
+await vscode.window.withProgress(
+    {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Rebuilding project index',
+        cancellable: true,
+    },
+    async (progress, token) => {
+        for (const source of sources) {
+            if (token.isCancellationRequested) { break; }
+            progress.report({ message: source.id, increment: 100 / sources.length });
+            await rebuildSource(source, token);
+        }
+    },
+);
+```
+
+Key behaviours:
+- **Cancel button** — stops mid-rebuild, keeps whatever was already indexed
+- **Per-source progress** — "docs... bugs... reports..." as each source completes
+- **Percentage bar** — fills proportionally to source count
+- **Partial index is valid** — if cancelled halfway, the completed sources are usable immediately
+
+### Parallelism
+
+| Level | Strategy |
+|-------|----------|
+| **Across sources** | Sequential — one source at a time to avoid file handle contention |
+| **Within a source** | `Promise.all` batches of 10 files — concurrent reads, bounded concurrency |
+| **Token extraction** | Synchronous per file (string splitting is CPU, not I/O) |
+| **Index writes** | Single write per source after all files processed (not per-file) |
+
+Bounded concurrency example:
+
+```typescript
+async function processInBatches<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>): Promise<void> {
+    for (let i = 0; i < items.length; i += batchSize) {
+        await Promise.all(items.slice(i, i + batchSize).map(fn));
+    }
+}
+```
+
+Why not fully parallel across sources: each source produces an independent `.idx.json` file write. Running them all concurrently risks disk thrashing and provides minimal speed gain (most time is in file reads, which are already batched within each source).
+
+### Timing Budgets
+
+Target durations for a typical project (50 doc files, 100 report sessions):
+
+| Operation | Budget | If exceeded |
+|-----------|--------|-------------|
+| Inline upsert | < 20ms | Investigate — should be a single file write |
+| Delta rebuild (docs, 5 changed) | < 200ms | Acceptable up to 500ms with status bar |
+| Delta rebuild (reports, 10 new sessions) | < 100ms | Sidecar reads are tiny |
+| Full rebuild (all sources) | < 3s | Show notification progress bar |
+| Token query (10 tokens × 200 indexed files) | < 10ms | In-memory, no I/O |
+
+### Analysis Panel Integration
+
+When the analysis panel triggers a `getOrRebuild()`, the indexer must not delay the panel's own progressive rendering:
+
+1. Analysis panel calls `getOrRebuild(maxAgeMs: 60000)`
+2. If index is fresh → return the in-memory index immediately (Tier 1)
+3. If index is stale → return the **stale index** immediately, then fire-and-forget a delta rebuild (non-awaited promise with `.catch()` error handling)
+4. When the background rebuild completes, it updates the in-memory index
+5. The *next* analysis call gets the fresh index
+
+This "serve stale, refresh in background" pattern ensures analysis never waits for indexing. The rebuild promise is not awaited by the caller — it runs independently and updates shared state when done.
+
+### What NOT to do
+
+- **Never block activation** — index loading is async. Extension activates immediately.
+- **Never rebuild on every file save** — dirty flag + lazy rebuild only.
+- **Never read log file content** — reports use sidecar metadata only.
+- **Never show a modal dialog** — all progress is non-blocking (status bar or notification).
+- **Never index during active recording** — active sessions are skipped, period.
+
+---
+
 ## Safeguards
 
 | Concern | Mitigation |
@@ -614,3 +744,6 @@ Settled decisions for implementation (no longer open):
 | Reports indexing | Sidecar-only (`.meta.json`) | Never read log file content. Sidecars already have `correlationTags` and `fingerprints`. Skip active and trashed sessions. |
 | Update strategy | Inline for extension-produced data, lazy for external changes | Session finalize / trash / restore update the index immediately. File watcher handles external edits to docs/bugs. Lazy rebuild is the safety net. |
 | Crashlytics cache | Move to `.saropa/cache/crashlytics/` | Single tooling root. `reports/` stays clean. One-time migration of existing cache. |
+| Progress UX | Three tiers: invisible (< 50ms), status bar (50ms–5s), notification (> 5s) | Inline updates are silent. Lazy rebuilds show status bar. Manual rebuilds show cancellable notification. |
+| Stale-serve pattern | Return stale index immediately, refresh in background | Analysis panel never waits for indexing. Next analysis gets the fresh index. |
+| Parallelism | Sequential across sources, batched (10) within sources | Avoids file handle contention while keeping reads concurrent. |
