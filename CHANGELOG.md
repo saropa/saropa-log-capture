@@ -12,11 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Crashlytics setup wizard:** The Crashlytics sidebar panel now shows an interactive 3-step setup wizard instead of plain text hints. Step 1 links to the Google Cloud CLI install page, step 2 opens a VS Code terminal to run the auth command, and step 3 offers a file picker to locate `google-services.json` (or a link to configure settings manually). A billing tip reassures users that Crashlytics API access is free. "Check Again" button and auto-refresh on terminal close.
+- **Clickable URLs in setup hints:** Setup hint URLs in the analysis panel (GitHub CLI, Firebase) are now rendered as clickable links instead of plain text.
 - **Filterable crash categories in Insights:** Toggle chips (FATAL, ANR, OOM, NATIVE) above the recurring errors list let you isolate specific crash types. All/None buttons for quick toggling. Errors without a category are always visible.
 - **Search in Insights panel:** Filter input in the header filters both Hot Files and Recurring Errors by keyword. Debounced at 150ms. Composes with category chip filtering.
 
 ### Changed
 - **Refactor:** Extracted Crashlytics production bridge logic from `insights-panel.ts` into `insights-crashlytics-bridge.ts` for maintainability.
+
+### Fixed
+- **Stale gcloud cache on refresh:** The "Check Again" button now clears all cached state (gcloud availability, token, issue list) so users can recover after installing gcloud or re-authenticating without reloading VS Code.
 
 ---
 ## [2.0.0] - 2026-02-10

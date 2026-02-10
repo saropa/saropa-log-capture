@@ -1,6 +1,7 @@
 /** HTML rendering for related lines, referenced files, GitHub, and Firebase sections. */
 
 import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
+import { linkifyUrls } from '../modules/source-linker';
 import type { RelatedLine, RelatedLinesResult } from '../modules/related-lines-scanner';
 import type { WorkspaceFileInfo } from '../modules/workspace-analyzer';
 import type { BlameLine } from '../modules/git-blame';
@@ -65,7 +66,7 @@ function renderFileCard(a: FileAnalysis): string {
 /** Render GitHub context section with PRs and issues. */
 export function renderGitHubSection(ctx: GitHubContext): string {
     if (!ctx.available) {
-        const hint = ctx.setupHint ? ` ${escapeHtml(ctx.setupHint)}` : '';
+        const hint = ctx.setupHint ? ` ${linkifyUrls(escapeHtml(ctx.setupHint))}` : '';
         return emptySlot('github', `🔗 GitHub CLI not available.${hint}`);
     }
     const total = (ctx.blamePr ? 1 : 0) + ctx.filePrs.length + ctx.issues.length;
@@ -108,7 +109,7 @@ function renderVersionRange(issue: FirebaseContext['issues'][number]): string {
 /** Render Firebase Crashlytics section with matching crash issues and console links. */
 export function renderFirebaseSection(ctx: FirebaseContext): string {
     if (!ctx.available) {
-        const hint = ctx.setupHint ? ` ${escapeHtml(ctx.setupHint)}` : '';
+        const hint = ctx.setupHint ? ` ${linkifyUrls(escapeHtml(ctx.setupHint))}` : '';
         return emptySlot('firebase', `🔥 Firebase not configured.${hint}`);
     }
     const n = ctx.issues.length;
