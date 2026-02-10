@@ -14,6 +14,7 @@ import type { SymbolResults } from './symbol-resolver';
 import { type SectionData, scoreRelevance } from './analysis-relevance';
 import { extractDateFromFilename } from './stack-parser';
 import { buildVscodeFileUri, buildGitHubCommitUrl, buildMarkdownFileLink, type GitLinkContext } from './link-helpers';
+import { formatLintSection } from './bug-report-lint-section';
 
 interface ReportCtx {
     readonly remote?: string;
@@ -42,6 +43,7 @@ export function formatBugReport(data: BugReportData): string {
     if (data.imports) { sections.push(formatImports(data.imports)); }
     if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
     if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
+    if (data.lintMatches?.matches.length) { sections.push(formatLintSection(data.lintMatches)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }
     sections.push(formatFooter(data.logFilename, data.lineNumber));
@@ -264,6 +266,8 @@ function extractSectionData(data: BugReportData): SectionData {
         localImportCount: data.imports?.localCount ?? 0,
         gitCommitCount: data.gitHistory.length,
         affectedFileCount: data.fileAnalyses.length,
+        lintViolationCount: data.lintMatches?.matches.length ?? 0,
+        lintCriticalCount: data.lintMatches?.matches.filter(v => v.impact === 'critical').length ?? 0,
     };
 }
 
