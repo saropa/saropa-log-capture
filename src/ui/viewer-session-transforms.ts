@@ -111,6 +111,28 @@ function renderSeverityBar(err, warn, perf, total) {
     return '<span class="sev-bar" title="' + total + ' issues"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
 }
 
+/** Compute relative error density across sessions, storing _sparkWidth (0-100) on each. */
+function computeSparkWidths(sessions) {
+    var maxDensity = 0;
+    for (var i = 0; i < sessions.length; i++) {
+        var total = (sessions[i].errorCount || 0) + (sessions[i].warningCount || 0) + (sessions[i].perfCount || 0);
+        var density = total / Math.max(sessions[i].lineCount || 1, 1);
+        sessions[i]._sparkDensity = density;
+        if (density > maxDensity) maxDensity = density;
+    }
+    for (var j = 0; j < sessions.length; j++) {
+        sessions[j]._sparkWidth = maxDensity > 0 ? Math.round((sessions[j]._sparkDensity / maxDensity) * 100) : 0;
+    }
+}
+
+function renderSparkBar(s) {
+    if (!s._sparkWidth || s._sparkWidth <= 0) return '';
+    var err = s.errorCount || 0, warn = s.warningCount || 0;
+    var cls = err >= warn ? 'spark-fill-error' : 'spark-fill-warning';
+    if (err === 0 && warn === 0) cls = 'spark-fill-perf';
+    return '<span class="spark-bar" title="Relative issue density"><span class="spark-fill ' + cls + '" style="width:' + s._sparkWidth + '%"></span></span>';
+}
+
 /** Mark the newest session per unique display name as isLatestOfName. */
 function markLatestByName(sessions, applyOptions) {
     var byName = {};

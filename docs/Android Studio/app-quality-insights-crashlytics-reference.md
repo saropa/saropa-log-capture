@@ -324,8 +324,7 @@ These are capabilities that Saropa has which AQI does not offer. They represent 
 
 21. **DONE — Include Crashlytics data in bug reports** — `FirebaseMatch` interface in `bug-report-collector.ts` stores issue title, event/user counts, version range, and console URL. `formatProductionImpact()` in `bug-report-formatter.ts` renders a "## Production Impact" section with event count, affected users, version range, and Firebase Console deep link.
 
-22. **Trend sparkline in session history** — For sessions with severity counts cached in `.meta.json`, render a tiny sparkline (like GitHub contribution graphs) showing error density per session. This brings the timeline visualization to the session list level.
-    - *Priority:* Low. *Complexity:* Medium (~60 lines in session tree rendering).
+22. **DONE — Trend sparkline in session history** — `computeSparkWidths()` in `viewer-session-transforms.ts` computes relative error density (total issues / line count) across all visible sessions. `renderSparkBar()` renders a tiny inline heat bar per session item, colored by dominant severity (red/yellow/blue). Width is proportional to the densest session in the list. CSS in `viewer-styles-session.ts` with smooth width transition.
 
 ---
 
@@ -385,15 +384,15 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 | 6 | Close/Mute issue write-back to Firebase | DONE |
 | 13 | Query Crashlytics issueStats endpoint | DONE |
 | 16 | Auto-detect app version for filtered queries | DONE |
-| 22 | Trend sparkline in session history tree | — |
+| 22 | Trend sparkline in session history tree | DONE |
 
 #### Progress Summary
 
 - **Phase 1:** 6/6 complete
 - **Phase 2:** 6/6 complete
 - **Phase 3:** 4/4 complete
-- **Phase 4:** 4/5 complete, 1 remaining
-- **Overall:** 20/21 complete, 1 remaining
+- **Phase 4:** 5/5 complete
+- **Overall:** 21/21 complete
 
 ---
 
@@ -403,8 +402,6 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio.
 
 **Saropa's core strength** is connecting debug-time errors to production impact through cross-session aggregation, automated bug reports, git blame, and documentation matching — capabilities AQI does not have.
 
-**Closed gaps since initial analysis:** Phases 1, 2, and 3 are fully complete. Phase 4 is 3/5 with 1 partial. Crashlytics integration now includes: severity badges, state tags, version ranges, device metadata, Keys/Logs/AI summary tabs, multi-event pagination with device/OS distribution charts, CodeLens crash indicators on source files, debug-to-production error bridge, Crashlytics-enhanced bug reports, fuzzy file resolution with package hints, and refresh timestamps with 5-minute TTL caching.
-
-**Remaining:** Wire `getIssueStats()` into the UI (item 13 — code exists, needs caller) and trend sparklines in session history (item 22 — new feature).
+**All 21 items complete.** Crashlytics integration now includes: severity badges, state tags, version ranges, device metadata, Keys/Logs/AI summary tabs, multi-event pagination with device/OS distribution charts, aggregate stats from issueStats API, CodeLens crash indicators on source files, debug-to-production error bridge, Crashlytics-enhanced bug reports, fuzzy file resolution with package hints, refresh timestamps with 5-minute TTL caching, and relative error density sparklines in the session history panel.
 
 **Saropa's unique positioning** — the debug-to-production bridge — is fully realized across multiple surfaces: CodeLens indicators on source files (item 19), production badges on recurring errors (item 20), AI-powered crash summaries (item 3), and production impact sections in bug reports (item 21). No competing tool combines local debug history with production crash data in a single view.
