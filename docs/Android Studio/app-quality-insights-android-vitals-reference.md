@@ -163,6 +163,7 @@ This section maps every Android Vitals capability to the current state of Saropa
 | **HAS** | Feature exists in Saropa today |
 | **PARTIAL** | Partially implemented — core logic exists but UX or scope is limited |
 | **GAP** | Not implemented — opportunity for improvement |
+| **DONE** | Improvement idea has been implemented |
 
 ---
 
@@ -173,17 +174,16 @@ Android Vitals is fundamentally different from Firebase Crashlytics: it is a sys
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
 | Google Play Console API integration | **GAP** | Saropa integrates with Firebase Crashlytics REST API (`firebasecrashlytics.googleapis.com`) but has no connection to the Google Play Developer Reporting API (`playdeveloperreporting.googleapis.com`) which powers the Android Vitals view. |
-| Crash vs ANR distinction | **PARTIAL** | `level-classifier.ts` detects "anr" and "application not responding" keywords in debug output and classifies them as `performance` level. But this is text-pattern detection on local debug logs — not production ANR data from the Play Store. |
+| Crash vs ANR distinction | **HAS** | `isAnrLine()` in `level-classifier.ts` detects ANR keywords. `countSeverities()` counts ANRs separately from general performance lines. Orange ANR badge (`error-badge-anr`) renders in the viewer via `viewer-styles-decoration.ts`. This is text-pattern detection on local debug logs — not production ANR data from the Play Store. |
 | System-level anonymous metrics | **GAP** | Saropa only sees what flows through the DAP debug adapter. Android Vitals sees every crash/ANR from every Play Store user, regardless of SDK presence. There is no mechanism to access this data. |
-| Dual data source (Vitals + Crashlytics tabs) | **PARTIAL** | Saropa has Crashlytics integration in the analysis panel. Adding a Vitals tab alongside it would create the same dual-source view that AQI provides. |
+| Dual data source (Vitals + Crashlytics tabs) | **PARTIAL** | Saropa has Crashlytics integration in the analysis panel and a dedicated Crashlytics sidebar (`crashlytics-panel.ts`). Adding a Vitals tab alongside it would create the same dual-source view that AQI provides. |
 
 **Improvement ideas:**
 
 1. **Google Play Developer Reporting API integration** — The Play Developer Reporting API v1beta1 (`playdeveloperreporting.googleapis.com`) exposes crash rate metrics, ANR rate metrics, and error reports. Add a new module (`google-play-vitals.ts`) that queries `apps/{package}/crashRateMetricSet:query` and `apps/{package}/anrRateMetricSet:query`. Auth can reuse the existing `gcloud` token flow since the API accepts Google OAuth tokens with the `androidpublisher` scope.
    - *Priority:* High (unique differentiator — no VS Code extension does this). *Complexity:* High (~200 lines for API client + ~150 lines for UI rendering).
 
-2. **ANR-specific detection and classification** — Today, "ANR" and "Application Not Responding" in debug output become `performance` level alongside frame drops and jank. Create a distinct `anr` sublevel or badge (orange clock icon, matching AQI) so ANRs stand out from general performance issues. Key ANR signatures to detect: `Application Not Responding`, `ANR in`, `Input dispatching timed out`, `Broadcast of Intent`, `executing service`.
-   - *Priority:* Medium. *Complexity:* Low (~25 lines in `level-classifier.ts` + `viewer-level-filter.ts`).
+2. **DONE — ANR-specific detection and classification** — `isAnrLine()` in `level-classifier.ts` detects ANR keywords (`anr`, `application not responding`, `input dispatching timed out`). `countSeverities()` in `session-severity-counts.ts` counts ANRs separately from general performance lines. Orange ANR badge (`error-badge-anr`) with hourglass styling renders in the viewer via `viewer-styles-decoration.ts`.
 
 3. **Package name auto-detection for API queries** — AQI uses the package name from the Gradle build. Saropa should detect it from `google-services.json` (`client[0].client_info.android_client_info.package_name`), `AndroidManifest.xml`, or `pubspec.yaml` (`name` field for Flutter). This enables automatic scoping of both Crashlytics and Vitals queries to the correct app.
    - *Priority:* Medium. *Complexity:* Low (~30 lines in `firebase-crashlytics.ts` or a new `app-identity.ts`).
@@ -197,7 +197,7 @@ AQI provides separate toggle buttons for Crashes (fatal) and ANRs (freezes), let
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
 | Crash/ANR type toggles | **GAP** | Saropa's level filter has 7 levels (error, warning, info, performance, todo, debug, notice) but no crash-vs-ANR distinction. Both are subsumed under `error` or `performance`. |
-| Issue type icons (red X vs orange clock) | **GAP** | No visual differentiation between fatal crashes and ANRs in any panel. |
+| Issue type icons (red X vs orange clock) | **PARTIAL** | ANR lines get an orange `error-badge-anr` badge in the log viewer. Crashlytics issues show FATAL/NON-FATAL badges via `renderIssueBadges()`. No separate toggle button for crash vs ANR categories. |
 | Separate event/user counts per type | **GAP** | Cross-session insights aggregate all errors together. There is no breakdown by crash category (fatal, non-fatal, ANR, OOM, native). |
 
 **Improvement ideas:**
@@ -216,17 +216,16 @@ AQI's toolbar provides 5 simultaneous filter dimensions: time range, visibility/
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Time range filter | **PARTIAL** | Sessions have timestamps, and the Project Logs panel shows dates. But there is no time-windowed query for cross-session insights or Crashlytics data. `aggregateInsights()` reads all sessions with no date filter. |
+| Time range filter | **HAS** | `aggregateInsights(timeRange)` in `cross-session-aggregator.ts` accepts `'24h' | '7d' | '30d' | 'all'` parameter. `filterByTime()` filters sessions by mtime. Insights panel has a dropdown selector. Crashlytics queries also pass `eventTimePeriod` via `getTimeRange()`. |
 | Version filter | **GAP** | Saropa captures debug adapter type in session headers but not the app version being debugged. No mechanism to filter sessions or crashes by app version. |
 | Visibility/status filter (Open/Closed/Ignored) | **GAP** | No issue lifecycle management. Sessions can be trashed but not marked open/closed/ignored. Error fingerprints have no status field. |
 | Device filter | **GAP** | Session headers contain some environment metadata but not device model or manufacturer. Debug sessions are local — there is no device dimension from production. |
 | OS version filter | **GAP** | Similar to device — the debug host OS is captured but not the target device's Android/iOS version. |
-| Compound filtering (all dimensions simultaneous) | **PARTIAL** | The Filters panel supports multiple simultaneous filters (level, category, tag, exclusion, app-only, source scope) but these operate on log lines within a session, not on sessions/issues across time. |
+| Compound filtering (all dimensions simultaneous) | **PARTIAL** | The Filters panel supports multiple simultaneous filters (level, category, tag, exclusion, app-only, source scope) on log lines within a session. Cross-session insights now support time range filtering. Crashlytics supports time range + version filtering. But device and OS dimensions are not available. |
 
 **Improvement ideas:**
 
-6. **Time-windowed cross-session aggregation** — Add a time range parameter to `aggregateInsights()` in `cross-session-aggregator.ts`. Filter `valid` sessions by their mtime against the selected window (24h, 7d, 30d, all). Expose as a dropdown in the Insights panel header. This directly mirrors the AQI time range filter but for debug session data.
-   - *Priority:* High. *Complexity:* Low (~20 lines in `cross-session-aggregator.ts` + ~15 lines in `insights-panel.ts`).
+6. **DONE — Time-windowed cross-session aggregation** — `aggregateInsights(timeRange: TimeRange)` in `cross-session-aggregator.ts` accepts `'24h' | '7d' | '30d' | 'all'`. `filterByTime()` filters sessions by parsed date against the time window. Insights panel header has a `<select>` dropdown and refresh button.
 
 7. **App version capture in session metadata** — During session creation, attempt to read the app version from workspace files: `pubspec.yaml` (`version` field), `build.gradle` (`versionName`), `package.json` (`version`). Store as `appVersion` in the session header and `.meta.json`. Show in session display and allow filtering.
    - *Priority:* Medium. *Complexity:* Medium (~40 lines in `log-session.ts` or `environment-collector.ts` + ~15 lines in `session-metadata.ts`).
@@ -249,7 +248,7 @@ AQI's left pane is a persistent, sortable, searchable master list of all issue c
 | Search/filter within issue list | **GAP** | The Insights panel has no text search. Errors are listed in rank order with no way to filter by keyword. |
 | Events column (occurrence count) | **HAS** | `RecurringError.totalOccurrences` is displayed in the Insights panel. |
 | Users/sessions column | **HAS** | `RecurringError.sessionCount` is displayed (sessions rather than users, since Saropa is debug-local). |
-| Impact sort (events × users) | **PARTIAL** | Recurring errors are sorted but the sort logic in `buildRecurringErrors` is not documented as impact-weighted. |
+| Impact sort (events × users) | **HAS** | `buildRecurringErrors()` in `cross-session-aggregator.ts` sorts by `(sessionCount * totalOccurrences)` descending. |
 | Issue fingerprint as identifier | **HAS** | `error-fingerprint.ts` normalizes error text (strips timestamps, UUIDs, hex, paths) and hashes it. This is conceptually identical to AQI's crash clustering. |
 
 **Improvement ideas:**
@@ -260,8 +259,7 @@ AQI's left pane is a persistent, sortable, searchable master list of all issue c
 11. **Search in Insights panel** — Add a text input at the top of the Insights panel that filters both hot files and recurring errors by keyword. Match against `normalizedText`, `exampleLine`, and `filename`. Reuses the search input pattern from the Filters panel.
     - *Priority:* Low. *Complexity:* Low (~25 lines in `insights-panel.ts`).
 
-12. **Impact-weighted sort** — In `buildRecurringErrors`, sort by `sessionCount * totalOccurrences` (descending) to match AQI's impact-first ranking. Currently appears to sort by session count alone.
-    - *Priority:* Low. *Complexity:* Trivial (~3 lines in `cross-session-aggregator.ts`).
+12. **DONE — Impact-weighted sort** — `buildRecurringErrors()` sorts by `(b.sessionCount * b.totalOccurrences) - (a.sessionCount * a.totalOccurrences)` descending, matching AQI's impact-first ranking.
 
 ---
 
@@ -271,11 +269,11 @@ AQI shows the version range an issue spans, an event navigator to page through i
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Affected version range | **PARTIAL** | `RecurringError.firstSeen` and `lastSeen` timestamps are tracked and shown. But these are session dates, not app version codes. The Crashlytics integration does not parse `firstSeenVersion`/`lastSeenVersion` either. |
+| Affected version range | **PARTIAL** | `RecurringError.firstSeen` and `lastSeen` timestamps are tracked and shown. These are session dates, not app version codes. Crashlytics integration now parses `firstVersion`/`lastVersion` from the API (see Crashlytics doc). But cross-session recurring errors still use session dates. |
 | Event navigator (< 1/12 >) | **HAS** | The Insights drill-down (`insights-drill-down.ts`) groups occurrences by session and lets users click individual matches to navigate. This is functionally similar to AQI's event navigator. |
 | Per-event device metadata | **GAP** | No device model, OS version, or hardware info per error occurrence. Debug sessions are all on the developer's machine. |
 | Event ID display | **GAP** | Error occurrences have no unique identifier. The fingerprint hash identifies the group, not individual events. |
-| Deep link to Play Console | **GAP** | No Google Play Console integration. Crashlytics integration has `consoleUrl` for Firebase Console. |
+| Deep link to Play Console | **GAP** | No Google Play Console integration. Crashlytics integration has `consoleUrl` for Firebase Console. "View on Firebase" link available in analysis panel and sidebar. |
 
 **Improvement ideas:**
 
@@ -342,18 +340,16 @@ AQI shows "Last refreshed: 16 minutes ago" with a manual refresh button, giving 
 
 | AQI Capability | Saropa Status | Details |
 |---------------|---------------|---------|
-| Last refreshed timestamp | **GAP** | Crashlytics queries are fire-and-forget — no timestamp displayed. Cross-session insights rebuild from scratch each time with no staleness indication. |
-| Manual refresh button | **PARTIAL** | The Insights panel can be re-opened to re-aggregate. Crashlytics data refreshes on each analysis. But there is no explicit "Refresh" button. |
-| Auto-refresh on interval | **GAP** | No periodic refresh for any remote data source. |
-| Cache staleness indicator | **GAP** | The `.crashlytics/` cache has no TTL. Users have no way to know if cached data is from 5 minutes ago or 5 days ago. |
+| Last refreshed timestamp | **HAS** | `formatElapsedLabel(insights.queriedAt)` in the Insights panel shows "just now" / "42s ago" / "3m ago". `FirebaseContext.queriedAt` provides timestamp for Crashlytics queries. Crashlytics sidebar also shows elapsed time. |
+| Manual refresh button | **HAS** | Insights panel has a "Refresh" button. Crashlytics sidebar has manual refresh. `clearIssueListCache()` bypasses TTL on manual refresh. |
+| Auto-refresh on interval | **PARTIAL** | Crashlytics sidebar (`crashlytics-panel.ts`) has configurable auto-refresh via `saropaLogCapture.firebase.refreshInterval`. Cross-session insights do not auto-refresh. |
+| Cache staleness indicator | **HAS** | Issue list cache has 5-minute TTL (`issueListTtl`). Token cache has 30-minute TTL (`tokenTtl`). Elapsed time labels on both Insights and Crashlytics panels indicate data age. |
 
 **Improvement ideas:**
 
-21. **Refresh timestamp on all remote data panels** — When the Insights panel or analysis panel fetches data (from Crashlytics, cross-session aggregation, or a future Vitals API), store and display the timestamp: "Data from 3 minutes ago". Add a refresh icon button that forces re-fetching.
-    - *Priority:* Medium. *Complexity:* Low (~15 lines per panel).
+21. **DONE — Refresh timestamp on all remote data panels** — `formatElapsedLabel()` shared helper in `ansi.ts` renders elapsed time. Used in Insights panel (`insights.queriedAt`), analysis panel (`FirebaseContext.queriedAt`), and Crashlytics sidebar. Refresh buttons clear caches and re-fetch.
 
-22. **TTL on Crashlytics issue list cache** — The issue list (top 20 crashes) should have a configurable TTL (default: 5 minutes). Within the TTL, subsequent analyses reuse the cached list. After expiry, re-fetch. The per-event detail cache can remain TTL-free since crash events are immutable.
-    - *Priority:* Medium. *Complexity:* Low (~20 lines in `firebase-crashlytics.ts`).
+22. **DONE — TTL on Crashlytics issue list cache** — `cachedIssueRows` in `firebase-crashlytics.ts` stores API responses with `issueListTtl = 5 * 60_000` (5 minutes). `cachedToken` has `tokenTtl = 30 * 60_000` (30 minutes). `clearIssueListCache()` invalidates on manual refresh.
 
 ---
 
@@ -403,15 +399,15 @@ These are capabilities that Saropa has which the Android Vitals view does not of
 
 Items grouped by implementation phase, ordered by impact-to-effort ratio. Items from the Crashlytics gap analysis are referenced but not duplicated.
 
-#### Phase 1: Quick Wins (Low complexity, immediate value)
+#### Phase 1: Quick Wins (Low complexity, immediate value) — ALL DONE
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 2 | ANR-specific detection and classification badge | ~25 lines | ANRs stand out from general perf |
-| 6 | Time-windowed cross-session aggregation | ~35 lines | Enables "last 7 days" filtering |
-| 12 | Impact-weighted sort in recurring errors | ~3 lines | Better error prioritization |
-| 21 | Refresh timestamp on remote data panels | ~15 lines/panel | Data freshness confidence |
-| 22 | TTL on Crashlytics issue list cache | ~20 lines | Avoid stale data silently |
+| # | Item | Status |
+|---|------|--------|
+| 2 | ANR-specific detection and classification badge | DONE |
+| 6 | Time-windowed cross-session aggregation | DONE |
+| 12 | Impact-weighted sort in recurring errors | DONE |
+| 21 | Refresh timestamp on remote data panels | DONE |
+| 22 | TTL on Crashlytics issue list cache | DONE |
 
 #### Phase 2: High-Impact Features (Medium complexity, strong differentiators)
 
@@ -453,7 +449,9 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**The highest-value gap to close** is ANR-specific intelligence. Today, ANR patterns in debug output are grouped with general performance issues. By adding ANR-specific classification (item 2), pre-production ANR risk scoring (item 23), thread header parsing (item 15), and debug-to-production ANR bridging (item 24), Saropa can offer something no tool provides: a continuous ANR detection pipeline from development through production.
+**Closed gaps since initial analysis:** All Phase 1 quick wins are complete (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). The Crashlytics integration is now comprehensive (see companion document for full status). Cross-session insights support time range filtering with dropdown UI.
+
+**The highest-value gap to close** is ANR-specific intelligence beyond detection. ANR patterns are now detected and badged (item 2 done), but pre-production ANR risk scoring (item 23), thread header parsing (item 15), and debug-to-production ANR bridging (item 24) remain. These would create a continuous ANR detection pipeline from development through production.
 
 **The highest-value gap to widen** is the proactive warning system. AQI is purely reactive — it reports what already happened in production. Saropa can detect choreographer warnings, GC pauses, and thread blocking patterns during debugging and flag "this will become an ANR in production." This shifts ANR detection left in the development lifecycle, where fixes are cheaper and faster.
 
