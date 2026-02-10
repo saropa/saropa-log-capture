@@ -44,6 +44,9 @@ export function getContentStyles(): string {
     font-weight: 700;
     font-size: 0.95em;
 }
+/* ANR pattern warning badge on blocking threads */
+.anr-badge { color: var(--vscode-editorWarning-foreground, #fc0); margin-right: 4px; }
+.anr-warning { color: var(--vscode-editorWarning-foreground, #fc0); }
 
 /* ===================================================================
    Jump-to-Bottom Button

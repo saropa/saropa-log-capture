@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Google Play Console deep link:** New `saropaLogCapture.playConsole.appUrl` setting for a custom Play Console URL. If set, the "Open Play Console" button in the Vitals panel navigates directly to your app's Vitals page instead of the generic homepage.
+- **Target device metadata:** Debug adapter type and target device are now stored in session `.meta.json`. Device is detected from Flutter launch output ("Launching ... on DEVICE") and launch config keys (`deviceId`, `device`, `deviceName`).
+- **Environment distribution in Insights:** Cross-Session Insights panel now shows debug adapter, platform, and SDK version distribution across sessions in a collapsible "Environment" section.
+- **ANR thread analysis:** Thread dump grouping now detects potential ANR patterns (main thread Runnable while other threads are Waiting/Blocked). Blocking threads get a warning badge and the summary line flags "ANR pattern detected".
+- **Thread-aware bug report export:** Bug report stack trace extraction now continues past thread headers instead of stopping. Multi-thread traces include `--- threadName ---` separators in the exported markdown.
+
+### Fixed
+- **Filter presets test:** Fixed "Errors Only" preset test to check `levels` instead of removed `searchPattern` field.
+
+### Added (continued)
 - **Package name auto-detection:** Detects Android package name from `google-services.json`, `AndroidManifest.xml`, or `pubspec.yaml`. Cached for 5 minutes. Override via `saropaLogCapture.firebase.packageName` setting. Enables scoping of Play Vitals and Crashlytics queries.
 <!-- cspell:ignore SIGSEGV -->
 - **Crash category sub-classification:** Fingerprinted errors are now classified into categories: FATAL, ANR, OOM, NATIVE, or non-fatal. Categories are detected from error text patterns (e.g. `OutOfMemoryError` → OOM, `SIGSEGV` → NATIVE). Colored badges appear in the Insights panel and Recurring Errors sidebar.

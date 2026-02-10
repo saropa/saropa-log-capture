@@ -423,15 +423,15 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 | 16 | Thread grouping for ANR-style traces | DONE |
 | 18 | Parse device/OS from Crashlytics events + charts | DONE |
 
-#### Phase 4: Exploratory (Low priority, high ambition)
+#### Phase 4: Exploratory (Low priority, high ambition) — ALL DONE
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 17 | ANR thread analysis heuristic (lock detection) | ~80 lines | Automated blocking-thread identification |
-| 19 | Local environment distribution across sessions | ~50 lines | Debug environment analytics |
-| 9 | Target device metadata from DAP | ~50 lines | Per-session device info |
-| 14 | Google Play Console deep link | ~10 lines | Quick access to Vitals dashboard |
-| 25 | Thread-aware stack trace export in bug reports | ~25 lines | Better ANR bug reports |
+| # | Item | Status |
+|---|------|--------|
+| 17 | ANR thread analysis heuristic (lock detection) | DONE |
+| 19 | Local environment distribution across sessions | DONE |
+| 9 | Target device metadata from DAP | DONE |
+| 14 | Google Play Console deep link | DONE |
+| 25 | Thread-aware stack trace export in bug reports | DONE |
 
 ---
 
@@ -441,7 +441,7 @@ Items grouped by implementation phase, ordered by impact-to-effort ratio. Items 
 
 **Saropa's core strength** is proactive debugging intelligence: live capture with ANR-pattern detection during development, cross-session error fingerprinting, git blame integration, automated bug reports, and the ability to link debug-time warnings to production crashes via Crashlytics.
 
-**Closed gaps since initial analysis:** All Phase 1, Phase 2, and Phase 3 items are complete (20 items total). Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). Phase 3 delivered strategic features: Google Play Vitals sidebar panel (#1), package name auto-detection (#3), crash category sub-classification (#4), thread dump grouping (#16), and device/OS distribution charts (#18).
+**Closed gaps since initial analysis:** All 25 items across all four phases are complete. Phase 1 delivered quick wins (ANR badge, time-windowed aggregation, impact-weighted sort, refresh timestamps, cache TTL). Phase 2 delivered high-impact features: ANR risk scoring (#23), debug-to-Crashlytics error bridge (#24), app version capture (#7), version range on recurring errors (#13), thread header parsing (#15), error status lifecycle (#8), and always-visible recurring errors sidebar panel (#10). Phase 3 delivered strategic features: Google Play Vitals sidebar panel (#1), package name auto-detection (#3), crash category sub-classification (#4), thread dump grouping (#16), and device/OS distribution charts (#18). Phase 4 delivered exploratory features: ANR thread analysis heuristic (#17), local environment distribution (#19), target device metadata from DAP (#9), Google Play Console deep link (#14), and thread-aware bug report export (#25).
 
 **The proactive warning system is now operational.** ANR risk scoring (item 23) detects choreographer warnings, GC pauses, and thread blocking patterns during debugging and flags "this will become an ANR in production." The Crashlytics error bridge (item 24) connects debug-time errors to production crash data. Together, these shift ANR and error detection left in the development lifecycle, where fixes are cheaper and faster.
 
