@@ -11,15 +11,15 @@ The original bug report incorrectly attributed this to missing backend `captureA
 
 The `captureAll` mechanism is fully implemented:
 
-- **Config:** `captureAll` defaults to `true` (`config.ts:152`, `package.json:442`)
-- **Backend gate:** `session-manager.ts:91` skips category filtering when `captureAll` is true
-- **UI ↔ backend:** "App Only" toggle sends `setCaptureAll` message to update the workspace setting (`viewer-stack-filter.ts:19` → `log-viewer-provider.ts:233`)
+- **Config:** `captureAll` defaults to `true` ([config.ts:152](src/modules/config.ts#L152), [package.json:442](package.json#L442))
+- **Backend gate:** [session-manager.ts:91](src/modules/session-manager.ts#L91) skips category filtering when `captureAll` is true
+- **UI ↔ backend:** "App Only" toggle sends `setCaptureAll` message to update the workspace setting ([viewer-stack-filter.ts:19](src/ui/viewer-stack-filter.ts#L19) → [log-viewer-provider.ts:233](src/ui/log-viewer-provider.ts#L233))
 - **Exclusions:** always apply independently of `captureAll` (fixed — previously `captureAll: true` bypassed exclusions too), default to `[]`
 
 ## Likely Root Causes (to investigate)
 
 ### 1. DAP adapter not emitting all lines
-The VS Code Debug Console can display output from sources other than DAP `output` events (e.g., adapter-internal logging, process stdout captured directly by VS Code). This extension only captures DAP `output` events via `DebugAdapterTracker.onDidSendMessage()` (`tracker.ts:44`). Lines that reach the Debug Console through other channels are invisible to the tracker.
+The VS Code Debug Console can display output from sources other than DAP `output` events (e.g., adapter-internal logging, process stdout captured directly by VS Code). This extension only captures DAP `output` events via `DebugAdapterTracker.onDidSendMessage()` ([tracker.ts:44](src/modules/tracker.ts#L44)). Lines that reach the Debug Console through other channels are invisible to the tracker.
 
 **How to verify:** Enable `saropaLogCapture.verboseDap: true` and compare raw DAP traffic against what appears in the Debug Console. Any lines present in the console but absent from DAP events confirm this cause.
 

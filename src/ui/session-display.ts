@@ -11,6 +11,8 @@ export interface SessionDisplayOptions {
     readonly normalizeNames: boolean;
     readonly showDayHeadings: boolean;
     readonly reverseSort: boolean;
+    readonly showLatestOnly?: boolean;
+    readonly panelWidth?: number;
 }
 
 /** Default display options. */
@@ -19,6 +21,7 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     normalizeNames: true,
     showDayHeadings: true,
     reverseSort: false,
+    showLatestOnly: false,
 };
 
 const shortMonths = [

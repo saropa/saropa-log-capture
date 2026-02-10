@@ -30,6 +30,11 @@ export interface SectionData {
     readonly githubPrCount?: number;
     readonly githubIssueCount?: number;
     readonly crashlyticsIssueCount?: number;
+    readonly productionImpact?: {
+        readonly eventCount: number;
+        readonly userCount: number;
+        readonly issueId: string;
+    };
 }
 
 /** Scoring output: summary findings + per-section relevance levels. */
@@ -172,7 +177,11 @@ function scoreGitHub(data: SectionData, findings: SectionFinding[], levels: Map<
 
 function scoreFirebase(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
     const count = data.crashlyticsIssueCount ?? 0;
-    if (count > 0) {
+    if (count > 0 && data.productionImpact) {
+        const { eventCount, userCount } = data.productionImpact;
+        findings.push({ icon: '🔥', text: `Also in production: ${eventCount} events, ${userCount} users`, level: 'high', sectionId: 'firebase' });
+        levels.set('firebase', 'high');
+    } else if (count > 0) {
         findings.push({ icon: '🔥', text: `${count} matching Crashlytics issue${count !== 1 ? 's' : ''} in production`, level: 'high', sectionId: 'firebase' });
         levels.set('firebase', 'high');
     } else { levels.set('firebase', 'none'); }

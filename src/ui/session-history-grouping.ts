@@ -21,6 +21,10 @@ export interface SessionMetadata {
     readonly tags?: string[];
     readonly autoTags?: string[];
     readonly correlationTags?: string[];
+    readonly durationMs?: number;
+    readonly errorCount?: number;
+    readonly warningCount?: number;
+    readonly perfCount?: number;
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly trashed?: boolean;
