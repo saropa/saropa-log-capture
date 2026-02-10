@@ -3,7 +3,7 @@ import { getConfig, getFileTypeGlob, getLogDirectoryUri, readTrackedFiles } from
 import { SessionMetadataStore } from '../modules/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
-    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, matchesTagFilter, totalLineCount,
+    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, totalLineCount,
 } from './session-history-grouping';
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
 import { parseHeader, buildDescription, buildTooltip, formatCount } from './session-history-helpers';
@@ -18,7 +18,6 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private readonly metaStore = new SessionMetadataStore();
     private readonly metaCache = new Map<string, SessionMetadata>();
     private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
-    private tagFilter: ReadonlySet<string> | undefined;
     private showTrash = false;
     private refreshTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -30,11 +29,6 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     setDisplayOptions(options: SessionDisplayOptions): void {
         this.displayOptions = options;
     }
-
-    /** Set tag filter (undefined = show all). Refreshes tree automatically. */
-    setTagFilter(tags: ReadonlySet<string> | undefined): void { this.tagFilter = tags; this.refresh(); }
-    /** Get the current tag filter. */
-    getTagFilter(): ReadonlySet<string> | undefined { return this.tagFilter; }
 
     /** Toggle visibility of trashed sessions. Refreshes tree automatically. */
     setShowTrash(show: boolean): void { this.showTrash = show; this.refresh(); }
@@ -180,9 +174,6 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             const visible = includeTrash ? items : items.filter(i => !i.trashed);
             const grouped = groupSplitFiles(visible);
             const sorted = grouped.sort((a, b) => b.mtime - a.mtime);
-            if (this.tagFilter && this.tagFilter.size > 0) {
-                return sorted.filter(item => matchesTagFilter(item, this.tagFilter!));
-            }
             return sorted;
         } catch {
             return [];

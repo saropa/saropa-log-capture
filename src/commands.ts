@@ -8,7 +8,6 @@ import { showSearchQuickPick } from './modules/log-search-ui';
 import { openLogAtLine } from './modules/log-search';
 import { LogViewerProvider } from './ui/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session-history-provider';
-import { isSplitGroup, type TreeItem } from './ui/session-history-grouping';
 import { scanForCorrelationTags } from './modules/correlation-scanner';
 import { exportToHtml } from './modules/html-export';
 import { exportToInteractiveHtml } from './modules/html-export-interactive';
@@ -207,21 +206,6 @@ function fileExportCmd(
 function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
     const { historyProvider } = deps;
     return [
-        vscode.commands.registerCommand('saropaLogCapture.filterByTag', async () => {
-            const items = await historyProvider.getChildren();
-            const allTags = collectCorrelationTags(items);
-            if (allTags.length === 0) {
-                vscode.window.showInformationMessage('No correlation tags found. Run a debug session first.');
-                return;
-            }
-            const current = historyProvider.getTagFilter();
-            const picks = allTags.map(t => ({ label: t, picked: current?.has(t) ?? false }));
-            const selected = await vscode.window.showQuickPick(picks, {
-                canPickMany: true, placeHolder: 'Select tags to filter sessions (empty = show all)',
-            });
-            if (selected === undefined) { return; }
-            historyProvider.setTagFilter(selected.length > 0 ? new Set(selected.map(s => s.label)) : undefined);
-        }),
         vscode.commands.registerCommand('saropaLogCapture.rescanTags', async (item: { uri: vscode.Uri }) => {
             if (!item?.uri) { return; }
             const tags = await scanForCorrelationTags(item.uri);
@@ -232,14 +216,6 @@ function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
     ];
 }
 
-function collectCorrelationTags(items: TreeItem[]): string[] {
-    const tags = new Set<string>();
-    for (const item of items) {
-        const metas = isSplitGroup(item) ? item.parts : [item];
-        for (const m of metas) { for (const t of m.correlationTags ?? []) { tags.add(t); } }
-    }
-    return [...tags].sort();
-}
 
 function toolCommands(deps: CommandDeps): vscode.Disposable[] {
     const { viewerProvider, inlineDecorations, popOutPanel } = deps;

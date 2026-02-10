@@ -209,9 +209,6 @@ async function handleSessionAction(
     case 'copyFilePath':
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
       break;
-    case 'filterByTag':
-      await vscode.commands.executeCommand('saropaLogCapture.filterByTag');
-      break;
   }
   if (mutating.includes(action)) { await refreshList(); }
 }
