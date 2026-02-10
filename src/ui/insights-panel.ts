@@ -15,6 +15,7 @@ import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { getInsightsStyles } from './insights-panel-styles';
 import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
 import { getDrillDownStyles } from './insights-drill-down-styles';
+import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentTimeRange: TimeRange = 'all';
@@ -25,7 +26,10 @@ export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
     const insights = await aggregateInsights(currentTimeRange);
-    if (panel) { panel.webview.html = buildResultsHtml(insights); }
+    if (panel) {
+        panel.webview.html = buildResultsHtml(insights);
+        bridgeErrorsToCrashlytics(insights.recurringErrors);
+    }
 }
 
 /** Dispose the singleton panel. */
@@ -143,7 +147,7 @@ function renderErrorItem(e: RecurringError): string {
     const normalized = escapeHtml(e.normalizedText);
     return `<div class="error-group" data-action="drillDown" data-hash="${escapeHtml(e.hash)}" data-normalized="${normalized}">
 <div class="error-text" title="${example}"><span class="expand-icon">&#9654;</span>${normalized}</div>
-<div class="error-meta">${sessions} &middot; ${total} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}</div>
+<div class="error-meta">${sessions} &middot; ${total} &middot; first: ${escapeHtml(e.firstSeen)} &middot; last: ${escapeHtml(e.lastSeen)}<span class="production-badge" data-badge-hash="${escapeHtml(e.hash)}"></span></div>
 </div>`;
 }
 
@@ -184,7 +188,47 @@ function getScript(): string {
         if (msg.type === 'drillDownResults') {
             var panel = document.querySelector('.drill-down-panel[data-hash="' + msg.hash + '"]');
             if (panel) panel.innerHTML = msg.html;
+        } else if (msg.type === 'productionBridgeResults') {
+            var bridges = msg.bridges || {};
+            Object.keys(bridges).forEach(function(hash) {
+                var badge = document.querySelector('.production-badge[data-badge-hash="' + hash + '"]');
+                if (badge) badge.textContent = ' · Production: ' + bridges[hash];
+            });
         }
     });
 })();`;
+}
+
+/** Async: match recurring debug errors against Crashlytics production issues. */
+function bridgeErrorsToCrashlytics(errors: readonly RecurringError[]): void {
+    if (errors.length === 0) { return; }
+    getFirebaseContext([]).then((ctx) => {
+        if (!ctx.available || ctx.issues.length === 0 || !panel) { return; }
+        const bridges = matchErrorsToIssues(errors, ctx.issues);
+        if (Object.keys(bridges).length > 0) {
+            panel.webview.postMessage({ type: 'productionBridgeResults', bridges });
+        }
+    }).catch(() => {});
+}
+
+function matchErrorsToIssues(
+    errors: readonly RecurringError[], issues: readonly CrashlyticsIssue[],
+): Record<string, string> {
+    const bridges: Record<string, string> = {};
+    for (const err of errors) {
+        const words = extractMatchWords(err);
+        for (const issue of issues) {
+            const combined = (issue.title + ' ' + issue.subtitle).toLowerCase();
+            if (words.some(w => combined.includes(w))) {
+                bridges[err.hash] = `${issue.eventCount} events, ${issue.userCount} users`;
+                break;
+            }
+        }
+    }
+    return bridges;
+}
+
+function extractMatchWords(err: RecurringError): string[] {
+    const text = (err.exampleLine + ' ' + err.normalizedText).toLowerCase();
+    return text.split(/\s+/).filter(w => w.length > 5 && !/^[<[\d]/.test(w));
 }

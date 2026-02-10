@@ -30,6 +30,7 @@ export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promi
         return {
             ...base, ...fields, hasTimestamps, lineCount, durationMs,
             errorCount: sev.errors, warningCount: sev.warnings, perfCount: sev.perfs,
+            anrCount: sev.anrs > 0 ? sev.anrs : undefined,
         };
     } catch {
         return base;
@@ -120,6 +121,7 @@ export function buildDescription(item: SessionMetadata, timeOnly: boolean, isAct
     }
     if (item.durationMs) { parts.push(formatDuration(item.durationMs)); }
     parts.push(formatSize(item.size));
+    if (item.anrCount) { parts.push(`ANR: ${item.anrCount}`); }
     if (item.tags && item.tags.length > 0) {
         parts.push(item.tags.map(t => `#${t}`).join(' '));
     }
@@ -144,6 +146,7 @@ export function buildTooltip(item: SessionMetadata): string {
     }
     if (item.durationMs) { parts.push(`Duration: ${formatDuration(item.durationMs)}`); }
     parts.push(`Size: ${formatSize(item.size)}`);
+    if (item.anrCount) { parts.push(`ANR patterns: ${item.anrCount}`); }
     parts.push(`Timestamps: ${item.hasTimestamps ? 'Yes' : 'No'}`);
     return parts.join('\n');
 }

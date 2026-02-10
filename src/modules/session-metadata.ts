@@ -24,6 +24,9 @@ export interface SessionMeta {
     errorCount?: number;
     warningCount?: number;
     perfCount?: number;
+    anrCount?: number;
+    /** ANR risk level computed by anr-risk-scorer.ts on session finalization. */
+    anrRiskLevel?: 'low' | 'medium' | 'high';
     /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
 }

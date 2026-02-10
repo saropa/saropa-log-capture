@@ -15,6 +15,8 @@ import { KeywordWatcher } from './keyword-watcher';
 import { SessionMetadataStore } from './session-metadata';
 import { scanForCorrelationTags } from './correlation-scanner';
 import { scanForFingerprints } from './error-fingerprint';
+import { scanAnrRisk } from './anr-risk-scorer';
+import { countSeverities, extractBody } from '../ui/session-severity-counts';
 import {
     generateSummary, showSummaryNotification, SessionStats,
 } from './session-summary';
@@ -172,6 +174,8 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
     });
 
+    scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
+
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     showSummaryNotification(generateSummary(filename, stats));
 
@@ -179,4 +183,25 @@ export async function finalizeSession(
     if (config.autoOpen) {
         await vscode.window.showTextDocument(logSession.fileUri);
     }
+}
+
+/** Async: scan log file for ANR risk patterns and store results in metadata. */
+function scanAnrRiskForSession(
+    fileUri: vscode.Uri,
+    store: SessionMetadataStore,
+    out: vscode.OutputChannel,
+): void {
+    Promise.resolve(vscode.workspace.fs.readFile(fileUri)).then(async (raw) => {
+        const body = extractBody(Buffer.from(raw).toString('utf-8'));
+        const risk = scanAnrRisk(body);
+        if (risk.score === 0) { return; }
+        const sev = countSeverities(body);
+        const meta = await store.loadMetadata(fileUri);
+        meta.anrCount = sev.anrs;
+        meta.anrRiskLevel = risk.level;
+        await store.saveMetadata(fileUri, meta);
+        out.appendLine(`ANR risk: ${risk.level} (score ${risk.score}) — ${risk.signals.join(', ')}`);
+    }).catch((err: unknown) => {
+        out.appendLine(`Failed to scan ANR risk: ${err}`);
+    });
 }
