@@ -15,6 +15,7 @@ import { type SectionData, scoreRelevance } from './analysis-relevance';
 import { extractDateFromFilename } from './stack-parser';
 import { buildVscodeFileUri, buildGitHubCommitUrl, buildMarkdownFileLink, type GitLinkContext } from './link-helpers';
 import { formatLintSection } from './bug-report-lint-section';
+import { formatThreadGroupedLines } from './bug-report-thread-format';
 
 interface ReportCtx {
     readonly remote?: string;
@@ -91,7 +92,7 @@ function formatStackTrace(frames: readonly StackFrame[], ctx: ReportCtx): string
     if (frames.length === 0) { return '## Stack Trace\n\n*No stack trace detected.*'; }
     const appCount = frames.filter(f => f.isApp).length;
     const fwCount = frames.length - appCount;
-    const lines = frames.map(f => f.isApp ? `>>> ${f.text}` : `    ${f.text}`);
+    const lines = formatThreadGroupedLines(frames);
     const parts = [
         '## Stack Trace',
         `\`\`\`\n${lines.join('\n')}\n\`\`\``,

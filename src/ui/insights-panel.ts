@@ -13,6 +13,7 @@ import { aggregateInsights, type CrossSessionInsights, type HotFile, type Recurr
 import { findInWorkspace } from '../modules/workspace-analyzer';
 import { searchLogFiles, openLogAtLine } from '../modules/log-search';
 import { getInsightsStyles } from './insights-panel-styles';
+import { renderEnvironmentSection } from './insights-panel-environment';
 import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
 import { getDrillDownStyles } from './insights-drill-down-styles';
 import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
@@ -94,6 +95,7 @@ ${renderHeader(insights)}
 <div class="content">
 ${renderHotFiles(insights.hotFiles)}
 ${renderRecurringErrors(insights.recurringErrors, statuses)}
+${renderEnvironmentSection(insights)}
 </div>
 <script nonce="${nonce}">${getScript()}</script>
 </body></html>`;

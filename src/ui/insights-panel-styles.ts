@@ -108,5 +108,10 @@ details[open] > .section-header::before { transform: rotate(90deg); }
 .cat-anr { background: #f57c00; color: #fff; }
 .cat-oom { background: #7b1fa2; color: #fff; }
 .cat-native { background: #757575; color: #fff; }
+.env-group { margin: 4px 0 8px 0; }
+.env-group-label { font-weight: 600; font-size: 12px; margin-bottom: 2px; color: var(--vscode-foreground); }
+.env-stat { display: flex; justify-content: space-between; padding: 2px 8px; font-size: 12px; }
+.env-value { font-family: var(--vscode-editor-font-family, monospace); }
+.env-count { color: var(--vscode-descriptionForeground); font-size: 11px; }
 `;
 }

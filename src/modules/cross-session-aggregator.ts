@@ -43,6 +43,7 @@ export interface CrossSessionInsights {
     readonly sessionCount: number;
     readonly platforms: readonly EnvironmentStat[];
     readonly sdkVersions: readonly EnvironmentStat[];
+    readonly debugAdapters: readonly EnvironmentStat[];
     readonly queriedAt: number;
 }
 
@@ -56,7 +57,7 @@ const timeRangeMs: Record<string, number> = { '24h': 86400000, '7d': 604800000, 
 /** Aggregate insights across all session metadata files. */
 export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
     const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [], queriedAt: Date.now() }; }
+    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [], debugAdapters: [], queriedAt: Date.now() }; }
     const logDir = getLogDirectoryUri(folder);
     const entries = await listMetaFiles(logDir);
     const metas = await Promise.all(entries.map(e => loadMeta(logDir, e)));
@@ -178,10 +179,12 @@ function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap:
 const platformTagRe = /^(?:platform|os|device|runtime)$/i;
 const sdkTagRe = /^(?:sdk|flutter|dart|node|python|java|go)/i;
 
-function buildEnvironmentStats(metas: readonly LoadedMeta[]): { platforms: EnvironmentStat[]; sdkVersions: EnvironmentStat[] } {
+function buildEnvironmentStats(metas: readonly LoadedMeta[]): { platforms: EnvironmentStat[]; sdkVersions: EnvironmentStat[]; debugAdapters: EnvironmentStat[] } {
     const platformMap = new Map<string, number>();
     const sdkMap = new Map<string, number>();
+    const adapterMap = new Map<string, number>();
     for (const { meta } of metas) {
+        if (meta.debugAdapterType) { incr(adapterMap, meta.debugAdapterType); }
         for (const tag of meta.autoTags ?? []) {
             const lower = tag.toLowerCase();
             if (platformTagRe.test(lower.split(':')[0] ?? '')) { incr(platformMap, tag); }
@@ -192,7 +195,7 @@ function buildEnvironmentStats(metas: readonly LoadedMeta[]): { platforms: Envir
             if (lower.includes('android') || lower.includes('ios') || lower.includes('web') || lower.includes('linux') || lower.includes('macos') || lower.includes('windows')) { incr(platformMap, tag); }
         }
     }
-    return { platforms: toStats(platformMap), sdkVersions: toStats(sdkMap) };
+    return { platforms: toStats(platformMap), sdkVersions: toStats(sdkMap), debugAdapters: toStats(adapterMap) };
 }
 
 function incr(map: Map<string, number>, key: string): void { map.set(key, (map.get(key) ?? 0) + 1); }
