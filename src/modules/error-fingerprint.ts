@@ -13,12 +13,16 @@ const maxScanLines = 5000;
 const maxFingerprints = 30;
 const maxExampleLength = 200;
 
+/** Crash category for error sub-classification. */
+export type CrashCategory = 'fatal' | 'anr' | 'oom' | 'native' | 'non-fatal';
+
 /** Compact fingerprint entry stored in sidecar metadata. */
 export interface FingerprintEntry {
     readonly h: string;  // 8-char hex hash
     readonly n: string;  // normalized text
     readonly e: string;  // example line (truncated)
     readonly c: number;  // count in this session
+    readonly cat?: CrashCategory;
 }
 
 /** Scan a log file and return error fingerprints grouped by hash. */
@@ -27,7 +31,7 @@ export async function scanForFingerprints(fileUri: vscode.Uri): Promise<Fingerpr
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
     const scanLimit = Math.min(lines.length, maxScanLines);
-    const groups = new Map<string, { n: string; e: string; c: number }>();
+    const groups = new Map<string, FpAccum>();
     for (let i = 0; i < scanLimit; i++) {
         collectFingerprint(lines[i], groups);
     }
@@ -57,7 +61,23 @@ export function hashFingerprint(normalized: string): string {
     return hash.toString(16).padStart(8, '0');
 }
 
-function collectFingerprint(line: string, groups: Map<string, { n: string; e: string; c: number }>): void {
+const anrRe = /ANR|Application Not Responding|Input dispatching timed out/i;
+const oomRe = /OutOfMemoryError|heap exhaustion|\bOOM\b|Cannot allocate/i;
+const nativeRe = /SIGSEGV|SIGABRT|SIGBUS|libflutter\.so|native crash/i;
+const fatalRe = /\bFATAL\b|unhandled exception|uncaught/i;
+
+/** Classify an error line into a crash category. */
+export function classifyCategory(text: string): CrashCategory {
+    if (anrRe.test(text)) { return 'anr'; }
+    if (oomRe.test(text)) { return 'oom'; }
+    if (nativeRe.test(text)) { return 'native'; }
+    if (fatalRe.test(text)) { return 'fatal'; }
+    return 'non-fatal';
+}
+
+type FpAccum = { n: string; e: string; c: number; cat: CrashCategory };
+
+function collectFingerprint(line: string, groups: Map<string, FpAccum>): void {
     const trimmed = line.trim();
     if (!trimmed || !isErrorLine(trimmed, 'stdout')) { return; }
     const normalized = normalizeLine(trimmed);
@@ -67,13 +87,13 @@ function collectFingerprint(line: string, groups: Map<string, { n: string; e: st
     if (existing) {
         existing.c++;
     } else {
-        groups.set(hash, { n: normalized, e: trimmed.slice(0, maxExampleLength), c: 1 });
+        groups.set(hash, { n: normalized, e: trimmed.slice(0, maxExampleLength), c: 1, cat: classifyCategory(trimmed) });
     }
 }
 
-function rankFingerprints(groups: Map<string, { n: string; e: string; c: number }>): FingerprintEntry[] {
+function rankFingerprints(groups: Map<string, FpAccum>): FingerprintEntry[] {
     return [...groups.entries()]
         .sort((a, b) => b[1].c - a[1].c)
         .slice(0, maxFingerprints)
-        .map(([h, { n, e, c }]) => ({ h, n, e, c }));
+        .map(([h, { n, e, c, cat }]) => ({ h, n, e, c, cat: cat === 'non-fatal' ? undefined : cat }));
 }
