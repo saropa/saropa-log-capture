@@ -25,6 +25,7 @@ export interface SessionMetadata {
     readonly errorCount?: number;
     readonly warningCount?: number;
     readonly perfCount?: number;
+    readonly anrCount?: number;
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly trashed?: boolean;
@@ -75,25 +76,17 @@ export function groupSplitFiles(items: SessionMetadata[]): TreeItem[] {
     for (const item of items) {
         const parsed = parseSplitFilename(item.filename);
         if (parsed) {
-            const key = parsed.base;
-            if (!groups.has(key)) {
-                groups.set(key, []);
-            }
-            groups.get(key)!.push({ ...item, partNumber: parsed.part });
-        } else {
-            const extMatch = item.filename.match(knownExtRe);
-            if (!extMatch) { continue; }
-            const base = item.filename.slice(0, extMatch.index);
-            const hasParts = items.some(i => parseSplitFilename(i.filename)?.base === base);
-            if (hasParts) {
-                if (!groups.has(base)) {
-                    groups.set(base, []);
-                }
-                groups.get(base)!.unshift({ ...item, partNumber: 1 });
-            } else {
-                standalone.push(item);
-            }
+            if (!groups.has(parsed.base)) { groups.set(parsed.base, []); }
+            groups.get(parsed.base)!.push({ ...item, partNumber: parsed.part });
+            continue;
         }
+        const extMatch = item.filename.match(knownExtRe);
+        if (!extMatch) { continue; }
+        const base = item.filename.slice(0, extMatch.index);
+        const hasParts = items.some(i => parseSplitFilename(i.filename)?.base === base);
+        if (!hasParts) { standalone.push(item); continue; }
+        if (!groups.has(base)) { groups.set(base, []); }
+        groups.get(base)!.unshift({ ...item, partNumber: 1 });
     }
 
     const result: TreeItem[] = [...standalone];

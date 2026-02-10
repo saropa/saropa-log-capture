@@ -81,5 +81,9 @@ details[open] > .section-header::before { transform: rotate(90deg); }
     display: flex; align-items: center; justify-content: center;
     height: 200px; color: var(--vscode-descriptionForeground);
 }
+.production-badge {
+    display: inline-block; font-size: 11px; margin-top: 2px;
+    color: var(--vscode-debugConsole-warningForeground, #ff9800);
+}
 `;
 }
