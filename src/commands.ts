@@ -256,5 +256,40 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
+        vscode.commands.registerCommand('saropaLogCapture.resetAllSettings', resetAllSettings),
     ];
+}
+
+const extensionId = 'saropa.saropa-log-capture';
+const settingsSection = 'saropaLogCapture';
+
+/** Reset all extension settings to their package.json defaults. */
+async function resetAllSettings(): Promise<void> {
+    const answer = await vscode.window.showWarningMessage(
+        'Reset all Saropa Log Capture settings to defaults?',
+        { modal: true },
+        'Reset',
+    );
+    if (answer !== 'Reset') { return; }
+
+    const ext = vscode.extensions.getExtension(extensionId);
+    const props: Record<string, unknown> | undefined =
+        ext?.packageJSON?.contributes?.configuration?.properties;
+    if (!props) { return; }
+
+    const cfg = vscode.workspace.getConfiguration(settingsSection);
+    const prefix = `${settingsSection}.`;
+    const keys = Object.keys(props)
+        .filter(k => k.startsWith(prefix))
+        .map(k => k.slice(prefix.length));
+
+    const { Global, Workspace } = vscode.ConfigurationTarget;
+    await Promise.all(keys.flatMap(k => [
+        cfg.update(k, undefined, Global),
+        cfg.update(k, undefined, Workspace),
+    ]));
+
+    vscode.window.showInformationMessage(
+        `Reset ${keys.length} settings to defaults.`,
+    );
 }
