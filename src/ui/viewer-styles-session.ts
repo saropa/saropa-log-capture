@@ -200,25 +200,16 @@ export function getSessionPanelStyles(): string {
 .session-context-menu.visible { display: block; }
 
 /* --- Severity dots --- */
-.sev-dots { font-size: 10px; color: var(--vscode-descriptionForeground); }
-.sev-dot {
-    display: inline-block; width: 7px; height: 7px;
-    border-radius: 50%; margin-right: 2px; vertical-align: middle;
-}
+.sev-dots { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); }
+.sev-pair { display: inline-flex; align-items: center; gap: 2px; }
+.sev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .sev-error { background: var(--vscode-charts-red, #f44336); }
 .sev-warning { background: var(--vscode-charts-yellow, #ffc107); }
 .sev-perf { background: var(--vscode-charts-blue, #2196f3); }
-.sev-bar { display: inline-flex; width: 40px; height: 6px; border-radius: 2px; overflow: hidden; vertical-align: middle; margin-left: 4px; background: var(--vscode-panel-border); }
+.sev-bar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 3px; background: var(--vscode-panel-border); }
 .sev-bar-e { background: var(--vscode-charts-red, #f44336); }
 .sev-bar-w { background: var(--vscode-charts-yellow, #ffc107); }
 .sev-bar-p { background: var(--vscode-charts-blue, #2196f3); }
-
-/* --- Spark density bar (relative error density across sessions) --- */
-.spark-bar { display: inline-block; width: 50px; height: 4px; background: var(--vscode-panel-border); border-radius: 2px; overflow: hidden; vertical-align: middle; margin-left: 6px; }
-.spark-fill { display: block; height: 100%; border-radius: 2px; transition: width 0.3s ease; }
-.spark-fill-error { background: var(--vscode-charts-red, #f44336); }
-.spark-fill-warning { background: var(--vscode-charts-yellow, #ffc107); }
-.spark-fill-perf { background: var(--vscode-charts-blue, #2196f3); }
 
 /* --- Session tag chips --- */
 .session-tags-section {
