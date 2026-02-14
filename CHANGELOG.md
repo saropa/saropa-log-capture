@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Session panel: removed spark bar.** The small grey "relative density" bar after severity dots was too small to convey useful information and confused users. Removed entirely.
+- **Session panel: severity dot alignment.** Colored severity dots now vertically center-align with their count numbers using flex layout instead of fragile `vertical-align`.
+- **Session panel: severity bar improved.** The proportional error/warning/perf bar is now full-width instead of a tiny 40px inline bar, and its tooltip shows a descriptive breakdown (e.g. "5 errors, 3 warnings") instead of a generic total.
+- **Historical log files now open at the top.** Previously, opening an old log file from session history would scroll to the bottom. The viewer now starts at line 1 for file views, while live capture sessions continue to auto-scroll.
+
+---
 ## [2.0.1] - 2026-02-10
 
 ### Added
