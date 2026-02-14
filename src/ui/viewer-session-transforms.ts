@@ -95,42 +95,22 @@ function formatSessionDuration(ms) {
 
 function renderSeverityDots(s) {
     var parts = [];
-    if (s.errorCount > 0) parts.push('<span class="sev-dot sev-error"></span>' + s.errorCount);
-    if (s.warningCount > 0) parts.push('<span class="sev-dot sev-warning"></span>' + s.warningCount);
-    if (s.perfCount > 0) parts.push('<span class="sev-dot sev-perf"></span>' + s.perfCount);
+    if (s.errorCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
+    if (s.warningCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
+    if (s.perfCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
     if (parts.length === 0) return '';
-    var total = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0);
-    var bar = total > 0 ? renderSeverityBar(s.errorCount || 0, s.warningCount || 0, s.perfCount || 0, total) : '';
-    return '<span class="sev-dots">' + parts.join(' ') + bar + '</span>';
+    return '<span class="sev-dots">' + parts.join('') + '</span>';
 }
 
 function renderSeverityBar(err, warn, perf, total) {
     var ePct = Math.round((err / total) * 100);
     var wPct = Math.round((warn / total) * 100);
     var pPct = 100 - ePct - wPct;
-    return '<span class="sev-bar" title="' + total + ' issues"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
-}
-
-/** Compute relative error density across sessions, storing _sparkWidth (0-100) on each. */
-function computeSparkWidths(sessions) {
-    var maxDensity = 0;
-    for (var i = 0; i < sessions.length; i++) {
-        var total = (sessions[i].errorCount || 0) + (sessions[i].warningCount || 0) + (sessions[i].perfCount || 0);
-        var density = total / Math.max(sessions[i].lineCount || 1, 1);
-        sessions[i]._sparkDensity = density;
-        if (density > maxDensity) maxDensity = density;
-    }
-    for (var j = 0; j < sessions.length; j++) {
-        sessions[j]._sparkWidth = maxDensity > 0 ? Math.round((sessions[j]._sparkDensity / maxDensity) * 100) : 0;
-    }
-}
-
-function renderSparkBar(s) {
-    if (!s._sparkWidth || s._sparkWidth <= 0) return '';
-    var err = s.errorCount || 0, warn = s.warningCount || 0;
-    var cls = err >= warn ? 'spark-fill-error' : 'spark-fill-warning';
-    if (err === 0 && warn === 0) cls = 'spark-fill-perf';
-    return '<span class="spark-bar" title="Relative issue density"><span class="spark-fill ' + cls + '" style="width:' + s._sparkWidth + '%"></span></span>';
+    var tp = [];
+    if (err > 0) tp.push(err + ' error' + (err !== 1 ? 's' : ''));
+    if (warn > 0) tp.push(warn + ' warning' + (warn !== 1 ? 's' : ''));
+    if (perf > 0) tp.push(perf + ' perf');
+    return '<span class="sev-bar" title="' + tp.join(', ') + '"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
 }
 
 /** Mark the newest session per unique display name as isLatestOfName. */

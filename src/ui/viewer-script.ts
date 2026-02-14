@@ -145,6 +145,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'clear':
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
+            autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
@@ -163,6 +164,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'setViewingMode':
             isViewingFile = !!msg.viewing;
+            if (isViewingFile) { autoScroll = false; }
             updateFooterText();
             break;
         case 'setSessionInfo':
