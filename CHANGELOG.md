@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Full severity dot breakdown in session list.** Each session now shows five colored dot counters: red (errors), yellow (warnings), purple (performance), blue (framework), and green (info). Framework lines are detected via logcat tags and launch boilerplate; info is all remaining lines.
 
 ### Changed
+- **Crashlytics and Recurring Errors open as editor tabs.** These panels are no longer collapsible sidebar sections. Click the flame or bug icons in the Log Viewer title bar to open them as full editor-tab panels with more screen space.
 - **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
 - **Performance dot color changed from blue to purple.** The performance severity dot in the session list is now purple to free up blue for framework lines.
 
