@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.3] - 2026-02-16
 
 ### Added
 - **Crashlytics setup diagnostics.** The Crashlytics panel now shows actual error details when setup fails instead of generic hints. Captures gcloud CLI errors (not found, not logged in, permission denied), HTTP status codes from the Firebase API (401/403/404), and network timeouts. A "Last checked" timestamp shows when the last diagnostic ran. All diagnostic steps are logged to the "Saropa Log Capture" output channel for advanced troubleshooting.
