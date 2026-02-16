@@ -9,6 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Crashlytics setup diagnostics.** The Crashlytics panel now shows actual error details when setup fails instead of generic hints. Captures gcloud CLI errors (not found, not logged in, permission denied), HTTP status codes from the Firebase API (401/403/404), and network timeouts. A "Last checked" timestamp shows when the last diagnostic ran. All diagnostic steps are logged to the "Saropa Log Capture" output channel for advanced troubleshooting.
+
+### Changed
+- **Minimap rewritten with canvas rendering.** The scrollbar minimap now paints markers onto a `<canvas>` element instead of creating individual DOM `<div>` elements. Uses `prefixSums` from the scroll-anchor system for pixel-accurate positioning, supports HiDPI displays, and eliminates innerHTML rebuilds for better performance.
+
+### Fixed
+- **Copy icon no longer overlaps scrollbar minimap.** Increased the right-edge clearance of the floating copy-to-clipboard button so it stays within the log content area.
+- **Timeline dots no longer shift on hover.** Replaced transform-based vertical centering with margin-based centering to eliminate sub-pixel jitter when hovering log lines.
+- **Same-color timeline dots are now connected by a colored vertical bar.** Consecutive log lines with the same severity level show a colored connector bar between their dots, making runs of same-level output visually distinct.
+
+---
 ## [2.0.2] - 2026-02-15
 
 ### Fixed
