@@ -191,6 +191,12 @@ function recalcHeights() {
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
+/** Extract bar level (e.g. 'error') from element class, or null. */
+function getBarLevel(el) {
+    var m = /level-bar-(\w+)/.exec(el.className);
+    return m ? m[1] : null;
+}
+
 function renderViewport(force) {
     if (!logEl.clientHeight) return;
     var scrollTop = logEl.scrollTop;
@@ -234,6 +240,14 @@ function renderViewport(force) {
         parts.push(renderItem(allLines[i], i));
     }
     viewportEl.innerHTML = parts.join('');
+    // Connect consecutive same-color dots with bar classes
+    var ch = viewportEl.children;
+    for (var ci = 0; ci < ch.length; ci++) {
+        var lvl = getBarLevel(ch[ci]);
+        if (!lvl) continue;
+        if (ci > 0 && getBarLevel(ch[ci - 1]) === lvl) ch[ci].classList.add('bar-up');
+        if (ci < ch.length - 1 && getBarLevel(ch[ci + 1]) === lvl) ch[ci].classList.add('bar-down');
+    }
     spacerTop.style.height = startOffset + 'px';
     var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
         ? totalHeight - prefixSums[endIdx + 1] : 0;
