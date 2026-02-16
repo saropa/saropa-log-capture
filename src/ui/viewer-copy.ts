@@ -160,7 +160,7 @@ function showCopyFloat(lineEl) {
     var wrapRect = wrapperEl.getBoundingClientRect();
     var logRect = logEl.getBoundingClientRect();
     var lineRect = lineEl.getBoundingClientRect();
-    copyFloat.style.right = (wrapRect.right - logRect.right + 4) + 'px';
+    copyFloat.style.right = (wrapRect.right - logRect.right + 8) + 'px';
     copyFloat.style.top = (lineRect.top - wrapRect.top + 2) + 'px';
     copyFloat.style.display = 'block';
 }
