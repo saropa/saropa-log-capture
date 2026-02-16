@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.4] - 2026-02-16
 
 ### Added
 - **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).

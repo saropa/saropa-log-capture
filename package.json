@@ -840,12 +840,12 @@
     "lint": "eslint src",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "test": "vscode-test",
+    "test": "node scripts/patch-vscode-test.js && vscode-test",
     "vscode:prepublish": "npm run package",
     "watch": "npm-run-all -p watch:*",
     "watch-tests": "tsc -p . -w --outDir out",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "2.0.3"
+  "version": "2.0.4"
 }
