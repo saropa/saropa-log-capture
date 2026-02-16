@@ -2,6 +2,8 @@
 
 Saropa Log Capture can query Firebase Crashlytics for production crash data matching errors found in your debug logs. When you analyze a log line, the extension checks if the same error class or message appears in your Crashlytics dashboard and shows matching crash issues with event counts, affected users, and a direct link to the Firebase Console.
 
+> **NOTE:** Refer to [app-quality-insights-crashlytics-reference.md](./history/Android%20Studio/app-quality-insights-crashlytics-reference.md)
+
 ## Prerequisites
 
 1. **Google Cloud SDK** (`gcloud` CLI) installed and on your PATH
