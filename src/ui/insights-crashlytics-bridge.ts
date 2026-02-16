@@ -8,20 +8,13 @@
 import * as vscode from 'vscode';
 import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
 import type { RecurringError } from '../modules/cross-session-aggregator';
+import { getOutputChannel } from '../modules/crashlytics-diagnostics';
 
 const bridgeTimeout = 10_000;
 
 /** Post a message to the webview, silently ignoring disposed panels. */
 function safePost(panel: vscode.WebviewPanel, message: Record<string, unknown>): void {
     try { panel.webview.postMessage(message); } catch { /* panel disposed */ }
-}
-
-let outputChannel: vscode.OutputChannel | undefined;
-
-/** Lazily create (or reuse) the shared output channel. */
-function getOutputChannel(): vscode.OutputChannel {
-    outputChannel ??= vscode.window.createOutputChannel('Saropa Log Capture');
-    return outputChannel;
 }
 
 /** Start the async Crashlytics bridge and post results back to the webview panel. */
