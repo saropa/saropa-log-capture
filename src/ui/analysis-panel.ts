@@ -259,9 +259,9 @@ function postFrameResult(file: string, line: number, html: string): void {
     panel?.webview.postMessage({ type: 'frameReady', file, line, html });
 }
 function ensurePanel(): void {
-    if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
+    if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.analysis', 'Line Analysis',
+        'saropaLogCapture.analysis', 'Saropa Line Analysis',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);

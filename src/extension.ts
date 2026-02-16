@@ -302,6 +302,20 @@ export function activate(context: vscode.ExtensionContext): void {
     );
     updateScopeContext().catch(() => {});
 
+    // Prevent VS Code from restoring webview panels on startup.
+    const noRestore: vscode.WebviewPanelSerializer = {
+        deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
+    };
+    for (const viewType of [
+        'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
+        'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
+        'saropaLogCapture.comparison',
+    ]) {
+        context.subscriptions.push(
+            vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
+        );
+    }
+
     outputChannel.appendLine('Saropa Log Capture activated.');
 }
 
