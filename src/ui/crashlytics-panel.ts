@@ -113,7 +113,9 @@ function buildPanelHtml(ctx: FirebaseContext): string {
     if (!ctx.available) { return buildSetupHtml(ctx, nonce); }
     const refreshNote = ctx.queriedAt ? `(${formatElapsedLabel(ctx.queriedAt)})` : '';
     let issueHtml = '';
-    if (ctx.issues.length === 0) {
+    if (ctx.issues.length === 0 && ctx.diagnostics) {
+        issueHtml = `<div class="fb-error">Query failed: ${escapeHtml(ctx.diagnostics.message)}</div>${renderDiagnosticBox(ctx)}`;
+    } else if (ctx.issues.length === 0) {
         issueHtml = '<p class="fb-empty">No open Crashlytics issues</p>';
     }
     for (const issue of ctx.issues) { issueHtml += renderIssueCard(issue); }
@@ -132,12 +134,23 @@ function buildSetupHtml(ctx: FirebaseContext, nonce: string): string {
     const stepNum = step === 'gcloud' ? 1 : step === 'token' ? 2 : 3;
     const content = step === 'gcloud' ? getGcloudStep()
         : step === 'token' ? getTokenStep() : getConfigStep();
+    const diagnosticHtml = renderDiagnosticBox(ctx);
     const tip = '<p class="setup-tip">Tip: Google Cloud may prompt you to enable billing, but Crashlytics API access is free.</p>';
     return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getSetupStyles()}</style></head>
-<body><div class="setup-header">Step ${stepNum} of 3</div>${content}${tip}
+<body><div class="setup-header">Step ${stepNum} of 3</div>${content}${diagnosticHtml}${tip}
 <button class="check-btn" onclick="postMsg('checkAgain')">Check Again</button>
 <script nonce="${nonce}">const vscodeApi=acquireVsCodeApi();function postMsg(t,v){vscodeApi.postMessage({type:t,url:v})}
 document.addEventListener('click',function(e){var a=e.target.closest('[data-url]');if(a&&a.dataset.url){postMsg('openFirebaseUrl',a.dataset.url)}});</script></body></html>`;
+}
+
+function renderDiagnosticBox(ctx: FirebaseContext): string {
+    const d = ctx.diagnostics;
+    if (!d) { return ''; }
+    const tech = d.technicalDetails
+        ? `<details class="diag-tech"><summary>Technical details</summary><pre>${escapeHtml(d.technicalDetails)}</pre></details>` : '';
+    const status = d.httpStatus ? `<div class="diag-status">HTTP ${d.httpStatus}</div>` : '';
+    const time = `<div class="diag-time">Last checked: ${formatElapsedLabel(d.checkedAt)}</div>`;
+    return `<div class="diag-box"><div class="diag-msg">${escapeHtml(d.message)}</div>${status}${tech}${time}</div>`;
 }
 
 function getGcloudStep(): string {
@@ -172,7 +185,8 @@ function getSetupStyles(): string {
 .setup-settings{display:block;margin-top:6px;font-size:12px;color:var(--vscode-textLink-foreground);cursor:pointer;opacity:0.8}
 .setup-tip{margin-top:16px;font-size:0.9em;opacity:0.6;font-style:italic}
 .check-btn{background:var(--vscode-button-secondaryBackground);color:var(--vscode-button-secondaryForeground);border:none;padding:4px 12px;cursor:pointer;border-radius:2px;font-size:12px;margin-top:8px}
-.check-btn:hover{background:var(--vscode-button-secondaryHoverBackground)}`;
+.check-btn:hover{background:var(--vscode-button-secondaryHoverBackground)}
+${getDiagnosticStyles()}`;
 }
 
 function renderIssueCard(issue: CrashlyticsIssue): string {
@@ -211,5 +225,17 @@ function getPanelStyles(): string {
 @keyframes fbpulse{0%,100%{opacity:0.6}50%{opacity:0.2}}
 .fb-actions{display:flex;gap:4px;margin-top:4px}
 .fb-action-btn{background:var(--vscode-button-secondaryBackground);color:var(--vscode-button-secondaryForeground);border:none;padding:2px 8px;cursor:pointer;border-radius:2px;font-size:11px}
-.fb-action-btn:hover{background:var(--vscode-button-secondaryHoverBackground)}`;
+.fb-action-btn:hover{background:var(--vscode-button-secondaryHoverBackground)}
+.fb-error{color:var(--vscode-errorForeground);font-size:0.9em;margin:6px 0}
+${getDiagnosticStyles()}`;
+}
+
+function getDiagnosticStyles(): string {
+    return `.diag-box{margin:10px 0;padding:8px;background:var(--vscode-inputValidation-warningBackground);border-left:3px solid var(--vscode-inputValidation-warningBorder);border-radius:3px;font-size:0.9em}
+.diag-msg{margin-bottom:4px}
+.diag-status{font-size:0.85em;opacity:0.8;margin-top:2px}
+.diag-tech{margin-top:6px;font-size:0.85em}
+.diag-tech summary{cursor:pointer;opacity:0.8}
+.diag-tech pre{margin:4px 0;padding:4px;background:var(--vscode-textCodeBlock-background);overflow-x:auto;font-family:var(--vscode-editor-font-family);font-size:0.9em;white-space:pre-wrap;word-break:break-all}
+.diag-time{font-size:0.8em;margin-top:6px;opacity:0.6;font-style:italic}`;
 }
