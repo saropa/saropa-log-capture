@@ -239,7 +239,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             meta = { ...meta, correlationTags: sidecar.correlationTags };
         }
         if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
-        if (sidecar.errorCount !== undefined) {
+        if (sidecar.errorCount !== undefined && sidecar.fwCount !== undefined) {
             meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
         } else if (meta.errorCount !== undefined) {
             sidecar.errorCount = meta.errorCount;
