@@ -23,6 +23,14 @@ var mmViewport = null;
 var mmDragging = false;
 var minimapDebounceTimer = 0;
 var mmColors = {};
+var mmShowInfo = false;
+
+/** Handle minimapShowInfo setting message from extension. */
+function handleMinimapShowInfo(msg) {
+    var prev = mmShowInfo;
+    mmShowInfo = !!msg.show;
+    if (prev !== mmShowInfo) scheduleMinimap();
+}
 
 /** Read VS Code theme colors with fallbacks. */
 function initMmColors() {
@@ -135,11 +143,6 @@ function paintMinimap() {
     }
     if (total === 0) return;
 
-    // Suppress info dots in large files to reduce visual noise
-    var vis = 0;
-    for (var i = 0; i < allLines.length; i++) { if (allLines[i].height > 0) vis++; }
-    var showInfo = vis < 5000;
-
     // Collect markers grouped by color to minimize fillStyle switches
     var groups = {};
     for (var i = 0; i < allLines.length; i++) {
@@ -147,7 +150,7 @@ function paintMinimap() {
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
         var lv = it.level;
         if (!lv || !mmColors[lv]) continue;
-        if (lv === 'info' && !showInfo) continue;
+        if (lv === 'info' && !mmShowInfo) continue;
         var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
         if (!groups[lv]) groups[lv] = [];
         groups[lv].push(py);
