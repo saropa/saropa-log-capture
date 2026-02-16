@@ -31,6 +31,7 @@ export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promi
             ...base, ...fields, hasTimestamps, lineCount, durationMs,
             errorCount: sev.errors, warningCount: sev.warnings, perfCount: sev.perfs,
             anrCount: sev.anrs > 0 ? sev.anrs : undefined,
+            fwCount: sev.frameworks, infoCount: sev.infos,
         };
     } catch {
         return base;

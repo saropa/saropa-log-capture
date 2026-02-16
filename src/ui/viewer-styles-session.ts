@@ -205,11 +205,9 @@ export function getSessionPanelStyles(): string {
 .sev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .sev-error { background: var(--vscode-charts-red, #f44336); }
 .sev-warning { background: var(--vscode-charts-yellow, #ffc107); }
-.sev-perf { background: var(--vscode-charts-blue, #2196f3); }
-.sev-bar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 3px; background: var(--vscode-panel-border); }
-.sev-bar-e { background: var(--vscode-charts-red, #f44336); }
-.sev-bar-w { background: var(--vscode-charts-yellow, #ffc107); }
-.sev-bar-p { background: var(--vscode-charts-blue, #2196f3); }
+.sev-perf { background: var(--vscode-charts-purple, #a855f7); }
+.sev-fw { background: var(--vscode-charts-blue, #2196f3); }
+.sev-info { background: var(--vscode-charts-green, #4caf50); }
 
 /* --- Session tag chips --- */
 .session-tags-section {

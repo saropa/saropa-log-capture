@@ -25,6 +25,8 @@ export interface SessionMeta {
     warningCount?: number;
     perfCount?: number;
     anrCount?: number;
+    fwCount?: number;
+    infoCount?: number;
     /** ANR risk level computed by anr-risk-scorer.ts on session finalization. */
     anrRiskLevel?: 'low' | 'medium' | 'high';
     /** App version detected at session finalization (e.g. from pubspec.yaml). */

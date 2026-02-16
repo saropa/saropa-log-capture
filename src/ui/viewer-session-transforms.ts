@@ -98,19 +98,10 @@ function renderSeverityDots(s) {
     if (s.errorCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
     if (s.warningCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
     if (s.perfCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
+    if (s.fwCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
+    if (s.infoCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
     if (parts.length === 0) return '';
     return '<span class="sev-dots">' + parts.join('') + '</span>';
-}
-
-function renderSeverityBar(err, warn, perf, total) {
-    var ePct = Math.round((err / total) * 100);
-    var wPct = Math.round((warn / total) * 100);
-    var pPct = 100 - ePct - wPct;
-    var tp = [];
-    if (err > 0) tp.push(err + ' error' + (err !== 1 ? 's' : ''));
-    if (warn > 0) tp.push(warn + ' warning' + (warn !== 1 ? 's' : ''));
-    if (perf > 0) tp.push(perf + ' perf');
-    return '<span class="sev-bar" title="' + tp.join(', ') + '"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
 }
 
 /** Mark the newest session per unique display name as isLatestOfName. */

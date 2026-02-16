@@ -97,6 +97,8 @@ body[data-icon-bar="right"] { flex-direction: row; }
     word-break: break-all;
     padding: 0 8px 0 24px;
     line-height: var(--log-line-height, 1.5);
+    height: calc(1em * var(--log-line-height, 1.5));
+    overflow: visible;
     transition: background 0.1s ease;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
