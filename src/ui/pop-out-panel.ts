@@ -150,6 +150,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   }
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
+  setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.post({ type: "sessionList", sessions }); }
