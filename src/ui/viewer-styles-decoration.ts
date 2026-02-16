@@ -171,18 +171,19 @@ export function getDecorationStyles(): string {
 /* Continuous timeline in log gutter */
 #viewport { position: relative; }
 #viewport::before {
-    content: ''; position: absolute; left: 6px;
+    content: ''; position: absolute; left: 12px;
     top: 0; bottom: 0; width: 1px;
     background: var(--vscode-panel-border);
-    pointer-events: none; z-index: 1;
+    pointer-events: none;
 }
 
 /* Severity dot mode (colored circle on timeline) */
+[class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
-    content: ''; position: absolute; left: 3px;
+    content: ''; position: absolute; left: 8px;
     top: 50%; transform: translateY(-50%);
-    width: 7px; height: 7px; border-radius: 50%;
-    pointer-events: none; z-index: 2;
+    width: 9px; height: 9px; border-radius: 50%;
+    pointer-events: none;
 }
 .level-bar-error::before { background: var(--vscode-debugConsole-errorForeground, #f48771); }
 .level-bar-warning::before { background: var(--vscode-debugConsole-warningForeground, #cca700); }
