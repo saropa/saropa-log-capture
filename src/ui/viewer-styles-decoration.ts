@@ -181,18 +181,28 @@ export function getDecorationStyles(): string {
 [class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
     content: ''; position: absolute; left: 8px;
-    top: 50%; transform: translateY(-50%);
+    top: 0; bottom: 0; margin: auto 0;
     width: 9px; height: 9px; border-radius: 50%;
-    pointer-events: none;
+    pointer-events: none; z-index: 2;
 }
-.level-bar-error::before { background: var(--vscode-debugConsole-errorForeground, #f48771); }
-.level-bar-warning::before { background: var(--vscode-debugConsole-warningForeground, #cca700); }
-.level-bar-performance::before { background: var(--vscode-debugConsole-infoForeground, #b695f8); }
-.level-bar-todo::before { background: var(--vscode-terminal-ansiWhite, #e5e5e5); }
-.level-bar-debug::before { background: var(--vscode-terminal-ansiYellow, #dcdcaa); }
-.level-bar-notice::before { background: var(--vscode-terminal-ansiCyan, #4fc1ff); }
-.level-bar-framework::before { background: var(--vscode-textLink-foreground, #3794ff); }
-.level-bar-info::before { background: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+.level-bar-error { --bar-color: var(--vscode-debugConsole-errorForeground, #f48771); }
+.level-bar-warning { --bar-color: var(--vscode-debugConsole-warningForeground, #cca700); }
+.level-bar-performance { --bar-color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
+.level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+.level-bar-notice { --bar-color: var(--vscode-terminal-ansiCyan, #4fc1ff); }
+.level-bar-framework { --bar-color: var(--vscode-textLink-foreground, #3794ff); }
+.level-bar-info { --bar-color: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+[class*="level-bar-"]::before { background: var(--bar-color); }
+
+/* Connector bars join consecutive same-color dots */
+.bar-down::after, .bar-up::after {
+    content: ''; position: absolute; left: 11px; width: 3px;
+    background: var(--bar-color); pointer-events: none; z-index: 1;
+}
+.bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
+.bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
+.bar-up.bar-down::after { top: 0; bottom: 0; }
 
 /* Error classification badges */
 .error-badge {
