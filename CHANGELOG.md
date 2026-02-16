@@ -9,6 +9,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Full severity dot breakdown in session list.** Each session now shows five colored dot counters: red (errors), yellow (warnings), purple (performance), blue (framework), and green (info). Framework lines are detected via logcat tags and launch boilerplate; info is all remaining lines.
+
+### Changed
+- **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
+- **Performance dot color changed from blue to purple.** The performance severity dot in the session list is now purple to free up blue for framework lines.
+
+### Removed
+- **Severity distribution bar in session list.** Removed the thin horizontal bar under each session entry; the five colored dot counters now convey a complete line-type breakdown.
+
+### Fixed
+- **Line hover background matches compressed line height.** Added explicit `height: calc(1em * line-height)` on `.line` elements so the hover background always matches the virtual-scroll row height, preventing it from bleeding into adjacent lines at compressed settings.
+- **Copy icon vertically centered on line.** The floating copy-to-clipboard icon now vertically centers on the hovered line instead of using a fixed offset.
+- **Copy icon no longer overlaps scrollbar minimap.** Increased the right-edge clearance of the floating copy-to-clipboard button so it stays within the log content area.
+
+---
 ## [2.0.4] - 2026-02-16
 
 ### Added

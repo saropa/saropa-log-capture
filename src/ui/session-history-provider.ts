@@ -240,12 +240,14 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         }
         if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
         if (sidecar.errorCount !== undefined) {
-            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount };
+            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
         } else if (meta.errorCount !== undefined) {
             sidecar.errorCount = meta.errorCount;
             sidecar.warningCount = meta.warningCount;
             sidecar.perfCount = meta.perfCount;
             sidecar.anrCount = meta.anrCount;
+            sidecar.fwCount = meta.fwCount;
+            sidecar.infoCount = meta.infoCount;
             this.metaStore.saveMetadata(uri, sidecar).catch(() => {});
         }
         this.metaCache.set(cacheKey, meta);

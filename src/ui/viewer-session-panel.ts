@@ -122,14 +122,12 @@ export function getSessionPanelScript(): string {
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
         var dots = renderSeverityDots(s);
-        var total = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0);
-        var bar = total > 0 ? renderSeverityBar(s.errorCount || 0, s.warningCount || 0, s.perfCount || 0, total) : '';
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
             + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
-            + dots + bar + '</div></div>';
+            + dots + '</div></div>';
     }
 
     function renderDayHeading(epochMs) {
