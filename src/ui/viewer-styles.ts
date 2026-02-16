@@ -95,7 +95,7 @@ body[data-icon-bar="right"] { flex-direction: row; }
 .line {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0 8px 0 16px;
+    padding: 0 8px 0 24px;
     line-height: var(--log-line-height, 1.5);
     transition: background 0.1s ease;
 }
