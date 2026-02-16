@@ -37,32 +37,38 @@ interface LinkEntry {
 const projectLinks: readonly LinkEntry[] = [
     {
         icon: '\u{1F4F1}', title: 'Saropa Contacts',
-        badge: 'saropa.com \u00b7 50K+ downloads \u00b7 \u2605 4.8',
-        desc: 'The superpower your address book is missing. A replacement address book that is cloud-connected to real people and businesses and focused on your trusted emergency groups.',
+        badge: 'iOS, Android, Web \u00b7 50K+ downloads \u00b7 \u2605 4.8',
+        desc: 'The superpower your address book is missing. An Intelligent Address Book with Business Card Mode, 252+ medical tips, global emergency numbers for 195+ countries, and biometric locking.',
+        url: 'https://saropa.com/',
+    },
+    {
+        icon: '\u{1F3E0}', title: 'Home Essentials',
+        badge: 'saropa.com',
+        desc: 'Your family\u2019s lifestyle backup plan. Secure vault for asset inventory, important documents, medical records, and legacy planning.',
         url: 'https://saropa.com/',
     },
     {
         icon: '\u{1F4CB}', title: 'Saropa Log Capture',
         badge: 'VS Code Marketplace',
-        desc: 'Automatically saves all VS Code Debug Console output to persistent log files, with a fast, feature-rich panel viewer. Works with any debug adapter. No setup required\u2009\u2014\u2009just hit F5.',
+        desc: 'The Debugger\u2019s Safety Net. Automatically saves all Debug Console output to persistent log files. No setup required\u2009\u2014\u2009just hit F5 and your logs are safe.',
         url: 'https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture',
     },
     {
         icon: '\u{1F6E1}\uFE0F', title: 'Saropa Claude Guard',
         badge: 'VS Code Marketplace',
-        desc: 'Tracks Claude API costs by tailing local JSONL log files, showing live spend in the VS Code status bar and enforcing daily/monthly budgets.',
+        desc: 'AI Governance. Tracks Claude API costs in real-time by tailing local logs. Enforce daily/monthly budgets and monitor spend directly from the status bar.',
         url: 'https://marketplace.visualstudio.com/items?itemName=Saropa.saropa-claude-guard',
     },
     {
         icon: '\u{1F50D}', title: 'saropa_lints',
         badge: 'pub.dev \u00b7 Dart & Flutter',
-        desc: 'Catch memory leaks, security vulnerabilities, and runtime crashes that standard linters miss.',
+        desc: '1700+ custom rules. Catch memory leaks, security vulnerabilities (mapped to OWASP Top 10), and runtime crashes. Includes AI-ready diagnostics for faster repairs.',
         url: 'https://pub.dev/packages/saropa_lints',
     },
     {
         icon: '\u{1F9F0}', title: 'saropa_dart_utils',
         badge: 'pub.dev \u00b7 Dart & Flutter',
-        desc: 'Stop writing the same utility functions in every Flutter project. 280+ production-hardened extension methods extracted from a real-world app with thousands of active users.',
+        desc: 'The Swiss Army library. 280+ production-hardened extension methods for Strings, Dates, and Lists extracted from real-world apps.',
         url: 'https://pub.dev/packages/saropa_dart_utils',
     },
 ];
@@ -112,7 +118,8 @@ function buildPanelHtml(version: string): string {
     const social = connectLinks.map(renderLink).join('\n');
     return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getStyles()}</style></head><body>
 <div class="ab-header">Saropa</div>
-<p class="ab-blurb">Technology company founded in 2010 with roots in financial services and secure communications. From developer extensions that just work on install to a contacts app trusted by 50,000+ people, we build software that cuts through the noise and never loses your data.</p>
+<p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
+<p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
 <div class="ab-section">Projects</div>
 ${projects}
 <div class="ab-section">Connect</div>
@@ -124,7 +131,8 @@ ${social}
 function getStyles(): string {
     return `body{padding:8px 12px;font-family:var(--vscode-font-family);font-size:var(--vscode-font-size);color:var(--vscode-foreground);line-height:1.4}
 .ab-header{font-size:1.4em;font-weight:700;margin-bottom:8px}
-.ab-blurb{opacity:0.85;margin:0 0 16px 0;font-size:0.95em}
+.ab-tagline{font-weight:600;font-style:italic;opacity:0.9;margin:0 0 6px 0;font-size:0.95em}
+.ab-blurb{opacity:0.8;margin:0 0 16px 0;font-size:0.9em}
 .ab-section{font-weight:600;font-size:1.05em;margin-bottom:8px;margin-top:12px;border-bottom:1px solid var(--vscode-panel-border);padding-bottom:4px}
 .ab-link{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:4px;cursor:pointer;margin-bottom:4px}
 .ab-link:hover{background:var(--vscode-list-hoverBackground)}
