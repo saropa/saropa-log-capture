@@ -207,6 +207,16 @@
         "command": "saropaLogCapture.resetAllSettings",
         "icon": "$(clear-all)",
         "title": "Saropa Log Capture: Reset All Settings to Defaults"
+      },
+      {
+        "command": "saropaLogCapture.showCrashlytics",
+        "icon": "$(flame)",
+        "title": "Saropa Log Capture: Open Crashlytics"
+      },
+      {
+        "command": "saropaLogCapture.showRecurringErrors",
+        "icon": "$(bug)",
+        "title": "Saropa Log Capture: Open Recurring Errors"
       }
     ],
     "configuration": {
@@ -680,6 +690,16 @@
     "menus": {
       "view/title": [
         {
+          "command": "saropaLogCapture.showCrashlytics",
+          "group": "navigation",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
+          "command": "saropaLogCapture.showRecurringErrors",
+          "group": "navigation",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
           "command": "saropaLogCapture.popOutViewer",
           "group": "navigation",
           "when": "view == saropaLogCapture.logViewer"
@@ -692,18 +712,6 @@
           "icon": "$(output)",
           "id": "saropaLogCapture.logViewer",
           "name": "Log Viewer",
-          "type": "webview"
-        },
-        {
-          "icon": "$(flame)",
-          "id": "saropaLogCapture.crashlyticsPanel",
-          "name": "Crashlytics",
-          "type": "webview"
-        },
-        {
-          "icon": "$(bug)",
-          "id": "saropaLogCapture.recurringErrorsPanel",
-          "name": "Recurring Errors",
           "type": "webview"
         },
         {

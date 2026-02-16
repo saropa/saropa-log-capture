@@ -1,4 +1,4 @@
-/** Persistent Crashlytics sidebar panel — shows top crash issues from Firebase. */
+/** Crashlytics editor-tab panel — shows top crash issues from Firebase. */
 
 import * as vscode from 'vscode';
 import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
@@ -10,98 +10,115 @@ import {
 } from '../modules/firebase-crashlytics';
 import { renderCrashDetail } from './analysis-crash-detail';
 
+let panel: vscode.WebviewPanel | undefined;
 let lastContext: FirebaseContext | undefined;
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
+let terminalListener: vscode.Disposable | undefined;
 
-/** WebviewViewProvider for the Crashlytics sidebar panel. */
-export class CrashlyticsPanelProvider implements vscode.WebviewViewProvider, vscode.Disposable {
-    private view: vscode.WebviewView | undefined;
-    private terminalListener: vscode.Disposable | undefined;
-    static readonly viewType = 'saropaLogCapture.crashlyticsPanel';
+/** Show (or reveal) the Crashlytics editor-tab panel. */
+export async function showCrashlyticsPanel(): Promise<void> {
+    ensurePanel();
+    await refresh();
+}
 
-    resolveWebviewView(webviewView: vscode.WebviewView): void {
-        this.view = webviewView;
-        webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
-        webviewView.webview.onDidReceiveMessage(msg => this.handleMessage(msg));
-        this.refresh();
-        this.startAutoRefresh();
-    }
+/** Refresh if the panel is open; no-op otherwise. */
+export async function refreshCrashlyticsPanel(): Promise<void> {
+    if (!panel) { return; }
+    await refresh();
+}
 
-    /** Force a refresh of the Crashlytics data. */
-    async refresh(): Promise<void> {
-        if (!this.view) { return; }
-        this.view.webview.html = buildLoadingHtml();
-        clearIssueListCache();
-        const ctx = await getFirebaseContext([]).catch(() => undefined);
-        lastContext = ctx ?? { available: false, setupHint: 'Query failed', issues: [] };
-        if (this.view) { this.view.webview.html = buildPanelHtml(lastContext); }
-    }
+/** Dispose the singleton panel. */
+export function disposeCrashlyticsPanel(): void {
+    panel?.dispose();
+    panel = undefined;
+}
 
-    dispose(): void {
+function ensurePanel(): void {
+    if (panel) { panel.reveal(); return; }
+    panel = vscode.window.createWebviewPanel(
+        'saropaLogCapture.crashlytics', 'Saropa Crashlytics',
+        vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
+    );
+    panel.webview.onDidReceiveMessage(handleMessage);
+    panel.onDidDispose(() => {
+        panel = undefined;
         if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = undefined; }
-        this.terminalListener?.dispose();
-    }
+        terminalListener?.dispose();
+        terminalListener = undefined;
+    });
+    startAutoRefresh();
+}
 
-    private startAutoRefresh(): void {
-        if (refreshTimer) { return; }
-        const interval = vscode.workspace.getConfiguration('saropaLogCapture.firebase').get<number>('refreshInterval', 300);
-        if (interval > 0) { refreshTimer = setInterval(() => this.refresh(), interval * 1000); }
-    }
+async function refresh(): Promise<void> {
+    if (!panel) { return; }
+    panel.webview.html = buildLoadingHtml();
+    clearIssueListCache();
+    const ctx = await getFirebaseContext([]).catch(() => undefined);
+    lastContext = ctx ?? { available: false, setupHint: 'Query failed', issues: [] };
+    if (panel) { panel.webview.html = buildPanelHtml(lastContext); }
+}
 
-    private async handleMessage(msg: Record<string, unknown>): Promise<void> {
-        if (msg.type === 'refresh' || msg.type === 'checkAgain') { await this.refresh(); }
-        else if (msg.type === 'runGcloudAuth') { this.runGcloudAuth(); }
-        else if (msg.type === 'browseGoogleServices') { await this.browseGoogleServices(); }
-        else if (msg.type === 'openSettings') {
-            vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.firebase');
-        }
-        else if (msg.type === 'fetchCrashDetail') { await this.fetchDetail(String(msg.issueId ?? '')); }
-        else if (msg.type === 'closeIssue' || msg.type === 'muteIssue') {
-            const state = msg.type === 'closeIssue' ? 'CLOSED' as const : 'MUTED' as const;
-            const ok = await updateIssueState(String(msg.issueId ?? ''), state);
-            if (ok) { await this.refresh(); }
-            else { this.view?.webview.postMessage({ type: 'issueActionFailed', action: state }); }
-        }
-        else if (msg.type === 'openFirebaseUrl') {
-            vscode.env.openExternal(vscode.Uri.parse(String(msg.url))).then(undefined, () => {});
-        }
-    }
+function startAutoRefresh(): void {
+    if (refreshTimer) { return; }
+    const interval = vscode.workspace
+        .getConfiguration('saropaLogCapture.firebase')
+        .get<number>('refreshInterval', 300);
+    if (interval > 0) { refreshTimer = setInterval(() => { refresh(); }, interval * 1000); }
+}
 
-    /** Open a terminal and run the gcloud auth command; auto-refresh on close. */
-    private runGcloudAuth(): void {
-        const terminal = vscode.window.createTerminal({ name: 'Google Cloud Auth' });
-        terminal.show();
-        terminal.sendText('gcloud auth application-default login');
-        this.terminalListener?.dispose();
-        this.terminalListener = vscode.window.onDidCloseTerminal(closed => {
-            if (closed !== terminal) { return; }
-            this.terminalListener?.dispose();
-            this.terminalListener = undefined;
-            this.refresh();
-        });
+async function handleMessage(msg: Record<string, unknown>): Promise<void> {
+    if (msg.type === 'refresh' || msg.type === 'checkAgain') { await refresh(); }
+    else if (msg.type === 'runGcloudAuth') { runGcloudAuth(); }
+    else if (msg.type === 'browseGoogleServices') { await browseGoogleServices(); }
+    else if (msg.type === 'openSettings') {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.firebase');
     }
+    else if (msg.type === 'fetchCrashDetail') { await fetchDetail(String(msg.issueId ?? '')); }
+    else if (msg.type === 'closeIssue' || msg.type === 'muteIssue') {
+        const state = msg.type === 'closeIssue' ? 'CLOSED' as const : 'MUTED' as const;
+        const ok = await updateIssueState(String(msg.issueId ?? ''), state);
+        if (ok) { await refresh(); }
+        else { panel?.webview.postMessage({ type: 'issueActionFailed', action: state }); }
+    }
+    else if (msg.type === 'openFirebaseUrl') {
+        vscode.env.openExternal(vscode.Uri.parse(String(msg.url))).then(undefined, () => {});
+    }
+}
 
-    /** Open a file picker for google-services.json and copy it to workspace root. */
-    private async browseGoogleServices(): Promise<void> {
-        const files = await vscode.window.showOpenDialog({
-            canSelectMany: false,
-            filters: { 'JSON': ['json'] },
-            openLabel: 'Select google-services.json',
-        });
-        if (!files || files.length === 0) { return; }
-        const ws = vscode.workspace.workspaceFolders?.[0];
-        if (!ws) { return; }
-        const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
-        await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
-        await this.refresh();
-    }
+/** Open a terminal and run the gcloud auth command; auto-refresh on close. */
+function runGcloudAuth(): void {
+    const terminal = vscode.window.createTerminal({ name: 'Google Cloud Auth' });
+    terminal.show();
+    terminal.sendText('gcloud auth application-default login');
+    terminalListener?.dispose();
+    terminalListener = vscode.window.onDidCloseTerminal(closed => {
+        if (closed !== terminal) { return; }
+        terminalListener?.dispose();
+        terminalListener = undefined;
+        refresh();
+    });
+}
 
-    private async fetchDetail(issueId: string): Promise<void> {
-        const multi = await getCrashEvents(issueId).catch(() => undefined);
-        const detail = multi?.events[0];
-        const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
-        this.view?.webview.postMessage({ type: 'crashDetailReady', issueId, html });
-    }
+/** Open a file picker for google-services.json and copy it to workspace root. */
+async function browseGoogleServices(): Promise<void> {
+    const files = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        filters: { 'JSON': ['json'] },
+        openLabel: 'Select google-services.json',
+    });
+    if (!files || files.length === 0) { return; }
+    const ws = vscode.workspace.workspaceFolders?.[0];
+    if (!ws) { return; }
+    const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
+    await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
+    await refresh();
+}
+
+async function fetchDetail(issueId: string): Promise<void> {
+    const multi = await getCrashEvents(issueId).catch(() => undefined);
+    const detail = multi?.events[0];
+    const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
+    panel?.webview.postMessage({ type: 'crashDetailReady', issueId, html });
 }
 
 function buildLoadingHtml(): string {

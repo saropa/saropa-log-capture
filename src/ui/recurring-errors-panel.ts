@@ -1,4 +1,4 @@
-/** Persistent sidebar panel showing top recurring error patterns across sessions. */
+/** Recurring errors editor-tab panel — shows top error patterns across sessions. */
 
 import * as vscode from 'vscode';
 import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
@@ -6,40 +6,54 @@ import { getNonce } from './viewer-content';
 import { aggregateInsights, type RecurringError } from '../modules/cross-session-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../modules/error-status-store';
 
-/** WebviewViewProvider for the Recurring Errors sidebar panel. */
-export class RecurringErrorsPanelProvider implements vscode.WebviewViewProvider, vscode.Disposable {
-    private view: vscode.WebviewView | undefined;
-    static readonly viewType = 'saropaLogCapture.recurringErrorsPanel';
+let panel: vscode.WebviewPanel | undefined;
 
-    resolveWebviewView(webviewView: vscode.WebviewView): void {
-        this.view = webviewView;
-        webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
-        webviewView.webview.onDidReceiveMessage(msg => this.handleMessage(msg));
-        this.refresh();
+/** Show (or reveal) the Recurring Errors editor-tab panel. */
+export async function showRecurringErrorsPanel(): Promise<void> {
+    ensurePanel();
+    await refresh();
+}
+
+/** Refresh if the panel is open; no-op otherwise. */
+export async function refreshRecurringErrorsPanel(): Promise<void> {
+    if (!panel) { return; }
+    await refresh();
+}
+
+/** Dispose the singleton panel. */
+export function disposeRecurringErrorsPanel(): void {
+    panel?.dispose();
+    panel = undefined;
+}
+
+function ensurePanel(): void {
+    if (panel) { panel.reveal(); return; }
+    panel = vscode.window.createWebviewPanel(
+        'saropaLogCapture.recurringErrors', 'Saropa Recurring Errors',
+        vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
+    );
+    panel.webview.onDidReceiveMessage(handleMessage);
+    panel.onDidDispose(() => { panel = undefined; });
+}
+
+async function refresh(): Promise<void> {
+    if (!panel) { return; }
+    panel.webview.html = buildLoadingHtml();
+    const insights = await aggregateInsights('all').catch(() => undefined);
+    const errors = insights?.recurringErrors ?? [];
+    const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
+    if (panel) {
+        panel.webview.html = buildPanelHtml(errors, statuses, insights?.queriedAt);
     }
+}
 
-    /** Force a data refresh (called after session finalization). */
-    async refresh(): Promise<void> {
-        if (!this.view) { return; }
-        this.view.webview.html = buildLoadingHtml();
-        const insights = await aggregateInsights('all').catch(() => undefined);
-        const errors = insights?.recurringErrors ?? [];
-        const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
-        if (this.view) {
-            this.view.webview.html = buildPanelHtml(errors, statuses, insights?.queriedAt);
-        }
-    }
-
-    dispose(): void { /* nothing to clean up */ }
-
-    private async handleMessage(msg: Record<string, unknown>): Promise<void> {
-        if (msg.type === 'refresh') { await this.refresh(); }
-        else if (msg.type === 'setErrorStatus') {
-            await setErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open') as ErrorStatus);
-            await this.refresh();
-        } else if (msg.type === 'openInsights') {
-            vscode.commands.executeCommand('saropaLogCapture.showInsights');
-        }
+async function handleMessage(msg: Record<string, unknown>): Promise<void> {
+    if (msg.type === 'refresh') { await refresh(); }
+    else if (msg.type === 'setErrorStatus') {
+        await setErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open') as ErrorStatus);
+        await refresh();
+    } else if (msg.type === 'openInsights') {
+        vscode.commands.executeCommand('saropaLogCapture.showInsights');
     }
 }
 
