@@ -3,60 +3,18 @@
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import { getLogDirectoryUri } from './config';
+import { detectAppVersion } from './app-version';
 import { parseEventResponse } from './crashlytics-event-parser';
-
-export interface CrashlyticsIssue {
-    readonly id: string;
-    readonly title: string;
-    readonly subtitle: string;
-    readonly eventCount: number;
-    readonly userCount: number;
-    readonly isFatal: boolean;
-    readonly state: 'OPEN' | 'CLOSED' | 'REGRESSION' | 'UNKNOWN';
-    readonly firstVersion?: string;
-    readonly lastVersion?: string;
-}
-
-export interface FirebaseContext {
-    readonly available: boolean;
-    readonly setupHint?: string;
-    /** Which setup step failed — drives the wizard UI in the panel. */
-    readonly setupStep?: 'gcloud' | 'token' | 'config';
-    readonly issues: readonly CrashlyticsIssue[];
-    readonly consoleUrl?: string;
-    readonly queriedAt?: number;
-}
-
-export interface CrashlyticsStackFrame {
-    readonly text: string;
-    readonly fileName?: string;
-    readonly lineNumber?: number;
-}
-
-interface CrashlyticsThread { readonly name: string; readonly frames: readonly CrashlyticsStackFrame[]; }
-
-export interface CrashlyticsEventDetail {
-    readonly issueId: string;
-    readonly crashThread?: CrashlyticsThread;
-    readonly appThreads: readonly CrashlyticsThread[];
-    readonly deviceModel?: string;
-    readonly osVersion?: string;
-    readonly eventTime?: string;
-    readonly customKeys?: readonly { readonly key: string; readonly value: string }[];
-    readonly logs?: readonly { readonly timestamp?: string; readonly message: string }[];
-}
-
-export interface CrashlyticsIssueEvents {
-    readonly issueId: string;
-    readonly events: readonly CrashlyticsEventDetail[];
-    readonly currentIndex: number;
-}
+import { logCrashlytics, classifyGcloudError, classifyTokenError, classifyHttpStatus, type DiagnosticDetails } from './crashlytics-diagnostics';
+import type { CrashlyticsIssue, CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext } from './crashlytics-types';
+export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext } from './crashlytics-types';
 
 interface FirebaseConfig { readonly projectId: string; readonly appId: string; }
 
 let gcloudAvailable: boolean | undefined;
 let cachedToken: { token: string; expires: number } | undefined;
 let cachedIssueRows: { rows: Record<string, unknown>[]; expires: number } | undefined;
+let lastDiagnostic: DiagnosticDetails | undefined;
 const tokenTtl = 30 * 60_000;
 const issueListTtl = 5 * 60_000;
 const apiTimeout = 10_000;
@@ -67,7 +25,12 @@ async function isGcloudAvailable(): Promise<boolean> {
     try {
         await runCmd('gcloud', ['--version']);
         gcloudAvailable = true;
-    } catch { gcloudAvailable = false; }
+        logCrashlytics('info', 'Google Cloud CLI found');
+    } catch (err) {
+        gcloudAvailable = false;
+        lastDiagnostic = classifyGcloudError(err);
+        logCrashlytics('error', `gcloud check: ${lastDiagnostic.message}`);
+    }
     return gcloudAvailable;
 }
 
@@ -76,10 +39,19 @@ export async function getAccessToken(): Promise<string | undefined> {
     if (cachedToken && Date.now() < cachedToken.expires) { return cachedToken.token; }
     try {
         const token = await runCmd('gcloud', ['auth', 'application-default', 'print-access-token']);
-        if (!token) { return undefined; }
+        if (!token) {
+            lastDiagnostic = { step: 'token', errorType: 'auth', message: 'gcloud returned empty token', checkedAt: Date.now() };
+            logCrashlytics('error', 'gcloud returned empty access token');
+            return undefined;
+        }
         cachedToken = { token, expires: Date.now() + tokenTtl };
+        logCrashlytics('info', 'Access token retrieved');
         return token;
-    } catch { return undefined; }
+    } catch (err) {
+        lastDiagnostic = classifyTokenError(err);
+        logCrashlytics('error', `Token fetch: ${lastDiagnostic.message}`);
+        return undefined;
+    }
 }
 
 /** Detect Firebase config from workspace google-services.json or extension settings. */
@@ -87,21 +59,40 @@ export async function detectFirebaseConfig(): Promise<FirebaseConfig | undefined
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
     const projectId = cfg.get<string>('projectId', '');
     const appId = cfg.get<string>('appId', '');
-    if (projectId && appId) { return { projectId, appId }; }
+    if (projectId && appId) {
+        logCrashlytics('info', `Config from settings: project=${projectId}`);
+        return { projectId, appId };
+    }
     return scanGoogleServicesJson(projectId, appId);
 }
 
 async function scanGoogleServicesJson(fallbackProject: string, fallbackApp: string): Promise<FirebaseConfig | undefined> {
     const files = await vscode.workspace.findFiles('**/google-services.json', '**/node_modules/**', 3);
-    if (files.length === 0) { return undefined; }
+    if (files.length === 0) {
+        logCrashlytics('info', 'No google-services.json found in workspace');
+        lastDiagnostic = { step: 'config', errorType: 'config', message: 'No google-services.json found in workspace', checkedAt: Date.now() };
+        return undefined;
+    }
     try {
         const raw = await vscode.workspace.fs.readFile(files[0]);
         const json = JSON.parse(Buffer.from(raw).toString('utf-8'));
         const projectId = fallbackProject || json.project_info?.project_id;
         const client = json.client?.[0];
         const appId = fallbackApp || client?.client_info?.mobilesdk_app_id;
-        return projectId && appId ? { projectId, appId } : undefined;
-    } catch { return undefined; }
+        if (projectId && appId) {
+            logCrashlytics('info', `Config from google-services.json: project=${projectId}`);
+            return { projectId, appId };
+        }
+        const missing = !projectId ? 'projectId' : 'appId';
+        logCrashlytics('error', `google-services.json missing ${missing}`);
+        lastDiagnostic = { step: 'config', errorType: 'config', message: `google-services.json found but missing ${missing}`, checkedAt: Date.now() };
+        return undefined;
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logCrashlytics('error', `Failed to parse google-services.json: ${msg}`);
+        lastDiagnostic = { step: 'config', errorType: 'config', message: `Failed to parse google-services.json`, technicalDetails: msg, checkedAt: Date.now() };
+        return undefined;
+    }
 }
 
 /** Clear all cached state so the next query re-checks gcloud, token, and issues. */
@@ -109,6 +100,7 @@ export function clearIssueListCache(): void {
     gcloudAvailable = undefined;
     cachedToken = undefined;
     cachedIssueRows = undefined;
+    lastDiagnostic = undefined;
 }
 
 /** Install page for the Google Cloud CLI (gcloud), required for Crashlytics API access. */
@@ -116,30 +108,39 @@ export const gcloudInstallUrl = 'https://docs.cloud.google.com/sdk/docs/install-
 
 /** Query Firebase Crashlytics for issues matching error tokens. */
 export async function getFirebaseContext(errorTokens: readonly string[]): Promise<FirebaseContext> {
+    lastDiagnostic = undefined;
     if (!await isGcloudAvailable()) {
-        return { available: false, setupStep: 'gcloud', setupHint: `Install Google Cloud CLI from ${gcloudInstallUrl}`, issues: [] };
+        return { available: false, setupStep: 'gcloud', setupHint: `Install Google Cloud CLI from ${gcloudInstallUrl}`, issues: [], diagnostics: lastDiagnostic };
     }
     const token = await getAccessToken();
     if (!token) {
-        return { available: false, setupStep: 'token', setupHint: 'Run: gcloud auth application-default login', issues: [] };
+        return { available: false, setupStep: 'token', setupHint: 'Run: gcloud auth application-default login', issues: [], diagnostics: lastDiagnostic };
     }
     const config = await detectFirebaseConfig();
     if (!config) {
-        return { available: false, setupStep: 'config', setupHint: 'Add google-services.json to workspace or set firebase.projectId/appId', issues: [] };
+        return { available: false, setupStep: 'config', setupHint: 'Add google-services.json to workspace or set firebase.projectId/appId', issues: [], diagnostics: lastDiagnostic };
     }
     const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
-    const issues = await queryTopIssues(config, token, errorTokens).catch(() => []);
-    return { available: true, issues, consoleUrl, queriedAt: Date.now() };
+    try {
+        const issues = await queryTopIssues(config, token, errorTokens);
+        logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
+        // When API succeeds but returns no issues, attach any diagnostic from fetchJson (e.g. HTTP 403)
+        const diag = issues.length === 0 ? lastDiagnostic : undefined;
+        return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag };
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logCrashlytics('error', `Issue query failed: ${msg}`);
+        if (!lastDiagnostic) {
+            lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
+        }
+        return { available: true, issues: [], consoleUrl, queriedAt: Date.now(), diagnostics: lastDiagnostic };
+    }
 }
 
 function getTimeRange(): string {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
     return cfg.get<string>('timeRange', 'LAST_7_DAYS');
 }
-
-// Re-export for consumers that imported from here previously.
-export { detectAppVersion } from './app-version';
-import { detectAppVersion } from './app-version';
 
 async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
     if (cachedIssueRows && Date.now() < cachedIssueRows.expires) {
@@ -218,10 +219,32 @@ function fetchJson(url: string, token: string, body?: string, method?: string): 
         }, (res) => {
             let data = '';
             res.on('data', (chunk: string) => { data += chunk; });
-            res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve(undefined); } });
+            res.on('end', () => {
+                const status = res.statusCode ?? 0;
+                if (status >= 400) {
+                    const msg = classifyHttpStatus(status, data);
+                    logCrashlytics('error', `HTTP ${status} from ${parsed.pathname}: ${msg}`);
+                    lastDiagnostic = { step: 'api', errorType: 'http', message: msg, httpStatus: status, checkedAt: Date.now(), technicalDetails: data.slice(0, 300) };
+                    resolve(undefined);
+                    return;
+                }
+                try { resolve(JSON.parse(data)); } catch {
+                    logCrashlytics('error', `Invalid JSON from ${parsed.pathname}: ${data.slice(0, 200)}`);
+                    resolve(undefined);
+                }
+            });
         });
-        req.on('error', () => resolve(undefined));
-        req.on('timeout', () => { req.destroy(); resolve(undefined); });
+        req.on('error', (err) => {
+            logCrashlytics('error', `Network error for ${parsed.pathname}: ${err.message}`);
+            lastDiagnostic = { step: 'api', errorType: 'network', message: `Network error: ${err.message}`, checkedAt: Date.now() };
+            resolve(undefined);
+        });
+        req.on('timeout', () => {
+            logCrashlytics('error', `Request timeout for ${parsed.pathname}`);
+            lastDiagnostic = { step: 'api', errorType: 'timeout', message: 'Request timed out', checkedAt: Date.now() };
+            req.destroy();
+            resolve(undefined);
+        });
         if (body) { req.write(body); }
         req.end();
     });
@@ -288,8 +311,12 @@ function parseMultipleEvents(issueId: string, data: Record<string, unknown>): Cr
 
 function runCmd(cmd: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-        execFile(cmd, args, { timeout: apiTimeout }, (err, stdout) => {
-            if (err) { reject(err); return; }
+        execFile(cmd, args, { timeout: apiTimeout }, (err, stdout, stderr) => {
+            if (err) {
+                (err as Error & { stderr?: string }).stderr = (stderr ?? '').trim();
+                reject(err);
+                return;
+            }
             resolve((stdout ?? '').trim());
         });
     });
