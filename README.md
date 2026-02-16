@@ -26,7 +26,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 
 - Debug Console output is ephemeral in VS Code—this extension makes it persistent, searchable, and exportable.
 - Zero config: install and start debugging, logs are captured automatically.
-- Panel viewer (next to Output/Terminal) for real-time log viewing, search, filtering, and more.
+- Sidebar viewer (activity bar icon) for real-time log viewing, search, filtering, and more.
 
 ---
 
@@ -47,7 +47,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
 
 ### Viewer
-- **Live panel viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (located in the bottom panel next to Output and Terminal).
+- **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
@@ -123,7 +123,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 1. Install the extension from the VS Code Marketplace
 2. Start a debug session (F5)
 3. Output is automatically captured to the `reports/` directory
-4. Open the **Saropa Log Capture** panel (bottom panel, next to Output/Terminal) to view output in real time
+4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
 
 ---
 
