@@ -225,6 +225,9 @@ window.addEventListener('message', function(event) {
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
+        case 'minimapShowInfo':
+            if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
+            break;
         case 'iconBarPosition':
             document.body.dataset.iconBar = msg.position || 'left';
             break;

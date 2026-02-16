@@ -19,6 +19,7 @@ import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
 import { RecurringErrorsPanelProvider } from './ui/recurring-errors-panel';
 import { VitalsPanelProvider } from './ui/vitals-panel';
+import { AboutPanelProvider } from './ui/about-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -86,6 +87,13 @@ export function activate(context: vscode.ExtensionContext): void {
         'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
     ));
 
+    // About Saropa sidebar panel.
+    const aboutPanel = new AboutPanelProvider(version);
+    context.subscriptions.push(aboutPanel);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(AboutPanelProvider.viewType, aboutPanel),
+    );
+
     // Crashlytics CodeLens — show crash indicators on affected source files.
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
@@ -122,11 +130,15 @@ export function activate(context: vscode.ExtensionContext): void {
         broadcaster.setHighlightRules(initCfg.highlightRules);
     }
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
+    broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
 
-    // Live config changes for icon bar position.
+    // Live config changes for settings that can update mid-session.
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
             broadcaster.setIconBarPosition(getConfig().iconBarPosition);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
+            broadcaster.setMinimapShowInfo(getConfig().minimapShowInfoMarkers);
         }
     }));
 

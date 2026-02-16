@@ -9,10 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).
+
+---
 ## [2.0.3] - 2026-02-16
 
 ### Added
 - **Crashlytics setup diagnostics.** The Crashlytics panel now shows actual error details when setup fails instead of generic hints. Captures gcloud CLI errors (not found, not logged in, permission denied), HTTP status codes from the Firebase API (401/403/404), and network timeouts. A "Last checked" timestamp shows when the last diagnostic ran. All diagnostic steps are logged to the "Saropa Log Capture" output channel for advanced troubleshooting.
+- **Minimap info markers setting.** New `saropaLogCapture.minimapShowInfoMarkers` setting (off by default) controls whether info-level (green) markers appear on the scrollbar minimap. Reduces visual noise for most users while letting those who want full coverage opt in.
 
 ### Changed
 - **Minimap rewritten with canvas rendering.** The scrollbar minimap now paints markers onto a `<canvas>` element instead of creating individual DOM `<div>` elements. Uses `prefixSums` from the scroll-anchor system for pixel-accurate positioning, supports HiDPI displays, and eliminates innerHTML rebuilds for better performance.
