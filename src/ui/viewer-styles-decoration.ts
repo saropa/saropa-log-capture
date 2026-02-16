@@ -197,7 +197,7 @@ export function getDecorationStyles(): string {
 
 /* Connector bars join consecutive same-color dots */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 11px; width: 3px;
+    content: ''; position: absolute; left: 10px; width: 5px;
     background: var(--bar-color); pointer-events: none; z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
