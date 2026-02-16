@@ -33,7 +33,7 @@ export class SessionComparisonPanel implements vscode.Disposable {
         } else {
             this.panel = vscode.window.createWebviewPanel(
                 'saropaLogCapture.comparison',
-                'Session Comparison',
+                'Saropa Log Comparison',
                 vscode.ViewColumn.One,
                 {
                     enableScripts: true,

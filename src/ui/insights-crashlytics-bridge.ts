@@ -9,26 +9,47 @@ import * as vscode from 'vscode';
 import { getFirebaseContext, type CrashlyticsIssue } from '../modules/firebase-crashlytics';
 import type { RecurringError } from '../modules/cross-session-aggregator';
 
+const bridgeTimeout = 10_000;
+
 /** Post a message to the webview, silently ignoring disposed panels. */
 function safePost(panel: vscode.WebviewPanel, message: Record<string, unknown>): void {
     try { panel.webview.postMessage(message); } catch { /* panel disposed */ }
+}
+
+let outputChannel: vscode.OutputChannel | undefined;
+
+/** Lazily create (or reuse) the shared output channel. */
+function getOutputChannel(): vscode.OutputChannel {
+    outputChannel ??= vscode.window.createOutputChannel('Saropa Log Capture');
+    return outputChannel;
 }
 
 /** Start the async Crashlytics bridge and post results back to the webview panel. */
 export function startCrashlyticsBridge(panel: vscode.WebviewPanel, errors: readonly RecurringError[]): void {
     if (errors.length === 0) { return; }
     safePost(panel, { type: 'productionBridgeLoading' });
-    const timer = setTimeout(() => {
-        safePost(panel, { type: 'productionBridgeResults', bridges: {} });
-    }, 15_000);
-    getFirebaseContext([]).then((ctx) => {
+    let settled = false;
+    const finish = (bridges: Record<string, string>, reason: string): void => {
+        if (settled) { return; }
+        settled = true;
         clearTimeout(timer);
-        const bridges = (ctx.available && ctx.issues.length > 0)
-            ? matchErrorsToIssues(errors, ctx.issues) : {};
+        getOutputChannel().appendLine(`Crashlytics bridge: ${reason}`);
         safePost(panel, { type: 'productionBridgeResults', bridges });
-    }).catch(() => {
-        clearTimeout(timer);
-        safePost(panel, { type: 'productionBridgeResults', bridges: {} });
+    };
+    const timer = setTimeout(() => {
+        finish({}, 'timed out after 10 s');
+    }, bridgeTimeout);
+    getFirebaseContext([]).then((ctx) => {
+        if (!ctx.available) {
+            finish({}, `not available — ${ctx.setupHint ?? 'unknown reason'}`);
+            return;
+        }
+        const bridges = ctx.issues.length > 0
+            ? matchErrorsToIssues(errors, ctx.issues) : {};
+        const count = Object.keys(bridges).length;
+        finish(bridges, `matched ${count} of ${errors.length} errors against ${ctx.issues.length} issues`);
+    }).catch((err: unknown) => {
+        finish({}, `error — ${err instanceof Error ? err.message : String(err)}`);
     });
 }
 

@@ -39,9 +39,9 @@ export async function showBugReport(
 export function disposeBugReportPanel(): void { panel?.dispose(); panel = undefined; }
 
 function ensurePanel(): void {
-    if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
+    if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.bugReport', 'Bug Report',
+        'saropaLogCapture.bugReport', 'Saropa Bug Report',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);

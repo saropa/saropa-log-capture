@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Fixed
+- **Panel titles: added "Saropa" prefix.** All webview panels opened in the main VS Code editor now include the "Saropa" prefix for discoverability (e.g. "Saropa Cross-Session Insights", "Saropa Log Timeline").
+- **Insights panel: refresh no longer resets position.** Clicking Refresh, changing the time range, or closing an error no longer moves the panel back to the Beside column.
+- **Insights panel: production data loading indicator.** The "Checking production data..." spinner now reliably stops via a settled guard, reduced timeout (10 s), and output channel logging for diagnostics.
+- **Panels no longer auto-restore on startup.** Registered no-op serializers for all singleton webview panels so VS Code does not restore them when reopening a project.
 - **Session panel: removed spark bar.** The small grey "relative density" bar after severity dots was too small to convey useful information and confused users. Removed entirely.
 - **Session panel: severity dot alignment.** Colored severity dots now vertically center-align with their count numbers using flex layout instead of fragile `vertical-align`.
 - **Session panel: severity bar improved.** The proportional error/warning/perf bar is now full-width instead of a tiny 40px inline bar, and its tooltip shows a descriptive breakdown (e.g. "5 errors, 3 warnings") instead of a generic total.

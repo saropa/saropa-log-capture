@@ -39,9 +39,9 @@ export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
 export function disposeInsightsPanel(): void { panel?.dispose(); panel = undefined; }
 
 function ensurePanel(): void {
-    if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
+    if (panel) { return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.insights', 'Cross-Session Insights',
+        'saropaLogCapture.insights', 'Saropa Cross-Session Insights',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);
@@ -112,7 +112,7 @@ function renderHeader(insights: CrossSessionInsights): string {
         + renderTimeRangeOption('7d', 'Last 7 days') + renderTimeRangeOption('24h', 'Last 24 hours');
     return `<div class="header">
 <div class="header-left">
-<div class="title">Cross-Session Insights</div>
+<div class="title">Saropa Cross-Session Insights</div>
 <div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''} &middot; ${formatElapsedLabel(insights.queriedAt)}</div>
 </div>
 <div class="header-right"><input id="insights-search" class="insights-search" type="text" placeholder="Filter..." />
