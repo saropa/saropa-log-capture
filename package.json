@@ -722,7 +722,7 @@
       ]
     },
     "viewsContainers": {
-      "panel": [
+      "activitybar": [
         {
           "icon": "images/sidebar-icon.svg",
           "id": "saropaLogCapture",

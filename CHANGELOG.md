@@ -13,7 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 - **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).
-- **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links.
+- **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links. Each entry has a badge line (platform, stats) and a full description.
+
+### Changed
+- **Moved views to activity bar.** All Saropa panels (Log Viewer, Crashlytics, Recurring Errors, About) now appear in the left activity bar sidebar instead of the bottom panel area, fixing the cramped layout.
+- **Updated README panel references.** Replaced "bottom panel next to Output/Terminal" wording with activity bar sidebar location.
 
 ---
 ## [2.0.3] - 2026-02-16
