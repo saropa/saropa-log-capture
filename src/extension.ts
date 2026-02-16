@@ -15,9 +15,9 @@ import { disposeAnalysisPanel } from './ui/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights-panel';
 import { disposeBugReportPanel } from './ui/bug-report-panel';
 import { disposeTimelinePanel } from './ui/timeline-panel';
-import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
+import { disposeCrashlyticsPanel } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
-import { RecurringErrorsPanelProvider } from './ui/recurring-errors-panel';
+import { disposeRecurringErrorsPanel } from './ui/recurring-errors-panel';
 import { VitalsPanelProvider } from './ui/vitals-panel';
 import { AboutPanelProvider } from './ui/about-panel';
 import { registerCommands } from './commands';
@@ -59,23 +59,6 @@ export function activate(context: vscode.ExtensionContext): void {
             webviewOptions: { retainContextWhenHidden: true },
         }),
     );
-
-    // Crashlytics sidebar panel.
-    const crashlyticsPanel = new CrashlyticsPanelProvider();
-    context.subscriptions.push(crashlyticsPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(CrashlyticsPanelProvider.viewType, crashlyticsPanel),
-    );
-
-    // Recurring Errors sidebar panel.
-    const recurringErrorsPanel = new RecurringErrorsPanelProvider();
-    context.subscriptions.push(recurringErrorsPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(RecurringErrorsPanelProvider.viewType, recurringErrorsPanel),
-    );
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'saropaLogCapture.refreshRecurringErrors', () => recurringErrorsPanel.refresh(),
-    ));
 
     // Google Play Vitals sidebar panel (opt-in).
     const vitalsPanel = new VitalsPanelProvider();
@@ -321,7 +304,8 @@ export function activate(context: vscode.ExtensionContext): void {
     for (const viewType of [
         'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison',
+        'saropaLogCapture.comparison', 'saropaLogCapture.crashlytics',
+        'saropaLogCapture.recurringErrors',
     ]) {
         context.subscriptions.push(
             vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
@@ -339,5 +323,7 @@ export function deactivate(): void {
     disposeInsightsPanel();
     disposeBugReportPanel();
     disposeTimelinePanel();
+    disposeCrashlyticsPanel();
+    disposeRecurringErrorsPanel();
 }
 
