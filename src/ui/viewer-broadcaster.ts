@@ -98,6 +98,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setScopeContext(context: ScopeContext): void {
     for (const t of this.targets) { t.setScopeContext(context); }
   }
+  setMinimapShowInfo(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapShowInfo(show); }
+  }
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }
   }

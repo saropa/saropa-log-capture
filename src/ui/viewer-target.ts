@@ -39,5 +39,6 @@ export interface ViewerTarget {
   updateWatchCounts(counts: ReadonlyMap<string, number>): void;
   sendBookmarkList(files: Record<string, unknown>): void;
   setScopeContext(context: ScopeContext): void;
+  setMinimapShowInfo(show: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
 }
