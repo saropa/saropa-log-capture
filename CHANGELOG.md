@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.2] - 2026-02-15
 
 ### Fixed
 - **Timeline dots: stacking and alignment.** The severity dot timeline in the log gutter now renders correctly — dots are single-color (no line bleed-through), always paint above the timeline line, and the whole construct is indented from the left edge.
