@@ -50,9 +50,9 @@ export async function showTimeline(fileUri: vscode.Uri): Promise<void> {
 export function disposeTimelinePanel(): void { panel?.dispose(); panel = undefined; }
 
 function ensurePanel(): void {
-    if (panel) { panel.reveal(vscode.ViewColumn.Beside); return; }
+    if (panel) { panel.reveal(); return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.timeline', 'Session Timeline',
+        'saropaLogCapture.timeline', 'Saropa Log Timeline',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);
@@ -152,7 +152,7 @@ ${renderStatsBar(stats)}${renderLegend()}
 }
 
 function renderHeader(filename: string): string {
-    return `<div class="header"><div class="title">Session Timeline</div><div class="subtitle">${escapeHtml(filename)}</div></div>`;
+    return `<div class="header"><div class="title">Saropa Log Timeline</div><div class="subtitle">${escapeHtml(filename)}</div></div>`;
 }
 
 function renderStatsBar(stats: TimelineStats): string {
