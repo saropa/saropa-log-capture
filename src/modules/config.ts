@@ -47,6 +47,8 @@ export interface SaropaLogCaptureConfig {
   readonly breakOnCritical: boolean;
   /** Show info-level (green) markers on the scrollbar minimap. */
   readonly minimapShowInfoMarkers: boolean;
+  /** Width of the scrollbar minimap: small (40px), medium (60px), or large (90px). */
+  readonly minimapWidth: "small" | "medium" | "large";
   /** Suppress error/warning text coloring on framework log lines (fw=true). */
   readonly deemphasizeFrameworkLevels: boolean;
   /** How aggressively to classify lines as errors: strict requires structural context, loose matches keywords anywhere. */
@@ -173,6 +175,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
     breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
     minimapShowInfoMarkers: cfg.get<boolean>("minimapShowInfoMarkers", false),
+    minimapWidth: cfg.get<string>("minimapWidth", "medium") as "small" | "medium" | "large",
     deemphasizeFrameworkLevels: cfg.get<boolean>("deemphasizeFrameworkLevels", false),
     levelDetection: cfg.get<string>("levelDetection", "strict") as "strict" | "loose",
     verboseDap: cfg.get<boolean>("verboseDap", false),

@@ -228,6 +228,9 @@ window.addEventListener('message', function(event) {
         case 'minimapShowInfo':
             if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
             break;
+        case 'minimapWidth':
+            if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg);
+            break;
         case 'iconBarPosition':
             document.body.dataset.iconBar = msg.position || 'left';
             break;

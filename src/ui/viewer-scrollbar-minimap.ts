@@ -32,6 +32,13 @@ function handleMinimapShowInfo(msg) {
     if (prev !== mmShowInfo) scheduleMinimap();
 }
 
+/** Handle minimapWidth setting message from extension. */
+function handleMinimapWidth(msg) {
+    if (!minimapEl) return;
+    var sizes = { small: '40px', medium: '60px', large: '90px' };
+    minimapEl.style.width = sizes[msg.width] || '60px';
+}
+
 /** Read VS Code theme colors with fallbacks. */
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
