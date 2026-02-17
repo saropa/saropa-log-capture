@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Severity distribution bar in session list.** Removed the thin horizontal bar under each session entry; the five colored dot counters now convey a complete line-type breakdown.
 
 ### Fixed
+- **gcloud CLI not detected on Windows.** The `execFile` call lacked `shell: true`, so Windows couldn't execute `gcloud.cmd` batch files, causing a false "Google Cloud CLI not found in PATH" error in the Crashlytics setup panel.
 - **Line hover background matches compressed line height.** Added explicit `height: calc(1em * line-height)` on `.line` elements so the hover background always matches the virtual-scroll row height, preventing it from bleeding into adjacent lines at compressed settings.
 - **Copy icon vertically centered on line.** The floating copy-to-clipboard icon now vertically centers on the hovered line instead of using a fixed offset.
 - **Copy icon no longer overlaps scrollbar minimap.** Increased the right-edge clearance of the floating copy-to-clipboard button so it stays within the log content area.

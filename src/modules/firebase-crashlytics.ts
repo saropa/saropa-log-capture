@@ -311,7 +311,7 @@ function parseMultipleEvents(issueId: string, data: Record<string, unknown>): Cr
 
 function runCmd(cmd: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-        execFile(cmd, args, { timeout: apiTimeout }, (err, stdout, stderr) => {
+        execFile(cmd, args, { timeout: apiTimeout, shell: true }, (err, stdout, stderr) => {
             if (err) {
                 (err as Error & { stderr?: string }).stderr = (stderr ?? '').trim();
                 reject(err);
