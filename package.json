@@ -282,6 +282,16 @@
           "markdownDescription": "Show **info**-level markers (green) on the scrollbar minimap. When disabled (default), only error, warning, performance, and other higher-severity markers appear. Enable to see a green dot for every info-level line.",
           "type": "boolean"
         },
+        "saropaLogCapture.minimapWidth": {
+          "default": "medium",
+          "description": "Width of the scrollbar minimap: small (40px), medium (60px), or large (90px).",
+          "enum": [
+            "small",
+            "medium",
+            "large"
+          ],
+          "type": "string"
+        },
         "saropaLogCapture.deemphasizeFrameworkLevels": {
           "default": false,
           "markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix.",
@@ -730,7 +740,7 @@
       ]
     },
     "viewsContainers": {
-      "activitybar": [
+      "panel": [
         {
           "icon": "images/sidebar-icon.svg",
           "id": "saropaLogCapture",
@@ -855,5 +865,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "2.0.4"
+  "version": "2.0.5"
 }
