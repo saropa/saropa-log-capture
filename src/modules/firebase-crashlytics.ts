@@ -253,7 +253,7 @@ function fetchJson(url: string, token: string, body?: string, method?: string): 
 function getCacheUri(issueId: string): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
-    return vscode.Uri.joinPath(getLogDirectoryUri(ws), '.crashlytics', `${issueId}.json`);
+    return vscode.Uri.joinPath(getLogDirectoryUri(ws), 'crashlytics', `${issueId}.json`);
 }
 
 async function readCachedEvents(issueId: string): Promise<CrashlyticsIssueEvents | undefined> {
