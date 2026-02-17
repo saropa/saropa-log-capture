@@ -47,7 +47,7 @@ async function getOrBuildIndex(): Promise<Map<string, CrashFileInfo>> {
 function getCrashlyticsDir(): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
-    return vscode.Uri.joinPath(getLogDirectoryUri(ws), '.crashlytics');
+    return vscode.Uri.joinPath(getLogDirectoryUri(ws), 'crashlytics');
 }
 
 async function buildIndexFromCache(): Promise<Map<string, CrashFileInfo>> {
