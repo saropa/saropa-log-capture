@@ -35,6 +35,16 @@ export function getIconBarHtml(): string {
     <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
+    <div class="ib-separator"></div>
+    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics">
+        <span class="codicon codicon-flame"></span>
+    </button>
+    <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors">
+        <span class="codicon codicon-bug"></span>
+    </button>
+    <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa">
+        <span class="codicon codicon-home"></span>
+    </button>
 </div>`;
 }
 
@@ -52,6 +62,9 @@ export function getIconBarScript(): string {
         info: document.getElementById('ib-info'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
+        crashlytics: document.getElementById('ib-crashlytics'),
+        recurring: document.getElementById('ib-recurring'),
+        about: document.getElementById('ib-about'),
     };
 
     function closeAllPanels() {
@@ -62,6 +75,9 @@ export function getIconBarScript(): string {
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
+        if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
+        if (typeof closeRecurringPanel === 'function') closeRecurringPanel();
+        if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
 
@@ -100,6 +116,12 @@ export function getIconBarScript(): string {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
+        } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
+            openCrashlyticsPanel();
+        } else if (name === 'recurring' && typeof openRecurringPanel === 'function') {
+            openRecurringPanel();
+        } else if (name === 'about' && typeof openAboutPanel === 'function') {
+            openAboutPanel();
         }
     };
 
@@ -134,6 +156,15 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
+    }
+    if (iconButtons.crashlytics) {
+        iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
+    }
+    if (iconButtons.recurring) {
+        iconButtons.recurring.addEventListener('click', function() { setActivePanel('recurring'); });
+    }
+    if (iconButtons.about) {
+        iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
     }
 
     setActivePanel('sessions');

@@ -23,8 +23,6 @@ import { insightsCommands } from './commands-insights';
 import { bugReportCommands } from './commands-bug-report';
 import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
-import { crashlyticsCommands } from './commands-crashlytics';
-import { recurringErrorsCommands } from './commands-recurring-errors';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -51,8 +49,6 @@ export function registerCommands(deps: CommandDeps): void {
         ...bugReportCommands(),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
-        ...crashlyticsCommands(),
-        ...recurringErrorsCommands(),
         ...toolCommands(deps),
     );
 }

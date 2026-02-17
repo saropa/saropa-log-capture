@@ -15,11 +15,8 @@ import { disposeAnalysisPanel } from './ui/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights-panel';
 import { disposeBugReportPanel } from './ui/bug-report-panel';
 import { disposeTimelinePanel } from './ui/timeline-panel';
-import { disposeCrashlyticsPanel } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
-import { disposeRecurringErrorsPanel } from './ui/recurring-errors-panel';
 import { VitalsPanelProvider } from './ui/vitals-panel';
-import { AboutPanelProvider } from './ui/about-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
@@ -69,13 +66,6 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand(
         'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
     ));
-
-    // About Saropa sidebar panel.
-    const aboutPanel = new AboutPanelProvider(version);
-    context.subscriptions.push(aboutPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(AboutPanelProvider.viewType, aboutPanel),
-    );
 
     // Crashlytics CodeLens — show crash indicators on affected source files.
     const crashCodeLens = new CrashlyticsCodeLensProvider();
@@ -308,8 +298,7 @@ export function activate(context: vscode.ExtensionContext): void {
     for (const viewType of [
         'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison', 'saropaLogCapture.crashlytics',
-        'saropaLogCapture.recurringErrors',
+        'saropaLogCapture.comparison',
     ]) {
         context.subscriptions.push(
             vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
@@ -327,7 +316,5 @@ export function deactivate(): void {
     disposeInsightsPanel();
     disposeBugReportPanel();
     disposeTimelinePanel();
-    disposeCrashlyticsPanel();
-    disposeRecurringErrorsPanel();
 }
 

@@ -19,6 +19,9 @@ import { getSessionPanelStyles } from './viewer-styles-session';
 import { getFindPanelStyles } from './viewer-styles-find';
 import { getBookmarkPanelStyles } from './viewer-styles-bookmarks';
 import { getTrashPanelStyles } from './viewer-styles-trash';
+import { getAboutPanelStyles } from './viewer-styles-about';
+import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
+import { getRecurringPanelStyles } from './viewer-styles-recurring';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -203,5 +206,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles();
 }

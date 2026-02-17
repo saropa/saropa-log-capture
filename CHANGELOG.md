@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Changed
 - **Crashlytics cache visible in session history.** Cached crash event files are now stored in `reports/crashlytics/` (was `.crashlytics/`), making them searchable, comparable, and visible in the session tree.
 - **Moved all views to bottom panel.** Log Viewer, Crashlytics, Play Vitals, and About panels now appear in the bottom panel (next to Terminal) instead of the sidebar.
-- **Crashlytics and Recurring Errors open as editor tabs.** These panels are no longer collapsible sidebar sections. Click the flame or bug icons in the Log Viewer title bar to open them as full editor-tab panels with more screen space.
+- **Crashlytics, Recurring Errors, and About are now icon-bar panels.** All three are integrated into the Log Viewer webview as slide-out panels accessible from the icon bar, matching the existing Sessions/Trash/Bookmarks pattern. No more separate editor tabs or sidebar views.
 - **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
 - **Performance dot color changed from blue to purple.** The performance severity dot in the session list is now purple to free up blue for framework lines.
 
