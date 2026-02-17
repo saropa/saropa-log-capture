@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Minimap width setting.** New `minimapWidth` preference lets you choose small (40px), medium (60px, default), or large (90px) for the scrollbar minimap.
 
 ### Changed
+- **Crashlytics cache visible in session history.** Cached crash event files are now stored in `reports/crashlytics/` (was `.crashlytics/`), making them searchable, comparable, and visible in the session tree.
 - **Moved all views to bottom panel.** Log Viewer, Crashlytics, Play Vitals, and About panels now appear in the bottom panel (next to Terminal) instead of the sidebar.
 - **Crashlytics and Recurring Errors open as editor tabs.** These panels are no longer collapsible sidebar sections. Click the flame or bug icons in the Log Viewer title bar to open them as full editor-tab panels with more screen space.
 - **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
