@@ -114,6 +114,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
+    broadcaster.setMinimapWidth(initCfg.minimapWidth);
 
     // Live config changes for settings that can update mid-session.
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
@@ -122,6 +123,9 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
             broadcaster.setMinimapShowInfo(getConfig().minimapShowInfoMarkers);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
+            broadcaster.setMinimapWidth(getConfig().minimapWidth);
         }
     }));
 
