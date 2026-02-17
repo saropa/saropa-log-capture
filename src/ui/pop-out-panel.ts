@@ -24,6 +24,7 @@ import type { ViewerTarget } from "./viewer-target";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import * as helpers from "./viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
+import * as panelHandlers from "./viewer-panel-handlers";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -235,6 +236,18 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "scriptError":
         for (const e of (msg.errors as { message: string }[]) ?? []) { console.warn("[SLC PopOut]", e.message); }
         break;
+      case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(m => this.post(m)).catch(() => {}); break;
+      case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), m => this.post(m)).catch(() => {}); break;
+      case "crashlyticsCloseIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), 'CLOSED', m => this.post(m)).catch(() => {}); break;
+      case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), 'MUTED', m => this.post(m)).catch(() => {}); break;
+      case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(m => this.post(m)); break;
+      case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(m => this.post(m)).catch(() => {}); break;
+      case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
+      case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(m => this.post(m)); break;
+      case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
+      case "requestRecurringErrors": panelHandlers.handleRecurringRequest(m => this.post(m)).catch(() => {}); break;
+      case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), m => this.post(m)).catch(() => {}); break;
+      case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
     }
   }
 

@@ -16,6 +16,7 @@ import type { ScopeContext } from "../modules/scope-context";
 import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
+import * as panelHandlers from "./viewer-panel-handlers";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -210,7 +211,7 @@ export class LogViewerProvider
     if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
   }
 
-  dispose(): void { this.stopBatchTimer(); }
+  dispose(): void { this.stopBatchTimer(); panelHandlers.disposeHandlers(); }
 
   // -- Private methods --
 
@@ -287,6 +288,17 @@ export class LogViewerProvider
       case "scriptError":
         ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
         break;
+      case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(m => this.postMessage(m)).catch(() => {}); break;
+      case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), m => this.postMessage(m)).catch(() => {}); break;
+      case "crashlyticsCloseIssue": case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), msg.type === "crashlyticsCloseIssue" ? 'CLOSED' : 'MUTED', m => this.postMessage(m)).catch(() => {}); break;
+      case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(m => this.postMessage(m)); break;
+      case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(m => this.postMessage(m)).catch(() => {}); break;
+      case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
+      case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(m => this.postMessage(m)); break;
+      case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
+      case "requestRecurringErrors": panelHandlers.handleRecurringRequest(m => this.postMessage(m)).catch(() => {}); break;
+      case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), m => this.postMessage(m)).catch(() => {}); break;
+      case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
     }
   }
 
