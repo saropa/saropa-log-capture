@@ -50,6 +50,9 @@ import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
 import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-panel';
 import { getTrashPanelHtml, getTrashPanelScript } from './viewer-trash-panel';
+import { getCrashlyticsPanelHtml, getCrashlyticsPanelScript } from './viewer-crashlytics-panel';
+import { getRecurringPanelHtml, getRecurringPanelScript } from './viewer-recurring-panel';
+import { getAboutPanelHtml, getAboutPanelScript } from './viewer-about-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
 export const MAX_VIEWER_LINES = 50000;
@@ -134,6 +137,9 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getDecoSettingsHtml()}
     ${getFiltersPanelHtml()}
     ${getOptionsPanelHtml()}
+    ${getCrashlyticsPanelHtml()}
+    ${getRecurringPanelHtml()}
+    ${getAboutPanelHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
     <div id="footer">
@@ -211,6 +217,9 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getBookmarkPanelScript())}
     ${scriptTag(nonce, getFiltersPanelScript())}
     ${scriptTag(nonce, getOptionsPanelScript())}
+    ${scriptTag(nonce, getCrashlyticsPanelScript())}
+    ${scriptTag(nonce, getRecurringPanelScript())}
+    ${scriptTag(nonce, getAboutPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}
     ${scriptTag(nonce, getStatsScript())}
