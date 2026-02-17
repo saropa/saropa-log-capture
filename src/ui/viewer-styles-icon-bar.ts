@@ -104,13 +104,24 @@ body[data-icon-bar="right"] .ib-badge {
 /* ===================================================================
    Right-side overrides — all slide-out panels
    =================================================================== */
+/* --- Icon bar separator --- */
+.ib-separator {
+    width: 20px;
+    height: 1px;
+    background: var(--vscode-panel-border);
+    margin: 4px 0;
+}
+
 body[data-icon-bar="right"] #search-bar,
 body[data-icon-bar="right"] .session-panel,
 body[data-icon-bar="right"] .options-panel,
 body[data-icon-bar="right"] .find-panel,
 body[data-icon-bar="right"] .bookmark-panel,
 body[data-icon-bar="right"] .trash-panel,
-body[data-icon-bar="right"] .info-panel {
+body[data-icon-bar="right"] .info-panel,
+body[data-icon-bar="right"] .crashlytics-panel,
+body[data-icon-bar="right"] .recurring-panel,
+body[data-icon-bar="right"] .about-panel {
     left: auto; right: -100%;
     border-right: none;
     border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
@@ -123,7 +134,10 @@ body[data-icon-bar="right"] .options-panel.visible,
 body[data-icon-bar="right"] .find-panel.visible,
 body[data-icon-bar="right"] .bookmark-panel.visible,
 body[data-icon-bar="right"] .trash-panel.visible,
-body[data-icon-bar="right"] .info-panel.visible {
+body[data-icon-bar="right"] .info-panel.visible,
+body[data-icon-bar="right"] .crashlytics-panel.visible,
+body[data-icon-bar="right"] .recurring-panel.visible,
+body[data-icon-bar="right"] .about-panel.visible {
     right: var(--icon-bar-width, 36px);
 }
 body[data-icon-bar="right"] .session-panel-resize {
