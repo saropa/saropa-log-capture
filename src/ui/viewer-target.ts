@@ -40,5 +40,6 @@ export interface ViewerTarget {
   sendBookmarkList(files: Record<string, unknown>): void;
   setScopeContext(context: ScopeContext): void;
   setMinimapShowInfo(show: boolean): void;
+  setMinimapWidth(width: "small" | "medium" | "large"): void;
   setIconBarPosition(position: "left" | "right"): void;
 }

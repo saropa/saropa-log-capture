@@ -9,12 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.5] - 2026-02-16
 
 ### Added
 - **Full severity dot breakdown in session list.** Each session now shows five colored dot counters: red (errors), yellow (warnings), purple (performance), blue (framework), and green (info). Framework lines are detected via logcat tags and launch boilerplate; info is all remaining lines.
+- **Minimap width setting.** New `minimapWidth` preference lets you choose small (40px), medium (60px, default), or large (90px) for the scrollbar minimap.
 
 ### Changed
+- **Moved all views to bottom panel.** Log Viewer, Crashlytics, Play Vitals, and About panels now appear in the bottom panel (next to Terminal) instead of the sidebar.
 - **Crashlytics and Recurring Errors open as editor tabs.** These panels are no longer collapsible sidebar sections. Click the flame or bug icons in the Log Viewer title bar to open them as full editor-tab panels with more screen space.
 - **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
 - **Performance dot color changed from blue to purple.** The performance severity dot in the session list is now purple to free up blue for framework lines.
