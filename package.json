@@ -833,7 +833,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "verify-nls": "node scripts/verify-nls.js",
-    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "compile": "npm run check-types && npm run lint && npm run verify-nls && node esbuild.js",
     "compile-tests": "tsc -p . --outDir out",
     "lint": "eslint src",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
@@ -845,5 +845,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "2.0.6"
+  "version": "2.0.7"
 }
