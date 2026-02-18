@@ -21,7 +21,7 @@ import * as panelHandlers from "./viewer-panel-handlers";
 const BATCH_INTERVAL_MS = 200;
 
 /**
- * Provides a webview-based sidebar panel that displays captured
+ * Provides a webview-based bottom panel that displays captured
  * debug output in real time with auto-scroll and theme support.
  */
 export class LogViewerProvider
