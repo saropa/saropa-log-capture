@@ -65,6 +65,8 @@ export interface SaropaLogCaptureConfig {
   readonly treeRefreshInterval: number;
   /** Which side of the log viewer to show the icon bar. */
   readonly iconBarPosition: "left" | "right";
+  /** Automatically move flat log files into date-based subfolders. */
+  readonly organizeFolders: boolean;
 }
 
 const SECTION = "saropaLogCapture";
@@ -186,6 +188,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
     treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
     iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
+    organizeFolders: cfg.get<boolean>("organizeFolders", true),
   };
 }
 
