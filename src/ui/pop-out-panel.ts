@@ -238,8 +238,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
         break;
       case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(m => this.post(m)).catch(() => {}); break;
       case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), m => this.post(m)).catch(() => {}); break;
-      case "crashlyticsCloseIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), 'CLOSED', m => this.post(m)).catch(() => {}); break;
-      case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), 'MUTED', m => this.post(m)).catch(() => {}); break;
+      case "crashlyticsCloseIssue": case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), msg.type === "crashlyticsCloseIssue" ? 'CLOSED' : 'MUTED', m => this.post(m)).catch(() => {}); break;
       case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(m => this.post(m)); break;
       case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(m => this.post(m)).catch(() => {}); break;
       case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;

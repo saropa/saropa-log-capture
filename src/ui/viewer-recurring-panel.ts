@@ -83,7 +83,7 @@ export function getRecurringPanelScript(): string {
               + '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="muted">Mute</span>'
             : '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="open">Re-open</span>';
         var cat = e.category
-            ? '<span class="re-cat-badge re-cat-' + e.category + '">' + e.category.toUpperCase() + '</span> '
+            ? '<span class="re-cat-badge re-cat-' + esc(e.category) + '">' + esc(e.category).toUpperCase() + '</span> '
             : '';
         return '<div class="re-card' + dimCls + '">'
             + '<div class="re-text" title="' + esc(e.exampleLine || '') + '">' + cat + esc(e.normalizedText) + '</div>'
