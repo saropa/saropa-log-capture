@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.6] - 2026-02-18
 
 ### Added
 - **Manifest localization support.** Extracted 127 user-visible strings from `package.json` into `package.nls.json` using VS Code's `%key%` reference mechanism. Enables future translation via locale-specific `package.nls.{locale}.json` files.
