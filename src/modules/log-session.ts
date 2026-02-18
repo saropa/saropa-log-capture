@@ -8,6 +8,7 @@ import {
     SessionContext,
     SourceLocation,
     generateBaseFileName,
+    formatDateFolder,
     formatLine,
     generateContinuationHeader,
     generateContextHeader,
@@ -287,10 +288,10 @@ export class LogSession {
     }
 
     private getLogDirUri(): vscode.Uri {
-        if (path.isAbsolute(this.config.logDirectory)) {
-            return vscode.Uri.file(this.config.logDirectory);
-        }
-        return vscode.Uri.joinPath(this.context.workspaceFolder.uri, this.config.logDirectory);
+        const base = path.isAbsolute(this.config.logDirectory)
+            ? vscode.Uri.file(this.config.logDirectory)
+            : vscode.Uri.joinPath(this.context.workspaceFolder.uri, this.config.logDirectory);
+        return vscode.Uri.joinPath(base, formatDateFolder(this.context.date));
     }
 }
 

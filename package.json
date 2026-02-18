@@ -558,6 +558,11 @@
           "minimum": 0,
           "type": "number"
         },
+        "saropaLogCapture.organizeFolders": {
+          "default": true,
+          "description": "%config.organizeFolders.description%",
+          "type": "boolean"
+        },
         "saropaLogCapture.redactEnvVars": {
           "default": [],
           "description": "%config.redactEnvVars.description%",
