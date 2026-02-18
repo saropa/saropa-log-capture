@@ -11,9 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+---
+## [2.0.7] - 2026-02-18
+
 ### Added
-- **Translation rollout plan.** Added `docs/translation-rollout-plan.md` covering priority languages (zh-cn, ja, ko, es, de), translation method, per-language workflow, and trigger criteria for when to begin localization work.
 - **Auto-organize legacy log files.** New `organizeFolders` setting (on by default) automatically moves flat log files with a `yyyymmdd_` prefix into date-based subfolders on session start. Companion `.meta.json` sidecars are moved alongside their log files.
+- **NLS verification in compile chain.** `npm run compile` now runs `verify-nls` before building, preventing NLS key drift on every build.
 
 ### Changed
 - **Date-based log subfolders.** New log sessions are now written to `reports/yyyymmdd/` subfolders (e.g. `reports/20260218/`) instead of directly into the `reports/` root. File retention and session history already scan subfolders, so existing workflows are unaffected.
