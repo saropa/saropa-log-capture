@@ -80,6 +80,7 @@
   "config.logDirectory.description": "Directory for log files, relative to workspace root.",
   "config.maxLines.description": "Maximum lines per log file. Oldest lines dropped when exceeded.",
   "config.maxLogFiles.description": "Maximum number of log files to retain (including subdirectories when enabled). 0 = unlimited. Oldest deleted when exceeded.",
+  "config.organizeFolders.description": "Automatically move log files with a date prefix into date-based subfolders (e.g. reports/20260218/).",
   "config.redactEnvVars.description": "Environment variable name patterns to redact from context headers. Supports * wildcards (e.g. API_KEY, SECRET_*).",
   "config.showDecorations.description": "Show decoration prefix (severity dot, counter, timestamp) on each log line in the viewer.",
   "config.showElapsedTime.description": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",

@@ -23,16 +23,22 @@ export interface SessionContext {
     readonly devEnvironment?: DevEnvironment;
 }
 
-/** Generate base filename without .log extension (for split naming). */
-export function generateBaseFileName(projectName: string, date: Date): string {
+/** Format a date as yyyymmdd for use as a subfolder name. */
+export function formatDateFolder(date: Date): string {
     const y = date.getFullYear();
     const mo = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
+    return `${y}${mo}${d}`;
+}
+
+/** Generate base filename without .log extension (for split naming). */
+export function generateBaseFileName(projectName: string, date: Date): string {
+    const dateStr = formatDateFolder(date);
     const h = String(date.getHours()).padStart(2, '0');
     const mi = String(date.getMinutes()).padStart(2, '0');
     const s = String(date.getSeconds()).padStart(2, '0');
     const safeName = projectName.replace(/[^a-zA-Z0-9_-]/g, '_');
-    return `${y}${mo}${d}_${h}${mi}${s}_${safeName}`;
+    return `${dateStr}_${h}${mi}${s}_${safeName}`;
 }
 
 /** Source location from a DAP output event. */
