@@ -17,3 +17,4 @@ nul
 **/*.map
 **/*.ts
 **/.vscode-test.*
+!package.nls*.json
