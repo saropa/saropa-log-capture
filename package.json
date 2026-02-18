@@ -11,222 +11,222 @@
       {
         "command": "saropaLogCapture.start",
         "icon": "$(play)",
-        "title": "Saropa Log Capture: Start Capture"
+        "title": "%command.start.title%"
       },
       {
         "command": "saropaLogCapture.stop",
         "icon": "$(debug-stop)",
-        "title": "Saropa Log Capture: Stop Capture"
+        "title": "%command.stop.title%"
       },
       {
         "command": "saropaLogCapture.pause",
         "icon": "$(debug-pause)",
-        "title": "Saropa Log Capture: Pause/Resume Capture"
+        "title": "%command.pause.title%"
       },
       {
         "command": "saropaLogCapture.open",
         "icon": "$(go-to-file)",
-        "title": "Saropa Log Capture: Open Active Log File"
+        "title": "%command.open.title%"
       },
       {
         "command": "saropaLogCapture.openFolder",
         "icon": "$(folder-opened)",
-        "title": "Saropa Log Capture: Open Log Folder"
+        "title": "%command.openFolder.title%"
       },
       {
         "command": "saropaLogCapture.clear",
         "icon": "$(clear-all)",
-        "title": "Saropa Log Capture: Clear Current Session"
+        "title": "%command.clear.title%"
       },
       {
         "command": "saropaLogCapture.delete",
         "icon": "$(trash)",
-        "title": "Saropa Log Capture: Delete Log File"
+        "title": "%command.delete.title%"
       },
       {
         "command": "saropaLogCapture.insertMarker",
         "icon": "$(horizontal-rule)",
-        "title": "Saropa Log Capture: Insert Marker"
+        "title": "%command.insertMarker.title%"
       },
       {
         "command": "saropaLogCapture.refreshHistory",
         "icon": "$(refresh)",
-        "title": "Refresh Session History"
+        "title": "%command.refreshHistory.title%"
       },
       {
         "command": "saropaLogCapture.openSession",
         "icon": "$(go-to-file)",
-        "title": "Open Log File"
+        "title": "%command.openSession.title%"
       },
       {
         "command": "saropaLogCapture.deleteSession",
         "icon": "$(trash)",
-        "title": "Delete Log File"
+        "title": "%command.deleteSession.title%"
       },
       {
         "command": "saropaLogCapture.exportHtml",
         "icon": "$(file-code)",
-        "title": "Export as HTML (Static)"
+        "title": "%command.exportHtml.title%"
       },
       {
         "command": "saropaLogCapture.exportHtmlInteractive",
         "icon": "$(browser)",
-        "title": "Export as HTML (Interactive)"
+        "title": "%command.exportHtmlInteractive.title%"
       },
       {
         "command": "saropaLogCapture.renameSession",
         "icon": "$(edit)",
-        "title": "Rename Session"
+        "title": "%command.renameSession.title%"
       },
       {
         "command": "saropaLogCapture.tagSession",
         "icon": "$(tag)",
-        "title": "Tag Session"
+        "title": "%command.tagSession.title%"
       },
       {
         "command": "saropaLogCapture.rescanTags",
         "icon": "$(sync)",
-        "title": "Rescan Correlation Tags"
+        "title": "%command.rescanTags.title%"
       },
       {
         "command": "saropaLogCapture.splitNow",
         "icon": "$(split-horizontal)",
-        "title": "Saropa Log Capture: Split Log File Now"
+        "title": "%command.splitNow.title%"
       },
       {
         "command": "saropaLogCapture.searchLogs",
         "icon": "$(search)",
-        "title": "Saropa Log Capture: Search Log Files"
+        "title": "%command.searchLogs.title%"
       },
       {
         "command": "saropaLogCapture.copyDeepLink",
         "icon": "$(link)",
-        "title": "Copy Deep Link"
+        "title": "%command.copyDeepLink.title%"
       },
       {
         "command": "saropaLogCapture.copyFilePath",
         "icon": "$(copy)",
-        "title": "Copy File Path"
+        "title": "%command.copyFilePath.title%"
       },
       {
         "command": "saropaLogCapture.applyPreset",
         "icon": "$(filter)",
-        "title": "Saropa Log Capture: Apply Filter Preset"
+        "title": "%command.applyPreset.title%"
       },
       {
         "command": "saropaLogCapture.savePreset",
         "icon": "$(save)",
-        "title": "Saropa Log Capture: Save Current Filters as Preset"
+        "title": "%command.savePreset.title%"
       },
       {
         "command": "saropaLogCapture.toggleInlineDecorations",
         "icon": "$(symbol-event)",
-        "title": "Saropa Log Capture: Toggle Inline Log Decorations"
+        "title": "%command.toggleInlineDecorations.title%"
       },
       {
         "command": "saropaLogCapture.popOutViewer",
         "icon": "$(link-external)",
-        "title": "Saropa Log Capture: Pop Out Viewer to New Window"
+        "title": "%command.popOutViewer.title%"
       },
       {
         "command": "saropaLogCapture.showInsights",
         "icon": "$(graph)",
-        "title": "Saropa Log Capture: Cross-Session Insights"
+        "title": "%command.showInsights.title%"
       },
       {
         "command": "saropaLogCapture.generateReport",
         "icon": "$(report)",
-        "title": "Saropa Log Capture: Generate Bug Report"
+        "title": "%command.generateReport.title%"
       },
       {
         "command": "saropaLogCapture.showTimeline",
         "icon": "$(graph-line)",
-        "title": "Saropa Log Capture: Show Session Timeline"
+        "title": "%command.showTimeline.title%"
       },
       {
         "command": "saropaLogCapture.compareSessions",
         "icon": "$(diff)",
-        "title": "Saropa Log Capture: Compare Sessions"
+        "title": "%command.compareSessions.title%"
       },
       {
         "command": "saropaLogCapture.markForComparison",
         "icon": "$(bookmark)",
-        "title": "Mark for Comparison"
+        "title": "%command.markForComparison.title%"
       },
       {
         "command": "saropaLogCapture.compareWithMarked",
         "icon": "$(diff)",
-        "title": "Compare with Marked Session"
+        "title": "%command.compareWithMarked.title%"
       },
       {
         "command": "saropaLogCapture.applyTemplate",
         "icon": "$(package)",
-        "title": "Saropa Log Capture: Apply Session Template"
+        "title": "%command.applyTemplate.title%"
       },
       {
         "command": "saropaLogCapture.saveTemplate",
         "icon": "$(save-as)",
-        "title": "Saropa Log Capture: Save Settings as Template"
+        "title": "%command.saveTemplate.title%"
       },
       {
         "command": "saropaLogCapture.exportCsv",
         "icon": "$(file)",
-        "title": "Export as CSV"
+        "title": "%command.exportCsv.title%"
       },
       {
         "command": "saropaLogCapture.exportJson",
         "icon": "$(json)",
-        "title": "Export as JSON"
+        "title": "%command.exportJson.title%"
       },
       {
         "command": "saropaLogCapture.exportJsonl",
         "icon": "$(list-flat)",
-        "title": "Export as JSONL"
+        "title": "%command.exportJsonl.title%"
       },
       {
         "command": "saropaLogCapture.trashSession",
         "icon": "$(trash)",
-        "title": "Move to Trash"
+        "title": "%command.trashSession.title%"
       },
       {
         "command": "saropaLogCapture.restoreSession",
         "icon": "$(discard)",
-        "title": "Restore from Trash"
+        "title": "%command.restoreSession.title%"
       },
       {
         "command": "saropaLogCapture.emptyTrash",
         "icon": "$(clear-all)",
-        "title": "Saropa Log Capture: Empty Trash"
+        "title": "%command.emptyTrash.title%"
       },
       {
         "command": "saropaLogCapture.toggleTrash",
         "icon": "$(eye)",
-        "title": "Saropa Log Capture: Toggle Trash Visibility"
+        "title": "%command.toggleTrash.title%"
       },
       {
         "command": "saropaLogCapture.resetAllSettings",
         "icon": "$(clear-all)",
-        "title": "Saropa Log Capture: Reset All Settings to Defaults"
+        "title": "%command.resetAllSettings.title%"
       }
     ],
     "configuration": {
       "properties": {
         "saropaLogCapture.autoOpen": {
           "default": false,
-          "description": "Automatically open the log file in the editor when a debug session ends.",
+          "description": "%config.autoOpen.description%",
           "type": "boolean"
         },
         "saropaLogCapture.autoTagRules": {
           "default": [],
-          "description": "Rules for automatically tagging sessions based on content patterns.",
+          "description": "%config.autoTagRules.description%",
           "items": {
             "properties": {
               "pattern": {
-                "description": "Text or /regex/ pattern to match against log lines.",
+                "description": "%config.autoTagRules.pattern.description%",
                 "type": "string"
               },
               "tag": {
-                "description": "Tag to apply when pattern matches.",
+                "description": "%config.autoTagRules.tag.description%",
                 "type": "string"
               }
             },
@@ -240,12 +240,12 @@
         },
         "saropaLogCapture.breakOnCritical": {
           "default": false,
-          "description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.).",
+          "description": "%config.breakOnCritical.description%",
           "type": "boolean"
         },
         "saropaLogCapture.captureAll": {
           "default": true,
-          "description": "If true, capture all Debug Console output regardless of category. When false, only captures categories listed in 'categories'. Exclusions always apply independently.",
+          "description": "%config.captureAll.description%",
           "type": "boolean"
         },
         "saropaLogCapture.categories": {
@@ -254,7 +254,7 @@
             "stderr",
             "stdout"
           ],
-          "description": "DAP output categories to capture. Common values: console, stdout, stderr, telemetry.",
+          "description": "%config.categories.description%",
           "items": {
             "type": "string"
           },
@@ -262,19 +262,19 @@
         },
         "saropaLogCapture.contextViewLines": {
           "default": 10,
-          "description": "Number of lines before and after to show in the context view modal.",
+          "description": "%config.contextViewLines.description%",
           "maximum": 100,
           "minimum": 1,
           "type": "number"
         },
         "saropaLogCapture.minimapShowInfoMarkers": {
           "default": false,
-          "markdownDescription": "Show **info**-level markers (green) on the scrollbar minimap. When disabled (default), only error, warning, performance, and other higher-severity markers appear. Enable to see a green dot for every info-level line.",
+          "markdownDescription": "%config.minimapShowInfoMarkers.markdownDescription%",
           "type": "boolean"
         },
         "saropaLogCapture.minimapWidth": {
           "default": "medium",
-          "description": "Width of the scrollbar minimap: small (40px), medium (60px), or large (90px).",
+          "description": "%config.minimapWidth.description%",
           "enum": [
             "small",
             "medium",
@@ -284,7 +284,7 @@
         },
         "saropaLogCapture.deemphasizeFrameworkLevels": {
           "default": false,
-          "markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix.",
+          "markdownDescription": "%config.deemphasizeFrameworkLevels.markdownDescription%",
           "type": "boolean"
         },
         "saropaLogCapture.docsScanDirs": {
@@ -292,7 +292,7 @@
             "bugs",
             "docs"
           ],
-          "description": "Directories to scan for project documentation references during analysis (relative to workspace root).",
+          "description": "%config.docsScanDirs.description%",
           "items": {
             "type": "string"
           },
@@ -300,17 +300,17 @@
         },
         "saropaLogCapture.enabled": {
           "default": true,
-          "description": "Enable or disable automatic log capture during debug sessions.",
+          "description": "%config.enabled.description%",
           "type": "boolean"
         },
         "saropaLogCapture.ai.enabled": {
           "default": false,
-          "description": "Enable AI-powered crash summaries in the analysis panel (requires VS Code Language Model API access).",
+          "description": "%config.ai.enabled.description%",
           "type": "boolean"
         },
         "saropaLogCapture.exclusions": {
           "default": [],
-          "description": "Patterns to exclude from the viewer. Plain strings match case-insensitively; /regex/ patterns are supported.",
+          "description": "%config.exclusions.description%",
           "items": {
             "type": "string"
           },
@@ -326,7 +326,7 @@
             ".md",
             ".txt"
           ],
-          "description": "File extensions to include when listing sessions in the reports directory. Reload window after changes.",
+          "description": "%config.fileTypes.description%",
           "items": {
             "type": "string"
           },
@@ -334,33 +334,33 @@
         },
         "saropaLogCapture.filterContextLines": {
           "default": 3,
-          "description": "Number of preceding lines to show (dimmed) when filtering by log level.",
+          "description": "%config.filterContextLines.description%",
           "maximum": 50,
           "minimum": 0,
           "type": "number"
         },
         "saropaLogCapture.filterPresets": {
           "default": [],
-          "description": "Saved filter presets for quick application. Each preset saves category filters, search pattern, and exclusion state.",
+          "description": "%config.filterPresets.description%",
           "items": {
             "properties": {
               "categories": {
-                "description": "DAP categories to show (empty = all).",
+                "description": "%config.filterPresets.categories.description%",
                 "items": {
                   "type": "string"
                 },
                 "type": "array"
               },
               "exclusionsEnabled": {
-                "description": "Whether exclusions should be enabled.",
+                "description": "%config.filterPresets.exclusionsEnabled.description%",
                 "type": "boolean"
               },
               "name": {
-                "description": "Display name for the preset.",
+                "description": "%config.filterPresets.name.description%",
                 "type": "string"
               },
               "searchPattern": {
-                "description": "Search pattern to apply (string or /regex/).",
+                "description": "%config.filterPresets.searchPattern.description%",
                 "type": "string"
               }
             },
@@ -373,22 +373,22 @@
         },
         "saropaLogCapture.firebase.appId": {
           "default": "",
-          "description": "Firebase app ID for Crashlytics queries (auto-detected from google-services.json if empty).",
+          "description": "%config.firebase.appId.description%",
           "type": "string"
         },
         "saropaLogCapture.firebase.packageName": {
           "default": "",
-          "description": "Android package name (e.g. com.example.myapp). Auto-detected from google-services.json, AndroidManifest.xml, or pubspec.yaml if empty.",
+          "description": "%config.firebase.packageName.description%",
           "type": "string"
         },
         "saropaLogCapture.firebase.projectId": {
           "default": "",
-          "description": "Firebase project ID for Crashlytics queries (auto-detected from google-services.json if empty).",
+          "description": "%config.firebase.projectId.description%",
           "type": "string"
         },
         "saropaLogCapture.firebase.timeRange": {
           "default": "LAST_7_DAYS",
-          "description": "Time window for Crashlytics issue queries.",
+          "description": "%config.firebase.timeRange.description%",
           "enum": [
             "LAST_24_HOURS",
             "LAST_7_DAYS",
@@ -396,38 +396,38 @@
             "LAST_90_DAYS"
           ],
           "enumDescriptions": [
-            "Last 24 hours",
-            "Last 7 days",
-            "Last 30 days",
-            "Last 90 days"
+            "%config.firebase.timeRange.enum.last24Hours%",
+            "%config.firebase.timeRange.enum.last7Days%",
+            "%config.firebase.timeRange.enum.last30Days%",
+            "%config.firebase.timeRange.enum.last90Days%"
           ],
           "type": "string"
         },
         "saropaLogCapture.firebase.refreshInterval": {
           "default": 300,
-          "description": "Auto-refresh interval (seconds) for the Crashlytics sidebar panel. 0 to disable auto-refresh.",
+          "description": "%config.firebase.refreshInterval.description%",
           "maximum": 3600,
           "minimum": 0,
           "type": "number"
         },
         "saropaLogCapture.firebase.versionFilter": {
           "default": "",
-          "description": "Filter Crashlytics results to a specific app version. Leave empty to auto-detect from pubspec.yaml or build.gradle.",
+          "description": "%config.firebase.versionFilter.description%",
           "type": "string"
         },
         "saropaLogCapture.playConsole.enabled": {
           "default": false,
-          "description": "Enable Google Play Vitals panel. Requires Play Console access and the Play Developer Reporting API enabled in your GCP project.",
+          "description": "%config.playConsole.enabled.description%",
           "type": "boolean"
         },
         "saropaLogCapture.playConsole.appUrl": {
           "default": "",
-          "description": "Full URL to your app in Google Play Console (e.g. https://play.google.com/console/u/0/developers/12345/app/67890/vitals/overview). If empty, opens the Play Console homepage.",
+          "description": "%config.playConsole.appUrl.description%",
           "type": "string"
         },
         "saropaLogCapture.format": {
           "default": "plaintext",
-          "description": "Output file format. Currently only plaintext is supported.",
+          "description": "%config.format.description%",
           "enum": [
             "html",
             "plaintext"
@@ -436,7 +436,7 @@
         },
         "saropaLogCapture.iconBarPosition": {
           "default": "left",
-          "description": "Which side of the log viewer to show the icon bar: left or right.",
+          "description": "%config.iconBarPosition.description%",
           "enum": [
             "left",
             "right"
@@ -445,7 +445,7 @@
         },
         "saropaLogCapture.gitignoreCheck": {
           "default": true,
-          "description": "On first run, check if the log directory is in .gitignore and offer to add it.",
+          "description": "%config.gitignoreCheck.description%",
           "type": "boolean"
         },
         "saropaLogCapture.highlightRules": {
@@ -466,38 +466,38 @@
               "pattern": "/\\b(success|passed|ok)\\b/i"
             }
           ],
-          "description": "Pattern-based highlighting rules for coloring log lines. Each rule specifies a pattern and visual styling.",
+          "description": "%config.highlightRules.description%",
           "items": {
             "properties": {
               "backgroundColor": {
-                "description": "Background color (CSS color, hex, or VS Code CSS variable).",
+                "description": "%config.highlightRules.backgroundColor.description%",
                 "type": "string"
               },
               "bold": {
                 "default": false,
-                "description": "Apply bold styling to matching lines.",
+                "description": "%config.highlightRules.bold.description%",
                 "type": "boolean"
               },
               "color": {
-                "description": "Text color (CSS color, hex, or VS Code CSS variable).",
+                "description": "%config.highlightRules.color.description%",
                 "type": "string"
               },
               "italic": {
                 "default": false,
-                "description": "Apply italic styling to matching lines.",
+                "description": "%config.highlightRules.italic.description%",
                 "type": "boolean"
               },
               "label": {
-                "description": "Label shown in tooltips explaining the highlight.",
+                "description": "%config.highlightRules.label.description%",
                 "type": "string"
               },
               "pattern": {
-                "description": "Text or /regex/ pattern to match against log lines.",
+                "description": "%config.highlightRules.pattern.description%",
                 "type": "string"
               },
               "scope": {
                 "default": "line",
-                "description": "How the highlight is applied: 'line' colors the entire line, 'keyword' colors only the matched text.",
+                "description": "%config.highlightRules.scope.description%",
                 "enum": [
                   "keyword",
                   "line"
@@ -514,22 +514,22 @@
         },
         "saropaLogCapture.includeElapsedTime": {
           "default": false,
-          "description": "Show elapsed time since the previous log line in the log file (e.g. [+125ms]).",
+          "description": "%config.includeElapsedTime.description%",
           "type": "boolean"
         },
         "saropaLogCapture.includeSourceLocation": {
           "default": false,
-          "description": "Include DAP source file path and line number in each log line (e.g. [app.ts:42]).",
+          "description": "%config.includeSourceLocation.description%",
           "type": "boolean"
         },
         "saropaLogCapture.includeSubfolders": {
           "default": true,
-          "description": "Include log files from subdirectories of the log directory in the Project Logs panel, search, and analysis. Does not affect file retention.",
+          "description": "%config.includeSubfolders.description%",
           "type": "boolean"
         },
         "saropaLogCapture.includeTimestamp": {
           "default": true,
-          "description": "Prefix each captured line with a timestamp.",
+          "description": "%config.includeTimestamp.description%",
           "type": "boolean"
         },
         "saropaLogCapture.levelDetection": {
@@ -538,29 +538,29 @@
             "loose",
             "strict"
           ],
-          "markdownDescription": "How aggressively to classify lines as errors. `strict` requires keywords in label positions (e.g. `Error:`, `[ERROR]`). `loose` matches keywords anywhere in the text.",
+          "markdownDescription": "%config.levelDetection.markdownDescription%",
           "type": "string"
         },
         "saropaLogCapture.logDirectory": {
           "default": "reports",
-          "description": "Directory for log files, relative to workspace root.",
+          "description": "%config.logDirectory.description%",
           "type": "string"
         },
         "saropaLogCapture.maxLines": {
           "default": 100000,
-          "description": "Maximum lines per log file. Oldest lines dropped when exceeded.",
+          "description": "%config.maxLines.description%",
           "minimum": 1000,
           "type": "number"
         },
         "saropaLogCapture.maxLogFiles": {
           "default": 0,
-          "description": "Maximum number of log files to retain (including subdirectories when enabled). 0 = unlimited. Oldest deleted when exceeded.",
+          "description": "%config.maxLogFiles.description%",
           "minimum": 0,
           "type": "number"
         },
         "saropaLogCapture.redactEnvVars": {
           "default": [],
-          "description": "Environment variable name patterns to redact from context headers. Supports * wildcards (e.g. API_KEY, SECRET_*).",
+          "description": "%config.redactEnvVars.description%",
           "items": {
             "type": "string"
           },
@@ -568,17 +568,17 @@
         },
         "saropaLogCapture.showDecorations": {
           "default": true,
-          "description": "Show decoration prefix (severity dot, counter, timestamp) on each log line in the viewer.",
+          "description": "%config.showDecorations.description%",
           "type": "boolean"
         },
         "saropaLogCapture.showElapsedTime": {
           "default": false,
-          "description": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+          "description": "%config.showElapsedTime.description%",
           "type": "boolean"
         },
         "saropaLogCapture.slowGapThreshold": {
           "default": 1000,
-          "description": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",
+          "description": "%config.slowGapThreshold.description%",
           "minimum": 100,
           "type": "number"
         },
@@ -590,11 +590,11 @@
             "maxSizeKB": 0,
             "silenceMinutes": 0
           },
-          "description": "Rules for automatically splitting log files. All values of 0 disable that rule.",
+          "description": "%config.splitRules.description%",
           "properties": {
             "keywords": {
               "default": [],
-              "description": "Keywords that trigger a split (e.g., 'HOT RESTART', '/SPLIT/').",
+              "description": "%config.splitRules.keywords.description%",
               "items": {
                 "type": "string"
               },
@@ -602,25 +602,25 @@
             },
             "maxDurationMinutes": {
               "default": 0,
-              "description": "Split file after this many minutes. 0 = disabled.",
+              "description": "%config.splitRules.maxDurationMinutes.description%",
               "minimum": 0,
               "type": "number"
             },
             "maxLines": {
               "default": 0,
-              "description": "Split file after this many lines. 0 = disabled.",
+              "description": "%config.splitRules.maxLines.description%",
               "minimum": 0,
               "type": "number"
             },
             "maxSizeKB": {
               "default": 0,
-              "description": "Split file after this size in KB. 0 = disabled.",
+              "description": "%config.splitRules.maxSizeKB.description%",
               "minimum": 0,
               "type": "number"
             },
             "silenceMinutes": {
               "default": 0,
-              "description": "Split file after this many minutes of silence. 0 = disabled.",
+              "description": "%config.splitRules.silenceMinutes.description%",
               "minimum": 0,
               "type": "number"
             }
@@ -629,19 +629,19 @@
         },
         "saropaLogCapture.suppressTransientErrors": {
           "default": false,
-          "description": "Hide expected transient errors (TimeoutException, SocketException, ECONNREFUSED, etc.). Filtered lines can be expanded if needed.",
+          "description": "%config.suppressTransientErrors.description%",
           "type": "boolean"
         },
         "saropaLogCapture.treeRefreshInterval": {
           "default": 0,
-          "description": "Tree view refresh interval in seconds during active recording. 0 = adaptive (3s for small files, 10s for medium, 30s for large).",
+          "description": "%config.treeRefreshInterval.description%",
           "maximum": 300,
           "minimum": 0,
           "type": "number"
         },
         "saropaLogCapture.verboseDap": {
           "default": false,
-          "description": "Log all raw DAP protocol messages (requests, responses, events) to the log file. Produces high-volume output — use for debugging adapter communication issues.",
+          "description": "%config.verboseDap.description%",
           "type": "boolean"
         },
         "saropaLogCapture.watchPatterns": {
@@ -659,12 +659,12 @@
               "keyword": "warning"
             }
           ],
-          "description": "Keywords to watch for in log output. Each entry has a keyword (string or /regex/) and alert type.",
+          "description": "%config.watchPatterns.description%",
           "items": {
             "properties": {
               "alert": {
                 "default": "flash",
-                "description": "Alert type: flash (visual pulse), badge (sidebar count), none (counter only).",
+                "description": "%config.watchPatterns.alert.description%",
                 "enum": [
                   "badge",
                   "flash",
@@ -673,7 +673,7 @@
                 "type": "string"
               },
               "keyword": {
-                "description": "Text or /regex/ pattern to watch for in log output.",
+                "description": "%config.watchPatterns.keyword.description%",
                 "type": "string"
               }
             },
@@ -685,7 +685,7 @@
           "type": "array"
         }
       },
-      "title": "Saropa Log Capture"
+      "title": "%config.title%"
     },
     "menus": {
       "view/title": [
@@ -701,13 +701,13 @@
         {
           "icon": "$(output)",
           "id": "saropaLogCapture.logViewer",
-          "name": "Log Viewer",
+          "name": "%view.logViewer.name%",
           "type": "webview"
         },
         {
           "icon": "$(graph-line)",
           "id": "saropaLogCapture.vitalsPanel",
-          "name": "Play Vitals",
+          "name": "%view.vitalsPanel.name%",
           "type": "webview",
           "when": "config.saropaLogCapture.playConsole.enabled"
         }
@@ -718,70 +718,70 @@
         {
           "icon": "images/sidebar-icon.svg",
           "id": "saropaLogCapture",
-          "title": "Saropa Log Capture"
+          "title": "%viewContainer.saropaLogCapture.title%"
         }
       ]
     },
     "walkthroughs": [
       {
-        "description": "Learn how to capture and analyze your debug output with Saropa Log Capture.",
+        "description": "%walkthrough.getStarted.description%",
         "id": "saropaLogCapture.getStarted",
         "steps": [
           {
             "completionEvents": [
               "onView:saropaLogCapture.logViewer"
             ],
-            "description": "All sessions are saved in the **Project Logs** panel. Click the sessions icon in the sidebar, then right-click to rename, tag, export, or share deep links.\n\n[Open Log Viewer](command:saropaLogCapture.logViewer.focus)",
+            "description": "%walkthrough.browseHistory.description%",
             "id": "saropaLogCapture.browseHistory",
             "media": {
               "markdown": "media/walkthrough/session-history.md"
             },
-            "title": "Browse Session History"
+            "title": "%walkthrough.browseHistory.title%"
           },
           {
-            "description": "Configure watch patterns, highlight rules, exclusions, and split rules in **Settings**.\n\n[Open Settings](command:workbench.action.openSettings?%22saropaLogCapture%22)",
+            "description": "%walkthrough.configureSettings.description%",
             "id": "saropaLogCapture.configureSettings",
             "media": {
               "markdown": "media/walkthrough/configure-settings.md"
             },
-            "title": "Customize Your Setup"
+            "title": "%walkthrough.configureSettings.title%"
           },
           {
             "completionEvents": [
               "onView:saropaLogCapture.logViewer"
             ],
-            "description": "Click the **Saropa Log Capture** icon in the Activity Bar to see live log output with colors, collapsible stacks, and search.\n\n[Open Log Viewer](command:saropaLogCapture.logViewer.focus)",
+            "description": "%walkthrough.openViewer.description%",
             "id": "saropaLogCapture.openViewer",
             "media": {
               "markdown": "media/walkthrough/open-viewer.md"
             },
-            "title": "Open the Log Viewer"
+            "title": "%walkthrough.openViewer.title%"
           },
           {
             "completionEvents": [
               "onCommand:workbench.action.debug.start"
             ],
-            "description": "Log capture starts automatically when you debug. Press **F5** or use the **Run and Debug** panel to start.\n\n[Start Debugging](command:workbench.action.debug.start)",
+            "description": "%walkthrough.startDebugging.description%",
             "id": "saropaLogCapture.startDebugging",
             "media": {
               "markdown": "media/walkthrough/start-debugging.md"
             },
-            "title": "Start a Debug Session"
+            "title": "%walkthrough.startDebugging.title%"
           },
           {
-            "description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers.",
+            "description": "%walkthrough.useKeyboardShortcuts.description%",
             "id": "saropaLogCapture.useKeyboardShortcuts",
             "media": {
               "markdown": "media/walkthrough/keyboard-shortcuts.md"
             },
-            "title": "Master Keyboard Shortcuts"
+            "title": "%walkthrough.useKeyboardShortcuts.title%"
           }
         ],
-        "title": "Get Started with Log Capture"
+        "title": "%walkthrough.getStarted.title%"
       }
     ]
   },
-  "description": "Automatically capture VS Code Debug Console output to persistent log files",
+  "description": "%description%",
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
@@ -796,7 +796,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   },
-  "displayName": "Saropa Log Capture",
+  "displayName": "%displayName%",
   "engines": {
     "vscode": "^1.108.1"
   },
@@ -827,6 +827,7 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
+    "verify-nls": "node scripts/verify-nls.js",
     "compile": "npm run check-types && npm run lint && node esbuild.js",
     "compile-tests": "tsc -p . --outDir out",
     "lint": "eslint src",
