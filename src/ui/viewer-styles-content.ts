@@ -1,4 +1,5 @@
 /** CSS for timing markers, stack traces, jump button, footer, annotations. */
+import { getInfoPanelStyles } from './viewer-styles-info';
 export function getContentStyles(): string {
     return /* css */ `
 /* --- Timing Markers --- */
