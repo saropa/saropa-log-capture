@@ -267,6 +267,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standar
 
 Not sure if something is a bug or a feature request? [Open a discussion issue](https://github.com/saropa/saropa-log-capture/issues/new). We're happy to talk through ideas.
 
+### Translations
+
+The extension ships machine-translated UI strings for Chinese Simplified, Japanese, Korean, Spanish, and German. If you spot a mistranslation or awkward phrasing, corrections are welcome — email [language@saropa.com](mailto:language@saropa.com) with the language, the incorrect string, and your suggested fix.
+
 ---
 
 ## Documentation
