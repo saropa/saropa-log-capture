@@ -25,7 +25,8 @@ function findNlsFiles() {
 }
 
 const pkgText = fs.readFileSync(path.join(root, 'package.json'), 'utf8');
-const refs = extractRefs(pkgText);
+// Deduplicate: a key referenced twice in package.json is still one key.
+const refs = [...new Set(extractRefs(pkgText))];
 const nlsFiles = findNlsFiles();
 
 if (nlsFiles.length === 0) {
@@ -40,8 +41,11 @@ for (const nlsFile of nlsFiles) {
 	const nls = JSON.parse(fs.readFileSync(nlsPath, 'utf8'));
 	const nlsKeys = Object.keys(nls);
 
-	const missing = refs.filter(k => nlsKeys.indexOf(k) === -1);
-	const orphan = nlsKeys.filter(k => refs.indexOf(k) === -1);
+	// Use Sets for O(1) membership checks.
+	const nlsSet = new Set(nlsKeys);
+	const refSet = new Set(refs);
+	const missing = refs.filter(k => !nlsSet.has(k));
+	const orphan = nlsKeys.filter(k => !refSet.has(k));
 
 	if (missing.length > 0 || orphan.length > 0) {
 		hasErrors = true;

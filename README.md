@@ -203,6 +203,8 @@ All settings are prefixed with `saropaLogCapture.`
 | `logDirectory`                 | `"reports"` | Where to save log files (relative to workspace root)     |
 | `autoOpen`                     | `false`     | Open log file when debug session ends                    |
 | `maxLogFiles`                  | `10`        | Max log files to retain (0 = unlimited)                  |
+| `organizeFolders`              | `true`      | Move flat log files into `yyyymmdd/` date subfolders on session start |
+| `includeSubfolders`            | `true`      | Include log files from date subfolders in session history, search, and analysis |
 | `gitignoreCheck`               | `true`      | Offer to add log directory to .gitignore on first run    |
 | `redactEnvVars`                | `[]`        | Env var patterns to redact from headers                  |
 | `captureAll`                   | `false`     | Capture all Debug Console output, bypassing filters      |
