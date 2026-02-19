@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - **Machine-translated locale files.** Added `package.nls.zh-cn.json`, `package.nls.ja.json`, `package.nls.ko.json`, `package.nls.es.json`, and `package.nls.de.json` with 128 translated keys each, covering all manifest-visible strings. Corrections welcome at language@saropa.com.
 
+### Changed
+- **README language badge.** Added a language support badge (EN | ZH | JA | KO | ES | DE) to the README header so multilingual support is visible at a glance on the marketplace listing.
+- **Marketplace keywords.** Added `multilingual`, `localization`, and `i18n` to `package.json` keywords for better search discoverability.
+
 ### Fixed
 - **`verify-nls.js` ref deduplication.** Deduplicate `%key%` refs via `Set` before comparison; switch membership checks to `Set.has()` (O(1)) to prevent false double-reporting if a key appears twice in `package.json`.
 - **README config table.** Added missing `organizeFolders` and `includeSubfolders` settings (both added in v2.0.7) to the configuration reference table.
