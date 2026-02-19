@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.8] - 2026-02-18
 
 ### Added
 - **Machine-translated locale files.** Added `package.nls.zh-cn.json`, `package.nls.ja.json`, `package.nls.ko.json`, `package.nls.es.json`, and `package.nls.de.json` with 128 translated keys each, covering all manifest-visible strings. Corrections welcome at language@saropa.com.
