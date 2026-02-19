@@ -1,9 +1,8 @@
 /** Firebase Crashlytics integration — queries crash data via REST API with gcloud auth. */
 
 import * as vscode from 'vscode';
-import { execFile } from 'child_process';
-import { getLogDirectoryUri } from './config';
 import { detectAppVersion } from './app-version';
+import { apiTimeout, runCmd, readCachedEvents, writeCacheEvents } from './crashlytics-io';
 import { parseEventResponse } from './crashlytics-event-parser';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, classifyHttpStatus, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssue, CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext } from './crashlytics-types';
@@ -17,7 +16,6 @@ let cachedIssueRows: { rows: Record<string, unknown>[]; expires: number } | unde
 let lastDiagnostic: DiagnosticDetails | undefined;
 const tokenTtl = 30 * 60_000;
 const issueListTtl = 5 * 60_000;
-const apiTimeout = 10_000;
 const apiBase = 'https://firebasecrashlytics.googleapis.com/v1beta1';
 
 async function isGcloudAvailable(): Promise<boolean> {
@@ -250,32 +248,6 @@ function fetchJson(url: string, token: string, body?: string, method?: string): 
     });
 }
 
-function getCacheUri(issueId: string): vscode.Uri | undefined {
-    const ws = vscode.workspace.workspaceFolders?.[0];
-    if (!ws) { return undefined; }
-    return vscode.Uri.joinPath(getLogDirectoryUri(ws), 'crashlytics', `${issueId}.json`);
-}
-
-async function readCachedEvents(issueId: string): Promise<CrashlyticsIssueEvents | undefined> {
-    const uri = getCacheUri(issueId);
-    if (!uri) { return undefined; }
-    try {
-        const raw = await vscode.workspace.fs.readFile(uri);
-        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8'));
-        if (parsed.events && Array.isArray(parsed.events)) { return parsed as CrashlyticsIssueEvents; }
-        // Migrate v1 single-event cache to multi-event format
-        const detail = parsed as CrashlyticsEventDetail;
-        return { issueId, events: [detail], currentIndex: 0 };
-    } catch { return undefined; }
-}
-
-async function writeCacheEvents(issueId: string, data: CrashlyticsIssueEvents): Promise<void> {
-    const uri = getCacheUri(issueId);
-    if (!uri) { return; }
-    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
-    await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify(data, null, 2)));
-}
-
 /** Fetch crash events for a specific issue, returning multi-event structure with pagination. */
 export async function getCrashEventDetail(issueId: string): Promise<CrashlyticsEventDetail | undefined> {
     const multi = await getCrashEvents(issueId);
@@ -309,15 +281,3 @@ function parseMultipleEvents(issueId: string, data: Record<string, unknown>): Cr
     return raw.map((_, i) => parseEventResponse(issueId, { events: [raw[i]] })).filter((e): e is CrashlyticsEventDetail => e !== undefined);
 }
 
-function runCmd(cmd: string, args: string[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-        execFile(cmd, args, { timeout: apiTimeout, shell: true }, (err, stdout, stderr) => {
-            if (err) {
-                (err as Error & { stderr?: string }).stderr = (stderr ?? '').trim();
-                reject(err);
-                return;
-            }
-            resolve((stdout ?? '').trim());
-        });
-    });
-}
