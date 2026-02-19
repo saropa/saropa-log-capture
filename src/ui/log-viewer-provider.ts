@@ -5,7 +5,6 @@ import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
-import { showBugReport } from "./bug-report-panel";
 import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
@@ -17,6 +16,7 @@ import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
 import * as panelHandlers from "./viewer-panel-handlers";
+import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 
 const BATCH_INTERVAL_MS = 200;
 
@@ -216,90 +216,23 @@ export class LogViewerProvider
   // -- Private methods --
 
   private handleMessage(msg: Record<string, unknown>): void {
-    switch (msg.type) {
-      case "insertMarker": this.onMarkerRequest?.(); break;
-      case "togglePause": this.onTogglePause?.(); break;
-      case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
-      case "copySourcePath":
-        helpers.copySourcePath(String(msg.path ?? ""), String(msg.mode ?? "relative"));
-        break;
-      case "exclusionAdded": case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
-      case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
-      case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
-      case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
-      case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
-      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? ""), Number(msg.lineIndex ?? -1), this.currentFileUri); break;
-      case "generateReport":
-        if (this.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), this.currentFileUri).catch(() => {}); }
-        break;
-      case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
-      case "promptAnnotation":
-        this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));
-        break;
-      case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;
-      case "linkClicked":
-        this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
-        break;
-      case "openUrl": vscode.env.openExternal(vscode.Uri.parse(String(msg.url ?? ""))).then(undefined, () => {}); break;
-      case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
-      case "navigateSession": this.onSessionNavigate?.(Number(msg.direction ?? 0)); break;
-      case "savePresetRequest":
-        this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
-        break;
-      case "setCaptureAll":
-        vscode.workspace.getConfiguration("saropaLogCapture")
-          .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
-        break;
-      case "editLine":
-        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, {
-          lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
-          timestamp: Number(msg.timestamp ?? 0), loadFromFile: (uri) => this.loadFromFile(uri),
-        }).catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
-        break;
-      case "exportLogs":
-        helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
-          .catch((err) => { vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`); });
-        break;
-      case "saveLevelFilters":
-        helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
-        break;
-      case "requestFindInFiles":
-        this.onFindInFiles?.(String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-        break;
-      case "openFindResult":
-        this.onOpenFindResult?.(String(msg.uriString ?? ""), String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-        break;
-      case "findNavigateMatch":
-        this.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
-        break;
-      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
-      case "requestSessionList": this.onSessionListRequest?.(); break;
-      case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
-      case "sessionAction": this.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
-      case "popOutViewer": this.onPopOutRequest?.(); break;
-      case "revealLogFile":
-        if (this.currentFileUri && this.onRevealLogFile) { Promise.resolve(this.onRevealLogFile(this.currentFileUri.toString())).catch(() => {}); }
-        break;
-      case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
-      case "promptGoToLine":
-        vscode.window.showInputBox({ prompt: "Go to line number", validateInput: (v) => /^\d+$/.test(v) ? null : "Enter a number" })
-          .then((v) => { if (v) { this.postMessage({ type: "scrollToLine", line: parseInt(v, 10) }); } });
-        break;
-      case "scriptError":
-        ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
-        break;
-      case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(m => this.postMessage(m)).catch(() => {}); break;
-      case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), m => this.postMessage(m)).catch(() => {}); break;
-      case "crashlyticsCloseIssue": case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), msg.type === "crashlyticsCloseIssue" ? 'CLOSED' : 'MUTED', m => this.postMessage(m)).catch(() => {}); break;
-      case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(m => this.postMessage(m)); break;
-      case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(m => this.postMessage(m)).catch(() => {}); break;
-      case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
-      case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(m => this.postMessage(m)); break;
-      case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
-      case "requestRecurringErrors": panelHandlers.handleRecurringRequest(m => this.postMessage(m)).catch(() => {}); break;
-      case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), m => this.postMessage(m)).catch(() => {}); break;
-      case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
-    }
+    const ctx: ViewerMessageContext = {
+      currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive,
+      context: this.context, post: (m) => this.postMessage(m), load: (u) => this.loadFromFile(u),
+      onMarkerRequest: this.onMarkerRequest, onTogglePause: this.onTogglePause,
+      onExclusionAdded: this.onExclusionAdded, onExclusionRemoved: this.onExclusionRemoved,
+      onAnnotationPrompt: this.onAnnotationPrompt, onSearchCodebase: this.onSearchCodebase,
+      onSearchSessions: this.onSearchSessions, onAnalyzeLine: this.onAnalyzeLine,
+      onAddToWatch: this.onAddToWatch, onLinkClick: this.onLinkClick,
+      onPartNavigate: this.onPartNavigate, onSavePresetRequest: this.onSavePresetRequest,
+      onSessionListRequest: this.onSessionListRequest, onOpenSessionFromPanel: this.onOpenSessionFromPanel,
+      onDisplayOptionsChange: this.onDisplayOptionsChange, onPopOutRequest: this.onPopOutRequest,
+      onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
+      onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
+      onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
+      onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,
+    };
+    dispatchViewerMessage(msg, ctx);
   }
 
   private startBatchTimer(): void {
