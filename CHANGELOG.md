@@ -9,6 +9,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Changed
+- **Module splits to stay under 300-line limit.** Extracted cohesive logic into five new files to keep every source file within the ESLint `max-lines` threshold (code lines only, blank lines and comments excluded):
+  - `viewer-styles-info.ts` — session info panel CSS, split from `viewer-styles-content.ts`
+  - `viewer-script-keyboard.ts` — keydown handler, split from `viewer-script.ts`
+  - `crashlytics-io.ts` — CLI runner and event cache I/O, split from `firebase-crashlytics.ts`
+  - `extension-lifecycle.ts` — debug session start/stop subscriptions, split from `extension.ts`
+  - `viewer-message-handler.ts` — webview message dispatcher, split from `log-viewer-provider.ts`
+
+---
 ## [2.0.8] - 2026-02-18
 
 ### Added

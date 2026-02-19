@@ -1,4 +1,3 @@
-import * as os from 'os';
 import * as vscode from 'vscode';
 import { getConfig } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
@@ -26,6 +25,7 @@ import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
 import { buildSessionListPayload } from './ui/viewer-provider-helpers';
 import { buildScopeContext } from './modules/scope-context';
+import { registerDebugLifecycle } from './extension-lifecycle';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -219,64 +219,7 @@ export function activate(context: vscode.ExtensionContext): void {
     );
 
     // Debug session lifecycle.
-    context.subscriptions.push(
-        vscode.debug.onDidStartDebugSession(async (session) => {
-            broadcaster.setPaused(false);
-            await sessionManager.startSession(session, context);
-            const activeSession = sessionManager.getActiveSession();
-            const filename = sessionManager.getActiveFilename();
-            if (filename) {
-                broadcaster.setFilename(filename);
-            }
-            broadcaster.setSessionActive(true);
-            viewerProvider.setSessionNavInfo(false, false, 0, 0);
-            if (activeSession?.fileUri) {
-                broadcaster.setCurrentFile(activeSession.fileUri);
-            }
-            broadcaster.setSplitInfo(1, 1);
-            broadcaster.setSessionInfo({
-                'Date': new Date().toISOString(),
-                'Project': session.workspaceFolder?.name ?? 'Unknown',
-                'Debug Adapter': session.type,
-                'launch.json': session.configuration.name,
-                'VS Code': vscode.version,
-                'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
-                'OS': `${os.type()} ${os.release()} (${os.arch()})`,
-            });
-            const cfg = getConfig();
-            if (cfg.exclusions.length > 0) {
-                broadcaster.setExclusions(cfg.exclusions);
-            }
-            if (cfg.showElapsedTime) {
-                broadcaster.setShowElapsed(true);
-            }
-            if (cfg.showDecorations) {
-                broadcaster.setShowDecorations(true);
-            }
-            broadcaster.setErrorClassificationSettings(
-                cfg.suppressTransientErrors ?? false,
-                cfg.breakOnCritical ?? false,
-                cfg.levelDetection ?? "strict",
-                cfg.deemphasizeFrameworkLevels ?? false
-            );
-            if (cfg.highlightRules.length > 0) {
-                broadcaster.setHighlightRules(cfg.highlightRules);
-            }
-            broadcaster.setContextLines(cfg.filterContextLines);
-            broadcaster.setContextViewLines(cfg.contextViewLines);
-            broadcaster.setPresets(loadPresets());
-            historyProvider.setActiveUri(activeSession?.fileUri);
-            historyProvider.refresh();
-        }),
-        vscode.debug.onDidTerminateDebugSession(async (session) => {
-            await sessionManager.stopSession(session);
-            broadcaster.setSessionActive(false);
-            historyProvider.setActiveUri(undefined);
-            historyProvider.refresh();
-            inlineDecorations.clearAll();
-            updateSessionNav().catch(() => {});
-        }),
-    );
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav });
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
