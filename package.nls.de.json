@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: Papierkorb-Sichtbarkeit umschalten",
   "command.resetAllSettings.title": "Saropa Log Capture: Alle Einstellungen auf Standardwerte zurücksetzen",
 
+  "config.aiActivity.enabled.description": "Claude Code AI-Aktivität (Tool-Aufrufe, Eingabeaufforderungen) im Log-Viewer zusammen mit Debug-Ausgaben anzeigen.",
+  "config.aiActivity.autoDetect.description": "AI-Aktivitäts-Overlay automatisch aktivieren, wenn ein Claude Code-Projektverzeichnis (~/.claude/projects/) für diesen Arbeitsbereich erkannt wird.",
+  "config.aiActivity.lookbackMinutes.description": "Wie weit zurück nach AI-Aktivität gesucht werden soll, wenn eine Debug-Sitzung startet (Minuten).",
+  "config.aiActivity.showPrompts.description": "Benutzer-Eingabeaufforderungen (was der Entwickler die KI gefragt hat) im Log-Viewer anzeigen.",
+  "config.aiActivity.showReadOperations.description": "AI-Leseoperationen (Read, Grep, Glob) anzeigen. Kann ausführlich sein — standardmäßig deaktiviert.",
+  "config.aiActivity.showSystemWarnings.description": "AI-Systemwarnungen (Rate-Limits, Hook-Blockierungen) anzeigen, die auf unterbrochene Änderungen hinweisen können.",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "Protokolldatei automatisch im Editor öffnen, wenn eine Debug-Sitzung endet.",
   "config.autoTagRules.description": "Regeln für die automatische Kennzeichnung von Sitzungen anhand von Inhaltsmustern.",

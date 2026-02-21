@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: ゴミ箱の表示を切り替え",
   "command.resetAllSettings.title": "Saropa Log Capture: すべての設定をデフォルトにリセット",
 
+  "config.aiActivity.enabled.description": "Claude Code AIアクティビティ（ツール呼び出し、プロンプト）をデバッグ出力と一緒にログビューアーに表示します。",
+  "config.aiActivity.autoDetect.description": "このワークスペースでClaude Codeプロジェクトディレクトリ（~/.claude/projects/）が検出された場合、AIアクティビティオーバーレイを自動的に有効にします。",
+  "config.aiActivity.lookbackMinutes.description": "デバッグセッション開始時にAIアクティビティを遡って検索する時間（分）。",
+  "config.aiActivity.showPrompts.description": "ユーザープロンプトのパンくずリスト（開発者がAIに何を依頼したか）をログビューアーに表示します。",
+  "config.aiActivity.showReadOperations.description": "AI読み取り操作（Read、Grep、Glob）を表示します。冗長になる場合があります — デフォルトで無効。",
+  "config.aiActivity.showSystemWarnings.description": "中断された変更を示す可能性のあるAIシステム警告（レート制限、フックブロック）を表示します。",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "デバッグセッション終了時に、ログファイルをエディターで自動的に開きます。",
   "config.autoTagRules.description": "コンテンツパターンに基づいてセッションに自動タグを付けるルール。",

@@ -59,7 +59,8 @@ function addToData(html, isMarker, category, ts, fw, sp) {
     }
     var plain = stripTags(html);
     var isSep = isSeparatorLine(plain);
-    var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
+    var isAi = category && category.indexOf('ai-') === 0;
+    var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;

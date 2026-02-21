@@ -10,8 +10,19 @@ export interface WatchPatternSetting {
   readonly alert?: "flash" | "badge" | "none";
 }
 
+/** AI activity overlay settings. */
+export interface AiActivityConfig {
+  readonly enabled: boolean;
+  readonly autoDetect: boolean;
+  readonly lookbackMinutes: number;
+  readonly showPrompts: boolean;
+  readonly showReadOperations: boolean;
+  readonly showSystemWarnings: boolean;
+}
+
 export interface SaropaLogCaptureConfig {
   readonly enabled: boolean;
+  readonly aiActivity: AiActivityConfig;
   readonly categories: readonly string[];
   readonly maxLines: number;
   readonly includeTimestamp: boolean;
@@ -141,6 +152,14 @@ export function getConfig(): SaropaLogCaptureConfig {
   const cfg = vscode.workspace.getConfiguration(SECTION);
   return {
     enabled: cfg.get<boolean>("enabled", true),
+    aiActivity: {
+      enabled: cfg.get<boolean>("aiActivity.enabled", true),
+      autoDetect: cfg.get<boolean>("aiActivity.autoDetect", true),
+      lookbackMinutes: cfg.get<number>("aiActivity.lookbackMinutes", 30),
+      showPrompts: cfg.get<boolean>("aiActivity.showPrompts", true),
+      showReadOperations: cfg.get<boolean>("aiActivity.showReadOperations", false),
+      showSystemWarnings: cfg.get<boolean>("aiActivity.showSystemWarnings", true),
+    },
     categories: cfg.get<string[]>("categories", [
       "console",
       "stdout",
