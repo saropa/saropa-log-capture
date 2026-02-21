@@ -211,6 +211,38 @@
     ],
     "configuration": {
       "properties": {
+        "saropaLogCapture.aiActivity.enabled": {
+          "default": true,
+          "description": "%config.aiActivity.enabled.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.aiActivity.autoDetect": {
+          "default": true,
+          "description": "%config.aiActivity.autoDetect.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.aiActivity.lookbackMinutes": {
+          "default": 30,
+          "description": "%config.aiActivity.lookbackMinutes.description%",
+          "maximum": 120,
+          "minimum": 1,
+          "type": "number"
+        },
+        "saropaLogCapture.aiActivity.showPrompts": {
+          "default": true,
+          "description": "%config.aiActivity.showPrompts.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.aiActivity.showReadOperations": {
+          "default": false,
+          "description": "%config.aiActivity.showReadOperations.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.aiActivity.showSystemWarnings": {
+          "default": true,
+          "description": "%config.aiActivity.showSystemWarnings.description%",
+          "type": "boolean"
+        },
         "saropaLogCapture.autoOpen": {
           "default": false,
           "description": "%config.autoOpen.description%",

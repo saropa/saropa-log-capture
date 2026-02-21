@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: Alternar visibilidad de la papelera",
   "command.resetAllSettings.title": "Saropa Log Capture: Restablecer todos los ajustes a valores predeterminados",
 
+  "config.aiActivity.enabled.description": "Mostrar actividad de AI de Claude Code (llamadas a herramientas, prompts) intercalada con la salida de depuración en el visor de registros.",
+  "config.aiActivity.autoDetect.description": "Activar automáticamente la superposición de actividad AI cuando se detecta un directorio de proyecto Claude Code (~/.claude/projects/) para este espacio de trabajo.",
+  "config.aiActivity.lookbackMinutes.description": "Cuántos minutos atrás buscar actividad AI cuando se inicia una sesión de depuración.",
+  "config.aiActivity.showPrompts.description": "Mostrar indicadores de prompts del usuario (lo que el desarrollador pidió a la AI) en el visor de registros.",
+  "config.aiActivity.showReadOperations.description": "Mostrar operaciones de lectura de AI (Read, Grep, Glob). Puede ser verboso — desactivado por defecto.",
+  "config.aiActivity.showSystemWarnings.description": "Mostrar advertencias del sistema AI (límites de tasa, bloqueos de hooks) que pueden indicar cambios interrumpidos.",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "Abrir automáticamente el archivo de registro en el editor cuando finaliza una sesión de depuración.",
   "config.autoTagRules.description": "Reglas para etiquetar automáticamente sesiones según patrones de contenido.",

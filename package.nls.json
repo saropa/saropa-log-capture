@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: Toggle Trash Visibility",
   "command.resetAllSettings.title": "Saropa Log Capture: Reset All Settings to Defaults",
 
+  "config.aiActivity.enabled.description": "Show Claude Code AI activity (tool calls, prompts) interleaved with debug output in the log viewer.",
+  "config.aiActivity.autoDetect.description": "Auto-enable AI activity overlay when a Claude Code project directory (~/.claude/projects/) is detected for this workspace.",
+  "config.aiActivity.lookbackMinutes.description": "How far back to scan for AI activity when a debug session starts (minutes).",
+  "config.aiActivity.showPrompts.description": "Show user prompt breadcrumbs (what the developer asked AI to do) in the log viewer.",
+  "config.aiActivity.showReadOperations.description": "Show AI read operations (Read, Grep, Glob). Can be verbose — disabled by default.",
+  "config.aiActivity.showSystemWarnings.description": "Show AI system warnings (rate limits, hook blocks) that may indicate interrupted changes.",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "Automatically open the log file in the editor when a debug session ends.",
   "config.autoTagRules.description": "Rules for automatically tagging sessions based on content patterns.",

@@ -26,6 +26,8 @@ import { BookmarkStore } from './modules/bookmark-store';
 import { buildSessionListPayload } from './ui/viewer-provider-helpers';
 import { buildScopeContext } from './modules/scope-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
+import { AiWatcher } from './modules/ai-watcher';
+import { formatAiEntry, filterAiEntries } from './modules/ai-line-formatter';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -218,8 +220,18 @@ export function activate(context: vscode.ExtensionContext): void {
         ),
     );
 
+    // AI activity watcher (overlay — viewer-only, never written to .log files).
+    const aiWatcher = new AiWatcher(outputChannel);
+    context.subscriptions.push(aiWatcher);
+    aiWatcher.onEntries((entries) => {
+        const cfg = getConfig().aiActivity;
+        for (const entry of filterAiEntries(entries, cfg)) {
+            broadcaster.addLine(formatAiEntry(entry));
+        }
+    });
+
     // Debug session lifecycle.
-    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav });
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher });
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
