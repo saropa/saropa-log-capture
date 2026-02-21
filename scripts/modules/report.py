@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Report generation, timing display, and success banner.
 
-Reports are saved to reports/ (which is gitignored) so the user
-has a persistent record of each pipeline run. The timing chart
-gives a visual breakdown of where time was spent.
+Reports are saved to reports/<yyyymmdd>/ date subfolders (which are
+gitignored) so the user has a persistent record of each pipeline run.
+The timing chart gives a visual breakdown of where time was spent.
 """
 
 import datetime
@@ -44,11 +44,13 @@ def save_report(
     vsix_path: str | None = None,
     is_publish: bool = False,
 ) -> str | None:
-    """Save a summary report to reports/. Returns the report path."""
-    reports_dir = os.path.join(PROJECT_ROOT, "reports")
+    """Save a summary report to reports/<yyyymmdd>/. Returns the report path."""
+    now = datetime.datetime.now()
+    date_folder = now.strftime("%Y%m%d")
+    reports_dir = os.path.join(PROJECT_ROOT, "reports", date_folder)
     os.makedirs(reports_dir, exist_ok=True)
 
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = now.strftime("%Y%m%d_%H%M%S")
     kind = "publish" if is_publish else "analyze"
     report_name = f"{ts}_saropa_log_capture_{kind}_report.log"
     report_path = os.path.join(reports_dir, report_name)
