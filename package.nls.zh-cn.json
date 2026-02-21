@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: 切换回收站可见性",
   "command.resetAllSettings.title": "Saropa Log Capture: 将所有设置重置为默认值",
 
+  "config.aiActivity.enabled.description": "在日志查看器中将 Claude Code AI 活动（工具调用、提示）与调试输出交错显示。",
+  "config.aiActivity.autoDetect.description": "当检测到此工作区的 Claude Code 项目目录（~/.claude/projects/）时，自动启用 AI 活动叠加层。",
+  "config.aiActivity.lookbackMinutes.description": "调试会话启动时回溯搜索 AI 活动的时间（分钟）。",
+  "config.aiActivity.showPrompts.description": "在日志查看器中显示用户提示面包屑（开发者向 AI 提出的请求）。",
+  "config.aiActivity.showReadOperations.description": "显示 AI 读取操作（Read、Grep、Glob）。可能内容较多 — 默认禁用。",
+  "config.aiActivity.showSystemWarnings.description": "显示 AI 系统警告（速率限制、钩子阻止），可能表示变更被中断。",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "调试会话结束时自动在编辑器中打开日志文件。",
   "config.autoTagRules.description": "根据内容模式自动为会话添加标签的规则。",

@@ -186,6 +186,14 @@ function renderItem(item, idx) {
         return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
+    // AI activity lines get a distinct prefix and CSS class
+    if (item.category && item.category.indexOf('ai-') === 0) {
+        var aiCat = item.category;
+        var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
+        var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
+        return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiBody + '</div>';
+    }
+
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
