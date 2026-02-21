@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.10] - 2026-02-21
 
 ### Added
 - **AI Activity Integration.** Show Claude Code AI activity (tool calls, user prompts, system warnings) interleaved with debug output in the log viewer. When a debug session starts, the extension scans the most recent Claude Code JSONL session file for recent AI activity and streams new entries in real time. AI lines appear with distinct colored left borders and `[AI ...]` prefixes, filterable via the existing category system.
