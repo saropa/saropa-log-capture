@@ -9,6 +9,8 @@ import type { ViewerBroadcaster } from './ui/viewer-broadcaster';
 import type { SessionHistoryProvider } from './ui/session-history-provider';
 import type { InlineDecorationsProvider } from './ui/inline-decorations';
 import type { LogViewerProvider } from './ui/log-viewer-provider';
+import type { AiWatcher } from './modules/ai-watcher';
+import { hasClaudeProject } from './modules/ai-session-resolver';
 
 interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
@@ -18,11 +20,12 @@ interface DebugLifecycleDeps {
     readonly inlineDecorations: InlineDecorationsProvider;
     readonly viewerProvider: LogViewerProvider;
     readonly updateSessionNav: () => Promise<void>;
+    readonly aiWatcher: AiWatcher;
 }
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher } = deps;
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
             broadcaster.setPaused(false);
@@ -59,6 +62,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             broadcaster.setPresets(loadPresets());
             historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();
+            startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
             await sessionManager.stopSession(session);
@@ -67,6 +71,24 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             historyProvider.refresh();
             inlineDecorations.clearAll();
             updateSessionNav().catch(() => {});
+            aiWatcher.stop();
         }),
     );
+}
+
+async function startAiWatcherIfEnabled(
+    cfg: ReturnType<typeof getConfig>,
+    session: vscode.DebugSession,
+    aiWatcher: AiWatcher,
+): Promise<void> {
+    const ai = cfg.aiActivity;
+    if (!ai.enabled && !ai.autoDetect) { return; }
+    const workspacePath = session.workspaceFolder?.uri.fsPath;
+    if (!workspacePath) { return; }
+    if (!ai.enabled && ai.autoDetect) {
+        const hasProject = await hasClaudeProject(workspacePath);
+        if (!hasProject) { return; }
+    }
+    const lookbackMs = ai.lookbackMinutes * 60 * 1000;
+    await aiWatcher.start(workspacePath, { lookbackMs });
 }

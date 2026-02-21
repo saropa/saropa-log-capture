@@ -43,6 +43,13 @@
   "command.toggleTrash.title": "Saropa Log Capture: 휴지통 표시 전환",
   "command.resetAllSettings.title": "Saropa Log Capture: 모든 설정을 기본값으로 재설정",
 
+  "config.aiActivity.enabled.description": "Claude Code AI 활동(도구 호출, 프롬프트)을 로그 뷰어에서 디버그 출력과 함께 인터리브하여 표시합니다.",
+  "config.aiActivity.autoDetect.description": "이 작업 영역에서 Claude Code 프로젝트 디렉터리(~/.claude/projects/)가 감지되면 AI 활동 오버레이를 자동으로 활성화합니다.",
+  "config.aiActivity.lookbackMinutes.description": "디버그 세션 시작 시 AI 활동을 얼마나 과거까지 검색할지 설정합니다(분).",
+  "config.aiActivity.showPrompts.description": "사용자 프롬프트 표시(개발자가 AI에게 요청한 내용)를 로그 뷰어에 표시합니다.",
+  "config.aiActivity.showReadOperations.description": "AI 읽기 작업(Read, Grep, Glob)을 표시합니다. 내용이 많을 수 있습니다 — 기본적으로 비활성화됨.",
+  "config.aiActivity.showSystemWarnings.description": "중단된 변경을 나타낼 수 있는 AI 시스템 경고(속도 제한, 훅 차단)를 표시합니다.",
+
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "디버그 세션이 종료되면 편집기에서 로그 파일을 자동으로 엽니다.",
   "config.autoTagRules.description": "콘텐츠 패턴을 기반으로 세션에 자동으로 태그를 지정하는 규칙입니다.",

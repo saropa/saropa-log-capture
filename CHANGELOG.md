@@ -9,6 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **AI Activity Integration.** Show Claude Code AI activity (tool calls, user prompts, system warnings) interleaved with debug output in the log viewer. When a debug session starts, the extension scans the most recent Claude Code JSONL session file for recent AI activity and streams new entries in real time. AI lines appear with distinct colored left borders and `[AI ...]` prefixes, filterable via the existing category system.
+  - New settings under `saropaLogCapture.aiActivity.*`: `enabled`, `autoDetect`, `lookbackMinutes`, `showPrompts`, `showReadOperations`, `showSystemWarnings`
+  - Auto-detection: when `autoDetect` is true (default), the feature activates silently if `~/.claude/projects/<slug>/` exists for the workspace
+  - Streaming deduplication: Claude Code writes multiple JSONL lines per assistant message during streaming; the parser keeps only the final (most complete) version, and the watcher tracks emitted entries to prevent duplicates across reads
+  - New modules: `ai-jsonl-types.ts`, `ai-jsonl-parser.ts`, `ai-session-resolver.ts`, `ai-watcher.ts`, `ai-line-formatter.ts`
+  - New viewer styles: `viewer-styles-ai.ts` — category-specific colors (cyan for prompts, yellow for edits, magenta for bash, orange for warnings)
+  - Translations added for all 6 locale files (EN, DE, ES, JA, KO, ZH-CN)
+
+---
 ## [2.0.9] - 2026-02-18
 
 ### Changed
