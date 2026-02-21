@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Changed
+- **Dev script reports use daily subfolders.** `scripts/modules/report.py` `save_report()` now writes publish/analyze reports into `reports/yyyymmdd/` date subfolders, matching the extension's existing date-folder convention for debug capture logs.
+
+---
 ## [2.0.10] - 2026-02-21
 
 ### Added
