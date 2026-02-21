@@ -880,5 +880,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "2.0.9"
+  "version": "2.0.10"
 }
