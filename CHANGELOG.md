@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Fixed
+- **Hot-path config reads.** `getConfig()` was called on every DAP message (30+ `cfg.get()` calls each time). Now cached in `SessionManagerImpl` and refreshed on settings change.
+- **File split race condition.** `performSplit()` was fired without await, so `appendLine()` could write to a closing stream. Added a `splitting` guard flag.
+- **Inline decoration thrashing.** `editor.setDecorations()` was called per log line with a source reference. Now debounced at 200ms.
+- **Package root FS walks on every editor switch.** `detectPackageRoot` checked up to 8 manifest files per directory level on every `onDidChangeActiveTextEditor`. Results are now cached.
+- **Unbounded `seenToolKeys` growth in AI watcher.** The dedup Set now clears at 10K entries to prevent memory leaks during long Claude sessions.
+- **Memory spike in Find in Files.** `searchLogFilesConcurrent` read all log files simultaneously via `Promise.all()`. Now batched (5 files at a time).
+- **Redundant config reads in settings change handler.** Three separate `getConfig()` calls collapsed to one.
+
 ### Changed
 - **Dev script reports use daily subfolders.** `scripts/modules/report.py` `save_report()` now writes publish/analyze reports into `reports/yyyymmdd/` date subfolders, matching the extension's existing date-folder convention for debug capture logs.
 
@@ -96,7 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 - **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).
-- **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Home Essentials, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links. Each entry has a badge line (platform, stats) and a description synced with ABOUT_SAROPA.md.
+- **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links. Each entry has a badge line (platform, stats) and a description synced with ABOUT_SAROPA.md.
 
 ### Changed
 - **Moved views to activity bar.** All Saropa panels (Log Viewer, Crashlytics, Recurring Errors, About) now appear in the left activity bar sidebar instead of the bottom panel area, fixing the cramped layout.

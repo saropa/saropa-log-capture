@@ -160,7 +160,10 @@ async function searchFile(
     return matches;
 }
 
-/** Search all log files concurrently, returning per-file match counts. */
+/** Max files to read simultaneously — prevents memory spikes with many log files. */
+const searchBatchSize = 5;
+
+/** Search all log files in batches, returning per-file match counts. */
 export async function searchLogFilesConcurrent(
     query: string,
     options: SearchOptions = {},
@@ -179,8 +182,12 @@ export async function searchLogFilesConcurrent(
     const pattern = buildPattern(query, options);
     if (!pattern) { return empty; }
 
-    const results = await Promise.all(logFiles.map(uri => countFileMatches(uri, pattern)));
-    const files = results.filter((r): r is FileSearchResult => r !== undefined);
+    const files: FileSearchResult[] = [];
+    for (let i = 0; i < logFiles.length; i += searchBatchSize) {
+        const batch = logFiles.slice(i, i + searchBatchSize);
+        const batchResults = await Promise.all(batch.map(uri => countFileMatches(uri, pattern)));
+        for (const r of batchResults) { if (r) { files.push(r); } }
+    }
     const totalMatches = files.reduce((sum, f) => sum + f.matchCount, 0);
     return { query, files, totalFiles: logFiles.length, totalMatches };
 }
