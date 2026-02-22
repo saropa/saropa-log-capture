@@ -21,6 +21,10 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
         cmd,
         capture_output=True,
         text=True,
+        # Explicit UTF-8 avoids Windows defaulting to cp1252,
+        # which garbles Mocha's ✓/✗ and other Unicode output.
+        encoding="utf-8",
+        errors="replace",
         # Windows needs shell=True because npm/npx are .cmd batch files
         # that only resolve through cmd.exe's PATH lookup.
         shell=(sys.platform == "win32"),
