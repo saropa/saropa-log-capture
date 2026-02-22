@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
+import { getConfig, SaropaLogCaptureConfig } from './config';
 import { SessionManager, DapOutputBody } from './tracker';
 import { LogSession } from './log-session';
 import { SourceLocation } from './log-session-helpers';
@@ -52,12 +52,19 @@ export class SessionManagerImpl implements SessionManager {
     private autoTagger: AutoTagger | null = null;
     private readonly metadataStore = new SessionMetadataStore();
     private readonly earlyOutputBuffer = new Map<string, DapOutputBody[]>();
+    /** Cached config snapshot — avoids 30+ cfg.get() calls per DAP message. */
+    private cachedConfig: SaropaLogCaptureConfig = getConfig();
 
     constructor(
         private readonly statusBar: StatusBar,
         private readonly outputChannel: vscode.OutputChannel,
     ) {
         this.watcher = this.createWatcher();
+    }
+
+    /** Refresh the cached config (call on settings change). */
+    refreshConfig(config?: SaropaLogCaptureConfig): void {
+        this.cachedConfig = config ?? getConfig();
     }
 
     get activeSessionCount(): number { return this.ownerSessionIds.size; }
@@ -85,7 +92,7 @@ export class SessionManagerImpl implements SessionManager {
         const session = this.sessions.get(sessionId);
         // Buffer events arriving before async session init completes (race condition fix)
         if (!session) { this.bufferEarlyEvent(sessionId, body); return; }
-        const config = getConfig();
+        const config = this.cachedConfig;
         if (!config.enabled) { return; }
 
         const category = body.category ?? 'console';
@@ -122,7 +129,7 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Called by the DAP tracker for all protocol messages (verbose mode). */
     onDapMessage(sessionId: string, msg: unknown, direction: DapDirection): void {
-        if (!getConfig().verboseDap) { return; }
+        if (!this.cachedConfig.verboseDap) { return; }
         const session = this.sessions.get(sessionId);
         if (!session) { return; }
 
@@ -134,7 +141,8 @@ export class SessionManagerImpl implements SessionManager {
         session: vscode.DebugSession,
         context: vscode.ExtensionContext,
     ): Promise<void> {
-        if (!getConfig().enabled) { return; }
+        this.cachedConfig = getConfig();
+        if (!this.cachedConfig.enabled) { return; }
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);

@@ -16,8 +16,24 @@ const manifestFiles = [
     'build.gradle.kts',
 ];
 
+/** Cache: file path → package root (or null if none found). */
+const rootCache = new Map<string, vscode.Uri | null>();
+
 /** Walk up from fileUri to find the nearest ancestor with a package manifest. */
 export async function detectPackageRoot(
+    fileUri: vscode.Uri,
+    stopAt: vscode.Uri,
+): Promise<vscode.Uri | undefined> {
+    const cacheKey = fileUri.path;
+    const cached = rootCache.get(cacheKey);
+    if (cached !== undefined) { return cached ?? undefined; }
+
+    const result = await walkForManifest(fileUri, stopAt);
+    rootCache.set(cacheKey, result ?? null);
+    return result;
+}
+
+async function walkForManifest(
     fileUri: vscode.Uri,
     stopAt: vscode.Uri,
 ): Promise<vscode.Uri | undefined> {
