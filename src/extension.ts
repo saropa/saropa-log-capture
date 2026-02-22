@@ -110,14 +110,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Live config changes for settings that can update mid-session.
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (!e.affectsConfiguration('saropaLogCapture')) { return; }
+        const cfg = getConfig();
+        sessionManager.refreshConfig(cfg);
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
-            broadcaster.setIconBarPosition(getConfig().iconBarPosition);
+            broadcaster.setIconBarPosition(cfg.iconBarPosition);
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
-            broadcaster.setMinimapShowInfo(getConfig().minimapShowInfoMarkers);
+            broadcaster.setMinimapShowInfo(cfg.minimapShowInfoMarkers);
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
-            broadcaster.setMinimapWidth(getConfig().minimapWidth);
+            broadcaster.setMinimapWidth(cfg.minimapWidth);
         }
     }));
 

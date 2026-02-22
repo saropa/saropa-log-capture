@@ -37,6 +37,7 @@ export class AiWatcher implements vscode.Disposable {
     private disposed = false;
     /** Tracks emitted tool calls to prevent streaming duplicates during tailing. */
     private seenToolKeys = new Set<string>();
+    private static readonly maxSeenKeys = 10_000;
 
     constructor(private readonly outputChannel: vscode.OutputChannel) {}
 
@@ -152,6 +153,10 @@ export class AiWatcher implements vscode.Disposable {
         const key = this.toolKey(e);
         if (!key) { return true; } // Non-tool entries always pass through
         if (this.seenToolKeys.has(key)) { return false; }
+        // Prevent unbounded growth — clear and accept rare re-emission
+        if (this.seenToolKeys.size >= AiWatcher.maxSeenKeys) {
+            this.seenToolKeys.clear();
+        }
         this.seenToolKeys.add(key);
         return true;
     }

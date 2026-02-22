@@ -42,6 +42,7 @@ export class InlineDecorationsProvider implements vscode.Disposable {
     private readonly disposables: vscode.Disposable[] = [];
     private enabled = false;
     private options: InlineDecorationsOptions;
+    private updateTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(options: InlineDecorationsOptions = DEFAULT_OPTIONS) {
         this.options = { ...DEFAULT_OPTIONS, ...options };
@@ -57,14 +58,14 @@ export class InlineDecorationsProvider implements vscode.Disposable {
 
         // Update decorations when active editor changes
         this.disposables.push(
-            vscode.window.onDidChangeActiveTextEditor(() => this.updateActiveEditor()),
+            vscode.window.onDidChangeActiveTextEditor(() => this.scheduleUpdate()),
         );
 
         // Update decorations when document changes
         this.disposables.push(
             vscode.workspace.onDidChangeTextDocument((e) => {
                 if (vscode.window.activeTextEditor?.document === e.document) {
-                    this.updateActiveEditor();
+                    this.scheduleUpdate();
                 }
             }),
         );
@@ -120,7 +121,7 @@ export class InlineDecorationsProvider implements vscode.Disposable {
 
         // Update if this file is currently visible
         if (this.enabled) {
-            this.updateActiveEditor();
+            this.scheduleUpdate();
         }
     }
 
@@ -138,11 +139,21 @@ export class InlineDecorationsProvider implements vscode.Disposable {
     }
 
     dispose(): void {
+        if (this.updateTimer) { clearTimeout(this.updateTimer); }
         this.clearAllDecorations();
         this.decorationType.dispose();
         for (const d of this.disposables) {
             d.dispose();
         }
+    }
+
+    /** Debounced update — avoids hammering the renderer during high-volume output. */
+    private scheduleUpdate(): void {
+        if (this.updateTimer) { return; }
+        this.updateTimer = setTimeout(() => {
+            this.updateTimer = undefined;
+            this.updateActiveEditor();
+        }, 200);
     }
 
     /** Update decorations for the active editor. */
