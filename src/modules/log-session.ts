@@ -28,6 +28,8 @@ export class LogSession {
     private _fileUri: vscode.Uri | undefined;
     private writeStream: fs.WriteStream | undefined;
     private maxLinesReached = false;
+    /** Guard flag — prevents writes to a stream being closed during split. */
+    private splitting = false;
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
 
@@ -90,7 +92,7 @@ export class LogSession {
         timestamp: Date,
         sourceLocation?: SourceLocation,
     ): void {
-        if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream) {
+        if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream || this.splitting) {
             return;
         }
 
@@ -104,6 +106,7 @@ export class LogSession {
 
         if (splitResult.shouldSplit && splitResult.reason) {
             this.performSplit(splitResult.reason).catch((e) => { console.error('Log split failed:', e); });
+            return; // Skip this line — split marker documents the boundary
         }
 
         const elapsedMs = this.computeElapsed(timestamp);
@@ -140,7 +143,7 @@ export class LogSession {
      * @returns The marker text written, or undefined if not recording.
      */
     appendMarker(customText?: string): string | undefined {
-        if (this._state === 'stopped' || !this.writeStream) {
+        if (this._state === 'stopped' || !this.writeStream || this.splitting) {
             return undefined;
         }
 
@@ -161,7 +164,7 @@ export class LogSession {
      * (DAP lines are diagnostic infrastructure, not user output).
      */
     appendDapLine(formatted: string): void {
-        if (this._state !== 'recording' || !this.writeStream) {
+        if (this._state !== 'recording' || !this.writeStream || this.splitting) {
             return;
         }
         const lineData = formatted + '\n';
@@ -179,46 +182,51 @@ export class LogSession {
 
     /** Perform a file split - close current file, open new one. */
     private async performSplit(reason: SplitReason): Promise<void> {
-        if (!this.writeStream) {
+        if (!this.writeStream || this.splitting) {
             return;
         }
 
-        // Write split marker to current file
-        const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${this._partNumber + 2} ===\n`;
-        this.writeStream.write(splitMarker);
+        this.splitting = true;
+        try {
+            // Write split marker to current file
+            const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${this._partNumber + 2} ===\n`;
+            this.writeStream.write(splitMarker);
 
-        // Close current file
-        await new Promise<void>((resolve, reject) => {
-            this.writeStream!.end(() => resolve());
-            this.writeStream!.on('error', reject);
-        });
+            // Close current file
+            await new Promise<void>((resolve, reject) => {
+                this.writeStream!.end(() => resolve());
+                this.writeStream!.on('error', reject);
+            });
 
-        // Increment part number and reset counters
-        this._partNumber++;
-        this._bytesWritten = 0;
-        this._partStartTime = Date.now();
-        this._lastLineTime = 0;
+            // Increment part number and reset counters
+            this._partNumber++;
+            this._bytesWritten = 0;
+            this._partStartTime = Date.now();
+            this._lastLineTime = 0;
 
-        // Open new file
-        const logDirPath = this.getLogDirUri().fsPath;
-        const newFileName = this.getPartFileName();
-        const newFilePath = path.join(logDirPath, newFileName);
-        this._fileUri = vscode.Uri.file(newFilePath);
+            // Open new file
+            const logDirPath = this.getLogDirUri().fsPath;
+            const newFileName = this.getPartFileName();
+            const newFilePath = path.join(logDirPath, newFileName);
+            this._fileUri = vscode.Uri.file(newFilePath);
 
-        this.writeStream = fs.createWriteStream(newFilePath, {
-            flags: 'a',
-            encoding: 'utf-8',
-        });
+            this.writeStream = fs.createWriteStream(newFilePath, {
+                flags: 'a',
+                encoding: 'utf-8',
+            });
 
-        // Write continuation header
-        const header = generateContinuationHeader(
-            this.context,
-            this._partNumber,
-            reason,
-            this._baseFileName
-        );
-        this.writeStream.write(header);
-        this._bytesWritten = Buffer.byteLength(header, 'utf-8');
+            // Write continuation header
+            const header = generateContinuationHeader(
+                this.context,
+                this._partNumber,
+                reason,
+                this._baseFileName
+            );
+            this.writeStream.write(header);
+            this._bytesWritten = Buffer.byteLength(header, 'utf-8');
+        } finally {
+            this.splitting = false;
+        }
 
         // Notify callback
         this.onSplit?.(this._fileUri, this._partNumber, reason);
