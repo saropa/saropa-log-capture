@@ -9,9 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.11] - 2026-02-22
 
 ### Fixed
+- **Session-manager test failing.** Category-filter test patched `getConfig` via `require()` but the import binding in session-manager was already cached. Switched to `refreshConfig()` with direct config objects.
+- **Garbled Unicode in publish script output.** `subprocess.run` defaulted to cp1252 on Windows, corrupting Mocha's ✓/✗ characters. Added explicit `encoding="utf-8"` to the `run()` helper.
 - **Hot-path config reads.** `getConfig()` was called on every DAP message (30+ `cfg.get()` calls each time). Now cached in `SessionManagerImpl` and refreshed on settings change.
 - **File split race condition.** `performSplit()` was fired without await, so `appendLine()` could write to a closing stream. Added a `splitting` guard flag.
 - **Inline decoration thrashing.** `editor.setDecorations()` was called per log line with a source reference. Now debounced at 200ms.
