@@ -15,7 +15,7 @@ export function getOptionsPanelHtml(): string {
     return `<div id="options-panel" class="options-panel">
     <div class="options-header">
         <span>Options</span>
-        <button class="options-close">&times;</button>
+        <button class="options-close" title="Close">&times;</button>
     </div>
 
     <div class="options-search-wrapper">

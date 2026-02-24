@@ -20,7 +20,7 @@ export function getDecoSettingsHtml(): string {
     return `<div id="deco-settings" class="deco-settings-panel">
     <div class="deco-settings-header">
         Decoration Settings
-        <button class="deco-settings-close">&times;</button>
+        <button class="deco-settings-close" title="Close">&times;</button>
     </div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-dot" checked />

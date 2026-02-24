@@ -47,7 +47,7 @@ function openEditModal(lineIdx) {
         '<div class="edit-modal-content">' +
         '<div class="edit-modal-header">' +
         'Edit Line ' + (lineIdx + 1) +
-        '<button class="edit-modal-close">&#x2715;</button>' +
+        '<button class="edit-modal-close" title="Close">&#x2715;</button>' +
         '</div>' +
         warning +
         '<textarea id="edit-modal-textarea" rows="5">' +

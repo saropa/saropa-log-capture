@@ -118,12 +118,13 @@ export function getSessionPanelScript(): string {
 
     function renderItem(s) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
+        var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
         var cls = 'session-item' + (s.isActive ? ' session-item-active' : '');
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
         var dots = renderSeverityDots(s);
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
-            + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
+            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
