@@ -28,7 +28,8 @@ var repeatTracker = {
     lastPlainText: null,
     lastLevel: null,
     count: 0,
-    lastTimestamp: 0
+    lastTimestamp: 0,
+    lastLineIndex: -1
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
 var repeatWindowMs = 3000; // 3 second window for detecting repeats
@@ -98,7 +99,7 @@ function extractContext(plainText) {
  * Calculate the height of a log item based on its type and filter state.
  */
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
