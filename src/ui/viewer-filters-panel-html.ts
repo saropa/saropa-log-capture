@@ -18,7 +18,7 @@ export function getFiltersPanelHtml(): string {
     return `<div id="filters-panel" class="options-panel">
     <div class="options-header">
         <span>Filters</span>
-        <button class="filters-close options-close">&times;</button>
+        <button class="filters-close options-close" title="Close">&times;</button>
     </div>
 
     <div class="options-search-wrapper">
