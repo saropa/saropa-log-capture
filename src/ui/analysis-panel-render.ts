@@ -9,7 +9,8 @@ import type { DocScanResults } from '../modules/docs-scanner';
 import type { ImportResults } from '../modules/import-extractor';
 import type { SymbolResults } from '../modules/symbol-resolver';
 import type { CommitDiff } from '../modules/git-diff';
-import { getAnalysisStyles, getAnalysisScript } from './analysis-panel-styles';
+import { getAnalysisStyles } from './analysis-panel-styles';
+import { getAnalysisScript } from './analysis-panel-script';
 import { type StackFrameInfo, renderFrameSection } from './analysis-frame-render';
 
 export interface TokenResultGroup { readonly token: AnalysisToken; readonly results: SearchResults; }

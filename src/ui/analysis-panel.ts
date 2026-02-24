@@ -3,35 +3,25 @@
 import * as vscode from 'vscode';
 import { escapeHtml } from '../modules/ansi';
 import { getNonce } from './viewer-content';
-import { searchLogFiles, openLogAtLine } from '../modules/log-search';
-import { type AnalysisToken, extractAnalysisTokens } from '../modules/line-analyzer';
-import { extractSourceReference, extractPackageHint } from '../modules/source-linker';
+import { openLogAtLine } from '../modules/log-search';
+import { extractAnalysisTokens } from '../modules/line-analyzer';
+import { extractSourceReference } from '../modules/source-linker';
 import { parseSourceTag } from '../modules/source-tag-parser';
-import { analyzeSourceFile } from '../modules/workspace-analyzer';
-import { getGitBlame } from '../modules/git-blame';
 import { extractFrames, analyzeFrame } from './analysis-frame-handler';
-import { getCommitDiff } from '../modules/git-diff';
-import { scanDocsForTokens } from '../modules/docs-scanner';
-import { extractImports } from '../modules/import-extractor';
-import { resolveSymbols } from '../modules/symbol-resolver';
-import { normalizeLine, hashFingerprint } from '../modules/error-fingerprint';
-import { aggregateInsights } from '../modules/cross-session-aggregator';
-import { extractDateFromFilename } from '../modules/stack-parser';
 import type { SectionData } from '../modules/analysis-relevance';
 import { type RelatedLinesResult, scanRelatedLines } from '../modules/related-lines-scanner';
-import { type GitHubContext, getGitHubContext } from '../modules/github-context';
-import { renderRelatedLinesSection, type FileAnalysis, renderReferencedFilesSection, renderGitHubSection, renderFirebaseSection } from './analysis-related-render';
-import { getFirebaseContext, getCrashEvents } from '../modules/firebase-crashlytics';
+import { renderRelatedLinesSection } from './analysis-related-render';
+import { getCrashEvents } from '../modules/firebase-crashlytics';
 import { getIssueStats } from '../modules/crashlytics-stats';
 import { renderCrashDetail, renderDeviceDistribution, renderApiDistribution } from './analysis-crash-detail';
 import { generateCrashSummary } from '../modules/crashlytics-ai-summary';
-import { type PostFn, mergeResults, postPendingSlots, postFinalization, postNoSource, buildSourceMetrics } from './analysis-panel-helpers';
+import { mergeResults, postPendingSlots, postFinalization } from './analysis-panel-helpers';
+import { buildProgressiveShell, emptySlot } from './analysis-panel-render';
 import {
-    type TokenResultGroup,
-    buildProgressiveShell, renderSourceSection, renderLineHistorySection,
-    renderDocsSection, renderImportsSection, renderSymbolsSection,
-    renderTokenGroups, emptySlot, errorSlot,
-} from './analysis-panel-render';
+    type StreamCtx,
+    runSourceChain, runDocsScan, runSymbolResolution, runTokenSearch,
+    runCrossSessionLookup, runReferencedFiles, runGitHubLookup, runFirebaseLookup,
+} from './analysis-panel-streams';
 
 let panel: vscode.WebviewPanel | undefined;
 let activeAbort: AbortController | undefined;
@@ -82,15 +72,16 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     else if (hasTag) { post('related', emptySlot('related', '📋 No related lines found')); }
 
     // Wave 2: all streams in parallel with enriched tokens
+    const ctx: StreamCtx = { post, signal: abort.signal, progress: postProgress };
     const results = await Promise.allSettled([
-        raceTimeout(runSourceChain(post, abort.signal, sourceToken?.value, sourceRef?.line), streamTimeout),
-        raceTimeout(runDocsScan(post, abort.signal, allTokens), streamTimeout),
-        raceTimeout(runSymbolResolution(post, abort.signal, allTokens), streamTimeout),
-        raceTimeout(runTokenSearch(post, abort.signal, allTokens), streamTimeout),
-        raceTimeout(runCrossSessionLookup(lineText), streamTimeout),
-        raceTimeout(runReferencedFiles(post, abort.signal, related), streamTimeout),
-        raceTimeout(runGitHubLookup(post, abort.signal, related, allTokens), streamTimeout),
-        raceTimeout(runFirebaseLookup(post, abort.signal, allTokens), streamTimeout),
+        raceTimeout(runSourceChain(ctx, sourceToken?.value, sourceRef?.line), streamTimeout),
+        raceTimeout(runDocsScan(ctx, allTokens), streamTimeout),
+        raceTimeout(runSymbolResolution(ctx, allTokens), streamTimeout),
+        raceTimeout(runTokenSearch(ctx, allTokens), streamTimeout),
+        raceTimeout(runCrossSessionLookup(postProgress, lineText), streamTimeout),
+        raceTimeout(runReferencedFiles(ctx, related), streamTimeout),
+        raceTimeout(runGitHubLookup(ctx, related, allTokens), streamTimeout),
+        raceTimeout(runFirebaseLookup(ctx, allTokens), streamTimeout),
     ]);
     if (abort.signal.aborted) { return; }
     postPendingSlots(posted, post, !!sourceRef, hasTag);
@@ -102,135 +93,6 @@ export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(
 function cancelAnalysis(): void { activeAbort?.abort(); activeAbort = undefined; }
 function postProgress(id: string, message: string): void {
     panel?.webview.postMessage({ type: 'sectionProgress', id, message });
-}
-
-async function runSourceChain(post: PostFn, signal: AbortSignal, filename?: string, crashLine?: number): Promise<Partial<SectionData>> {
-    if (!filename) { postNoSource(post, '📄 No source file reference found'); return {}; }
-    const wsInfo = await analyzeSourceFile(filename, crashLine);
-    if (signal.aborted) { return {}; }
-    if (!wsInfo) { postNoSource(post, '📄 Source file not found in workspace'); return {}; }
-    postProgress('source', '📄 Running git blame...');
-    const blame = wsInfo.uri && crashLine
-        ? await getGitBlame(wsInfo.uri, crashLine).catch(() => undefined)
-        : undefined;
-    if (signal.aborted) { return {}; }
-    const diff = blame ? await getCommitDiff(blame.hash).catch(() => undefined) : undefined;
-    if (signal.aborted) { return {}; }
-    post('source', renderSourceSection(wsInfo, blame, diff));
-    post('line-history', renderLineHistorySection(wsInfo.lineCommits));
-    const metrics = buildSourceMetrics(wsInfo, blame);
-    try {
-        postProgress('imports', '📦 Parsing imports...');
-        const imports = await extractImports(wsInfo.uri);
-        if (!signal.aborted) { post('imports', renderImportsSection(imports)); }
-        return { ...metrics, importCount: imports.imports.length, localImportCount: imports.localCount };
-    } catch {
-        if (!signal.aborted) { post('imports', errorSlot('imports', '📦 Import extraction failed')); }
-        return metrics;
-    }
-}
-
-async function runDocsScan(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
-    if (signal.aborted) { return {}; }
-    const wsFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!wsFolder) { post('docs', emptySlot('docs', '📚 No workspace folder open')); return {}; }
-    try {
-        const names = tokens.map(t => t.value);
-        postProgress('docs', '📚 Scanning ' + names.length + ' tokens...');
-        const results = await scanDocsForTokens(names, wsFolder);
-        if (!signal.aborted) { post('docs', renderDocsSection(results)); }
-        return { docMatchCount: results.matches.length };
-    } catch {
-        if (!signal.aborted) { post('docs', errorSlot('docs', '📚 Documentation scan failed')); }
-        return {};
-    }
-}
-
-async function runSymbolResolution(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
-    if (signal.aborted) { return {}; }
-    try {
-        postProgress('symbols', '🔎 Querying language server...');
-        const results = await resolveSymbols(tokens);
-        if (!signal.aborted) { post('symbols', renderSymbolsSection(results)); }
-        return { symbolCount: results.symbols.length };
-    } catch {
-        if (!signal.aborted) { post('symbols', errorSlot('symbols', '🔎 Symbol resolution failed')); }
-        return {};
-    }
-}
-
-async function runTokenSearch(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
-    try {
-        postProgress('tokens', '🔍 Searching ' + tokens.length + ' token' + (tokens.length > 1 ? 's' : '') + ' across sessions...');
-        const groups = await Promise.all(tokens.map(async (token): Promise<TokenResultGroup> => ({
-            token, results: await searchLogFiles(token.value, { maxResults: 50, maxResultsPerFile: 10 }),
-        })));
-        if (signal.aborted) { return {}; }
-        post('tokens', renderTokenGroups(groups));
-        const total = groups.reduce((s, g) => s + g.results.matches.length, 0);
-        const files = new Set(groups.flatMap(g => g.results.matches.map(m => m.filename))).size;
-        return { tokenMatchCount: total, tokenFileCount: files };
-    } catch {
-        if (!signal.aborted) { post('tokens', errorSlot('tokens', '🔍 Token search failed')); }
-        return {};
-    }
-}
-
-async function runCrossSessionLookup(lineText: string): Promise<Partial<SectionData>> {
-    try {
-        const normalized = normalizeLine(lineText);
-        if (normalized.length < 5) { return {}; }
-        const hash = hashFingerprint(normalized);
-        postProgress('trend', '📊 Reading session metadata...');
-        const insights = await aggregateInsights();
-        const match = insights.recurringErrors.find(e => e.hash === hash);
-        if (!match) { return {}; }
-        const firstDate = extractDateFromFilename(match.firstSeen);
-        const trend = match.timeline
-            .map(t => ({ date: extractDateFromFilename(t.session), count: t.count }))
-            .filter((t): t is { date: string; count: number } => t.date !== undefined)
-            .sort((a, b) => a.date.localeCompare(b.date));
-        return { crossSession: { sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences, firstSeenDate: firstDate, trend } };
-    } catch { return {}; }
-}
-
-async function runReferencedFiles(post: PostFn, signal: AbortSignal, related?: RelatedLinesResult): Promise<Partial<SectionData>> {
-    if (!related) { return {}; }
-    if (!related.uniqueFiles.length) { post('files', emptySlot('files', '📁 No source files referenced')); return {}; }
-    postProgress('files', '📁 Analyzing ' + related.uniqueFiles.length + ' source files...');
-    const refs = related.lines.filter(l => l.sourceRef).map(l => ({ ...l.sourceRef!, text: l.text }));
-    const uniqueRefs = [...new Map(refs.map(r => [r.file, r])).values()].slice(0, 5);
-    const analyses = (await Promise.all(uniqueRefs.map(async (ref): Promise<FileAnalysis | undefined> => {
-        if (signal.aborted) { return undefined; }
-        const info = await analyzeSourceFile(ref.file, ref.line, extractPackageHint(ref.text)).catch(() => undefined);
-        if (!info || signal.aborted) { return undefined; }
-        const blame = await getGitBlame(info.uri, ref.line).catch(() => undefined);
-        return signal.aborted ? undefined : { filename: ref.file, line: ref.line, info, blame };
-    }))).filter((a): a is FileAnalysis => a !== undefined);
-    if (!signal.aborted) { post('files', renderReferencedFilesSection(analyses)); }
-    return { relatedFileCount: analyses.length };
-}
-
-async function runGitHubLookup(post: PostFn, signal: AbortSignal, related?: RelatedLinesResult, tokens?: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
-    const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-    if (!cwd) { post('github', emptySlot('github', '🔗 No workspace folder open')); return {}; }
-    postProgress('github', '🔗 Checking GitHub CLI...');
-    const files = related?.uniqueFiles ?? [];
-    const errorTokens = (tokens ?? []).filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const fallback: GitHubContext = { available: false, setupHint: 'GitHub query failed', filePrs: [], issues: [] };
-    const ctx = await getGitHubContext({ files: [...files], errorTokens, cwd }).catch(() => fallback);
-    if (!signal.aborted) { post('github', renderGitHubSection(ctx)); }
-    return { githubBlamePr: !!ctx.blamePr, githubPrCount: ctx.filePrs.length, githubIssueCount: ctx.issues.length };
-}
-
-async function runFirebaseLookup(post: PostFn, signal: AbortSignal, tokens: readonly AnalysisToken[]): Promise<Partial<SectionData>> {
-    postProgress('firebase', '🔥 Detecting Firebase config...');
-    const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const ctx = await getFirebaseContext(errorTokens).catch(() => ({ available: false, setupHint: 'Firebase query failed', issues: [] as const }));
-    if (!signal.aborted) { post('firebase', renderFirebaseSection(ctx)); }
-    const top = ctx.issues[0];
-    const productionImpact = top ? { eventCount: top.eventCount, userCount: top.userCount, issueId: top.id } : undefined;
-    return { crashlyticsIssueCount: ctx.issues.length, productionImpact };
 }
 
 async function fetchCrashDetail(issueId: string, eventIndex = 0): Promise<void> {
