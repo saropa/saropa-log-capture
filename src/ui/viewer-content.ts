@@ -155,26 +155,26 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <span class="level-dot-group" data-level="notice" title="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
-        <div id="level-flyup">
-            <div class="level-flyup-title">Level Filters</div>
-            <div class="level-flyup-header">
-                <a id="level-select-all" href="#" class="active">All</a>
-                <a id="level-select-none" href="#">None</a>
-            </div>
-            <button id="level-info-toggle" class="level-circle active" title="Info"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
-            <button id="level-warning-toggle" class="level-circle active" title="Warning"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>
-            <button id="level-error-toggle" class="level-circle active" title="Error"><span class="level-emoji">🔴</span><span class="level-label">Error</span><span class="level-count"></span></button>
-            <button id="level-performance-toggle" class="level-circle active" title="Performance"><span class="level-emoji">🟣</span><span class="level-label">Perf</span><span class="level-count"></span></button>
-            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
-            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
-            <button id="level-notice-toggle" class="level-circle active" title="Notice"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
-            <div class="level-flyup-context">
-                <span class="level-flyup-context-label">Context: <span id="context-lines-label">3 lines</span></span>
-                <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
-            </div>
-        </div>
         <span id="line-count"></span>
         <span id="filter-badge" class="filter-badge" title="Active filters — click to open filters"></span>
+    </div>
+    <div id="level-flyup">
+        <div class="level-flyup-title">Level Filters</div>
+        <div class="level-flyup-header">
+            <a id="level-select-all" href="#" class="active">All</a>
+            <a id="level-select-none" href="#">None</a>
+        </div>
+        <button id="level-info-toggle" class="level-circle active" title="Info"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
+        <button id="level-warning-toggle" class="level-circle active" title="Warning"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>
+        <button id="level-error-toggle" class="level-circle active" title="Error"><span class="level-emoji">🔴</span><span class="level-label">Error</span><span class="level-count"></span></button>
+        <button id="level-performance-toggle" class="level-circle active" title="Performance"><span class="level-emoji">🟣</span><span class="level-label">Perf</span><span class="level-count"></span></button>
+        <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+        <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
+        <button id="level-notice-toggle" class="level-circle active" title="Notice"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+        <div class="level-flyup-context">
+            <span class="level-flyup-context-label">Context: <span id="context-lines-label">3 lines</span></span>
+            <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
+        </div>
     </div>
     </div>
     ${getIconBarHtml()}

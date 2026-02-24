@@ -194,6 +194,7 @@ export function getDecorationStyles(): string {
 .level-bar-framework { --bar-color: var(--vscode-textLink-foreground, #3794ff); }
 .level-bar-info { --bar-color: var(--vscode-terminal-ansiGreen, #4ec9b0); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
+.bar-bridge::before { display: none; }
 
 /* Connector bars join consecutive same-color dots */
 .bar-down::after, .bar-up::after {

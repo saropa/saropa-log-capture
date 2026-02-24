@@ -214,6 +214,15 @@ function getBarLevel(el) {
     return m ? m[1] : null;
 }
 
+/** Find next viewport child with a severity dot, stopping at markers. */
+function findNextBarSibling(children, startIdx) {
+    for (var ni = startIdx + 1; ni < children.length; ni++) {
+        if (children[ni].classList.contains('marker')) return -1;
+        if (getBarLevel(children[ni])) return ni;
+    }
+    return -1;
+}
+
 function renderViewport(force) {
     if (!logEl.clientHeight) return;
     var scrollTop = logEl.scrollTop;
@@ -257,13 +266,18 @@ function renderViewport(force) {
         parts.push(renderItem(allLines[i], i));
     }
     viewportEl.innerHTML = parts.join('');
-    // Connect consecutive same-color dots with bar classes
+    // Connect consecutive same-color dots, bridging through no-dot lines
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
         var lvl = getBarLevel(ch[ci]);
         if (!lvl) continue;
-        if (ci > 0 && getBarLevel(ch[ci - 1]) === lvl) ch[ci].classList.add('bar-up');
-        if (ci < ch.length - 1 && getBarLevel(ch[ci + 1]) === lvl) ch[ci].classList.add('bar-down');
+        var ni = findNextBarSibling(ch, ci);
+        if (ni < 0 || getBarLevel(ch[ni]) !== lvl) continue;
+        ch[ci].classList.add('bar-down');
+        ch[ni].classList.add('bar-up');
+        for (var bi = ci + 1; bi < ni; bi++) {
+            ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
+        }
     }
     spacerTop.style.height = startOffset + 'px';
     var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
