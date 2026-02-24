@@ -17,7 +17,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Level Filters fly-up panel unreadable.** The panel was nested inside `#footer` (which has `position: sticky`), trapping it in the footer's stacking context. Moved it out of the footer so `position: fixed` works against the viewport. Also switched background to `--vscode-editorWidget-background` with a solid `#1e1e1e` fallback for themes that don't define menu variables.
 
 ### Changed
-- **Modularized level filter code.** Extracted level classification patterns and `classifyLevel()` into `viewer-level-classify.ts`. Extracted all level filter CSS into `viewer-styles-level.ts`. Reduces `viewer-level-filter.ts` from 299→262 lines and `viewer-styles-ui.ts` from 292→132 lines.
+- **Modularized level filter code.** Split into focused modules: `viewer-level-classify.ts` (classification patterns + `classifyLevel()`), `viewer-level-events.ts` (DOM event wiring), `viewer-styles-level.ts` (all level filter CSS). Original files reduced: `viewer-level-filter.ts` 299→185, `viewer-styles-ui.ts` 292→132.
+- **Modularized analysis panel streams.** Extracted 8 async `run*` stream functions from `analysis-panel.ts` into `analysis-panel-streams.ts` with a `StreamCtx` interface to stay within the 4-parameter limit.
+- **Modularized config file utilities.** Extracted `isTrackedFile`, `readTrackedFiles`, `getFileTypeGlob`, `shouldRedactEnvVar` from `config.ts` into `config-file-utils.ts`. Re-exported from the original module for backward compatibility.
+- **Modularized bug report sections.** Extracted 21 section formatting functions from `bug-report-formatter.ts` into `bug-report-sections.ts`.
+- **Modularized Crashlytics API queries.** Extracted `fetchJson`, `queryTopIssues`, `matchIssues`, `updateIssueState`, `getCrashEvents`, and related functions from `firebase-crashlytics.ts` into `crashlytics-api.ts`.
+- **Modularized analysis panel styles.** Extracted `getAnalysisScript()` from `analysis-panel-styles.ts` into `analysis-panel-script.ts`.
+- **Modularized insights panel script.** Extracted webview script from `insights-panel.ts` into `insights-panel-script.ts`.
+- **Modularized context menu HTML.** Extracted `getContextMenuHtml()` from `viewer-context-menu.ts` into `viewer-context-menu-html.ts`.
+- **Modularized exclusion chip styles.** Extracted exclusion chip CSS from `viewer-styles-options.ts` into `viewer-styles-exclusion-chips.ts`.
+- **Modularized viewport rendering.** Extracted `renderViewport()` and helpers from `viewer-data.ts` into `viewer-data-viewport.ts`.
+- **Modularized options panel events.** Extracted event wiring from `viewer-options-panel-script.ts` into `viewer-options-events.ts`.
+- **Modularized export init script.** Extracted `initExportModal()` and wiring from `viewer-export-script.ts` into `viewer-export-init.ts`.
+- **Modularized source tag UI.** Extracted tag chip rendering and interaction from `viewer-source-tags.ts` into `viewer-source-tags-ui.ts`.
 
 ---
 ## [2.0.11] - 2026-02-22

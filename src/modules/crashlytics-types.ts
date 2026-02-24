@@ -2,6 +2,8 @@
 
 import type { DiagnosticDetails } from './crashlytics-diagnostics';
 
+export interface FirebaseConfig { readonly projectId: string; readonly appId: string; }
+
 export interface CrashlyticsIssue {
     readonly id: string;
     readonly title: string;
