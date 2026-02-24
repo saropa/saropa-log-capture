@@ -74,7 +74,7 @@ export function getBookmarkPanelScript(): string {
             hasVisible = true;
             html += '<div class="bookmark-file-group">'
                 + '<div class="bookmark-file-header">'
-                + '<span class="codicon codicon-file"></span>'
+                + '<span class="codicon codicon-file" title="Log file"></span>'
                 + '<span class="bookmark-file-name">' + escapeHtml(entry.filename) + '</span>'
                 + '<span class="bookmark-count-badge">' + filtered.length + '</span>'
                 + '<button class="bookmark-file-delete" data-file-uri="' + escapeAttr(entry.fileUri)
@@ -87,7 +87,7 @@ export function getBookmarkPanelScript(): string {
                 html += '<div class="bookmark-item" data-file-uri="' + escapeAttr(entry.fileUri)
                     + '" data-line="' + b.lineIndex + '" data-id="' + escapeAttr(b.id) + '">'
                     + '<div class="bookmark-item-main">'
-                    + '<span class="codicon codicon-' + (b.note ? 'comment' : 'bookmark') + '"></span>'
+                    + '<span class="codicon codicon-' + (b.note ? 'comment' : 'bookmark') + '" title="' + (b.note ? 'Bookmark with note' : 'Bookmark') + '"></span>'
                     + '<span class="bookmark-item-label">' + escapeHtml(label) + '</span>'
                     + '</div>'
                     + (b.note ? '<div class="bookmark-item-note">' + escapeHtml(b.note) + '</div>' : '')

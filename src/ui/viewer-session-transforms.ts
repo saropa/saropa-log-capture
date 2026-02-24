@@ -95,11 +95,11 @@ function formatSessionDuration(ms) {
 
 function renderSeverityDots(s) {
     var parts = [];
-    if (s.errorCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
-    if (s.warningCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
-    if (s.perfCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
-    if (s.fwCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
-    if (s.infoCount > 0) parts.push('<span class="sev-pair"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
+    if (s.errorCount > 0) parts.push('<span class="sev-pair" title="Errors"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
+    if (s.warningCount > 0) parts.push('<span class="sev-pair" title="Warnings"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
+    if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
+    if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
+    if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
     if (parts.length === 0) return '';
     return '<span class="sev-dots">' + parts.join('') + '</span>';
 }

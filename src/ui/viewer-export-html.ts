@@ -13,7 +13,7 @@ export function getExportModalHtml(): string {
     <div class="modal-content">
         <div class="modal-header">
             <span>Export Logs</span>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" title="Close">&times;</button>
         </div>
         <div class="modal-body">
             <div class="export-section">

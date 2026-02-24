@@ -69,7 +69,7 @@ export function getTrashPanelScript(): string {
         var meta = buildTrashMeta(s);
         var dots = renderSeverityDots(s);
         return '<div class="trash-item" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
-            + '<span class="trash-item-icon"><span class="codicon codicon-trash"></span></span>'
+            + '<span class="trash-item-icon" title="Trashed session"><span class="codicon codicon-trash"></span></span>'
             + '<div class="trash-item-info">'
             + '<span class="trash-item-name">' + escapeHtml(name) + '</span>'
             + (meta ? '<span class="trash-item-meta">' + escapeHtml(meta) + '</span>' : '')
