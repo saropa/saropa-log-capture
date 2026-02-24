@@ -78,15 +78,25 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         repeatTracker.count++;
         repeatTracker.lastTimestamp = now;
 
+        // On first repeat, hide the original line to avoid a visual gap
+        if (repeatTracker.count === 2 && repeatTracker.lastLineIndex >= 0 &&
+            repeatTracker.lastLineIndex < allLines.length) {
+            var origItem = allLines[repeatTracker.lastLineIndex];
+            if (origItem && origItem.height > 0) {
+                totalHeight -= origItem.height;
+                origItem.height = 0;
+                origItem.repeatHidden = true;
+            }
+        }
+
         // Create repeat notification line
-        var preview = repeatTracker.lastPlainText.substring(0, repeatPreviewLength);
-        if (repeatTracker.lastPlainText.length > repeatPreviewLength) {
+        var preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
+        if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
             preview += '...';
         }
-        var levelDot = (typeof getLevelDot === 'function') ? getLevelDot(lvl) : '';
-        var repeatHtml = '<span class="repeat-notification">' + levelDot +
-            ' Repeated log #' + repeatTracker.count +
-            ' <span class="repeat-preview">(' + escapeHtml(preview) + ')</span></span>';
+        var repeatHtml = '<span class="repeat-notification">' +
+            'Repeated #' + repeatTracker.count +
+            ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
         var repeatItem = {
             html: repeatHtml,
             type: 'repeat-notification',
@@ -135,6 +145,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr };
         allLines.push(lineItem);
+        repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
         totalHeight += finalH;
@@ -169,6 +180,11 @@ function trimData() {
     }
     allLines.splice(0, excess);
     activeGroupHeader = null;
+    // Adjust repeat tracker index after splice so it still points at the correct line
+    if (repeatTracker.lastLineIndex >= 0) {
+        repeatTracker.lastLineIndex -= excess;
+        if (repeatTracker.lastLineIndex < 0) repeatTracker.lastLineIndex = -1;
+    }
     if (removedHeight > 0 && !autoScroll) {
         suppressScroll = true;
         logEl.scrollTop = Math.max(0, logEl.scrollTop - removedHeight);

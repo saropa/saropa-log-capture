@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Repeat notification visual clutter.** Removed redundant emoji dot from repeat notifications (decorations handle dots). Original line is now hidden when a repeat is detected, eliminating the visual gap. Empty previews show an ellipsis fallback. Fixed `trimData()` invalidating the repeat tracker's line index after splice.
+
+---
 ## [2.0.11] - 2026-02-22
 
 ### Fixed
