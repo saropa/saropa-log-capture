@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 **VS Code Marketplace** - [marketplace.visualstudio.com / saropa.saropa-log-capture](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture)
 
-**Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
+**Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
 ## [2.0.11] - 2026-02-22
