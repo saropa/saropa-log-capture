@@ -174,15 +174,16 @@ export function getDecorationStyles(): string {
     content: ''; position: absolute; left: 12px;
     top: 0; bottom: 0; width: 1px;
     background: var(--vscode-panel-border);
+    opacity: 0.4;
     pointer-events: none;
 }
 
 /* Severity dot mode (colored circle on timeline) */
 [class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
-    content: ''; position: absolute; left: 8px;
+    content: ''; position: absolute; left: 9px;
     top: 0; bottom: 0; margin: auto 0;
-    width: 9px; height: 9px; border-radius: 50%;
+    width: 7px; height: 7px; border-radius: 50%;
     pointer-events: none; z-index: 2;
 }
 .level-bar-error { --bar-color: var(--vscode-debugConsole-errorForeground, #f48771); }
@@ -198,7 +199,7 @@ export function getDecorationStyles(): string {
 
 /* Connector bars join consecutive same-color dots */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 10px; width: 5px;
+    content: ''; position: absolute; left: 11px; width: 2px;
     background: var(--bar-color); pointer-events: none; z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
