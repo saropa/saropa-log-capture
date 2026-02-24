@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 - **Repeat notification visual clutter.** Removed redundant emoji dot from repeat notifications (decorations handle dots). Original line is now hidden when a repeat is detected, eliminating the visual gap. Empty previews show an ellipsis fallback. Fixed `trimData()` invalidating the repeat tracker's line index after splice.
+- **Severity dot connectors broken by unclassified lines.** Consecutive same-color dots separated by lines without a severity classification (e.g. separator lines, context lines) were not visually connected. The connector logic now scans forward for the nearest dot instead of only checking the immediately adjacent DOM element, and bridges intermediate no-dot lines with a colored bar.
+- **Level Filters fly-up panel unreadable.** The panel was nested inside `#footer` (which has `position: sticky`), trapping it in the footer's stacking context. Moved it out of the footer so `position: fixed` works against the viewport. Also switched background to `--vscode-editorWidget-background` with a solid `#1e1e1e` fallback for themes that don't define menu variables.
+
+### Changed
+- **Modularized level filter code.** Extracted level classification patterns and `classifyLevel()` into `viewer-level-classify.ts`. Extracted all level filter CSS into `viewer-styles-level.ts`. Reduces `viewer-level-filter.ts` from 299→262 lines and `viewer-styles-ui.ts` from 292→132 lines.
 
 ---
 ## [2.0.11] - 2026-02-22
