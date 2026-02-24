@@ -1,6 +1,7 @@
 /** Markdown formatter for the "Known Lint Issues" bug report section. */
 
 import type { LintReportData, LintViolation } from './lint-violation-reader';
+import { escapePipe } from './bug-report-sections';
 
 /** Format matched lint violations into a markdown section. */
 export function formatLintSection(data: LintReportData): string {
@@ -44,5 +45,3 @@ function formatShortTimestamp(ts: string): string {
     const m = ts.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
     return m ? m[1] + 'Z' : ts;
 }
-
-function escapePipe(text: string): string { return text.replace(/\|/g, '\\|'); }
