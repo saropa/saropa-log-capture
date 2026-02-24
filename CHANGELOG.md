@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Added
+- **Tooltips for all icons across all screens.** Session list icons (recording dot, completed, log file), severity count dots (errors, warnings, performance, framework, info), bookmark icons (file, bookmark/note), trash item icons, and all close buttons (decoration settings, export modal, filters panel, options panel, edit modal, context peek) now show descriptive tooltips on hover.
+
 ### Fixed
 - **Severity dot gutter visual clutter.** Reduced dot size (9→7 px), connector bars (5→2 px), and dimmed the timeline to 40% opacity so the three gutter layers no longer compete visually.
 - **Repeat notification visual clutter.** Removed redundant emoji dot from repeat notifications (decorations handle dots). Original line is now hidden when a repeat is detected, eliminating the visual gap. Empty previews show an ellipsis fallback. Fixed `trimData()` invalidating the repeat tracker's line index after splice.
