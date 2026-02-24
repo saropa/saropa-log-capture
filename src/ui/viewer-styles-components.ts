@@ -6,7 +6,8 @@
  */
 import { getSearchStyles } from './viewer-styles-search';
 import { getUiStyles } from './viewer-styles-ui';
+import { getLevelStyles } from './viewer-styles-level';
 
 export function getComponentStyles(): string {
-    return getSearchStyles() + getUiStyles();
+    return getSearchStyles() + getUiStyles() + getLevelStyles();
 }
