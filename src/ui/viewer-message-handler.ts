@@ -121,6 +121,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); break;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
       case "requestRecurringErrors": panelHandlers.handleRecurringRequest(ctx.post).catch(() => {}); break;
+      case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post).catch(() => {}); break;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
     }
