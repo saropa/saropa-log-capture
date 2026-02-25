@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Severity bar centering.** Connector bars between dots were 0.5px off-center (2px bar at left:11 vs 7px dot centered at 12.5px). Widened connectors to 3px so both center at 12.5px.
+- **Unconnected line tails.** Removed the full-height background line (`#viewport::before`) that extended above the first dot and below the last dot. The colored connector segments now provide the timeline without visual overflow.
+- **Bar colors mismatched session panel.** Level-bar dots used `--vscode-debugConsole-*` variables (dark amber for warning) while severity dots in the session panel used `--vscode-charts-*` (bright yellow). Unified all five shared levels (error, warning, performance, framework, info) to use the `--vscode-charts-*` palette.
+- **Timeline broken across color transitions.** Dots of different severity levels were not connected, leaving gaps in the timeline. Connector logic now bridges all adjacent dots regardless of color, stopping only at markers.
+
+---
 ## [2.0.12] - 2026-02-24
 
 ### Added
