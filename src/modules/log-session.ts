@@ -3,16 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SaropaLogCaptureConfig } from './config';
 import { Deduplicator } from './deduplication';
-import { FileSplitter, SplitReason, formatSplitReason } from './file-splitter';
+import { FileSplitter, SplitReason } from './file-splitter';
 import {
     SessionContext,
     SourceLocation,
     generateBaseFileName,
     formatDateFolder,
     formatLine,
-    generateContinuationHeader,
     generateContextHeader,
 } from './log-session-helpers';
+import { getPartFileName, performFileSplit } from './log-session-split';
 export { SessionContext };
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
@@ -71,7 +71,7 @@ export class LogSession {
 
         // Generate base filename (without part suffix)
         this._baseFileName = generateBaseFileName(this.context.projectName, this.context.date);
-        const fileName = this.getPartFileName();
+        const fileName = getPartFileName(this._baseFileName, this._partNumber);
         const filePath = path.join(logDirPath, fileName);
         this._fileUri = vscode.Uri.file(filePath);
 
@@ -180,7 +180,7 @@ export class LogSession {
         await this.performSplit({ type: 'manual' });
     }
 
-    /** Perform a file split - close current file, open new one. */
+    /** Perform a file split — close current file, open new one. */
     private async performSplit(reason: SplitReason): Promise<void> {
         if (!this.writeStream || this.splitting) {
             return;
@@ -188,57 +188,25 @@ export class LogSession {
 
         this.splitting = true;
         try {
-            // Write split marker to current file
-            const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${this._partNumber + 2} ===\n`;
-            this.writeStream.write(splitMarker);
+            const result = await performFileSplit({
+                writeStream: this.writeStream,
+                logDirPath: this.getLogDirUri().fsPath,
+                baseFileName: this._baseFileName,
+                partNumber: this._partNumber,
+                context: this.context,
+            }, reason);
 
-            // Close current file
-            await new Promise<void>((resolve, reject) => {
-                this.writeStream!.end(() => resolve());
-                this.writeStream!.on('error', reject);
-            });
-
-            // Increment part number and reset counters
-            this._partNumber++;
-            this._bytesWritten = 0;
+            this.writeStream = result.newStream;
+            this._fileUri = result.newFileUri;
+            this._partNumber = result.newPartNumber;
+            this._bytesWritten = result.headerBytes;
             this._partStartTime = Date.now();
             this._lastLineTime = 0;
-
-            // Open new file
-            const logDirPath = this.getLogDirUri().fsPath;
-            const newFileName = this.getPartFileName();
-            const newFilePath = path.join(logDirPath, newFileName);
-            this._fileUri = vscode.Uri.file(newFilePath);
-
-            this.writeStream = fs.createWriteStream(newFilePath, {
-                flags: 'a',
-                encoding: 'utf-8',
-            });
-
-            // Write continuation header
-            const header = generateContinuationHeader(
-                this.context,
-                this._partNumber,
-                reason,
-                this._baseFileName
-            );
-            this.writeStream.write(header);
-            this._bytesWritten = Buffer.byteLength(header, 'utf-8');
         } finally {
             this.splitting = false;
         }
 
-        // Notify callback
         this.onSplit?.(this._fileUri, this._partNumber, reason);
-    }
-
-    /** Get the filename for the current part. */
-    private getPartFileName(): string {
-        if (this._partNumber === 0) {
-            return `${this._baseFileName}.log`;
-        }
-        const partSuffix = String(this._partNumber + 1).padStart(3, '0');
-        return `${this._baseFileName}_${partSuffix}.log`;
     }
 
     pause(): void {

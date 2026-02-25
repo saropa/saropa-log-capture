@@ -28,6 +28,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Level Filters fly-up panel unreadable.** The panel was nested inside `#footer` (which has `position: sticky`), trapping it in the footer's stacking context. Moved it out of the footer so `position: fixed` works against the viewport. Also switched background to `--vscode-editorWidget-background` with a solid `#1e1e1e` fallback for themes that don't define menu variables.
 
 ### Changed
+- **Modularized performance panel script.** Extracted current-session scan/render logic (regex patterns, classification, group rendering) from `viewer-performance-panel.ts` into `viewer-performance-current.ts`. Parent reduced: 330→232 lines.
+- **Modularized log session split logic.** Extracted `performFileSplit()` and `getPartFileName()` from `log-session.ts` into `log-session-split.ts`. Parent reduced: 305→274 lines.
+- **Modularized session event bus.** Extracted `LineData`, `LineListener`, `SplitListener` types and `EarlyOutputBuffer` class from `session-manager.ts` into `session-event-bus.ts`. Re-exported for backward compatibility. Parent reduced: 301→277 lines.
 - **Modularized level filter code.** Split into focused modules: `viewer-level-classify.ts` (classification patterns + `classifyLevel()`), `viewer-level-events.ts` (DOM event wiring), `viewer-styles-level.ts` (all level filter CSS). Original files reduced: `viewer-level-filter.ts` 299→185, `viewer-styles-ui.ts` 292→132.
 - **Modularized analysis panel streams.** Extracted 8 async `run*` stream functions from `analysis-panel.ts` into `analysis-panel-streams.ts` with a `StreamCtx` interface to stay within the 4-parameter limit.
 - **Modularized config file utilities.** Extracted `isTrackedFile`, `readTrackedFiles`, `getFileTypeGlob`, `shouldRedactEnvVar` from `config.ts` into `config-file-utils.ts`. Re-exported from the original module for backward compatibility.
