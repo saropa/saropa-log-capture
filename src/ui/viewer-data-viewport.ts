@@ -53,10 +53,16 @@ function renderViewport(force) {
         Math.abs(startIdx - lastStart) < hyst &&
         Math.abs(endIdx - lastEnd) < hyst) { return; }
     lastStart = startIdx; lastEnd = endIdx;
+    // Find previous visible line before viewport start for spacing calculation
+    var prevVis = null;
+    for (var sp = startIdx - 1; sp >= 0; sp--) {
+        if (allLines[sp].height > 0) { prevVis = allLines[sp]; break; }
+    }
     var parts = [];
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
-        parts.push(renderItem(allLines[i], i));
+        parts.push(renderItem(allLines[i], i, prevVis));
+        prevVis = allLines[i];
     }
     viewportEl.innerHTML = parts.join('');
     // Connect consecutive same-color dots, bridging through no-dot lines

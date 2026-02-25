@@ -12,9 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Expanded performance classification.** Lines containing `PERF` prefix and `GC freed`/`GC concurrent` are now classified as performance level (purple), in addition to existing Choreographer/ANR/jank patterns.
+- **Context menu sub-menus.** Grouped Search, Actions, and Options into collapsible sub-menus to reduce clutter when right-clicking a log line (was ~17 flat items, now ≤10 top-level). The Options sub-menu provides quick toggles for word wrap, line prefix, and visual spacing. Submenus auto-flip left when the menu opens near the right viewport edge.
 - **Tooltips for all icons across all screens.** Session list icons (recording dot, completed, log file), severity count dots (errors, warnings, performance, framework, info), bookmark icons (file, bookmark/note), trash item icons, and all close buttons (decoration settings, export modal, filters panel, options panel, edit modal, context peek) now show descriptive tooltips on hover.
 
 ### Fixed
+- **Context line spacing when filtering.** Visual spacing now uses the previous *visible* line (not the previous array element) to calculate gaps, fixing non-uniform spacing caused by hidden/filtered lines. Gap is placed above context groups (not between context and match line), keeping context lines visually grouped with the line they provide context for.
 - **Severity dot gutter visual clutter.** Reduced dot size (9→7 px), connector bars (5→2 px), and dimmed the timeline to 40% opacity so the three gutter layers no longer compete visually.
 - **Repeat notification visual clutter.** Removed redundant emoji dot from repeat notifications (decorations handle dots). Original line is now hidden when a repeat is detected, eliminating the visual gap. Empty previews show an ellipsis fallback. Fixed `trimData()` invalidating the repeat tracker's line index after splice.
 - **Severity dot connectors broken by unclassified lines.** Consecutive same-color dots separated by lines without a severity classification (e.g. separator lines, context lines) were not visually connected. The connector logic now scans forward for the nearest dot instead of only checking the immediately adjacent DOM element, and bridges intermediate no-dot lines with a colored bar.

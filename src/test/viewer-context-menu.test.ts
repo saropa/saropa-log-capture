@@ -46,6 +46,22 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("e.target.closest('.source-link')"));
             assert.ok(script.includes('contextMenuSourcePath'));
         });
+
+        test('should handle toggle actions for Options submenu', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function handleToggleAction'));
+            assert.ok(script.includes("'toggle-wrap'"));
+            assert.ok(script.includes("'toggle-decorations'"));
+            assert.ok(script.includes("'toggle-spacing'"));
+        });
+
+        test('should sync toggle checkmarks from state variables', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function syncContextMenuToggles'));
+            assert.ok(script.includes('wordWrap'));
+            assert.ok(script.includes('showDecorations'));
+            assert.ok(script.includes('visualSpacingEnabled'));
+        });
     });
 
     suite('getContextMenuHtml', () => {
@@ -55,18 +71,45 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('class="context-menu"'));
         });
 
-        test('should include all menu items', () => {
+        test('should include top-level menu items', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('> Copy\n'));
             assert.ok(html.includes('Select All'));
             assert.ok(html.includes('Copy Line'));
+            assert.ok(html.includes('Copy All'));
+            assert.ok(html.includes('Copy to Search'));
+            assert.ok(html.includes('Open Source File'));
+        });
+
+        test('should include Search submenu with items', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('> Search\n'));
             assert.ok(html.includes('Search Codebase'));
             assert.ok(html.includes('Search Past Sessions'));
-            assert.ok(html.includes('Open Source File'));
-            assert.ok(html.includes('Show Context'));
+            assert.ok(html.includes('Analyze Across Sessions'));
+            assert.ok(html.includes('Generate Bug Report'));
+        });
+
+        test('should include Actions submenu with items', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('> Actions\n'));
             assert.ok(html.includes('Pin Line'));
+            assert.ok(html.includes('Bookmark Line'));
+            assert.ok(html.includes('Edit Line'));
+            assert.ok(html.includes('Show Context'));
             assert.ok(html.includes('Add to Watch List'));
             assert.ok(html.includes('Add to Exclusions'));
+        });
+
+        test('should include Options submenu with toggle items', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('> Options\n'));
+            assert.ok(html.includes('data-action="toggle-wrap"'));
+            assert.ok(html.includes('data-action="toggle-decorations"'));
+            assert.ok(html.includes('data-action="toggle-spacing"'));
+            assert.ok(html.includes('Word wrap'));
+            assert.ok(html.includes('Line prefix'));
+            assert.ok(html.includes('Visual spacing'));
         });
 
         test('should include data-action attributes', () => {
@@ -86,11 +129,26 @@ suite('ViewerContextMenu', () => {
         test('should mark line-specific items with data-line-action', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="copy" data-line-action'));
-            assert.ok(html.includes('data-action="pin" data-line-action'));
-            assert.ok(html.includes('data-action="add-watch" data-line-action'));
             // Global items should NOT have data-line-action
             assert.ok(!html.includes('data-action="copy-selection" data-line-action'));
             assert.ok(!html.includes('data-action="select-all" data-line-action'));
+        });
+
+        test('should mark Search and Actions submenus as line-specific', () => {
+            const html = getContextMenuHtml();
+            // Submenu containers should have data-line-action
+            assert.ok(html.includes('class="context-menu-submenu" data-line-action'));
+        });
+
+        test('should not mark Options submenu as line-specific', () => {
+            const html = getContextMenuHtml();
+            // The Options submenu container: class="context-menu-submenu"> with no data-line-action
+            // Search and Actions containers: class="context-menu-submenu" data-line-action>
+            // Verify Options submenu opens with submenu class directly followed by >, then the gear icon
+            assert.ok(html.includes(
+                'class="context-menu-submenu">\n' +
+                '        <span class="codicon codicon-settings-gear">',
+            ));
         });
 
         test('should include source-link menu items with data-source-action', () => {
@@ -118,6 +176,21 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('codicon-pin'));
             assert.ok(html.includes('codicon-eye'));
             assert.ok(html.includes('codicon-eye-closed'));
+        });
+
+        test('should include submenu structure elements', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('context-menu-submenu'));
+            assert.ok(html.includes('context-menu-submenu-content'));
+            assert.ok(html.includes('context-menu-arrow'));
+            assert.ok(html.includes('codicon-chevron-right'));
+        });
+
+        test('should include toggle structure for Options items', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('context-menu-toggle'));
+            assert.ok(html.includes('context-menu-check'));
+            assert.ok(html.includes('codicon-check'));
         });
     });
 });
