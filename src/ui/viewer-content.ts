@@ -52,6 +52,7 @@ import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-
 import { getTrashPanelHtml, getTrashPanelScript } from './viewer-trash-panel';
 import { getCrashlyticsPanelHtml, getCrashlyticsPanelScript } from './viewer-crashlytics-panel';
 import { getRecurringPanelHtml, getRecurringPanelScript } from './viewer-recurring-panel';
+import { getPerformancePanelHtml, getPerformancePanelScript } from './viewer-performance-panel';
 import { getAboutPanelHtml, getAboutPanelScript } from './viewer-about-panel';
 
 /** Maximum lines retained in the viewer data array (file on disk keeps all). */
@@ -139,6 +140,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getOptionsPanelHtml()}
     ${getCrashlyticsPanelHtml()}
     ${getRecurringPanelHtml()}
+    ${getPerformancePanelHtml()}
     ${getAboutPanelHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
@@ -219,6 +221,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getOptionsPanelScript())}
     ${scriptTag(nonce, getCrashlyticsPanelScript())}
     ${scriptTag(nonce, getRecurringPanelScript())}
+    ${scriptTag(nonce, getPerformancePanelScript())}
     ${scriptTag(nonce, getAboutPanelScript())}
     ${scriptTag(nonce, getIconBarScript())}
     ${scriptTag(nonce, getErrorBreakpointScript())}

@@ -42,6 +42,9 @@ export function getIconBarHtml(): string {
     <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors">
         <span class="codicon codicon-bug"></span>
     </button>
+    <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance">
+        <span class="codicon codicon-graph-line"></span>
+    </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa">
         <span class="codicon codicon-home"></span>
     </button>
@@ -64,6 +67,7 @@ export function getIconBarScript(): string {
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
         recurring: document.getElementById('ib-recurring'),
+        performance: document.getElementById('ib-performance'),
         about: document.getElementById('ib-about'),
     };
 
@@ -77,6 +81,7 @@ export function getIconBarScript(): string {
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
         if (typeof closeRecurringPanel === 'function') closeRecurringPanel();
+        if (typeof closePerformancePanel === 'function') closePerformancePanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
@@ -120,6 +125,8 @@ export function getIconBarScript(): string {
             openCrashlyticsPanel();
         } else if (name === 'recurring' && typeof openRecurringPanel === 'function') {
             openRecurringPanel();
+        } else if (name === 'performance' && typeof openPerformancePanel === 'function') {
+            openPerformancePanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
             openAboutPanel();
         }
@@ -162,6 +169,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.recurring) {
         iconButtons.recurring.addEventListener('click', function() { setActivePanel('recurring'); });
+    }
+    if (iconButtons.performance) {
+        iconButtons.performance.addEventListener('click', function() { setActivePanel('performance'); });
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
