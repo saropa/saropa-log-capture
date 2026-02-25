@@ -125,7 +125,7 @@ function calcItemHeight(item) {
  * Handles markers, stack frames, and regular lines with appropriate styling.
  * Applies search highlighting, pattern highlights, and category styling.
  */
-function renderItem(item, idx) {
+function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
 
@@ -135,10 +135,23 @@ function renderItem(item, idx) {
     // Compute visual spacing classes before early returns so all item types benefit
     var spacingCls = '';
     if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
-        var spPrev = idx > 0 ? allLines[idx - 1] : null;
+        // Use previous visible line (passed from renderViewport, or scan backwards)
+        var spPrev = null;
+        if (prevVis !== undefined) {
+            spPrev = prevVis;
+        } else {
+            for (var sp = idx - 1; sp >= 0; sp--) {
+                if (allLines[sp].height > 0) { spPrev = allLines[sp]; break; }
+            }
+        }
         if (item.type === 'marker') {
             if (spPrev) spacingCls += ' spacing-before';
             spacingCls += ' spacing-after';
+        } else if (item.isContextFirst) {
+            // Gap ABOVE context group to separate from previous content
+            if (spPrev) spacingCls += ' spacing-before';
+        } else if (item.isContext || (spPrev && spPrev.isContext)) {
+            // Context lines stay tight with each other and with their match line
         } else if (item.type === 'stack-header') {
             if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') {
                 spacingCls += ' spacing-before';
