@@ -16,6 +16,7 @@ import { KeywordWatcher } from './keyword-watcher';
 import { SessionMetadataStore } from './session-metadata';
 import { scanForCorrelationTags } from './correlation-scanner';
 import { scanForFingerprints } from './error-fingerprint';
+import { scanForPerfFingerprints } from './perf-fingerprint';
 import { scanAnrRisk } from './anr-risk-scorer';
 import { detectAppVersion } from './app-version';
 import { detectTargetDevice } from './device-detector';
@@ -185,6 +186,15 @@ export async function finalizeSession(
         }
     }).catch((err) => {
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
+    });
+
+    scanForPerfFingerprints(logSession.fileUri).then(async (pfs) => {
+        if (pfs.length > 0) {
+            await metadataStore.setPerfFingerprints(logSession.fileUri, pfs);
+            outputChannel.appendLine(`Perf fingerprints: ${pfs.length} operations`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan perf fingerprints: ${err}`);
     });
 
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
