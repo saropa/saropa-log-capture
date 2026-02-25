@@ -168,15 +168,8 @@ export function getDecorationStyles(): string {
     background-color: rgba(78, 201, 176, 0.14);
 }
 
-/* Continuous timeline in log gutter */
+/* Positioning context for severity dots and connector bars */
 #viewport { position: relative; }
-#viewport::before {
-    content: ''; position: absolute; left: 12px;
-    top: 0; bottom: 0; width: 1px;
-    background: var(--vscode-panel-border);
-    opacity: 0.4;
-    pointer-events: none;
-}
 
 /* Severity dot mode (colored circle on timeline) */
 [class*="level-bar-"] { z-index: 1; }
@@ -186,20 +179,20 @@ export function getDecorationStyles(): string {
     width: 7px; height: 7px; border-radius: 50%;
     pointer-events: none; z-index: 2;
 }
-.level-bar-error { --bar-color: var(--vscode-debugConsole-errorForeground, #f48771); }
-.level-bar-warning { --bar-color: var(--vscode-debugConsole-warningForeground, #cca700); }
-.level-bar-performance { --bar-color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
+.level-bar-warning { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+.level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
 .level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
 .level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
 .level-bar-notice { --bar-color: var(--vscode-terminal-ansiCyan, #4fc1ff); }
-.level-bar-framework { --bar-color: var(--vscode-textLink-foreground, #3794ff); }
-.level-bar-info { --bar-color: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+.level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-info { --bar-color: var(--vscode-charts-green, #4caf50); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
 
-/* Connector bars join consecutive same-color dots */
+/* Connector bars join consecutive dots */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 11px; width: 2px;
+    content: ''; position: absolute; left: 11px; width: 3px;
     background: var(--bar-color); pointer-events: none; z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
