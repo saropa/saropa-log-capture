@@ -23,6 +23,21 @@ function initContextMenu() {
     });
 }
 
+/** Sync toggle checkmarks in Options submenu from current state. */
+function syncContextMenuToggles() {
+    if (!contextMenuEl) return;
+    var toggles = contextMenuEl.querySelectorAll('.context-menu-toggle');
+    for (var i = 0; i < toggles.length; i++) {
+        var t = toggles[i];
+        var action = t.dataset.action;
+        var on = false;
+        if (action === 'toggle-wrap') on = (typeof wordWrap !== 'undefined') && wordWrap;
+        else if (action === 'toggle-decorations') on = (typeof showDecorations !== 'undefined') && showDecorations;
+        else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
+        t.classList.toggle('checked', on);
+    }
+}
+
 function showContextMenu(x, y, lineIdx, sourceLink) {
     if (!contextMenuEl) return;
     contextMenuLineIdx = lineIdx;
@@ -53,6 +68,7 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         contextMenuSourceCol = sourceLink.dataset.col || '1';
     }
 
+    syncContextMenuToggles();
     positionContextMenu(x, y);
 }
 
@@ -66,6 +82,8 @@ function positionContextMenu(x, y) {
     contextMenuEl.style.left = x + 'px';
     contextMenuEl.style.top = y + 'px';
     contextMenuEl.style.maxHeight = (window.innerHeight - y - 4) + 'px';
+    // Flip submenus left when menu is near right edge (160px = submenu min-width)
+    contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
 }
 
 function hideContextMenu() {
@@ -122,7 +140,25 @@ function handleSourceAction(action) {
     return false;
 }
 
+/** Handle toggle actions (Options submenu) — keep menu open. */
+function handleToggleAction(action) {
+    var toggleFns = {
+        'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
+        'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
+        'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
+    };
+    var fn = toggleFns[action];
+    if (!fn) return false;
+    fn();
+    syncContextMenuToggles();
+    if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+    return true;
+}
+
 function onContextMenuAction(action) {
+    // Toggle actions keep menu open — handle before hideContextMenu
+    if (handleToggleAction(action)) return;
+
     var lineIdx = contextMenuLineIdx;
     hideContextMenu();
 
@@ -135,11 +171,6 @@ function onContextMenuAction(action) {
 
     switch (action) {
         case 'copy': vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText }); break;
-        case 'copy-decorated':
-            if (typeof decorateLine === 'function') {
-                vscodeApi.postMessage({ type: 'copyToClipboard', text: decorateLine(lineData) });
-            }
-            break;
         case 'copy-to-search':
             if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
                 openSearch();
