@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { FingerprintEntry } from './error-fingerprint';
+import type { PerfFingerprintEntry } from './perf-fingerprint';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -19,6 +20,8 @@ export interface SessionMeta {
     correlationTags?: string[];
     /** Error fingerprints extracted from log content. */
     fingerprints?: FingerprintEntry[];
+    /** Performance fingerprints extracted from log content. */
+    perfFingerprints?: PerfFingerprintEntry[];
     annotations?: Annotation[];
     /** Cached severity line counts from content scanning. */
     errorCount?: number;
@@ -100,6 +103,13 @@ export class SessionMetadataStore {
     async setFingerprints(logUri: vscode.Uri, fingerprints: FingerprintEntry[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.fingerprints = fingerprints;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /** Set or update performance fingerprints (from content scanning). */
+    async setPerfFingerprints(logUri: vscode.Uri, perfFingerprints: PerfFingerprintEntry[]): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.perfFingerprints = perfFingerprints;
         await this.saveMetadata(logUri, meta);
     }
 

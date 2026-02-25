@@ -15,6 +15,7 @@ import {
 } from '../modules/firebase-crashlytics';
 import { renderCrashDetail } from './analysis-crash-detail';
 import { aggregateInsights } from '../modules/cross-session-aggregator';
+import { aggregatePerformance } from '../modules/perf-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../modules/error-status-store';
 
 type PostFn = (msg: unknown) => void;
@@ -120,6 +121,18 @@ export async function handleRecurringRequest(post: PostFn): Promise<void> {
 export async function handleSetErrorStatus(hash: string, status: string, post: PostFn): Promise<void> {
     await setErrorStatus(hash, status as ErrorStatus);
     await handleRecurringRequest(post);
+}
+
+/* ---- Performance handlers ---- */
+
+/** Aggregate performance fingerprints across sessions and send to webview. */
+export async function handlePerformanceRequest(post: PostFn): Promise<void> {
+    const insights = await aggregatePerformance('all').catch(() => undefined);
+    post({
+        type: 'performanceData',
+        trends: insights?.trends ?? [],
+        sessionCount: insights?.sessionCount ?? 0,
+    });
 }
 
 /* ---- Serialization helpers ---- */
