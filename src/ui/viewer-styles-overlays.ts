@@ -121,5 +121,45 @@ export function getOverlayStyles(): string {
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
 }
+
+/* --- Submenu trigger row --- */
+.context-menu-submenu {
+    position: relative;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+}
+.context-menu-submenu:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, inherit);
+}
+.context-menu-submenu .codicon { font-size: 14px; opacity: 0.8; }
+.context-menu-arrow { margin-left: auto; font-size: 12px !important; opacity: 0.6; }
+
+/* --- Submenu flyout panel --- */
+.context-menu-submenu-content {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    z-index: 201;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+    padding: 4px 0;
+}
+.context-menu-submenu:hover > .context-menu-submenu-content { display: block; }
+/* Flip submenus left when context menu is near right viewport edge */
+.context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
+
+/* --- Toggle items (checkmark + label) --- */
+.context-menu-toggle .context-menu-check { font-size: 14px; opacity: 0; }
+.context-menu-toggle.checked .context-menu-check { opacity: 0.8; }
 `;
 }
