@@ -22,6 +22,7 @@ import { getTrashPanelStyles } from './viewer-styles-trash';
 import { getAboutPanelStyles } from './viewer-styles-about';
 import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
 import { getRecurringPanelStyles } from './viewer-styles-recurring';
+import { getPerformancePanelStyles } from './viewer-styles-performance';
 import { getAiStyles } from './viewer-styles-ai';
 
 export function getViewerStyles(): string {
@@ -207,5 +208,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getAiStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles();
 }

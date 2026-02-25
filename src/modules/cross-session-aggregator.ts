@@ -3,10 +3,9 @@
  * aggregated insights — hot files and recurring error patterns.
  */
 
-import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri } from './config';
-import type { SessionMeta } from './session-metadata';
 import type { CrashCategory, FingerprintEntry } from './error-fingerprint';
+import { loadFilteredMetas, type LoadedMeta, type TimeRange } from './metadata-loader';
+export type { TimeRange } from './metadata-loader';
 
 /** A source file mentioned across multiple sessions. */
 export interface HotFile {
@@ -47,22 +46,12 @@ export interface CrossSessionInsights {
     readonly queriedAt: number;
 }
 
-/** Time window for filtering sessions by age. */
-export type TimeRange = '24h' | '7d' | '30d' | 'all';
-
 const maxHotFiles = 20;
 const maxErrors = 30;
-const timeRangeMs: Record<string, number> = { '24h': 86400000, '7d': 604800000, '30d': 2592000000 };
 
 /** Aggregate insights across all session metadata files. */
 export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) { return { hotFiles: [], recurringErrors: [], sessionCount: 0, platforms: [], sdkVersions: [], debugAdapters: [], queriedAt: Date.now() }; }
-    const logDir = getLogDirectoryUri(folder);
-    const entries = await listMetaFiles(logDir);
-    const metas = await Promise.all(entries.map(e => loadMeta(logDir, e)));
-    const valid = metas.filter((m): m is LoadedMeta => m !== undefined);
-    const filtered = filterByTime(valid, timeRange);
+    const filtered = await loadFilteredMetas(timeRange);
     const envStats = buildEnvironmentStats(filtered);
     return {
         hotFiles: buildHotFiles(filtered),
@@ -71,52 +60,6 @@ export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<C
         ...envStats,
         queriedAt: Date.now(),
     };
-}
-
-interface LoadedMeta { readonly filename: string; readonly meta: SessionMeta }
-
-function parseSessionDate(filename: string): number {
-    const m = filename.match(/^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
-    if (!m) { return 0; }
-    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
-}
-
-function filterByTime(metas: readonly LoadedMeta[], range: TimeRange): readonly LoadedMeta[] {
-    if (range === 'all') { return metas; }
-    const cutoff = Date.now() - (timeRangeMs[range] ?? 0);
-    return metas.filter(m => parseSessionDate(m.filename) >= cutoff);
-}
-
-const maxScanDepth = 10;
-
-async function listMetaFiles(logDir: vscode.Uri): Promise<string[]> {
-    const { includeSubfolders } = getConfig();
-    return collectMetaFiles(logDir, includeSubfolders ? maxScanDepth : 0, '');
-}
-
-async function collectMetaFiles(dir: vscode.Uri, depth: number, prefix: string): Promise<string[]> {
-    let entries: [string, vscode.FileType][];
-    try { entries = await vscode.workspace.fs.readDirectory(dir); } catch { return []; }
-    const results: string[] = [];
-    for (const [name, type] of entries) {
-        const rel = prefix ? `${prefix}/${name}` : name;
-        if (type === vscode.FileType.File && name.endsWith('.meta.json')) { results.push(rel); }
-        // Skip dotfiles (.git, .vscode, etc.)
-        else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
-            results.push(...await collectMetaFiles(vscode.Uri.joinPath(dir, name), depth - 1, rel));
-        }
-    }
-    return results;
-}
-
-async function loadMeta(logDir: vscode.Uri, filename: string): Promise<LoadedMeta | undefined> {
-    try {
-        const uri = vscode.Uri.joinPath(logDir, filename);
-        const data = await vscode.workspace.fs.readFile(uri);
-        const meta = JSON.parse(Buffer.from(data).toString('utf-8')) as SessionMeta;
-        const sessionFilename = filename.replace(/\.meta\.json$/, '');
-        return { filename: sessionFilename, meta };
-    } catch { return undefined; }
 }
 
 function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {
