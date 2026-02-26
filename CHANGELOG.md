@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 - **Context menu submenus not visible.** Submenu flyout panels (Search, Actions, Options) were clipped by `overflow-y: auto` on the parent menu container. Removed the overflow constraint so absolute-positioned submenus can render outside the menu bounds.
 - **False-positive CRITICAL badge on instructional text.** Lines containing "fatal" in non-error context (e.g. "To make this warning fatal" or `debugZoneErrorsAreFatal`) were incorrectly badged as CRITICAL. Tightened heuristics to require all-caps `FATAL` or "fatal" followed by an error-type noun (error, exception, crash, signal, fault).
+- **Severity bar disconnected at stack traces.** Stack headers and stack frames were missing severity bar dots because `renderItem()` returned early before the bar class was computed. Moved bar computation earlier and ensured stack items inherit the error level (not overridden by framework color).
 - **Repeat notifications at end of session.** "Repeated #N (…)" lines no longer appear as the last visible content before a session boundary marker — the original line is restored instead.
 - **Blank lines tracked as repeats.** Empty or whitespace-only lines no longer trigger repeat detection, preventing meaningless "Repeated #N (…)" notifications.
 
