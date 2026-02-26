@@ -79,6 +79,8 @@ export function getTagStyles(): string {
     background: var(--vscode-list-hoverBackground);
     opacity: 1;
 }
+.source-tag-chip.tag-overflow { display: none; }
+.source-tag-chip .codicon { font-size: 11px; line-height: 1; }
 .tag-count {
     font-size: 9px;
     opacity: 0.7;
