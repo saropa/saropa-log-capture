@@ -21,7 +21,7 @@ export function getSessionPanelHtml(): string {
         <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames"><span class="codicon codicon-calendar"></span> Dates</button>
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
         <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
-        <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order"><span class="codicon codicon-arrow-down"></span> Sort</button>
+        <button id="session-toggle-reverse" class="session-toggle-btn session-sort-btn" title="Reverse sort order"><span class="codicon codicon-sort-precedence"></span></button>
         <button id="session-toggle-latest" class="session-toggle-btn" title="Show only latest of each name"><span class="codicon codicon-pinned"></span> Latest</button>
         <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag"><span class="codicon codicon-filter"></span> Tags</button>
     </div>
@@ -177,7 +177,7 @@ export function getSessionPanelScript(): string {
         var sortBtn = document.getElementById('session-toggle-reverse');
         if (sortBtn) {
             var icon = sortBtn.querySelector('.codicon');
-            if (icon) icon.className = sessionDisplayOptions.reverseSort ? 'codicon codicon-arrow-up' : 'codicon codicon-arrow-down';
+            if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
         }
     }
 

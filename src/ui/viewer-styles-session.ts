@@ -18,7 +18,7 @@ export function getSessionPanelStyles(): string {
     top: 0;
     bottom: 0;
     width: 25%;
-    min-width: 280px;
+    min-width: 560px;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
@@ -115,6 +115,8 @@ export function getSessionPanelStyles(): string {
     color: var(--vscode-foreground);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
+
+.session-sort-btn { margin-left: auto; }
 
 .session-toggle-btn.active {
     color: var(--vscode-foreground);
