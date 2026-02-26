@@ -81,7 +81,6 @@ function positionContextMenu(x, y) {
     if (rect.bottom > window.innerHeight) y = Math.max(0, y - rect.height);
     contextMenuEl.style.left = x + 'px';
     contextMenuEl.style.top = y + 'px';
-    contextMenuEl.style.maxHeight = (window.innerHeight - y - 4) + 'px';
     // Flip submenus left when menu is near right edge (160px = submenu min-width)
     contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
 }
