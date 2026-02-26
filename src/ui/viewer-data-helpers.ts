@@ -41,7 +41,32 @@ var repeatPreviewLength = 85; // Characters to show in repeat preview
  */
 function generateRepeatHash(level, plainText) {
     var preview = plainText.substring(0, 200).trim();
+    if (!preview) return null;
     return level + '::' + preview;
+}
+
+/** Remove trailing repeat notifications and restore the original line. */
+function cleanupTrailingRepeats() {
+    if (repeatTracker.count <= 1 || repeatTracker.lastLineIndex < 0) return;
+    if (repeatTracker.lastLineIndex < allLines.length) {
+        var orig = allLines[repeatTracker.lastLineIndex];
+        if (orig && orig.repeatHidden) {
+            orig.repeatHidden = false;
+            orig.height = calcItemHeight(orig);
+            totalHeight += orig.height;
+        }
+    }
+    for (var ri = allLines.length - 1; ri >= 0; ri--) {
+        if (allLines[ri].type !== 'repeat-notification') break;
+        totalHeight -= allLines[ri].height;
+        allLines[ri].height = 0;
+    }
+    repeatTracker.lastHash = null;
+    repeatTracker.lastPlainText = null;
+    repeatTracker.lastLevel = null;
+    repeatTracker.count = 0;
+    repeatTracker.lastTimestamp = 0;
+    repeatTracker.lastLineIndex = -1;
 }
 
 /**

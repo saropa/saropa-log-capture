@@ -18,6 +18,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
             if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
             activeGroupHeader = null;
         }
+        cleanupTrailingRepeats();
         allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null });
         totalHeight += MARKER_HEIGHT;
         return;
@@ -72,7 +73,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
     var now = ts || Date.now();
     var isRepeat = false;
 
-    if (repeatTracker.lastHash === currentHash &&
+    if (currentHash !== null && repeatTracker.lastHash === currentHash &&
         (now - repeatTracker.lastTimestamp) < repeatWindowMs) {
         // This is a repeat within the time window
         isRepeat = true;
