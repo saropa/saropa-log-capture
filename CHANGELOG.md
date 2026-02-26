@@ -11,7 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Changed
+- **Compact correlation tag chips.** Replaced `file:` and `error:` text prefixes with codicon icons; hide count badge when count is 1; collapse chips beyond 8 behind a "+N more" toggle.
+- **Session panel sort button UX.** Replaced labeled "Sort" button with a right-aligned icon-only `codicon-sort-precedence` toggle. Icon flips vertically via CSS transform when reverse sort is active. Doubled panel minimum width from 280px to 560px.
+
 ### Fixed
+- **Session panel closes when clicking a tag chip.** `rebuildSessionTagChips` replaces innerHTML during the click handler, detaching the event target before the document-level "close on outside click" listener runs its `contains()` check. Added `stopPropagation()` to the chip click handler.
 - **Context menu submenus not visible.** Submenu flyout panels (Search, Actions, Options) were clipped by `overflow-y: auto` on the parent menu container. Removed the overflow constraint so absolute-positioned submenus can render outside the menu bounds.
 - **False-positive CRITICAL badge on instructional text.** Lines containing "fatal" in non-error context (e.g. "To make this warning fatal" or `debugZoneErrorsAreFatal`) were incorrectly badged as CRITICAL. Tightened heuristics to require all-caps `FATAL` or "fatal" followed by an error-type noun (error, exception, crash, signal, fault).
 - **Severity bar missing on stack traces.** Stack headers and stack frames had no severity bar dots because `renderItem()` returned early before the bar class was computed. Moved bar computation earlier so stack items get dots whose color matches their text (framework frames get blue, app frames get error red).
