@@ -203,8 +203,7 @@ function renderItem(item, idx, prevVis) {
     // Severity bar class — computed early so stack items also get dots
     var barCls = '';
     if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
-        var isStack = (item.type === 'stack-frame' || item.type === 'stack-header');
-        if (item.fw && !isStack) {
+        if (item.fw) {
             barCls = ' level-bar-framework';
         } else {
             barCls = ' level-bar-' + item.level;
