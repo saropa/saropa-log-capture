@@ -200,6 +200,17 @@ function renderItem(item, idx, prevVis) {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
+    // Severity bar class — computed early so stack items also get dots
+    var barCls = '';
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
+        var isStack = (item.type === 'stack-frame' || item.type === 'stack-header');
+        if (item.fw && !isStack) {
+            barCls = ' level-bar-framework';
+        } else {
+            barCls = ' level-bar-' + item.level;
+        }
+    }
+
     if (item.type === 'stack-header') {
         var ch, sf;
         if (item.collapsed === true) {
@@ -218,11 +229,11 @@ function renderItem(item, idx, prevVis) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + spacingCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
+        return '<div class="stack-header' + matchCls + spacingCls + barCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
 
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
     // AI activity lines get a distinct prefix and CSS class
@@ -266,16 +277,6 @@ function renderItem(item, idx, prevVis) {
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
-
-    // Add severity bar class if enabled
-    var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
-        if (item.fw) {
-            barCls = ' level-bar-framework';
-        } else {
-            barCls = ' level-bar-' + item.level;
-        }
-    }
 
     return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }
