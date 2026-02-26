@@ -65,6 +65,7 @@ export function getSessionTagsScript(): string {
     };
 
     if (sessionTagChips) sessionTagChips.addEventListener('click', function(e) {
+        e.stopPropagation();
         var chip = e.target.closest('[data-stag]');
         if (chip) {
             var tag = chip.getAttribute('data-stag');
