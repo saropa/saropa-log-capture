@@ -162,10 +162,15 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.fetchItems(true);
     }
 
-    private async fetchItems(includeTrash: boolean): Promise<TreeItem[]> {
+    /** Like getAllChildren but from an optional root folder (for Project Logs panel override). */
+    async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
+        return this.fetchItems(true, logDirOverride);
+    }
+
+    private async fetchItems(includeTrash: boolean, logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
         const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder) { return []; }
-        const logDir = getLogDirectoryUri(folder);
+        if (!folder && !logDirOverride) { return []; }
+        const logDir = logDirOverride ?? getLogDirectoryUri(folder!);
         try {
             const { fileTypes, includeSubfolders } = getConfig();
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
