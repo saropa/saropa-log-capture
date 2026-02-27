@@ -67,6 +67,11 @@ export function getSessionPanelStyles(): string {
     text-decoration: underline;
 }
 
+/* Separator dot excluded from selection when user selects the path. */
+.session-path-sep {
+    user-select: none;
+}
+
 .session-panel-actions {
     display: flex;
     gap: 4px;

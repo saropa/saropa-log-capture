@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session panel sort button UX.** Replaced labeled "Sort" with a right-aligned icon-only `codicon-sort-precedence` toggle; icon flips vertically when reverse sort is active.
 
 ### Fixed
+- **Context menu text wrapping and bottom cropping.** Menu and flyout submenus use `white-space: nowrap` and `width: max-content` so labels stay on one line. Menu position is clamped to the viewport so it is never cropped when right-clicking near the bottom or right edge.
 - **Project Logs path separator selection.** The " · " between the title and path is no longer highlighted when selecting the path (separator in own element with `user-select: none`).
 - **Footer version link did not open About panel.** Clicking the version in the footer opened the About panel but the same event bubbled to document and triggered the panel's "outside click" close, so the panel closed immediately. Added `stopPropagation()` on the version-link click so the About panel stays open.
 - **Three blue colors unified.** Notice and framework now share `--vscode-charts-blue` (#2196f3) for severity bar, line tint, and notice line text; link/info accent (#3794ff) unchanged.
