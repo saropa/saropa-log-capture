@@ -106,13 +106,53 @@ function updateFooterText() {
         fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Reveal in Session History';
         footerTextEl.appendChild(fn);
     }
-    if (footerVersion) {
-        footerTextEl.appendChild(document.createTextNode((currentFilename ? ' \\u00b7 ' : '') + footerVersion));
-    }
     if (loadTruncatedInfo) {
         footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
     }
     updateLineCount();
+    updateFooterVersionLink();
+}
+
+function updateFooterVersionLink() {
+    var link = document.getElementById('footer-version-link');
+    if (link && footerVersion) {
+        link.textContent = footerVersion;
+        link.style.display = '';
+    } else if (link) link.style.display = 'none';
+}
+
+function updateFooterSelection() {
+    var el = document.getElementById('footer-selection');
+    if (!el) return;
+    var sel = window.getSelection();
+    if (!sel || sel.isCollapsed) { el.textContent = ''; return; }
+    var viewport = document.getElementById('viewport');
+    if (!viewport || (!viewport.contains(sel.anchorNode) && !viewport.contains(sel.focusNode))) { el.textContent = ''; return; }
+    var text = sel.toString();
+    var lineCount = (text.match(/\\n/g) || []).length + 1;
+    var charCount = text.length;
+    el.textContent = lineCount + ' line' + (lineCount !== 1 ? 's' : '') + ', ' + charCount + ' char' + (charCount !== 1 ? 's' : '') + ' selected';
+}
+var selectionUpdateRaf = null;
+function scheduleFooterSelectionUpdate() {
+    if (selectionUpdateRaf) return;
+    selectionUpdateRaf = requestAnimationFrame(function() {
+        selectionUpdateRaf = null;
+        updateFooterSelection();
+    });
+}
+if (viewportEl) {
+    document.addEventListener('selectionchange', scheduleFooterSelectionUpdate);
+    viewportEl.addEventListener('mouseup', function() { setTimeout(updateFooterSelection, 0); });
+    viewportEl.addEventListener('keyup', scheduleFooterSelectionUpdate);
+}
+var footerVersionLink = document.getElementById('footer-version-link');
+if (footerVersionLink) {
+    footerVersionLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof setActivePanel === 'function') setActivePanel('about');
+    });
+    updateFooterVersionLink();
 }
 
 function updateLineCount() {

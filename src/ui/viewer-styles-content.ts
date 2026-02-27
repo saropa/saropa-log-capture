@@ -132,8 +132,21 @@ export function getContentStyles(): string {
 /* Push right-aligned group to the end of footer */
 .footer-spacer { flex: 1; }
 
-/* Line count — right-aligned in footer, tabular digits prevent width jitter */
-#line-count { margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Line count — tabular digits prevent width jitter */
+#line-count { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Selection count (lines + chars) when text is selected in viewport */
+.footer-selection { white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
+.footer-selection:empty { display: none; }
+
+/* Version link at far right — opens About panel */
+.footer-version-link {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: none;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+.footer-version-link:hover { text-decoration: underline; }
 
 /* --- Active filter badge in footer --- */
 @keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }

@@ -23,6 +23,7 @@ import type { SessionDisplayOptions } from "./session-display";
 import type { ViewerTarget } from "./viewer-target";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import * as helpers from "./viewer-provider-helpers";
+import { loadAndPostAboutContent } from "./about-content-loader";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
 import * as panelHandlers from "./viewer-panel-handlers";
 
@@ -162,6 +163,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
     this.post({ type: "sessionList", sessions, ...rootInfo });
   }
+  sendSessionListLoading(folderPath: string): void {
+    this.post({ type: "sessionListLoading", folderPath });
+  }
   sendBookmarkList(files: Record<string, unknown>): void { this.post({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.post({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.post({ type: "sessionState", active }); }
@@ -255,6 +259,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "requestRecurringErrors": panelHandlers.handleRecurringRequest(m => this.post(m)).catch(() => {}); break;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), m => this.post(m)).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
+      case "requestAboutContent":
+        void loadAndPostAboutContent(this.context.extensionUri, this.version, (m) => this.post(m));
+        break;
     }
   }
 
