@@ -58,7 +58,7 @@ These principles guide all development decisions:
    npm run compile       # Full build
    npm run test          # Run tests
    ```
-5. Test manually in Extension Development Host (F5)
+5. Test manually: press **F5**. When the Extension Development Host window opens, if you see "All installed extensions are temporarily disabled", click **Reload and Enable Extensions**. Then click the **Saropa Log Capture** icon in the left activity bar to open the viewer. Start a debug session in that window to see capture in action.
 6. Commit with descriptive message
 7. Open a Pull Request
 
