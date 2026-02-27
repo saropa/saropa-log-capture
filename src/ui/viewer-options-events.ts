@@ -76,6 +76,11 @@ if (optVisualSpacing) optVisualSpacing.addEventListener('change', function(e) {
     if (typeof toggleVisualSpacing === 'function') toggleVisualSpacing();
     syncOptionsPanelUi();
 });
+var optHideBlankLines = document.getElementById('opt-hide-blank-lines');
+if (optHideBlankLines) optHideBlankLines.addEventListener('change', function(e) {
+    if (typeof toggleHideBlankLines === 'function') toggleHideBlankLines();
+    syncOptionsPanelUi();
+});
 
 // Audio
 var optAudio = document.getElementById('opt-audio');
