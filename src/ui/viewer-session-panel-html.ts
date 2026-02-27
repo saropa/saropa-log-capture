@@ -1,0 +1,50 @@
+/**
+ * Session history panel HTML template for the webview.
+ * Used by viewer-session-panel.ts.
+ */
+
+/** Generate the session panel HTML. */
+export function getSessionPanelHtml(): string {
+    return /* html */ `
+<div id="session-panel" class="session-panel">
+    <div id="session-resize" class="session-panel-resize"></div>
+    <div class="session-panel-header">
+        <span class="session-panel-title">Project Logs</span>
+        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span class="session-path-sep" aria-hidden="true"> · </span><span id="session-path-text">Default</span></span>
+        <button id="session-reset-root" class="session-panel-action" title="Use default folder" style="display:none">
+            <span class="codicon codicon-debug-restart"></span>
+        </button>
+        <div class="session-panel-actions">
+            <button id="session-refresh" class="session-panel-action" title="Refresh">
+                <span class="codicon codicon-refresh"></span>
+            </button>
+            <button id="session-close" class="session-panel-close" title="Close">&times;</button>
+        </div>
+    </div>
+    <div class="session-panel-toggles">
+        <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames"><span class="codicon codicon-calendar"></span> Dates</button>
+        <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
+        <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
+        <button id="session-toggle-reverse" class="session-toggle-btn session-sort-btn" title="Reverse sort order"><span class="codicon codicon-sort-precedence"></span></button>
+        <button id="session-toggle-latest" class="session-toggle-btn" title="Show only latest of each name"><span class="codicon codicon-pinned"></span> Latest</button>
+        <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag"><span class="codicon codicon-filter"></span> Tags</button>
+    </div>
+    <div id="session-tags-section" class="session-tags-section" style="display:none">
+        <div id="session-tag-chips" class="session-tag-chips"></div>
+    </div>
+    <div class="session-panel-content">
+        <div id="session-list"></div>
+        <div id="session-empty" class="session-empty">No sessions found</div>
+        <div id="session-loading" class="session-loading" style="display:none">
+            <div class="session-loading-bar"><div class="session-loading-bar-fill"></div></div>
+            <div id="session-loading-label" class="session-loading-label">Loading…</div>
+            <div class="session-loading-shimmer">
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line session-shimmer-line-short"></div>
+            </div>
+        </div>
+    </div>
+</div>`;
+}
