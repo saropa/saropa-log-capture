@@ -14,9 +14,15 @@ export function getAboutPanelHtml(): string {
         <button id="about-panel-close" class="about-panel-close" title="Close">&times;</button>
     </div>
     <div class="about-panel-content">
-        <div class="ab-header">Saropa</div>
+        <div class="ab-version-row">
+            <span class="ab-version-label">Saropa Log Capture</span>
+            <span id="ab-version-badge" class="ab-version-badge"></span>
+        </div>
         <p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
         <p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
+        <div class="ab-section">Recent changes</div>
+        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">Loading…</span></div>
+        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="https://marketplace.visualstudio.com/items/Saropa.saropa-log-capture/changelog">Full changelog on Marketplace</a>
         <div class="ab-section">Projects</div>
         ${getProjectLinksHtml()}
         <div class="ab-section">Connect</div>
@@ -37,6 +43,7 @@ export function getAboutPanelScript(): string {
         aboutPanelOpen = true;
         aboutPanelEl.classList.add('visible');
         injectVersion();
+        if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'requestAboutContent' });
     };
 
     window.closeAboutPanel = function() {
@@ -53,11 +60,36 @@ export function getAboutPanelScript(): string {
         if (badge && ver) badge.textContent = ver;
     }
 
+    window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'aboutContent') return;
+        var badge = document.getElementById('ab-version-badge');
+        if (badge && e.data.version) badge.textContent = e.data.version;
+        var chunk = document.getElementById('about-changelog');
+        if (chunk) {
+            chunk.innerHTML = '';
+            if (e.data.changelogExcerpt) {
+                var pre = document.createElement('pre');
+                pre.className = 'ab-changelog-pre';
+                pre.textContent = e.data.changelogExcerpt;
+                chunk.appendChild(pre);
+            } else chunk.appendChild(document.createTextNode('Changelog unavailable.'));
+        }
+        var link = document.getElementById('about-changelog-link');
+        if (link && e.data.changelogUrl) link.setAttribute('data-url', e.data.changelogUrl);
+    });
+
     /* ---- Click handlers ---- */
 
     if (aboutPanelEl) {
         aboutPanelEl.addEventListener('click', function(e) {
             var link = e.target.closest('.ab-link');
+            var changelogLink = e.target.closest('#about-changelog-link');
+            if (changelogLink) {
+                e.preventDefault();
+                var url = changelogLink.getAttribute('data-url');
+                if (url && typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openUrl', url: url });
+                return;
+            }
             if (!link) return;
             var url = link.getAttribute('data-url');
             if (url) vscodeApi.postMessage({ type: 'openUrl', url: url });
@@ -100,7 +132,7 @@ function getProjectLinksHtml(): string {
             desc: 'The superpower your address book is missing. An Intelligent Address Book with Business Card Mode, 252+ medical tips, global emergency numbers for 195+ countries, and biometric locking.',
             url: 'https://saropa.com/' }),
         linkHtml({ icon: '\u{1F4CB}', title: 'Saropa Log Capture',
-            badge: 'VS Code Marketplace <span id="ab-version-badge"></span>',
+            badge: 'VS Code Marketplace',
             desc: 'The Debugger\u2019s Safety Net. Automatically saves all Debug Console output to persistent log files. No setup required\u2009\u2014\u2009just hit F5 and your logs are safe.',
             url: 'https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture' }),
         linkHtml({ icon: '\u{1F6E1}\uFE0F', title: 'Saropa Claude Guard', badge: 'VS Code Marketplace',

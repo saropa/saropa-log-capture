@@ -138,6 +138,8 @@ export function getSessionPanelStyles(): string {
 
 .session-panel-content {
     flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
@@ -159,6 +161,9 @@ export function getSessionPanelStyles(): string {
     color: var(--vscode-charts-red, #f44336);
 }
 
+.session-item-icon {
+    user-select: none;
+}
 .session-item-icon .codicon {
     font-size: 14px;
     margin-top: 2px;
@@ -223,13 +228,40 @@ export function getSessionPanelStyles(): string {
 .sev-fw { background: var(--vscode-charts-blue, #2196f3); }
 .sev-info { background: var(--vscode-charts-green, #4caf50); }
 
-/* --- Session tag chips --- */
+/* --- Session tag chips (correlation filters: file/error tags across sessions) --- */
 .session-tags-section {
-    padding: 4px 12px;
+    padding: 6px 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+    min-height: 0;
 }
-.session-tag-chips {
-    display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+.session-tags-section .session-tag-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    max-height: 4.8em;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.session-tags-section .source-tag-chip {
+    border: none;
+    background: var(--vscode-badge-background, rgba(128, 128, 128, 0.25));
+    color: var(--vscode-badge-foreground, var(--vscode-foreground));
+}
+.session-tags-section .source-tag-chip.active {
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+}
+.session-tags-section .source-tag-chip .tag-label {
+    display: inline-block;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.session-tags-section .tag-count {
+    flex-shrink: 0;
 }
 
 /* --- Empty / loading states --- */

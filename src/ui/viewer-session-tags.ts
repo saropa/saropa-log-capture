@@ -41,7 +41,7 @@ export function getSessionTagsScript(): string {
     function buildChipHtml(tag, index, count) {
         var active = !excludedTags[tag] ? ' active' : '';
         var hide = index >= maxVisible && !tagsExpanded ? ' tag-overflow' : '';
-        var cnt = count > 1 ? '<span class="tag-count">' + count + '</span>' : '';
+        var cnt = '<span class="tag-count">' + count + '</span>';
         return '<button class="source-tag-chip' + active + hide
             + '" data-stag="' + tag + '">' + tagIcon(tag) + '<span class="tag-label">'
             + tagLabel(tag) + '</span>' + cnt + '</button>';
@@ -56,7 +56,7 @@ export function getSessionTagsScript(): string {
                 counts[tags[j]] = (counts[tags[j]] || 0) + 1;
             }
         }
-        var keys = Object.keys(counts).sort();
+        var keys = Object.keys(counts).sort(function(a, b) { return (counts[b] || 0) - (counts[a] || 0); });
         if (keys.length === 0) {
             sessionTagSection.style.display = 'none';
             sessionTagChips.innerHTML = '';

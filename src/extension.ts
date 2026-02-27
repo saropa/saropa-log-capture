@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const items = await historyProvider.getAllChildren();
         const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
         const folder = vscode.workspace.workspaceFolders?.[0];
-        const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'Default';
+        const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'No workspace';
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
 
