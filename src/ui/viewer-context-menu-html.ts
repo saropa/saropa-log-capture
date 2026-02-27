@@ -94,6 +94,10 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Visual spacing</span>
             </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Hide blank lines</span>
+            </div>
         </div>
     </div>
 </div>`;
