@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Prerequisite tool checks (Node, npm, git, gh CLI, vsce auth).
+"""Prerequisite tool checks (Node, npm, git, gh CLI, vsce auth, OVSX PAT).
 
 Each check returns True on success, False on blocking failure.
 All prerequisites are blocking — the pipeline halts on the first failure
@@ -66,7 +66,7 @@ def check_gh_cli() -> bool:
     """Verify GitHub CLI is installed and authenticated.
 
     Only called when publishing (not --analyze-only). Blocking because
-    Step 16 requires `gh release create` to attach the .vsix to a
+    Step 15 requires `gh release create` to attach the .vsix to a
     GitHub release. Failing early here prevents discovering the issue
     only after the marketplace publish has already succeeded.
     """
@@ -93,7 +93,7 @@ def check_vsce_auth() -> bool:
     """Verify vsce has valid marketplace credentials for 'saropa'.
 
     Only called when --analyze-only is NOT set, since credentials are
-    only needed for the actual marketplace publish in Step 15.
+    only needed for the actual marketplace publish in Step 13.
     Uses `vsce verify-pat` which validates the PAT without publishing.
     """
     info("Checking marketplace credentials...")
@@ -116,4 +116,22 @@ def check_vsce_auth() -> bool:
 
     fail("No valid marketplace PAT found for publisher 'saropa'.")
     info(f"  Run: {C.YELLOW}npx @vscode/vsce login saropa{C.RESET}")
+    return False
+
+
+def check_ovsx_token() -> bool:
+    """Verify OVSX_PAT is set for publishing to Open VSX (Cursor / VSCodium).
+
+    Only called when publishing. Token is created at open-vsx.org
+    (user-settings → Access Tokens). Not stored in keychain; use env var.
+    """
+    import os as _os
+    pat = _os.environ.get("OVSX_PAT", "").strip()
+    if pat:
+        ok("OVSX_PAT set (Open VSX publish)")
+        return True
+    fail("OVSX_PAT is not set. Required for Open VSX (Cursor / VSCodium).")
+    info(f"  1. Create token: {C.WHITE}https://open-vsx.org/user-settings/tokens{C.RESET}")
+    info(f"  2. Set in this shell: {C.YELLOW}OVSX_PAT=<your-token>{C.RESET}")
+    info(f"  3. First time only: {C.YELLOW}npx ovsx create-namespace saropa -p <token>{C.RESET}")
     return False

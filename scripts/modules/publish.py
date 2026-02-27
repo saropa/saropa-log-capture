@@ -33,7 +33,8 @@ def confirm_publish(version: str) -> bool:
     print(f"    1. Commit and push to origin")
     print(f"    2. Create git tag v{version}")
     print(f"    3. Publish to VS Code Marketplace")
-    print(f"    4. Create GitHub release with .vsix")
+    print(f"    4. Publish to Open VSX (Cursor / VSCodium)")
+    print(f"    5. Create GitHub release with .vsix")
     print(f"\n  {C.RED}These actions are irreversible.{C.RESET}")
     return ask_yn("Proceed with publish?", default=False)
 
@@ -186,6 +187,36 @@ def publish_marketplace(vsix_path: str) -> bool:
             print(result.stderr)
         return False
     ok("Published to VS Code Marketplace")
+    return True
+
+
+# ── Publish: Open VSX ───────────────────────────────────────
+
+
+def publish_openvsx(vsix_path: str) -> bool:
+    """Publish the pre-built .vsix to Open VSX (open-vsx.org).
+
+    Used by Cursor, VSCodium, and others. Requires OVSX_PAT env var
+    (create at https://open-vsx.org/user-settings/tokens). Same .vsix
+    as Step 13; credentials checked earlier in pipeline.
+    """
+    pat = os.environ.get("OVSX_PAT", "").strip()
+    if not pat:
+        fail("OVSX_PAT is not set. Create a token at open-vsx.org/user-settings/tokens")
+        return False
+    info(f"Publishing {os.path.basename(vsix_path)} to Open VSX...")
+    result = run(
+        ["npx", "ovsx", "publish", vsix_path, "-p", pat],
+        cwd=PROJECT_ROOT,
+    )
+    if result.returncode != 0:
+        fail("Open VSX publish failed:")
+        if result.stdout.strip():
+            print(result.stdout)
+        if result.stderr.strip():
+            print(result.stderr)
+        return False
+    ok("Published to Open VSX")
     return True
 
 
