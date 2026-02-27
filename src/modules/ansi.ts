@@ -1,28 +1,52 @@
 /** Regex matching ANSI escape sequences (SGR and cursor codes). */
 const ANSI_REGEX = /\x1b\[[0-9;]*[a-zA-Z]/g;
 
-/** Standard foreground colors (SGR 30-37). Matched to VS Code terminal palette. */
+/** Standard foreground colors (SGR 30-37). Uses VS Code CSS variables so ANSI colors match the active theme. */
 const standardFg: Record<number, string> = {
-    30: '#000', 31: '#cd3131', 32: '#0dbc79', 33: '#e5e510',
-    34: '#2472c8', 35: '#bc3fbc', 36: '#11a8cd', 37: '#e5e5e5',
+    30: 'var(--vscode-terminal-ansiBlack, #000)',
+    31: 'var(--vscode-terminal-ansiRed, #cd3131)',
+    32: 'var(--vscode-terminal-ansiGreen, #0dbc79)',
+    33: 'var(--vscode-terminal-ansiYellow, #e5e510)',
+    34: 'var(--vscode-terminal-ansiBlue, #2472c8)',
+    35: 'var(--vscode-terminal-ansiMagenta, #bc3fbc)',
+    36: 'var(--vscode-terminal-ansiCyan, #11a8cd)',
+    37: 'var(--vscode-terminal-ansiWhite, #e5e5e5)',
 };
 
-/** Bright foreground colors (SGR 90-97). Matched to VS Code terminal bright palette. */
+/** Bright foreground colors (SGR 90-97). Uses VS Code CSS variables so ANSI colors match the active theme. */
 const brightFg: Record<number, string> = {
-    90: '#666', 91: '#f14c4c', 92: '#23d18b', 93: '#f5f543',
-    94: '#3b8eea', 95: '#d670d6', 96: '#29b8db', 97: '#fff',
+    90: 'var(--vscode-terminal-ansiBrightBlack, #666)',
+    91: 'var(--vscode-terminal-ansiBrightRed, #f14c4c)',
+    92: 'var(--vscode-terminal-ansiBrightGreen, #23d18b)',
+    93: 'var(--vscode-terminal-ansiBrightYellow, #f5f543)',
+    94: 'var(--vscode-terminal-ansiBrightBlue, #3b8eea)',
+    95: 'var(--vscode-terminal-ansiBrightMagenta, #d670d6)',
+    96: 'var(--vscode-terminal-ansiBrightCyan, #29b8db)',
+    97: 'var(--vscode-terminal-ansiBrightWhite, #fff)',
 };
 
-/** Standard background colors (SGR 40-47). Matched to VS Code terminal palette. */
+/** Standard background colors (SGR 40-47). Uses VS Code CSS variables so ANSI colors match the active theme. */
 const standardBg: Record<number, string> = {
-    40: '#000', 41: '#cd3131', 42: '#0dbc79', 43: '#e5e510',
-    44: '#2472c8', 45: '#bc3fbc', 46: '#11a8cd', 47: '#e5e5e5',
+    40: 'var(--vscode-terminal-ansiBlack, #000)',
+    41: 'var(--vscode-terminal-ansiRed, #cd3131)',
+    42: 'var(--vscode-terminal-ansiGreen, #0dbc79)',
+    43: 'var(--vscode-terminal-ansiYellow, #e5e510)',
+    44: 'var(--vscode-terminal-ansiBlue, #2472c8)',
+    45: 'var(--vscode-terminal-ansiMagenta, #bc3fbc)',
+    46: 'var(--vscode-terminal-ansiCyan, #11a8cd)',
+    47: 'var(--vscode-terminal-ansiWhite, #e5e5e5)',
 };
 
-/** Bright background colors (SGR 100-107). Matched to VS Code terminal bright palette. */
+/** Bright background colors (SGR 100-107). Uses VS Code CSS variables so ANSI colors match the active theme. */
 const brightBg: Record<number, string> = {
-    100: '#666', 101: '#f14c4c', 102: '#23d18b', 103: '#f5f543',
-    104: '#3b8eea', 105: '#d670d6', 106: '#29b8db', 107: '#fff',
+    100: 'var(--vscode-terminal-ansiBrightBlack, #666)',
+    101: 'var(--vscode-terminal-ansiBrightRed, #f14c4c)',
+    102: 'var(--vscode-terminal-ansiBrightGreen, #23d18b)',
+    103: 'var(--vscode-terminal-ansiBrightYellow, #f5f543)',
+    104: 'var(--vscode-terminal-ansiBrightBlue, #3b8eea)',
+    105: 'var(--vscode-terminal-ansiBrightMagenta, #d670d6)',
+    106: 'var(--vscode-terminal-ansiBrightCyan, #29b8db)',
+    107: 'var(--vscode-terminal-ansiBrightWhite, #fff)',
 };
 
 interface AnsiState {
