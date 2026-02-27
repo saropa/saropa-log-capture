@@ -131,25 +131,30 @@ function markLatestByName(sessions, applyOptions) {
 /* --- Panel resize --- */
 function initSessionPanelResize(panelEl, saveWidth) {
     var handle = document.getElementById('session-resize');
+    var slotEl = document.getElementById('panel-slot');
     if (!handle || !panelEl) return;
     var dragging = false;
     handle.addEventListener('mousedown', function(e) {
         e.preventDefault(); dragging = true;
         handle.classList.add('dragging');
         panelEl.style.transition = 'none';
+        if (slotEl) slotEl.style.transition = 'none';
     });
     document.addEventListener('mousemove', function(e) {
         if (!dragging) return;
         var vw = document.documentElement.clientWidth;
         var isRight = document.body.dataset.iconBar === 'right';
-        var w = isRight ? vw - e.clientX : e.clientX;
-        panelEl.style.width = Math.max(280, Math.min(vw * 0.8, w)) + 'px';
+        var raw = isRight ? vw - e.clientX : e.clientX;
+        var w = Math.max(280, Math.min(vw * 0.8, raw)) + 'px';
+        panelEl.style.width = w;
+        if (slotEl) slotEl.style.width = w;
     });
     document.addEventListener('mouseup', function() {
         if (!dragging) return;
         dragging = false;
         handle.classList.remove('dragging');
         panelEl.style.transition = '';
+        if (slotEl) slotEl.style.transition = '';
         saveWidth(parseInt(panelEl.style.width, 10) || 0);
     });
 }

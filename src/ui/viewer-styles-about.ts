@@ -11,27 +11,19 @@ export function getAboutPanelStyles(): string {
    About Panel — slide-out (same pattern as trash/bookmark panels)
    =================================================================== */
 .about-panel {
-    position: fixed;
-    left: -100%;
-    top: 0;
-    bottom: 0;
-    width: 30%;
     min-width: 280px;
     max-width: 420px;
+    height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: left 0.15s ease;
-    z-index: 240;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    pointer-events: none;
 }
 
 .about-panel.visible {
-    left: var(--icon-bar-width, 36px);
-    pointer-events: auto;
+    display: flex;
 }
 
 .about-panel-header {
