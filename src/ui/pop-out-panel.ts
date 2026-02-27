@@ -59,6 +59,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
   private onSessionAction?: (action: string, uriString: string, filename: string) => void;
+  private onBrowseSessionRoot?: () => Promise<void>;
+  private onClearSessionRoot?: () => Promise<void>;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -106,6 +108,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = h; }
   setSessionActionHandler(h: (a: string, u: string, f: string) => void): void { this.onSessionAction = h; }
+  setBrowseSessionRootHandler(h: () => Promise<void>): void { this.onBrowseSessionRoot = h; }
+  setClearSessionRootHandler(h: () => Promise<void>): void { this.onClearSessionRoot = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
     if (!this.panel) { return; }
@@ -155,7 +159,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.post({ type: "sessionList", sessions }); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+    this.post({ type: "sessionList", sessions, ...rootInfo });
+  }
   sendBookmarkList(files: Record<string, unknown>): void { this.post({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.post({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.post({ type: "sessionState", active }); }
@@ -230,6 +236,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks":
       case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
       case "requestSessionList": this.onSessionListRequest?.(); break;
+      case "browseSessionRoot": void this.onBrowseSessionRoot?.(); break;
+      case "clearSessionRoot": void this.onClearSessionRoot?.(); break;
       case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "sessionAction": this.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
       case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
