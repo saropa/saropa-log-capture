@@ -260,6 +260,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standar
 3. Run `npm run compile` to verify your changes
 4. Open a Pull Request
 
+**Testing the extension (F5):**  
+Open this repo in **VS Code** (not Cursor): **File → Open Folder** → select the repo, then press **F5**. A second VS Code window opens (Extension Development Host) with the extension loaded. Click the **Saropa Log Capture** icon in the activity bar (left) to open the viewer. If you use Cursor, the F5 host may still be Cursor and the extension may not load; use VS Code for reliable testing.
+
 **Reporting issues:**
 
 - Include steps to reproduce and your debug adapter (Dart, Node, Python, etc.)

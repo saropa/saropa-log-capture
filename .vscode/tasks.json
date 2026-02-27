@@ -2,7 +2,35 @@
 // for the documentation about the tasks.json format
 {
 	"version": "2.0.0",
+	"problemMatchers": [
+		{
+			"name": "esbuild-watch",
+			"owner": "esbuild",
+			"fileLocation": "relative",
+			"pattern": {
+				"regexp": "^(.*):(\\d+):(\\d+):\\s*(error|warning):\\s*(.*)$",
+				"file": 1,
+				"line": 2,
+				"column": 3,
+				"severity": 4,
+				"message": 5
+			},
+			"background": {
+				"activeOnStart": true,
+				"beginsPattern": "\\[watch\\] build started",
+				"endsPattern": "\\[watch\\] build finished"
+			}
+		}
+	],
 	"tasks": [
+		{
+			"label": "compile",
+			"type": "npm",
+			"script": "compile",
+			"group": "build",
+			"problemMatcher": "$tsc",
+			"presentation": { "reveal": "always", "panel": "shared" }
+		},
 		{
             "label": "watch",
             "dependsOn": [
@@ -21,7 +49,7 @@
             "type": "npm",
             "script": "watch:esbuild",
             "group": "build",
-            "problemMatcher": "$esbuild-watch",
+            "problemMatcher": "esbuild-watch",
             "isBackground": true,
             "label": "npm: watch:esbuild",
             "presentation": {
@@ -59,6 +87,14 @@
 				"npm: watch-tests"
 			],
 			"problemMatcher": []
+		},
+		{
+			"label": "Open workspace in VS Code",
+			"type": "shell",
+			"command": "code",
+			"args": ["${workspaceFolder}"],
+			"problemMatcher": [],
+			"presentation": { "reveal": "silent" }
 		}
 	]
 }
