@@ -91,14 +91,17 @@ function updateDecoButton() {
  * Only includes parts whose sub-toggle is enabled.
  * Returns empty string for markers, stack-frame sub-lines, or when off.
  *
- * Example output: <span class="line-decoration">🟢 <span class="deco-counter">    1</span> T07:23:36 » </span>
+ * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
+ * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
 function getDecorationPrefix(item) {
     if (!showDecorations) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
 
     var parts = [];
-    if (decoShowDot) parts.push(getLevelDot(item.level || 'info', !!item.fw));
+    // Emoji dots are NOT shown in the visual prefix — the CSS severity bar
+    // (level-bar-*) is the visual indicator. Emoji dots appear only in
+    // decorated copy format (see decorateLine() in viewer-copy.ts).
     if (decoShowCounter) {
         var seqStr = item.seq !== undefined ? String(item.seq) : '?';
         parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
