@@ -10,12 +10,18 @@ import * as vscode from "vscode";
 import type { SessionManagerImpl } from "../modules/session-manager";
 import type { SessionHistoryProvider } from "./session-history-provider";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
+import { getLogDirectoryUri } from "../modules/config";
 import { showSearchQuickPick } from "../modules/log-search-ui";
 import { openLogAtLine } from "../modules/log-search";
 import { showAnalysis } from "./analysis-panel";
 import { loadPresets, promptSavePreset } from "../modules/filter-presets";
 import { buildSessionListPayload, openSourceFile } from "./viewer-provider-helpers";
 import type { BookmarkStore } from "../modules/bookmark-store";
+
+/** Workspace state: Project Logs panel root folder override (URI string). */
+export const SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
+/** Workspace state: last folder used in browse dialog so defaultUri is never system default. */
+const SESSION_PANEL_LAST_BROWSE_KEY = "sessionPanelLastBrowseFolder";
 
 /** Object with handler setters common to both viewer targets. */
 interface HandlerTarget {
@@ -34,6 +40,8 @@ interface HandlerTarget {
   setSessionActionHandler(h: (action: string, uriString: string, filename: string) => void): void;
   setAddBookmarkHandler(h: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void;
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
+  setBrowseSessionRootHandler?(h: () => Promise<void>): void;
+  setClearSessionRootHandler?(h: () => Promise<void>): void;
 }
 
 /** Dependencies needed by the shared handler wiring. */
@@ -42,6 +50,7 @@ export interface HandlerDeps {
   readonly broadcaster: ViewerBroadcaster;
   readonly historyProvider: SessionHistoryProvider;
   readonly bookmarkStore: BookmarkStore;
+  readonly context: vscode.ExtensionContext;
   readonly onOpenBookmark?: (fileUri: string, lineIndex: number) => void;
 }
 
@@ -106,10 +115,44 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
   });
   const refreshSessionList = async (): Promise<void> => {
-    const items = await historyProvider.getAllChildren();
-    broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+    const items = overrideUri
+      ? await historyProvider.getAllChildrenFromRoot(overrideUri)
+      : await historyProvider.getAllChildren();
+    const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
+    const rootLabel = overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "Default");
+    broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
   target.setSessionListHandler(() => { void refreshSessionList(); });
+  /** Browse: use lastBrowse or default log dir as defaultUri so picker never opens at system default. */
+  target.setBrowseSessionRootHandler?.(async () => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const defaultLogUri = folder ? getLogDirectoryUri(folder) : undefined;
+    const lastBrowse = deps.context.workspaceState.get<string>(SESSION_PANEL_LAST_BROWSE_KEY);
+    const defaultUri = lastBrowse ? vscode.Uri.parse(lastBrowse) : defaultLogUri;
+    const uris = await vscode.window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectMany: false,
+      defaultUri: defaultUri ?? undefined,
+    });
+    if (uris?.length) {
+      await deps.context.workspaceState.update(SESSION_PANEL_ROOT_KEY, uris[0].toString());
+      await deps.context.workspaceState.update(SESSION_PANEL_LAST_BROWSE_KEY, uris[0].toString());
+      await refreshSessionList();
+    }
+  });
+  /** Reset to default: clear override and set lastBrowse to default path so next browse opens there. */
+  target.setClearSessionRootHandler?.(async () => {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    const defaultLogUri = folder ? getLogDirectoryUri(folder) : undefined;
+    await deps.context.workspaceState.update(SESSION_PANEL_ROOT_KEY, undefined);
+    if (defaultLogUri) {
+      await deps.context.workspaceState.update(SESSION_PANEL_LAST_BROWSE_KEY, defaultLogUri.toString());
+    }
+    await refreshSessionList();
+  });
   target.setSessionActionHandler((action, uriString, filename) => {
     void handleSessionAction(action, uriString, filename, { historyProvider, refreshList: refreshSessionList });
   });
