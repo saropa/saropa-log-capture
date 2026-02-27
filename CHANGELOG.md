@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.14] - 2026-02-27
 
 ### Added
 - **Hide blank lines option.** Toggle in the flyout context menu (Options) and in the Options panel (Layout). When on, lines that are empty or only whitespace are hidden from the viewport.
