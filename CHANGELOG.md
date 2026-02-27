@@ -12,14 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
-- **Project Logs root folder.** Panel header shows path as suffix (e.g. "Project Logs · Default" or "Project Logs · d:\src\contacts"); click path to open folder picker. Reset icon appears when using a custom folder; last-used folder (or workspace default) is used as picker defaultUri so the dialog never opens at system default.
-- **Project Logs loading state.** Progress bar and shimmer placeholders while the session list is loading after opening the panel or changing folder.
-- **Sidebar open animation.** Slide-out panels (Project Logs, Search, etc.) now animate open with overflow hidden until the width transition ends, so content no longer overlaps the log; close already animated.
+- **Project Logs root folder.** Panel header shows path as suffix (e.g. "Project Logs · d:\src\contacts"); click path to open folder picker. Reset icon when using a custom folder; last-used folder is used as picker defaultUri. Header always shows the actual folder path (never "Default").
+- **Project Logs loading state.** Progress bar and shimmer while the session list loads; loading label shows the folder path being loaded (e.g. "Loading d:\src\contacts…").
+- **Sidebar open animation.** Slide-out panels animate open (0.25s ease-out) with overflow hidden until the width transition ends; close already animated.
+- **Footer under log area only.** The status bar (filename, level dots, line count, version) now sits only under the log content area, not under the sidebar panels.
+- **Version link in footer.** Version appears on the far right of the footer and opens the About panel when clicked.
+- **About panel changelog.** About panel shows current version, a "Recent changes" excerpt from CHANGELOG.md (first three version sections), and a "Full changelog on Marketplace" link to the VS Code Marketplace changelog page.
+- **Selection count in footer.** When text is selected in the log viewport, the footer shows "N lines, M chars selected"; updates are throttled with requestAnimationFrame for smoothness.
 
 ### Changed
-- **Side-by-side panel layout.** Flyout panels (session, search, options, find, bookmarks, trash, info, filters, crashlytics, recurring, performance, about) now push the log viewport narrower instead of overlaying on top of it. Panels and log content sit side-by-side with animated width transitions; the virtual scroll viewport automatically recalculates via ResizeObserver.
-- **Compact correlation tag chips.** Replaced `file:` and `error:` text prefixes with codicon icons; hide count badge when count is 1; collapse chips beyond 8 behind a "+N more" toggle.
-- **Session panel sort button UX.** Replaced labeled "Sort" button with a right-aligned icon-only `codicon-sort-precedence` toggle. Icon flips vertically via CSS transform when reverse sort is active. Doubled panel minimum width from 280px to 560px.
+- **Side-by-side panel layout.** Flyout panels (session, search, options, find, bookmarks, trash, info, filters, crashlytics, recurring, performance, about) push the log viewport narrower with animated width transitions; the virtual scroll viewport recalculates via ResizeObserver.
+- **Project Logs tag chips.** Tags sorted by session count (desc); count shown on every chip; badge-style chips (no border); section limited to ~2 lines with vertical scroll; long tag names ellipsized.
+- **Session panel minimum width.** Panel and resize drag enforce 560px minimum; restored width on reopen is clamped to 560px so the panel never opens narrower than minimum.
+- **Session panel sort button UX.** Replaced labeled "Sort" with a right-aligned icon-only `codicon-sort-precedence` toggle; icon flips vertically when reverse sort is active.
 
 ### Fixed
 - **Three blue colors unified.** Notice and framework now share `--vscode-charts-blue` (#2196f3) for severity bar, line tint, and notice line text; link/info accent (#3794ff) unchanged.

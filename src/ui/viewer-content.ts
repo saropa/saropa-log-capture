@@ -131,6 +131,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getPerformancePanelHtml()}
     ${getAboutPanelHtml()}
     </div>
+    <div id="log-area-with-footer">
+    <!-- Footer lives here so it appears only under the log area, not under the sidebar panel slot -->
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap">
         <div id="spacer-top"></div>
@@ -142,14 +144,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     </div>
-    </div>
-    ${getContextMenuHtml()}
-    ${getContextModalHtml()}
-    ${getDecoSettingsHtml()}
-    ${getExportModalHtml()}
-    ${getEditModalHtml()}
     <div id="footer">
-        <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...${version ? ` \u00b7 v${version}` : ''}</span>
+        <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
         <span id="level-menu-btn" class="level-summary">
             <span class="level-dot-group" data-level="info" title="Info"><span class="level-dot active level-dot-info"></span><span class="dot-count"></span></span>
@@ -162,8 +158,18 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <span id="line-count"></span>
+        <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" title="Active filters — click to open filters"></span>
+        <span class="footer-spacer"></span>
+        <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa">${version ? `v${version}` : ''}</a>
     </div>
+    </div>
+    </div>
+    ${getContextMenuHtml()}
+    ${getContextModalHtml()}
+    ${getDecoSettingsHtml()}
+    ${getExportModalHtml()}
+    ${getEditModalHtml()}
     <div id="level-flyup">
         <div class="level-flyup-title">Level Filters</div>
         <div class="level-flyup-header">
