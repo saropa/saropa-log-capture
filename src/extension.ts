@@ -20,7 +20,8 @@ import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
 import { PopOutPanel } from './ui/pop-out-panel';
-import { wireSharedHandlers } from './ui/viewer-handler-wiring';
+import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/viewer-handler-wiring';
+import { getLogDirectoryUri } from './modules/config';
 import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
 import { buildSessionListPayload } from './ui/viewer-provider-helpers';
@@ -84,8 +85,13 @@ export function activate(context: vscode.ExtensionContext): void {
     historyProvider = new SessionHistoryProvider();
     context.subscriptions.push(historyProvider);
     historyProvider.onDidChangeTreeData(async () => {
+        const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+        if (overrideUriStr) { return; }
         const items = await historyProvider.getAllChildren();
-        broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
+        const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'Default';
+        broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
 
     // Bookmarks.
@@ -171,7 +177,7 @@ export function activate(context: vscode.ExtensionContext): void {
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
     };
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, onOpenBookmark };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
