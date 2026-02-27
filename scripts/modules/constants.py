@@ -53,6 +53,7 @@ class ExitCode:
     PUBLISH_FAILED = 12
     RELEASE_FAILED = 13
     USER_CANCELLED = 14
+    OPENVSX_FAILED = 15
 
 
 # ── Color Setup ──────────────────────────────────────────────
