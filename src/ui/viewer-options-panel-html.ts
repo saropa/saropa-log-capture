@@ -89,6 +89,10 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-visual-spacing" checked />
                 <span>Visual spacing (breathing room)</span>
             </label>
+            <label class="options-row" title="Hide lines that are empty or only whitespace">
+                <input type="checkbox" id="opt-hide-blank-lines" />
+                <span>Hide blank lines</span>
+            </label>
         </div>
 
         <!-- Audio Section -->
