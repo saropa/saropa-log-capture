@@ -146,6 +146,8 @@ function syncOptionsPanelUi() {
     syncDecoUi();
     var vsCheck = document.getElementById('opt-visual-spacing');
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
+    var hideBlankCheck = document.getElementById('opt-hide-blank-lines');
+    if (hideBlankCheck && typeof hideBlankLines !== 'undefined') hideBlankCheck.checked = hideBlankLines;
     syncAudioUi();
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
 }

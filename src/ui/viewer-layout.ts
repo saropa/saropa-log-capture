@@ -5,6 +5,7 @@
  * - Font size control (8-22px)
  * - Line height control (0.5-4.0)
  * - Dynamic ROW_HEIGHT measurement via hidden probe element
+ * - Visual spacing and hide-blank-lines toggles
  * - Updates CSS variables and triggers viewport recalculation
  */
 
@@ -21,6 +22,9 @@ var logLineHeight = 2.0;
 
 /** Enable visual spacing (breathing room) between sections. */
 var visualSpacingEnabled = true;
+
+/** Hide lines that are empty or only whitespace. */
+var hideBlankLines = false;
 
 /**
  * Measure actual line height from the DOM and update ROW_HEIGHT / MARKER_HEIGHT.
@@ -84,6 +88,18 @@ function toggleVisualSpacing() {
     visualSpacingEnabled = !visualSpacingEnabled;
     if (typeof renderViewport === 'function') {
         renderViewport(true);
+    }
+}
+
+/**
+ * Toggle hide blank lines on/off.
+ */
+function toggleHideBlankLines() {
+    hideBlankLines = !hideBlankLines;
+    if (typeof recalcAndRender === 'function') recalcAndRender();
+    else {
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof renderViewport === 'function') renderViewport(true);
     }
 }
 

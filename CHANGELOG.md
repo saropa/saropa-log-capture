@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Hide blank lines option.** Toggle in the flyout context menu (Options) and in the Options panel (Layout). When on, lines that are empty or only whitespace are hidden from the viewport.
 - **Project Logs root folder.** Panel header shows path as suffix (e.g. "Project Logs · d:\src\contacts"); click path to open folder picker. Reset icon when using a custom folder; last-used folder is used as picker defaultUri. Header always shows the actual folder path (never "Default").
 - **Project Logs loading state.** Progress bar and shimmer while the session list loads; loading label shows the folder path being loaded (e.g. "Loading d:\src\contacts…").
 - **Sidebar open animation.** Slide-out panels animate open (0.25s ease-out) with overflow hidden until the width transition ends; close already animated.

@@ -125,6 +125,8 @@ function extractContext(plainText) {
  */
 function calcItemHeight(item) {
     if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
+    /* When hideBlankLines is on, treat blank log lines as height 0 so the viewport skips them. */
+    if (typeof hideBlankLines !== 'undefined' && hideBlankLines && item.type === 'line' && stripTags(item.html).trim() === '') return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
