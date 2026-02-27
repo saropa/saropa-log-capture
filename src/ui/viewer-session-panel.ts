@@ -10,7 +10,7 @@ export function getSessionPanelHtml(): string {
     <div id="session-resize" class="session-panel-resize"></div>
     <div class="session-panel-header">
         <span class="session-panel-title">Project Logs</span>
-        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span id="session-path-text"></span></span>
+        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span class="session-path-sep" aria-hidden="true"> · </span><span id="session-path-text">Default</span></span>
         <button id="session-reset-root" class="session-panel-action" title="Use default folder" style="display:none">
             <span class="codicon codicon-debug-restart"></span>
         </button>
@@ -273,7 +273,7 @@ export function getSessionPanelScript(): string {
     function updateHeaderPath(rootLabel, isDefault) {
         var pathText = document.getElementById('session-path-text');
         var resetBtn = document.getElementById('session-reset-root');
-        if (pathText) pathText.textContent = ' \\u00b7 ' + (rootLabel || 'No workspace');
+        if (pathText) pathText.textContent = isDefault ? 'Default' : (rootLabel || 'No workspace');
         if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
     }
 
