@@ -112,33 +112,10 @@ body[data-icon-bar="right"] .ib-badge {
     margin: 4px 0;
 }
 
-body[data-icon-bar="right"] #search-bar,
-body[data-icon-bar="right"] .session-panel,
-body[data-icon-bar="right"] .options-panel,
-body[data-icon-bar="right"] .find-panel,
-body[data-icon-bar="right"] .bookmark-panel,
-body[data-icon-bar="right"] .trash-panel,
-body[data-icon-bar="right"] .info-panel,
-body[data-icon-bar="right"] .crashlytics-panel,
-body[data-icon-bar="right"] .recurring-panel,
-body[data-icon-bar="right"] .about-panel {
-    left: auto; right: -100%;
+body[data-icon-bar="right"] #panel-slot > * {
     border-right: none;
     border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: right 0.15s ease;
-}
-body[data-icon-bar="right"] #search-bar.visible,
-body[data-icon-bar="right"] .session-panel.visible,
-body[data-icon-bar="right"] .options-panel.visible,
-body[data-icon-bar="right"] .find-panel.visible,
-body[data-icon-bar="right"] .bookmark-panel.visible,
-body[data-icon-bar="right"] .trash-panel.visible,
-body[data-icon-bar="right"] .info-panel.visible,
-body[data-icon-bar="right"] .crashlytics-panel.visible,
-body[data-icon-bar="right"] .recurring-panel.visible,
-body[data-icon-bar="right"] .about-panel.visible {
-    right: var(--icon-bar-width, 36px);
 }
 body[data-icon-bar="right"] .session-panel-resize {
     left: -3px; right: auto;
