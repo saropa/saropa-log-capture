@@ -9,7 +9,11 @@ export function getSessionPanelHtml(): string {
 <div id="session-panel" class="session-panel">
     <div id="session-resize" class="session-panel-resize"></div>
     <div class="session-panel-header">
-        <span>Project Logs</span>
+        <span class="session-panel-title">Project Logs</span>
+        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span id="session-path-text">Default</span></span>
+        <button id="session-reset-root" class="session-panel-action" title="Use default folder" style="display:none">
+            <span class="codicon codicon-debug-restart"></span>
+        </button>
         <div class="session-panel-actions">
             <button id="session-refresh" class="session-panel-action" title="Refresh">
                 <span class="codicon codicon-refresh"></span>
@@ -31,7 +35,16 @@ export function getSessionPanelHtml(): string {
     <div class="session-panel-content">
         <div id="session-list"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>
-        <div id="session-loading" class="session-loading" style="display:none">Loading...</div>
+        <div id="session-loading" class="session-loading" style="display:none">
+            <div class="session-loading-bar"><div class="session-loading-bar-fill"></div></div>
+            <div class="session-loading-label">Loading folder…</div>
+            <div class="session-loading-shimmer">
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line session-shimmer-line-short"></div>
+            </div>
+        </div>
     </div>
 </div>`;
 }
@@ -55,7 +68,10 @@ export function getSessionPanelScript(): string {
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
-        if (sessionDisplayOptions.panelWidth > 0) sessionPanelEl.style.width = sessionDisplayOptions.panelWidth + 'px';
+        if (sessionDisplayOptions.panelWidth > 0) {
+            sessionPanelEl.style.width = sessionDisplayOptions.panelWidth + 'px';
+            if (typeof setPanelSlotWidth === 'function') setPanelSlotWidth(sessionDisplayOptions.panelWidth);
+        }
         sessionPanelEl.classList.add('visible');
         requestSessionList();
     };
@@ -252,12 +268,25 @@ export function getSessionPanelScript(): string {
         closeSessionPanel();
     });
 
+    function updateHeaderPath(rootLabel, isDefault) {
+        var pathText = document.getElementById('session-path-text');
+        var resetBtn = document.getElementById('session-reset-root');
+        if (pathText) pathText.textContent = ' \\u00b7 ' + (isDefault ? 'Default' : (rootLabel || ''));
+        if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
+    }
+
+    var headerPathEl = document.getElementById('session-header-path');
+    if (headerPathEl) headerPathEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
+    var resetRootBtn = document.getElementById('session-reset-root');
+    if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
+
     /* Listen for messages from the extension. */
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
             renderSessionList(e.data.sessions);
+            if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
         if (e.data.type === 'sessionDisplayOptions') {
             sessionDisplayOptions = e.data.options || sessionDisplayOptions;
