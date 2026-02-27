@@ -114,18 +114,26 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
     vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
   });
-  const refreshSessionList = async (): Promise<void> => {
+  const getSessionRootPath = (): string => {
     const folder = vscode.workspace.workspaceFolders?.[0];
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+    return overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "No workspace");
+  };
+  const refreshSessionList = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const items = overrideUri
       ? await historyProvider.getAllChildrenFromRoot(overrideUri)
       : await historyProvider.getAllChildren();
     const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
-    const rootLabel = overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "Default");
+    const rootLabel = getSessionRootPath();
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
-  target.setSessionListHandler(() => { void refreshSessionList(); });
+  target.setSessionListHandler(() => {
+    broadcaster.sendSessionListLoading(getSessionRootPath());
+    void refreshSessionList();
+  });
   /** Browse: use lastBrowse or default log dir as defaultUri so picker never opens at system default. */
   target.setBrowseSessionRootHandler?.(async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];
