@@ -115,6 +115,22 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
+    <div id="panel-content-row">
+    <div id="panel-slot">
+    ${getSearchPanelHtml()}
+    ${getSessionPanelHtml()}
+    ${getSessionContextMenuHtml()}
+    ${getFindPanelHtml()}
+    ${getBookmarkPanelHtml()}
+    ${getTrashPanelHtml()}
+    ${getSessionInfoPanelHtml()}
+    ${getFiltersPanelHtml()}
+    ${getOptionsPanelHtml()}
+    ${getCrashlyticsPanelHtml()}
+    ${getRecurringPanelHtml()}
+    ${getPerformancePanelHtml()}
+    ${getAboutPanelHtml()}
+    </div>
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap">
         <div id="spacer-top"></div>
@@ -126,22 +142,10 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     </div>
+    </div>
     ${getContextMenuHtml()}
-    ${getSearchPanelHtml()}
-    ${getSessionPanelHtml()}
-    ${getSessionContextMenuHtml()}
-    ${getFindPanelHtml()}
-    ${getBookmarkPanelHtml()}
-    ${getTrashPanelHtml()}
-    ${getSessionInfoPanelHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
-    ${getFiltersPanelHtml()}
-    ${getOptionsPanelHtml()}
-    ${getCrashlyticsPanelHtml()}
-    ${getRecurringPanelHtml()}
-    ${getPerformancePanelHtml()}
-    ${getAboutPanelHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
     <div id="footer">

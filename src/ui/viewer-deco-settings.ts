@@ -24,7 +24,7 @@ export function getDecoSettingsHtml(): string {
     </div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-dot" checked />
-        Severity dot
+        Severity dot (copy only)
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-counter" checked />
