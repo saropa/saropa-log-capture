@@ -43,7 +43,7 @@
 # .NOTES
 #   Version:      3.0.0
 #   Requires:     Python 3.10+
-#   Optional:     colorama (`pip install colorama`) for Windows color support
+#   colorama is auto-installed when missing (for Windows terminal color support)
 #
 # Exit Codes:
 #    0  SUCCESS              8  VERSION_INVALID
@@ -59,8 +59,21 @@
 
 import argparse
 import os
+import subprocess
 import sys
 import time
+
+# Ensure colorama is available so modules.constants can init it on Windows.
+# If pip install fails we continue; constants.py falls back to ANSI without init.
+try:
+    import colorama  # noqa: F401
+except ImportError:
+    print("Installing colorama for terminal colors…")
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "colorama", "-q"],
+        check=False,
+        capture_output=True,
+    )
 
 from modules.constants import C, ExitCode, PROJECT_ROOT
 from modules.display import dim, heading, info, ok, show_logo, warn
