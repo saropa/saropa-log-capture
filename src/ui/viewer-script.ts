@@ -30,6 +30,7 @@ var autoScroll = true, isPaused = false, isViewingFile = false, wordWrap = false
 var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
+var loadTruncatedInfo = null;
 
 function stripTags(html) { return html.replace(/<[^>]*>/g, ''); }
 function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
@@ -108,6 +109,9 @@ function updateFooterText() {
     if (footerVersion) {
         footerTextEl.appendChild(document.createTextNode((currentFilename ? ' \\u00b7 ' : '') + footerVersion));
     }
+    if (loadTruncatedInfo) {
+        footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
+    }
     updateLineCount();
 }
 
@@ -145,6 +149,7 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'clear':
+            loadTruncatedInfo = null;
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
@@ -217,11 +222,16 @@ window.addEventListener('message', function(event) {
         case 'findNextMatch':
             if (typeof searchNext === 'function') searchNext();
             break;
+        case 'loadTruncated':
+            loadTruncatedInfo = { shown: msg.shown || 0, total: msg.total || 0 };
+            updateFooterText();
+            break;
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined) {
                 suppressScroll = true; logEl.scrollTop = scrollMemory[currentFilename]; suppressScroll = false;
                 autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
+            updateFooterText();
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
