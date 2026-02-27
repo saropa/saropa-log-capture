@@ -35,6 +35,19 @@ export function getIconBarHtml(): string {
     <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
+    <div class="ib-separator"></div>
+    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics">
+        <span class="codicon codicon-flame"></span>
+    </button>
+    <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors">
+        <span class="codicon codicon-bug"></span>
+    </button>
+    <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance">
+        <span class="codicon codicon-graph-line"></span>
+    </button>
+    <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa">
+        <span class="codicon codicon-home"></span>
+    </button>
 </div>`;
 }
 
@@ -43,6 +56,54 @@ export function getIconBarScript(): string {
     return /* js */ `
 (function() {
     var activePanel = null;
+    var panelSlot = document.getElementById('panel-slot');
+    var panelWidths = {
+        sessions: 560, search: 320, find: 320, bookmarks: 320,
+        filters: 320, info: 300, trash: 320, options: 320,
+        crashlytics: 340, recurring: 340, performance: 340, about: 340,
+    };
+
+    /** Pending transitionend handler so we can remove it if user switches panel before transition ends (avoids listener accumulation). */
+    var pendingOpenHandler = null;
+
+    /** Set panel-slot width to show/hide the active panel with animation. Open: keep overflow hidden until transition ends so panel slides in without overlapping. */
+    function updatePanelSlotWidth(name) {
+        if (!panelSlot) return;
+        if (!name) {
+            panelSlot.classList.remove('open');
+            panelSlot.style.width = '0';
+            if (pendingOpenHandler) {
+                panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+                pendingOpenHandler = null;
+            }
+            return;
+        }
+        if (pendingOpenHandler) {
+            panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+            pendingOpenHandler = null;
+        }
+        var maxW = document.documentElement.clientWidth * 0.7;
+        var w = Math.min(panelWidths[name] || 320, maxW);
+        panelSlot.classList.remove('open');
+        panelSlot.style.width = '0px';
+        panelSlot.offsetHeight;
+        panelSlot.style.width = w + 'px';
+        function addOpenAfterTransition(e) {
+            if (e.propertyName !== 'width') return;
+            panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+            pendingOpenHandler = null;
+            if (panelSlot.style.width !== '0px') { panelSlot.classList.add('open'); }
+        }
+        pendingOpenHandler = addOpenAfterTransition;
+        panelSlot.addEventListener('transitionend', addOpenAfterTransition);
+    }
+
+    /** Update panel-slot width externally (e.g. during resize drag). */
+    window.setPanelSlotWidth = function(w) {
+        if (!panelSlot) return;
+        panelSlot.style.width = w + 'px';
+    };
+
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
         search: document.getElementById('ib-search'),
@@ -52,6 +113,10 @@ export function getIconBarScript(): string {
         info: document.getElementById('ib-info'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
+        crashlytics: document.getElementById('ib-crashlytics'),
+        recurring: document.getElementById('ib-recurring'),
+        performance: document.getElementById('ib-performance'),
+        about: document.getElementById('ib-about'),
     };
 
     function closeAllPanels() {
@@ -62,6 +127,10 @@ export function getIconBarScript(): string {
         if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
+        if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
+        if (typeof closeRecurringPanel === 'function') closeRecurringPanel();
+        if (typeof closePerformancePanel === 'function') closePerformancePanel();
+        if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
 
@@ -79,11 +148,13 @@ export function getIconBarScript(): string {
             closeAllPanels();
             activePanel = null;
             updateIconStates();
+            updatePanelSlotWidth(null);
             return;
         }
         closeAllPanels();
         activePanel = name;
         updateIconStates();
+        updatePanelSlotWidth(name);
         if (name === 'sessions' && typeof openSessionPanel === 'function') {
             openSessionPanel();
         } else if (name === 'search' && typeof openSearch === 'function') {
@@ -100,6 +171,14 @@ export function getIconBarScript(): string {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
+        } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
+            openCrashlyticsPanel();
+        } else if (name === 'recurring' && typeof openRecurringPanel === 'function') {
+            openRecurringPanel();
+        } else if (name === 'performance' && typeof openPerformancePanel === 'function') {
+            openPerformancePanel();
+        } else if (name === 'about' && typeof openAboutPanel === 'function') {
+            openAboutPanel();
         }
     };
 
@@ -108,6 +187,7 @@ export function getIconBarScript(): string {
         if (activePanel === name) {
             activePanel = null;
             updateIconStates();
+            updatePanelSlotWidth(null);
         }
     };
 
@@ -134,6 +214,18 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
+    }
+    if (iconButtons.crashlytics) {
+        iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
+    }
+    if (iconButtons.recurring) {
+        iconButtons.recurring.addEventListener('click', function() { setActivePanel('recurring'); });
+    }
+    if (iconButtons.performance) {
+        iconButtons.performance.addEventListener('click', function() { setActivePanel('performance'); });
+    }
+    if (iconButtons.about) {
+        iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
     }
 
     setActivePanel('sessions');

@@ -6,6 +6,7 @@
  * (renderItem, renderViewport).
  */
 import { getViewerDataHelpers } from './viewer-data-helpers';
+import { getViewportRenderScript } from './viewer-data-viewport';
 
 export function getViewerDataScript(): string {
     return getViewerDataHelpers() + /* javascript */ `
@@ -17,6 +18,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
             if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
             activeGroupHeader = null;
         }
+        cleanupTrailingRepeats();
         allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null });
         totalHeight += MARKER_HEIGHT;
         return;
@@ -59,7 +61,8 @@ function addToData(html, isMarker, category, ts, fw, sp) {
     }
     var plain = stripTags(html);
     var isSep = isSeparatorLine(plain);
-    var lvl = (typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info';
+    var isAi = category && category.indexOf('ai-') === 0;
+    var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
@@ -70,22 +73,32 @@ function addToData(html, isMarker, category, ts, fw, sp) {
     var now = ts || Date.now();
     var isRepeat = false;
 
-    if (repeatTracker.lastHash === currentHash &&
+    if (currentHash !== null && repeatTracker.lastHash === currentHash &&
         (now - repeatTracker.lastTimestamp) < repeatWindowMs) {
         // This is a repeat within the time window
         isRepeat = true;
         repeatTracker.count++;
         repeatTracker.lastTimestamp = now;
 
+        // On first repeat, hide the original line to avoid a visual gap
+        if (repeatTracker.count === 2 && repeatTracker.lastLineIndex >= 0 &&
+            repeatTracker.lastLineIndex < allLines.length) {
+            var origItem = allLines[repeatTracker.lastLineIndex];
+            if (origItem && origItem.height > 0) {
+                totalHeight -= origItem.height;
+                origItem.height = 0;
+                origItem.repeatHidden = true;
+            }
+        }
+
         // Create repeat notification line
-        var preview = repeatTracker.lastPlainText.substring(0, repeatPreviewLength);
-        if (repeatTracker.lastPlainText.length > repeatPreviewLength) {
+        var preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
+        if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
             preview += '...';
         }
-        var levelDot = (typeof getLevelDot === 'function') ? getLevelDot(lvl) : '';
-        var repeatHtml = '<span class="repeat-notification">' + levelDot +
-            ' Repeated log #' + repeatTracker.count +
-            ' <span class="repeat-preview">(' + escapeHtml(preview) + ')</span></span>';
+        var repeatHtml = '<span class="repeat-notification">' +
+            'Repeated #' + repeatTracker.count +
+            ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
         var repeatItem = {
             html: repeatHtml,
             type: 'repeat-notification',
@@ -134,6 +147,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr };
         allLines.push(lineItem);
+        repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
         totalHeight += finalH;
@@ -168,6 +182,11 @@ function trimData() {
     }
     allLines.splice(0, excess);
     activeGroupHeader = null;
+    // Adjust repeat tracker index after splice so it still points at the correct line
+    if (repeatTracker.lastLineIndex >= 0) {
+        repeatTracker.lastLineIndex -= excess;
+        if (repeatTracker.lastLineIndex < 0) repeatTracker.lastLineIndex = -1;
+    }
     if (removedHeight > 0 && !autoScroll) {
         suppressScroll = true;
         logEl.scrollTop = Math.max(0, logEl.scrollTop - removedHeight);
@@ -191,53 +210,6 @@ function recalcHeights() {
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
-function renderViewport(force) {
-    if (!logEl.clientHeight) return;
-    var scrollTop = logEl.scrollTop;
-    var viewH = logEl.clientHeight;
-    var bufferPx = OVERSCAN * ROW_HEIGHT;
-    var topTarget = Math.max(0, scrollTop - bufferPx);
-    var bottomTarget = scrollTop + viewH + bufferPx;
-    var startIdx, startOffset, endIdx;
-
-    if (typeof findIndexAtOffset === 'function' && prefixSums) {
-        var sa = findIndexAtOffset(topTarget);
-        startIdx = sa.index;
-        startOffset = prefixSums[startIdx];
-        var ea = findIndexAtOffset(bottomTarget);
-        endIdx = ea.index;
-    } else {
-        // Fallback before prefix sums are built
-        var cumH = 0; startIdx = 0; startOffset = 0;
-        for (var i = 0; i < allLines.length; i++) {
-            if (cumH + allLines[i].height > topTarget) { startIdx = i; startOffset = cumH; break; }
-            cumH += allLines[i].height;
-            if (i === allLines.length - 1) { startIdx = allLines.length; startOffset = cumH; }
-        }
-        var endH = 0; endIdx = startIdx;
-        for (var i = startIdx; i < allLines.length; i++) {
-            if (allLines[i].height === 0) { endIdx = i; continue; }
-            endH += allLines[i].height; endIdx = i;
-            if (startOffset + endH > bottomTarget) break;
-        }
-    }
-
-    // Hysteresis: only rebuild DOM when visible area shifts past half the overscan buffer
-    var hyst = Math.floor(OVERSCAN / 2);
-    if (!force && lastStart >= 0 &&
-        Math.abs(startIdx - lastStart) < hyst &&
-        Math.abs(endIdx - lastEnd) < hyst) { return; }
-    lastStart = startIdx; lastEnd = endIdx;
-    var parts = [];
-    for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
-        if (allLines[i].height === 0) continue;
-        parts.push(renderItem(allLines[i], i));
-    }
-    viewportEl.innerHTML = parts.join('');
-    spacerTop.style.height = startOffset + 'px';
-    var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
-        ? totalHeight - prefixSums[endIdx + 1] : 0;
-    spacerBottom.style.height = bottomH + 'px';
-}
+${getViewportRenderScript()}
 `;
 }

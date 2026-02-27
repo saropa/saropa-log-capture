@@ -156,10 +156,10 @@ export function getDecorationStyles(): string {
     background-color: rgba(220, 220, 170, 0.16);
 }
 .line.line-tint-notice {
-    background-color: rgba(79, 193, 255, 0.08);
+    background-color: rgba(33, 150, 243, 0.08);
 }
 .line.line-tint-notice:hover {
-    background-color: rgba(79, 193, 255, 0.16);
+    background-color: rgba(33, 150, 243, 0.16);
 }
 .line.line-tint-info {
     background-color: rgba(78, 201, 176, 0.06);
@@ -168,30 +168,36 @@ export function getDecorationStyles(): string {
     background-color: rgba(78, 201, 176, 0.14);
 }
 
-/* Continuous timeline in log gutter */
+/* Positioning context for severity dots and connector bars */
 #viewport { position: relative; }
-#viewport::before {
-    content: ''; position: absolute; left: 6px;
-    top: 0; bottom: 0; width: 1px;
-    background: var(--vscode-panel-border);
-    pointer-events: none; z-index: 1;
-}
 
 /* Severity dot mode (colored circle on timeline) */
+[class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
-    content: ''; position: absolute; left: 3px;
-    top: 50%; transform: translateY(-50%);
+    content: ''; position: absolute; left: 9px;
+    top: 0; bottom: 0; margin: auto 0;
     width: 7px; height: 7px; border-radius: 50%;
     pointer-events: none; z-index: 2;
 }
-.level-bar-error::before { background: var(--vscode-debugConsole-errorForeground, #f48771); }
-.level-bar-warning::before { background: var(--vscode-debugConsole-warningForeground, #cca700); }
-.level-bar-performance::before { background: var(--vscode-debugConsole-infoForeground, #b695f8); }
-.level-bar-todo::before { background: var(--vscode-terminal-ansiWhite, #e5e5e5); }
-.level-bar-debug::before { background: var(--vscode-terminal-ansiYellow, #dcdcaa); }
-.level-bar-notice::before { background: var(--vscode-terminal-ansiCyan, #4fc1ff); }
-.level-bar-framework::before { background: var(--vscode-textLink-foreground, #3794ff); }
-.level-bar-info::before { background: var(--vscode-terminal-ansiGreen, #4ec9b0); }
+.level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
+.level-bar-warning { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+.level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
+.level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
+.level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+.level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-info { --bar-color: var(--vscode-charts-green, #4caf50); }
+[class*="level-bar-"]::before { background: var(--bar-color); }
+.bar-bridge::before { display: none; }
+
+/* Connector bars join consecutive dots */
+.bar-down::after, .bar-up::after {
+    content: ''; position: absolute; left: 11px; width: 3px;
+    background: var(--bar-color); pointer-events: none; z-index: 1;
+}
+.bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
+.bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
+.bar-up.bar-down::after { top: 0; bottom: 0; }
 
 /* Error classification badges */
 .error-badge {

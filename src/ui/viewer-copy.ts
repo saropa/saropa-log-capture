@@ -71,7 +71,8 @@ function copyAllToClipboard() {
 function decorateLine(item) {
     var text = stripTags(item.html || '');
     var parts = [];
-    if (typeof getLevelDot === 'function') {
+    /* Emoji dot only in copy when "Severity dot (copy only)" is checked; viewer uses gutter bar only. */
+    if (typeof decoShowDot !== 'undefined' && decoShowDot && typeof getLevelDot === 'function') {
         parts.push(getLevelDot(item.level || 'info', !!item.fw));
     }
     if (item.seq !== undefined) {
@@ -160,9 +161,11 @@ function showCopyFloat(lineEl) {
     var wrapRect = wrapperEl.getBoundingClientRect();
     var logRect = logEl.getBoundingClientRect();
     var lineRect = lineEl.getBoundingClientRect();
-    copyFloat.style.right = (wrapRect.right - logRect.right + 4) + 'px';
-    copyFloat.style.top = (lineRect.top - wrapRect.top + 2) + 'px';
-    copyFloat.style.display = 'block';
+    copyFloat.style.right = (wrapRect.right - logRect.right + 8) + 'px';
+    copyFloat.style.display = 'block'; // must precede offsetHeight read
+    var iconH = copyFloat.offsetHeight;
+    var centerY = lineRect.top + (lineRect.height - iconH) / 2 - wrapRect.top;
+    copyFloat.style.top = centerY + 'px';
 }
 
 function hideCopyFloat() {

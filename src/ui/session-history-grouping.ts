@@ -26,6 +26,8 @@ export interface SessionMetadata {
     readonly warningCount?: number;
     readonly perfCount?: number;
     readonly anrCount?: number;
+    readonly fwCount?: number;
+    readonly infoCount?: number;
     readonly hasTimestamps?: boolean;
     readonly partNumber?: number;
     readonly trashed?: boolean;

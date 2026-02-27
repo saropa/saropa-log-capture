@@ -8,6 +8,7 @@ import * as os from 'os';
 import { getConfig, getLogDirectoryUri } from './config';
 import { LogSession, SessionContext } from './log-session';
 import { enforceFileRetention } from './file-retention';
+import { organizeLogFiles } from './folder-organizer';
 import { checkGitignore } from './gitignore-checker';
 import { ExclusionRule, parseExclusionPattern } from './exclusion-matcher';
 import { AutoTagger } from './auto-tagger';
@@ -15,6 +16,7 @@ import { KeywordWatcher } from './keyword-watcher';
 import { SessionMetadataStore } from './session-metadata';
 import { scanForCorrelationTags } from './correlation-scanner';
 import { scanForFingerprints } from './error-fingerprint';
+import { scanForPerfFingerprints } from './perf-fingerprint';
 import { scanAnrRisk } from './anr-risk-scorer';
 import { detectAppVersion } from './app-version';
 import { detectTargetDevice } from './device-detector';
@@ -62,10 +64,19 @@ export async function initializeSession(
     checkGitignore(context, workspaceFolder, config.logDirectory).catch((err) => {
         outputChannel.appendLine(`Gitignore check failed: ${err}`);
     });
+    const logDirUri = getLogDirectoryUri(workspaceFolder);
     const retentionStore = new SessionMetadataStore();
-    enforceFileRetention(getLogDirectoryUri(workspaceFolder), config.maxLogFiles, retentionStore).catch((err) => {
-        outputChannel.appendLine(`File retention failed: ${err}`);
-    });
+    // Organize first so retention counts settled files.
+    const organizePromise = config.organizeFolders
+        ? organizeLogFiles(logDirUri).catch((err) => {
+            outputChannel.appendLine(`Folder organization failed: ${err}`);
+        })
+        : Promise.resolve();
+    organizePromise.then(() =>
+        enforceFileRetention(logDirUri, config.maxLogFiles, retentionStore).catch((err) => {
+            outputChannel.appendLine(`File retention failed: ${err}`);
+        }),
+    );
 
     const devEnvironment = await collectDevEnvironment().catch(() => undefined);
 
@@ -175,6 +186,15 @@ export async function finalizeSession(
         }
     }).catch((err) => {
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
+    });
+
+    scanForPerfFingerprints(logSession.fileUri).then(async (pfs) => {
+        if (pfs.length > 0) {
+            await metadataStore.setPerfFingerprints(logSession.fileUri, pfs);
+            outputChannel.appendLine(`Perf fingerprints: ${pfs.length} operations`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan perf fingerprints: ${err}`);
     });
 
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);

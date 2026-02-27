@@ -1,3 +1,6 @@
+NOTE: For maintainability we also have to rename files and methods.
+NOTE: For discoverability we need to prefix "SAROPA" in the title of ALL windows that are opened in the main vs code window, e.g. "Cross-Session Insights"
+
 # Terminology Standard
 
 Consistent vocabulary for all user-facing text in Saropa Log Capture.

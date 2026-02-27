@@ -3,6 +3,8 @@
  *
  * Slide-out panel from the right side with organized sections for all viewer settings.
  */
+import { getExclusionChipStyles } from './viewer-styles-exclusion-chips';
+
 export function getOptionsStyles(): string {
     return /* css */ `
 
@@ -12,30 +14,19 @@ export function getOptionsStyles(): string {
    organized into logical sections.
    =================================================================== */
 .options-panel {
-    position: fixed;
-    /* Must be -100% (not -25%) to fully hide off-screen: min-width 280px
-       exceeds 25% in narrow sidebar viewports, leaving the panel partially
-       visible and blocking clicks on footer buttons underneath. */
-    left: -100%;
-    top: 0;
-    bottom: 0;
-    width: 25%;
     min-width: 280px;
     max-width: 400px;
+    height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: left 0.15s ease;
-    z-index: 250;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    pointer-events: none;
 }
 
 .options-panel.visible {
-    left: var(--icon-bar-width, 36px);
-    pointer-events: auto;
+    display: flex;
 }
 
 .options-header {
@@ -188,106 +179,5 @@ export function getOptionsStyles(): string {
     opacity: 0.8;
     padding: 0 0 4px 24px;
 }
-
-/* --- Exclusion pattern chips: removable pills in noise-reduction section --- */
-.exclusion-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 4px 0 2px;
-}
-.exclusion-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    border: 1px solid var(--vscode-descriptionForeground);
-    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
-    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
-    white-space: nowrap;
-    max-width: 100%;
-    transition: opacity 0.15s;
-}
-.exclusion-chip-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-}
-.exclusion-chip-remove {
-    background: none;
-    border: none;
-    color: var(--vscode-descriptionForeground);
-    font-size: 12px;
-    cursor: pointer;
-    padding: 0 2px;
-    line-height: 1;
-}
-.exclusion-chip-remove:hover {
-    color: var(--vscode-errorForeground, #f44);
-}
-.exclusion-chips-disabled .exclusion-chip {
-    opacity: 0.4;
-}
-
-/* --- Inline exclusion add input --- */
-.exclusion-input-wrapper {
-    display: flex;
-    align-items: center;
-    background: var(--vscode-input-background);
-    border: 1px solid var(--vscode-input-border, transparent);
-    border-radius: 2px;
-    margin: 4px 0;
-}
-.exclusion-input-wrapper:focus-within {
-    border-color: var(--vscode-focusBorder);
-}
-#exclusion-add-input {
-    flex: 1;
-    min-width: 0;
-    background: transparent;
-    color: var(--vscode-input-foreground);
-    border: none;
-    padding: 4px 8px;
-    font-size: 11px;
-    font-family: inherit;
-    outline: none;
-}
-#exclusion-add-btn {
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: none;
-    border-left: 1px solid var(--vscode-input-border, transparent);
-    font-size: 11px;
-    padding: 4px 10px;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-#exclusion-add-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
-}
-
-/* Audio preview buttons */
-.preview-sound-btn {
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border, transparent);
-    font-size: 10px;
-    padding: 2px 8px;
-    cursor: pointer;
-    border-radius: 2px;
-    margin-left: 4px;
-}
-
-.preview-sound-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
-}
-
-/* Volume slider (range input) */
-input[type="range"] {
-    cursor: pointer;
-    accent-color: var(--vscode-button-background);
-}
-`;
+` + getExclusionChipStyles();
 }

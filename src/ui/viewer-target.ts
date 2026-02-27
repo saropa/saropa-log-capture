@@ -33,11 +33,13 @@ export interface ViewerTarget {
   setPresets(presets: readonly FilterPreset[]): void;
   setCurrentFile(uri: vscode.Uri | undefined): void;
   setSessionInfo(info: Record<string, string> | null): void;
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void;
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void;
   sendDisplayOptions(options: SessionDisplayOptions): void;
   setSessionActive(active: boolean): void;
   updateWatchCounts(counts: ReadonlyMap<string, number>): void;
   sendBookmarkList(files: Record<string, unknown>): void;
   setScopeContext(context: ScopeContext): void;
+  setMinimapShowInfo(show: boolean): void;
+  setMinimapWidth(width: "small" | "medium" | "large"): void;
   setIconBarPosition(position: "left" | "right"): void;
 }

@@ -3,15 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SaropaLogCaptureConfig } from './config';
 import { Deduplicator } from './deduplication';
-import { FileSplitter, SplitReason, formatSplitReason } from './file-splitter';
+import { FileSplitter, SplitReason } from './file-splitter';
 import {
     SessionContext,
     SourceLocation,
     generateBaseFileName,
+    formatDateFolder,
     formatLine,
-    generateContinuationHeader,
     generateContextHeader,
 } from './log-session-helpers';
+import { getPartFileName, performFileSplit } from './log-session-split';
 export { SessionContext };
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
@@ -27,6 +28,8 @@ export class LogSession {
     private _fileUri: vscode.Uri | undefined;
     private writeStream: fs.WriteStream | undefined;
     private maxLinesReached = false;
+    /** Guard flag — prevents writes to a stream being closed during split. */
+    private splitting = false;
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
 
@@ -68,7 +71,7 @@ export class LogSession {
 
         // Generate base filename (without part suffix)
         this._baseFileName = generateBaseFileName(this.context.projectName, this.context.date);
-        const fileName = this.getPartFileName();
+        const fileName = getPartFileName(this._baseFileName, this._partNumber);
         const filePath = path.join(logDirPath, fileName);
         this._fileUri = vscode.Uri.file(filePath);
 
@@ -89,7 +92,7 @@ export class LogSession {
         timestamp: Date,
         sourceLocation?: SourceLocation,
     ): void {
-        if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream) {
+        if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream || this.splitting) {
             return;
         }
 
@@ -103,6 +106,7 @@ export class LogSession {
 
         if (splitResult.shouldSplit && splitResult.reason) {
             this.performSplit(splitResult.reason).catch((e) => { console.error('Log split failed:', e); });
+            return; // Skip this line — split marker documents the boundary
         }
 
         const elapsedMs = this.computeElapsed(timestamp);
@@ -139,7 +143,7 @@ export class LogSession {
      * @returns The marker text written, or undefined if not recording.
      */
     appendMarker(customText?: string): string | undefined {
-        if (this._state === 'stopped' || !this.writeStream) {
+        if (this._state === 'stopped' || !this.writeStream || this.splitting) {
             return undefined;
         }
 
@@ -160,7 +164,7 @@ export class LogSession {
      * (DAP lines are diagnostic infrastructure, not user output).
      */
     appendDapLine(formatted: string): void {
-        if (this._state !== 'recording' || !this.writeStream) {
+        if (this._state !== 'recording' || !this.writeStream || this.splitting) {
             return;
         }
         const lineData = formatted + '\n';
@@ -176,60 +180,33 @@ export class LogSession {
         await this.performSplit({ type: 'manual' });
     }
 
-    /** Perform a file split - close current file, open new one. */
+    /** Perform a file split — close current file, open new one. */
     private async performSplit(reason: SplitReason): Promise<void> {
-        if (!this.writeStream) {
+        if (!this.writeStream || this.splitting) {
             return;
         }
 
-        // Write split marker to current file
-        const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${this._partNumber + 2} ===\n`;
-        this.writeStream.write(splitMarker);
+        this.splitting = true;
+        try {
+            const result = await performFileSplit({
+                writeStream: this.writeStream,
+                logDirPath: this.getLogDirUri().fsPath,
+                baseFileName: this._baseFileName,
+                partNumber: this._partNumber,
+                context: this.context,
+            }, reason);
 
-        // Close current file
-        await new Promise<void>((resolve, reject) => {
-            this.writeStream!.end(() => resolve());
-            this.writeStream!.on('error', reject);
-        });
-
-        // Increment part number and reset counters
-        this._partNumber++;
-        this._bytesWritten = 0;
-        this._partStartTime = Date.now();
-        this._lastLineTime = 0;
-
-        // Open new file
-        const logDirPath = this.getLogDirUri().fsPath;
-        const newFileName = this.getPartFileName();
-        const newFilePath = path.join(logDirPath, newFileName);
-        this._fileUri = vscode.Uri.file(newFilePath);
-
-        this.writeStream = fs.createWriteStream(newFilePath, {
-            flags: 'a',
-            encoding: 'utf-8',
-        });
-
-        // Write continuation header
-        const header = generateContinuationHeader(
-            this.context,
-            this._partNumber,
-            reason,
-            this._baseFileName
-        );
-        this.writeStream.write(header);
-        this._bytesWritten = Buffer.byteLength(header, 'utf-8');
-
-        // Notify callback
-        this.onSplit?.(this._fileUri, this._partNumber, reason);
-    }
-
-    /** Get the filename for the current part. */
-    private getPartFileName(): string {
-        if (this._partNumber === 0) {
-            return `${this._baseFileName}.log`;
+            this.writeStream = result.newStream;
+            this._fileUri = result.newFileUri;
+            this._partNumber = result.newPartNumber;
+            this._bytesWritten = result.headerBytes;
+            this._partStartTime = Date.now();
+            this._lastLineTime = 0;
+        } finally {
+            this.splitting = false;
         }
-        const partSuffix = String(this._partNumber + 1).padStart(3, '0');
-        return `${this._baseFileName}_${partSuffix}.log`;
+
+        this.onSplit?.(this._fileUri, this._partNumber, reason);
     }
 
     pause(): void {
@@ -287,10 +264,10 @@ export class LogSession {
     }
 
     private getLogDirUri(): vscode.Uri {
-        if (path.isAbsolute(this.config.logDirectory)) {
-            return vscode.Uri.file(this.config.logDirectory);
-        }
-        return vscode.Uri.joinPath(this.context.workspaceFolder.uri, this.config.logDirectory);
+        const base = path.isAbsolute(this.config.logDirectory)
+            ? vscode.Uri.file(this.config.logDirectory)
+            : vscode.Uri.joinPath(this.context.workspaceFolder.uri, this.config.logDirectory);
+        return vscode.Uri.joinPath(base, formatDateFolder(this.context.date));
     }
 }
 

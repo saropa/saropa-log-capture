@@ -5,7 +5,7 @@ import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
-import { showBugReport } from "./bug-report-panel";
+import { getConfig } from "../modules/config";
 import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
@@ -16,11 +16,13 @@ import type { ScopeContext } from "../modules/scope-context";
 import type { ViewerTarget } from "./viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "./viewer-thread-grouping";
+import * as panelHandlers from "./viewer-panel-handlers";
+import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 
 const BATCH_INTERVAL_MS = 200;
 
 /**
- * Provides a webview-based sidebar panel that displays captured
+ * Provides a webview-based bottom panel that displays captured
  * debug output in real time with auto-scroll and theme support.
  */
 export class LogViewerProvider
@@ -55,6 +57,8 @@ export class LogViewerProvider
   private onSessionNavigate?: (direction: number) => void;
   private onFileLoaded?: (uri: vscode.Uri) => void;
   private onSessionAction?: (action: string, uriString: string, filename: string) => void;
+  private onBrowseSessionRoot?: () => Promise<void>;
+  private onClearSessionRoot?: () => Promise<void>;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -124,6 +128,8 @@ export class LogViewerProvider
   setSessionNavigateHandler(handler: (direction: number) => void): void { this.onSessionNavigate = handler; }
   setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
   setSessionActionHandler(handler: (action: string, uriString: string, filename: string) => void): void { this.onSessionAction = handler; }
+  setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
+  setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
   // -- Webview state methods --
   scrollToLine(line: number): void { this.postMessage({ type: "scrollToLine", line }); }
   setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
@@ -167,13 +173,17 @@ export class LogViewerProvider
 
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.postMessage({ type: "setScopeContext", ...ctx }); }
+  setMinimapShowInfo(show: boolean): void { this.postMessage({ type: "minimapShowInfo", show }); }
+  setMinimapWidth(width: "small" | "medium" | "large"): void { this.postMessage({ type: "minimapWidth", width }); }
   setIconBarPosition(position: "left" | "right"): void { this.postMessage({ type: "iconBarPosition", position }); }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
 
   sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
   setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
   findNextMatch(): void { this.postMessage({ type: "findNextMatch" }); }
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+    this.postMessage({ type: "sessionList", sessions, ...rootInfo });
+  }
   sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
@@ -195,9 +205,17 @@ export class LogViewerProvider
     this.postMessage({ type: "setViewingMode", viewing: true }); this.setFilename(uri.path.split("/").pop() ?? "");
     const fields = parseHeaderFields(rawLines);
     if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
+    const headerEnd = findHeaderEnd(rawLines);
+    let contentLines = rawLines.slice(headerEnd);
+    const maxLines = getConfig().maxLines;
+    /* Cap parse/send to avoid CPU spike on huge files; footer shows "Showing first X of Y lines" when truncated. */
+    if (contentLines.length > maxLines) {
+      contentLines = contentLines.slice(0, maxLines);
+      this.postMessage({ type: "loadTruncated", shown: maxLines, total: rawLines.length - headerEnd });
+    }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
-    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
+    await sendFileLines(contentLines, ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }
@@ -208,84 +226,29 @@ export class LogViewerProvider
     if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
   }
 
-  dispose(): void { this.stopBatchTimer(); }
+  dispose(): void { this.stopBatchTimer(); panelHandlers.disposeHandlers(); }
 
   // -- Private methods --
 
   private handleMessage(msg: Record<string, unknown>): void {
-    switch (msg.type) {
-      case "insertMarker": this.onMarkerRequest?.(); break;
-      case "togglePause": this.onTogglePause?.(); break;
-      case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
-      case "copySourcePath":
-        helpers.copySourcePath(String(msg.path ?? ""), String(msg.mode ?? "relative"));
-        break;
-      case "exclusionAdded": case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
-      case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
-      case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
-      case "searchCodebase": this.onSearchCodebase?.(String(msg.text ?? "")); break;
-      case "searchSessions": this.onSearchSessions?.(String(msg.text ?? "")); break;
-      case "analyzeLine": this.onAnalyzeLine?.(String(msg.text ?? ""), Number(msg.lineIndex ?? -1), this.currentFileUri); break;
-      case "generateReport":
-        if (this.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), this.currentFileUri).catch(() => {}); }
-        break;
-      case "addToWatch": this.onAddToWatch?.(String(msg.text ?? "")); break;
-      case "promptAnnotation":
-        this.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));
-        break;
-      case "addBookmark": this.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), this.currentFileUri); break;
-      case "linkClicked":
-        this.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
-        break;
-      case "openUrl": vscode.env.openExternal(vscode.Uri.parse(String(msg.url ?? ""))).then(undefined, () => {}); break;
-      case "navigatePart": this.onPartNavigate?.(Number(msg.part ?? 1)); break;
-      case "navigateSession": this.onSessionNavigate?.(Number(msg.direction ?? 0)); break;
-      case "savePresetRequest":
-        this.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
-        break;
-      case "setCaptureAll":
-        vscode.workspace.getConfiguration("saropaLogCapture")
-          .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
-        break;
-      case "editLine":
-        helpers.handleEditLine(this.currentFileUri, this.isSessionActive, {
-          lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
-          timestamp: Number(msg.timestamp ?? 0), loadFromFile: (uri) => this.loadFromFile(uri),
-        }).catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
-        break;
-      case "exportLogs":
-        helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
-          .catch((err) => { vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`); });
-        break;
-      case "saveLevelFilters":
-        helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
-        break;
-      case "requestFindInFiles":
-        this.onFindInFiles?.(String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-        break;
-      case "openFindResult":
-        this.onOpenFindResult?.(String(msg.uriString ?? ""), String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-        break;
-      case "findNavigateMatch":
-        this.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
-        break;
-      case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": this.onBookmarkAction?.(msg); break;
-      case "requestSessionList": this.onSessionListRequest?.(); break;
-      case "openSessionFromPanel": this.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
-      case "sessionAction": this.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
-      case "popOutViewer": this.onPopOutRequest?.(); break;
-      case "revealLogFile":
-        if (this.currentFileUri && this.onRevealLogFile) { Promise.resolve(this.onRevealLogFile(this.currentFileUri.toString())).catch(() => {}); }
-        break;
-      case "setSessionDisplayOptions": this.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
-      case "promptGoToLine":
-        vscode.window.showInputBox({ prompt: "Go to line number", validateInput: (v) => /^\d+$/.test(v) ? null : "Enter a number" })
-          .then((v) => { if (v) { this.postMessage({ type: "scrollToLine", line: parseInt(v, 10) }); } });
-        break;
-      case "scriptError":
-        ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
-        break;
-    }
+    const ctx: ViewerMessageContext = {
+      currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive,
+      context: this.context, post: (m) => this.postMessage(m), load: (u) => this.loadFromFile(u),
+      onMarkerRequest: this.onMarkerRequest, onTogglePause: this.onTogglePause,
+      onExclusionAdded: this.onExclusionAdded, onExclusionRemoved: this.onExclusionRemoved,
+      onAnnotationPrompt: this.onAnnotationPrompt, onSearchCodebase: this.onSearchCodebase,
+      onSearchSessions: this.onSearchSessions, onAnalyzeLine: this.onAnalyzeLine,
+      onAddToWatch: this.onAddToWatch, onLinkClick: this.onLinkClick,
+      onPartNavigate: this.onPartNavigate, onSavePresetRequest: this.onSavePresetRequest,
+      onSessionListRequest: this.onSessionListRequest, onOpenSessionFromPanel: this.onOpenSessionFromPanel,
+      onDisplayOptionsChange: this.onDisplayOptionsChange, onPopOutRequest: this.onPopOutRequest,
+      onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
+      onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
+      onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
+      onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,
+      onBrowseSessionRoot: this.onBrowseSessionRoot, onClearSessionRoot: this.onClearSessionRoot,
+    };
+    dispatchViewerMessage(msg, ctx);
   }
 
   private startBatchTimer(): void {

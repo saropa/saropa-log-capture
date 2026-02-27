@@ -14,6 +14,8 @@ export function getSessionTagsScript(): string {
     var sessionTagChips = document.getElementById('session-tag-chips');
     /** Tracks deactivated tags: key present and truthy = tag is excluded from filter. */
     var excludedTags = {};
+    var tagsExpanded = false;
+    var maxVisible = 8;
 
     window.toggleSessionTagsSection = function() {
         if (!sessionTagSection) return;
@@ -22,6 +24,28 @@ export function getSessionTagsScript(): string {
         var btn = document.getElementById('session-filter-tags');
         if (btn) btn.classList.toggle('active', !vis);
     };
+
+    function tagIcon(tag) {
+        if (tag.indexOf('file:') === 0) return '<span class="codicon codicon-file"></span>';
+        if (tag.indexOf('error:') === 0) return '<span class="codicon codicon-warning"></span>';
+        return '';
+    }
+
+    function tagLabel(tag) {
+        if (tag.indexOf('file:') === 0) return tag.substring(5);
+        if (tag.indexOf('error:') === 0) return tag.substring(6);
+        return tag;
+    }
+
+    /** Build HTML for a single tag chip button. */
+    function buildChipHtml(tag, index, count) {
+        var active = !excludedTags[tag] ? ' active' : '';
+        var hide = index >= maxVisible && !tagsExpanded ? ' tag-overflow' : '';
+        var cnt = count > 1 ? '<span class="tag-count">' + count + '</span>' : '';
+        return '<button class="source-tag-chip' + active + hide
+            + '" data-stag="' + tag + '">' + tagIcon(tag) + '<span class="tag-label">'
+            + tagLabel(tag) + '</span>' + cnt + '</button>';
+    }
 
     window.rebuildSessionTagChips = function(sessions) {
         if (!sessionTagChips) return;
@@ -44,10 +68,12 @@ export function getSessionTagsScript(): string {
         var max = 20;
         var shown = keys.slice(0, max);
         for (var k = 0; k < shown.length; k++) {
-            var t = shown[k], active = !excludedTags[t];
-            html += '<button class="source-tag-chip' + (active ? ' active' : '')
-                + '" data-stag="' + t + '"><span class="tag-label">' + t
-                + '</span><span class="tag-count">' + counts[t] + '</span></button>';
+            html += buildChipHtml(shown[k], k, counts[shown[k]]);
+        }
+        if (shown.length > maxVisible) {
+            var extra = shown.length - maxVisible;
+            html += '<button class="tag-show-all-btn" data-stag-action="toggle-more">'
+                + (tagsExpanded ? 'Show less' : '+' + extra + ' more') + '</button>';
         }
         if (keys.length > max) html += '<span class="tag-count">+' + (keys.length - max) + ' more</span>';
         sessionTagChips.innerHTML = html;
@@ -65,22 +91,26 @@ export function getSessionTagsScript(): string {
     };
 
     if (sessionTagChips) sessionTagChips.addEventListener('click', function(e) {
+        e.stopPropagation();
         var chip = e.target.closest('[data-stag]');
         if (chip) {
             var tag = chip.getAttribute('data-stag');
             excludedTags[tag] = !excludedTags[tag];
-            chip.classList.toggle('active', !excludedTags[tag]);
             if (typeof rerenderSessionList === 'function') rerenderSessionList();
             return;
         }
         var btn = e.target.closest('[data-stag-action]');
         if (!btn) return;
         var action = btn.getAttribute('data-stag-action');
+        if (action === 'toggle-more') {
+            tagsExpanded = !tagsExpanded;
+            if (typeof rerenderSessionList === 'function') rerenderSessionList();
+            return;
+        }
         var chips = sessionTagChips.querySelectorAll('[data-stag]');
         for (var i = 0; i < chips.length; i++) {
             var t = chips[i].getAttribute('data-stag');
             excludedTags[t] = action === 'none';
-            chips[i].classList.toggle('active', action === 'all');
         }
         if (typeof rerenderSessionList === 'function') rerenderSessionList();
     });

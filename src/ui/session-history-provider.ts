@@ -162,10 +162,15 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.fetchItems(true);
     }
 
-    private async fetchItems(includeTrash: boolean): Promise<TreeItem[]> {
+    /** Like getAllChildren but from an optional root folder (for Project Logs panel override). */
+    async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
+        return this.fetchItems(true, logDirOverride);
+    }
+
+    private async fetchItems(includeTrash: boolean, logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
         const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder) { return []; }
-        const logDir = getLogDirectoryUri(folder);
+        if (!folder && !logDirOverride) { return []; }
+        const logDir = logDirOverride ?? getLogDirectoryUri(folder!);
         try {
             const { fileTypes, includeSubfolders } = getConfig();
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
@@ -239,13 +244,15 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             meta = { ...meta, correlationTags: sidecar.correlationTags };
         }
         if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
-        if (sidecar.errorCount !== undefined) {
-            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount };
+        if (sidecar.errorCount !== undefined && sidecar.fwCount !== undefined) {
+            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
         } else if (meta.errorCount !== undefined) {
             sidecar.errorCount = meta.errorCount;
             sidecar.warningCount = meta.warningCount;
             sidecar.perfCount = meta.perfCount;
             sidecar.anrCount = meta.anrCount;
+            sidecar.fwCount = meta.fwCount;
+            sidecar.infoCount = meta.infoCount;
             this.metaStore.saveMetadata(uri, sidecar).catch(() => {});
         }
         this.metaCache.set(cacheKey, meta);

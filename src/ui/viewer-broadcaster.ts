@@ -80,8 +80,8 @@ export class ViewerBroadcaster implements ViewerTarget {
   setSessionInfo(info: Record<string, string> | null): void {
     for (const t of this.targets) { t.setSessionInfo(info); }
   }
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void {
-    for (const t of this.targets) { t.sendSessionList(sessions); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+    for (const t of this.targets) { t.sendSessionList(sessions, rootInfo); }
   }
   sendDisplayOptions(options: SessionDisplayOptions): void {
     for (const t of this.targets) { t.sendDisplayOptions(options); }
@@ -97,6 +97,12 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   setScopeContext(context: ScopeContext): void {
     for (const t of this.targets) { t.setScopeContext(context); }
+  }
+  setMinimapShowInfo(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapShowInfo(show); }
+  }
+  setMinimapWidth(width: "small" | "medium" | "large"): void {
+    for (const t of this.targets) { t.setMinimapWidth(width); }
   }
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }

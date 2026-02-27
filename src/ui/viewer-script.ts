@@ -1,4 +1,5 @@
 /** Client-side JS for the log viewer: virtual scrolling, stack traces, auto-scroll. */
+import { getKeyboardScript } from './viewer-script-keyboard';
 export function getViewerScript(maxLines: number): string {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
@@ -29,6 +30,7 @@ var autoScroll = true, isPaused = false, isViewingFile = false, wordWrap = false
 var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
+var loadTruncatedInfo = null;
 
 function stripTags(html) { return html.replace(/<[^>]*>/g, ''); }
 function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
@@ -107,6 +109,9 @@ function updateFooterText() {
     if (footerVersion) {
         footerTextEl.appendChild(document.createTextNode((currentFilename ? ' \\u00b7 ' : '') + footerVersion));
     }
+    if (loadTruncatedInfo) {
+        footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
+    }
     updateLineCount();
 }
 
@@ -144,13 +149,15 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'clear':
+            loadTruncatedInfo = null;
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
+            autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
-            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; }
+            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
@@ -163,6 +170,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'setViewingMode':
             isViewingFile = !!msg.viewing;
+            if (isViewingFile) { autoScroll = false; }
             updateFooterText();
             break;
         case 'setSessionInfo':
@@ -214,14 +222,25 @@ window.addEventListener('message', function(event) {
         case 'findNextMatch':
             if (typeof searchNext === 'function') searchNext();
             break;
+        case 'loadTruncated':
+            loadTruncatedInfo = { shown: msg.shown || 0, total: msg.total || 0 };
+            updateFooterText();
+            break;
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined) {
                 suppressScroll = true; logEl.scrollTop = scrollMemory[currentFilename]; suppressScroll = false;
                 autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
+            updateFooterText();
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
+            break;
+        case 'minimapShowInfo':
+            if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
+            break;
+        case 'minimapWidth':
+            if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg);
             break;
         case 'iconBarPosition':
             document.body.dataset.iconBar = msg.position || 'left';
@@ -229,66 +248,7 @@ window.addEventListener('message', function(event) {
     }
 });
 
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && typeof copyAsPlainText === 'function') {
-        if (selectionStart >= 0) { e.preventDefault(); copyAsPlainText(); return; }
-        var nSel = window.getSelection();
-        var nTxt = nSel ? nSel.toString() : '';
-        if (nTxt.trim()) {
-            e.preventDefault();
-            vscodeApi.postMessage({ type: 'copyToClipboard', text: nTxt });
-            return;
-        }
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && typeof copyAsMarkdown === 'function') {
-        e.preventDefault(); copyAsMarkdown(); return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A' && typeof copyAllToClipboard === 'function') {
-        e.preventDefault(); copyAllToClipboard(); return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
-        e.preventDefault();
-        if (typeof setActivePanel === 'function') setActivePanel('find');
-        return;
-    }
-    if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
-        e.preventDefault();
-        if (typeof setActivePanel === 'function') setActivePanel('search');
-        else if (typeof openSearch === 'function') openSearch();
-        return;
-    }
-    if (e.key === 'Escape') {
-        if (typeof closeContextModal === 'function' && typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0) {
-            closeContextModal();
-            return;
-        }
-        if (typeof closeGotoLine === 'function') closeGotoLine(true);
-        if (typeof closeSearch === 'function') closeSearch();
-        if (typeof closeFindPanel === 'function') closeFindPanel();
-        if (typeof closeInfoPanel === 'function') closeInfoPanel();
-        if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
-        if (typeof closeSessionPanel === 'function') closeSessionPanel();
-        return;
-    }
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-        e.preventDefault(); var r = document.createRange(); r.selectNodeContents(viewportEl);
-        var s = window.getSelection(); if (s) { s.removeAllRanges(); s.addRange(r); } return;
-    }
-    if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
-    if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
-    else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
-    else if (e.key === 'Home') { suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }
-    else if (e.key === 'End') { jumpToBottom(); }
-    else if (e.key === 'PageUp') { logEl.scrollTop -= logEl.clientHeight * 0.8; autoScroll = false; }
-    else if (e.key === 'PageDown') { logEl.scrollTop += logEl.clientHeight * 0.8; }
-    else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
-    else if ((e.key === 'p' || e.key === 'P') && typeof togglePin === 'function') { togglePin(getCenterIdx()); }
-    else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
-});
+${getKeyboardScript()}
 
 var _resizeRaf = false;
 new ResizeObserver(function() {

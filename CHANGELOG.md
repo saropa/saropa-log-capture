@@ -6,7 +6,211 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 **VS Code Marketplace** - [marketplace.visualstudio.com / saropa.saropa-log-capture](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture)
 
-**Publish version**: See field "version": "x.y.z" in [package.json](./package.json)
+**Published version**: See field "version": "x.y.z" in [package.json](./package.json)
+
+---
+## [Unreleased]
+
+### Added
+- **Project Logs root folder.** Panel header shows path as suffix (e.g. "Project Logs · Default" or "Project Logs · d:\src\contacts"); click path to open folder picker. Reset icon appears when using a custom folder; last-used folder (or workspace default) is used as picker defaultUri so the dialog never opens at system default.
+- **Project Logs loading state.** Progress bar and shimmer placeholders while the session list is loading after opening the panel or changing folder.
+- **Sidebar open animation.** Slide-out panels (Project Logs, Search, etc.) now animate open with overflow hidden until the width transition ends, so content no longer overlaps the log; close already animated.
+
+### Changed
+- **Side-by-side panel layout.** Flyout panels (session, search, options, find, bookmarks, trash, info, filters, crashlytics, recurring, performance, about) now push the log viewport narrower instead of overlaying on top of it. Panels and log content sit side-by-side with animated width transitions; the virtual scroll viewport automatically recalculates via ResizeObserver.
+- **Compact correlation tag chips.** Replaced `file:` and `error:` text prefixes with codicon icons; hide count badge when count is 1; collapse chips beyond 8 behind a "+N more" toggle.
+- **Session panel sort button UX.** Replaced labeled "Sort" button with a right-aligned icon-only `codicon-sort-precedence` toggle. Icon flips vertically via CSS transform when reverse sort is active. Doubled panel minimum width from 280px to 560px.
+
+### Fixed
+- **Three blue colors unified.** Notice and framework now share `--vscode-charts-blue` (#2196f3) for severity bar, line tint, and notice line text; link/info accent (#3794ff) unchanged.
+- **CPU spike with huge log files.** Opening a file is capped at `saropaLogCapture.maxLines` (default 100k); footer shows "Showing first X of Y lines" when truncated.
+- **Severity bar vs emoji dot.** Viewer shows only the gutter severity bar; emoji dot (🟢🟠🔴) appears only in "Copy with decorations" and only when "Severity dot (copy only)" is checked.
+- **Session panel closes when clicking a tag chip.** `rebuildSessionTagChips` replaces innerHTML during the click handler, detaching the event target before the document-level "close on outside click" listener runs its `contains()` check. Added `stopPropagation()` to the chip click handler.
+- **Context menu submenus not visible.** Submenu flyout panels (Search, Actions, Options) were clipped by `overflow-y: auto` on the parent menu container. Removed the overflow constraint so absolute-positioned submenus can render outside the menu bounds.
+- **False-positive CRITICAL badge on instructional text.** Lines containing "fatal" in non-error context (e.g. "To make this warning fatal" or `debugZoneErrorsAreFatal`) were incorrectly badged as CRITICAL. Tightened heuristics to require all-caps `FATAL` or "fatal" followed by an error-type noun (error, exception, crash, signal, fault).
+- **Severity bar missing on stack traces.** Stack headers and stack frames had no severity bar dots because `renderItem()` returned early before the bar class was computed. Moved bar computation earlier so stack items get dots whose color matches their text (framework frames get blue, app frames get error red).
+- **Repeat notifications at end of session.** "Repeated #N (…)" lines no longer appear as the last visible content before a session boundary marker — the original line is restored instead.
+- **Blank lines tracked as repeats.** Empty or whitespace-only lines no longer trigger repeat detection, preventing meaningless "Repeated #N (…)" notifications.
+
+---
+## [2.0.13] - 2026-02-25
+
+### Fixed
+- **Severity bar centering.** Connector bars between dots were 0.5px off-center (2px bar at left:11 vs 7px dot centered at 12.5px). Widened connectors to 3px so both center at 12.5px.
+- **Unconnected line tails.** Removed the full-height background line (`#viewport::before`) that extended above the first dot and below the last dot. The colored connector segments now provide the timeline without visual overflow.
+- **Bar colors mismatched session panel.** Level-bar dots used `--vscode-debugConsole-*` variables (dark amber for warning) while severity dots in the session panel used `--vscode-charts-*` (bright yellow). Unified all five shared levels (error, warning, performance, framework, info) to use the `--vscode-charts-*` palette.
+- **Timeline broken across color transitions.** Dots of different severity levels were not connected, leaving gaps in the timeline. Connector logic now bridges all adjacent dots regardless of color, stopping only at markers.
+
+---
+## [2.0.12] - 2026-02-24
+
+### Added
+- **Performance panel.** New sidebar panel (graph-line icon) with two tabs: Current session shows grouped perf events (PERF traces, Choreographer jank, GC, timeouts) with click-to-navigate; Trends tab shows cross-session aggregated table with SVG line chart for tracking operation duration over time.
+- **Performance fingerprinting.** New `perf-fingerprint.ts` module scans log files for named PERF traces, Choreographer frame skips, GC events, and timeouts, producing fingerprints stored in session metadata for cross-session trend analysis.
+- **Cross-session performance aggregation.** New `perf-aggregator.ts` module reads perf fingerprints from all session metadata files and computes trends (improving/degrading/stable) by comparing first-half to second-half averages.
+- **Shared metadata loader.** Extracted common metadata file loading (`parseSessionDate`, `filterByTime`, `listMetaFiles`, `loadMeta`) into `metadata-loader.ts`, eliminating duplication between `cross-session-aggregator.ts` and `perf-aggregator.ts`.
+- **Expanded performance classification.** Lines containing `PERF` prefix and `GC freed`/`GC concurrent` are now classified as performance level (purple), in addition to existing Choreographer/ANR/jank patterns.
+- **Context menu sub-menus.** Grouped Search, Actions, and Options into collapsible sub-menus to reduce clutter when right-clicking a log line (was ~17 flat items, now ≤10 top-level). The Options sub-menu provides quick toggles for word wrap, line prefix, and visual spacing. Submenus auto-flip left when the menu opens near the right viewport edge.
+- **Tooltips for all icons across all screens.** Session list icons (recording dot, completed, log file), severity count dots (errors, warnings, performance, framework, info), bookmark icons (file, bookmark/note), trash item icons, and all close buttons (decoration settings, export modal, filters panel, options panel, edit modal, context peek) now show descriptive tooltips on hover.
+
+### Fixed
+- **Context line spacing when filtering.** Visual spacing now uses the previous *visible* line (not the previous array element) to calculate gaps, fixing non-uniform spacing caused by hidden/filtered lines. Gap is placed above context groups (not between context and match line), keeping context lines visually grouped with the line they provide context for.
+- **Severity dot gutter visual clutter.** Reduced dot size (9→7 px), connector bars (5→2 px), and dimmed the timeline to 40% opacity so the three gutter layers no longer compete visually.
+- **Repeat notification visual clutter.** Removed redundant emoji dot from repeat notifications (decorations handle dots). Original line is now hidden when a repeat is detected, eliminating the visual gap. Empty previews show an ellipsis fallback. Fixed `trimData()` invalidating the repeat tracker's line index after splice.
+- **Severity dot connectors broken by unclassified lines.** Consecutive same-color dots separated by lines without a severity classification (e.g. separator lines, context lines) were not visually connected. The connector logic now scans forward for the nearest dot instead of only checking the immediately adjacent DOM element, and bridges intermediate no-dot lines with a colored bar.
+- **Level Filters fly-up panel unreadable.** The panel was nested inside `#footer` (which has `position: sticky`), trapping it in the footer's stacking context. Moved it out of the footer so `position: fixed` works against the viewport. Also switched background to `--vscode-editorWidget-background` with a solid `#1e1e1e` fallback for themes that don't define menu variables.
+
+### Changed
+- **Modularized performance panel script.** Extracted current-session scan/render logic (regex patterns, classification, group rendering) from `viewer-performance-panel.ts` into `viewer-performance-current.ts`. Parent reduced: 330→232 lines.
+- **Modularized log session split logic.** Extracted `performFileSplit()` and `getPartFileName()` from `log-session.ts` into `log-session-split.ts`. Parent reduced: 305→274 lines.
+- **Modularized session event bus.** Extracted `LineData`, `LineListener`, `SplitListener` types and `EarlyOutputBuffer` class from `session-manager.ts` into `session-event-bus.ts`. Re-exported for backward compatibility. Parent reduced: 301→277 lines.
+- **Modularized level filter code.** Split into focused modules: `viewer-level-classify.ts` (classification patterns + `classifyLevel()`), `viewer-level-events.ts` (DOM event wiring), `viewer-styles-level.ts` (all level filter CSS). Original files reduced: `viewer-level-filter.ts` 299→185, `viewer-styles-ui.ts` 292→132.
+- **Modularized analysis panel streams.** Extracted 8 async `run*` stream functions from `analysis-panel.ts` into `analysis-panel-streams.ts` with a `StreamCtx` interface to stay within the 4-parameter limit.
+- **Modularized config file utilities.** Extracted `isTrackedFile`, `readTrackedFiles`, `getFileTypeGlob`, `shouldRedactEnvVar` from `config.ts` into `config-file-utils.ts`. Re-exported from the original module for backward compatibility.
+- **Modularized bug report sections.** Extracted 21 section formatting functions from `bug-report-formatter.ts` into `bug-report-sections.ts`.
+- **Modularized Crashlytics API queries.** Extracted `fetchJson`, `queryTopIssues`, `matchIssues`, `updateIssueState`, `getCrashEvents`, and related functions from `firebase-crashlytics.ts` into `crashlytics-api.ts`.
+- **Modularized analysis panel styles.** Extracted `getAnalysisScript()` from `analysis-panel-styles.ts` into `analysis-panel-script.ts`.
+- **Modularized insights panel script.** Extracted webview script from `insights-panel.ts` into `insights-panel-script.ts`.
+- **Modularized context menu HTML.** Extracted `getContextMenuHtml()` from `viewer-context-menu.ts` into `viewer-context-menu-html.ts`.
+- **Modularized exclusion chip styles.** Extracted exclusion chip CSS from `viewer-styles-options.ts` into `viewer-styles-exclusion-chips.ts`.
+- **Modularized viewport rendering.** Extracted `renderViewport()` and helpers from `viewer-data.ts` into `viewer-data-viewport.ts`.
+- **Modularized options panel events.** Extracted event wiring from `viewer-options-panel-script.ts` into `viewer-options-events.ts`.
+- **Modularized export init script.** Extracted `initExportModal()` and wiring from `viewer-export-script.ts` into `viewer-export-init.ts`.
+- **Modularized source tag UI.** Extracted tag chip rendering and interaction from `viewer-source-tags.ts` into `viewer-source-tags-ui.ts`.
+
+---
+## [2.0.11] - 2026-02-22
+
+### Fixed
+- **Session-manager test failing.** Category-filter test patched `getConfig` via `require()` but the import binding in session-manager was already cached. Switched to `refreshConfig()` with direct config objects.
+- **Garbled Unicode in publish script output.** `subprocess.run` defaulted to cp1252 on Windows, corrupting Mocha's ✓/✗ characters. Added explicit `encoding="utf-8"` to the `run()` helper.
+- **Hot-path config reads.** `getConfig()` was called on every DAP message (30+ `cfg.get()` calls each time). Now cached in `SessionManagerImpl` and refreshed on settings change.
+- **File split race condition.** `performSplit()` was fired without await, so `appendLine()` could write to a closing stream. Added a `splitting` guard flag.
+- **Inline decoration thrashing.** `editor.setDecorations()` was called per log line with a source reference. Now debounced at 200ms.
+- **Package root FS walks on every editor switch.** `detectPackageRoot` checked up to 8 manifest files per directory level on every `onDidChangeActiveTextEditor`. Results are now cached.
+- **Unbounded `seenToolKeys` growth in AI watcher.** The dedup Set now clears at 10K entries to prevent memory leaks during long Claude sessions.
+- **Memory spike in Find in Files.** `searchLogFilesConcurrent` read all log files simultaneously via `Promise.all()`. Now batched (5 files at a time).
+- **Redundant config reads in settings change handler.** Three separate `getConfig()` calls collapsed to one.
+
+### Changed
+- **Dev script reports use daily subfolders.** `scripts/modules/report.py` `save_report()` now writes publish/analyze reports into `reports/yyyymmdd/` date subfolders, matching the extension's existing date-folder convention for debug capture logs.
+
+---
+## [2.0.10] - 2026-02-21
+
+### Added
+- **AI Activity Integration.** Show Claude Code AI activity (tool calls, user prompts, system warnings) interleaved with debug output in the log viewer. When a debug session starts, the extension scans the most recent Claude Code JSONL session file for recent AI activity and streams new entries in real time. AI lines appear with distinct colored left borders and `[AI ...]` prefixes, filterable via the existing category system.
+  - New settings under `saropaLogCapture.aiActivity.*`: `enabled`, `autoDetect`, `lookbackMinutes`, `showPrompts`, `showReadOperations`, `showSystemWarnings`
+  - Auto-detection: when `autoDetect` is true (default), the feature activates silently if `~/.claude/projects/<slug>/` exists for the workspace
+  - Streaming deduplication: Claude Code writes multiple JSONL lines per assistant message during streaming; the parser keeps only the final (most complete) version, and the watcher tracks emitted entries to prevent duplicates across reads
+  - New modules: `ai-jsonl-types.ts`, `ai-jsonl-parser.ts`, `ai-session-resolver.ts`, `ai-watcher.ts`, `ai-line-formatter.ts`
+  - New viewer styles: `viewer-styles-ai.ts` — category-specific colors (cyan for prompts, yellow for edits, magenta for bash, orange for warnings)
+  - Translations added for all 6 locale files (EN, DE, ES, JA, KO, ZH-CN)
+
+---
+## [2.0.9] - 2026-02-18
+
+### Changed
+- **Module splits to stay under 300-line limit.** Extracted cohesive logic into five new files to keep every source file within the ESLint `max-lines` threshold (code lines only, blank lines and comments excluded):
+  - `viewer-styles-info.ts` — session info panel CSS, split from `viewer-styles-content.ts`
+  - `viewer-script-keyboard.ts` — keydown handler, split from `viewer-script.ts`
+  - `crashlytics-io.ts` — CLI runner and event cache I/O, split from `firebase-crashlytics.ts`
+  - `extension-lifecycle.ts` — debug session start/stop subscriptions, split from `extension.ts`
+  - `viewer-message-handler.ts` — webview message dispatcher, split from `log-viewer-provider.ts`
+
+---
+## [2.0.8] - 2026-02-18
+
+### Added
+- **Machine-translated locale files.** Added `package.nls.zh-cn.json`, `package.nls.ja.json`, `package.nls.ko.json`, `package.nls.es.json`, and `package.nls.de.json` with 128 translated keys each, covering all manifest-visible strings. Corrections welcome at language@saropa.com.
+
+### Changed
+- **README language badge.** Added a language support badge (EN | ZH | JA | KO | ES | DE) to the README header so multilingual support is visible at a glance on the marketplace listing.
+- **Marketplace keywords.** Added `multilingual`, `localization`, and `i18n` to `package.json` keywords for better search discoverability.
+
+### Fixed
+- **`verify-nls.js` ref deduplication.** Deduplicate `%key%` refs via `Set` before comparison; switch membership checks to `Set.has()` (O(1)) to prevent false double-reporting if a key appears twice in `package.json`.
+- **README config table.** Added missing `organizeFolders` and `includeSubfolders` settings (both added in v2.0.7) to the configuration reference table.
+
+---
+## [2.0.7] - 2026-02-18
+
+### Added
+- **Auto-organize legacy log files.** New `organizeFolders` setting (on by default) automatically moves flat log files with a `yyyymmdd_` prefix into date-based subfolders on session start. Companion `.meta.json` sidecars are moved alongside their log files.
+- **NLS verification in compile chain.** `npm run compile` now runs `verify-nls` before building, preventing NLS key drift on every build.
+
+### Changed
+- **Date-based log subfolders.** New log sessions are now written to `reports/yyyymmdd/` subfolders (e.g. `reports/20260218/`) instead of directly into the `reports/` root. File retention and session history already scan subfolders, so existing workflows are unaffected.
+
+---
+## [2.0.6] - 2026-02-18
+
+### Added
+- **Manifest localization support.** Extracted 127 user-visible strings from `package.json` into `package.nls.json` using VS Code's `%key%` reference mechanism. Enables future translation via locale-specific `package.nls.{locale}.json` files.
+- **NLS key alignment verification script.** New `npm run verify-nls` command checks that all `%key%` references in `package.json` have matching entries in every `package.nls*.json` file, reporting missing and orphan keys.
+
+---
+## [2.0.5] - 2026-02-16
+
+### Added
+- **Full severity dot breakdown in session list.** Each session now shows five colored dot counters: red (errors), yellow (warnings), purple (performance), blue (framework), and green (info). Framework lines are detected via logcat tags and launch boilerplate; info is all remaining lines.
+- **Minimap width setting.** New `minimapWidth` preference lets you choose small (40px), medium (60px, default), or large (90px) for the scrollbar minimap.
+
+### Changed
+- **Crashlytics cache visible in session history.** Cached crash event files are now stored in `reports/crashlytics/` (was `.crashlytics/`), making them searchable, comparable, and visible in the session tree.
+- **Moved all views to bottom panel.** Log Viewer, Crashlytics, Play Vitals, and About panels now appear in the bottom panel (next to Terminal) instead of the sidebar.
+- **Crashlytics, Recurring Errors, and About are now icon-bar panels.** All three are integrated into the Log Viewer webview as slide-out panels accessible from the icon bar, matching the existing Sessions/Trash/Bookmarks pattern. No more separate editor tabs or sidebar views.
+- **Wider timeline connector bars.** The vertical bars joining consecutive same-color severity dots are now 5px wide (was 3px), staying centered on the dots.
+- **Performance dot color changed from blue to purple.** The performance severity dot in the session list is now purple to free up blue for framework lines.
+
+### Removed
+- **Severity distribution bar in session list.** Removed the thin horizontal bar under each session entry; the five colored dot counters now convey a complete line-type breakdown.
+
+### Fixed
+- **gcloud CLI not detected on Windows.** The `execFile` call lacked `shell: true`, so Windows couldn't execute `gcloud.cmd` batch files, causing a false "Google Cloud CLI not found in PATH" error in the Crashlytics setup panel.
+- **Line hover background matches compressed line height.** Added explicit `height: calc(1em * line-height)` on `.line` elements so the hover background always matches the virtual-scroll row height, preventing it from bleeding into adjacent lines at compressed settings.
+- **Copy icon vertically centered on line.** The floating copy-to-clipboard icon now vertically centers on the hovered line instead of using a fixed offset.
+- **Copy icon no longer overlaps scrollbar minimap.** Increased the right-edge clearance of the floating copy-to-clipboard button so it stays within the log content area.
+
+---
+## [2.0.4] - 2026-02-16
+
+### Added
+- **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).
+- **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links. Each entry has a badge line (platform, stats) and a description synced with ABOUT_SAROPA.md.
+
+### Changed
+- **Moved views to activity bar.** All Saropa panels (Log Viewer, Crashlytics, Recurring Errors, About) now appear in the left activity bar sidebar instead of the bottom panel area, fixing the cramped layout.
+- **Updated README panel references.** Replaced "bottom panel next to Output/Terminal" wording with activity bar sidebar location.
+
+---
+## [2.0.3] - 2026-02-16
+
+### Added
+- **Crashlytics setup diagnostics.** The Crashlytics panel now shows actual error details when setup fails instead of generic hints. Captures gcloud CLI errors (not found, not logged in, permission denied), HTTP status codes from the Firebase API (401/403/404), and network timeouts. A "Last checked" timestamp shows when the last diagnostic ran. All diagnostic steps are logged to the "Saropa Log Capture" output channel for advanced troubleshooting.
+- **Minimap info markers setting.** New `saropaLogCapture.minimapShowInfoMarkers` setting (off by default) controls whether info-level (green) markers appear on the scrollbar minimap. Reduces visual noise for most users while letting those who want full coverage opt in.
+
+### Changed
+- **Minimap rewritten with canvas rendering.** The scrollbar minimap now paints markers onto a `<canvas>` element instead of creating individual DOM `<div>` elements. Uses `prefixSums` from the scroll-anchor system for pixel-accurate positioning, supports HiDPI displays, and eliminates innerHTML rebuilds for better performance.
+
+### Fixed
+- **Copy icon no longer overlaps scrollbar minimap.** Increased the right-edge clearance of the floating copy-to-clipboard button so it stays within the log content area.
+- **Timeline dots no longer shift on hover.** Replaced transform-based vertical centering with margin-based centering to eliminate sub-pixel jitter when hovering log lines.
+- **Same-color timeline dots are now connected by a colored vertical bar.** Consecutive log lines with the same severity level show a colored connector bar between their dots, making runs of same-level output visually distinct.
+
+---
+## [2.0.2] - 2026-02-15
+
+### Fixed
+- **Timeline dots: stacking and alignment.** The severity dot timeline in the log gutter now renders correctly — dots are single-color (no line bleed-through), always paint above the timeline line, and the whole construct is indented from the left edge.
+- **Panel titles: added "Saropa" prefix.** All webview panels opened in the main VS Code editor now include the "Saropa" prefix for discoverability (e.g. "Saropa Cross-Session Insights", "Saropa Log Timeline").
+- **Insights panel: refresh no longer resets position.** Clicking Refresh, changing the time range, or closing an error no longer moves the panel back to the Beside column.
+- **Insights panel: production data loading indicator.** The "Checking production data..." spinner now reliably stops via a settled guard, reduced timeout (10 s), and output channel logging for diagnostics.
+- **Panels no longer auto-restore on startup.** Registered no-op serializers for all singleton webview panels so VS Code does not restore them when reopening a project.
+- **Session panel: removed spark bar.** The small grey "relative density" bar after severity dots was too small to convey useful information and confused users. Removed entirely.
+- **Session panel: severity dot alignment.** Colored severity dots now vertically center-align with their count numbers using flex layout instead of fragile `vertical-align`.
+- **Session panel: severity bar improved.** The proportional error/warning/perf bar is now full-width instead of a tiny 40px inline bar, and its tooltip shows a descriptive breakdown (e.g. "5 errors, 3 warnings") instead of a generic total.
+- **Historical log files now open at the top.** Previously, opening an old log file from session history would scroll to the bottom. The viewer now starts at line 1 for file views, while live capture sessions continue to auto-scroll.
 
 ---
 ## [2.0.1] - 2026-02-10

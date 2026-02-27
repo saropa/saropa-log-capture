@@ -13,6 +13,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 [![GitHub last commit](https://img.shields.io/github/last-commit/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/commits)
 [![GitHub issues](https://img.shields.io/github/issues/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Languages](https://img.shields.io/badge/UI%20languages-EN%20%7C%20ZH%20%7C%20JA%20%7C%20KO%20%7C%20ES%20%7C%20DE-blue)](https://github.com/saropa/saropa-log-capture#translations)
 
 > Have feedback or ideas? Share them by [opening an issue](https://github.com/saropa/saropa-log-capture/issues/new) on GitHub!
 
@@ -26,7 +27,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 
 - Debug Console output is ephemeral in VS Code—this extension makes it persistent, searchable, and exportable.
 - Zero config: install and start debugging, logs are captured automatically.
-- Panel viewer (next to Output/Terminal) for real-time log viewing, search, filtering, and more.
+- Sidebar viewer (activity bar icon) for real-time log viewing, search, filtering, and more.
 
 ---
 
@@ -47,7 +48,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
 
 ### Viewer
-- **Live panel viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (located in the bottom panel next to Output and Terminal).
+- **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
@@ -123,7 +124,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 1. Install the extension from the VS Code Marketplace
 2. Start a debug session (F5)
 3. Output is automatically captured to the `reports/` directory
-4. Open the **Saropa Log Capture** panel (bottom panel, next to Output/Terminal) to view output in real time
+4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
 
 ---
 
@@ -203,6 +204,8 @@ All settings are prefixed with `saropaLogCapture.`
 | `logDirectory`                 | `"reports"` | Where to save log files (relative to workspace root)     |
 | `autoOpen`                     | `false`     | Open log file when debug session ends                    |
 | `maxLogFiles`                  | `10`        | Max log files to retain (0 = unlimited)                  |
+| `organizeFolders`              | `true`      | Move flat log files into `yyyymmdd/` date subfolders on session start |
+| `includeSubfolders`            | `true`      | Include log files from date subfolders in session history, search, and analysis |
 | `gitignoreCheck`               | `true`      | Offer to add log directory to .gitignore on first run    |
 | `redactEnvVars`                | `[]`        | Env var patterns to redact from headers                  |
 | `captureAll`                   | `false`     | Capture all Debug Console output, bypassing filters      |
@@ -257,6 +260,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standar
 3. Run `npm run compile` to verify your changes
 4. Open a Pull Request
 
+**Testing the extension (F5):**  
+Open this repo in **VS Code** (not Cursor): **File → Open Folder** → select the repo, then press **F5**. A second VS Code window opens (Extension Development Host) with the extension loaded. Click the **Saropa Log Capture** icon in the activity bar (left) to open the viewer. If you use Cursor, the F5 host may still be Cursor and the extension may not load; use VS Code for reliable testing.
+
 **Reporting issues:**
 
 - Include steps to reproduce and your debug adapter (Dart, Node, Python, etc.)
@@ -266,6 +272,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standar
 ### Discussing ideas
 
 Not sure if something is a bug or a feature request? [Open a discussion issue](https://github.com/saropa/saropa-log-capture/issues/new). We're happy to talk through ideas.
+
+### Translations
+
+The extension ships machine-translated UI strings for Chinese Simplified, Japanese, Korean, Spanish, and German. If you spot a mistranslation or awkward phrasing, corrections are welcome — email [language@saropa.com](mailto:language@saropa.com) with the language, the incorrect string, and your suggested fix.
 
 ---
 

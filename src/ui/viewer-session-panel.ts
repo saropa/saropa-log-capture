@@ -9,7 +9,11 @@ export function getSessionPanelHtml(): string {
 <div id="session-panel" class="session-panel">
     <div id="session-resize" class="session-panel-resize"></div>
     <div class="session-panel-header">
-        <span>Project Logs</span>
+        <span class="session-panel-title">Project Logs</span>
+        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span id="session-path-text">Default</span></span>
+        <button id="session-reset-root" class="session-panel-action" title="Use default folder" style="display:none">
+            <span class="codicon codicon-debug-restart"></span>
+        </button>
         <div class="session-panel-actions">
             <button id="session-refresh" class="session-panel-action" title="Refresh">
                 <span class="codicon codicon-refresh"></span>
@@ -21,7 +25,7 @@ export function getSessionPanelHtml(): string {
         <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames"><span class="codicon codicon-calendar"></span> Dates</button>
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
         <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
-        <button id="session-toggle-reverse" class="session-toggle-btn" title="Reverse sort order"><span class="codicon codicon-arrow-down"></span> Sort</button>
+        <button id="session-toggle-reverse" class="session-toggle-btn session-sort-btn" title="Reverse sort order"><span class="codicon codicon-sort-precedence"></span></button>
         <button id="session-toggle-latest" class="session-toggle-btn" title="Show only latest of each name"><span class="codicon codicon-pinned"></span> Latest</button>
         <button id="session-filter-tags" class="session-toggle-btn" title="Filter by correlation tag"><span class="codicon codicon-filter"></span> Tags</button>
     </div>
@@ -31,7 +35,16 @@ export function getSessionPanelHtml(): string {
     <div class="session-panel-content">
         <div id="session-list"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>
-        <div id="session-loading" class="session-loading" style="display:none">Loading...</div>
+        <div id="session-loading" class="session-loading" style="display:none">
+            <div class="session-loading-bar"><div class="session-loading-bar-fill"></div></div>
+            <div class="session-loading-label">Loading folder…</div>
+            <div class="session-loading-shimmer">
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line"></div>
+                <div class="session-shimmer-line session-shimmer-line-short"></div>
+            </div>
+        </div>
     </div>
 </div>`;
 }
@@ -55,7 +68,10 @@ export function getSessionPanelScript(): string {
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
-        if (sessionDisplayOptions.panelWidth > 0) sessionPanelEl.style.width = sessionDisplayOptions.panelWidth + 'px';
+        if (sessionDisplayOptions.panelWidth > 0) {
+            sessionPanelEl.style.width = sessionDisplayOptions.panelWidth + 'px';
+            if (typeof setPanelSlotWidth === 'function') setPanelSlotWidth(sessionDisplayOptions.panelWidth);
+        }
         sessionPanelEl.classList.add('visible');
         requestSessionList();
     };
@@ -91,7 +107,6 @@ export function getSessionPanelScript(): string {
         if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
         var sorted = sortSessions(active);
-        computeSparkWidths(sorted);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted) : renderFlat(sorted);
         sessionListEl.innerHTML = html;
     }
@@ -119,16 +134,17 @@ export function getSessionPanelScript(): string {
 
     function renderItem(s) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
+        var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
         var cls = 'session-item' + (s.isActive ? ' session-item-active' : '');
         var name = applySessionDisplayOptions(s.displayName || s.filename);
         var meta = buildSessionMeta(s);
         var dots = renderSeverityDots(s);
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
-            + '<span class="session-item-icon"><span class="codicon ' + icon + '"></span></span>'
+            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span></span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + '</span>'
             + (meta ? '<span class="session-item-meta">' + escapeHtmlText(meta) + '</span>' : '')
-            + dots + renderSparkBar(s) + '</div></div>';
+            + dots + '</div></div>';
     }
 
     function renderDayHeading(epochMs) {
@@ -177,7 +193,7 @@ export function getSessionPanelScript(): string {
         var sortBtn = document.getElementById('session-toggle-reverse');
         if (sortBtn) {
             var icon = sortBtn.querySelector('.codicon');
-            if (icon) icon.className = sessionDisplayOptions.reverseSort ? 'codicon codicon-arrow-up' : 'codicon codicon-arrow-down';
+            if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
         }
     }
 
@@ -252,12 +268,25 @@ export function getSessionPanelScript(): string {
         closeSessionPanel();
     });
 
+    function updateHeaderPath(rootLabel, isDefault) {
+        var pathText = document.getElementById('session-path-text');
+        var resetBtn = document.getElementById('session-reset-root');
+        if (pathText) pathText.textContent = ' \\u00b7 ' + (isDefault ? 'Default' : (rootLabel || ''));
+        if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
+    }
+
+    var headerPathEl = document.getElementById('session-header-path');
+    if (headerPathEl) headerPathEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
+    var resetRootBtn = document.getElementById('session-reset-root');
+    if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
+
     /* Listen for messages from the extension. */
     window.addEventListener('message', function(e) {
         if (!e.data) return;
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
             renderSessionList(e.data.sessions);
+            if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
         if (e.data.type === 'sessionDisplayOptions') {
             sessionDisplayOptions = e.data.options || sessionDisplayOptions;

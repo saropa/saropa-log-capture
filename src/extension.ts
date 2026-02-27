@@ -1,4 +1,3 @@
-import * as os from 'os';
 import * as vscode from 'vscode';
 import { getConfig } from './modules/config';
 import { SaropaTrackerFactory } from './modules/tracker';
@@ -15,19 +14,21 @@ import { disposeAnalysisPanel } from './ui/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights-panel';
 import { disposeBugReportPanel } from './ui/bug-report-panel';
 import { disposeTimelinePanel } from './ui/timeline-panel';
-import { CrashlyticsPanelProvider } from './ui/crashlytics-panel';
 import { CrashlyticsCodeLensProvider } from './ui/crashlytics-codelens';
-import { RecurringErrorsPanelProvider } from './ui/recurring-errors-panel';
 import { VitalsPanelProvider } from './ui/vitals-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session-display';
 import { ViewerBroadcaster } from './ui/viewer-broadcaster';
 import { PopOutPanel } from './ui/pop-out-panel';
-import { wireSharedHandlers } from './ui/viewer-handler-wiring';
+import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/viewer-handler-wiring';
+import { getLogDirectoryUri } from './modules/config';
 import { searchLogFilesConcurrent } from './modules/log-search';
 import { BookmarkStore } from './modules/bookmark-store';
 import { buildSessionListPayload } from './ui/viewer-provider-helpers';
 import { buildScopeContext } from './modules/scope-context';
+import { registerDebugLifecycle } from './extension-lifecycle';
+import { AiWatcher } from './modules/ai-watcher';
+import { formatAiEntry, filterAiEntries } from './modules/ai-line-formatter';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -59,23 +60,6 @@ export function activate(context: vscode.ExtensionContext): void {
         }),
     );
 
-    // Crashlytics sidebar panel.
-    const crashlyticsPanel = new CrashlyticsPanelProvider();
-    context.subscriptions.push(crashlyticsPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(CrashlyticsPanelProvider.viewType, crashlyticsPanel),
-    );
-
-    // Recurring Errors sidebar panel.
-    const recurringErrorsPanel = new RecurringErrorsPanelProvider();
-    context.subscriptions.push(recurringErrorsPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(RecurringErrorsPanelProvider.viewType, recurringErrorsPanel),
-    );
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'saropaLogCapture.refreshRecurringErrors', () => recurringErrorsPanel.refresh(),
-    ));
-
     // Google Play Vitals sidebar panel (opt-in).
     const vitalsPanel = new VitalsPanelProvider();
     context.subscriptions.push(vitalsPanel);
@@ -101,8 +85,13 @@ export function activate(context: vscode.ExtensionContext): void {
     historyProvider = new SessionHistoryProvider();
     context.subscriptions.push(historyProvider);
     historyProvider.onDidChangeTreeData(async () => {
+        const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+        if (overrideUriStr) { return; }
         const items = await historyProvider.getAllChildren();
-        broadcaster.sendSessionList(buildSessionListPayload(items, historyProvider.getActiveUri()));
+        const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'Default';
+        broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
 
     // Bookmarks.
@@ -122,11 +111,22 @@ export function activate(context: vscode.ExtensionContext): void {
         broadcaster.setHighlightRules(initCfg.highlightRules);
     }
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
+    broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
+    broadcaster.setMinimapWidth(initCfg.minimapWidth);
 
-    // Live config changes for icon bar position.
+    // Live config changes for settings that can update mid-session.
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (!e.affectsConfiguration('saropaLogCapture')) { return; }
+        const cfg = getConfig();
+        sessionManager.refreshConfig(cfg);
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
-            broadcaster.setIconBarPosition(getConfig().iconBarPosition);
+            broadcaster.setIconBarPosition(cfg.iconBarPosition);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
+            broadcaster.setMinimapShowInfo(cfg.minimapShowInfoMarkers);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
+            broadcaster.setMinimapWidth(cfg.minimapWidth);
         }
     }));
 
@@ -177,7 +177,7 @@ export function activate(context: vscode.ExtensionContext): void {
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
     };
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, onOpenBookmark };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
@@ -229,65 +229,18 @@ export function activate(context: vscode.ExtensionContext): void {
         ),
     );
 
+    // AI activity watcher (overlay — viewer-only, never written to .log files).
+    const aiWatcher = new AiWatcher(outputChannel);
+    context.subscriptions.push(aiWatcher);
+    aiWatcher.onEntries((entries) => {
+        const cfg = getConfig().aiActivity;
+        for (const entry of filterAiEntries(entries, cfg)) {
+            broadcaster.addLine(formatAiEntry(entry));
+        }
+    });
+
     // Debug session lifecycle.
-    context.subscriptions.push(
-        vscode.debug.onDidStartDebugSession(async (session) => {
-            broadcaster.setPaused(false);
-            await sessionManager.startSession(session, context);
-            const activeSession = sessionManager.getActiveSession();
-            const filename = sessionManager.getActiveFilename();
-            if (filename) {
-                broadcaster.setFilename(filename);
-            }
-            broadcaster.setSessionActive(true);
-            viewerProvider.setSessionNavInfo(false, false, 0, 0);
-            if (activeSession?.fileUri) {
-                broadcaster.setCurrentFile(activeSession.fileUri);
-            }
-            broadcaster.setSplitInfo(1, 1);
-            broadcaster.setSessionInfo({
-                'Date': new Date().toISOString(),
-                'Project': session.workspaceFolder?.name ?? 'Unknown',
-                'Debug Adapter': session.type,
-                'launch.json': session.configuration.name,
-                'VS Code': vscode.version,
-                'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
-                'OS': `${os.type()} ${os.release()} (${os.arch()})`,
-            });
-            const cfg = getConfig();
-            if (cfg.exclusions.length > 0) {
-                broadcaster.setExclusions(cfg.exclusions);
-            }
-            if (cfg.showElapsedTime) {
-                broadcaster.setShowElapsed(true);
-            }
-            if (cfg.showDecorations) {
-                broadcaster.setShowDecorations(true);
-            }
-            broadcaster.setErrorClassificationSettings(
-                cfg.suppressTransientErrors ?? false,
-                cfg.breakOnCritical ?? false,
-                cfg.levelDetection ?? "strict",
-                cfg.deemphasizeFrameworkLevels ?? false
-            );
-            if (cfg.highlightRules.length > 0) {
-                broadcaster.setHighlightRules(cfg.highlightRules);
-            }
-            broadcaster.setContextLines(cfg.filterContextLines);
-            broadcaster.setContextViewLines(cfg.contextViewLines);
-            broadcaster.setPresets(loadPresets());
-            historyProvider.setActiveUri(activeSession?.fileUri);
-            historyProvider.refresh();
-        }),
-        vscode.debug.onDidTerminateDebugSession(async (session) => {
-            await sessionManager.stopSession(session);
-            broadcaster.setSessionActive(false);
-            historyProvider.setActiveUri(undefined);
-            historyProvider.refresh();
-            inlineDecorations.clearAll();
-            updateSessionNav().catch(() => {});
-        }),
-    );
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher });
 
     // Commands.
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
@@ -301,6 +254,20 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => {}); }),
     );
     updateScopeContext().catch(() => {});
+
+    // Prevent VS Code from restoring webview panels on startup.
+    const noRestore: vscode.WebviewPanelSerializer = {
+        deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
+    };
+    for (const viewType of [
+        'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
+        'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
+        'saropaLogCapture.comparison',
+    ]) {
+        context.subscriptions.push(
+            vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
+        );
+    }
 
     outputChannel.appendLine('Saropa Log Capture activated.');
 }

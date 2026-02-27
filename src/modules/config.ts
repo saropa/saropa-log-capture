@@ -10,8 +10,19 @@ export interface WatchPatternSetting {
   readonly alert?: "flash" | "badge" | "none";
 }
 
+/** AI activity overlay settings. */
+export interface AiActivityConfig {
+  readonly enabled: boolean;
+  readonly autoDetect: boolean;
+  readonly lookbackMinutes: number;
+  readonly showPrompts: boolean;
+  readonly showReadOperations: boolean;
+  readonly showSystemWarnings: boolean;
+}
+
 export interface SaropaLogCaptureConfig {
   readonly enabled: boolean;
+  readonly aiActivity: AiActivityConfig;
   readonly categories: readonly string[];
   readonly maxLines: number;
   readonly includeTimestamp: boolean;
@@ -45,6 +56,10 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   /** Show notification when critical errors appear (NullPointerException, AssertionError, etc.). */
   readonly breakOnCritical: boolean;
+  /** Show info-level (green) markers on the scrollbar minimap. */
+  readonly minimapShowInfoMarkers: boolean;
+  /** Width of the scrollbar minimap: small (40px), medium (60px), or large (90px). */
+  readonly minimapWidth: "small" | "medium" | "large";
   /** Suppress error/warning text coloring on framework log lines (fw=true). */
   readonly deemphasizeFrameworkLevels: boolean;
   /** How aggressively to classify lines as errors: strict requires structural context, loose matches keywords anywhere. */
@@ -61,6 +76,8 @@ export interface SaropaLogCaptureConfig {
   readonly treeRefreshInterval: number;
   /** Which side of the log viewer to show the icon bar. */
   readonly iconBarPosition: "left" | "right";
+  /** Automatically move flat log files into date-based subfolders. */
+  readonly organizeFolders: boolean;
 }
 
 const SECTION = "saropaLogCapture";
@@ -135,6 +152,14 @@ export function getConfig(): SaropaLogCaptureConfig {
   const cfg = vscode.workspace.getConfiguration(SECTION);
   return {
     enabled: cfg.get<boolean>("enabled", true),
+    aiActivity: {
+      enabled: cfg.get<boolean>("aiActivity.enabled", true),
+      autoDetect: cfg.get<boolean>("aiActivity.autoDetect", true),
+      lookbackMinutes: cfg.get<number>("aiActivity.lookbackMinutes", 30),
+      showPrompts: cfg.get<boolean>("aiActivity.showPrompts", true),
+      showReadOperations: cfg.get<boolean>("aiActivity.showReadOperations", false),
+      showSystemWarnings: cfg.get<boolean>("aiActivity.showSystemWarnings", true),
+    },
     categories: cfg.get<string[]>("categories", [
       "console",
       "stdout",
@@ -170,6 +195,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     contextViewLines: cfg.get<number>("contextViewLines", 10),
     suppressTransientErrors: cfg.get<boolean>("suppressTransientErrors", false),
     breakOnCritical: cfg.get<boolean>("breakOnCritical", false),
+    minimapShowInfoMarkers: cfg.get<boolean>("minimapShowInfoMarkers", false),
+    minimapWidth: cfg.get<string>("minimapWidth", "medium") as "small" | "medium" | "large",
     deemphasizeFrameworkLevels: cfg.get<boolean>("deemphasizeFrameworkLevels", false),
     levelDetection: cfg.get<string>("levelDetection", "strict") as "strict" | "loose",
     verboseDap: cfg.get<boolean>("verboseDap", false),
@@ -180,6 +207,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
     treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
     iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
+    organizeFolders: cfg.get<boolean>("organizeFolders", true),
   };
 }
 
@@ -214,61 +242,4 @@ export function getLogDirectoryUri(
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
 }
 
-/** Check if a filename matches any tracked file type. Excludes .meta.json sidecars and dotfiles. */
-export function isTrackedFile(name: string, fileTypes: readonly string[]): boolean {
-  if (name.endsWith('.meta.json') || name.startsWith('.')) { return false; }
-  return fileTypes.some(ext => name.endsWith(ext));
-}
-
-const maxScanDepth = 10;
-
-/** List tracked files, optionally recursing into subdirectories. Returns relative paths. */
-export async function readTrackedFiles(
-  dirUri: vscode.Uri,
-  fileTypes: readonly string[],
-  includeSubfolders: boolean,
-): Promise<string[]> {
-  return collectFiles(dirUri, fileTypes, includeSubfolders ? maxScanDepth : 0, '');
-}
-
-async function collectFiles(dir: vscode.Uri, fileTypes: readonly string[], depth: number, prefix: string): Promise<string[]> {
-  let entries: [string, vscode.FileType][];
-  try {
-    entries = await vscode.workspace.fs.readDirectory(dir);
-  } catch { return []; }
-  const results: string[] = [];
-  for (const [name, type] of entries) {
-    const rel = prefix ? `${prefix}/${name}` : name;
-    if (type === vscode.FileType.File && isTrackedFile(name, fileTypes)) {
-      results.push(rel);
-    } else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
-      results.push(...await collectFiles(vscode.Uri.joinPath(dir, name), fileTypes, depth - 1, rel));
-    }
-  }
-  return results;
-}
-
-/** Build a glob pattern for file watchers, e.g. "*.{log,txt,md}". */
-export function getFileTypeGlob(fileTypes: readonly string[]): string {
-  const exts = fileTypes.map(e => e.replace(/^\./, ''));
-  return exts.length === 1 ? `*.${exts[0]}` : `*.{${exts.join(',')}}`;
-}
-
-/** Returns true if the env var name matches any pattern. Supports * wildcards (glob-style, case-insensitive). */
-export function shouldRedactEnvVar(
-  name: string,
-  patterns: readonly string[],
-): boolean {
-  for (const pattern of patterns) {
-    const regex = new RegExp(
-      "^" +
-        pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") +
-        "$",
-      "i",
-    );
-    if (regex.test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
+export { isTrackedFile, readTrackedFiles, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';

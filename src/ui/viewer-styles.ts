@@ -19,6 +19,11 @@ import { getSessionPanelStyles } from './viewer-styles-session';
 import { getFindPanelStyles } from './viewer-styles-find';
 import { getBookmarkPanelStyles } from './viewer-styles-bookmarks';
 import { getTrashPanelStyles } from './viewer-styles-trash';
+import { getAboutPanelStyles } from './viewer-styles-about';
+import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
+import { getRecurringPanelStyles } from './viewer-styles-recurring';
+import { getPerformancePanelStyles } from './viewer-styles-performance';
+import { getAiStyles } from './viewer-styles-ai';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -55,10 +60,51 @@ body[data-icon-bar="right"] { flex-direction: row; }
 }
 
 /* ===================================================================
+   Panel-Content Row
+   Flex row containing the panel slot and log content area.
+   Panel sits on the icon-bar side; log content takes remaining space.
+   =================================================================== */
+#panel-content-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+}
+body[data-icon-bar="right"] #panel-content-row {
+    flex-direction: row-reverse;
+}
+
+/* ===================================================================
+   Panel Slot
+   Container for all slide-out panels. Width is 0 when no panel is
+   open; animates to target width when a panel opens. Uses CSS grid
+   to stack all panels in a single cell (only one visible at a time).
+   =================================================================== */
+#panel-slot {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.15s ease;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    max-width: 70vw;
+}
+#panel-slot > * {
+    grid-row: 1;
+    grid-column: 1;
+}
+#panel-slot.open {
+    overflow: visible;
+}
+
+/* ===================================================================
    Log Content Wrapper
    Flex row containing the scrollable log area and the minimap panel.
    =================================================================== */
 #log-content-wrapper {
+    min-width: 80px;
     position: relative;
     flex: 1;
     min-height: 0;
@@ -95,8 +141,10 @@ body[data-icon-bar="right"] { flex-direction: row; }
 .line {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0 8px 0 16px;
+    padding: 0 8px 0 24px;
     line-height: var(--log-line-height, 1.5);
+    height: calc(1em * var(--log-line-height, 1.5));
+    overflow: visible;
     transition: background 0.1s ease;
 }
 .line:hover { background: var(--vscode-list-hoverBackground); }
@@ -179,7 +227,7 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     opacity: 0.8;
 }
 .line.level-notice {
-    color: var(--vscode-terminal-ansiCyan, #4fc1ff);
+    color: var(--vscode-charts-blue, #2196f3);
 }
 .line.level-info {
     color: var(--vscode-terminal-ansiBlue, #3794ff);
@@ -201,5 +249,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles();
 }

@@ -28,7 +28,8 @@ var repeatTracker = {
     lastPlainText: null,
     lastLevel: null,
     count: 0,
-    lastTimestamp: 0
+    lastTimestamp: 0,
+    lastLineIndex: -1
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
 var repeatWindowMs = 3000; // 3 second window for detecting repeats
@@ -40,7 +41,32 @@ var repeatPreviewLength = 85; // Characters to show in repeat preview
  */
 function generateRepeatHash(level, plainText) {
     var preview = plainText.substring(0, 200).trim();
+    if (!preview) return null;
     return level + '::' + preview;
+}
+
+/** Remove trailing repeat notifications and restore the original line. */
+function cleanupTrailingRepeats() {
+    if (repeatTracker.count <= 1 || repeatTracker.lastLineIndex < 0) return;
+    if (repeatTracker.lastLineIndex < allLines.length) {
+        var orig = allLines[repeatTracker.lastLineIndex];
+        if (orig && orig.repeatHidden) {
+            orig.repeatHidden = false;
+            orig.height = calcItemHeight(orig);
+            totalHeight += orig.height;
+        }
+    }
+    for (var ri = allLines.length - 1; ri >= 0; ri--) {
+        if (allLines[ri].type !== 'repeat-notification') break;
+        totalHeight -= allLines[ri].height;
+        allLines[ri].height = 0;
+    }
+    repeatTracker.lastHash = null;
+    repeatTracker.lastPlainText = null;
+    repeatTracker.lastLevel = null;
+    repeatTracker.count = 0;
+    repeatTracker.lastTimestamp = 0;
+    repeatTracker.lastLineIndex = -1;
 }
 
 /**
@@ -98,7 +124,7 @@ function extractContext(plainText) {
  * Calculate the height of a log item based on its type and filter state.
  */
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
@@ -124,7 +150,7 @@ function calcItemHeight(item) {
  * Handles markers, stack frames, and regular lines with appropriate styling.
  * Applies search highlighting, pattern highlights, and category styling.
  */
-function renderItem(item, idx) {
+function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
 
@@ -134,10 +160,23 @@ function renderItem(item, idx) {
     // Compute visual spacing classes before early returns so all item types benefit
     var spacingCls = '';
     if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
-        var spPrev = idx > 0 ? allLines[idx - 1] : null;
+        // Use previous visible line (passed from renderViewport, or scan backwards)
+        var spPrev = null;
+        if (prevVis !== undefined) {
+            spPrev = prevVis;
+        } else {
+            for (var sp = idx - 1; sp >= 0; sp--) {
+                if (allLines[sp].height > 0) { spPrev = allLines[sp]; break; }
+            }
+        }
         if (item.type === 'marker') {
             if (spPrev) spacingCls += ' spacing-before';
             spacingCls += ' spacing-after';
+        } else if (item.isContextFirst) {
+            // Gap ABOVE context group to separate from previous content
+            if (spPrev) spacingCls += ' spacing-before';
+        } else if (item.isContext || (spPrev && spPrev.isContext)) {
+            // Context lines stay tight with each other and with their match line
         } else if (item.type === 'stack-header') {
             if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') {
                 spacingCls += ' spacing-before';
@@ -161,6 +200,16 @@ function renderItem(item, idx) {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
+    // Severity bar class — computed early so stack items also get dots
+    var barCls = '';
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
+        if (item.fw) {
+            barCls = ' level-bar-framework';
+        } else {
+            barCls = ' level-bar-' + item.level;
+        }
+    }
+
     if (item.type === 'stack-header') {
         var ch, sf;
         if (item.collapsed === true) {
@@ -179,11 +228,19 @@ function renderItem(item, idx) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + spacingCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
+        return '<div class="stack-header' + matchCls + spacingCls + barCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
     }
 
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + '"' + idxAttr + '>' + html + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + '"' + idxAttr + '>' + html + '</div>';
+    }
+
+    // AI activity lines get a distinct prefix and CSS class
+    if (item.category && item.category.indexOf('ai-') === 0) {
+        var aiCat = item.category;
+        var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
+        var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
+        return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiBody + '</div>';
     }
 
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
@@ -219,16 +276,6 @@ function renderItem(item, idx) {
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
-
-    // Add severity bar class if enabled
-    var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
-        if (item.fw) {
-            barCls = ' level-bar-framework';
-        } else {
-            barCls = ' level-bar-' + item.level;
-        }
-    }
 
     return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }

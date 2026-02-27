@@ -95,42 +95,13 @@ function formatSessionDuration(ms) {
 
 function renderSeverityDots(s) {
     var parts = [];
-    if (s.errorCount > 0) parts.push('<span class="sev-dot sev-error"></span>' + s.errorCount);
-    if (s.warningCount > 0) parts.push('<span class="sev-dot sev-warning"></span>' + s.warningCount);
-    if (s.perfCount > 0) parts.push('<span class="sev-dot sev-perf"></span>' + s.perfCount);
+    if (s.errorCount > 0) parts.push('<span class="sev-pair" title="Errors"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
+    if (s.warningCount > 0) parts.push('<span class="sev-pair" title="Warnings"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
+    if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
+    if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
+    if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
     if (parts.length === 0) return '';
-    var total = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0);
-    var bar = total > 0 ? renderSeverityBar(s.errorCount || 0, s.warningCount || 0, s.perfCount || 0, total) : '';
-    return '<span class="sev-dots">' + parts.join(' ') + bar + '</span>';
-}
-
-function renderSeverityBar(err, warn, perf, total) {
-    var ePct = Math.round((err / total) * 100);
-    var wPct = Math.round((warn / total) * 100);
-    var pPct = 100 - ePct - wPct;
-    return '<span class="sev-bar" title="' + total + ' issues"><span class="sev-bar-e" style="width:' + ePct + '%"></span><span class="sev-bar-w" style="width:' + wPct + '%"></span><span class="sev-bar-p" style="width:' + pPct + '%"></span></span>';
-}
-
-/** Compute relative error density across sessions, storing _sparkWidth (0-100) on each. */
-function computeSparkWidths(sessions) {
-    var maxDensity = 0;
-    for (var i = 0; i < sessions.length; i++) {
-        var total = (sessions[i].errorCount || 0) + (sessions[i].warningCount || 0) + (sessions[i].perfCount || 0);
-        var density = total / Math.max(sessions[i].lineCount || 1, 1);
-        sessions[i]._sparkDensity = density;
-        if (density > maxDensity) maxDensity = density;
-    }
-    for (var j = 0; j < sessions.length; j++) {
-        sessions[j]._sparkWidth = maxDensity > 0 ? Math.round((sessions[j]._sparkDensity / maxDensity) * 100) : 0;
-    }
-}
-
-function renderSparkBar(s) {
-    if (!s._sparkWidth || s._sparkWidth <= 0) return '';
-    var err = s.errorCount || 0, warn = s.warningCount || 0;
-    var cls = err >= warn ? 'spark-fill-error' : 'spark-fill-warning';
-    if (err === 0 && warn === 0) cls = 'spark-fill-perf';
-    return '<span class="spark-bar" title="Relative issue density"><span class="spark-fill ' + cls + '" style="width:' + s._sparkWidth + '%"></span></span>';
+    return '<span class="sev-dots">' + parts.join('') + '</span>';
 }
 
 /** Mark the newest session per unique display name as isLatestOfName. */
@@ -160,25 +131,30 @@ function markLatestByName(sessions, applyOptions) {
 /* --- Panel resize --- */
 function initSessionPanelResize(panelEl, saveWidth) {
     var handle = document.getElementById('session-resize');
+    var slotEl = document.getElementById('panel-slot');
     if (!handle || !panelEl) return;
     var dragging = false;
     handle.addEventListener('mousedown', function(e) {
         e.preventDefault(); dragging = true;
         handle.classList.add('dragging');
         panelEl.style.transition = 'none';
+        if (slotEl) slotEl.style.transition = 'none';
     });
     document.addEventListener('mousemove', function(e) {
         if (!dragging) return;
         var vw = document.documentElement.clientWidth;
         var isRight = document.body.dataset.iconBar === 'right';
-        var w = isRight ? vw - e.clientX : e.clientX;
-        panelEl.style.width = Math.max(280, Math.min(vw * 0.8, w)) + 'px';
+        var raw = isRight ? vw - e.clientX : e.clientX;
+        var w = Math.max(280, Math.min(vw * 0.8, raw)) + 'px';
+        panelEl.style.width = w;
+        if (slotEl) slotEl.style.width = w;
     });
     document.addEventListener('mouseup', function() {
         if (!dragging) return;
         dragging = false;
         handle.classList.remove('dragging');
         panelEl.style.transition = '';
+        if (slotEl) slotEl.style.transition = '';
         saveWidth(parseInt(panelEl.style.width, 10) || 0);
     });
 }
