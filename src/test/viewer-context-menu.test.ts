@@ -53,6 +53,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("'toggle-wrap'"));
             assert.ok(script.includes("'toggle-decorations'"));
             assert.ok(script.includes("'toggle-spacing'"));
+            assert.ok(script.includes("'toggle-hide-blank-lines'"));
         });
 
         test('should sync toggle checkmarks from state variables', () => {
@@ -61,6 +62,16 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('wordWrap'));
             assert.ok(script.includes('showDecorations'));
             assert.ok(script.includes('visualSpacingEnabled'));
+            assert.ok(script.includes('hideBlankLines'));
+        });
+
+        test('should clamp menu to viewport so bottom/right are never cropped', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function positionContextMenu'));
+            assert.ok(script.includes('window.innerHeight'));
+            assert.ok(script.includes('window.innerWidth'));
+            assert.ok(script.includes('rect.bottom > window.innerHeight'));
+            assert.ok(script.includes('innerHeight - rect.height'));
         });
     });
 
@@ -107,9 +118,11 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('data-action="toggle-wrap"'));
             assert.ok(html.includes('data-action="toggle-decorations"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
+            assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line prefix'));
             assert.ok(html.includes('Visual spacing'));
+            assert.ok(html.includes('Hide blank lines'));
         });
 
         test('should include data-action attributes', () => {

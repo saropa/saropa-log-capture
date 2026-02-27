@@ -34,6 +34,7 @@ function syncContextMenuToggles() {
         if (action === 'toggle-wrap') on = (typeof wordWrap !== 'undefined') && wordWrap;
         else if (action === 'toggle-decorations') on = (typeof showDecorations !== 'undefined') && showDecorations;
         else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
+        else if (action === 'toggle-hide-blank-lines') on = (typeof hideBlankLines !== 'undefined') && hideBlankLines;
         t.classList.toggle('checked', on);
     }
 }
@@ -72,16 +73,19 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     positionContextMenu(x, y);
 }
 
+/** Place menu at (x,y), then clamp to viewport so it is never cropped at right or bottom. */
 function positionContextMenu(x, y) {
     contextMenuEl.style.left = x + 'px';
     contextMenuEl.style.top = y + 'px';
     contextMenuEl.classList.add('visible');
     var rect = contextMenuEl.getBoundingClientRect();
-    if (rect.right > window.innerWidth) x = Math.max(0, x - rect.width);
-    if (rect.bottom > window.innerHeight) y = Math.max(0, y - rect.height);
-    contextMenuEl.style.left = x + 'px';
-    contextMenuEl.style.top = y + 'px';
-    // Flip submenus left when menu is near right edge (160px = submenu min-width)
+    var newX = x;
+    var newY = y;
+    if (rect.right > window.innerWidth) newX = Math.max(0, window.innerWidth - rect.width);
+    if (rect.bottom > window.innerHeight) newY = Math.max(0, window.innerHeight - rect.height);
+    contextMenuEl.style.left = newX + 'px';
+    contextMenuEl.style.top = newY + 'px';
+    rect = contextMenuEl.getBoundingClientRect();
     contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
 }
 
@@ -145,6 +149,7 @@ function handleToggleAction(action) {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
         'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
+        'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
     };
     var fn = toggleFns[action];
     if (!fn) return false;
