@@ -5,6 +5,7 @@ import { getNonce, buildViewerHtml } from "./viewer-content";
 import { LineData } from "../modules/session-manager";
 import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
+import { getConfig } from "../modules/config";
 import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
@@ -198,9 +199,17 @@ export class LogViewerProvider
     this.postMessage({ type: "setViewingMode", viewing: true }); this.setFilename(uri.path.split("/").pop() ?? "");
     const fields = parseHeaderFields(rawLines);
     if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
+    const headerEnd = findHeaderEnd(rawLines);
+    let contentLines = rawLines.slice(headerEnd);
+    const maxLines = getConfig().maxLines;
+    /* Cap parse/send to avoid CPU spike on huge files; footer shows "Showing first X of Y lines" when truncated. */
+    if (contentLines.length > maxLines) {
+      contentLines = contentLines.slice(0, maxLines);
+      this.postMessage({ type: "loadTruncated", shown: maxLines, total: rawLines.length - headerEnd });
+    }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
-    await sendFileLines(rawLines.slice(findHeaderEnd(rawLines)), ctx, post, this.seenCategories);
+    await sendFileLines(contentLines, ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }

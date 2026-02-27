@@ -71,7 +71,8 @@ function copyAllToClipboard() {
 function decorateLine(item) {
     var text = stripTags(item.html || '');
     var parts = [];
-    if (typeof getLevelDot === 'function') {
+    /* Emoji dot only in copy when "Severity dot (copy only)" is checked; viewer uses gutter bar only. */
+    if (typeof decoShowDot !== 'undefined' && decoShowDot && typeof getLevelDot === 'function') {
         parts.push(getLevelDot(item.level || 'info', !!item.fw));
     }
     if (item.seq !== undefined) {
