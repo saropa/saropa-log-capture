@@ -36,6 +36,8 @@ export interface ViewerMessageContext {
     readonly onBookmarkAction?: (m: Record<string, unknown>) => void;
     readonly onSessionNavigate?: (d: number) => void;
     readonly onSessionAction?: (a: string, u: string, f: string) => void;
+    readonly onBrowseSessionRoot?: () => Promise<void>;
+    readonly onClearSessionRoot?: () => Promise<void>;
 }
 
 /** Route a webview message to the appropriate handler. */
@@ -98,6 +100,8 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": ctx.onBookmarkAction?.(msg); break;
       case "requestSessionList": ctx.onSessionListRequest?.(); break;
+      case "browseSessionRoot": void ctx.onBrowseSessionRoot?.(); break;
+      case "clearSessionRoot": void ctx.onClearSessionRoot?.(); break;
       case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
       case "sessionAction": ctx.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
       case "popOutViewer": ctx.onPopOutRequest?.(); break;

@@ -57,6 +57,8 @@ export class LogViewerProvider
   private onSessionNavigate?: (direction: number) => void;
   private onFileLoaded?: (uri: vscode.Uri) => void;
   private onSessionAction?: (action: string, uriString: string, filename: string) => void;
+  private onBrowseSessionRoot?: () => Promise<void>;
+  private onClearSessionRoot?: () => Promise<void>;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -126,6 +128,8 @@ export class LogViewerProvider
   setSessionNavigateHandler(handler: (direction: number) => void): void { this.onSessionNavigate = handler; }
   setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
   setSessionActionHandler(handler: (action: string, uriString: string, filename: string) => void): void { this.onSessionAction = handler; }
+  setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
+  setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
   // -- Webview state methods --
   scrollToLine(line: number): void { this.postMessage({ type: "scrollToLine", line }); }
   setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
@@ -177,7 +181,9 @@ export class LogViewerProvider
   sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
   setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
   findNextMatch(): void { this.postMessage({ type: "findNextMatch" }); }
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void { this.postMessage({ type: "sessionList", sessions }); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+    this.postMessage({ type: "sessionList", sessions, ...rootInfo });
+  }
   sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
@@ -240,6 +246,7 @@ export class LogViewerProvider
       onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
       onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
       onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,
+      onBrowseSessionRoot: this.onBrowseSessionRoot, onClearSessionRoot: this.onClearSessionRoot,
     };
     dispatchViewerMessage(msg, ctx);
   }
