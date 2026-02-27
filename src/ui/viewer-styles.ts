@@ -60,10 +60,51 @@ body[data-icon-bar="right"] { flex-direction: row; }
 }
 
 /* ===================================================================
+   Panel-Content Row
+   Flex row containing the panel slot and log content area.
+   Panel sits on the icon-bar side; log content takes remaining space.
+   =================================================================== */
+#panel-content-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+}
+body[data-icon-bar="right"] #panel-content-row {
+    flex-direction: row-reverse;
+}
+
+/* ===================================================================
+   Panel Slot
+   Container for all slide-out panels. Width is 0 when no panel is
+   open; animates to target width when a panel opens. Uses CSS grid
+   to stack all panels in a single cell (only one visible at a time).
+   =================================================================== */
+#panel-slot {
+    width: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.15s ease;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    max-width: 70vw;
+}
+#panel-slot > * {
+    grid-row: 1;
+    grid-column: 1;
+}
+#panel-slot.open {
+    overflow: visible;
+}
+
+/* ===================================================================
    Log Content Wrapper
    Flex row containing the scrollable log area and the minimap panel.
    =================================================================== */
 #log-content-wrapper {
+    min-width: 80px;
     position: relative;
     flex: 1;
     min-height: 0;
@@ -186,7 +227,7 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     opacity: 0.8;
 }
 .line.level-notice {
-    color: var(--vscode-terminal-ansiCyan, #4fc1ff);
+    color: var(--vscode-charts-blue, #2196f3);
 }
 .line.level-info {
     color: var(--vscode-terminal-ansiBlue, #3794ff);
