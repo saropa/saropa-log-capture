@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unpublished] - 2026-02-27
 
+### Changed
+- **Session panel and session styles modularized.** Split `viewer-session-panel.ts` (HTML moved to `viewer-session-panel-html.ts`) and `viewer-styles-session.ts` (styles split into `viewer-styles-session-panel`, `-list`, `-tags-loading`) to comply with the 300-line file limit. No behavior or API changes; callers still import from `viewer-session-panel` and `viewer-styles-session`.
+
 ### Publishing
 - **Open VSX / Cursor marketplace.** The extension is now published to Open VSX (open-vsx.org) as well as the VS Code Marketplace, so it appears in Cursor, VSCodium, and other editors that use Open VSX. Install from the Extensions view in Cursor or via **Extensions: Install from VSIX…** with a .vsix from the GitHub release.
 
