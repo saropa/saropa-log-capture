@@ -29,7 +29,8 @@
 #     Step 11: Git commit & push
 #     Step 12: Git tag (v{version})
 #     Step 13: Publish to VS Code Marketplace
-#     Step 14: Create GitHub release (attach .vsix)
+#     Step 14: Publish to Open VSX (Cursor / VSCodium)
+#     Step 15: Create GitHub release (attach .vsix)
 #
 # .USAGE
 #   python scripts/publish_to_vscode.py                   # full analyze + publish pipeline
@@ -53,7 +54,7 @@
 #    4  DEPENDENCY_FAILED   12  PUBLISH_FAILED
 #    5  COMPILE_FAILED      13  RELEASE_FAILED
 #    6  TEST_FAILED         14  USER_CANCELLED
-#    7  QUALITY_FAILED
+#    7  QUALITY_FAILED      15  OPENVSX_FAILED
 #
 # ##############################################################################
 
@@ -84,6 +85,7 @@ from modules.checks_prereqs import (
     check_git,
     check_node,
     check_npm,
+    check_ovsx_token,
     check_vsce_auth,
 )
 from modules.checks_environment import (
@@ -106,6 +108,7 @@ from modules.publish import (
     create_github_release,
     git_commit_and_push,
     publish_marketplace,
+    publish_openvsx,
     step_package,
 )
 from modules.report import (
@@ -307,12 +310,18 @@ def _run_publish_steps(
                     lambda: publish_marketplace(vsix_path), results):
         return False
 
-    # Step 14: Create GitHub release with .vsix attached
-    heading("Step 14 · GitHub Release")
+    # Step 14: Publish to Open VSX (Cursor / VSCodium)
+    heading("Step 14 · Publish to Open VSX")
+    if not run_step("Open VSX publish",
+                    lambda: publish_openvsx(vsix_path), results):
+        return False
+
+    # Step 15: Create GitHub release with .vsix attached
+    heading("Step 15 · GitHub Release")
     if not run_step("GitHub release",
                     lambda: create_github_release(version, vsix_path),
                     results):
-        warn("Marketplace publish succeeded but GitHub release failed.")
+        warn("Marketplace/Open VSX publish succeeded but GitHub release failed.")
         warn(f"Create manually: gh release create v{version}")
 
     return True
@@ -321,7 +330,7 @@ def _run_publish_steps(
 def _check_publish_credentials(
     results: list[tuple[str, bool, float]],
 ) -> bool:
-    """Verify gh CLI and vsce PAT before irreversible publish steps.
+    """Verify gh CLI, vsce PAT, and OVSX PAT before irreversible publish steps.
 
     Checked after the user confirms publish intent, so these
     credentials never block local builds or analyze-only runs.
@@ -331,6 +340,8 @@ def _check_publish_credentials(
         return False
     if not run_step("vsce PAT", check_vsce_auth, results):
         return False
+    if not run_step("OVSX PAT", check_ovsx_token, results):
+        return False
     return True
 
 
@@ -339,10 +350,10 @@ def _run_publish(
     vsix_path: str,
     results: list[tuple[str, bool, float]],
 ) -> bool:
-    """Run publish steps (11-14). Returns True on success.
+    """Run publish steps (11-15). Returns True on success.
 
     CHANGELOG and .vsix are already finalized during analysis.
-    This phase commits, tags, publishes to marketplace, and
+    This phase commits, tags, publishes to both marketplaces, and
     creates a GitHub release.
     """
     if not _check_publish_credentials(results):
@@ -439,7 +450,7 @@ def main() -> int:
        (Step 10 resolves version + stamps CHANGELOG)
     2. Package .vsix and offer local install (always)
     3. If --analyze-only: stop here
-    4. Otherwise: confirm → credentials → publish (Steps 11-14)
+    4. Otherwise: confirm → credentials → publish (Steps 11-15)
     """
     args = parse_args()
     version = read_package_version()
@@ -502,6 +513,7 @@ _STEP_EXIT_CODES = {
     "Git commit & push": ExitCode.GIT_FAILED,
     "Git tag": ExitCode.GIT_FAILED,
     "Marketplace publish": ExitCode.PUBLISH_FAILED,
+    "Open VSX publish": ExitCode.OPENVSX_FAILED,
     "GitHub release": ExitCode.RELEASE_FAILED,
 }
 
