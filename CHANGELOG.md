@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Added
+- **Project Logs root folder.** Panel header shows path as suffix (e.g. "Project Logs · Default" or "Project Logs · d:\src\contacts"); click path to open folder picker. Reset icon appears when using a custom folder; last-used folder (or workspace default) is used as picker defaultUri so the dialog never opens at system default.
+- **Project Logs loading state.** Progress bar and shimmer placeholders while the session list is loading after opening the panel or changing folder.
+- **Sidebar open animation.** Slide-out panels (Project Logs, Search, etc.) now animate open with overflow hidden until the width transition ends, so content no longer overlaps the log; close already animated.
+
 ### Changed
 - **Side-by-side panel layout.** Flyout panels (session, search, options, find, bookmarks, trash, info, filters, crashlytics, recurring, performance, about) now push the log viewport narrower instead of overlaying on top of it. Panels and log content sit side-by-side with animated width transitions; the virtual scroll viewport automatically recalculates via ResizeObserver.
 - **Compact correlation tag chips.** Replaced `file:` and `error:` text prefixes with codicon icons; hide count badge when count is 1; collapse chips beyond 8 behind a "+N more" toggle.

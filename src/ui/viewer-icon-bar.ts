@@ -56,6 +56,54 @@ export function getIconBarScript(): string {
     return /* js */ `
 (function() {
     var activePanel = null;
+    var panelSlot = document.getElementById('panel-slot');
+    var panelWidths = {
+        sessions: 560, search: 320, find: 320, bookmarks: 320,
+        filters: 320, info: 300, trash: 320, options: 320,
+        crashlytics: 340, recurring: 340, performance: 340, about: 340,
+    };
+
+    /** Pending transitionend handler so we can remove it if user switches panel before transition ends (avoids listener accumulation). */
+    var pendingOpenHandler = null;
+
+    /** Set panel-slot width to show/hide the active panel with animation. Open: keep overflow hidden until transition ends so panel slides in without overlapping. */
+    function updatePanelSlotWidth(name) {
+        if (!panelSlot) return;
+        if (!name) {
+            panelSlot.classList.remove('open');
+            panelSlot.style.width = '0';
+            if (pendingOpenHandler) {
+                panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+                pendingOpenHandler = null;
+            }
+            return;
+        }
+        if (pendingOpenHandler) {
+            panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+            pendingOpenHandler = null;
+        }
+        var maxW = document.documentElement.clientWidth * 0.7;
+        var w = Math.min(panelWidths[name] || 320, maxW);
+        panelSlot.classList.remove('open');
+        panelSlot.style.width = '0px';
+        panelSlot.offsetHeight;
+        panelSlot.style.width = w + 'px';
+        function addOpenAfterTransition(e) {
+            if (e.propertyName !== 'width') return;
+            panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+            pendingOpenHandler = null;
+            if (panelSlot.style.width !== '0px') { panelSlot.classList.add('open'); }
+        }
+        pendingOpenHandler = addOpenAfterTransition;
+        panelSlot.addEventListener('transitionend', addOpenAfterTransition);
+    }
+
+    /** Update panel-slot width externally (e.g. during resize drag). */
+    window.setPanelSlotWidth = function(w) {
+        if (!panelSlot) return;
+        panelSlot.style.width = w + 'px';
+    };
+
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
         search: document.getElementById('ib-search'),
@@ -100,11 +148,13 @@ export function getIconBarScript(): string {
             closeAllPanels();
             activePanel = null;
             updateIconStates();
+            updatePanelSlotWidth(null);
             return;
         }
         closeAllPanels();
         activePanel = name;
         updateIconStates();
+        updatePanelSlotWidth(name);
         if (name === 'sessions' && typeof openSessionPanel === 'function') {
             openSessionPanel();
         } else if (name === 'search' && typeof openSearch === 'function') {
@@ -137,6 +187,7 @@ export function getIconBarScript(): string {
         if (activePanel === name) {
             activePanel = null;
             updateIconStates();
+            updatePanelSlotWidth(null);
         }
     };
 

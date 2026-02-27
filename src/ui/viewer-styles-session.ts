@@ -13,21 +13,14 @@ export function getSessionPanelStyles(): string {
    Session Panel — slide-out (same pattern as search/options)
    =================================================================== */
 .session-panel {
-    position: fixed;
-    left: -100%;
-    top: 0;
-    bottom: 0;
-    width: 25%;
     min-width: 560px;
+    height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: left 0.15s ease;
-    z-index: 240;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
-    pointer-events: none;
 }
 
 .session-panel-resize {
@@ -41,18 +34,37 @@ export function getSessionPanelStyles(): string {
 }
 
 .session-panel.visible {
-    left: var(--icon-bar-width, 36px);
-    pointer-events: auto;
+    display: flex;
 }
 
 .session-panel-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 6px;
     padding: 8px 12px;
     font-weight: 600;
     font-size: 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.session-panel-title {
+    flex-shrink: 0;
+}
+
+.session-header-path {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.session-header-path:hover {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: underline;
 }
 
 .session-panel-actions {
@@ -221,12 +233,84 @@ export function getSessionPanelStyles(): string {
 }
 
 /* --- Empty / loading states --- */
-.session-empty,
-.session-loading {
+.session-empty {
     padding: 16px 12px;
     font-size: 12px;
     color: var(--vscode-descriptionForeground);
     text-align: center;
+}
+
+.session-loading {
+    padding: 12px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.session-loading-bar {
+    height: 4px;
+    background: var(--vscode-progressBar-background, rgba(128, 128, 128, 0.2));
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.session-loading-bar-fill {
+    height: 100%;
+    width: 40%;
+    background: var(--vscode-progressBar-foreground, var(--vscode-focusBorder, #3794ff));
+    border-radius: 2px;
+    animation: session-progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+.session-loading-label {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+}
+
+.session-loading-shimmer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.session-shimmer-line {
+    height: 36px;
+    border-radius: 4px;
+    background: var(--vscode-sideBar-background, #252526);
+    position: relative;
+    overflow: hidden;
+}
+
+.session-shimmer-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--vscode-widget-border, rgba(255, 255, 255, 0.08)) 45%,
+        var(--vscode-focusBorder, rgba(255, 255, 255, 0.12)) 50%,
+        var(--vscode-widget-border, rgba(255, 255, 255, 0.08)) 55%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: session-shimmer 1.8s ease-in-out infinite;
+}
+
+.session-shimmer-line-short {
+    width: 60%;
+}
+
+@keyframes session-progress-indeterminate {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(150%); }
+    100% { transform: translateX(-100%); }
+}
+
+@keyframes session-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 `;
 }

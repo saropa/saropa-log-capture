@@ -80,8 +80,8 @@ export class ViewerBroadcaster implements ViewerTarget {
   setSessionInfo(info: Record<string, string> | null): void {
     for (const t of this.targets) { t.setSessionInfo(info); }
   }
-  sendSessionList(sessions: readonly Record<string, unknown>[]): void {
-    for (const t of this.targets) { t.sendSessionList(sessions); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
+    for (const t of this.targets) { t.sendSessionList(sessions, rootInfo); }
   }
   sendDisplayOptions(options: SessionDisplayOptions): void {
     for (const t of this.targets) { t.sendDisplayOptions(options); }
