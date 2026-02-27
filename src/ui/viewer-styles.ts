@@ -61,8 +61,8 @@ body[data-icon-bar="right"] { flex-direction: row; }
 
 /* ===================================================================
    Panel-Content Row
-   Flex row containing the panel slot and log content area.
-   Panel sits on the icon-bar side; log content takes remaining space.
+   Flex row containing the panel slot and log+footer area.
+   Panel sits on the icon-bar side; log area (content + footer) takes remaining space.
    =================================================================== */
 #panel-content-row {
     flex: 1;
@@ -72,6 +72,13 @@ body[data-icon-bar="right"] { flex-direction: row; }
 }
 body[data-icon-bar="right"] #panel-content-row {
     flex-direction: row-reverse;
+}
+#log-area-with-footer {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ===================================================================
@@ -84,7 +91,7 @@ body[data-icon-bar="right"] #panel-content-row {
     width: 0;
     flex-shrink: 0;
     overflow: hidden;
-    transition: width 0.15s ease;
+    transition: width 0.25s ease-out;
     position: relative;
     display: grid;
     grid-template-columns: 1fr;

@@ -56,7 +56,14 @@ export function getAboutPanelStyles(): string {
 }
 
 /* --- About panel content styles --- */
-.ab-header { font-size: 1.4em; font-weight: 700; margin-bottom: 8px; }
+.ab-version-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.ab-version-label { font-size: 1.1em; font-weight: 700; }
+.ab-version-badge { font-size: 0.9em; font-weight: 500; color: var(--vscode-descriptionForeground); }
+.ab-changelog { margin-bottom: 8px; max-height: 220px; overflow-y: auto; font-size: 10px; line-height: 1.35; }
+.ab-changelog-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: inherit; }
+.ab-changelog-loading { opacity: 0.6; }
+.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: 11px; margin-bottom: 12px; }
+.ab-changelog-link:hover { text-decoration: underline; }
 .ab-tagline { font-weight: 600; font-style: italic; opacity: 0.9; margin: 0 0 6px 0; font-size: 0.95em; }
 .ab-blurb { opacity: 0.8; margin: 0 0 16px 0; font-size: 0.9em; }
 .ab-section { font-weight: 600; font-size: 1.05em; margin-bottom: 8px; margin-top: 12px; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: 4px; }

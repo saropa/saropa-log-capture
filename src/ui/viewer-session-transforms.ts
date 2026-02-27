@@ -145,7 +145,7 @@ function initSessionPanelResize(panelEl, saveWidth) {
         var vw = document.documentElement.clientWidth;
         var isRight = document.body.dataset.iconBar === 'right';
         var raw = isRight ? vw - e.clientX : e.clientX;
-        var w = Math.max(280, Math.min(vw * 0.8, raw)) + 'px';
+        var w = Math.max(560, Math.min(vw * 0.8, raw)) + 'px';
         panelEl.style.width = w;
         if (slotEl) slotEl.style.width = w;
     });

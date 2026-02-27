@@ -1,7 +1,8 @@
 /** Dispatches incoming webview messages for the log viewer. */
 
-import * as vscode from 'vscode';
-import * as helpers from './viewer-provider-helpers';
+import * as vscode from "vscode";
+import * as helpers from "./viewer-provider-helpers";
+import { loadAndPostAboutContent } from "./about-content-loader";
 import * as panelHandlers from './viewer-panel-handlers';
 import { showBugReport } from './bug-report-panel';
 import type { SessionDisplayOptions } from './session-display';
@@ -10,6 +11,7 @@ export interface ViewerMessageContext {
     readonly currentFileUri: vscode.Uri | undefined;
     readonly isSessionActive: boolean;
     readonly context: vscode.ExtensionContext;
+    readonly extensionVersion?: string;
     readonly post: (msg: unknown) => void;
     readonly load: (uri: vscode.Uri) => Promise<void>;
     readonly onMarkerRequest?: () => void;
@@ -128,5 +130,8 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post).catch(() => {}); break;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
+      case "requestAboutContent":
+        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.post);
+        break;
     }
 }
