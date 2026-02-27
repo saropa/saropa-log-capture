@@ -12,10 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Changed
+- **Side-by-side panel layout.** Flyout panels (session, search, options, find, bookmarks, trash, info, filters, crashlytics, recurring, performance, about) now push the log viewport narrower instead of overlaying on top of it. Panels and log content sit side-by-side with animated width transitions; the virtual scroll viewport automatically recalculates via ResizeObserver.
 - **Compact correlation tag chips.** Replaced `file:` and `error:` text prefixes with codicon icons; hide count badge when count is 1; collapse chips beyond 8 behind a "+N more" toggle.
 - **Session panel sort button UX.** Replaced labeled "Sort" button with a right-aligned icon-only `codicon-sort-precedence` toggle. Icon flips vertically via CSS transform when reverse sort is active. Doubled panel minimum width from 280px to 560px.
 
 ### Fixed
+- **Three blue colors unified.** Notice and framework now share `--vscode-charts-blue` (#2196f3) for severity bar, line tint, and notice line text; link/info accent (#3794ff) unchanged.
+- **CPU spike with huge log files.** Opening a file is capped at `saropaLogCapture.maxLines` (default 100k); footer shows "Showing first X of Y lines" when truncated.
+- **Severity bar vs emoji dot.** Viewer shows only the gutter severity bar; emoji dot (🟢🟠🔴) appears only in "Copy with decorations" and only when "Severity dot (copy only)" is checked.
 - **Session panel closes when clicking a tag chip.** `rebuildSessionTagChips` replaces innerHTML during the click handler, detaching the event target before the document-level "close on outside click" listener runs its `contains()` check. Added `stopPropagation()` to the chip click handler.
 - **Context menu submenus not visible.** Submenu flyout panels (Search, Actions, Options) were clipped by `overflow-y: auto` on the parent menu container. Removed the overflow constraint so absolute-positioned submenus can render outside the menu bounds.
 - **False-positive CRITICAL badge on instructional text.** Lines containing "fatal" in non-error context (e.g. "To make this warning fatal" or `debugZoneErrorsAreFatal`) were incorrectly badged as CRITICAL. Tightened heuristics to require all-caps `FATAL` or "fatal" followed by an error-type noun (error, exception, crash, signal, fault).

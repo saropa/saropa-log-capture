@@ -156,10 +156,10 @@ export function getDecorationStyles(): string {
     background-color: rgba(220, 220, 170, 0.16);
 }
 .line.line-tint-notice {
-    background-color: rgba(79, 193, 255, 0.08);
+    background-color: rgba(33, 150, 243, 0.08);
 }
 .line.line-tint-notice:hover {
-    background-color: rgba(79, 193, 255, 0.16);
+    background-color: rgba(33, 150, 243, 0.16);
 }
 .line.line-tint-info {
     background-color: rgba(78, 201, 176, 0.06);
@@ -184,7 +184,7 @@ export function getDecorationStyles(): string {
 .level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
 .level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
 .level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
-.level-bar-notice { --bar-color: var(--vscode-terminal-ansiCyan, #4fc1ff); }
+.level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
 .level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
 .level-bar-info { --bar-color: var(--vscode-charts-green, #4caf50); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
