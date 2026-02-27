@@ -150,6 +150,7 @@ var footerVersionLink = document.getElementById('footer-version-link');
 if (footerVersionLink) {
     footerVersionLink.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation(); /* Prevent document outside-click from closing the panel we are opening */
         if (typeof setActivePanel === 'function') setActivePanel('about');
     });
     updateFooterVersionLink();
