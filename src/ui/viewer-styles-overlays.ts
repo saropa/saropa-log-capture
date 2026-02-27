@@ -94,7 +94,9 @@ export function getOverlayStyles(): string {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
+    width: max-content;
     padding: 4px 0;
+    white-space: nowrap;
 }
 @keyframes menu-pop-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 .context-menu.visible { display: block; animation: menu-pop-in 0.12s ease-out; }
@@ -151,7 +153,9 @@ export function getOverlayStyles(): string {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     min-width: 160px;
+    width: max-content;
     padding: 4px 0;
+    white-space: nowrap;
 }
 .context-menu-submenu:hover > .context-menu-submenu-content { display: block; }
 /* Flip submenus left when context menu is near right viewport edge */
