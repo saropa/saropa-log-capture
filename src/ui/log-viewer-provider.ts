@@ -184,6 +184,9 @@ export class LogViewerProvider
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
     this.postMessage({ type: "sessionList", sessions, ...rootInfo });
   }
+  sendSessionListLoading(folderPath: string): void {
+    this.postMessage({ type: "sessionListLoading", folderPath });
+  }
   sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
@@ -233,7 +236,8 @@ export class LogViewerProvider
   private handleMessage(msg: Record<string, unknown>): void {
     const ctx: ViewerMessageContext = {
       currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive,
-      context: this.context, post: (m) => this.postMessage(m), load: (u) => this.loadFromFile(u),
+      context: this.context, extensionVersion: this.version,
+      post: (m) => this.postMessage(m), load: (u) => this.loadFromFile(u),
       onMarkerRequest: this.onMarkerRequest, onTogglePause: this.onTogglePause,
       onExclusionAdded: this.onExclusionAdded, onExclusionRemoved: this.onExclusionRemoved,
       onAnnotationPrompt: this.onAnnotationPrompt, onSearchCodebase: this.onSearchCodebase,
