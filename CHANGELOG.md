@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session panel minimum width.** Panel and resize drag enforce 560px minimum; restored width on reopen is clamped to 560px so the panel never opens narrower than minimum.
 - **Session panel sort button UX.** Replaced labeled "Sort" with a right-aligned icon-only `codicon-sort-precedence` toggle; icon flips vertically when reverse sort is active.
 - **Publish script: colorama auto-install.** When the `colorama` package is missing, the publish script now installs it automatically for Windows terminal color support instead of requiring a manual `pip install colorama`.
+- **Publish script: Open VSX.** Pipeline now publishes to Open VSX (open-vsx.org) after the VS Code Marketplace (Step 14). Required for visibility in Cursor and VSCodium. Requires `OVSX_PAT`; script checks credentials and guides with token URL and first-time `npx ovsx create-namespace saropa -p <token>`.
 
 ### Fixed
 - **Context menu text wrapping and bottom cropping.** Menu and flyout submenus use `white-space: nowrap` and `width: max-content` so labels stay on one line. Menu position is clamped to the viewport so it is never cropped when right-clicking near the bottom or right edge.
