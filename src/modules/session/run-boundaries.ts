@@ -21,12 +21,9 @@ function getMessagePart(raw: string): string {
     return stripAnsi(withoutPrefix);
 }
 
-/** Patterns that indicate start of a new run (launch, VM connect, build, hot restart/reload). */
+/** Patterns that indicate start of a new run. Only launch and hot restart/reload; mid-startup lines (Built, VM connect) do not start a run. */
 const RUN_START_PATTERNS: { re: RegExp; label: string; kind: RunBoundaryKind }[] = [
     { re: /^Launching\s.+\s+in\s+(?:debug|profile|release)\s+mode/i, label: 'Launch', kind: 'launch' },
-    { re: /^Connecting to VM Service at\s/i, label: 'VM connect', kind: 'launch' },
-    { re: /^Connected to the VM Service/i, label: 'VM connected', kind: 'launch' },
-    { re: /^[√✓]\s+Built\s/i, label: 'Built', kind: 'launch' },
     { re: /Performing\s+hot\s+restart|^Hot\s+restart/i, label: 'Hot restart', kind: 'hot_restart' },
     { re: /Performing\s+hot\s+reload|^Hot\s+reload/i, label: 'Hot reload', kind: 'hot_reload' },
 ];

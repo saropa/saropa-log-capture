@@ -11,7 +11,19 @@ suite('run-boundaries', () => {
         assert.strictEqual(b[0].label, 'Launch');
     });
 
-    test('detects VM Service and Exited', () => {
+    test('normal startup (Launching then Built) yields single run start', () => {
+        const lines = [
+            'Launching lib\\main.dart on sdk gphone64 x86 64 in debug mode...',
+            '✓ Built build\\app\\outputs\\flutter-apk\\app-debug.apk',
+            'FlutterJNI loaded.',
+        ];
+        const b = detectRunBoundaries(lines);
+        const starts = getRunStartIndices(b);
+        assert.strictEqual(starts.length, 1);
+        assert.strictEqual(starts[0], 0);
+    });
+
+    test('detects Exited only (VM connect/Connected are mid-startup, not run starts)', () => {
         const lines = [
             'Connecting to VM Service at ws://127.0.0.1:64773/ws',
             'Connected to the VM Service.',
@@ -19,11 +31,9 @@ suite('run-boundaries', () => {
             'Exited (-1).',
         ];
         const b = detectRunBoundaries(lines);
-        assert.strictEqual(b.length, 4);
-        assert.strictEqual(b[0].kind, 'launch');
-        assert.strictEqual(b[1].kind, 'launch');
-        assert.strictEqual(b[2].kind, 'exited');
-        assert.strictEqual(b[3].kind, 'exited');
+        assert.strictEqual(b.length, 2);
+        assert.strictEqual(b[0].kind, 'exited');
+        assert.strictEqual(b[1].kind, 'exited');
     });
 
     test('detects hot restart and hot reload', () => {
