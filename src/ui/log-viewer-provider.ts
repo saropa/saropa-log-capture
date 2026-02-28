@@ -10,6 +10,7 @@ import {
   PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
   computeSessionMidnight,
 } from "./viewer-file-loader";
+import { detectRunBoundaries, getRunStartIndices } from "../modules/run-boundaries";
 import { SerializedHighlightRule, serializeHighlightRules } from "./viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "./session-display";
 import type { ScopeContext } from "../modules/scope-context";
@@ -20,6 +21,8 @@ import * as panelHandlers from "./viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 
 const BATCH_INTERVAL_MS = 200;
+const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
+const BATCH_BACKLOG_THRESHOLD = 1000;
 
 /**
  * Provides a webview-based bottom panel that displays captured
@@ -30,7 +33,7 @@ export class LogViewerProvider
 {
   private view: vscode.WebviewView | undefined;
   private pendingLines: PendingLine[] = [];
-  private batchTimer: ReturnType<typeof setInterval> | undefined;
+  private batchTimer: ReturnType<typeof setTimeout> | undefined;
   private threadDumpState: ThreadDumpState = createThreadDumpState();
   private onMarkerRequest?: () => void;
   private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
@@ -161,6 +164,8 @@ export class LogViewerProvider
     this.postMessage({ type: "setPresets", presets });
   }
   addLine(data: LineData): void {
+    /* Skip per-line work when sidebar is hidden to avoid extension-host CPU spike. */
+    if (!this.view?.visible) { return; }
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const line: PendingLine = {
@@ -220,6 +225,11 @@ export class LogViewerProvider
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
     await sendFileLines(contentLines, ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
+    const boundaries = detectRunBoundaries(contentLines);
+    const runStartIndices = getRunStartIndices(boundaries);
+    if (runStartIndices.length > 0) {
+      post({ type: "runBoundaries", boundaries, runStartIndices });
+    }
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
@@ -256,11 +266,26 @@ export class LogViewerProvider
   }
 
   private startBatchTimer(): void {
-    helpers.stopBatchTimer(this.batchTimer);
-    this.batchTimer = helpers.startBatchTimer(BATCH_INTERVAL_MS, () => this.flushBatch(), () => this.stopBatchTimer());
+    this.stopBatchTimer();
+    this.scheduleNextBatch();
   }
 
-  private stopBatchTimer(): void { helpers.stopBatchTimer(this.batchTimer); this.batchTimer = undefined; }
+  private scheduleNextBatch(): void {
+    if (!this.view) { return; }
+    const delay = this.pendingLines.length > BATCH_BACKLOG_THRESHOLD ? BATCH_INTERVAL_UNDER_LOAD_MS : BATCH_INTERVAL_MS;
+    this.batchTimer = setTimeout(() => {
+      this.batchTimer = undefined;
+      this.flushBatch();
+      this.scheduleNextBatch();
+    }, delay);
+  }
+
+  private stopBatchTimer(): void {
+    if (this.batchTimer !== undefined) {
+      clearTimeout(this.batchTimer);
+      this.batchTimer = undefined;
+    }
+  }
 
   private flushBatch(): void {
     helpers.flushBatch(
