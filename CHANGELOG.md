@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Fixed
+- **Publish script Step 10 when tag exists and changelog unpublished.** When the version is already released (tag exists) and CHANGELOG still has an unpublished section (`[Unreleased]`, `[Unpublished]`, or `[Undefined]`), the script now offers "Bump to vX.Y.Z?" first instead of "Publish as-is?". Stamping accepts all three headings.
+
+---
+## [2.0.17] - 2026-02-28
+
 ### Added
 - **Run navigator in title bar.** When a log has multiple runs (launch, hot restart/reload), the run navigator (Run 1 of N, Prev/Next) appears in the same bar as the session navigator, separated by a pipe. Hidden when only one run is detected.
 - **Run separators in list view.** Above each new run (except the first) a tall pink/dark-pink bar shows run number, start and end time, duration, and issue counts with colored dots (error/warning/perf/info). Run summaries are computed when loading a file; separators are inserted in a single pass for performance.
