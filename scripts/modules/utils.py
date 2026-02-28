@@ -3,11 +3,12 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 
-from modules.constants import PROJECT_ROOT
+from modules.constants import MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
@@ -30,6 +31,57 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
         shell=(sys.platform == "win32"),
         **kwargs,
     )
+
+
+def get_ovsx_pat() -> str:
+    """Return OVSX_PAT from environment or from project .env file.
+
+    So the token works when the script is run from the IDE (no shell env).
+    .env is in .gitignore; use one line: OVSX_PAT=your-token
+    """
+    pat = os.environ.get("OVSX_PAT", "").strip()
+    if pat:
+        return pat
+    env_path = os.path.join(PROJECT_ROOT, ".env")
+    try:
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("OVSX_PAT="):
+                    value = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    return value
+    except OSError:
+        pass
+    return ""
+
+
+def get_installed_extension_versions(
+    extension_id: str = MARKETPLACE_EXTENSION_ID,
+) -> dict[str, str]:
+    """Return installed version per editor: {"vscode": "2.0.15", "cursor": "2.0.14"}.
+
+    Checks `code` and `cursor` CLI (--list-extensions --show-versions).
+    Only includes editors where the extension is installed. Empty dict = not installed.
+    """
+    out: dict[str, str] = {}
+    for editor in ("code", "cursor"):
+        if not shutil.which(editor):
+            continue
+        result = run(
+            [editor, "--list-extensions", "--show-versions"],
+            check=False,
+        )
+        if result.returncode != 0:
+            continue
+        prefix = f"{extension_id.lower()}@"
+        for line in result.stdout.strip().splitlines():
+            line = line.strip().lower()
+            if line.startswith(prefix):
+                version = line[len(prefix) :].strip()
+                if version:
+                    out[editor] = version
+                break
+    return out
 
 
 def read_package_version() -> str:

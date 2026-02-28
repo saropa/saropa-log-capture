@@ -11,9 +11,10 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 # Maximum lines allowed per TypeScript source file.
 MAX_FILE_LINES = 300
 
+MARKETPLACE_EXTENSION_ID = "saropa.saropa-log-capture"
 MARKETPLACE_URL = (
     "https://marketplace.visualstudio.com"
-    "/items?itemName=saropa.saropa-log-capture"
+    f"/items?itemName={MARKETPLACE_EXTENSION_ID}"
 )
 REPO_URL = "https://github.com/saropa/saropa-log-capture"
 
