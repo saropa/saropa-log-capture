@@ -1,0 +1,129 @@
+/** HTML rendering for related lines, referenced files, GitHub, and Firebase sections. */
+
+import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
+import { linkifyUrls } from '../../modules/source/source-linker';
+import type { RelatedLine, RelatedLinesResult } from '../../modules/analysis/related-lines-scanner';
+import type { WorkspaceFileInfo } from '../../modules/misc/workspace-analyzer';
+import type { BlameLine } from '../../modules/git/git-blame';
+import type { GitHubContext } from '../../modules/git/github-context';
+import type { FirebaseContext } from '../../modules/crashlytics/firebase-crashlytics';
+import { doneSlot, emptySlot } from './analysis-panel-render';
+
+/** Render related lines as a diagnostic timeline. */
+export function renderRelatedLinesSection(result: RelatedLinesResult, analyzedIdx: number): string {
+    const n = result.lines.length;
+    if (n === 0) { return emptySlot('related', '📋 No related lines found'); }
+    const fileNote = result.uniqueFiles.length > 0 ? ` · ${result.uniqueFiles.length} source file${result.uniqueFiles.length !== 1 ? 's' : ''}` : '';
+    let html = `<details class="group" open><summary class="group-header">📋 Related Lines <span class="match-count">${n} ${escapeHtml(result.tag)} line${n !== 1 ? 's' : ''}${fileNote}</span></summary>`;
+    const showAll = n <= 25;
+    const visible = showAll ? result.lines : result.lines.slice(0, 10);
+    for (const line of visible) { html += renderRelatedLine(line, analyzedIdx); }
+    if (!showAll) {
+        html += `<div class="related-overflow" id="related-overflow">${n - 10} more lines hidden · <a href="#" onclick="document.querySelectorAll('.related-hidden').forEach(e=>e.style.display='flex');this.parentElement.style.display='none';return false">Show all</a></div>`;
+        for (let i = 10; i < result.lines.length; i++) {
+            html += renderRelatedLine(result.lines[i], analyzedIdx, true);
+        }
+    }
+    return doneSlot('related', html + '</details>');
+}
+
+function renderRelatedLine(line: RelatedLine, analyzedIdx: number, hidden = false): string {
+    const cls = line.lineIndex === analyzedIdx ? 'related-line analyzed' : 'related-line';
+    const style = hidden ? ' style="display:none"' : '';
+    const hiddenCls = hidden ? ' related-hidden' : '';
+    const srcTag = line.sourceRef ? ` <span class="related-src">${escapeHtml(line.sourceRef.file)}:${line.sourceRef.line}</span>` : '';
+    const trimmed = line.text.length > 120 ? line.text.slice(0, 117) + '...' : line.text;
+    return `<div class="${cls}${hiddenCls}" data-line="${line.lineIndex}"${style}><span class="related-idx">${line.lineIndex + 1}</span><span class="line-text">${escapeHtml(trimmed)}</span>${srcTag}</div>`;
+}
+
+/** Analysis result for a single referenced file. */
+export interface FileAnalysis {
+    readonly filename: string;
+    readonly line: number;
+    readonly info: WorkspaceFileInfo;
+    readonly blame?: BlameLine;
+}
+
+/** Render referenced files section with blame and annotation context. */
+export function renderReferencedFilesSection(analyses: readonly FileAnalysis[]): string {
+    if (analyses.length === 0) { return emptySlot('files', '📁 No source files resolved'); }
+    let html = `<details class="group" open><summary class="group-header">📁 Referenced Files <span class="match-count">${analyses.length} file${analyses.length !== 1 ? 's' : ''}</span></summary>`;
+    for (const a of analyses) { html += renderFileCard(a); }
+    return doneSlot('files', html + '</details>');
+}
+
+function renderFileCard(a: FileAnalysis): string {
+    const annos = a.info.annotations.length;
+    const urgent = a.info.annotations.filter(x => /^(BUG|FIXME)$/i.test(x.type)).length;
+    let meta = '';
+    if (a.blame) { meta += `${escapeHtml(a.blame.author)} · ${escapeHtml(a.blame.date)}`; }
+    if (annos > 0) { meta += ` · ${annos} annotation${annos !== 1 ? 's' : ''}`; }
+    if (urgent > 0) { meta += ` · <span class="ref-file-urgent">⚠️ ${urgent} urgent</span>`; }
+    const uri = a.info.uri.toString();
+    return `<div class="ref-file-card" data-source-uri="${escapeHtml(uri)}" data-line="${a.line}"><div class="ref-file-name">${escapeHtml(a.filename)}:${a.line}</div>${meta ? `<div class="ref-file-meta">${meta}</div>` : ''}</div>`;
+}
+
+/** Render GitHub context section with PRs and issues. */
+export function renderGitHubSection(ctx: GitHubContext): string {
+    if (!ctx.available) {
+        const hint = ctx.setupHint ? ` ${linkifyUrls(escapeHtml(ctx.setupHint))}` : '';
+        return emptySlot('github', `🔗 GitHub CLI not available.${hint}`);
+    }
+    const total = (ctx.blamePr ? 1 : 0) + ctx.filePrs.length + ctx.issues.length;
+    if (total === 0) { return emptySlot('github', '🔗 No recent GitHub activity for these files'); }
+    let html = `<details class="group" open><summary class="group-header">🔗 GitHub <span class="match-count">${total} result${total !== 1 ? 's' : ''}</span></summary>`;
+    if (ctx.blamePr) {
+        html += `<div class="gh-item gh-blame-pr" data-url="${escapeHtml(ctx.blamePr.url)}">🔴 <strong>PR #${ctx.blamePr.number}</strong> introduced blame commit · "${escapeHtml(ctx.blamePr.title)}" · @${escapeHtml(ctx.blamePr.author)}</div>`;
+    }
+    for (const pr of ctx.filePrs) {
+        const cls = pr.state === 'OPEN' ? 'gh-pr-open' : pr.state === 'MERGED' ? 'gh-pr-merged' : '';
+        html += `<div class="gh-item ${cls}" data-url="${escapeHtml(pr.url)}">PR #${pr.number} · ${escapeHtml(pr.title)} · @${escapeHtml(pr.author)} · ${pr.state.toLowerCase()}</div>`;
+    }
+    for (const iss of ctx.issues) {
+        const labels = iss.labels.length > 0 ? ` · ${iss.labels.map(l => escapeHtml(l)).join(', ')}` : '';
+        html += `<div class="gh-item gh-issue" data-url="${escapeHtml(iss.url)}">Issue #${iss.number} · ${escapeHtml(iss.title)}${labels}</div>`;
+    }
+    return doneSlot('github', html + '</details>');
+}
+
+function renderIssueBadges(issue: FirebaseContext['issues'][number]): string {
+    const parts: string[] = [];
+    const severityClass = issue.isFatal ? 'fb-badge-fatal' : 'fb-badge-nonfatal';
+    const severityLabel = issue.isFatal ? 'FATAL' : 'NON-FATAL';
+    parts.push(`<span class="fb-badge ${severityClass}">${severityLabel}</span>`);
+    if (issue.state !== 'UNKNOWN') {
+        const stateClass = issue.state === 'REGRESSION' ? 'fb-badge-regressed' : issue.state === 'CLOSED' ? 'fb-badge-closed' : 'fb-badge-open';
+        parts.push(`<span class="fb-badge ${stateClass}">${issue.state}</span>`);
+    }
+    return parts.join(' ');
+}
+
+function renderVersionRange(issue: FirebaseContext['issues'][number]): string {
+    if (!issue.firstVersion && !issue.lastVersion) { return ''; }
+    const range = issue.firstVersion && issue.lastVersion && issue.firstVersion !== issue.lastVersion
+        ? `${escapeHtml(issue.firstVersion)} → ${escapeHtml(issue.lastVersion)}`
+        : escapeHtml(issue.firstVersion ?? issue.lastVersion ?? '');
+    return ` · <span class="fb-versions">${range}</span>`;
+}
+
+/** Render Firebase Crashlytics section with matching crash issues and console links. */
+export function renderFirebaseSection(ctx: FirebaseContext): string {
+    if (!ctx.available) {
+        const hint = ctx.setupHint ? ` ${linkifyUrls(escapeHtml(ctx.setupHint))}` : '';
+        return emptySlot('firebase', `🔥 Firebase not configured.${hint}`);
+    }
+    const n = ctx.issues.length;
+    const refreshNote = ctx.queriedAt ? ` <span class="fb-refresh-time">(${formatElapsedLabel(ctx.queriedAt)})</span>` : '';
+    const consoleLink = ctx.consoleUrl
+        ? `<div class="fb-console" data-url="${escapeHtml(ctx.consoleUrl)}">Open Firebase Console →</div>` : '';
+    if (n === 0) { return doneSlot('firebase', `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">0 matches</span>${refreshNote}</summary><div class="fb-empty">No matching Crashlytics issues found</div>${consoleLink}</details>`); }
+    let html = `<details class="group" open><summary class="group-header">🔥 Firebase <span class="match-count">${n} crash${n !== 1 ? 'es' : ''}</span>${refreshNote}</summary>`;
+    for (const issue of ctx.issues) {
+        const users = issue.userCount > 0 ? ` · ${issue.userCount} user${issue.userCount !== 1 ? 's' : ''}` : '';
+        const eid = escapeHtml(issue.id);
+        const badges = renderIssueBadges(issue);
+        const versions = renderVersionRange(issue);
+        html += `<div class="fb-item" data-issue-id="${eid}"><div class="fb-title">${badges} <span class="crash-expand-icon">▶</span>${escapeHtml(issue.title)}</div><div class="fb-meta">${escapeHtml(issue.subtitle)} · ${issue.eventCount} event${issue.eventCount !== 1 ? 's' : ''}${users}${versions}</div><div class="crash-detail" id="crash-detail-${eid}"></div></div>`;
+    }
+    return doneSlot('firebase', html + consoleLink + '</details>');
+}
