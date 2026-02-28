@@ -17,6 +17,7 @@ MARKETPLACE_URL = (
     f"/items?itemName={MARKETPLACE_EXTENSION_ID}"
 )
 REPO_URL = "https://github.com/saropa/saropa-log-capture"
+OPENVSX_URL = "https://open-vsx.org/extension/saropa/saropa-log-capture"
 
 # cspell:ignore urrent startfile unpushed pubdev connor4312 dbaeumer
 
