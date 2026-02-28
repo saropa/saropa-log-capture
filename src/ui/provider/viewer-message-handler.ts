@@ -82,11 +82,11 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
           lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
           timestamp: Number(msg.timestamp ?? 0), loadFromFile: ctx.load,
-        }).catch((err) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
+        }).catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedEditLine', err.message)); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
-          .catch((err) => { vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`); });
+          .catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedExportLogs', err.message)); });
         break;
       case "saveLevelFilters":
         helpers.saveLevelFilters(ctx.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
@@ -112,7 +112,10 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       case "setSessionDisplayOptions": ctx.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "promptGoToLine":
-        vscode.window.showInputBox({ prompt: "Go to line number", validateInput: (v) => /^\d+$/.test(v) ? null : "Enter a number" })
+        vscode.window.showInputBox({
+            prompt: vscode.l10n.t('prompt.goToLine'),
+            validateInput: (v) => /^\d+$/.test(v) ? null : vscode.l10n.t('prompt.goToLineValidate'),
+          })
           .then((v) => { if (v) { ctx.post({ type: "scrollToLine", line: parseInt(v, 10) }); } });
         break;
       case "scriptError":

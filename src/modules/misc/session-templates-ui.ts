@@ -12,7 +12,7 @@ import {
 export async function pickTemplate(): Promise<SessionTemplate | undefined> {
     const templates = await loadTemplates();
     if (templates.length === 0) {
-        vscode.window.showInformationMessage('No templates available.');
+        vscode.window.showInformationMessage(vscode.l10n.t('msg.noTemplates'));
         return undefined;
     }
     const items = templates.map(t => ({
@@ -22,7 +22,7 @@ export async function pickTemplate(): Promise<SessionTemplate | undefined> {
         template: t,
     }));
     const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select a template to apply',
+        placeHolder: vscode.l10n.t('prompt.selectTemplate'),
         title: 'Session Templates',
     });
     return selected?.template;
@@ -46,8 +46,8 @@ function buildTemplateDetail(template: SessionTemplate): string {
 /** Prompt user to save current settings as a template. */
 export async function promptSaveTemplate(): Promise<SessionTemplate | undefined> {
     const name = await vscode.window.showInputBox({
-        prompt: 'Enter a name for this template',
-        placeHolder: 'e.g., My Flutter Setup, API Debug',
+prompt: vscode.l10n.t('prompt.templateName'),
+                placeHolder: vscode.l10n.t('prompt.templateNamePlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return 'Template name cannot be empty';
@@ -59,11 +59,11 @@ export async function promptSaveTemplate(): Promise<SessionTemplate | undefined>
         return undefined;
     }
     const description = await vscode.window.showInputBox({
-        prompt: 'Enter a description (optional)',
-        placeHolder: 'e.g., Optimized for REST API debugging',
+prompt: vscode.l10n.t('prompt.templateDescription'),
+                placeHolder: vscode.l10n.t('prompt.templateDescriptionPlaceholder'),
     });
     const template = createTemplateFromSettings(name.trim(), description?.trim());
     await saveTemplate(template);
-    vscode.window.showInformationMessage(`Template "${template.name}" saved.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.templateSaved', template.name));
     return template;
 }

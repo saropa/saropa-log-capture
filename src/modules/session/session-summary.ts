@@ -144,9 +144,9 @@ export function showSummaryNotification(summary: SessionSummary): void {
 
     vscode.window.showInformationMessage(
         message,
-        'Open Log',
+        vscode.l10n.t('action.openLog'),
     ).then((selection) => {
-        if (selection === 'Open Log') {
+        if (selection === vscode.l10n.t('action.openLog')) {
             vscode.commands.executeCommand('saropaLogCapture.open');
         }
     });
