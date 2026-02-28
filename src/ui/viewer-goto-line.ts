@@ -75,7 +75,8 @@ function openGotoLine() {
 function closeGotoLine(revert) {
     if (!gotoOverlay) return;
     gotoOverlay.classList.remove('visible');
-    if (revert && gotoSavedScroll >= 0) {
+    if (revert && gotoSavedScroll >= 0 && !window.isContextMenuOpen) {
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
         suppressScroll = true;
         logEl.scrollTop = gotoSavedScroll;
         suppressScroll = false;
@@ -85,10 +86,11 @@ function closeGotoLine(revert) {
 }
 
 function scrollToLineNumber(num) {
-    if (num < 1 || allLines.length === 0) return;
+    if (num < 1 || allLines.length === 0 || window.isContextMenuOpen) return;
     var target = Math.min(num, allLines.length) - 1;
     var offset = 0;
     for (var i = 0; i < target; i++) offset += allLines[i].height;
+    if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true;
     logEl.scrollTop = offset;
     suppressScroll = false;

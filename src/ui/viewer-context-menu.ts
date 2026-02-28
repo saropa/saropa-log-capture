@@ -9,6 +9,7 @@ var contextMenuEl = null;
 var contextMenuSourcePath = '';
 var contextMenuSourceLine = '';
 var contextMenuSourceCol = '';
+/** Set by show/hide; other scripts skip programmatic scroll when true. */
 window.isContextMenuOpen = false;
 
 function initContextMenu() {
@@ -16,7 +17,7 @@ function initContextMenu() {
     if (!contextMenuEl) return;
     document.addEventListener('click', function(e) { if (!contextMenuEl.contains(e.target)) hideContextMenu(); });
     var logEl = document.getElementById('log-content');
-    if (logEl) logEl.addEventListener('scroll', function() { if (window.__programmaticScroll) return; hideContextMenu(); });
+    if (logEl) logEl.addEventListener('scroll', function() { if (window.__programmaticScroll) return; hideContextMenu(); }); /* user scroll only */
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideContextMenu(); });
     contextMenuEl.addEventListener('click', function(e) {
         var item = e.target.closest('.context-menu-item');
