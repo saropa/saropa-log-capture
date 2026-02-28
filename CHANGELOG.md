@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Src folder reorganization.** `src/modules`, `src/ui`, and `src/test` are grouped into subfolders by domain/responsibility (see `docs/src-folder-reorganization-plan.md`). Modules: capture, session, config, crashlytics, bug-report, ai, export, search, source, analysis, git, storage, features, misc. UI: provider, viewer, viewer-styles, viewer-panels, viewer-nav, viewer-search-filter, viewer-context-menu, viewer-decorations, viewer-stack-tags, session, analysis, insights, panels, shared. Tests mirror under `test/modules/` and `test/ui/`.
 
 ### Fixed
+- **Copy All / Copy Line script error.** When a log line had no `html` (e.g. edge case in viewer data), "Copy All" or copy-float threw `Cannot read properties of undefined (reading 'replace')`. `stripTags` is now null/undefined-safe so clipboard copy never throws.
 - **Publish script Step 10 when tag exists and changelog unpublished.** When the version is already released (tag exists) and CHANGELOG still has an unpublished section (`[Unreleased]`, `[Unpublished]`, or `[Undefined]`), the script now offers "Bump to vX.Y.Z?" first instead of "Publish as-is?". Stamping accepts all three headings.
 
 ---
