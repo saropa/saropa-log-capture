@@ -13,6 +13,7 @@ var sessionNavTotalEl = document.getElementById('session-nav-total');
 function updateSessionNav(hasPrev, hasNext, index, total) {
     if (!hasPrev && !hasNext) {
         sessionNav.classList.remove('visible');
+        if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
         return;
     }
     sessionNav.classList.add('visible');
@@ -20,6 +21,7 @@ function updateSessionNav(hasPrev, hasNext, index, total) {
     sessionNavTotalEl.textContent = total;
     sessionPrevBtn.disabled = !hasPrev;
     sessionNextBtn.disabled = !hasNext;
+    if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
 }
 
 sessionPrevBtn.addEventListener('click', function() {
