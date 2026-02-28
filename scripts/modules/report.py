@@ -10,7 +10,7 @@ import datetime
 import os
 import webbrowser
 
-from modules.constants import C, MARKETPLACE_URL, PROJECT_ROOT, REPO_URL
+from modules.constants import C, MARKETPLACE_URL, OPENVSX_URL, PROJECT_ROOT, REPO_URL
 from modules.display import heading, ok
 from modules.utils import elapsed_str
 
@@ -64,6 +64,7 @@ def save_report(
 
     if is_publish:
         lines.append(f"Marketplace: {MARKETPLACE_URL}")
+        lines.append(f"Open VSX (Cursor): {OPENVSX_URL}")
         lines.append(f"GitHub release: {REPO_URL}/releases/tag/v{version}")
 
     lines.append("")
@@ -104,6 +105,9 @@ def print_success_banner(version: str, vsix_path: str) -> None:
 
   {C.CYAN}Marketplace:{C.RESET}
     {C.WHITE}{MARKETPLACE_URL}{C.RESET}
+
+  {C.CYAN}Open VSX (Cursor / VSCodium):{C.RESET}
+    {C.WHITE}{OPENVSX_URL}{C.RESET}
 
   {C.CYAN}GitHub Release:{C.RESET}
     {C.WHITE}{REPO_URL}/releases/tag/v{version}{C.RESET}
