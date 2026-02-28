@@ -41,6 +41,8 @@ export interface SessionMeta {
     debugTarget?: string;
     /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
+    /** Integration provider payloads keyed by provider id (e.g. buildCi, windowsEvents). */
+    integrations?: Record<string, unknown>;
 }
 
 type MetaMap = Record<string, SessionMeta>;

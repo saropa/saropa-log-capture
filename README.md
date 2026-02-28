@@ -43,6 +43,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log file starts with session metadata.
+- **Integration adapters:** Opt-in adapters (e.g. Packages lockfile hash) add lines to the header and meta; status bar shows which adapters contributed. Configure via `saropaLogCapture.integrations.adapters`.
 - **ANSI preservation:** Raw ANSI codes kept in files for external tools.
 - **Gitignore safety:** Offers to add log dir to `.gitignore` on first run.
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
