@@ -37,6 +37,7 @@ import { getSessionInfoPanelHtml, getSessionHeaderScript } from './viewer-sessio
 import { getExportModalHtml, getExportScript } from './viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getScrollAnchorScript } from './viewer-scroll-anchor';
+import { getViewerVisibilityScript } from './viewer-visibility';
 import { getErrorClassificationScript } from './viewer-error-classification';
 import { getScopeFilterScript } from './viewer-scope-filter';
 import { getErrorHandlerScript } from './viewer-error-handler';
@@ -47,6 +48,7 @@ import { getSessionTransformsScript } from './viewer-session-transforms';
 import { getSessionTagsScript } from './viewer-session-tags';
 import { getSessionContextMenuHtml, getSessionContextMenuScript } from './viewer-session-context-menu';
 import { getGotoLineHtml, getGotoLineStyles, getGotoLineScript } from './viewer-goto-line';
+import { getRunNavHtml, getRunNavScript } from './viewer-run-nav';
 import { getFindPanelHtml, getFindPanelScript } from './viewer-find-panel';
 import { getBookmarkPanelHtml, getBookmarkPanelScript } from './viewer-bookmark-panel';
 import { getTrashPanelHtml, getTrashPanelScript } from './viewer-trash-panel';
@@ -114,6 +116,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <span class="nav-bar-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
+    ${getRunNavHtml()}
     <div id="pinned-section"></div>
     <div id="panel-content-row">
     <div id="panel-slot">
@@ -191,7 +194,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     </div>
     ${getIconBarHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
-    ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES))}
+    ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES), getViewerVisibilityScript())}
     ${scriptTag(nonce, getScrollAnchorScript())}
     ${scriptTag(nonce, getFilterScript())}
     ${scriptTag(nonce, getWatchScript())}
@@ -242,6 +245,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getExportScript())}
     ${scriptTag(nonce, getErrorClassificationScript())}
     ${scriptTag(nonce, getGotoLineScript())}
+    ${scriptTag(nonce, getRunNavScript())}
 </body>
 </html>`;
 }

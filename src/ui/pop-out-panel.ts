@@ -28,12 +28,14 @@ import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, 
 import * as panelHandlers from "./viewer-panel-handlers";
 
 const BATCH_INTERVAL_MS = 200;
+const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
+const BATCH_BACKLOG_THRESHOLD = 1000;
 
 /** Pop-out viewer as an editor tab (movable to a floating window). */
 export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
   private pendingLines: PendingLine[] = [];
-  private batchTimer: ReturnType<typeof setInterval> | undefined;
+  private batchTimer: ReturnType<typeof setTimeout> | undefined;
   private threadDumpState: ThreadDumpState = createThreadDumpState();
   private readonly seenCategories = new Set<string>();
   private cachedPresets: readonly FilterPreset[] = [];
@@ -113,7 +115,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setClearSessionRootHandler(h: () => Promise<void>): void { this.onClearSessionRoot = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
-    if (!this.panel) { return; }
+    /* Skip when panel not visible to avoid CPU spike (same as sidebar viewer). */
+    if (!this.panel?.visible) { return; }
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const line: PendingLine = {
@@ -266,10 +269,24 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   }
 
   private startBatchTimer(): void {
-    helpers.stopBatchTimer(this.batchTimer);
-    this.batchTimer = helpers.startBatchTimer(BATCH_INTERVAL_MS, () => this.flushBatch(), () => this.stopBatchTimer());
+    this.stopBatchTimer();
+    this.scheduleNextBatch();
   }
-  private stopBatchTimer(): void { helpers.stopBatchTimer(this.batchTimer); this.batchTimer = undefined; }
+  private scheduleNextBatch(): void {
+    if (!this.panel) { return; }
+    const delay = this.pendingLines.length > BATCH_BACKLOG_THRESHOLD ? BATCH_INTERVAL_UNDER_LOAD_MS : BATCH_INTERVAL_MS;
+    this.batchTimer = setTimeout(() => {
+      this.batchTimer = undefined;
+      this.flushBatch();
+      this.scheduleNextBatch();
+    }, delay);
+  }
+  private stopBatchTimer(): void {
+    if (this.batchTimer !== undefined) {
+      clearTimeout(this.batchTimer);
+      this.batchTimer = undefined;
+    }
+  }
   private flushBatch(): void {
     helpers.flushBatch(this.pendingLines, !!this.panel, (m) => this.post(m),
       (lines) => helpers.sendNewCategories(lines, this.seenCategories, (m) => this.post(m)));
