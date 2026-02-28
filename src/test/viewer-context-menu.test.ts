@@ -67,6 +67,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("'toggle-wrap'"));
             assert.ok(script.includes("'toggle-decorations'"));
             assert.ok(script.includes("'toggle-spacing'"));
+            assert.ok(script.includes("'toggle-line-height'"));
             assert.ok(script.includes("'toggle-hide-blank-lines'"));
         });
 
@@ -76,6 +77,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('wordWrap'));
             assert.ok(script.includes('showDecorations'));
             assert.ok(script.includes('visualSpacingEnabled'));
+            assert.ok(script.includes('logLineHeight'));
             assert.ok(script.includes('hideBlankLines'));
         });
 
@@ -138,10 +140,12 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('data-action="toggle-wrap"'));
             assert.ok(html.includes('data-action="toggle-decorations"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
+            assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line prefix'));
             assert.ok(html.includes('Visual spacing'));
+            assert.ok(html.includes('Comfortable line height'));
             assert.ok(html.includes('Hide blank lines'));
         });
 
