@@ -256,22 +256,33 @@ def _ask_version(current: str) -> str | None:
     return None
 
 
+# Keywords that mean "changelog not yet published" (any triggers auto-bump when tag exists).
+_UNPUBLISHED_HEADING_RE = re.compile(
+    r'^##\s*\[(?:Unreleased|Unpublished|Undefined)\]', re.IGNORECASE | re.MULTILINE
+)
+
+
+def _changelog_has_unpublished_heading() -> bool:
+    """True if CHANGELOG has ## [Unreleased], [Unpublished], or [Undefined]."""
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            for line in f:
+                if _UNPUBLISHED_HEADING_RE.match(line):
+                    return True
+    except OSError:
+        pass
+    return False
+
+
 def has_unreleased_section() -> bool:
     """Check if CHANGELOG.md has an ## [Unreleased] section.
 
     The [Unreleased] heading (per Keep a Changelog convention) indicates
     work-in-progress changes. During publish, it gets replaced with the
-    version number and today's date.
+    version number and today's date. Also accepts [Unpublished] / [Undefined].
     """
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
-    try:
-        with open(changelog_path, encoding="utf-8") as f:
-            for line in f:
-                if re.match(r'^## \[Unreleased\]', line, re.IGNORECASE):
-                    return True
-    except OSError:
-        pass
-    return False
+    return _changelog_has_unpublished_heading()
 
 
 def _is_version_tagged(version: str) -> bool:
@@ -344,7 +355,7 @@ def _ensure_untagged_version(version: str) -> tuple[str, bool]:
 
 
 def _stamp_changelog(version: str) -> bool:
-    """Replace '## [Unreleased]' with '## [version] - date' in CHANGELOG.
+    """Replace '## [Unreleased]' (or [Unpublished]/[Undefined]) with '## [version] - date'.
 
     Called during validation so the CHANGELOG is finalized before
     packaging. If publish is cancelled, the change is uncommitted
@@ -359,11 +370,10 @@ def _stamp_changelog(version: str) -> bool:
         return False
 
     today = datetime.datetime.now().strftime("%Y-%m-%d")
-    pattern = r'## \[Unreleased\]'
     replacement = f'## [{version}] - {today}'
-    updated, count = re.subn(pattern, replacement, content, flags=re.IGNORECASE)
+    updated, count = _UNPUBLISHED_HEADING_RE.subn(replacement, content)
     if count == 0:
-        fail("Could not find '## [Unreleased]' in CHANGELOG.md")
+        fail("Could not find '## [Unreleased]' (or [Unpublished]/[Undefined]) in CHANGELOG.md")
         return False
 
     try:
@@ -377,46 +387,62 @@ def _stamp_changelog(version: str) -> bool:
     return True
 
 
+def _offer_bump_and_apply(
+    current: str, next_ver: str, fail_msg: str, default_yes: bool = True
+) -> tuple[str, bool]:
+    """Ask to bump to next_ver; if yes, write package.json and report. Returns (version, ok)."""
+    if not ask_yn(f"Bump to v{next_ver}?", default=default_yes):
+        fail(fail_msg)
+        return current, False
+    if not _write_package_version(next_ver):
+        return current, False
+    fix(f"package.json: {current} → {C.WHITE}{next_ver}{C.RESET}")
+    return next_ver, True
+
+
 def validate_version_changelog() -> tuple[str, bool]:
     """Validate version, resolve tag conflicts, confirm, and stamp CHANGELOG.
 
     1. package.json must have a valid version (source of truth)
     2. Version must be greater than the highest released version in CHANGELOG
-    3. CHANGELOG.md must have an ## [Unreleased] section
+    3. CHANGELOG.md must have ## [Unreleased] or [Unpublished] or [Undefined]
     4. The version must not already be tagged (auto-bumps if so)
     5. User confirms or overrides the final version
-    6. Stamp CHANGELOG: [Unreleased] → [version] - today
+    6. Stamp CHANGELOG: that heading → [version] - today
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
         fail("Could not read version from package.json")
         return pkg_version, False
 
-    # When version <= CHANGELOG max: infer intent from git. Already tagged → re-publish (as-is). Else offer bump or as-is.
+    # When version <= CHANGELOG max: infer intent from git. Already tagged → re-publish (as-is) or bump.
     max_cl = _get_changelog_max_version()
     if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
         next_ver = _bump_patch(max_cl)
         if _is_version_tagged(pkg_version):
             warn(f"v{pkg_version} is already released (tag exists).")
-            if ask_yn(f"Publish v{pkg_version} as-is (e.g. sync to Open VSX)?", default=True):
-                ok(f"Publishing v{pkg_version} as-is")
-                return pkg_version, True
-            # User said no to as-is — offer bump
-            if not ask_yn(f"Bump to v{next_ver}?", default=True):
-                fail(f"Set package.json version higher than {max_cl}")
-                return pkg_version, False
-            if not _write_package_version(next_ver):
-                return pkg_version, False
-            fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
-            pkg_version = next_ver
+            # Changelog still has [Unreleased]/[Unpublished]/[Undefined] → offer bump first (no "publish as-is?").
+            if _changelog_has_unpublished_heading():
+                pkg_version, bump_ok = _offer_bump_and_apply(
+                    pkg_version, next_ver, "Version already tagged; bump to release changelog."
+                )
+                if not bump_ok:
+                    return pkg_version, False
+            else:
+                if ask_yn(f"Publish v{pkg_version} as-is (e.g. sync to Open VSX)?", default=True):
+                    ok(f"Publishing v{pkg_version} as-is")
+                    return pkg_version, True
+                pkg_version, bump_ok = _offer_bump_and_apply(
+                    pkg_version, next_ver, f"Set package.json version higher than {max_cl}"
+                )
+                if not bump_ok:
+                    return pkg_version, False
         else:
             warn(f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
-            if ask_yn(f"Bump to v{next_ver}?", default=True):
-                if not _write_package_version(next_ver):
-                    return pkg_version, False
-                fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
-                pkg_version = next_ver
-            else:
+            pkg_version, bump_ok = _offer_bump_and_apply(
+                pkg_version, next_ver, f"Set package.json version higher than {max_cl}"
+            )
+            if not bump_ok:
                 if not ask_yn(f"Publish v{pkg_version} as-is (no CHANGELOG stamp)? [y/N]", default=False):
                     fail(f"Set package.json version higher than {max_cl}")
                     return pkg_version, False
@@ -424,7 +450,7 @@ def validate_version_changelog() -> tuple[str, bool]:
                 return pkg_version, True
 
     if not has_unreleased_section():
-        fail("No '## [Unreleased]' section found in CHANGELOG.md")
+        fail("No '## [Unreleased]' (or [Unpublished]/[Undefined]) section in CHANGELOG.md")
         info("Add a section: ## [Unreleased]")
         return pkg_version, False
 
