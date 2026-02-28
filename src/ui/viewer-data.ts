@@ -208,6 +208,8 @@ function recalcHeights() {
         allLines[i].height = calcItemHeight(allLines[i]);
         totalHeight += allLines[i].height;
     }
+    /* Invalidate visible-line cache so updateLineCount recalc runs after filter/layout change. */
+    if (typeof window !== 'undefined') window.__visibleCountDirty = true;
     if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
