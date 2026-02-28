@@ -1,6 +1,6 @@
 # bugs to fix — RESOLVED
 
-**Resolved (implemented):** (1) Notice/framework blue unified to `--vscode-charts-blue` (#2196f3) in bar, tint, line text, footer dot. (2) File load capped at `maxLines` to avoid CPU spike; footer shows "Showing first X of Y lines" when truncated. (3) Emoji dot only in Copy with decorations (respects "Severity dot (copy only)"); viewer shows gutter bar only; JSDoc updated.
+**Resolved (implemented):** (1) Notice/framework blue unified to `--vscode-charts-blue` (#2196f3) in bar, tint, line text, footer dot. (2) File load capped at `maxLines` to avoid CPU spike; footer shows "Showing first X of Y lines" when truncated. (3) Emoji dot only in Copy with decorations (respects "Severity dot (copy only)"); viewer shows gutter bar only; JSDoc updated. (4) Severity bar no longer covers line number/timestamp: when line decorations (time and number) are on, lines use 1.25em left clearance so the gutter bar sits left of the decoration prefix (`viewer-styles-decoration.ts`).
 
 ---
 

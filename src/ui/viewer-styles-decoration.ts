@@ -12,9 +12,9 @@ export function getDecorationStyles(): string {
    Line decoration prefix (severity dot, counter, timestamp) and
    the settings popover panel for toggling individual parts.
    =================================================================== */
-/* Decoration prefix (severity dot, counter, timestamp) */
+/* Decoration prefix (severity dot, counter, timestamp) — scale with zoom via em */
 .line-decoration {
-    font-size: 11px;
+    font-size: 0.85em;
     opacity: 0.85;
     white-space: nowrap;
     user-select: none;
@@ -23,13 +23,14 @@ export function getDecorationStyles(): string {
     color: var(--vscode-editorLineNumber-foreground, #858585);
 }
 
-/* Hanging indent for decorated lines: overflow text aligns with content, not decoration */
+/* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
+/* When time/number are shown, reserve 1.25em left for severity bar (dot at 0.69em + 0.54em) so the bar does not cover the numbers. */
 .line:has(.line-decoration) {
-    padding-left: 170px;
-    text-indent: -170px;
+    padding-left: 14.25em; /* 1.25em bar clearance + 13em decoration width */
+    text-indent: -13em;
 }
 .line:has(.line-decoration) .line-decoration {
-    /* Pulled back to left edge by negative text-indent */
+    /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
     margin-right: 0;
 }
 /* Emoji toggle buttons (decorations, audio, minimap) */
@@ -171,12 +172,12 @@ export function getDecorationStyles(): string {
 /* Positioning context for severity dots and connector bars */
 #viewport { position: relative; }
 
-/* Severity dot mode (colored circle on timeline) */
+/* Severity dot mode (colored circle on timeline) — scale with zoom via em */
 [class*="level-bar-"] { z-index: 1; }
 [class*="level-bar-"]::before {
-    content: ''; position: absolute; left: 9px;
+    content: ''; position: absolute; left: 0.69em;
     top: 0; bottom: 0; margin: auto 0;
-    width: 7px; height: 7px; border-radius: 50%;
+    width: 0.54em; height: 0.54em; border-radius: 50%;
     pointer-events: none; z-index: 2;
 }
 .level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
@@ -190,9 +191,9 @@ export function getDecorationStyles(): string {
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
 
-/* Connector bars join consecutive dots */
+/* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
-    content: ''; position: absolute; left: 11px; width: 3px;
+    content: ''; position: absolute; left: 0.85em; width: 0.23em;
     background: var(--bar-color); pointer-events: none; z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
