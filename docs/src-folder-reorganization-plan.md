@@ -1,5 +1,7 @@
 # Plan: Group src/modules, src/ui & src/test into Subfolders
 
+**Status: Implemented.** Structure is in place; use this doc as reference.
+
 **Goal:** Reduce flat file lists in `modules/`, `ui/`, and `test/` by grouping files into logical subfolders.  
 **Scope:** ~97 files in `modules`, ~130 in `ui`, ~48 in `test`.  
 **Build:** Single entry `src/extension.ts`; esbuild resolves imports. No path mappings today—only import path updates required when moving files.
