@@ -110,13 +110,13 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <button id="session-prev" title="Previous session (older)" disabled>&#x25C0; Prev</button>
         <span class="nav-bar-label">Session <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
         <button id="session-next" title="Next session (newer)" disabled>Next &#x25B6;</button>
+        ${getRunNavHtml()}
     </div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>
         <span class="nav-bar-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
         <button id="split-next" title="Next part" disabled>&#x25B6;</button>
     </div>
-    ${getRunNavHtml()}
     <div id="pinned-section"></div>
     <div id="panel-content-row">
     <div id="panel-slot">
