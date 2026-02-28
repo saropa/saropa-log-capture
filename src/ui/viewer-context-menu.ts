@@ -9,13 +9,14 @@ var contextMenuEl = null;
 var contextMenuSourcePath = '';
 var contextMenuSourceLine = '';
 var contextMenuSourceCol = '';
+window.isContextMenuOpen = false;
 
 function initContextMenu() {
     contextMenuEl = document.getElementById('context-menu');
     if (!contextMenuEl) return;
     document.addEventListener('click', function(e) { if (!contextMenuEl.contains(e.target)) hideContextMenu(); });
     var logEl = document.getElementById('log-content');
-    if (logEl) logEl.addEventListener('scroll', hideContextMenu);
+    if (logEl) logEl.addEventListener('scroll', function() { if (window.__programmaticScroll) return; hideContextMenu(); });
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideContextMenu(); });
     contextMenuEl.addEventListener('click', function(e) {
         var item = e.target.closest('.context-menu-item');
@@ -71,9 +72,10 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
 
     syncContextMenuToggles();
     positionContextMenu(x, y);
+    window.isContextMenuOpen = true;
 }
 
-/** Place menu at (x,y), then clamp to viewport so it is never cropped at right or bottom. */
+/** Place menu at (x,y), clamp to viewport, and set flip classes so submenus stay on screen. */
 function positionContextMenu(x, y) {
     contextMenuEl.style.left = x + 'px';
     contextMenuEl.style.top = y + 'px';
@@ -87,11 +89,14 @@ function positionContextMenu(x, y) {
     contextMenuEl.style.top = newY + 'px';
     rect = contextMenuEl.getBoundingClientRect();
     contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
+    var submenuMaxH = 220; /* max height of any submenu panel; flip vertical when near bottom */
+    contextMenuEl.classList.toggle('flip-submenu-vertical', rect.bottom + submenuMaxH > window.innerHeight);
 }
 
 function hideContextMenu() {
     if (contextMenuEl) contextMenuEl.classList.remove('visible');
     contextMenuLineIdx = -1;
+    window.isContextMenuOpen = false;
 }
 
 function handleGlobalAction(action) {
@@ -174,7 +179,22 @@ function onContextMenuAction(action) {
     var plainText = stripTags(lineData.html || '');
 
     switch (action) {
-        case 'copy': vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText }); break;
+        case 'copy': {
+            /* When multiple lines are selected (shift+click) and right-click is inside that range, copy all selected full lines; else copy single line. */
+            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var lo = Math.min(start, end);
+            var hi = Math.max(start, end);
+            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
+            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+                var lines = getSelectedLines();
+                var text = lines.length > 0 ? linesToPlainText(lines) : plainText;
+                vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+            } else {
+                vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText });
+            }
+            break;
+        }
         case 'copy-to-search':
             if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
                 openSearch();
