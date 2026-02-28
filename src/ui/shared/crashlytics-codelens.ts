@@ -1,7 +1,7 @@
 /** CodeLens provider that shows Crashlytics crash indicators on affected source files. */
 
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from '../../modules/config/config';
+import { getSaropaCacheCrashlyticsUri } from '../../modules/config/config';
 
 /** Cached mapping: filename → { issueCount, totalEvents, totalUsers }. */
 let crashIndex: Map<string, CrashFileInfo> | undefined;
@@ -47,7 +47,7 @@ async function getOrBuildIndex(): Promise<Map<string, CrashFileInfo>> {
 function getCrashlyticsDir(): vscode.Uri | undefined {
     const ws = vscode.workspace.workspaceFolders?.[0];
     if (!ws) { return undefined; }
-    return vscode.Uri.joinPath(getLogDirectoryUri(ws), 'crashlytics');
+    return getSaropaCacheCrashlyticsUri(ws);
 }
 
 async function buildIndexFromCache(): Promise<Map<string, CrashFileInfo>> {

@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
 import { SessionMetadataStore } from './modules/session/session-metadata';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
+import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 
 /** Register trash-related commands. */
 export function trashCommands(
@@ -17,6 +18,10 @@ export function trashCommands(
             const uri = item?.uri ?? getCurrentFileUri();
             if (!uri) { return; }
             await metaStore.setTrashed(uri, true);
+            if (getConfig().projectIndex.enabled) {
+                const idx = getGlobalProjectIndexer();
+                if (idx) { idx.removeEntry('reports', vscode.workspace.asRelativePath(uri).replace(/\\/g, '/')).catch(() => {}); }
+            }
             historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
@@ -25,12 +30,18 @@ export function trashCommands(
             const uri = item?.uri ?? getCurrentFileUri();
             if (!uri) { return; }
             await metaStore.setTrashed(uri, false);
+            if (getConfig().projectIndex.enabled) {
+                const idx = getGlobalProjectIndexer();
+                if (idx) {
+                    metaStore.loadMetadata(uri).then((meta) => idx.upsertReportEntryFromMeta(uri, meta)).catch(() => {});
+                }
+            }
             historyProvider.invalidateMeta(uri);
             historyProvider.refresh();
         }),
         vscode.commands.registerCommand('saropaLogCapture.emptyTrash', async () => {
             const count = await emptyTrash(metaStore);
-            if (count === 0) { vscode.window.showInformationMessage('Trash is empty.'); }
+            if (count === 0) { vscode.window.showInformationMessage(vscode.l10n.t('msg.trashEmpty')); }
             if (count > 0) { historyProvider.refresh(); }
         }),
         vscode.commands.registerCommand('saropaLogCapture.toggleTrash', () => {
@@ -54,10 +65,11 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
     }
     if (trashed.length === 0) { return 0; }
     const answer = await vscode.window.showWarningMessage(
-        `Permanently delete ${trashed.length} trashed file(s)? This cannot be undone.`,
-        { modal: true }, 'Delete',
+        vscode.l10n.t('msg.deleteTrashConfirm', String(trashed.length)),
+        { modal: true },
+        vscode.l10n.t('action.delete'),
     );
-    if (answer !== 'Delete') { return -1; }
+    if (answer !== vscode.l10n.t('action.delete')) { return -1; }
     let deleted = 0;
     for (const uri of trashed) {
         try {
@@ -66,6 +78,6 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
             deleted++;
         } catch { /* file may be locked */ }
     }
-    vscode.window.showInformationMessage(`Permanently deleted ${deleted} file(s) from trash.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.permanentlyDeletedFromTrash', String(deleted)));
     return deleted;
 }
