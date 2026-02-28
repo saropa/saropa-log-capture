@@ -17,6 +17,13 @@ export function getSessionTagsScript(): string {
     var tagsExpanded = false;
     var maxVisible = 8;
 
+    /** Keep Tags section closed and button inactive (default when list is built). */
+    function ensureTagsSectionClosed() {
+        if (sessionTagSection) sessionTagSection.style.display = 'none';
+        var btn = document.getElementById('session-filter-tags');
+        if (btn) btn.classList.remove('active');
+    }
+
     window.toggleSessionTagsSection = function() {
         if (!sessionTagSection) return;
         var vis = sessionTagSection.style.display !== 'none';
@@ -58,7 +65,7 @@ export function getSessionTagsScript(): string {
         }
         var keys = Object.keys(counts).sort(function(a, b) { return (counts[b] || 0) - (counts[a] || 0); });
         if (keys.length === 0) {
-            sessionTagSection.style.display = 'none';
+            ensureTagsSectionClosed();
             sessionTagChips.innerHTML = '';
             return;
         }
@@ -77,6 +84,7 @@ export function getSessionTagsScript(): string {
         }
         if (keys.length > max) html += '<span class="tag-count">+' + (keys.length - max) + ' more</span>';
         sessionTagChips.innerHTML = html;
+        ensureTagsSectionClosed();
     };
 
     window.filterSessionsByTags = function(sessions) {
