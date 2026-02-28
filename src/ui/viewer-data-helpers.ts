@@ -120,14 +120,20 @@ function extractContext(plainText) {
     return null;
 }
 
+/** True when the line has no visible text (used for hideBlankLines and severity bar). */
+function isLineContentBlank(item) {
+    return !item || !item.html || stripTags(item.html).trim() === '';
+}
+
 /**
  * Calculate the height of a log item based on its type and filter state.
  */
 function calcItemHeight(item) {
     if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
     /* When hideBlankLines is on, treat blank log lines as height 0 so the viewport skips them. */
-    if (typeof hideBlankLines !== 'undefined' && hideBlankLines && item.type === 'line' && stripTags(item.html).trim() === '') return 0;
+    if (typeof hideBlankLines !== 'undefined' && hideBlankLines && item.type === 'line' && isLineContentBlank(item)) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
+    if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
     if (item.type === 'stack-frame' && item.groupId >= 0) {
         var header = (typeof groupHeaderMap !== 'undefined') ? groupHeaderMap[item.groupId] : null;
@@ -202,9 +208,9 @@ function renderItem(item, idx, prevVis) {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
-    // Severity bar class — computed early so stack items also get dots
+    // Severity bar (colored dot) — omit for blank lines so decoration prefix alone has no dot.
     var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext) {
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext && !isLineContentBlank(item)) {
         if (item.fw) {
             barCls = ' level-bar-framework';
         } else {
@@ -278,8 +284,13 @@ function renderItem(item, idx, prevVis) {
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
+    var isBlank = isLineContentBlank(item);
+    if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
+        tintCls = ' line-tint-' + allLines[idx - 1].level;
+    }
+    var blankCls = isBlank ? ' line-blank' : '';
 
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
 }
 `;
 }
