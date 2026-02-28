@@ -36,6 +36,7 @@ function syncContextMenuToggles() {
         if (action === 'toggle-wrap') on = (typeof wordWrap !== 'undefined') && wordWrap;
         else if (action === 'toggle-decorations') on = (typeof showDecorations !== 'undefined') && showDecorations;
         else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
+        else if (action === 'toggle-line-height') on = (typeof logLineHeight !== 'undefined') && logLineHeight >= 1.5; /* comfortable when >= 1.5 (presets: 1.2 / 2.0) */
         else if (action === 'toggle-hide-blank-lines') on = (typeof hideBlankLines !== 'undefined') && hideBlankLines;
         t.classList.toggle('checked', on);
     }
@@ -155,6 +156,7 @@ function handleToggleAction(action) {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
         'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
+        'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
     };
     var fn = toggleFns[action];
