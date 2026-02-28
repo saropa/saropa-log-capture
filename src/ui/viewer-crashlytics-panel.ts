@@ -83,7 +83,9 @@ export function getCrashlyticsPanelScript(): string {
         if (ctx.issues && ctx.issues.length > 0) {
             if (cpIssuesEl) cpIssuesEl.innerHTML = ctx.issues.map(renderIssue).join('');
         } else if (ctx.diagnosticHtml) {
-            if (cpIssuesEl) cpIssuesEl.innerHTML = '<div class="cp-error">Query failed</div>' + ctx.diagnosticHtml;
+            // When query fails (e.g. 404), offer to open the config file used for projectId/appId.
+            var openBtn = '<div class="cp-diag-actions"><button class="cp-setup-btn" data-action="crashlyticsOpenGoogleServicesJson">Open google-services.json</button></div>';
+            if (cpIssuesEl) cpIssuesEl.innerHTML = '<div class="cp-error">Query failed</div>' + ctx.diagnosticHtml + openBtn;
         } else {
             if (cpEmptyEl) cpEmptyEl.style.display = '';
         }
@@ -182,6 +184,8 @@ export function getCrashlyticsPanelScript(): string {
                     vscodeApi.postMessage({ type: 'openGcloudInstall' });
                 } else if (action === 'openCrashlyticsSettings') {
                     vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaLogCapture.firebase' });
+                } else if (action === 'crashlyticsOpenGoogleServicesJson') {
+                    vscodeApi.postMessage({ type: 'crashlyticsOpenGoogleServicesJson' });
                 } else {
                     vscodeApi.postMessage({ type: action });
                 }
