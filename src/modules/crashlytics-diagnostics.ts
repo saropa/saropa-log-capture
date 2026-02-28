@@ -61,11 +61,14 @@ export function classifyTokenError(err: unknown): DiagnosticDetails {
     return { step: 'token', errorType: 'auth', checkedAt, message: `Authentication failed: ${msg.slice(0, 120)}`, technicalDetails: stderr || undefined };
 }
 
+/** Hint shown when Firebase config is missing or API returns 404 (single source of truth for path/settings). */
+export const firebaseConfigSetupHint = 'Add google-services.json (e.g. android/app/) or set saropaLogCapture.firebase.projectId / .appId in settings.';
+
 /** Map an HTTP status code to a user-friendly error message. */
 export function classifyHttpStatus(status: number, body?: string): string {
     if (status === 401) { return 'Authentication expired — token may be invalid or revoked'; }
     if (status === 403) { return 'Permission denied — your account needs the Firebase Crashlytics Viewer role'; }
-    if (status === 404) { return 'Project or app not found — check firebase.projectId and firebase.appId settings'; }
+    if (status === 404) { return `Project or app not found. ${firebaseConfigSetupHint}`; }
     if (status === 429) { return 'Rate limited by Firebase API — try again in a few minutes'; }
     if (status >= 500) { return `Firebase API error (HTTP ${status}) — the service may be temporarily unavailable`; }
     const snippet = body ? body.slice(0, 100) : '';

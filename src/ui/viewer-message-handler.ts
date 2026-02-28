@@ -123,6 +123,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "crashlyticsCloseIssue": case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), msg.type === "crashlyticsCloseIssue" ? 'CLOSED' : 'MUTED', ctx.post).catch(() => {}); break;
       case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(ctx.post); break;
       case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(ctx.post).catch(() => {}); break;
+      case "crashlyticsOpenGoogleServicesJson": panelHandlers.handleOpenGoogleServicesJson().catch(() => {}); break;
       case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); break;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
