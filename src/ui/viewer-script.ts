@@ -158,6 +158,7 @@ if (footerVersionLink) {
     updateFooterVersionLink();
 }
 
+var cachedVisibleCount = 0, lastVisibleCountTime = 0;
 function updateLineCount() {
     var el = document.getElementById('line-count');
     if (!el) return;
@@ -165,41 +166,49 @@ function updateLineCount() {
     var badge = document.getElementById('filter-badge');
     var isFiltered = badge && badge.style.display !== 'none';
     if (isFiltered) {
-        var visible = 0;
-        for (var i = 0; i < allLines.length; i++) {
-            if (allLines[i].height > 0) visible++;
-        }
-        el.textContent = formatNumber(visible) + '/' + formatNumber(lineCount) + ' lines';
-    } else {
-        el.textContent = formatNumber(lineCount) + ' lines';
-    }
+        if (typeof window !== 'undefined' && window.__visibleCountDirty) { cachedVisibleCount = -1; window.__visibleCountDirty = false; }
+        var now = Date.now();
+        if (now - lastVisibleCountTime < 1000 && cachedVisibleCount >= 0) { el.textContent = formatNumber(cachedVisibleCount) + '/' + formatNumber(lineCount) + ' lines'; return; }
+        lastVisibleCountTime = now;
+        var visible = 0; for (var i = 0; i < allLines.length; i++) { if (allLines[i].height > 0) visible++; }
+        cachedVisibleCount = visible; el.textContent = formatNumber(visible) + '/' + formatNumber(lineCount) + ' lines';
+    } else { cachedVisibleCount = -1; el.textContent = formatNumber(lineCount) + ' lines'; }
 }
 
 window.addEventListener('message', function(event) {
     var msg = event.data;
     switch (msg.type) {
-        case 'addLines':
+        case 'addLines': {
+            var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
                 addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
-            if (typeof buildPrefixSums === 'function') buildPrefixSums();
-            renderViewport(true);
-            if (typeof scheduleMinimap === 'function') scheduleMinimap();
-            if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
-            updateFooterText();
+            if (typeof buildPrefixSums === 'function' && typeof appendPrefixSums === 'function') {
+                if (prefixSums && prefixSums.length + msg.lines.length === allLines.length + 1) { appendPrefixSums(); }
+                else { buildPrefixSums(); }
+            }
+            if (!isHidden) {
+                renderViewport(true);
+                if (typeof scheduleMinimap === 'function') scheduleMinimap();
+                if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
+                updateFooterText();
+            }
             break;
+        }
         case 'clear':
             loadTruncatedInfo = null;
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
+            cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof closeContextModal === 'function') closeContextModal(); if (typeof closeInfoPanel === 'function') closeInfoPanel();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
@@ -249,6 +258,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'splitInfo':
             if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
+            break;
+        case 'runBoundaries':
+            if (typeof handleRunBoundaries === 'function') handleRunBoundaries(msg);
             break;
         case 'sessionNavInfo':
             if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
