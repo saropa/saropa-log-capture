@@ -225,15 +225,18 @@ export function getSessionPanelScript(): string {
         closeSessionPanel();
     });
 
+    /* Header: show suffix ( · path) only when non-default folder; whole title area clickable to browse. */
     function updateHeaderPath(rootLabel, isDefault) {
+        var headerPathEl = document.getElementById('session-header-path');
         var pathText = document.getElementById('session-path-text');
         var resetBtn = document.getElementById('session-reset-root');
-        if (pathText) pathText.textContent = isDefault ? 'Default' : (rootLabel || 'No workspace');
+        if (headerPathEl) headerPathEl.style.display = isDefault ? 'none' : '';
+        if (pathText) pathText.textContent = isDefault ? '' : (rootLabel || 'No workspace');
         if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
     }
 
-    var headerPathEl = document.getElementById('session-header-path');
-    if (headerPathEl) headerPathEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
+    var headerClickableEl = document.getElementById('session-header-clickable');
+    if (headerClickableEl) headerClickableEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
     var resetRootBtn = document.getElementById('session-reset-root');
     if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
 
