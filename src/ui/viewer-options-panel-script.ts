@@ -152,6 +152,30 @@ function syncOptionsPanelUi() {
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
 }
 
+/** Reset all options panel options to default (viewer display/layout/audio only; not workspace settings). */
+function resetOptionsToDefault() {
+    if (typeof setFontSize === 'function') setFontSize(13);
+    if (typeof setLineHeight === 'function') setLineHeight(2.0);
+    wordWrap = false;
+    var logEl = document.getElementById('log-content');
+    if (logEl) logEl.classList.toggle('nowrap', true);
+    showDecorations = true;
+    if (typeof resetDecoDefaults === 'function') resetDecoDefaults();
+    if (typeof showMilliseconds !== 'undefined') showMilliseconds = false;
+    showElapsed = false;
+    if (typeof lineColorsEnabled !== 'undefined') lineColorsEnabled = true;
+    if (typeof updateDecoButton === 'function') updateDecoButton();
+    if (typeof visualSpacingEnabled !== 'undefined') visualSpacingEnabled = true;
+    if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
+    if (typeof audioEnabled !== 'undefined') audioEnabled = false;
+    if (typeof audioRateLimit !== 'undefined') audioRateLimit = 2000;
+    if (typeof setAudioVolume === 'function') setAudioVolume(30);
+    if (typeof updateAudioButton === 'function') updateAudioButton();
+    if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
+    syncOptionsPanelUi();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
 ${getOptionsEventHandlers()}
 `;
 }
