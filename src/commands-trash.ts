@@ -1,9 +1,9 @@
 /** Trash management command registrations. */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config';
-import { SessionMetadataStore } from './modules/session-metadata';
-import { SessionHistoryProvider } from './ui/session-history-provider';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
+import { SessionMetadataStore } from './modules/session/session-metadata';
+import { SessionHistoryProvider } from './ui/session/session-history-provider';
 
 /** Register trash-related commands. */
 export function trashCommands(

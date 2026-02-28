@@ -1,7 +1,7 @@
 /** Command registration for cross-session insights. */
 
 import * as vscode from 'vscode';
-import { showInsightsPanel } from './ui/insights-panel';
+import { showInsightsPanel } from './ui/insights/insights-panel';
 
 /** Register cross-session insights commands. */
 export function insightsCommands(): vscode.Disposable[] {

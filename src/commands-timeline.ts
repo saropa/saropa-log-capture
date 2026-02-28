@@ -1,7 +1,7 @@
 /** Command registration for session timeline. */
 
 import * as vscode from 'vscode';
-import { showTimeline } from './ui/timeline-panel';
+import { showTimeline } from './ui/panels/timeline-panel';
 
 /** Register timeline commands. */
 export function timelineCommands(): vscode.Disposable[] {
