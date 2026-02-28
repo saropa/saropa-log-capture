@@ -23,18 +23,18 @@ export async function handleEditLine(
 	input: EditLineInput,
 ): Promise<void> {
 	if (!currentFileUri) {
-		vscode.window.showWarningMessage("No log file is currently loaded for editing.");
+		vscode.window.showWarningMessage(vscode.l10n.t('msg.noLogFileLoaded'));
 		return;
 	}
 
 	if (isSessionActive) {
 		const choice = await vscode.window.showWarningMessage(
-			"A debug session is active. Editing the log file now may cause data loss or corruption.",
+			vscode.l10n.t('msg.debugSessionActiveEdit'),
 			{ modal: true },
-			"Edit Anyway",
-			"Cancel"
+			vscode.l10n.t('action.editAnyway'),
+			vscode.l10n.t('action.cancel'),
 		);
-		if (choice !== "Edit Anyway") { return; }
+		if (choice !== vscode.l10n.t('action.editAnyway')) { return; }
 	}
 
 	try {
@@ -45,14 +45,14 @@ export async function handleEditLine(
 		const targetIndex = dataStartIndex + input.lineIndex;
 
 		if (targetIndex < dataStartIndex || targetIndex >= lines.length) {
-			vscode.window.showErrorMessage(`Line index ${input.lineIndex} is out of range.`);
+			vscode.window.showErrorMessage(vscode.l10n.t('msg.lineIndexOutOfRange', String(input.lineIndex)));
 			return;
 		}
 
 		lines[targetIndex] = input.newText;
 		const newContent = lines.join('\n');
 		await vscode.workspace.fs.writeFile(currentFileUri, Buffer.from(newContent, 'utf-8'));
-		vscode.window.showInformationMessage(`Line ${input.lineIndex + 1} updated successfully.`);
+		vscode.window.showInformationMessage(vscode.l10n.t('msg.lineUpdatedSuccess', String(input.lineIndex + 1)));
 		await input.loadFromFile(currentFileUri);
 	} catch (err) {
 		throw new Error(`File edit failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -67,10 +67,10 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 	const uri = await vscode.window.showSaveDialog({
 		defaultUri: vscode.Uri.file('exported-logs.txt'),
 		filters: {
-			'Text Files': ['txt', 'log'],
-			'All Files': ['*']
+			[vscode.l10n.t('filter.textFiles')]: ['txt', 'log'],
+			[vscode.l10n.t('filter.allFiles')]: ['*'],
 		},
-		saveLabel: 'Export Logs'
+		saveLabel: vscode.l10n.t('saveLabel.exportLogs'),
 	});
 
 	if (!uri) {
@@ -89,7 +89,7 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 		const levelStr = levels.length > 0 ? ` (${levels.join(', ')})` : '';
 
 		vscode.window.showInformationMessage(
-			`Exported ${lineCount} line${lineCount === 1 ? '' : 's'}${levelStr} to ${uri.fsPath}`
+			vscode.l10n.t('msg.exportedLinesTo', String(lineCount), lineCount === 1 ? '' : 's', levelStr, uri.fsPath),
 		);
 	} catch (err) {
 		throw new Error(`Export failed: ${err instanceof Error ? err.message : String(err)}`);

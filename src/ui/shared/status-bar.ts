@@ -1,25 +1,27 @@
 import * as vscode from 'vscode';
 
-/** Human-readable labels for integration adapter ids. */
-const INTEGRATION_LABELS: Record<string, string> = {
-    packages: 'Packages',
-    buildCi: 'Build',
-    windowsEvents: 'Windows events',
-    git: 'Git',
-    database: 'Database',
-    externalLogs: 'External logs',
-    performance: 'Performance',
-    http: 'HTTP',
-    terminal: 'Terminal',
-    browser: 'Browser',
-    docker: 'Docker',
-    linuxLogs: 'Linux logs',
-    crashDumps: 'Crash dumps',
-    testResults: 'Tests',
-    security: 'Security',
-    coverage: 'Coverage',
-    environment: 'Environment',
-};
+/** Human-readable labels for integration adapter ids (localized). */
+function getIntegrationLabels(): Record<string, string> {
+    return {
+        packages: vscode.l10n.t('integration.packages'),
+        buildCi: vscode.l10n.t('integration.buildCi'),
+        windowsEvents: vscode.l10n.t('integration.windowsEvents'),
+        git: vscode.l10n.t('integration.git'),
+        database: vscode.l10n.t('integration.database'),
+        externalLogs: vscode.l10n.t('integration.externalLogs'),
+        performance: vscode.l10n.t('integration.performance'),
+        http: vscode.l10n.t('integration.http'),
+        terminal: vscode.l10n.t('integration.terminal'),
+        browser: vscode.l10n.t('integration.browser'),
+        docker: vscode.l10n.t('integration.docker'),
+        linuxLogs: vscode.l10n.t('integration.linuxLogs'),
+        crashDumps: vscode.l10n.t('integration.crashDumps'),
+        testResults: vscode.l10n.t('integration.testResults'),
+        security: vscode.l10n.t('integration.security'),
+        coverage: vscode.l10n.t('integration.coverage'),
+        environment: vscode.l10n.t('integration.environment'),
+    };
+}
 
 export class StatusBar implements vscode.Disposable {
     private readonly item: vscode.StatusBarItem;
@@ -90,29 +92,33 @@ export class StatusBar implements vscode.Disposable {
 
     private updateText(): void {
         const watchSuffix = this.buildWatchSuffix();
-        const integrationSuffix = this.buildIntegrationSuffix();
+        const labelsMap = getIntegrationLabels();
+        const integrationSuffix = this.buildIntegrationSuffix(labelsMap);
         const count = this.formatCount(this.lineCount);
-        const baseTooltip = 'Saropa Log Capture';
         const recordingTip = integrationSuffix
-            ? `${baseTooltip}: Recording. Integrations: ${this.integrationAdapterIds.map(id => INTEGRATION_LABELS[id] ?? id).join(', ')}. Click to open log file.`
-            : `${baseTooltip}: Recording. Click to open log file.`;
+            ? vscode.l10n.t('statusBar.recordingTooltipWithIntegrations',
+                this.integrationAdapterIds.map(id => labelsMap[id] ?? id).join(', '))
+            : vscode.l10n.t('statusBar.recordingTooltip');
         if (this.paused) {
             this.pauseItem.text = '$(debug-pause)';
-            this.pauseItem.tooltip = 'Saropa Log Capture: Click to resume.';
-            this.item.text = `Paused (${count} lines)${watchSuffix}${integrationSuffix}`;
-            this.item.tooltip = 'Saropa Log Capture: Paused. Click to open log file.';
+            this.pauseItem.tooltip = vscode.l10n.t('statusBar.resumeTooltip');
+            this.item.text = vscode.l10n.t('statusBar.pausedLines', count) + watchSuffix + integrationSuffix;
+            this.item.tooltip = vscode.l10n.t('statusBar.pausedTooltip');
         } else {
             this.pauseItem.text = '$(record)';
-            this.pauseItem.tooltip = 'Saropa Log Capture: Click to pause.';
-            this.item.text = `${count} lines${watchSuffix}${integrationSuffix}`;
+            this.pauseItem.tooltip = vscode.l10n.t('statusBar.pauseTooltip');
+            this.item.text = vscode.l10n.t('statusBar.lines', count) + watchSuffix + integrationSuffix;
             this.item.tooltip = recordingTip;
         }
     }
 
-    private buildIntegrationSuffix(): string {
+    /** Build integration suffix using pre-resolved labels to avoid duplicate l10n lookups. */
+    private buildIntegrationSuffix(labelsMap: Record<string, string>): string {
         if (this.integrationAdapterIds.length === 0) { return ''; }
-        const labels = this.integrationAdapterIds.map(id => INTEGRATION_LABELS[id] ?? id);
-        return labels.length === 1 ? ` | $(package) ${labels[0]}` : ` | $(check-all) ${labels.length} adapters`;
+        const labels = this.integrationAdapterIds.map(id => labelsMap[id] ?? id);
+        return labels.length === 1
+            ? vscode.l10n.t('statusBar.singleAdapterSuffix', labels[0])
+            : vscode.l10n.t('statusBar.adaptersSuffix', String(labels.length));
     }
 
     private buildWatchSuffix(): string {
