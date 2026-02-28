@@ -33,7 +33,7 @@ def confirm_publish(version: str) -> bool:
     print(f"    1. Commit and push to origin")
     print(f"    2. Create git tag v{version}")
     print(f"    3. Publish to VS Code Marketplace")
-    print(f"    4. Publish to Open VSX (Cursor / VSCodium)")
+    print(f"    4. Publish to Open VSX (Cursor / VSCodium, if OVSX_PAT set)")
     print(f"    5. Create GitHub release with .vsix")
     print(f"\n  {C.RED}These actions are irreversible.{C.RESET}")
     return ask_yn("Proceed with publish?", default=False)
