@@ -225,6 +225,7 @@ export class LogViewerProvider
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
     await sendFileLines(contentLines, ctx, post, this.seenCategories);
     if (gen !== this.loadGeneration) { return; }
+    /* Detect launch/hot-restart/reload boundaries for Run Prev/Next nav when viewing a file. */
     const boundaries = detectRunBoundaries(contentLines);
     const runStartIndices = getRunStartIndices(boundaries);
     if (runStartIndices.length > 0) {
