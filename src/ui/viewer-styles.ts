@@ -24,6 +24,7 @@ import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
 import { getRecurringPanelStyles } from './viewer-styles-recurring';
 import { getPerformancePanelStyles } from './viewer-styles-performance';
 import { getAiStyles } from './viewer-styles-ai';
+import { getRunSeparatorStyles } from './viewer-styles-run-separator';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -237,7 +238,7 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     color: var(--vscode-charts-blue, #2196f3);
 }
 .line.level-info {
-    color: var(--vscode-terminal-ansiBlue, #3794ff);
+    color: var(--vscode-terminal-ansiYellow, #dcdcaa);
 }
 
 /* --- ASCII separator lines (===, ---, +---, etc.) --- */
@@ -256,5 +257,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles();
+` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles() + getRunSeparatorStyles();
 }

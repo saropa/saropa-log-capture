@@ -14,3 +14,7 @@ With decorations on, the colored severity bar (green dot for info, etc.) appeare
 ## Files changed
 
 - `src/ui/viewer-data-helpers.ts` — `isLineContentBlank()`; barCls gated by it; calcItemHeight uses it for hideBlankLines.
+
+## Follow-up (same session)
+
+Blank lines now get the previous line's severity tint and a `.line-blank` class so they visually join the block above. Optional CSS variable `--blank-line-bg` overrides the join color. Info-level severity styling was updated to use yellow (text, bar, tint).

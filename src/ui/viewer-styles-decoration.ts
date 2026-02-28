@@ -163,10 +163,15 @@ export function getDecorationStyles(): string {
     background-color: rgba(33, 150, 243, 0.16);
 }
 .line.line-tint-info {
-    background-color: rgba(78, 201, 176, 0.06);
+    background-color: rgba(255, 204, 0, 0.08);
 }
 .line.line-tint-info:hover {
-    background-color: rgba(78, 201, 176, 0.14);
+    background-color: rgba(255, 204, 0, 0.14);
+}
+
+/* Blank/empty lines: set --blank-line-bg to any color to join before/after; when unset, previous line tint shows. */
+.line.line-blank {
+    background-color: var(--blank-line-bg);
 }
 
 /* Positioning context for severity dots and connector bars */
@@ -187,7 +192,7 @@ export function getDecorationStyles(): string {
 .level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
 .level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
 .level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
-.level-bar-info { --bar-color: var(--vscode-charts-green, #4caf50); }
+.level-bar-info { --bar-color: var(--vscode-charts-yellow, #ffc107); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
 
