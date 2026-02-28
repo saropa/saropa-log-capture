@@ -255,5 +255,6 @@ function getDiagnosticStyles(): string {
 }
 
 .cp-diag-time { font-size: 0.8em; margin-top: 6px; opacity: 0.6; font-style: italic; }
+.cp-diag-actions { margin: 10px 12px 4px; }
 `;
 }
