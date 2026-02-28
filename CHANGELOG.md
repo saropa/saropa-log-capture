@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - **Run navigation within a log.** When viewing a log file that contains multiple app runs (e.g. Flutter launch, hot restart, hot reload, exit), a "Run 1 of N" bar appears with Prev/Next to jump between runs. Boundaries are detected from lines such as "Launching ... in debug mode", "Connected to the VM Service", "Performing hot restart", "Application finished.", and "Exited (-1)".
 - **Copy Line (context menu) with multi-line selection.** When multiple lines are selected (shift+click) and you right-click a line in that range, "Copy Line" copies all selected lines as full lines. Otherwise it copies only the single line under the cursor.
+- **Crashlytics: Open google-services.json from error view.** When the Crashlytics panel shows "Query failed" (e.g. HTTP 404), an **Open google-services.json** button opens the config file the extension uses (with progress notification). Helps verify projectId/appId when the API returns "Project or app not found".
+
+### Changed
+- **Crashlytics: better google-services.json discovery.** The extension now prefers `android/**/google-services.json` (e.g. `android/app/google-services.json`) for Flutter/Android projects, then falls back to any workspace `google-services.json`. Both searches run in parallel. Output channel logs which file was used (e.g. `Config from android/app/google-services.json`).
+- **Crashlytics: clearer config and 404 messages.** Error text now mentions `google-services.json` (e.g. android/app/) and settings `saropaLogCapture.firebase.projectId / .appId` so users know where to fix config. Single shared hint string used for "no file found", setup wizard, and 404.
 
 ### Fixed
 - **CPU spike (100%) during capture.** Extension host and webview no longer saturate CPU when the log viewer is hidden or under heavy output: incremental prefix sums (O(new lines) instead of O(n) per batch), visibility-aware updates (skip HTML/linkify and viewport/minimap work when panel or tab is hidden), throttled visible-line count when filters are on, minimap skipped when tab hidden and sampled above 50k lines, batch cap (2000 lines per message) and adaptive flush interval (500ms when backlog > 1000). Viewer refreshes when the user returns to the tab.
