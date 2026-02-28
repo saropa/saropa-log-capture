@@ -16,12 +16,12 @@ export async function handleDeleteCommand(): Promise<void> {
         .reverse();
 
     if (logFiles.length === 0) {
-        vscode.window.showInformationMessage('No session files found.');
+        vscode.window.showInformationMessage(vscode.l10n.t('msg.noSessionFiles'));
         return;
     }
 
     const selected = await vscode.window.showQuickPick(logFiles, {
-        placeHolder: 'Select session file(s) to delete',
+        placeHolder: vscode.l10n.t('prompt.selectSessionsToDelete'),
         canPickMany: true,
     });
 
@@ -29,6 +29,6 @@ export async function handleDeleteCommand(): Promise<void> {
         for (const file of selected) {
             await vscode.workspace.fs.delete(vscode.Uri.joinPath(logDirUri, file));
         }
-        vscode.window.showInformationMessage(`Deleted ${selected.length} session file(s).`);
+        vscode.window.showInformationMessage(vscode.l10n.t('msg.deletedSessionFiles', String(selected.length)));
     }
 }

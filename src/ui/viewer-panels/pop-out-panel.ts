@@ -231,11 +231,11 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
         helpers.handleEditLine(this.currentFileUri, this.isSessionActive, {
           lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
           timestamp: Number(msg.timestamp ?? 0), loadFromFile: () => Promise.resolve(),
-        }).catch((err: Error) => { vscode.window.showErrorMessage(`Failed to edit line: ${err.message}`); });
+        }).catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedEditLine', err.message)); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
-          .catch((err: Error) => { vscode.window.showErrorMessage(`Failed to export logs: ${err.message}`); });
+          .catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedExportLogs', err.message)); });
         break;
       case "saveLevelFilters":
         helpers.saveLevelFilters(this.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
