@@ -48,6 +48,8 @@ export class LogSession {
     get partNumber(): number { return this._partNumber; }
     get bytesWritten(): number { return this._bytesWritten; }
     get startTime(): number { return this._partStartTime; }
+    /** Session context (for integration API). */
+    get sessionContext(): SessionContext { return this.context; }
 
     constructor(
         private readonly context: SessionContext,
@@ -63,7 +65,7 @@ export class LogSession {
         this.onSplit = callback;
     }
 
-    async start(): Promise<void> {
+    async start(extraHeaderLines?: readonly string[]): Promise<void> {
         const logDirUri = this.getLogDirUri();
         const logDirPath = logDirUri.fsPath;
 
@@ -80,7 +82,7 @@ export class LogSession {
             encoding: 'utf-8',
         });
 
-        const header = generateContextHeader(this.context, this.config);
+        const header = generateContextHeader(this.context, this.config, extraHeaderLines);
         this.writeStream.write(header);
         this._bytesWritten = Buffer.byteLength(header, 'utf-8');
         this._partStartTime = Date.now();

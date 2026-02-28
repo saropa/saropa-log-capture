@@ -9,6 +9,8 @@ const mockStatusBar = {
   show: () => {},
   hide: () => {},
   setPaused: () => {},
+  updateWatchCounts: () => {},
+  updateIntegrationAdapters: () => {},
 };
 const mockOutputChannel = { appendLine: () => {} };
 

@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import * as os from 'os';
+import * as path from 'path';
 import { getConfig, getLogDirectoryUri } from '../config/config';
 import { LogSession, SessionContext } from '../capture/log-session';
 import { enforceFileRetention } from '../config/file-retention';
@@ -25,12 +26,19 @@ import {
     generateSummary, showSummaryNotification, SessionStats,
 } from './session-summary';
 import { collectDevEnvironment } from '../misc/environment-collector';
+import {
+    getDefaultIntegrationRegistry,
+    createIntegrationContext,
+    createIntegrationEndContext,
+} from '../integrations';
 
 /** Result of initializing a new log session. */
 export interface SessionSetupResult {
     readonly logSession: LogSession;
     readonly exclusionRules: ExclusionRule[];
     readonly autoTagger: AutoTagger;
+    /** Integration adapter ids that contributed at start (for status bar). */
+    readonly integrationContributorIds: string[];
 }
 
 /** Parameters for session initialization. */
@@ -101,10 +109,17 @@ export async function initializeSession(
         .filter((r): r is ExclusionRule => r !== undefined);
     const autoTagger = new AutoTagger(config.autoTagRules);
 
+    // Integration adapters: sync header lines + contributor ids for status bar; async work fire-and-forget.
+    const integrationRegistry = getDefaultIntegrationRegistry();
+    const integrationContext = createIntegrationContext(sessionContext, config, outputChannel);
+    const { lines: extraHeaderLines, contributorIds: integrationContributorIds } =
+        integrationRegistry.getHeaderContributions(integrationContext);
+
     try {
-        await logSession.start();
+        await logSession.start(extraHeaderLines);
         outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
-        return { logSession, exclusionRules, autoTagger };
+        integrationRegistry.runOnSessionStartAsync(integrationContext);
+        return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     } catch (err) {
         outputChannel.appendLine(`Failed to start log session: ${err}`);
         return undefined;
@@ -118,6 +133,7 @@ export interface FinalizeSessionParams {
     readonly autoTagger: AutoTagger | null;
     readonly metadataStore: SessionMetadataStore;
     readonly debugAdapterType: string;
+    readonly sessionStartTime: number;
 }
 
 /** Parameters for building session statistics. */
@@ -153,7 +169,9 @@ export async function finalizeSession(
     params: FinalizeSessionParams,
     stats: SessionStats,
 ): Promise<void> {
-    const { logSession, outputChannel, autoTagger, metadataStore } = params;
+    const { logSession, outputChannel, autoTagger, metadataStore, sessionStartTime } = params;
+    const sessionEndTime = Date.now();
+    const config = getConfig();
 
     try {
         await logSession.stop();
@@ -161,6 +179,22 @@ export async function finalizeSession(
     } catch (err) {
         outputChannel.appendLine(`Error stopping log session: ${err}`);
     }
+
+    // Run integration end-phase (meta + sidecars); does not block other finalization.
+    const integrationRegistry = getDefaultIntegrationRegistry();
+    const integrationContext = createIntegrationContext(
+        logSession.sessionContext, config, outputChannel,
+    );
+    const baseFileName = path.basename(logSession.fileUri.fsPath).replace(/\.log$/i, '') ||
+        'session';
+    const endContext = createIntegrationEndContext({
+        base: integrationContext,
+        logUri: logSession.fileUri,
+        baseFileName,
+        sessionStartTime,
+        sessionEndTime,
+    });
+    await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
 
     if (autoTagger?.hasTriggeredTags()) {
         const autoTags = autoTagger.getTriggeredTags();
@@ -216,7 +250,6 @@ export async function finalizeSession(
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
     showSummaryNotification(generateSummary(filename, stats));
 
-    const config = getConfig();
     if (config.autoOpen) {
         await vscode.window.showTextDocument(logSession.fileUri);
     }

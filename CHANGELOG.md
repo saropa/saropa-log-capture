@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Integration API and first adapter (Packages).** Extensible framework for attaching external data to log sessions (header lines, meta, sidecars). Users enable adapters via `saropaLogCapture.integrations.adapters`. **Packages** adapter (id: `packages`) runs at session start: detects npm/yarn/pnpm lockfile, computes content hash, adds a "Lockfile: … sha256:…" line to the context header and stores payload in session meta for reproducibility. Status bar shows which adapters contributed (e.g. "Packages") while recording. Design and future adapter specs: `docs/integrations/INTEGRATION_API.md`, `bugs/integration-spec-*.md`.
+
+---
 ## [2.0.18] - 2026-02-28
 
 ### Changed
