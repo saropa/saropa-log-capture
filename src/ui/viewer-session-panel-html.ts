@@ -1,6 +1,7 @@
 /**
  * Session history panel HTML template for the webview.
  * Used by viewer-session-panel.ts.
+ * Header: "Project Logs" plus optional " · <path>" (hidden when default folder); whole header span is clickable.
  */
 
 /** Generate the session panel HTML. */
@@ -9,8 +10,10 @@ export function getSessionPanelHtml(): string {
 <div id="session-panel" class="session-panel">
     <div id="session-resize" class="session-panel-resize"></div>
     <div class="session-panel-header">
-        <span class="session-panel-title">Project Logs</span>
-        <span id="session-header-path" class="session-header-path" title="Click to choose folder"><span class="session-path-sep" aria-hidden="true"> · </span><span id="session-path-text">Default</span></span>
+        <span id="session-header-clickable" class="session-header-clickable" title="Click to choose folder">
+            <span class="session-panel-title">Project Logs</span>
+            <span id="session-header-path" class="session-header-path" style="display:none"><span class="session-path-sep" aria-hidden="true"> · </span><span id="session-path-text"></span></span>
+        </span>
         <button id="session-reset-root" class="session-panel-action" title="Use default folder" style="display:none">
             <span class="codicon codicon-debug-restart"></span>
         </button>
