@@ -1,8 +1,8 @@
 /** Session comparison command registrations. */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config';
-import { getComparisonPanel } from './ui/session-comparison';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
+import { getComparisonPanel } from './ui/session/session-comparison';
 
 /** URI of session marked for comparison (first selection). */
 let comparisonMarkUri: vscode.Uri | undefined;

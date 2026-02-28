@@ -2,15 +2,15 @@
 
 import * as os from 'os';
 import * as vscode from 'vscode';
-import { getConfig } from './modules/config';
-import { loadPresets } from './modules/filter-presets';
-import type { SessionManagerImpl } from './modules/session-manager';
-import type { ViewerBroadcaster } from './ui/viewer-broadcaster';
-import type { SessionHistoryProvider } from './ui/session-history-provider';
-import type { InlineDecorationsProvider } from './ui/inline-decorations';
-import type { LogViewerProvider } from './ui/log-viewer-provider';
-import type { AiWatcher } from './modules/ai-watcher';
-import { hasClaudeProject } from './modules/ai-session-resolver';
+import { getConfig } from './modules/config/config';
+import { loadPresets } from './modules/storage/filter-presets';
+import type { SessionManagerImpl } from './modules/session/session-manager';
+import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
+import type { SessionHistoryProvider } from './ui/session/session-history-provider';
+import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
+import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
+import type { AiWatcher } from './modules/ai/ai-watcher';
+import { hasClaudeProject } from './modules/ai/ai-session-resolver';
 
 interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
