@@ -24,6 +24,12 @@ suite('Viewer HTML', () => {
     });
 
     suite('script syntax', () => {
+        test('should define stripTags null-safe so Copy All never throws on missing line.html', () => {
+            const html = buildViewerHtml({ nonce: getNonce(), extensionUri: 'https://example.com', version: '0.0.0' });
+            assert.ok(html.includes('function stripTags'), 'script should define stripTags');
+            assert.ok(html.includes('html == null'), 'stripTags should guard against null/undefined');
+        });
+
         test('should produce HTML with no script syntax errors', () => {
             const html = buildViewerHtml({ nonce: getNonce(), extensionUri: 'https://example.com', version: '0.0.0' });
             const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
