@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.18] - 2026-02-28
 
 ### Changed
 - **Src folder reorganization.** `src/modules`, `src/ui`, and `src/test` are grouped into subfolders by domain/responsibility (see `docs/src-folder-reorganization-plan.md`). Modules: capture, session, config, crashlytics, bug-report, ai, export, search, source, analysis, git, storage, features, misc. UI: provider, viewer, viewer-styles, viewer-panels, viewer-nav, viewer-search-filter, viewer-context-menu, viewer-decorations, viewer-stack-tags, session, analysis, insights, panels, shared. Tests mirror under `test/modules/` and `test/ui/`.
