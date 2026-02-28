@@ -150,6 +150,7 @@ export class SessionManagerImpl implements SessionManager {
         this.sessionStartTime = Date.now();
         this.floodSuppressedTotal = 0;
         this.statusBar.show();
+        this.statusBar.updateIntegrationAdapters(result.integrationContributorIds);
         this.replayEarlyBuffer(session.id);
     }
 
@@ -171,9 +172,13 @@ export class SessionManagerImpl implements SessionManager {
             logSession, outputChannel: this.outputChannel,
             autoTagger: this.autoTagger, metadataStore: this.metadataStore,
             debugAdapterType: session.type,
+            sessionStartTime: this.sessionStartTime,
         }, stats);
 
-        if (this.ownerSessionIds.size === 0) { this.statusBar.hide(); }
+        if (this.ownerSessionIds.size === 0) {
+            this.statusBar.updateIntegrationAdapters([]);
+            this.statusBar.hide();
+        }
     }
 
     /** Get the active LogSession for the current debug session. */
