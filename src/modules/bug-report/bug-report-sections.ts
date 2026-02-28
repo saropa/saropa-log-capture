@@ -124,13 +124,21 @@ export function formatImports(results: ImportResults): string {
 }
 
 export function formatDocMatches(results: DocScanResults): string {
+    const hasHeading = results.matches.some(m => m.heading);
     const rows = results.matches.map(m => {
         const loc = `[${m.filename}:${m.lineNumber}](${buildVscodeFileUri(m.uri.fsPath, m.lineNumber)})`;
-        return `| ${loc} | ${escapePipe(m.matchedToken)} | ${escapePipe(m.lineText.trim().slice(0, 80))} |`;
+        const section = hasHeading ? ` ${escapePipe(m.heading ?? '')} |` : '';
+        const context = escapePipe(m.lineText.trim().slice(0, 80));
+        return hasHeading
+            ? `| ${loc} | ${escapePipe(m.matchedToken)} |${section} ${context} |`
+            : `| ${loc} | ${escapePipe(m.matchedToken)} | ${context} |`;
     });
+    const header = hasHeading
+        ? '| Location | Token | Section | Context |\n|----------|-------|---------|--------|\n'
+        : '| Location | Token | Context |\n|----------|-------|---------|\n';
     return [
         `## Related Documentation (${results.matches.length} references)`,
-        '| Location | Token | Context |\n|----------|-------|---------|\n' + rows.join('\n'),
+        header + rows.join('\n'),
     ].join('\n\n');
 }
 

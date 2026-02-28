@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig } from './config';
 
 const STATE_KEY = 'gitignoreChecked';
+const STATE_KEY_SAROPA = 'gitignoreCheckedSaropa';
 
 /**
  * Check if the log directory is covered by .gitignore.
@@ -50,12 +51,12 @@ export async function checkGitignore(
     }
 
     const action = await vscode.window.showInformationMessage(
-        `Saropa Log Capture saves logs to '${logDirectory}/'. Add it to .gitignore to prevent accidental commits?`,
-        'Add to .gitignore',
-        "Don't Ask Again"
+        vscode.l10n.t('msg.gitignoreLogPrompt', logDirectory),
+        vscode.l10n.t('action.addToGitignore'),
+        vscode.l10n.t('action.dontAskAgain'),
     );
 
-    if (action === 'Add to .gitignore') {
+    if (action === vscode.l10n.t('action.addToGitignore')) {
         try {
             const suffix = content.endsWith('\n') ? '' : '\n';
             const entry = `${suffix}\n# Saropa Log Capture\n${logDirectory}/\n`;
@@ -66,10 +67,57 @@ export async function checkGitignore(
             );
         } catch (err) {
             vscode.window.showErrorMessage(
-                `Failed to update .gitignore: ${err}`
+                vscode.l10n.t('msg.failedUpdateGitignore', String(err)),
             );
         }
     }
 
     await context.workspaceState.update(STATE_KEY, true);
+}
+
+/** Offer to add .saropa/ to .gitignore if not already present. Only runs once per workspace. */
+export async function checkGitignoreSaropa(
+    context: vscode.ExtensionContext,
+    workspaceFolder: vscode.WorkspaceFolder,
+): Promise<void> {
+    if (context.workspaceState.get<boolean>(STATE_KEY_SAROPA)) { return; }
+    const config = getConfig();
+    if (!config.gitignoreCheck) {
+        await context.workspaceState.update(STATE_KEY_SAROPA, true);
+        return;
+    }
+    const gitignoreUri = vscode.Uri.joinPath(workspaceFolder.uri, '.gitignore');
+    let content: string;
+    try {
+        const raw = await vscode.workspace.fs.readFile(gitignoreUri);
+        content = Buffer.from(raw).toString('utf-8');
+    } catch {
+        await context.workspaceState.update(STATE_KEY_SAROPA, true);
+        return;
+    }
+    const lines = content.split(/\r?\n/).map(l => l.trim());
+    const isCovered = lines.some(line => {
+        if (line.startsWith('#') || line.length === 0) { return false; }
+        const normalized = line.replace(/^\//, '').replace(/\/$/, '');
+        return normalized === '.saropa' || normalized === '.saropa/';
+    });
+    if (isCovered) {
+        await context.workspaceState.update(STATE_KEY_SAROPA, true);
+        return;
+    }
+    const action = await vscode.window.showInformationMessage(
+        vscode.l10n.t('msg.gitignoreSaropaPrompt'),
+        vscode.l10n.t('action.addToGitignore'),
+        vscode.l10n.t('action.dontAskAgain'),
+    );
+    if (action === vscode.l10n.t('action.addToGitignore')) {
+        try {
+            const suffix = content.endsWith('\n') ? '' : '\n';
+            const entry = `${suffix}\n# Saropa Log Capture (index & cache)\n.saropa/\n`;
+            await vscode.workspace.fs.writeFile(gitignoreUri, Buffer.from(content + entry, 'utf-8'));
+        } catch (err) {
+            vscode.window.showErrorMessage(vscode.l10n.t('msg.failedUpdateGitignore', String(err)));
+        }
+    }
+    await context.workspaceState.update(STATE_KEY_SAROPA, true);
 }

@@ -14,6 +14,7 @@ import {
     initializeSession, finalizeSession, buildSessionStats,
 } from './session-lifecycle';
 import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
+import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
 /**
@@ -36,6 +37,7 @@ export class SessionManagerImpl implements SessionManager {
     private readonly earlyBuffer = new EarlyOutputBuffer();
     /** Cached config snapshot — avoids 30+ cfg.get() calls per DAP message. */
     private cachedConfig: SaropaLogCaptureConfig = getConfig();
+    private projectIndexer: ProjectIndexer | null = null;
 
     constructor(
         private readonly statusBar: StatusBar,
@@ -47,6 +49,11 @@ export class SessionManagerImpl implements SessionManager {
     /** Refresh the cached config (call on settings change). */
     refreshConfig(config?: SaropaLogCaptureConfig): void {
         this.cachedConfig = config ?? getConfig();
+    }
+
+    /** Set project indexer for inline reports index updates after session finalization. */
+    setProjectIndexer(indexer: ProjectIndexer | null): void {
+        this.projectIndexer = indexer;
     }
 
     get activeSessionCount(): number { return this.ownerSessionIds.size; }
@@ -168,11 +175,19 @@ export class SessionManagerImpl implements SessionManager {
             categoryCounts: this.categoryCounts,
             watcher: this.watcher, floodSuppressedTotal: this.floodSuppressedTotal,
         });
+        const onReportsIndexReady = this.projectIndexer && getConfig().projectIndex.enabled
+            ? (logUri: vscode.Uri) => {
+                this.metadataStore.loadMetadata(logUri).then((meta) => {
+                    this.projectIndexer!.upsertReportEntryFromMeta(logUri, meta).catch(() => {});
+                }).catch(() => {});
+            }
+            : undefined;
         await finalizeSession({
             logSession, outputChannel: this.outputChannel,
             autoTagger: this.autoTagger, metadataStore: this.metadataStore,
             debugAdapterType: session.type,
             sessionStartTime: this.sessionStartTime,
+            onReportsIndexReady,
         }, stats);
 
         if (this.ownerSessionIds.size === 0) {
