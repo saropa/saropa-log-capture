@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Project Logs Tags toggle off by default.** When the session list loads or refreshes, the Tags filter section stays closed and the Tags button is inactive. Users can still open it with the Tags button.
 
 ### Fixed
+- **Sidebar panel width no longer changes when switching between Options and Project Logs.** All slide-out panels (Options, Project Logs, Search, Find, Bookmarks, etc.) now share a single width with a minimum of 560px, persisted with Project Logs display options, so the sidebar no longer resizes when switching panels.
 - **Severity dot on blank lines.** The colored severity bar (green/red/etc. dot) is no longer shown for lines that have no visible text, even when the decoration prefix (counter, timestamp, chevron) is shown.
 - **Legacy .meta.json in workspace root not removed.** Migration now includes the workspace root (in addition to the configured log dir and override folder) so legacy sidecars in the project root (e.g. `CHANGELOG.meta.json`, `CLAUDE.md.meta.json`) are migrated and deleted on first Project Logs load.
 
