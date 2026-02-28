@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Fixed
+- **Legacy .meta.json in workspace root not removed.** Migration now includes the workspace root (in addition to the configured log dir and override folder) so legacy sidecars in the project root (e.g. `CHANGELOG.meta.json`, `CLAUDE.md.meta.json`) are migrated and deleted on first Project Logs load.
+
+---
+
 ## [2.0.16] - 2026-02-28
 
 ### Added
