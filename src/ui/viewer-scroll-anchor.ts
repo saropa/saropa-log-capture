@@ -42,6 +42,21 @@ function buildPrefixSums() {
 }
 
 /**
+ * Extend prefixSums by appending cumulative heights for new lines at the tail.
+ * O(new lines) only. Call when lines were appended and trimData did not run.
+ * Requires prefixSums.length === allLines.length - addedCount + 1 (in sync before append).
+ */
+function appendPrefixSums() {
+    if (!prefixSums || prefixSums.length < 1) return;
+    var last = prefixSums[prefixSums.length - 1];
+    for (var i = prefixSums.length - 1; i < allLines.length; i++) {
+        last += allLines[i].height;
+        prefixSums.push(last);
+    }
+    totalHeight = last;
+}
+
+/**
  * Binary search on prefixSums to find the line at a pixel offset.
  * @param {number} px — scroll offset in pixels
  * @returns {{ index: number, offset: number }}
