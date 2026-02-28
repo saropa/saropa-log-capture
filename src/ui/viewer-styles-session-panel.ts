@@ -45,6 +45,24 @@ export function getSessionPanelLayoutStyles(): string {
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
+.session-header-clickable {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.session-header-clickable:hover {
+    color: var(--vscode-textLink-foreground);
+}
+
+.session-header-clickable:hover .session-header-path {
+    color: var(--vscode-textLink-foreground);
+    text-decoration: underline;
+}
+
 .session-panel-title {
     flex-shrink: 0;
 }
@@ -56,13 +74,7 @@ export function getSessionPanelLayoutStyles(): string {
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--vscode-descriptionForeground);
-    cursor: pointer;
     font-weight: 500;
-}
-
-.session-header-path:hover {
-    color: var(--vscode-textLink-foreground);
-    text-decoration: underline;
 }
 
 /* Separator dot excluded from selection when user selects the path. */
