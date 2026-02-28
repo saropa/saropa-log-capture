@@ -7,7 +7,7 @@ export function bugReportCommands(): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand('saropaLogCapture.generateReport', () => {
             vscode.window.showInformationMessage(
-                'Right-click an error line in the log viewer to generate a bug report.',
+                vscode.l10n.t('msg.rightClickForBugReport'),
             );
         }),
     ];

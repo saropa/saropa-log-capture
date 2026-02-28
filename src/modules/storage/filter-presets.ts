@@ -150,7 +150,7 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
     const presets = loadPresets();
 
     if (presets.length === 0) {
-        vscode.window.showInformationMessage('No filter presets configured.');
+        vscode.window.showInformationMessage(vscode.l10n.t('msg.noFilterPresets'));
         return undefined;
     }
 
@@ -161,7 +161,7 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
     }));
 
     const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Select a filter preset to apply',
+        placeHolder: vscode.l10n.t('prompt.selectPreset'),
         title: 'Filter Presets',
     });
 
@@ -201,8 +201,8 @@ export async function promptSavePreset(currentFilters: {
     exclusionsEnabled?: boolean;
 }): Promise<FilterPreset | undefined> {
     const name = await vscode.window.showInputBox({
-        prompt: 'Enter a name for this filter preset',
-        placeHolder: 'e.g., Errors Only, SQL Queries, Network Debug',
+prompt: vscode.l10n.t('prompt.presetName'),
+                placeHolder: vscode.l10n.t('prompt.presetPlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return 'Preset name cannot be empty';
@@ -221,7 +221,7 @@ export async function promptSavePreset(currentFilters: {
     };
 
     await savePreset(preset);
-    vscode.window.showInformationMessage(`Filter preset "${preset.name}" saved.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.filterPresetSaved', preset.name));
 
     return preset;
 }

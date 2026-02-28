@@ -162,4 +162,4 @@ After shipping translations, track:
 - [VS Code Display Language Configuration](https://code.visualstudio.com/docs/getstarted/locales)
 - [VS Code Localization Repository](https://github.com/microsoft/vscode-loc) — reference for standard UI terminology in each language
 - [VS Code Marketplace Language Packs](https://marketplace.visualstudio.com/search?target=VSCode&category=Language+Packs&sortBy=Installs) — install count data
-- [docs/internationalization-best-practices.md](internationalization-best-practices.md) — technical rules for nls files
+- [docs/internationalization-best-practices.md](../internationalization-best-practices.md) — technical rules for nls files
