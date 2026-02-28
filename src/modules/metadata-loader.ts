@@ -1,13 +1,14 @@
 /**
- * Shared helpers for loading session metadata sidecar files.
- * Used by both cross-session-aggregator and perf-aggregator.
+ * Shared helpers for loading session metadata from the central store.
+ * Used by cross-session-aggregator and perf-aggregator.
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri } from './config';
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from './config';
+import { SessionMetadataStore } from './session-metadata';
 import type { SessionMeta } from './session-metadata';
 
-/** A loaded session metadata file with its parsed filename. */
+/** A loaded session with its log filename and metadata. */
 export interface LoadedMeta {
     readonly filename: string;
     readonly meta: SessionMeta;
@@ -16,12 +17,12 @@ export interface LoadedMeta {
 /** Time window for filtering sessions by age. */
 export type TimeRange = '24h' | '7d' | '30d' | 'all';
 
-const maxScanDepth = 10;
 const timeRangeMs: Record<string, number> = { '24h': 86400000, '7d': 604800000, '30d': 2592000000 };
 
 /** Parse a session date from a log filename like `20260224_163302_....log`. */
 export function parseSessionDate(filename: string): number {
-    const m = filename.match(/^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+    const base = filename.split('/').pop() ?? filename;
+    const m = base.match(/^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
     if (!m) { return 0; }
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
 }
@@ -33,35 +34,19 @@ export function filterByTime(metas: readonly LoadedMeta[], range: TimeRange): re
     return metas.filter(m => parseSessionDate(m.filename) >= cutoff);
 }
 
-/** List all `.meta.json` files under the configured log directory. */
+/** List log file relative paths under the configured log directory (used for metadata lookup). */
 export async function listMetaFiles(logDir: vscode.Uri): Promise<string[]> {
-    const { includeSubfolders } = getConfig();
-    return collectMetaFiles(logDir, includeSubfolders ? maxScanDepth : 0, '');
+    const { fileTypes, includeSubfolders } = getConfig();
+    return readTrackedFiles(logDir, fileTypes, includeSubfolders);
 }
 
-async function collectMetaFiles(dir: vscode.Uri, depth: number, prefix: string): Promise<string[]> {
-    let entries: [string, vscode.FileType][];
-    try { entries = await vscode.workspace.fs.readDirectory(dir); } catch { return []; }
-    const results: string[] = [];
-    for (const [name, type] of entries) {
-        const rel = prefix ? `${prefix}/${name}` : name;
-        if (type === vscode.FileType.File && name.endsWith('.meta.json')) { results.push(rel); }
-        // Skip dotfiles (.git, .vscode, etc.)
-        else if (depth > 0 && type === vscode.FileType.Directory && !name.startsWith('.')) {
-            results.push(...await collectMetaFiles(vscode.Uri.joinPath(dir, name), depth - 1, rel));
-        }
-    }
-    return results;
-}
-
-/** Load and parse a single `.meta.json` file. Returns undefined on failure. */
-export async function loadMeta(logDir: vscode.Uri, filename: string): Promise<LoadedMeta | undefined> {
+/** Load metadata for one log file from the central store. */
+export async function loadMeta(logDir: vscode.Uri, logRelPath: string): Promise<LoadedMeta | undefined> {
     try {
-        const uri = vscode.Uri.joinPath(logDir, filename);
-        const data = await vscode.workspace.fs.readFile(uri);
-        const meta = JSON.parse(Buffer.from(data).toString('utf-8')) as SessionMeta;
-        const sessionFilename = filename.replace(/\.meta\.json$/, '');
-        return { filename: sessionFilename, meta };
+        const uri = vscode.Uri.joinPath(logDir, logRelPath);
+        const store = new SessionMetadataStore();
+        const meta = await store.loadMetadata(uri);
+        return { filename: logRelPath, meta };
     } catch { return undefined; }
 }
 
