@@ -12,10 +12,12 @@
   "typescript.tsc.autoDetect": "off",
   "cSpell.words": [
     "clippy",
+    "colorama",
     "Dedup",
     "Deduplicator",
     "Deutsch",
     "ECONNREFUSED",
+    "ellipsized",
     "esbuild",
     "Fintech",
     "flyup",
