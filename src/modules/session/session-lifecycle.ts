@@ -134,6 +134,8 @@ export interface FinalizeSessionParams {
     readonly metadataStore: SessionMetadataStore;
     readonly debugAdapterType: string;
     readonly sessionStartTime: number;
+    /** Called when post-finalize metadata (correlation tags, fingerprints) has been written. Used for project index inline update. */
+    readonly onReportsIndexReady?: (logUri: vscode.Uri) => void | Promise<void>;
 }
 
 /** Parameters for building session statistics. */
@@ -204,7 +206,7 @@ export async function finalizeSession(
         outputChannel.appendLine(`Auto-tags applied: ${autoTags.join(', ')}`);
     }
 
-    scanForCorrelationTags(logSession.fileUri).then(async (corrTags) => {
+    const pCorr = scanForCorrelationTags(logSession.fileUri).then(async (corrTags) => {
         if (corrTags.length > 0) {
             await metadataStore.setCorrelationTags(logSession.fileUri, corrTags);
             outputChannel.appendLine(`Correlation tags: ${corrTags.join(', ')}`);
@@ -213,7 +215,7 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to scan correlation tags: ${err}`);
     });
 
-    scanForFingerprints(logSession.fileUri).then(async (fps) => {
+    const pFp = scanForFingerprints(logSession.fileUri).then(async (fps) => {
         if (fps.length > 0) {
             await metadataStore.setFingerprints(logSession.fileUri, fps);
             outputChannel.appendLine(`Error fingerprints: ${fps.length} patterns`);
@@ -222,7 +224,7 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
     });
 
-    scanForPerfFingerprints(logSession.fileUri).then(async (pfs) => {
+    const pPerf = scanForPerfFingerprints(logSession.fileUri).then(async (pfs) => {
         if (pfs.length > 0) {
             await metadataStore.setPerfFingerprints(logSession.fileUri, pfs);
             outputChannel.appendLine(`Perf fingerprints: ${pfs.length} operations`);
@@ -230,6 +232,10 @@ export async function finalizeSession(
     }).catch((err) => {
         outputChannel.appendLine(`Failed to scan perf fingerprints: ${err}`);
     });
+
+    Promise.allSettled([pCorr, pFp, pPerf]).then(() => {
+        params.onReportsIndexReady?.(logSession.fileUri);
+    }).catch(() => {});
 
     scanAnrRiskForSession(logSession.fileUri, metadataStore, outputChannel);
 

@@ -53,7 +53,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     if (msg.type === 'openFile') {
         const uri = await findInWorkspace(String(msg.filename));
         if (uri) { await vscode.window.showTextDocument(uri); }
-        else { vscode.window.showWarningMessage(`Source file "${msg.filename}" not found in workspace.`); }
+        else { vscode.window.showWarningMessage(vscode.l10n.t('msg.sourceFileNotFound', String(msg.filename ?? ''))); }
     } else if (msg.type === 'drillDownError') {
         await handleDrillDown(String(msg.hash ?? ''), String(msg.normalized ?? ''));
     } else if (msg.type === 'openMatch') {
