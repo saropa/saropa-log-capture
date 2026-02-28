@@ -7,10 +7,12 @@ import { HighlightRule } from "../modules/highlight-rules";
 import { FilterPreset } from "../modules/filter-presets";
 import { getConfig } from "../modules/config";
 import {
-  PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
-  computeSessionMidnight,
+  type PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
+  computeSessionMidnight, parseTimeToMs,
 } from "./viewer-file-loader";
 import { detectRunBoundaries, getRunStartIndices } from "../modules/run-boundaries";
+import { getRunSummaries } from "../modules/run-summaries";
+import { countSeverities } from "./session-severity-counts";
 import { SerializedHighlightRule, serializeHighlightRules } from "./viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "./session-display";
 import type { ScopeContext } from "../modules/scope-context";
@@ -229,7 +231,17 @@ export class LogViewerProvider
     const boundaries = detectRunBoundaries(contentLines);
     const runStartIndices = getRunStartIndices(boundaries);
     if (runStartIndices.length > 0) {
-      post({ type: "runBoundaries", boundaries, runStartIndices });
+      const sessionMidnightMs = ctx.sessionMidnightMs;
+      const getTimestampForLine = (raw: string): number => {
+        const m = raw.match(/^\[([\d:.]+)\]/);
+        return m ? parseTimeToMs(m[1], sessionMidnightMs) : 0;
+      };
+      const countSeveritiesForSlice = (lines: string[]): { errors: number; warnings: number; perfs: number; infos: number } => {
+        const c = countSeverities(lines.join("\n"));
+        return { errors: c.errors, warnings: c.warnings, perfs: c.perfs, infos: c.infos };
+      };
+      const runSummaries = getRunSummaries(contentLines, runStartIndices, getTimestampForLine, countSeveritiesForSlice);
+      post({ type: "runBoundaries", boundaries, runStartIndices, runSummaries });
     }
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
   }
