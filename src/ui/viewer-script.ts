@@ -260,6 +260,7 @@ window.addEventListener('message', function(event) {
             if (typeof handleSplitInfo === 'function') handleSplitInfo(msg);
             break;
         case 'runBoundaries':
+            /* Run Prev/Next nav: indices of launch/hot-restart/reload lines (from loadFromFile). */
             if (typeof handleRunBoundaries === 'function') handleRunBoundaries(msg);
             break;
         case 'sessionNavInfo':
