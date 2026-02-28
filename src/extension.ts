@@ -29,6 +29,8 @@ import { buildScopeContext } from './modules/storage/scope-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
+import { getDefaultIntegrationRegistry } from './modules/integrations';
+import { packageLockfileProvider } from './modules/integrations/providers/package-lockfile';
 
 let sessionManager: SessionManagerImpl;
 let inlineDecorations: InlineDecorationsProvider;
@@ -43,6 +45,8 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(statusBar, outputChannel);
 
     sessionManager = new SessionManagerImpl(statusBar, outputChannel);
+
+    getDefaultIntegrationRegistry().register(packageLockfileProvider);
 
     // Inline code decorations.
     inlineDecorations = new InlineDecorationsProvider();

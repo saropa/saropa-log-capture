@@ -121,10 +121,11 @@ export function generateContinuationHeader(
     return lines.join('\n') + '\n';
 }
 
-/** Generate the context header block for the start of a log file. */
+/** Generate the context header block for the start of a log file. extraLines: from integration adapters, appended before divider. */
 export function generateContextHeader(
     ctx: SessionContext,
-    config: SaropaLogCaptureConfig
+    config: SaropaLogCaptureConfig,
+    extraLines?: readonly string[],
 ): string {
     const lines: string[] = [];
     lines.push('=== SAROPA LOG CAPTURE — SESSION START ===');
@@ -139,6 +140,9 @@ export function generateContextHeader(
     lines.push(`Extension:      saropa-log-capture v${ctx.extensionVersion}`);
     lines.push(`OS:             ${ctx.os}`);
     appendDevEnvironment(lines, ctx.devEnvironment);
+    if (extraLines?.length) {
+        for (const l of extraLines) { lines.push(l); }
+    }
     lines.push('==========================================');
     lines.push('');
     return lines.join('\n') + '\n';

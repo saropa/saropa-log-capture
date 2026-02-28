@@ -595,6 +595,12 @@
           "description": "%config.organizeFolders.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.integrations.adapters": {
+          "default": ["packages"],
+          "description": "Integration adapters to enable (e.g. packages, buildCi). Only these run; clear to disable all.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
         "saropaLogCapture.redactEnvVars": {
           "default": [],
           "description": "%config.redactEnvVars.description%",
