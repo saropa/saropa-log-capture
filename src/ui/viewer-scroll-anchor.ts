@@ -6,14 +6,19 @@
  * filter/layout changes keep the same content visible.
  *
  * Globals introduced:
- *   suppressScroll   — skip handleScroll during programmatic scrollTop
- *   prefixSums       — cumulative height array for O(1) position lookup
- *   recalcAndRender  — anchored replacement for recalcHeights + renderViewport
+ *   suppressScroll      — skip handleScroll during programmatic scrollTop
+ *   __programmaticScroll — context menu uses this to avoid closing on programmatic scroll
+ *   setProgrammaticScroll() — call before programmatic scroll; clears after 80ms
+ *   prefixSums          — cumulative height array for O(1) position lookup
+ *   recalcAndRender     — anchored replacement for recalcHeights + renderViewport
  */
 export function getScrollAnchorScript(): string {
     return /* javascript */ `
 /** When true, the scroll event handler skips rendering. */
 var suppressScroll = false;
+/** When true, context menu should not close on the next scroll (programmatic scroll). */
+window.__programmaticScroll = false;
+window.setProgrammaticScroll = function() { window.__programmaticScroll = true; setTimeout(function() { window.__programmaticScroll = false; }, 80); };
 
 /**
  * Cumulative height array: prefixSums[i] = sum of heights for lines 0..i-1.
@@ -86,18 +91,22 @@ function recalcAndRender() {
     buildPrefixSums();
     renderViewport(true);
 
-    suppressScroll = true;
-    if (anchorIdx >= 0) {
-        if (anchorIdx >= allLines.length) {
-            anchorIdx = allLines.length - 1;
-        }
+    /* Skip scroll when context menu is open so menu stays stable. */
+    if (!window.isContextMenuOpen) {
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+        suppressScroll = true;
         if (anchorIdx >= 0) {
-            logEl.scrollTop = prefixSums[anchorIdx] + anchorOff;
+            if (anchorIdx >= allLines.length) {
+                anchorIdx = allLines.length - 1;
+            }
+            if (anchorIdx >= 0) {
+                logEl.scrollTop = prefixSums[anchorIdx] + anchorOff;
+            }
+        } else if (autoScroll) {
+            logEl.scrollTop = logEl.scrollHeight;
         }
-    } else if (autoScroll) {
-        logEl.scrollTop = logEl.scrollHeight;
+        suppressScroll = false;
     }
-    suppressScroll = false;
 }
 `;
 }
