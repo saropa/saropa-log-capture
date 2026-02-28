@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 - **Copy All / Copy Line script error.** When a log line had no `html` (e.g. edge case in viewer data), "Copy All" or copy-float threw `Cannot read properties of undefined (reading 'replace')`. `stripTags` is now null/undefined-safe so clipboard copy never throws.
 - **Publish script Step 10 when tag exists and changelog unpublished.** When the version is already released (tag exists) and CHANGELOG still has an unpublished section (`[Unreleased]`, `[Unpublished]`, or `[Undefined]`), the script now offers "Bump to vX.Y.Z?" first instead of "Publish as-is?". Stamping accepts all three headings.
+- **Run 2 incorrectly detected during normal startup.** Run boundaries now treat only "Launching ... in debug mode", "Hot restart", and "Hot reload" as run starts. Mid-startup lines ("✓ Built", "Connecting to VM Service", "Connected to the VM Service") no longer start a new run, so a single Flutter startup shows as one run.
+- **Run separator overlapping severity bar.** The run separator bar now uses the same left padding (14.25em) as log lines so it does not overlap the left severity/timeline bar.
 
 ---
 ## [2.0.17] - 2026-02-28

@@ -4,12 +4,12 @@
 
 export function getRunSeparatorStyles(): string {
     return /* css */ `
+/* Left padding aligns with log line content (same as viewer-styles-decoration) so the bar does not overlap the severity bar. */
 .run-separator {
     min-height: 72px;
     background: linear-gradient(135deg, #c2185b 0%, #880e4f 100%);
-    border-left: 4px solid #ad1457;
     margin: 0;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 14.25em;
     display: flex;
     align-items: center;
     color: rgba(255,255,255,0.95);
@@ -21,6 +21,8 @@ export function getRunSeparatorStyles(): string {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    border-left: 4px solid #ad1457;
+    padding-left: 8px;
 }
 .run-sep-title {
     font-weight: bold;
