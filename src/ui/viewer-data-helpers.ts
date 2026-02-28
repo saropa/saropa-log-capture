@@ -204,13 +204,34 @@ function renderItem(item, idx, prevVis) {
         return '<div class="marker' + spacingCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
+    if (item.type === 'run-separator') {
+        var rs = item.runSummary;
+        if (!rs) return '<div class="run-separator"' + idxAttr + '></div>';
+        var startStr = (typeof formatRunTime === 'function') ? formatRunTime(rs.startTime) : '--:--:--';
+        var endStr = (typeof formatRunTime === 'function') ? formatRunTime(rs.endTime) : '--:--:--';
+        var durStr = (typeof formatDuration === 'function') ? formatDuration(rs.durationMs) : '';
+        var runNum = (item.runIndex != null) ? item.runIndex + 1 : 0;
+        var dots = '';
+        if (rs.errors > 0) dots += '<span class="run-sep-dot run-sep-dot-error" title="Errors">' + rs.errors + '</span>';
+        if (rs.warnings > 0) dots += '<span class="run-sep-dot run-sep-dot-warning" title="Warnings">' + rs.warnings + '</span>';
+        if (rs.perfs > 0) dots += '<span class="run-sep-dot run-sep-dot-perf" title="Perf">' + rs.perfs + '</span>';
+        if (rs.infos > 0) dots += '<span class="run-sep-dot run-sep-dot-info" title="Info">' + rs.infos + '</span>';
+        if (!dots) dots = '<span class="run-sep-dot run-sep-dot-none">0</span>';
+        return '<div class="run-separator"' + idxAttr + '><div class="run-separator-inner">' +
+            '<span class="run-sep-title">Run ' + runNum + '</span>' +
+            '<span class="run-sep-times">' + startStr + ' \u2013 ' + endStr + '</span>' +
+            '<span class="run-sep-duration">' + durStr + '</span>' +
+            '<span class="run-sep-counts">' + dots + '</span></div></div>';
+    }
+
     if (item.type === 'repeat-notification') {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
 
+    var isBlank = isLineContentBlank(item);
     // Severity bar (colored dot) — omit for blank lines so decoration prefix alone has no dot.
     var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext && !isLineContentBlank(item)) {
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext && !isBlank) {
         if (item.fw) {
             barCls = ' level-bar-framework';
         } else {
@@ -284,7 +305,7 @@ function renderItem(item, idx, prevVis) {
 
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
-    var isBlank = isLineContentBlank(item);
+    // Blank lines: use previous line's tint so the empty line visually joins the block above.
     if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
         tintCls = ' line-tint-' + allLines[idx - 1].level;
     }
