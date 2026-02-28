@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unpublished] - 2026-02-27
+## [2.0.15] - 2026-02-27 - 2026-02-27
 
 ### Changed
 - **Session panel and session styles modularized.** Split `viewer-session-panel.ts` (HTML moved to `viewer-session-panel-html.ts`) and `viewer-styles-session.ts` (styles split into `viewer-styles-session-panel`, `-list`, `-tags-loading`) to comply with the 300-line file limit. No behavior or API changes; callers still import from `viewer-session-panel` and `viewer-styles-session`.

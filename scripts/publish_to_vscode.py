@@ -310,11 +310,15 @@ def _run_publish_steps(
                     lambda: publish_marketplace(vsix_path), results):
         return False
 
-    # Step 14: Publish to Open VSX (Cursor / VSCodium)
+    # Step 14: Publish to Open VSX (optional; skip if no token, don't fail pipeline if it errors)
     heading("Step 14 · Publish to Open VSX")
-    if not run_step("Open VSX publish",
-                    lambda: publish_openvsx(vsix_path), results):
-        return False
+    if os.environ.get("OVSX_PAT", "").strip():
+        openvsx_ok = run_step("Open VSX publish",
+                              lambda: publish_openvsx(vsix_path), results)
+        if not openvsx_ok:
+            warn("Open VSX publish failed; continuing to GitHub release.")
+    else:
+        warn("OVSX_PAT not set; skipping Open VSX.")
 
     # Step 15: Create GitHub release with .vsix attached
     heading("Step 15 · GitHub Release")
@@ -330,10 +334,10 @@ def _run_publish_steps(
 def _check_publish_credentials(
     results: list[tuple[str, bool, float]],
 ) -> bool:
-    """Verify gh CLI, vsce PAT, and OVSX PAT before irreversible publish steps.
+    """Verify gh CLI and vsce PAT; check OVSX PAT (optional, never blocks).
 
-    Checked after the user confirms publish intent, so these
-    credentials never block local builds or analyze-only runs.
+    Checked after the user confirms publish intent. Missing OVSX_PAT
+    only skips Open VSX; VS Code Marketplace and GitHub release still run.
     """
     heading("Publish Credentials")
     if not run_step("GitHub CLI", check_gh_cli, results):

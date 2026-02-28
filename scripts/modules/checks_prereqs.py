@@ -120,18 +120,17 @@ def check_vsce_auth() -> bool:
 
 
 def check_ovsx_token() -> bool:
-    """Verify OVSX_PAT is set for publishing to Open VSX (Cursor / VSCodium).
+    """Check OVSX_PAT for Open VSX (Cursor / VSCodium). Never blocks: missing = skip step.
 
-    Only called when publishing. Token is created at open-vsx.org
-    (user-settings → Access Tokens). Not stored in keychain; use env var.
+    When set, Step 14 will publish to Open VSX. When not set, we warn and
+    skip Step 14 so the pipeline still succeeds (VS Code + GitHub release).
     """
     import os as _os
     pat = _os.environ.get("OVSX_PAT", "").strip()
     if pat:
         ok("OVSX_PAT set (Open VSX publish)")
         return True
-    fail("OVSX_PAT is not set. Required for Open VSX (Cursor / VSCodium).")
-    info(f"  1. Create token: {C.WHITE}https://open-vsx.org/user-settings/tokens{C.RESET}")
-    info(f"  2. Set in this shell: {C.YELLOW}OVSX_PAT=<your-token>{C.RESET}")
-    info(f"  3. First time only: {C.YELLOW}npx ovsx create-namespace saropa -p <token>{C.RESET}")
-    return False
+    warn("OVSX_PAT not set; Open VSX step will be skipped.")
+    info(f"  To publish to Cursor/VSCodium: set {C.YELLOW}OVSX_PAT{C.RESET}")
+    info(f"  Token: {C.WHITE}https://open-vsx.org/user-settings/tokens{C.RESET}")
+    return True
