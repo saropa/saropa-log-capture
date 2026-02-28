@@ -19,12 +19,14 @@ export function getSessionPanelScript(): string {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
         reverseSort: false, showLatestOnly: false, panelWidth: 0,
     };
+    var MIN_PANEL_WIDTH = 560;
+    /* Shared with icon bar: all slide-out panels use this width so the sidebar does not resize when switching (Options, Project Logs, etc.). */
+    window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
-        var minPanelW = 560;
-        if (sessionDisplayOptions.panelWidth >= minPanelW) {
+        if (sessionDisplayOptions.panelWidth >= MIN_PANEL_WIDTH) {
             var w = sessionDisplayOptions.panelWidth;
             sessionPanelEl.style.width = w + 'px';
             if (typeof setPanelSlotWidth === 'function') setPanelSlotWidth(w);
@@ -178,6 +180,7 @@ export function getSessionPanelScript(): string {
     initSessionPanelResize(sessionPanelEl, function(w) {
         if (w > 0) {
             sessionDisplayOptions.panelWidth = w;
+            window.__sharedPanelWidth = w;
             vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
         }
     });
@@ -254,6 +257,7 @@ export function getSessionPanelScript(): string {
         }
         if (e.data.type === 'sessionDisplayOptions') {
             sessionDisplayOptions = e.data.options || sessionDisplayOptions;
+            window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
             syncToggleButtons();
             if (cachedSessions) renderSessionList(cachedSessions);
         }
