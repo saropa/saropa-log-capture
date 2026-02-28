@@ -96,8 +96,11 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 	}
 }
 
+/** Max lines sent per addLines message to avoid webview CPU spike under heavy load. */
+export const MAX_LINES_PER_BATCH = 2000;
+
 /**
- * Flush batched lines to the webview.
+ * Flush batched lines to the webview. Sends at most MAX_LINES_PER_BATCH per call.
  */
 export function flushBatch(
 	pendingLines: PendingLine[],
@@ -106,7 +109,8 @@ export function flushBatch(
 	sendNewCategories: (lines: readonly PendingLine[]) => void
 ): void {
 	if (pendingLines.length === 0 || !isReady) { return; }
-	const lines = pendingLines.splice(0);
+	const take = Math.min(pendingLines.length, MAX_LINES_PER_BATCH);
+	const lines = pendingLines.splice(0, take);
 	postMessage({ type: "addLines", lines, lineCount: lines[lines.length - 1].lineCount });
 	sendNewCategories(lines);
 }

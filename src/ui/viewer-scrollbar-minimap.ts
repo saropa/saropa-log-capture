@@ -129,9 +129,11 @@ function mmLineOffset(i, hasPfx, cumH) {
     return hasPfx ? prefixSums[i] : cumH[i];
 }
 
-/** Paint all markers onto the canvas in a single pass. */
+var MM_SAMPLE_THRESHOLD = 50000;
+/** Paint all markers onto the canvas in a single pass. Skips when document hidden; samples when line count > MM_SAMPLE_THRESHOLD. */
 function paintMinimap() {
     if (!mmCtx || !minimapEl) return;
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
     var mmW = minimapEl.clientWidth;
     var mmH = minimapEl.clientHeight;
     resizeMmCanvas();
@@ -150,9 +152,10 @@ function paintMinimap() {
     }
     if (total === 0) return;
 
+    var step = allLines.length > MM_SAMPLE_THRESHOLD ? Math.max(1, Math.floor(allLines.length / MM_SAMPLE_THRESHOLD)) : 1;
     // Collect markers grouped by color to minimize fillStyle switches
     var groups = {};
-    for (var i = 0; i < allLines.length; i++) {
+    for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
         var lv = it.level;
@@ -214,6 +217,7 @@ function updateMinimap() {
 }
 
 function scheduleMinimap() {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
     clearTimeout(minimapDebounceTimer);
     minimapDebounceTimer = setTimeout(updateMinimap, 120);
 }
