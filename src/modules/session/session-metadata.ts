@@ -267,7 +267,7 @@ export class SessionMetadataStore {
         try {
             try {
                 await vscode.workspace.fs.stat(newLogUri);
-                vscode.window.showWarningMessage(`Cannot rename: "${newFilename}" already exists.`);
+                vscode.window.showWarningMessage(vscode.l10n.t('msg.cannotRenameExists', newFilename));
                 return logUri;
             } catch { /* good */ }
 
@@ -280,7 +280,7 @@ export class SessionMetadataStore {
             return newLogUri;
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to rename log file: ${msg}`);
+            vscode.window.showErrorMessage(vscode.l10n.t('msg.failedRenameLogFile', msg));
             return logUri;
         }
     }

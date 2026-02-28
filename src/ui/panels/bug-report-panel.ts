@@ -32,7 +32,7 @@ export async function showBugReport(
     lastSubject = deriveSubject(data.errorLine, data.fingerprint);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);
-    vscode.window.showInformationMessage('Bug report markdown copied to clipboard.');
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.bugReportCopied'));
 }
 
 /** Dispose the singleton panel. */
@@ -51,7 +51,7 @@ function ensurePanel(): void {
 async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     if (msg.type === 'copy') {
         await vscode.env.clipboard.writeText(lastMarkdown);
-        vscode.window.showInformationMessage('Bug report markdown copied to clipboard.');
+        vscode.window.showInformationMessage(vscode.l10n.t('msg.bugReportCopied'));
     } else if (msg.type === 'save') {
         const uri = await vscode.window.showSaveDialog({
             defaultUri: vscode.Uri.file(buildDefaultFilename()),
@@ -59,7 +59,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         });
         if (uri) {
             await vscode.workspace.fs.writeFile(uri, Buffer.from(lastMarkdown, 'utf-8'));
-            vscode.window.showInformationMessage(`Report saved to ${uri.fsPath.split(/[\\/]/).pop()}`);
+            vscode.window.showInformationMessage(vscode.l10n.t('msg.reportSavedTo', uri.fsPath.split(/[\\/]/).pop() ?? ''));
         }
     }
 }

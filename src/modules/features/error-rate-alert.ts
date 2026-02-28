@@ -108,10 +108,10 @@ export class ErrorRateAlert {
         } else {
             // Default: show VS Code warning
             vscode.window.showWarningMessage(
-                `High error rate detected: ${rate} errors in ${windowSec}s`,
-                'Open Log',
+                vscode.l10n.t('msg.highErrorRate', String(rate), String(windowSec)),
+                vscode.l10n.t('action.openLog'),
             ).then((selection) => {
-                if (selection === 'Open Log') {
+                if (selection === vscode.l10n.t('action.openLog')) {
                     vscode.commands.executeCommand('saropaLogCapture.open');
                 }
             });

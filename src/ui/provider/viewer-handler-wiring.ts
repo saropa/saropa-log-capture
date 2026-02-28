@@ -80,7 +80,10 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     }
   });
   target.setAnnotationPromptHandler(async (lineIndex, current) => {
-    const text = await vscode.window.showInputBox({ prompt: `Annotate line ${lineIndex + 1}`, value: current });
+    const text = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('prompt.annotateLine', String(lineIndex + 1)),
+    value: current,
+  });
     if (text === undefined) { return; }
     broadcaster.setAnnotation(lineIndex, text);
     const session = sessionManager.getActiveSession();
@@ -108,11 +111,11 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);
     if (cur.some(p => p.pattern === text)) {
-      vscode.window.showInformationMessage(`"${text}" is already in watch list.`);
+      vscode.window.showInformationMessage(vscode.l10n.t('msg.alreadyInWatchList', text));
       return;
     }
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
-    vscode.window.showInformationMessage(`Added "${text}" to watch list.`);
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.addedToWatchList', text));
   });
   const getSessionRootPath = (): string => {
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -191,23 +194,28 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
 async function confirmDeleteFileBookmarks(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
   const filename = String(msg.filename ?? 'this file');
   const answer = await vscode.window.showWarningMessage(
-    `Delete all bookmarks for ${filename}?`, { modal: true }, 'Delete All',
+    vscode.l10n.t('msg.deleteBookmarksForFile', filename),
+    { modal: true },
+    vscode.l10n.t('action.deleteAll'),
   );
-  if (answer === 'Delete All') { store.removeAllForFile(String(msg.fileUri ?? '')); }
+  if (answer === vscode.l10n.t('action.deleteAll')) { store.removeAllForFile(String(msg.fileUri ?? '')); }
 }
 
 async function confirmDeleteAllBookmarks(store: BookmarkStore): Promise<void> {
   const total = store.getTotalCount();
   if (total === 0) { return; }
   const answer = await vscode.window.showWarningMessage(
-    `Delete all ${total} bookmark${total === 1 ? '' : 's'}?`, { modal: true }, 'Delete All',
+    vscode.l10n.t('msg.deleteAllBookmarks', String(total), total === 1 ? '' : 's'),
+    { modal: true },
+    vscode.l10n.t('action.deleteAll'),
   );
-  if (answer === 'Delete All') { store.removeAll(); }
+  if (answer === vscode.l10n.t('action.deleteAll')) { store.removeAll(); }
 }
 
 async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
   const note = await vscode.window.showInputBox({
-    prompt: 'Edit bookmark note', value: String(msg.currentNote ?? ''),
+    prompt: vscode.l10n.t('prompt.editBookmarkNote'),
+    value: String(msg.currentNote ?? ''),
   });
   if (note === undefined) { return; }
   store.updateNote(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''), note);

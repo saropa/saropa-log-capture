@@ -89,7 +89,7 @@ export async function handleOpenGoogleServicesJson(): Promise<void> {
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc);
     } else {
-        await vscode.window.showInformationMessage('No google-services.json found in workspace. Add one (e.g. android/app/) or use Browse to select a file.');
+        await vscode.window.showInformationMessage(vscode.l10n.t('msg.noGoogleServicesJson'));
     }
 }
 

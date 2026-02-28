@@ -113,14 +113,14 @@ export function generateDeepLink(sessionFilename: string, line?: number): string
 export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     const params = parseDeepLinkUri(uri);
     if (!params) {
-        vscode.window.showErrorMessage('Invalid deep link format');
+        vscode.window.showErrorMessage(vscode.l10n.t('msg.invalidDeepLink'));
         return false;
     }
 
     // Deep links require a workspace - log files are stored relative to it
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
-        vscode.window.showErrorMessage('No workspace open. Please open a workspace first.');
+        vscode.window.showErrorMessage(vscode.l10n.t('msg.noWorkspaceOpen'));
         return false;
     }
 
@@ -132,7 +132,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     try {
         await vscode.workspace.fs.stat(logUri);
     } catch {
-        vscode.window.showErrorMessage(`Log file not found: ${params.session}`);
+        vscode.window.showErrorMessage(vscode.l10n.t('msg.logFileNotFound', params.session));
         return false;
     }
 
@@ -169,7 +169,7 @@ export async function copyDeepLinkToClipboard(sessionFilename: string, line?: nu
 
     // Show confirmation with line info if applicable
     const lineInfo = line ? ` (line ${line})` : '';
-    vscode.window.showInformationMessage(`Deep link copied${lineInfo}`);
+    vscode.window.showInformationMessage(vscode.l10n.t('msg.deepLinkCopied', lineInfo));
 }
 
 /**

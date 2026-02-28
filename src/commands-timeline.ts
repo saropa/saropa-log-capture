@@ -10,7 +10,7 @@ export function timelineCommands(): vscode.Disposable[] {
             'saropaLogCapture.showTimeline',
             async (item?: { uri: vscode.Uri }) => {
                 if (item?.uri) { await showTimeline(item.uri); }
-                else { vscode.window.showInformationMessage('Right-click a session in Session History to show its timeline.'); }
+                else { vscode.window.showInformationMessage(vscode.l10n.t('msg.rightClickForTimeline')); }
             },
         ),
     ];
