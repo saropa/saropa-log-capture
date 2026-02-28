@@ -178,11 +178,12 @@ function searchPrev() {
 }
 
 function scrollToMatch() {
-    if (currentMatchIdx < 0) return;
+    if (currentMatchIdx < 0 || window.isContextMenuOpen) return;
     var idx = matchIndices[currentMatchIdx];
     var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
         ? prefixSums[idx] : 0;
     if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }
+    if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true;
     logEl.scrollTop = cumH - logEl.clientHeight / 2;
     suppressScroll = false;

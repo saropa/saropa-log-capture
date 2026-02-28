@@ -187,7 +187,8 @@ function trimData() {
         repeatTracker.lastLineIndex -= excess;
         if (repeatTracker.lastLineIndex < 0) repeatTracker.lastLineIndex = -1;
     }
-    if (removedHeight > 0 && !autoScroll) {
+    if (removedHeight > 0 && !autoScroll && !window.isContextMenuOpen) {
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
         suppressScroll = true;
         logEl.scrollTop = Math.max(0, logEl.scrollTop - removedHeight);
         suppressScroll = false;
