@@ -40,11 +40,13 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'show-context':"));
         });
 
-        test('should handle copy-selection and select-all global actions', () => {
+        test('should handle copy-selection, select-all, and export-current-view global actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function handleGlobalAction'));
             assert.ok(script.includes("'copy-selection'"));
             assert.ok(script.includes("'select-all'"));
+            assert.ok(script.includes("'export-current-view'"));
+            assert.ok(script.includes('window.openExportModal'));
         });
 
         test('should handle source-link actions', () => {

@@ -126,6 +126,17 @@ if (resetOptionsBtn && typeof resetOptionsToDefault === 'function') {
     });
 }
 
+// Reset extension settings: run host command (confirmation in host).
+var resetSettingsBtn = document.getElementById('reset-settings-btn');
+if (resetSettingsBtn) {
+    resetSettingsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            vscodeApi.postMessage({ type: 'resetAllSettings' });
+        }
+    });
+}
+
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');

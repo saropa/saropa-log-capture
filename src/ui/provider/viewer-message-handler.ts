@@ -134,5 +134,9 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "requestAboutContent":
         void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.post);
         break;
+      case "resetAllSettings":
+        /* Host shows modal confirmation; no webview feedback needed. */
+        void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
+        break;
     }
 }

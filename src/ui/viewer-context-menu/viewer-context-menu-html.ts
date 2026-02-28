@@ -26,6 +26,9 @@ export function getContextMenuHtml(): string {
     <div class="context-menu-item" data-action="select-all">
         <span class="codicon codicon-list-flat"></span> Select All
     </div>
+    <div class="context-menu-item" data-action="export-current-view">
+        <span class="codicon codicon-export"></span> Export current view…
+    </div>
     <div class="context-menu-separator" data-line-action></div>
     <div class="context-menu-item" data-action="copy-to-search" data-line-action>
         <span class="codicon codicon-search"></span> Copy to Search
