@@ -22,6 +22,9 @@ import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
 import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
 import { getLogDirectoryUri } from './modules/config/config';
+import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
+import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
+import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload } from './ui/provider/viewer-provider-helpers';
@@ -33,6 +36,7 @@ import { getDefaultIntegrationRegistry } from './modules/integrations';
 import { packageLockfileProvider } from './modules/integrations/providers/package-lockfile';
 
 let sessionManager: SessionManagerImpl;
+let projectIndexer: ProjectIndexer | null = null;
 let inlineDecorations: InlineDecorationsProvider;
 let viewerProvider: LogViewerProvider;
 let historyProvider: SessionHistoryProvider;
@@ -45,6 +49,15 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(statusBar, outputChannel);
 
     sessionManager = new SessionManagerImpl(statusBar, outputChannel);
+
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (folder && getConfig().projectIndex.enabled) {
+        projectIndexer = new ProjectIndexer(folder);
+        setGlobalProjectIndexer(projectIndexer);
+        sessionManager.setProjectIndexer(projectIndexer);
+        projectIndexer.startWatching();
+        context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; setGlobalProjectIndexer(null); } });
+    }
 
     getDefaultIntegrationRegistry().register(packageLockfileProvider);
 
@@ -273,11 +286,20 @@ export function activate(context: vscode.ExtensionContext): void {
         );
     }
 
+    // One-time migration: move reports/crashlytics/ to .saropa/cache/crashlytics/
+    if (folder) {
+        migrateCrashlyticsCacheToSaropa(folder).catch(() => {});
+        checkGitignoreSaropa(context, folder).catch(() => {});
+    }
+
     outputChannel.appendLine('Saropa Log Capture activated.');
 }
 
 export function deactivate(): void {
     sessionManager?.stopAll();
+    projectIndexer?.dispose();
+    projectIndexer = null;
+    setGlobalProjectIndexer(null);
     popOutPanel?.dispose();
     disposeComparisonPanel();
     disposeAnalysisPanel();

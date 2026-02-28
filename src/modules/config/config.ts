@@ -80,6 +80,25 @@ export interface SaropaLogCaptureConfig {
   readonly organizeFolders: boolean;
   /** Integration adapter ids to enable (e.g. ["packages", "buildCi"]). Only these run. */
   readonly integrationsAdapters: readonly string[];
+  /** Project index: docs/reports indexing for faster analysis. */
+  readonly projectIndex: ProjectIndexConfig;
+}
+
+/** Single source entry for project index (path + file types). */
+export interface ProjectIndexSourceConfig {
+  readonly path: string;
+  readonly fileTypes?: readonly string[];
+  readonly enabled?: boolean;
+}
+
+/** Project index settings. */
+export interface ProjectIndexConfig {
+  readonly enabled: boolean;
+  readonly sources: readonly ProjectIndexSourceConfig[];
+  readonly includeRootFiles: boolean;
+  readonly includeReports: boolean;
+  readonly maxFilesPerSource: number;
+  readonly refreshInterval: number;
 }
 
 const SECTION = "saropaLogCapture";
@@ -211,6 +230,27 @@ export function getConfig(): SaropaLogCaptureConfig {
     iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
     organizeFolders: cfg.get<boolean>("organizeFolders", true),
     integrationsAdapters: cfg.get<string[]>("integrations.adapters", ["packages"]),
+    projectIndex: getProjectIndexConfig(cfg),
+  };
+}
+
+function getProjectIndexConfig(cfg: vscode.WorkspaceConfiguration): ProjectIndexConfig {
+  const rawSources = cfg.get<Array<{ path: string; fileTypes?: string[]; enabled?: boolean }>>("projectIndex.sources");
+  const docsDirs = cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]);
+  const sources: ProjectIndexSourceConfig[] = Array.isArray(rawSources) && rawSources.length > 0
+    ? rawSources.map((s) => ({
+        path: String(s?.path ?? ""),
+        fileTypes: Array.isArray(s?.fileTypes) ? s.fileTypes : [".md", ".txt"],
+        enabled: s?.enabled !== false,
+      })).filter((s) => s.path.length > 0)
+    : docsDirs.map((dir) => ({ path: dir, fileTypes: [".md", ".txt"], enabled: true }));
+  return {
+    enabled: cfg.get<boolean>("projectIndex.enabled", true),
+    sources,
+    includeRootFiles: cfg.get<boolean>("projectIndex.includeRootFiles", true),
+    includeReports: cfg.get<boolean>("projectIndex.includeReports", true),
+    maxFilesPerSource: Math.min(1000, Math.max(10, cfg.get<number>("projectIndex.maxFilesPerSource", 100))),
+    refreshInterval: Math.min(3600, Math.max(0, cfg.get<number>("projectIndex.refreshInterval", 0))),
   };
 }
 
@@ -243,6 +283,21 @@ export function getLogDirectoryUri(
     return vscode.Uri.file(config.logDirectory);
   }
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
+}
+
+/** URI for extension tooling root (.saropa/). Index and caches live under here. */
+export function getSaropaDirUri(workspaceFolder: vscode.WorkspaceFolder): vscode.Uri {
+  return vscode.Uri.joinPath(workspaceFolder.uri, '.saropa');
+}
+
+/** URI for Crashlytics cache directory (.saropa/cache/crashlytics/). */
+export function getSaropaCacheCrashlyticsUri(workspaceFolder: vscode.WorkspaceFolder): vscode.Uri {
+  return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'cache', 'crashlytics');
+}
+
+/** URI for project index directory (.saropa/index/). */
+export function getSaropaIndexDirUri(workspaceFolder: vscode.WorkspaceFolder): vscode.Uri {
+  return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'index');
 }
 
 export { isTrackedFile, readTrackedFiles, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';

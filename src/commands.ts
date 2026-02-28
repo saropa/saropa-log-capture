@@ -23,6 +23,7 @@ import { insightsCommands } from './commands-insights';
 import { bugReportCommands } from './commands-bug-report';
 import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
+import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -92,20 +93,20 @@ function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.delete', async () => { await handleDeleteCommand(); }),
         vscode.commands.registerCommand('saropaLogCapture.insertMarker', async () => {
             const text = await vscode.window.showInputBox({
-                prompt: 'Marker text (leave empty for timestamp only)',
-                placeHolder: 'e.g. before refactor, test attempt 2',
+                prompt: vscode.l10n.t('msg.markerPrompt'),
+                placeHolder: vscode.l10n.t('msg.markerPlaceholder'),
             });
             if (text !== undefined) { sessionManager.insertMarker(text || undefined); }
         }),
         vscode.commands.registerCommand('saropaLogCapture.splitNow', async () => {
             const session = sessionManager.getActiveSession();
             if (!session) {
-                vscode.window.showWarningMessage('No active debug session to split.');
+                vscode.window.showWarningMessage(vscode.l10n.t('msg.noActiveSessionToSplit'));
                 return;
             }
             await session.splitNow();
             historyProvider.refresh();
-            vscode.window.showInformationMessage(`Log file split. Now on part ${session.partNumber + 1}.`);
+            vscode.window.showInformationMessage(vscode.l10n.t('msg.logFileSplit', String(session.partNumber + 1)));
         }),
     ];
 }
@@ -125,9 +126,11 @@ function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
           async (item: { uri: vscode.Uri; filename: string }) => {
             if (!item?.uri) { return; }
             const answer = await vscode.window.showWarningMessage(
-                `Delete ${item.filename}?`, { modal: true }, 'Delete',
+                vscode.l10n.t('msg.deleteFileConfirm', item.filename),
+                { modal: true },
+                vscode.l10n.t('action.delete'),
             );
-            if (answer === 'Delete') {
+            if (answer === vscode.l10n.t('action.delete')) {
                 await vscode.workspace.fs.delete(item.uri);
                 historyProvider.refresh();
             }
@@ -142,7 +145,7 @@ function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
           async (item: { uri: vscode.Uri; filename: string }) => {
             if (!item?.uri) { return; }
             const name = await vscode.window.showInputBox({
-                prompt: 'Enter new name for this session (also renames file)',
+                prompt: vscode.l10n.t('msg.renameSessionPrompt'),
                 value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_(?:\d{6}|\d{2}-\d{2}(?:-\d{2})?)_/, ''),
             });
             if (!name || name.trim() === '') { return; }
@@ -156,7 +159,7 @@ function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             const meta = await historyProvider.getMetaStore().loadMetadata(item.uri);
             const input = await vscode.window.showInputBox({
-                prompt: 'Enter tags (comma-separated)',
+                prompt: vscode.l10n.t('msg.enterTagsPrompt'),
                 value: (meta.tags ?? []).join(', '),
             });
             if (input === undefined) { return; }
@@ -197,9 +200,10 @@ function fileExportCmd(
         if (!item?.uri) { return; }
         const outUri = await fn(item.uri);
         const action = await vscode.window.showInformationMessage(
-            `Exported to ${outUri.fsPath.split(/[\\/]/).pop()}`, 'Open',
+            vscode.l10n.t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
+            vscode.l10n.t('action.open'),
         );
-        if (action === 'Open') { await vscode.window.showTextDocument(outUri); }
+        if (action === vscode.l10n.t('action.open')) { await vscode.window.showTextDocument(outUri); }
     });
 }
 
@@ -211,15 +215,32 @@ function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
             const tags = await scanForCorrelationTags(item.uri);
             await historyProvider.getMetaStore().setCorrelationTags(item.uri, tags);
             historyProvider.refresh();
-            vscode.window.showInformationMessage(`Found ${tags.length} correlation tag${tags.length !== 1 ? 's' : ''}.`);
+            vscode.window.showInformationMessage(
+            vscode.l10n.t('msg.foundCorrelationTags', String(tags.length), tags.length !== 1 ? 's' : ''),
+        );
         }),
     ];
 }
 
 
 function toolCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { viewerProvider, inlineDecorations, popOutPanel } = deps;
+    const { viewerProvider, inlineDecorations, popOutPanel, sessionManager } = deps;
     return [
+        vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
+            const indexer = getGlobalProjectIndexer();
+            if (!indexer) {
+                vscode.window.showWarningMessage('Project index is not available (no workspace folder).');
+                return;
+            }
+            await vscode.window.withProgress(
+                { location: vscode.ProgressLocation.Notification, title: 'Rebuilding project index', cancellable: true },
+                async (_progress, _token) => {
+                    const getActiveLogUri = () => sessionManager.getActiveSession()?.fileUri;
+                    await indexer.build(getActiveLogUri);
+                },
+            );
+            vscode.window.showInformationMessage('Project index rebuilt.');
+        }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();
@@ -232,7 +253,7 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
             if (!item?.uri) { return; }
             await vscode.env.clipboard.writeText(item.uri.fsPath);
-            vscode.window.showInformationMessage('File path copied to clipboard');
+            vscode.window.showInformationMessage(vscode.l10n.t('msg.filePathCopied'));
         }),
         vscode.commands.registerCommand('saropaLogCapture.applyPreset', async () => {
             const preset = await pickPreset();
@@ -245,14 +266,14 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.toggleInlineDecorations', () => {
             const enabled = inlineDecorations.toggle();
             vscode.window.showInformationMessage(
-                `Inline log decorations ${enabled ? 'enabled' : 'disabled'}`,
+                enabled ? vscode.l10n.t('msg.inlineDecorationsEnabled') : vscode.l10n.t('msg.inlineDecorationsDisabled'),
             );
         }),
         vscode.commands.registerCommand('saropaLogCapture.applyTemplate', async () => {
             const template = await pickTemplate();
             if (template) {
                 await applyTemplate(template);
-                vscode.window.showInformationMessage(`Template "${template.name}" applied.`);
+                vscode.window.showInformationMessage(vscode.l10n.t('msg.templateApplied', template.name));
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
@@ -266,11 +287,11 @@ const settingsSection = 'saropaLogCapture';
 /** Reset all extension settings to their package.json defaults. */
 async function resetAllSettings(): Promise<void> {
     const answer = await vscode.window.showWarningMessage(
-        'Reset all Saropa Log Capture settings to defaults?',
+        vscode.l10n.t('msg.resetSettingsConfirm'),
         { modal: true },
-        'Reset',
+        vscode.l10n.t('action.reset'),
     );
-    if (answer !== 'Reset') { return; }
+    if (answer !== vscode.l10n.t('action.reset')) { return; }
 
     const ext = vscode.extensions.getExtension(extensionId);
     const props: Record<string, unknown> | undefined =
@@ -290,6 +311,6 @@ async function resetAllSettings(): Promise<void> {
     ]));
 
     vscode.window.showInformationMessage(
-        `Reset ${keys.length} settings to defaults.`,
+        vscode.l10n.t('msg.settingsReset', String(keys.length)),
     );
 }

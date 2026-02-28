@@ -1,8 +1,15 @@
 import * as vscode from 'vscode';
 import { getConfig, readTrackedFiles } from './config';
 import type { SessionMetadataStore } from '../session/session-metadata';
+import { getGlobalProjectIndexer } from '../project-indexer/project-indexer';
 
 let hasNotifiedThisSession = false;
+
+function removeReportFromIndex(uri: vscode.Uri): void {
+    if (!getConfig().projectIndex.enabled) { return; }
+    const idx = getGlobalProjectIndexer();
+    if (idx) { idx.removeEntry('reports', vscode.workspace.asRelativePath(uri).replace(/\\/g, '/')).catch(() => {}); }
+}
 
 /**
  * Enforce the maxLogFiles limit. Trashes oldest tracked files by mtime
@@ -50,6 +57,7 @@ export async function enforceFileRetention(
         try {
             const uri = vscode.Uri.joinPath(logDirUri, fileStats[i].name);
             await metaStore.setTrashed(uri, true);
+            removeReportFromIndex(uri);
             trashed++;
         } catch {
             // File may be locked — skip it.
@@ -59,7 +67,7 @@ export async function enforceFileRetention(
     if (trashed > 0 && !hasNotifiedThisSession) {
         hasNotifiedThisSession = true;
         vscode.window.showInformationMessage(
-            `Saropa Log Capture: Moved ${trashed} old file(s) to trash (maxLogFiles: ${maxLogFiles}).`
+            vscode.l10n.t('msg.fileRetentionMoved', String(trashed), String(maxLogFiles)),
         );
     }
 

@@ -52,7 +52,7 @@ Workspace
 ├── guides/         ← scanned (how-to docs)
 ├── reports/        ← scanned (sidecar metadata only)
 │   ├── *.log + *.meta.json   ← session files (unchanged)
-│   └── (no more .crashlytics/ subfolder — moved to .saropa/)
+│   └── (no more crashlytics/ subfolder — moved to .saropa/)
 ├── README.md       ← scanned (root files)
 └── .saropa/
     ├── index/
@@ -63,7 +63,7 @@ Workspace
     │   └── root-files.idx.json  ← root-level loose files
     └── cache/
         └── crashlytics/
-            └── {issueId}.json   ← crash event detail (moved from reports/.crashlytics/)
+            └── {issueId}.json   ← crash event detail (moved from reports/crashlytics/)
 ```
 
 #### `.saropa/` as the single tooling root
@@ -75,7 +75,7 @@ All extension-generated artifacts (indexes, caches) live under `.saropa/`. User-
 | `.saropa/index/` | Project index files | `project-indexer.ts` |
 | `.saropa/cache/crashlytics/` | Crash event detail JSON (immutable) | `firebase-crashlytics.ts` |
 
-**Migration:** On first run after upgrade, if `reports/.crashlytics/` exists, move its contents to `.saropa/cache/crashlytics/` and delete the old directory. Cache files have no TTL (crash events are immutable records) so they're valuable to preserve.
+**Migration:** On first run after upgrade, if `reports/crashlytics/` exists, move its contents to `.saropa/cache/crashlytics/` and delete the old directory. Cache files have no TTL (crash events are immutable records) so they're valuable to preserve.
 
 #### How `reports/` is indexed (special handling)
 
@@ -91,14 +91,14 @@ Log files are fundamentally different from knowledge files — machine-generated
 | Trashed files | N/A | Skip sessions where `meta.trashed === true` |
 | Token types | General keywords, headings | Semantic only: `file:app.dart`, `error:NullPointerException` |
 
-**Why sidecar-first:**
-- The `.meta.json` sidecars already store `correlationTags` (source files, error classes) and `fingerprints` (error signatures) — extracted by `correlation-scanner.ts` during session finalization
-- Reading a 2 KB sidecar is orders of magnitude cheaper than parsing a 50K-line log file
+**Why metadata-based (central store):**
+- Session metadata lives in `reports/.session-metadata.json` (central store; no per-file sidecars). The indexer reads this single file and builds report entries from its keys (workspace-relative log paths) and meta (correlationTags, fingerprints, etc.).
+- Reading the central JSON is orders of magnitude cheaper than parsing log file content
 - Tokens are already semantic and deduplicated — no stop-word filtering or noise reduction needed
 - If a sidecar has no `correlationTags` yet (legacy session), the indexer can optionally queue a background extraction
 
 **Session eligibility:**
-- Completed (not actively recording) — checked by absence from `sessionManager`'s active session set (the set of `ownerSessionIds`)
+- Completed (not actively recording) — checked by absence from `sessionManager`'s active session set (`ownerSessionIds`, the same set used elsewhere to determine "currently recording")
 - Not trashed (`meta.trashed !== true`)
 - Has a `.meta.json` sidecar (sessions without one get a minimal metadata-only entry)
 
@@ -119,6 +119,8 @@ Log files are fundamentally different from knowledge files — machine-generated
   "warningCount": 12
 }
 ```
+
+The `fingerprints` array stores string representations derived from session metadata's `FingerprintEntry[]` (e.g. `"hash@file:line"`) so the on-disk index format is a simple string array.
 
 ### Index Storage: `.saropa/index/`
 
@@ -391,10 +393,14 @@ When the extension itself creates or modifies a file, it already knows exactly w
 
 | Event | Action |
 |-------|--------|
-| Session finalized → `.meta.json` written | Upsert `reports.idx.json` entry with correlationTags, fingerprints, counts |
+| Session finalized → metadata complete | Upsert `reports.idx.json` entry (see timing note below) |
 | Crash detail fetched → cache file written | Upsert Crashlytics cache entry (if indexed in future) |
 | Session trashed | Remove entry from `reports.idx.json` |
 | Session restored from trash | Upsert entry back into `reports.idx.json` |
+
+**When to run the reports upsert:** `finalizeSession()` does not write `.meta.json` itself; it calls `integrationRegistry.runOnSessionEnd()` then fires async `scanForCorrelationTags` / `scanForFingerprints` / etc., which call `metadataStore.setCorrelationTags` / `setFingerprints` and thus save `.meta.json` (possibly multiple times). Correlation tags and fingerprints are not available when `finalizeSession` returns. **Recommended:** From `session-lifecycle.ts`, when the post-finalize metadata work is complete (e.g. after a single `Promise.allSettled([…setCorrelationTags, setFingerprints, …])`-style completion), call `indexer.upsertEntry('reports', entry)` with the full meta including `correlationTags` and `fingerprints`. Alternatively, upsert immediately after finalization with whatever meta exists (often without tags/fingerprints) and trigger a second upsert when correlation/fingerprint metadata is saved.
+
+**Trash/restore hook:** `setTrashed` is called from `commands-trash.ts` (trash/restore commands) and `src/modules/config/file-retention.ts`. The **callers** of `setTrashed` are responsible for calling `indexer.removeEntry('reports', path)` or `indexer.upsertEntry('reports', entry)` after the call; `session-metadata.ts` stays unchanged and does not take a dependency on the indexer.
 
 This is a single `upsertEntry(sourceId, entry)` / `removeEntry(sourceId, relativePath)` call — no full rebuild needed.
 
@@ -414,7 +420,7 @@ The lazy rebuild also acts as a **consistency safety net** — it catches anythi
 
 ### File Watcher Integration
 
-Register a `FileSystemWatcher` per enabled source:
+Register a `FileSystemWatcher` per enabled source. The watcher pattern must be derived from the source's `fileTypes` (e.g. `.md`, `.txt`, `.yml`); use a glob that matches all configured extensions (e.g. multiple watchers or a pattern like `${source.path}/**/*.{md,txt}` when both are in fileTypes).
 
 ```typescript
 const watcher = vscode.workspace.createFileSystemWatcher(
@@ -481,11 +487,11 @@ The existing `search-index.ts` indexes `reports/` file metadata (lineCount, size
 
 ### Stage 1: `.saropa/` Foundation & Crashlytics Migration
 
-**Files:** `src/modules/firebase-crashlytics.ts`, `src/modules/gitignore-checker.ts`, `src/extension.ts`
+**Files:** `src/modules/crashlytics/crashlytics-io.ts` (or firebase-crashlytics), `src/modules/config/gitignore-checker.ts`, `src/extension.ts`
 
 - Create `.saropa/cache/crashlytics/` directory structure
-- Migrate existing `reports/.crashlytics/*.json` → `.saropa/cache/crashlytics/`
-- Delete old `reports/.crashlytics/` after successful migration
+- Migrate existing `reports/crashlytics/*.json` → `.saropa/cache/crashlytics/`
+- Delete old `reports/crashlytics/` after successful migration
 - Update `firebase-crashlytics.ts` cache path from `getLogDirectoryUri()` to `.saropa/cache/crashlytics/`
 - Offer to add `.saropa/` to `.gitignore` (same pattern as `reports/`)
 
@@ -493,7 +499,7 @@ The existing `search-index.ts` indexes `reports/` file metadata (lineCount, size
 
 ### Stage 2: Core Index Infrastructure
 
-**Files:** `src/modules/project-indexer.ts`
+**Files:** `src/modules/project-indexer.ts` (and optionally `token-extractor.ts` if core exceeds 300 lines)
 
 - `ProjectIndexer` class with `build()`, `rebuild()`, `getOrRebuild()`, `query()`
 - `upsertEntry(sourceId, entry)` and `removeEntry(sourceId, relativePath)` for inline updates
@@ -505,29 +511,26 @@ The existing `search-index.ts` indexes `reports/` file metadata (lineCount, size
 - Configuration reading from new settings
 - Fallback to `docsScanDirs` if new settings not configured
 
-**Estimated scope:** 1 new file (~250 lines), config.ts additions (~30 lines), package.json settings (~60 lines)
+**Estimated scope:** 1 new file (~250 lines), split into `project-indexer.ts` + `token-extractor.ts` if > 300 lines; config additions (~30 lines), package.json settings (~60 lines)
 
 ### Stage 3: Inline Index Updates
 
-**Files:** `src/modules/session-lifecycle.ts`, `src/modules/session-metadata.ts`, `src/modules/project-indexer.ts`
+**Files:** `src/modules/session-lifecycle.ts`, `src/commands-trash.ts`, `src/modules/config/file-retention.ts`, `src/modules/project-indexer.ts`
 
-- After `finalizeSession()` writes `.meta.json` → call `indexer.upsertEntry('reports', entry)`
-- After `setTrashed(true)` → call `indexer.removeEntry('reports', path)`
-- After `setTrashed(false)` (restore) → call `indexer.upsertEntry('reports', entry)`
-- These are single-entry updates, not full rebuilds
+- When post-finalize metadata is complete (e.g. after `Promise.allSettled` on setCorrelationTags/setFingerprints in `session-lifecycle.ts`) → call `indexer.upsertEntry('reports', entry)` with full meta.
+- In **callers** of `setTrashed`: after `setTrashed(true)` call `indexer.removeEntry('reports', path)`; after `setTrashed(false)` (restore) call `indexer.upsertEntry('reports', entry)`. (`session-metadata.ts` is unchanged.)
+- These are single-entry updates, not full rebuilds.
 
-**Estimated scope:** ~25 lines across 3 files
+**Estimated scope:** ~25 lines across 4 files
 
 ### Stage 4: Docs Scanner Integration
 
-**Files:** `src/modules/docs-scanner.ts`
+**Files:** `src/modules/misc/docs-scanner.ts`
 
 - Replace direct file scanning with index-first lookup
 - Token pre-filter: only read files whose index tokens match query
 - Graceful fallback to full scan if index unavailable
-- Pass heading context through to `DocMatch` results
-
-**Estimated scope:** ~40 lines changed in docs-scanner.ts
+- Pass heading context through to `DocMatch` results (extend `DocMatch` with optional `heading?: string` when results come from the index)
 
 ### Stage 5: File Watcher & Lifecycle
 
@@ -544,13 +547,15 @@ The existing `search-index.ts` indexes `reports/` file metadata (lineCount, size
 
 ### Stage 6: Analysis Panel Enhancements
 
-**Files:** `src/modules/bug-report-collector.ts`, analysis panel templates
+**Files:** `src/modules/misc/docs-scanner.ts` (DocMatch), `src/modules/bug-report/bug-report-sections.ts` (formatDocMatches), `src/modules/bug-report/bug-report-collector.ts`, analysis panel templates
 
+- Extend `DocMatch` with optional `readonly heading?: string` (or `section`) for "Found under ## …" context
+- Update `formatDocMatches()` in bug-report-sections.ts and any other consumers to display heading when present
 - Show heading context for doc matches ("Found under ## Troubleshooting")
 - Sort matches by heading relevance
 - Include indexed file count in analysis summary
 
-**Estimated scope:** ~30 lines across 2-3 files
+**Estimated scope:** ~30 lines across 3-4 files
 
 ---
 
@@ -702,13 +707,13 @@ This "serve stale, refresh in background" pattern ensures analysis never waits f
 
 | File | Current Lines | Added Lines | Notes |
 |------|--------------|-------------|-------|
-| `project-indexer.ts` | New | ~250 | Core module (may split if > 300) |
+| `project-indexer.ts` | New | ~250 | Core module (split into + token-extractor.ts if > 300) |
 | `config.ts` | 279 | ~30 | New settings reader + migration |
 | `package.json` | — | ~60 | New setting definitions |
-| `firebase-crashlytics.ts` | — | ~15 | Cache path migration to `.saropa/` |
-| `docs-scanner.ts` | 79 | ~20 | Index-first lookup |
-| `session-lifecycle.ts` | — | ~10 | Inline index update after finalization |
-| `session-metadata.ts` | 183 | ~10 | Inline index update on trash/restore |
+| `crashlytics-io.ts` | — | ~15 | Cache path migration to `.saropa/` |
+| `docs-scanner.ts` (misc/) | 79 | ~20 | Index-first lookup |
+| `session-lifecycle.ts` | — | ~10 | Inline index update when post-finalize metadata complete |
+| `commands-trash.ts` / `file-retention.ts` | — | ~10 | Call indexer on setTrashed (callers own the hook) |
 | `extension.ts` | — | ~20 | Lifecycle wiring + migration trigger |
 | `gitignore-checker.ts` | — | ~10 | `.saropa/` handling |
 

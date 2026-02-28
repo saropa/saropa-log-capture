@@ -204,9 +204,14 @@
         "title": "%command.toggleTrash.title%"
       },
       {
-        "command": "saropaLogCapture.resetAllSettings",
+        "command":         "saropaLogCapture.resetAllSettings",
         "icon": "$(clear-all)",
         "title": "%command.resetAllSettings.title%"
+      },
+      {
+        "command": "saropaLogCapture.rebuildProjectIndex",
+        "icon": "$(refresh)",
+        "title": "Rebuild Project Index"
       }
     ],
     "configuration": {
@@ -329,6 +334,63 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "saropaLogCapture.projectIndex.enabled": {
+          "default": true,
+          "description": "Enable project-wide indexing of documentation and knowledge files for faster analysis searches.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.projectIndex.sources": {
+          "default": [
+            { "path": "docs", "fileTypes": [".md", ".txt"] },
+            { "path": "doc", "fileTypes": [".md", ".txt", ".rst", ".rdoc"] },
+            { "path": "bugs", "fileTypes": [".md", ".txt"] },
+            { "path": ".github", "fileTypes": [".md", ".yml", ".yaml"] },
+            { "path": "adr", "fileTypes": [".md"] },
+            { "path": "rfcs", "fileTypes": [".md"] },
+            { "path": "design", "fileTypes": [".md", ".txt"] },
+            { "path": "wiki", "fileTypes": [".md"] },
+            { "path": "guides", "fileTypes": [".md"] }
+          ],
+          "description": "Directories to index for project knowledge. Each entry: path (relative to workspace root) and fileTypes. Non-existent dirs are skipped.",
+          "items": {
+            "properties": {
+              "path": { "type": "string", "description": "Directory path relative to workspace root." },
+              "fileTypes": {
+                "items": { "type": "string" },
+                "type": "array",
+                "description": "File extensions to include (e.g. .md, .txt)."
+              },
+              "enabled": { "default": true, "type": "boolean", "description": "Enable this source." }
+            },
+            "required": ["path"],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "saropaLogCapture.projectIndex.includeRootFiles": {
+          "default": true,
+          "description": "Index matching files at workspace root (README.md, CHANGELOG.md, etc.).",
+          "type": "boolean"
+        },
+        "saropaLogCapture.projectIndex.includeReports": {
+          "default": true,
+          "description": "Index completed (non-active, non-trashed) log sessions from reports using .meta.json sidecars.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.projectIndex.maxFilesPerSource": {
+          "default": 100,
+          "description": "Maximum number of files to index per source directory.",
+          "maximum": 1000,
+          "minimum": 10,
+          "type": "number"
+        },
+        "saropaLogCapture.projectIndex.refreshInterval": {
+          "default": 0,
+          "description": "Seconds between automatic index refreshes. 0 = only on demand.",
+          "maximum": 3600,
+          "minimum": 0,
+          "type": "number"
         },
         "saropaLogCapture.enabled": {
           "default": true,
@@ -865,6 +927,7 @@
   ],
   "license": "MIT",
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "name": "saropa-log-capture",
   "publisher": "saropa",
   "repository": {
