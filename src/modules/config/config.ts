@@ -78,6 +78,8 @@ export interface SaropaLogCaptureConfig {
   readonly iconBarPosition: "left" | "right";
   /** Automatically move flat log files into date-based subfolders. */
   readonly organizeFolders: boolean;
+  /** Integration adapter ids to enable (e.g. ["packages", "buildCi"]). Only these run. */
+  readonly integrationsAdapters: readonly string[];
 }
 
 const SECTION = "saropaLogCapture";
@@ -208,6 +210,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
     iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
     organizeFolders: cfg.get<boolean>("organizeFolders", true),
+    integrationsAdapters: cfg.get<string[]>("integrations.adapters", ["packages"]),
   };
 }
 
