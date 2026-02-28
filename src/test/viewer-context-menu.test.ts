@@ -13,6 +13,14 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('function onContextMenuAction'));
         });
 
+        test('should copy all selected lines when multiple lines selected (Copy Line uses getSelectedLines)', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('getSelectedLines'));
+            assert.ok(script.includes('linesToPlainText'));
+            assert.ok(script.includes('selectionStart'));
+            assert.ok(script.includes('selectionEnd'));
+        });
+
         test('should handle all expected actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes("case 'copy':"));
@@ -72,6 +80,12 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('window.innerWidth'));
             assert.ok(script.includes('rect.bottom > window.innerHeight'));
             assert.ok(script.includes('innerHeight - rect.height'));
+        });
+
+        test('should flip submenus vertically when menu is near bottom so flyouts stay on screen', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('flip-submenu-vertical'));
+            assert.ok(script.includes('rect.bottom + submenuMaxH > window.innerHeight'));
         });
     });
 
