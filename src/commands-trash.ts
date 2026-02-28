@@ -61,9 +61,8 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
     let deleted = 0;
     for (const uri of trashed) {
         try {
-            const metaUri = metaStore.getMetaUri(uri);
             await vscode.workspace.fs.delete(uri);
-            try { await vscode.workspace.fs.delete(metaUri); } catch { /* sidecar may not exist */ }
+            await metaStore.deleteMetadata(uri);
             deleted++;
         } catch { /* file may be locked */ }
     }

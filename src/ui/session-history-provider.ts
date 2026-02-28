@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig, getFileTypeGlob, getLogDirectoryUri, readTrackedFiles } from '../modules/config';
-import { SessionMetadataStore } from '../modules/session-metadata';
+import { SessionMetadataStore, migrateSidecarsInDirectory } from '../modules/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
     isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, totalLineCount,
@@ -101,7 +101,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.metaStore;
     }
 
-    /** Invalidate cached metadata for a URI (e.g. after sidecar change). */
+    /** Invalidate cached metadata for a URI (e.g. after metadata change). */
     invalidateMeta(uri: vscode.Uri): void {
         const prefix = uri.toString() + '|';
         for (const key of this.metaCache.keys()) {
@@ -167,10 +167,20 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.fetchItems(true, logDirOverride);
     }
 
+    private static migratedDirsThisActivation = new Set<string>();
+
     private async fetchItems(includeTrash: boolean, logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (!folder && !logDirOverride) { return []; }
-        const logDir = logDirOverride ?? getLogDirectoryUri(folder!);
+        const configuredDir = folder ? getLogDirectoryUri(folder) : undefined;
+        const logDir = logDirOverride ?? configuredDir!;
+        for (const dir of [configuredDir, logDirOverride].filter((d): d is vscode.Uri => d !== undefined && d !== null)) {
+            const key = dir.toString();
+            if (!SessionHistoryProvider.migratedDirsThisActivation.has(key)) {
+                SessionHistoryProvider.migratedDirsThisActivation.add(key);
+                await migrateSidecarsInDirectory(dir, folder ?? undefined);
+            }
+        }
         try {
             const { fileTypes, includeSubfolders } = getConfig();
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
