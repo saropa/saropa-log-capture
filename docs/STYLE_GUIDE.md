@@ -46,7 +46,7 @@ All interactive buttons in the footer use this shared class:
 }
 ```
 
-Used by: `#wrap-toggle`, `#app-only-toggle`, `#exclusion-toggle`, `#export-btn`, `#search-panel-btn`, `#options-panel-btn`
+Used by: `#wrap-toggle`, `#app-only-toggle`, `#exclusion-toggle`, `#search-panel-btn`, `#options-panel-btn`
 
 ### `.level-circle` — Level Filter Circles
 

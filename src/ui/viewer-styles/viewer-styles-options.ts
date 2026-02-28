@@ -157,7 +157,7 @@ export function getOptionsStyles(): string {
     opacity: 0.4;
 }
 
-/* Action buttons in options panel (Export, Reset) */
+/* Action buttons in options panel (Reset to default, Reset extension settings) */
 .options-action-btn {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
