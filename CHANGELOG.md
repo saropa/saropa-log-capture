@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Copy Line (context menu) with multi-line selection.** When multiple lines are selected (shift+click) and you right-click a line in that range, "Copy Line" copies all selected lines as full lines. Otherwise it copies only the single line under the cursor.
 
 ### Fixed
+- **Right-click context menu cancelled when new log lines arrived.** The menu no longer closes on auto-scroll. Programmatic scrolls are suppressed while the context menu is open, and the scroll handler ignores programmatic scrolls so the menu stays open when content is appended.
+- **Decorations scale with font zoom.** Prefixed time, counter, and severity bar (dot and connector) now use em-based sizes so they scale with the log font when using the Options slider or Ctrl+scroll zoom.
 - **Severity bar overlapping line numbers when decorations on.** With line prefix (time and number) enabled, the gutter severity bar (dot at 0.69em) was drawn over the decoration numbers. Decorated lines now use 1.25em left clearance so the bar and connector sit to the left of the counter/timestamp (padding-left 14.25em = 1.25em bar + 13em decoration; text-indent -13em unchanged).
 - **Context menu submenus off screen at bottom.** When the main menu was near the bottom of the viewport, opening Search, Actions, or Options caused the flyout to extend below the window. The menu now applies a vertical flip so submenu panels open upward and stay visible.
 

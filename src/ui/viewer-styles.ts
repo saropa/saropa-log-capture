@@ -148,7 +148,7 @@ body[data-icon-bar="right"] #panel-content-row {
 .line {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0 8px 0 24px;
+    padding: 0 8px 0 1.85em;
     line-height: var(--log-line-height, 1.5);
     height: calc(1em * var(--log-line-height, 1.5));
     overflow: visible;
