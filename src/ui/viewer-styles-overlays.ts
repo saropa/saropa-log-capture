@@ -15,7 +15,7 @@ export function getOverlayStyles(): string {
    Shared styles for the split-part breadcrumb and session prev/next
    navigation bar. Both use the same layout and button styling.
    =================================================================== */
-#split-breadcrumb, #session-nav, #run-nav {
+#split-breadcrumb, #session-nav {
     display: none;
     align-items: center;
     gap: 4px;
@@ -25,7 +25,19 @@ export function getOverlayStyles(): string {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
 }
-#split-breadcrumb.visible, #session-nav.visible, #run-nav.visible { display: flex; }
+#split-breadcrumb.visible, #session-nav.visible { display: flex; }
+#run-nav {
+    display: none;
+    align-items: center;
+    gap: 4px;
+}
+#run-nav.visible { display: flex; }
+.nav-bar-sep {
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.7;
+    margin: 0 2px;
+    user-select: none;
+}
 .nav-bar-label { font-weight: bold; }
 #split-breadcrumb button, #session-nav button, #run-nav button {
     background: none;

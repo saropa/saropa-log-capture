@@ -2,9 +2,11 @@
  * Run navigation: Prev run / Next run within a single log (launch, hot restart/reload).
  */
 
+/** Run nav is rendered inside the session nav bar (same row). Only shown when runStartIndices.length > 1. */
 export function getRunNavHtml(): string {
     return /* html */ `
 <div id="run-nav">
+    <span class="nav-bar-sep" aria-hidden="true">|</span>
     <button id="run-prev" type="button" title="Previous run (launch/hot restart/reload)" disabled>&#x25C0; Prev</button>
     <span class="nav-bar-label">Run <span id="run-current">1</span> of <span id="run-total">1</span></span>
     <button id="run-next" type="button" title="Next run" disabled>Next &#x25B6;</button>
@@ -61,14 +63,62 @@ function updateRunNav() {
 
 function scrollToRunIndex(runIdx) {
     if (runIdx < 0 || runIdx >= runStartIndices.length || typeof scrollToLineNumber !== 'function') return;
-    var lineIndex = runStartIndices[runIdx];
-    scrollToLineNumber(lineIndex + 1);
+    var lineNum = runIdx > 0 ? runStartIndices[runIdx] : 1;
+    scrollToLineNumber(lineNum);
     updateRunNav();
+}
+
+var RUN_SEPARATOR_HEIGHT = 72;
+
+function formatRunTime(ms) {
+    if (!ms) return '--:--:--';
+    var d = new Date(ms);
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+
+function formatDuration(ms) {
+    if (ms < 1000) return ms + 'ms';
+    if (ms < 60000) return Math.round(ms / 1000) + 's';
+    var m = Math.floor(ms / 60000);
+    var s = Math.round((ms % 60000) / 1000);
+    return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+}
+
+/** Insert run-separator rows before each run (except the first). Single-pass to avoid O(N*R) splices. */
+function insertRunSeparators(runSummaries) {
+    if (!runSummaries || runSummaries.length <= 1 || !allLines || allLines.length === 0) return;
+    var indices = runStartIndices.slice();
+    var nextRunIdx = 1;
+    var newLines = [];
+    for (var i = 0; i < allLines.length; i++) {
+        while (nextRunIdx < indices.length && indices[nextRunIdx] === i) {
+            var summary = runSummaries[nextRunIdx];
+            newLines.push({
+                type: 'run-separator',
+                height: RUN_SEPARATOR_HEIGHT,
+                runSummary: summary,
+                runIndex: nextRunIdx,
+                groupId: -1,
+                category: '',
+                timestamp: 0
+            });
+            totalHeight += RUN_SEPARATOR_HEIGHT;
+            runStartIndices[nextRunIdx] = newLines.length;
+            nextRunIdx++;
+        }
+        newLines.push(allLines[i]);
+    }
+    allLines.length = 0;
+    for (var k = 0; k < newLines.length; k++) allLines.push(newLines[k]);
+    if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
 function handleRunBoundaries(msg) {
     runStartIndices = msg.runStartIndices || [];
+    var runSummaries = msg.runSummaries;
+    if (runSummaries && runSummaries.length > 1 && allLines && allLines.length > 0) insertRunSeparators(runSummaries);
     updateRunNav();
+    if (typeof renderViewport === 'function') renderViewport(true);
 }
 
 function clearRunNav() {
