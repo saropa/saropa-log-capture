@@ -43,6 +43,7 @@ function openExportModal() {
     updateExportPreview();
     exportModalEl.classList.add('visible');
 }
+window.openExportModal = openExportModal;
 
 /**
  * Close the export modal.

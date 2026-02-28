@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Options panel: Reset extension settings.** Actions section now includes "Reset extension settings" (in addition to "Reset to default" for viewer-only options). Triggers `saropaLogCapture.resetAllSettings`; confirmation is shown in the host. Available in both main viewer and pop-out.
+- **Export current view from context menu.** "Export current view…" was moved from the Options panel to the log content right-click menu (next to Copy All / Select All) so it is clear the action exports the current log, not options. The export modal (level filters, templates) is unchanged; opening it is now via context menu only.
 - **Integration API and first adapter (Packages).** Extensible framework for attaching external data to log sessions (header lines, meta, sidecars). Users enable adapters via `saropaLogCapture.integrations.adapters`. **Packages** adapter (id: `packages`) runs at session start: detects npm/yarn/pnpm lockfile, computes content hash, adds a "Lockfile: … sha256:…" line to the context header and stores payload in session meta for reproducibility. Status bar shows which adapters contributed (e.g. "Packages") while recording. Design and future adapter specs: `docs/integrations/INTEGRATION_API.md`, `bugs/integration-spec-*.md`.
 
 ---

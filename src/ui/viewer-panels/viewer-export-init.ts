@@ -82,11 +82,5 @@ if (document.readyState === 'loading') {
 } else {
     initExportModal();
 }
-
-// Export button click handler
-var exportBtn = document.getElementById('export-btn');
-if (exportBtn) {
-    exportBtn.addEventListener('click', openExportModal);
-}
 `;
 }

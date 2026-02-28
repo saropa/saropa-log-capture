@@ -266,6 +266,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "requestAboutContent":
         void loadAndPostAboutContent(this.context.extensionUri, this.version, (m) => this.post(m));
         break;
+      case "resetAllSettings":
+        void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
+        break;
     }
   }
 
