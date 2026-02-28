@@ -16,9 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Context menu: Comfortable line height.** Options submenu now includes a "Comfortable line height" toggle. Checked = comfortable (2.0), unchecked = compressed (1.2). Syncs with the Options panel line-height slider.
 
 ### Changed
+- **Project Logs header: no "Default" label; whole header clickable.** The header shows only "Project Logs" when using the default folder. The suffix (path) appears only when a non-default folder is selected. The entire header (title and optional suffix) is clickable to choose folder; reset and close/refresh remain separate controls.
 - **Project Logs Tags toggle off by default.** When the session list loads or refreshes, the Tags filter section stays closed and the Tags button is inactive. Users can still open it with the Tags button.
 
 ### Fixed
+- **Severity dot on blank lines.** The colored severity bar (green/red/etc. dot) is no longer shown for lines that have no visible text, even when the decoration prefix (counter, timestamp, chevron) is shown.
 - **Legacy .meta.json in workspace root not removed.** Migration now includes the workspace root (in addition to the configured log dir and override folder) so legacy sidecars in the project root (e.g. `CHANGELOG.meta.json`, `CLAUDE.md.meta.json`) are migrated and deleted on first Project Logs load.
 
 ---
