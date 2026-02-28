@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 
-/** Check if a filename matches any tracked file type. Excludes .meta.json sidecars and dotfiles. */
+/** Check if a filename matches any tracked file type. Excludes .meta.json and dotfiles. */
 export function isTrackedFile(name: string, fileTypes: readonly string[]): boolean {
   if (name.endsWith('.meta.json') || name.startsWith('.')) { return false; }
   return fileTypes.some(ext => name.endsWith(ext));
