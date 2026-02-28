@@ -12,7 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Options panel: Reset to default.** Actions section includes a "Reset to default" button that restores all viewer options (display, layout, audio) to their defaults. Does not change VS Code workspace settings.
 - **Context menu: Comfortable line height.** Options submenu now includes a "Comfortable line height" toggle. Checked = comfortable (2.0), unchecked = compressed (1.2). Syncs with the Options panel line-height slider.
+
+### Changed
+- **Project Logs Tags toggle off by default.** When the session list loads or refreshes, the Tags filter section stays closed and the Tags button is inactive. Users can still open it with the Tags button.
 
 ### Fixed
 - **Legacy .meta.json in workspace root not removed.** Migration now includes the workspace root (in addition to the configured log dir and override folder) so legacy sidecars in the project root (e.g. `CHANGELOG.meta.json`, `CLAUDE.md.meta.json`) are migrated and deleted on first Project Logs load.
