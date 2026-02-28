@@ -126,6 +126,10 @@ function handleGlobalAction(action) {
         }
         return true;
     }
+    if (action === 'export-current-view') {
+        if (typeof window.openExportModal === 'function') window.openExportModal();
+        return true;
+    }
     return false;
 }
 
