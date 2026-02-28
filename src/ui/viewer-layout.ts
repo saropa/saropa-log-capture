@@ -3,7 +3,7 @@
  *
  * Provides dynamic layout adjustments for the log viewer:
  * - Font size control (8-22px)
- * - Line height control (0.5-4.0)
+ * - Line height control (0.5-4.0) and compressed/comfortable preset toggle
  * - Dynamic ROW_HEIGHT measurement via hidden probe element
  * - Visual spacing and hide-blank-lines toggles
  * - Updates CSS variables and triggers viewport recalculation
@@ -79,6 +79,18 @@ function setLineHeight(height) {
         if (typeof recalcHeights === 'function') recalcHeights();
         if (typeof renderViewport === 'function') renderViewport(true);
     }
+}
+
+/** Line height presets: compressed (tight) vs comfortable (breathing room). */
+var LINE_HEIGHT_COMPRESSED = 1.2;
+var LINE_HEIGHT_COMFORTABLE = 2.0;
+
+/**
+ * Toggle line height between compressed and comfortable.
+ */
+function toggleLineHeightMode() {
+    var target = logLineHeight >= 1.5 ? LINE_HEIGHT_COMPRESSED : LINE_HEIGHT_COMFORTABLE;
+    setLineHeight(target);
 }
 
 /**
