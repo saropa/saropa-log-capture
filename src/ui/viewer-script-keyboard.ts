@@ -53,7 +53,7 @@ document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
     if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
     else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
-    else if (e.key === 'Home') { suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }
+    else if (e.key === 'Home') { if (window.isContextMenuOpen) return; if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }
     else if (e.key === 'End') { jumpToBottom(); }
     else if (e.key === 'PageUp') { logEl.scrollTop -= logEl.clientHeight * 0.8; autoScroll = false; }
     else if (e.key === 'PageDown') { logEl.scrollTop += logEl.clientHeight * 0.8; }
