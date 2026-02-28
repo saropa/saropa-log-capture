@@ -6,12 +6,19 @@ create git tags, publish to marketplace, create GitHub releases).
 """
 
 import glob
+import json
 import os
 import re
 
-from modules.constants import C, MARKETPLACE_URL, PROJECT_ROOT, REPO_URL
+from modules.constants import (
+    C,
+    MARKETPLACE_EXTENSION_ID,
+    MARKETPLACE_URL,
+    PROJECT_ROOT,
+    REPO_URL,
+)
 from modules.display import ask_yn, fail, info, ok
-from modules.utils import run
+from modules.utils import get_ovsx_pat, run
 
 
 # ── Publish: Confirmation ────────────────────────────────────
@@ -81,6 +88,13 @@ def step_package() -> str | None:
 
 
 # ── Publish: Git ─────────────────────────────────────────────
+
+
+def is_version_tagged(version: str) -> bool:
+    """True if git tag v{version} already exists (e.g. publish as-is)."""
+    tag = f"v{version}"
+    result = run(["git", "tag", "-l", tag], cwd=PROJECT_ROOT)
+    return bool(result.stdout.strip())
 
 
 def git_commit_and_push(version: str) -> bool:
@@ -166,6 +180,29 @@ def create_git_tag(version: str) -> bool:
 # ── Publish: Marketplace ─────────────────────────────────────
 
 
+def get_marketplace_published_version() -> str | None:
+    """Return the latest version published on VS Code Marketplace, or None if unknown.
+
+    Uses vsce show --json. When unauthenticated or offline, returns None (do not skip publish).
+    """
+    result = run(
+        ["npx", "@vscode/vsce", "show", MARKETPLACE_EXTENSION_ID, "--json"],
+        cwd=PROJECT_ROOT,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
+    try:
+        data = json.loads(result.stdout)
+        versions = data.get("versions")
+        if versions and isinstance(versions, list) and len(versions) > 0:
+            first = versions[0]
+            if isinstance(first, dict) and "version" in first:
+                return str(first["version"]).strip()
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return None
+
+
 def publish_marketplace(vsix_path: str) -> bool:
     """Publish the pre-built .vsix to VS Code Marketplace.
 
@@ -196,11 +233,10 @@ def publish_marketplace(vsix_path: str) -> bool:
 def publish_openvsx(vsix_path: str) -> bool:
     """Publish the pre-built .vsix to Open VSX (open-vsx.org).
 
-    Used by Cursor, VSCodium, and others. Requires OVSX_PAT env var
-    (create at https://open-vsx.org/user-settings/tokens). Same .vsix
-    as Step 13; credentials checked earlier in pipeline.
+    Used by Cursor, VSCodium, and others. Token from OVSX_PAT env or .env.
+    Same .vsix as Step 13; credentials checked earlier in pipeline.
     """
-    pat = os.environ.get("OVSX_PAT", "").strip()
+    pat = get_ovsx_pat()
     if not pat:
         fail("OVSX_PAT is not set. Create a token at open-vsx.org/user-settings/tokens")
         return False
@@ -262,8 +298,11 @@ def create_github_release(version: str, vsix_path: str) -> bool:
     who prefer to install from GitHub rather than the marketplace.
     """
     tag = f"v{version}"
+    view = run(["gh", "release", "view", tag], cwd=PROJECT_ROOT)
+    if view.returncode == 0:
+        info(f"GitHub release {tag} already exists; skipping.")
+        return True
     notes = extract_changelog_section(version)
-
     info(f"Creating GitHub release {tag}...")
     # gh release create attaches files listed after the tag name
     result = run(
