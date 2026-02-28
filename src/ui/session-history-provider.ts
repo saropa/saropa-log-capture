@@ -174,7 +174,16 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (!folder && !logDirOverride) { return []; }
         const configuredDir = folder ? getLogDirectoryUri(folder) : undefined;
         const logDir = logDirOverride ?? configuredDir!;
-        for (const dir of [configuredDir, logDirOverride].filter((d): d is vscode.Uri => d !== undefined && d !== null)) {
+        // Migrate configured log dir, override (if any), and workspace root so we remove all legacy sidecars.
+        const allDirs = [configuredDir, logDirOverride, folder?.uri].filter((d): d is vscode.Uri => d !== undefined && d !== null);
+        const seen = new Set<string>();
+        const dirsToMigrate = allDirs.filter(d => {
+            const k = d.toString();
+            if (seen.has(k)) { return false; }
+            seen.add(k);
+            return true;
+        });
+        for (const dir of dirsToMigrate) {
             const key = dir.toString();
             if (!SessionHistoryProvider.migratedDirsThisActivation.has(key)) {
                 SessionHistoryProvider.migratedDirsThisActivation.add(key);
