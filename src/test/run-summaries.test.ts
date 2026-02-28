@@ -49,9 +49,10 @@ suite('run-summaries', () => {
         assert.strictEqual(r.length, 2);
         assert.strictEqual(r[0].startLineIndex, 0);
         assert.strictEqual(r[0].endLineIndex, 2);
-        assert.strictEqual(r[0].durationMs, 3000);
+        // Run 0: lines 0–2, timestamps 12:00:00.000 → 12:00:02.000 → duration 2000ms; 1 error, 2 infos (Launch + "info").
+        assert.strictEqual(r[0].durationMs, 2000);
         assert.strictEqual(r[0].errors, 1);
-        assert.strictEqual(r[0].infos, 1);
+        assert.strictEqual(r[0].infos, 2);
         assert.strictEqual(r[1].startLineIndex, 3);
         assert.strictEqual(r[1].endLineIndex, 4);
         assert.strictEqual(r[1].warnings, 1);
