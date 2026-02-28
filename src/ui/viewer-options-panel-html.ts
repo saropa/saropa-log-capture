@@ -5,7 +5,7 @@
  *   - Display options (word wrap, decorations, font size, line height)
  *   - Layout (visual spacing)
  *   - Audio alerts
- *   - Actions (export)
+ *   - Actions (export, reset to default)
  *
  * Filter controls (presets, tags, exclusions) live in the filters panel.
  */
@@ -133,6 +133,7 @@ export function getOptionsPanelHtml(): string {
             <h3 class="options-section-title">Actions</h3>
             <div class="options-row">
                 <button id="export-btn" class="options-action-btn" title="Export logs">Export</button>
+                <button id="reset-options-btn" class="options-action-btn" title="Reset all options to default">Reset to default</button>
             </div>
         </div>
     </div>

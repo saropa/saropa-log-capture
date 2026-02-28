@@ -117,6 +117,15 @@ if (previewWarningBtn) previewWarningBtn.addEventListener('click', function(e) {
     e.preventDefault(); if (typeof previewAudioSound === 'function') previewAudioSound('warning');
 });
 
+// Reset to default: restore all options panel values (display, layout, audio).
+var resetOptionsBtn = document.getElementById('reset-options-btn');
+if (resetOptionsBtn && typeof resetOptionsToDefault === 'function') {
+    resetOptionsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        resetOptionsToDefault();
+    });
+}
+
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
