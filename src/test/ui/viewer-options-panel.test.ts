@@ -10,11 +10,12 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('options-section-title'));
         });
 
-        test('should include Reset to default button in Actions', () => {
+        test('should include Reset and Reset extension settings buttons in Actions', () => {
             const html = getOptionsPanelHtml();
             assert.ok(html.includes('id="reset-options-btn"'));
+            assert.ok(html.includes('id="reset-settings-btn"'));
             assert.ok(html.includes('Reset to default'));
-            assert.ok(html.includes('Reset all options to default'));
+            assert.ok(html.includes('Reset extension settings'));
         });
     });
 
