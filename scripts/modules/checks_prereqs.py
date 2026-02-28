@@ -11,7 +11,7 @@ import subprocess
 
 from modules.constants import C, PROJECT_ROOT
 from modules.display import fail, info, ok, warn
-from modules.utils import run
+from modules.utils import get_ovsx_pat, run
 
 
 def check_node() -> bool:
@@ -122,15 +122,15 @@ def check_vsce_auth() -> bool:
 def check_ovsx_token() -> bool:
     """Check OVSX_PAT for Open VSX (Cursor / VSCodium). Never blocks: missing = skip step.
 
+    Token is read from env or from project .env file (so Run from IDE works).
     When set, Step 14 will publish to Open VSX. When not set, we warn and
     skip Step 14 so the pipeline still succeeds (VS Code + GitHub release).
     """
-    import os as _os
-    pat = _os.environ.get("OVSX_PAT", "").strip()
+    pat = get_ovsx_pat()
     if pat:
         ok("OVSX_PAT set (Open VSX publish)")
         return True
     warn("OVSX_PAT not set; Open VSX step will be skipped.")
-    info(f"  To publish to Cursor/VSCodium: set {C.YELLOW}OVSX_PAT{C.RESET}")
+    info(f"  Set in shell, or add to {C.WHITE}.env{C.RESET}: {C.YELLOW}OVSX_PAT=your-token{C.RESET}")
     info(f"  Token: {C.WHITE}https://open-vsx.org/user-settings/tokens{C.RESET}")
     return True

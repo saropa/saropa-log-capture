@@ -78,7 +78,13 @@ except ImportError:
 
 from modules.constants import C, ExitCode, PROJECT_ROOT
 from modules.display import dim, heading, info, ok, show_logo, warn
-from modules.utils import read_package_version, run, run_step
+from modules.utils import (
+    get_installed_extension_versions,
+    get_ovsx_pat,
+    read_package_version,
+    run,
+    run_step,
+)
 
 from modules.checks_prereqs import (
     check_gh_cli,
@@ -106,7 +112,9 @@ from modules.publish import (
     confirm_publish,
     create_git_tag,
     create_github_release,
+    get_marketplace_published_version,
     git_commit_and_push,
+    is_version_tagged,
     publish_marketplace,
     publish_openvsx,
     step_package,
@@ -282,43 +290,88 @@ def _run_build_and_validate(
     return version, True
 
 
+def _ask_publish_stores() -> str:
+    """Ask which store(s) to publish to when extension is not installed locally.
+
+    Returns 'vscode_only', 'openvsx_only', or 'both'.
+    """
+    print(f"\n  {C.YELLOW}Which store(s) to publish to?{C.RESET}")
+    print(f"    1 = VS Code Marketplace only")
+    print(f"    2 = Open VSX only (Cursor / VSCodium)")
+    print(f"    3 = both")
+    try:
+        raw = input(f"  Choice [3]: {C.RESET}").strip() or "3"
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return "both"
+    if raw == "1":
+        return "vscode_only"
+    if raw == "2":
+        return "openvsx_only"
+    return "both"
+
+
 def _run_publish_steps(
     version: str,
     vsix_path: str,
     results: list[tuple[str, bool, float]],
+    stores: str = "both",
 ) -> bool:
     """Commit, tag, and publish. Returns True on success.
 
-    CHANGELOG is already stamped and .vsix already built during
-    the analysis phase, so publish just needs to commit and ship.
+    stores: 'vscode_only', 'openvsx_only', or 'both'. When version is
+    already tagged (publish as-is), skip commit and tag.
     """
-    # Step 11: Commit the stamped CHANGELOG + version bump
-    heading("Step 11 · Git Commit & Push")
-    if not run_step("Git commit & push",
-                    lambda: git_commit_and_push(version), results):
-        return False
-
-    # Step 12: Tag the release commit
-    heading("Step 12 · Git Tag")
-    if not run_step("Git tag",
-                    lambda: create_git_tag(version), results):
-        return False
-
-    # Step 13: Upload to VS Code Marketplace
-    heading("Step 13 · Publish to Marketplace")
-    if not run_step("Marketplace publish",
-                    lambda: publish_marketplace(vsix_path), results):
-        return False
-
-    # Step 14: Publish to Open VSX (optional; skip if no token, don't fail pipeline if it errors)
-    heading("Step 14 · Publish to Open VSX")
-    if os.environ.get("OVSX_PAT", "").strip():
-        openvsx_ok = run_step("Open VSX publish",
-                              lambda: publish_openvsx(vsix_path), results)
-        if not openvsx_ok:
-            warn("Open VSX publish failed; continuing to GitHub release.")
+    if is_version_tagged(version):
+        heading("Step 11 · Git Commit & Push")
+        info(f"Tag v{version} already exists; skipping commit & tag.")
+        heading("Step 12 · Git Tag")
+        info(f"Skipped (tag exists).")
     else:
-        warn("OVSX_PAT not set; skipping Open VSX.")
+        heading("Step 11 · Git Commit & Push")
+        if not run_step("Git commit & push",
+                        lambda: git_commit_and_push(version), results):
+            return False
+        heading("Step 12 · Git Tag")
+        if not run_step("Git tag",
+                        lambda: create_git_tag(version), results):
+            return False
+
+    # Step 13: Upload to VS Code Marketplace (skip if openvsx_only or version already published)
+    heading("Step 13 · Publish to Marketplace")
+    if stores == "openvsx_only":
+        info("Skipping (publish to Open VSX only).")
+    else:
+        published = get_marketplace_published_version()
+        if published == version:
+            info(f"VS Code Marketplace already has v{version}; skipping.")
+        else:
+            if not run_step("Marketplace publish",
+                            lambda: publish_marketplace(vsix_path), results):
+                return False
+
+    # Step 14: Publish to Open VSX (skip if vscode_only; prompt for token if missing)
+    heading("Step 14 · Publish to Open VSX")
+    if stores == "vscode_only":
+        info("Skipping (publish to VS Code Marketplace only).")
+    else:
+        pat = get_ovsx_pat()
+        if not pat:
+            try:
+                import getpass
+                prompt = "Paste Open VSX token (publish to Cursor) or Enter to skip: "
+                pat = (getpass.getpass(prompt=prompt) or "").strip()
+                if pat:
+                    os.environ["OVSX_PAT"] = pat
+            except (EOFError, KeyboardInterrupt):
+                pat = ""
+            if not pat:
+                warn("No token; skipping Open VSX.")
+        if pat:
+            openvsx_ok = run_step("Open VSX publish",
+                                  lambda: publish_openvsx(vsix_path), results)
+            if not openvsx_ok:
+                warn("Open VSX publish failed; continuing to GitHub release.")
 
     # Step 15: Create GitHub release with .vsix attached
     heading("Step 15 · GitHub Release")
@@ -333,19 +386,21 @@ def _run_publish_steps(
 
 def _check_publish_credentials(
     results: list[tuple[str, bool, float]],
+    stores: str = "both",
 ) -> bool:
-    """Verify gh CLI and vsce PAT; check OVSX PAT (optional, never blocks).
-
-    Checked after the user confirms publish intent. Missing OVSX_PAT
-    only skips Open VSX; VS Code Marketplace and GitHub release still run.
-    """
+    """Verify credentials for chosen store(s). gh CLI always; vsce if VS Code; OVSX if Open VSX."""
     heading("Publish Credentials")
     if not run_step("GitHub CLI", check_gh_cli, results):
         return False
-    if not run_step("vsce PAT", check_vsce_auth, results):
-        return False
-    if not run_step("OVSX PAT", check_ovsx_token, results):
-        return False
+    if stores in ("both", "vscode_only"):
+        if not run_step("vsce PAT", check_vsce_auth, results):
+            return False
+    else:
+        info("Skipping vsce PAT (publish to Open VSX only).")
+    if stores in ("both", "openvsx_only"):
+        run_step("OVSX PAT", check_ovsx_token, results)  # never blocks
+    else:
+        info("Skipping OVSX PAT (publish to VS Code Marketplace only).")
     return True
 
 
@@ -353,16 +408,12 @@ def _run_publish(
     version: str,
     vsix_path: str,
     results: list[tuple[str, bool, float]],
+    stores: str,
 ) -> bool:
-    """Run publish steps (11-15). Returns True on success.
-
-    CHANGELOG and .vsix are already finalized during analysis.
-    This phase commits, tags, publishes to both marketplaces, and
-    creates a GitHub release.
-    """
-    if not _check_publish_credentials(results):
+    """Run publish steps (11-15). Returns True on success."""
+    if not _check_publish_credentials(results, stores):
         return False
-    if not _run_publish_steps(version, vsix_path, results):
+    if not _run_publish_steps(version, vsix_path, results, stores=stores):
         return False
 
     _finish_with_report(results, version, vsix_path)
@@ -430,6 +481,12 @@ def _package_and_install(
 
     heading("Local Install")
     ok(f"VSIX: {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}")
+    installed = get_installed_extension_versions()
+    if installed:
+        parts = [f"{editor} v{ver}" for editor, ver in sorted(installed.items())]
+        info(f"Installed locally: {', '.join(parts)}")
+    else:
+        info("Not installed in VS Code or Cursor.")
     print_install_instructions(vsix_path)
     if args.auto_install:
         _auto_install_vsix(vsix_path)
@@ -490,7 +547,10 @@ def main() -> int:
         info("Publish cancelled by user.")
         return ExitCode.USER_CANCELLED
 
-    if not _run_publish(version, vsix_path, results):
+    stores = "both"
+    if not get_installed_extension_versions():
+        stores = _ask_publish_stores()
+    if not _run_publish(version, vsix_path, results, stores):
         return _exit_code_from_results(results)
 
     return ExitCode.SUCCESS
