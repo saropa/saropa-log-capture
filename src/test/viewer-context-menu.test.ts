@@ -13,6 +13,12 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('function onContextMenuAction'));
         });
 
+        test('should track context menu open state for programmatic-scroll coordination', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('isContextMenuOpen'));
+            assert.ok(script.includes('__programmaticScroll'));
+        });
+
         test('should copy all selected lines when multiple lines selected (Copy Line uses getSelectedLines)', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('getSelectedLines'));

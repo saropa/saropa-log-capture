@@ -91,6 +91,8 @@ function getCenterIdx() {
 }
 
 function jumpToBottom() {
+    if (window.isContextMenuOpen) return;
+    if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false;
     autoScroll = true; jumpBtn.style.display = 'none';
 }
@@ -186,7 +188,7 @@ window.addEventListener('message', function(event) {
             if (typeof buildPrefixSums === 'function') buildPrefixSums();
             renderViewport(true);
             if (typeof scheduleMinimap === 'function') scheduleMinimap();
-            if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
+            if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
             updateFooterText();
             break;
         case 'clear':
@@ -252,8 +254,10 @@ window.addEventListener('message', function(event) {
             if (typeof handleSessionNavInfo === 'function') handleSessionNavInfo(msg);
             break;
         case 'scrollToLine': {
+            if (window.isContextMenuOpen) break;
             var li = Math.max(0, Math.min(Number(msg.line) - 1, allLines.length - 1));
             var ch = 0; for (var si = 0; si < li; si++) ch += allLines[si].height;
+            if (window.setProgrammaticScroll) window.setProgrammaticScroll();
             suppressScroll = true; logEl.scrollTop = ch; suppressScroll = false;
             autoScroll = false; break;
         }
@@ -268,7 +272,8 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'loadComplete':
-            if (currentFilename && scrollMemory[currentFilename] !== undefined) {
+            if (currentFilename && scrollMemory[currentFilename] !== undefined && !window.isContextMenuOpen) {
+                if (window.setProgrammaticScroll) window.setProgrammaticScroll();
                 suppressScroll = true; logEl.scrollTop = scrollMemory[currentFilename]; suppressScroll = false;
                 autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
@@ -294,7 +299,7 @@ ${getKeyboardScript()}
 var _resizeRaf = false;
 new ResizeObserver(function() {
     if (_resizeRaf) return; _resizeRaf = true;
-    requestAnimationFrame(function() { _resizeRaf = false; if (allLines.length > 0 && logEl.clientHeight > 0) { renderViewport(false); if (autoScroll) { suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; } } });
+    requestAnimationFrame(function() { _resizeRaf = false; if (allLines.length > 0 && logEl.clientHeight > 0) { renderViewport(false); if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; } } });
 }).observe(logEl);
 `;
 }
