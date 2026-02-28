@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Context menu: Comfortable line height.** Options submenu now includes a "Comfortable line height" toggle. Checked = comfortable (2.0), unchecked = compressed (1.2). Syncs with the Options panel line-height slider.
 
 ### Changed
+- **Session details merged into nav bar; scroll-up-reveal header.** The session context line (adapter · project · date) is now in the same bar as the session and run navigators instead of a separate row above the log. The bar hides when scrolling down and reveals when scrolling up (smart sticky / scroll-up-reveal), with a 0.28s cubic-bezier animation. Shown when at top of log or when scrolling up past a small threshold.
 - **Severity styling: info level uses yellow.** Info lines (e.g. Android `I/`) now use yellow for text, severity bar dot, and whole-line tint for clearer visibility.
 - **Blank lines join previous block.** Empty lines get the previous line's severity tint and a `.line-blank` class so they visually join; set `--blank-line-bg` in CSS to override with a custom color.
 - **Project Logs header: no "Default" label; whole header clickable.** The header shows only "Project Logs" when using the default folder. The suffix (path) appears only when a non-default folder is selected. The entire header (title and optional suffix) is clickable to choose folder; reset and close/refresh remain separate controls.

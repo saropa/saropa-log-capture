@@ -2,8 +2,9 @@
  * Session info panel for the log viewer webview.
  *
  * Provides a slide-out panel (toggled via the icon bar) that shows full
- * session metadata, and inserts a compact one-line prefix at the top
- * of the log content showing adapter, project, and date.
+ * session metadata. A compact one-line summary (adapter, project, date) is
+ * shown in the session nav bar and hides on scroll down, reveals on scroll up
+ * (smart sticky / scroll-up-reveal header).
  */
 
 /** Returns the HTML for the session info slide-out panel. */
@@ -42,35 +43,24 @@ function buildSessionPrefix(info) {
     return parts.join(' \\u00b7 ');
 }
 
-/** Show or hide the info icon and update the prefix line. */
+/** Show or hide the info icon and update the merged session-details line in the nav bar. */
 function applySessionInfo(info) {
     sessionInfoData = info;
     var ibBtn = document.getElementById('ib-info');
+    var detailsEl = document.getElementById('session-details-inline');
     var prefix = document.getElementById('session-info-prefix');
 
+    if (prefix) { prefix.remove(); }
     if (!info) {
         if (ibBtn) ibBtn.style.display = 'none';
-        if (prefix) prefix.remove();
+        if (detailsEl) detailsEl.textContent = '';
+        if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
         return;
     }
 
     if (ibBtn) ibBtn.style.display = '';
-
-    // Insert or update compact prefix line
-    var logContent = document.getElementById('log-content');
-    if (!logContent) return;
-    var spacerTop = document.getElementById('spacer-top');
-    if (!prefix) {
-        prefix = document.createElement('div');
-        prefix.id = 'session-info-prefix';
-        prefix.className = 'session-info-prefix';
-        if (spacerTop) {
-            logContent.insertBefore(prefix, spacerTop);
-        } else {
-            logContent.insertBefore(prefix, logContent.firstChild);
-        }
-    }
-    prefix.textContent = buildSessionPrefix(info);
+    if (detailsEl) detailsEl.textContent = buildSessionPrefix(info);
+    if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
 }
 
 /** Open the session info slide-out panel. */
@@ -109,6 +99,18 @@ window.closeInfoPanel = function() {
     if (typeof clearActivePanel === 'function') clearActivePanel('info');
 };
 
+/** Wrapper is visible when session nav is visible or session details have text. */
+window.updateSessionNavWrapperVisibility = function() {
+    var wrapper = document.getElementById('session-nav-wrapper');
+    var nav = document.getElementById('session-nav');
+    var details = document.getElementById('session-details-inline');
+    if (!wrapper) return;
+    var hasNav = nav && nav.classList.contains('visible');
+    var hasDetails = details && details.textContent.trim().length > 0;
+    if (hasNav || hasDetails) { wrapper.classList.add('has-content'); }
+    else { wrapper.classList.remove('has-content'); }
+};
+
 // Close button
 var _infoClose = document.getElementById('info-panel-close');
 if (_infoClose) _infoClose.addEventListener('click', closeInfoPanel);
@@ -122,5 +124,33 @@ document.addEventListener('click', function(e) {
     if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
     closeInfoPanel();
 });
+
+/** Smart sticky header: hide on scroll down, reveal on scroll up. */
+(function setupSmartStickyHeader() {
+    var logEl = document.getElementById('log-content');
+    var wrapper = document.getElementById('session-nav-wrapper');
+    if (!logEl || !wrapper) return;
+    var lastScrollTop = 0;
+    var thresholdDown = 48;  /* px scrolled before hiding header */
+    var thresholdUp = 16;    /* px scroll-up delta to reveal; at top always show */
+    var ticking = false;
+    function update() {
+        var st = logEl.scrollTop;
+        if (st <= thresholdUp) {
+            wrapper.classList.remove('smart-header-hidden');
+        } else if (st > lastScrollTop && st > thresholdDown) {
+            wrapper.classList.add('smart-header-hidden');
+        } else if (st < lastScrollTop && lastScrollTop - st >= thresholdUp) {
+            wrapper.classList.remove('smart-header-hidden');
+        }
+        lastScrollTop = st;
+        ticking = false;
+    }
+    logEl.addEventListener('scroll', function() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(update);
+    }, { passive: true });
+})();
 `;
 }

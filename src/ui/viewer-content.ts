@@ -106,11 +106,16 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
 </head>
 <body>
     <div id="main-content">
+    <div id="session-nav-wrapper" class="session-nav-wrapper">
     <div id="session-nav">
+        <span class="session-nav-controls">
         <button id="session-prev" title="Previous session (older)" disabled>&#x25C0; Prev</button>
         <span class="nav-bar-label">Session <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
         <button id="session-next" title="Next session (newer)" disabled>Next &#x25B6;</button>
         ${getRunNavHtml()}
+        </span>
+        <span id="session-details-inline" class="session-details-inline" aria-label="Session context"></span>
+    </div>
     </div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>

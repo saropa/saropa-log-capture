@@ -15,6 +15,30 @@ export function getOverlayStyles(): string {
    Shared styles for the split-part breadcrumb and session prev/next
    navigation bar. Both use the same layout and button styling.
    =================================================================== */
+/* Session nav wrapper: collapsed by default; expands when .has-content; scroll-up-reveal hides via .smart-header-hidden */
+.session-nav-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.session-nav-wrapper.has-content {
+    max-height: 88px;
+}
+.session-nav-wrapper.smart-header-hidden.has-content {
+    max-height: 0;
+}
+.session-details-inline {
+    margin-left: 8px;
+    padding-left: 8px;
+    border-left: 1px solid var(--vscode-panel-border);
+    min-width: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+}
 #split-breadcrumb, #session-nav {
     display: none;
     align-items: center;
@@ -25,7 +49,10 @@ export function getOverlayStyles(): string {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
 }
-#split-breadcrumb.visible, #session-nav.visible { display: flex; }
+#session-nav-wrapper.has-content #session-nav { display: flex; }
+.session-nav-controls { display: none; align-items: center; gap: 4px; }
+#session-nav.visible .session-nav-controls { display: flex; }
+#split-breadcrumb.visible { display: flex; }
 #run-nav {
     display: none;
     align-items: center;
