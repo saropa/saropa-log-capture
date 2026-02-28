@@ -68,7 +68,7 @@ export async function initializeSession(
     const retentionStore = new SessionMetadataStore();
     // Organize first so retention counts settled files.
     const organizePromise = config.organizeFolders
-        ? organizeLogFiles(logDirUri).catch((err) => {
+        ? organizeLogFiles(logDirUri, retentionStore).catch((err) => {
             outputChannel.appendLine(`Folder organization failed: ${err}`);
         })
         : Promise.resolve();

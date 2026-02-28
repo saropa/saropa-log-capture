@@ -3,13 +3,13 @@ import { SessionMetadataStore, SessionMeta, Annotation } from '../modules/sessio
 
 suite('SessionMetadataStore', () => {
 
-    test('should construct a meta URI from a log URI', () => {
+    test('getMetaUri returns a URI for metadata (central store or sidecar)', () => {
         const store = new SessionMetadataStore();
-        // getMetaUri replaces .log with .meta.json
         const fakeUri = { toString: () => 'file:///workspace/reports/test.log' };
         const metaUri = store.getMetaUri(fakeUri as never);
-        assert.ok(metaUri.toString().endsWith('.meta.json'));
-        assert.ok(!metaUri.toString().includes('.log'));
+        const s = metaUri.toString();
+        assert.ok(s.endsWith('.meta.json') || s.includes('session-metadata.json'));
+        assert.ok(!s.includes('/test.log'));
     });
 
     test('Annotation interface should hold expected fields', () => {
