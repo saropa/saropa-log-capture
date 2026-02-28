@@ -160,6 +160,8 @@ export function getOverlayStyles(): string {
 .context-menu-submenu:hover > .context-menu-submenu-content { display: block; }
 /* Flip submenus left when context menu is near right viewport edge */
 .context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
+/* Align submenu bottom with trigger when near bottom so panel opens upward */
+.context-menu.flip-submenu-vertical .context-menu-submenu-content { top: auto; bottom: 0; }
 
 /* --- Toggle items (checkmark + label) --- */
 .context-menu-toggle .context-menu-check { font-size: 14px; opacity: 0; }
