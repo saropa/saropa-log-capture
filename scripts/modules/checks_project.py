@@ -392,18 +392,36 @@ def validate_version_changelog() -> tuple[str, bool]:
         fail("Could not read version from package.json")
         return pkg_version, False
 
-    # Guard: prevent version downgrades — offer bump if needed
+    # When version <= CHANGELOG max: infer intent from git. Already tagged → re-publish (as-is). Else offer bump or as-is.
     max_cl = _get_changelog_max_version()
     if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
         next_ver = _bump_patch(max_cl)
-        warn(f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
-        if not ask_yn(f"Bump to v{next_ver}?", default=True):
-            fail(f"Set package.json version higher than {max_cl}")
-            return pkg_version, False
-        if not _write_package_version(next_ver):
-            return pkg_version, False
-        fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
-        pkg_version = next_ver
+        if _is_version_tagged(pkg_version):
+            warn(f"v{pkg_version} is already released (tag exists).")
+            if ask_yn(f"Publish v{pkg_version} as-is (e.g. sync to Open VSX)?", default=True):
+                ok(f"Publishing v{pkg_version} as-is")
+                return pkg_version, True
+            # User said no to as-is — offer bump
+            if not ask_yn(f"Bump to v{next_ver}?", default=True):
+                fail(f"Set package.json version higher than {max_cl}")
+                return pkg_version, False
+            if not _write_package_version(next_ver):
+                return pkg_version, False
+            fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
+            pkg_version = next_ver
+        else:
+            warn(f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
+            if ask_yn(f"Bump to v{next_ver}?", default=True):
+                if not _write_package_version(next_ver):
+                    return pkg_version, False
+                fix(f"package.json: {pkg_version} → {C.WHITE}{next_ver}{C.RESET}")
+                pkg_version = next_ver
+            else:
+                if not ask_yn(f"Publish v{pkg_version} as-is (no CHANGELOG stamp)? [y/N]", default=False):
+                    fail(f"Set package.json version higher than {max_cl}")
+                    return pkg_version, False
+                ok(f"Publishing v{pkg_version} as-is")
+                return pkg_version, True
 
     if not has_unreleased_section():
         fail("No '## [Unreleased]' section found in CHANGELOG.md")
