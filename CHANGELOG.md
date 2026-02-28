@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Run navigator in title bar.** When a log has multiple runs (launch, hot restart/reload), the run navigator (Run 1 of N, Prev/Next) appears in the same bar as the session navigator, separated by a pipe. Hidden when only one run is detected.
+- **Run separators in list view.** Above each new run (except the first) a tall pink/dark-pink bar shows run number, start and end time, duration, and issue counts with colored dots (error/warning/perf/info). Run summaries are computed when loading a file; separators are inserted in a single pass for performance.
 - **Options panel: Reset to default.** Actions section includes a "Reset to default" button that restores all viewer options (display, layout, audio) to their defaults. Does not change VS Code workspace settings.
 - **Context menu: Comfortable line height.** Options submenu now includes a "Comfortable line height" toggle. Checked = comfortable (2.0), unchecked = compressed (1.2). Syncs with the Options panel line-height slider.
 
