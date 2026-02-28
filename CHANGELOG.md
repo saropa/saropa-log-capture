@@ -9,6 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Added
+- **Copy Line (context menu) with multi-line selection.** When multiple lines are selected (shift+click) and you right-click a line in that range, "Copy Line" copies all selected lines as full lines. Otherwise it copies only the single line under the cursor.
+
+### Fixed
+- **Severity bar overlapping line numbers when decorations on.** With line prefix (time and number) enabled, the gutter severity bar (dot at 0.69em) was drawn over the decoration numbers. Decorated lines now use 1.25em left clearance so the bar and connector sit to the left of the counter/timestamp (padding-left 14.25em = 1.25em bar + 13em decoration; text-indent -13em unchanged).
+- **Context menu submenus off screen at bottom.** When the main menu was near the bottom of the viewport, opening Search, Actions, or Options caused the flyout to extend below the window. The menu now applies a vertical flip so submenu panels open upward and stay visible.
+
+---
 ## [2.0.15] - 2026-02-27 - 2026-02-27
 
 ### Changed
