@@ -32,7 +32,8 @@ var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
 
-function stripTags(html) { return html.replace(/<[^>]*>/g, ''); }
+/** Strip HTML tags; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
+function stripTags(html) { return (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); }
 function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
 
 function handleScroll() {
