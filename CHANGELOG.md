@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Run navigation within a log.** When viewing a log file that contains multiple app runs (e.g. Flutter launch, hot restart, hot reload, exit), a "Run 1 of N" bar appears with Prev/Next to jump between runs. Boundaries are detected from lines such as "Launching ... in debug mode", "Connected to the VM Service", "Performing hot restart", "Application finished.", and "Exited (-1)".
 - **Copy Line (context menu) with multi-line selection.** When multiple lines are selected (shift+click) and you right-click a line in that range, "Copy Line" copies all selected lines as full lines. Otherwise it copies only the single line under the cursor.
 
 ### Fixed
