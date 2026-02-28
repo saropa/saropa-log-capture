@@ -70,8 +70,10 @@ Find these values in the Firebase Console under Project Settings > General.
 ### Detection priority
 
 1. Extension settings (`saropaLogCapture.firebase.projectId` + `.appId`) if both set
-2. `google-services.json` found in workspace (scans up to 3 matches, uses first)
+2. `google-services.json` in workspace: **android/** paths (e.g. `android/app/google-services.json`) are preferred, then any other match (up to 5), excluding `node_modules`
 3. Falls back to "not configured" with setup hint
+
+When the query fails (e.g. HTTP 404), the Crashlytics panel shows an **Open google-services.json** button so you can check or fix the file the extension is using.
 
 ## What It Queries
 

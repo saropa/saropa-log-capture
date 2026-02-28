@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { escapeHtml, formatElapsedLabel } from '../modules/ansi';
 import {
     getFirebaseContext, getCrashEvents, updateIssueState,
-    clearIssueListCache, gcloudInstallUrl,
+    clearIssueListCache, gcloudInstallUrl, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../modules/firebase-crashlytics';
 import { renderCrashDetail } from './analysis-crash-detail';
@@ -77,6 +77,20 @@ export async function handleBrowseGoogleServices(post: PostFn): Promise<void> {
     const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
     await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
     await handleCrashlyticsRequest(post);
+}
+
+/** Open google-services.json in the workspace (prefers android/app/). Shows progress while resolving. */
+export async function handleOpenGoogleServicesJson(): Promise<void> {
+    const uri = await vscode.window.withProgress(
+        { location: vscode.ProgressLocation.Notification, title: 'Opening google-services.json…' },
+        () => findBestGoogleServicesJson(),
+    );
+    if (uri) {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc);
+    } else {
+        await vscode.window.showInformationMessage('No google-services.json found in workspace. Add one (e.g. android/app/) or use Browse to select a file.');
+    }
 }
 
 /** Open the gcloud install URL. */

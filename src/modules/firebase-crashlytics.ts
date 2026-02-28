@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { runCmd } from './crashlytics-io';
-import { logCrashlytics, classifyGcloudError, classifyTokenError, type DiagnosticDetails } from './crashlytics-diagnostics';
+import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig } from './crashlytics-types';
 export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext } from './crashlytics-types';
 import {
@@ -62,21 +62,33 @@ export async function detectFirebaseConfig(): Promise<FirebaseConfig | undefined
     return scanGoogleServicesJson(projectId, appId);
 }
 
+const nodeModulesExclude = '**/node_modules/**';
+
+/** Prefer android/app/ for Flutter/Android; then any google-services.json. Runs both searches in parallel. */
+export async function findBestGoogleServicesJson(): Promise<vscode.Uri | undefined> {
+    const [android, anyFiles] = await Promise.all([
+        vscode.workspace.findFiles('**/android/**/google-services.json', nodeModulesExclude, 5),
+        vscode.workspace.findFiles('**/google-services.json', nodeModulesExclude, 5),
+    ]);
+    return android.length > 0 ? android[0] : anyFiles[0];
+}
+
 async function scanGoogleServicesJson(fallbackProject: string, fallbackApp: string): Promise<FirebaseConfig | undefined> {
-    const files = await vscode.workspace.findFiles('**/google-services.json', '**/node_modules/**', 3);
-    if (files.length === 0) {
-        logCrashlytics('info', 'No google-services.json found in workspace');
-        lastDiagnostic = { step: 'config', errorType: 'config', message: 'No google-services.json found in workspace', checkedAt: Date.now() };
+    const file = await findBestGoogleServicesJson();
+    if (!file) {
+        logCrashlytics('info', 'No google-services.json found in workspace (searched android/** and **)');
+        lastDiagnostic = { step: 'config', errorType: 'config', message: `No google-services.json found. ${firebaseConfigSetupHint}`, checkedAt: Date.now() };
         return undefined;
     }
     try {
-        const raw = await vscode.workspace.fs.readFile(files[0]);
+        const raw = await vscode.workspace.fs.readFile(file);
         const json = JSON.parse(Buffer.from(raw).toString('utf-8'));
         const projectId = fallbackProject || json.project_info?.project_id;
         const client = json.client?.[0];
         const appId = fallbackApp || client?.client_info?.mobilesdk_app_id;
         if (projectId && appId) {
-            logCrashlytics('info', `Config from google-services.json: project=${projectId}`);
+            const rel = vscode.workspace.asRelativePath(file);
+            logCrashlytics('info', `Config from ${rel}: project=${projectId}`);
             return { projectId, appId };
         }
         const missing = !projectId ? 'projectId' : 'appId';
@@ -114,7 +126,7 @@ export async function getFirebaseContext(errorTokens: readonly string[]): Promis
     }
     const config = await detectFirebaseConfig();
     if (!config) {
-        return { available: false, setupStep: 'config', setupHint: 'Add google-services.json to workspace or set firebase.projectId/appId', issues: [], diagnostics: lastDiagnostic };
+        return { available: false, setupStep: 'config', setupHint: firebaseConfigSetupHint, issues: [], diagnostics: lastDiagnostic };
     }
     const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
     try {
