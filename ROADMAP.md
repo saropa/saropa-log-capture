@@ -166,11 +166,11 @@ Tail mode (§1 Task 89), .slc bundle (§1 Tasks 74–75), Remote/SSH (§1 Task 9
 
 ## 7. Recommendations (Prioritized)
 
-### Do Soon
+### Do Soon *(completed 2026-03-01)*
 
-1. Update **README Known Limitations** to match current viewer cap (`maxLines`, "first X of Y lines").
-2. Update **bugs/integration-specs-index.md** so implemented adapters are marked Done.
-3. Add **minimal a11y** (aria-label, role) and document keyboard shortcuts in one place.
+1. ~~Update **README Known Limitations** to match current viewer cap (`maxLines`, "first X of Y lines").~~ Done: settings table includes `viewerMaxLines`; Known Limitations and keyboard shortcuts table in README.
+2. ~~Update **bugs/integration-specs-index.md** so implemented adapters are marked Done.~~ Done: clarifying sentence added; adapters already marked.
+3. ~~Add **minimal a11y** (aria-label, role) and document keyboard shortcuts in one place.~~ Done: extended a11y in viewer (log role, nav/slider aria-labels); shortcuts in README + link to docs/keyboard-shortcuts.md.
 
 ### Do Next
 
