@@ -120,12 +120,18 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 
 ---
 
+## Requirements
+
+- **VS Code** ^1.108.1 (or a Cursor/Open VSX–compatible editor). The extension declares `engines.vscode: "^1.108.1"` in `package.json`.
+
 ## Installation & Quick Start
 
 1. Install the extension from the VS Code Marketplace
 2. Start a debug session (F5)
 3. Output is automatically captured to the `reports/` directory
 4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
+
+**Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host.
 
 ---
 
@@ -141,6 +147,8 @@ By default, Saropa Log Capture filters out some system/framework logs for clarit
 This is useful for troubleshooting, framework debugging, or when you want a complete record of all debug output. Toggle back to "App Only: ON" to restore filtering.
 
 ### Power Shortcuts (Panel Viewer)
+
+See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference.
 
 | Key            | Action                                 |
 |----------------|----------------------------------------|
@@ -208,7 +216,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `organizeFolders`              | `true`      | Move flat log files into `yyyymmdd/` date subfolders on session start |
 | `includeSubfolders`            | `true`      | Include log files from date subfolders in session history, search, and analysis |
 | `gitignoreCheck`               | `true`      | Offer to add log directory to .gitignore on first run    |
-| `redactEnvVars`                | `[]`        | Env var patterns to redact from headers                  |
+| `redactEnvVars`                | `[]`        | Env var patterns to redact from headers. **Tip:** Redact secrets (e.g. `API_KEY`, `SECRET_*`, `*_TOKEN`) by adding matching patterns so they never appear in session context headers. |
 | `captureAll`                   | `false`     | Capture all Debug Console output, bypassing filters      |
 | `exclusions`                   | `[]`        | Patterns to exclude from viewer (string or `/regex/`)    |
 | `showDecorations`              | `true`      | Show severity dots, counters, and timestamps on lines    |
@@ -236,7 +244,8 @@ All settings are prefixed with `saropaLogCapture.`
 
 ## Known Limitations
 
-- Panel viewer caps at 50,000 lines for performance (file on disk keeps all lines up to `maxLines`).
+- **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
+- **Debug Console only:** Capture is from the VS Code Debug Console (DAP) only. Integrated Terminal output is not captured; see [Terminal output capture](docs/deferred/TERMINAL_OUTPUT_CAPTURE.md) for details.
 
 ---
 
@@ -286,7 +295,8 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 |----------|-------------|
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Developer setup, code standards, and how to contribute |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-| [ROADMAP.md](ROADMAP.md) | Planned features and project direction |
+| [ROADMAP.md](ROADMAP.md) | Planned features, project review, and direction |
+| [docs/keyboard-shortcuts.md](docs/keyboard-shortcuts.md) | Keyboard shortcut reference (panel viewer and commands) |
 | [STYLE_GUIDE.md](STYLE_GUIDE.md) | Code style conventions and patterns |
 
 ---
