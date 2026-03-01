@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri } from '../config/config';
 import type { FingerprintEntry } from '../analysis/error-fingerprint';
+import { logExtensionError } from '../misc/extension-logger';
 import type { PerfFingerprintEntry } from '../misc/perf-fingerprint';
 
 /** A single annotation attached to a log line. */
@@ -280,6 +281,7 @@ export class SessionMetadataStore {
             return newLogUri;
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
+            logExtensionError('renameLogFile', err instanceof Error ? err : new Error(msg));
             vscode.window.showErrorMessage(vscode.l10n.t('msg.failedRenameLogFile', msg));
             return logUri;
         }

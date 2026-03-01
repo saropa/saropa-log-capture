@@ -5,6 +5,21 @@ import { getGlobalProjectIndexer } from '../project-indexer/project-indexer';
 
 let hasNotifiedThisSession = false;
 
+/**
+ * Pure selection logic: given file stats (name, mtime) and max count, return the names
+ * of the oldest files that should be trashed so the remaining count <= maxLogFiles.
+ * Sorted oldest first. Exported for unit testing.
+ */
+export function selectFilesToTrash(
+    fileStats: readonly { name: string; mtime: number }[],
+    maxLogFiles: number,
+): string[] {
+    if (maxLogFiles <= 0 || fileStats.length <= maxLogFiles) { return []; }
+    const sorted = [...fileStats].sort((a, b) => a.mtime - b.mtime);
+    const toTrash = sorted.length - maxLogFiles;
+    return sorted.slice(0, toTrash).map((f) => f.name);
+}
+
 function removeReportFromIndex(uri: vscode.Uri): void {
     if (!getConfig().projectIndex.enabled) { return; }
     const idx = getGlobalProjectIndexer();
@@ -43,19 +58,15 @@ export async function enforceFileRetention(
         } catch { return undefined; }
     }));
     const fileStats = results.filter((r): r is { name: string; mtime: number } => r !== undefined);
-
-    // Sort oldest first.
-    fileStats.sort((a, b) => a.mtime - b.mtime);
-
-    const toTrash = fileStats.length - maxLogFiles;
-    if (toTrash <= 0) {
+    const namesToTrash = selectFilesToTrash(fileStats, maxLogFiles);
+    if (namesToTrash.length === 0) {
         return 0;
     }
 
     let trashed = 0;
-    for (let i = 0; i < toTrash; i++) {
+    for (const name of namesToTrash) {
         try {
-            const uri = vscode.Uri.joinPath(logDirUri, fileStats[i].name);
+            const uri = vscode.Uri.joinPath(logDirUri, name);
             await metaStore.setTrashed(uri, true);
             removeReportFromIndex(uri);
             trashed++;
