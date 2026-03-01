@@ -38,6 +38,8 @@
   "command.exportCsv.title": "导出为 CSV",
   "command.exportJson.title": "导出为 JSON",
   "command.exportJsonl.title": "导出为 JSONL",
+  "command.exportSlc.title": "导出为 .slc 包",
+  "command.importSlc.title": "导入 .slc 包",
   "command.trashSession.title": "移至回收站",
   "command.restoreSession.title": "从回收站还原",
   "command.emptyTrash.title": "Saropa Log Capture: 清空回收站",

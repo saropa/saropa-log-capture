@@ -26,6 +26,9 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item" data-session-action="exportJsonl">
         <span class="codicon codicon-list-flat"></span> Export as JSONL
     </div>
+    <div class="context-menu-item" data-session-action="exportSlc">
+        <span class="codicon codicon-package"></span> Export as .slc Bundle
+    </div>
     <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-session-action="copyDeepLink">
         <span class="codicon codicon-link"></span> Copy Deep Link

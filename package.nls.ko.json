@@ -38,6 +38,8 @@
   "command.exportCsv.title": "CSV로 내보내기",
   "command.exportJson.title": "JSON으로 내보내기",
   "command.exportJsonl.title": "JSONL로 내보내기",
+  "command.exportSlc.title": ".slc 번들로 내보내기",
+  "command.importSlc.title": ".slc 번들 가져오기",
   "command.trashSession.title": "휴지통으로 이동",
   "command.restoreSession.title": "휴지통에서 복원",
   "command.emptyTrash.title": "Saropa Log Capture: 휴지통 비우기",
