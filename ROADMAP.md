@@ -89,7 +89,7 @@ Planned features for future releases, plus a consolidated project review (potent
 
 ### 3.2 UX Polish
 
-*(Completed items removed: footer consolidation, viewer line cap in README, keyboard shortcut cheatsheet, preset "last used", session list date filter, copy as snippet.)*
+Further UX improvements as identified.
 
 ### 3.3 Performance & Scale
 
@@ -111,8 +111,6 @@ Planned features for future releases, plus a consolidated project review (potent
 ## 3.5 Implementation effort (easiest first)
 
 Items below are ordered by effort so you can pick quick wins. **Effort:** Docs = docs/config only, no code. Small = one file or one clear code path. Medium = reuse existing patterns, a few touchpoints.
-
-*(Completed easy items removed: Plan.md footer consolidation, VS Code version docs, redaction docs, viewer line cap in README, CHANGELOG URL in About loader, copy as snippet, keyboard shortcut cheatsheet, preset "last used", minimal a11y.)*
 
 ### Harder (not in "easiest" set)
 
@@ -169,14 +167,12 @@ Tail mode (§1 Task 89), .slc bundle (§1 Tasks 74–75), Remote/SSH (§1 Task 9
 ### Do Next
 
 1. Implement **tail mode** (89) and **.slc bundle** (74–75).
-2. Finish **footer consolidation** (plan.md); verify Options panel is single source of truth.
-3. Consider enabling **stricter tsconfig** options (noImplicitReturns, noFallthroughCasesInSwitch, noUnusedParameters).
 
 ### Consider for "Wow"
 
-4. **AI "Explain this error"** (VS Code Language Model API).
-5. **Session replay** with optional timing.
-6. **One-click export to Loki/Grafana** when configured.
+2. **AI "Explain this error"** (VS Code Language Model API).
+3. **Session replay** with optional timing.
+4. **One-click export to Loki/Grafana** when configured.
 
 ---
 
