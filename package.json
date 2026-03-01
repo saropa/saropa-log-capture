@@ -461,6 +461,15 @@
               "searchPattern": {
                 "description": "%config.filterPresets.searchPattern.description%",
                 "type": "string"
+              },
+              "levels": {
+                "description": "%config.filterPresets.levels.description%",
+                "items": { "type": "string" },
+                "type": "array"
+              },
+              "appOnlyMode": {
+                "description": "%config.filterPresets.appOnlyMode.description%",
+                "type": "boolean"
               }
             },
             "required": [
@@ -649,6 +658,12 @@
           "default": 100000,
           "description": "%config.maxLines.description%",
           "minimum": 1000,
+          "type": "number"
+        },
+        "saropaLogCapture.viewerMaxLines": {
+          "default": 0,
+          "description": "%config.viewerMaxLines.description%",
+          "minimum": 0,
           "type": "number"
         },
         "saropaLogCapture.maxLogFiles": {

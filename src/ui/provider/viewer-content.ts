@@ -57,7 +57,7 @@ import { getRecurringPanelHtml, getRecurringPanelScript } from '../panels/viewer
 import { getPerformancePanelHtml, getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getAboutPanelHtml, getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
 
-/** Maximum lines retained in the viewer data array (file on disk keeps all). */
+/** Maximum lines retained in the viewer data array when viewerMaxLines is 0 (file on disk can be larger, up to maxLines). */
 export const MAX_VIEWER_LINES = 50000;
 
 /** Wrap script content in a nonce-tagged script element for fault isolation. */
@@ -81,6 +81,19 @@ interface ViewerHtmlOptions {
     readonly version?: string;
     readonly cspSource?: string;
     readonly codiconCssUri?: string;
+    /** Max lines retained in the viewer (default MAX_VIEWER_LINES when omitted). */
+    readonly viewerMaxLines?: number;
+}
+
+/**
+ * Effective viewer line cap from config.
+ * Used when building viewer HTML (getViewerScript) and when slicing file content in the provider.
+ * @param maxLines - Max lines per log file (config).
+ * @param viewerMaxLines - Max lines to show in viewer (0 = use MAX_VIEWER_LINES).
+ * @returns Cap to use; never exceeds maxLines.
+ */
+export function getEffectiveViewerLines(maxLines: number, viewerMaxLines: number): number {
+    return (viewerMaxLines > 0 ? Math.min(viewerMaxLines, maxLines) : MAX_VIEWER_LINES);
 }
 
 /** Build the complete HTML document for the log viewer webview. */
@@ -146,30 +159,30 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
-        <button id="jump-btn" title="Scroll to bottom">⬇ Bottom</button>
+        <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">⬇ Bottom</button>
     </div>
-    <div id="copy-float" class="codicon codicon-copy" title="Copy line"></div>
+    <div id="copy-float" class="codicon codicon-copy" title="Copy line" role="button" aria-label="Copy line"></div>
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     </div>
     <div id="footer">
         <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
-        <span id="level-menu-btn" class="level-summary">
-            <span class="level-dot-group" data-level="info" title="Info"><span class="level-dot active level-dot-info"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="warning" title="Warning"><span class="level-dot active level-dot-warning"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="error" title="Error"><span class="level-dot active level-dot-error"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="performance" title="Perf"><span class="level-dot active level-dot-performance"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="todo" title="TODO"><span class="level-dot active level-dot-todo"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="debug" title="Debug"><span class="level-dot active level-dot-debug"></span><span class="dot-count"></span></span>
-            <span class="level-dot-group" data-level="notice" title="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
+        <span id="level-menu-btn" class="level-summary" role="button" aria-label="Level filters" title="Level filters — click to open">
+            <span class="level-dot-group" data-level="info" title="Info" role="img" aria-label="Info"><span class="level-dot active level-dot-info"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="warning" title="Warning" role="img" aria-label="Warning"><span class="level-dot active level-dot-warning"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="error" title="Error" role="img" aria-label="Error"><span class="level-dot active level-dot-error"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="performance" title="Perf" role="img" aria-label="Performance"><span class="level-dot active level-dot-performance"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="todo" title="TODO" role="img" aria-label="TODO"><span class="level-dot active level-dot-todo"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="debug" title="Debug" role="img" aria-label="Debug"><span class="level-dot active level-dot-debug"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="notice" title="Notice" role="img" aria-label="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <span id="line-count"></span>
         <span id="footer-selection" class="footer-selection"></span>
-        <span id="filter-badge" class="filter-badge" title="Active filters — click to open filters"></span>
+        <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
         <span class="footer-spacer"></span>
-        <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa">${version ? `v${version}` : ''}</a>
+        <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa" aria-label="About Saropa Log Capture">${version ? `v${version}` : ''}</a>
     </div>
     </div>
     </div>
@@ -184,13 +197,13 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <a id="level-select-all" href="#" class="active">All</a>
             <a id="level-select-none" href="#">None</a>
         </div>
-        <button id="level-info-toggle" class="level-circle active" title="Info"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
-        <button id="level-warning-toggle" class="level-circle active" title="Warning"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>
-        <button id="level-error-toggle" class="level-circle active" title="Error"><span class="level-emoji">🔴</span><span class="level-label">Error</span><span class="level-count"></span></button>
-        <button id="level-performance-toggle" class="level-circle active" title="Performance"><span class="level-emoji">🟣</span><span class="level-label">Perf</span><span class="level-count"></span></button>
-        <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
-        <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
-        <button id="level-notice-toggle" class="level-circle active" title="Notice"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+        <button id="level-info-toggle" class="level-circle active" title="Info" aria-label="Toggle Info level"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
+        <button id="level-warning-toggle" class="level-circle active" title="Warning" aria-label="Toggle Warning level"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>
+        <button id="level-error-toggle" class="level-circle active" title="Error" aria-label="Toggle Error level"><span class="level-emoji">🔴</span><span class="level-label">Error</span><span class="level-count"></span></button>
+        <button id="level-performance-toggle" class="level-circle active" title="Performance" aria-label="Toggle Performance level"><span class="level-emoji">🟣</span><span class="level-label">Perf</span><span class="level-count"></span></button>
+        <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME" aria-label="Toggle TODO level"><span class="level-emoji">⚪</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+        <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace" aria-label="Toggle Debug level"><span class="level-emoji">🟤</span><span class="level-label">Debug</span><span class="level-count"></span></button>
+        <button id="level-notice-toggle" class="level-circle active" title="Notice" aria-label="Toggle Notice level"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
         <div class="level-flyup-context">
             <span class="level-flyup-context-label">Context: <span id="context-lines-label">3 lines</span></span>
             <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
@@ -199,7 +212,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     </div>
     ${getIconBarHtml()}
     ${scriptTag(nonce, getErrorHandlerScript())}
-    ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(MAX_VIEWER_LINES), getViewerVisibilityScript())}
+    ${scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(opts.viewerMaxLines ?? MAX_VIEWER_LINES), getViewerVisibilityScript())}
     ${scriptTag(nonce, getScrollAnchorScript())}
     ${scriptTag(nonce, getFilterScript())}
     ${scriptTag(nonce, getWatchScript())}

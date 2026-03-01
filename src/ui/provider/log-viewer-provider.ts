@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
-import { getNonce, buildViewerHtml } from "./viewer-content";
+import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -89,12 +89,15 @@ export class LogViewerProvider
       vscode.Uri.joinPath(codiconsUri, 'codicon.css'),
     ).toString();
     const cspSource = webviewView.webview.cspSource;
-    webviewView.webview.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource, codiconCssUri });
+    const cfg = getConfig();
+    // Cap viewer at viewerMaxLines (or default 50k) so script and loaded content stay in sync.
+    const viewerMaxLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
+    webviewView.webview.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource, codiconCssUri, viewerMaxLines });
     webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
       this.handleMessage(msg),
     );
     this.startBatchTimer();
-    queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg)));
+    queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg), this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
     queueMicrotask(() => this.sendIntegrationsAdapters(getConfig().integrationsAdapters));
     if (this.pendingLoadUri) { queueMicrotask(() => { void this.loadFromFile(this.pendingLoadUri!); }); }
     webviewView.onDidChangeVisibility(() => {
@@ -164,7 +167,8 @@ export class LogViewerProvider
   }
   setPresets(presets: readonly FilterPreset[]): void {
     this.cachedPresets = presets;
-    this.postMessage({ type: "setPresets", presets });
+    const lastUsed = this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
+    this.postMessage({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
   }
   addLine(data: LineData): void {
     /* Skip per-line work when sidebar is hidden to avoid extension-host CPU spike. */
@@ -221,11 +225,12 @@ export class LogViewerProvider
     if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
     const headerEnd = findHeaderEnd(rawLines);
     let contentLines = rawLines.slice(headerEnd);
-    const maxLines = getConfig().maxLines;
-    /* Cap parse/send to avoid CPU spike on huge files; footer shows "Showing first X of Y lines" when truncated. */
-    if (contentLines.length > maxLines) {
-      contentLines = contentLines.slice(0, maxLines);
-      this.postMessage({ type: "loadTruncated", shown: maxLines, total: rawLines.length - headerEnd });
+    const cfg = getConfig();
+    const effectiveViewerLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
+    /* Cap parse/send to effectiveViewerLines so we never send more lines than the viewer script can display; footer shows "Showing first X of Y lines" when truncated. */
+    if (contentLines.length > effectiveViewerLines) {
+      contentLines = contentLines.slice(0, effectiveViewerLines);
+      this.postMessage({ type: "loadTruncated", shown: effectiveViewerLines, total: rawLines.length - headerEnd });
     }
     const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
     const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };

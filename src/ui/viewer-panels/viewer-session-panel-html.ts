@@ -2,6 +2,7 @@
  * Session history panel HTML template for the webview.
  * Used by viewer-session-panel.ts.
  * Header: "Project Logs" plus optional " · <path>" (hidden when default folder); whole header span is clickable.
+ * Includes a date-range select (All time / Last 7 days / Last 30 days) persisted with session display options.
  */
 
 /** Generate the session panel HTML. */
@@ -25,6 +26,11 @@ export function getSessionPanelHtml(): string {
         </div>
     </div>
     <div class="session-panel-toggles">
+        <select id="session-date-range" class="session-date-range-select" title="Filter by date" aria-label="Filter sessions by date">
+            <option value="all">All time</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+        </select>
         <button id="session-toggle-strip" class="session-toggle-btn" title="Show date/time in filenames"><span class="codicon codicon-calendar"></span> Dates</button>
         <button id="session-toggle-normalize" class="session-toggle-btn" title="Tidy names"><span class="codicon codicon-edit"></span> Tidy</button>
         <button id="session-toggle-headings" class="session-toggle-btn" title="Group by day"><span class="codicon codicon-list-tree"></span> Days</button>
