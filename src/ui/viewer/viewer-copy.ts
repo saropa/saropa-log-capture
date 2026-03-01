@@ -40,6 +40,10 @@ function linesToMarkdown(lines) {
     return '\\x60\\x60\\x60\\n' + linesToPlainText(lines) + '\\n\\x60\\x60\\x60';
 }
 
+function linesToSnippet(lines) {
+    return '\\x60\\x60\\x60log\\n' + linesToPlainText(lines) + '\\n\\x60\\x60\\x60';
+}
+
 function copyAsPlainText() {
     var lines = selectionStart >= 0 ? getSelectedLines() : getVisibleLines();
     if (lines.length === 0) return;
@@ -50,6 +54,12 @@ function copyAsMarkdown() {
     var lines = selectionStart >= 0 ? getSelectedLines() : getVisibleLines();
     if (lines.length === 0) return;
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToMarkdown(lines) });
+}
+
+function copyAsSnippet() {
+    var lines = selectionStart >= 0 ? getSelectedLines() : getVisibleLines();
+    if (lines.length === 0) return;
+    vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToSnippet(lines) });
 }
 
 function getAllCopyableLines() {
