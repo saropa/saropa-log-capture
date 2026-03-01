@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [2.0.19] - 2026-02-28
 
 ### Added
 - **Runtime localization (l10n).** Status bar text, notification messages, and input prompts now use `vscode.l10n.t()` with `l10n/bundle.l10n.json`. Locale-specific bundles (`bundle.l10n.{locale}.json`) provided for de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw (English placeholder values; replace with translations as needed). Manifest localization (package.nls.*) unchanged.
