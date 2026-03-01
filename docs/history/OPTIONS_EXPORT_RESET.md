@@ -1,10 +1,10 @@
 # Options Panel – Export & Reset
 
-**Status: Implemented.** See CHANGELOG [Unreleased] for details.
+**Status: Implemented (see CHANGELOG [Unreleased]).**
 
 ## 1. Add user settings reset to the Options panel
 
-- **Clarification:** The panel already has “Reset to default,” which resets **viewer** state only (display, layout, audio). The extension command `saropaLogCapture.resetAllSettings` resets **all extension settings** (workspace/global config) to package.json defaults.
+- **Clarification:** The panel already has “Reset to default,” which resets **viewer** state only (display, layout, audio). The extension command `saropaLogCapture.resetAllSettings` resets **all extension settings** (workspace and global config) to package.json defaults.
 - **Implementation:** Add a second action in the Options panel: “Reset extension settings” that triggers `saropaLogCapture.resetAllSettings`. Confirmation is handled in the extension host. Keep “Reset to default” for viewer-only reset.
 
 ## 2. Move Export out of the Options panel
