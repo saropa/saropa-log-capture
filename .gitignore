@@ -5,10 +5,17 @@ node_modules
 media/codicons/
 .vscode-test/
 *.vsix
-.claude/
-CLAUDE.md
 /reports
 nul
-*claude_temp*
 __pycache__/
+
+# AI / editor tooling — never commit or publish
+.claude/
+CLAUDE.md
+*claude_temp*
 .github/copilot-instructions.md
+.cursor/
+AGENTS.md
+agent-transcripts/
+*.cursorrules
+.cursorrules
