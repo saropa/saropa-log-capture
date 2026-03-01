@@ -4,11 +4,31 @@
  * Provides a slide-out panel with display and layout settings:
  *   - Display options (word wrap, decorations, font size, line height)
  *   - Layout (visual spacing)
+ *   - Integrations (which adapters run per session)
  *   - Audio alerts
  *   - Actions (reset to default, reset extension settings)
  *
  * Filter controls (presets, tags, exclusions) live in the filters panel.
  */
+import { escapeHtml } from '../../modules/capture/ansi';
+import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
+
+/** Build the Integrations section HTML (checkboxes per adapter). */
+function getIntegrationsSectionHtml(): string {
+    const rows = INTEGRATION_ADAPTERS.map(
+        (a) => `<label class="options-row" title="${escapeHtml(a.description)}">
+                <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
+                <span>${escapeHtml(a.label)}</span>
+            </label>`,
+    ).join('\n            ');
+    return `
+        <!-- Integrations Section -->
+        <div class="options-section" id="integrations-section">
+            <h3 class="options-section-title">Integrations</h3>
+            <p class="options-hint">Which adapters run for each debug session (header/meta/sidecar).</p>
+            ${rows}
+        </div>`;
+}
 
 /** Returns the HTML for the options panel element. */
 export function getOptionsPanelHtml(): string {
@@ -81,6 +101,9 @@ export function getOptionsPanelHtml(): string {
                 </label>
             </div>
         </div>
+
+        <!-- Integrations Section (injected) -->
+        ${getIntegrationsSectionHtml()}
 
         <!-- Layout Section -->
         <div class="options-section">
