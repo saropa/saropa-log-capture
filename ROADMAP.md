@@ -166,23 +166,17 @@ Tail mode (§1 Task 89), .slc bundle (§1 Tasks 74–75), Remote/SSH (§1 Task 9
 
 ## 7. Recommendations (Prioritized)
 
-### Do Soon *(completed 2026-03-01)*
-
-1. ~~Update **README Known Limitations** to match current viewer cap (`maxLines`, "first X of Y lines").~~ Done: settings table includes `viewerMaxLines`; Known Limitations and keyboard shortcuts table in README.
-2. ~~Update **bugs/integration-specs-index.md** so implemented adapters are marked Done.~~ Done: clarifying sentence added; adapters already marked.
-3. ~~Add **minimal a11y** (aria-label, role) and document keyboard shortcuts in one place.~~ Done: extended a11y in viewer (log role, nav/slider aria-labels); shortcuts in README + link to docs/keyboard-shortcuts.md.
-
 ### Do Next
 
-4. Implement **tail mode** (89) and **.slc bundle** (74–75).
-5. Finish **footer consolidation** (plan.md); verify Options panel is single source of truth.
-6. Consider enabling **stricter tsconfig** options (noImplicitReturns, noFallthroughCasesInSwitch, noUnusedParameters).
+1. Implement **tail mode** (89) and **.slc bundle** (74–75).
+2. Finish **footer consolidation** (plan.md); verify Options panel is single source of truth.
+3. Consider enabling **stricter tsconfig** options (noImplicitReturns, noFallthroughCasesInSwitch, noUnusedParameters).
 
 ### Consider for "Wow"
 
-7. **AI "Explain this error"** (VS Code Language Model API).
-8. **Session replay** with optional timing.
-9. **One-click export to Loki/Grafana** when configured.
+4. **AI "Explain this error"** (VS Code Language Model API).
+5. **Session replay** with optional timing.
+6. **One-click export to Loki/Grafana** when configured.
 
 ---
 
