@@ -36,6 +36,14 @@ suite('Viewer HTML', () => {
         });
     });
 
+    suite('accessibility (a11y)', () => {
+        test('log content has role=log and aria-label for screen readers', () => {
+            const html = buildViewerHtml({ nonce: getNonce(), version: '0.0.0' });
+            assert.ok(html.includes('role="log"'), 'log region should have role=log');
+            assert.ok(html.includes('aria-label="Log content"'), 'log region should have aria-label');
+        });
+    });
+
     suite('codicon stylesheet', () => {
         test('should include codicon link tag when URI provided', () => {
             const uri = 'https://file+.vscode-resource.test/media/codicons/codicon.css';

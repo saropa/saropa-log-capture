@@ -122,18 +122,18 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <div id="session-nav-wrapper" class="session-nav-wrapper">
     <div id="session-nav">
         <span class="session-nav-controls">
-        <button id="session-prev" title="Previous session (older)" disabled>&#x25C0; Prev</button>
+        <button id="session-prev" title="Previous session (older)" aria-label="Previous session (older)" disabled>&#x25C0; Prev</button>
         <span class="nav-bar-label">Session <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
-        <button id="session-next" title="Next session (newer)" disabled>Next &#x25B6;</button>
+        <button id="session-next" title="Next session (newer)" aria-label="Next session (newer)" disabled>Next &#x25B6;</button>
         ${getRunNavHtml()}
         </span>
         <span id="session-details-inline" class="session-details-inline" aria-label="Session context"></span>
     </div>
     </div>
     <div id="split-breadcrumb">
-        <button id="split-prev" title="Previous part" disabled>&#x25C0;</button>
-        <span class="nav-bar-label">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
-        <button id="split-next" title="Next part" disabled>&#x25B6;</button>
+        <button id="split-prev" title="Previous part" aria-label="Previous part" disabled>&#x25C0;</button>
+        <span class="nav-bar-label" aria-hidden="true">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>
+        <button id="split-next" title="Next part" aria-label="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
     <div id="panel-content-row">
@@ -155,7 +155,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <div id="log-area-with-footer">
     <!-- Footer lives here so it appears only under the log area, not under the sidebar panel slot -->
     <div id="log-content-wrapper">
-    <div id="log-content" class="nowrap">
+    <!-- Log region: role=log and aria-label for screen readers -->
+    <div id="log-content" class="nowrap" role="log" aria-label="Log content">
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
@@ -206,7 +207,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <button id="level-notice-toggle" class="level-circle active" title="Notice" aria-label="Toggle Notice level"><span class="level-emoji">🟦</span><span class="level-label">Notice</span><span class="level-count"></span></button>
         <div class="level-flyup-context">
             <span class="level-flyup-context-label">Context: <span id="context-lines-label">3 lines</span></span>
-            <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" />
+            <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of preceding context lines shown when filtering" aria-label="Context lines when filtering" />
         </div>
     </div>
     </div>
