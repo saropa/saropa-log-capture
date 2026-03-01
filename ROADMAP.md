@@ -166,13 +166,13 @@ Tail mode (§1 Task 89), .slc bundle (§1 Tasks 74–75), Remote/SSH (§1 Task 9
 
 ### Do Next
 
-1. Implement **tail mode** (89) and **.slc bundle** (74–75).
+*(None; tail mode and .slc bundle are done.)*
 
 ### Consider for "Wow"
 
-2. **AI "Explain this error"** (VS Code Language Model API).
-3. **Session replay** with optional timing.
-4. **One-click export to Loki/Grafana** when configured.
+1. **AI "Explain this error"** (VS Code Language Model API).
+2. **Session replay** with optional timing.
+3. **One-click export to Loki/Grafana** when configured.
 
 ---
 

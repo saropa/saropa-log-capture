@@ -111,5 +111,16 @@
   "saveLabel.exportLogs": "Export Logs",
   "filter.textFiles": "Text Files",
   "filter.allFiles": "All Files",
+  "filter.slcBundles": ".slc session bundles",
+  "action.saveSlcBundle": "Save .slc Bundle",
+  "msg.slcImportReadFailed": "Failed to read .slc file: {0}",
+  "msg.slcImportNoManifest": "Invalid .slc: missing manifest.json",
+  "msg.slcImportInvalidManifest": "Invalid .slc: invalid or unsupported manifest",
+  "msg.slcImportNoWorkspace": "Open a workspace folder to import .slc bundles.",
+  "msg.slcImportMissingLog": "Invalid .slc: missing log file \"{0}\"",
+  "msg.openLogFirst": "Open a log file first.",
+  "title.importSlc": "Import .slc session bundle(s)",
+  "progress.exportSlc": "Exporting .slc bundle…",
+  "progress.importSlc": "Importing .slc bundle(s)…",
   "msg.noAnalyzableTokens": "No analyzable tokens found in this line."
 }
