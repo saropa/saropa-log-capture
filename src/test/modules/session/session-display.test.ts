@@ -1,7 +1,21 @@
 import * as assert from 'assert';
-import { formatRelativeTime } from '../../../ui/session/session-display';
+import { formatRelativeTime, defaultDisplayOptions } from '../../../ui/session/session-display';
 
 suite('session-display', () => {
+
+    suite('defaultDisplayOptions', () => {
+        test('includes dateRange with value "all"', () => {
+            assert.strictEqual(defaultDisplayOptions.dateRange, 'all');
+        });
+
+        test('has all required display option fields', () => {
+            assert.strictEqual(typeof defaultDisplayOptions.stripDatetime, 'boolean');
+            assert.strictEqual(typeof defaultDisplayOptions.normalizeNames, 'boolean');
+            assert.strictEqual(typeof defaultDisplayOptions.showDayHeadings, 'boolean');
+            assert.strictEqual(typeof defaultDisplayOptions.reverseSort, 'boolean');
+            assert.ok(defaultDisplayOptions.dateRange === 'all' || defaultDisplayOptions.dateRange === '7d' || defaultDisplayOptions.dateRange === '30d');
+        });
+    });
     suite('formatRelativeTime', () => {
         test('should return "(just now)" for timestamps < 1 min ago', () => {
             const now = Date.now();

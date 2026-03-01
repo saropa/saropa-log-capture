@@ -9,7 +9,8 @@
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
-import { getNonce, buildViewerHtml } from "../provider/viewer-content";
+import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
+import { getConfig } from "../../modules/config/config";
 import type { LineData } from "../../modules/session/session-manager";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
@@ -155,7 +156,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   }
   setPresets(presets: readonly FilterPreset[]): void {
     this.cachedPresets = presets;
-    this.post({ type: "setPresets", presets });
+    const lastUsed = this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
+    this.post({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
   }
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
@@ -188,7 +190,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const wv = this.panel.webview;
     const audioWebviewUri = wv.asWebviewUri(audioUri).toString();
     const codiconCssUri = wv.asWebviewUri(vscode.Uri.joinPath(codiconsUri, 'codicon.css')).toString();
-    wv.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource: wv.cspSource, codiconCssUri });
+    const cfg = getConfig();
+    const viewerMaxLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
+    wv.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource: wv.cspSource, codiconCssUri, viewerMaxLines });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
@@ -204,6 +208,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "insertMarker": this.onMarkerRequest?.(); break;
       case "togglePause": this.onTogglePause?.(); break;
       case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
+      case "presetApplied":
+        if (msg.name) { void this.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", String(msg.name)); }
+        break;
       case "exclusionAdded":
       case "addToExclusion": this.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
       case "exclusionRemoved": this.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
@@ -264,7 +271,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), m => this.post(m)).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
       case "requestAboutContent":
-        void loadAndPostAboutContent(this.context.extensionUri, this.version, (m) => this.post(m));
+        void loadAndPostAboutContent(this.context.extensionUri, this.version, this.context.extension.id, (m) => this.post(m));
         break;
       case "resetAllSettings":
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
