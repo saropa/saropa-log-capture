@@ -17,7 +17,7 @@ export function getSessionPanelScript(): string {
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
-        reverseSort: false, showLatestOnly: false, panelWidth: 0,
+        reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
     };
     var MIN_PANEL_WIDTH = 560;
     /* Shared with icon bar: all slide-out panels use this width so the sidebar does not resize when switching (Options, Project Logs, etc.). */
@@ -65,6 +65,13 @@ export function getSessionPanelScript(): string {
         var active = sessions.filter(function(s) { return !s.trashed; });
         if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
+        /* Date range filter: keep sessions with mtime >= (now - 7d or 30d). */
+        var range = sessionDisplayOptions.dateRange || 'all';
+        if (range !== 'all') {
+            var now = Date.now(), ms = range === '7d' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+            var cutoff = now - ms;
+            active = active.filter(function(s) { return (s.mtime || 0) >= cutoff; });
+        }
         var sorted = sortSessions(active);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted) : renderFlat(sorted);
         sessionListEl.innerHTML = html;
@@ -154,6 +161,8 @@ export function getSessionPanelScript(): string {
             var icon = sortBtn.querySelector('.codicon');
             if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
         }
+        var dateRangeEl = document.getElementById('session-date-range');
+        if (dateRangeEl && dateRangeEl.value !== (sessionDisplayOptions.dateRange || 'all')) dateRangeEl.value = sessionDisplayOptions.dateRange || 'all';
     }
 
     function toggleOption(key) {
@@ -176,6 +185,17 @@ export function getSessionPanelScript(): string {
     bindToggle('session-toggle-headings', 'showDayHeadings');
     bindToggle('session-toggle-reverse', 'reverseSort');
     bindToggle('session-toggle-latest', 'showLatestOnly');
+
+    /* Date range dropdown: persist choice via setSessionDisplayOptions and re-render list. */
+    var dateRangeSelect = document.getElementById('session-date-range');
+    if (dateRangeSelect) dateRangeSelect.addEventListener('change', function() {
+        var copy = {};
+        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+        copy.dateRange = dateRangeSelect.value;
+        sessionDisplayOptions = copy;
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    });
 
     initSessionPanelResize(sessionPanelEl, function(w) {
         if (w > 0) {
@@ -256,7 +276,8 @@ export function getSessionPanelScript(): string {
             if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
         if (e.data.type === 'sessionDisplayOptions') {
-            sessionDisplayOptions = e.data.options || sessionDisplayOptions;
+            var opts = e.data.options || sessionDisplayOptions;
+            sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
             window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
             syncToggleButtons();
             if (cachedSessions) renderSessionList(cachedSessions);

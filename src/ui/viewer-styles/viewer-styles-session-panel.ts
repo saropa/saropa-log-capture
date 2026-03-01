@@ -125,6 +125,17 @@ export function getSessionPanelLayoutStyles(): string {
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
+/* Date range filter dropdown (All time / Last 7 days / Last 30 days). */
+.session-date-range-select {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--vscode-input-border, transparent);
+    background: var(--vscode-input-background, transparent);
+    color: var(--vscode-input-foreground, var(--vscode-foreground));
+    margin-right: 4px;
+}
+
 .session-toggle-btn {
     background: none;
     border: 1px solid transparent;
