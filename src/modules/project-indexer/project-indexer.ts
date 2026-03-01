@@ -6,8 +6,19 @@
 import * as vscode from 'vscode';
 import { getConfig, getSaropaIndexDirUri } from '../config/config';
 import type { ProjectIndexSourceConfig } from '../config/config';
-import { extractTokensFromMarkdown, extractTokensFromText, type HeadingEntry } from './token-extractor';
+import { extractTokensFromMarkdown, extractTokensFromText } from './token-extractor';
 import { buildReportIndex } from './build-report-index';
+import type {
+    DocIndexEntry,
+    ReportIndexEntry,
+    IndexEntry,
+    SourceIndexFile,
+    ManifestSourceMeta,
+    IndexManifest,
+} from './project-indexer-types';
+import { tokenCountOfEntry } from './project-indexer-types';
+
+export type { DocIndexEntry, ReportIndexEntry, IndexEntry, SourceIndexFile, ManifestSourceMeta, IndexManifest } from './project-indexer-types';
 
 const INDEX_VERSION = 1;
 const BATCH_SIZE = 10;
@@ -19,62 +30,6 @@ export function setGlobalProjectIndexer(indexer: ProjectIndexer | null): void {
 }
 export function getGlobalProjectIndexer(): ProjectIndexer | null {
     return globalIndexer;
-}
-
-function tokenCountOfEntry(f: IndexEntry): number {
-    if ('tokens' in f) { return (f as DocIndexEntry).tokens?.length ?? 0; }
-    const r = f as ReportIndexEntry;
-    return (r.correlationTokens?.length ?? 0) + (r.fingerprints?.length ?? 0);
-}
-
-export interface DocIndexEntry {
-    readonly relativePath: string;
-    readonly uri: string;
-    readonly sizeBytes: number;
-    readonly mtime: number;
-    readonly lineCount: number;
-    readonly tokens: string[];
-    readonly headings: readonly HeadingEntry[];
-}
-
-export interface ReportIndexEntry {
-    readonly relativePath: string;
-    readonly uri: string;
-    readonly sizeBytes: number;
-    readonly mtime: number;
-    readonly lineCount?: number;
-    readonly displayName?: string;
-    readonly tags?: string[];
-    readonly correlationTokens: string[];
-    readonly fingerprints: string[];
-    readonly errorCount?: number;
-    readonly warningCount?: number;
-}
-
-export type IndexEntry = DocIndexEntry | ReportIndexEntry;
-
-export interface SourceIndexFile {
-    readonly version: number;
-    readonly sourceId: string;
-    readonly buildTime: number;
-    readonly files: readonly IndexEntry[];
-}
-
-export interface ManifestSourceMeta {
-    readonly id: string;
-    readonly path: string;
-    readonly enabled: boolean;
-    readonly fileTypes?: readonly string[];
-    readonly lastIndexed: string;
-    readonly fileCount: number;
-    readonly tokenCount: number;
-}
-
-export interface IndexManifest {
-    readonly version: number;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-    readonly sources: readonly ManifestSourceMeta[];
 }
 
 export class ProjectIndexer {
