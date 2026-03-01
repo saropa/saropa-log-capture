@@ -2,6 +2,10 @@
 
 Thank you for your interest in contributing! This document provides guidelines for contributors.
 
+## Commit messages
+
+- **No editor or tool trailers.** Do not add "Made-with: Cursor" or similar lines to commit messages. A `commit-msg` hook is provided to enforce this; install with: `cp scripts/git-hooks/commit-msg .git/hooks/commit-msg` (and `chmod +x .git/hooks/commit-msg` on Unix).
+
 ## Design Principles
 
 These principles guide all development decisions:
