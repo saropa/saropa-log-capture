@@ -1,4 +1,10 @@
-/** Helper functions for LogViewerProvider — message handlers and batch processing. */
+/**
+ * Helper functions for LogViewerProvider — message handlers and batch processing.
+ *
+ * Handles edit-line, export-logs, copy, and tree→webview payload building. Also provides
+ * line batching, category tracking, and cached config (presets/highlight rules) posting.
+ */
+
 import * as vscode from "vscode";
 import { findHeaderEnd } from "../viewer/viewer-file-loader";
 import { isFrameworkFrame, isFrameworkLogLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
@@ -7,6 +13,7 @@ import { resolveSourceUri } from "../../modules/source/source-resolver";
 import { TreeItem, isSplitGroup } from "../session/session-history-grouping";
 import { PendingLine } from "../viewer/viewer-file-loader";
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "../session/session-display";
+import { logExtensionError } from "../../modules/misc/extension-logger";
 
 /** Input data for editing a log line. */
 export interface EditLineInput {
@@ -55,7 +62,9 @@ export async function handleEditLine(
 		vscode.window.showInformationMessage(vscode.l10n.t('msg.lineUpdatedSuccess', String(input.lineIndex + 1)));
 		await input.loadFromFile(currentFileUri);
 	} catch (err) {
-		throw new Error(`File edit failed: ${err instanceof Error ? err.message : String(err)}`);
+		const message = err instanceof Error ? err.message : String(err);
+		logExtensionError('editLine', err instanceof Error ? err : new Error(message));
+		throw new Error(`File edit failed: ${message}`);
 	}
 }
 
@@ -92,7 +101,9 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 			vscode.l10n.t('msg.exportedLinesTo', String(lineCount), lineCount === 1 ? '' : 's', levelStr, uri.fsPath),
 		);
 	} catch (err) {
-		throw new Error(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
+		const message = err instanceof Error ? err.message : String(err);
+		logExtensionError('exportLogs', err instanceof Error ? err : new Error(message));
+		throw new Error(`Export failed: ${message}`);
 	}
 }
 
@@ -162,14 +173,16 @@ function escapeForAttr(s: string): string {
 
 /**
  * Send cached configuration (presets and highlight rules) to the webview.
+ * Optionally include lastUsedPresetName so the webview can re-apply it on load.
  */
 export function sendCachedConfig(
 	cachedPresets: readonly unknown[],
 	cachedHighlightRules: unknown[],
-	postMessage: (msg: unknown) => void
+	postMessage: (msg: unknown) => void,
+	lastUsedPresetName?: string | undefined
 ): void {
 	if (cachedPresets.length > 0) {
-		postMessage({ type: "setPresets", presets: cachedPresets });
+		postMessage({ type: "setPresets", presets: cachedPresets, lastUsedPresetName: lastUsedPresetName ?? undefined });
 	}
 	if (cachedHighlightRules.length > 0) {
 		postMessage({ type: "setHighlightRules", rules: cachedHighlightRules });
