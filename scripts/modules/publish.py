@@ -17,7 +17,7 @@ from modules.constants import (
     PROJECT_ROOT,
     REPO_URL,
 )
-from modules.display import ask_yn, fail, info, ok
+from modules.display import ask_yn, fail, fix, info, ok
 from modules.utils import get_ovsx_pat, run
 
 
@@ -131,23 +131,40 @@ def _push_to_origin() -> bool:
 
     Detects the current branch name dynamically rather than hardcoding
     "main", so this works on feature branches too.
+    If push is rejected (non-fast-forward), pulls with merge and retries once.
     """
-    info("Pushing to origin...")
-    # Resolve current branch name (e.g., "main", "release/v1")
     branch = run(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
         cwd=PROJECT_ROOT,
     )
     branch_name = branch.stdout.strip() or "main"
+
+    info("Pushing to origin...")
     push = run(
         ["git", "push", "origin", branch_name],
         cwd=PROJECT_ROOT,
     )
-    if push.returncode != 0:
-        fail(f"git push failed: {push.stderr.strip()}")
-        return False
-    ok(f"Pushed to origin/{branch_name}")
-    return True
+    if push.returncode == 0:
+        ok(f"Pushed to origin/{branch_name}")
+        return True
+
+    # Rejected (e.g. non-fast-forward): try pull then push once
+    if "non-fast-forward" in (push.stderr or "") or "rejected" in (push.stderr or "").lower():
+        fix("Remote has new commits; pulling with merge then re-pushing...")
+        pull = run(["git", "pull", "origin", branch_name, "--no-edit"], cwd=PROJECT_ROOT)
+        if pull.returncode != 0:
+            fail(f"git pull failed: {pull.stderr.strip()}")
+            return False
+        ok("Merged remote changes")
+        push2 = run(["git", "push", "origin", branch_name], cwd=PROJECT_ROOT)
+        if push2.returncode != 0:
+            fail(f"git push failed after merge: {push2.stderr.strip()}")
+            return False
+        ok(f"Pushed to origin/{branch_name}")
+        return True
+
+    fail(f"git push failed: {push.stderr.strip()}")
+    return False
 
 
 def create_git_tag(version: str) -> bool:
