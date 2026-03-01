@@ -189,6 +189,16 @@
         "title": "%command.exportJsonl.title%"
       },
       {
+        "command": "saropaLogCapture.exportSlc",
+        "icon": "$(package)",
+        "title": "%command.exportSlc.title%"
+      },
+      {
+        "command": "saropaLogCapture.importSlc",
+        "icon": "$(file-directory)",
+        "title": "%command.importSlc.title%"
+      },
+      {
         "command": "saropaLogCapture.trashSession",
         "icon": "$(trash)",
         "title": "%command.trashSession.title%"
@@ -1096,6 +1106,9 @@
     ]
   },
   "description": "%description%",
+  "dependencies": {
+    "jszip": "^3.10.1"
+  },
   "devDependencies": {
     "c8": "^10.1.2",
     "@types/mocha": "^10.0.10",

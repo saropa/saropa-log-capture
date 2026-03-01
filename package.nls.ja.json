@@ -38,6 +38,8 @@
   "command.exportCsv.title": "CSV としてエクスポート",
   "command.exportJson.title": "JSON としてエクスポート",
   "command.exportJsonl.title": "JSONL としてエクスポート",
+  "command.exportSlc.title": ".slc バンドルとしてエクスポート",
+  "command.importSlc.title": ".slc バンドルをインポート",
   "command.trashSession.title": "ゴミ箱に移動",
   "command.restoreSession.title": "ゴミ箱から復元",
   "command.emptyTrash.title": "Saropa Log Capture: ゴミ箱を空にする",

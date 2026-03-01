@@ -38,6 +38,8 @@
   "command.exportCsv.title": "Exportar como CSV",
   "command.exportJson.title": "Exportar como JSON",
   "command.exportJsonl.title": "Exportar como JSONL",
+  "command.exportSlc.title": "Exportar como paquete .slc",
+  "command.importSlc.title": "Importar paquete .slc",
   "command.trashSession.title": "Mover a la papelera",
   "command.restoreSession.title": "Restaurar desde la papelera",
   "command.emptyTrash.title": "Saropa Log Capture: Vaciar papelera",

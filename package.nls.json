@@ -38,6 +38,8 @@
   "command.exportCsv.title": "Export as CSV",
   "command.exportJson.title": "Export as JSON",
   "command.exportJsonl.title": "Export as JSONL",
+  "command.exportSlc.title": "Export as .slc Bundle",
+  "command.importSlc.title": "Import .slc Bundle",
   "command.trashSession.title": "Move to Trash",
   "command.restoreSession.title": "Restore from Trash",
   "command.emptyTrash.title": "Saropa Log Capture: Empty Trash",
