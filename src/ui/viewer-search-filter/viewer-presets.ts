@@ -28,6 +28,10 @@ var applyingPreset = false;
 function handleSetPresets(msg) {
     filterPresets = msg.presets || [];
     updatePresetDropdown();
+    var lastUsed = msg.lastUsedPresetName;
+    if (lastUsed && filterPresets.some(function(p) { return p.name === lastUsed; })) {
+        setTimeout(function() { applyPreset(lastUsed); }, 0);
+    }
 }
 
 /** Apply a preset by name — sets filters and notifies extension. */

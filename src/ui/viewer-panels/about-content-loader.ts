@@ -4,9 +4,14 @@
 
 import * as vscode from "vscode";
 
-const CHANGELOG_URL = "https://marketplace.visualstudio.com/items/Saropa.saropa-log-capture/changelog";
+const MARKETPLACE_CHANGELOG_BASE = "https://marketplace.visualstudio.com/items";
 const MAX_EXCERPT_CHARS = 6000;
 const MAX_SECTIONS = 3;
+
+/** Build changelog URL from extension id (e.g. saropa.saropa-log-capture). */
+export function buildChangelogUrl(extensionId: string): string {
+  return `${MARKETPLACE_CHANGELOG_BASE}/${extensionId}/changelog`;
+}
 
 /** Build version string for display. */
 export function formatAboutVersion(version: string | undefined): string {
@@ -17,17 +22,19 @@ export function formatAboutVersion(version: string | undefined): string {
 export async function loadAndPostAboutContent(
   extensionUri: vscode.Uri,
   extensionVersion: string | undefined,
+  extensionId: string,
   post: (msg: unknown) => void,
 ): Promise<void> {
   const version = formatAboutVersion(extensionVersion);
+  const changelogUrl = buildChangelogUrl(extensionId);
   try {
     const uri = vscode.Uri.joinPath(extensionUri, "CHANGELOG.md");
     const buf = await vscode.workspace.fs.readFile(uri);
     const full = Buffer.from(buf).toString("utf-8");
     const sections = full.split(/\n(?=##\s)/);
     const excerpt = sections.slice(0, MAX_SECTIONS).join("\n").slice(0, MAX_EXCERPT_CHARS);
-    post({ type: "aboutContent", version, changelogExcerpt: excerpt, changelogUrl: CHANGELOG_URL });
+    post({ type: "aboutContent", version, changelogExcerpt: excerpt, changelogUrl });
   } catch {
-    post({ type: "aboutContent", version, changelogExcerpt: "", changelogUrl: CHANGELOG_URL });
+    post({ type: "aboutContent", version, changelogExcerpt: "", changelogUrl });
   }
 }
