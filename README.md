@@ -62,6 +62,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **JSON rendering:** Embedded JSON shown as collapsible pretty-printed blocks.
 - **ASCII art detection:** Box-drawing and separator characters styled for readability.
 - **Scroll position memory:** Viewer remembers scroll position per file when switching between logs.
+- **Tail mode:** Command **Saropa Log Capture: Open Tailed File** opens any workspace file matching `saropaLogCapture.tailPatterns` (default `**/*.log`); the viewer appends new lines as the file grows.
 
 ### Search & Filter
 - **Search panel:** Slide-out search with regex, case sensitivity, and whole word toggles. Search history (last 10 terms) shown on open. Clear button (×) in input.
