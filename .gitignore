@@ -4,6 +4,7 @@ dist
 node_modules
 media/codicons/
 .vscode-test/
+coverage/
 *.vsix
 /reports
 nul
