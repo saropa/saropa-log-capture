@@ -13,7 +13,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 [![GitHub last commit](https://img.shields.io/github/last-commit/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/commits)
 [![GitHub issues](https://img.shields.io/github/issues/saropa/saropa-log-capture)](https://github.com/saropa/saropa-log-capture/issues)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Languages](https://img.shields.io/badge/UI%20languages-EN%20%7C%20ZH%20%7C%20JA%20%7C%20KO%20%7C%20ES%20%7C%20DE-blue)](https://github.com/saropa/saropa-log-capture#translations)
+[![Languages](https://img.shields.io/badge/UI%20languages-11%20locales-blue)](https://github.com/saropa/saropa-log-capture#translations)
 
 > Have feedback or ideas? Share them by [opening an issue](https://github.com/saropa/saropa-log-capture/issues/new) on GitHub!
 
@@ -276,7 +276,7 @@ Not sure if something is a bug or a feature request? [Open a discussion issue](h
 
 ### Translations
 
-The extension ships machine-translated UI strings for Chinese Simplified, Japanese, Korean, Spanish, and German. If you spot a mistranslation or awkward phrasing, corrections are welcome — email [language@saropa.com](mailto:language@saropa.com) with the language, the incorrect string, and your suggested fix.
+The extension ships localized UI strings for 11 locales: Chinese (Simplified & Traditional), German, Spanish, French, Italian, Japanese, Korean, Portuguese (Brazil), and Russian. If you spot a mistranslation or awkward phrasing, corrections are welcome — email [language@saropa.com](mailto:language@saropa.com) with the language, the incorrect string, and your suggested fix.
 
 ---
 
