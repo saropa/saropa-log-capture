@@ -1,18 +1,12 @@
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
-import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
-import { getConfig } from "../../modules/config/config";
-import {
-  type PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
-  computeSessionMidnight, parseTimeToMs, parseRawLinesToPending,
-} from "../viewer/viewer-file-loader";
-import { detectRunBoundaries, getRunStartIndices } from "../../modules/session/run-boundaries";
-import { getRunSummaries } from "../../modules/session/run-summaries";
-import { countSeverities } from "../session/session-severity-counts";
+import { executeLoadContent, createTailWatcher } from "./log-viewer-provider-load";
+import { setupLogViewerWebview } from "./log-viewer-provider-setup";
+import { type PendingLine } from "../viewer/viewer-file-loader";
 import { SerializedHighlightRule, serializeHighlightRules } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ScopeContext } from "../../modules/storage/scope-context";
@@ -72,7 +66,7 @@ export class LogViewerProvider
   private isSessionActive = false;
   private pendingLoadUri: vscode.Uri | undefined;
   private loadGeneration = 0;
-  private tailWatcher: vscode.FileSystemWatcher | undefined;
+  private tailWatcher: vscode.Disposable | undefined;
   private tailLastLineCount = 0;
   private tailSessionMidnightMs = 0;
   private tailUri: vscode.Uri | undefined;
@@ -86,36 +80,17 @@ export class LogViewerProvider
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.view = webviewView;
-    const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
-    const codiconsUri = vscode.Uri.joinPath(this.extensionUri, 'media', 'codicons');
-    webviewView.webview.options = { enableScripts: true, localResourceRoots: [audioUri, codiconsUri] };
-    const audioWebviewUri = webviewView.webview.asWebviewUri(audioUri).toString();
-    const codiconCssUri = webviewView.webview.asWebviewUri(
-      vscode.Uri.joinPath(codiconsUri, 'codicon.css'),
-    ).toString();
-    const cspSource = webviewView.webview.cspSource;
-    const cfg = getConfig();
-    // Cap viewer at viewerMaxLines (or default 50k) so script and loaded content stay in sync.
-    const viewerMaxLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
-    webviewView.webview.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource, codiconCssUri, viewerMaxLines });
-    webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) =>
-      this.handleMessage(msg),
-    );
-    this.startBatchTimer();
-    queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg), this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
-    queueMicrotask(() => this.sendIntegrationsAdapters(getConfig().integrationsAdapters));
-    if (this.pendingLoadUri) { queueMicrotask(() => { void this.loadFromFile(this.pendingLoadUri!); }); }
-    webviewView.onDidChangeVisibility(() => {
-      if (webviewView.visible) {
-        this.unreadWatchHits = 0;
-        helpers.updateBadge(this.view, this.unreadWatchHits);
-      }
-    });
-    webviewView.onDidDispose(() => {
-      this.stopBatchTimer();
-      this.view = undefined;
-    });
+    setupLogViewerWebview(this, webviewView);
   }
+  getCachedPresets(): readonly FilterPreset[] { return this.cachedPresets; }
+  getCachedHighlightRules(): SerializedHighlightRule[] { return this.cachedHighlightRules; }
+  getPendingLoadUri(): vscode.Uri | undefined { return this.pendingLoadUri; }
+  setView(view: vscode.WebviewView | undefined): void { this.view = view; }
+  getUnreadWatchHits(): number { return this.unreadWatchHits; }
+  setUnreadWatchHits(n: number): void { this.unreadWatchHits = n; }
+  getExtensionUri(): vscode.Uri { return this.extensionUri; }
+  getVersion(): string { return this.version; }
+  getContext(): vscode.ExtensionContext { return this.context; }
   // -- Handler setters (one callback per webview action) --
   setMarkerHandler(handler: () => void): void { this.onMarkerRequest = handler; }
   setTogglePauseHandler(handler: () => void): void { this.onTogglePause = handler; }
@@ -218,50 +193,21 @@ export class LogViewerProvider
     this.postMessage({ type: "clear" }); this.setSessionInfo(null);
   }
   async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean }): Promise<void> {
-    const gen = ++this.loadGeneration; this.pendingLoadUri = uri;
+    const gen = ++this.loadGeneration;
+    this.pendingLoadUri = uri;
     this.view?.show?.(true);
     for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
     if (!this.view || gen !== this.loadGeneration) { return; }
     this.stopTailing();
-    this.clear(); this.seenCategories.clear(); this.currentFileUri = uri;
-    const raw = await vscode.workspace.fs.readFile(uri);
+    this.clear();
+    this.seenCategories.clear();
+    this.currentFileUri = uri;
+    const { sessionMidnightMs, contentLength } = await executeLoadContent(this, uri, () => gen === this.loadGeneration);
     if (gen !== this.loadGeneration) { return; }
-    const text = Buffer.from(raw).toString("utf-8"), rawLines = text.split(/\r?\n/);
-    this.postMessage({ type: "setViewingMode", viewing: true }); this.setFilename(uri.path.split("/").pop() ?? "");
-    const fields = parseHeaderFields(rawLines);
-    if (Object.keys(fields).length > 0) { this.setSessionInfo(fields); }
-    const headerEnd = findHeaderEnd(rawLines);
-    let contentLines = rawLines.slice(headerEnd);
-    const cfg = getConfig();
-    const effectiveViewerLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
-    /* Cap parse/send to effectiveViewerLines so we never send more lines than the viewer script can display; footer shows "Showing first X of Y lines" when truncated. */
-    if (contentLines.length > effectiveViewerLines) {
-      contentLines = contentLines.slice(0, effectiveViewerLines);
-      this.postMessage({ type: "loadTruncated", shown: effectiveViewerLines, total: rawLines.length - headerEnd });
-    }
-    const post = (msg: unknown): void => { if (gen === this.loadGeneration) { this.postMessage(msg); } };
-    const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields['Date'] ?? '') };
-    await sendFileLines(contentLines, ctx, post, this.seenCategories);
-    if (gen !== this.loadGeneration) { return; }
-    /* Detect launch/hot-restart/reload boundaries for Run Prev/Next nav when viewing a file. */
-    const boundaries = detectRunBoundaries(contentLines);
-    const runStartIndices = getRunStartIndices(boundaries);
-    if (runStartIndices.length > 0) {
-      const sessionMidnightMs = ctx.sessionMidnightMs;
-      const getTimestampForLine = (raw: string): number => {
-        const m = raw.match(/^\[([\d:.]+)\]/);
-        return m ? parseTimeToMs(m[1], sessionMidnightMs) : 0;
-      };
-      const countSeveritiesForSlice = (lines: string[]): { errors: number; warnings: number; perfs: number; infos: number } => {
-        const c = countSeverities(lines.join("\n"));
-        return { errors: c.errors, warnings: c.warnings, perfs: c.perfs, infos: c.infos };
-      };
-      const runSummaries = getRunSummaries(contentLines, runStartIndices, getTimestampForLine, countSeveritiesForSlice);
-      post({ type: "runBoundaries", boundaries, runStartIndices, runSummaries });
-    }
-    this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
+    this.onFileLoaded?.(uri);
+    this.pendingLoadUri = undefined;
     if (options?.tail) {
-      this.startTailing(uri, ctx.sessionMidnightMs, contentLines.length);
+      this.startTailing(uri, sessionMidnightMs, contentLength);
     }
   }
   private stopTailing(): void {
@@ -269,36 +215,18 @@ export class LogViewerProvider
     this.tailWatcher = undefined;
     this.tailUri = undefined;
   }
-  /** Start watching the file and appending new lines to the viewer on change. */
   private startTailing(uri: vscode.Uri, sessionMidnightMs: number, initialLineCount: number): void {
     this.stopTailing();
     this.tailUri = uri;
     this.tailSessionMidnightMs = sessionMidnightMs;
-    this.tailLastLineCount = initialLineCount;
-    this.tailWatcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
-    this.tailWatcher.onDidChange(async () => {
-      if (this.currentFileUri?.fsPath !== uri.fsPath || !this.view) { return; }
-      if (this.tailUpdateInProgress) { return; }
-      this.tailUpdateInProgress = true;
-      try {
-        const raw = await vscode.workspace.fs.readFile(uri);
-        const rawLines = Buffer.from(raw).toString("utf-8").split(/\r?\n/);
-        const headerEnd = findHeaderEnd(rawLines);
-        const contentLines = rawLines.slice(headerEnd);
-        if (contentLines.length <= this.tailLastLineCount) { return; }
-        const newLines = contentLines.slice(this.tailLastLineCount);
-        const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: this.tailSessionMidnightMs };
-        const pending = parseRawLinesToPending(newLines, ctx);
-        this.tailLastLineCount = contentLines.length;
-        this.postMessage({ type: "addLines", lines: pending, lineCount: this.tailLastLineCount });
-        helpers.sendNewCategories(pending, this.seenCategories, (msg) => this.postMessage(msg));
-      } catch {
-        // File may be locked or deleted; ignore
-      } finally {
-        this.tailUpdateInProgress = false;
-      }
-    });
+    this.tailWatcher = createTailWatcher(uri, sessionMidnightMs, initialLineCount, this);
   }
+  getTailLastLineCount(): number { return this.tailLastLineCount; }
+  setTailLastLineCount(n: number): void { this.tailLastLineCount = n; }
+  getTailUpdateInProgress(): boolean { return this.tailUpdateInProgress; }
+  setTailUpdateInProgress(v: boolean): void { this.tailUpdateInProgress = v; }
+  getView(): vscode.WebviewView | undefined { return this.view; }
+  getSeenCategories(): Set<string> { return this.seenCategories; }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj = Object.fromEntries(counts);
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
@@ -310,7 +238,7 @@ export class LogViewerProvider
 
   // -- Private methods --
 
-  private handleMessage(msg: Record<string, unknown>): void {
+  handleMessage(msg: Record<string, unknown>): void {
     const ctx: ViewerMessageContext = {
       currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive,
       context: this.context, extensionVersion: this.version,
@@ -332,7 +260,7 @@ export class LogViewerProvider
     dispatchViewerMessage(msg, ctx);
   }
 
-  private startBatchTimer(): void {
+  startBatchTimer(): void {
     this.stopBatchTimer();
     this.scheduleNextBatch();
   }
@@ -347,7 +275,7 @@ export class LogViewerProvider
     }, delay);
   }
 
-  private stopBatchTimer(): void {
+  stopBatchTimer(): void {
     if (this.batchTimer !== undefined) {
       clearTimeout(this.batchTimer);
       this.batchTimer = undefined;
@@ -363,5 +291,5 @@ export class LogViewerProvider
     );
   }
 
-  private postMessage(message: unknown): void { this.view?.webview.postMessage(message); }
+  postMessage(message: unknown): void { this.view?.webview.postMessage(message); }
 }
