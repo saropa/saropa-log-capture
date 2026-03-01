@@ -42,6 +42,7 @@
   "command.emptyTrash.title": "Saropa Log Capture: 휴지통 비우기",
   "command.toggleTrash.title": "Saropa Log Capture: 휴지통 표시 전환",
   "command.resetAllSettings.title": "Saropa Log Capture: 모든 설정을 기본값으로 재설정",
+  "command.configureIntegrations.title": "통합 구성",
 
   "config.aiActivity.enabled.description": "Claude Code AI 활동(도구 호출, 프롬프트)을 로그 뷰어에서 디버그 출력과 함께 인터리브하여 표시합니다.",
   "config.aiActivity.autoDetect.description": "이 작업 영역에서 Claude Code 프로젝트 디렉터리(~/.claude/projects/)가 감지되면 AI 활동 오버레이를 자동으로 활성화합니다.",

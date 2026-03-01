@@ -42,6 +42,7 @@
   "command.emptyTrash.title": "Saropa Log Capture: Empty Trash",
   "command.toggleTrash.title": "Saropa Log Capture: Toggle Trash Visibility",
   "command.resetAllSettings.title": "Saropa Log Capture: Reset All Settings to Defaults",
+  "command.configureIntegrations.title": "Configure integrations",
 
   "config.aiActivity.enabled.description": "Show Claude Code AI activity (tool calls, prompts) interleaved with debug output in the log viewer.",
   "config.aiActivity.autoDetect.description": "Auto-enable AI activity overlay when a Claude Code project directory (~/.claude/projects/) is detected for this workspace.",

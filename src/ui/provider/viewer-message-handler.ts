@@ -141,5 +141,14 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         /* Host shows modal confirmation; no webview feedback needed. */
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
         break;
+      case "setIntegrationsAdapters":
+        /* Options panel toggled an integration; persist and echo back so webview stays in sync. */
+        {
+          const adapterIds = (msg.adapterIds as string[]) ?? [];
+          const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+          void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
+            .then(() => { ctx.post({ type: 'integrationsAdapters', adapterIds }); });
+        }
+        break;
     }
 }

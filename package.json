@@ -209,6 +209,11 @@
         "title": "%command.resetAllSettings.title%"
       },
       {
+        "command": "saropaLogCapture.configureIntegrations",
+        "icon": "$(extensions)",
+        "title": "%command.configureIntegrations.title%"
+      },
+      {
         "command": "saropaLogCapture.rebuildProjectIndex",
         "icon": "$(refresh)",
         "title": "Rebuild Project Index"
@@ -659,9 +664,185 @@
         },
         "saropaLogCapture.integrations.adapters": {
           "default": ["packages"],
-          "description": "Integration adapters to enable (e.g. packages, buildCi). Only these run; clear to disable all.",
+          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker). Only these run; clear to disable all.",
           "items": { "type": "string" },
           "type": "array"
+        },
+        "saropaLogCapture.integrations.buildCi.buildInfoPath": {
+          "default": ".saropa/last-build.json",
+          "description": "Path (relative to workspace) to last-build.json for build/CI integration.",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.buildCi.fileMaxAgeMinutes": {
+          "default": 60,
+          "description": "If last-build.json is older than this many minutes, it is ignored.",
+          "minimum": 1,
+          "maximum": 1440,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.git.describeInHeader": {
+          "default": true,
+          "description": "Include git describe (e.g. v1.2.3-5-gabc1234) in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.git.uncommittedInHeader": {
+          "default": true,
+          "description": "Include uncommitted files summary in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.git.stashInHeader": {
+          "default": false,
+          "description": "Include stash count in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.environment.includeEnvChecksum": {
+          "default": false,
+          "description": "Include env block checksum in context header (launch config env, redacted).",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.environment.configFiles": {
+          "default": [],
+          "description": "Paths (relative to workspace) to config files to include content hashes for.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.environment.includeInHeader": {
+          "default": true,
+          "description": "Include config file checksum lines in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.testResults.source": {
+          "default": "file",
+          "description": "Test results source: file (last-test-run.json) or junit (JUnit XML).",
+          "enum": ["file", "junit"],
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.testResults.lastRunPath": {
+          "default": ".saropa/last-test-run.json",
+          "description": "Path to last test run JSON (when source is file).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.testResults.junitPath": {
+          "default": "",
+          "description": "Path to JUnit XML (when source is junit).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.testResults.fileMaxAgeHours": {
+          "default": 24,
+          "description": "Ignore test results file older than this (hours).",
+          "minimum": 1,
+          "maximum": 168,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.testResults.includeFailedListInHeader": {
+          "default": false,
+          "description": "List failed test names in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.coverage.reportPath": {
+          "default": "coverage/lcov.info",
+          "description": "Path to coverage report (lcov.info, cobertura.xml, or coverage-summary.json).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.coverage.includeInHeader": {
+          "default": true,
+          "description": "Include coverage line in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.crashDumps.searchPaths": {
+          "default": [],
+          "description": "Paths to scan for crash dumps (e.g. ${workspaceFolder}, ${env:TEMP}). Empty = workspace + common OS paths.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.crashDumps.extensions": {
+          "default": [".dmp", ".mdmp", ".core"],
+          "description": "File extensions for crash dump discovery.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.crashDumps.leadMinutes": {
+          "default": 1,
+          "description": "Minutes before session start to include file mtime.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.crashDumps.lagMinutes": {
+          "default": 5,
+          "description": "Minutes after session end to include file mtime.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.crashDumps.maxFiles": {
+          "default": 20,
+          "description": "Max crash dump files to list.",
+          "minimum": 1,
+          "maximum": 100,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.crashDumps.includeInHeader": {
+          "default": true,
+          "description": "Add crash dumps summary line to header when any found.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.windowsEvents.logs": {
+          "default": ["Application", "System"],
+          "description": "Windows Event Log names to query (Windows only).",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.windowsEvents.levels": {
+          "default": ["Critical", "Error", "Warning"],
+          "description": "Event levels to include.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.windowsEvents.leadMinutes": {
+          "default": 2,
+          "description": "Minutes before session start for event query.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.windowsEvents.lagMinutes": {
+          "default": 5,
+          "description": "Minutes after session end for event query.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.windowsEvents.maxEvents": {
+          "default": 200,
+          "description": "Max events to collect per session.",
+          "minimum": 1,
+          "maximum": 500,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.docker.runtime": {
+          "default": "docker",
+          "description": "Container runtime CLI: docker or podman.",
+          "enum": ["docker", "podman"],
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.docker.containerId": {
+          "default": "",
+          "description": "Override container ID or name (if not inferrable from launch).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.docker.containerNamePattern": {
+          "default": "",
+          "description": "Regex to match container name from docker ps.",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.docker.captureLogs": {
+          "default": true,
+          "description": "Capture container logs for session time range to sidecar.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.docker.maxLogLines": {
+          "default": 20000,
+          "description": "Cap container log lines in sidecar.",
+          "minimum": 100,
+          "maximum": 100000,
+          "type": "number"
         },
         "saropaLogCapture.redactEnvVars": {
           "default": [],

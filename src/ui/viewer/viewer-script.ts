@@ -296,14 +296,12 @@ window.addEventListener('message', function(event) {
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
-        case 'minimapShowInfo':
-            if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
-            break;
-        case 'minimapWidth':
-            if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg);
-            break;
-        case 'iconBarPosition':
-            document.body.dataset.iconBar = msg.position || 'left';
+        case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
+        case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
+        case 'iconBarPosition': document.body.dataset.iconBar = msg.position || 'left'; break;
+        case 'integrationsAdapters':
+            /* Host sent current enabled adapters (e.g. on load or after Options panel change); sync Options checkboxes. */
+            window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : []; if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
             break;
     }
 });
