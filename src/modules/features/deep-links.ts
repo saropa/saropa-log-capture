@@ -14,6 +14,7 @@
 
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../config/config';
+import { logExtensionWarn } from '../misc/extension-logger';
 
 /**
  * Parameters extracted from a deep link URI.
@@ -113,6 +114,7 @@ export function generateDeepLink(sessionFilename: string, line?: number): string
 export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     const params = parseDeepLinkUri(uri);
     if (!params) {
+        logExtensionWarn('deepLink', 'Invalid deep link URI');
         vscode.window.showErrorMessage(vscode.l10n.t('msg.invalidDeepLink'));
         return false;
     }
@@ -120,6 +122,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     // Deep links require a workspace - log files are stored relative to it
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
+        logExtensionWarn('deepLink', 'No workspace open');
         vscode.window.showErrorMessage(vscode.l10n.t('msg.noWorkspaceOpen'));
         return false;
     }
@@ -132,6 +135,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     try {
         await vscode.workspace.fs.stat(logUri);
     } catch {
+        logExtensionWarn('deepLink', `Log file not found: ${params.session}`);
         vscode.window.showErrorMessage(vscode.l10n.t('msg.logFileNotFound', params.session));
         return false;
     }
