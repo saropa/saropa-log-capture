@@ -1,7 +1,7 @@
 /** Command registration for the Saropa Log Capture extension. */
 
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from './modules/config/config';
+import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { handleDeleteCommand } from './modules/features/delete-command';
 import { showSearchQuickPick } from './modules/search/log-search-ui';
@@ -25,6 +25,7 @@ import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { showIntegrationsPicker } from './modules/integrations/integrations-ui';
+import { logExtensionWarn } from './modules/misc/extension-logger';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -122,6 +123,35 @@ function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
             await viewerProvider.loadFromFile(item.uri);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.openTailedFile', async () => {
+            const folder = vscode.workspace.workspaceFolders?.[0];
+            if (!folder) {
+                void vscode.window.showWarningMessage(vscode.l10n.t('msg.openWorkspaceFirst', 'Open a workspace folder first.'));
+                return;
+            }
+            const cfg = getConfig();
+            const patterns = cfg.tailPatterns.length > 0 ? cfg.tailPatterns : ['**/*.log'];
+            const exclude = '**/node_modules/**';
+            const uris = new Map<string, vscode.Uri>();
+            for (const pattern of patterns) {
+                const found = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, pattern), exclude, 500);
+                for (const u of found) { uris.set(u.fsPath, u); }
+            }
+            const list = [...uris.values()].sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+            if (list.length === 0) {
+                void vscode.window.showInformationMessage(vscode.l10n.t('msg.noTailedFiles', 'No files match tail patterns. Check saropaLogCapture.tailPatterns.'));
+                return;
+            }
+            const rel = (u: vscode.Uri) => vscode.workspace.asRelativePath(u, false);
+            const picked = await vscode.window.showQuickPick(
+                list.map((u) => ({ label: rel(u), uri: u })),
+                { placeHolder: vscode.l10n.t('msg.selectTailedFile', 'Select a file to open and tail') },
+            );
+            if (picked?.uri) {
+                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                await viewerProvider.loadFromFile(picked.uri, { tail: true });
+            }
         }),
         vscode.commands.registerCommand('saropaLogCapture.deleteSession',
           async (item: { uri: vscode.Uri; filename: string }) => {
@@ -230,6 +260,7 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {
+                logExtensionWarn('rebuildProjectIndex', 'Project index not available (no workspace folder)');
                 vscode.window.showWarningMessage('Project index is not available (no workspace folder).');
                 return;
             }

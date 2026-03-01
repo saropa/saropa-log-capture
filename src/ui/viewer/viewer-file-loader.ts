@@ -188,3 +188,11 @@ function buildFileLine(
         fw: classifyFrame(text),
     };
 }
+
+/**
+ * Parse raw log file lines into PendingLine[] for the webview.
+ * Used by tail mode to append new lines when a watched file changes.
+ */
+export function parseRawLinesToPending(lines: string[], ctx: FileParseContext): PendingLine[] {
+    return lines.map((raw) => parseFileLine(raw, ctx));
+}
