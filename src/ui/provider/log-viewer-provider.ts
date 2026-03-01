@@ -95,6 +95,7 @@ export class LogViewerProvider
     );
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (msg) => this.postMessage(msg)));
+    queueMicrotask(() => this.sendIntegrationsAdapters(getConfig().integrationsAdapters));
     if (this.pendingLoadUri) { queueMicrotask(() => { void this.loadFromFile(this.pendingLoadUri!); }); }
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
@@ -196,6 +197,9 @@ export class LogViewerProvider
   }
   sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
   sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
+  sendIntegrationsAdapters(adapterIds: readonly string[]): void {
+    this.postMessage({ type: "integrationsAdapters", adapterIds: [...adapterIds] });
+  }
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
   clear(): void {

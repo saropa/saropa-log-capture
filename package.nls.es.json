@@ -42,6 +42,7 @@
   "command.emptyTrash.title": "Saropa Log Capture: Vaciar papelera",
   "command.toggleTrash.title": "Saropa Log Capture: Alternar visibilidad de la papelera",
   "command.resetAllSettings.title": "Saropa Log Capture: Restablecer todos los ajustes a valores predeterminados",
+  "command.configureIntegrations.title": "Configurar integraciones",
 
   "config.aiActivity.enabled.description": "Mostrar actividad de AI de Claude Code (llamadas a herramientas, prompts) intercalada con la salida de depuración en el visor de registros.",
   "config.aiActivity.autoDetect.description": "Activar automáticamente la superposición de actividad AI cuando se detecta un directorio de proyecto Claude Code (~/.claude/projects/) para este espacio de trabajo.",

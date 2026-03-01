@@ -24,6 +24,7 @@ import { bugReportCommands } from './commands-bug-report';
 import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
 import { getGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
+import { showIntegrationsPicker } from './modules/integrations/integrations-ui';
 
 /** Dependencies needed by command registrations. */
 export interface CommandDeps {
@@ -278,6 +279,7 @@ function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         }),
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
         vscode.commands.registerCommand('saropaLogCapture.resetAllSettings', resetAllSettings),
+        vscode.commands.registerCommand('saropaLogCapture.configureIntegrations', () => showIntegrationsPicker()),
     ];
 }
 
