@@ -1,11 +1,38 @@
 
 ![Saropa Log Capture banner](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/banner.png)
 
-<!-- # Saropa Log Capture -->
+```text
+      F5 debug  ──►  output  ──►  saved to  reports/*.log
+                                        │
+                                        ▼
+                    ┌─────────────────────────────────────────┐
+                    │  VIEWER (what VS Code doesn't give you) │
+                    │  · Search all logs (regex, history)     │
+                    │  · Click  file.dart:42  →  open source │
+                    │  · Filter by error / warning / level     │
+                    │  · Keep many sessions, compare two      │
+                    │  · Export HTML, CSV, or share .slc      │
+                    └─────────────────────────────────────────┘
+```
 
-> **Never lose your debug output again.**
+In VS Code, when you stop debugging or switch target, the Debug Console is cleared. Everything you printed is gone. This extension saves that output to log files and adds a viewer so you can keep sessions, search them, compare runs, and click a log line to jump to the source line. No setup: install, hit F5, logs are captured for any adapter (Dart, Node, Python, C++, Go, etc.).
 
-Saropa Log Capture automatically saves all VS Code Debug Console output to persistent log files, with a fast, feature-rich panel viewer. Works with **any** debug adapter (Dart, Node.js, Python, C++, Go, and more). No setup required—just hit F5 and your logs are safe.
+**What you get that VS Code doesn't:**
+
+- **Logs saved to files** — Debug Console is cleared on stop; here output goes to `reports/*.log` and stays.
+- **Click to source** — Click `file.ts:42` in the log to open that file and line (Ctrl+Click for split).
+- **Search** — Regex search over the log, with history; search across all sessions.
+- **Filter by level** — Show only errors, or warnings, or hide noise; filter by tag (e.g. logcat tags).
+- **Keep and compare sessions** — Open any past session; diff two logs side by side.
+- **Big logs** — Virtual scroll over 100K+ lines without freezing.
+- **Pop-out viewer** — Move the viewer to a second monitor.
+- **Export** — Current view or full session as HTML, CSV, JSON, or a shareable `.slc` bundle.
+- **Tail any log** — Open any workspace `.log` file and watch new lines live.
+- **Run navigation** — For Flutter: jump between runs (launch, hot restart, hot reload) inside one log.
+- **Error alerts** — Optional sound or flash when errors appear; errors classified (e.g. crash vs timeout).
+- **Session context** — Optional: lockfile hash, Git state, env snapshot, test results in each log header.
+
+The viewer is built for real use: virtual scrolling, severity filters, run navigation for Flutter, side-by-side diff. You can tail any workspace log, export filtered views or full sessions, or attach optional adapters (lockfile, Git, env, test results, crash dumps) to session headers.
 
 <!-- GitHub Activity -->
 [![GitHub stars](https://img.shields.io/github/stars/saropa/saropa-log-capture?style=social)](https://github.com/saropa/saropa-log-capture)
@@ -15,19 +42,19 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Languages](https://img.shields.io/badge/UI%20languages-11%20locales-blue)](https://github.com/saropa/saropa-log-capture#translations)
 
-> Have feedback or ideas? Share them by [opening an issue](https://github.com/saropa/saropa-log-capture/issues/new) on GitHub!
+> Feedback or ideas? [Open an issue](https://github.com/saropa/saropa-log-capture/issues/new).
 
 **Who is this for?**
-- Developers who need to keep, search, and export debug output
-- Anyone frustrated by losing Debug Console logs after a session ends
+- Developers who keep, search, and export debug output
+- Anyone who’s lost Debug Console history when a session ended
 
 ---
 
 ## Overview
 
-- Debug Console output is ephemeral in VS Code—this extension makes it persistent, searchable, and exportable.
-- Zero config: install and start debugging, logs are captured automatically.
-- Sidebar viewer (activity bar icon) for real-time log viewing, search, filtering, and more.
+- **Logs saved, not lost:** VS Code clears the Debug Console when you stop; this extension writes output to files and gives you a viewer that handles 100K+ lines (virtual scroll), click-to-source, and theme support.
+- **No config:** Install, start debugging (F5); logs are captured automatically. Works with any debug adapter.
+- **Viewer:** Click source links in logs to jump to code (Ctrl+Click for split). Pop-out to a second monitor. Run navigator (Run 1 of N) for Flutter hot restart/reload. Error classification and optional sound/flash on errors. Tail any workspace `.log` file live. Export filtered views or full sessions as `.slc` bundles. Optional adapters add lockfile hash, Git, env, test/coverage/crash data to session headers.
 
 ---
 
@@ -43,10 +70,11 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log file starts with session metadata.
-- **Integration adapters:** Opt-in adapters (e.g. Packages lockfile hash) add lines to the header and meta; status bar shows which adapters contributed. Configure via `saropaLogCapture.integrations.adapters`.
+- **Integration adapters:** Opt-in adapters add header lines and meta per session; status bar shows which contributed. Configure via `saropaLogCapture.integrations.adapters`. Adapters: Packages (lockfile hash), Build/CI, Git (describe, uncommitted, stash), Environment snapshot, Test results (file or JUnit XML), Code coverage (lcov/Cobertura), Crash dumps (scan at session end), Windows Event Log (Application/System, Windows only), Docker (container inspect/logs at session end).
 - **ANSI preservation:** Raw ANSI codes kept in files for external tools.
 - **Gitignore safety:** Offers to add log dir to `.gitignore` on first run.
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
+- **AI Activity (opt-in):** When enabled, Claude Code AI activity (tool calls, prompts, system warnings) can be streamed into the log viewer interleaved with debug output; AI lines have distinct colored borders and `[AI ...]` prefixes, filterable by category. Settings under `saropaLogCapture.aiActivity.*`; auto-detects `~/.claude/projects/` when `autoDetect` is on.
 
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
@@ -63,6 +91,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **ASCII art detection:** Box-drawing and separator characters styled for readability.
 - **Scroll position memory:** Viewer remembers scroll position per file when switching between logs.
 - **Tail mode:** Command **Saropa Log Capture: Open Tailed File** opens any workspace file matching `saropaLogCapture.tailPatterns` (default `**/*.log`); the viewer appends new lines as the file grows.
+- **Run navigation:** Logs with multiple app runs (e.g. Flutter launch, hot restart, hot reload) show "Run 1 of N" with Prev/Next in the title bar; run separators (bar with run number, time range, duration, issue counts) appear above each run in the list.
 
 ### Search & Filter
 - **Search panel:** Slide-out search with regex, case sensitivity, and whole word toggles. Search history (last 10 terms) shown on open. Clear button (×) in input.
@@ -79,6 +108,9 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Error breakpoints:** Visual and audio alerts when errors appear—flash border, sound, counter badge, optional modal popup.
 - **Multi-level classification:** Seven severity levels—Error, Warning, Info, Performance, TODO, Debug/Trace, and Notice—each auto-detected with dedicated colors and filters.
 
+### Performance
+- **Performance panel:** Icon-bar panel (graph-line): Current session tab shows grouped perf events (PERF traces, Choreographer jank, GC, timeouts) with click-to-navigate; Trends tab shows cross-session aggregated table with SVG line chart for operation duration over time. Fingerprints stored in session metadata.
+
 ### Display & Layout
 - **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), and whole-line coloring for all severity levels. Configurable in the Options panel.
 - **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
@@ -87,9 +119,10 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **Elapsed time:** Show `+Nms` between lines; slow gaps highlighted.
 - **Scrollbar minimap:** Visual overview showing search matches, errors, warnings, and viewport position.
 - **Highlight rules:** Color lines matching patterns (configurable colors, labels). Defaults include Fatal, TODO/FIXME, Hack/Workaround, Deprecated, Info, Debug.
+- **Options panel actions:** Reset to default (viewer options only) and Reset extension settings (all extension settings to defaults).
 
 ### Session Management
-- **Project Logs panel:** In-webview slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Active sessions highlighted with a recording icon.
+- **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Active sessions highlighted with a recording icon. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
 - **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading.
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
@@ -102,7 +135,7 @@ Saropa Log Capture automatically saves all VS Code Debug Console output to persi
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
 - **.slc session bundle:** Export current or selected session (including split parts and metadata) to a `.slc` ZIP; command **Import .slc Bundle** restores sessions into the workspace log directory.
 - **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
-- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines.
+- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.
 - **Copy to Search:** Right-click a line to open search pre-filled with its text.
 - **Source link context menu:** Right-click a filename reference to Open File, Copy Relative Path, or Copy Full Path.
 
@@ -193,6 +226,9 @@ See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference.
 | `Saropa Log Capture: Compare Sessions`               | Side-by-side diff of two log sessions            |
 | `Saropa Log Capture: Apply Session Template`         | Apply a saved session template                   |
 | `Saropa Log Capture: Save Settings as Template`      | Save current settings as a reusable template     |
+| `Saropa Log Capture: Open Tailed File`               | Open a workspace log file and tail it live       |
+| `Saropa Log Capture: Import .slc Bundle`             | Import a `.slc` session bundle into the log dir  |
+| `Saropa Log Capture: Configure integrations`         | Quick Pick to enable/disable integration adapters |
 
 ---
 
@@ -240,6 +276,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `splitRules.keywords`          | `[]`        | Split when keyword or `/regex/` matched                  |
 | `splitRules.maxDurationMinutes`| `0`         | Split after N minutes (0 = disabled)                     |
 | `splitRules.silenceMinutes`    | `0`         | Split after N minutes of silence (0 = disabled)          |
+| `tailPatterns`                 | `["**/*.log"]` | Glob patterns for **Open Tailed File** (workspace-relative) |
 
 </details>
 

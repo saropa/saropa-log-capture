@@ -8,44 +8,44 @@
 /** Generate the icon bar HTML with codicon-based buttons. */
 export function getIconBarHtml(): string {
     return /* html */ `
-<div id="icon-bar">
-    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs">
+<div id="icon-bar" role="toolbar" aria-label="Log viewer tools">
+    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs" aria-label="Project Logs">
         <span class="codicon codicon-files"></span>
     </button>
-    <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)">
+    <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)" aria-label="Search (Ctrl+F)">
         <span class="codicon codicon-search"></span>
     </button>
-    <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)">
+    <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
         <span class="codicon codicon-list-filter"></span>
     </button>
-    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks">
+    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks" aria-label="Bookmarks">
         <span class="codicon codicon-bookmark"></span>
         <span id="ib-bookmarks-badge" class="ib-badge"></span>
     </button>
-    <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters">
+    <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span>
     </button>
-    <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info">
+    <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info" aria-label="Session Info">
         <span class="codicon codicon-info"></span>
     </button>
-    <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash">
+    <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span>
         <span id="ib-trash-badge" class="ib-badge"></span>
     </button>
-    <button id="ib-options" class="ib-icon" tabindex="0" title="Options">
+    <button id="ib-options" class="ib-icon" tabindex="0" title="Options" aria-label="Options">
         <span class="codicon codicon-settings-gear"></span>
     </button>
     <div class="ib-separator"></div>
-    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics">
+    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span>
     </button>
-    <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors">
+    <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors" aria-label="Recurring Errors">
         <span class="codicon codicon-bug"></span>
     </button>
-    <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance">
+    <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance" aria-label="Performance">
         <span class="codicon codicon-graph-line"></span>
     </button>
-    <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa">
+    <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa" aria-label="About Saropa">
         <span class="codicon codicon-home"></span>
     </button>
 </div>`;
