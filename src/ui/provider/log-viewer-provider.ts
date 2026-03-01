@@ -8,7 +8,7 @@ import { FilterPreset } from "../../modules/storage/filter-presets";
 import { getConfig } from "../../modules/config/config";
 import {
   type PendingLine, findHeaderEnd, sendFileLines, parseHeaderFields,
-  computeSessionMidnight, parseTimeToMs,
+  computeSessionMidnight, parseTimeToMs, parseRawLinesToPending,
 } from "../viewer/viewer-file-loader";
 import { detectRunBoundaries, getRunStartIndices } from "../../modules/session/run-boundaries";
 import { getRunSummaries } from "../../modules/session/run-summaries";
@@ -72,6 +72,11 @@ export class LogViewerProvider
   private isSessionActive = false;
   private pendingLoadUri: vscode.Uri | undefined;
   private loadGeneration = 0;
+  private tailWatcher: vscode.FileSystemWatcher | undefined;
+  private tailLastLineCount = 0;
+  private tailSessionMidnightMs = 0;
+  private tailUri: vscode.Uri | undefined;
+  private tailUpdateInProgress = false;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -207,15 +212,17 @@ export class LogViewerProvider
   setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
 
   clear(): void {
+    this.stopTailing();
     flushThreadDump(this.threadDumpState, this.pendingLines);
     this.pendingLines = []; this.currentFileUri = undefined;
     this.postMessage({ type: "clear" }); this.setSessionInfo(null);
   }
-  async loadFromFile(uri: vscode.Uri): Promise<void> {
+  async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration; this.pendingLoadUri = uri;
     this.view?.show?.(true);
     for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
     if (!this.view || gen !== this.loadGeneration) { return; }
+    this.stopTailing();
     this.clear(); this.seenCategories.clear(); this.currentFileUri = uri;
     const raw = await vscode.workspace.fs.readFile(uri);
     if (gen !== this.loadGeneration) { return; }
@@ -253,6 +260,44 @@ export class LogViewerProvider
       post({ type: "runBoundaries", boundaries, runStartIndices, runSummaries });
     }
     this.postMessage({ type: "loadComplete" }); this.onFileLoaded?.(uri); this.pendingLoadUri = undefined;
+    if (options?.tail) {
+      this.startTailing(uri, ctx.sessionMidnightMs, contentLines.length);
+    }
+  }
+  private stopTailing(): void {
+    this.tailWatcher?.dispose();
+    this.tailWatcher = undefined;
+    this.tailUri = undefined;
+  }
+  /** Start watching the file and appending new lines to the viewer on change. */
+  private startTailing(uri: vscode.Uri, sessionMidnightMs: number, initialLineCount: number): void {
+    this.stopTailing();
+    this.tailUri = uri;
+    this.tailSessionMidnightMs = sessionMidnightMs;
+    this.tailLastLineCount = initialLineCount;
+    this.tailWatcher = vscode.workspace.createFileSystemWatcher(uri.fsPath);
+    this.tailWatcher.onDidChange(async () => {
+      if (this.currentFileUri?.fsPath !== uri.fsPath || !this.view) { return; }
+      if (this.tailUpdateInProgress) { return; }
+      this.tailUpdateInProgress = true;
+      try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const rawLines = Buffer.from(raw).toString("utf-8").split(/\r?\n/);
+        const headerEnd = findHeaderEnd(rawLines);
+        const contentLines = rawLines.slice(headerEnd);
+        if (contentLines.length <= this.tailLastLineCount) { return; }
+        const newLines = contentLines.slice(this.tailLastLineCount);
+        const ctx = { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: this.tailSessionMidnightMs };
+        const pending = parseRawLinesToPending(newLines, ctx);
+        this.tailLastLineCount = contentLines.length;
+        this.postMessage({ type: "addLines", lines: pending, lineCount: this.tailLastLineCount });
+        helpers.sendNewCategories(pending, this.seenCategories, (msg) => this.postMessage(msg));
+      } catch {
+        // File may be locked or deleted; ignore
+      } finally {
+        this.tailUpdateInProgress = false;
+      }
+    });
   }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj = Object.fromEntries(counts);
@@ -261,7 +306,7 @@ export class LogViewerProvider
     if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
   }
 
-  dispose(): void { this.stopBatchTimer(); panelHandlers.disposeHandlers(); }
+  dispose(): void { this.stopTailing(); this.stopBatchTimer(); panelHandlers.disposeHandlers(); }
 
   // -- Private methods --
 
