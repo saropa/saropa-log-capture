@@ -50,6 +50,124 @@ These principles guide all development decisions:
 - Register all disposables via `context.subscriptions.push()`
 - Read settings fresh on each use — users can change them mid-session
 
+## Documentation
+
+### File-level doc headers
+
+Every source file should start with a JSDoc block that describes:
+
+- **What** the file is responsible for (one or two sentences).
+- **When relevant**: key behavior, integration points, or "see also" references.
+
+Use `/** ... */` before the first import. One line is fine for simple modules; use multiple lines for non-obvious or critical modules (e.g. message routing, config loading).
+
+### JSDoc for public APIs
+
+- **Exported functions and classes**: Add a short description. Use `@param` and `@returns` when the signature is not self-explanatory.
+- **Exported interfaces/types**: Document the type and any non-obvious fields (e.g. units, valid values).
+- **`@example`**: Use sparingly, only when it clarifies usage (e.g. pattern parsing, regex formats).
+- **`@throws`**: Document when callers must handle specific errors.
+
+Keep descriptions concise; avoid restating the name. Prefer "Returns the compiled rule set" over "This function returns the compiled rule set."
+
+### Inline comments
+
+- **Explain why, not what.** Prefer comments for non-obvious logic, workarounds, and magic numbers.
+- **Branches and edge cases**: A short comment on non-obvious branches (e.g. "Skip when session is still recording") helps future readers.
+- **Bug fixes**: Use a brief "BUG FIX:" or "Workaround:" when the code exists to address a specific issue.
+- **Avoid noise**: Do not comment the obvious (e.g. "increment counter" above `i++`).
+
+### Examples
+
+**File header (concise):**
+
+```ts
+/** Dispatches incoming webview messages for the log viewer to the appropriate handlers. */
+```
+
+**File header (richer):**
+
+```ts
+/**
+ * Highlight Rule Engine
+ *
+ * Pattern-based highlighting for log lines. Rules support plain strings (case-insensitive)
+ * or regex literals (/pattern/flags). Stackable and priority-based; uses VS Code theme colors.
+ */
+```
+
+**Function with params:**
+
+```ts
+/**
+ * Compiles user highlight rules into efficient matchers. Invalid rules are skipped.
+ * @param rules - Rules from user settings
+ * @returns Compiled rules for matching; call once when rules change, not per line.
+ */
+```
+
+**Inline (why, not what):**
+
+```ts
+// Skip when session is still recording so we don't rewrite under the writer's feet.
+if (isSessionActive) { return; }
+```
+
+## Testing
+
+### Where tests live
+
+- Unit tests are in `src/test/`, mirroring `src/`: e.g. `src/test/modules/config/config.test.ts` for `src/modules/config/config.ts`.
+- Tests use the **Mocha** API (`suite`, `test`) and run via **vscode-test** (Extension Development Host). Run with: `npm run test`.
+
+### What to test
+
+- **Public API**: Exported functions and classes; focus on behavior, not implementation.
+- **Edge cases**: Empty input, boundary values, invalid or unexpected arguments.
+- **Pure logic first**: Modules that do not depend on `vscode` or the file system are easiest to test; add tests when adding or changing such logic.
+
+### When to add tests
+
+- **New features**: Add tests for new public functions or notable branches.
+- **Bug fixes**: Add a regression test that would have caught the bug.
+- **Refactors**: Use existing tests to confirm behavior is unchanged.
+
+### Running tests
+
+```bash
+npm run test
+```
+
+The `pretest` script runs type-check, lint, and compile first. Tests run inside a VS Code Extension Host; the first run may take longer while the test environment is set up.
+
+### Coverage
+
+```bash
+npm run test:coverage
+```
+
+Runs tests with c8 and prints a coverage report. Note: many tests run inside the VS Code Extension Host (child process), so reported coverage may not include all code paths exercised there. Coverage is most accurate for pure logic tested in the same process (e.g. `selectFilesToTrash`, `EarlyOutputBuffer`, `FloodGuard`).
+
+## Error handling, param validation, and logging
+
+### Error handling
+
+- **Boundaries**: Use try/catch at boundaries (message handlers, command handlers, async entry points). Log the error and either rethrow (with a clear message) or show a user-facing message and return.
+- **Avoid empty catch**: Prefer `catch (err) { logError('context', err); throw new Error('...'); }` or handle meaningfully. If you intentionally swallow (e.g. "file not found"), add a one-line comment.
+- **User-facing vs. log**: Use `vscode.window.showErrorMessage` / `showWarningMessage` for user-visible feedback; use the shared **extension logger** (see below) for diagnostic details so support can troubleshoot.
+
+### Parameter validation
+
+- **Public API**: Validate required parameters at the start of exported functions: early return or throw with a clear message if a required value is missing or invalid.
+- **Defensive checks**: For values from the webview, config, or file system, coerce types (e.g. `Number(msg.lineIndex ?? -1)`) and guard against out-of-range or invalid state before use.
+- **Helpers**: Use `assertDefined(value, name)` (from `modules/misc/assert`) for required non-null values in hot paths when you want a clear diagnostic on misuse.
+
+### Warning and error logging
+
+- Use the **extension logger** (`getExtensionLogger()`) so all messages go to the "Saropa Log Capture" output channel. Call `setExtensionLogger(channel)` once from the extension entry point.
+- **Levels**: Use `logExtensionError` for failures and unexpected conditions; use `logExtensionWarn` for recoverable or degraded behavior; use `logExtensionInfo` sparingly (e.g. session start/stop, retention run).
+- **Content**: Include a short context (e.g. "editLine", "file retention") and the error message or key data. Avoid logging secrets or full paths to user data unless necessary for support.
+
 ## Development Workflow
 
 1. Fork the repository
