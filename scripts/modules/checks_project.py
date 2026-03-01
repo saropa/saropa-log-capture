@@ -8,6 +8,7 @@ and version consistency before we attempt any package or publish operations.
 import datetime
 import os
 import re
+import sys
 
 from modules.constants import C, MAX_FILE_LINES, PROJECT_ROOT
 from modules.display import ask_yn, fail, fix, info, ok, warn
@@ -237,6 +238,9 @@ def _get_changelog_max_version() -> str | None:
 
 def _ask_version(current: str) -> str | None:
     """Prompt user to confirm or override the version. Returns version or None."""
+    if not sys.stdin.isatty():
+        # Non-interactive (e.g. IDE terminal with no stdin): accept default
+        return current
     try:
         answer = input(
             f"  {C.YELLOW}Publish as v{current}? "
@@ -458,10 +462,13 @@ def validate_version_changelog() -> tuple[str, bool]:
     if not tag_ok:
         return version, False
 
-    # Let the user confirm or override the version
-    confirmed = _ask_version(version)
+    # Let the user confirm or override the version (skip if PUBLISH_YES / --yes)
+    if os.environ.get("PUBLISH_YES"):
+        confirmed = version
+    else:
+        confirmed = _ask_version(version)
     if confirmed is None:
-        fail("Version not confirmed.")
+        fail("Version not confirmed. Press Y or Enter to confirm, or run with --yes.")
         return version, False
     if confirmed != version:
         # User overrode — re-check tag availability
