@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const testDir = path.join(__dirname, '..', '.vscode-test');
+const testDir = path.join(__dirname, '..', '..', '.vscode-test');
 if (!fs.existsSync(testDir)) {
 	process.exit(0);
 }

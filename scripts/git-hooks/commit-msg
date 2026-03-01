@@ -1,0 +1,9 @@
+#!/bin/sh
+# Reject any commit message containing a "Made with Cursor" (or similar) trailer.
+# This repo does not credit editor/tool trailers.
+# Install: cp scripts/git-hooks/commit-msg .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
+if grep -qiE 'Made-with:\s*Cursor|Made with:\s*Cursor' "$1"; then
+	echo "Commit rejected: remove 'Made-with: Cursor' (and similar) trailer from the message." >&2
+	exit 1
+fi
+exit 0
