@@ -26,6 +26,8 @@ export interface SaropaLogCaptureConfig {
   readonly aiActivity: AiActivityConfig;
   readonly categories: readonly string[];
   readonly maxLines: number;
+  /** Max lines shown in the viewer (0 = use default 50k). Must be ≤ maxLines. */
+  readonly viewerMaxLines: number;
   readonly includeTimestamp: boolean;
   readonly format: "plaintext" | "html";
   readonly logDirectory: string;
@@ -259,6 +261,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       "stderr",
     ]),
     maxLines: cfg.get<number>("maxLines", 100000),
+    viewerMaxLines: cfg.get<number>("viewerMaxLines", 0),
     includeTimestamp: cfg.get<boolean>("includeTimestamp", true),
     format: cfg.get<"plaintext" | "html">("format", "plaintext"),
     logDirectory: cfg.get<string>("logDirectory", "reports"),
