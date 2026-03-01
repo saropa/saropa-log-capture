@@ -34,6 +34,14 @@ import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { getDefaultIntegrationRegistry } from './modules/integrations';
 import { packageLockfileProvider } from './modules/integrations/providers/package-lockfile';
+import { buildCiProvider } from './modules/integrations/providers/build-ci';
+import { gitSourceCodeProvider } from './modules/integrations/providers/git-source-code';
+import { environmentSnapshotProvider } from './modules/integrations/providers/environment-snapshot';
+import { testResultsProvider } from './modules/integrations/providers/test-results';
+import { codeCoverageProvider } from './modules/integrations/providers/code-coverage';
+import { crashDumpsProvider } from './modules/integrations/providers/crash-dumps';
+import { windowsEventLogProvider } from './modules/integrations/providers/windows-event-log';
+import { dockerContainersProvider } from './modules/integrations/providers/docker-containers';
 
 let sessionManager: SessionManagerImpl;
 let projectIndexer: ProjectIndexer | null = null;
@@ -59,7 +67,16 @@ export function activate(context: vscode.ExtensionContext): void {
         context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; setGlobalProjectIndexer(null); } });
     }
 
-    getDefaultIntegrationRegistry().register(packageLockfileProvider);
+    const integrationRegistry = getDefaultIntegrationRegistry();
+    integrationRegistry.register(packageLockfileProvider);
+    integrationRegistry.register(buildCiProvider);
+    integrationRegistry.register(gitSourceCodeProvider);
+    integrationRegistry.register(environmentSnapshotProvider);
+    integrationRegistry.register(testResultsProvider);
+    integrationRegistry.register(codeCoverageProvider);
+    integrationRegistry.register(crashDumpsProvider);
+    integrationRegistry.register(windowsEventLogProvider);
+    integrationRegistry.register(dockerContainersProvider);
 
     // Inline code decorations.
     inlineDecorations = new InlineDecorationsProvider();

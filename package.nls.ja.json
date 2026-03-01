@@ -42,6 +42,7 @@
   "command.emptyTrash.title": "Saropa Log Capture: ゴミ箱を空にする",
   "command.toggleTrash.title": "Saropa Log Capture: ゴミ箱の表示を切り替え",
   "command.resetAllSettings.title": "Saropa Log Capture: すべての設定をデフォルトにリセット",
+  "command.configureIntegrations.title": "統合を構成",
 
   "config.aiActivity.enabled.description": "Claude Code AIアクティビティ（ツール呼び出し、プロンプト）をデバッグ出力と一緒にログビューアーに表示します。",
   "config.aiActivity.autoDetect.description": "このワークスペースでClaude Codeプロジェクトディレクトリ（~/.claude/projects/）が検出された場合、AIアクティビティオーバーレイを自動的に有効にします。",

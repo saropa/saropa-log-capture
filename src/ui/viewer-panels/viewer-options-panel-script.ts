@@ -140,6 +140,20 @@ function syncAudioUi() {
     if (rl && typeof audioRateLimit !== 'undefined') rl.value = audioRateLimit.toString();
 }
 
+/** Sync integrations checkboxes from window.integrationAdapters (set by host message). */
+function syncIntegrationsUi() {
+    var adapterIds = (typeof window !== 'undefined' && window.integrationAdapters) ? window.integrationAdapters : [];
+    var set = {};
+    for (var i = 0; i < adapterIds.length; i++) set[adapterIds[i]] = true;
+    var section = document.getElementById('integrations-section');
+    if (!section) return;
+    var inputs = section.querySelectorAll('input[data-adapter-id]');
+    for (var j = 0; j < inputs.length; j++) {
+        var id = inputs[j].getAttribute('data-adapter-id');
+        if (id) inputs[j].checked = !!set[id];
+    }
+}
+
 /** Sync all options panel controls from current state variables. */
 function syncOptionsPanelUi() {
     syncDisplayUi();
@@ -148,6 +162,7 @@ function syncOptionsPanelUi() {
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
     var hideBlankCheck = document.getElementById('opt-hide-blank-lines');
     if (hideBlankCheck && typeof hideBlankLines !== 'undefined') hideBlankCheck.checked = hideBlankLines;
+    syncIntegrationsUi();
     syncAudioUi();
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
 }

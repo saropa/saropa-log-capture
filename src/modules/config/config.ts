@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import { SplitRules, defaultSplitRules } from "../misc/file-splitter";
+import { SplitRules, parseSplitRules } from "../misc/file-splitter";
 import { AutoTagRule } from "../misc/auto-tagger";
 import { HighlightRule } from "../storage/highlight-rules";
+import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 
 /** Watch pattern entry from user settings. */
 export interface WatchPatternSetting {
@@ -80,8 +81,79 @@ export interface SaropaLogCaptureConfig {
   readonly organizeFolders: boolean;
   /** Integration adapter ids to enable (e.g. ["packages", "buildCi"]). Only these run. */
   readonly integrationsAdapters: readonly string[];
+  /** Build/CI integration (file-based last-build.json). */
+  readonly integrationsBuildCi: IntegrationBuildCiConfig;
+  /** Git integration (describe, uncommitted, stash). */
+  readonly integrationsGit: IntegrationGitConfig;
+  /** Environment snapshot (env checksum, config file hashes). */
+  readonly integrationsEnvironment: IntegrationEnvironmentConfig;
+  /** Test results (last run file or JUnit). */
+  readonly integrationsTestResults: IntegrationTestResultsConfig;
+  /** Code coverage (lcov/summary file). */
+  readonly integrationsCoverage: IntegrationCoverageConfig;
+  /** Crash dumps (scan dirs at session end). */
+  readonly integrationsCrashDumps: IntegrationCrashDumpsConfig;
+  /** Windows Event Log (session end, Windows only). */
+  readonly integrationsWindowsEvents: IntegrationWindowsEventsConfig;
+  /** Docker/container (inspect + logs at end). */
+  readonly integrationsDocker: IntegrationDockerConfig;
   /** Project index: docs/reports indexing for faster analysis. */
   readonly projectIndex: ProjectIndexConfig;
+}
+
+export interface IntegrationBuildCiConfig {
+  readonly buildInfoPath: string;
+  readonly fileMaxAgeMinutes: number;
+}
+
+export interface IntegrationGitConfig {
+  readonly describeInHeader: boolean;
+  readonly uncommittedInHeader: boolean;
+  readonly stashInHeader: boolean;
+}
+
+export interface IntegrationEnvironmentConfig {
+  readonly includeEnvChecksum: boolean;
+  readonly configFiles: readonly string[];
+  readonly includeInHeader: boolean;
+}
+
+export interface IntegrationTestResultsConfig {
+  readonly source: 'file' | 'junit';
+  readonly lastRunPath: string;
+  readonly junitPath: string;
+  readonly fileMaxAgeHours: number;
+  readonly includeFailedListInHeader: boolean;
+}
+
+export interface IntegrationCoverageConfig {
+  readonly reportPath: string;
+  readonly includeInHeader: boolean;
+}
+
+export interface IntegrationCrashDumpsConfig {
+  readonly searchPaths: readonly string[];
+  readonly extensions: readonly string[];
+  readonly leadMinutes: number;
+  readonly lagMinutes: number;
+  readonly maxFiles: number;
+  readonly includeInHeader: boolean;
+}
+
+export interface IntegrationWindowsEventsConfig {
+  readonly logs: readonly string[];
+  readonly levels: readonly string[];
+  readonly leadMinutes: number;
+  readonly lagMinutes: number;
+  readonly maxEvents: number;
+}
+
+export interface IntegrationDockerConfig {
+  readonly runtime: 'docker' | 'podman';
+  readonly containerId: string;
+  readonly containerNamePattern: string;
+  readonly captureLogs: boolean;
+  readonly maxLogLines: number;
 }
 
 /** Single source entry for project index (path + file types). */
@@ -230,48 +302,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     iconBarPosition: cfg.get<string>("iconBarPosition", "left") as "left" | "right",
     organizeFolders: cfg.get<boolean>("organizeFolders", true),
     integrationsAdapters: cfg.get<string[]>("integrations.adapters", ["packages"]),
+    ...getIntegrationConfig(cfg),
     projectIndex: getProjectIndexConfig(cfg),
-  };
-}
-
-function getProjectIndexConfig(cfg: vscode.WorkspaceConfiguration): ProjectIndexConfig {
-  const rawSources = cfg.get<Array<{ path: string; fileTypes?: string[]; enabled?: boolean }>>("projectIndex.sources");
-  const docsDirs = cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]);
-  const sources: ProjectIndexSourceConfig[] = Array.isArray(rawSources) && rawSources.length > 0
-    ? rawSources.map((s) => ({
-        path: String(s?.path ?? ""),
-        fileTypes: Array.isArray(s?.fileTypes) ? s.fileTypes : [".md", ".txt"],
-        enabled: s?.enabled !== false,
-      })).filter((s) => s.path.length > 0)
-    : docsDirs.map((dir) => ({ path: dir, fileTypes: [".md", ".txt"], enabled: true }));
-  return {
-    enabled: cfg.get<boolean>("projectIndex.enabled", true),
-    sources,
-    includeRootFiles: cfg.get<boolean>("projectIndex.includeRootFiles", true),
-    includeReports: cfg.get<boolean>("projectIndex.includeReports", true),
-    maxFilesPerSource: Math.min(1000, Math.max(10, cfg.get<number>("projectIndex.maxFilesPerSource", 100))),
-    refreshInterval: Math.min(3600, Math.max(0, cfg.get<number>("projectIndex.refreshInterval", 0))),
-  };
-}
-
-function parseSplitRules(raw: Record<string, unknown>): SplitRules {
-  const defaults = defaultSplitRules();
-  return {
-    maxLines:
-      typeof raw.maxLines === "number" ? raw.maxLines : defaults.maxLines,
-    maxSizeKB:
-      typeof raw.maxSizeKB === "number" ? raw.maxSizeKB : defaults.maxSizeKB,
-    keywords: Array.isArray(raw.keywords)
-      ? raw.keywords.filter((k) => typeof k === "string")
-      : defaults.keywords,
-    maxDurationMinutes:
-      typeof raw.maxDurationMinutes === "number"
-        ? raw.maxDurationMinutes
-        : defaults.maxDurationMinutes,
-    silenceMinutes:
-      typeof raw.silenceMinutes === "number"
-        ? raw.silenceMinutes
-        : defaults.silenceMinutes,
   };
 }
 
