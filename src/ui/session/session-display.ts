@@ -5,6 +5,9 @@
  * used by both the tree view and the webview session panel.
  */
 
+/** Date range filter for the session list. */
+export type SessionDateRange = 'all' | '7d' | '30d';
+
 /** Persisted display options for the session list. */
 export interface SessionDisplayOptions {
     readonly stripDatetime: boolean;
@@ -13,6 +16,8 @@ export interface SessionDisplayOptions {
     readonly reverseSort: boolean;
     readonly showLatestOnly?: boolean;
     readonly panelWidth?: number;
+    /** Filter sessions by modified time: all, last 7 days, or last 30 days. */
+    readonly dateRange?: SessionDateRange;
 }
 
 /** Default display options. */
@@ -22,6 +27,7 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     showDayHeadings: true,
     reverseSort: false,
     showLatestOnly: false,
+    dateRange: 'all',
 };
 
 const shortMonths = [
