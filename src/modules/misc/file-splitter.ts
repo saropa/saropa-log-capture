@@ -135,6 +135,22 @@ export function defaultSplitRules(): SplitRules {
     };
 }
 
+/** Parse raw settings into SplitRules (for config loading). */
+export function parseSplitRules(raw: Record<string, unknown>): SplitRules {
+    const defaults = defaultSplitRules();
+    return {
+        maxLines: typeof raw.maxLines === "number" ? raw.maxLines : defaults.maxLines,
+        maxSizeKB: typeof raw.maxSizeKB === "number" ? raw.maxSizeKB : defaults.maxSizeKB,
+        keywords: Array.isArray(raw.keywords)
+            ? raw.keywords.filter((k) => typeof k === "string")
+            : defaults.keywords,
+        maxDurationMinutes:
+            typeof raw.maxDurationMinutes === "number" ? raw.maxDurationMinutes : defaults.maxDurationMinutes,
+        silenceMinutes:
+            typeof raw.silenceMinutes === "number" ? raw.silenceMinutes : defaults.silenceMinutes,
+    };
+}
+
 /** Format a split reason for display in headers/logs. */
 export function formatSplitReason(reason: SplitReason): string {
     switch (reason.type) {
