@@ -206,6 +206,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `enabled`                      | `true`      | Enable/disable automatic log capture                     |
 | `categories`                   | `["console","stdout","stderr"]` | DAP output categories to capture |
 | `maxLines`                     | `100000`    | Maximum lines per log file                               |
+| `viewerMaxLines`               | `0`         | Max lines shown in viewer (0 = 50,000). Cannot exceed `maxLines`. Reduce for large files. |
 | `includeTimestamp`             | `true`      | Prefix each line with a timestamp                        |
 | `includeSourceLocation`        | `false`     | Include source file and line number in log lines         |
 | `includeElapsedTime`           | `false`     | Show elapsed time since previous line in log files       |
@@ -246,6 +247,34 @@ All settings are prefixed with `saropaLogCapture.`
 
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
 - **Debug Console only:** Capture is from the VS Code Debug Console (DAP) only. Integrated Terminal output is not captured; see [Terminal output capture](docs/deferred/TERMINAL_OUTPUT_CAPTURE.md) for details.
+
+### Keyboard shortcuts and accessibility
+
+The viewer uses `aria-label` and `role` on controls and the log content (`role="log"`) for screen readers. Keyboard shortcuts are listed below.
+
+**When the log viewer has focus:**
+
+| Shortcut | Action |
+|----------|--------|
+| **Ctrl+F** / **F3** | Open search panel |
+| **Ctrl+Shift+F** | Find in Files |
+| **Ctrl+G** | Go to line |
+| **Escape** | Close search, options, go-to-line, peek, or session panel |
+| **Ctrl+C** | Copy selection; if no selection, copy current line (when supported) |
+| **Ctrl+Shift+C** | Copy selection as Markdown |
+| **Ctrl+Shift+A** | Copy full log to clipboard |
+| **Ctrl+A** | Select all (in viewer) |
+| **Ctrl++** / **Ctrl+-** / **Ctrl+0** | Increase / decrease / reset font size |
+| **Space** | Toggle pause (live capture) |
+| **W** | Toggle word wrap |
+| **Home** / **End** | Jump to top / bottom |
+| **Page Up** / **Page Down** | Scroll by page |
+| **M** | Insert marker at current position |
+| **P** | Pin line at center |
+| **N** | Add annotation to line at center |
+| **Ctrl+scroll** | Zoom font size (when not over an input) |
+
+On macOS use **Cmd** instead of **Ctrl**. See also [Keyboard shortcuts](docs/keyboard-shortcuts.md) for printable reference and Command Palette commands.
 
 ---
 
