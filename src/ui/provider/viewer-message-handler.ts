@@ -1,4 +1,10 @@
-/** Dispatches incoming webview messages for the log viewer. */
+/**
+ * Dispatches incoming webview messages for the log viewer to the appropriate handlers.
+ *
+ * Each message type (e.g. copyToClipboard, editLine, navigateSession) is routed using
+ * the context callbacks provided by the LogViewerProvider. Handlers run in the extension
+ * host; the webview only sends { type, ...payload }.
+ */
 
 import * as vscode from "vscode";
 import * as helpers from "./viewer-provider-helpers";
@@ -6,6 +12,8 @@ import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { showBugReport } from '../panels/bug-report-panel';
 import type { SessionDisplayOptions } from '../session/session-display';
+import { logExtensionWarn } from '../../modules/misc/extension-logger';
+import { assertDefined } from '../../modules/misc/assert';
 
 export interface ViewerMessageContext {
     readonly currentFileUri: vscode.Uri | undefined;
@@ -42,12 +50,25 @@ export interface ViewerMessageContext {
     readonly onClearSessionRoot?: () => Promise<void>;
 }
 
-/** Route a webview message to the appropriate handler. */
+/**
+ * Route a webview message to the appropriate handler.
+ * @param msg - Incoming message with at least `type`; payload fields vary by type.
+ * @param ctx - Callbacks and state (current file, post, load, etc.) for handling the message.
+ */
 export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
+    // Require context so misuse fails fast with a clear error.
+    assertDefined(ctx, 'ctx');
+    if (!msg || typeof msg.type !== 'string') {
+        logExtensionWarn('viewerMessage', 'Ignoring message with missing or invalid type');
+        return;
+    }
     switch (msg.type) {
       case "insertMarker": ctx.onMarkerRequest?.(); break;
       case "togglePause": ctx.onTogglePause?.(); break;
       case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
+      case "presetApplied":
+        if (msg.name) { void ctx.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", String(msg.name)); }
+        break;
       case "copySourcePath":
         helpers.copySourcePath(String(msg.path ?? ""), String(msg.mode ?? "relative"));
         break;
@@ -135,7 +156,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
       case "requestAboutContent":
-        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.post);
+        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
         break;
       case "resetAllSettings":
         /* Host shows modal confirmation; no webview feedback needed. */

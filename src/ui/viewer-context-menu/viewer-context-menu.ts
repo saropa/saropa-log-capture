@@ -1,4 +1,7 @@
-/** Right-click context menu: copy, select-all, and quick actions on log lines. */
+/**
+ * Right-click context menu for the log viewer: copy, select-all, and quick actions on log lines.
+ * Exposes HTML and inline script; click handlers and toggle state live in the script.
+ */
 export { getContextMenuHtml } from './viewer-context-menu-html';
 
 /** Get the context menu script with click handlers and keyboard shortcuts. */
@@ -114,6 +117,10 @@ function handleGlobalAction(action) {
     }
     if (action === 'copy-all-decorated') {
         if (typeof copyAllDecorated === 'function') copyAllDecorated();
+        return true;
+    }
+    if (action === 'copy-as-snippet') {
+        if (typeof copyAsSnippet === 'function') copyAsSnippet();
         return true;
     }
     if (action === 'select-all') {

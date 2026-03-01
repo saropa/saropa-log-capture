@@ -1,3 +1,10 @@
+/**
+ * Extension entry point for Saropa Log Capture.
+ *
+ * Activates the sidebar log viewer, session history, capture pipeline, integrations,
+ * and all commands. Registers webview providers, URI handler, and config listeners.
+ */
+
 import * as vscode from 'vscode';
 import { getConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
@@ -42,6 +49,7 @@ import { codeCoverageProvider } from './modules/integrations/providers/code-cove
 import { crashDumpsProvider } from './modules/integrations/providers/crash-dumps';
 import { windowsEventLogProvider } from './modules/integrations/providers/windows-event-log';
 import { dockerContainersProvider } from './modules/integrations/providers/docker-containers';
+import { setExtensionLogger } from './modules/misc/extension-logger';
 
 let sessionManager: SessionManagerImpl;
 let projectIndexer: ProjectIndexer | null = null;
@@ -53,6 +61,7 @@ let popOutPanel: PopOutPanel;
 
 export function activate(context: vscode.ExtensionContext): void {
     const outputChannel = vscode.window.createOutputChannel('Saropa Log Capture');
+    setExtensionLogger(outputChannel);
     const statusBar = new StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
 
