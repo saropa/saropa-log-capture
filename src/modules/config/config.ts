@@ -1,3 +1,11 @@
+/**
+ * Saropa Log Capture configuration — single source of truth for all extension settings.
+ *
+ * Reads from VS Code workspace/global config (section "saropaLogCapture"), applies
+ * defaults, and exposes a typed SaropaLogCaptureConfig. Call getConfig() when you need
+ * current values; config is not cached across settings changes.
+ */
+
 import * as vscode from "vscode";
 import * as path from "path";
 import { SplitRules, parseSplitRules } from "../misc/file-splitter";
@@ -71,6 +79,8 @@ export interface SaropaLogCaptureConfig {
   readonly verboseDap: boolean;
   /** File extensions to include when listing sessions in the reports directory. */
   readonly fileTypes: readonly string[];
+  /** Glob patterns for tail mode: watch and open workspace log files. */
+  readonly tailPatterns: readonly string[];
   /** Directories to scan for project documentation references during analysis. */
   readonly docsScanDirs: readonly string[];
   /** Include log files from subdirectories of the log directory. */
@@ -299,6 +309,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     fileTypes: cfg.get<string[]>("fileTypes", [
       ".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html",
     ]),
+    tailPatterns: cfg.get<string[]>("tailPatterns", ["**/*.log"]),
     docsScanDirs: cfg.get<string[]>("docsScanDirs", ["bugs", "docs"]),
     includeSubfolders: cfg.get<boolean>("includeSubfolders", true),
     treeRefreshInterval: cfg.get<number>("treeRefreshInterval", 0),
