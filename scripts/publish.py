@@ -136,6 +136,7 @@ from modules.install import (
 # Argument definitions: (flag, help text)
 _CLI_FLAGS = [
     ("--analyze-only", "Run analysis + build + package, offer local install. No publish."),
+    ("--yes", "Accept version and stamp CHANGELOG without prompting (non-interactive / CI)."),
     ("--skip-tests", "Skip the test step during analysis."),
     ("--skip-extensions", "Skip VS Code extension checks."),
     ("--skip-global-npm", "Skip global npm package checks."),
@@ -280,6 +281,8 @@ def _run_build_and_validate(
     # Uses manual timing because validate_version_changelog()
     # returns a tuple rather than a simple bool.
     heading("Step 10 · Version & CHANGELOG")
+    if getattr(args, "yes", False):
+        os.environ["PUBLISH_YES"] = "1"
     t0 = time.time()
     version, version_ok = validate_version_changelog()
     elapsed = time.time() - t0
