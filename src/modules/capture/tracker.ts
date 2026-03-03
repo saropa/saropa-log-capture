@@ -1,3 +1,9 @@
+/**
+ * DAP protocol hook: routes debug adapter output events to SessionManager.
+ * VS Code calls createDebugAdapterTracker per debug session; SaropaTracker forwards
+ * output events to SessionManager.onOutputEvent and optional onDapMessage (verbose).
+ */
+
 import * as vscode from 'vscode';
 import { DapDirection } from './dap-formatter';
 

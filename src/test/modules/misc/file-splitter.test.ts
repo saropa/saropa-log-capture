@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { FileSplitter, SplitRules, defaultSplitRules, formatSplitReason } from '../../../modules/misc/file-splitter';
+import { FileSplitter, SplitRules, defaultSplitRules, formatSplitReason, parseSplitRules } from '../../../modules/misc/file-splitter';
 
 suite('FileSplitter', () => {
 
@@ -120,5 +120,36 @@ suite('formatSplitReason', () => {
     test('should format manual reason', () => {
         const result = formatSplitReason({ type: 'manual' });
         assert.ok(result.includes('manual'));
+    });
+});
+
+suite('parseSplitRules', () => {
+    test('returns defaults for null', () => {
+        const r = parseSplitRules(null as unknown as Record<string, unknown>);
+        assert.strictEqual(r.maxLines, 0);
+        assert.strictEqual(r.maxSizeKB, 0);
+        assert.deepStrictEqual(r.keywords, []);
+    });
+
+    test('returns defaults for undefined', () => {
+        const r = parseSplitRules(undefined as unknown as Record<string, unknown>);
+        assert.strictEqual(r.maxLines, 0);
+    });
+
+    test('filters non-string keywords', () => {
+        const r = parseSplitRules({ keywords: ['a', 1, null, 'b'] });
+        assert.deepStrictEqual(r.keywords, ['a', 'b']);
+    });
+
+    test('clamps negative maxLines to 0', () => {
+        const r = parseSplitRules({ maxLines: -100 });
+        assert.strictEqual(r.maxLines, 0);
+    });
+
+    test('accepts valid numbers', () => {
+        const r = parseSplitRules({ maxLines: 5000, maxSizeKB: 100, silenceMinutes: 5 });
+        assert.strictEqual(r.maxLines, 5000);
+        assert.strictEqual(r.maxSizeKB, 100);
+        assert.strictEqual(r.silenceMinutes, 5);
     });
 });

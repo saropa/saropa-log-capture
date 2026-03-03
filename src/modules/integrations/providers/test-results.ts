@@ -7,6 +7,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { safeParseJSON } from '../../misc/safe-json';
+
+const MAX_TEST_RESULTS_FILE_BYTES = 1024 * 1024; // 1 MB
 
 export interface TestResultsSummary {
     total: number;
@@ -28,13 +31,17 @@ function fromFile(
     maxAgeMs: number,
 ): TestResultsSummary | undefined {
     try {
+        if (!workspaceFolder?.uri?.fsPath) { return undefined; }
         const abs = path.isAbsolute(relativePath)
             ? relativePath
             : path.join(workspaceFolder.uri.fsPath, relativePath);
         const stat = fs.statSync(abs);
-        if (!stat.isFile() || Date.now() - stat.mtimeMs > maxAgeMs) { return undefined; }
+        if (!stat.isFile() || stat.size > MAX_TEST_RESULTS_FILE_BYTES || Date.now() - stat.mtimeMs > maxAgeMs) {
+            return undefined;
+        }
         const raw = fs.readFileSync(abs, 'utf-8');
-        const data = JSON.parse(raw) as Record<string, unknown>;
+        const data = safeParseJSON<Record<string, unknown>>(raw);
+        if (!data || typeof data !== 'object') { return undefined; }
         const total = Number(data.total) || 0;
         const passed = Number(data.passed) || 0;
         const failed = Number(data.failed) || 0;

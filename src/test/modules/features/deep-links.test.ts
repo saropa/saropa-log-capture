@@ -76,5 +76,58 @@ suite('DeepLinks', () => {
             const link2 = generateDeepLink('test.log', -1);
             assert.ok(!link2.includes('line='));
         });
+
+        test('should fallback session name when empty string', () => {
+            const link = generateDeepLink('');
+            assert.ok(link.includes('session=session.log'));
+        });
+
+        test('should trim session filename', () => {
+            const link = generateDeepLink('  my.log  ', 1);
+            assert.ok(link.includes('session=my.log'));
+        });
+    });
+
+    suite('parseDeepLinkUri - defensive', () => {
+        test('should return undefined for path traversal in session', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=../../../etc/passwd');
+            assert.strictEqual(parseDeepLinkUri(uri), undefined);
+        });
+
+        test('should return undefined for session with backslash', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=..\\foo.log');
+            assert.strictEqual(parseDeepLinkUri(uri), undefined);
+        });
+
+        test('should return undefined for session starting with slash', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=/absolute.log');
+            assert.strictEqual(parseDeepLinkUri(uri), undefined);
+        });
+
+        test('should return undefined for empty session', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=');
+            assert.strictEqual(parseDeepLinkUri(uri), undefined);
+        });
+
+        test('should clamp line to safe range (valid line accepted)', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=1');
+            const params = parseDeepLinkUri(uri);
+            assert.ok(params);
+            assert.strictEqual(params.line, 1);
+        });
+
+        test('should drop line when zero', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=0');
+            const params = parseDeepLinkUri(uri);
+            assert.ok(params);
+            assert.strictEqual(params.line, undefined);
+        });
+
+        test('should drop line when negative', () => {
+            const uri = vscode.Uri.parse('vscode://saropa.saropa-log-capture/open?session=app.log&line=-1');
+            const params = parseDeepLinkUri(uri);
+            assert.ok(params);
+            assert.strictEqual(params.line, undefined);
+        });
     });
 });

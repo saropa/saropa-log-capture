@@ -1,7 +1,6 @@
 /**
- * File splitting logic extracted from LogSession.
- * Handles closing the current log stream, opening a new part file,
- * and writing the continuation header.
+ * File splitting logic called by LogSession when split rules fire (lines, bytes, time).
+ * Closes the current log stream, opens the next part file, writes a continuation header.
  */
 
 import * as fs from 'fs';
@@ -43,17 +42,14 @@ export async function performFileSplit(
 ): Promise<SplitResult> {
     const nextPart = ctx.partNumber + 1;
 
-    // Write split marker to current file
     const splitMarker = `\n=== SPLIT: ${formatSplitReason(reason)} — Continued in part ${nextPart + 1} ===\n`;
     ctx.writeStream.write(splitMarker);
 
-    // Close current file
     await new Promise<void>((resolve, reject) => {
         ctx.writeStream.end(() => resolve());
         ctx.writeStream.on('error', reject);
     });
 
-    // Open new file
     const newFileName = getPartFileName(ctx.baseFileName, nextPart);
     const newFilePath = path.join(ctx.logDirPath, newFileName);
     const newFileUri = vscode.Uri.file(newFilePath);
