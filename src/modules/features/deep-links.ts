@@ -48,6 +48,7 @@ export interface DeepLinkParams {
  * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-log-capture/open?line=42'))
  * // Returns: undefined
  */
+
 /** Reject session names that could escape log directory (path traversal, absolute paths). */
 function isValidSessionName(session: string): boolean {
     const trimmed = session.trim();
