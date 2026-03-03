@@ -8,8 +8,8 @@
                     ┌─────────────────────────────────────────┐
                     │  VIEWER (what VS Code doesn't give you) │
                     │  · Search all logs (regex, history)     │
-                    │  · Click  file.dart:42  →  open source │
-                    │  · Filter by error / warning / level     │
+                    │  · Click  file.dart:42  →  open source  │
+                    │  · Filter by error / warning / level    │
                     │  · Keep many sessions, compare two      │
                     │  · Export HTML, CSV, or share .slc      │
                     └─────────────────────────────────────────┘
@@ -185,49 +185,49 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference.
 
-| Key            | Action                                 |
-|----------------|----------------------------------------|
-| Ctrl+F         | Open search panel                      |
-| F3 / Shift+F3  | Next / previous search match           |
-| Escape         | Close search panel / inline peek       |
-| Space          | Toggle pause/resume                    |
-| W              | Toggle word wrap                       |
-| M              | Insert marker                          |
-| P              | Pin/unpin center line                  |
-| Shift+Click    | Select line range                      |
-| Ctrl+C         | Copy selection as plain text           |
-| Ctrl+Shift+C   | Copy selection as markdown             |
-| Ctrl+Shift+A   | Copy all visible lines to clipboard    |
-| N              | Annotate center line                   |
-| A              | Toggle app-only stack trace mode       |
-| Double-click   | Open inline peek with context lines    |
-| Home           | Scroll to top                          |
-| End            | Scroll to bottom                       |
+| Key           | Action                              |
+| ------------- | ----------------------------------- |
+| Ctrl+F        | Open search panel                   |
+| F3 / Shift+F3 | Next / previous search match        |
+| Escape        | Close search panel / inline peek    |
+| Space         | Toggle pause/resume                 |
+| W             | Toggle word wrap                    |
+| M             | Insert marker                       |
+| P             | Pin/unpin center line               |
+| Shift+Click   | Select line range                   |
+| Ctrl+C        | Copy selection as plain text        |
+| Ctrl+Shift+C  | Copy selection as markdown          |
+| Ctrl+Shift+A  | Copy all visible lines to clipboard |
+| N             | Annotate center line                |
+| A             | Toggle app-only stack trace mode    |
+| Double-click  | Open inline peek with context lines |
+| Home          | Scroll to top                       |
+| End           | Scroll to bottom                    |
 
 ---
 
 ## Key Commands
 
-| Command                                              | Description                                      |
-|------------------------------------------------------|--------------------------------------------------|
-| `Saropa Log Capture: Start Capture`                  | Start capturing to a new log file                |
-| `Saropa Log Capture: Stop Capture`                   | Stop capturing and finalize the file             |
-| `Saropa Log Capture: Pause/Resume Capture`           | Toggle capture on/off                            |
-| `Saropa Log Capture: Insert Marker`                  | Insert a visual separator into the log           |
-| `Saropa Log Capture: Open Active Log File`           | Open the current log file in the editor          |
-| `Saropa Log Capture: Open Log Folder`                | Reveal the log directory in the file explorer    |
-| `Saropa Log Capture: Clear Current Session`          | Reset the line counter                           |
-| `Saropa Log Capture: Delete Log File`                | Delete log files from the reports directory      |
-| `Saropa Log Capture: Split Log File Now`             | Manually split the current log file              |
-| `Saropa Log Capture: Search Log Files`               | Search across all log files with Quick Pick      |
-| `Saropa Log Capture: Apply Filter Preset`            | Apply a saved filter preset                      |
-| `Saropa Log Capture: Save Current Filters as Preset` | Save current filter state as a named preset      |
-| `Saropa Log Capture: Toggle Inline Log Decorations`  | Toggle inline log decorations in the editor      |
-| `Saropa Log Capture: Compare Sessions`               | Side-by-side diff of two log sessions            |
-| `Saropa Log Capture: Apply Session Template`         | Apply a saved session template                   |
-| `Saropa Log Capture: Save Settings as Template`      | Save current settings as a reusable template     |
-| `Saropa Log Capture: Open Tailed File`               | Open a workspace log file and tail it live       |
-| `Saropa Log Capture: Import .slc Bundle`             | Import a `.slc` session bundle into the log dir  |
+| Command                                              | Description                                       |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| `Saropa Log Capture: Start Capture`                  | Start capturing to a new log file                 |
+| `Saropa Log Capture: Stop Capture`                   | Stop capturing and finalize the file              |
+| `Saropa Log Capture: Pause/Resume Capture`           | Toggle capture on/off                             |
+| `Saropa Log Capture: Insert Marker`                  | Insert a visual separator into the log            |
+| `Saropa Log Capture: Open Active Log File`           | Open the current log file in the editor           |
+| `Saropa Log Capture: Open Log Folder`                | Reveal the log directory in the file explorer     |
+| `Saropa Log Capture: Clear Current Session`          | Reset the line counter                            |
+| `Saropa Log Capture: Delete Log File`                | Delete log files from the reports directory       |
+| `Saropa Log Capture: Split Log File Now`             | Manually split the current log file               |
+| `Saropa Log Capture: Search Log Files`               | Search across all log files with Quick Pick       |
+| `Saropa Log Capture: Apply Filter Preset`            | Apply a saved filter preset                       |
+| `Saropa Log Capture: Save Current Filters as Preset` | Save current filter state as a named preset       |
+| `Saropa Log Capture: Toggle Inline Log Decorations`  | Toggle inline log decorations in the editor       |
+| `Saropa Log Capture: Compare Sessions`               | Side-by-side diff of two log sessions             |
+| `Saropa Log Capture: Apply Session Template`         | Apply a saved session template                    |
+| `Saropa Log Capture: Save Settings as Template`      | Save current settings as a reusable template      |
+| `Saropa Log Capture: Open Tailed File`               | Open a workspace log file and tail it live        |
+| `Saropa Log Capture: Import .slc Bundle`             | Import a `.slc` session bundle into the log dir   |
 | `Saropa Log Capture: Configure integrations`         | Quick Pick to enable/disable integration adapters |
 
 ---
@@ -239,44 +239,44 @@ All settings are prefixed with `saropaLogCapture.`
 <details>
 <summary><strong>Click to expand settings table</strong></summary>
 
-| Setting                        | Default     | Description                                              |
-|--------------------------------|-------------|----------------------------------------------------------|
-| `enabled`                      | `true`      | Enable/disable automatic log capture                     |
-| `categories`                   | `["console","stdout","stderr"]` | DAP output categories to capture |
-| `maxLines`                     | `100000`    | Maximum lines per log file                               |
-| `viewerMaxLines`               | `0`         | Max lines shown in viewer (0 = 50,000). Cannot exceed `maxLines`. Reduce for large files. |
-| `includeTimestamp`             | `true`      | Prefix each line with a timestamp                        |
-| `includeSourceLocation`        | `false`     | Include source file and line number in log lines         |
-| `includeElapsedTime`           | `false`     | Show elapsed time since previous line in log files       |
-| `format`                       | `"plaintext"` | Output format (plaintext only for now)                |
-| `logDirectory`                 | `"reports"` | Where to save log files (relative to workspace root)     |
-| `autoOpen`                     | `false`     | Open log file when debug session ends                    |
-| `maxLogFiles`                  | `10`        | Max log files to retain (0 = unlimited)                  |
-| `organizeFolders`              | `true`      | Move flat log files into `yyyymmdd/` date subfolders on session start |
-| `includeSubfolders`            | `true`      | Include log files from date subfolders in session history, search, and analysis |
-| `gitignoreCheck`               | `true`      | Offer to add log directory to .gitignore on first run    |
-| `redactEnvVars`                | `[]`        | Env var patterns to redact from headers. **Tip:** Redact secrets (e.g. `API_KEY`, `SECRET_*`, `*_TOKEN`) by adding matching patterns so they never appear in session context headers. |
-| `captureAll`                   | `false`     | Capture all Debug Console output, bypassing filters      |
-| `exclusions`                   | `[]`        | Patterns to exclude from viewer (string or `/regex/`)    |
-| `showDecorations`              | `true`      | Show severity dots, counters, and timestamps on lines    |
-| `filterContextLines`           | `3`         | Context lines shown around level-filter matches          |
-| `contextViewLines`             | `10`        | Context lines shown in inline peek on double-click       |
-| `watchPatterns`                | `[{keyword:"error",...},{keyword:"exception",...},{keyword:"warning",...}]` | Keywords to watch with alert type |
-| `showElapsedTime`              | `false`     | Show elapsed time between consecutive log lines          |
-| `slowGapThreshold`             | `1000`      | Elapsed time threshold (ms) for highlighting slow gaps   |
-| `suppressTransientErrors`      | `false`     | Hide expected transient errors (timeout, socket, etc.)   |
-| `breakOnCritical`              | `false`     | Show notification when critical errors appear            |
-| `levelDetection`               | `"strict"`  | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere) |
-| `verboseDap`                   | `false`     | Log all raw DAP protocol messages to the log file        |
-| `highlightRules`               | *(3 built-in rules)* | Pattern-based line coloring rules               |
-| `filterPresets`                | `[]`        | Saved filter presets for quick application                |
-| `autoTagRules`                 | `[]`        | Rules for auto-tagging sessions by content patterns      |
-| `splitRules.maxLines`          | `0`         | Split file after N lines (0 = disabled)                  |
-| `splitRules.maxSizeKB`         | `0`         | Split file after N KB (0 = disabled)                     |
-| `splitRules.keywords`          | `[]`        | Split when keyword or `/regex/` matched                  |
-| `splitRules.maxDurationMinutes`| `0`         | Split after N minutes (0 = disabled)                     |
-| `splitRules.silenceMinutes`    | `0`         | Split after N minutes of silence (0 = disabled)          |
-| `tailPatterns`                 | `["**/*.log"]` | Glob patterns for **Open Tailed File** (workspace-relative) |
+| Setting                         | Default                                                                     | Description                                                                                                                                                                           |
+| ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                       | `true`                                                                      | Enable/disable automatic log capture                                                                                                                                                  |
+| `categories`                    | `["console","stdout","stderr"]`                                             | DAP output categories to capture                                                                                                                                                      |
+| `maxLines`                      | `100000`                                                                    | Maximum lines per log file                                                                                                                                                            |
+| `viewerMaxLines`                | `0`                                                                         | Max lines shown in viewer (0 = 50,000). Cannot exceed `maxLines`. Reduce for large files.                                                                                             |
+| `includeTimestamp`              | `true`                                                                      | Prefix each line with a timestamp                                                                                                                                                     |
+| `includeSourceLocation`         | `false`                                                                     | Include source file and line number in log lines                                                                                                                                      |
+| `includeElapsedTime`            | `false`                                                                     | Show elapsed time since previous line in log files                                                                                                                                    |
+| `format`                        | `"plaintext"`                                                               | Output format (plaintext only for now)                                                                                                                                                |
+| `logDirectory`                  | `"reports"`                                                                 | Where to save log files (relative to workspace root)                                                                                                                                  |
+| `autoOpen`                      | `false`                                                                     | Open log file when debug session ends                                                                                                                                                 |
+| `maxLogFiles`                   | `10`                                                                        | Max log files to retain (0 = unlimited)                                                                                                                                               |
+| `organizeFolders`               | `true`                                                                      | Move flat log files into `yyyymmdd/` date subfolders on session start                                                                                                                 |
+| `includeSubfolders`             | `true`                                                                      | Include log files from date subfolders in session history, search, and analysis                                                                                                       |
+| `gitignoreCheck`                | `true`                                                                      | Offer to add log directory to .gitignore on first run                                                                                                                                 |
+| `redactEnvVars`                 | `[]`                                                                        | Env var patterns to redact from headers. **Tip:** Redact secrets (e.g. `API_KEY`, `SECRET_*`, `*_TOKEN`) by adding matching patterns so they never appear in session context headers. |
+| `captureAll`                    | `false`                                                                     | Capture all Debug Console output, bypassing filters                                                                                                                                   |
+| `exclusions`                    | `[]`                                                                        | Patterns to exclude from viewer (string or `/regex/`)                                                                                                                                 |
+| `showDecorations`               | `true`                                                                      | Show severity dots, counters, and timestamps on lines                                                                                                                                 |
+| `filterContextLines`            | `3`                                                                         | Context lines shown around level-filter matches                                                                                                                                       |
+| `contextViewLines`              | `10`                                                                        | Context lines shown in inline peek on double-click                                                                                                                                    |
+| `watchPatterns`                 | `[{keyword:"error",...},{keyword:"exception",...},{keyword:"warning",...}]` | Keywords to watch with alert type                                                                                                                                                     |
+| `showElapsedTime`               | `false`                                                                     | Show elapsed time between consecutive log lines                                                                                                                                       |
+| `slowGapThreshold`              | `1000`                                                                      | Elapsed time threshold (ms) for highlighting slow gaps                                                                                                                                |
+| `suppressTransientErrors`       | `false`                                                                     | Hide expected transient errors (timeout, socket, etc.)                                                                                                                                |
+| `breakOnCritical`               | `false`                                                                     | Show notification when critical errors appear                                                                                                                                         |
+| `levelDetection`                | `"strict"`                                                                  | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere)                                                                                                       |
+| `verboseDap`                    | `false`                                                                     | Log all raw DAP protocol messages to the log file                                                                                                                                     |
+| `highlightRules`                | *(3 built-in rules)*                                                        | Pattern-based line coloring rules                                                                                                                                                     |
+| `filterPresets`                 | `[]`                                                                        | Saved filter presets for quick application                                                                                                                                            |
+| `autoTagRules`                  | `[]`                                                                        | Rules for auto-tagging sessions by content patterns                                                                                                                                   |
+| `splitRules.maxLines`           | `0`                                                                         | Split file after N lines (0 = disabled)                                                                                                                                               |
+| `splitRules.maxSizeKB`          | `0`                                                                         | Split file after N KB (0 = disabled)                                                                                                                                                  |
+| `splitRules.keywords`           | `[]`                                                                        | Split when keyword or `/regex/` matched                                                                                                                                               |
+| `splitRules.maxDurationMinutes` | `0`                                                                         | Split after N minutes (0 = disabled)                                                                                                                                                  |
+| `splitRules.silenceMinutes`     | `0`                                                                         | Split after N minutes of silence (0 = disabled)                                                                                                                                       |
+| `tailPatterns`                  | `["**/*.log"]`                                                              | Glob patterns for **Open Tailed File** (workspace-relative)                                                                                                                           |
 
 </details>
 
@@ -293,25 +293,25 @@ The viewer uses `aria-label` and `role` on controls and the log content (`role="
 
 **When the log viewer has focus:**
 
-| Shortcut | Action |
-|----------|--------|
-| **Ctrl+F** / **F3** | Open search panel |
-| **Ctrl+Shift+F** | Find in Files |
-| **Ctrl+G** | Go to line |
-| **Escape** | Close search, options, go-to-line, peek, or session panel |
-| **Ctrl+C** | Copy selection; if no selection, copy current line (when supported) |
-| **Ctrl+Shift+C** | Copy selection as Markdown |
-| **Ctrl+Shift+A** | Copy full log to clipboard |
-| **Ctrl+A** | Select all (in viewer) |
-| **Ctrl++** / **Ctrl+-** / **Ctrl+0** | Increase / decrease / reset font size |
-| **Space** | Toggle pause (live capture) |
-| **W** | Toggle word wrap |
-| **Home** / **End** | Jump to top / bottom |
-| **Page Up** / **Page Down** | Scroll by page |
-| **M** | Insert marker at current position |
-| **P** | Pin line at center |
-| **N** | Add annotation to line at center |
-| **Ctrl+scroll** | Zoom font size (when not over an input) |
+| Shortcut                             | Action                                                              |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| **Ctrl+F** / **F3**                  | Open search panel                                                   |
+| **Ctrl+Shift+F**                     | Find in Files                                                       |
+| **Ctrl+G**                           | Go to line                                                          |
+| **Escape**                           | Close search, options, go-to-line, peek, or session panel           |
+| **Ctrl+C**                           | Copy selection; if no selection, copy current line (when supported) |
+| **Ctrl+Shift+C**                     | Copy selection as Markdown                                          |
+| **Ctrl+Shift+A**                     | Copy full log to clipboard                                          |
+| **Ctrl+A**                           | Select all (in viewer)                                              |
+| **Ctrl++** / **Ctrl+-** / **Ctrl+0** | Increase / decrease / reset font size                               |
+| **Space**                            | Toggle pause (live capture)                                         |
+| **W**                                | Toggle word wrap                                                    |
+| **Home** / **End**                   | Jump to top / bottom                                                |
+| **Page Up** / **Page Down**          | Scroll by page                                                      |
+| **M**                                | Insert marker at current position                                   |
+| **P**                                | Pin line at center                                                  |
+| **N**                                | Add annotation to line at center                                    |
+| **Ctrl+scroll**                      | Zoom font size (when not over an input)                             |
 
 On macOS use **Cmd** instead of **Ctrl**. See also [Keyboard shortcuts](docs/keyboard-shortcuts.md) for printable reference and Command Palette commands.
 
@@ -359,13 +359,13 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Developer setup, code standards, and how to contribute |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
-| [ROADMAP.md](ROADMAP.md) | Planned features, project review, and direction |
+| Document                                                 | Description                                             |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                       | Developer setup, code standards, and how to contribute  |
+| [CHANGELOG.md](CHANGELOG.md)                             | Version history and release notes                       |
+| [ROADMAP.md](ROADMAP.md)                                 | Planned features, project review, and direction         |
 | [docs/keyboard-shortcuts.md](docs/keyboard-shortcuts.md) | Keyboard shortcut reference (panel viewer and commands) |
-| [STYLE_GUIDE.md](STYLE_GUIDE.md) | Code style conventions and patterns |
+| [STYLE_GUIDE.md](STYLE_GUIDE.md)                         | Code style conventions and patterns                     |
 
 ---
 
