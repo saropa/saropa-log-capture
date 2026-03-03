@@ -1,6 +1,9 @@
 /**
  * Types and early-output buffer for session event dispatching.
- * Extracted from session-manager.ts for line-count management.
+ * LineData and LineListener/SplitListener are used by extension-activation to wire
+ * SessionManager → ViewerBroadcaster and SessionHistoryProvider. EarlyOutputBuffer
+ * exists because DAP can emit output before initializeSession() completes; events
+ * are buffered and replayed after startSession().
  */
 
 import * as vscode from 'vscode';
@@ -26,7 +29,7 @@ export type LineListener = (data: LineData) => void;
 /** Callback for split events (used to update viewer breadcrumb). */
 export type SplitListener = (newUri: vscode.Uri, partNumber: number, totalParts: number) => void;
 
-/** Buffers DAP output events arriving before async session init completes. */
+/** Buffers DAP output events for a sessionId until startSession completes; then replayed by SessionManager. */
 export class EarlyOutputBuffer {
     private readonly buffer = new Map<string, DapOutputBody[]>();
 

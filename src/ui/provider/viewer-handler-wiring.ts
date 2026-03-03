@@ -57,12 +57,16 @@ export interface HandlerDeps {
 /** Wire common webview→extension handlers on a viewer target. */
 export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): void {
   const { sessionManager, broadcaster, historyProvider } = deps;
+
+  // --- Marker, link click, pause ---
   target.setMarkerHandler(() => sessionManager.insertMarker());
   target.setLinkClickHandler((f, l, c, s) => openSourceFile(f, l, c, s));
   target.setTogglePauseHandler(() => {
     const p = sessionManager.togglePause();
     if (p !== undefined) { broadcaster.setPaused(p); }
   });
+
+  // --- Exclusions (persist to workspace config, then push to broadcaster) ---
   target.setExclusionAddedHandler(async (pattern) => {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<string[]>('exclusions', []);
@@ -79,6 +83,8 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
       broadcaster.setExclusions(updated);
     }
   });
+
+  // --- Annotation, preset save, search (codebase / sessions), analyze line, add to watch ---
   target.setAnnotationPromptHandler(async (lineIndex, current) => {
     const text = await vscode.window.showInputBox({
     prompt: vscode.l10n.t('prompt.annotateLine', String(lineIndex + 1)),
@@ -117,6 +123,8 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
     vscode.window.showInformationMessage(vscode.l10n.t('msg.addedToWatchList', text));
   });
+
+  // --- Session list, browse/clear root, session actions (open, trash, export, etc.) ---
   const getSessionRootPath = (): string => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
@@ -167,6 +175,8 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   target.setSessionActionHandler((action, uriString, filename) => {
     void handleSessionAction(action, uriString, filename, { historyProvider, refreshList: refreshSessionList });
   });
+
+  // --- Bookmarks: add, request list, delete, edit note, open ---
   target.setAddBookmarkHandler((lineIndex, text, fileUri) => {
     const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
     if (!uri) { return; }
