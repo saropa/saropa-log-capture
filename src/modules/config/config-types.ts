@@ -1,6 +1,7 @@
 /**
  * Configuration types and default highlight rules for Saropa Log Capture.
- * Kept in a separate file to keep config.ts under the line limit.
+ * SaropaLogCaptureConfig is the single typed shape returned by getConfig(); integration
+ * and project-index sub-shapes are defined here and merged in config.ts.
  */
 
 import type { HighlightRule } from "../storage/highlight-rules";

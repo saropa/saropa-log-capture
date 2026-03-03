@@ -79,7 +79,7 @@ export class SessionManagerImpl implements SessionManager {
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
         const session = this.sessions.get(sessionId);
-        // Buffer events arriving before async session init completes (race condition fix)
+        // Buffer events arriving before async session init completes (DAP can fire before startSession returns).
         if (!session) { this.earlyBuffer.add(sessionId, body); return; }
         const config = this.cachedConfig;
         if (!config.enabled) { return; }
@@ -108,6 +108,7 @@ export class SessionManagerImpl implements SessionManager {
         const sourceLocation: SourceLocation | undefined =
             body.source?.path ? { path: body.source.path, line: body.line, column: body.column } : undefined;
         session.appendLine(text, category, now, sourceLocation);
+        // Broadcast to sidebar/pop-out and update watcher/auto-tagger (via broadcastLine).
         this.categoryCounts[category] = (this.categoryCounts[category] ?? 0) + 1;
         this.broadcastLine({
             text, isMarker: false, lineCount: session.lineCount,
@@ -132,6 +133,7 @@ export class SessionManagerImpl implements SessionManager {
     ): Promise<void> {
         this.cachedConfig = getConfig();
         if (!this.cachedConfig.enabled) { return; }
+        // Child debug sessions (e.g. Dart VM) share the parent's LogSession so output goes to one file.
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
@@ -262,6 +264,8 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Recreate the keyword watcher from current config. */
     refreshWatcher(): void { this.watcher = this.createWatcher(); }
+
+    // --- Private: early buffer replay, line/split broadcast, watcher ---
 
     private replayEarlyBuffer(sessionId: string): void {
         const buffered = this.earlyBuffer.drain(sessionId);

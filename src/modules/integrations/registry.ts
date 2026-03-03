@@ -1,6 +1,7 @@
 /**
- * Registry for integration providers. Collects header lines at session start
- * and runs end-phase providers to merge meta and write sidecars.
+ * Registry for integration providers. Called from session-lifecycle: getHeaderContributions
+ * before LogSession.start(), runOnSessionStartAsync after start (fire-and-forget),
+ * runOnSessionEnd during finalizeSession to merge meta and write sidecar files.
  */
 
 import * as vscode from 'vscode';
@@ -34,6 +35,7 @@ function collectProviderEndContributions(
 export class IntegrationRegistry {
     private readonly providers: IntegrationProvider[] = [];
 
+    /** Register a provider. Called once from extension-activation for each built-in provider. */
     register(provider: IntegrationProvider): void {
         if (this.providers.some(p => p.id === provider.id)) { return; }
         this.providers.push(provider);

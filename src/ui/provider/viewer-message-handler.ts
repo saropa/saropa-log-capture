@@ -1,9 +1,7 @@
 /**
- * Dispatches incoming webview messages for the log viewer to the appropriate handlers.
- *
- * Each message type (e.g. copyToClipboard, editLine, navigateSession) is routed using
- * the context callbacks provided by the LogViewerProvider. Handlers run in the extension
- * host; the webview only sends { type, ...payload }.
+ * Dispatches incoming webview postMessage to extension handlers. Each message type
+ * (copyToClipboard, editLine, navigateSession, etc.) is routed via ViewerMessageContext
+ * callbacks set by LogViewerProvider. Called from the provider's onDidReceiveMessage.
  */
 
 import * as vscode from "vscode";
@@ -55,10 +53,25 @@ export interface ViewerMessageContext {
  * @param msg - Incoming message with at least `type`; payload fields vary by type.
  * @param ctx - Callbacks and state (current file, post, load, etc.) for handling the message.
  */
+/** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
+const MAX_SAFE_INDEX = 10_000_000;
+function safeLineIndex(v: unknown, fallback: number): number {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0 || n > MAX_SAFE_INDEX) {return fallback;}
+  return Math.floor(n);
+}
+
+/** Only allow http, https, or vscode URIs for openUrl to avoid javascript: etc. */
+function isAllowedExternalUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.length > 2048) {return false;}
+  return /^https?:\/\//i.test(trimmed) || /^vscode:\/\//i.test(trimmed);
+}
+
 export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
     // Require context so misuse fails fast with a clear error.
     assertDefined(ctx, 'ctx');
-    if (!msg || typeof msg.type !== 'string') {
+    if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') {
         logExtensionWarn('viewerMessage', 'Ignoring message with missing or invalid type');
         return;
     }
@@ -77,21 +90,29 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "searchCodebase": ctx.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": ctx.onSearchSessions?.(String(msg.text ?? "")); break;
-      case "analyzeLine": ctx.onAnalyzeLine?.(String(msg.text ?? ""), Number(msg.lineIndex ?? -1), ctx.currentFileUri); break;
+      case "analyzeLine": ctx.onAnalyzeLine?.(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, -1), ctx.currentFileUri); break;
       case "generateReport":
-        if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), Number(msg.lineIndex ?? 0), ctx.currentFileUri).catch(() => {}); }
+        if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri).catch(() => {}); }
         break;
       case "addToWatch": ctx.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation":
-        ctx.onAnnotationPrompt?.(Number(msg.lineIndex ?? 0), String(msg.current ?? ""));
+        ctx.onAnnotationPrompt?.(safeLineIndex(msg.lineIndex, 0), String(msg.current ?? ""));
         break;
-      case "addBookmark": ctx.onAddBookmark?.(Number(msg.lineIndex ?? 0), String(msg.text ?? ""), ctx.currentFileUri); break;
+      case "addBookmark": ctx.onAddBookmark?.(safeLineIndex(msg.lineIndex, 0), String(msg.text ?? ""), ctx.currentFileUri); break;
       case "linkClicked":
         ctx.onLinkClick?.(String(msg.path ?? ""), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
         break;
-      case "openUrl": vscode.env.openExternal(vscode.Uri.parse(String(msg.url ?? ""))).then(undefined, () => {}); break;
-      case "navigatePart": ctx.onPartNavigate?.(Number(msg.part ?? 1)); break;
-      case "navigateSession": ctx.onSessionNavigate?.(Number(msg.direction ?? 0)); break;
+      case "openUrl": {
+        const url = String(msg.url ?? "");
+        if (isAllowedExternalUrl(url)) {
+          vscode.env.openExternal(vscode.Uri.parse(url)).then(undefined, () => {});
+        } else {
+          logExtensionWarn('viewerMessage', 'openUrl rejected: invalid or disallowed scheme');
+        }
+        break;
+      }
+      case "navigatePart": ctx.onPartNavigate?.(Math.max(1, safeLineIndex(msg.part, 1))); break;
+      case "navigateSession": ctx.onSessionNavigate?.(Math.sign(safeLineIndex(msg.direction, 0))); break;
       case "savePresetRequest":
         ctx.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
         break;
@@ -101,7 +122,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       case "editLine":
         helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
-          lineIndex: Number(msg.lineIndex ?? 0), newText: String(msg.newText ?? ""),
+          lineIndex: safeLineIndex(msg.lineIndex, 0), newText: String(msg.newText ?? ""),
           timestamp: Number(msg.timestamp ?? 0), loadFromFile: ctx.load,
         }).catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedEditLine', err.message)); });
         break;
@@ -119,7 +140,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         ctx.onOpenFindResult?.(String(msg.uriString ?? ""), String(msg.query ?? ""), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
         break;
       case "findNavigateMatch":
-        ctx.onFindNavigateMatch?.(String(msg.uriString ?? ""), Number(msg.matchIndex ?? 0));
+        ctx.onFindNavigateMatch?.(String(msg.uriString ?? ""), safeLineIndex(msg.matchIndex, 0));
         break;
       case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": ctx.onBookmarkAction?.(msg); break;
       case "requestSessionList": ctx.onSessionListRequest?.(); break;
@@ -165,7 +186,10 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "setIntegrationsAdapters":
         /* Options panel toggled an integration; persist and echo back so webview stays in sync. */
         {
-          const adapterIds = (msg.adapterIds as string[]) ?? [];
+          const raw = msg.adapterIds;
+          const adapterIds = Array.isArray(raw)
+            ? (raw as unknown[]).filter((x): x is string => typeof x === 'string')
+            : [];
           const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
           void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
             .then(() => { ctx.post({ type: 'integrationsAdapters', adapterIds }); });

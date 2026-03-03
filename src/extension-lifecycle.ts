@@ -28,6 +28,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
     const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher } = deps;
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
+            // Session start: create log session, then push state to broadcaster and history.
             broadcaster.setPaused(false);
             await sessionManager.startSession(session, context);
             const activeSession = sessionManager.getActiveSession();
@@ -65,6 +66,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
+            // Session end: stop session, clear broadcaster/history/decorations, update nav.
             await sessionManager.stopSession(session);
             broadcaster.setSessionActive(false);
             historyProvider.setActiveUri(undefined);

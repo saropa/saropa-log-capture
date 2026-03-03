@@ -1,8 +1,8 @@
 /**
  * Error fingerprinting: normalize error lines and produce stable hashes.
- *
  * Variations of the same error (different ports, timestamps, IDs) map
  * to the same fingerprint, enabling cross-session error grouping.
+ * Called from session-lifecycle finalizeSession; results stored in SessionMetadata.
  */
 
 import * as vscode from 'vscode';

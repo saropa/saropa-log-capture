@@ -15,6 +15,7 @@ import { disposeInsightsPanel } from './ui/insights/insights-panel';
 import { disposeBugReportPanel } from './ui/panels/bug-report-panel';
 import { disposeTimelinePanel } from './ui/panels/timeline-panel';
 
+/** Refs returned by runActivation; used in deactivate to stop sessions, dispose indexer and pop-out in correct order. */
 let activationRefs: { sessionManager: { stopAll: () => void }; projectIndexer: { dispose: () => void } | null; popOutPanel: { dispose: () => void } } | null = null;
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -25,6 +26,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
     if (activationRefs) {
+        // Stop all log sessions first, then dispose indexer and pop-out (order matters for cleanup).
         activationRefs.sessionManager?.stopAll();
         activationRefs.projectIndexer?.dispose();
         activationRefs.projectIndexer = null;
@@ -32,6 +34,7 @@ export function deactivate(): void {
         activationRefs.popOutPanel?.dispose();
         activationRefs = null;
     }
+    // Dispose editor panels that are not tied to activationRefs.
     disposeComparisonPanel();
     disposeAnalysisPanel();
     disposeInsightsPanel();

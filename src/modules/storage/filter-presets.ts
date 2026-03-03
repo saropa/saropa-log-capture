@@ -1,14 +1,6 @@
 /**
- * Filter Presets Module
- *
- * Manages saved filter configurations for quick application in the viewer.
- * Presets save a combination of category filters, search patterns, and
- * exclusion toggles as named shortcuts.
- *
- * Presets are stored in workspace settings and can be applied via:
- * - Dropdown in viewer toolbar
- * - Command palette
- * - Keyboard shortcut
+ * Filter presets: saved filter configurations (categories, levels, search, exclusions) for the viewer.
+ * Stored in workspace settings; loaded in extension-activation and applied via viewer toolbar / commands.
  */
 
 import * as vscode from 'vscode';

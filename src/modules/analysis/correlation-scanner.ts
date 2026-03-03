@@ -1,8 +1,8 @@
 /**
  * Correlation scanner: extract semantic tags from log file content.
- *
  * Scans a log file for source file references and error class names,
  * returning frequency-ranked tags like `file:handler.dart` or `error:SocketException`.
+ * Called from session-lifecycle finalizeSession and from the rescanTags command.
  */
 
 import * as vscode from 'vscode';

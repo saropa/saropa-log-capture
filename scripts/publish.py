@@ -340,7 +340,7 @@ def _run_publish_steps(
                         lambda: create_git_tag(version), results):
             return False
 
-    # Step 13: Upload to VS Code Marketplace (skip if openvsx_only or version already published)
+    # Step 13: Upload to VS Code Marketplace (skip if openvsx_only or version already published there)
     heading("Step 13 · Publish to Marketplace")
     if stores == "openvsx_only":
         info("Skipping (publish to Open VSX only).")

@@ -1,3 +1,8 @@
+/**
+ * Source link detection and linkification. Extracts file:line[:col] from log text for
+ * inline decorations and open-in-editor; linkifyHtml wraps matches in clickable tags in the webview.
+ */
+
 import { escapeHtml } from '../capture/ansi';
 
 /**

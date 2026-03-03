@@ -50,11 +50,13 @@ export interface ActivationRefs {
 }
 
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
+    // --- Status bar & session manager ---
     const statusBar = new StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
 
+    // --- Project indexer (optional; indexes reports for docs/reports) ---
     const folder = vscode.workspace.workspaceFolders?.[0];
     let projectIndexer: ProjectIndexer | null = null;
     if (folder && getConfig().projectIndex.enabled) {
@@ -65,6 +67,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; setGlobalProjectIndexer(null); } });
     }
 
+    // --- Integration registry (session start/end contributions; see docs/integrations/INTEGRATION_API.md) ---
     const integrationRegistry = getDefaultIntegrationRegistry();
     integrationRegistry.register(packageLockfileProvider);
     integrationRegistry.register(buildCiProvider);
@@ -76,6 +79,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     integrationRegistry.register(windowsEventLogProvider);
     integrationRegistry.register(dockerContainersProvider);
 
+    // --- Webview providers: sidebar viewer, vitals, pop-out ---
     const inlineDecorations = new InlineDecorationsProvider();
     context.subscriptions.push(inlineDecorations);
 
@@ -100,6 +104,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
 
+    // --- Broadcaster & session list: single fan-out to sidebar and pop-out ---
     const broadcaster = new ViewerBroadcaster();
     const popOutPanel = new PopOutPanel(context.extensionUri, version, context, broadcaster);
     broadcaster.addTarget(viewerProvider);
@@ -123,6 +128,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler()));
 
+    // --- Initial broadcaster state from config ---
     broadcaster.setPresets(loadPresets());
     const initCfg = getConfig();
     if (initCfg.highlightRules.length > 0) {
@@ -132,6 +138,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
 
+    // --- Config change listener: push updates to session manager and broadcaster ---
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (!e.affectsConfiguration('saropaLogCapture')) { return; }
         const cfg = getConfig();
@@ -159,6 +166,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.sendDisplayOptions(options);
     });
 
+    // --- Line/split listeners: DAP output → broadcaster + history + inline decorations ---
     sessionManager.addLineListener((data) => {
         broadcaster.addLine(data);
         historyProvider.setActiveLineCount(data.lineCount);
@@ -186,6 +194,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         historyProvider.refresh();
     });
 
+    // --- Shared handler wiring (marker, pause, exclusions, search, bookmarks, session list, etc.) ---
     const onOpenBookmark = async (fileUri: string, lineIndex: number): Promise<void> => {
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
@@ -232,6 +241,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     });
     viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
 
+    // --- DAP tracker factory: routes debug adapter output events to SessionManager ---
     context.subscriptions.push(
         vscode.debug.registerDebugAdapterTrackerFactory(
             '*',
@@ -239,6 +249,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         ),
     );
 
+    // --- AI activity watcher: optional stream of AI entries into the log viewer ---
     const aiWatcher = new AiWatcher(outputChannel);
     context.subscriptions.push(aiWatcher);
     aiWatcher.onEntries((entries) => {
@@ -248,9 +259,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         }
     });
 
+    // --- Debug lifecycle (start/stop session) and command registration ---
     registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher });
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
 
+    // --- Scope context for source-scope filter (updates on active editor change) ---
     const updateScopeContext = async (): Promise<void> => {
         const ctx = await buildScopeContext(vscode.window.activeTextEditor);
         broadcaster.setScopeContext(ctx);
@@ -260,6 +273,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     );
     updateScopeContext().catch(() => {});
 
+    // --- Webview panel serializers: do not restore state (dispose on reload) ---
     const noRestore: vscode.WebviewPanelSerializer = {
         deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
     };
@@ -273,6 +287,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         );
     }
 
+    // --- Post-activation: one-off migrations and checks (non-blocking) ---
     if (folder) {
         migrateCrashlyticsCacheToSaropa(folder).catch(() => {});
         checkGitignoreSaropa(context, folder).catch(() => {});

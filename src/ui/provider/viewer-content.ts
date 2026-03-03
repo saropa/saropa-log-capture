@@ -1,3 +1,9 @@
+/**
+ * Assembles HTML, CSS, and script bundles for the log viewer webview. Composes
+ * viewer-script, filter/search/presets, decorations, panels, and nav into a single
+ * HTML document; used by LogViewerProvider and PopOutPanel when creating the webview.
+ */
+
 import { getViewerStyles } from '../viewer-styles/viewer-styles';
 import { getViewerScript } from '../viewer/viewer-script';
 import { getFilterScript } from '../viewer-search-filter/viewer-filter';

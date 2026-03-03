@@ -1,3 +1,9 @@
+/**
+ * Writes debug output to a log file. Created by session-lifecycle.initializeSession;
+ * receives lines from SessionManager (DAP → tracker → SessionManager → appendLine).
+ * Handles file splitting, deduplication, max lines, and markers.
+ */
+
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -65,6 +71,7 @@ export class LogSession {
         this.onSplit = callback;
     }
 
+    /** Create log directory, open first part file, write context header (and optional integration header lines). */
     async start(extraHeaderLines?: readonly string[]): Promise<void> {
         const logDirUri = this.getLogDirUri();
         const logDirPath = logDirUri.fsPath;
@@ -108,7 +115,7 @@ export class LogSession {
 
         if (splitResult.shouldSplit && splitResult.reason) {
             this.performSplit(splitResult.reason).catch((e) => { console.error('Log split failed:', e); });
-            return; // Skip this line — split marker documents the boundary
+            return; // This line is not written; the split marker in the new file documents the boundary.
         }
 
         const elapsedMs = this.computeElapsed(timestamp);
@@ -126,6 +133,7 @@ export class LogSession {
         for (const line of lines) {
             if (this._lineCount >= this.config.maxLines) {
                 this.maxLinesReached = true;
+                // Cap enforced; further appendLine calls no-op until clear/stop.
                 this.writeStream.write(`\n--- MAX LINES REACHED (${this.config.maxLines}) ---\n`);
                 return;
             }
@@ -182,7 +190,7 @@ export class LogSession {
         await this.performSplit({ type: 'manual' });
     }
 
-    /** Perform a file split — close current file, open new one. */
+    /** Perform a file split: close current stream, open new part file, notify listeners. */
     private async performSplit(reason: SplitReason): Promise<void> {
         if (!this.writeStream || this.splitting) {
             return;
