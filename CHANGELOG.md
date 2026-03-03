@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **README Quick Start.** Added F5 testing note: use VS Code (not Cursor) for Extension Development Host.
 - **Integration specs index.** `bugs/integration-specs-index.md` now marks implemented adapters (buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker) as Done; intro sentence clarifies Done = implemented, Pending = planned.
 - **ESLint curly.** Added braces to single-line `if` bodies in config, integration-config, deep-links, file-splitter, and viewer-message-handler for consistency.
+- **Integration config.** Crashlytics and Windows Events `leadMinutes`/`lagMinutes` now correctly preserve user value `0` (was replaced by default); added `configNonNegative` helper to avoid duplication.
 
 ---
 ## [2.0.19] - 2026-02-28
