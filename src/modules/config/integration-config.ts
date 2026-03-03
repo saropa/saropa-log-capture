@@ -17,6 +17,13 @@ import type {
 } from './config';
 import { clamp, ensureBoolean, ensureEnum, ensureStringArray } from './config-validation';
 
+/** Read a non-negative number from config; return default if missing or invalid. */
+function configNonNegative(cfg: vscode.WorkspaceConfiguration, key: string, defaultVal: number): number {
+  const v = cfg.get(key);
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : defaultVal;
+}
+
 export type IntegrationConfigBlock = {
   integrationsBuildCi: IntegrationBuildCiConfig;
   integrationsGit: IntegrationGitConfig;
@@ -64,16 +71,16 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
     integrationsCrashDumps: {
       searchPaths: ensureStringArray(cfg.get('integrations.crashDumps.searchPaths'), []),
       extensions: ensureStringArray(cfg.get('integrations.crashDumps.extensions'), ['.dmp', '.mdmp', '.core']),
-      leadMinutes: Math.max(0, Number(cfg.get('integrations.crashDumps.leadMinutes')) || 1),
-      lagMinutes: Math.max(0, Number(cfg.get('integrations.crashDumps.lagMinutes')) || 5),
+      leadMinutes: configNonNegative(cfg, 'integrations.crashDumps.leadMinutes', 1),
+      lagMinutes: configNonNegative(cfg, 'integrations.crashDumps.lagMinutes', 5),
       maxFiles: clamp(cfg.get('integrations.crashDumps.maxFiles'), 1, 100, 20),
       includeInHeader: ensureBoolean(cfg.get('integrations.crashDumps.includeInHeader'), true),
     },
     integrationsWindowsEvents: {
       logs: ensureStringArray(cfg.get('integrations.windowsEvents.logs'), ['Application', 'System']),
       levels: ensureStringArray(cfg.get('integrations.windowsEvents.levels'), ['Critical', 'Error', 'Warning']),
-      leadMinutes: Math.max(0, Number(cfg.get('integrations.windowsEvents.leadMinutes')) || 2),
-      lagMinutes: Math.max(0, Number(cfg.get('integrations.windowsEvents.lagMinutes')) || 5),
+      leadMinutes: configNonNegative(cfg, 'integrations.windowsEvents.leadMinutes', 2),
+      lagMinutes: configNonNegative(cfg, 'integrations.windowsEvents.lagMinutes', 5),
       maxEvents: clamp(cfg.get('integrations.windowsEvents.maxEvents'), 1, 500, 200),
     },
     integrationsDocker: {
