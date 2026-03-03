@@ -1,6 +1,7 @@
 /**
  * Stack frame classification — distinguishes app code from framework/library frames.
  * Works across Dart, Node, Python, Go, and other common runtimes.
+ * Used by viewer stack UI and analysis panel for frame filtering and grouping.
  */
 
 /** Patterns that identify framework / library stack frames. */

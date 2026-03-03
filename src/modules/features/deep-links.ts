@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../config/config';
 import { logExtensionWarn } from '../misc/extension-logger';
+import { MAX_SAFE_LINE, MAX_SESSION_FILENAME_LENGTH } from '../config/config-validation';
 
 /**
  * Parameters extracted from a deep link URI.
@@ -47,29 +48,41 @@ export interface DeepLinkParams {
  * parseDeepLinkUri(Uri.parse('vscode://saropa.saropa-log-capture/open?line=42'))
  * // Returns: undefined
  */
+/** Reject session names that could escape log directory (path traversal, absolute paths). */
+function isValidSessionName(session: string): boolean {
+    const trimmed = session.trim();
+    if (trimmed.length === 0 || trimmed.length > MAX_SESSION_FILENAME_LENGTH) {return false;}
+    if (trimmed.includes('..') || trimmed.includes('\\') || trimmed.startsWith('/')) {return false;}
+    return true;
+}
+
 export function parseDeepLinkUri(uri: vscode.Uri): DeepLinkParams | undefined {
+    if (!uri || typeof uri.path !== 'string') {
+        return undefined;
+    }
     // Only handle /open path - reject unknown paths for forward compatibility
     if (uri.path !== '/open') {
         return undefined;
     }
 
     // URLSearchParams handles URL decoding automatically
-    const params = new URLSearchParams(uri.query);
+    const params = new URLSearchParams(uri.query ?? '');
     const session = params.get('session');
 
     // Session is required - can't open a log without knowing which file
-    if (!session) {
+    if (!session || !isValidSessionName(session)) {
         return undefined;
     }
 
-    // Line is optional - if missing or invalid, we just open the file
+    // Line is optional - if missing or invalid, we just open the file; clamp to safe range
     const lineStr = params.get('line');
-    const line = lineStr ? parseInt(lineStr, 10) : undefined;
+    const parsed = lineStr ? parseInt(lineStr, 10) : NaN;
+    const line =
+        Number.isFinite(parsed) && parsed >= 1 && parsed <= MAX_SAFE_LINE ? parsed : undefined;
 
     return {
-        session,
-        // Filter out NaN and invalid line numbers
-        line: line && !isNaN(line) ? line : undefined,
+        session: session.trim(),
+        line,
     };
 }
 
@@ -91,12 +104,14 @@ export function generateDeepLink(sessionFilename: string, line?: number): string
     const baseUri = 'vscode://saropa.saropa-log-capture/open';
     const params = new URLSearchParams();
 
-    params.set('session', sessionFilename);
+    const safeName = typeof sessionFilename === 'string' && sessionFilename.trim().length > 0
+        ? sessionFilename.trim()
+        : 'session.log';
+    params.set('session', safeName);
 
-    // Only include line parameter if it's a positive number
-    // Line 0 or negative makes no sense for navigation
-    if (line !== undefined && line > 0) {
-        params.set('line', String(line));
+    // Only include line parameter if it's a positive number within safe range
+    if (line !== undefined && Number.isFinite(line) && line >= 1 && line <= MAX_SAFE_LINE) {
+        params.set('line', String(Math.floor(line)));
     }
 
     return `${baseUri}?${params.toString()}`;
@@ -112,6 +127,10 @@ export function generateDeepLink(sessionFilename: string, line?: number): string
  * @returns true if the link was handled successfully, false otherwise
  */
 export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
+    if (!uri) {
+        logExtensionWarn('deepLink', 'No URI provided');
+        return false;
+    }
     const params = parseDeepLinkUri(uri);
     if (!params) {
         logExtensionWarn('deepLink', 'Invalid deep link URI');

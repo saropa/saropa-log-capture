@@ -1,8 +1,6 @@
 /**
- * Export Formats Module
- *
- * Export log sessions to CSV, JSON, and JSONL formats.
- * Parses log lines to extract timestamp, category, level, and message.
+ * Export formats: CSV, JSON, JSONL. Parses log lines to extract timestamp, category, level, and message.
+ * Invoked by export commands (commands-export) and session panel export actions.
  */
 
 import * as vscode from 'vscode';

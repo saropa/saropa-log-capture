@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../config/config';
+import { parseJSONOrDefault } from './safe-json';
 
 /** Possible error lifecycle states. */
 export type ErrorStatus = 'open' | 'closed' | 'muted';
@@ -29,7 +30,8 @@ async function loadStatuses(): Promise<StatusMap> {
     if (!uri) { return {}; }
     try {
         const raw = await vscode.workspace.fs.readFile(uri);
-        return JSON.parse(Buffer.from(raw).toString('utf-8')) as StatusMap;
+        const parsed = parseJSONOrDefault<StatusMap>(Buffer.from(raw), {});
+        return typeof parsed === 'object' && parsed !== null ? parsed : {};
     } catch { return {}; }
 }
 
