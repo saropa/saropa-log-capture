@@ -135,19 +135,27 @@ export function defaultSplitRules(): SplitRules {
     };
 }
 
-/** Parse raw settings into SplitRules (for config loading). */
-export function parseSplitRules(raw: Record<string, unknown>): SplitRules {
+const MAX_LINES = 10_000_000;
+const MAX_SIZE_KB = 10_000_000;
+const MAX_DURATION_MINUTES = 525600; // 1 year
+const MAX_SILENCE_MINUTES = 10080;  // 1 week
+
+/** Parse raw settings into SplitRules (for config loading). Clamps numbers to safe ranges. */
+export function parseSplitRules(raw: Record<string, unknown> | null | undefined): SplitRules {
     const defaults = defaultSplitRules();
+    const obj = raw && typeof raw === 'object' ? raw : {};
+    const num = (v: unknown, def: number, max: number): number => {
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {return def;}
+        return Math.min(v, max);
+    };
     return {
-        maxLines: typeof raw.maxLines === "number" ? raw.maxLines : defaults.maxLines,
-        maxSizeKB: typeof raw.maxSizeKB === "number" ? raw.maxSizeKB : defaults.maxSizeKB,
-        keywords: Array.isArray(raw.keywords)
-            ? raw.keywords.filter((k) => typeof k === "string")
+        maxLines: num(obj.maxLines, defaults.maxLines, MAX_LINES),
+        maxSizeKB: num(obj.maxSizeKB, defaults.maxSizeKB, MAX_SIZE_KB),
+        keywords: Array.isArray(obj.keywords)
+            ? (obj.keywords as unknown[]).filter((k) => typeof k === 'string')
             : defaults.keywords,
-        maxDurationMinutes:
-            typeof raw.maxDurationMinutes === "number" ? raw.maxDurationMinutes : defaults.maxDurationMinutes,
-        silenceMinutes:
-            typeof raw.silenceMinutes === "number" ? raw.silenceMinutes : defaults.silenceMinutes,
+        maxDurationMinutes: num(obj.maxDurationMinutes, defaults.maxDurationMinutes, MAX_DURATION_MINUTES),
+        silenceMinutes: num(obj.silenceMinutes, defaults.silenceMinutes, MAX_SILENCE_MINUTES),
     };
 }
 

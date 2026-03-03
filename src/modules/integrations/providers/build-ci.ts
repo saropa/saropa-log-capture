@@ -7,6 +7,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { safeParseJSON } from '../../misc/safe-json';
+
+const MAX_BUILD_FILE_BYTES = 512 * 1024; // 512 KB
 
 export interface BuildInfo {
     status: 'success' | 'failure' | 'cancelled';
@@ -28,14 +31,17 @@ function getBuildInfoFromFile(
     maxAgeMs: number,
 ): BuildInfo | undefined {
     try {
+        if (!workspaceFolder?.uri?.fsPath) { return undefined; }
         const absPath = path.isAbsolute(relativePath)
             ? relativePath
             : path.join(workspaceFolder.uri.fsPath, relativePath);
         const stat = fs.statSync(absPath);
         if (!stat.isFile()) { return undefined; }
+        if (stat.size > MAX_BUILD_FILE_BYTES) { return undefined; }
         if (Date.now() - stat.mtimeMs > maxAgeMs) { return undefined; }
         const raw = fs.readFileSync(absPath, 'utf-8');
-        const data = JSON.parse(raw) as Record<string, unknown>;
+        const data = safeParseJSON<Record<string, unknown>>(raw);
+        if (!data || typeof data !== 'object') { return undefined; }
         const status = data.status as string;
         if (status !== 'success' && status !== 'failure' && status !== 'cancelled') {
             return undefined;

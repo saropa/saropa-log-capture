@@ -1,4 +1,8 @@
-/** Command registration for the Saropa Log Capture extension. */
+/**
+ * Command registration for the Saropa Log Capture extension.
+ * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
+ * history browse/edit, export, comparison, correlation, insights, bug report, timeline, trash, tools.
+ */
 
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
@@ -14,7 +18,7 @@ import { toolCommands } from './commands-tools';
 
 export type { CommandDeps } from './commands-deps';
 
-/** Register all extension commands. */
+/** Register all extension commands. Called from extension-activation after handler wiring. */
 export function registerCommands(deps: CommandDeps): void {
     const { context } = deps;
     context.subscriptions.push(

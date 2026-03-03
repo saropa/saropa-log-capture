@@ -1,8 +1,7 @@
 /**
  * Extension-side severity level classification.
- *
  * Mirrors the regex patterns in viewer-level-filter.ts (webview-side).
- * When updating patterns here, also update viewer-level-filter.ts and vice versa.
+ * Used by viewer level filter, analysis panel, and error classification; keep in sync with viewer-level-filter.ts.
  */
 
 /** Valid severity levels. */

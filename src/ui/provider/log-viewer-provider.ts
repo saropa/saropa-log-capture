@@ -1,3 +1,9 @@
+/**
+ * Sidebar log viewer webview host. Implements ViewerTarget so it receives broadcaster
+ * calls (addLine, setFilename, setSessionInfo, etc.) and postMessage from the iframe;
+ * wires handlers via viewer-handler-wiring and viewer-message-handler.
+ */
+
 import * as vscode from "vscode";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
@@ -20,10 +26,7 @@ const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
 const BATCH_BACKLOG_THRESHOLD = 1000;
 
-/**
- * Provides a webview-based bottom panel that displays captured
- * debug output in real time with auto-scroll and theme support.
- */
+/** Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support. */
 export class LogViewerProvider
   implements vscode.WebviewViewProvider, ViewerTarget, vscode.Disposable
 {

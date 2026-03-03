@@ -1,4 +1,7 @@
-/** Bookmark persistence layer backed by workspaceState. */
+/**
+ * Bookmark persistence layer backed by workspaceState. Used by viewer-handler-wiring
+ * (add, remove, list) and by activation to push bookmark list to the broadcaster on change.
+ */
 
 import * as vscode from 'vscode';
 

@@ -1,3 +1,8 @@
+/**
+ * Consecutive duplicate log line grouping. Used by LogSession.appendLine to collapse
+ * identical lines within a time window and write a single line with count (e.g. "x54").
+ */
+
 export interface DeduplicationOptions {
     /** Time window in ms. Identical lines within this window are grouped. */
     readonly windowMs: number;
