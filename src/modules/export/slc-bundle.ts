@@ -1,7 +1,7 @@
 /**
- * .slc session bundle export and import (Tasks 74–75).
- * Export produces a ZIP with manifest.json, metadata.json, and log file(s); import extracts
- * into the workspace log directory and merges metadata. See ROADMAP §1.
+ * .slc session bundle export and import. Export produces a ZIP with manifest.json,
+ * metadata.json, and log file(s); import extracts into the workspace log directory and merges metadata.
+ * Invoked by exportSlc command and session panel "Export as SLC".
  */
 import * as vscode from 'vscode';
 import JSZip from 'jszip';

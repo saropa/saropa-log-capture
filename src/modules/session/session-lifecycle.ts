@@ -74,7 +74,7 @@ export async function initializeSession(
     });
     const logDirUri = getLogDirectoryUri(workspaceFolder);
     const retentionStore = new SessionMetadataStore();
-    // Organize first so retention counts settled files.
+    // Organize first so retention counts settled files; then enforce max log files.
     const organizePromise = config.organizeFolders
         ? organizeLogFiles(logDirUri, retentionStore).catch((err) => {
             outputChannel.appendLine(`Folder organization failed: ${err}`);
@@ -109,7 +109,7 @@ export async function initializeSession(
         .filter((r): r is ExclusionRule => r !== undefined);
     const autoTagger = new AutoTagger(config.autoTagRules);
 
-    // Integration adapters: sync header lines + contributor ids for status bar; async work fire-and-forget.
+    // Integration registry: sync header contributions before start(); async runOnSessionStartAsync is fire-and-forget.
     const integrationRegistry = getDefaultIntegrationRegistry();
     const integrationContext = createIntegrationContext(sessionContext, config, outputChannel);
     const { lines: extraHeaderLines, contributorIds: integrationContributorIds } =
@@ -182,7 +182,7 @@ export async function finalizeSession(
         outputChannel.appendLine(`Error stopping log session: ${err}`);
     }
 
-    // Run integration end-phase (meta + sidecars); does not block other finalization.
+    // Integration end-phase: providers write meta + sidecars; then we run scans and save metadata.
     const integrationRegistry = getDefaultIntegrationRegistry();
     const integrationContext = createIntegrationContext(
         logSession.sessionContext, config, outputChannel,
@@ -198,6 +198,7 @@ export async function finalizeSession(
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
 
+    // Save auto-tags if any watch patterns triggered during the session.
     if (autoTagger?.hasTriggeredTags()) {
         const autoTags = autoTagger.getTriggeredTags();
         metadataStore.setAutoTags(logSession.fileUri, autoTags).catch((err) => {
@@ -206,6 +207,7 @@ export async function finalizeSession(
         outputChannel.appendLine(`Auto-tags applied: ${autoTags.join(', ')}`);
     }
 
+    // Scans (correlation tags, error fingerprints, perf fingerprints) run in parallel; onReportsIndexReady after all settle.
     const pCorr = scanForCorrelationTags(logSession.fileUri).then(async (corrTags) => {
         if (corrTags.length > 0) {
             await metadataStore.setCorrelationTags(logSession.fileUri, corrTags);

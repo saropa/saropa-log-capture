@@ -1,6 +1,6 @@
 /**
- * Cross-session log search functionality.
- * Searches across all log files in the reports directory.
+ * Cross-session log search. Searches across all log files in the reports directory.
+ * Invoked by viewer Find in Files (searchLogFilesConcurrent) and openLogAtLine.
  */
 
 import * as vscode from 'vscode';
