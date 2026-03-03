@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getLogDirectoryUri } from '../config/config';
 import type { FingerprintEntry } from '../analysis/error-fingerprint';
+import { parseJSONOrDefault } from '../misc/safe-json';
 import { logExtensionError } from '../misc/extension-logger';
 import type { PerfFingerprintEntry } from '../misc/perf-fingerprint';
 
@@ -235,7 +236,8 @@ export class SessionMetadataStore {
     private async readCentral(uri: vscode.Uri): Promise<MetaMap> {
         try {
             const data = await vscode.workspace.fs.readFile(uri);
-            return JSON.parse(Buffer.from(data).toString('utf-8')) as MetaMap;
+            const parsed = parseJSONOrDefault<MetaMap>(Buffer.from(data), {});
+            return typeof parsed === 'object' && parsed !== null ? parsed : {};
         } catch {
             return {};
         }
@@ -252,7 +254,8 @@ export class SessionMetadataStore {
         const metaUri = this.fallbackSidecarUri(logUri);
         try {
             const data = await vscode.workspace.fs.readFile(metaUri);
-            return JSON.parse(Buffer.from(data).toString('utf-8')) as SessionMeta;
+            const parsed = parseJSONOrDefault<SessionMeta>(Buffer.from(data), {});
+            return typeof parsed === 'object' && parsed !== null ? parsed : {};
         } catch {
             return {};
         }

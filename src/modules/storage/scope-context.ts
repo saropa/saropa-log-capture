@@ -1,9 +1,7 @@
 /**
- * Builds scope context for the source scope filter.
- *
- * Computes the active file path, workspace folder, package root, and
- * directory — all normalized to forward-slash lowercase for cross-platform
- * comparison in the webview.
+ * Builds scope context for the source scope filter. Computes active file path, workspace folder,
+ * package root, and directory (normalized for cross-platform comparison). Called from
+ * extension-activation on active editor change and pushed to the broadcaster for the webview.
  */
 
 import * as vscode from 'vscode';

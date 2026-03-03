@@ -1,9 +1,7 @@
 /**
- * Interactive HTML export module.
- *
- * Creates a self-contained, shareable HTML file with embedded JavaScript that
- * works completely offline. Unlike the static HTML export, this version includes
- * interactive features:
+ * Interactive HTML export module. Creates a self-contained, shareable HTML file
+ * with embedded JavaScript (no external deps). Invoked by export commands and session panel.
+ * Features:
  *
  * - **Search**: Ctrl+F to open, F3/Shift+F3 for next/previous match
  * - **Category filter**: Multi-select dropdown to show/hide stdout/stderr/console
