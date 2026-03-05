@@ -6,9 +6,9 @@
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import * as path from 'path';
 import { shouldRedactEnvVar } from '../../config/config';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { resolveWorkspaceFileUri } from '../workspace-path';
 
 function isEnabled(context: IntegrationContext): boolean {
     const adapters = context.config.integrationsAdapters ?? [];
@@ -35,9 +35,7 @@ function hashFileContent(content: Buffer): string {
 
 function readAndHashConfigFile(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): string | undefined {
     try {
-        const absPath = path.isAbsolute(relativePath)
-            ? relativePath
-            : path.join(workspaceFolder.uri.fsPath, relativePath);
+        const absPath = resolveWorkspaceFileUri(workspaceFolder, relativePath).fsPath;
         const buf = fs.readFileSync(absPath);
         return hashFileContent(buf);
     } catch {
