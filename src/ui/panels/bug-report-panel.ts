@@ -53,8 +53,12 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         await vscode.env.clipboard.writeText(lastMarkdown);
         vscode.window.showInformationMessage(vscode.l10n.t('msg.bugReportCopied'));
     } else if (msg.type === 'save') {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        const defaultUri = workspaceFolder
+            ? vscode.Uri.joinPath(workspaceFolder.uri, buildDefaultFilename())
+            : vscode.Uri.file(buildDefaultFilename());
         const uri = await vscode.window.showSaveDialog({
-            defaultUri: vscode.Uri.file(buildDefaultFilename()),
+            defaultUri,
             filters: { 'Markdown': ['md'], 'All Files': ['*'] },
         });
         if (uri) {
