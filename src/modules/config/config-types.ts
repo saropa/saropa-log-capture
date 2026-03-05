@@ -77,6 +77,14 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsWindowsEvents: IntegrationWindowsEventsConfig;
   readonly integrationsDocker: IntegrationDockerConfig;
   readonly integrationsLoki: IntegrationLokiConfig;
+  readonly integrationsPerformance: IntegrationPerformanceConfig;
+  readonly integrationsTerminal: IntegrationTerminalConfig;
+  readonly integrationsLinuxLogs: IntegrationLinuxLogsConfig;
+  readonly integrationsExternalLogs: IntegrationExternalLogsConfig;
+  readonly integrationsSecurity: IntegrationSecurityConfig;
+  readonly integrationsDatabase: IntegrationDatabaseConfig;
+  readonly integrationsHttp: IntegrationHttpConfig;
+  readonly integrationsBrowser: IntegrationBrowserConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
 }
@@ -152,6 +160,64 @@ export interface IntegrationDockerConfig {
 export interface IntegrationLokiConfig {
   readonly enabled: boolean;
   readonly pushUrl: string;
+}
+
+export interface IntegrationPerformanceConfig {
+  readonly snapshotAtStart: boolean;
+  readonly sampleDuringSession: boolean;
+  readonly sampleIntervalSeconds: number;
+  readonly includeInHeader: boolean;
+}
+
+export interface IntegrationTerminalConfig {
+  readonly whichTerminals: 'all' | 'active' | 'linked';
+  readonly writeSidecar: boolean;
+  readonly prefixTimestamp: boolean;
+  readonly maxLines: number;
+}
+
+export interface IntegrationLinuxLogsConfig {
+  readonly when: 'wsl' | 'remote' | 'always';
+  readonly sources: readonly string[];
+  readonly leadMinutes: number;
+  readonly lagMinutes: number;
+  readonly maxLines: number;
+  readonly wslDistro: string;
+}
+
+export interface IntegrationExternalLogsConfig {
+  readonly paths: readonly string[];
+  readonly writeSidecars: boolean;
+  readonly prefixLines: boolean;
+  readonly maxLinesPerFile: number;
+}
+
+export interface IntegrationSecurityConfig {
+  readonly windowsSecurityLog: boolean;
+  readonly auditLogPath: string;
+  readonly redactSecurityEvents: boolean;
+}
+
+export interface IntegrationDatabaseConfig {
+  readonly mode: 'parse' | 'file' | 'api';
+  readonly queryLogPath: string;
+  readonly requestIdPattern: string;
+  readonly timeWindowSeconds: number;
+  readonly maxQueriesPerLookup: number;
+}
+
+export interface IntegrationHttpConfig {
+  readonly requestIdPattern: string;
+  readonly requestLogPath: string;
+  readonly timeWindowSeconds: number;
+  readonly maxRequestsPerSession: number;
+}
+
+export interface IntegrationBrowserConfig {
+  readonly mode: 'file' | 'cdp';
+  readonly browserLogPath: string;
+  readonly browserLogFormat: 'jsonl' | 'json';
+  readonly maxEvents: number;
 }
 
 /** Single source entry for project index (path + file types). */

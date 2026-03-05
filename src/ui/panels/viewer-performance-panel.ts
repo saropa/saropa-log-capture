@@ -22,6 +22,7 @@ export function getPerformancePanelHtml(): string {
     <div class="pp-tabs">
         <button id="pp-tab-current" class="pp-tab active">Current</button>
         <button id="pp-tab-trends" class="pp-tab">Trends</button>
+        <button id="pp-tab-session" class="pp-tab">Session</button>
     </div>
     <div class="performance-panel-content">
         <div id="pp-current-view"></div>
@@ -34,6 +35,20 @@ export function getPerformancePanelHtml(): string {
                 <thead><tr><th>Operation</th><th>Avg</th><th>Sessions</th><th></th></tr></thead>
                 <tbody id="pp-trend-body"></tbody>
             </table>
+        </div>
+        <div id="pp-session-view" style="display:none" class="pp-session-view">
+            <div class="pp-session-block">
+                <div class="pp-session-title">System snapshot</div>
+                <div id="pp-snapshot" class="pp-session-value">Not recorded. Enable the Performance integration to record CPUs, RAM, and process stats at session start.</div>
+            </div>
+            <div class="pp-session-block">
+                <div class="pp-session-title">Session samples</div>
+                <div id="pp-samples" class="pp-session-value">Not recorded. Enable the Performance integration to record periodic memory/load samples during the session.</div>
+            </div>
+            <div class="pp-session-block">
+                <div class="pp-session-title">Profiler output</div>
+                <div id="pp-profiler" class="pp-session-value">None attached. Enable the Performance integration and set a profiler output path to attach a trace or flame graph file.</div>
+            </div>
         </div>
         <div id="pp-empty" class="pp-empty">No performance events found</div>
         <div id="pp-loading" class="pp-loading" style="display:none">Loading\u2026</div>
@@ -56,6 +71,8 @@ export function getPerformancePanelScript(): string {
     var ppChartTitle = document.getElementById('pp-chart-title');
     var ppTabCurrent = document.getElementById('pp-tab-current');
     var ppTabTrends = document.getElementById('pp-tab-trends');
+    var ppTabSession = document.getElementById('pp-tab-session');
+    var ppSessionView = document.getElementById('pp-session-view');
     var ppOpen = false;
     var ppActiveTab = 'current';
     var ppTrendsData = null;
@@ -65,7 +82,7 @@ export function getPerformancePanelScript(): string {
         ppOpen = true;
         ppPanel.classList.add('visible');
         if (ppActiveTab === 'current') { buildCurrentView(); }
-        else { requestTrends(); }
+        else if (ppActiveTab === 'trends') { requestTrends(); }
     };
 
     window.closePerformancePanel = function() {
@@ -81,14 +98,32 @@ export function getPerformancePanelScript(): string {
         ppActiveTab = tab;
         ppTabCurrent.classList.toggle('active', tab === 'current');
         ppTabTrends.classList.toggle('active', tab === 'trends');
-        ppCurrentView.style.display = tab === 'current' ? '' : 'none';
-        ppTrendsView.style.display = tab === 'trends' ? '' : 'none';
+        if (ppTabSession) ppTabSession.classList.toggle('active', tab === 'session');
+        if (ppCurrentView) ppCurrentView.style.display = tab === 'current' ? '' : 'none';
+        if (ppTrendsView) ppTrendsView.style.display = tab === 'trends' ? '' : 'none';
+        if (ppSessionView) ppSessionView.style.display = tab === 'session' ? '' : 'none';
+        if (ppEmpty) ppEmpty.style.display = 'none';
         if (tab === 'current') { buildCurrentView(); }
-        else { requestTrends(); }
+        else if (tab === 'trends') { requestTrends(); }
+        else if (tab === 'session') {
+            setSessionTabLoading(true);
+            vscodeApi.postMessage({ type: 'requestPerformanceData' });
+        }
+    }
+
+    function setSessionTabLoading(loading) {
+        var ppSnapshot = document.getElementById('pp-snapshot');
+        var ppSamples = document.getElementById('pp-samples');
+        var ppProfiler = document.getElementById('pp-profiler');
+        var msg = loading ? 'Loading\u2026' : '';
+        if (ppSnapshot && loading) ppSnapshot.textContent = msg;
+        if (ppSamples && loading) ppSamples.textContent = msg;
+        if (ppProfiler && loading) ppProfiler.textContent = msg;
     }
 
     if (ppTabCurrent) ppTabCurrent.addEventListener('click', function() { switchTab('current'); });
     if (ppTabTrends) ppTabTrends.addEventListener('click', function() { switchTab('trends'); });
+    if (ppTabSession) ppTabSession.addEventListener('click', function() { switchTab('session'); });
 
     ${getPerformanceCurrentScript()}
 
@@ -183,7 +218,7 @@ export function getPerformancePanelScript(): string {
     var ppRefresh = document.getElementById('pp-refresh');
     if (ppRefresh) ppRefresh.addEventListener('click', function() {
         if (ppActiveTab === 'current') buildCurrentView();
-        else requestTrends();
+        else if (ppActiveTab === 'trends') requestTrends();
     });
 
     var ppCloseBtn = document.getElementById('pp-panel-close');
@@ -205,8 +240,39 @@ export function getPerformancePanelScript(): string {
         if (!e.data) return;
         if (e.data.type === 'performanceData') {
             renderTrends(e.data.trends);
+            if (ppActiveTab === 'session') {
+                setSessionTabLoading(false);
+                renderSessionData(e.data.sessionData);
+            }
         }
     });
+
+    function renderSessionData(sessionData) {
+        var ppSnapshot = document.getElementById('pp-snapshot');
+        var ppSamples = document.getElementById('pp-samples');
+        var ppProfiler = document.getElementById('pp-profiler');
+        var snap = sessionData && sessionData.snapshot;
+        if (ppSnapshot) {
+            if (snap && typeof snap === 'object') {
+                var s = snap;
+                var txt = s.cpus + ' CPUs, ' + (s.totalMemMb || 0) + ' MB RAM (' + (s.freeMemMb || 0) + ' MB free)';
+                if (s.processMemMb != null) txt += '; process: ' + s.processMemMb + ' MB';
+                ppSnapshot.textContent = txt;
+            } else {
+                ppSnapshot.textContent = 'Not recorded. Enable the Performance integration to record CPUs, RAM at session start.';
+            }
+        }
+        if (ppSamples) {
+            if (sessionData && sessionData.samplesFile && sessionData.sampleCount != null) {
+                ppSamples.textContent = sessionData.sampleCount + ' samples in ' + sessionData.samplesFile + '. Use "Open log folder" to view.';
+            } else {
+                ppSamples.textContent = 'Not recorded. Enable the Performance integration and "Sample during session" to record periodic memory/load.';
+            }
+        }
+        if (ppProfiler) {
+            ppProfiler.textContent = 'None attached. Use a future "Attach profiler output" command to link a trace file.';
+        }
+    }
 
     /* ---- Helpers ---- */
 
