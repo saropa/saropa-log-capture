@@ -147,6 +147,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Real-time repeat notifications:** Immediate notification when duplicate lines are detected, with message preview and repeat counter.
 
 ### Infrastructure
+- **Project index:** A lightweight index under `.saropa/index/` speeds up analysis by indexing project docs (e.g. `docs/`, `bugs/`), root markdown files, and completed session metadata. The Analysis panel and doc-matching use it when enabled. Command **Saropa Log Capture: Rebuild Project Index** to refresh manually; settings under `saropaLogCapture.projectIndex.*` (sources, includeReports, maxFilesPerSource, refreshInterval). Add `.saropa/` to `.gitignore` to keep tooling artifacts (index and caches such as Crashlytics) out of version control.
 - **Script fault isolation:** Each viewer feature runs in a separate script block—a SyntaxError in one feature won't break the rest.
 - **App-only stack traces:** Press A to hide framework/library frames.
 - **Stack deduplication:** Identical stacks collapsed with count badge.
@@ -286,6 +287,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `splitRules.maxDurationMinutes` | `0`                                                                         | Split after N minutes (0 = disabled)                                                                                                                                                  |
 | `splitRules.silenceMinutes`     | `0`                                                                         | Split after N minutes of silence (0 = disabled)                                                                                                                                       |
 | `tailPatterns`                  | `["**/*.log"]`                                                              | Glob patterns for **Open Tailed File** (workspace-relative)                                                                                                                           |
+| `projectIndex.enabled`         | `true`                                                                      | Enable project-wide indexing of docs and session metadata (`.saropa/index/`) for faster analysis and doc matching                                                                     |
 
 </details>
 
