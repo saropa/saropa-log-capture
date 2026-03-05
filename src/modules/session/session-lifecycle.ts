@@ -31,6 +31,7 @@ import {
     createIntegrationContext,
     createIntegrationEndContext,
 } from '../integrations';
+import { startTerminalCapture } from '../integrations/terminal-capture';
 
 /** Result of initializing a new log session. */
 export interface SessionSetupResult {
@@ -119,6 +120,14 @@ export async function initializeSession(
         await logSession.start(extraHeaderLines);
         outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
         integrationRegistry.runOnSessionStartAsync(integrationContext);
+        if (config.integrationsAdapters?.includes('terminal')) {
+            const termCfg = config.integrationsTerminal;
+            startTerminalCapture({
+                whichTerminals: termCfg.whichTerminals,
+                maxLines: termCfg.maxLines,
+                prefixTimestamp: termCfg.prefixTimestamp,
+            });
+        }
         return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     } catch (err) {
         outputChannel.appendLine(`Failed to start log session: ${err}`);
