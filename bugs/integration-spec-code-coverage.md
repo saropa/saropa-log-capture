@@ -1,8 +1,8 @@
 # Spec: Code Coverage Integration
 
 **Adapter id:** `coverage`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/code-coverage.md](../docs/integrations/code-coverage.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/code-coverage.ts` and this spec.
 
 ## Goal
 

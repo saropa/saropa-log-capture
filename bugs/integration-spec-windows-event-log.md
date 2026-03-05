@@ -1,8 +1,8 @@
 # Spec: Windows Event Log Integration
 
 **Adapter id:** `windowsEvents`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/windows-event-log.md](../docs/integrations/windows-event-log.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/windows-event-log.ts` and this spec.
 
 ## Goal
 

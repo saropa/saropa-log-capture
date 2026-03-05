@@ -1,8 +1,8 @@
 # Spec: Build and CI Integration
 
 **Adapter id:** `buildCi`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/build-ci.md](../docs/integrations/build-ci.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/build-ci.ts` and this spec.
 
 ## Goal
 

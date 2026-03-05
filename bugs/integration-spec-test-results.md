@@ -1,8 +1,8 @@
 # Spec: Test Results Integration
 
 **Adapter id:** `testResults`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/test-results.md](../docs/integrations/test-results.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/test-results.ts` and this spec.
 
 ## Goal
 

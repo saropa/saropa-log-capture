@@ -1,8 +1,8 @@
 # Spec: Docker and Containers Integration
 
 **Adapter id:** `docker`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/docker-containers.md](../docs/integrations/docker-containers.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/docker-containers.ts` and this spec.
 
 ## Goal
 
