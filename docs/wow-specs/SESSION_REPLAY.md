@@ -1,9 +1,11 @@
 # Wow Spec: Session replay with optional timing
 
-**Status:** Proposed (Consider for Wow)  
+**Status:** Implemented  
 **Source:** ROADMAP §7 "Consider for Wow" #2, §4 "Wow" #7  
 **Dependencies:** Existing log viewer, parsed lines with timestamps or line order  
 **Related:** Viewer file loader, elapsed time display, session metadata
+
+Implementation: Replay bar (play/pause/stop, Timed/Fast mode, speed, scrubber), command-palette Replay command, Space = play/pause, config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs), and file-loader parsing of `[+Nms]` for per-line replay timing.
 
 ---
 

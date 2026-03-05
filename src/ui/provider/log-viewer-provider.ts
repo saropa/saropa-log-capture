@@ -5,6 +5,7 @@
  */
 
 import * as vscode from "vscode";
+import { getConfig } from "../../modules/config/config";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { LineData } from "../../modules/session/session-manager";
@@ -143,6 +144,15 @@ export class LogViewerProvider
   setCopyContextLines(count: number): void { this.postMessage({ type: "setCopyContextLines", count }); }
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
+  /** Start replay on the currently loaded log (e.g. from Replay command). Sends replay config from settings. */
+  startReplay(): void {
+    this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
+  }
+  /** Replay settings from workspace config for startReplay / loadFromFile(..., { replay: true }). */
+  private getReplayConfig(): { defaultMode: string; defaultSpeed: number; minLineDelayMs: number; maxDelayMs: number } {
+    const r = getConfig().replay;
+    return { defaultMode: r.defaultMode, defaultSpeed: r.defaultSpeed, minLineDelayMs: r.minLineDelayMs, maxDelayMs: r.maxDelayMs };
+  }
   setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
   applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
@@ -214,7 +224,7 @@ export class LogViewerProvider
       this.startTailing(uri, sessionMidnightMs, contentLength);
     }
     if (options?.replay) {
-      this.postMessage({ type: "startReplay" });
+      this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
     }
   }
   private stopTailing(): void {

@@ -1,14 +1,15 @@
 /**
- * Session replay: play/pause/stop, scrubber, speed.
+ * Session replay: play/pause/stop, Timed/Fast mode, speed, scrubber.
  * Uses window.replayMode and window.replayCurrentIndex; viewer-data-viewport
  * clamps visible lines to replayCurrentIndex when replayMode is true.
  *
+ * Timing: In Timed mode, delay between lines uses line.elapsedMs (from [+Nms] in file)
+ * or timestamp delta; in Fast mode a fixed short delay is used. Config (min/max delay,
+ * default speed/mode) is sent with startReplay from the extension.
+ *
  * Richer context: When replay is started from the session list, the extension
  * loads the session and can attach session metadata (displayName, tags) and
- * integration data (build, git, test results) for the session timeline. That
- * data can be shown in the replay bar or a side panel. When integration
- * sources are fetched, the extension should persist them to session metadata
- * (SessionMeta.integrations) so the next replay of the same session is faster.
+ * integration data (build, git, test results) for the session timeline.
  */
 
 export function getReplayBarHtml(): string {
@@ -17,6 +18,11 @@ export function getReplayBarHtml(): string {
     <button id="replay-play" class="replay-btn" title="Play" aria-label="Play replay"><span class="codicon codicon-debug-start"></span></button>
     <button id="replay-pause" class="replay-btn" title="Pause" aria-label="Pause replay"><span class="codicon codicon-debug-pause"></span></button>
     <button id="replay-stop" class="replay-btn" title="Stop and exit replay" aria-label="Stop replay"><span class="codicon codicon-debug-stop"></span></button>
+    <span class="replay-mode-label">Mode:</span>
+    <select id="replay-mode" class="replay-mode" title="Timed uses line deltas when available; Fast uses fixed short delay" aria-label="Replay mode">
+        <option value="timed">Timed</option>
+        <option value="fast">Fast</option>
+    </select>
     <span class="replay-speed-label">Speed:</span>
     <select id="replay-speed" class="replay-speed" title="Playback speed" aria-label="Playback speed">
         <option value="0.5">0.5x</option>
@@ -37,6 +43,7 @@ export function getReplayScript(): string {
     var replayPlaying = false;
     var replayTimer = null;
     var replaySpeedFactor = 1;
+    var replayTimedMode = true;
     var REPLAY_MIN_MS = 10;
     var REPLAY_MAX_MS = 30000;
     var REPLAY_FAST_MS = 50;
@@ -45,14 +52,36 @@ export function getReplayScript(): string {
     var playBtn = document.getElementById('replay-play');
     var pauseBtn = document.getElementById('replay-pause');
     var stopBtn = document.getElementById('replay-stop');
+    var modeSelect = document.getElementById('replay-mode');
     var speedSelect = document.getElementById('replay-speed');
     var scrubber = document.getElementById('replay-scrubber');
     var statusEl = document.getElementById('replay-status');
 
+    /** Apply extension replay config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs). */
+    function applyReplayConfig(cfg) {
+        if (!cfg) return;
+        if (cfg.defaultMode === 'fast' || cfg.defaultMode === 'timed') replayTimedMode = (cfg.defaultMode === 'timed');
+        if (typeof cfg.defaultSpeed === 'number' && cfg.defaultSpeed > 0) replaySpeedFactor = cfg.defaultSpeed;
+        if (typeof cfg.minLineDelayMs === 'number' && cfg.minLineDelayMs >= 0) REPLAY_MIN_MS = cfg.minLineDelayMs;
+        if (typeof cfg.maxDelayMs === 'number' && cfg.maxDelayMs > 0) REPLAY_MAX_MS = cfg.maxDelayMs;
+        if (typeof cfg.minLineDelayMs === 'number' && cfg.minLineDelayMs >= 0) REPLAY_FAST_MS = Math.max(10, cfg.minLineDelayMs);
+        if (modeSelect) modeSelect.value = replayTimedMode ? 'timed' : 'fast';
+        if (speedSelect) {
+            var v = String(replaySpeedFactor);
+            if ([0.5, 1, 2, 5].indexOf(replaySpeedFactor) >= 0) speedSelect.value = v;
+        }
+    }
+
+    /** Delay before showing line at lineIdx: Timed = elapsedMs or timestamp delta (clamped); Fast = fixed. */
     function getDelayMs(lineIdx) {
         if (lineIdx <= 0 || !allLines || lineIdx >= allLines.length) return 0;
+        if (!replayTimedMode) return Math.max(REPLAY_MIN_MS, REPLAY_FAST_MS / replaySpeedFactor);
         var curr = allLines[lineIdx];
         var prev = allLines[lineIdx - 1];
+        if (curr && curr.elapsedMs != null && curr.elapsedMs >= 0) {
+            var scaled = curr.elapsedMs / replaySpeedFactor;
+            return Math.max(REPLAY_MIN_MS, Math.min(REPLAY_MAX_MS, scaled));
+        }
         if (curr && prev && curr.timestamp && prev.timestamp) {
             var delta = curr.timestamp - prev.timestamp;
             if (delta < 0) return REPLAY_FAST_MS;
@@ -121,8 +150,9 @@ export function getReplayScript(): string {
     }
     window.exitReplayMode = exitReplayMode;
 
-    window.startReplay = function() {
+    window.startReplay = function(msg) {
         if (!allLines || allLines.length === 0) return;
+        if (msg && msg.replayConfig) applyReplayConfig(msg.replayConfig);
         window.replayMode = true;
         window.replayCurrentIndex = 0;
         if (bar) bar.style.display = 'flex';
@@ -132,6 +162,10 @@ export function getReplayScript(): string {
         updateReplayUi();
         scheduleNext();
     };
+
+    if (modeSelect) modeSelect.addEventListener('change', function() {
+        replayTimedMode = (modeSelect.value === 'timed');
+    });
 
     if (playBtn) playBtn.addEventListener('click', function() {
         if (!window.replayMode) return;
@@ -165,7 +199,31 @@ export function getReplayScript(): string {
 
     window.addEventListener('message', function(e) {
         if (e.data && e.data.type === 'startReplay') {
-            if (typeof startReplay === 'function') startReplay();
+            if (typeof window.startReplay === 'function') window.startReplay(e.data);
+        }
+        if (e.data && e.data.type === 'setReplayConfig' && e.data.replayConfig) {
+            applyReplayConfig(e.data.replayConfig);
+        }
+    });
+
+    /* Space = play/pause when replay is active and focus is not in an input. */
+    document.addEventListener('keydown', function(ev) {
+        if (!window.replayMode || ev.repeat) return;
+        var tag = (ev.target && ev.target.tagName) ? ev.target.tagName.toUpperCase() : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (ev.code === 'Space' || ev.key === ' ') {
+            ev.preventDefault();
+            if (replayPlaying) {
+                stopReplayTimer();
+                replayPlaying = false;
+                if (playBtn) playBtn.style.display = '';
+                if (pauseBtn) pauseBtn.style.display = 'none';
+            } else {
+                replayPlaying = true;
+                if (playBtn) playBtn.style.display = 'none';
+                if (pauseBtn) pauseBtn.style.display = '';
+                scheduleNext();
+            }
         }
     });
 })();
