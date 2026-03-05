@@ -76,7 +76,17 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsCrashDumps: IntegrationCrashDumpsConfig;
   readonly integrationsWindowsEvents: IntegrationWindowsEventsConfig;
   readonly integrationsDocker: IntegrationDockerConfig;
+  readonly integrationsLoki: IntegrationLokiConfig;
   readonly projectIndex: ProjectIndexConfig;
+  readonly replay: ReplayConfig;
+}
+
+/** Session replay defaults (loaded log playback with optional timing). */
+export interface ReplayConfig {
+  readonly defaultMode: 'timed' | 'fast';
+  readonly defaultSpeed: number;
+  readonly minLineDelayMs: number;
+  readonly maxDelayMs: number;
 }
 
 export interface IntegrationBuildCiConfig {
@@ -136,6 +146,12 @@ export interface IntegrationDockerConfig {
   readonly containerNamePattern: string;
   readonly captureLogs: boolean;
   readonly maxLogLines: number;
+}
+
+/** Grafana Loki export (push log session to Loki). */
+export interface IntegrationLokiConfig {
+  readonly enabled: boolean;
+  readonly pushUrl: string;
 }
 
 /** Single source entry for project index (path + file types). */

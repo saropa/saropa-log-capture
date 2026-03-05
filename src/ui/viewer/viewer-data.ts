@@ -11,7 +11,8 @@ import { getViewportRenderScript } from './viewer-data-viewport';
 export function getViewerDataScript(): string {
     return getViewerDataHelpers() + /* javascript */ `
 
-function addToData(html, isMarker, category, ts, fw, sp) {
+function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
+    /* elapsedMs: optional per-line delay (from [+Nms] in file) for session replay timing. */
     if (isMarker) {
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
@@ -19,7 +20,9 @@ function addToData(html, isMarker, category, ts, fw, sp) {
             activeGroupHeader = null;
         }
         cleanupTrailingRepeats();
-        allLines.push({ html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null });
+        var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null };
+        if (elapsedMs !== undefined && elapsedMs >= 0) markerItem.elapsedMs = elapsedMs;
+        allLines.push(markerItem);
         totalHeight += MARKER_HEIGHT;
         return;
     }
@@ -37,7 +40,9 @@ function addToData(html, isMarker, category, ts, fw, sp) {
                     if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
                 }
             }
-            allLines.push({ html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false });
+            var sfItem = { html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false };
+            if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
+            allLines.push(sfItem);
             activeGroupHeader.frameCount++;
             return;
         }
@@ -47,6 +52,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         if (lTagH && lTagH === sTagH) lTagH = null;
         var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
         var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false };
+        if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         groupHeaderMap[gid] = hdr;
@@ -146,6 +152,7 @@ function addToData(html, isMarker, category, ts, fw, sp) {
         var finalH = scopeFilt ? 0 : lineH;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr };
+        if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
