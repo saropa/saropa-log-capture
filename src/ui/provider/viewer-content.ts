@@ -62,6 +62,7 @@ import { getCrashlyticsPanelHtml, getCrashlyticsPanelScript } from '../panels/vi
 import { getRecurringPanelHtml, getRecurringPanelScript } from '../panels/viewer-recurring-panel';
 import { getPerformancePanelHtml, getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getAboutPanelHtml, getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
+import { getReplayBarHtml, getReplayScript } from '../viewer/viewer-replay';
 
 /** Maximum lines retained in the viewer data array when viewerMaxLines is 0 (file on disk can be larger, up to maxLines). */
 export const MAX_VIEWER_LINES = 50000;
@@ -172,6 +173,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
     </div>
+    ${getReplayBarHtml()}
     <div id="footer">
         <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}
@@ -228,6 +230,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getCopyScript())}
     ${scriptTag(nonce, getAnnotationScript())}
     ${scriptTag(nonce, getTimingScript())}
+    ${scriptTag(nonce, getReplayScript())}
     ${scriptTag(nonce, getDecorationsScript())}
     ${scriptTag(nonce, getDecoSettingsScript())}
     ${scriptTag(nonce, getStackDedupScript())}
