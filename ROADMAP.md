@@ -170,9 +170,7 @@ Tail mode (§1 Task 89), .slc bundle (§1 Tasks 74–75), Remote/SSH (§1 Task 9
 
 ### Consider for "Wow"
 
-1. **AI "Explain this error"** (VS Code Language Model API). — [docs/wow-specs/AI_EXPLAIN_ERROR.md](docs/wow-specs/AI_EXPLAIN_ERROR.md)
-2. **Session replay** with optional timing. — [docs/wow-specs/SESSION_REPLAY.md](docs/wow-specs/SESSION_REPLAY.md)
-3. **One-click export to Loki/Grafana** when configured. — [docs/wow-specs/EXPORT_LOKI_GRAFANA.md](docs/wow-specs/EXPORT_LOKI_GRAFANA.md)
+1. **AI "Explain this error"** (VS Code Language Model API). — [docs/history/AI_EXPLAIN_ERROR.md](docs/history/AI_EXPLAIN_ERROR.md)
 
 ---
 
