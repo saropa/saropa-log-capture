@@ -1,10 +1,10 @@
 # Integration adapter specs
 
-Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaLogCapture.integrations.adapters`. Full design docs live in [docs/integrations/](../docs/integrations/). Implemented adapters are marked **Done**; rows below with **Pending** are planned.
+Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaLogCapture.integrations.adapters`. Design docs for **planned** integrations live in [docs/integrations/](../docs/integrations/). Implemented adapters are marked **Done** and documented in the spec (or provider code); **Pending** rows are planned.
 
 | Adapter id | Spec | Status |
 |------------|------|--------|
-| `packages` | *(implemented)* — see [docs/integrations/package-lockfile.md](../docs/integrations/package-lockfile.md) | Done |
+| `packages` | *(implemented)* — see [src/modules/integrations/providers/package-lockfile.ts](../src/modules/integrations/providers/package-lockfile.ts) | Done |
 | `buildCi` | [integration-spec-build-ci.md](integration-spec-build-ci.md) | Done |
 | `git` | [integration-spec-git-source-code.md](integration-spec-git-source-code.md) | Done |
 | `environment` | [integration-spec-environment-snapshot.md](integration-spec-environment-snapshot.md) | Done |
@@ -23,3 +23,23 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Pending |
 
 **API:** [docs/integrations/INTEGRATION_API.md](../docs/integrations/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
+
+---
+
+## Performance (PERF): one place (the Performance panel)
+
+All performance-related features live in the **Performance panel** (graph icon). It is OK to flag HOT/flame/slow items in the log list (e.g. purple perf count); the full story is in the panel.
+
+| Tab / feature | What it is | Where you see it |
+|---------------|------------|------------------|
+| **Current** | We scan the **current log** for PERF/jank/GC/timeout and group them. | Performance panel → **Current** tab. Click a row to jump to that line. |
+| **Trends** | Cross-session aggregated durations and trend (improving/degrading/stable). | Performance panel → **Trends** tab. Table + chart. |
+| **Session** | System snapshot, session samples, and profiler output. | Performance panel → **Session** tab. Today: placeholders until the performance adapter exists. Later: snapshot (CPUs, RAM), optional `.perf.json` samples, and Open profiler output link for an attached trace/flame file. |
+
+**Log level:** Lines that look like PERF/jank/GC/ANR are still classified as level "performance" (purple) in the log and in the session list; the panel is the single place for all PERF ideas (Current + Trends + Session).
+
+---
+
+## What plugins can I add?
+
+You can add exactly these (turn on in Options → Integrations or via Command Palette → Configure integrations): packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics. There are no other plugins; when we add one, it will appear in Options.
