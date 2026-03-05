@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
+- **Session replay.** Replay a saved log session with optional timing: lines appear in order with delay from per-line timestamps (or fixed 50 ms when absent). **Replay** is available from the Project Logs list (right-click a session → Replay). Replay bar: Play, Pause, Stop, speed (0.5x–5x), and a scrubber to seek to any line. Replay mode shows only lines up to the current position; exit via Stop or when loading another session. See [docs/wow-specs/SESSION_REPLAY.md](docs/wow-specs/SESSION_REPLAY.md).
 - **Copy with source: surrounding context lines.** New setting `saropaLogCapture.copyContextLines` (default 3, max 20). When using **Copy with source** from the log viewer context menu, the copied excerpt now includes this many log lines before and after the selection (or the right-clicked line), so stack traces and surrounding errors are included. Set to 0 to copy only the selection. NLS description in package.nls.json.
 
 ### Changed
