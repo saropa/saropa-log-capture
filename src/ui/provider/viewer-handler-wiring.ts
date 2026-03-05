@@ -52,6 +52,8 @@ export interface HandlerDeps {
   readonly bookmarkStore: BookmarkStore;
   readonly context: vscode.ExtensionContext;
   readonly onOpenBookmark?: (fileUri: string, lineIndex: number) => void;
+  /** Open a session and start replay (focus viewer + load with replay option). */
+  readonly openSessionForReplay?: (uri: vscode.Uri) => Promise<void>;
 }
 
 /** Wire common webview→extension handlers on a viewer target. */
@@ -173,7 +175,11 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     await refreshSessionList();
   });
   target.setSessionActionHandler((action, uriString, filename) => {
-    void handleSessionAction(action, uriString, filename, { historyProvider, refreshList: refreshSessionList });
+    void handleSessionAction(action, uriString, filename, {
+      historyProvider,
+      refreshList: refreshSessionList,
+      openSessionForReplay: deps.openSessionForReplay,
+    });
   });
 
   // --- Bookmarks: add, request list, delete, edit note, open ---
@@ -234,6 +240,7 @@ async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, 
 interface SessionActionContext {
   readonly historyProvider: SessionHistoryProvider;
   readonly refreshList: () => Promise<void>;
+  readonly openSessionForReplay?: (uri: vscode.Uri) => Promise<void>;
 }
 
 async function handleSessionAction(
@@ -245,6 +252,13 @@ async function handleSessionAction(
   switch (action) {
     case 'open':
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.openSession', item); }
+      break;
+    case 'replay':
+      if (uri && ctx.openSessionForReplay) {
+        await ctx.openSessionForReplay(uri);
+      } else if (item) {
+        await vscode.commands.executeCommand('saropaLogCapture.openSession', item);
+      }
       break;
     case 'trash':
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.trashSession', item); }

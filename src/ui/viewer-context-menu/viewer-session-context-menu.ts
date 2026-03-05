@@ -6,6 +6,9 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item" data-session-action="open">
         <span class="codicon codicon-go-to-file"></span> Open
     </div>
+    <div class="context-menu-item" data-session-action="replay">
+        <span class="codicon codicon-debug-start"></span> Replay
+    </div>
     <div class="context-menu-separator"></div>
     <div class="context-menu-item" data-session-action="rename">
         <span class="codicon codicon-edit"></span> Rename...
