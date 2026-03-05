@@ -79,6 +79,20 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "insertMarker": ctx.onMarkerRequest?.(); break;
       case "togglePause": ctx.onTogglePause?.(); break;
       case "copyToClipboard": vscode.env.clipboard.writeText(String(msg.text ?? "")); break;
+      case "copyWithSource": {
+        const text = String(msg.text ?? "").trim();
+        const rawRefs = msg.sourceRefs;
+        const sourceRefs = Array.isArray(rawRefs)
+          ? (rawRefs as unknown[]).map((r) => {
+              const o = r as Record<string, unknown>;
+              return { path: String(o.path ?? ""), line: Number(o.line) || 1 };
+            }).filter((r) => r.path.length > 0)
+          : [];
+        void helpers.buildCopyWithSource(text, sourceRefs)
+          .then((out) => { void vscode.env.clipboard.writeText(out); })
+          .catch(() => { void vscode.env.clipboard.writeText(text || ""); });
+        break;
+      }
       case "presetApplied":
         if (msg.name) { void ctx.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", String(msg.name)); }
         break;
@@ -173,7 +187,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); break;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
       case "requestRecurringErrors": panelHandlers.handleRecurringRequest(ctx.post).catch(() => {}); break;
-      case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post).catch(() => {}); break;
+      case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); break;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
       case "requestAboutContent":
@@ -184,7 +198,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
         break;
       case "setIntegrationsAdapters":
-        /* Options panel toggled an integration; persist and echo back so webview stays in sync. */
+        /* Options panel toggled an integration; persist, run prep checks, then echo back. */
         {
           const raw = msg.adapterIds;
           const adapterIds = Array.isArray(raw)
@@ -192,7 +206,10 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
             : [];
           const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
           void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
-            .then(() => { ctx.post({ type: 'integrationsAdapters', adapterIds }); });
+            .then(() => {
+              ctx.post({ type: 'integrationsAdapters', adapterIds });
+              void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(adapterIds));
+            });
         }
         break;
     }
