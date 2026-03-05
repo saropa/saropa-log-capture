@@ -47,6 +47,12 @@ function renderViewport(force) {
         }
     }
 
+    // Replay mode: only show lines 0..replayCurrentIndex (set by viewer-replay script)
+    if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number') {
+        var cap = window.replayCurrentIndex;
+        if (endIdx > cap) endIdx = cap;
+        if (startIdx > cap) startIdx = cap;
+    }
     // Hysteresis: only rebuild DOM when visible area shifts past half the overscan buffer
     var hyst = Math.floor(OVERSCAN / 2);
     if (!force && lastStart >= 0 &&
@@ -61,6 +67,7 @@ function renderViewport(force) {
     var parts = [];
     for (var i = startIdx; i <= endIdx && i < allLines.length; i++) {
         if (allLines[i].height === 0) continue;
+        if (typeof window.replayMode !== 'undefined' && window.replayMode && typeof window.replayCurrentIndex === 'number' && i > window.replayCurrentIndex) continue;
         parts.push(renderItem(allLines[i], i, prevVis));
         prevVis = allLines[i];
     }

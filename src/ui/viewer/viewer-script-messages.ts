@@ -27,6 +27,7 @@ window.addEventListener('message', function(event) {
         }
         case 'clear':
             loadTruncatedInfo = null;
+            if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
@@ -125,7 +126,10 @@ window.addEventListener('message', function(event) {
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'iconBarPosition': document.body.dataset.iconBar = msg.position || 'left'; break;
         case 'integrationsAdapters':
-            window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : []; if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
+            window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : [];
+            if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
+            var ibCrash = document.getElementById('ib-crashlytics');
+            if (ibCrash) ibCrash.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('crashlytics') >= 0);
             break;
     }
 });
