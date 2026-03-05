@@ -159,6 +159,14 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 - **VS Code** ^1.108.1 (or a Cursor/Open VSX–compatible editor). The extension declares `engines.vscode: "^1.108.1"` in `package.json`.
 
+## Remote development (SSH, WSL, Dev Containers)
+
+The extension runs in the **workspace** context, so when you open a folder via **Remote - SSH**, **Remote - WSL**, or **Dev Containers**, it runs on the remote host or inside the container. Capture, session storage, session history, and the log viewer all work there: logs are stored on the remote filesystem, and the viewer loads them from the same environment.
+
+- **Supported:** [Remote - SSH](https://code.visualstudio.com/docs/remote/ssh), [WSL](https://code.visualstudio.com/docs/remote/wsl), [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers).
+- **Recommendation:** Use a **relative** log directory (e.g. `reports` or `.logs`) in remote workspaces so logs stay under the workspace. An absolute `saropaLogCapture.logDirectory` is resolved on the extension host (the remote), which is fine but less portable.
+- **No extra setup:** Install the extension; when you open a remote folder and start debugging, capture and viewer behave the same as on a local workspace.
+
 ## Installation & Quick Start
 
 1. Install the extension from the VS Code Marketplace

@@ -3,9 +3,10 @@
  * coverage-summary.json at session start and adds coverage line to header and meta.
  */
 
+import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { resolveWorkspaceFileUri } from '../workspace-path';
 
 function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('coverage');
@@ -80,7 +81,7 @@ export const codeCoverageProvider: IntegrationProvider = {
         if (!isEnabled(context)) { return undefined; }
         const { workspaceFolder, config } = context;
         const rel = config.integrationsCoverage.reportPath;
-        const abs = path.isAbsolute(rel) ? rel : path.join(workspaceFolder.uri.fsPath, rel);
+        const abs = resolveWorkspaceFileUri(workspaceFolder, rel).fsPath;
         let result: { linePercent: number; branchPercent?: number } | undefined;
         const lower = abs.toLowerCase();
         if (lower.endsWith('.xml')) {
