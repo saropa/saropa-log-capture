@@ -12,7 +12,7 @@ import { stripAnsi } from "../../modules/capture/ansi";
 import { PendingLine } from "../viewer/viewer-file-loader";
 import { logExtensionError } from "../../modules/misc/extension-logger";
 
-export { buildSessionListPayload, openSourceFile, copySourcePath } from "./viewer-provider-actions";
+export { buildSessionListPayload, openSourceFile, copySourcePath, buildCopyWithSource, type CopySourceRef } from "./viewer-provider-actions";
 
 /** Input data for editing a log line. */
 export interface EditLineInput {
@@ -71,9 +71,13 @@ export async function handleEditLine(
  * Handle exporting logs to a file.
  */
 export async function handleExportLogs(text: string, options: Record<string, unknown>): Promise<void> {
-	// Prompt user to choose save location
+	// Prompt user to choose save location (workspace-based default for remote/SSH/WSL/Dev Containers)
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+	const defaultUri = workspaceFolder
+		? vscode.Uri.joinPath(workspaceFolder.uri, 'exported-logs.txt')
+		: vscode.Uri.file('exported-logs.txt');
 	const uri = await vscode.window.showSaveDialog({
-		defaultUri: vscode.Uri.file('exported-logs.txt'),
+		defaultUri,
 		filters: {
 			[vscode.l10n.t('filter.textFiles')]: ['txt', 'log'],
 			[vscode.l10n.t('filter.allFiles')]: ['*'],

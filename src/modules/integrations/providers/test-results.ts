@@ -5,8 +5,8 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { resolveWorkspaceFileUri } from '../workspace-path';
 import { safeParseJSON } from '../../misc/safe-json';
 
 const MAX_TEST_RESULTS_FILE_BYTES = 1024 * 1024; // 1 MB
@@ -31,10 +31,8 @@ function fromFile(
     maxAgeMs: number,
 ): TestResultsSummary | undefined {
     try {
-        if (!workspaceFolder?.uri?.fsPath) { return undefined; }
-        const abs = path.isAbsolute(relativePath)
-            ? relativePath
-            : path.join(workspaceFolder.uri.fsPath, relativePath);
+        if (!workspaceFolder?.uri) { return undefined; }
+        const abs = resolveWorkspaceFileUri(workspaceFolder, relativePath).fsPath;
         const stat = fs.statSync(abs);
         if (!stat.isFile() || stat.size > MAX_TEST_RESULTS_FILE_BYTES || Date.now() - stat.mtimeMs > maxAgeMs) {
             return undefined;
@@ -67,9 +65,7 @@ function fromFile(
 
 function parseJUnit(workspaceFolder: vscode.WorkspaceFolder, relativePath: string): TestResultsSummary | undefined {
     try {
-        const abs = path.isAbsolute(relativePath)
-            ? relativePath
-            : path.join(workspaceFolder.uri.fsPath, relativePath);
+        const abs = resolveWorkspaceFileUri(workspaceFolder, relativePath).fsPath;
         const xml = fs.readFileSync(abs, 'utf-8');
         const testsuiteMatch = xml.match(/<testsuite[^>]*\s(?:tests|testcase)=/);
         if (!testsuiteMatch) { return undefined; }

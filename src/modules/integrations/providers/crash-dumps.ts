@@ -7,13 +7,15 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
+import { resolveWorkspaceFileUri } from '../workspace-path';
 
 function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('crashDumps');
 }
 
 function resolvePath(template: string, workspaceFolder: vscode.WorkspaceFolder): string {
-    let s = template.replace(/\$\{workspaceFolder\}/gi, workspaceFolder.uri.fsPath);
+    const workspacePath = resolveWorkspaceFileUri(workspaceFolder, '.').fsPath;
+    let s = template.replace(/\$\{workspaceFolder\}/gi, workspacePath);
     s = s.replace(/\$\{env:([^}]+)\}/g, (_: string, name: string) => process.env[name] ?? '');
     return path.normalize(s);
 }
@@ -82,7 +84,7 @@ export const crashDumpsProvider: IntegrationProvider = {
         const searchPaths = cfg.searchPaths.length > 0
             ? cfg.searchPaths.map(p => resolvePath(p, workspaceFolder))
             : [
-                workspaceFolder.uri.fsPath,
+                resolveWorkspaceFileUri(workspaceFolder, '.').fsPath,
                 process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'CrashDumps') : '',
                 process.env.TEMP ?? '',
             ].filter(Boolean);

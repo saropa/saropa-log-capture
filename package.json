@@ -1145,6 +1145,9 @@
   "engines": {
     "vscode": "^1.108.1"
   },
+  "extensionKind": [
+    "workspace"
+  ],
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"

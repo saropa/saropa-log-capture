@@ -5,8 +5,8 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
+import { resolveWorkspaceFileUri } from '../workspace-path';
 import { safeParseJSON } from '../../misc/safe-json';
 
 const MAX_BUILD_FILE_BYTES = 512 * 1024; // 512 KB
@@ -31,10 +31,8 @@ function getBuildInfoFromFile(
     maxAgeMs: number,
 ): BuildInfo | undefined {
     try {
-        if (!workspaceFolder?.uri?.fsPath) { return undefined; }
-        const absPath = path.isAbsolute(relativePath)
-            ? relativePath
-            : path.join(workspaceFolder.uri.fsPath, relativePath);
+        if (!workspaceFolder?.uri) { return undefined; }
+        const absPath = resolveWorkspaceFileUri(workspaceFolder, relativePath).fsPath;
         const stat = fs.statSync(absPath);
         if (!stat.isFile()) { return undefined; }
         if (stat.size > MAX_BUILD_FILE_BYTES) { return undefined; }
