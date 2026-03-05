@@ -238,5 +238,42 @@ export function getContentStyles(): string {
     margin-bottom: 12px;
 }
 
+/* ===================================================================
+   Session Replay Bar
+   Play/pause/stop, speed, scrubber when replaying a loaded session.
+   =================================================================== */
+.replay-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--vscode-panel-background);
+    border-top: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+}
+.replay-btn {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    padding: 2px 6px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.replay-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-foreground);
+}
+.replay-speed-label { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.replay-speed {
+    font-size: 11px;
+    padding: 1px 4px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+}
+.replay-scrubber { flex: 1; min-width: 60px; max-width: 200px; }
+.replay-status { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 ` + getInfoPanelStyles();
 }

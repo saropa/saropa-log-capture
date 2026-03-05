@@ -123,7 +123,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ### Session Management
 - **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Active sessions highlighted with a recording icon. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
-- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading.
+- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the replay bar (play/pause, scrubber, speed) to step through.
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).

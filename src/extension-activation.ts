@@ -199,7 +199,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
     };
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark };
+    const openSessionForReplay = async (uri: vscode.Uri): Promise<void> => {
+        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+        await viewerProvider.loadFromFile(uri, { replay: true });
+    };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
