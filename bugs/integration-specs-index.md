@@ -13,14 +13,14 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `crashDumps` | [integration-spec-crash-dumps.md](integration-spec-crash-dumps.md) | Done |
 | `windowsEvents` | [integration-spec-windows-event-log.md](integration-spec-windows-event-log.md) | Done |
 | `docker` | [integration-spec-docker-containers.md](integration-spec-docker-containers.md) | Done |
-| `database` | [integration-spec-database-query-logs.md](integration-spec-database-query-logs.md) | Pending |
-| `externalLogs` | [integration-spec-application-file-logs.md](integration-spec-application-file-logs.md) | Pending |
-| `performance` | [integration-spec-performance-profiling.md](integration-spec-performance-profiling.md) | Pending |
-| `http` | [integration-spec-http-network.md](integration-spec-http-network.md) | Pending |
-| `terminal` | [integration-spec-terminal-output.md](integration-spec-terminal-output.md) | Pending |
-| `browser` | [integration-spec-browser-devtools.md](integration-spec-browser-devtools.md) | Pending |
-| `linuxLogs` | [integration-spec-wsl-linux-logs.md](integration-spec-wsl-linux-logs.md) | Pending |
-| `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Pending |
+| `database` | [integration-spec-database-query-logs.md](integration-spec-database-query-logs.md) | Done |
+| `externalLogs` | [integration-spec-application-file-logs.md](integration-spec-application-file-logs.md) | Done |
+| `performance` | [integration-spec-performance-profiling.md](integration-spec-performance-profiling.md) | Done |
+| `http` | [integration-spec-http-network.md](integration-spec-http-network.md) | Done |
+| `terminal` | [integration-spec-terminal-output.md](integration-spec-terminal-output.md) | Done |
+| `browser` | [integration-spec-browser-devtools.md](integration-spec-browser-devtools.md) | Done |
+| `linuxLogs` | [integration-spec-wsl-linux-logs.md](integration-spec-wsl-linux-logs.md) | Done |
+| `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Done |
 
 **API:** [docs/integrations/INTEGRATION_API.md](../docs/integrations/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 
@@ -34,7 +34,7 @@ All performance-related features live in the **Performance panel** (graph icon).
 |---------------|------------|------------------|
 | **Current** | We scan the **current log** for PERF/jank/GC/timeout and group them. | Performance panel → **Current** tab. Click a row to jump to that line. |
 | **Trends** | Cross-session aggregated durations and trend (improving/degrading/stable). | Performance panel → **Trends** tab. Table + chart. |
-| **Session** | System snapshot, session samples, and profiler output. | Performance panel → **Session** tab. Today: placeholders until the performance adapter exists. Later: snapshot (CPUs, RAM), optional `.perf.json` samples, and Open profiler output link for an attached trace/flame file. |
+| **Session** | System snapshot, session samples, and profiler output. | Performance panel → **Session** tab. When the Performance adapter is enabled: snapshot (CPUs, RAM) at session start; optional `.perf.json` samples when "Sample during session" is on; Open profiler output link (future). |
 
 **Log level:** Lines that look like PERF/jank/GC/ANR are still classified as level "performance" (purple) in the log and in the session list; the panel is the single place for all PERF ideas (Current + Trends + Session).
 
@@ -42,4 +42,4 @@ All performance-related features live in the **Performance panel** (graph icon).
 
 ## What plugins can I add?
 
-You can add exactly these (turn on in Options → Integrations or via Command Palette → Configure integrations): packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics. There are no other plugins; when we add one, it will appear in Options.
+You can add exactly these (turn on in Options → Integrations or via Command Palette → Configure integrations): packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics, performance, terminal, linuxLogs, externalLogs, security, database, http, browser. There are no other plugins; when we add one, it will appear in Options.

@@ -26,7 +26,7 @@ In VS Code, when you stop debugging or switch target, the Debug Console is clear
 - **Keep and compare sessions** — Open any past session; diff two logs side by side.
 - **Big logs** — Virtual scroll over 100K+ lines without freezing.
 - **Pop-out viewer** — Move the viewer to a second monitor.
-- **Export** — Current view or full session as HTML, CSV, JSON, or a shareable `.slc` bundle.
+- **Export** — Current view or full session as HTML, CSV, JSON, a shareable `.slc` bundle, or push to Grafana Loki.
 - **Tail any log** — Open any workspace `.log` file and watch new lines live.
 - **Run navigation** — For Flutter: jump between runs (launch, hot restart, hot reload) inside one log.
 - **Error alerts** — Optional sound or flash when errors appear; errors classified (e.g. crash vs timeout).
@@ -70,7 +70,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log file starts with session metadata.
-- **Integration adapters:** Opt-in adapters add header lines and meta per session; status bar shows which contributed. Configure via `saropaLogCapture.integrations.adapters`. Adapters: Packages (lockfile hash), Build/CI, Git (describe, uncommitted, stash), Environment snapshot, Test results (file or JUnit XML), Code coverage (lcov/Cobertura), Crash dumps (scan at session end), Windows Event Log (Application/System, Windows only), Docker (container inspect/logs at session end).
+- **Integration adapters:** Opt-in adapters add header lines and meta per session; status bar shows which contributed. Configure via `saropaLogCapture.integrations.adapters`. Adapters: Packages (lockfile hash), Build/CI, Git (describe, uncommitted, stash), Environment snapshot, Test results (file or JUnit XML), Code coverage (lcov/Cobertura), Crash dumps (scan at session end), Windows Event Log (Application/System, Windows only), Docker (container inspect/logs at session end), Performance (system snapshot and optional sampling), Terminal output (capture Integrated Terminal to sidecar), WSL/Linux logs (dmesg, journalctl), Application/file logs (tail external log files), Security/audit (Windows Security channel, app audit file), Database query logs (correlate by request ID), HTTP/network (request log, HAR), Browser/DevTools (browser console log file). See Options → Integrations.
 - **ANSI preservation:** Raw ANSI codes kept in files for external tools.
 - **Gitignore safety:** Offers to add log dir to `.gitignore` on first run.
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
@@ -134,6 +134,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **HTML export:** Static or interactive with search, filters, and theme toggle.
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
 - **.slc session bundle:** Export current or selected session (including split parts and metadata) to a `.slc` ZIP; command **Import .slc Bundle** restores sessions into the workspace log directory.
+- **Export to Loki:** Push current or selected session to Grafana Loki. Enable `saropaLogCapture.loki.enabled`, set `saropaLogCapture.loki.pushUrl`, and store your API key with **Saropa Log Capture: Set Loki API Key**. Available from command palette and session context menu.
 - **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.
 - **Copy to Search:** Right-click a line to open search pre-filled with its text.

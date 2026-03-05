@@ -42,6 +42,14 @@ import { codeCoverageProvider } from './modules/integrations/providers/code-cove
 import { crashDumpsProvider } from './modules/integrations/providers/crash-dumps';
 import { windowsEventLogProvider } from './modules/integrations/providers/windows-event-log';
 import { dockerContainersProvider } from './modules/integrations/providers/docker-containers';
+import { performanceSnapshotProvider } from './modules/integrations/providers/performance-snapshot';
+import { terminalOutputProvider } from './modules/integrations/providers/terminal-output';
+import { linuxLogsProvider } from './modules/integrations/providers/linux-logs';
+import { externalLogsProvider } from './modules/integrations/providers/external-logs';
+import { securityAuditProvider } from './modules/integrations/providers/security-audit';
+import { databaseQueryLogsProvider } from './modules/integrations/providers/database-query-logs';
+import { httpNetworkProvider } from './modules/integrations/providers/http-network';
+import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
 
 export interface ActivationRefs {
     sessionManager: SessionManagerImpl;
@@ -78,6 +86,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     integrationRegistry.register(crashDumpsProvider);
     integrationRegistry.register(windowsEventLogProvider);
     integrationRegistry.register(dockerContainersProvider);
+    integrationRegistry.register(performanceSnapshotProvider);
+    integrationRegistry.register(terminalOutputProvider);
+    integrationRegistry.register(linuxLogsProvider);
+    integrationRegistry.register(externalLogsProvider);
+    integrationRegistry.register(securityAuditProvider);
+    integrationRegistry.register(databaseQueryLogsProvider);
+    integrationRegistry.register(httpNetworkProvider);
+    integrationRegistry.register(browserDevtoolsProvider);
 
     // --- Webview providers: sidebar viewer, vitals, pop-out ---
     const inlineDecorations = new InlineDecorationsProvider();
