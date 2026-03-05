@@ -145,6 +145,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     captureAll: ensureBoolean(cfg.get("captureAll"), true),
     filterContextLines: clamp(cfg.get("filterContextLines"), 0, 100, 3),
     contextViewLines: clamp(cfg.get("contextViewLines"), 0, 100, 10),
+    copyContextLines: clamp(cfg.get("copyContextLines"), 0, 20, 3),
     suppressTransientErrors: ensureBoolean(cfg.get("suppressTransientErrors"), false),
     breakOnCritical: ensureBoolean(cfg.get("breakOnCritical"), false),
     minimapShowInfoMarkers: ensureBoolean(cfg.get("minimapShowInfoMarkers"), false),

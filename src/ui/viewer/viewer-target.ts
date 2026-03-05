@@ -25,6 +25,7 @@ export interface ViewerTarget {
   updateFooter(text: string): void;
   setContextLines(count: number): void;
   setContextViewLines(count: number): void;
+  setCopyContextLines(count: number): void;
   setShowElapsed(show: boolean): void;
   setShowDecorations(show: boolean): void;
   setErrorClassificationSettings(suppress: boolean, breakOn: boolean, detection: string, deemphasizeFw: boolean): void;

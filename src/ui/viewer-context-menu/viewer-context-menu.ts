@@ -12,8 +12,60 @@ var contextMenuEl = null;
 var contextMenuSourcePath = '';
 var contextMenuSourceLine = '';
 var contextMenuSourceCol = '';
+/** Lines before/after selection to include in Copy with source (0 = selection only). Set via setCopyContextLines. */
+var copyContextLines = 3;
 /** Set by show/hide; other scripts skip programmatic scroll when true. */
 window.isContextMenuOpen = false;
+
+function collectSourceRefsFromLinks(links) {
+    var seen = {};
+    var refs = [];
+    for (var i = 0; i < links.length; i++) {
+        var a = links[i];
+        var path = a.getAttribute('data-path');
+        var line = parseInt(a.getAttribute('data-line'), 10);
+        if (!path) continue;
+        var key = path + ':' + line;
+        if (seen[key]) continue;
+        seen[key] = true;
+        refs.push({ path: path, line: isNaN(line) ? 1 : line });
+    }
+    return refs;
+}
+
+function collectSourceRefsInSelection() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return [];
+    var range = sel.getRangeAt(0);
+    var container = range.commonAncestorContainer;
+    var root = container.nodeType === 3 ? container.parentElement : container;
+    if (!root || !root.querySelectorAll) return [];
+    var links = root.querySelectorAll('.source-link');
+    return collectSourceRefsFromLinks(links);
+}
+
+function collectSourceRefsForLineRange(lo, hi) {
+    var viewport = document.getElementById('viewport');
+    if (!viewport) return [];
+    var refs = [];
+    var seen = {};
+    for (var i = lo; i <= hi; i++) {
+        var row = viewport.querySelector('[data-idx="' + i + '"]');
+        if (!row) continue;
+        var links = row.querySelectorAll('.source-link');
+        for (var j = 0; j < links.length; j++) {
+            var a = links[j];
+            var path = a.getAttribute('data-path');
+            var line = parseInt(a.getAttribute('data-line'), 10);
+            if (!path) continue;
+            var key = path + ':' + line;
+            if (seen[key]) continue;
+            seen[key] = true;
+            refs.push({ path: path, line: isNaN(line) ? 1 : line });
+        }
+    }
+    return refs;
+}
 
 function initContextMenu() {
     contextMenuEl = document.getElementById('context-menu');
@@ -56,8 +108,11 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     }
 
     var sel = window.getSelection();
+    var hasTextSelection = sel && sel.toString().length > 0;
     var copySelItem = contextMenuEl.querySelector('[data-action="copy-selection"]');
-    if (copySelItem) copySelItem.style.display = sel && sel.toString().length > 0 ? '' : 'none';
+    if (copySelItem) copySelItem.style.display = hasTextSelection ? '' : 'none';
+    var copyWithSourceItem = contextMenuEl.querySelector('[data-action="copy-with-source"]');
+    if (copyWithSourceItem) copyWithSourceItem.style.display = (hasTextSelection || hasLine) ? '' : 'none';
 
     var lineData = hasLine ? allLines[lineIdx] : null;
     var hasSourceLink = lineData && lineData.html && lineData.html.indexOf('source-link') !== -1;
@@ -109,6 +164,13 @@ function handleGlobalAction(action) {
         var sel = window.getSelection();
         var text = sel ? sel.toString() : '';
         if (text.length > 0) vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+        return true;
+    }
+    if (action === 'copy-with-source') {
+        var sel = window.getSelection();
+        var text = sel ? sel.toString() : '';
+        var refs = collectSourceRefsInSelection();
+        if (text.length > 0 || refs.length > 0) vscodeApi.postMessage({ type: 'copyWithSource', text: text, sourceRefs: refs });
         return true;
     }
     if (action === 'copy-all') {
@@ -209,6 +271,27 @@ function onContextMenuAction(action) {
             }
             break;
         }
+        case 'copy-with-source': {
+            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var lo = Math.min(start, end);
+            var hi = Math.max(start, end);
+            var baseLo = lo >= 0 ? lo : lineIdx;
+            var baseHi = hi > lo ? hi : lineIdx;
+            /* Include N lines before/after selection (copyContextLines) for stack traces and surrounding context. */
+            var n = typeof copyContextLines === 'number' ? Math.max(0, Math.min(20, copyContextLines)) : 0;
+            var loExpand = Math.max(0, baseLo - n);
+            var hiExpand = Math.min(allLines.length - 1, baseHi + n);
+            var parts = [];
+            for (var i = loExpand; i <= hiExpand; i++) {
+                var item = allLines[i];
+                if (item && item.html != null) parts.push(stripTags(item.html));
+            }
+            var logText = parts.join('\\n');
+            var refs = collectSourceRefsForLineRange(loExpand, hiExpand);
+            if (logText.length > 0 || refs.length > 0) vscodeApi.postMessage({ type: 'copyWithSource', text: logText, sourceRefs: refs });
+            break;
+        }
         case 'copy-to-search':
             if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
                 openSearch();
@@ -259,5 +342,12 @@ if (document.readyState === 'loading') {
 } else {
     initContextMenu();
 }
+
+window.addEventListener('message', function(event) {
+    var msg = event.data;
+    if (msg && msg.type === 'setCopyContextLines' && typeof msg.count === 'number') {
+        copyContextLines = Math.max(0, Math.min(20, Math.floor(msg.count)));
+    }
+});
 `;
 }
