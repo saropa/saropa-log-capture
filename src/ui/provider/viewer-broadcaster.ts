@@ -56,6 +56,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setContextViewLines(count: number): void {
     for (const t of this.targets) { t.setContextViewLines(count); }
   }
+  setCopyContextLines(count: number): void {
+    for (const t of this.targets) { t.setCopyContextLines(count); }
+  }
   setShowElapsed(show: boolean): void {
     for (const t of this.targets) { t.setShowElapsed(show); }
   }

@@ -60,6 +60,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }
             broadcaster.setContextLines(cfg.filterContextLines);
             broadcaster.setContextViewLines(cfg.contextViewLines);
+            broadcaster.setCopyContextLines(cfg.copyContextLines);
             broadcaster.setPresets(loadPresets());
             historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();

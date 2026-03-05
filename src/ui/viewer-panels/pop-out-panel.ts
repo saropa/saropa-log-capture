@@ -144,6 +144,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   updateFooter(text: string): void { this.post({ type: "updateFooter", text }); }
   setContextLines(count: number): void { this.post({ type: "setContextLines", count }); }
   setContextViewLines(count: number): void { this.post({ type: "setContextViewLines", count }); }
+  setCopyContextLines(count: number): void { this.post({ type: "setCopyContextLines", count }); }
   setShowElapsed(show: boolean): void { this.post({ type: "setShowElapsed", show }); }
   setShowDecorations(show: boolean): void { this.post({ type: "setShowDecorations", show }); }
   setErrorClassificationSettings(s: boolean, b: boolean, d: string, fw: boolean): void { this.post({ type: "errorClassificationSettings", suppressTransientErrors: s, breakOnCritical: b, levelDetection: d, deemphasizeFrameworkLevels: fw }); }

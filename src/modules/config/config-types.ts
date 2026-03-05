@@ -51,6 +51,8 @@ export interface SaropaLogCaptureConfig {
   readonly captureAll: boolean;
   readonly filterContextLines: number;
   readonly contextViewLines: number;
+  /** Lines before/after selection to include in "Copy with source". 0 = selection only. */
+  readonly copyContextLines: number;
   readonly suppressTransientErrors: boolean;
   readonly breakOnCritical: boolean;
   readonly minimapShowInfoMarkers: boolean;
@@ -86,6 +88,10 @@ export interface IntegrationGitConfig {
   readonly describeInHeader: boolean;
   readonly uncommittedInHeader: boolean;
   readonly stashInHeader: boolean;
+  /** Show blame (commit, author) when navigating to source from a log line. */
+  readonly blameOnNavigate: boolean;
+  /** At session end, optionally capture git blame for file:line references in the log (e.g. stack frames). */
+  readonly includeLineHistoryInMeta: boolean;
 }
 
 export interface IntegrationEnvironmentConfig {

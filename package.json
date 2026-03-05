@@ -324,6 +324,13 @@
           "minimum": 1,
           "type": "number"
         },
+        "saropaLogCapture.copyContextLines": {
+          "default": 3,
+          "description": "%config.copyContextLines.description%",
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number"
+        },
         "saropaLogCapture.minimapShowInfoMarkers": {
           "default": false,
           "markdownDescription": "%config.minimapShowInfoMarkers.markdownDescription%",
@@ -702,7 +709,7 @@
         },
         "saropaLogCapture.integrations.adapters": {
           "default": ["packages"],
-          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker). Only these run; clear to disable all.",
+          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": { "type": "string" },
           "type": "array"
         },
@@ -731,6 +738,16 @@
         "saropaLogCapture.integrations.git.stashInHeader": {
           "default": false,
           "description": "Include stash count in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.git.blameOnNavigate": {
+          "default": true,
+          "description": "When opening source from a log line (e.g. stack frame), show git blame (last commit, author) and optional PR link.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.git.includeLineHistoryInMeta": {
+          "default": false,
+          "description": "At session end, capture git blame for file:line references in the log (e.g. stack traces) and store in session meta.",
           "type": "boolean"
         },
         "saropaLogCapture.integrations.environment.includeEnvChecksum": {
