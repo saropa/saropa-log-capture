@@ -27,6 +27,14 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('selectionEnd'));
         });
 
+        test('should use copyContextLines for Copy with source (expand range before/after)', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('copyContextLines'));
+            assert.ok(script.includes('setCopyContextLines'));
+            assert.ok(script.includes('loExpand'));
+            assert.ok(script.includes('hiExpand'));
+        });
+
         test('should handle all expected actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes("case 'copy':"));
