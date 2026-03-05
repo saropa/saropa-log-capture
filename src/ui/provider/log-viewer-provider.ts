@@ -196,7 +196,7 @@ export class LogViewerProvider
     this.pendingLines = []; this.currentFileUri = undefined;
     this.postMessage({ type: "clear" }); this.setSessionInfo(null);
   }
-  async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean }): Promise<void> {
+  async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration;
     this.pendingLoadUri = uri;
     this.view?.show?.(true);
@@ -212,6 +212,9 @@ export class LogViewerProvider
     this.pendingLoadUri = undefined;
     if (options?.tail) {
       this.startTailing(uri, sessionMidnightMs, contentLength);
+    }
+    if (options?.replay) {
+      this.postMessage({ type: "startReplay" });
     }
   }
   private stopTailing(): void {
