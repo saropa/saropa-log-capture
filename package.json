@@ -194,6 +194,17 @@
         "title": "%command.exportSlc.title%"
       },
       {
+        "command": "saropaLogCapture.exportToLoki",
+        "icon": "$(cloud-upload)",
+        "title": "%command.exportToLoki.title%",
+        "enablement": "config.saropaLogCapture.loki.enabled && config.saropaLogCapture.loki.pushUrl != ''"
+      },
+      {
+        "command": "saropaLogCapture.setLokiApiKey",
+        "icon": "$(key)",
+        "title": "%command.setLokiApiKey.title%"
+      },
+      {
         "command": "saropaLogCapture.importSlc",
         "icon": "$(file-directory)",
         "title": "%command.importSlc.title%"
@@ -899,6 +910,16 @@
           "maximum": 100000,
           "type": "number"
         },
+        "saropaLogCapture.loki.enabled": {
+          "default": false,
+          "description": "Enable Export to Loki. When true and pushUrl is set, the 'Export to Loki' command pushes the current log session to Grafana Loki.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.loki.pushUrl": {
+          "default": "",
+          "description": "Loki push API URL (e.g. https://logs-prod-XXX.grafana.net/loki/api/v1/push or http://localhost:3100/loki/api/v1/push). Required when Loki export is enabled.",
+          "type": "string"
+        },
         "saropaLogCapture.redactEnvVars": {
           "default": [],
           "description": "%config.redactEnvVars.description%",
@@ -906,6 +927,33 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "saropaLogCapture.replay.defaultMode": {
+          "default": "timed",
+          "description": "Default replay mode: use actual line timing when available (timed) or fixed short delay (fast).",
+          "enum": ["timed", "fast"],
+          "type": "string"
+        },
+        "saropaLogCapture.replay.defaultSpeed": {
+          "default": 1,
+          "description": "Default replay speed factor (e.g. 1 = 1x, 2 = 2x).",
+          "maximum": 10,
+          "minimum": 0.25,
+          "type": "number"
+        },
+        "saropaLogCapture.replay.minLineDelayMs": {
+          "default": 10,
+          "description": "Minimum delay between lines during replay (ms). Prevents replay from being too fast.",
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.replay.maxDelayMs": {
+          "default": 30000,
+          "description": "Maximum delay between lines during replay (ms). Caps long gaps so replay does not freeze.",
+          "maximum": 300000,
+          "minimum": 1000,
+          "type": "number"
         },
         "saropaLogCapture.showDecorations": {
           "default": true,

@@ -263,6 +263,15 @@ export function getContentStyles(): string {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
+.replay-mode-label { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.replay-mode {
+    font-size: 11px;
+    padding: 1px 4px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+}
 .replay-speed-label { font-size: 11px; color: var(--vscode-descriptionForeground); }
 .replay-speed {
     font-size: 11px;
