@@ -16,6 +16,8 @@ export interface PendingLine {
     readonly lineCount: number;
     readonly category: string;
     readonly timestamp: number;
+    /** Elapsed ms since previous line (e.g. from [+125ms] in file). Used for replay timing. */
+    readonly elapsedMs?: number;
     readonly fw?: boolean;
     readonly sourcePath?: string;
 }
@@ -100,6 +102,15 @@ export function parseTimeToMs(timeStr: string, midnightMs: number): number {
     return midnightMs + (h * 3600000) + (m * 60000) + (s * 1000) + ms;
 }
 
+/** Parse elapsed prefix "+125ms", "+1.5s", "+15s" into ms. Returns undefined if not matched. */
+export function parseElapsedToMs(elapsedStr: string): number | undefined {
+    const m = elapsedStr.match(/^\+(\d+(?:\.\d+)?)(ms|s)$/);
+    if (!m) { return undefined; }
+    const val = parseFloat(m[1]);
+    if (!Number.isFinite(val) || val < 0) { return undefined; }
+    return m[2] === 's' ? Math.round(val * 1000) : Math.round(val);
+}
+
 /**
  * Send parsed file lines to the webview in async batches.
  * Yields 10ms between batches so the webview can process each one without freezing.
@@ -139,7 +150,7 @@ export async function sendFileLines(
 
 /**
  * Parse a raw log file line into a PendingLine for the webview.
- * Detects markers, session boundaries, and extracts timestamps + category.
+ * Detects markers, session boundaries, and extracts timestamps, optional [+Nms] elapsed, and category.
  */
 function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (/^---\s*(MARKER:|MAX LINES)/.test(raw)) {
@@ -149,12 +160,27 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
         return buildMarkerLine(raw);
     }
-    const tsMatch = raw.match(/^\[([\d:.]+)\]\s*\[(\w+)\]\s?(.*)/);
+    // [time] [+elapsed] [category] rest
+    const timeElapsedCat = raw.match(/^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/);
+    if (timeElapsedCat) {
+        const ts = parseTimeToMs(timeElapsedCat[1], ctx.sessionMidnightMs);
+        const elapsed = parseElapsedToMs(timeElapsedCat[2]);
+        return buildFileLine(timeElapsedCat[4], timeElapsedCat[3], ctx.classifyFrame, ts, elapsed);
+    }
+    // [time] [category] rest
+    const tsMatch = raw.match(/^\[([\d:.]+)\]\s*\[([\w-]+)\]\s?(.*)$/);
     if (tsMatch) {
         const ts = parseTimeToMs(tsMatch[1], ctx.sessionMidnightMs);
         return buildFileLine(tsMatch[3], tsMatch[2], ctx.classifyFrame, ts);
     }
-    const catMatch = raw.match(/^\[(\w+)\]\s?(.*)/);
+    // [+elapsed] [category] rest (no absolute time)
+    const elapsedCat = raw.match(/^\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/);
+    if (elapsedCat) {
+        const elapsed = parseElapsedToMs(elapsedCat[1]);
+        return buildFileLine(elapsedCat[3], elapsedCat[2], ctx.classifyFrame, 0, elapsed);
+    }
+    // [category] rest
+    const catMatch = raw.match(/^\[([\w-]+)\]\s?(.*)$/);
     if (catMatch) {
         return buildFileLine(catMatch[2], catMatch[1], ctx.classifyFrame, 0);
     }
@@ -178,6 +204,7 @@ function buildFileLine(
     category: string,
     classifyFrame: (text: string) => boolean | undefined,
     timestamp: number,
+    elapsedMs?: number,
 ): PendingLine {
     return {
         text: linkifyUrls(linkifyHtml(ansiToHtml(text))),
@@ -185,6 +212,7 @@ function buildFileLine(
         lineCount: 0,
         category,
         timestamp,
+        ...(elapsedMs !== undefined && elapsedMs >= 0 ? { elapsedMs } : {}),
         fw: classifyFrame(text),
     };
 }
