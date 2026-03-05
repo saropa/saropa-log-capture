@@ -73,6 +73,10 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
             await viewerProvider.loadFromFile(item.uri);
         }),
+        vscode.commands.registerCommand('saropaLogCapture.replay', async () => {
+            await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+            viewerProvider.startReplay();
+        }),
         vscode.commands.registerCommand('saropaLogCapture.openTailedFile', async () => {
             const folder = vscode.workspace.workspaceFolders?.[0];
             if (!folder) {
