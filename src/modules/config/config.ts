@@ -25,6 +25,7 @@ export type {
   WatchPatternSetting,
   AiActivityConfig,
   SaropaLogCaptureConfig,
+  ReplayConfig,
   IntegrationBuildCiConfig,
   IntegrationGitConfig,
   IntegrationEnvironmentConfig,
@@ -33,6 +34,7 @@ export type {
   IntegrationCrashDumpsConfig,
   IntegrationWindowsEventsConfig,
   IntegrationDockerConfig,
+  IntegrationLokiConfig,
   ProjectIndexSourceConfig,
   ProjectIndexConfig,
 } from "./config-types";
@@ -163,6 +165,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     integrationsAdapters: ensureStringArray(cfg.get("integrations.adapters"), ["packages"]),
     ...getIntegrationConfig(cfg),
     projectIndex: getProjectIndexConfig(cfg),
+    replay: {
+      defaultMode: ensureEnum(cfg.get("replay.defaultMode"), ["timed", "fast"], "timed"),
+      defaultSpeed: clamp(cfg.get("replay.defaultSpeed"), 0.25, 10, 1),
+      minLineDelayMs: clamp(cfg.get("replay.minLineDelayMs"), 0, 1000, 10),
+      maxDelayMs: clamp(cfg.get("replay.maxDelayMs"), 1000, 300000, 30000),
+    },
   };
 }
 
