@@ -140,6 +140,7 @@ export class LogViewerProvider
   }
   setContextLines(count: number): void { this.postMessage({ type: "setContextLines", count }); }
   setContextViewLines(count: number): void { this.postMessage({ type: "setContextViewLines", count }); }
+  setCopyContextLines(count: number): void { this.postMessage({ type: "setCopyContextLines", count }); }
   setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
   setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
   setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
