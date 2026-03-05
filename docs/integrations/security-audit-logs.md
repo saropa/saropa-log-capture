@@ -116,4 +116,4 @@ Some failures are security-related: **authentication** changes, **permission** d
 ## References
 
 - Windows Security log: [Event IDs](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-logon-events)
-- Existing: windows-event-log.md (query, sidecar, levels), application-file-logs (tail, path).
+- Existing: Windows Event Log adapter `windowsEvents` (query, sidecar, levels), application-file-logs (tail, path).
