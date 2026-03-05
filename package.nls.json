@@ -61,6 +61,7 @@
   "config.captureAll.description": "If true, capture all Debug Console output regardless of category. When false, only captures categories listed in 'categories'. Exclusions always apply independently.",
   "config.categories.description": "DAP output categories to capture. Common values: console, stdout, stderr, telemetry.",
   "config.contextViewLines.description": "Number of lines before and after to show in the context view modal.",
+  "config.copyContextLines.description": "Number of log lines before and after the selection to include when using Copy with source (e.g. for stack traces). 0 = selection only.",
   "config.minimapShowInfoMarkers.markdownDescription": "Show **info**-level markers (green) on the scrollbar minimap. When disabled (default), only error, warning, performance, and other higher-severity markers appear. Enable to see a green dot for every info-level line.",
   "config.minimapWidth.description": "Width of the scrollbar minimap: small (40px), medium (60px), or large (90px).",
   "config.deemphasizeFrameworkLevels.markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix.",
