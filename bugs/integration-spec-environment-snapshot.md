@@ -1,8 +1,8 @@
 # Spec: Environment and Config Snapshot Integration
 
 **Adapter id:** `environment`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/environment-snapshot.md](../docs/integrations/environment-snapshot.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/environment-snapshot.ts` and this spec.
 
 ## Goal
 
