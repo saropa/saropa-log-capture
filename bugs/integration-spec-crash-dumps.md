@@ -1,8 +1,8 @@
 # Spec: Crash Dumps Integration
 
 **Adapter id:** `crashDumps`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/crash-dumps.md](../docs/integrations/crash-dumps.md)
+**Status:** Implemented  
+**Design:** Implemented; see provider in `src/modules/integrations/providers/crash-dumps.ts` and this spec.
 
 ## Goal
 
