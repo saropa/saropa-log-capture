@@ -17,6 +17,7 @@ import { renderCrashDetail } from '../analysis/analysis-crash-detail';
 import { aggregateInsights } from '../../modules/misc/cross-session-aggregator';
 import { aggregatePerformance } from '../../modules/misc/perf-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
+import { SessionMetadataStore } from '../../modules/session/session-metadata';
 
 type PostFn = (msg: unknown) => void;
 
@@ -25,29 +26,41 @@ let terminalListener: vscode.Disposable | undefined;
 
 /* ---- Crashlytics handlers ---- */
 
-/** Fetch Crashlytics context and send to webview. */
+/** Fetch Crashlytics context and send to webview. Never throws. */
 export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
-    clearIssueListCache();
-    const raw = await getFirebaseContext([]).catch(() => undefined);
-    const ctx: FirebaseContext = raw ?? { available: false, setupHint: 'Query failed', issues: [] };
-    post({ type: 'crashlyticsData', context: serializeContext(ctx) });
+    try {
+        clearIssueListCache();
+        const raw = await getFirebaseContext([]);
+        const ctx: FirebaseContext = raw ?? { available: false, setupHint: 'Query failed', issues: [] };
+        post({ type: 'crashlyticsData', context: serializeContext(ctx) });
+    } catch {
+        post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', issues: [] }) });
+    }
 }
 
-/** Fetch crash detail for a specific issue and send HTML to webview. */
+/** Fetch crash detail for a specific issue and send HTML to webview. Never throws. */
 export async function handleCrashDetail(issueId: string, post: PostFn): Promise<void> {
-    const multi = await getCrashEvents(issueId).catch(() => undefined);
-    const detail = multi?.events[0];
-    const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
-    post({ type: 'crashDetailReady', issueId, html });
+    try {
+        const multi = await getCrashEvents(issueId);
+        const detail = multi?.events[multi.currentIndex ?? 0];
+        const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
+        post({ type: 'crashDetailReady', issueId, html });
+    } catch {
+        post({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
+    }
 }
 
-/** Close or mute a Crashlytics issue, then refresh. */
+/** Close or mute a Crashlytics issue, then refresh. Never throws. */
 export async function handleCrashlyticsAction(
     issueId: string, state: 'CLOSED' | 'MUTED', post: PostFn,
 ): Promise<void> {
-    const ok = await updateIssueState(issueId, state);
-    if (ok) { await handleCrashlyticsRequest(post); }
-    else { post({ type: 'issueActionFailed', action: state }); }
+    try {
+        const ok = await updateIssueState(issueId, state);
+        if (ok) { await handleCrashlyticsRequest(post); }
+        else { post({ type: 'issueActionFailed', action: state }); }
+    } catch {
+        post({ type: 'issueActionFailed', action: state });
+    }
 }
 
 /** Open a terminal and run gcloud auth; auto-refresh on terminal close. */
@@ -64,31 +77,39 @@ export function handleGcloudAuth(post: PostFn): void {
     });
 }
 
-/** Show file picker for google-services.json and copy to workspace root. */
+/** Show file picker for google-services.json and copy to workspace root. Never throws. */
 export async function handleBrowseGoogleServices(post: PostFn): Promise<void> {
-    const files = await vscode.window.showOpenDialog({
-        canSelectMany: false,
-        filters: { 'JSON': ['json'] },
-        openLabel: 'Select google-services.json',
-    });
-    if (!files || files.length === 0) { return; }
-    const ws = vscode.workspace.workspaceFolders?.[0];
-    if (!ws) { return; }
-    const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
-    await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
-    await handleCrashlyticsRequest(post);
+    try {
+        const files = await vscode.window.showOpenDialog({
+            canSelectMany: false,
+            filters: { 'JSON': ['json'] },
+            openLabel: 'Select google-services.json',
+        });
+        if (!files || files.length === 0) { return; }
+        const ws = vscode.workspace.workspaceFolders?.[0];
+        if (!ws) { return; }
+        const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
+        await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
+        await handleCrashlyticsRequest(post);
+    } catch {
+        // Silently ignore so we never crash the app
+    }
 }
 
-/** Open google-services.json in the workspace (prefers android/app/). Shows progress while resolving. */
+/** Open google-services.json in the workspace (prefers android/app/). Shows progress while resolving. Never throws. */
 export async function handleOpenGoogleServicesJson(): Promise<void> {
-    const uri = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: 'Opening google-services.json…' },
-        () => findBestGoogleServicesJson(),
-    );
-    if (uri) {
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc);
-    } else {
+    try {
+        const uri = await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: 'Opening google-services.json…' },
+            () => findBestGoogleServicesJson(),
+        );
+        if (uri) {
+            const doc = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(doc);
+        } else {
+            await vscode.window.showInformationMessage(vscode.l10n.t('msg.noGoogleServicesJson'));
+        }
+    } catch {
         await vscode.window.showInformationMessage(vscode.l10n.t('msg.noGoogleServicesJson'));
     }
 }
@@ -139,13 +160,25 @@ export async function handleSetErrorStatus(hash: string, status: string, post: P
 
 /* ---- Performance handlers ---- */
 
-/** Aggregate performance fingerprints across sessions and send to webview. */
-export async function handlePerformanceRequest(post: PostFn): Promise<void> {
-    const insights = await aggregatePerformance('all').catch(() => undefined);
+/** Aggregate performance fingerprints and optional session data for current log. */
+export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri): Promise<void> {
+    const [insights, sessionData] = await Promise.all([
+        aggregatePerformance('all').catch(() => undefined),
+        logUri ? (async () => {
+            try {
+                const store = new SessionMetadataStore();
+                const meta = await store.loadMetadata(logUri);
+                return meta.integrations?.performance as Record<string, unknown> | undefined;
+            } catch {
+                return undefined;
+            }
+        })() : Promise.resolve(undefined),
+    ]);
     post({
         type: 'performanceData',
         trends: insights?.trends ?? [],
         sessionCount: insights?.sessionCount ?? 0,
+        sessionData: sessionData ?? undefined,
     });
 }
 

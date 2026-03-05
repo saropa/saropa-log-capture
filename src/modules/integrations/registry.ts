@@ -46,15 +46,32 @@ export class IntegrationRegistry {
         if (i !== -1) { this.providers.splice(i, 1); }
     }
 
-    /** Returns header lines and contributor ids (sync). Call before LogSession.start(). */
+    /** Returns header lines and contributor ids (sync). Call before LogSession.start(). Never throws; provider errors are logged and skipped.
+     * Note: isEnabled may return Promise<boolean> per API; this path treats non-boolean as false (sync only). */
     getHeaderContributions(context: IntegrationContext): { lines: string[]; contributorIds: string[] } {
         const lines: string[] = [];
         const contributorIds: string[] = [];
         for (const p of this.providers) {
-            const enabled = p.isEnabled(context);
-            if (typeof enabled !== 'boolean' || !enabled) { continue; }
-            if (!p.onSessionStartSync) { continue; }
-            const contributions = p.onSessionStartSync(context);
+            let enabled: boolean;
+            try {
+                const result = p.isEnabled(context);
+                enabled = typeof result === 'boolean' ? result : false;
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                context.outputChannel.appendLine(`[${p.id}] isEnabled failed: ${msg}`);
+                continue;
+            }
+            if (!enabled) { continue; }
+            const sync = p.onSessionStartSync;
+            if (!sync) { continue; }
+            let contributions: Contribution[] | undefined;
+            try {
+                contributions = sync(context);
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : String(err);
+                context.outputChannel.appendLine(`[${p.id}] onSessionStartSync failed: ${msg}`);
+                continue;
+            }
             if (!contributions) { continue; }
             let contributed = false;
             for (const c of contributions) {
