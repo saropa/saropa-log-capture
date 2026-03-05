@@ -39,6 +39,8 @@
   "command.exportJson.title": "Export as JSON",
   "command.exportJsonl.title": "Export as JSONL",
   "command.exportSlc.title": "Export as .slc Bundle",
+  "command.exportToLoki.title": "Export to Loki",
+  "command.setLokiApiKey.title": "Saropa Log Capture: Set Loki API Key",
   "command.importSlc.title": "Import .slc Bundle",
   "command.trashSession.title": "Move to Trash",
   "command.restoreSession.title": "Restore from Trash",
