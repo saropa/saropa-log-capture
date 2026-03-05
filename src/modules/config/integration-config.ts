@@ -4,16 +4,25 @@
 
 import * as vscode from 'vscode';
 import type {
-  IntegrationBuildCiConfig,
-  IntegrationGitConfig,
-  IntegrationEnvironmentConfig,
-  IntegrationTestResultsConfig,
-  IntegrationCoverageConfig,
-  IntegrationCrashDumpsConfig,
-  IntegrationWindowsEventsConfig,
-  IntegrationDockerConfig,
-  ProjectIndexConfig,
-  ProjectIndexSourceConfig,
+    IntegrationBuildCiConfig,
+    IntegrationGitConfig,
+    IntegrationEnvironmentConfig,
+    IntegrationTestResultsConfig,
+    IntegrationCoverageConfig,
+    IntegrationCrashDumpsConfig,
+    IntegrationWindowsEventsConfig,
+    IntegrationDockerConfig,
+    IntegrationLokiConfig,
+    IntegrationPerformanceConfig,
+    IntegrationTerminalConfig,
+    IntegrationLinuxLogsConfig,
+    IntegrationExternalLogsConfig,
+    IntegrationSecurityConfig,
+    IntegrationDatabaseConfig,
+    IntegrationHttpConfig,
+    IntegrationBrowserConfig,
+    ProjectIndexConfig,
+    ProjectIndexSourceConfig,
 } from './config';
 import { clamp, ensureBoolean, ensureEnum, ensureStringArray } from './config-validation';
 
@@ -33,6 +42,15 @@ export type IntegrationConfigBlock = {
   integrationsCrashDumps: IntegrationCrashDumpsConfig;
   integrationsWindowsEvents: IntegrationWindowsEventsConfig;
   integrationsDocker: IntegrationDockerConfig;
+  integrationsLoki: IntegrationLokiConfig;
+  integrationsPerformance: IntegrationPerformanceConfig;
+  integrationsTerminal: IntegrationTerminalConfig;
+  integrationsLinuxLogs: IntegrationLinuxLogsConfig;
+  integrationsExternalLogs: IntegrationExternalLogsConfig;
+  integrationsSecurity: IntegrationSecurityConfig;
+  integrationsDatabase: IntegrationDatabaseConfig;
+  integrationsHttp: IntegrationHttpConfig;
+  integrationsBrowser: IntegrationBrowserConfig;
 };
 
 export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): IntegrationConfigBlock {
@@ -47,6 +65,8 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       describeInHeader: ensureBoolean(cfg.get('integrations.git.describeInHeader'), true),
       uncommittedInHeader: ensureBoolean(cfg.get('integrations.git.uncommittedInHeader'), true),
       stashInHeader: ensureBoolean(cfg.get('integrations.git.stashInHeader'), false),
+      blameOnNavigate: ensureBoolean(cfg.get('integrations.git.blameOnNavigate'), true),
+      includeLineHistoryInMeta: ensureBoolean(cfg.get('integrations.git.includeLineHistoryInMeta'), false),
     },
     integrationsEnvironment: {
       includeEnvChecksum: ensureBoolean(cfg.get('integrations.environment.includeEnvChecksum'), false),
@@ -89,6 +109,60 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       containerNamePattern: typeof cfg.get('integrations.docker.containerNamePattern') === 'string' ? (cfg.get('integrations.docker.containerNamePattern') as string) : '',
       captureLogs: ensureBoolean(cfg.get('integrations.docker.captureLogs'), true),
       maxLogLines: clamp(cfg.get('integrations.docker.maxLogLines'), 100, 100000, 20000),
+    },
+    integrationsLoki: {
+      enabled: ensureBoolean(cfg.get('loki.enabled'), false),
+      pushUrl: typeof cfg.get('loki.pushUrl') === 'string' ? (cfg.get('loki.pushUrl') as string).trim() : '',
+    },
+    integrationsPerformance: {
+      snapshotAtStart: ensureBoolean(cfg.get('integrations.performance.snapshotAtStart'), true),
+      sampleDuringSession: ensureBoolean(cfg.get('integrations.performance.sampleDuringSession'), false),
+      sampleIntervalSeconds: clamp(cfg.get('integrations.performance.sampleIntervalSeconds'), 1, 300, 5),
+      includeInHeader: ensureBoolean(cfg.get('integrations.performance.includeInHeader'), true),
+    },
+    integrationsTerminal: {
+      whichTerminals: ensureEnum(cfg.get('integrations.terminal.whichTerminals'), ['all', 'active', 'linked'], 'active'),
+      writeSidecar: ensureBoolean(cfg.get('integrations.terminal.writeSidecar'), true),
+      prefixTimestamp: ensureBoolean(cfg.get('integrations.terminal.prefixTimestamp'), true),
+      maxLines: clamp(cfg.get('integrations.terminal.maxLines'), 1000, 500000, 50000),
+    },
+    integrationsLinuxLogs: {
+      when: ensureEnum(cfg.get('integrations.linuxLogs.when'), ['wsl', 'remote', 'always'], 'wsl'),
+      sources: ensureStringArray(cfg.get('integrations.linuxLogs.sources'), ['dmesg', 'journalctl']),
+      leadMinutes: configNonNegative(cfg, 'integrations.linuxLogs.leadMinutes', 2),
+      lagMinutes: configNonNegative(cfg, 'integrations.linuxLogs.lagMinutes', 5),
+      maxLines: clamp(cfg.get('integrations.linuxLogs.maxLines'), 100, 10000, 1000),
+      wslDistro: typeof cfg.get('integrations.linuxLogs.wslDistro') === 'string' ? (cfg.get('integrations.linuxLogs.wslDistro') as string).trim() : '',
+    },
+    integrationsExternalLogs: {
+      paths: ensureStringArray(cfg.get('integrations.externalLogs.paths'), []),
+      writeSidecars: ensureBoolean(cfg.get('integrations.externalLogs.writeSidecars'), true),
+      prefixLines: ensureBoolean(cfg.get('integrations.externalLogs.prefixLines'), true),
+      maxLinesPerFile: clamp(cfg.get('integrations.externalLogs.maxLinesPerFile'), 100, 1000000, 10000),
+    },
+    integrationsSecurity: {
+      windowsSecurityLog: ensureBoolean(cfg.get('integrations.security.windowsSecurityLog'), false),
+      auditLogPath: typeof cfg.get('integrations.security.auditLogPath') === 'string' ? (cfg.get('integrations.security.auditLogPath') as string).trim() : '',
+      redactSecurityEvents: ensureBoolean(cfg.get('integrations.security.redactSecurityEvents'), true),
+    },
+    integrationsDatabase: {
+      mode: ensureEnum(cfg.get('integrations.database.mode'), ['parse', 'file', 'api'], 'parse'),
+      queryLogPath: typeof cfg.get('integrations.database.queryLogPath') === 'string' ? (cfg.get('integrations.database.queryLogPath') as string).trim() : '',
+      requestIdPattern: typeof cfg.get('integrations.database.requestIdPattern') === 'string' ? (cfg.get('integrations.database.requestIdPattern') as string).trim() : '',
+      timeWindowSeconds: clamp(cfg.get('integrations.database.timeWindowSeconds'), 1, 120, 5),
+      maxQueriesPerLookup: clamp(cfg.get('integrations.database.maxQueriesPerLookup'), 1, 200, 20),
+    },
+    integrationsHttp: {
+      requestIdPattern: typeof cfg.get('integrations.http.requestIdPattern') === 'string' ? (cfg.get('integrations.http.requestIdPattern') as string).trim() : '',
+      requestLogPath: typeof cfg.get('integrations.http.requestLogPath') === 'string' ? (cfg.get('integrations.http.requestLogPath') as string).trim() : '',
+      timeWindowSeconds: clamp(cfg.get('integrations.http.timeWindowSeconds'), 1, 120, 10),
+      maxRequestsPerSession: clamp(cfg.get('integrations.http.maxRequestsPerSession'), 10, 5000, 500),
+    },
+    integrationsBrowser: {
+      mode: ensureEnum(cfg.get('integrations.browser.mode'), ['file', 'cdp'], 'file'),
+      browserLogPath: typeof cfg.get('integrations.browser.browserLogPath') === 'string' ? (cfg.get('integrations.browser.browserLogPath') as string).trim() : '',
+      browserLogFormat: ensureEnum(cfg.get('integrations.browser.browserLogFormat'), ['jsonl', 'json'], 'jsonl'),
+      maxEvents: clamp(cfg.get('integrations.browser.maxEvents'), 100, 100000, 10000),
     },
   };
 }
