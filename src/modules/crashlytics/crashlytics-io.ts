@@ -43,36 +43,44 @@ export async function readCachedEvents(issueId: string): Promise<CrashlyticsIssu
     } catch { return undefined; }
 }
 
-/** Persist crash events to the on-disk cache, creating the directory if needed. */
+/** Persist crash events to the on-disk cache, creating the directory if needed. Never throws. */
 export async function writeCacheEvents(issueId: string, data: CrashlyticsIssueEvents): Promise<void> {
-    const uri = getCacheUri(issueId);
-    if (!uri) { return; }
-    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
-    await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify(data, null, 2)));
+    try {
+        const uri = getCacheUri(issueId);
+        if (!uri) { return; }
+        await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(uri, '..'));
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(JSON.stringify(data, null, 2)));
+    } catch {
+        // Cache write failure is non-fatal; skip silently
+    }
 }
 
-/** One-time migration: move reports/crashlytics/*.json to .saropa/cache/crashlytics/. Call on activation. */
+/** One-time migration: move reports/crashlytics/*.json to .saropa/cache/crashlytics/. Call on activation. Never throws. */
 export async function migrateCrashlyticsCacheToSaropa(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
-    const oldDir = vscode.Uri.joinPath(getLogDirectoryUri(workspaceFolder), 'crashlytics');
-    const newDir = getSaropaCacheCrashlyticsUri(workspaceFolder);
-    let entries: [string, vscode.FileType][];
     try {
-        entries = await vscode.workspace.fs.readDirectory(oldDir);
+        const oldDir = vscode.Uri.joinPath(getLogDirectoryUri(workspaceFolder), 'crashlytics');
+        const newDir = getSaropaCacheCrashlyticsUri(workspaceFolder);
+        let entries: [string, vscode.FileType][];
+        try {
+            entries = await vscode.workspace.fs.readDirectory(oldDir);
+        } catch {
+            return;
+        }
+        const files = entries.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.json'));
+        if (files.length === 0) { return; }
+        await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(newDir, '..'));
+        await vscode.workspace.fs.createDirectory(newDir);
+        for (const [name] of files) {
+            const src = vscode.Uri.joinPath(oldDir, name);
+            const dest = vscode.Uri.joinPath(newDir, name);
+            const raw = await vscode.workspace.fs.readFile(src);
+            await vscode.workspace.fs.writeFile(dest, raw);
+        }
+        for (const [name] of files) {
+            await vscode.workspace.fs.delete(vscode.Uri.joinPath(oldDir, name));
+        }
+        await vscode.workspace.fs.delete(oldDir);
     } catch {
-        return;
+        // Migration failure is non-fatal
     }
-    const files = entries.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.json'));
-    if (files.length === 0) { return; }
-    await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(newDir, '..'));
-    await vscode.workspace.fs.createDirectory(newDir);
-    for (const [name] of files) {
-        const src = vscode.Uri.joinPath(oldDir, name);
-        const dest = vscode.Uri.joinPath(newDir, name);
-        const raw = await vscode.workspace.fs.readFile(src);
-        await vscode.workspace.fs.writeFile(dest, raw);
-    }
-    for (const [name] of files) {
-        await vscode.workspace.fs.delete(vscode.Uri.joinPath(oldDir, name));
-    }
-    await vscode.workspace.fs.delete(oldDir);
 }

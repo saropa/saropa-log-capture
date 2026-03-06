@@ -9,7 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
-## [Unreleased]
+## [3.0.3] - 2026-03-05
+
+## [3.0.2] - 2026-03-05
+
+In this release we add eight new integration adapters (performance, terminal, WSL, security, and more), one-click export to Grafana Loki, session replay with timing, and full support for remote workspaces (SSH, WSL, Dev Containers).
 
 ### Added
 - **Eight new integration adapters.** Performance (system snapshot at session start, optional periodic sampling, Session tab in Performance panel), Terminal output (capture Integrated Terminal to sidecar; requires supported VS Code terminal API), WSL/Linux logs (dmesg and journalctl for WSL or remote Linux), Application/file logs (read last N lines from configured paths at session end), Security/audit (Windows Security channel with optional redaction, app audit file path), Database query logs (file mode: JSONL query log at session end), HTTP/network (request log JSONL at session end), Browser/DevTools (file mode: browser console JSONL/JSON at session end). All opt-in via `saropaLogCapture.integrations.adapters`. Config under `integrations.performance.*`, `integrations.terminal.*`, `integrations.linuxLogs.*`, `integrations.externalLogs.*`, `integrations.security.*`, `integrations.database.*`, `integrations.http.*`, `integrations.browser.*`. See [bugs/integration-specs-index.md](bugs/integration-specs-index.md) and [docs/integrations/TASK_BREAKDOWN_AND_EASE.md](docs/integrations/TASK_BREAKDOWN_AND_EASE.md).
@@ -18,11 +22,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session replay.** Replay a saved log session with optional timing: lines appear in order with delay from per-line timestamps or `[+Nms]` elapsed prefixes (or fixed delay when absent). **Replay** is available from the Project Logs list (right-click a session → Replay) and from the command palette (**Saropa Log Capture: Replay Session**). Replay bar: Play, Pause, Stop; **Timed** (use line deltas) vs **Fast** (fixed short delay); speed (0.5x–5x); scrubber to seek. **Space** toggles play/pause. Settings: `replay.defaultMode`, `replay.defaultSpeed`, `replay.minLineDelayMs`, `replay.maxDelayMs`.
 - **Copy with source: surrounding context lines.** New setting `saropaLogCapture.copyContextLines` (default 3, max 20). When using **Copy with source** from the log viewer context menu, the copied excerpt now includes this many log lines before and after the selection (or the right-clicked line), so stack traces and surrounding errors are included. Set to 0 to copy only the selection. NLS description in package.nls.json.
 
+### Fixed
+- **NLS verification.** Added missing manifest keys to all 10 localized package.nls.*.json (de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw): `command.exportToLoki.title`, `command.setLokiApiKey.title`, and `config.copyContextLines.description`, so `verify-nls` passes and publish can complete.
+
 ### Changed
+- **Publish script: vsce login when PAT missing.** If marketplace PAT verification fails, the script now runs `vsce login saropa` interactively instead of only printing a manual command. Handles both first-time (PAT prompt only) and overwrite (y/N then PAT) flows; user sees a short hint if vsce asks to overwrite. No piped token so prompt order is correct in all cases.
 - **Integration design docs.** Completed integration design documents (package-lockfile, build-ci, git-source-code, environment-snapshot, test-results, code-coverage, crash-dumps, windows-event-log, docker-containers) removed from `docs/integrations/`. Content is covered by: README there (points to Options, provider code, and bugs specs), [bugs/integration-specs-index.md](bugs/integration-specs-index.md) and `integration-spec-*.md`, provider JSDoc in `src/modules/integrations/providers/`, and CHANGELOG entries from when each was added (e.g. 2.0.19). That folder now holds design docs for **planned** integrations only.
 
 ---
 ## [3.0.1] - 2026-03-03
+
+We improved the docs and added ARCHITECTURE.md, made config and JSON parsing safer, and tightened deep links and split rules.
 
 ### Added
 - **System-wide code comments and ARCHITECTURE.md.** Deep comment pass across entry, activation, capture pipeline, config, integrations, handlers, analysis, export, storage, and UI: file-level JSDoc, section comments (`// --- ... ---`), and inline "why" comments. New `ARCHITECTURE.md` describes high-level flow (DAP → tracker → SessionManager → LogSession + Broadcaster), lifecycle, config, and comment conventions.
@@ -35,6 +45,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [3.0.0] - 2026-03-01
+
+In this release we add tail mode for live file watching, .slc session bundle export/import, a configurable viewer line cap, session date filter, copy-as-snippet for GitHub/GitLab, and accessibility improvements, plus a lot of refactoring under the hood.
 
 ### Added
 - **Documentation standards and extension logging.** CONTRIBUTING documents file-level doc headers, JSDoc for public APIs, and inline comment guidelines. Shared extension logger (`extension-logger.ts`) with `setExtensionLogger()` at activation; `logExtensionError`, `logExtensionWarn`, `logExtensionInfo` used in edit/export, rename, deep links, and rebuild index. Cursor rules for documentation and error-handling/testing (`.cursor/rules/`).
@@ -74,6 +86,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.19] - 2026-02-28
 
+We added runtime and manifest localization (11 locales), a project indexer for faster analysis, an integration framework with Packages and eight more adapters (Build/CI, Git, Test results, Crashlytics, etc.), and a reset button in the Options panel.
+
 ### Added
 - **Runtime localization (l10n).** Status bar text, notification messages, and input prompts now use `vscode.l10n.t()` with `l10n/bundle.l10n.json`. Locale-specific bundles (`bundle.l10n.{locale}.json`) provided for de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw (English placeholder values; replace with translations as needed). Manifest localization (package.nls.*) unchanged.
 - **Manifest localization: five additional locales.** Added `package.nls.fr.json`, `package.nls.it.json`, `package.nls.pt-br.json`, `package.nls.ru.json`, and `package.nls.zh-tw.json` so command titles, view names, walkthrough text, and Firebase time-range enums are localized for French, Italian, Portuguese (Brazil), Russian, and Chinese (Traditional). Config setting descriptions remain in English for these locales; translate as needed. All 11 manifest locales now align with the l10n bundle set.
@@ -88,6 +102,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.18] - 2026-02-28
 
+We reorganized the source tree by domain, fixed the Copy All/Line crash, improved the publish script, and fixed run boundaries and separators for Flutter logs.
+
 ### Changed
 - **Src folder reorganization.** `src/modules`, `src/ui`, and `src/test` are grouped into subfolders by domain/responsibility (see 2.0.18 entry). Modules: capture, session, config, crashlytics, bug-report, ai, export, search, source, analysis, git, storage, features, misc. UI: provider, viewer, viewer-styles, viewer-panels, viewer-nav, viewer-search-filter, viewer-context-menu, viewer-decorations, viewer-stack-tags, session, analysis, insights, panels, shared. Tests mirror under `test/modules/` and `test/ui/`.
 
@@ -99,6 +115,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.17] - 2026-02-28
+
+We add a run navigator and visual run separators for logs with multiple runs (e.g. Flutter launch or hot restart), a Reset to default in Options, and a comfortable line height toggle.
 
 ### Added
 - **Run navigator in title bar.** When a log has multiple runs (launch, hot restart/reload), the run navigator (Run 1 of N, Prev/Next) appears in the same bar as the session navigator, separated by a pipe. Hidden when only one run is detected.
@@ -123,6 +141,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [2.0.16] - 2026-02-28
 
+In this release you can jump between runs in a log and copy multiple lines at once; we also moved to central session metadata and fixed CPU spikes, context menu closing, and minimap issues.
+
 ### Added
 - **Run navigation within a log.** When viewing a log file that contains multiple app runs (e.g. Flutter launch, hot restart, hot reload, exit), a "Run 1 of N" bar appears with Prev/Next to jump between runs. Boundaries are detected from lines such as "Launching ... in debug mode", "Connected to the VM Service", "Performing hot restart", "Application finished.", and "Exited (-1)".
 - **Copy Line (context menu) with multi-line selection.** When multiple lines are selected (shift+click) and you right-click a line in that range, "Copy Line" copies all selected lines as full lines. Otherwise it copies only the single line under the cursor.
@@ -143,6 +163,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.15] - 2026-02-27 - 2026-02-27
 
+We split the session panel and styles into smaller modules and started publishing to Open VSX so you can install from Cursor and VSCodium.
+
 ### Changed
 - **Session panel and session styles modularized.** Split `viewer-session-panel.ts` (HTML moved to `viewer-session-panel-html.ts`) and `viewer-styles-session.ts` (styles split into `viewer-styles-session-panel`, `-list`, `-tags-loading`) to comply with the 300-line file limit. No behavior or API changes; callers still import from `viewer-session-panel` and `viewer-styles-session`.
 
@@ -152,6 +174,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.14] - 2026-02-27
+
+We add an option to hide blank lines, let you pick the Project Logs folder, show loading states and animations, surface a changelog excerpt in the About panel, and include Open VSX in the publish pipeline.
 
 ### Added
 - **Hide blank lines option.** Toggle in the flyout context menu (Options) and in the Options panel (Layout). When on, lines that are empty or only whitespace are hidden from the viewport.
@@ -188,6 +212,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.13] - 2026-02-25
 
+We fixed the severity bar and timeline: centering, connectors, and consistent colors in the session list.
+
 ### Fixed
 - **Severity bar centering.** Connector bars between dots were 0.5px off-center (2px bar at left:11 vs 7px dot centered at 12.5px). Widened connectors to 3px so both center at 12.5px.
 - **Unconnected line tails.** Removed the full-height background line (`#viewport::before`) that extended above the first dot and below the last dot. The colored connector segments now provide the timeline without visual overflow.
@@ -196,6 +222,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.12] - 2026-02-24
+
+We add a Performance panel (current session and cross-session trends), group the context menu into submenus, add tooltips across the UI, and modularize more of the codebase.
 
 ### Added
 - **Performance panel.** New sidebar panel (graph-line icon) with two tabs: Current session shows grouped perf events (PERF traces, Choreographer jank, GC, timeouts) with click-to-navigate; Trends tab shows cross-session aggregated table with SVG line chart for tracking operation duration over time.
@@ -234,6 +262,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.11] - 2026-02-22
 
+We focus on performance and stability: config is cached, the file split race is fixed, Find in Files is batched, and the test/dev scripts are updated.
+
 ### Fixed
 - **Session-manager test failing.** Category-filter test patched `getConfig` via `require()` but the import binding in session-manager was already cached. Switched to `refreshConfig()` with direct config objects.
 - **Garbled Unicode in publish script output.** `subprocess.run` defaulted to cp1252 on Windows, corrupting Mocha's ✓/✗ characters. Added explicit `encoding="utf-8"` to the `run()` helper.
@@ -251,6 +281,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.10] - 2026-02-21
 
+We show Claude Code AI activity (tool calls, prompts, warnings) inline in the log viewer and stream it in real time.
+
 ### Added
 - **AI Activity Integration.** Show Claude Code AI activity (tool calls, user prompts, system warnings) interleaved with debug output in the log viewer. When a debug session starts, the extension scans the most recent Claude Code JSONL session file for recent AI activity and streams new entries in real time. AI lines appear with distinct colored left borders and `[AI ...]` prefixes, filterable via the existing category system.
   - New settings under `saropaLogCapture.aiActivity.*`: `enabled`, `autoDetect`, `lookbackMinutes`, `showPrompts`, `showReadOperations`, `showSystemWarnings`
@@ -263,6 +295,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.9] - 2026-02-18
 
+We split a few files into smaller modules to stay under the 300-line limit; behavior is unchanged.
+
 ### Changed
 - **Module splits to stay under 300-line limit.** Extracted cohesive logic into five new files to keep every source file within the ESLint `max-lines` threshold (code lines only, blank lines and comments excluded):
   - `viewer-styles-info.ts` — session info panel CSS, split from `viewer-styles-content.ts`
@@ -273,6 +307,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.8] - 2026-02-18
+
+We added localized manifest files for Chinese, Japanese, Korean, Spanish, and German so the extension works better in more locales.
 
 ### Added
 - **Machine-translated locale files.** Added `package.nls.zh-cn.json`, `package.nls.ja.json`, `package.nls.ko.json`, `package.nls.es.json`, and `package.nls.de.json` with 128 translated keys each, covering all manifest-visible strings. Corrections welcome at language@saropa.com.
@@ -288,6 +324,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.7] - 2026-02-18
 
+We auto-organize legacy logs into date folders, put new sessions in date subfolders, and run NLS verification as part of compile.
+
 ### Added
 - **Auto-organize legacy log files.** New `organizeFolders` setting (on by default) automatically moves flat log files with a `yyyymmdd_` prefix into date-based subfolders on session start. Companion `.meta.json` sidecars are moved alongside their log files.
 - **NLS verification in compile chain.** `npm run compile` now runs `verify-nls` before building, preventing NLS key drift on every build.
@@ -298,12 +336,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.6] - 2026-02-18
 
+We moved all user-visible strings into NLS for localization and added a verify-nls script to catch key drift.
+
 ### Added
 - **Manifest localization support.** Extracted 127 user-visible strings from `package.json` into `package.nls.json` using VS Code's `%key%` reference mechanism. Enables future translation via locale-specific `package.nls.{locale}.json` files.
 - **NLS key alignment verification script.** New `npm run verify-nls` command checks that all `%key%` references in `package.json` have matching entries in every `package.nls*.json` file, reporting missing and orphan keys.
 
 ---
 ## [2.0.5] - 2026-02-16
+
+We show a five-dot severity breakdown in the session list, add a configurable minimap width, surface the Crashlytics cache in the session tree, and move all views to the bottom panel.
 
 ### Added
 - **Full severity dot breakdown in session list.** Each session now shows five colored dot counters: red (errors), yellow (warnings), purple (performance), blue (framework), and green (info). Framework lines are detected via logcat tags and launch boilerplate; info is all remaining lines.
@@ -328,6 +370,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.4] - 2026-02-16
 
+We add an About Saropa sidebar panel with a project list and links, and move the views to the activity bar.
+
 ### Added
 - **About Saropa sidebar panel.** New info panel in the sidebar showing a short blurb about Saropa and clickable links to project websites (Marketplace, GitHub, saropa.com).
 - **Full project catalogue in About panel.** Lists all Saropa projects (Contacts, Log Capture, Claude Guard, saropa_lints, saropa_dart_utils) and a Connect section with GitHub, Medium, Bluesky, and LinkedIn links. Each entry has a badge line (platform, stats) and a description synced with ABOUT_SAROPA.md.
@@ -338,6 +382,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.3] - 2026-02-16
+
+We show detailed errors when Crashlytics setup fails, rewrote the minimap with canvas, and fixed the copy icon and timeline.
 
 ### Added
 - **Crashlytics setup diagnostics.** The Crashlytics panel now shows actual error details when setup fails instead of generic hints. Captures gcloud CLI errors (not found, not logged in, permission denied), HTTP status codes from the Firebase API (401/403/404), and network timeouts. A "Last checked" timestamp shows when the last diagnostic ran. All diagnostic steps are logged to the "Saropa Log Capture" output channel for advanced troubleshooting.
@@ -354,6 +400,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [2.0.2] - 2026-02-15
 
+We fixed the timeline dots, added a Saropa prefix to panel titles, improved the Insights panel and session list, and made historical logs open at the top.
+
 ### Fixed
 - **Timeline dots: stacking and alignment.** The severity dot timeline in the log gutter now renders correctly — dots are single-color (no line bleed-through), always paint above the timeline line, and the whole construct is indented from the left edge.
 - **Panel titles: added "Saropa" prefix.** All webview panels opened in the main VS Code editor now include the "Saropa" prefix for discoverability (e.g. "Saropa Cross-Session Insights", "Saropa Log Timeline").
@@ -367,6 +415,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.1] - 2026-02-10
+
+In this release we add a Reset All Settings command, a Crashlytics setup wizard, filterable crash categories in Insights, and search in the Insights panel.
 
 ### Added
 - **Reset All Settings command:** New "Saropa Log Capture: Reset All Settings to Defaults" command in the command palette resets every extension setting to its default value in one step.
@@ -383,6 +433,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [2.0.0] - 2026-02-10
+
+In this release we add Google Play Vitals, Firebase Crashlytics, ANR analysis, a recurring errors sidebar, a dedicated Trash panel, source scope filter, and a bunch of analysis and bug-report improvements.
 
 <!-- cspell:ignore SIGSEGV -->
 ### Added
@@ -453,6 +505,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [1.2.0] - 2026-02-08
 
+We add a related-lines timeline in the analysis panel, referenced files with blame, GitHub PR/issues context, and progress indicators with timeouts.
+
 ### Added
 - **Related lines:** When analyzing a tagged log line (e.g. HERO-DEBUG), all lines sharing that source tag are shown as a diagnostic timeline with clickable line navigation and source file references.
 - **Referenced files:** Source files referenced across related lines are analyzed with git blame, annotations, and recent change detection — providing multi-file context instead of single-file analysis.
@@ -465,6 +519,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [1.1.3] - 2026-02-08
+
+We add a dedicated Filters panel and tag search, show session metadata in Project Logs, and retire the Session History tree in favor of the webview panel.
 
 ### Added
 - **Filters panel:** Moved all filter controls (Quick Filters, Output Channels, Log Tags, Class Tags, Noise Reduction) from the Options panel into a dedicated Filters panel with its own icon bar button. Options panel now contains only Display, Layout, Audio, and Actions.
@@ -480,6 +536,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [1.1.2] - 2026-02-08
+
+We add a Class Tags filter, a session context menu (rename, tag, export, trash), a Trash section in Project Logs, and search in the options panel.
 
 ### Added
 - **Class Tags filter:** Detects PascalCase class names (e.g. `AppBadgeService.load()`, `_EventBadgeWrapperState._loadBadgeCount`) in log lines and stack traces. Classes appearing 2+ times show as filterable chips in a new "Class Tags" section of the filters panel, with toggle, solo, all/none controls matching the existing Log Tags UX.
@@ -506,6 +564,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [1.1.1] - 2026-02-08
 
+We restored the Session History panel (it was accidentally hidden) and added a Trash button to the Log Viewer toolbar.
+
 ### Fixed
 - **Session History panel hidden:** Removed `"when": "false"` that permanently hid the Session History tree view, preventing access to trash, tag filtering, and session management.
 
@@ -517,6 +577,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [1.1.0] - 2026-02-08
+
+We add level text colors and a toggle, clickable inline tag links with solo-filter, sub-tag detection for logcat, and keyword-scope highlight rules.
 
 ### Fixed
 - **Level text coloring lost when decorations enabled:** Line text coloring (error=red, warning=gold, etc.) was suppressed whenever decorations were on (the default). Decoupled text colors from the decoration toggle so both work together.
@@ -534,8 +596,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [1.0.1] - 2026-02-08
 
+Patch release with minor fixes and alignment.
+
 ---
 ## [1.0.0] - 2026-02-07
+
+We call this 1.0: subfolder scanning, session trash (retention uses trash instead of delete), bug report and minimap fixes, affected files in reports, and a lot of UX improvements.
 
 ### Fixed
 - **Bug report preview rendering:** Code blocks were broken in the preview panel because the inline code regex consumed backticks from triple-backtick fences. Fixed by processing code blocks before inline code and restricting inline code to single lines.
@@ -565,6 +631,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.3.1] - 2026-02-07
+
+We add a session navigation bar, correlation tags and error fingerprints, Cross-Session Insights, Generate Bug Report, and logcat-aware level classification.
 
 ### Added
 - **Session navigation bar:** When viewing a historical log file, a "Session N of M" navigation bar appears with Previous/Next buttons to step through sessions by modification time. Hides during live capture, re-appears on session end. Follows the split-nav breadcrumb pattern and handles split file groups as single units.
@@ -597,6 +665,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.9] - 2026-02-05
 
+We add strict/loose level detection, double-click to solo a level, a hover copy icon on lines, and fix sidebar state, scroll jumps, and search behavior.
+
 ### Improved
 - **Context lines visual separation:** When level filtering shows context lines around matches, the first context line in each group now displays a subtle dashed separator. Context lines no longer show level coloring, tint, or severity bars — they appear uniformly dimmed to clearly distinguish them from matched lines.
 
@@ -621,6 +691,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.8] - 2026-02-03
 
+We add a bookmark count badge and instant bookmark add, and fix minimap and context menu positioning.
+
 ### Added
 - **Bookmark count badge:** The bookmarks icon in the icon bar now displays a count badge showing the total number of bookmarks. Hidden when count is zero, caps at "99+".
 
@@ -638,6 +710,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.7] - 2026-02-03
 
+We fixed the Find in Files icon, moved Bookmarks into the icon bar panel, and made Pop Out available only from the title bar.
+
 ### Fixed
 - **Find in Files icon missing:** Replaced invalid `codicon-search-view` (not in codicons 0.0.44) with `codicon-list-filter` so the icon bar button renders correctly.
 
@@ -648,6 +722,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.2.6] - 2026-02-03
+
+We add configurable file types, Find in Files across logs, a Bookmarks panel, a context lines slider, and a bunch of viewer fixes.
 
 ### Added
 - **Configurable file types (`saropaLogCapture.fileTypes`):** The session history, search, file retention, delete, and comparison features now recognize configurable file extensions beyond `.log`. Default: `.log`, `.txt`, `.md`, `.csv`, `.json`, `.jsonl`, `.html`. Drop a `.txt` or `.md` into the reports directory and it appears in the session list. The setting is an array of dot-prefixed extensions; reload the window after changes.
@@ -674,6 +750,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.2.5] - 2026-02-02
+
+We add a right-click context menu, Go to Line (Ctrl+G), keyboard and scroll font zoom, and search/match persistence.
 
 ### Added
 - **Right-click context menu:** Custom context menu on log lines with Copy (line text), Search Codebase, Search Past Sessions, Open Source File, Show Context, Pin Line, Add Note, Add to Watch List, and Add to Exclusions. Global actions (Copy selection, Select All) appear regardless of click target. Line-specific items auto-hide when right-clicking empty space.
@@ -717,6 +795,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.4] - 2026-02-02
 
+We aligned the search UI with VS Code (icons, history arrows) and removed the clear button.
+
 ### Changed
 - **Search toggles match VS Code:** Match Case, Match Whole Word, and Use Regular Expression buttons now use codicon icons (`codicon-case-sensitive`, `codicon-whole-word`, `codicon-regex`) positioned inline inside the search input, matching VS Code's native search layout. Active state uses VS Code's `--vscode-inputOption-*` theme variables.
 - **Search history arrow navigation:** Up/Down arrow keys in the search input cycle through recent search terms, matching VS Code and terminal conventions. Clickable history list below the input is retained.
@@ -726,6 +806,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.2.3] - 2026-02-02
+
+We fixed stats not resetting on file load, redesigned the level flyup, and made the filter badge open the level flyup.
 
 ### Fixed
 - **Stats counters not resetting on file load:** Level counts (e.g., "125 info") accumulated across sessions because the stats script only listened for 'reset' messages, not 'clear'. Now resets on both, fixing phantom counts that misled users about current file content.
@@ -739,6 +821,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.2.2] - 2026-02-02
+
+We add a pop-out viewer, session display options (Dates, Tidy, Days, Sort), source location and elapsed time in logs, and fix CSP/codicon issues.
 
 ### Fixed
 - **Line prefix sub-options misplaced:** Decoration sub-options (severity dot, counter, timestamp, etc.) appeared below the minimap checkbox instead of under their parent "Line prefix" checkbox. Moved to correct position and changed from show/hide to always-visible with disabled styling when line prefix is off.
@@ -764,6 +848,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.2.1] - 2026-02-02
 
+We fixed icons in dark mode, the search panel toggle, the minimap disappearing on scroll, and split the status bar into pause and count.
+
 ### Fixed
 - **Icon bar icons invisible in dark mode:** The Content Security Policy blocked the codicon font from loading (`default-src 'none'` with no `font-src`). Now passes `webview.cspSource` to the CSP so VS Code can inject its icon font.
 - **Search mode toggle resets search text and breaks filter/clear:** Clicking any button inside the search panel (mode toggle, regex, case, clear) could trigger the document-level click-outside handler, closing the panel and clearing state. Toggle buttons were especially affected because `textContent` assignment detaches the original click target text node, making `contains()` fail. Fixed by stopping event propagation at the search bar boundary so internal clicks never reach the outside-click handler.
@@ -780,6 +866,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 ## [0.2.0] - 2026-02-02
+
+We add an icon bar with Session History and Options panels, simplify the footer, and add historical file timestamps and the level flyup.
 
 ### Added
 - **Icon bar:** VS Code activity-bar-style vertical icon bar on the right edge of the log viewer with icons for Session History, Search, and Options. Clicking an icon toggles its slide-out panel with mutual exclusion (only one panel open at a time). Uses codicon icons with an active indicator bar matching VS Code's activity bar pattern.
@@ -817,6 +905,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.1.15]
 
+We fixed scroll flickering and layout thrashing and narrowed transition scope for smoother rendering.
+
 ### Fixed
 - **Scroll flickering from ResizeObserver loop:** The `ResizeObserver` on `#log-content` called `renderViewport(true)` unconditionally, bypassing the visible-range bail-out check. Every DOM replacement triggered another resize observation, creating a feedback loop. Now RAF-debounced and uses `renderViewport(false)` so no-op re-renders are skipped.
 - **Layout thrashing in scroll handler:** `jumpBtn.style.display` write was sandwiched between DOM reads and `renderViewport`'s internal reads, forcing a synchronous reflow on every scroll frame. Moved the write after all reads complete.
@@ -825,10 +915,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.1.14]
 
-- Dev build
+Development build.
 
 ---
 ## [0.1.13]
+
+We slimmed the footer, added a filter badge, reorganized the options panel (Quick Filters, Output Channels, Log Tags, etc.), added a scrollbar minimap option, and fixed mouse wheel scroll.
 
 ### Changed
 - **Footer UI consolidation:** Slimmed footer to just: line count, level circles, filter badge, search button, and options button. Removed 7 toggle buttons (wrap, exclusions, app-only, decorations, audio, minimap, export) that are now in the options panel.
@@ -859,10 +951,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.1.12]  - 2026-02-01
 
-- Dev Build
+Development build.
 
 ---
 ## [0.1.11]  - 2026-02-01
+
+We added a close button to the source preview, fixed the decoration counter, added a session info modal, fixed viewer scroll and minimap performance, and made search a slide-out panel.
 
 ### Fixed
 - **Source preview popup not dismissible:** The hover preview over stack trace source links had no close affordance — it only auto-hid when the mouse moved away. Added a close button (×), Escape key, and click-outside dismissal.
@@ -888,6 +982,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.1.10]  - 2026-02-01
 
+*Regex and export fixes; script fault isolation and global error handler for webview stability.*
+
 ### Fixed
 - **Viewer blank due to regex SyntaxError:** An invalid character class range in `isSeparatorLine` (`[=\\-+...]` produced range `\` to `+` with start > end) caused a SyntaxError that killed the entire webview script block. Fixed by moving `-` to end of character class.
 - **Double-escaped regexes in viewer scripts:** `extractContext` in data helpers and decoration-stripping regexes in the export script used `\\\\s`/`\\\\d` which produced literal `\s`/`\d` instead of whitespace/digit classes. Fixed to single-escaped.
@@ -902,10 +998,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [0.1.9]  - 2026-02-01
 
-- Development build
+Development build.
 
 ---
 ## [0.1.8] - 2026-02-01
+
+We fixed the options panel not responding to clicks, duplicate elements, missing escapeHtml, the audio path, and the split breadcrumb part number.
 
 ### Fixed
 - **Options panel button unresponsive:** The slide-out options panel used `right: -25%` to hide off-screen, but with `min-width: 280px` it remained partially visible in narrow sidebar viewports (z-index 250), silently intercepting clicks on footer buttons including the options toggle. Changed to `right: -100%` with `pointer-events: none` when closed.
@@ -921,11 +1019,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.1.6] - 2026-01-31
 
+We classify errors as CRITICAL, TRANSIENT, or BUG and let you filter or break on criticals.
+
 <!-- cspell:ignore ECONNREFUSED -->
 ### Added
 - **Smart Error Classification:** Automatically classifies error log lines into three categories: 🔥 CRITICAL (NullPointerException, AssertionError, FATAL, etc.), ⚡ TRANSIENT (TimeoutException, SocketException, ECONNREFUSED, etc.), and 🐛 BUG (TypeError, ReferenceError, SyntaxError, etc.). Visual badges appear inline before the log message. Two new settings: `saropaLogCapture.suppressTransientErrors` (default: false) hides expected transient errors via filtering, and `saropaLogCapture.breakOnCritical` (default: false) triggers VS Code notifications when critical errors appear. Helps quickly identify severe issues vs. expected network hiccups.
 
 ## [0.1.5] - 2026-01-31
+
+*Stack trace preview mode, milliseconds in timestamps, audio volume and rate limiting, inline tag parsing, session info header, repeat notifications, and layout/export options.*
 
 ### Added
 - **Stack Trace Preview Mode:** Stack traces now show first 3 non-framework frames by default (collapsible preview mode) instead of completely collapsed. Click the header to cycle through: preview → fully expanded → fully collapsed → preview. Framework frames are filtered out in preview mode. Toggle indicator shows ▷ (preview), ▼ (expanded), or ▶ (collapsed).
@@ -952,6 +1054,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.1.4] - 2026-01-31
 
+We add error breakpoints (visual and audio alerts), search case/word toggles, live stats, an edit-line modal, a scrollbar minimap, and a bunch of viewer improvements.
+
 ### Added
 - **Error Breakpoints:** Configurable visual and audio alerts when errors appear in logs. Features: flash red border around viewer, play alert sound, increment error counter badge (clickable to clear), and optional modal popup. Toggle on/off via footer button. Detects errors via `stderr` category or error keywords (`error`, `exception`, `failed`, `fatal`, `panic`, `critical`). Only triggers once per batch to avoid spam.
 - **Search Enhancements:** Added case sensitivity toggle (Aa/AA) and whole word match toggle (\b) to search bar. Both buttons show bold text when active and work in combination with existing regex mode toggle.
@@ -975,6 +1079,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Session State Tracking:** Extension now tracks debug session active/inactive state and currently displayed file URI. Viewer receives `sessionState` messages to enable intelligent warnings and safe file editing.
 
 ## [0.1.3] - 2026-01-31
+
+We add a source tag filter, full Debug Console capture, line decorations, level filter, inline peek, historical log viewing, and move the panel to the bottom.
 
 ### Refactored
 - **File Size Compliance:** Split 12 TypeScript files that exceeded the 300-line limit into 29 files (12 original + 17 new extraction files). All source files now comply with the project's hard limit. No functional changes — behavior, API surface, and build output are identical.
@@ -1007,7 +1113,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [0.1.0] - 2026-01-28
 
-First public release on the VS Code Marketplace.
+First public release: auto-capture, live viewer, session history, export, filtering, and the rest of the basics.
 
 ### Core Features
 
@@ -1067,4 +1173,4 @@ First public release on the VS Code Marketplace.
 
 ## [0.0.1]
 
-- Initial scaffold via `yo code`
+Initial project scaffold.
