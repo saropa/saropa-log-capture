@@ -279,6 +279,41 @@ def _changelog_has_unpublished_heading() -> bool:
     return False
 
 
+# First release heading: ## [x.y.z] or ## [x.y.z] - date (so we know where to insert [Unreleased])
+_FIRST_RELEASE_HEADING_RE = re.compile(r'^##\s*\[\d+\.\d+\.\d+\]', re.MULTILINE)
+
+
+def _ensure_unreleased_section() -> bool:
+    """If CHANGELOG has no ## [Unreleased], insert it before the first ## [x.y.z] section.
+
+    Keeps Keep a Changelog convention; the stamp step will replace it with [version] - date.
+    Returns True if the file now has an unreleased heading (added or already present).
+    """
+    if _changelog_has_unpublished_heading():
+        return True
+    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            content = f.read()
+    except OSError:
+        fail("Could not read CHANGELOG.md")
+        return False
+    match = _FIRST_RELEASE_HEADING_RE.search(content)
+    if not match:
+        fail("CHANGELOG.md has no ## [Unreleased] and no ## [x.y.z] release heading.")
+        return False
+    insert = "## [Unreleased]\n\n"
+    new_content = content[: match.start()] + insert + content[match.start() :]
+    try:
+        with open(changelog_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
+    except OSError:
+        fail("Could not write CHANGELOG.md")
+        return False
+    fix("Added ## [Unreleased] to CHANGELOG.md")
+    return True
+
+
 def has_unreleased_section() -> bool:
     """Check if CHANGELOG.md has an ## [Unreleased] section.
 
@@ -454,9 +489,8 @@ def validate_version_changelog() -> tuple[str, bool]:
                 return pkg_version, True
 
     if not has_unreleased_section():
-        fail("No '## [Unreleased]' (or [Unpublished]/[Undefined]) section in CHANGELOG.md")
-        info("Add a section: ## [Unreleased]")
-        return pkg_version, False
+        if not _ensure_unreleased_section():
+            return pkg_version, False
 
     version, tag_ok = _ensure_untagged_version(pkg_version)
     if not tag_ok:
