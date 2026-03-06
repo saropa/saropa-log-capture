@@ -13,6 +13,7 @@
   "cSpell.words": [
     "clippy",
     "colorama",
+    "debuggee",
     "Dedup",
     "Deduplicator",
     "Deutsch",
@@ -23,6 +24,7 @@
     "flyup",
     "grayscale",
     "jank",
+    "journalctl",
     "linecap",
     "linejoin",
     "linkify",

@@ -20,6 +20,7 @@ function getIntegrationLabels(): Record<string, string> {
         security: vscode.l10n.t('integration.security'),
         coverage: vscode.l10n.t('integration.coverage'),
         environment: vscode.l10n.t('integration.environment'),
+        crashlytics: vscode.l10n.t('integration.crashlytics'),
     };
 }
 
