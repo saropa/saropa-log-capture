@@ -8,6 +8,7 @@ so the user gets a clear message about what to install.
 
 import shutil
 import subprocess
+import sys
 
 from modules.constants import C, PROJECT_ROOT
 from modules.display import fail, info, ok, warn
@@ -90,11 +91,13 @@ def check_gh_cli() -> bool:
 
 
 def check_vsce_auth() -> bool:
-    """Verify vsce has valid marketplace credentials for 'saropa'.
+    """Verify vsce has valid marketplace credentials for publisher 'saropa'.
 
     Only called when --analyze-only is NOT set, since credentials are
     only needed for the actual marketplace publish in Step 13.
-    Uses `vsce verify-pat` which validates the PAT without publishing.
+    Uses `vsce verify-pat` to validate without publishing. If verification
+    fails, runs `vsce login saropa` interactively so the user can enter or
+    overwrite the PAT (handles both first-time and overwrite prompts).
     """
     info("Checking marketplace credentials...")
     result = run(
@@ -114,8 +117,31 @@ def check_vsce_auth() -> bool:
         info("Publish may fail if credentials are missing.")
         return True
 
+    # Run vsce login interactively: works for both first-time (PAT only) and
+    # overwrite (y/N then PAT) without guessing prompt order via piped input.
+    info("Marketplace needs a login token (PAT). Same token whether you use VS Code or Cursor — it can expire.")
+    info(f"  Get one: {C.WHITE}https://marketplace.visualstudio.com/manage{C.RESET} → your publisher → Create token. Copy it, then paste here when vsce asks.")
+    info("Running vsce login for publisher 'saropa'...")
+    info("  If it asks to 'overwrite' — type y, then paste the token when asked.")
+    login_result = subprocess.run(
+        ["npx", "@vscode/vsce", "login", "saropa"],
+        cwd=PROJECT_ROOT,
+        shell=(sys.platform == "win32"),
+    )
+    if login_result.returncode != 0:
+        fail("vsce login failed or was cancelled.")
+        return False
+    # Re-verify after login
+    result = run(
+        ["npx", "@vscode/vsce", "verify-pat", "saropa"],
+        cwd=PROJECT_ROOT,
+        check=False,
+    )
+    if result.returncode == 0:
+        ok("Marketplace PAT verified for 'saropa'")
+        return True
     fail("No valid marketplace PAT found for publisher 'saropa'.")
-    info(f"  Run: {C.YELLOW}npx @vscode/vsce login saropa{C.RESET}")
+    info(f"  Run manually if needed: {C.YELLOW}npx @vscode/vsce login saropa{C.RESET}")
     return False
 
 

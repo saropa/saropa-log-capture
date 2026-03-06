@@ -293,6 +293,9 @@ async function handleSessionAction(
     case 'exportSlc':
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportSlc', item); }
       break;
+    case 'exportToLoki':
+      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportToLoki', item); }
+      break;
     case 'copyDeepLink':
       if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyDeepLink', item); }
       break;

@@ -167,6 +167,26 @@ export function getPerformancePanelStyles(): string {
 .pp-chart-axis { stroke: var(--vscode-panel-border); stroke-width: 1; }
 .pp-chart-label { fill: var(--vscode-descriptionForeground); font-size: 9px; }
 
+/* --- Session tab (snapshot, samples, profiler) --- */
+.pp-session-view { padding: 8px 12px; }
+.pp-session-block {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.pp-session-block:last-child { border-bottom: none; margin-bottom: 0; }
+.pp-session-title {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--vscode-foreground);
+}
+.pp-session-value {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.4;
+}
+
 /* --- Empty / loading --- */
 .pp-empty {
     padding: 16px 12px;

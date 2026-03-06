@@ -140,6 +140,24 @@ export function getOptionsStyles(): string {
     background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
 }
 
+/* Integration rows: checkbox + label on first line, description on second line */
+.options-row-integration {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.options-row-integration .options-integration-label {
+    flex: 0 0 auto;
+}
+.options-row-integration .options-integration-desc {
+    flex: 1 1 100%;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.9;
+    margin-left: 24px;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
 .options-indent {
     margin-left: 20px;
     padding-left: 12px;

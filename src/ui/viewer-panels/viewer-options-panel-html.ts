@@ -13,19 +13,20 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
 
-/** Build the Integrations section HTML (checkboxes per adapter). */
+/** Build the Integrations section HTML (checkboxes per adapter with descriptions). */
 function getIntegrationsSectionHtml(): string {
     const rows = INTEGRATION_ADAPTERS.map(
-        (a) => `<label class="options-row" title="${escapeHtml(a.description)}">
+        (a) => `<label class="options-row options-row-integration" title="${escapeHtml(a.description)}">
                 <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
-                <span>${escapeHtml(a.label)}</span>
+                <span class="options-integration-label">${escapeHtml(a.label)}</span>
+                <span class="options-integration-desc">${escapeHtml(a.description)}</span>
             </label>`,
     ).join('\n            ');
     return `
         <!-- Integrations Section -->
         <div class="options-section" id="integrations-section">
             <h3 class="options-section-title">Integrations</h3>
-            <p class="options-hint">Which adapters run for each debug session (header/meta/sidecar).</p>
+            <p class="options-hint">Choose what to attach to each session. Session adapters add context to the log header or meta; Crashlytics shows the production-issues sidebar. Each option below describes what it does.</p>
             ${rows}
         </div>`;
 }

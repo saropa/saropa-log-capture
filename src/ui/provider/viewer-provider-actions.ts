@@ -7,6 +7,8 @@ import * as vscode from "vscode";
 import { resolveSourceUri } from "../../modules/source/source-resolver";
 import { TreeItem, isSplitGroup } from "../session/session-history-grouping";
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "../session/session-display";
+import { getConfig } from "../../modules/config/config";
+import { getGitBlame } from "../../modules/git/git-blame";
 
 /** Convert tree items to a flat session list for the webview panel. */
 export function buildSessionListPayload(
@@ -32,7 +34,7 @@ export function buildSessionListPayload(
     );
 }
 
-/** Open a source file at a specific line, optionally in a split editor. */
+/** Open a source file at a specific line, optionally in a split editor. If Git integration is enabled with blameOnNavigate, shows blame (last commit, author) in the status bar. */
 export async function openSourceFile(
     filePath: string,
     line: number,
@@ -51,6 +53,18 @@ export async function openSourceFile(
     } catch {
         // File may not exist on disk — ignore silently.
     }
+    const config = getConfig();
+    if (
+        config.integrationsAdapters?.includes('git') &&
+        config.integrationsGit.blameOnNavigate &&
+        line >= 1
+    ) {
+        getGitBlame(uri, line).then((blame) => {
+            if (!blame) { return; }
+            const msg = `Git: ${blame.author} · ${blame.date} · ${blame.hash} ${blame.message}`;
+            vscode.window.setStatusBarMessage(msg, 8_000);
+        }).catch(() => {});
+    }
 }
 
 /** Copy a source file path to clipboard (relative or full). */
@@ -63,4 +77,58 @@ export function copySourcePath(filePath: string, mode: string): void {
     const isAbsolute = /^([/\\]|[a-zA-Z]:)/.test(filePath);
     const text = isAbsolute ? vscode.workspace.asRelativePath(filePath, false) : filePath.replace(/^package:[^/]+\//, '');
     vscode.env.clipboard.writeText(text);
+}
+
+/** Source reference from the viewer (path and line from a source-link). */
+export interface CopySourceRef {
+    path: string;
+    line: number;
+}
+
+/** Build log excerpt plus source file names and line content for clipboard. Never throws. */
+export async function buildCopyWithSource(logText: string, sourceRefs: CopySourceRef[]): Promise<string> {
+    const lines: string[] = [];
+    const trimmed = typeof logText === 'string' ? logText.trim() : '';
+    if (trimmed) {
+        lines.push('Log excerpt:');
+        lines.push('');
+        lines.push(trimmed);
+        lines.push('');
+    }
+    if (Array.isArray(sourceRefs) && sourceRefs.length > 0) {
+        const seen = new Set<string>();
+        for (const ref of sourceRefs) {
+            const path = typeof ref.path === 'string' ? ref.path.trim() : '';
+            const lineNum = Math.max(1, Math.floor(Number(ref.line)) || 1);
+            if (!path) { continue; }
+            const key = `${path}:${lineNum}`;
+            if (seen.has(key)) { continue; }
+            seen.add(key);
+            const uri = resolveSourceUri(path);
+            if (!uri) {
+                lines.push(`Source: ${path}:${lineNum}`);
+                lines.push('  (file not resolved)');
+                lines.push('');
+                continue;
+            }
+            try {
+                const doc = await vscode.workspace.openTextDocument(uri);
+                const displayPath = vscode.workspace.asRelativePath(uri, false);
+                const start = Math.max(0, lineNum - 1 - 2);
+                const end = Math.min(doc.lineCount - 1, lineNum - 1 + 2);
+                lines.push(`Source: ${displayPath}:${lineNum}`);
+                for (let i = start; i <= end; i++) {
+                    const num = i + 1;
+                    const prefix = num === lineNum ? '  > ' : '    ';
+                    lines.push(prefix + `${num}| ${doc.lineAt(i).text}`);
+                }
+                lines.push('');
+            } catch {
+                lines.push(`Source: ${path}:${lineNum}`);
+                lines.push('  (could not read file)');
+                lines.push('');
+            }
+        }
+    }
+    return lines.join('\n').trim() || trimmed;
 }

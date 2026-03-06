@@ -27,23 +27,33 @@ function getTimeRange(): string {
     return cfg.get<string>('timeRange', 'LAST_7_DAYS');
 }
 
+/** Never throws; returns [] on any failure. */
 export async function queryTopIssues(config: FirebaseConfig, token: string, errorTokens: readonly string[]): Promise<CrashlyticsIssue[]> {
-    if (cachedIssueRows && Date.now() < cachedIssueRows.expires) {
+    try {
+        if (cachedIssueRows && Date.now() < cachedIssueRows.expires) {
+            return matchIssues(cachedIssueRows.rows, errorTokens);
+        }
+        if (!config?.projectId || !config?.appId || typeof token !== 'string') { return []; }
+        const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/reports/topIssues:query`;
+        const filters: Record<string, unknown> = { issueErrorTypes: ['FATAL', 'NON_FATAL'] };
+        try {
+            const ver = await detectAppVersion();
+            if (ver) { filters.versions = [ver]; }
+        } catch {
+            // Proceed without version filter
+        }
+        const body = JSON.stringify({
+            issueFilters: filters,
+            pageSize: 20,
+            eventTimePeriod: getTimeRange(),
+        });
+        const data = await fetchJson(url, token, body);
+        if (!data?.rows || !Array.isArray(data.rows)) { return []; }
+        cachedIssueRows = { rows: data.rows as Record<string, unknown>[], expires: Date.now() + issueListTtl };
         return matchIssues(cachedIssueRows.rows, errorTokens);
+    } catch {
+        return [];
     }
-    const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/reports/topIssues:query`;
-    const filters: Record<string, unknown> = { issueErrorTypes: ['FATAL', 'NON_FATAL'] };
-    const ver = await detectAppVersion();
-    if (ver) { filters.versions = [ver]; }
-    const body = JSON.stringify({
-        issueFilters: filters,
-        pageSize: 20,
-        eventTimePeriod: getTimeRange(),
-    });
-    const data = await fetchJson(url, token, body);
-    if (!data?.rows || !Array.isArray(data.rows)) { return []; }
-    cachedIssueRows = { rows: data.rows as Record<string, unknown>[], expires: Date.now() + issueListTtl };
-    return matchIssues(cachedIssueRows.rows, errorTokens);
 }
 
 function parseIssueState(raw: unknown): CrashlyticsIssue['state'] {
@@ -82,11 +92,16 @@ function matchIssues(rows: Record<string, unknown>[], errorTokens: readonly stri
     return results.slice(0, 5);
 }
 
-/** Update a Crashlytics issue state (close or mute). Returns true on success. */
+/** Update a Crashlytics issue state (close or mute). Returns true on success. Never throws. */
 export async function updateIssueState(config: FirebaseConfig, token: string, issueId: string, state: 'CLOSED' | 'MUTED'): Promise<boolean> {
-    const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/issues/${issueId}?updateMask=state`;
-    const result = await fetchJson(url, token, JSON.stringify({ state }), 'PATCH');
-    return result !== undefined;
+    try {
+        if (!config?.projectId || !config?.appId || !issueId) { return false; }
+        const url = `${apiBase}/projects/${config.projectId}/apps/${config.appId}/issues/${encodeURIComponent(issueId)}?updateMask=state`;
+        const result = await fetchJson(url, token, JSON.stringify({ state }), 'PATCH');
+        return result !== undefined;
+    } catch {
+        return false;
+    }
 }
 
 function fetchJson(url: string, token: string, body?: string, method?: string): Promise<Record<string, unknown> | undefined> {

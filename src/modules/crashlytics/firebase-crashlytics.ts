@@ -114,44 +114,56 @@ export function clearIssueListCache(): void {
 /** Install page for the Google Cloud CLI (gcloud), required for Crashlytics API access. */
 export const gcloudInstallUrl = 'https://docs.cloud.google.com/sdk/docs/install-sdk';
 
-/** Query Firebase Crashlytics for issues matching error tokens. */
+/** Query Firebase Crashlytics for issues matching error tokens. Never throws; returns a safe context on any failure. */
 export async function getFirebaseContext(errorTokens: readonly string[]): Promise<FirebaseContext> {
+    const safeEmpty = (setupStep: FirebaseContext['setupStep'], setupHint: string): FirebaseContext =>
+        ({ available: false, setupStep, setupHint, issues: [], diagnostics: lastDiagnostic });
     lastDiagnostic = undefined;
-    if (!await isGcloudAvailable()) {
-        return { available: false, setupStep: 'gcloud', setupHint: `Install Google Cloud CLI from ${gcloudInstallUrl}`, issues: [], diagnostics: lastDiagnostic };
-    }
-    const token = await getAccessToken();
-    if (!token) {
-        return { available: false, setupStep: 'token', setupHint: 'Run: gcloud auth application-default login', issues: [], diagnostics: lastDiagnostic };
-    }
-    const config = await detectFirebaseConfig();
-    if (!config) {
-        return { available: false, setupStep: 'config', setupHint: firebaseConfigSetupHint, issues: [], diagnostics: lastDiagnostic };
-    }
-    const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
     try {
-        const issues = await queryTopIssues(config, token, errorTokens);
-        logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
-        // When API succeeds but returns no issues, attach any diagnostic from fetchJson (e.g. HTTP 403)
-        const diag = issues.length === 0 ? (lastDiagnostic ?? getLastApiDiagnostic()) : undefined;
-        return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag };
+        if (!(await isGcloudAvailable())) {
+            return safeEmpty('gcloud', `Install Google Cloud CLI from ${gcloudInstallUrl}`);
+        }
+        const token = await getAccessToken();
+        if (!token) {
+            return safeEmpty('token', 'Run: gcloud auth application-default login');
+        }
+        const config = await detectFirebaseConfig();
+        if (!config) {
+            return safeEmpty('config', firebaseConfigSetupHint);
+        }
+        const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
+        try {
+            const issues = await queryTopIssues(config, token, errorTokens);
+            logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
+            const diag = issues.length === 0 ? (lastDiagnostic ?? getLastApiDiagnostic()) : undefined;
+            return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag };
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            logCrashlytics('error', `Issue query failed: ${msg}`);
+            if (!lastDiagnostic) {
+                lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
+            }
+            return { available: true, issues: [], consoleUrl, queriedAt: Date.now(), diagnostics: lastDiagnostic };
+        }
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logCrashlytics('error', `Issue query failed: ${msg}`);
-        if (!lastDiagnostic) {
-            lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
-        }
-        return { available: true, issues: [], consoleUrl, queriedAt: Date.now(), diagnostics: lastDiagnostic };
+        logCrashlytics('error', `getFirebaseContext failed: ${msg}`);
+        lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
+        return { available: false, setupStep: 'gcloud', setupHint: 'Unexpected error; check Output for Saropa Crashlytics', issues: [], diagnostics: lastDiagnostic };
     }
 }
 
-/** Update a Crashlytics issue state (close or mute). Returns true on success. */
+/** Update a Crashlytics issue state (close or mute). Returns true on success. Never throws. */
 export async function updateIssueState(issueId: string, state: 'CLOSED' | 'MUTED'): Promise<boolean> {
-    const token = await getAccessToken();
-    if (!token) { return false; }
-    const config = await detectFirebaseConfig();
-    if (!config) { return false; }
-    return apiUpdateIssueState(config, token, issueId, state);
+    try {
+        const token = await getAccessToken();
+        if (!token) { return false; }
+        const config = await detectFirebaseConfig();
+        if (!config) { return false; }
+        return await apiUpdateIssueState(config, token, issueId, state);
+    } catch {
+        return false;
+    }
 }
 
 /** Fetch crash events for a specific issue, returning multi-event structure with pagination. */
@@ -160,11 +172,15 @@ export async function getCrashEventDetail(issueId: string): Promise<CrashlyticsE
     return multi?.events[multi.currentIndex];
 }
 
-/** Fetch multiple crash events for an issue (cached). */
+/** Fetch multiple crash events for an issue (cached). Never throws. */
 export async function getCrashEvents(issueId: string): Promise<CrashlyticsIssueEvents | undefined> {
-    const token = await getAccessToken();
-    if (!token) { return undefined; }
-    const config = await detectFirebaseConfig();
-    if (!config) { return undefined; }
-    return apiGetCrashEvents(token, config, issueId);
+    try {
+        const token = await getAccessToken();
+        if (!token) { return undefined; }
+        const config = await detectFirebaseConfig();
+        if (!config) { return undefined; }
+        return await apiGetCrashEvents(token, config, issueId);
+    } catch {
+        return undefined;
+    }
 }

@@ -26,6 +26,7 @@
   "integration.security": "Security",
   "integration.coverage": "Coverage",
   "integration.environment": "Environment",
+  "integration.crashlytics": "Crashlytics",
   "msg.noActiveSessionToSplit": "No active debug session to split.",
   "msg.logFileSplit": "Log file split. Now on part {0}.",
   "msg.deleteFileConfirm": "Delete {0}?",
@@ -122,5 +123,13 @@
   "title.importSlc": "Import .slc session bundle(s)",
   "progress.exportSlc": "Exporting .slc bundle…",
   "progress.importSlc": "Importing .slc bundle(s)…",
+  "progress.exportLoki": "Pushing to Loki…",
+  "msg.lokiPushed": "Session pushed to Loki.",
+  "msg.lokiNotConfigured": "Enable Loki export in settings and set the Loki push URL.",
+  "msg.lokiPushFailed": "Loki push failed: {0}",
+  "msg.lokiApiKeyStored": "Loki API key stored. You can now use Export to Loki.",
+  "msg.lokiApiKeyEmpty": "No key entered. Use this command again to store your Loki API key.",
+  "prompt.lokiApiKey": "Loki API key (Bearer token). Stored in Secret Storage.",
+  "prompt.lokiApiKeyPlaceholder": "Paste your Grafana Cloud or Loki API key",
   "msg.noAnalyzableTokens": "No analyzable tokens found in this line."
 }
