@@ -112,6 +112,14 @@ body[data-icon-bar="right"] .ib-badge {
     margin: 4px 0;
 }
 
+/* Crashlytics icon hidden until integrations.adapters includes "crashlytics". */
+#ib-crashlytics {
+    display: none;
+}
+#ib-crashlytics.ib-integration-enabled {
+    display: flex;
+}
+
 body[data-icon-bar="right"] #panel-slot > * {
     border-right: none;
     border-left: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
