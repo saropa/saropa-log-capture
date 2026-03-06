@@ -26,6 +26,7 @@
   "integration.security": "Security",
   "integration.coverage": "Coverage",
   "integration.environment": "Environment",
+  "integration.crashlytics": "Crashlytics",
   "msg.noActiveSessionToSplit": "No active debug session to split.",
   "msg.logFileSplit": "Log file split. Now on part {0}.",
   "msg.deleteFileConfirm": "Delete {0}?",
@@ -111,5 +112,13 @@
   "saveLabel.exportLogs": "Export Logs",
   "filter.textFiles": "Text Files",
   "filter.allFiles": "All Files",
+  "progress.exportLoki": "Envoi vers Loki…",
+  "msg.lokiPushed": "Session envoyée vers Loki.",
+  "msg.lokiNotConfigured": "Activez l’export Loki dans les paramètres et définissez l’URL de push Loki.",
+  "msg.lokiPushFailed": "Échec de l’envoi vers Loki : {0}",
+  "msg.lokiApiKeyStored": "Clé API Loki enregistrée. Vous pouvez utiliser Exporter vers Loki.",
+  "msg.lokiApiKeyEmpty": "Aucune clé saisie. Utilisez à nouveau cette commande pour enregistrer votre clé API Loki.",
+  "prompt.lokiApiKey": "Clé API Loki (jeton Bearer). Enregistrée dans le stockage sécurisé.",
+  "prompt.lokiApiKeyPlaceholder": "Collez votre clé API Grafana Cloud ou Loki",
   "msg.noAnalyzableTokens": "No analyzable tokens found in this line."
 }

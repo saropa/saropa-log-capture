@@ -26,6 +26,9 @@ export function getContextMenuHtml(): string {
     <div class="context-menu-item" data-action="copy-as-snippet">
         <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
     </div>
+    <div class="context-menu-item" data-action="copy-with-source">
+        <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
+    </div>
     <div class="context-menu-item" data-action="select-all">
         <span class="codicon codicon-list-flat"></span> Select All
     </div>

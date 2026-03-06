@@ -1,14 +1,16 @@
-/** Export-related commands (HTML, CSV, JSON, SLC). */
+/** Export-related commands (HTML, CSV, JSON, SLC, Loki). */
 
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
+import { getConfig } from './modules/config/config';
 import { exportToHtml } from './modules/export/html-export';
 import { exportToInteractiveHtml } from './modules/export/html-export-interactive';
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export/export-formats';
 import { exportSessionToSlc, importSlcBundle } from './modules/export/slc-bundle';
+import { exportToLoki as doExportToLoki, setLokiBearerToken } from './modules/export/loki-export';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { viewerProvider, historyProvider } = deps;
+    const { context, viewerProvider, historyProvider } = deps;
     return [
         htmlExportCmd('exportHtml', exportToHtml),
         htmlExportCmd('exportHtmlInteractive', exportToInteractiveHtml),
@@ -56,6 +58,48 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                 await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
                 await viewerProvider.loadFromFile(lastResult.mainLogUri);
             }
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.exportToLoki',
+            async (item: { uri: vscode.Uri } | undefined) => {
+                const config = getConfig();
+                const loki = config.integrationsLoki;
+                if (!loki.enabled || !loki.pushUrl.trim()) {
+                    void vscode.window.showWarningMessage(
+                        vscode.l10n.t('msg.lokiNotConfigured', 'Enable Loki export in settings and set the Loki push URL.'),
+                    );
+                    return;
+                }
+                const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
+                if (!uri) {
+                    void vscode.window.showWarningMessage(vscode.l10n.t('msg.openLogFirst', 'Open a log file first.'));
+                    return;
+                }
+                const result = await vscode.window.withProgress(
+                    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.exportLoki', 'Pushing to Loki…') },
+                    () => doExportToLoki(uri, loki, context, historyProvider.getMetaStore()),
+                );
+                if (result.success) {
+                    void vscode.window.showInformationMessage(vscode.l10n.t('msg.lokiPushed', 'Session pushed to Loki.'));
+                } else {
+                    void vscode.window.showErrorMessage(
+                        vscode.l10n.t('msg.lokiPushFailed', 'Loki push failed: {0}', result.errorMessage ?? 'Unknown error'),
+                    );
+                }
+            }),
+        vscode.commands.registerCommand('saropaLogCapture.setLokiApiKey', async () => {
+            const token = await vscode.window.showInputBox({
+                prompt: vscode.l10n.t('prompt.lokiApiKey', 'Loki API key (Bearer token). Stored in Secret Storage.'),
+                password: true,
+                placeHolder: vscode.l10n.t('prompt.lokiApiKeyPlaceholder', 'Paste your Grafana Cloud or Loki API key'),
+            });
+            if (token === undefined) { return; }
+            const trimmed = token.trim();
+            if (!trimmed) {
+                void vscode.window.showWarningMessage(vscode.l10n.t('msg.lokiApiKeyEmpty', 'No key entered. Use this command again to store your Loki API key.'));
+                return;
+            }
+            await setLokiBearerToken(context, trimmed);
+            void vscode.window.showInformationMessage(vscode.l10n.t('msg.lokiApiKeyStored', 'Loki API key stored. You can now use Export to Loki.'));
         }),
     ];
 }
