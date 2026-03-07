@@ -12,8 +12,8 @@ export function getCrashlyticsPanelStyles(): string {
    Crashlytics Panel — slide-out
    =================================================================== */
 .crashlytics-panel {
+    width: 100%;
     min-width: 280px;
-    max-width: 420px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
