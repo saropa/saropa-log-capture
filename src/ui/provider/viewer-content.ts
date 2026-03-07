@@ -167,8 +167,9 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <div id="spacer-top"></div>
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
-        <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">⬇ Bottom</button>
     </div>
+    <button id="jump-top-btn" title="Scroll to top" aria-label="Scroll to top">&#x2B06; Top</button>
+    <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">&#x2B07; Bottom</button>
     <div id="copy-float" class="codicon codicon-copy" title="Copy line" role="button" aria-label="Copy line"></div>
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}

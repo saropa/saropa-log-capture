@@ -11,8 +11,8 @@ export function getAboutPanelStyles(): string {
    About Panel — slide-out (same pattern as trash/bookmark panels)
    =================================================================== */
 .about-panel {
+    width: 100%;
     min-width: 280px;
-    max-width: 420px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
@@ -40,12 +40,16 @@ export function getAboutPanelStyles(): string {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
 }
 
-.about-panel-close:hover { color: var(--vscode-errorForeground, #f44); }
+.about-panel-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 .about-panel-content {
     flex: 1;
@@ -59,10 +63,10 @@ export function getAboutPanelStyles(): string {
 .ab-version-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .ab-version-label { font-size: 1.1em; font-weight: 700; }
 .ab-version-badge { font-size: 0.9em; font-weight: 500; color: var(--vscode-descriptionForeground); }
-.ab-changelog { margin-bottom: 8px; max-height: 220px; overflow-y: auto; font-size: 10px; line-height: 1.35; }
+.ab-changelog { margin-bottom: 8px; overflow-y: auto; font-size: 10px; line-height: 1.35; }
 .ab-changelog-pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: inherit; }
 .ab-changelog-loading { opacity: 0.6; }
-.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: 11px; margin-bottom: 12px; }
+.ab-changelog-link { display: inline-block; color: var(--vscode-textLink-foreground); font-size: 11px; margin-bottom: 4px; }
 .ab-changelog-link:hover { text-decoration: underline; }
 .ab-tagline { font-weight: 600; font-style: italic; opacity: 0.9; margin: 0 0 6px 0; font-size: 0.95em; }
 .ab-blurb { opacity: 0.8; margin: 0 0 16px 0; font-size: 0.9em; }

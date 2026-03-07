@@ -13,8 +13,9 @@ function toggleSearchMode() {
     searchFilterMode = !searchFilterMode;
     if (searchModeToggleEl) {
         searchModeToggleEl.textContent = searchFilterMode ? 'Mode: Filter' : 'Mode: Highlight';
+        searchModeToggleEl.classList.toggle('active', searchFilterMode);
     }
-    updateSearch();
+    if (searchInputEl.value) updateSearch();
 }
 
 function toggleRegexMode() {

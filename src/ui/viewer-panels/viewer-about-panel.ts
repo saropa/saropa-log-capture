@@ -11,7 +11,7 @@ export function getAboutPanelHtml(): string {
 <div id="about-panel" class="about-panel">
     <div class="about-panel-header">
         <span>About Saropa</span>
-        <button id="about-panel-close" class="about-panel-close" title="Close">&times;</button>
+        <button id="about-panel-close" class="about-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
     </div>
     <div class="about-panel-content">
         <div class="ab-version-row">
@@ -21,8 +21,8 @@ export function getAboutPanelHtml(): string {
         <p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
         <p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
         <div class="ab-section">Recent changes</div>
-        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">Loading…</span></div>
         <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="https://marketplace.visualstudio.com/items/Saropa.saropa-log-capture/changelog">Full changelog on Marketplace</a>
+        <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">Loading…</span></div>
         <div class="ab-section">Projects</div>
         ${getProjectLinksHtml()}
         <div class="ab-section">Connect</div>
@@ -50,6 +50,8 @@ export function getAboutPanelScript(): string {
         if (!aboutPanelEl) return;
         aboutPanelEl.classList.remove('visible');
         aboutPanelOpen = false;
+        var cl = document.getElementById('about-changelog');
+        if (cl) cl.innerHTML = '<span class="ab-changelog-loading">Loading\\u2026</span>';
         if (typeof clearActivePanel === 'function') clearActivePanel('about');
     };
 
