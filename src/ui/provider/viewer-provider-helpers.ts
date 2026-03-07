@@ -6,6 +6,7 @@
  */
 
 import * as vscode from "vscode";
+import { t } from "../../l10n";
 import { findHeaderEnd } from "../viewer/viewer-file-loader";
 import { isFrameworkFrame, isFrameworkLogLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
 import { stripAnsi } from "../../modules/capture/ansi";
@@ -29,18 +30,18 @@ export async function handleEditLine(
 	input: EditLineInput,
 ): Promise<void> {
 	if (!currentFileUri) {
-		vscode.window.showWarningMessage(vscode.l10n.t('msg.noLogFileLoaded'));
+		vscode.window.showWarningMessage(t('msg.noLogFileLoaded'));
 		return;
 	}
 
 	if (isSessionActive) {
 		const choice = await vscode.window.showWarningMessage(
-			vscode.l10n.t('msg.debugSessionActiveEdit'),
+			t('msg.debugSessionActiveEdit'),
 			{ modal: true },
-			vscode.l10n.t('action.editAnyway'),
-			vscode.l10n.t('action.cancel'),
+			t('action.editAnyway'),
+			t('action.cancel'),
 		);
-		if (choice !== vscode.l10n.t('action.editAnyway')) { return; }
+		if (choice !== t('action.editAnyway')) { return; }
 	}
 
 	try {
@@ -51,14 +52,14 @@ export async function handleEditLine(
 		const targetIndex = dataStartIndex + input.lineIndex;
 
 		if (targetIndex < dataStartIndex || targetIndex >= lines.length) {
-			vscode.window.showErrorMessage(vscode.l10n.t('msg.lineIndexOutOfRange', String(input.lineIndex)));
+			vscode.window.showErrorMessage(t('msg.lineIndexOutOfRange', String(input.lineIndex)));
 			return;
 		}
 
 		lines[targetIndex] = input.newText;
 		const newContent = lines.join('\n');
 		await vscode.workspace.fs.writeFile(currentFileUri, Buffer.from(newContent, 'utf-8'));
-		vscode.window.showInformationMessage(vscode.l10n.t('msg.lineUpdatedSuccess', String(input.lineIndex + 1)));
+		vscode.window.showInformationMessage(t('msg.lineUpdatedSuccess', String(input.lineIndex + 1)));
 		await input.loadFromFile(currentFileUri);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
@@ -79,10 +80,10 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 	const uri = await vscode.window.showSaveDialog({
 		defaultUri,
 		filters: {
-			[vscode.l10n.t('filter.textFiles')]: ['txt', 'log'],
-			[vscode.l10n.t('filter.allFiles')]: ['*'],
+			[t('filter.textFiles')]: ['txt', 'log'],
+			[t('filter.allFiles')]: ['*'],
 		},
-		saveLabel: vscode.l10n.t('saveLabel.exportLogs'),
+		saveLabel: t('saveLabel.exportLogs'),
 	});
 
 	if (!uri) {
@@ -101,7 +102,7 @@ export async function handleExportLogs(text: string, options: Record<string, unk
 		const levelStr = levels.length > 0 ? ` (${levels.join(', ')})` : '';
 
 		vscode.window.showInformationMessage(
-			vscode.l10n.t('msg.exportedLinesTo', String(lineCount), lineCount === 1 ? '' : 's', levelStr, uri.fsPath),
+			t('msg.exportedLinesTo', String(lineCount), lineCount === 1 ? '' : 's', levelStr, uri.fsPath),
 		);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);

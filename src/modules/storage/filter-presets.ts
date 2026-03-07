@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 
 /**
  * A saved filter preset configuration.
@@ -142,7 +143,7 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
     const presets = loadPresets();
 
     if (presets.length === 0) {
-        vscode.window.showInformationMessage(vscode.l10n.t('msg.noFilterPresets'));
+        vscode.window.showInformationMessage(t('msg.noFilterPresets'));
         return undefined;
     }
 
@@ -153,7 +154,7 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
     }));
 
     const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: vscode.l10n.t('prompt.selectPreset'),
+        placeHolder: t('prompt.selectPreset'),
         title: 'Filter Presets',
     });
 
@@ -193,8 +194,8 @@ export async function promptSavePreset(currentFilters: {
     exclusionsEnabled?: boolean;
 }): Promise<FilterPreset | undefined> {
     const name = await vscode.window.showInputBox({
-prompt: vscode.l10n.t('prompt.presetName'),
-                placeHolder: vscode.l10n.t('prompt.presetPlaceholder'),
+prompt: t('prompt.presetName'),
+                placeHolder: t('prompt.presetPlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return 'Preset name cannot be empty';
@@ -213,7 +214,7 @@ prompt: vscode.l10n.t('prompt.presetName'),
     };
 
     await savePreset(preset);
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.filterPresetSaved', preset.name));
+    vscode.window.showInformationMessage(t('msg.filterPresetSaved', preset.name));
 
     return preset;
 }

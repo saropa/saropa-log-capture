@@ -4,6 +4,7 @@
  * Invoked by exportSlc command and session panel "Export as SLC".
  */
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import JSZip from 'jszip';
 import { getLogDirectoryUri } from '../config/config';
 import { SessionMetadataStore } from '../session/session-metadata';
@@ -68,8 +69,8 @@ export async function exportSessionToSlc(logUri: vscode.Uri): Promise<vscode.Uri
     const defaultName = mainName.replace(/\.log$/i, '') + '.slc';
     const picked = await vscode.window.showSaveDialog({
         defaultUri: vscode.Uri.joinPath(logUri, '..', defaultName),
-        filters: { [vscode.l10n.t('filter.slcBundles')]: ['slc'] },
-        saveLabel: vscode.l10n.t('action.saveSlcBundle'),
+        filters: { [t('filter.slcBundles')]: ['slc'] },
+        saveLabel: t('action.saveSlcBundle'),
     });
     if (!picked) { return undefined; }
     let targetUri = picked;
@@ -108,13 +109,13 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
         raw = await vscode.workspace.fs.readFile(slcUri);
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportReadFailed', msg));
+        vscode.window.showErrorMessage(t('msg.slcImportReadFailed', msg));
         return undefined;
     }
     const zip = await JSZip.loadAsync(raw);
     const manifestFile = zip.file(MANIFEST_FILENAME);
     if (!manifestFile) {
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportNoManifest'));
+        vscode.window.showErrorMessage(t('msg.slcImportNoManifest'));
         return undefined;
     }
     const manifestJson = await manifestFile.async('string');
@@ -122,16 +123,16 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
     try {
         manifest = JSON.parse(manifestJson) as SlcManifest;
     } catch {
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportInvalidManifest'));
+        vscode.window.showErrorMessage(t('msg.slcImportInvalidManifest'));
         return undefined;
     }
     if (!isSlcManifestValid(manifest)) {
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportInvalidManifest'));
+        vscode.window.showErrorMessage(t('msg.slcImportInvalidManifest'));
         return undefined;
     }
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportNoWorkspace'));
+        vscode.window.showErrorMessage(t('msg.slcImportNoWorkspace'));
         return undefined;
     }
     const logDir = getLogDirectoryUri(folder);
@@ -146,7 +147,7 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
     const mainLogUri = vscode.Uri.joinPath(logDir, mainFileName);
     const mainEntry = zip.file(manifest.mainLog);
     if (!mainEntry) {
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.slcImportMissingLog', manifest.mainLog));
+        vscode.window.showErrorMessage(t('msg.slcImportMissingLog', manifest.mainLog));
         return undefined;
     }
     const mainData = await mainEntry.async('nodebuffer');
