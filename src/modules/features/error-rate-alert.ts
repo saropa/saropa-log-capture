@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 
 /** Configuration for error rate alerting. */
 export interface ErrorRateConfig {
@@ -108,10 +109,10 @@ export class ErrorRateAlert {
         } else {
             // Default: show VS Code warning
             vscode.window.showWarningMessage(
-                vscode.l10n.t('msg.highErrorRate', String(rate), String(windowSec)),
-                vscode.l10n.t('action.openLog'),
+                t('msg.highErrorRate', String(rate), String(windowSec)),
+                t('action.openLog'),
             ).then((selection) => {
-                if (selection === vscode.l10n.t('action.openLog')) {
+                if (selection === t('action.openLog')) {
                     vscode.commands.executeCommand('saropaLogCapture.open');
                 }
             });

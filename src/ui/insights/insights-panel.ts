@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { aggregateInsights, type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../../modules/misc/cross-session-aggregator';
@@ -53,7 +54,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     if (msg.type === 'openFile') {
         const uri = await findInWorkspace(String(msg.filename));
         if (uri) { await vscode.window.showTextDocument(uri); }
-        else { vscode.window.showWarningMessage(vscode.l10n.t('msg.sourceFileNotFound', String(msg.filename ?? ''))); }
+        else { vscode.window.showWarningMessage(t('msg.sourceFileNotFound', String(msg.filename ?? ''))); }
     } else if (msg.type === 'drillDownError') {
         await handleDrillDown(String(msg.hash ?? ''), String(msg.normalized ?? ''));
     } else if (msg.type === 'openMatch') {

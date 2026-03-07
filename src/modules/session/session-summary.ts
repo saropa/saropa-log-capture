@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 
 /** Statistics collected during a debug session. */
 export interface SessionStats {
@@ -144,9 +145,9 @@ export function showSummaryNotification(summary: SessionSummary): void {
 
     vscode.window.showInformationMessage(
         message,
-        vscode.l10n.t('action.openLog'),
+        t('action.openLog'),
     ).then((selection) => {
-        if (selection === vscode.l10n.t('action.openLog')) {
+        if (selection === t('action.openLog')) {
             vscode.commands.executeCommand('saropaLogCapture.open');
         }
     });

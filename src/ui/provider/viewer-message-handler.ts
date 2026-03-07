@@ -5,6 +5,7 @@
  */
 
 import * as vscode from "vscode";
+import { t } from "../../l10n";
 import * as helpers from "./viewer-provider-helpers";
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
@@ -138,11 +139,11 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
           lineIndex: safeLineIndex(msg.lineIndex, 0), newText: String(msg.newText ?? ""),
           timestamp: Number(msg.timestamp ?? 0), loadFromFile: ctx.load,
-        }).catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedEditLine', err.message)); });
+        }).catch((err: Error) => { vscode.window.showErrorMessage(t('msg.failedEditLine', err.message)); });
         break;
       case "exportLogs":
         helpers.handleExportLogs(String(msg.text ?? ""), (msg.options as Record<string, unknown>) ?? {})
-          .catch((err: Error) => { vscode.window.showErrorMessage(vscode.l10n.t('msg.failedExportLogs', err.message)); });
+          .catch((err: Error) => { vscode.window.showErrorMessage(t('msg.failedExportLogs', err.message)); });
         break;
       case "saveLevelFilters":
         helpers.saveLevelFilters(ctx.context, String(msg.filename ?? ""), (msg.levels as string[]) ?? []);
@@ -178,8 +179,8 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "setSessionDisplayOptions": ctx.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "promptGoToLine":
         vscode.window.showInputBox({
-            prompt: vscode.l10n.t('prompt.goToLine'),
-            validateInput: (v) => /^\d+$/.test(v) ? null : vscode.l10n.t('prompt.goToLineValidate'),
+            prompt: t('prompt.goToLine'),
+            validateInput: (v) => /^\d+$/.test(v) ? null : t('prompt.goToLineValidate'),
           })
           .then((v) => { if (v) { ctx.post({ type: "scrollToLine", line: parseInt(v, 10) }); } });
         break;

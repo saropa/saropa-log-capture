@@ -1,6 +1,7 @@
 /** Export-related commands (HTML, CSV, JSON, SLC, Loki). */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { getConfig } from './modules/config/config';
 import { exportToHtml } from './modules/export/html-export';
@@ -21,31 +22,31 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
             async (item: { uri: vscode.Uri } | undefined) => {
                 const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
                 if (!uri) {
-                    void vscode.window.showWarningMessage(vscode.l10n.t('msg.openLogFirst', 'Open a log file first.'));
+                    void vscode.window.showWarningMessage(t('msg.openLogFirst'));
                     return;
                 }
                 const outUri = await vscode.window.withProgress(
-                    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.exportSlc') },
+                    { location: vscode.ProgressLocation.Notification, title: t('progress.exportSlc') },
                     () => exportSessionToSlc(uri),
                 );
                 if (outUri) {
                     const action = await vscode.window.showInformationMessage(
-                        vscode.l10n.t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
-                        vscode.l10n.t('action.open'),
+                        t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
+                        t('action.open'),
                     );
-                    if (action === vscode.l10n.t('action.open')) { await vscode.window.showTextDocument(outUri); }
+                    if (action === t('action.open')) { await vscode.window.showTextDocument(outUri); }
                 }
             }),
         vscode.commands.registerCommand('saropaLogCapture.importSlc', async () => {
             const uris = await vscode.window.showOpenDialog({
-                filters: { [vscode.l10n.t('filter.slcBundles')]: ['slc'] },
+                filters: { [t('filter.slcBundles')]: ['slc'] },
                 canSelectMany: true,
-                title: vscode.l10n.t('title.importSlc', 'Import .slc session bundle(s)'),
+                title: t('title.importSlc'),
             });
             if (!uris?.length) { return; }
             let lastResult: { mainLogUri: vscode.Uri } | undefined;
             await vscode.window.withProgress(
-                { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.importSlc') },
+                { location: vscode.ProgressLocation.Notification, title: t('progress.importSlc') },
                 async () => {
                     for (const uri of uris) {
                         const result = await importSlcBundle(uri);
@@ -64,42 +65,40 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                 const config = getConfig();
                 const loki = config.integrationsLoki;
                 if (!loki.enabled || !loki.pushUrl.trim()) {
-                    void vscode.window.showWarningMessage(
-                        vscode.l10n.t('msg.lokiNotConfigured', 'Enable Loki export in settings and set the Loki push URL.'),
-                    );
+                    void vscode.window.showWarningMessage(t('msg.lokiNotConfigured'));
                     return;
                 }
                 const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
                 if (!uri) {
-                    void vscode.window.showWarningMessage(vscode.l10n.t('msg.openLogFirst', 'Open a log file first.'));
+                    void vscode.window.showWarningMessage(t('msg.openLogFirst'));
                     return;
                 }
                 const result = await vscode.window.withProgress(
-                    { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('progress.exportLoki', 'Pushing to Loki…') },
+                    { location: vscode.ProgressLocation.Notification, title: t('progress.exportLoki') },
                     () => doExportToLoki(uri, loki, context, historyProvider.getMetaStore()),
                 );
                 if (result.success) {
-                    void vscode.window.showInformationMessage(vscode.l10n.t('msg.lokiPushed', 'Session pushed to Loki.'));
+                    void vscode.window.showInformationMessage(t('msg.lokiPushed'));
                 } else {
                     void vscode.window.showErrorMessage(
-                        vscode.l10n.t('msg.lokiPushFailed', 'Loki push failed: {0}', result.errorMessage ?? 'Unknown error'),
+                        t('msg.lokiPushFailed', result.errorMessage ?? 'Unknown error'),
                     );
                 }
             }),
         vscode.commands.registerCommand('saropaLogCapture.setLokiApiKey', async () => {
             const token = await vscode.window.showInputBox({
-                prompt: vscode.l10n.t('prompt.lokiApiKey', 'Loki API key (Bearer token). Stored in Secret Storage.'),
+                prompt: t('prompt.lokiApiKey'),
                 password: true,
-                placeHolder: vscode.l10n.t('prompt.lokiApiKeyPlaceholder', 'Paste your Grafana Cloud or Loki API key'),
+                placeHolder: t('prompt.lokiApiKeyPlaceholder'),
             });
             if (token === undefined) { return; }
             const trimmed = token.trim();
             if (!trimmed) {
-                void vscode.window.showWarningMessage(vscode.l10n.t('msg.lokiApiKeyEmpty', 'No key entered. Use this command again to store your Loki API key.'));
+                void vscode.window.showWarningMessage(t('msg.lokiApiKeyEmpty'));
                 return;
             }
             await setLokiBearerToken(context, trimmed);
-            void vscode.window.showInformationMessage(vscode.l10n.t('msg.lokiApiKeyStored', 'Loki API key stored. You can now use Export to Loki.'));
+            void vscode.window.showInformationMessage(t('msg.lokiApiKeyStored'));
         }),
     ];
 }
@@ -124,9 +123,9 @@ function fileExportCmd(
         if (!item?.uri) { return; }
         const outUri = await fn(item.uri);
         const action = await vscode.window.showInformationMessage(
-            vscode.l10n.t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
-            vscode.l10n.t('action.open'),
+            t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
+            t('action.open'),
         );
-        if (action === vscode.l10n.t('action.open')) { await vscode.window.showTextDocument(outUri); }
+        if (action === t('action.open')) { await vscode.window.showTextDocument(outUri); }
     });
 }

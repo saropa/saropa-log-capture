@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
 import {
     getFirebaseContext, getCrashEvents, updateIssueState,
@@ -107,10 +108,10 @@ export async function handleOpenGoogleServicesJson(): Promise<void> {
             const doc = await vscode.workspace.openTextDocument(uri);
             await vscode.window.showTextDocument(doc);
         } else {
-            await vscode.window.showInformationMessage(vscode.l10n.t('msg.noGoogleServicesJson'));
+            await vscode.window.showInformationMessage(t('msg.noGoogleServicesJson'));
         }
     } catch {
-        await vscode.window.showInformationMessage(vscode.l10n.t('msg.noGoogleServicesJson'));
+        await vscode.window.showInformationMessage(t('msg.noGoogleServicesJson'));
     }
 }
 

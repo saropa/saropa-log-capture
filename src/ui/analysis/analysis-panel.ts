@@ -1,6 +1,7 @@
 /** Cross-session analysis panel — progressive rendering with cancellation. */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { openLogAtLine } from '../../modules/search/log-search';
@@ -36,7 +37,7 @@ function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 export async function showAnalysis(lineText: string, lineIndex?: number, fileUri?: vscode.Uri): Promise<void> {
     const tokens = extractAnalysisTokens(lineText);
     if (tokens.length === 0) {
-        vscode.window.showInformationMessage(vscode.l10n.t('msg.noAnalyzableTokens'));
+        vscode.window.showInformationMessage(t('msg.noAnalyzableTokens'));
         return;
     }
     cancelAnalysis();

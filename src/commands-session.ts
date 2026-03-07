@@ -1,6 +1,7 @@
 /** Session lifecycle, actions, and history browse/edit commands. */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import type { CommandDeps } from './commands-deps';
 import { handleDeleteCommand } from './modules/features/delete-command';
@@ -44,20 +45,20 @@ export function sessionActionCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.delete', async () => { await handleDeleteCommand(); }),
         vscode.commands.registerCommand('saropaLogCapture.insertMarker', async () => {
             const text = await vscode.window.showInputBox({
-                prompt: vscode.l10n.t('msg.markerPrompt'),
-                placeHolder: vscode.l10n.t('msg.markerPlaceholder'),
+                prompt: t('msg.markerPrompt'),
+                placeHolder: t('msg.markerPlaceholder'),
             });
             if (text !== undefined) { sessionManager.insertMarker(text || undefined); }
         }),
         vscode.commands.registerCommand('saropaLogCapture.splitNow', async () => {
             const session = sessionManager.getActiveSession();
             if (!session) {
-                vscode.window.showWarningMessage(vscode.l10n.t('msg.noActiveSessionToSplit'));
+                vscode.window.showWarningMessage(t('msg.noActiveSessionToSplit'));
                 return;
             }
             await session.splitNow();
             historyProvider.refresh();
-            vscode.window.showInformationMessage(vscode.l10n.t('msg.logFileSplit', String(session.partNumber + 1)));
+            vscode.window.showInformationMessage(t('msg.logFileSplit', String(session.partNumber + 1)));
         }),
     ];
 }
@@ -80,7 +81,7 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.openTailedFile', async () => {
             const folder = vscode.workspace.workspaceFolders?.[0];
             if (!folder) {
-                void vscode.window.showWarningMessage(vscode.l10n.t('msg.openWorkspaceFirst', 'Open a workspace folder first.'));
+                void vscode.window.showWarningMessage(t('msg.openWorkspaceFirst'));
                 return;
             }
             const cfg = getConfig();
@@ -93,13 +94,13 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
             }
             const list = [...uris.values()].sort((a, b) => a.fsPath.localeCompare(b.fsPath));
             if (list.length === 0) {
-                void vscode.window.showInformationMessage(vscode.l10n.t('msg.noTailedFiles', 'No files match tail patterns. Check saropaLogCapture.tailPatterns.'));
+                void vscode.window.showInformationMessage(t('msg.noTailedFiles'));
                 return;
             }
             const rel = (u: vscode.Uri) => vscode.workspace.asRelativePath(u, false);
             const picked = await vscode.window.showQuickPick(
                 list.map((u) => ({ label: rel(u), uri: u })),
-                { placeHolder: vscode.l10n.t('msg.selectTailedFile', 'Select a file to open and tail') },
+                { placeHolder: t('msg.selectTailedFile') },
             );
             if (picked?.uri) {
                 await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
@@ -110,11 +111,11 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
           async (item: { uri: vscode.Uri; filename: string }) => {
             if (!item?.uri) { return; }
             const answer = await vscode.window.showWarningMessage(
-                vscode.l10n.t('msg.deleteFileConfirm', item.filename),
+                t('msg.deleteFileConfirm', item.filename),
                 { modal: true },
-                vscode.l10n.t('action.delete'),
+                t('action.delete'),
             );
-            if (answer === vscode.l10n.t('action.delete')) {
+            if (answer === t('action.delete')) {
                 await vscode.workspace.fs.delete(item.uri);
                 historyProvider.refresh();
             }
@@ -129,7 +130,7 @@ export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
           async (item: { uri: vscode.Uri; filename: string }) => {
             if (!item?.uri) { return; }
             const name = await vscode.window.showInputBox({
-                prompt: vscode.l10n.t('msg.renameSessionPrompt'),
+                prompt: t('msg.renameSessionPrompt'),
                 value: item.filename.replace(/\.log$/, '').replace(/^\d{8}_(?:\d{6}|\d{2}-\d{2}(?:-\d{2})?)_/, ''),
             });
             if (!name || name.trim() === '') { return; }
@@ -143,11 +144,11 @@ export function historyEditCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             const meta = await historyProvider.getMetaStore().loadMetadata(item.uri);
             const input = await vscode.window.showInputBox({
-                prompt: vscode.l10n.t('msg.enterTagsPrompt'),
+                prompt: t('msg.enterTagsPrompt'),
                 value: (meta.tags ?? []).join(', '),
             });
             if (input === undefined) { return; }
-            const tags = input.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            const tags = input.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
             await historyProvider.getMetaStore().setTags(item.uri, tags);
             historyProvider.refresh();
         }),
