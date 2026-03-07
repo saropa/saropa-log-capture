@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
 import type { FingerprintEntry } from '../analysis/error-fingerprint';
 import { parseJSONOrDefault } from '../misc/safe-json';
@@ -196,7 +197,7 @@ export class SessionMetadataStore {
         try {
             try {
                 await vscode.workspace.fs.stat(newLogUri);
-                vscode.window.showWarningMessage(vscode.l10n.t('msg.cannotRenameExists', newFilename));
+                vscode.window.showWarningMessage(t('msg.cannotRenameExists', newFilename));
                 return logUri;
             } catch { /* good */ }
 
@@ -210,7 +211,7 @@ export class SessionMetadataStore {
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             logExtensionError('renameLogFile', err instanceof Error ? err : new Error(msg));
-            vscode.window.showErrorMessage(vscode.l10n.t('msg.failedRenameLogFile', msg));
+            vscode.window.showErrorMessage(t('msg.failedRenameLogFile', msg));
             return logUri;
         }
     }

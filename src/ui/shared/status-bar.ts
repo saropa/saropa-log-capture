@@ -1,26 +1,27 @@
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 
 /** Human-readable labels for integration adapter ids (localized). */
 function getIntegrationLabels(): Record<string, string> {
     return {
-        packages: vscode.l10n.t('integration.packages'),
-        buildCi: vscode.l10n.t('integration.buildCi'),
-        windowsEvents: vscode.l10n.t('integration.windowsEvents'),
-        git: vscode.l10n.t('integration.git'),
-        database: vscode.l10n.t('integration.database'),
-        externalLogs: vscode.l10n.t('integration.externalLogs'),
-        performance: vscode.l10n.t('integration.performance'),
-        http: vscode.l10n.t('integration.http'),
-        terminal: vscode.l10n.t('integration.terminal'),
-        browser: vscode.l10n.t('integration.browser'),
-        docker: vscode.l10n.t('integration.docker'),
-        linuxLogs: vscode.l10n.t('integration.linuxLogs'),
-        crashDumps: vscode.l10n.t('integration.crashDumps'),
-        testResults: vscode.l10n.t('integration.testResults'),
-        security: vscode.l10n.t('integration.security'),
-        coverage: vscode.l10n.t('integration.coverage'),
-        environment: vscode.l10n.t('integration.environment'),
-        crashlytics: vscode.l10n.t('integration.crashlytics'),
+        packages: t('integration.packages'),
+        buildCi: t('integration.buildCi'),
+        windowsEvents: t('integration.windowsEvents'),
+        git: t('integration.git'),
+        database: t('integration.database'),
+        externalLogs: t('integration.externalLogs'),
+        performance: t('integration.performance'),
+        http: t('integration.http'),
+        terminal: t('integration.terminal'),
+        browser: t('integration.browser'),
+        docker: t('integration.docker'),
+        linuxLogs: t('integration.linuxLogs'),
+        crashDumps: t('integration.crashDumps'),
+        testResults: t('integration.testResults'),
+        security: t('integration.security'),
+        coverage: t('integration.coverage'),
+        environment: t('integration.environment'),
+        crashlytics: t('integration.crashlytics'),
     };
 }
 
@@ -97,18 +98,18 @@ export class StatusBar implements vscode.Disposable {
         const integrationSuffix = this.buildIntegrationSuffix(labelsMap);
         const count = this.formatCount(this.lineCount);
         const recordingTip = integrationSuffix
-            ? vscode.l10n.t('statusBar.recordingTooltipWithIntegrations',
+            ? t('statusBar.recordingTooltipWithIntegrations',
                 this.integrationAdapterIds.map(id => labelsMap[id] ?? id).join(', '))
-            : vscode.l10n.t('statusBar.recordingTooltip');
+            : t('statusBar.recordingTooltip');
         if (this.paused) {
             this.pauseItem.text = '$(debug-pause)';
-            this.pauseItem.tooltip = vscode.l10n.t('statusBar.resumeTooltip');
-            this.item.text = vscode.l10n.t('statusBar.pausedLines', count) + watchSuffix + integrationSuffix;
-            this.item.tooltip = vscode.l10n.t('statusBar.pausedTooltip');
+            this.pauseItem.tooltip = t('statusBar.resumeTooltip');
+            this.item.text = t('statusBar.pausedLines', count) + watchSuffix + integrationSuffix;
+            this.item.tooltip = t('statusBar.pausedTooltip');
         } else {
             this.pauseItem.text = '$(record)';
-            this.pauseItem.tooltip = vscode.l10n.t('statusBar.pauseTooltip');
-            this.item.text = vscode.l10n.t('statusBar.lines', count) + watchSuffix + integrationSuffix;
+            this.pauseItem.tooltip = t('statusBar.pauseTooltip');
+            this.item.text = t('statusBar.lines', count) + watchSuffix + integrationSuffix;
             this.item.tooltip = recordingTip;
         }
     }
@@ -118,8 +119,8 @@ export class StatusBar implements vscode.Disposable {
         if (this.integrationAdapterIds.length === 0) { return ''; }
         const labels = this.integrationAdapterIds.map(id => labelsMap[id] ?? id);
         return labels.length === 1
-            ? vscode.l10n.t('statusBar.singleAdapterSuffix', labels[0])
-            : vscode.l10n.t('statusBar.adaptersSuffix', String(labels.length));
+            ? t('statusBar.singleAdapterSuffix', labels[0])
+            : t('statusBar.adaptersSuffix', String(labels.length));
     }
 
     private buildWatchSuffix(): string {

@@ -11,13 +11,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Fixed
+- **Localized messages showing raw keys.** All `vscode.l10n.t()` calls used symbolic keys (e.g., `msg.gitignoreLogPrompt`) which displayed literally in English locale. Introduced `src/l10n.ts` helper that maps keys to English strings before passing through `vscode.l10n.t()`. Fixes 159 call sites across 26 source files. Also fixed 14 calls in `commands-export.ts` and `commands-session.ts` that incorrectly passed inline English text as positional substitution arguments. Re-keyed all 11 translation bundles to use English strings as lookup keys.
+
 ### Added
 - **Scroll to Top button.** New "Top" button appears when scrolled past 50% of viewport height. Both Top and Bottom buttons hidden on small files (< 150% viewport height).
 - **Find-in-files sort by match count.** Sort toggle in the find panel header reorders results by number of matches (most hits first).
 - **Footer path gestures.** Footer now shows the relative path (or full path if outside workspace). Long-press copies the path to clipboard. Double-click opens the containing folder.
 
 ### Changed
-- **Project Logs list performance.** Items-level cache with fetch deduplication eliminates redundant directory scans and metadata loads on repeat opens. Bulk central metadata read (`.session-metadata.json` read once per refresh, not once per file). Severity scan skipped when sidecar already has cached counts. Concurrency-limited batch loading (max 8 parallel file reads). Debounced webview session list requests (150ms).
+- **Project Logs list performance.** Items-level cache with fetch deduplication eliminates redundant directory scans and metadata loads on repeat opens. Bulk central metadata read (`.session-metadata.json` read once per refresh, not once per file). Severity scan skipped when sidecar already has cached counts. Concurrency-limited batch loading (max 8 parallel file reads). Debounced webview session list requests (150m
+1. 	check all your work for logic issues, documentation quality, project adherance (consistency and modularity), beauty in animations,transitions, etc
+2.	deep review files with all code changes (and only those files) for:
+	- are there logic issues?
+	- are there race conditions?
+	- check for logic duplication and shared logic opportunities
+	- performance risks
+	- clarity of user facing messages
+	- recursion risks
+	- concise clear code comments explaining changes
+	- project framework compliance
+	- unit test cases
+	- if there opportunities to improve the code, or remove code smells then stop here and report
+	- changelog, readme, TODOs, plans and other relevant documents
+3. The system needs to perform well: consider spinners, shimmers, progress bars, loading status messages, background processing, parallelism, and so on
+4. if there is a related bug report, update with a concise summary and move it to the \bugs\history folder
+5. git commit ONLY these changes if there are no remaining issues
+6. clearly state in big writing that the TASK IS COMPLETE
+
+
+
+s).
 - **Panel close buttons.** Replaced text `x` with codicon icons, restyled to match the refresh button size across all panels.
 - **Panel widths.** Search, Find, Options, About, Bookmark, and Trash panels now fill the full panel-slot width (removed `max-width` constraints).
 - **Tidy mode improvements.** File extension stripped in tidy mode. Time extracted from filename and shown as 12-hour format (e.g. "10:19 AM"); hidden when it matches the session modified time. Severity dots moved inline with meta text. "N lines" text replaced by colored severity dots that sum to total line count (uncategorized lines shown as a dim "other" dot).

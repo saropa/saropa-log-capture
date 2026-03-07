@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { collectBugReportData } from '../../modules/bug-report/bug-report-collector';
 import { formatBugReport } from '../../modules/bug-report/bug-report-formatter';
@@ -32,7 +33,7 @@ export async function showBugReport(
     lastSubject = deriveSubject(data.errorLine, data.fingerprint);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.bugReportCopied'));
+    vscode.window.showInformationMessage(t('msg.bugReportCopied'));
 }
 
 /** Dispose the singleton panel. */
@@ -51,7 +52,7 @@ function ensurePanel(): void {
 async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     if (msg.type === 'copy') {
         await vscode.env.clipboard.writeText(lastMarkdown);
-        vscode.window.showInformationMessage(vscode.l10n.t('msg.bugReportCopied'));
+        vscode.window.showInformationMessage(t('msg.bugReportCopied'));
     } else if (msg.type === 'save') {
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
         const defaultUri = workspaceFolder
@@ -63,7 +64,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         });
         if (uri) {
             await vscode.workspace.fs.writeFile(uri, Buffer.from(lastMarkdown, 'utf-8'));
-            vscode.window.showInformationMessage(vscode.l10n.t('msg.reportSavedTo', uri.fsPath.split(/[\\/]/).pop() ?? ''));
+            vscode.window.showInformationMessage(t('msg.reportSavedTo', uri.fsPath.split(/[\\/]/).pop() ?? ''));
         }
     }
 }
