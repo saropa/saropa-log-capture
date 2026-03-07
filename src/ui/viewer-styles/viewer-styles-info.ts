@@ -18,8 +18,8 @@ export function getInfoPanelStyles(): string {
 
 /* --- Info panel (slide-out, same pattern as session/options panels) --- */
 .info-panel {
-    min-width: 240px;
-    max-width: 360px;
+    width: 100%;
+    min-width: 280px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
