@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import {
     SessionTemplate, loadTemplates, saveTemplate, createTemplateFromSettings,
 } from '../session/session-templates';
@@ -12,7 +13,7 @@ import {
 export async function pickTemplate(): Promise<SessionTemplate | undefined> {
     const templates = await loadTemplates();
     if (templates.length === 0) {
-        vscode.window.showInformationMessage(vscode.l10n.t('msg.noTemplates'));
+        vscode.window.showInformationMessage(t('msg.noTemplates'));
         return undefined;
     }
     const items = templates.map(t => ({
@@ -22,7 +23,7 @@ export async function pickTemplate(): Promise<SessionTemplate | undefined> {
         template: t,
     }));
     const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: vscode.l10n.t('prompt.selectTemplate'),
+        placeHolder: t('prompt.selectTemplate'),
         title: 'Session Templates',
     });
     return selected?.template;
@@ -46,8 +47,8 @@ function buildTemplateDetail(template: SessionTemplate): string {
 /** Prompt user to save current settings as a template. */
 export async function promptSaveTemplate(): Promise<SessionTemplate | undefined> {
     const name = await vscode.window.showInputBox({
-prompt: vscode.l10n.t('prompt.templateName'),
-                placeHolder: vscode.l10n.t('prompt.templateNamePlaceholder'),
+prompt: t('prompt.templateName'),
+                placeHolder: t('prompt.templateNamePlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return 'Template name cannot be empty';
@@ -59,11 +60,11 @@ prompt: vscode.l10n.t('prompt.templateName'),
         return undefined;
     }
     const description = await vscode.window.showInputBox({
-prompt: vscode.l10n.t('prompt.templateDescription'),
-                placeHolder: vscode.l10n.t('prompt.templateDescriptionPlaceholder'),
+prompt: t('prompt.templateDescription'),
+                placeHolder: t('prompt.templateDescriptionPlaceholder'),
     });
     const template = createTemplateFromSettings(name.trim(), description?.trim());
     await saveTemplate(template);
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.templateSaved', template.name));
+    vscode.window.showInformationMessage(t('msg.templateSaved', template.name));
     return template;
 }

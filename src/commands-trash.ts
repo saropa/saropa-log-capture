@@ -1,6 +1,7 @@
 /** Trash management command registrations. */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
 import { SessionMetadataStore } from './modules/session/session-metadata';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
@@ -41,7 +42,7 @@ export function trashCommands(
         }),
         vscode.commands.registerCommand('saropaLogCapture.emptyTrash', async () => {
             const count = await emptyTrash(metaStore);
-            if (count === 0) { vscode.window.showInformationMessage(vscode.l10n.t('msg.trashEmpty')); }
+            if (count === 0) { vscode.window.showInformationMessage(t('msg.trashEmpty')); }
             if (count > 0) { historyProvider.refresh(); }
         }),
         vscode.commands.registerCommand('saropaLogCapture.toggleTrash', () => {
@@ -65,11 +66,11 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
     }
     if (trashed.length === 0) { return 0; }
     const answer = await vscode.window.showWarningMessage(
-        vscode.l10n.t('msg.deleteTrashConfirm', String(trashed.length)),
+        t('msg.deleteTrashConfirm', String(trashed.length)),
         { modal: true },
-        vscode.l10n.t('action.delete'),
+        t('action.delete'),
     );
-    if (answer !== vscode.l10n.t('action.delete')) { return -1; }
+    if (answer !== t('action.delete')) { return -1; }
     let deleted = 0;
     for (const uri of trashed) {
         try {
@@ -78,6 +79,6 @@ async function emptyTrash(metaStore: SessionMetadataStore): Promise<number> {
             deleted++;
         } catch { /* file may be locked */ }
     }
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.permanentlyDeletedFromTrash', String(deleted)));
+    vscode.window.showInformationMessage(t('msg.permanentlyDeletedFromTrash', String(deleted)));
     return deleted;
 }

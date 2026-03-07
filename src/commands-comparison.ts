@@ -1,6 +1,7 @@
 /** Session comparison command registrations. */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
 import { getComparisonPanel } from './ui/session/session-comparison';
 
@@ -15,7 +16,7 @@ export function comparisonCommands(extensionUri: vscode.Uri): vscode.Disposable[
             if (!item?.uri) { return; }
             comparisonMarkUri = item.uri;
             vscode.window.showInformationMessage(
-                vscode.l10n.t('msg.markedForComparison', item.filename),
+                t('msg.markedForComparison', item.filename),
             );
         }),
         vscode.commands.registerCommand('saropaLogCapture.compareWithMarked',
@@ -23,12 +24,12 @@ export function comparisonCommands(extensionUri: vscode.Uri): vscode.Disposable[
             if (!item?.uri) { return; }
             if (!comparisonMarkUri) {
                 vscode.window.showWarningMessage(
-                    vscode.l10n.t('msg.noSessionMarked'),
+                    t('msg.noSessionMarked'),
                 );
                 return;
             }
             if (comparisonMarkUri.fsPath === item.uri.fsPath) {
-                vscode.window.showWarningMessage(vscode.l10n.t('msg.cannotCompareWithSelf'));
+                vscode.window.showWarningMessage(t('msg.cannotCompareWithSelf'));
                 return;
             }
             const panel = getComparisonPanel(extensionUri);
@@ -56,19 +57,19 @@ async function pickTwoSessions(): Promise<[vscode.Uri, vscode.Uri] | undefined> 
         .map(rel => ({ label: rel, uri: vscode.Uri.joinPath(logDir, rel) }))
         .sort((a, b) => b.label.localeCompare(a.label));
     if (files.length < 2) {
-        vscode.window.showWarningMessage(vscode.l10n.t('msg.needTwoSessions'));
+        vscode.window.showWarningMessage(t('msg.needTwoSessions'));
         return undefined;
     }
     const first = await vscode.window.showQuickPick(files, {
-        placeHolder: vscode.l10n.t('prompt.selectFirstSession'),
-        title: vscode.l10n.t('title.compareSessions1'),
+        placeHolder: t('prompt.selectFirstSession'),
+        title: t('title.compareSessions1'),
     });
     if (!first) { return undefined; }
     const second = await vscode.window.showQuickPick(
         files.filter(f => f.uri.fsPath !== first.uri.fsPath),
         {
-            placeHolder: vscode.l10n.t('prompt.selectSecondSession'),
-            title: vscode.l10n.t('title.compareSessions2'),
+            placeHolder: t('prompt.selectSecondSession'),
+            title: t('title.compareSessions2'),
         },
     );
     return second ? [first.uri, second.uri] : undefined;
