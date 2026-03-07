@@ -69,6 +69,14 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
+    if (lvl === 'info' && !isSep && allLines.length > 0) {
+        var prevItem = allLines[allLines.length - 1];
+        if (prevItem && prevItem.type !== 'marker' && prevItem.type !== 'run-separator'
+            && prevItem.level && prevItem.level !== 'info'
+            && ts && prevItem.timestamp && Math.abs(ts - prevItem.timestamp) <= 2000) {
+            lvl = prevItem.level;
+        }
+    }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
