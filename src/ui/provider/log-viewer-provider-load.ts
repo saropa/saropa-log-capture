@@ -42,7 +42,7 @@ export async function executeLoadContent(
   const text = Buffer.from(raw).toString("utf-8");
   const rawLines = text.split(/\r?\n/);
   target.postMessage({ type: "setViewingMode", viewing: true });
-  target.setFilename(uri.path.split("/").pop() ?? "");
+  target.setFilename(vscode.workspace.asRelativePath(uri, false));
   const fields = parseHeaderFields(rawLines);
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
   const headerEnd = findHeaderEnd(rawLines);

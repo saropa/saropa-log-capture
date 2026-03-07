@@ -107,13 +107,15 @@ export function getSessionPanelLayoutStyles(): string {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
 }
 
 .session-panel-close:hover {
     color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 /* --- Session panel display toggles --- */

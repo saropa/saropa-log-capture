@@ -11,8 +11,8 @@ export function getTrashPanelStyles(): string {
    Trash Panel — slide-out (same pattern as bookmark panel)
    =================================================================== */
 .trash-panel {
+    width: 100%;
     min-width: 280px;
-    max-width: 400px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
@@ -61,12 +61,16 @@ export function getTrashPanelStyles(): string {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
 }
 
-.trash-panel-close:hover { color: var(--vscode-errorForeground, #f44); }
+.trash-panel-close:hover {
+    color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
 
 .trash-panel-content {
     flex: 1;

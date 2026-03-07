@@ -204,9 +204,11 @@ export class SessionManagerImpl implements SessionManager {
         return active ? this.sessions.get(active.id) : undefined;
     }
 
-    /** Get the log filename for the active session (basename only). */
+    /** Get the log file path for the active session (relative or full). */
     getActiveFilename(): string | undefined {
-        return this.getActiveSession()?.fileUri.fsPath.split(/[\\/]/).pop();
+        const uri = this.getActiveSession()?.fileUri;
+        if (!uri) { return undefined; }
+        return vscode.workspace.asRelativePath(uri, false);
     }
 
     /** Check if a debug session already has an active log session. */

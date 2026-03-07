@@ -11,8 +11,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ---
 ## [Unreleased]
 
+### Added
+- **Scroll to Top button.** New "Top" button appears when scrolled past 50% of viewport height. Both Top and Bottom buttons hidden on small files (< 150% viewport height).
+- **Find-in-files sort by match count.** Sort toggle in the find panel header reorders results by number of matches (most hits first).
+- **Footer path gestures.** Footer now shows the relative path (or full path if outside workspace). Long-press copies the path to clipboard. Double-click opens the containing folder.
+
 ### Changed
 - **Project Logs list performance.** Items-level cache with fetch deduplication eliminates redundant directory scans and metadata loads on repeat opens. Bulk central metadata read (`.session-metadata.json` read once per refresh, not once per file). Severity scan skipped when sidecar already has cached counts. Concurrency-limited batch loading (max 8 parallel file reads). Debounced webview session list requests (150ms).
+- **Panel close buttons.** Replaced text `x` with codicon icons, restyled to match the refresh button size across all panels.
+- **Panel widths.** Search, Find, Options, About, Bookmark, and Trash panels now fill the full panel-slot width (removed `max-width` constraints).
+- **Tidy mode improvements.** File extension stripped in tidy mode. Time extracted from filename and shown as 12-hour format (e.g. "10:19 AM"); hidden when it matches the session modified time. Severity dots moved inline with meta text. "N lines" text replaced by colored severity dots that sum to total line count (uncategorized lines shown as a dim "other" dot).
+- **Tidy subfolder display.** Only shows subfolder prefix when basenames collide for disambiguation.
+- **About panel changelog.** URL link moved above changelog content; changelog cleared on panel close.
+
+### Fixed
+- **Prev/Next session navigation.** Both buttons were navigating to the next session due to `safeLineIndex()` rejecting negative direction values.
+- **Search tags textbox styling.** CSS ID mismatch (`#options-search` vs `#filters-search`) left the input unstyled.
+- **Search mode toggle.** Toggle was resetting search text and missing active-state styling.
+- **Find-in-files screen jump.** Session navigator CSS transition caused a visual jump when switching files.
+- **Scroll-to-bottom button.** Button was inside the scroll container making it unclickable; moved to positioned wrapper with proper z-index.
 
 ## [3.0.3] - 2026-03-05
 

@@ -126,7 +126,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       }
       case "navigatePart": ctx.onPartNavigate?.(Math.max(1, safeLineIndex(msg.part, 1))); break;
-      case "navigateSession": ctx.onSessionNavigate?.(Math.sign(safeLineIndex(msg.direction, 0))); break;
+      case "navigateSession": { const d = Number(msg.direction); ctx.onSessionNavigate?.(d < 0 ? -1 : 1); break; }
       case "savePresetRequest":
         ctx.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
         break;
@@ -165,6 +165,15 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "popOutViewer": ctx.onPopOutRequest?.(); break;
       case "revealLogFile":
         if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
+        break;
+      case "copyCurrentFilePath":
+        if (ctx.currentFileUri) { vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(() => {}, () => {}); }
+        break;
+      case "openCurrentFileFolder":
+        if (ctx.currentFileUri) {
+          const parentUri = vscode.Uri.joinPath(ctx.currentFileUri, '..');
+          vscode.commands.executeCommand('revealFileInOS', parentUri).then(() => {}, () => {});
+        }
         break;
       case "setSessionDisplayOptions": ctx.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); break;
       case "promptGoToLine":

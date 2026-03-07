@@ -12,7 +12,10 @@ export function getFindPanelHtml(): string {
 <div id="find-panel" class="find-panel">
     <div class="find-panel-header">
         <span>Find in Files</span>
-        <button id="find-panel-close" class="find-panel-close" title="Close">&times;</button>
+        <div class="find-panel-header-actions">
+            <button id="find-sort-toggle" class="find-header-btn" title="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
+            <button id="find-panel-close" class="find-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
+        </div>
     </div>
     <div class="find-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="find-input-wrapper">
@@ -52,6 +55,7 @@ export function getFindPanelScript(): string {
     var findCaseSensitive = false;
     var findWholeWord = false;
     var findRegexMode = false;
+    var findSortByHits = false;
     var cachedResults = null;
     var activeFileUri = null;
     var activeMatchIdx = 0;
@@ -120,9 +124,13 @@ export function getFindPanelScript(): string {
             + data.files.length + ' of ' + data.totalFiles + ' file'
             + (data.totalFiles === 1 ? '' : 's');
 
+        var files = data.files.slice();
+        if (findSortByHits) {
+            files.sort(function(a, b) { return b.matchCount - a.matchCount; });
+        }
         var html = '';
-        for (var i = 0; i < data.files.length; i++) {
-            var f = data.files[i];
+        for (var i = 0; i < files.length; i++) {
+            var f = files[i];
             var activeCls = (f.uriString === activeFileUri) ? ' active' : '';
             html += '<div class="find-result-item' + activeCls + '" data-uri="'
                 + escapeAttr(f.uriString) + '" data-count="' + f.matchCount + '">'
@@ -171,6 +179,7 @@ export function getFindPanelScript(): string {
         toggleClass('find-case-toggle', findCaseSensitive);
         toggleClass('find-word-toggle', findWholeWord);
         toggleClass('find-regex-toggle', findRegexMode);
+        toggleClass('find-sort-toggle', findSortByHits);
     }
 
     function toggleClass(id, active) {
@@ -198,6 +207,14 @@ export function getFindPanelScript(): string {
         function(v) { findRegexMode = v; });
 
     syncToggles();
+
+    /* Sort toggle re-renders cached results without a new search. */
+    var findSortBtn = document.getElementById('find-sort-toggle');
+    if (findSortBtn) findSortBtn.addEventListener('click', function() {
+        findSortByHits = !findSortByHits;
+        syncToggles();
+        if (cachedResults) renderResults(cachedResults);
+    });
 
     /* --- Debounced input --- */
 

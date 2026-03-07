@@ -83,7 +83,7 @@ export function getSessionListStyles(): string {
 .session-context-menu.visible { display: block; }
 
 /* --- Severity dots --- */
-.sev-dots { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); }
+.sev-dots { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; color: var(--vscode-descriptionForeground); vertical-align: middle; }
 .sev-pair { display: inline-flex; align-items: center; gap: 2px; }
 .sev-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .sev-error { background: var(--vscode-charts-red, #f44336); }
@@ -91,5 +91,6 @@ export function getSessionListStyles(): string {
 .sev-perf { background: var(--vscode-charts-purple, #a855f7); }
 .sev-fw { background: var(--vscode-charts-blue, #2196f3); }
 .sev-info { background: var(--vscode-charts-green, #4caf50); }
+.sev-other { background: var(--vscode-descriptionForeground, #888); opacity: 0.5; }
 `;
 }

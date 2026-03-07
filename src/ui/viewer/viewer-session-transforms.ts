@@ -51,6 +51,12 @@ function normalizeSessionName(name) {
     return (titled || parts[0]) + parts[1];
 }
 
+/** Extract basename from a path (strip folder prefix). */
+function getSessionBasename(name) {
+    var idx = name.lastIndexOf('/');
+    return idx >= 0 ? name.substring(idx + 1) : name;
+}
+
 /* --- Day heading formatting --- */
 var shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -100,8 +106,27 @@ function renderSeverityDots(s) {
     if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
     if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
     if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
+    var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0) + (s.fwCount || 0) + (s.infoCount || 0);
+    var other = (s.lineCount || 0) - categorized;
+    if (other > 0) parts.push('<span class="sev-pair" title="Other lines"><span class="sev-dot sev-other"></span>' + other + '</span>');
     if (parts.length === 0) return '';
     return '<span class="sev-dots">' + parts.join('') + '</span>';
+}
+
+/** Extract hours and minutes from a datetime pattern in the filename. */
+function extractFilenameTime(name) {
+    var base = splitFileExt(getSessionBasename(name))[0];
+    var m = base.match(/^\\d{4}-?\\d{2}-?\\d{2}[_T -](\\d{2})[-:]?(\\d{2})/);
+    if (!m) m = base.match(/^\\d{6}[_T -](\\d{2})[-:]?(\\d{2})/);
+    if (!m) m = base.match(/[_ -]\\d{4}-?\\d{2}-?\\d{2}[_T -](\\d{2})[-:]?(\\d{2})/);
+    return m ? { hours: parseInt(m[1], 10), minutes: parseInt(m[2], 10) } : null;
+}
+
+/** Format hours and minutes as 12-hour time (e.g. "10:19 AM"). */
+function formatTime12hFromParts(hours, minutes) {
+    var h = hours % 12 || 12;
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    return h + ':' + pad2(minutes) + ' ' + ampm;
 }
 
 /** Mark the newest session per unique display name as isLatestOfName. */
