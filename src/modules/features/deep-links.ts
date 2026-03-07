@@ -13,6 +13,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
 import { logExtensionWarn } from '../misc/extension-logger';
 import { MAX_SAFE_LINE, MAX_SESSION_FILENAME_LENGTH } from '../config/config-validation';
@@ -135,7 +136,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     const params = parseDeepLinkUri(uri);
     if (!params) {
         logExtensionWarn('deepLink', 'Invalid deep link URI');
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.invalidDeepLink'));
+        vscode.window.showErrorMessage(t('msg.invalidDeepLink'));
         return false;
     }
 
@@ -143,7 +144,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
         logExtensionWarn('deepLink', 'No workspace open');
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.noWorkspaceOpen'));
+        vscode.window.showErrorMessage(t('msg.noWorkspaceOpen'));
         return false;
     }
 
@@ -156,7 +157,7 @@ export async function handleDeepLink(uri: vscode.Uri): Promise<boolean> {
         await vscode.workspace.fs.stat(logUri);
     } catch {
         logExtensionWarn('deepLink', `Log file not found: ${params.session}`);
-        vscode.window.showErrorMessage(vscode.l10n.t('msg.logFileNotFound', params.session));
+        vscode.window.showErrorMessage(t('msg.logFileNotFound', params.session));
         return false;
     }
 
@@ -193,7 +194,7 @@ export async function copyDeepLinkToClipboard(sessionFilename: string, line?: nu
 
     // Show confirmation with line info if applicable
     const lineInfo = line ? ` (line ${line})` : '';
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.deepLinkCopied', lineInfo));
+    vscode.window.showInformationMessage(t('msg.deepLinkCopied', lineInfo));
 }
 
 /**

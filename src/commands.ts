@@ -5,6 +5,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
@@ -46,7 +47,7 @@ function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
             await historyProvider.getMetaStore().setCorrelationTags(item.uri, tags);
             historyProvider.refresh();
             vscode.window.showInformationMessage(
-            vscode.l10n.t('msg.foundCorrelationTags', String(tags.length), tags.length !== 1 ? 's' : ''),
+            t('msg.foundCorrelationTags', String(tags.length), tags.length !== 1 ? 's' : ''),
         );
         }),
     ];
