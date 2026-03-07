@@ -7,6 +7,7 @@
  */
 
 import * as vscode from "vscode";
+import { t } from "../../l10n";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
@@ -89,7 +90,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   // --- Annotation, preset save, search (codebase / sessions), analyze line, add to watch ---
   target.setAnnotationPromptHandler(async (lineIndex, current) => {
     const text = await vscode.window.showInputBox({
-    prompt: vscode.l10n.t('prompt.annotateLine', String(lineIndex + 1)),
+    prompt: t('prompt.annotateLine', String(lineIndex + 1)),
     value: current,
   });
     if (text === undefined) { return; }
@@ -107,23 +108,23 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     });
     if (preset) { broadcaster.setPresets(loadPresets()); }
   });
-  target.setSearchCodebaseHandler(async (t) => {
-    await vscode.commands.executeCommand('workbench.action.findInFiles', { query: t });
+  target.setSearchCodebaseHandler(async (text) => {
+    await vscode.commands.executeCommand('workbench.action.findInFiles', { query: text });
   });
-  target.setSearchSessionsHandler(async (t) => {
-    const m = await showSearchQuickPick(t);
+  target.setSearchSessionsHandler(async (text) => {
+    const m = await showSearchQuickPick(text);
     if (m) { await openLogAtLine(m); }
   });
-  target.setAnalyzeLineHandler(async (t, idx, uri) => { await showAnalysis(t, idx, uri); });
+  target.setAnalyzeLineHandler(async (text, idx, uri) => { await showAnalysis(text, idx, uri); });
   target.setAddToWatchHandler(async (text) => {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<{ pattern: string; alertType?: string }[]>('watchPatterns', []);
     if (cur.some(p => p.pattern === text)) {
-      vscode.window.showInformationMessage(vscode.l10n.t('msg.alreadyInWatchList', text));
+      vscode.window.showInformationMessage(t('msg.alreadyInWatchList', text));
       return;
     }
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
-    vscode.window.showInformationMessage(vscode.l10n.t('msg.addedToWatchList', text));
+    vscode.window.showInformationMessage(t('msg.addedToWatchList', text));
   });
 
   // --- Session list, browse/clear root, session actions (open, trash, export, etc.) ---
@@ -212,27 +213,27 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
 async function confirmDeleteFileBookmarks(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
   const filename = String(msg.filename ?? 'this file');
   const answer = await vscode.window.showWarningMessage(
-    vscode.l10n.t('msg.deleteBookmarksForFile', filename),
+    t('msg.deleteBookmarksForFile', filename),
     { modal: true },
-    vscode.l10n.t('action.deleteAll'),
+    t('action.deleteAll'),
   );
-  if (answer === vscode.l10n.t('action.deleteAll')) { store.removeAllForFile(String(msg.fileUri ?? '')); }
+  if (answer === t('action.deleteAll')) { store.removeAllForFile(String(msg.fileUri ?? '')); }
 }
 
 async function confirmDeleteAllBookmarks(store: BookmarkStore): Promise<void> {
   const total = store.getTotalCount();
   if (total === 0) { return; }
   const answer = await vscode.window.showWarningMessage(
-    vscode.l10n.t('msg.deleteAllBookmarks', String(total), total === 1 ? '' : 's'),
+    t('msg.deleteAllBookmarks', String(total), total === 1 ? '' : 's'),
     { modal: true },
-    vscode.l10n.t('action.deleteAll'),
+    t('action.deleteAll'),
   );
-  if (answer === vscode.l10n.t('action.deleteAll')) { store.removeAll(); }
+  if (answer === t('action.deleteAll')) { store.removeAll(); }
 }
 
 async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
   const note = await vscode.window.showInputBox({
-    prompt: vscode.l10n.t('prompt.editBookmarkNote'),
+    prompt: t('prompt.editBookmarkNote'),
     value: String(msg.currentNote ?? ''),
   });
   if (note === undefined) { return; }

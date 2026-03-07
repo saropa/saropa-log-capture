@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { getConfig } from './config';
 
 const STATE_KEY = 'gitignoreChecked';
@@ -51,12 +52,12 @@ export async function checkGitignore(
     }
 
     const action = await vscode.window.showInformationMessage(
-        vscode.l10n.t('msg.gitignoreLogPrompt', logDirectory),
-        vscode.l10n.t('action.addToGitignore'),
-        vscode.l10n.t('action.dontAskAgain'),
+        t('msg.gitignoreLogPrompt', logDirectory),
+        t('action.addToGitignore'),
+        t('action.dontAskAgain'),
     );
 
-    if (action === vscode.l10n.t('action.addToGitignore')) {
+    if (action === t('action.addToGitignore')) {
         try {
             const suffix = content.endsWith('\n') ? '' : '\n';
             const entry = `${suffix}\n# Saropa Log Capture\n${logDirectory}/\n`;
@@ -67,7 +68,7 @@ export async function checkGitignore(
             );
         } catch (err) {
             vscode.window.showErrorMessage(
-                vscode.l10n.t('msg.failedUpdateGitignore', String(err)),
+                t('msg.failedUpdateGitignore', String(err)),
             );
         }
     }
@@ -106,17 +107,17 @@ export async function checkGitignoreSaropa(
         return;
     }
     const action = await vscode.window.showInformationMessage(
-        vscode.l10n.t('msg.gitignoreSaropaPrompt'),
-        vscode.l10n.t('action.addToGitignore'),
-        vscode.l10n.t('action.dontAskAgain'),
+        t('msg.gitignoreSaropaPrompt'),
+        t('action.addToGitignore'),
+        t('action.dontAskAgain'),
     );
-    if (action === vscode.l10n.t('action.addToGitignore')) {
+    if (action === t('action.addToGitignore')) {
         try {
             const suffix = content.endsWith('\n') ? '' : '\n';
             const entry = `${suffix}\n# Saropa Log Capture (index & cache)\n.saropa/\n`;
             await vscode.workspace.fs.writeFile(gitignoreUri, Buffer.from(content + entry, 'utf-8'));
         } catch (err) {
-            vscode.window.showErrorMessage(vscode.l10n.t('msg.failedUpdateGitignore', String(err)));
+            vscode.window.showErrorMessage(t('msg.failedUpdateGitignore', String(err)));
         }
     }
     await context.workspaceState.update(STATE_KEY_SAROPA, true);
