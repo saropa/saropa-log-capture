@@ -15,7 +15,7 @@ export function getBookmarkPanelHtml(): string {
             <button id="bookmark-delete-all" class="bookmark-panel-action" title="Delete All Bookmarks">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close">&times;</button>
+            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="bookmark-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">

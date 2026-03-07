@@ -11,9 +11,13 @@ var sessionNavCurrentEl = document.getElementById('session-nav-current');
 var sessionNavTotalEl = document.getElementById('session-nav-total');
 
 function updateSessionNav(hasPrev, hasNext, index, total) {
+    /* Suppress CSS transition to avoid visible jump when switching files. */
+    var wrapper = document.getElementById('session-nav-wrapper');
+    if (wrapper) { wrapper.style.transition = 'none'; }
     if (!hasPrev && !hasNext) {
         sessionNav.classList.remove('visible');
         if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
+        if (wrapper) requestAnimationFrame(function() { wrapper.style.transition = ''; });
         return;
     }
     sessionNav.classList.add('visible');
@@ -22,6 +26,7 @@ function updateSessionNav(hasPrev, hasNext, index, total) {
     sessionPrevBtn.disabled = !hasPrev;
     sessionNextBtn.disabled = !hasNext;
     if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
+    if (wrapper) requestAnimationFrame(function() { wrapper.style.transition = ''; });
 }
 
 sessionPrevBtn.addEventListener('click', function() {
