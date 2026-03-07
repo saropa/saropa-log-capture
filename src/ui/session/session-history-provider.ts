@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig, getFileTypeGlob, getLogDirectoryUri, readTrackedFiles } from '../../modules/config/config';
-import { SessionMetadataStore, migrateSidecarsInDirectory } from '../../modules/session/session-metadata';
+import { SessionMetadataStore, migrateSidecarsInDirectory, type SessionMeta } from '../../modules/session/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
     isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, totalLineCount,
@@ -20,6 +20,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
     private showTrash = false;
     private refreshTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Cached result from the last successful fetch (default log dir only). */
+    private itemsCache: TreeItem[] | undefined;
+    /** Guards against overlapping fetch calls — callers share the same promise. */
+    private fetchInFlight: Promise<TreeItem[]> | undefined;
 
     constructor() {
         this.setupWatcher();
@@ -49,7 +53,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.activeUri;
     }
 
+    /** Invalidate items cache and notify the tree view to re-fetch. */
     refresh(): void {
+        this.itemsCache = undefined;
+        this.fetchInFlight = undefined;
         this._onDidChange.fire();
     }
 
@@ -107,6 +114,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         for (const key of this.metaCache.keys()) {
             if (key.startsWith(prefix)) { this.metaCache.delete(key); break; }
         }
+        this.itemsCache = undefined;
     }
 
     /** Find a top-level tree item whose URI matches (or whose split group contains it). */
@@ -154,53 +162,78 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (element && isSplitGroup(element)) {
             return element.parts.sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
         }
-        return this.fetchItems(this.showTrash);
+        const all = await this.getCachedOrFetch();
+        return this.showTrash ? all : all.filter(i => isSplitGroup(i) || !i.trashed);
     }
 
     /** Fetch all items including trashed (for the webview session panel). */
     async getAllChildren(): Promise<TreeItem[]> {
-        return this.fetchItems(true);
+        return this.getCachedOrFetch();
     }
 
     /** Like getAllChildren but from an optional root folder (for Project Logs panel override). */
     async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
-        return this.fetchItems(true, logDirOverride);
+        if (logDirOverride) { return this.fetchItemsCore(logDirOverride); }
+        return this.getCachedOrFetch();
+    }
+
+    /** Return cached items if available, or deduplicate a single in-flight fetch. */
+    private async getCachedOrFetch(): Promise<TreeItem[]> {
+        if (this.itemsCache) { return this.itemsCache; }
+        if (this.fetchInFlight) { return this.fetchInFlight; }
+        // Capture local ref so a concurrent refresh() can't corrupt state:
+        // if refresh() clears fetchInFlight while this fetch runs, the stale
+        // completion won't overwrite the cache or clear the new in-flight ref.
+        const promise = this.fetchItemsCore().then(items => {
+            if (this.fetchInFlight === promise) {
+                this.itemsCache = items;
+                this.fetchInFlight = undefined;
+            }
+            return items;
+        }).catch(() => {
+            if (this.fetchInFlight === promise) { this.fetchInFlight = undefined; }
+            return [];
+        });
+        this.fetchInFlight = promise;
+        return promise;
     }
 
     private static migratedDirsThisActivation = new Set<string>();
 
-    private async fetchItems(includeTrash: boolean, logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
+    private async fetchItemsCore(logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (!folder && !logDirOverride) { return []; }
         const configuredDir = folder ? getLogDirectoryUri(folder) : undefined;
         const logDir = logDirOverride ?? configuredDir!;
-        // Migrate configured log dir, override (if any), and workspace root so we remove all legacy sidecars.
-        const allDirs = [configuredDir, logDirOverride, folder?.uri].filter((d): d is vscode.Uri => d !== undefined && d !== null);
-        const seen = new Set<string>();
-        const dirsToMigrate = allDirs.filter(d => {
-            const k = d.toString();
-            if (seen.has(k)) { return false; }
-            seen.add(k);
-            return true;
-        });
-        for (const dir of dirsToMigrate) {
-            const key = dir.toString();
-            if (!SessionHistoryProvider.migratedDirsThisActivation.has(key)) {
-                SessionHistoryProvider.migratedDirsThisActivation.add(key);
-                await migrateSidecarsInDirectory(dir, folder ?? undefined);
-            }
-        }
+        await this.migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride);
         try {
             const { fileTypes, includeSubfolders } = getConfig();
             const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
-            const items = await Promise.all(logFiles.map(rel => this.loadMetadata(logDir, rel)));
+            const centralMeta = await this.metaStore.loadAllMetadata(logDir);
+            const items = await this.loadBatch(logDir, logFiles, centralMeta);
             this.pruneCache(items);
-            const visible = includeTrash ? items : items.filter(i => !i.trashed);
-            const grouped = groupSplitFiles(visible);
-            const sorted = grouped.sort((a, b) => b.mtime - a.mtime);
-            return sorted;
+            const grouped = groupSplitFiles(items);
+            return grouped.sort((a, b) => b.mtime - a.mtime);
         } catch {
             return [];
+        }
+    }
+
+    /** Run one-time sidecar migration for all relevant directories. */
+    private async migrateIfNeeded(
+        folder: vscode.WorkspaceFolder | undefined,
+        configuredDir: vscode.Uri | undefined,
+        logDirOverride: vscode.Uri | undefined,
+    ): Promise<void> {
+        const allDirs = [configuredDir, logDirOverride, folder?.uri]
+            .filter((d): d is vscode.Uri => d !== undefined && d !== null);
+        const seen = new Set<string>();
+        for (const dir of allDirs) {
+            const key = dir.toString();
+            if (seen.has(key) || SessionHistoryProvider.migratedDirsThisActivation.has(key)) { continue; }
+            seen.add(key);
+            SessionHistoryProvider.migratedDirsThisActivation.add(key);
+            await migrateSidecarsInDirectory(dir, folder ?? undefined);
         }
     }
 
@@ -212,9 +245,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
 
     private setupWatcher(): void {
         const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder) {
-            return;
-        }
+        if (!folder) { return; }
         const logDir = getLogDirectoryUri(folder);
         const { fileTypes, includeSubfolders } = getConfig();
         const glob = includeSubfolders ? `**/${getFileTypeGlob(fileTypes)}` : getFileTypeGlob(fileTypes);
@@ -247,34 +278,64 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         }
     }
 
-    private async loadMetadata(logDir: vscode.Uri, filename: string): Promise<SessionMetadata> {
+    /** Load metadata for all files with bounded concurrency (max 8 parallel). */
+    private async loadBatch(
+        logDir: vscode.Uri,
+        files: readonly string[],
+        centralMeta: ReadonlyMap<string, SessionMeta>,
+    ): Promise<SessionMetadata[]> {
+        const results: SessionMetadata[] = new Array(files.length);
+        const limit = 8;
+        let index = 0;
+        const run = async (): Promise<void> => {
+            while (index < files.length) {
+                const i = index++;
+                results[i] = await this.loadMetadata(logDir, files[i], centralMeta);
+            }
+        };
+        const count = Math.min(limit, files.length);
+        await Promise.all(Array.from({ length: count }, () => run()));
+        return results;
+    }
+
+    private async loadMetadata(
+        logDir: vscode.Uri,
+        filename: string,
+        centralMeta: ReadonlyMap<string, SessionMeta>,
+    ): Promise<SessionMetadata> {
         const uri = vscode.Uri.joinPath(logDir, filename);
         const stat = await vscode.workspace.fs.stat(uri);
         const cacheKey = `${uri.toString()}|${stat.mtime}|${stat.size}`;
         const cached = this.metaCache.get(cacheKey);
         if (cached) { return cached; }
+        const relKey = vscode.workspace.asRelativePath(uri).replace(/\\/g, '/');
+        const sidecar = centralMeta.get(relKey) ?? {};
+        const hasCachedSev = sidecar.errorCount !== undefined && sidecar.fwCount !== undefined;
         let meta: SessionMetadata = { uri, filename, size: stat.size, mtime: stat.mtime };
-        meta = await parseHeader(uri, meta);
-        const sidecar = await this.metaStore.loadMetadata(uri);
-        if (sidecar.displayName) { meta = { ...meta, displayName: sidecar.displayName }; }
-        if (sidecar.tags && sidecar.tags.length > 0) { meta = { ...meta, tags: sidecar.tags }; }
-        if (sidecar.autoTags && sidecar.autoTags.length > 0) { meta = { ...meta, autoTags: sidecar.autoTags }; }
-        if (sidecar.correlationTags && sidecar.correlationTags.length > 0) {
-            meta = { ...meta, correlationTags: sidecar.correlationTags };
-        }
-        if (sidecar.trashed) { meta = { ...meta, trashed: true }; }
-        if (sidecar.errorCount !== undefined && sidecar.fwCount !== undefined) {
-            meta = { ...meta, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
-        } else if (meta.errorCount !== undefined) {
-            sidecar.errorCount = meta.errorCount;
-            sidecar.warningCount = meta.warningCount;
-            sidecar.perfCount = meta.perfCount;
-            sidecar.anrCount = meta.anrCount;
-            sidecar.fwCount = meta.fwCount;
-            sidecar.infoCount = meta.infoCount;
-            this.metaStore.saveMetadata(uri, sidecar).catch(() => {});
-        }
+        meta = await parseHeader(uri, meta, hasCachedSev);
+        meta = this.applySidecar(meta, sidecar, uri, hasCachedSev);
         this.metaCache.set(cacheKey, meta);
         return meta;
+    }
+
+    /** Merge sidecar metadata into the parsed session metadata. */
+    private applySidecar(
+        meta: SessionMetadata, sidecar: SessionMeta,
+        uri: vscode.Uri, hasCachedSev: boolean,
+    ): SessionMetadata {
+        let result = meta;
+        if (sidecar.displayName) { result = { ...result, displayName: sidecar.displayName }; }
+        if (sidecar.tags?.length) { result = { ...result, tags: sidecar.tags }; }
+        if (sidecar.autoTags?.length) { result = { ...result, autoTags: sidecar.autoTags }; }
+        if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }
+        if (sidecar.trashed) { result = { ...result, trashed: true }; }
+        if (hasCachedSev) {
+            return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
+        }
+        if (result.errorCount !== undefined) {
+            const toSave = { ...sidecar, errorCount: result.errorCount, warningCount: result.warningCount, perfCount: result.perfCount, anrCount: result.anrCount, fwCount: result.fwCount, infoCount: result.infoCount };
+            this.metaStore.saveMetadata(uri, toSave).catch(() => {});
+        }
+        return result;
     }
 }

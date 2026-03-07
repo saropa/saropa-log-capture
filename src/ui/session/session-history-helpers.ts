@@ -15,8 +15,8 @@ const footerCountRe = /===\s*SESSION END\b.*?(\d[\d,]*)\s+lines\s*===/;
 /** Regex to extract ISO date from the SESSION END footer. */
 const footerDateRe = /===\s*SESSION END[\s\u2014\u2013-]+(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)/;
 
-/** Parse header fields, footer line count, and timestamp presence from a log file. */
-export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promise<SessionMetadata> {
+/** Parse header fields, footer line count, and timestamp presence from a log file. Skips severity scan when counts are already cached in the sidecar. */
+export async function parseHeader(uri: vscode.Uri, base: SessionMetadata, skipSeverityScan = false): Promise<SessionMetadata> {
     try {
         const raw = await vscode.workspace.fs.readFile(uri);
         const text = Buffer.from(raw).toString('utf-8');
@@ -26,6 +26,9 @@ export async function parseHeader(uri: vscode.Uri, base: SessionMetadata): Promi
         const lineCount = parseLineCount(text);
         const fields = extractFields(block);
         const durationMs = parseDuration(text, fields.date);
+        if (skipSeverityScan) {
+            return { ...base, ...fields, hasTimestamps, lineCount, durationMs };
+        }
         const sev = countSeverities(extractBody(text));
         return {
             ...base, ...fields, hasTimestamps, lineCount, durationMs,

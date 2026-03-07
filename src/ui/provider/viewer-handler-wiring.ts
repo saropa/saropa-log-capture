@@ -143,9 +143,11 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     const rootLabel = getSessionRootPath();
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
+  let sessionListTimer: ReturnType<typeof setTimeout> | undefined;
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath());
-    void refreshSessionList();
+    if (sessionListTimer) { clearTimeout(sessionListTimer); }
+    sessionListTimer = setTimeout(() => { void refreshSessionList(); }, 150);
   });
   /** Browse: use lastBrowse or default log dir as defaultUri so picker never opens at system default. */
   target.setBrowseSessionRootHandler?.(async () => {

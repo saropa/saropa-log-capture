@@ -215,6 +215,18 @@ export class SessionMetadataStore {
         }
     }
 
+    /**
+     * Read the central metadata file once and return all entries keyed by relative path.
+     * Used by SessionHistoryProvider to avoid N reads per refresh cycle.
+     */
+    async loadAllMetadata(logDir: vscode.Uri): Promise<ReadonlyMap<string, SessionMeta>> {
+        const folder = vscode.workspace.getWorkspaceFolder(logDir) ?? vscode.workspace.workspaceFolders?.[0];
+        if (!folder) { return new Map(); }
+        const centralUri = vscode.Uri.joinPath(getLogDirectoryUri(folder), '.session-metadata.json');
+        const data = await this.readCentral(centralUri);
+        return new Map(Object.entries(data));
+    }
+
     private getCentralMetaUri(logUri: vscode.Uri): vscode.Uri | undefined {
         const folder = vscode.workspace.getWorkspaceFolder(logUri) ?? vscode.workspace.workspaceFolders?.[0];
         if (!folder) { return undefined; }
