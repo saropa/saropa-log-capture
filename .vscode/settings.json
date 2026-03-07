@@ -11,6 +11,7 @@
   // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
   "typescript.tsc.autoDetect": "off",
   "cSpell.words": [
+    "basenames",
     "clippy",
     "colorama",
     "debuggee",
@@ -25,6 +26,7 @@
     "grayscale",
     "jank",
     "journalctl",
+    "Kykto",
     "linecap",
     "linejoin",
     "linkify",
@@ -58,6 +60,7 @@
     "stackable",
     "Subfolders",
     "Toggleable",
+    "unclickable",
     "unpushed",
     "viewports",
     "visibilitychange",
@@ -86,5 +89,8 @@
       "keyword": "warning",
       "alert": "badge"
     }
+  ],
+  "saropaLogCapture.integrations.adapters": [
+    "packages"
   ]
 }
