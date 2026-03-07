@@ -50,19 +50,18 @@ export function getContentStyles(): string {
 .anr-warning { color: var(--vscode-editorWarning-foreground, #fc0); }
 
 /* ===================================================================
-   Jump-to-Bottom Button
-   Inline button shown at bottom of log content when user scrolls away.
-   Positioned absolute within #log-content container.
+   Jump-to-Top / Jump-to-Bottom Buttons
+   Floating buttons in log-content-wrapper, shown when content
+   exceeds SCROLL_BTN_THRESHOLD of viewport height.
    =================================================================== */
 #log-content {
     position: relative;
 }
 @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 0.85; transform: translateY(0); } }
-#jump-btn {
+#jump-btn, #jump-top-btn {
     display: none;
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    right: 20px;
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
@@ -71,10 +70,14 @@ export function getContentStyles(): string {
     border-radius: 4px;
     font-size: 11px;
     opacity: 0.85;
+    z-index: 15;
     transition: opacity 0.2s ease;
     animation: fade-in 0.2s ease-out;
+    pointer-events: auto;
 }
-#jump-btn:hover {
+#jump-btn { bottom: 8px; }
+#jump-top-btn { top: 8px; }
+#jump-btn:hover, #jump-top-btn:hover {
     opacity: 1;
     background: var(--vscode-list-hoverBackground);
 }

@@ -9,12 +9,39 @@ var spacerTop = document.getElementById('spacer-top');
 var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
+var jumpTopBtn = document.getElementById('jump-top-btn');
+/** Only show scroll buttons when content exceeds this fraction of the viewport height. */
+var SCROLL_BTN_THRESHOLD = 1.5;
 var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
-if (footerTextEl) footerTextEl.addEventListener('click', function(e) {
-    if (e.target && e.target.classList && e.target.classList.contains('footer-filename')) vscodeApi.postMessage({ type: 'revealLogFile' });
-});
+/* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
+var _fnPressTimer = null;
+var _fnLongFired = false;
+if (footerTextEl) {
+    footerTextEl.addEventListener('mousedown', function(e) {
+        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        _fnLongFired = false;
+        _fnPressTimer = setTimeout(function() {
+            _fnLongFired = true;
+            vscodeApi.postMessage({ type: 'copyCurrentFilePath' });
+            e.target.title = 'Copied!';
+            setTimeout(function() { e.target.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
+        }, 500);
+    });
+    footerTextEl.addEventListener('mouseup', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
+    footerTextEl.addEventListener('mouseleave', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
+    footerTextEl.addEventListener('click', function(e) {
+        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        if (_fnLongFired) { _fnLongFired = false; return; }
+        vscodeApi.postMessage({ type: 'revealLogFile' });
+    });
+    footerTextEl.addEventListener('dblclick', function(e) {
+        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        e.preventDefault();
+        vscodeApi.postMessage({ type: 'openCurrentFileFolder' });
+    });
+}
 var wrapToggle = document.getElementById('wrap-toggle');
 
 var vscodeApi = acquireVsCodeApi();
@@ -42,7 +69,9 @@ function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
     var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
     autoScroll = atBottom; renderViewport(false);
-    jumpBtn.style.display = atBottom ? 'none' : 'block';
+    var isTall = logEl.scrollHeight > logEl.clientHeight * SCROLL_BTN_THRESHOLD;
+    jumpBtn.style.display = (!atBottom && isTall) ? 'block' : 'none';
+    if (jumpTopBtn) jumpTopBtn.style.display = (logEl.scrollTop > logEl.clientHeight * 0.5 && isTall) ? 'block' : 'none';
 }
 
 logEl.addEventListener('scroll', function() {
@@ -84,6 +113,12 @@ viewportEl.addEventListener('click', function(e) {
 function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 jumpBtn.addEventListener('click', jumpToBottom);
+if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {
+    if (window.isContextMenuOpen) return;
+    if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+    suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false;
+    autoScroll = false; jumpTopBtn.style.display = 'none';
+});
 
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
@@ -108,7 +143,7 @@ function updateFooterText() {
     if (prefix) footerTextEl.appendChild(document.createTextNode(prefix));
     if (currentFilename) {
         var fn = document.createElement('span');
-        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Reveal in Session History';
+        fn.className = 'footer-filename'; fn.textContent = currentFilename; fn.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder';
         footerTextEl.appendChild(fn);
     }
     if (loadTruncatedInfo) {

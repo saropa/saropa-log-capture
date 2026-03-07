@@ -11,8 +11,8 @@ export function getFindPanelStyles(): string {
    Find Panel — slide-out (same pattern as session panel)
    =================================================================== */
 .find-panel {
+    width: 100%;
     min-width: 280px;
-    max-width: 400px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
@@ -36,17 +36,44 @@ export function getFindPanelStyles(): string {
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
+.find-panel-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.find-header-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+.find-header-btn:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.find-header-btn.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
+    border-color: var(--vscode-focusBorder);
+}
+
 .find-panel-close {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 16px;
     cursor: pointer;
-    padding: 0 4px;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
 }
 
 .find-panel-close:hover {
     color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 /* --- Search input row --- */

@@ -8,6 +8,12 @@ import {
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
 import { parseHeader, buildDescription, buildTooltip, formatCount } from './session-history-helpers';
 
+/** Extract the basename from a relative path (strip folder prefix). */
+function getBasename(name: string): string {
+    const idx = name.lastIndexOf('/');
+    return idx >= 0 ? name.substring(idx + 1) : name;
+}
+
 /** Tree data provider for listing past log sessions from the reports directory. */
 export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable {
     private readonly _onDidChange = new vscode.EventEmitter<void>();
@@ -24,6 +30,8 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private itemsCache: TreeItem[] | undefined;
     /** Guards against overlapping fetch calls — callers share the same promise. */
     private fetchInFlight: Promise<TreeItem[]> | undefined;
+    /** Basenames that appear more than once — need subfolder for disambiguation. */
+    private duplicateBasenames = new Set<string>();
 
     constructor() {
         this.setupWatcher();
@@ -69,7 +77,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
 
     private getSessionTreeItem(item: SessionMetadata): vscode.TreeItem {
         const isActive = this.activeUri?.toString() === item.uri.toString();
-        const rawLabel = item.displayName ?? item.filename;
+        const fullLabel = item.displayName ?? item.filename;
+        const bn = getBasename(fullLabel);
+        const rawLabel = this.duplicateBasenames.has(bn) ? fullLabel : bn;
         const label = applyDisplayOptions(rawLabel, this.displayOptions);
         const displayLabel = isActive ? `● ${label}` : label;
         const ti = new vscode.TreeItem(displayLabel, vscode.TreeItemCollapsibleState.None);
@@ -188,6 +198,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
             if (this.fetchInFlight === promise) {
                 this.itemsCache = items;
                 this.fetchInFlight = undefined;
+                this.computeDuplicateBasenames(items);
             }
             return items;
         }).catch(() => {
@@ -267,6 +278,22 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         if (this.activeLineCount > 10_000) { return 30_000; }
         if (this.activeLineCount > 1_000) { return 10_000; }
         return 3_000;
+    }
+
+    /** Find basenames that appear more than once (need subfolder prefix). */
+    private computeDuplicateBasenames(items: readonly TreeItem[]): void {
+        const counts = new Map<string, number>();
+        for (const item of items) {
+            const label = isSplitGroup(item)
+                ? (item.displayName ?? item.baseFilename)
+                : (item.displayName ?? item.filename);
+            const bn = getBasename(label);
+            counts.set(bn, (counts.get(bn) ?? 0) + 1);
+        }
+        this.duplicateBasenames = new Set<string>();
+        for (const [bn, count] of counts) {
+            if (count > 1) { this.duplicateBasenames.add(bn); }
+        }
     }
 
     /** Remove cache entries for files no longer present on disk. */
