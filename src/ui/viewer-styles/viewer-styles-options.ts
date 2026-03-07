@@ -14,8 +14,8 @@ export function getOptionsStyles(): string {
    organized into logical sections.
    =================================================================== */
 .options-panel {
+    width: 100%;
     min-width: 280px;
-    max-width: 400px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
     border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
@@ -44,14 +44,15 @@ export function getOptionsStyles(): string {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
-    font-size: 18px;
     cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
+    padding: 2px;
+    border-radius: 3px;
+    font-size: 14px;
 }
 
 .options-close:hover {
     color: var(--vscode-errorForeground, #f44);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .options-search-wrapper {
@@ -61,7 +62,7 @@ export function getOptionsStyles(): string {
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     padding: 4px 8px;
 }
-#options-search {
+#filters-search {
     flex: 1;
     min-width: 0;
     background: transparent;
