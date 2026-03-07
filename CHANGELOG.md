@@ -9,7 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 ---
+## [Unreleased]
+
+### Changed
+- **Project Logs list performance.** Items-level cache with fetch deduplication eliminates redundant directory scans and metadata loads on repeat opens. Bulk central metadata read (`.session-metadata.json` read once per refresh, not once per file). Severity scan skipped when sidecar already has cached counts. Concurrency-limited batch loading (max 8 parallel file reads). Debounced webview session list requests (150ms).
+
 ## [3.0.3] - 2026-03-05
+
+- Release publish
 
 ## [3.0.2] - 2026-03-05
 
@@ -1019,7 +1026,7 @@ We fixed the options panel not responding to clicks, duplicate elements, missing
 
 ## [0.1.6] - 2026-01-31
 
-We classify errors as CRITICAL, TRANSIENT, or BUG and let you filter or break on criticals.
+We classify errors as CRITICAL, TRANSIENT, or BUG and let you filter or break on critical issues.
 
 <!-- cspell:ignore ECONNREFUSED -->
 ### Added
