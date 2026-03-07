@@ -15,7 +15,7 @@ export function getTrashPanelHtml(): string {
             <button id="trash-empty-all" class="trash-panel-action" title="Empty Trash">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="trash-panel-close" class="trash-panel-close" title="Close">&times;</button>
+            <button id="trash-panel-close" class="trash-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="trash-panel-content">

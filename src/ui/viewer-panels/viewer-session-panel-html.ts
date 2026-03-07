@@ -22,7 +22,7 @@ export function getSessionPanelHtml(): string {
             <button id="session-refresh" class="session-panel-action" title="Refresh">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="session-close" class="session-panel-close" title="Close">&times;</button>
+            <button id="session-close" class="session-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="session-panel-toggles">

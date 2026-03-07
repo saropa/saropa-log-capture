@@ -9,7 +9,7 @@ export function getSearchPanelHtml(): string {
     return /* html */ `<div id="search-bar">
     <div class="search-header">
         <span>Search</span>
-        <button class="search-close" id="search-close" title="Close (Escape)">&times;</button>
+        <button class="search-close" id="search-close" title="Close (Escape)"><span class="codicon codicon-close"></span></button>
     </div>
     <div class="search-content">
         <div class="search-input-wrapper">
