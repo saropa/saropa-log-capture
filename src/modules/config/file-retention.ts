@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { t } from '../../l10n';
 import { getConfig, readTrackedFiles } from './config';
 import type { SessionMetadataStore } from '../session/session-metadata';
 import { getGlobalProjectIndexer } from '../project-indexer/project-indexer';
@@ -78,7 +79,7 @@ export async function enforceFileRetention(
     if (trashed > 0 && !hasNotifiedThisSession) {
         hasNotifiedThisSession = true;
         vscode.window.showInformationMessage(
-            vscode.l10n.t('msg.fileRetentionMoved', String(trashed), String(maxLogFiles)),
+            t('msg.fileRetentionMoved', String(trashed), String(maxLogFiles)),
         );
     }
 

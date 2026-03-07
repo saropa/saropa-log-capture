@@ -1,6 +1,7 @@
 /** Tool commands: index rebuild, pop-out, search, presets, templates, integrations, reset settings. */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { showSearchQuickPick } from './modules/search/log-search-ui';
 import { openLogAtLine } from './modules/search/log-search';
@@ -46,7 +47,7 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.copyFilePath', async (item: { uri: vscode.Uri }) => {
             if (!item?.uri) { return; }
             await vscode.env.clipboard.writeText(item.uri.fsPath);
-            vscode.window.showInformationMessage(vscode.l10n.t('msg.filePathCopied'));
+            vscode.window.showInformationMessage(t('msg.filePathCopied'));
         }),
         vscode.commands.registerCommand('saropaLogCapture.applyPreset', async () => {
             const preset = await pickPreset();
@@ -59,14 +60,14 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.toggleInlineDecorations', () => {
             const enabled = inlineDecorations.toggle();
             vscode.window.showInformationMessage(
-                enabled ? vscode.l10n.t('msg.inlineDecorationsEnabled') : vscode.l10n.t('msg.inlineDecorationsDisabled'),
+                enabled ? t('msg.inlineDecorationsEnabled') : t('msg.inlineDecorationsDisabled'),
             );
         }),
         vscode.commands.registerCommand('saropaLogCapture.applyTemplate', async () => {
             const template = await pickTemplate();
             if (template) {
                 await applyTemplate(template);
-                vscode.window.showInformationMessage(vscode.l10n.t('msg.templateApplied', template.name));
+                vscode.window.showInformationMessage(t('msg.templateApplied', template.name));
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.saveTemplate', async () => { await promptSaveTemplate(); }),
@@ -77,11 +78,11 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
 
 async function resetAllSettings(): Promise<void> {
     const answer = await vscode.window.showWarningMessage(
-        vscode.l10n.t('msg.resetSettingsConfirm'),
+        t('msg.resetSettingsConfirm'),
         { modal: true },
-        vscode.l10n.t('action.reset'),
+        t('action.reset'),
     );
-    if (answer !== vscode.l10n.t('action.reset')) { return; }
+    if (answer !== t('action.reset')) { return; }
 
     const ext = vscode.extensions.getExtension(extensionId);
     const props: Record<string, unknown> | undefined =
@@ -101,6 +102,6 @@ async function resetAllSettings(): Promise<void> {
     ]));
 
     vscode.window.showInformationMessage(
-        vscode.l10n.t('msg.settingsReset', String(keys.length)),
+        t('msg.settingsReset', String(keys.length)),
     );
 }
