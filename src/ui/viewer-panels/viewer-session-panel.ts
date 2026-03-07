@@ -26,11 +26,6 @@ export function getSessionPanelScript(): string {
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
-        if (sessionDisplayOptions.panelWidth >= MIN_PANEL_WIDTH) {
-            var w = sessionDisplayOptions.panelWidth;
-            sessionPanelEl.style.width = w + 'px';
-            if (typeof setPanelSlotWidth === 'function') setPanelSlotWidth(w);
-        }
         sessionPanelEl.classList.add('visible');
         requestSessionList();
     };
@@ -308,6 +303,11 @@ export function getSessionPanelScript(): string {
             var opts = e.data.options || sessionDisplayOptions;
             sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
             window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
+            /* Update slot width for any currently open panel. */
+            var slot = document.getElementById('panel-slot');
+            if (slot && parseInt(slot.style.width, 10) > 0) {
+                slot.style.width = window.__sharedPanelWidth + 'px';
+            }
             syncToggleButtons();
             if (cachedSessions) renderSessionList(cachedSessions);
         }
