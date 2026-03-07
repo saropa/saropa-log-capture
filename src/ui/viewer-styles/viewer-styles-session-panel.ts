@@ -11,6 +11,7 @@ export function getSessionPanelLayoutStyles(): string {
    Session Panel — slide-out (same pattern as search/options)
    =================================================================== */
 .session-panel {
+    width: 100%;
     min-width: 560px;
     height: 100%;
     background: var(--vscode-sideBar-background, var(--vscode-editor-background));
