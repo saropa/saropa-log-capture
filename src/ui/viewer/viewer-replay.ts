@@ -56,6 +56,29 @@ export function getReplayScript(): string {
     var speedSelect = document.getElementById('replay-speed');
     var scrubber = document.getElementById('replay-scrubber');
     var statusEl = document.getElementById('replay-status');
+    var ibReplay = document.getElementById('ib-replay');
+
+    /** Show or hide the icon bar replay button. */
+    function setReplayIconVisible(visible) {
+        if (!ibReplay) return;
+        ibReplay.classList.toggle('ib-replay-active', visible);
+    }
+
+    /** Update the icon bar replay icon to reflect play/pause state. */
+    function updateReplayIcon(playing) {
+        if (!ibReplay) return;
+        var icon = ibReplay.querySelector('.codicon');
+        if (!icon) return;
+        icon.className = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
+        ibReplay.title = playing ? 'Replay (playing)' : 'Replay (paused)';
+    }
+
+    /** Toggle the replay bar visibility. */
+    window.toggleReplayBar = function() {
+        if (!bar || !window.replayMode) return;
+        var visible = bar.style.display !== 'none';
+        bar.style.display = visible ? 'none' : 'flex';
+    };
 
     /** Apply extension replay config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs). */
     function applyReplayConfig(cfg) {
@@ -120,6 +143,7 @@ export function getReplayScript(): string {
             replayPlaying = false;
             if (playBtn) playBtn.style.display = '';
             if (pauseBtn) pauseBtn.style.display = 'none';
+            updateReplayIcon(false);
             if (statusEl) statusEl.textContent = 'Complete';
             if (typeof renderViewport === 'function') renderViewport(true);
             return;
@@ -145,6 +169,8 @@ export function getReplayScript(): string {
         if (bar) bar.style.display = 'none';
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
+        setReplayIconVisible(false);
+        updateReplayIcon(false);
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
     }
@@ -155,10 +181,12 @@ export function getReplayScript(): string {
         if (msg && msg.replayConfig) applyReplayConfig(msg.replayConfig);
         window.replayMode = true;
         window.replayCurrentIndex = 0;
-        if (bar) bar.style.display = 'flex';
+        /* Bar stays hidden — user toggles it via the icon bar button */
         replayPlaying = true;
         if (playBtn) playBtn.style.display = 'none';
         if (pauseBtn) pauseBtn.style.display = '';
+        setReplayIconVisible(true);
+        updateReplayIcon(true);
         updateReplayUi();
         scheduleNext();
     };
@@ -172,6 +200,7 @@ export function getReplayScript(): string {
         replayPlaying = true;
         playBtn.style.display = 'none';
         if (pauseBtn) pauseBtn.style.display = '';
+        updateReplayIcon(true);
         scheduleNext();
     });
     if (pauseBtn) pauseBtn.addEventListener('click', function() {
@@ -179,6 +208,7 @@ export function getReplayScript(): string {
         replayPlaying = false;
         playBtn.style.display = '';
         pauseBtn.style.display = 'none';
+        updateReplayIcon(false);
     });
     if (stopBtn) stopBtn.addEventListener('click', exitReplayMode);
     if (speedSelect) speedSelect.addEventListener('change', function() {
@@ -194,6 +224,7 @@ export function getReplayScript(): string {
         replayPlaying = false;
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
+        updateReplayIcon(false);
         updateReplayUi();
     });
 
@@ -218,10 +249,12 @@ export function getReplayScript(): string {
                 replayPlaying = false;
                 if (playBtn) playBtn.style.display = '';
                 if (pauseBtn) pauseBtn.style.display = 'none';
+                updateReplayIcon(false);
             } else {
                 replayPlaying = true;
                 if (playBtn) playBtn.style.display = 'none';
                 if (pauseBtn) pauseBtn.style.display = '';
+                updateReplayIcon(true);
                 scheduleNext();
             }
         }
