@@ -2,18 +2,17 @@ import * as vscode from 'vscode';
 import { getConfig, SaropaLogCaptureConfig } from '../config/config';
 import { SessionManager, DapOutputBody } from '../capture/tracker';
 import { LogSession } from '../capture/log-session';
-import { SourceLocation } from '../capture/log-session-helpers';
 import { StatusBar } from '../../ui/shared/status-bar';
 import { KeywordWatcher } from '../features/keyword-watcher';
 import { FloodGuard } from '../capture/flood-guard';
-import { ExclusionRule, testExclusion } from '../features/exclusion-matcher';
+import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
-import { DapMessage, DapDirection, formatDapMessage } from '../capture/dap-formatter';
+import { DapDirection } from '../capture/dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
-import {
-    initializeSession, finalizeSession, buildSessionStats,
-} from './session-lifecycle';
+import { initializeSession } from './session-lifecycle-init';
+import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
 import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
+import { processOutputEvent, processDapMessage } from './session-manager-events';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
@@ -78,52 +77,17 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
-        const session = this.sessions.get(sessionId);
-        // Buffer events arriving before async session init completes (DAP can fire before startSession returns).
-        if (!session) { this.earlyBuffer.add(sessionId, body); return; }
-        const config = this.cachedConfig;
-        if (!config.enabled) { return; }
-
-        const category = body.category ?? 'console';
-        const text = body.output.replace(/\r?\n$/, '');
-        if (text.length === 0) { return; }
-
-        if (!config.captureAll && !config.categories.includes(category)) { return; }
-        if (testExclusion(text, this.exclusionRules)) { return; }
-
-        const floodResult = this.floodGuard.check(text);
-        if (!floodResult.allow) { return; }
-        const now = new Date();
-
-        if (floodResult.suppressedCount) {
-            this.floodSuppressedTotal += floodResult.suppressedCount;
-            const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
-            session.appendLine(summary, 'system', now);
-            this.broadcastLine({
-                text: summary, isMarker: false, lineCount: session.lineCount,
-                category: 'system', timestamp: now,
-            });
-        }
-
-        const sourceLocation: SourceLocation | undefined =
-            body.source?.path ? { path: body.source.path, line: body.line, column: body.column } : undefined;
-        session.appendLine(text, category, now, sourceLocation);
-        // Broadcast to sidebar/pop-out and update watcher/auto-tagger (via broadcastLine).
-        this.categoryCounts[category] = (this.categoryCounts[category] ?? 0) + 1;
-        this.broadcastLine({
-            text, isMarker: false, lineCount: session.lineCount,
-            category, timestamp: now,
-            sourcePath: body.source?.path, sourceLine: body.line,
-        });
+        const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
+        processOutputEvent(
+            { sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
+            { counters, broadcastLine: (data) => this.broadcastLine(data) }, sessionId, body,
+        );
+        this.floodSuppressedTotal = counters.floodSuppressedTotal;
     }
 
     /** Called by the DAP tracker for all protocol messages (verbose mode). */
     onDapMessage(sessionId: string, msg: unknown, direction: DapDirection): void {
-        if (!this.cachedConfig.verboseDap) { return; }
-        const session = this.sessions.get(sessionId);
-        if (!session) { return; }
-
-        session.appendDapLine(formatDapMessage(msg as DapMessage, direction, new Date()));
+        processDapMessage({ config: this.cachedConfig, sessions: this.sessions }, sessionId, msg, direction);
     }
 
     /** Start capturing a debug session. */

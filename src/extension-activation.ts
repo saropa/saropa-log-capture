@@ -32,24 +32,7 @@ import { buildScopeContext } from './modules/storage/scope-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
-import { getDefaultIntegrationRegistry } from './modules/integrations';
-import { packageLockfileProvider } from './modules/integrations/providers/package-lockfile';
-import { buildCiProvider } from './modules/integrations/providers/build-ci';
-import { gitSourceCodeProvider } from './modules/integrations/providers/git-source-code';
-import { environmentSnapshotProvider } from './modules/integrations/providers/environment-snapshot';
-import { testResultsProvider } from './modules/integrations/providers/test-results';
-import { codeCoverageProvider } from './modules/integrations/providers/code-coverage';
-import { crashDumpsProvider } from './modules/integrations/providers/crash-dumps';
-import { windowsEventLogProvider } from './modules/integrations/providers/windows-event-log';
-import { dockerContainersProvider } from './modules/integrations/providers/docker-containers';
-import { performanceSnapshotProvider } from './modules/integrations/providers/performance-snapshot';
-import { terminalOutputProvider } from './modules/integrations/providers/terminal-output';
-import { linuxLogsProvider } from './modules/integrations/providers/linux-logs';
-import { externalLogsProvider } from './modules/integrations/providers/external-logs';
-import { securityAuditProvider } from './modules/integrations/providers/security-audit';
-import { databaseQueryLogsProvider } from './modules/integrations/providers/database-query-logs';
-import { httpNetworkProvider } from './modules/integrations/providers/http-network';
-import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
+import { registerAllIntegrations } from './activation-integrations';
 
 export interface ActivationRefs {
     sessionManager: SessionManagerImpl;
@@ -76,24 +59,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     // --- Integration registry (session start/end contributions; see docs/integrations/INTEGRATION_API.md) ---
-    const integrationRegistry = getDefaultIntegrationRegistry();
-    integrationRegistry.register(packageLockfileProvider);
-    integrationRegistry.register(buildCiProvider);
-    integrationRegistry.register(gitSourceCodeProvider);
-    integrationRegistry.register(environmentSnapshotProvider);
-    integrationRegistry.register(testResultsProvider);
-    integrationRegistry.register(codeCoverageProvider);
-    integrationRegistry.register(crashDumpsProvider);
-    integrationRegistry.register(windowsEventLogProvider);
-    integrationRegistry.register(dockerContainersProvider);
-    integrationRegistry.register(performanceSnapshotProvider);
-    integrationRegistry.register(terminalOutputProvider);
-    integrationRegistry.register(linuxLogsProvider);
-    integrationRegistry.register(externalLogsProvider);
-    integrationRegistry.register(securityAuditProvider);
-    integrationRegistry.register(databaseQueryLogsProvider);
-    integrationRegistry.register(httpNetworkProvider);
-    integrationRegistry.register(browserDevtoolsProvider);
+    registerAllIntegrations();
 
     // --- Webview providers: sidebar viewer, vitals, pop-out ---
     const inlineDecorations = new InlineDecorationsProvider();
