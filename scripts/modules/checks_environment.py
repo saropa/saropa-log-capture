@@ -15,7 +15,7 @@ from modules.constants import (
     REQUIRED_VSCODE_EXTENSIONS,
 )
 from modules.display import fail, fix, info, ok, warn
-from modules.utils import run
+from modules.utils import clear_extensions_cache, list_editor_extensions, run
 
 
 def check_vscode_cli() -> bool:
@@ -71,21 +71,17 @@ def check_global_npm_packages() -> bool:
 def check_vscode_extensions() -> bool:
     """Check and install required VS Code extensions.
 
-    Skips silently if the 'code' CLI isn't available. Otherwise lists
-    installed extensions and auto-installs any that are missing from
-    REQUIRED_VSCODE_EXTENSIONS.
+    Skips silently if the 'code' CLI isn't available. Uses the cached
+    extension list to avoid spawning extra VS Code windows on Windows.
     """
     if not shutil.which("code"):
         warn("Skipping VS Code extension check — 'code' CLI not available.")
         return True
 
-    result = run(["code", "--list-extensions"], check=False)
-    if result.returncode != 0:
-        warn("Could not list VS Code extensions.")
-        return True
-
-    # Case-insensitive comparison for extension IDs
-    installed = set(result.stdout.strip().lower().splitlines())
+    # Cached — reuses the same CLI call as get_installed_extension_versions()
+    ext_lines = list_editor_extensions("code")
+    # Lines are 'publisher.name@version'; extract IDs
+    installed = {line.split("@")[0] for line in ext_lines}
 
     all_ok = True
     for ext in REQUIRED_VSCODE_EXTENSIONS:
@@ -102,4 +98,5 @@ def check_vscode_extensions() -> bool:
                 all_ok = False
             else:
                 ok(f"Installed: {C.WHITE}{ext}{C.RESET}")
+                clear_extensions_cache()
     return all_ok

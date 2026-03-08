@@ -39,7 +39,7 @@ import { getErrorBreakpointHtml, getErrorBreakpointScript } from '../viewer-deco
 import { getStatsScript } from '../viewer/viewer-stats';
 import { getEditModalHtml, getEditModalScript } from '../viewer-context-menu/viewer-edit-modal';
 import { getScrollbarMinimapHtml, getScrollbarMinimapScript } from '../viewer/viewer-scrollbar-minimap';
-import { getSessionInfoPanelHtml, getSessionHeaderScript } from '../viewer-nav/viewer-session-header';
+import { getSessionHeaderScript } from '../viewer-nav/viewer-session-header';
 import { getExportModalHtml, getExportScript } from '../viewer-panels/viewer-export';
 import { getLayoutScript } from './viewer-layout';
 import { getScrollAnchorScript } from '../viewer/viewer-scroll-anchor';
@@ -151,7 +151,6 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getFindPanelHtml()}
     ${getBookmarkPanelHtml()}
     ${getTrashPanelHtml()}
-    ${getSessionInfoPanelHtml()}
     ${getFiltersPanelHtml()}
     ${getOptionsPanelHtml()}
     ${getCrashlyticsPanelHtml()}
