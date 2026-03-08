@@ -55,29 +55,54 @@ def get_ovsx_pat() -> str:
     return ""
 
 
+# Cache for `editor --list-extensions --show-versions` output.
+# Keyed by editor name ("code", "cursor"). Each call to the CLI can
+# spawn a VS Code / Cursor window on Windows, so we cache to call once.
+_extensions_cache: dict[str, set[str]] = {}
+
+
+def list_editor_extensions(editor: str = "code") -> set[str]:
+    """Return cached set of lowercase extension lines from the editor CLI.
+
+    Each line looks like 'publisher.name@version'. Returns empty set
+    if the CLI isn't available or the command fails. The result is
+    cached so the CLI is invoked at most once per editor per run.
+    """
+    if editor in _extensions_cache:
+        return _extensions_cache[editor]
+    if not shutil.which(editor):
+        _extensions_cache[editor] = set()
+        return set()
+    result = run(
+        [editor, "--list-extensions", "--show-versions"], check=False,
+    )
+    if result.returncode != 0:
+        _extensions_cache[editor] = set()
+        return set()
+    lines = set(result.stdout.strip().lower().splitlines())
+    _extensions_cache[editor] = lines
+    return lines
+
+
+def clear_extensions_cache() -> None:
+    """Clear the cached extension list after installing extensions."""
+    _extensions_cache.clear()
+
+
 def get_installed_extension_versions(
     extension_id: str = MARKETPLACE_EXTENSION_ID,
 ) -> dict[str, str]:
     """Return installed version per editor: {"vscode": "2.0.15", "cursor": "2.0.14"}.
 
-    Checks `code` and `cursor` CLI (--list-extensions --show-versions).
+    Uses cached CLI output so each editor is queried at most once.
     Only includes editors where the extension is installed. Empty dict = not installed.
     """
     out: dict[str, str] = {}
+    prefix = f"{extension_id.lower()}@"
     for editor in ("code", "cursor"):
-        if not shutil.which(editor):
-            continue
-        result = run(
-            [editor, "--list-extensions", "--show-versions"],
-            check=False,
-        )
-        if result.returncode != 0:
-            continue
-        prefix = f"{extension_id.lower()}@"
-        for line in result.stdout.strip().splitlines():
-            line = line.strip().lower()
+        for line in list_editor_extensions(editor):
             if line.startswith(prefix):
-                version = line[len(prefix) :].strip()
+                version = line[len(prefix):].strip()
                 if version:
                     out[editor] = version
                 break

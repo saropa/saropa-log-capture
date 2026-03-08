@@ -5,7 +5,6 @@ These checks validate the git state, project dependencies, build output,
 and version consistency before we attempt any package or publish operations.
 """
 
-import datetime
 import os
 import re
 import sys
@@ -279,14 +278,14 @@ def _changelog_has_unpublished_heading() -> bool:
     return False
 
 
-# First release heading: ## [x.y.z] or ## [x.y.z] - date (so we know where to insert [Unreleased])
+# First release heading: ## [x.y.z] (so we know where to insert [Unreleased])
 _FIRST_RELEASE_HEADING_RE = re.compile(r'^##\s*\[\d+\.\d+\.\d+\]', re.MULTILINE)
 
 
 def _ensure_unreleased_section() -> bool:
     """If CHANGELOG has no ## [Unreleased], insert it before the first ## [x.y.z] section.
 
-    Keeps Keep a Changelog convention; the stamp step will replace it with [version] - date.
+    Keeps Keep a Changelog convention; the stamp step will replace it with [version].
     Returns True if the file now has an unreleased heading (added or already present).
     """
     if _changelog_has_unpublished_heading():
@@ -319,7 +318,7 @@ def has_unreleased_section() -> bool:
 
     The [Unreleased] heading (per Keep a Changelog convention) indicates
     work-in-progress changes. During publish, it gets replaced with the
-    version number and today's date. Also accepts [Unpublished] / [Undefined].
+    version number. Also accepts [Unpublished] / [Undefined].
     """
     return _changelog_has_unpublished_heading()
 
@@ -394,11 +393,11 @@ def _ensure_untagged_version(version: str) -> tuple[str, bool]:
 
 
 def _stamp_changelog(version: str) -> bool:
-    """Replace '## [Unreleased]' (or [Unpublished]/[Undefined]) with '## [version] - date'.
+    """Replace '## [Unreleased]' (or [Unpublished]/[Undefined]) with '## [version]'.
 
-    Called during validation so the CHANGELOG is finalized before
-    packaging. If publish is cancelled, the change is uncommitted
-    and easily reverted with git.
+    Version-only heading (no date). Called during validation so the
+    CHANGELOG is finalized before packaging. If publish is cancelled,
+    the change is uncommitted and easily reverted with git.
     """
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     try:
@@ -408,8 +407,7 @@ def _stamp_changelog(version: str) -> bool:
         fail("Could not read CHANGELOG.md")
         return False
 
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    replacement = f'## [{version}] - {today}'
+    replacement = f'## [{version}]'
     updated, count = _UNPUBLISHED_HEADING_RE.subn(replacement, content)
     if count == 0:
         fail("Could not find '## [Unreleased]' (or [Unpublished]/[Undefined]) in CHANGELOG.md")
@@ -422,7 +420,7 @@ def _stamp_changelog(version: str) -> bool:
         fail("Could not write CHANGELOG.md")
         return False
 
-    ok(f"CHANGELOG: [Unreleased] → [{version}] - {today}")
+    ok(f"CHANGELOG: [Unreleased] → [{version}]")
     return True
 
 
@@ -447,7 +445,7 @@ def validate_version_changelog() -> tuple[str, bool]:
     3. CHANGELOG.md must have ## [Unreleased] or [Unpublished] or [Undefined]
     4. The version must not already be tagged (auto-bumps if so)
     5. User confirms or overrides the final version
-    6. Stamp CHANGELOG: that heading → [version] - today
+    6. Stamp CHANGELOG: that heading → [version]
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
