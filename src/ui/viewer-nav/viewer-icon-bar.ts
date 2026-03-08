@@ -25,9 +25,6 @@ export function getIconBarHtml(): string {
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span>
     </button>
-    <button id="ib-info" class="ib-icon" tabindex="0" title="Session Info" aria-label="Session Info">
-        <span class="codicon codicon-info"></span>
-    </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span>
         <span id="ib-trash-badge" class="ib-badge"></span>
@@ -36,6 +33,9 @@ export function getIconBarHtml(): string {
         <span class="codicon codicon-settings-gear"></span>
     </button>
     <div class="ib-separator"></div>
+    <button id="ib-replay" class="ib-icon" tabindex="0" title="Replay controls" aria-label="Replay controls">
+        <span class="codicon codicon-debug-start"></span>
+    </button>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span>
     </button>
@@ -111,7 +111,6 @@ export function getIconBarScript(): string {
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
         filters: document.getElementById('ib-filters'),
-        info: document.getElementById('ib-info'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
@@ -125,7 +124,6 @@ export function getIconBarScript(): string {
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
         if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
-        if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
@@ -166,8 +164,6 @@ export function getIconBarScript(): string {
             openBookmarkPanel();
         } else if (name === 'filters' && typeof openFiltersPanel === 'function') {
             openFiltersPanel();
-        } else if (name === 'info' && typeof openInfoPanel === 'function') {
-            openInfoPanel();
         } else if (name === 'trash' && typeof openTrashPanel === 'function') {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
@@ -207,9 +203,6 @@ export function getIconBarScript(): string {
     if (iconButtons.filters) {
         iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
     }
-    if (iconButtons.info) {
-        iconButtons.info.addEventListener('click', function() { setActivePanel('info'); });
-    }
     if (iconButtons.trash) {
         iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });
     }
@@ -227,6 +220,13 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
+    }
+
+    var replayBtn = document.getElementById('ib-replay');
+    if (replayBtn) {
+        replayBtn.addEventListener('click', function() {
+            if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
+        });
     }
 
     setActivePanel('sessions');
