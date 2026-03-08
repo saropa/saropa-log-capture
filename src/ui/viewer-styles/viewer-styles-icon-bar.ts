@@ -24,7 +24,7 @@ export function getIconBarStyles(): string {
     flex-direction: column;
     align-items: center;
     padding-top: 4px;
-    gap: 2px;
+    gap: 3px;
     background: var(--vscode-activityBar-background, var(--vscode-sideBar-background, var(--vscode-panel-background)));
     border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
 }
@@ -110,6 +110,14 @@ body[data-icon-bar="right"] .ib-badge {
     height: 1px;
     background: var(--vscode-panel-border);
     margin: 4px 0;
+}
+
+/* Replay icon hidden until replay mode is active. */
+#ib-replay {
+    display: none;
+}
+#ib-replay.ib-replay-active {
+    display: flex;
 }
 
 /* Crashlytics icon hidden until integrations.adapters includes "crashlytics". */
