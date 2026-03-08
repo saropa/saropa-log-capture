@@ -37,7 +37,6 @@ document.addEventListener('keydown', function(e) {
         if (typeof closeGotoLine === 'function') closeGotoLine(true);
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
-        if (typeof closeInfoPanel === 'function') closeInfoPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
         return;
