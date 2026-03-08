@@ -1,26 +1,11 @@
 /**
- * Session info panel for the log viewer webview.
+ * Session info tooltip and smart sticky header for the log viewer webview.
  *
- * Provides a slide-out panel (toggled via the icon bar) that shows full
- * session metadata. A compact one-line summary (adapter, project, date) is
- * shown in the session nav bar and hides on scroll down, reveals on scroll up
- * (smart sticky / scroll-up-reveal header).
+ * Session metadata is shown as a tooltip on the session count label
+ * and can be copied to clipboard via long-press. A compact one-line
+ * summary (adapter, project, date) is shown in the session nav bar
+ * and hides on scroll down, reveals on scroll up (smart sticky header).
  */
-
-/** Returns the HTML for the session info slide-out panel. */
-export function getSessionInfoPanelHtml(): string {
-    return /* html */ `
-<div id="info-panel" class="info-panel">
-    <div class="info-panel-header">
-        <span>Session Info</span>
-        <button id="info-panel-close" class="info-panel-close" title="Close">&times;</button>
-    </div>
-    <div class="info-panel-content">
-        <div id="session-info-grid" class="session-info-grid"></div>
-        <div id="info-panel-empty" class="info-panel-empty">No session info available</div>
-    </div>
-</div>`;
-}
 
 /** Returns the JavaScript for session info handling. */
 export function getSessionHeaderScript(): string {
@@ -43,61 +28,41 @@ function buildSessionPrefix(info) {
     return parts.join(' \\u00b7 ');
 }
 
-/** Show or hide the info icon and update the merged session-details line in the nav bar. */
+/** Build a multi-line text from session info for tooltip and clipboard. */
+function buildSessionInfoText(info) {
+    if (!info) return '';
+    var lines = [];
+    var keys = Object.keys(info);
+    for (var i = 0; i < keys.length; i++) {
+        lines.push(keys[i] + ': ' + info[keys[i]]);
+    }
+    return lines.join('\\n');
+}
+
+/** Update the session-details line and tooltip from session metadata. */
 function applySessionInfo(info) {
     sessionInfoData = info;
-    var ibBtn = document.getElementById('ib-info');
     var detailsEl = document.getElementById('session-details-inline');
-    var prefix = document.getElementById('session-info-prefix');
 
-    if (prefix) { prefix.remove(); }
     if (!info) {
-        if (ibBtn) ibBtn.style.display = 'none';
         if (detailsEl) detailsEl.textContent = '';
+        updateSessionInfoTooltip();
         if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
         return;
     }
 
-    if (ibBtn) ibBtn.style.display = '';
     if (detailsEl) detailsEl.textContent = buildSessionPrefix(info);
+    updateSessionInfoTooltip();
     if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
 }
 
-/** Open the session info slide-out panel. */
-window.openInfoPanel = function() {
-    var panel = document.getElementById('info-panel');
-    var emptyEl = document.getElementById('info-panel-empty');
-    var grid = document.getElementById('session-info-grid');
-    if (!panel) return;
-
-    if (!sessionInfoData) {
-        if (grid) grid.innerHTML = '';
-        if (emptyEl) emptyEl.style.display = '';
-    } else {
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (grid) {
-            var html = '';
-            var keys = Object.keys(sessionInfoData);
-            for (var i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                var val = sessionInfoData[key];
-                html += '<div class="session-info-row">';
-                html += '<span class="session-info-key">' + escapeHtml(key) + '</span>';
-                html += '<span class="session-info-value">' + escapeHtml(val) + '</span>';
-                html += '</div>';
-            }
-            grid.innerHTML = html;
-        }
-    }
-    panel.classList.add('visible');
-};
-
-/** Close the session info slide-out panel. */
-window.closeInfoPanel = function() {
-    var panel = document.getElementById('info-panel');
-    if (panel) panel.classList.remove('visible');
-    if (typeof clearActivePanel === 'function') clearActivePanel('info');
-};
+/** Set the tooltip on the session count label from stored session info. */
+function updateSessionInfoTooltip() {
+    var label = document.querySelector('.nav-bar-label');
+    if (!label) return;
+    var text = buildSessionInfoText(sessionInfoData);
+    label.title = text || '';
+}
 
 /** Wrapper is visible when session nav is visible or session details have text. */
 window.updateSessionNavWrapperVisibility = function() {
@@ -111,19 +76,42 @@ window.updateSessionNavWrapperVisibility = function() {
     else { wrapper.classList.remove('has-content'); }
 };
 
-// Close button
-var _infoClose = document.getElementById('info-panel-close');
-if (_infoClose) _infoClose.addEventListener('click', closeInfoPanel);
+/** Long-press on session count label copies session info to clipboard. */
+(function setupSessionInfoLongPress() {
+    var label = document.querySelector('.nav-bar-label');
+    if (!label) return;
+    var timer = null;
+    var longPressMs = 500;
 
-// Click outside → close
-document.addEventListener('click', function(e) {
-    var panel = document.getElementById('info-panel');
-    if (!panel || !panel.classList.contains('visible')) return;
-    if (panel.contains(e.target)) return;
-    var ibBtn = document.getElementById('ib-info');
-    if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-    closeInfoPanel();
-});
+    function cancelTimer() {
+        if (timer) { clearTimeout(timer); timer = null; }
+    }
+
+    function onLongPress() {
+        timer = null;
+        var text = buildSessionInfoText(sessionInfoData);
+        if (!text) return;
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+        if (typeof showCopyToast === 'function') { showCopyToast(); }
+    }
+
+    label.addEventListener('mousedown', function(e) {
+        if (e.button !== 0) return;
+        cancelTimer();
+        timer = setTimeout(onLongPress, longPressMs);
+    });
+    label.addEventListener('mouseup', cancelTimer);
+    label.addEventListener('mouseleave', cancelTimer);
+    label.addEventListener('touchstart', function(e) {
+        cancelTimer();
+        timer = setTimeout(onLongPress, longPressMs);
+    }, { passive: true });
+    label.addEventListener('touchend', cancelTimer);
+    label.addEventListener('touchmove', cancelTimer);
+    label.addEventListener('touchcancel', cancelTimer);
+
+    label.style.cursor = 'default';
+})();
 
 /** Smart sticky header: hide on scroll down, reveal on scroll up. */
 (function setupSmartStickyHeader() {
