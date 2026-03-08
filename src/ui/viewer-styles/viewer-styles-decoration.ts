@@ -199,7 +199,7 @@ export function getDecorationStyles(): string {
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
     content: ''; position: absolute; left: 0.85em; width: 0.23em;
-    background: var(--bar-color); pointer-events: none; z-index: 1;
+    background: var(--bar-color); opacity: 0.45; pointer-events: none; z-index: 1;
 }
 .bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
 .bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
