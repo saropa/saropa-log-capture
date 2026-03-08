@@ -18,6 +18,8 @@ import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
 import { buildSessionListPayload, openSourceFile } from "./viewer-provider-helpers";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
+import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
+import { handleSessionAction } from "./viewer-handler-sessions";
 
 /** Workspace state: Project Logs panel root folder override (URI string). */
 export const SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
@@ -69,7 +71,19 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     if (p !== undefined) { broadcaster.setPaused(p); }
   });
 
-  // --- Exclusions (persist to workspace config, then push to broadcaster) ---
+  wireExclusionHandlers(target, broadcaster);
+  wireContentHandlers(target, sessionManager, broadcaster, historyProvider);
+
+  // --- Session list, browse/clear root, session actions ---
+  wireSessionListHandlers(target, deps);
+  wireBookmarkHandlers(target, {
+    sessionManager, broadcaster,
+    bookmarkStore: deps.bookmarkStore,
+    onOpenBookmark: deps.onOpenBookmark,
+  });
+}
+
+function wireExclusionHandlers(target: HandlerTarget, broadcaster: ViewerBroadcaster): void {
   target.setExclusionAddedHandler(async (pattern) => {
     const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
     const cur = cfg.get<string[]>('exclusions', []);
@@ -86,13 +100,19 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
       broadcaster.setExclusions(updated);
     }
   });
+}
 
-  // --- Annotation, preset save, search (codebase / sessions), analyze line, add to watch ---
+function wireContentHandlers(
+  target: HandlerTarget,
+  sessionManager: SessionManagerImpl,
+  broadcaster: ViewerBroadcaster,
+  historyProvider: SessionHistoryProvider,
+): void {
   target.setAnnotationPromptHandler(async (lineIndex, current) => {
     const text = await vscode.window.showInputBox({
-    prompt: t('prompt.annotateLine', String(lineIndex + 1)),
-    value: current,
-  });
+      prompt: t('prompt.annotateLine', String(lineIndex + 1)),
+      value: current,
+    });
     if (text === undefined) { return; }
     broadcaster.setAnnotation(lineIndex, text);
     const session = sessionManager.getActiveSession();
@@ -126,14 +146,18 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
     await cfg.update('watchPatterns', [...cur, { pattern: text }], vscode.ConfigurationTarget.Workspace);
     vscode.window.showInformationMessage(t('msg.addedToWatchList', text));
   });
+}
 
-  // --- Session list, browse/clear root, session actions (open, trash, export, etc.) ---
-  const getSessionRootPath = (): string => {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
-    const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
-    return overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "No workspace");
-  };
+function getSessionRootPath(context: vscode.ExtensionContext): string {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+  const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+  return overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "No workspace");
+}
+
+/** Wire session list, browse root, clear root, and session action handlers. */
+function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
+  const { historyProvider, broadcaster } = deps;
   const refreshSessionList = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
@@ -141,25 +165,22 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
       ? await historyProvider.getAllChildrenFromRoot(overrideUri)
       : await historyProvider.getAllChildren();
     const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
-    const rootLabel = getSessionRootPath();
+    const rootLabel = getSessionRootPath(deps.context);
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
   let sessionListTimer: ReturnType<typeof setTimeout> | undefined;
   target.setSessionListHandler(() => {
-    broadcaster.sendSessionListLoading(getSessionRootPath());
+    broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
     if (sessionListTimer) { clearTimeout(sessionListTimer); }
     sessionListTimer = setTimeout(() => { void refreshSessionList(); }, 150);
   });
-  /** Browse: use lastBrowse or default log dir as defaultUri so picker never opens at system default. */
   target.setBrowseSessionRootHandler?.(async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     const defaultLogUri = folder ? getLogDirectoryUri(folder) : undefined;
     const lastBrowse = deps.context.workspaceState.get<string>(SESSION_PANEL_LAST_BROWSE_KEY);
     const defaultUri = lastBrowse ? vscode.Uri.parse(lastBrowse) : defaultLogUri;
     const uris = await vscode.window.showOpenDialog({
-      canSelectFolders: true,
-      canSelectMany: false,
-      defaultUri: defaultUri ?? undefined,
+      canSelectFolders: true, canSelectMany: false, defaultUri: defaultUri ?? undefined,
     });
     if (uris?.length) {
       await deps.context.workspaceState.update(SESSION_PANEL_ROOT_KEY, uris[0].toString());
@@ -167,7 +188,6 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
       await refreshSessionList();
     }
   });
-  /** Reset to default: clear override and set lastBrowse to default path so next browse opens there. */
   target.setClearSessionRootHandler?.(async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     const defaultLogUri = folder ? getLogDirectoryUri(folder) : undefined;
@@ -179,132 +199,7 @@ export function wireSharedHandlers(target: HandlerTarget, deps: HandlerDeps): vo
   });
   target.setSessionActionHandler((action, uriString, filename) => {
     void handleSessionAction(action, uriString, filename, {
-      historyProvider,
-      refreshList: refreshSessionList,
-      openSessionForReplay: deps.openSessionForReplay,
+      historyProvider, refreshList: refreshSessionList, openSessionForReplay: deps.openSessionForReplay,
     });
   });
-
-  // --- Bookmarks: add, request list, delete, edit note, open ---
-  target.setAddBookmarkHandler((lineIndex, text, fileUri) => {
-    const uri = fileUri ?? sessionManager.getActiveSession()?.fileUri;
-    if (!uri) { return; }
-    const filename = uri.path.split('/').pop() ?? '';
-    deps.bookmarkStore.add({ fileUri: uri.toString(), filename, lineIndex, lineText: text, note: '' });
-  });
-  target.setBookmarkActionHandler((msg) => {
-    const type = String(msg.type ?? '');
-    if (type === 'requestBookmarks') {
-      broadcaster.sendBookmarkList(deps.bookmarkStore.getAll() as Record<string, unknown>);
-    } else if (type === 'deleteBookmark') {
-      deps.bookmarkStore.remove(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''));
-    } else if (type === 'deleteFileBookmarks') {
-      void confirmDeleteFileBookmarks(deps.bookmarkStore, msg);
-    } else if (type === 'deleteAllBookmarks') {
-      void confirmDeleteAllBookmarks(deps.bookmarkStore);
-    } else if (type === 'editBookmarkNote') {
-      void promptEditBookmarkNote(deps.bookmarkStore, msg);
-    } else if (type === 'openBookmark') {
-      deps.onOpenBookmark?.(String(msg.fileUri ?? ''), Number(msg.lineIndex ?? 0));
-    }
-  });
-}
-
-async function confirmDeleteFileBookmarks(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
-  const filename = String(msg.filename ?? 'this file');
-  const answer = await vscode.window.showWarningMessage(
-    t('msg.deleteBookmarksForFile', filename),
-    { modal: true },
-    t('action.deleteAll'),
-  );
-  if (answer === t('action.deleteAll')) { store.removeAllForFile(String(msg.fileUri ?? '')); }
-}
-
-async function confirmDeleteAllBookmarks(store: BookmarkStore): Promise<void> {
-  const total = store.getTotalCount();
-  if (total === 0) { return; }
-  const answer = await vscode.window.showWarningMessage(
-    t('msg.deleteAllBookmarks', String(total), total === 1 ? '' : 's'),
-    { modal: true },
-    t('action.deleteAll'),
-  );
-  if (answer === t('action.deleteAll')) { store.removeAll(); }
-}
-
-async function promptEditBookmarkNote(store: BookmarkStore, msg: Record<string, unknown>): Promise<void> {
-  const note = await vscode.window.showInputBox({
-    prompt: t('prompt.editBookmarkNote'),
-    value: String(msg.currentNote ?? ''),
-  });
-  if (note === undefined) { return; }
-  store.updateNote(String(msg.fileUri ?? ''), String(msg.bookmarkId ?? ''), note);
-}
-
-interface SessionActionContext {
-  readonly historyProvider: SessionHistoryProvider;
-  readonly refreshList: () => Promise<void>;
-  readonly openSessionForReplay?: (uri: vscode.Uri) => Promise<void>;
-}
-
-async function handleSessionAction(
-  action: string, uriString: string, filename: string, ctx: SessionActionContext,
-): Promise<void> {
-  const uri = uriString ? vscode.Uri.parse(uriString) : undefined;
-  const item = uri ? { uri, filename } : undefined;
-  const mutating = ['trash', 'restore', 'emptyTrash', 'deletePermanently', 'rename', 'tag'];
-  switch (action) {
-    case 'open':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.openSession', item); }
-      break;
-    case 'replay':
-      if (uri && ctx.openSessionForReplay) {
-        await ctx.openSessionForReplay(uri);
-      } else if (item) {
-        await vscode.commands.executeCommand('saropaLogCapture.openSession', item);
-      }
-      break;
-    case 'trash':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.trashSession', item); }
-      break;
-    case 'restore':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.restoreSession', item); }
-      break;
-    case 'emptyTrash':
-      await vscode.commands.executeCommand('saropaLogCapture.emptyTrash');
-      break;
-    case 'deletePermanently':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.deleteSession', item); }
-      break;
-    case 'rename':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.renameSession', item); }
-      break;
-    case 'tag':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.tagSession', item); }
-      break;
-    case 'exportHtml':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item); }
-      break;
-    case 'exportCsv':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportCsv', item); }
-      break;
-    case 'exportJson':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJson', item); }
-      break;
-    case 'exportJsonl':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJsonl', item); }
-      break;
-    case 'exportSlc':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportSlc', item); }
-      break;
-    case 'exportToLoki':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportToLoki', item); }
-      break;
-    case 'copyDeepLink':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyDeepLink', item); }
-      break;
-    case 'copyFilePath':
-      if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
-      break;
-  }
-  if (mutating.includes(action)) { await ctx.refreshList(); }
 }
