@@ -1,5 +1,4 @@
 /** CSS for timing markers, stack traces, jump button, footer, annotations. */
-import { getInfoPanelStyles } from './viewer-styles-info';
 export function getContentStyles(): string {
     return /* css */ `
 /* --- Timing Markers --- */
@@ -287,5 +286,5 @@ export function getContentStyles(): string {
 .replay-scrubber { flex: 1; min-width: 60px; max-width: 200px; }
 .replay-status { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-` + getInfoPanelStyles();
+`;
 }
