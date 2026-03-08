@@ -6,8 +6,6 @@
 
 import * as vscode from "vscode";
 import { getConfig } from "../../modules/config/config";
-import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
-import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -19,22 +17,19 @@ import type { SessionDisplayOptions } from "../session/session-display";
 import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import * as helpers from "./viewer-provider-helpers";
-import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
+import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-thread-grouping";
 import * as panelHandlers from "../shared/viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
-
-const BATCH_INTERVAL_MS = 200;
-const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
-const BATCH_BACKLOG_THRESHOLD = 1000;
+import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } from "./log-viewer-provider-batch";
 
 /** Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support. */
 export class LogViewerProvider
   implements vscode.WebviewViewProvider, ViewerTarget, vscode.Disposable
 {
   private view: vscode.WebviewView | undefined;
-  private pendingLines: PendingLine[] = [];
-  private batchTimer: ReturnType<typeof setTimeout> | undefined;
-  private threadDumpState: ThreadDumpState = createThreadDumpState();
+  pendingLines: PendingLine[] = [];
+  batchTimer: ReturnType<typeof setTimeout> | undefined;
+  threadDumpState: ThreadDumpState = createThreadDumpState();
   private onMarkerRequest?: () => void;
   private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
   private onTogglePause?: () => void;
@@ -164,18 +159,7 @@ export class LogViewerProvider
     const lastUsed = this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
     this.postMessage({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
   }
-  addLine(data: LineData): void {
-    /* Skip per-line work when sidebar is hidden to avoid extension-host CPU spike. */
-    if (!this.view?.visible) { return; }
-    let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
-    if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
-    const line: PendingLine = {
-      text: html, isMarker: data.isMarker, lineCount: data.lineCount,
-      category: data.category, timestamp: data.timestamp.getTime(),
-      fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
-    };
-    processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
-  }
+  addLine(data: LineData): void { addLineToBatch(this, data); }
 
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.postMessage({ type: "setScopeContext", ...ctx }); }
@@ -202,7 +186,7 @@ export class LogViewerProvider
 
   clear(): void {
     this.stopTailing();
-    flushThreadDump(this.threadDumpState, this.pendingLines);
+    flushPendingBatch(this);
     this.pendingLines = []; this.currentFileUri = undefined;
     this.postMessage({ type: "clear" }); this.setSessionInfo(null);
   }
@@ -251,9 +235,7 @@ export class LogViewerProvider
     if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
   }
 
-  dispose(): void { this.stopTailing(); this.stopBatchTimer(); panelHandlers.disposeHandlers(); }
-
-  // -- Private methods --
+  dispose(): void { this.stopTailing(); stopBatchTimer(this); panelHandlers.disposeHandlers(); }
 
   handleMessage(msg: Record<string, unknown>): void {
     const ctx: ViewerMessageContext = {
@@ -277,36 +259,7 @@ export class LogViewerProvider
     dispatchViewerMessage(msg, ctx);
   }
 
-  startBatchTimer(): void {
-    this.stopBatchTimer();
-    this.scheduleNextBatch();
-  }
-
-  private scheduleNextBatch(): void {
-    if (!this.view) { return; }
-    const delay = this.pendingLines.length > BATCH_BACKLOG_THRESHOLD ? BATCH_INTERVAL_UNDER_LOAD_MS : BATCH_INTERVAL_MS;
-    this.batchTimer = setTimeout(() => {
-      this.batchTimer = undefined;
-      this.flushBatch();
-      this.scheduleNextBatch();
-    }, delay);
-  }
-
-  stopBatchTimer(): void {
-    if (this.batchTimer !== undefined) {
-      clearTimeout(this.batchTimer);
-      this.batchTimer = undefined;
-    }
-  }
-
-  private flushBatch(): void {
-    helpers.flushBatch(
-      this.pendingLines,
-      !!this.view,
-      (msg) => this.postMessage(msg),
-      (lines) => helpers.sendNewCategories(lines, this.seenCategories, (msg) => this.postMessage(msg))
-    );
-  }
-
+  startBatchTimer(): void { startBatchTimer(this); }
+  stopBatchTimer(): void { stopBatchTimer(this); }
   postMessage(message: unknown): void { this.view?.webview.postMessage(message); }
 }
