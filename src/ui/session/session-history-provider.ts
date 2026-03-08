@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
-import { getConfig, getFileTypeGlob, getLogDirectoryUri, readTrackedFiles } from '../../modules/config/config';
-import { SessionMetadataStore, migrateSidecarsInDirectory, type SessionMeta } from '../../modules/session/session-metadata';
+import { getConfig, getFileTypeGlob, getLogDirectoryUri } from '../../modules/config/config';
+import { SessionMetadataStore } from '../../modules/session/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
-    isSplitGroup, groupSplitFiles, buildSplitGroupTooltip, formatSize, totalLineCount,
+    isSplitGroup, buildSplitGroupTooltip, formatSize, totalLineCount,
 } from './session-history-grouping';
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
-import { parseHeader, buildDescription, buildTooltip, formatCount } from './session-history-helpers';
+import { buildDescription, buildTooltip, formatCount } from './session-history-helpers';
+import { fetchItemsCore, type FetchTarget } from './session-history-fetching';
 
 /** Extract the basename from a relative path (strip folder prefix). */
 function getBasename(name: string): string {
@@ -15,14 +16,14 @@ function getBasename(name: string): string {
 }
 
 /** Tree data provider for listing past log sessions from the reports directory. */
-export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable {
+export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable, FetchTarget {
     private readonly _onDidChange = new vscode.EventEmitter<void>();
     readonly onDidChangeTreeData = this._onDidChange.event;
     private watcher: vscode.FileSystemWatcher | undefined;
     private activeUri: vscode.Uri | undefined;
     private activeLineCount = 0;
-    private readonly metaStore = new SessionMetadataStore();
-    private readonly metaCache = new Map<string, SessionMetadata>();
+    readonly metaStore = new SessionMetadataStore();
+    readonly metaCache = new Map<string, SessionMetadata>();
     private displayOptions: SessionDisplayOptions = defaultDisplayOptions;
     private showTrash = false;
     private refreshTimer: ReturnType<typeof setTimeout> | undefined;
@@ -183,7 +184,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
 
     /** Like getAllChildren but from an optional root folder (for Project Logs panel override). */
     async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
-        if (logDirOverride) { return this.fetchItemsCore(logDirOverride); }
+        if (logDirOverride) { return fetchItemsCore(this, logDirOverride); }
         return this.getCachedOrFetch();
     }
 
@@ -191,10 +192,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     private async getCachedOrFetch(): Promise<TreeItem[]> {
         if (this.itemsCache) { return this.itemsCache; }
         if (this.fetchInFlight) { return this.fetchInFlight; }
-        // Capture local ref so a concurrent refresh() can't corrupt state:
-        // if refresh() clears fetchInFlight while this fetch runs, the stale
-        // completion won't overwrite the cache or clear the new in-flight ref.
-        const promise = this.fetchItemsCore().then(items => {
+        const promise = fetchItemsCore(this).then(items => {
             if (this.fetchInFlight === promise) {
                 this.itemsCache = items;
                 this.fetchInFlight = undefined;
@@ -207,45 +205,6 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         });
         this.fetchInFlight = promise;
         return promise;
-    }
-
-    private static migratedDirsThisActivation = new Set<string>();
-
-    private async fetchItemsCore(logDirOverride?: vscode.Uri): Promise<TreeItem[]> {
-        const folder = vscode.workspace.workspaceFolders?.[0];
-        if (!folder && !logDirOverride) { return []; }
-        const configuredDir = folder ? getLogDirectoryUri(folder) : undefined;
-        const logDir = logDirOverride ?? configuredDir!;
-        await this.migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride);
-        try {
-            const { fileTypes, includeSubfolders } = getConfig();
-            const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
-            const centralMeta = await this.metaStore.loadAllMetadata(logDir);
-            const items = await this.loadBatch(logDir, logFiles, centralMeta);
-            this.pruneCache(items);
-            const grouped = groupSplitFiles(items);
-            return grouped.sort((a, b) => b.mtime - a.mtime);
-        } catch {
-            return [];
-        }
-    }
-
-    /** Run one-time sidecar migration for all relevant directories. */
-    private async migrateIfNeeded(
-        folder: vscode.WorkspaceFolder | undefined,
-        configuredDir: vscode.Uri | undefined,
-        logDirOverride: vscode.Uri | undefined,
-    ): Promise<void> {
-        const allDirs = [configuredDir, logDirOverride, folder?.uri]
-            .filter((d): d is vscode.Uri => d !== undefined && d !== null);
-        const seen = new Set<string>();
-        for (const dir of allDirs) {
-            const key = dir.toString();
-            if (seen.has(key) || SessionHistoryProvider.migratedDirsThisActivation.has(key)) { continue; }
-            seen.add(key);
-            SessionHistoryProvider.migratedDirsThisActivation.add(key);
-            await migrateSidecarsInDirectory(dir, folder ?? undefined);
-        }
     }
 
     dispose(): void {
@@ -294,75 +253,5 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         for (const [bn, count] of counts) {
             if (count > 1) { this.duplicateBasenames.add(bn); }
         }
-    }
-
-    /** Remove cache entries for files no longer present on disk. */
-    private pruneCache(currentItems: SessionMetadata[]): void {
-        const liveUris = new Set(currentItems.map(i => i.uri.toString()));
-        for (const [key] of this.metaCache) {
-            const uri = key.slice(0, key.indexOf('|'));
-            if (!liveUris.has(uri)) { this.metaCache.delete(key); }
-        }
-    }
-
-    /** Load metadata for all files with bounded concurrency (max 8 parallel). */
-    private async loadBatch(
-        logDir: vscode.Uri,
-        files: readonly string[],
-        centralMeta: ReadonlyMap<string, SessionMeta>,
-    ): Promise<SessionMetadata[]> {
-        const results: SessionMetadata[] = new Array(files.length);
-        const limit = 8;
-        let index = 0;
-        const run = async (): Promise<void> => {
-            while (index < files.length) {
-                const i = index++;
-                results[i] = await this.loadMetadata(logDir, files[i], centralMeta);
-            }
-        };
-        const count = Math.min(limit, files.length);
-        await Promise.all(Array.from({ length: count }, () => run()));
-        return results;
-    }
-
-    private async loadMetadata(
-        logDir: vscode.Uri,
-        filename: string,
-        centralMeta: ReadonlyMap<string, SessionMeta>,
-    ): Promise<SessionMetadata> {
-        const uri = vscode.Uri.joinPath(logDir, filename);
-        const stat = await vscode.workspace.fs.stat(uri);
-        const cacheKey = `${uri.toString()}|${stat.mtime}|${stat.size}`;
-        const cached = this.metaCache.get(cacheKey);
-        if (cached) { return cached; }
-        const relKey = vscode.workspace.asRelativePath(uri).replace(/\\/g, '/');
-        const sidecar = centralMeta.get(relKey) ?? {};
-        const hasCachedSev = sidecar.errorCount !== undefined && sidecar.fwCount !== undefined;
-        let meta: SessionMetadata = { uri, filename, size: stat.size, mtime: stat.mtime };
-        meta = await parseHeader(uri, meta, hasCachedSev);
-        meta = this.applySidecar(meta, sidecar, uri, hasCachedSev);
-        this.metaCache.set(cacheKey, meta);
-        return meta;
-    }
-
-    /** Merge sidecar metadata into the parsed session metadata. */
-    private applySidecar(
-        meta: SessionMetadata, sidecar: SessionMeta,
-        uri: vscode.Uri, hasCachedSev: boolean,
-    ): SessionMetadata {
-        let result = meta;
-        if (sidecar.displayName) { result = { ...result, displayName: sidecar.displayName }; }
-        if (sidecar.tags?.length) { result = { ...result, tags: sidecar.tags }; }
-        if (sidecar.autoTags?.length) { result = { ...result, autoTags: sidecar.autoTags }; }
-        if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }
-        if (sidecar.trashed) { result = { ...result, trashed: true }; }
-        if (hasCachedSev) {
-            return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
-        }
-        if (result.errorCount !== undefined) {
-            const toSave = { ...sidecar, errorCount: result.errorCount, warningCount: result.warningCount, perfCount: result.perfCount, anrCount: result.anrCount, fwCount: result.fwCount, infoCount: result.infoCount };
-            this.metaStore.saveMetadata(uri, toSave).catch(() => {});
-        }
-        return result;
     }
 }
