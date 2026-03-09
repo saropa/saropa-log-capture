@@ -1,8 +1,8 @@
 # Spec: Terminal Output Integration
 
 **Adapter id:** `terminal`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/terminal-output.md](../docs/integrations/terminal-output.md)
+**Status:** Implemented
+**Design:** Implemented; see provider in `src/modules/integrations/providers/terminal-output.ts`, capture in `src/modules/integrations/terminal-capture.ts`, and this spec.
 
 ## Goal
 
