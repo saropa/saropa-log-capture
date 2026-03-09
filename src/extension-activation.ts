@@ -33,8 +33,14 @@ import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
+import { createApi } from './api';
+import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
 
 export interface ActivationRefs {
+    readonly api: SaropaLogCaptureApi;
+    readonly disposeApi: () => void;
+    readonly fireSessionStart: (event: SaropaSessionEvent) => void;
+    readonly fireSessionEnd: (event: SaropaSessionEvent) => void;
     sessionManager: SessionManagerImpl;
     projectIndexer: ProjectIndexer | null;
     popOutPanel: PopOutPanel;
@@ -46,6 +52,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     context.subscriptions.push(statusBar, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
+
+    // --- Public API (bridges internal listeners to vscode.Event) ---
+    const apiHandle = createApi(sessionManager);
 
     // --- Project indexer (optional; indexes reports for docs/reports) ---
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -246,7 +255,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     });
 
     // --- Debug lifecycle (start/stop session) and command registration ---
-    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher });
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
 
     // --- Scope context for source-scope filter (updates on active editor change) ---
@@ -280,5 +289,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     outputChannel.appendLine('Saropa Log Capture activated.');
-    return { sessionManager, projectIndexer, popOutPanel };
+    return {
+        api: apiHandle.api,
+        disposeApi: apiHandle.dispose,
+        fireSessionStart: apiHandle.fireSessionStart,
+        fireSessionEnd: apiHandle.fireSessionEnd,
+        sessionManager,
+        projectIndexer,
+        popOutPanel,
+    };
 }
