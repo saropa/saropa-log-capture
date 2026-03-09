@@ -8,6 +8,7 @@ but will auto-install if missing and the tools are reachable.
 
 import json
 import shutil
+import sys
 
 from modules.constants import (
     C,
@@ -15,7 +16,7 @@ from modules.constants import (
     REQUIRED_VSCODE_EXTENSIONS,
 )
 from modules.display import fail, fix, info, ok, warn
-from modules.utils import clear_extensions_cache, list_editor_extensions, run
+from modules.utils import list_editor_extensions, run
 
 
 def check_vscode_cli() -> bool:
@@ -89,6 +90,8 @@ def check_vscode_extensions() -> bool:
             ok(f"VS Code extension: {C.WHITE}{ext}{C.RESET}")
         else:
             fix(f"Installing VS Code extension: {C.WHITE}{ext}{C.RESET}")
+            if sys.platform == "win32":
+                info("A VS Code window may briefly appear...")
             install_result = run(
                 ["code", "--install-extension", ext], check=False,
             )
@@ -98,5 +101,4 @@ def check_vscode_extensions() -> bool:
                 all_ok = False
             else:
                 ok(f"Installed: {C.WHITE}{ext}{C.RESET}")
-                clear_extensions_cache()
     return all_ok
