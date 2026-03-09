@@ -84,8 +84,7 @@ Planned features for future releases, plus a consolidated project review (potent
 | 2 | .slc session bundle | Tasks 74–75; full session portability. |
 | 3 | Remote / SSH / Dev Containers | Task 90. |
 | 4 | External log services | Task 92; Logz.io, Loki, Datadog. |
-| 5 | More integration adapters | Database, HTTP/network, browser DevTools, WSL/linux logs, security audit (bugs/integration-specs-index). |
-| 6 | Terminal output correlation | When VS Code exposes terminal API (docs/deferred/TERMINAL_OUTPUT_CAPTURE.md). |
+| 5 | More integration adapters | Database, HTTP/network, browser DevTools, security audit (bugs/integration-specs-index). |
 
 ### 3.2 UX Polish
 
