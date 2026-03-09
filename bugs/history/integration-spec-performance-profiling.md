@@ -1,8 +1,8 @@
 # Spec: Performance and Profiling Integration
 
 **Adapter id:** `performance`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/performance-profiling.md](../docs/integrations/performance-profiling.md)
+**Status:** Implemented
+**Design:** Implemented; see provider in `src/modules/integrations/providers/performance-snapshot.ts` and this spec.
 
 ## Goal
 

@@ -1,8 +1,8 @@
 # Spec: WSL and Linux Logs Integration
 
 **Adapter id:** `linuxLogs`  
-**Status:** Not implemented  
-**Full design:** [docs/integrations/wsl-linux-logs.md](../docs/integrations/wsl-linux-logs.md)
+**Status:** Implemented
+**Design:** Implemented; see provider in `src/modules/integrations/providers/linux-logs.ts` and this spec.
 
 ## Goal
 

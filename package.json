@@ -720,7 +720,7 @@
         },
         "saropaLogCapture.integrations.adapters": {
           "default": ["packages"],
-          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
+          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": { "type": "string" },
           "type": "array"
         },
@@ -909,6 +909,87 @@
           "minimum": 100,
           "maximum": 100000,
           "type": "number"
+        },
+        "saropaLogCapture.integrations.performance.snapshotAtStart": {
+          "default": true,
+          "description": "Capture CPU and RAM snapshot at session start.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.performance.sampleDuringSession": {
+          "default": false,
+          "description": "Periodically sample free memory during the session and write samples to a .perf.json sidecar.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.performance.sampleIntervalSeconds": {
+          "default": 5,
+          "description": "Seconds between periodic memory samples.",
+          "minimum": 1,
+          "maximum": 300,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.performance.includeInHeader": {
+          "default": true,
+          "description": "Include system snapshot line in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.terminal.whichTerminals": {
+          "default": "active",
+          "description": "Which terminals to capture: all open terminals, only the active terminal at session start, or only user-linked terminals.",
+          "enum": ["all", "active", "linked"],
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.terminal.writeSidecar": {
+          "default": true,
+          "description": "Write captured terminal output to a .terminal.log sidecar at session end.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.terminal.prefixTimestamp": {
+          "default": true,
+          "description": "Prefix each captured terminal line with a timestamp.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.terminal.maxLines": {
+          "default": 50000,
+          "description": "Max terminal output lines to buffer per session.",
+          "minimum": 1000,
+          "maximum": 500000,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.linuxLogs.when": {
+          "default": "wsl",
+          "description": "When to capture Linux system logs: only when targeting WSL, on any remote Linux, or always.",
+          "enum": ["wsl", "remote", "always"],
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.linuxLogs.sources": {
+          "default": ["dmesg", "journalctl"],
+          "description": "Linux log sources to capture at session end.",
+          "items": { "type": "string" },
+          "type": "array"
+        },
+        "saropaLogCapture.integrations.linuxLogs.leadMinutes": {
+          "default": 2,
+          "description": "Minutes before session start to include in log query.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.linuxLogs.lagMinutes": {
+          "default": 5,
+          "description": "Minutes after session end to include in log query.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.linuxLogs.maxLines": {
+          "default": 1000,
+          "description": "Max lines per log source.",
+          "minimum": 100,
+          "maximum": 10000,
+          "type": "number"
+        },
+        "saropaLogCapture.integrations.linuxLogs.wslDistro": {
+          "default": "",
+          "description": "WSL distribution name (e.g. Ubuntu-22.04). Empty uses the default distribution.",
+          "type": "string"
         },
         "saropaLogCapture.loki.enabled": {
           "default": false,
