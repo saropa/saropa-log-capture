@@ -353,7 +353,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 ## Known Limitations
 
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
-- **Debug Console only:** Capture is from the VS Code Debug Console (DAP) only. Integrated Terminal output is not captured; see [Terminal output capture](docs/deferred/TERMINAL_OUTPUT_CAPTURE.md) for details.
+- **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a `.terminal.log` sidecar at session end.
 
 ### Keyboard shortcuts and accessibility
 
