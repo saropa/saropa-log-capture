@@ -9,6 +9,7 @@ import sys
 import time
 
 from modules.constants import MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
+from modules.display import info
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
@@ -73,6 +74,9 @@ def list_editor_extensions(editor: str = "code") -> set[str]:
     if not shutil.which(editor):
         _extensions_cache[editor] = set()
         return set()
+    if sys.platform == "win32":
+        label = "VS Code" if editor == "code" else editor.capitalize()
+        info(f"Querying {label} CLI (a {label} window may briefly appear)...")
     result = run(
         [editor, "--list-extensions", "--show-versions"], check=False,
     )
@@ -82,11 +86,6 @@ def list_editor_extensions(editor: str = "code") -> set[str]:
     lines = set(result.stdout.strip().lower().splitlines())
     _extensions_cache[editor] = lines
     return lines
-
-
-def clear_extensions_cache() -> None:
-    """Clear the cached extension list after installing extensions."""
-    _extensions_cache.clear()
 
 
 def get_installed_extension_versions(
