@@ -503,6 +503,8 @@ def _auto_install_vsix(vsix_path: str) -> None:
     """CI mode: install .vsix via code CLI without prompting."""
     vsix_name = os.path.basename(vsix_path)
     info(f"Running: code --install-extension {vsix_name}")
+    if sys.platform == "win32":
+        info("A VS Code window may briefly appear...")
     run(["code", "--install-extension", os.path.abspath(vsix_path)])
 
 
