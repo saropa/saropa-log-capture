@@ -51,6 +51,14 @@ describe("SessionManagerImpl", () => {
     );
   });
 
+  it("writeLine should no-op when no active session exists", () => {
+    const mgr = makeSessionManager();
+    let captured = false;
+    mgr.addLineListener(() => { captured = true; });
+    mgr.writeLine("hello", "console", new Date());
+    assert.strictEqual(captured, false, "writeLine should not broadcast without an active session");
+  });
+
   it("should filter by exclusion when captureAll is false", () => {
     const mgr = makeSessionManager();
     mgr.refreshConfig(makeConfig({
