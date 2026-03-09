@@ -78,6 +78,69 @@ export function processOutputEvent(
     });
 }
 
+/** Dependencies for API writeLine processing (subset of OutputEventDeps). */
+export interface WriteLineDeps {
+    readonly config: Pick<SaropaLogCaptureConfig, 'enabled'>;
+    readonly exclusionRules: readonly ExclusionRule[];
+    readonly floodGuard: FloodGuard;
+}
+
+/** Input data for a single API-written line. */
+export interface WriteLineInput {
+    readonly session: LogSession;
+    readonly text: string;
+    readonly category: string;
+    readonly timestamp: Date;
+}
+
+/**
+ * Process an API-written line — filter, append to log, and broadcast.
+ *
+ * Unlike {@link processOutputEvent}, this skips the category whitelist
+ * (API callers explicitly choose to write) and splits multi-line text.
+ */
+export function processApiWriteLine(
+    deps: WriteLineDeps,
+    target: OutputEventTarget,
+    input: WriteLineInput,
+): void {
+    if (!deps.config.enabled) { return; }
+    const normalized = input.text.replace(/\r?\n$/, '');
+    const lines = normalized.includes('\n') ? normalized.split(/\r?\n/) : [normalized];
+    for (const line of lines) {
+        writeOneLine(deps, target, { ...input, text: line });
+    }
+}
+
+/** Write a single line through the exclusion/flood/append/broadcast pipeline. */
+function writeOneLine(
+    deps: WriteLineDeps,
+    target: OutputEventTarget,
+    input: WriteLineInput,
+): void {
+    const { session, text, category, timestamp } = input;
+    if (text.length > 0) {
+        if (testExclusion(text, deps.exclusionRules)) { return; }
+        const floodResult = deps.floodGuard.check(text);
+        if (!floodResult.allow) { return; }
+        if (floodResult.suppressedCount) {
+            target.counters.floodSuppressedTotal += floodResult.suppressedCount;
+            const summary = `[FLOOD SUPPRESSED: ${floodResult.suppressedCount} identical messages]`;
+            session.appendLine(summary, 'system', timestamp);
+            target.broadcastLine({
+                text: summary, isMarker: false, lineCount: session.lineCount,
+                category: 'system', timestamp,
+            });
+        }
+    }
+    session.appendLine(text, category, timestamp);
+    target.counters.categoryCounts[category] = (target.counters.categoryCounts[category] ?? 0) + 1;
+    target.broadcastLine({
+        text, isMarker: false, lineCount: session.lineCount,
+        category, timestamp,
+    });
+}
+
 /** Process a verbose DAP protocol message — record it in the log file. */
 export function processDapMessage(
     deps: Pick<OutputEventDeps, 'config' | 'sessions'>,
