@@ -75,6 +75,8 @@ def prompt_install(vsix_path: str) -> None:
 
     vsix_name = os.path.basename(vsix_path)
     info(f"Running: code --install-extension {vsix_name}")
+    if sys.platform == "win32":
+        info("A VS Code window may briefly appear...")
     result = run(
         ["code", "--install-extension", os.path.abspath(vsix_path)],
     )
