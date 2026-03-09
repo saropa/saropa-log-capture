@@ -12,7 +12,7 @@ import { SessionMetadataStore } from './session-metadata';
 import { initializeSession } from './session-lifecycle-init';
 import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
 import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
-import { processOutputEvent, processDapMessage } from './session-manager-events';
+import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
@@ -177,6 +177,19 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Check if a debug session already has an active log session. */
     hasSession(sessionId: string): boolean { return this.sessions.has(sessionId); }
+
+    /** Write one or more lines into the active log session (public API). */
+    writeLine(text: string, category: string, timestamp: Date): void {
+        const session = this.getActiveSession();
+        if (!session) { return; }
+        const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
+        processApiWriteLine(
+            { config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
+            { counters, broadcastLine: (data) => this.broadcastLine(data) },
+            { session, text, category, timestamp },
+        );
+        this.floodSuppressedTotal = counters.floodSuppressedTotal;
+    }
 
     /** Insert a visual marker into the active log session. */
     insertMarker(customText?: string): void {

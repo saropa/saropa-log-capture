@@ -293,6 +293,63 @@ All settings are prefixed with `saropaLogCapture.`
 
 ---
 
+## Extension API
+
+Other VS Code extensions can consume a typed API from Saropa Log Capture:
+
+```typescript
+import * as vscode from 'vscode';
+
+// In your extension's activate():
+const ext = vscode.extensions.getExtension('saropa.saropa-log-capture');
+if (!ext) { return; }
+const api = ext.isActive ? ext.exports : await ext.activate();
+
+// Subscribe to live log lines
+context.subscriptions.push(
+    api.onDidWriteLine((line) => {
+        if (line.category === 'stderr') {
+            console.log(`Error: ${line.text}`);
+        }
+    }),
+);
+
+// Session lifecycle
+context.subscriptions.push(
+    api.onDidStartSession((session) => {
+        console.log(`Capture started: ${session.projectName}`);
+    }),
+);
+
+// Write lines into the active capture session
+api.writeLine('Slow query detected (1250ms)', {
+    category: 'drift-perf',
+    timestamp: queryEndTime,
+});
+
+// Query current state
+const info = api.getSessionInfo();
+if (info?.isActive) {
+    api.insertMarker('My extension checkpoint');
+}
+
+// Register an integration provider
+context.subscriptions.push(
+    api.registerIntegrationProvider({
+        id: 'my-extension',
+        isEnabled: () => true,
+        onSessionStartSync: () => [{
+            kind: 'header',
+            lines: ['My Extension: active'],
+        }],
+    }),
+);
+```
+
+See [api-types.ts](src/api-types.ts) for the full type definitions.
+
+---
+
 ## Known Limitations
 
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
