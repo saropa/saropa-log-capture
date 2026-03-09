@@ -1,1 +1,0 @@
-double clicking a color dot hides all others. this is great. but double clicking again should select all

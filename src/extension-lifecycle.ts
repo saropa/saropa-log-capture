@@ -11,6 +11,7 @@ import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-d
 import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { AiWatcher } from './modules/ai/ai-watcher';
 import { hasClaudeProject } from './modules/ai/ai-session-resolver';
+import type { SaropaSessionEvent } from './api-types';
 
 interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
@@ -21,11 +22,13 @@ interface DebugLifecycleDeps {
     readonly viewerProvider: LogViewerProvider;
     readonly updateSessionNav: () => Promise<void>;
     readonly aiWatcher: AiWatcher;
+    readonly fireSessionStart: (event: SaropaSessionEvent) => void;
+    readonly fireSessionEnd: (event: SaropaSessionEvent) => void;
 }
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart, fireSessionEnd } = deps;
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
             // Session start: create log session, then push state to broadcaster and history.
@@ -64,9 +67,23 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             broadcaster.setPresets(loadPresets());
             historyProvider.setActiveUri(activeSession?.fileUri);
             historyProvider.refresh();
+            fireSessionStart({
+                debugSessionId: session.id,
+                debugAdapterType: session.type,
+                projectName: session.workspaceFolder?.name ?? 'Unknown',
+                fileUri: activeSession?.fileUri,
+            });
             startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
+            // Fire API event before stopping so fileUri is still valid for consumers.
+            const ending = sessionManager.getActiveSession();
+            fireSessionEnd({
+                debugSessionId: session.id,
+                debugAdapterType: session.type,
+                projectName: session.workspaceFolder?.name ?? 'Unknown',
+                fileUri: ending?.fileUri,
+            });
             // Session end: stop session, clear broadcaster/history/decorations, update nav.
             await sessionManager.stopSession(session);
             broadcaster.setSessionActive(false);
