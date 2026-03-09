@@ -5,22 +5,22 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | Adapter id | Spec | Status |
 |------------|------|--------|
 | `packages` | *(implemented)* — see [src/modules/integrations/providers/package-lockfile.ts](../src/modules/integrations/providers/package-lockfile.ts) | Done |
-| `buildCi` | [integration-spec-build-ci.md](integration-spec-build-ci.md) | Done |
-| `git` | [integration-spec-git-source-code.md](integration-spec-git-source-code.md) | Done |
-| `environment` | [integration-spec-environment-snapshot.md](integration-spec-environment-snapshot.md) | Done |
-| `testResults` | [integration-spec-test-results.md](integration-spec-test-results.md) | Done |
-| `coverage` | [integration-spec-code-coverage.md](integration-spec-code-coverage.md) | Done |
-| `crashDumps` | [integration-spec-crash-dumps.md](integration-spec-crash-dumps.md) | Done |
-| `windowsEvents` | [integration-spec-windows-event-log.md](integration-spec-windows-event-log.md) | Done |
-| `docker` | [integration-spec-docker-containers.md](integration-spec-docker-containers.md) | Done |
-| `database` | [integration-spec-database-query-logs.md](integration-spec-database-query-logs.md) | Done |
-| `externalLogs` | [integration-spec-application-file-logs.md](integration-spec-application-file-logs.md) | Done |
-| `performance` | [integration-spec-performance-profiling.md](integration-spec-performance-profiling.md) | Done |
-| `http` | [integration-spec-http-network.md](integration-spec-http-network.md) | Done |
-| `terminal` | [integration-spec-terminal-output.md](integration-spec-terminal-output.md) | Done |
-| `browser` | [integration-spec-browser-devtools.md](integration-spec-browser-devtools.md) | Done |
-| `linuxLogs` | [integration-spec-wsl-linux-logs.md](integration-spec-wsl-linux-logs.md) | Done |
-| `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Done |
+| `buildCi` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `git` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `environment` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `testResults` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `coverage` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `crashDumps` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `windowsEvents` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `docker` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `database` | [integration-spec-database-query-logs.md](integration-spec-database-query-logs.md) | Partial |
+| `externalLogs` | [integration-spec-application-file-logs.md](integration-spec-application-file-logs.md) | Partial |
+| `performance` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `http` | [integration-spec-http-network.md](integration-spec-http-network.md) | Partial |
+| `terminal` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `browser` | [integration-spec-browser-devtools.md](integration-spec-browser-devtools.md) | Partial |
+| `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
+| `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Partial |
 
 **API:** [docs/integrations/INTEGRATION_API.md](../docs/integrations/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 
