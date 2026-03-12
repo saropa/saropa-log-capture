@@ -13,12 +13,14 @@ import {
     AddSourceInput,
     MAX_INVESTIGATIONS,
     MAX_SOURCES_PER_INVESTIGATION,
+    MAX_SEARCH_HISTORY,
 } from './investigation-types';
 
 const INVESTIGATIONS_FILENAME = 'investigations.json';
 const SAROPA_FOLDER = '.saropa';
 const ACTIVE_INVESTIGATION_KEY = 'slc.activeInvestigationId';
 const RECENT_INVESTIGATIONS_KEY = 'slc.recentInvestigationIds';
+const SEARCH_HISTORY_KEY = 'slc.searchHistory';
 const MAX_RECENT = 5;
 
 function generateId(): string {
@@ -239,6 +241,25 @@ export class InvestigationStore implements vscode.Disposable {
         const filtered = recent.filter(r => r !== id);
         const updated = [id, ...filtered].slice(0, MAX_RECENT);
         await this.context.workspaceState.update(RECENT_INVESTIGATIONS_KEY, updated);
+    }
+
+    /** Get search history (most recent first). */
+    async getSearchHistory(): Promise<string[]> {
+        return this.context.workspaceState.get<string[]>(SEARCH_HISTORY_KEY, []);
+    }
+
+    /** Add a query to search history. */
+    async addToSearchHistory(query: string): Promise<void> {
+        if (!query.trim()) { return; }
+        const history = await this.getSearchHistory();
+        const filtered = history.filter(q => q !== query);
+        const updated = [query, ...filtered].slice(0, MAX_SEARCH_HISTORY);
+        await this.context.workspaceState.update(SEARCH_HISTORY_KEY, updated);
+    }
+
+    /** Clear search history. */
+    async clearSearchHistory(): Promise<void> {
+        await this.context.workspaceState.update(SEARCH_HISTORY_KEY, []);
     }
 
     private getInvestigationsFileUri(): vscode.Uri | undefined {

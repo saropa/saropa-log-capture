@@ -5,6 +5,27 @@ export function getInvestigationPanelScript(): string {
     const vscode = acquireVsCodeApi();
     let searchTimeout = null;
 
+    function getSearchOptions() {
+        const caseSensitive = document.querySelector('.option-case-sensitive');
+        const useRegex = document.querySelector('.option-use-regex');
+        const contextLines = document.querySelector('.option-context-lines');
+        return {
+            caseSensitive: caseSensitive?.checked ?? false,
+            useRegex: useRegex?.checked ?? false,
+            contextLines: parseInt(contextLines?.value ?? '2', 10),
+        };
+    }
+
+    function doSearch(query) {
+        const options = getSearchOptions();
+        vscode.postMessage({ type: 'search', query, ...options });
+    }
+
+    function hideDropdowns() {
+        document.querySelector('.search-history-dropdown')?.classList.add('hidden');
+        document.querySelector('.search-options')?.classList.add('hidden');
+    }
+
     document.addEventListener('click', (e) => {
         const target = e.target;
         
@@ -34,8 +55,8 @@ export function getInvestigationPanelScript(): string {
             return;
         }
         
-        if (target.closest('.result-item')) {
-            const item = target.closest('.result-item');
+        if (target.closest('.result-item') || target.closest('.result-context')) {
+            const item = target.closest('.result-item') || target.closest('.result-context');
             const path = item.dataset.path;
             const line = parseInt(item.dataset.line, 10);
             if (path) {
@@ -64,9 +85,52 @@ export function getInvestigationPanelScript(): string {
             if (input) {
                 input.value = '';
                 input.focus();
-                vscode.postMessage({ type: 'search', query: '' });
+                doSearch('');
+            }
+            hideDropdowns();
+            return;
+        }
+
+        if (target.closest('.search-history-btn')) {
+            const dropdown = document.querySelector('.search-history-dropdown');
+            const options = document.querySelector('.search-options');
+            options?.classList.add('hidden');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+                if (!dropdown.classList.contains('hidden')) {
+                    vscode.postMessage({ type: 'getSearchHistory' });
+                }
             }
             return;
+        }
+
+        if (target.closest('.search-options-btn')) {
+            const options = document.querySelector('.search-options');
+            const dropdown = document.querySelector('.search-history-dropdown');
+            dropdown?.classList.add('hidden');
+            options?.classList.toggle('hidden');
+            return;
+        }
+
+        if (target.closest('.history-item')) {
+            const query = target.closest('.history-item').dataset.query;
+            const input = document.querySelector('.search-input');
+            if (input && query) {
+                input.value = query;
+                doSearch(query);
+            }
+            hideDropdowns();
+            return;
+        }
+
+        if (target.closest('.history-clear')) {
+            vscode.postMessage({ type: 'clearSearchHistory' });
+            hideDropdowns();
+            return;
+        }
+
+        if (!target.closest('.search-section')) {
+            hideDropdowns();
         }
     });
 
@@ -75,17 +139,36 @@ export function getInvestigationPanelScript(): string {
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                vscode.postMessage({ type: 'search', query: e.target.value });
+                doSearch(e.target.value);
             }, 300);
         });
         
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 e.target.value = '';
-                vscode.postMessage({ type: 'search', query: '' });
+                doSearch('');
+                hideDropdowns();
+            }
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                doSearch(e.target.value);
             }
         });
+
+        searchInput.addEventListener('focus', () => {
+            hideDropdowns();
+        });
     }
+
+    const optionInputs = document.querySelectorAll('.search-option input');
+    optionInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            const query = document.querySelector('.search-input')?.value;
+            if (query) {
+                doSearch(query);
+            }
+        });
+    });
 
     const notesTextarea = document.querySelector('.notes-textarea');
     if (notesTextarea) {
@@ -100,10 +183,38 @@ export function getInvestigationPanelScript(): string {
 
     window.addEventListener('message', (event) => {
         const message = event.data;
+        
         if (message.type === 'searchResults') {
             const container = document.querySelector('.results-content');
             if (container) {
                 container.innerHTML = message.html;
+            }
+        }
+
+        if (message.type === 'searchProgress') {
+            const progress = document.querySelector('.search-progress');
+            const fill = document.querySelector('.progress-fill');
+            const text = document.querySelector('.progress-text');
+            if (progress) {
+                if (message.searching) {
+                    progress.classList.remove('hidden');
+                    if (fill && message.current && message.total) {
+                        fill.style.width = ((message.current / message.total) * 100) + '%';
+                    }
+                    if (text) {
+                        text.textContent = message.message || '';
+                    }
+                } else {
+                    progress.classList.add('hidden');
+                    if (fill) fill.style.width = '0%';
+                }
+            }
+        }
+
+        if (message.type === 'searchHistory') {
+            const dropdown = document.querySelector('.search-history-dropdown');
+            if (dropdown) {
+                dropdown.innerHTML = message.html;
             }
         }
     });
