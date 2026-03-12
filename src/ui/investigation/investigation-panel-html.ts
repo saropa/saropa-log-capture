@@ -12,21 +12,25 @@ import { getInvestigationPanelScript } from './investigation-panel-script';
 import type { Investigation, InvestigationSource } from '../../modules/investigation/investigation-types';
 import { renderEmptyResults } from './investigation-panel-handlers';
 
-export function renderSourceItem(source: InvestigationSource): string {
+export function renderSourceItem(source: InvestigationSource, isMissing: boolean = false): string {
     const icon = source.type === 'session' ? '📄' : '📎';
     const typeLabel = source.type === 'session' ? 'session' : 'file';
-    return `<div class="source-item" data-path="${escapeHtml(source.relativePath)}">
+    const missingClass = isMissing ? ' source-missing' : '';
+    const missingIcon = isMissing ? '<span class="source-warning" title="' + t('msg.sourceFileMissing') + '">⚠️</span>' : '';
+    return `<div class="source-item${missingClass}" data-path="${escapeHtml(source.relativePath)}">
     <span class="source-icon">${icon}</span>
+    ${missingIcon}
     <span class="source-label">${escapeHtml(source.label)}</span>
     <span class="source-type">${typeLabel}</span>
     <button class="unpin-btn" data-path="${escapeHtml(source.relativePath)}" title="${t('action.unpin')}">✕</button>
 </div>`;
 }
 
-export function buildInvestigationHtml(inv: Investigation): string {
+export function buildInvestigationHtml(inv: Investigation, missingSources: string[] = []): string {
     const nonce = getNonce();
+    const missingSet = new Set(missingSources);
     const sourcesHtml = inv.sources.length > 0
-        ? inv.sources.map(s => renderSourceItem(s)).join('')
+        ? inv.sources.map(s => renderSourceItem(s, missingSet.has(s.relativePath))).join('')
         : `<div class="empty-sources">${t('msg.noSourcesPinned')}</div>`;
 
     return `<!DOCTYPE html><html><head>
@@ -51,7 +55,28 @@ export function buildInvestigationHtml(inv: Investigation): string {
         <div class="search-box">
             <span class="search-icon">🔍</span>
             <input type="text" class="search-input" placeholder="${t('placeholder.searchSources')}" value="${escapeHtml(inv.lastSearchQuery ?? '')}">
+            <button class="search-history-btn" title="${t('action.searchHistory')}">▾</button>
+            <button class="search-options-btn" title="${t('action.searchOptions')}">⚙</button>
             <button class="search-clear" title="${t('action.clear')}">✕</button>
+        </div>
+        <div class="search-history-dropdown hidden"></div>
+        <div class="search-options hidden">
+            <label class="search-option">
+                <input type="checkbox" class="option-case-sensitive">
+                <span>${t('label.caseSensitive')}</span>
+            </label>
+            <label class="search-option">
+                <input type="checkbox" class="option-use-regex">
+                <span>${t('label.useRegex')}</span>
+            </label>
+            <label class="search-option">
+                <span>${t('label.contextLines')}</span>
+                <input type="number" class="option-context-lines" value="2" min="0" max="10">
+            </label>
+        </div>
+        <div class="search-progress hidden">
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <span class="progress-text"></span>
         </div>
     </div>
     <div class="results-section">
