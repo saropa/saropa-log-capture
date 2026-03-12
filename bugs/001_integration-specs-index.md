@@ -13,14 +13,14 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `crashDumps` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `windowsEvents` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `docker` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `database` | [integration-spec-database-query-logs.md](integration-spec-database-query-logs.md) | Partial |
-| `externalLogs` | [integration-spec-application-file-logs.md](integration-spec-application-file-logs.md) | Partial |
+| `database` | [011_integration-spec-database-query-logs.md](011_integration-spec-database-query-logs.md) | Partial |
+| `externalLogs` | [009_integration-spec-application-file-logs.md](009_integration-spec-application-file-logs.md) | Partial |
 | `performance` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `http` | [integration-spec-http-network.md](integration-spec-http-network.md) | Partial |
+| `http` | [010_integration-spec-http-network.md](010_integration-spec-http-network.md) | Partial |
 | `terminal` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `browser` | [integration-spec-browser-devtools.md](integration-spec-browser-devtools.md) | Partial |
+| `browser` | [012_integration-spec-browser-devtools.md](012_integration-spec-browser-devtools.md) | Partial |
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
-| `security` | [integration-spec-security-audit-logs.md](integration-spec-security-audit-logs.md) | Partial |
+| `security` | [013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md) | Partial |
 
 **API:** [docs/integrations/INTEGRATION_API.md](../docs/integrations/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 
