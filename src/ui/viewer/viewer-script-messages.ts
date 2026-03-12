@@ -34,6 +34,7 @@ window.addEventListener('message', function(event) {
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
+            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
@@ -51,7 +52,12 @@ window.addEventListener('message', function(event) {
         case 'setViewingMode':
             isViewingFile = !!msg.viewing;
             if (isViewingFile) { autoScroll = false; }
+            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
             updateFooterText();
+            break;
+        case 'sessionState':
+            isSessionActive = !!msg.active;
+            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
             break;
         case 'setSessionInfo':
             if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);
