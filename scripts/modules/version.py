@@ -29,8 +29,8 @@ def _parse_semver(version: str) -> tuple[int, ...]:
     return tuple(int(x) for x in version.split("."))
 
 
-def _get_changelog_max_version() -> str | None:
-    """Return the highest versioned heading in CHANGELOG.md, or None."""
+def _get_changelog_versions() -> list[str]:
+    """Return all versioned headings in CHANGELOG.md."""
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     versions: list[str] = []
     try:
@@ -40,7 +40,13 @@ def _get_changelog_max_version() -> str | None:
                 if m:
                     versions.append(m.group(1))
     except OSError:
-        return None
+        pass
+    return versions
+
+
+def _get_changelog_max_version() -> str | None:
+    """Return the highest versioned heading in CHANGELOG.md, or None."""
+    versions = _get_changelog_versions()
     if not versions:
         return None
     return max(versions, key=_parse_semver)
@@ -177,19 +183,33 @@ def _stamp_changelog(version: str) -> bool:
 def _prompt_version(suggested: str, min_version: str) -> str | None:
     """Prompt user to accept suggested version or enter custom.
 
-    User can press Enter to accept suggested, or type a semver string.
+    Pre-fills the input with the suggested version for easy editing.
     The chosen version must be >= min_version.
     """
     if not sys.stdin.isatty():
         return suggested
 
+    # Pre-fill input with suggested version (cross-platform)
     try:
-        answer = input(
-            f"  {C.YELLOW}Version [{suggested}]: {C.RESET}"
-        ).strip()
+        import readline
+        def prefill():
+            readline.insert_text(suggested)
+            readline.redisplay()
+        readline.set_startup_hook(prefill)
+    except ImportError:
+        pass  # readline not available (some Windows setups)
+
+    try:
+        answer = input(f"  {C.YELLOW}Version: {C.RESET}").strip()
     except (EOFError, KeyboardInterrupt):
         print()
         return None
+    finally:
+        try:
+            import readline
+            readline.set_startup_hook()
+        except ImportError:
+            pass
 
     if not answer:
         return suggested
@@ -226,13 +246,11 @@ def validate_version_changelog() -> tuple[str, bool]:
     max_cl = _get_changelog_max_version()
     min_version = max_cl if max_cl else "0.0.0"
 
-    if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
+    info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
+    if max_cl and _parse_semver(pkg_version) < _parse_semver(max_cl):
         suggested = _bump_patch(max_cl)
-        info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
     else:
         suggested = pkg_version
-        if max_cl:
-            info(f"package.json v{pkg_version} > CHANGELOG max v{max_cl}")
 
     if os.environ.get("PUBLISH_YES"):
         version = suggested
@@ -253,7 +271,9 @@ def validate_version_changelog() -> tuple[str, bool]:
     else:
         ok(f"Tag 'v{version}' is available")
 
-    if not is_republish:
+    # Only stamp changelog if this version doesn't already have an entry
+    version_in_changelog = version in _get_changelog_versions()
+    if not is_republish and not version_in_changelog:
         if not has_unreleased_section():
             if not _ensure_unreleased_section():
                 return version, False
