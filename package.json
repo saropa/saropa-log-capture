@@ -1369,5 +1369,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.1.0"
+  "version": "3.1.1"
 }

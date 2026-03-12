@@ -235,30 +235,6 @@ def _get_changelog_max_version() -> str | None:
     return max(versions, key=_parse_semver)
 
 
-def _ask_version(current: str) -> str | None:
-    """Prompt user to confirm or override the version. Returns version or None."""
-    if not sys.stdin.isatty():
-        # Non-interactive (e.g. IDE terminal with no stdin): accept default
-        return current
-    try:
-        answer = input(
-            f"  {C.YELLOW}Publish as v{current}? "
-            f"[Y/n/version]: {C.RESET}",
-        ).strip()
-    except (EOFError, KeyboardInterrupt):
-        print()
-        return None
-    if not answer or answer.lower() in ("y", "yes"):
-        return current
-    if answer.lower() in ("n", "no"):
-        return None
-    # Treat as a version string — validate basic semver shape
-    if re.match(r'^\d+\.\d+\.\d+$', answer):
-        return answer
-    fail(f"Invalid version format: {answer} (expected x.y.z)")
-    return None
-
-
 # Keywords that mean "changelog not yet published" (any triggers auto-bump when tag exists).
 _UNPUBLISHED_HEADING_RE = re.compile(
     r'^##\s*\[(?:Unreleased|Unpublished|Undefined)\]', re.IGNORECASE | re.MULTILINE
@@ -369,29 +345,6 @@ def _write_package_version(version: str) -> bool:
     return True
 
 
-def _ensure_untagged_version(version: str) -> tuple[str, bool]:
-    """If the version is already tagged, offer to bump patch.
-
-    Keeps bumping until an available tag is found or the user declines.
-    Returns (resolved_version, success).
-    """
-    original = version
-    while _is_version_tagged(version):
-        next_ver = _bump_patch(version)
-        warn(f"Tag 'v{version}' already exists.")
-        if not ask_yn(f"Bump to {next_ver}?", default=True):
-            fail("Version already tagged. Bump manually.")
-            return version, False
-        version = next_ver
-
-    if version != original:
-        if not _write_package_version(version):
-            return version, False
-        fix(f"package.json: {original} → {C.WHITE}{version}{C.RESET}")
-    ok(f"Tag 'v{version}' is available")
-    return version, True
-
-
 def _stamp_changelog(version: str) -> bool:
     """Replace '## [Unreleased]' (or [Unpublished]/[Undefined]) with '## [version]'.
 
@@ -424,96 +377,101 @@ def _stamp_changelog(version: str) -> bool:
     return True
 
 
-def _offer_bump_and_apply(
-    current: str, next_ver: str, fail_msg: str, default_yes: bool = True
-) -> tuple[str, bool]:
-    """Ask to bump to next_ver; if yes, write package.json and report. Returns (version, ok)."""
-    if not ask_yn(f"Bump to v{next_ver}?", default=default_yes):
-        fail(fail_msg)
-        return current, False
-    if not _write_package_version(next_ver):
-        return current, False
-    fix(f"package.json: {current} → {C.WHITE}{next_ver}{C.RESET}")
-    return next_ver, True
+def _prompt_version(suggested: str, min_version: str) -> str | None:
+    """Prompt user to accept suggested version or enter custom. Returns version or None.
+
+    User can press Enter to accept suggested, or type a semver string.
+    The chosen version must be >= min_version.
+    """
+    if not sys.stdin.isatty():
+        return suggested
+
+    try:
+        answer = input(
+            f"  {C.YELLOW}Version [{suggested}]: {C.RESET}"
+        ).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+
+    # Default (Enter) → use suggested
+    if not answer:
+        return suggested
+
+    # Explicit cancel
+    if answer.lower() in ("n", "no", "q", "quit", "exit"):
+        return None
+
+    # Custom version string → validate format and minimum
+    if not re.match(r"^\d+\.\d+\.\d+$", answer):
+        fail(f"Invalid version format: {answer} (expected x.y.z)")
+        return None
+
+    if _parse_semver(answer) < _parse_semver(min_version):
+        fail(f"Version {answer} is below minimum {min_version}")
+        return None
+
+    return answer
 
 
 def validate_version_changelog() -> tuple[str, bool]:
-    """Validate version, resolve tag conflicts, confirm, and stamp CHANGELOG.
+    """Validate version, prompt user, and stamp CHANGELOG.
 
-    1. package.json must have a valid version (source of truth)
-    2. Version must be greater than the highest released version in CHANGELOG
-    3. CHANGELOG.md must have ## [Unreleased] or [Unpublished] or [Undefined]
-    4. The version must not already be tagged (auto-bumps if so)
-    5. User confirms or overrides the final version
-    6. Stamp CHANGELOG: that heading → [version]
+    Simple flow:
+    1. Determine minimum version (max of changelog versions)
+    2. Suggest next patch version as default
+    3. ONE prompt: user accepts or enters custom version (must be >= minimum)
+    4. Check tag is available
+    5. Stamp CHANGELOG
     """
     pkg_version = read_package_version()
     if pkg_version == "unknown":
         fail("Could not read version from package.json")
         return pkg_version, False
 
-    # When version <= CHANGELOG max: infer intent from git. Already tagged → re-publish (as-is) or bump.
+    # Minimum version = highest in changelog (if any)
     max_cl = _get_changelog_max_version()
-    if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
-        next_ver = _bump_patch(max_cl)
-        if _is_version_tagged(pkg_version):
-            warn(f"v{pkg_version} is already released (tag exists).")
-            # Changelog still has [Unreleased]/[Unpublished]/[Undefined] → offer bump first (no "publish as-is?").
-            if _changelog_has_unpublished_heading():
-                pkg_version, bump_ok = _offer_bump_and_apply(
-                    pkg_version, next_ver, "Version already tagged; bump to release changelog."
-                )
-                if not bump_ok:
-                    return pkg_version, False
-            else:
-                if ask_yn(f"Publish v{pkg_version} as-is (e.g. sync to Open VSX)?", default=True):
-                    ok(f"Publishing v{pkg_version} as-is")
-                    return pkg_version, True
-                pkg_version, bump_ok = _offer_bump_and_apply(
-                    pkg_version, next_ver, f"Set package.json version higher than {max_cl}"
-                )
-                if not bump_ok:
-                    return pkg_version, False
-        else:
-            warn(f"package.json v{pkg_version} <= CHANGELOG max v{max_cl}")
-            pkg_version, bump_ok = _offer_bump_and_apply(
-                pkg_version, next_ver, f"Set package.json version higher than {max_cl}"
-            )
-            if not bump_ok:
-                if not ask_yn(f"Publish v{pkg_version} as-is (no CHANGELOG stamp)? [y/N]", default=False):
-                    fail(f"Set package.json version higher than {max_cl}")
-                    return pkg_version, False
-                ok(f"Publishing v{pkg_version} as-is")
-                return pkg_version, True
+    min_version = max_cl if max_cl else "0.0.0"
 
-    if not has_unreleased_section():
-        if not _ensure_unreleased_section():
+    # Suggest: bump patch from max(changelog, package), or use package if higher
+    if max_cl and _parse_semver(pkg_version) <= _parse_semver(max_cl):
+        suggested = _bump_patch(max_cl)
+        info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
+    else:
+        suggested = pkg_version
+        if max_cl:
+            info(f"package.json v{pkg_version} > CHANGELOG max v{max_cl}")
+
+    # Non-interactive mode: use suggested version
+    if os.environ.get("PUBLISH_YES"):
+        version = suggested
+    else:
+        version = _prompt_version(suggested, min_version)
+        if version is None:
+            fail("Version not confirmed.")
             return pkg_version, False
 
-    version, tag_ok = _ensure_untagged_version(pkg_version)
-    if not tag_ok:
-        return version, False
+    # Write to package.json if changed
+    if version != pkg_version:
+        if not _write_package_version(version):
+            return pkg_version, False
+        fix(f"package.json: {pkg_version} → {C.WHITE}{version}{C.RESET}")
 
-    # Let the user confirm or override the version (skip if PUBLISH_YES / --yes)
-    if os.environ.get("PUBLISH_YES"):
-        confirmed = version
+    # Check if this is a re-publish (tag already exists)
+    is_republish = _is_version_tagged(version)
+    if is_republish:
+        info(f"Tag 'v{version}' exists (re-publish / sync)")
     else:
-        confirmed = _ask_version(version)
-    if confirmed is None:
-        fail("Version not confirmed. Press Y or Enter to confirm, or run with --yes.")
-        return version, False
-    if confirmed != version:
-        # User overrode — re-check tag availability
-        if _is_version_tagged(confirmed):
-            fail(f"Tag 'v{confirmed}' already exists.")
-            return confirmed, False
-        if not _write_package_version(confirmed):
-            return confirmed, False
-        fix(f"package.json: {version} → {C.WHITE}{confirmed}{C.RESET}")
-        version = confirmed
+        ok(f"Tag 'v{version}' is available")
 
-    if not _stamp_changelog(version):
-        return version, False
+    # For new releases: ensure changelog has unreleased section and stamp it
+    # For re-publish: skip changelog changes (already stamped)
+    if not is_republish:
+        if not has_unreleased_section():
+            if not _ensure_unreleased_section():
+                return version, False
+        if not _stamp_changelog(version):
+            return version, False
 
     ok(f"Version {C.WHITE}{version}{C.RESET} validated")
     return version, True
