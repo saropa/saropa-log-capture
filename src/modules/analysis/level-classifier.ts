@@ -8,8 +8,8 @@
 export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice';
 
 const logcatLevelPattern = /^([VDIWEFA])\//;
-const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|\bfail(?:ed|ure)\b/i;
-const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b/i;
+const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|\bfail(?:ed|ure)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
 const warnPattern = /\b(warn(ing)?|caution)\b/i;
 const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
 const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+(?:pause|freed|concurrent)|anr|application\s+not\s+responding)\b/i;
@@ -21,7 +21,7 @@ const noticePattern = /\b(notice|note|important)\b/i;
 export function classifyLevel(plainText: string, category: string, strict: boolean): SeverityLevel {
     if (category === 'stderr') { return 'error'; }
     const lcm = logcatLevelPattern.exec(plainText);
-    if (lcm) { return classifyLogcat(lcm[1], plainText); }
+    if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }
     const ep = strict ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) { return 'error'; }
     return classifyNonError(plainText);
@@ -35,9 +35,11 @@ export function isActionableLevel(level: SeverityLevel): boolean {
     return level === 'error' || level === 'warning' || level === 'performance' || level === 'todo';
 }
 
-function classifyLogcat(prefix: string, plainText: string): SeverityLevel {
+function classifyLogcat(prefix: string, plainText: string, strict: boolean): SeverityLevel {
     if (prefix === 'E' || prefix === 'F' || prefix === 'A') { return 'error'; }
     if (prefix === 'W') { return 'warning'; }
+    const ep = strict ? strictErrorPattern : looseErrorPattern;
+    if (ep.test(plainText)) { return 'error'; }
     if (perfPattern.test(plainText)) { return 'performance'; }
     if (todoPattern.test(plainText)) { return 'todo'; }
     if (prefix === 'V' || prefix === 'D' || debugPattern.test(plainText)) { return 'debug'; }

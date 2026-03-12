@@ -168,6 +168,51 @@ suite('LevelClassifier', () => {
         });
     });
 
+    suite('classifyLevel — Dart/Flutter errors', () => {
+
+        test('should detect _TypeError (Dart internal error)', () => {
+            assert.strictEqual(
+                classifyLevel('[log] _TypeError (Null check operator used on a null value)', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should detect _RangeError (Dart internal error)', () => {
+            assert.strictEqual(
+                classifyLevel('_RangeError (Invalid value)', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should detect _FormatException (Dart internal error)', () => {
+            assert.strictEqual(
+                classifyLevel('_FormatException (Unexpected character)', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should detect "Null check operator" message', () => {
+            assert.strictEqual(
+                classifyLevel('[log] Null check operator used on a null value', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should detect I/flutter with _TypeError as error', () => {
+            assert.strictEqual(
+                classifyLevel('I/flutter (10946): _TypeError (Null check operator used on a null value)', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should detect I/flutter with Null check operator as error', () => {
+            assert.strictEqual(
+                classifyLevel('I/flutter (10946): Potential Null Check Operator Error Detected: Null check operator used on a null value', 'stdout', true),
+                'error',
+            );
+        });
+    });
+
     suite('isActionableLevel', () => {
 
         test('should return true for error', () => {
