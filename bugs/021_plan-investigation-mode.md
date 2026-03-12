@@ -1,5 +1,7 @@
 # Plan: Investigation Mode
 
+**Status:** Phase 2 complete, Phase 3 pending
+
 **Feature:** Pin multiple sessions and sources into a persistent "investigation" that can be searched together and exported as a bundle.
 
 **Problems Solved:**
@@ -97,9 +99,14 @@ Create `src/modules/investigation/investigation-search.ts`:
 interface SearchOptions {
     query: string;
     caseSensitive?: boolean;
-    useRegex?: boolean;
-    maxResultsPerSource?: number;  // Default 100
-    contextLines?: number;         // Lines before/after match, default 2
+    useRegex?: boolean;           // JavaScript regex flavor (supports flags: i, m, s)
+    maxResultsPerSource?: number; // Default 100
+    contextLines?: number;        // Lines before/after match, default 2
+}
+
+// Search history stored in workspace state (not file)
+interface SearchHistory {
+    queries: string[];            // Last 10 queries, most recent first
 }
 
 interface SearchResult {
@@ -148,7 +155,14 @@ async function searchInvestigation(
 - Stream-read files in chunks (don't load entire file into memory)
 - Cancel search if user types new query (debounce 300ms in UI)
 - Show "Searching N files..." progress indicator
-- For files >10MB, search first 10MB only with warning
+- For files >10MB, search first 10MB only with warning badge
+
+**Search history:**
+
+- Store last 10 queries in workspace state (not file)
+- Show dropdown button next to search input
+- Click history item to populate and execute search
+- Clear history option in dropdown footer
 
 ### 3. Investigation Panel
 
@@ -169,17 +183,20 @@ Create `src/ui/investigation/investigation-panel.ts`:
 │ ├─ 📄 20260312_143022_AuthDebug.log              [Unpin]       │
 │ ├─ 📄 20260312_141500_BackendTest.log            [Unpin]       │
 │ ├─ 📊 20260312_143022.perf.json                  [Unpin]       │
-│ └─ 🌐 20260312_143022.requests.json              [Unpin]       │
+│ ├─ 🌐 20260312_143022.requests.json              [Unpin]       │
+│ └─ ⚠️ deleted-session.log (missing)              [Remove]      │
 ├─────────────────────────────────────────────────────────────────┤
-│ 🔍 Search: [timeout________________] [⚙] [Search]              │
+│ 🔍 Search: [timeout________________] [▾ History] [⚙] [Search]  │
 │                                                                 │
 │ Results (4 matches across 3 sources):                           │
 │ ├─ AuthDebug.log                                                │
-│ │  └─ :142 ERROR: Connection timeout                           │
+│ │  └─ :141  INFO: Retrying connection...          (context)    │
+│ │  └─ :142  ERROR: Connection [timeout] exceeded  ← match      │
+│ │  └─ :143  DEBUG: Stack trace follows            (context)    │
 │ ├─ BackendTest.log                                              │
-│ │  └─ :89 TimeoutException in handler                          │
+│ │  └─ :89  [Timeout]Exception in handler          ← match      │
 │ └─ requests.json                                                │
-│    └─ :12 POST /api/auth 500 (3002ms)                          │
+│    └─ :12  POST /api/auth 500 (3002ms)            ← match      │
 ├─────────────────────────────────────────────────────────────────┤
 │ 📝 Notes:                                                       │
 │ [User's investigation notes here...]                            │
@@ -187,6 +204,11 @@ Create `src/ui/investigation/investigation-panel.ts`:
 │ [Export as .slc] [Generate Bug Report] [Copy Summary]           │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**Search result rendering:**
+- Match lines show the matching text highlighted (e.g., `[timeout]` in brackets above)
+- Context lines (before/after) are dimmed and collapsible per result group
+- Click any line to navigate to file:line in editor
 
 **Interactions:**
 
@@ -378,40 +400,54 @@ Add "Investigations" group to Project Logs tree:
 
 | File | Change |
 |------|--------|
-| `src/modules/investigation/investigation-types.ts` | New: data model interfaces |
-| `src/modules/investigation/investigation-store.ts` | New: persistence (CRUD + active state) |
-| `src/modules/investigation/investigation-search.ts` | New: cross-source search with cancellation |
-| `src/ui/investigation/investigation-panel.ts` | New: webview panel controller |
-| `src/ui/investigation/investigation-content.ts` | New: HTML/CSS for panel |
-| `src/ui/investigation/investigation-script.ts` | New: webview script |
-| `src/ui/investigation/investigation-tree-provider.ts` | New: sidebar tree data provider |
+| `src/modules/investigation/investigation-types.ts` | ✅ Data model interfaces + search types |
+| `src/modules/investigation/investigation-store.ts` | ✅ Persistence (CRUD + active state + search history) |
+| `src/modules/investigation/investigation-search.ts` | ✅ Cross-source search with sidecar resolution, cancellation, progress |
+| `src/ui/investigation/investigation-panel.ts` | ✅ Webview panel controller |
+| `src/ui/investigation/investigation-panel-html.ts` | ✅ HTML for panel (with CSP, search options) |
+| `src/ui/investigation/investigation-panel-styles.ts` | ✅ CSS for panel (context lines, progress, warnings) |
+| `src/ui/investigation/investigation-panel-script.ts` | ✅ Webview script (search, history, options) |
+| `src/ui/investigation/investigation-panel-handlers.ts` | ✅ Message handlers for panel |
+| `src/ui/investigation/investigation-tree-provider.ts` | Pending: sidebar tree data provider |
 | `src/modules/export/slc-bundle.ts` | Extend: investigation export/import, manifest v3 |
 | `src/modules/bug-report/bug-report-collector.ts` | Extend: collect investigation context |
 | `src/ui/panels/bug-report-panel.ts` | Extend: render investigation context section |
 | `src/commands-session.ts` | Add investigation commands |
 | `src/ui/session-panel.ts` | Add investigations group to tree |
-| `package.json` | Add commands, menus, settings |
+| `package.json` | Add commands, menus, keybindings, settings |
 | `l10n.ts` + bundles | Add localization strings |
+
+**Test files:**
+
+| File | Coverage |
+|------|----------|
+| `src/modules/investigation/investigation-store.test.ts` | CRUD, active state, limit enforcement, recovery |
+| `src/modules/investigation/investigation-search.test.ts` | Search across logs/sidecars, cancellation, large files |
+| `src/modules/export/slc-bundle-investigation.test.ts` | Export/import v3 bundles, manifest validation |
 
 ---
 
 ## Phases
 
-### Phase 1: Core model and basic UI ✅ IMPLEMENTED
-- Investigation data model and store (with relative paths)
-- Active investigation state management
-- Create/delete/switch investigations
-- Add/remove sources via commands
-- Basic investigation webview panel showing pinned sources
-- Basic cross-source search (included early)
-- ~~Investigations group in sidebar tree~~ (deferred to Phase 4)
+### Phase 1: Core model and basic UI ✅ COMPLETE
+- ✅ Investigation data model and store (with relative paths)
+- ✅ Active investigation state management
+- ✅ Create/delete/switch investigations
+- ✅ Add/remove sources via commands
+- ✅ Basic investigation webview panel showing pinned sources
+- ✅ Basic cross-source search (included early)
+- ⏭️ Investigations group in sidebar tree (deferred to Phase 4)
 
-### Phase 2: Cross-source search
-- Search implementation for logs and JSON sidecars
-- Cancellation support and progress reporting
-- Search UI in investigation panel (debounced input)
-- Click result to navigate to file:line
-- Large file handling (>10MB warning)
+### Phase 2: Cross-source search ✅ COMPLETE
+- ✅ Search implementation for logs and JSON sidecars
+- ✅ Sidecar auto-resolution for session sources
+- ✅ Cancellation support and progress reporting
+- ✅ Search UI with options (case sensitive, regex, context lines)
+- ✅ Search history (last 10 queries)
+- ✅ Click result to navigate to file:line
+- ✅ Context lines in results (before/after)
+- ✅ Large file handling (>10MB warning badge)
+- ✅ Missing source detection and warning badges
 
 ### Phase 3: Export and integration
 - Manifest v3 with `type: 'investigation'`
@@ -439,6 +475,65 @@ Add "Investigations" group to Project Logs tree:
 - **Backward compatibility**: Old extension versions will fail gracefully on v3 bundles (invalid manifest)
 - **Discovery**: Add "Create Investigation" button in session panel header + context menu
 - **Recent list**: Store last 5 opened investigation IDs in workspace state; show in quick picker
+
+---
+
+## Limit Behavior
+
+When limits are reached, show clear user feedback:
+
+| Limit | Reached Behavior |
+|-------|------------------|
+| 50 investigations | Show error: "Maximum investigations reached. Delete an existing investigation to create a new one." |
+| 20 sources per investigation | Show error: "Investigation has 20 sources (maximum). Remove a source to add another." |
+| 10MB file during search | Show warning badge on source: "⚠️ Large file — searched first 10MB only" |
+
+---
+
+## Error Handling
+
+| Scenario | Behavior |
+|----------|----------|
+| Source file deleted/moved | Show "⚠️ Missing" badge; skip in search; allow manual removal |
+| Source file locked/unreadable | Log warning; skip in search; show "⚠️ Unreadable" badge |
+| `investigations.json` corrupt | Backup to `investigations.json.bak`; reset to empty; show notification with recovery option |
+| `investigations.json` missing | Create empty file on first investigation create |
+| Import fails mid-extraction | Clean up partial files; show error; do not create investigation |
+| Search cancelled mid-flight | Stop immediately; show partial results with "Search cancelled" message |
+| User modifies sources during search | Cancel ongoing search automatically; restart with new source list |
+
+**Storage recovery:**
+
+```typescript
+async function loadInvestigations(): Promise<Investigation[]> {
+    try {
+        const content = await readFile(INVESTIGATIONS_PATH);
+        return JSON.parse(content);
+    } catch (e) {
+        if (await fileExists(INVESTIGATIONS_PATH)) {
+            await copyFile(INVESTIGATIONS_PATH, INVESTIGATIONS_BACKUP_PATH);
+            logger.warn('Corrupt investigations.json backed up');
+        }
+        return [];
+    }
+}
+```
+
+---
+
+## Keyboard Accessibility
+
+| Shortcut | Action | Context |
+|----------|--------|---------|
+| `Ctrl+Shift+I` | Open/focus investigation panel | Global |
+| `Ctrl+F` | Focus search input | Investigation panel |
+| `Enter` | Execute search | Search input focused |
+| `Escape` | Clear search / close panel | Investigation panel |
+| `↑` / `↓` | Navigate search results | Results focused |
+| `Enter` | Open file at selected result | Result focused |
+| `Delete` | Remove selected source | Source focused |
+
+Add `aria-label` attributes to all interactive elements for screen reader support.
 
 ---
 
