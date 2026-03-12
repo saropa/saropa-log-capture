@@ -95,6 +95,35 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         contextMenuSourceCol = sourceLink.dataset.col || '1';
     }
 
+    // Hide Lines submenu visibility
+    var hasShiftSelection = (typeof selectionStart !== 'undefined' && selectionStart >= 0 &&
+        typeof selectionEnd !== 'undefined' && selectionEnd >= 0 &&
+        Math.abs(selectionEnd - selectionStart) > 0);
+    var lineIsHidden = hasLine && (typeof isLineHidden === 'function') && isLineHidden(lineIdx);
+    var anyHidden = (typeof hasHiddenLines === 'function') && hasHiddenLines();
+    var selectionHasHidden = hasShiftSelection && (typeof hasSelectionWithHidden === 'function') && hasSelectionWithHidden();
+
+    // Show hide-lines submenu if we have a line OR there are hidden lines to unhide
+    var hideSubmenu = contextMenuEl.querySelector('#hide-lines-submenu');
+    if (hideSubmenu) hideSubmenu.style.display = (hasLine || anyHidden) ? '' : 'none';
+
+    // Selection-based items
+    contextMenuEl.querySelectorAll('[data-selection-action]').forEach(function(el) {
+        el.style.display = hasShiftSelection ? '' : 'none';
+    });
+
+    // Unhide line (only if this line is hidden)
+    var unhideLineItem = contextMenuEl.querySelector('[data-action="unhide-line"]');
+    if (unhideLineItem) unhideLineItem.style.display = lineIsHidden ? '' : 'none';
+
+    // Unhide selection (only if selection contains hidden lines)
+    var unhideSelItem = contextMenuEl.querySelector('[data-action="unhide-selection"]');
+    if (unhideSelItem) unhideSelItem.style.display = (hasShiftSelection && selectionHasHidden) ? '' : 'none';
+
+    // Unhide all (only if there are hidden lines)
+    var unhideAllItem = contextMenuEl.querySelector('[data-action="unhide-all"]');
+    if (unhideAllItem) unhideAllItem.style.display = anyHidden ? '' : 'none';
+
     syncContextMenuToggles();
     positionContextMenu(x, y);
     window.isContextMenuOpen = true;

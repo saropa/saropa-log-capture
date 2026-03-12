@@ -48,6 +48,28 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'show-context':"));
         });
 
+        test('should handle hide/unhide line actions', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes("case 'hide-line':"));
+            assert.ok(script.includes("case 'unhide-line':"));
+            assert.ok(script.includes("case 'hide-selection':"));
+            assert.ok(script.includes("case 'unhide-selection':"));
+            assert.ok(script.includes("case 'hide-all-visible':"));
+            assert.ok(script.includes("case 'unhide-all':"));
+            assert.ok(script.includes('hideLine'));
+            assert.ok(script.includes('unhideLine'));
+            assert.ok(script.includes('hideAllVisible'));
+            assert.ok(script.includes('unhideAll'));
+        });
+
+        test('should check hidden line state for menu visibility', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('isLineHidden'));
+            assert.ok(script.includes('hasHiddenLines'));
+            assert.ok(script.includes('hasSelectionWithHidden'));
+            assert.ok(script.includes('hide-lines-submenu'));
+        });
+
         test('should handle copy-selection, select-all, and export-current-view global actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function handleGlobalAction'));
@@ -223,6 +245,34 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('codicon-pin'));
             assert.ok(html.includes('codicon-eye'));
             assert.ok(html.includes('codicon-eye-closed'));
+        });
+
+        test('should include Hide Lines submenu with actions', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('id="hide-lines-submenu"'));
+            assert.ok(html.includes('> Hide Lines\n'));
+            assert.ok(html.includes('Hide This Line'));
+            assert.ok(html.includes('Unhide This Line'));
+            assert.ok(html.includes('Hide Selection'));
+            assert.ok(html.includes('Unhide Selection'));
+            assert.ok(html.includes('Hide All Visible'));
+            assert.ok(html.includes('Unhide All'));
+        });
+
+        test('should include hide/unhide action data attributes', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="hide-line"'));
+            assert.ok(html.includes('data-action="unhide-line"'));
+            assert.ok(html.includes('data-action="hide-selection"'));
+            assert.ok(html.includes('data-action="unhide-selection"'));
+            assert.ok(html.includes('data-action="hide-all-visible"'));
+            assert.ok(html.includes('data-action="unhide-all"'));
+        });
+
+        test('should mark selection-based hide items with data-selection-action', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="hide-selection" data-selection-action'));
+            assert.ok(html.includes('data-action="unhide-selection" data-selection-action'));
         });
 
         test('should include submenu structure elements', () => {

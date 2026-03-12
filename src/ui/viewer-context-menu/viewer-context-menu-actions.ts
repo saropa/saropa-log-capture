@@ -170,6 +170,24 @@ function onContextMenuAction(action) {
             vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts });
             break;
         }
+        case 'hide-line':
+            if (typeof hideLine === 'function') hideLine(lineIdx);
+            break;
+        case 'unhide-line':
+            if (typeof unhideLine === 'function') unhideLine(lineIdx);
+            break;
+        case 'hide-selection':
+            if (typeof hideSelection === 'function') hideSelection();
+            break;
+        case 'unhide-selection':
+            if (typeof unhideSelection === 'function') unhideSelection();
+            break;
+        case 'hide-all-visible':
+            if (typeof hideAllVisible === 'function') hideAllVisible();
+            break;
+        case 'unhide-all':
+            if (typeof unhideAll === 'function') unhideAll();
+            break;
     }
 }
 
