@@ -29,8 +29,8 @@ async function runLinuxLogs(context: IntegrationEndContext): Promise<string> {
     const when = cfg.when;
     const onLinux = isExtensionOnLinux();
     const targetWsl = isTargetWsl(context);
-    if (when === 'wsl' && !targetWsl && !onLinux) return '';
-    if (when === 'remote' && !onLinux) return '';
+    if (when === 'wsl' && !targetWsl && !onLinux) {return '';}
+    if (when === 'remote' && !onLinux) {return '';}
     const start = new Date(context.sessionStartTime - cfg.leadMinutes * 60 * 1000).toISOString();
     const end = new Date(context.sessionEndTime + cfg.lagMinutes * 60 * 1000).toISOString();
     const parts: string[] = [];
