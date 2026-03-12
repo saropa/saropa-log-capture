@@ -238,6 +238,10 @@ export class LogViewerProvider
   dispose(): void { this.stopTailing(); stopBatchTimer(this); panelHandlers.disposeHandlers(); }
 
   handleMessage(msg: Record<string, unknown>): void {
+    if (msg.type === 'viewerFocused') {
+      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; helpers.updateBadge(this.view, 0); }
+      return;
+    }
     const ctx: ViewerMessageContext = {
       currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive,
       context: this.context, extensionVersion: this.version,
