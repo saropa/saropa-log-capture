@@ -16,6 +16,14 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Replay bar no longer appears when log is empty.** Added defense-in-depth guards to prevent the replay controls from showing "0 / 0" when no log lines are loaded. The CSS no longer forces visibility, and JavaScript guards now exit replay mode if logs are cleared.
+
+---
+
 ## [3.1.2]
 
 Enables Cursor IDE compatibility by lowering the VS Code engine requirement to 1.105.0.

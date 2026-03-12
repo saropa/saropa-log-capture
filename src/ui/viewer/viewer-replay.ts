@@ -97,6 +97,7 @@ export function getReplayScript(): string {
     window.toggleReplayBar = function() {
         if (!bar) return;
         if (replaySessionActive || !replayFileLoaded) return;
+        if (!allLines || allLines.length === 0) return;
         if (!window.replayMode) {
             if (typeof window.startReplay === 'function') window.startReplay();
             return;
@@ -141,11 +142,15 @@ export function getReplayScript(): string {
 
     function updateReplayUi() {
         var total = allLines ? allLines.length : 0;
+        if (total === 0) {
+            if (window.replayMode) window.exitReplayMode();
+            return;
+        }
         if (scrubber) {
             scrubber.max = Math.max(0, total - 1);
             scrubber.value = window.replayCurrentIndex;
         }
-        if (statusEl) statusEl.textContent = (window.replayCurrentIndex + 1) + ' / ' + (total || 0);
+        if (statusEl) statusEl.textContent = (window.replayCurrentIndex + 1) + ' / ' + total;
         if (typeof renderViewport === 'function') renderViewport(true);
         if (autoScroll !== undefined && typeof window.setProgrammaticScroll === 'function' && logEl) {
             window.setProgrammaticScroll();
