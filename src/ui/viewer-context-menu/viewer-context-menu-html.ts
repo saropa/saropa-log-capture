@@ -78,6 +78,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-context">
                 <span class="codicon codicon-list-flat"></span> Show Context
             </div>
+            <div class="context-menu-item" data-action="show-integration-context">
+                <span class="codicon codicon-layers"></span> Show Integration Context
+            </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="add-watch">
                 <span class="codicon codicon-eye"></span> Add to Watch List

@@ -111,5 +111,7 @@
   "Export Logs": "Export Logs",
   "Text Files": "Text Files",
   "All Files": "All Files",
-  "No analyzable tokens found in this line.": "No analyzable tokens found in this line."
+  "No analyzable tokens found in this line.": "No analyzable tokens found in this line.",
+  "No integration context available for this line.": "No integration context available for this line.",
+  "No integration data captured for this session. Enable integrations in settings.": "No integration data captured for this session. Enable integrations in settings."
 }
