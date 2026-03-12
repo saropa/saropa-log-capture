@@ -5,7 +5,6 @@
  *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error, 🟣 performance, 🔵 framework)
  *   - Sequential counter (1, 2, ...)
  *   - Wall-clock timestamp (T07:23:36)
- *   - Separator (»)
  *
  * Also provides whole-line severity tinting (subtle background colors).
  *
@@ -89,14 +88,15 @@ function updateDecoButton() {
 /**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
- * Returns empty string for markers, stack-frame sub-lines, or when off.
+ * Returns empty string for markers, stack-frame sub-lines, blank lines, or when off.
  *
- * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
+ * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 </span>
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
 function getDecorationPrefix(item) {
     if (!showDecorations) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
+    if (typeof isLineContentBlank === 'function' && isLineContentBlank(item)) return '';
 
     var parts = [];
     // Emoji dots are NOT shown in the visual prefix — the CSS severity bar
@@ -112,7 +112,7 @@ function getDecorationPrefix(item) {
     }
     if (parts.length === 0) return '';
     return '<span class="line-decoration">'
-        + parts.join('&nbsp; ') + '&nbsp; \\u00BB '
+        + parts.join('&nbsp; ') + '&nbsp; '
         + '</span>';
 }
 
