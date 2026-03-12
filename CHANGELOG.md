@@ -16,7 +16,15 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [3.1.3] - Unreleased
+## [3.2.0] - Unreleased
+
+### Fixed
+
+- **Empty lines no longer show decoration prefixes.** Blank or whitespace-only lines now skip counter and timestamp decorations, matching the existing behavior for severity bars.
+
+---
+
+## [3.1.3]
 
 ### Changed
 
