@@ -62,7 +62,8 @@ export function getOptionsStyles(): string {
     border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
     padding: 4px 8px;
 }
-#filters-search {
+#filters-search,
+#options-search {
     flex: 1;
     min-width: 0;
     background: transparent;
