@@ -1303,7 +1303,7 @@
     "jszip": "^3.10.1"
   },
   "devDependencies": {
-    "c8": "^10.1.2",
+    "c8": "^11.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
     "@types/vscode": "^1.105.0",
