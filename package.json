@@ -1306,7 +1306,7 @@
     "c8": "^10.1.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.108.1",
+    "@types/vscode": "^1.105.0",
     "@vscode/codicons": "^0.0.44",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
@@ -1319,7 +1319,7 @@
   },
   "displayName": "%displayName%",
   "engines": {
-    "vscode": "^1.108.1"
+    "vscode": "^1.105.0"
   },
   "extensionKind": [
     "workspace"
@@ -1369,5 +1369,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.1.1"
+  "version": "3.1.2"
 }
