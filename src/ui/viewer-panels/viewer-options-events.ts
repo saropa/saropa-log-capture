@@ -95,12 +95,18 @@ var audioVolumeLabel = document.getElementById('audio-volume-label');
 var audioRateLimitSelect = document.getElementById('audio-rate-limit');
 var previewErrorBtn = document.getElementById('preview-error-sound');
 var previewWarningBtn = document.getElementById('preview-warning-sound');
+var volumePreviewDebounceTimer = null;
 
 if (audioVolumeSlider) {
     audioVolumeSlider.addEventListener('input', function(e) {
         var value = parseInt(e.target.value, 10);
         if (audioVolumeLabel) audioVolumeLabel.textContent = value + '%';
         if (typeof setAudioVolume === 'function') setAudioVolume(value);
+        // Debounced preview: play sound after user stops dragging
+        if (volumePreviewDebounceTimer) clearTimeout(volumePreviewDebounceTimer);
+        volumePreviewDebounceTimer = setTimeout(function() {
+            if (typeof previewAudioSound === 'function') previewAudioSound('warning');
+        }, 300);
     });
 }
 if (audioRateLimitSelect) {
