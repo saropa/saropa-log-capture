@@ -1,6 +1,7 @@
 /**
  * .slc session bundle export and import. Export produces a ZIP with manifest.json,
- * metadata.json, and log file(s); import extracts into the workspace log directory and merges metadata.
+ * metadata.json, log file(s), and integration sidecar files; import extracts into
+ * the workspace log directory and merges metadata.
  * Invoked by exportSlc command and session panel "Export as SLC".
  */
 import * as vscode from 'vscode';
@@ -10,7 +11,7 @@ import { getLogDirectoryUri } from '../config/config';
 import { SessionMetadataStore } from '../session/session-metadata';
 import type { SessionMeta } from '../session/session-metadata';
 
-const MANIFEST_VERSION = 1;
+const MANIFEST_VERSION = 2;
 const MANIFEST_FILENAME = 'manifest.json';
 const METADATA_FILENAME = 'metadata.json';
 
@@ -18,12 +19,58 @@ export interface SlcManifest {
     version: number;
     mainLog: string;
     parts: string[];
+    sidecars?: string[];
     displayName?: string;
 }
 
 /** Returns true if manifest has supported version and required mainLog (for tests and import). */
 export function isSlcManifestValid(manifest: SlcManifest): boolean {
-    return manifest.version === MANIFEST_VERSION && typeof manifest.mainLog === 'string' && manifest.mainLog.length > 0;
+    const validVersion = manifest.version === 1 || manifest.version === 2;
+    return validVersion && typeof manifest.mainLog === 'string' && manifest.mainLog.length > 0;
+}
+
+/** Known sidecar extensions from integration providers. */
+const SIDECAR_EXTENSIONS = [
+    '.perf.json',
+    '.terminal.log',
+    '.events.json',
+    '.container.log',
+    '.crash-dumps.json',
+    '.linux.log',
+    '.requests.json',
+    '.queries.json',
+    '.browser.json',
+    '.security.json',
+    '.audit.json',
+];
+
+/**
+ * Find integration sidecar files for a session log file.
+ * Sidecars are named basename.{type}.{ext} (e.g. session.perf.json, session.terminal.log).
+ */
+async function findSidecarUris(mainLogUri: vscode.Uri): Promise<vscode.Uri[]> {
+    const dir = vscode.Uri.joinPath(mainLogUri, '..');
+    const mainName = mainLogUri.path.split(/[/\\]/).pop() ?? '';
+    const baseMatch = mainName.match(/^(.+?)(_\d{3})?\.log$/i);
+    if (!baseMatch) { return []; }
+    const base = baseMatch[1];
+    const results: vscode.Uri[] = [];
+    let entries: [string, vscode.FileType][];
+    try {
+        entries = await vscode.workspace.fs.readDirectory(dir);
+    } catch {
+        return [];
+    }
+    for (const [name, type] of entries) {
+        if (type !== vscode.FileType.File) { continue; }
+        if (!name.startsWith(base + '.')) { continue; }
+        const isSidecar = SIDECAR_EXTENSIONS.some(ext => name.endsWith(ext));
+        if (isSidecar) {
+            results.push(vscode.Uri.joinPath(dir, name));
+        }
+    }
+    results.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
+    return results;
 }
 
 /**
@@ -79,12 +126,17 @@ export async function exportSessionToSlc(logUri: vscode.Uri): Promise<vscode.Uri
     }
     const store = new SessionMetadataStore();
     const meta = await store.loadMetadata(logUri);
-    const partUris = await findSplitPartUris(logUri);
+    const [partUris, sidecarUris] = await Promise.all([
+        findSplitPartUris(logUri),
+        findSidecarUris(logUri),
+    ]);
     const partNames = partUris.map(u => u.path.split(/[/\\]/).pop() ?? '');
+    const sidecarNames = sidecarUris.map(u => u.path.split(/[/\\]/).pop() ?? '');
     const manifest: SlcManifest = {
         version: MANIFEST_VERSION,
         mainLog: mainName,
         parts: partNames,
+        sidecars: sidecarNames.length > 0 ? sidecarNames : undefined,
         displayName: meta.displayName,
     };
     const zip = new JSZip();
@@ -92,8 +144,12 @@ export async function exportSessionToSlc(logUri: vscode.Uri): Promise<vscode.Uri
     zip.file(METADATA_FILENAME, JSON.stringify(meta, null, 2));
     const mainData = await vscode.workspace.fs.readFile(logUri);
     zip.file(mainName, mainData);
-    const partBuffers = await Promise.all(partUris.map(uri => vscode.workspace.fs.readFile(uri)));
+    const [partBuffers, sidecarBuffers] = await Promise.all([
+        Promise.all(partUris.map(uri => vscode.workspace.fs.readFile(uri))),
+        Promise.all(sidecarUris.map(uri => vscode.workspace.fs.readFile(uri))),
+    ]);
     partNames.forEach((name, i) => zip.file(name, partBuffers[i]));
+    sidecarNames.forEach((name, i) => zip.file(name, sidecarBuffers[i]));
     const blob = await zip.generateAsync({ type: 'nodebuffer' });
     await vscode.workspace.fs.writeFile(targetUri, Buffer.from(blob));
     return targetUri;
@@ -160,6 +216,17 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
         const partUri = vscode.Uri.joinPath(logDir, partFileName);
         const partData = await partEntry.async('nodebuffer');
         await vscode.workspace.fs.writeFile(partUri, Buffer.from(partData));
+    }
+    const sidecars = manifest.sidecars ?? [];
+    for (const sidecarName of sidecars) {
+        const sidecarEntry = zip.file(sidecarName);
+        if (!sidecarEntry) { continue; }
+        const extMatch = sidecarName.match(/\.[^.]+\.[^.]+$/);
+        const ext = extMatch ? extMatch[0] : '';
+        const newSidecarName = `${mainStem}${ext}`;
+        const sidecarUri = vscode.Uri.joinPath(logDir, newSidecarName);
+        const sidecarData = await sidecarEntry.async('nodebuffer');
+        await vscode.workspace.fs.writeFile(sidecarUri, Buffer.from(sidecarData));
     }
     const metaFile = zip.file(METADATA_FILENAME);
     if (metaFile) {
