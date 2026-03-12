@@ -15,6 +15,11 @@ import {
     handleSearch,
     handleUpdateNotes,
     performSearch,
+    getSearchHistoryHtml,
+    handleClearSearchHistory,
+    checkMissingSources,
+    renderSearchResultsCompact,
+    type SearchOptionsMessage,
 } from './investigation-panel-handlers';
 
 let panel: vscode.WebviewPanel | undefined;
@@ -52,13 +57,19 @@ async function refreshPanel(): Promise<void> {
     if (!panel || !currentStore) { return; }
     const investigation = await currentStore.getActiveInvestigation();
     panel.title = investigation ? `Investigation: ${investigation.name}` : 'Investigation';
+
+    let missingSources: string[] = [];
+    if (investigation) {
+        missingSources = await checkMissingSources(investigation);
+    }
+
     panel.webview.html = investigation
-        ? buildInvestigationHtml(investigation)
+        ? buildInvestigationHtml(investigation, missingSources)
         : buildNoInvestigationHtml();
 
     if (investigation?.lastSearchQuery) {
-        const html = await performSearch(investigation, investigation.lastSearchQuery);
-        panel.webview.postMessage({ type: 'searchResults', html });
+        const result = await performSearch(investigation, { query: investigation.lastSearchQuery });
+        panel.webview.postMessage({ type: 'searchResults', html: renderSearchResultsCompact(result, investigation.lastSearchQuery) });
     }
 }
 
@@ -96,7 +107,28 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
 
         case 'search':
             if (panel) {
-                await handleSearch(currentStore, String(msg.query ?? ''), panel);
+                const options: SearchOptionsMessage = {
+                    query: String(msg.query ?? ''),
+                    caseSensitive: Boolean(msg.caseSensitive ?? false),
+                    useRegex: Boolean(msg.useRegex ?? false),
+                    contextLines: typeof msg.contextLines === 'number' ? msg.contextLines : 2,
+                };
+                await handleSearch(currentStore, options, panel);
+            }
+            break;
+
+        case 'getSearchHistory':
+            if (panel) {
+                const historyHtml = await getSearchHistoryHtml(currentStore);
+                panel.webview.postMessage({ type: 'searchHistory', html: historyHtml });
+            }
+            break;
+
+        case 'clearSearchHistory':
+            await handleClearSearchHistory(currentStore);
+            if (panel) {
+                const historyHtml = await getSearchHistoryHtml(currentStore);
+                panel.webview.postMessage({ type: 'searchHistory', html: historyHtml });
             }
             break;
 
