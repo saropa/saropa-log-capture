@@ -28,6 +28,7 @@ import { getPresetsScript } from '../viewer-search-filter/viewer-presets';
 import { getContextMenuScript, getContextMenuHtml } from '../viewer-context-menu/viewer-context-menu';
 import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filter';
 import { getContextModalScript, getContextModalHtml } from '../viewer-context-menu/viewer-context-modal';
+import { getContextPopoverScript } from '../viewer-context-menu/viewer-context-popover';
 import { getViewerDataScript } from '../viewer/viewer-data';
 import { getSourceTagsScript } from '../viewer-stack-tags/viewer-source-tags';
 import { getClassTagsScript } from '../viewer-stack-tags/viewer-class-tags';
@@ -249,6 +250,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getPresetsScript())}
     ${scriptTag(nonce, getFilterBadgeScript())}
     ${scriptTag(nonce, getContextModalScript())}
+    ${scriptTag(nonce, getContextPopoverScript())}
     ${scriptTag(nonce, getContextMenuScript())}
     ${scriptTag(nonce, getAudioScript(extensionUri || ''))}
     ${scriptTag(nonce, getSessionTransformsScript())}
