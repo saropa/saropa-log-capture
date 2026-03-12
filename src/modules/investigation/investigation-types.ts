@@ -58,3 +58,67 @@ export const MAX_INVESTIGATIONS = 50;
 
 /** Maximum number of sources per investigation. */
 export const MAX_SOURCES_PER_INVESTIGATION = 20;
+
+/** Maximum file size to search fully (bytes). Files larger than this show a warning. */
+export const MAX_SEARCH_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+/** Maximum search results per source file. */
+export const MAX_RESULTS_PER_SOURCE = 100;
+
+/** Maximum search history entries. */
+export const MAX_SEARCH_HISTORY = 10;
+
+/** Search options for cross-source search. */
+export interface SearchOptions {
+    readonly query: string;
+    readonly caseSensitive?: boolean;
+    readonly useRegex?: boolean;
+    readonly contextLines?: number;
+    readonly maxResultsPerSource?: number;
+}
+
+/** A single search match within a file. */
+export interface SearchMatch {
+    readonly line: number;
+    readonly column: number;
+    readonly text: string;
+    readonly contextBefore?: readonly string[];
+    readonly contextAfter?: readonly string[];
+}
+
+/** Search results for a single source file (may be main log or sidecar). */
+export interface SourceSearchResult {
+    readonly source: InvestigationSource;
+    readonly sourceFile: string;
+    readonly matches: readonly SearchMatch[];
+    readonly truncated: boolean;
+    readonly largeFileWarning?: boolean;
+}
+
+/** Aggregated search results across all sources. */
+export interface InvestigationSearchResult {
+    readonly results: readonly SourceSearchResult[];
+    readonly totalMatches: number;
+    readonly totalSources: number;
+    readonly cancelled: boolean;
+    readonly searchTimeMs: number;
+}
+
+/** Known sidecar extensions that can be searched. */
+export const SEARCHABLE_SIDECAR_EXTENSIONS = [
+    '.terminal.log',
+    '.requests.json',
+    '.events.json',
+    '.queries.json',
+    '.browser.json',
+    '.container.log',
+    '.linux.log',
+] as const;
+
+/** Sidecar extensions to skip (numeric/binary data only). */
+export const SKIP_SIDECAR_EXTENSIONS = [
+    '.perf.json',
+    '.crash-dumps.json',
+    '.security.json',
+    '.audit.json',
+] as const;
