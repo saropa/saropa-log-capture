@@ -166,6 +166,10 @@ const strings: Record<string, string> = {
     'prompt.lokiApiKey': 'Loki API key (Bearer token). Stored in Secret Storage.',
     'prompt.lokiApiKeyPlaceholder': 'Paste your Grafana Cloud or Loki API key',
 
+    // Integration context
+    'msg.noIntegrationContext': 'No integration context available for this line.',
+    'msg.noIntegrationData': 'No integration data captured for this session. Enable integrations in settings.',
+
     // Actions (shared button labels)
     'action.delete': 'Delete',
     'action.open': 'Open',
