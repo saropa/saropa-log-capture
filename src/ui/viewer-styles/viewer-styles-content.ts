@@ -245,7 +245,7 @@ export function getContentStyles(): string {
    Play/pause/stop, speed, scrubber when replaying a loaded session.
    =================================================================== */
 .replay-bar {
-    display: flex;
+    /* display controlled by JavaScript; do not set here */
     align-items: center;
     gap: 8px;
     padding: 4px 8px;
