@@ -58,11 +58,31 @@ export function getReplayScript(): string {
     var statusEl = document.getElementById('replay-status');
     var ibReplay = document.getElementById('ib-replay');
 
+    /** Track whether a recording session is active (hide replay controls during recording). */
+    var replaySessionActive = false;
+    /** Track whether we're viewing a loaded file (enable replay controls when true). */
+    var replayFileLoaded = false;
+
     /** Show or hide the icon bar replay button. */
     function setReplayIconVisible(visible) {
         if (!ibReplay) return;
         ibReplay.classList.toggle('ib-replay-active', visible);
     }
+
+    /** Enable/disable replay icon based on file loaded state and session state. */
+    window.setReplayEnabled = function(fileLoaded, sessionActive) {
+        replayFileLoaded = fileLoaded;
+        replaySessionActive = sessionActive;
+        if (sessionActive || !fileLoaded) {
+            setReplayIconVisible(false);
+            if (bar) bar.style.display = 'none';
+            if (window.replayMode) {
+                window.exitReplayMode();
+            }
+        } else if (fileLoaded && !window.replayMode) {
+            setReplayIconVisible(true);
+        }
+    };
 
     /** Update the icon bar replay icon to reflect play/pause state. */
     function updateReplayIcon(playing) {
@@ -75,7 +95,12 @@ export function getReplayScript(): string {
 
     /** Toggle the replay bar visibility. */
     window.toggleReplayBar = function() {
-        if (!bar || !window.replayMode) return;
+        if (!bar) return;
+        if (replaySessionActive || !replayFileLoaded) return;
+        if (!window.replayMode) {
+            if (typeof window.startReplay === 'function') window.startReplay();
+            return;
+        }
         var visible = bar.style.display !== 'none';
         bar.style.display = visible ? 'none' : 'flex';
     };
@@ -169,8 +194,12 @@ export function getReplayScript(): string {
         if (bar) bar.style.display = 'none';
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
-        setReplayIconVisible(false);
         updateReplayIcon(false);
+        if (replayFileLoaded && !replaySessionActive) {
+            setReplayIconVisible(true);
+        } else {
+            setReplayIconVisible(false);
+        }
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
     }
@@ -178,10 +207,11 @@ export function getReplayScript(): string {
 
     window.startReplay = function(msg) {
         if (!allLines || allLines.length === 0) return;
+        if (replaySessionActive) return;
         if (msg && msg.replayConfig) applyReplayConfig(msg.replayConfig);
         window.replayMode = true;
         window.replayCurrentIndex = 0;
-        /* Bar stays hidden — user toggles it via the icon bar button */
+        if (bar) bar.style.display = 'flex';
         replayPlaying = true;
         if (playBtn) playBtn.style.display = 'none';
         if (pauseBtn) pauseBtn.style.display = '';
