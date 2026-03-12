@@ -31,12 +31,12 @@ export const httpNetworkProvider: IntegrationProvider = {
             for (const line of lines.slice(-cap)) {
                 try {
                     const obj = JSON.parse(line) as Record<string, unknown>;
-                    if (obj && typeof obj === 'object') requests.push(obj);
+                    if (obj && typeof obj === 'object') {requests.push(obj);}
                 } catch {
                     // skip non-JSON lines
                 }
             }
-            if (requests.length === 0) return undefined;
+            if (requests.length === 0) {return undefined;}
             const sidecarContent = JSON.stringify({ requests }, null, 2);
             const payload = { sidecar: `${context.baseFileName}.requests.json`, count: requests.length };
             return [

@@ -17,7 +17,7 @@ function append(data: string, terminalName: string): void {
     for (const line of prefixed) {
         if (line) {
             lines.push(line);
-            if (lines.length > maxLinesCap) lines.shift();
+            if (lines.length > maxLinesCap) {lines.shift();}
         }
     }
 }
@@ -50,8 +50,8 @@ export function startTerminalCapture(options: {
         const term = e.terminal as vscode.Terminal & { _id?: string; name?: string };
         const id = term._id ?? term.name ?? 'terminal';
         const name = term.name ?? id;
-        if (which === 'linked' && !linked.has(String(id))) return;
-        if (which === 'active' && activeTerminalId !== undefined && String(id) !== activeTerminalId) return;
+        if (which === 'linked' && !linked.has(String(id))) {return;}
+        if (which === 'active' && activeTerminalId !== undefined && String(id) !== activeTerminalId) {return;}
         append(e.data, name);
     });
     if (sub && typeof (sub as vscode.Disposable).dispose === 'function') {

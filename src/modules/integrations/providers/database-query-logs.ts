@@ -30,12 +30,12 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
             for (const line of lines.slice(-2000)) {
                 try {
                     const obj = JSON.parse(line) as Record<string, unknown>;
-                    if (obj && typeof obj === 'object') queries.push(obj);
+                    if (obj && typeof obj === 'object') {queries.push(obj);}
                 } catch {
                     // skip non-JSON lines
                 }
             }
-            if (queries.length === 0) return undefined;
+            if (queries.length === 0) {return undefined;}
             const sidecarContent = JSON.stringify({ queries }, null, 2);
             const payload = { sidecar: `${context.baseFileName}.queries.json`, count: queries.length };
             return [
