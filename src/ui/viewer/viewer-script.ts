@@ -49,6 +49,8 @@ window._vscodeApi = vscodeApi;
 if (window._scriptErrors && window._scriptErrors.length) {
     vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
 }
+/* Clear panel badge when user focuses webview (onDidChangeVisibility only fires on hide/show toggle). */
+document.addEventListener('focus', function() { vscodeApi.postMessage({ type: 'viewerFocused' }); }, true);
 var MAX_LINES = ${maxLines};
 var ROW_HEIGHT = 20;
 var MARKER_HEIGHT = 28;
