@@ -991,6 +991,13 @@
           "description": "WSL distribution name (e.g. Ubuntu-22.04). Empty uses the default distribution.",
           "type": "string"
         },
+        "saropaLogCapture.contextWindowSeconds": {
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Time window (±seconds) for the Context Popover. When you click 'Show Integration Context' on a log line, the popover shows data from this many seconds before and after the line timestamp.",
+          "type": "number"
+        },
         "saropaLogCapture.loki.enabled": {
           "default": false,
           "description": "Enable Export to Loki. When true and pushUrl is set, the 'Export to Loki' command pushes the current log session to Grafana Loki.",
@@ -1322,5 +1329,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.0.6"
+  "version": "3.1.0"
 }
