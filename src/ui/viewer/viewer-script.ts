@@ -63,7 +63,18 @@ var loadTruncatedInfo = null;
 
 /** Strip HTML tags; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
 function stripTags(html) { return (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); }
-function isStackFrameText(html) { return /^\\s+at\\s/.test(stripTags(html)); }
+/** Detect stack frame lines across multiple formats (JS, Dart, Python, etc). Mirrors isStackFrameLine in stack-parser.ts. */
+function isStackFrameText(html) {
+    var plain = stripTags(html);
+    var trimmed = plain.replace(/^\\s+/, '');
+    if (!trimmed) return false;
+    if (/^\\s+at\\s/.test(plain)) return true;           // JS/Node: "    at Function.foo ..."
+    if (/^#\\d+\\s/.test(trimmed)) return true;          // Dart: "#0  ClassName.method ..."
+    if (/^\\s+File "/.test(plain)) return true;          // Python: '  File "foo.py"'
+    if (/^\\s*\\u2502\\s/.test(plain)) return true;      // Box-drawing in some trace formats
+    if (/^package:/.test(trimmed)) return true;          // Dart package paths
+    return /^\\s+\\S+\\.\\S+:\\d+/.test(plain);          // Generic: "  pkg.Func:123"
+}
 
 function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
