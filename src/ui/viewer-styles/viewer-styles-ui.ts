@@ -130,3 +130,6 @@ export function getUiStyles(): string {
 
 `;
 }
+
+export { getContextPopoverStyles } from '../viewer-context-menu/viewer-context-popover';
+
