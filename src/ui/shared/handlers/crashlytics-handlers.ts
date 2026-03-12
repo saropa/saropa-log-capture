@@ -1,0 +1,137 @@
+/**
+ * Crashlytics Handlers
+ *
+ * Handlers for Crashlytics panel operations including data fetching,
+ * issue actions, and authentication.
+ */
+
+import * as vscode from 'vscode';
+import { t } from '../../../l10n';
+import {
+    getFirebaseContext, getCrashEvents, updateIssueState,
+    clearIssueListCache, gcloudInstallUrl, findBestGoogleServicesJson,
+    type FirebaseContext,
+} from '../../../modules/crashlytics/firebase-crashlytics';
+import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
+import { serializeContext } from './crashlytics-serializers';
+
+export type PostFn = (msg: unknown) => void;
+
+let refreshTimer: ReturnType<typeof setInterval> | undefined;
+let terminalListener: vscode.Disposable | undefined;
+
+/** Fetch Crashlytics context and send to webview. Never throws. */
+export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
+    try {
+        clearIssueListCache();
+        const raw = await getFirebaseContext([]);
+        const ctx: FirebaseContext = raw ?? { available: false, setupHint: 'Query failed', issues: [] };
+        post({ type: 'crashlyticsData', context: serializeContext(ctx) });
+    } catch {
+        post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', issues: [] }) });
+    }
+}
+
+/** Fetch crash detail for a specific issue and send HTML to webview. Never throws. */
+export async function handleCrashDetail(issueId: string, post: PostFn): Promise<void> {
+    try {
+        const multi = await getCrashEvents(issueId);
+        const detail = multi?.events[multi.currentIndex ?? 0];
+        const html = detail ? renderCrashDetail(detail) : '<div class="no-matches">Crash details not available</div>';
+        post({ type: 'crashDetailReady', issueId, html });
+    } catch {
+        post({ type: 'crashDetailReady', issueId, html: '<div class="no-matches">Crash details not available</div>' });
+    }
+}
+
+/** Close or mute a Crashlytics issue, then refresh. Never throws. */
+export async function handleCrashlyticsAction(
+    issueId: string, state: 'CLOSED' | 'MUTED', post: PostFn,
+): Promise<void> {
+    try {
+        const ok = await updateIssueState(issueId, state);
+        if (ok) { await handleCrashlyticsRequest(post); }
+        else { post({ type: 'issueActionFailed', action: state }); }
+    } catch {
+        post({ type: 'issueActionFailed', action: state });
+    }
+}
+
+/** Open a terminal and run gcloud auth; auto-refresh on terminal close. */
+export function handleGcloudAuth(post: PostFn): void {
+    const terminal = vscode.window.createTerminal({ name: 'Google Cloud Auth' });
+    terminal.show();
+    terminal.sendText('gcloud auth application-default login');
+    terminalListener?.dispose();
+    terminalListener = vscode.window.onDidCloseTerminal(closed => {
+        if (closed !== terminal) { return; }
+        terminalListener?.dispose();
+        terminalListener = undefined;
+        handleCrashlyticsRequest(post);
+    });
+}
+
+/** Show file picker for google-services.json and copy to workspace root. Never throws. */
+export async function handleBrowseGoogleServices(post: PostFn): Promise<void> {
+    try {
+        const files = await vscode.window.showOpenDialog({
+            canSelectMany: false,
+            filters: { 'JSON': ['json'] },
+            openLabel: 'Select google-services.json',
+        });
+        if (!files || files.length === 0) { return; }
+        const ws = vscode.workspace.workspaceFolders?.[0];
+        if (!ws) { return; }
+        const dest = vscode.Uri.joinPath(ws.uri, 'google-services.json');
+        await vscode.workspace.fs.copy(files[0], dest, { overwrite: true });
+        await handleCrashlyticsRequest(post);
+    } catch {
+        // Silently ignore so we never crash the app
+    }
+}
+
+/** Open google-services.json in the workspace (prefers android/app/). Shows progress while resolving. Never throws. */
+export async function handleOpenGoogleServicesJson(): Promise<void> {
+    try {
+        const uri = await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: 'Opening google-services.json…' },
+            () => findBestGoogleServicesJson(),
+        );
+        if (uri) {
+            const doc = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(doc);
+        } else {
+            await vscode.window.showInformationMessage(t('msg.noGoogleServicesJson'));
+        }
+    } catch {
+        await vscode.window.showInformationMessage(t('msg.noGoogleServicesJson'));
+    }
+}
+
+/** Open the gcloud install URL. */
+export function handleOpenGcloudInstall(): void {
+    vscode.env.openExternal(vscode.Uri.parse(gcloudInstallUrl)).then(undefined, () => {});
+}
+
+/** Start periodic Crashlytics auto-refresh. */
+export function startCrashlyticsAutoRefresh(post: PostFn): void {
+    stopCrashlyticsAutoRefresh();
+    const interval = vscode.workspace
+        .getConfiguration('saropaLogCapture.firebase')
+        .get<number>('refreshInterval', 300);
+    if (interval > 0) {
+        refreshTimer = setInterval(() => { handleCrashlyticsRequest(post); }, interval * 1000);
+    }
+}
+
+/** Stop periodic Crashlytics auto-refresh. */
+export function stopCrashlyticsAutoRefresh(): void {
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = undefined; }
+}
+
+/** Dispose terminal listener and stop auto-refresh. */
+export function disposeCrashlyticsHandlers(): void {
+    stopCrashlyticsAutoRefresh();
+    terminalListener?.dispose();
+    terminalListener = undefined;
+}

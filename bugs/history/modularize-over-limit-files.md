@@ -1,6 +1,6 @@
 # Modularize Files Exceeding 300-Line Limit
 
-**Status:** Planning  
+**Status:** Completed  
 **Priority:** Low  
 **Type:** Refactoring
 
@@ -154,9 +154,17 @@
 
 ---
 
-## Notes
+## Resolution
 
-- All splits preserve existing public API exports
-- No functional changes — pure refactoring
-- Run tests after each file to catch import issues
-- Update any barrel exports (`index.ts`) as needed
+Completed 2026-03-12. All 6 files modularized into 13 new files, all under 300 lines. TypeScript compiles and all 1,462 tests pass.
+
+| Original File | Before | After |
+|--------------|--------|-------|
+| `viewer-context-popover.ts` | 468 | 7 |
+| `timeline-panel.ts` | 324 | 148 |
+| `context-loader.ts` | 321 | 130 |
+| `investigation-panel.ts` | 346 | 100 |
+| `viewer-panel-handlers.ts` | 349 | 33 |
+| `extension-activation.ts` | 307 | 180 |
+
+Also fixed duplicated `escapeHtml` by importing from shared `ansi.ts` module.

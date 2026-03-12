@@ -6,75 +6,18 @@
  */
 
 import * as vscode from 'vscode';
-import { parseJSONOrDefault } from '../misc/safe-json';
+import type { ContextWindow, ContextData, SidecarType } from './context-loader-types';
+import { loadPerfContext, loadHttpContext, loadTerminalContext } from './context-sidecar-parsers';
 
-/** Time window specification for filtering context data. */
-export interface ContextWindow {
-    /** Center time in epoch milliseconds (from clicked line). */
-    centerTime: number;
-    /** Window size in milliseconds (applied ±). Default: 5000ms. */
-    windowMs: number;
-}
-
-/** Performance sample entry from .perf.json sidecar. */
-export interface PerfContextEntry {
-    timestamp: number;
-    freeMemMb: number;
-    loadAvg1?: number;
-    delta?: string;
-}
-
-/** HTTP request entry from .requests.json sidecar. */
-export interface HttpContextEntry {
-    timestamp: number;
-    method: string;
-    url: string;
-    status: number;
-    durationMs: number;
-    requestId?: string;
-}
-
-/** Terminal output entry from .terminal.log sidecar. */
-export interface TerminalContextEntry {
-    timestamp: number;
-    line: string;
-}
-
-/** Docker container event from metadata or sidecar. */
-export interface DockerContextEntry {
-    timestamp: number;
-    containerId: string;
-    containerName: string;
-    status: string;
-    health?: string;
-}
-
-/** Generic event entry for other integration sources. */
-export interface EventContextEntry {
-    timestamp: number;
-    source: string;
-    message: string;
-    level?: string;
-}
-
-/** Combined context data from all integration sources. */
-export interface ContextData {
-    performance?: PerfContextEntry[];
-    http?: HttpContextEntry[];
-    terminal?: TerminalContextEntry[];
-    docker?: DockerContextEntry[];
-    events?: EventContextEntry[];
-    /** The time window used for filtering. */
-    window: ContextWindow;
-    /** Whether any data was found. */
-    hasData: boolean;
-}
-
-/** Sidecar file type to loader mapping. */
-interface SidecarType {
-    suffix: string;
-    loader: (content: string, window: ContextWindow) => Partial<ContextData>;
-}
+export type {
+    ContextWindow,
+    ContextData,
+    PerfContextEntry,
+    HttpContextEntry,
+    TerminalContextEntry,
+    DockerContextEntry,
+    EventContextEntry,
+} from './context-loader-types';
 
 const SIDECAR_TYPES: SidecarType[] = [
     { suffix: '.perf.json', loader: loadPerfContext },
@@ -162,123 +105,6 @@ export async function loadContextData(
     );
 
     return result;
-}
-
-/**
- * Load and filter performance samples from .perf.json sidecar.
- */
-function loadPerfContext(content: string, window: ContextWindow): Partial<ContextData> {
-    const data = parseJSONOrDefault<{ samples?: { t: number; freememMb: number; loadAvg1?: number }[] }>(content, {});
-    if (!data.samples || !Array.isArray(data.samples)) {
-        return {};
-    }
-
-    const minTime = window.centerTime - window.windowMs;
-    const maxTime = window.centerTime + window.windowMs;
-
-    const filtered: PerfContextEntry[] = data.samples
-        .filter(s => s.t >= minTime && s.t <= maxTime)
-        .map(s => ({
-            timestamp: s.t,
-            freeMemMb: s.freememMb,
-            loadAvg1: s.loadAvg1,
-        }));
-
-    if (filtered.length === 0) { return {}; }
-
-    if (filtered.length >= 2) {
-        const first = filtered[0];
-        const last = filtered[filtered.length - 1];
-        const memDelta = last.freeMemMb - first.freeMemMb;
-        const sign = memDelta >= 0 ? '+' : '';
-        last.delta = `${sign}${memDelta}MB from window start`;
-    }
-
-    return { performance: filtered };
-}
-
-/**
- * Load and filter HTTP requests from .requests.json sidecar.
- */
-function loadHttpContext(content: string, window: ContextWindow): Partial<ContextData> {
-    const data = parseJSONOrDefault<{ requests?: Record<string, unknown>[] }>(content, {});
-    if (!data.requests || !Array.isArray(data.requests)) {
-        return {};
-    }
-
-    const minTime = window.centerTime - window.windowMs;
-    const maxTime = window.centerTime + window.windowMs;
-
-    const filtered: HttpContextEntry[] = [];
-    for (const req of data.requests) {
-        const timestamp = extractTimestamp(req);
-        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) {
-            continue;
-        }
-
-        filtered.push({
-            timestamp,
-            method: String(req.method || 'GET'),
-            url: String(req.url || req.path || ''),
-            status: Number(req.status || req.statusCode || 0),
-            durationMs: Number(req.duration || req.durationMs || req.responseTime || 0),
-            requestId: req.requestId ? String(req.requestId) : undefined,
-        });
-    }
-
-    if (filtered.length === 0) { return {}; }
-
-    filtered.sort((a, b) => a.timestamp - b.timestamp);
-    return { http: filtered.slice(0, 50) };
-}
-
-/**
- * Load and filter terminal output from .terminal.log sidecar.
- */
-function loadTerminalContext(content: string, window: ContextWindow): Partial<ContextData> {
-    const lines = content.split(/\r?\n/).filter(Boolean);
-    if (lines.length === 0) { return {}; }
-
-    const minTime = window.centerTime - window.windowMs;
-    const maxTime = window.centerTime + window.windowMs;
-
-    const filtered: TerminalContextEntry[] = [];
-    for (const line of lines) {
-        const tsMatch = line.match(/^\[(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\]/);
-        if (!tsMatch) { continue; }
-
-        const timestamp = new Date(tsMatch[1]).getTime();
-        if (isNaN(timestamp) || timestamp < minTime || timestamp > maxTime) {
-            continue;
-        }
-
-        const text = line.substring(tsMatch[0].length).trim();
-        if (text) {
-            filtered.push({ timestamp, line: text });
-        }
-    }
-
-    if (filtered.length === 0) { return {}; }
-
-    return { terminal: filtered.slice(0, 30) };
-}
-
-/**
- * Extract timestamp from a request object.
- */
-function extractTimestamp(obj: Record<string, unknown>): number {
-    const candidates = ['timestamp', 'time', 'ts', 'startTime', 'requestTime', 'createdAt'];
-    for (const key of candidates) {
-        const val = obj[key];
-        if (typeof val === 'number' && val > 0) {
-            return val < 1e12 ? val * 1000 : val;
-        }
-        if (typeof val === 'string') {
-            const parsed = Date.parse(val);
-            if (!isNaN(parsed)) { return parsed; }
-        }
-    }
-    return 0;
 }
 
 /**

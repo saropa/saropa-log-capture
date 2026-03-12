@@ -8,14 +8,9 @@ import { getConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
-import { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { createUriHandler } from './modules/features/deep-links';
 import { loadPresets } from './modules/storage/filter-presets';
-import { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
-import { extractSourceReference } from './modules/source/source-linker';
-import { CrashlyticsCodeLensProvider } from './ui/shared/crashlytics-codelens';
-import { VitalsPanelProvider } from './ui/panels/vitals-panel';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
 import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
@@ -28,7 +23,6 @@ import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-index
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload } from './ui/provider/viewer-provider-helpers';
-import { buildScopeContext } from './modules/storage/scope-context';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
@@ -37,6 +31,8 @@ import { createApi } from './api';
 import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import { disposeInvestigationPanel } from './ui/investigation/investigation-panel';
+import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
+import { setupLineListeners, setupConfigListener, setupScopeContextListener } from './activation-listeners';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -49,16 +45,12 @@ export interface ActivationRefs {
 }
 
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
-    // --- Status bar & session manager ---
     const statusBar = new StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
-
-    // --- Public API (bridges internal listeners to vscode.Event) ---
     const apiHandle = createApi(sessionManager);
 
-    // --- Project indexer (optional; indexes reports for docs/reports) ---
     const folder = vscode.workspace.workspaceFolders?.[0];
     let projectIndexer: ProjectIndexer | null = null;
     if (folder && getConfig().projectIndex.enabled) {
@@ -69,35 +61,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; setGlobalProjectIndexer(null); } });
     }
 
-    // --- Integration registry (session start/end contributions; see docs/integrations/INTEGRATION_API.md) ---
     registerAllIntegrations();
 
-    // --- Webview providers: sidebar viewer, vitals, pop-out ---
-    const inlineDecorations = new InlineDecorationsProvider();
-    context.subscriptions.push(inlineDecorations);
-
     const version = String(context.extension.packageJSON.version ?? '');
-    const viewerProvider = new LogViewerProvider(context.extensionUri, version, context);
-    context.subscriptions.push(viewerProvider);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider, {
-            webviewOptions: { retainContextWhenHidden: true },
-        }),
-    );
+    const { viewerProvider, vitalsPanel, inlineDecorations } = setupWebviewProviders(context, version);
 
-    const vitalsPanel = new VitalsPanelProvider();
-    context.subscriptions.push(vitalsPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(VitalsPanelProvider.viewType, vitalsPanel),
-    );
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
-    ));
-
-    const crashCodeLens = new CrashlyticsCodeLensProvider();
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
-
-    // --- Broadcaster & session list: single fan-out to sidebar and pop-out ---
     const broadcaster = new ViewerBroadcaster();
     const popOutPanel = new PopOutPanel(context.extensionUri, version, context, broadcaster);
     broadcaster.addTarget(viewerProvider);
@@ -125,7 +93,6 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler()));
 
-    // --- Initial broadcaster state from config ---
     broadcaster.setPresets(loadPresets());
     const initCfg = getConfig();
     if (initCfg.highlightRules.length > 0) {
@@ -135,21 +102,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
 
-    // --- Config change listener: push updates to session manager and broadcaster ---
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
-        if (!e.affectsConfiguration('saropaLogCapture')) { return; }
-        const cfg = getConfig();
-        sessionManager.refreshConfig(cfg);
-        if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
-            broadcaster.setIconBarPosition(cfg.iconBarPosition);
-        }
-        if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
-            broadcaster.setMinimapShowInfo(cfg.minimapShowInfoMarkers);
-        }
-        if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
-            broadcaster.setMinimapWidth(cfg.minimapWidth);
-        }
-    }));
+    setupConfigListener(context, sessionManager, broadcaster);
+    setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
+    setupScopeContextListener(context, broadcaster);
 
     const displayKey = 'slc.sessionDisplayOptions';
     const stored = context.workspaceState.get<Partial<SessionDisplayOptions>>(displayKey, {});
@@ -163,35 +118,6 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.sendDisplayOptions(options);
     });
 
-    // --- Line/split listeners: DAP output → broadcaster + history + inline decorations ---
-    sessionManager.addLineListener((data) => {
-        broadcaster.addLine(data);
-        historyProvider.setActiveLineCount(data.lineCount);
-        if (data.watchHits && data.watchHits.length > 0) {
-            broadcaster.updateWatchCounts(sessionManager.getWatcher().getCounts());
-        }
-        if (!data.isMarker) {
-            const sourceRef = extractSourceReference(data.text);
-            if (sourceRef) {
-                inlineDecorations.recordLogLine(
-                    sourceRef.filePath,
-                    sourceRef.line,
-                    data.text,
-                    data.category,
-                );
-            }
-        }
-    });
-    sessionManager.addSplitListener((_newUri, partNumber, totalParts) => {
-        broadcaster.setSplitInfo(partNumber, totalParts);
-        const filename = sessionManager.getActiveFilename();
-        if (filename) {
-            broadcaster.setFilename(filename);
-        }
-        historyProvider.refresh();
-    });
-
-    // --- Shared handler wiring (marker, pause, exclusions, search, bookmarks, session list, etc.) ---
     const onOpenBookmark = async (fileUri: string, lineIndex: number): Promise<void> => {
         await viewerProvider.loadFromFile(vscode.Uri.parse(fileUri));
         viewerProvider.scrollToLine(lineIndex + 1);
@@ -242,15 +168,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     });
     viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
 
-    // --- DAP tracker factory: routes debug adapter output events to SessionManager ---
     context.subscriptions.push(
-        vscode.debug.registerDebugAdapterTrackerFactory(
-            '*',
-            new SaropaTrackerFactory(sessionManager),
-        ),
+        vscode.debug.registerDebugAdapterTrackerFactory('*', new SaropaTrackerFactory(sessionManager)),
     );
 
-    // --- AI activity watcher: optional stream of AI entries into the log viewer ---
     const aiWatcher = new AiWatcher(outputChannel);
     context.subscriptions.push(aiWatcher);
     aiWatcher.onEntries((entries) => {
@@ -260,35 +181,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         }
     });
 
-    // --- Debug lifecycle (start/stop session) and command registration ---
     registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
     registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel, investigationStore });
 
-    // --- Scope context for source-scope filter (updates on active editor change) ---
-    const updateScopeContext = async (): Promise<void> => {
-        const ctx = await buildScopeContext(vscode.window.activeTextEditor);
-        broadcaster.setScopeContext(ctx);
-    };
-    context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => {}); }),
-    );
-    updateScopeContext().catch(() => {});
+    registerNoRestoreSerializers(context);
 
-    // --- Webview panel serializers: do not restore state (dispose on reload) ---
-    const noRestore: vscode.WebviewPanelSerializer = {
-        deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
-    };
-    for (const viewType of [
-        'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
-        'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
-    ]) {
-        context.subscriptions.push(
-            vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
-        );
-    }
-
-    // --- Post-activation: one-off migrations and checks (non-blocking) ---
     if (folder) {
         migrateCrashlyticsCacheToSaropa(folder).catch(() => {});
         checkGitignoreSaropa(context, folder).catch(() => {});
