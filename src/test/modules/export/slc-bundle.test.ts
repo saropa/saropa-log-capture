@@ -8,8 +8,14 @@ suite('slc-bundle', () => {
             assert.strictEqual(isSlcManifestValid({ version: 1, mainLog: 'a.log', parts: ['a_002.log'], displayName: 'Foo' }), true);
         });
 
-        test('rejects wrong version', () => {
-            assert.strictEqual(isSlcManifestValid({ version: 2, mainLog: 'x.log', parts: [] }), false);
+        test('accepts valid manifest with version 2 and sidecars', () => {
+            assert.strictEqual(isSlcManifestValid({ version: 2, mainLog: 'session.log', parts: [] }), true);
+            assert.strictEqual(isSlcManifestValid({ version: 2, mainLog: 'a.log', parts: [], sidecars: ['a.perf.json'] }), true);
+        });
+
+        test('rejects unsupported version', () => {
+            assert.strictEqual(isSlcManifestValid({ version: 3, mainLog: 'x.log', parts: [] }), false);
+            assert.strictEqual(isSlcManifestValid({ version: 0, mainLog: 'x.log', parts: [] }), false);
         });
 
         test('rejects missing mainLog', () => {

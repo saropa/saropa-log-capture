@@ -134,5 +134,7 @@
   "No analyzable tokens found in this line.": "No analyzable tokens found in this line.",
   "No files match tail patterns. Check saropaLogCapture.tailPatterns.": "No files match tail patterns. Check saropaLogCapture.tailPatterns.",
   "Open a workspace folder first.": "Open a workspace folder first.",
-  "Select a file to open and tail": "Select a file to open and tail"
+  "Select a file to open and tail": "Select a file to open and tail",
+  "No integration context available for this line.": "No integration context available for this line.",
+  "No integration data captured for this session. Enable integrations in settings.": "No integration data captured for this session. Enable integrations in settings."
 }
