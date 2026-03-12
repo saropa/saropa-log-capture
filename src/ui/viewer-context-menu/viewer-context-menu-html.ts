@@ -90,6 +90,32 @@ export function getContextMenuHtml(): string {
             </div>
         </div>
     </div>
+    <div class="context-menu-submenu" id="hide-lines-submenu">
+        <span class="codicon codicon-eye-closed"></span> Hide Lines
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+            <div class="context-menu-item" data-action="hide-line" data-line-action>
+                <span class="codicon codicon-eye-closed"></span> Hide This Line
+            </div>
+            <div class="context-menu-item" data-action="unhide-line" data-line-action data-requires-hidden>
+                <span class="codicon codicon-eye"></span> Unhide This Line
+            </div>
+            <div class="context-menu-separator" data-selection-action></div>
+            <div class="context-menu-item" data-action="hide-selection" data-selection-action>
+                <span class="codicon codicon-eye-closed"></span> Hide Selection
+            </div>
+            <div class="context-menu-item" data-action="unhide-selection" data-selection-action data-requires-hidden>
+                <span class="codicon codicon-eye"></span> Unhide Selection
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" data-action="hide-all-visible">
+                <span class="codicon codicon-eye-closed"></span> Hide All Visible
+            </div>
+            <div class="context-menu-item" data-action="unhide-all" data-requires-any-hidden>
+                <span class="codicon codicon-eye"></span> Unhide All
+            </div>
+        </div>
+    </div>
     <div class="context-menu-submenu">
         <span class="codicon codicon-settings-gear"></span> Options
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>

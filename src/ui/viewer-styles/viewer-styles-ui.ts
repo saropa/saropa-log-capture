@@ -78,6 +78,43 @@ export function getUiStyles(): string {
 }
 
 /* ===================================================================
+   Hidden Lines Counter
+   Footer element showing count of manually hidden lines with peek toggle.
+   =================================================================== */
+.hidden-lines-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-badge-background, rgba(0, 0, 0, 0.2));
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+    user-select: none;
+}
+.hidden-lines-counter:hover {
+    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.5));
+    color: var(--vscode-foreground);
+}
+.hidden-lines-counter.peeking {
+    background: var(--vscode-inputValidation-infoBackground, rgba(0, 127, 212, 0.2));
+    color: var(--vscode-inputValidation-infoForeground, #75beff);
+}
+.hidden-lines-counter.peeking .codicon {
+    transform: rotate(180deg);
+}
+.hidden-lines-counter.peeking .codicon::before {
+    content: "\\eb99"; /* codicon-eye */
+}
+.hidden-lines-counter .codicon {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+/* ===================================================================
    Inline Peek
    Expandable context view inserted inline after the viewport.
    Shows surrounding lines around a right-click → Show Context target.

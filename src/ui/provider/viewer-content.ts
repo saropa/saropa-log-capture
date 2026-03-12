@@ -14,6 +14,7 @@ import { getWatchScript } from '../viewer/viewer-watch';
 import { getPinScript } from '../viewer/viewer-pin';
 import { getExclusionScript } from '../viewer-search-filter/viewer-exclusions';
 import { getCopyScript } from '../viewer/viewer-copy';
+import { getHiddenLinesScript } from '../viewer/viewer-hidden-lines';
 import { getAnnotationScript } from '../viewer/viewer-annotations';
 import { getTimingScript } from '../viewer/viewer-timing';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
@@ -189,6 +190,10 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <span id="line-count"></span>
+        <span id="hidden-lines-counter" class="hidden-lines-counter" style="display: none;" role="button" title="Click to peek at hidden lines" aria-label="Hidden lines counter">
+            <span class="codicon codicon-eye-closed"></span>
+            <span class="hidden-count-text">0 hidden</span>
+        </span>
         <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
         <span class="footer-spacer"></span>
@@ -229,6 +234,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getPinScript())}
     ${scriptTag(nonce, getExclusionScript())}
     ${scriptTag(nonce, getCopyScript())}
+    ${scriptTag(nonce, getHiddenLinesScript())}
     ${scriptTag(nonce, getAnnotationScript())}
     ${scriptTag(nonce, getTimingScript())}
     ${scriptTag(nonce, getReplayScript())}
