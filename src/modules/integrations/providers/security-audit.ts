@@ -20,9 +20,9 @@ function redact(msg: string): string {
 }
 
 function querySecurityChannel(context: IntegrationEndContext): Array<{ time: string; id: number; level: string; message: string }> {
-    if (os.platform() !== 'win32') return [];
+    if (os.platform() !== 'win32') {return [];}
     const cfg = context.config.integrationsSecurity;
-    if (!cfg.windowsSecurityLog) return [];
+    if (!cfg.windowsSecurityLog) {return [];}
     const { sessionStartTime, sessionEndTime, outputChannel } = context;
     const start = new Date(sessionStartTime - 2 * 60 * 1000).toISOString();
     const end = new Date(sessionEndTime + 5 * 60 * 1000).toISOString();
@@ -30,7 +30,7 @@ function querySecurityChannel(context: IntegrationEndContext): Array<{ time: str
     try {
         const out = execSync(`powershell -NoProfile -NonInteractive -Command "& { ${script} }"`, { encoding: 'utf-8', timeout: 15000, maxBuffer: 2 * 1024 * 1024 });
         const raw = out.trim();
-        if (!raw) return [];
+        if (!raw) {return [];}
         const parsed = JSON.parse(raw);
         const arr = Array.isArray(parsed) ? parsed : [parsed];
         const redactMsg = cfg.redactSecurityEvents ? redact : (m: string) => m;
