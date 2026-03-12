@@ -1,7 +1,8 @@
 /**
  * Command registration for the Saropa Log Capture extension.
  * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
- * history browse/edit, export, comparison, correlation, insights, bug report, timeline, trash, tools.
+ * history browse/edit, export, comparison, correlation, insights, bug report, timeline, trash,
+ * investigation, tools.
  */
 
 import * as vscode from 'vscode';
@@ -16,12 +17,13 @@ import { trashCommands } from './commands-trash';
 import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands, historyEditCommands } from './commands-session';
 import { exportCommands } from './commands-export';
 import { toolCommands } from './commands-tools';
+import { registerInvestigationCommands } from './commands-investigation';
 
 export type { CommandDeps } from './commands-deps';
 
 /** Register all extension commands. Called from extension-activation after handler wiring. */
 export function registerCommands(deps: CommandDeps): void {
-    const { context } = deps;
+    const { context, investigationStore } = deps;
     context.subscriptions.push(
         ...sessionLifecycleCommands(deps),
         ...sessionActionCommands(deps),
@@ -34,6 +36,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...bugReportCommands(),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
+        ...registerInvestigationCommands({ context, investigationStore }),
         ...toolCommands(deps),
     );
 }
