@@ -19,6 +19,7 @@ import { aggregateInsights } from '../../modules/misc/cross-session-aggregator';
 import { aggregatePerformance } from '../../modules/misc/perf-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
 import { SessionMetadataStore } from '../../modules/session/session-metadata';
+import { loadContextData, loadContextFromMeta, type ContextData, type ContextWindow } from '../../modules/context/context-loader';
 
 type PostFn = (msg: unknown) => void;
 
@@ -213,14 +214,86 @@ function formatIntegrationEntry(key: string, value: unknown): string[] {
 }
 
 /**
- * Show integration context data for a log line. Displays data from integrations captured during the session.
- * @param _timestamp Reserved for future enhancement: filter integration data to ±5s of this timestamp.
+ * Show integration context data for a log line as a popover.
+ * Filters integration data to ±windowMs of the line timestamp.
  */
 export async function handleIntegrationContextRequest(
     logUri: vscode.Uri | undefined,
     lineIndex: number,
-    _timestamp: number | undefined,
+    timestamp: number | undefined,
     post: PostFn,
+): Promise<void> {
+    if (!logUri) {
+        post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
+        return;
+    }
+    try {
+        const store = new SessionMetadataStore();
+        const meta = await store.loadMetadata(logUri);
+
+        const windowMs = vscode.workspace
+            .getConfiguration('saropaLogCapture')
+            .get<number>('contextWindowSeconds', 5) * 1000;
+
+        const centerTime = timestamp && timestamp > 0
+            ? timestamp
+            : getSessionCenterTime(meta.integrations);
+
+        if (centerTime === 0) {
+            post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
+            return;
+        }
+
+        const window: ContextWindow = { centerTime, windowMs };
+        let contextData = await loadContextData(logUri, window);
+
+        if (!contextData.hasData && meta.integrations) {
+            const metaContext = await loadContextFromMeta(meta.integrations, window);
+            contextData = { ...contextData, ...metaContext, hasData: Object.keys(metaContext).length > 0 };
+        }
+
+        if (!contextData.hasData) {
+            post({ type: 'contextPopoverData', error: t('msg.noIntegrationData') });
+            return;
+        }
+
+        post({
+            type: 'contextPopoverData',
+            lineIndex,
+            timestamp: centerTime,
+            windowMs,
+            data: contextData,
+        });
+    } catch {
+        post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
+    }
+}
+
+/**
+ * Get the center time for context filtering from session metadata.
+ */
+function getSessionCenterTime(integrations: Record<string, unknown> | undefined): number {
+    if (!integrations) { return 0; }
+    for (const value of Object.values(integrations)) {
+        const data = value as Record<string, unknown>;
+        if (data.capturedAt && typeof data.capturedAt === 'number') {
+            return data.capturedAt;
+        }
+        const sw = data.sessionWindow as { start: number; end: number } | undefined;
+        if (sw?.start && sw?.end) {
+            return Math.round((sw.start + sw.end) / 2);
+        }
+    }
+    return 0;
+}
+
+/**
+ * Show integration context in a separate document (legacy behavior).
+ * Called when user explicitly wants to view full context.
+ */
+export async function handleIntegrationContextDocument(
+    logUri: vscode.Uri | undefined,
+    lineIndex: number,
 ): Promise<void> {
     if (!logUri) {
         vscode.window.showInformationMessage(t('msg.noIntegrationContext'));
@@ -238,7 +311,6 @@ export async function handleIntegrationContextRequest(
         for (const [key, value] of Object.entries(integrations)) {
             contextLines.push(...formatIntegrationEntry(key, value));
         }
-        post({ type: 'integrationContextData', context: contextLines.join('\n') });
         const doc = await vscode.workspace.openTextDocument({ content: contextLines.join('\n'), language: 'markdown' });
         await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
     } catch {
