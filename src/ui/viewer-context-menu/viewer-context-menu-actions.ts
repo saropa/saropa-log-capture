@@ -165,6 +165,11 @@ function onContextMenuAction(action) {
             break;
         case 'edit': if (typeof openEditModal === 'function') openEditModal(lineIdx); break;
         case 'show-context': if (typeof openContextModal === 'function') openContextModal(lineIdx); break;
+        case 'show-integration-context': {
+            var ts = lineData.ts || lineData.timestamp;
+            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts });
+            break;
+        }
     }
 }
 

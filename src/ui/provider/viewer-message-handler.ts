@@ -222,5 +222,13 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
             });
         }
         break;
+      case "showIntegrationContext":
+        panelHandlers.handleIntegrationContextRequest(
+          ctx.currentFileUri,
+          safeLineIndex(msg.lineIndex, 0),
+          msg.timestamp as number | undefined,
+          ctx.post,
+        ).catch(() => {});
+        break;
     }
 }
