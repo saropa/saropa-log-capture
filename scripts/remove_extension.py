@@ -249,7 +249,7 @@ def _show_workspace_json(folder: str) -> None:
         with open(wj, encoding="utf-8") as f:
             data = json.load(f)
         uri = data.get("folder", "unknown")
-        info(f"    → {dim(uri)}")
+        info(f"    > {dim(uri)}")
     except (OSError, json.JSONDecodeError):
         pass
 
