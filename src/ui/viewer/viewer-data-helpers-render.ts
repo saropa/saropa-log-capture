@@ -64,7 +64,8 @@ function renderItem(item, idx, prevVis) {
     var isBlank = isLineContentBlank(item);
     var barCls = '';
     if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext && !isBlank) {
-        barCls = item.fw ? ' level-bar-framework' : ' level-bar-' + item.level;
+        var hasSeverity = item.level === 'error' || item.level === 'warning' || item.level === 'performance';
+        barCls = (item.fw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + item.level;
     }
     if (item.type === 'stack-header') {
         var ch, sf;
