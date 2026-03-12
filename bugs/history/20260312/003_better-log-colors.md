@@ -1,12 +1,12 @@
 # Better Log Colors
 
-Status: **Implemented** (Parts 1-6)
+Status: **Implemented** (Issues 1-6)
 
 ## Issue 1: Empty lines at end of file
 
 Empty lines (empty or whitespace-only) should not get decoration chevrons or timestamps.
 
-**Status:** Not yet addressed (separate issue).
+**Fix:** Added blank-line check to `getDecorationPrefix()` in `viewer-decorations.ts`. Function now returns empty string when `isLineContentBlank(item)` is true, consistent with how severity bars already skip blank lines.
 
 ## Issue 2: Level-based text coloring lost
 
