@@ -22,7 +22,7 @@ function renderItem(item, idx, prevVis) {
             if (spPrev) spacingCls += ' spacing-before';
             spacingCls += ' spacing-after';
         } else if (item.isContextFirst) {
-            if (spPrev) spacingCls += ' spacing-before';
+            // No spacing-before for context lines; gap goes after the error instead
         } else if (item.type === 'stack-header') {
             if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') spacingCls += ' spacing-before';
         } else if (item.type !== 'stack-frame' && item.type !== 'repeat-notification') {
@@ -30,6 +30,10 @@ function renderItem(item, idx, prevVis) {
                 if (item.level && spPrev.level && item.level !== spPrev.level) spacingCls += ' spacing-before';
                 else if (item.isSeparator && !spPrev.isSeparator) spacingCls += ' spacing-before';
             }
+        }
+        // Add spacing after lines that end a context group (target of filtered level)
+        if (!item.isContext && item.type !== 'marker' && spPrev && spPrev.isContext) {
+            spacingCls += ' spacing-after';
         }
     }
     if (item.type === 'marker') {
