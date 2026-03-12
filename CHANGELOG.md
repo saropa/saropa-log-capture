@@ -16,7 +16,9 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [3.1.1]
+## [3.1.2]
+
+Enables Cursor IDE compatibility by lowering the VS Code engine requirement to 1.105.0.
 
 ### Changed
 
@@ -24,7 +26,19 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [3.1.1]
+
+Failed release (reverted) — the engine change was incorrectly applied and had to be redone in 3.1.2.
+
+~~### Changed~~
+
+- ~~**Lowered VS Code engine requirement to 1.105.0.** Enables installation in Cursor IDE (which uses VS Code 1.105.1). The extension does not use any APIs requiring 1.108+.~~
+
+---
+
 ## [3.1.0]
+
+Major feature release: unified timeline view correlates all log sources on one time axis, context popovers show related data around any log line, and you can now hide/unhide lines manually.
 
 ### Added
 
@@ -48,6 +62,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 ---
 
 ## [3.0.6]
+
+Exposes a public API so other VS Code extensions can subscribe to log events and inject lines, plus reduces VS Code window spawns during publish.
 
 ### Fixed
 
@@ -120,7 +136,7 @@ Fixes multi-line severity inheritance and localized strings showing raw keys, ad
 
 ## [3.0.3]
 
-- Release publish
+Automated release to publish accumulated fixes; no user-facing changes beyond what shipped in 3.0.2.
 
 ## [3.0.2]
 
