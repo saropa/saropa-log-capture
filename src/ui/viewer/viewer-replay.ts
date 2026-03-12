@@ -201,7 +201,8 @@ export function getReplayScript(): string {
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
         updateReplayIcon(false);
-        if (replayFileLoaded && !replaySessionActive) {
+        var hasLines = allLines && allLines.length > 0;
+        if (replayFileLoaded && !replaySessionActive && hasLines) {
             setReplayIconVisible(true);
         } else {
             setReplayIconVisible(false);
