@@ -88,12 +88,11 @@ def print_timing(results: list[tuple[str, bool, float]]) -> None:
     total = sum(t for _, _, t in results)
     heading("Timing")
     for name, passed, secs in results:
-        icon = f"{C.GREEN}✓{C.RESET}" if passed else f"{C.RED}✗{C.RESET}"
-        # Scale bar length proportionally to total time (max 30 chars)
+        icon = f"{C.GREEN}+{C.RESET}" if passed else f"{C.RED}x{C.RESET}"
         bar_len = int(min(secs / max(total, 0.001) * 30, 30))
-        bar = f"{C.GREEN}{'█' * bar_len}{C.RESET}" if bar_len else ""
+        bar = f"{C.GREEN}{'#' * bar_len}{C.RESET}" if bar_len else ""
         print(f"  {icon} {name:<25s} {elapsed_str(secs):>8s}  {bar}")
-    print(f"  {'─' * 45}")
+    print(f"  {'-' * 45}")
     print(f"    {'Total':<23s} {C.BOLD}{elapsed_str(total)}{C.RESET}")
 
 

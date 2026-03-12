@@ -120,7 +120,7 @@ def check_vsce_auth() -> bool:
     # Run vsce login interactively: works for both first-time (PAT only) and
     # overwrite (y/N then PAT) without guessing prompt order via piped input.
     info("Marketplace needs a login token (PAT). Same token whether you use VS Code or Cursor — it can expire.")
-    info(f"  Get one: {C.WHITE}https://marketplace.visualstudio.com/manage{C.RESET} → your publisher → Create token. Copy it, then paste here when vsce asks.")
+    info(f"  Get one: {C.WHITE}https://marketplace.visualstudio.com/manage{C.RESET} -> your publisher -> Create token. Copy it, then paste here when vsce asks.")
     info("Running vsce login for publisher 'saropa'...")
     info("  If it asks to 'overwrite' — type y, then paste the token when asked.")
     login_result = subprocess.run(
