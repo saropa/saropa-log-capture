@@ -43,7 +43,7 @@ export const browserDevtoolsProvider: IntegrationProvider = {
                     return undefined;
                 }
             }
-            if (events.length === 0) return undefined;
+            if (events.length === 0) {return undefined;}
             const sidecarContent = JSON.stringify(events, null, 2);
             const payload = { sidecar: `${context.baseFileName}.browser.json`, count: events.length };
             return [
