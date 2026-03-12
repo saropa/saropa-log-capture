@@ -95,7 +95,7 @@ body {
     font-style: italic;
 }
 
-.search-section { padding: 12px 16px; }
+.search-section { padding: 12px 16px; position: relative; }
 .search-box {
     display: flex; align-items: center; gap: 8px;
     background: var(--vscode-input-background);
@@ -111,12 +111,69 @@ body {
     font-size: 13px;
 }
 .search-input::placeholder { color: var(--vscode-input-placeholderForeground); }
-.search-clear {
+.search-history-btn, .search-options-btn, .search-clear {
     background: none; border: none; cursor: pointer;
     color: var(--vscode-icon-foreground); font-size: 14px;
-    padding: 2px; border-radius: 3px;
+    padding: 2px 4px; border-radius: 3px;
 }
-.search-clear:hover { background: var(--vscode-toolbar-hoverBackground); }
+.search-history-btn:hover, .search-options-btn:hover, .search-clear:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+.search-history-dropdown {
+    position: absolute; top: 100%; left: 16px; right: 16px; z-index: 100;
+    background: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    max-height: 200px; overflow-y: auto;
+}
+.history-list { padding: 4px 0; }
+.history-item {
+    padding: 6px 12px; cursor: pointer;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 12px;
+}
+.history-item:hover { background: var(--vscode-list-hoverBackground); }
+.history-clear {
+    padding: 6px 12px; cursor: pointer;
+    border-top: 1px solid var(--vscode-dropdown-border);
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+}
+.history-clear:hover { background: var(--vscode-list-hoverBackground); }
+.history-empty {
+    padding: 12px; text-align: center;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+.search-options {
+    display: flex; gap: 16px; padding: 8px 0; flex-wrap: wrap;
+}
+.search-option {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+}
+.search-option input[type="checkbox"] { cursor: pointer; }
+.search-option input[type="number"] {
+    width: 50px; padding: 2px 4px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 3px;
+}
+.search-progress {
+    display: flex; align-items: center; gap: 8px; padding: 8px 0;
+}
+.progress-bar {
+    flex: 1; height: 4px; background: var(--vscode-editorWidget-background);
+    border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+    height: 100%; background: var(--vscode-progressBar-background);
+    width: 0%; transition: width 0.15s ease-out;
+}
+.progress-text { font-size: 11px; color: var(--vscode-descriptionForeground); }
+.hidden { display: none !important; }
 
 .results-section {
     flex: 1; padding: 0 16px 16px;
@@ -126,11 +183,36 @@ body {
     font-size: 11px; color: var(--vscode-descriptionForeground);
     margin-bottom: 8px; padding-top: 8px;
 }
+.search-time { opacity: 0.7; }
+.search-cancelled {
+    padding: 16px; text-align: center;
+    color: var(--vscode-editorWarning-foreground);
+    font-style: italic;
+}
 .result-group { margin-bottom: 12px; }
 .result-group-header {
     font-size: 11px; font-weight: 600;
     padding: 4px 0; display: flex; align-items: center; gap: 6px;
 }
+.result-group-name { flex-shrink: 0; }
+.result-group-count { color: var(--vscode-descriptionForeground); }
+.result-group-sidecar {
+    font-size: 9px; padding: 1px 4px;
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 3px; text-transform: uppercase;
+}
+.result-group-warning { margin-left: 4px; cursor: help; }
+.result-context {
+    padding: 2px 8px 2px 20px;
+    cursor: pointer; border-radius: 3px;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    opacity: 0.5;
+}
+.result-context:hover { background: var(--vscode-list-hoverBackground); opacity: 0.7; }
+.result-context .context-line { font-style: italic; }
 .result-item {
     padding: 4px 8px 4px 20px;
     cursor: pointer; border-radius: 3px;
@@ -144,6 +226,12 @@ body {
     margin-right: 8px;
 }
 .result-match { background: var(--vscode-editor-findMatchHighlightBackground); }
+.result-truncated {
+    padding: 4px 20px;
+    font-size: 11px; font-style: italic;
+    color: var(--vscode-descriptionForeground);
+}
+.source-warning { margin-right: 4px; }
 
 .notes-section { padding: 12px 16px; }
 .notes-textarea {
