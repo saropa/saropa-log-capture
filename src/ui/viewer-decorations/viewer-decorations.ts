@@ -90,7 +90,7 @@ function updateDecoButton() {
  * Only includes parts whose sub-toggle is enabled.
  * Returns empty string for markers, stack-frame sub-lines, blank lines, or when off.
  *
- * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 </span>
+ * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
 function getDecorationPrefix(item) {
@@ -112,7 +112,7 @@ function getDecorationPrefix(item) {
     }
     if (parts.length === 0) return '';
     return '<span class="line-decoration">'
-        + parts.join('&nbsp; ') + '&nbsp; '
+        + parts.join('&nbsp; ') + '&nbsp;\\u00BB '
         + '</span>';
 }
 
