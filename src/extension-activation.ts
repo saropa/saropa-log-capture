@@ -35,6 +35,8 @@ import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
 import { createApi } from './api';
 import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
+import { InvestigationStore } from './modules/investigation/investigation-store';
+import { disposeInvestigationPanel } from './ui/investigation/investigation-panel';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -116,6 +118,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const bookmarkStore = new BookmarkStore(context);
     context.subscriptions.push(bookmarkStore);
     bookmarkStore.onDidChange(() => { broadcaster.sendBookmarkList(bookmarkStore.getAll() as Record<string, unknown>); });
+
+    const investigationStore = new InvestigationStore(context);
+    context.subscriptions.push(investigationStore);
+    context.subscriptions.push({ dispose: disposeInvestigationPanel });
 
     context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler()));
 
@@ -256,7 +262,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     // --- Debug lifecycle (start/stop session) and command registration ---
     registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
-    registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel });
+    registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel, investigationStore });
 
     // --- Scope context for source-scope filter (updates on active editor change) ---
     const updateScopeContext = async (): Promise<void> => {
@@ -275,7 +281,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     for (const viewType of [
         'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison',
+        'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
     ]) {
         context.subscriptions.push(
             vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
