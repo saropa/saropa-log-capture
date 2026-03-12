@@ -66,7 +66,7 @@ def prompt_install(vsix_path: str) -> None:
     """
     if not shutil.which("code"):
         warn("VS Code CLI (code) not found on PATH — cannot auto-install.")
-        info("Add it via: VS Code → Ctrl+Shift+P → "
+        info("Add it via: VS Code > Ctrl+Shift+P > "
              "'Shell Command: Install code command in PATH'")
         return
 
