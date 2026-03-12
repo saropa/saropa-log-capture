@@ -9,9 +9,7 @@ import glob
 import json
 import os
 import re
-import subprocess
 import tempfile
-import time
 
 from modules.constants import C, MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
 from modules.display import fail, info, ok
@@ -50,46 +48,16 @@ def step_package() -> str | None:
     return vsix_path
 
 
-def _run_with_progress(
-    cmd: list[str],
-    label: str,
-    timeout_secs: int = 300,
-) -> subprocess.CompletedProcess[str]:
-    """Run a command with polling progress dots. Returns CompletedProcess."""
-    print(f"  [INFO] {label}", end="", flush=True)
-    proc = subprocess.Popen(
-        cmd,
-        cwd=PROJECT_ROOT,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.DEVNULL,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        shell=True,
-    )
-    start = time.time()
-    while proc.poll() is None:
-        if time.time() - start > timeout_secs:
-            proc.kill()
-            print(" TIMEOUT")
-            return subprocess.CompletedProcess(cmd, -1, "", "Timed out")
-        print(".", end="", flush=True)
-        time.sleep(2)
-    print()  # newline after dots
-    stdout, stderr = proc.communicate()
-    return subprocess.CompletedProcess(cmd, proc.returncode, stdout, stderr)
-
-
 def get_marketplace_published_version() -> str | None:
     """Return the latest version published on VS Code Marketplace, or None.
 
     Uses vsce show --json. When unauthenticated or offline, returns None.
+    This can take 30-60 seconds due to marketplace API latency.
     """
-    result = _run_with_progress(
+    info("Checking marketplace version (this may take up to 60s)...")
+    result = run(
         ["npx", "@vscode/vsce", "show", MARKETPLACE_EXTENSION_ID, "--json"],
-        "Checking marketplace version",
-        timeout_secs=60,
+        cwd=PROJECT_ROOT,
     )
     if result.returncode != 0 or not result.stdout.strip():
         return None
@@ -112,10 +80,10 @@ def publish_marketplace(vsix_path: str) -> bool:
     The PAT is stored in the system keychain via `npx @vscode/vsce login`.
     """
     vsix_name = os.path.basename(vsix_path)
-    result = _run_with_progress(
+    info(f"Publishing {vsix_name} to marketplace...")
+    result = run(
         ["npx", "@vscode/vsce", "publish", "--packagePath", vsix_path],
-        f"Publishing {vsix_name} to marketplace",
-        timeout_secs=300,
+        cwd=PROJECT_ROOT,
     )
     if result.returncode != 0:
         fail("Marketplace publish failed:")
@@ -138,10 +106,10 @@ def publish_openvsx(vsix_path: str) -> bool:
         fail("OVSX_PAT is not set. Create a token at open-vsx.org/user-settings/tokens")
         return False
     vsix_name = os.path.basename(vsix_path)
-    result = _run_with_progress(
+    info(f"Publishing {vsix_name} to Open VSX...")
+    result = run(
         ["npx", "ovsx", "publish", vsix_path, "-p", pat],
-        f"Publishing {vsix_name} to Open VSX",
-        timeout_secs=300,
+        cwd=PROJECT_ROOT,
     )
     if result.returncode != 0:
         fail("Open VSX publish failed:")
