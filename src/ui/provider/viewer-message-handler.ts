@@ -230,5 +230,11 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
           ctx.post,
         ).catch(() => {});
         break;
+      case "openFullIntegrationContext":
+        panelHandlers.handleIntegrationContextDocument(
+          ctx.currentFileUri,
+          safeLineIndex(msg.lineIndex, 0),
+        ).catch(() => {});
+        break;
     }
 }
