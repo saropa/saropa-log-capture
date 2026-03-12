@@ -55,7 +55,7 @@ var MARKER_HEIGHT = 28;
 var OVERSCAN = 30;
 
 var allLines = [], totalHeight = 0, lineCount = 0;
-var autoScroll = true, isPaused = false, isViewingFile = false, wordWrap = false;
+var autoScroll = true, isPaused = false, isViewingFile = false, wordWrap = false, isSessionActive = false;
 var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
