@@ -17,7 +17,8 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
 
     shell=True is needed on Windows so that npm/npx/.cmd scripts resolve
     via PATH through cmd.exe. On macOS/Linux, shell=False is safer and
-    avoids quoting issues.
+    avoids quoting issues. stdin=DEVNULL prevents commands from waiting
+    for user input (which would hang the script).
     """
     return subprocess.run(
         cmd,
@@ -30,6 +31,8 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
         # Windows needs shell=True because npm/npx are .cmd batch files
         # that only resolve through cmd.exe's PATH lookup.
         shell=(sys.platform == "win32"),
+        # Prevent commands from waiting for stdin input.
+        stdin=subprocess.DEVNULL,
         **kwargs,
     )
 
