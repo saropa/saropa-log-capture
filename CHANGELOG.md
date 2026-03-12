@@ -20,11 +20,25 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+- **Investigation Mode: Cross-source search (Phase 2).** Search across all pinned sources in an investigation, including auto-resolved session sidecars (`.terminal.log`, `.requests.json`, `.events.json`, `.queries.json`, `.browser.json`). Features include:
+  - Search options: case sensitivity, regex mode, configurable context lines
+  - Search history dropdown with last 10 queries
+  - Progress bar showing file-by-file search status
+  - Cancellation support (new search auto-cancels previous)
+  - Large file handling with warning badges (>10MB searched partially)
+  - Missing source detection with warning badges
+  - Context lines before/after matches (dimmed, clickable)
 - **Cursor IDE compatibility warning.** Detects when running in Cursor IDE and warns that debug output capture may not work due to differences in the Debug Adapter Protocol implementation. Shows a one-time dismissible notification with workaround guidance.
 
 ### Fixed
 
 - **Empty lines no longer show decoration prefixes.** Blank or whitespace-only lines now skip counter and timestamp decorations, matching the existing behavior for severity bars.
+
+### Added
+
+- **Empty state watermark.** When log content is empty, a centered watermark now displays with context-aware messages ("Empty log file" or "No log entries") instead of a blank area.
+- **File info panel.** A metadata panel at the bottom of the log viewer shows file name (clickable to reveal), folder (clickable to open), modification date/time, and stats (line count, file size, errors, warnings, performance issues).
+- **Cursor IDE compatibility warning.** Detects when running in Cursor IDE and warns that debug output capture may not work due to differences in the Debug Adapter Protocol implementation. Shows a one-time dismissible notification with workaround guidance.
 
 ---
 
