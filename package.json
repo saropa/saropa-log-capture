@@ -243,6 +243,46 @@
         "command": "saropaLogCapture.rebuildProjectIndex",
         "icon": "$(refresh)",
         "title": "Rebuild Project Index"
+      },
+      {
+        "command": "saropaLogCapture.createInvestigation",
+        "icon": "$(new-folder)",
+        "title": "%command.createInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.openInvestigation",
+        "icon": "$(folder-opened)",
+        "title": "%command.openInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.closeInvestigation",
+        "icon": "$(close)",
+        "title": "%command.closeInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.switchInvestigation",
+        "icon": "$(list-selection)",
+        "title": "%command.switchInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.addToInvestigation",
+        "icon": "$(pin)",
+        "title": "%command.addToInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.removeFromInvestigation",
+        "icon": "$(pinned)",
+        "title": "%command.removeFromInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.exportInvestigation",
+        "icon": "$(package)",
+        "title": "%command.exportInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.deleteInvestigation",
+        "icon": "$(trash)",
+        "title": "%command.deleteInvestigation.title%"
       }
     ],
     "configuration": {
