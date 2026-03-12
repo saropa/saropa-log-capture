@@ -114,7 +114,16 @@ export class IntegrationRegistry {
                 const meta = await metadataStore.loadMetadata(context.logUri);
                 if (!meta.integrations) { meta.integrations = {}; }
                 for (const c of metaContributions) {
-                    meta.integrations[c.key] = c.payload;
+                    const payload = c.payload;
+                    const wrapped = typeof payload === 'object' && payload !== null
+                        ? { ...payload as Record<string, unknown> }
+                        : { value: payload };
+                    (wrapped as Record<string, unknown>).capturedAt = context.sessionEndTime;
+                    (wrapped as Record<string, unknown>).sessionWindow = {
+                        start: context.sessionStartTime,
+                        end: context.sessionEndTime,
+                    };
+                    meta.integrations[c.key] = wrapped;
                 }
                 await metadataStore.saveMetadata(context.logUri, meta);
             } catch (err) {
