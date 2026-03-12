@@ -183,6 +183,69 @@ export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri
     });
 }
 
+/* ---- Integration Context handlers ---- */
+
+/** Format a single integration entry into display lines. */
+function formatIntegrationEntry(key: string, value: unknown): string[] {
+    const lines: string[] = [];
+    const data = value as Record<string, unknown>;
+    const capturedAt = data.capturedAt as number | undefined;
+    const sessionWindow = data.sessionWindow as { start: number; end: number } | undefined;
+    const header = capturedAt
+        ? `${key} (captured at ${new Date(capturedAt).toLocaleTimeString()})`
+        : key;
+    lines.push(`── ${header} ──`);
+    if (sessionWindow) {
+        lines.push(`  Session: ${new Date(sessionWindow.start).toLocaleTimeString()} - ${new Date(sessionWindow.end).toLocaleTimeString()}`);
+    }
+    for (const [k, v] of Object.entries(data)) {
+        if (k === 'capturedAt' || k === 'sessionWindow') { continue; }
+        const formatted = typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v);
+        if (formatted.includes('\n')) {
+            lines.push(`  ${k}:`);
+            formatted.split('\n').forEach(line => lines.push(`    ${line}`));
+        } else {
+            lines.push(`  ${k}: ${formatted}`);
+        }
+    }
+    lines.push('');
+    return lines;
+}
+
+/**
+ * Show integration context data for a log line. Displays data from integrations captured during the session.
+ * @param _timestamp Reserved for future enhancement: filter integration data to ±5s of this timestamp.
+ */
+export async function handleIntegrationContextRequest(
+    logUri: vscode.Uri | undefined,
+    lineIndex: number,
+    _timestamp: number | undefined,
+    post: PostFn,
+): Promise<void> {
+    if (!logUri) {
+        vscode.window.showInformationMessage(t('msg.noIntegrationContext'));
+        return;
+    }
+    try {
+        const store = new SessionMetadataStore();
+        const meta = await store.loadMetadata(logUri);
+        const integrations = meta.integrations;
+        if (!integrations || Object.keys(integrations).length === 0) {
+            vscode.window.showInformationMessage(t('msg.noIntegrationData'));
+            return;
+        }
+        const contextLines: string[] = [`Integration context for line ${lineIndex + 1}:`, ''];
+        for (const [key, value] of Object.entries(integrations)) {
+            contextLines.push(...formatIntegrationEntry(key, value));
+        }
+        post({ type: 'integrationContextData', context: contextLines.join('\n') });
+        const doc = await vscode.workspace.openTextDocument({ content: contextLines.join('\n'), language: 'markdown' });
+        await vscode.window.showTextDocument(doc, { preview: true, viewColumn: vscode.ViewColumn.Beside });
+    } catch {
+        vscode.window.showInformationMessage(t('msg.noIntegrationContext'));
+    }
+}
+
 /* ---- Serialization helpers ---- */
 
 function serializeContext(ctx: FirebaseContext): Record<string, unknown> {

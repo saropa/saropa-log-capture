@@ -120,5 +120,7 @@
   "No key entered. Use this command again to store your Loki API key.": "Aucune clé saisie. Utilisez à nouveau cette commande pour enregistrer votre clé API Loki.",
   "Loki API key (Bearer token). Stored in Secret Storage.": "Clé API Loki (jeton Bearer). Enregistrée dans le stockage sécurisé.",
   "Paste your Grafana Cloud or Loki API key": "Collez votre clé API Grafana Cloud ou Loki",
-  "No analyzable tokens found in this line.": "No analyzable tokens found in this line."
+  "No analyzable tokens found in this line.": "No analyzable tokens found in this line.",
+  "No integration context available for this line.": "No integration context available for this line.",
+  "No integration data captured for this session. Enable integrations in settings.": "No integration data captured for this session. Enable integrations in settings."
 }
