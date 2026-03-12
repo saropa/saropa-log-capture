@@ -124,6 +124,7 @@ window.addEventListener('message', function(event) {
                 autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
             updateFooterText();
+            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);

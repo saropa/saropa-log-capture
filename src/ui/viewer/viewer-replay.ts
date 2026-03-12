@@ -73,13 +73,14 @@ export function getReplayScript(): string {
     window.setReplayEnabled = function(fileLoaded, sessionActive) {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
-        if (sessionActive || !fileLoaded) {
+        var hasLines = allLines && allLines.length > 0;
+        if (sessionActive || !fileLoaded || !hasLines) {
             setReplayIconVisible(false);
             if (bar) bar.style.display = 'none';
             if (window.replayMode) {
                 window.exitReplayMode();
             }
-        } else if (fileLoaded && !window.replayMode) {
+        } else if (fileLoaded && hasLines && !window.replayMode) {
             setReplayIconVisible(true);
         }
     };
