@@ -27,7 +27,7 @@ def check_vscode_cli() -> bool:
     """
     if not shutil.which("code"):
         warn("VS Code CLI (code) not found on PATH.")
-        info(f"  Open VS Code → {C.YELLOW}Ctrl+Shift+P{C.RESET} → "
+        info(f"  Open VS Code > {C.YELLOW}Ctrl+Shift+P{C.RESET} > "
              f"'{C.WHITE}Shell Command: Install code command in PATH{C.RESET}'")
         return True  # non-blocking
     ok("VS Code CLI (code) available on PATH")
