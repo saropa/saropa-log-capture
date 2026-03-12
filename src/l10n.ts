@@ -139,6 +139,15 @@ const strings: Record<string, string> = {
     'msg.reportSavedTo': 'Report saved to {0}',
     'msg.rightClickForTimeline': 'Right-click a session in Session History to show its timeline.',
     'msg.rightClickForBugReport': 'Right-click an error line in the log viewer to generate a bug report.',
+
+    // Timeline panel
+    'panel.timeline.title': 'Unified Timeline',
+    'panel.timeline.loading': 'Loading timeline data...',
+    'panel.timeline.noEvents': 'No events found in this session.',
+    'panel.timeline.duration': 'Duration',
+    'panel.timeline.total': 'Events',
+    'panel.timeline.exportJson': 'Export JSON',
+    'panel.timeline.exportCsv': 'Export CSV',
     'msg.noGoogleServicesJson': 'No google-services.json found in workspace. Add one (e.g. android/app/) or use Browse to select a file.',
     'msg.noAnalyzableTokens': 'No analyzable tokens found in this line.',
 
@@ -169,6 +178,7 @@ const strings: Record<string, string> = {
     // Integration context
     'msg.noIntegrationContext': 'No integration context available for this line.',
     'msg.noIntegrationData': 'No integration data captured for this session. Enable integrations in settings.',
+    'msg.noIntegrationDataInWindow': 'No integration data in this time window.',
 
     // Actions (shared button labels)
     'action.delete': 'Delete',
