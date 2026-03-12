@@ -15,7 +15,7 @@ function readLastLines(filePath: string, maxLines: number): string[] {
     try {
         const raw = fs.readFileSync(filePath, 'utf-8');
         const lines = raw.split(/\r?\n/);
-        if (lines.length <= maxLines) return lines;
+        if (lines.length <= maxLines) {return lines;}
         return lines.slice(-maxLines);
     } catch {
         return [];
@@ -41,7 +41,7 @@ export const externalLogsProvider: IntegrationProvider = {
             const uri = resolveWorkspaceFileUri(workspaceFolder, relPath);
             try {
                 const lines = readLastLines(uri.fsPath, cfg.maxLinesPerFile);
-                if (lines.length === 0) continue;
+                if (lines.length === 0) {continue;}
                 const label = relPath.replace(/[/\\]/g, '_').replace(/\.[^.]+$/, '') || 'external';
                 const prefix = cfg.prefixLines ? `[${label}] ` : '';
                 const content = lines.map((l) => (l ? prefix + l : l)).join('\n');
@@ -53,7 +53,7 @@ export const externalLogsProvider: IntegrationProvider = {
                 context.outputChannel.appendLine(`[externalLogs] ${relPath}: ${msg}`);
             }
         }
-        if (contributions.length === 0) return undefined;
+        if (contributions.length === 0) {return undefined;}
         contributions.unshift({ kind: 'meta', key: 'externalLogs', payload: { sidecars } });
         return contributions;
     },
