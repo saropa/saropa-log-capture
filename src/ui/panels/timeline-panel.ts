@@ -1,214 +1,324 @@
 /**
- * Session timeline panel.
- *
- * Reads a log file, classifies every line by timestamp and severity,
- * and renders an SVG timeline showing errors/warnings over time.
+ * Unified timeline panel: correlates all data sources (debug console, terminal,
+ * integrations) on a single time-synchronized view.
+ * Phase 3: Virtual scrolling, time scrubber, minimap, export.
  */
 
 import * as vscode from 'vscode';
-import { stripAnsi, escapeHtml } from '../../modules/capture/ansi';
+import { escapeHtml } from '../../modules/capture/ansi';
 import { formatDuration } from '../../modules/session/session-summary';
 import { getNonce } from '../provider/viewer-content';
-import { findHeaderEnd, parseHeaderFields, computeSessionMidnight, parseTimeToMs } from '../viewer/viewer-file-loader';
-import { classifyLevel, isActionableLevel, type SeverityLevel } from '../../modules/analysis/level-classifier';
 import { openLogAtLine } from '../../modules/search/log-search';
-import { getTimelineStyles } from './timeline-panel-styles';
-
-interface TimelinePoint {
-    readonly timestamp: number;
-    readonly level: SeverityLevel;
-    readonly lineNumber: number;
-    readonly lineText: string;
-}
-
-interface TimelineStats {
-    readonly startTime: number;
-    readonly endTime: number;
-    readonly duration: number;
-    readonly totalLines: number;
-    readonly errorCount: number;
-    readonly warningCount: number;
-    readonly perfCount: number;
-    readonly todoCount: number;
-}
+import { getUnifiedTimelineStyles } from './timeline-panel-styles';
+import { t } from '../../l10n';
+import { loadTimelineEvents, getSourceLabel, getSourceColor, type TimelineLoadResult } from '../../modules/timeline/timeline-loader';
+import { type TimelineEvent, type TimelineSource, type TimelineLevel } from '../../modules/timeline/timeline-event';
+import { formatTimestampShort } from '../../modules/timeline/timestamp-parser';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentUri: vscode.Uri | undefined;
+let currentResult: TimelineLoadResult | undefined;
 
-/** Show the timeline for a log file. */
 export async function showTimeline(fileUri: vscode.Uri): Promise<void> {
     currentUri = fileUri;
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
-    const data = await parseTimelineData(fileUri);
-    if (!panel) { return; }
-    const filename = fileUri.fsPath.split(/[\\/]/).pop() ?? '';
-    panel.webview.html = buildTimelineHtml(data.points, data.stats, filename);
+
+    try {
+        currentResult = await loadTimelineEvents({ sessionUri: fileUri, includeAll: true, maxEvents: 100000 });
+        if (!panel) { return; }
+        const filename = fileUri.fsPath.split(/[\\/]/).pop() ?? '';
+        panel.webview.html = buildTimelineHtml(currentResult, filename);
+    } catch (err) {
+        if (!panel) { return; }
+        panel.webview.html = buildErrorHtml(err instanceof Error ? err.message : String(err));
+    }
 }
 
-/** Dispose the singleton panel. */
-export function disposeTimelinePanel(): void { panel?.dispose(); panel = undefined; }
+export function disposeTimelinePanel(): void { panel?.dispose(); panel = undefined; currentResult = undefined; }
 
 function ensurePanel(): void {
     if (panel) { panel.reveal(); return; }
-    panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.timeline', 'Saropa Log Timeline',
-        vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
-    );
+    panel = vscode.window.createWebviewPanel('saropaLogCapture.timeline', t('panel.timeline.title'), vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] });
     panel.webview.onDidReceiveMessage(handleMessage);
-    panel.onDidDispose(() => { panel = undefined; });
+    panel.onDidDispose(() => { panel = undefined; currentResult = undefined; });
 }
 
 function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'openLine' && currentUri) {
-        const match = { uri: currentUri, filename: '', lineNumber: Number(msg.lineNumber), lineText: '', matchStart: 0, matchEnd: 0 };
-        openLogAtLine(match).catch(() => {});
+        openLogAtLine({ uri: currentUri, filename: '', lineNumber: Number(msg.lineNumber), lineText: '', matchStart: 0, matchEnd: 0 }).catch(() => {});
+    } else if (msg.type === 'openSidecar' && msg.file) {
+        vscode.window.showTextDocument(vscode.Uri.parse(String(msg.file)), { preview: true }).then(() => {}, () => {});
+    } else if (msg.type === 'export' && currentResult) {
+        exportTimeline(String(msg.format), currentResult);
     }
 }
 
-async function parseTimelineData(fileUri: vscode.Uri): Promise<{ points: TimelinePoint[]; stats: TimelineStats }> {
-    const raw = await vscode.workspace.fs.readFile(fileUri);
-    const allLines = Buffer.from(raw).toString('utf-8').split('\n');
-    const headerEnd = findHeaderEnd(allLines);
-    const fields = parseHeaderFields(allLines);
-    const midnightMs = computeSessionMidnight(fields['Date'] ?? '');
-    const tsPattern = /^\[([\d:.]+)\]\s*\[(\w+)\]\s?(.*)/;
-    const points: TimelinePoint[] = [];
-    const counts = { error: 0, warning: 0, performance: 0, todo: 0 };
-    for (let i = headerEnd; i < allLines.length; i++) {
-        const line = allLines[i];
-        const m = tsPattern.exec(line);
-        if (!m) { continue; }
-        const ts = parseTimeToMs(m[1], midnightMs);
-        if (ts === 0) { continue; }
-        const plain = stripAnsi(m[3]);
-        const level = classifyLevel(plain, m[2], true);
-        if (isActionableLevel(level)) {
-            points.push({ timestamp: ts, level, lineNumber: i + 1, lineText: plain.slice(0, 120) });
-            counts[level as keyof typeof counts]++;
-        }
-    }
-    const stats = buildStats(points, allLines.length - headerEnd, counts);
-    return { points: bucketIfNeeded(points), stats };
-}
+async function exportTimeline(format: string, result: TimelineLoadResult): Promise<void> {
+    const defaultName = `timeline.${format}`;
+    const filters: Record<string, string[]> = format === 'json' ? { 'JSON': ['json'] } : { 'CSV': ['csv'] };
+    const uri = await vscode.window.showSaveDialog({ defaultUri: vscode.Uri.file(defaultName), filters });
+    if (!uri) { return; }
 
-function buildStats(
-    points: readonly TimelinePoint[], totalLines: number, counts: Record<string, number>,
-): TimelineStats {
-    if (points.length === 0) {
-        return { startTime: 0, endTime: 0, duration: 0, totalLines, errorCount: 0, warningCount: 0, perfCount: 0, todoCount: 0 };
+    let content: string;
+    if (format === 'json') {
+        content = JSON.stringify(result.events.map(e => ({ timestamp: e.timestamp, source: e.source, level: e.level, summary: e.summary, detail: e.detail })), null, 2);
+    } else {
+        const header = 'timestamp,time,source,level,summary\n';
+        const rows = result.events.map(e => `${e.timestamp},"${formatTimestampShort(e.timestamp)}","${e.source}","${e.level}","${e.summary.replace(/"/g, '""')}"`).join('\n');
+        content = header + rows;
     }
-    const start = points[0].timestamp;
-    const end = points[points.length - 1].timestamp;
-    return { startTime: start, endTime: end, duration: end - start, totalLines, ...spreadCounts(counts) };
-}
-
-function spreadCounts(c: Record<string, number>): { errorCount: number; warningCount: number; perfCount: number; todoCount: number } {
-    return { errorCount: c.error ?? 0, warningCount: c.warning ?? 0, perfCount: c.performance ?? 0, todoCount: c.todo ?? 0 };
-}
-
-const maxDots = 400;
-function bucketIfNeeded(points: TimelinePoint[]): TimelinePoint[] {
-    if (points.length <= maxDots) { return points; }
-    const start = points[0].timestamp;
-    const end = points[points.length - 1].timestamp;
-    const bucketWidth = (end - start) / maxDots;
-    const buckets = new Map<number, TimelinePoint>();
-    const severityRank: Record<string, number> = { error: 4, warning: 3, performance: 2, todo: 1 };
-    for (const p of points) {
-        const idx = Math.min(Math.floor((p.timestamp - start) / bucketWidth), maxDots - 1);
-        const existing = buckets.get(idx);
-        if (!existing || (severityRank[p.level] ?? 0) > (severityRank[existing.level] ?? 0)) {
-            buckets.set(idx, p);
-        }
-    }
-    return [...buckets.values()].sort((a, b) => a.timestamp - b.timestamp);
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
+    vscode.window.showInformationMessage(t('msg.exportedTo', uri.fsPath));
 }
 
 function buildLoadingHtml(): string {
     const nonce = getNonce();
-    return `<!DOCTYPE html><html><head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getTimelineStyles()}</style>
-</head><body><div class="empty-state">Analyzing session...</div></body></html>`;
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="loading">${t('panel.timeline.loading')}</div></body></html>`;
 }
 
-function buildTimelineHtml(points: TimelinePoint[], stats: TimelineStats, filename: string): string {
+function buildErrorHtml(message: string): string {
     const nonce = getNonce();
-    if (stats.duration === 0 && points.length === 0) {
-        return `<!DOCTYPE html><html><head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getTimelineStyles()}</style>
-</head><body>${renderHeader(filename)}
-<div class="no-timestamps">No timestamped actionable events found in this session.</div></body></html>`;
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="error-state">${escapeHtml(message)}</div></body></html>`;
+}
+
+function buildTimelineHtml(result: TimelineLoadResult, filename: string): string {
+    const nonce = getNonce();
+    const { events, stats, sourcesFound, sessionStart, sessionEnd } = result;
+
+    if (events.length === 0) {
+        return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body>${renderHeader(filename)}<div class="empty-state">${t('panel.timeline.noEvents')}</div></body></html>`;
     }
+
+    const eventsJson = JSON.stringify(events.map(e => ({ ts: e.timestamp, src: e.source, lvl: e.level, sum: e.summary, line: e.location?.line, file: e.location?.file })));
+    const minimapData = buildMinimapData(events, sessionStart, sessionEnd);
+
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getTimelineStyles()}</style>
-</head><body>${renderHeader(filename)}
-${renderStatsBar(stats)}${renderLegend()}
-<div class="timeline-container">${renderSvg(points, stats)}</div>
-<script nonce="${nonce}">${getScript()}</script></body></html>`;
+<style nonce="${nonce}">${getUnifiedTimelineStyles()}</style>
+</head><body>
+${renderHeader(filename)}
+${renderToolbar(sourcesFound, stats)}
+${renderTimeScrubber(sessionStart, sessionEnd)}
+${renderMinimap(minimapData)}
+<div class="timeline-container" id="timeline-container"></div>
+<script nonce="${nonce}">${getAdvancedScript(eventsJson, sessionStart, sessionEnd)}</script>
+</body></html>`;
 }
 
 function renderHeader(filename: string): string {
-    return `<div class="header"><div class="title">Saropa Log Timeline</div><div class="subtitle">${escapeHtml(filename)}</div></div>`;
+    return `<div class="header"><div class="title">${t('panel.timeline.title')}</div><div class="subtitle">${escapeHtml(filename)}</div></div>`;
 }
 
-function renderStatsBar(stats: TimelineStats): string {
-    const dur = formatDuration(stats.duration);
-    return `<div class="stats-bar">
-<div class="stat-item"><span class="stat-label">Duration:</span><span class="stat-count">${dur}</span></div>
-<div class="stat-item"><span class="stat-dot error"></span><span class="stat-count">${stats.errorCount}</span><span class="stat-label">errors</span></div>
-<div class="stat-item"><span class="stat-dot warning"></span><span class="stat-count">${stats.warningCount}</span><span class="stat-label">warnings</span></div>
-<div class="stat-item"><span class="stat-dot performance"></span><span class="stat-count">${stats.perfCount}</span><span class="stat-label">perf</span></div>
-<div class="stat-item"><span class="stat-dot todo"></span><span class="stat-count">${stats.todoCount}</span><span class="stat-label">todos</span></div>
+function renderToolbar(sources: TimelineSource[], stats: { totalEvents: number; durationMs: number; bySource: Record<TimelineSource, number>; byLevel: Record<string, number> }): string {
+    const filterHtml = sources.map(s => `<label class="source-filter"><input type="checkbox" data-source="${s}" checked><span class="source-dot" style="background:${getSourceColor(s)}"></span><span class="source-label">${getSourceLabel(s)}</span><span class="source-count">(${stats.bySource[s] ?? 0})</span></label>`).join('');
+    const dur = formatDuration(stats.durationMs);
+    return `<div class="toolbar">
+<div class="source-filters">${filterHtml}</div>
+<div class="stats-bar">
+<span class="stat-item"><span class="stat-label">${t('panel.timeline.duration')}:</span> ${dur}</span>
+<span class="stat-item"><span class="stat-label">${t('panel.timeline.total')}:</span> ${stats.totalEvents}</span>
+<span class="stat-item"><span class="stat-dot error"></span>${stats.byLevel.error ?? 0}</span>
+<span class="stat-item"><span class="stat-dot warning"></span>${stats.byLevel.warning ?? 0}</span>
+</div>
+<div class="export-buttons">
+<button class="export-btn" data-format="json">${t('panel.timeline.exportJson')}</button>
+<button class="export-btn" data-format="csv">${t('panel.timeline.exportCsv')}</button>
+</div>
 </div>`;
 }
 
-function renderLegend(): string {
-    return `<div class="legend">
-<div class="legend-item"><span class="stat-dot error"></span>Error</div>
-<div class="legend-item"><span class="stat-dot warning"></span>Warning</div>
-<div class="legend-item"><span class="stat-dot performance"></span>Performance</div>
-<div class="legend-item"><span class="stat-dot todo"></span>Todo</div></div>`;
+function renderTimeScrubber(start: number, end: number): string {
+    const startTime = formatTimestampShort(start);
+    const endTime = formatTimestampShort(end);
+    return `<div class="time-scrubber">
+<span class="time-label start">${startTime}</span>
+<div class="scrubber-track"><div class="scrubber-range" id="scrubber-range"></div><div class="scrubber-handle left" id="handle-left"></div><div class="scrubber-handle right" id="handle-right"></div></div>
+<span class="time-label end">${endTime}</span>
+<div class="zoom-controls"><button class="zoom-btn" data-zoom="in">+</button><button class="zoom-btn" data-zoom="out">−</button><button class="zoom-btn" data-zoom="reset">⟲</button></div>
+</div>`;
 }
 
-function renderSvg(points: readonly TimelinePoint[], stats: TimelineStats): string {
-    const w = 800, h = 120, pad = 40;
-    const plotW = w - pad * 2;
-    const range = stats.duration || 1;
-    const levelY: Record<string, number> = { error: 20, warning: 45, performance: 70, todo: 95 };
-    const levelColor: Record<string, string> = { error: 'var(--vscode-editorError-foreground, #f14c4c)', warning: 'var(--vscode-editorWarning-foreground, #cca700)', performance: '#b267e6', todo: 'var(--vscode-descriptionForeground)' };
-    let dots = '';
-    for (const p of points) {
-        const x = pad + ((p.timestamp - stats.startTime) / range) * plotW;
-        const y = levelY[p.level] ?? 50;
-        const c = levelColor[p.level] ?? '#888';
-        const title = escapeHtml(`L${p.lineNumber}: ${p.lineText}`);
-        dots += `<circle class="timeline-dot" cx="${x.toFixed(1)}" cy="${y}" r="4" fill="${c}" data-line="${p.lineNumber}"><title>${title}</title></circle>`;
+interface MinimapBucket { x: number; errors: number; warnings: number; info: number; }
+
+function buildMinimapData(events: TimelineEvent[], start: number, end: number): MinimapBucket[] {
+    const bucketCount = 100;
+    const range = end - start || 1;
+    const buckets: MinimapBucket[] = [];
+    for (let i = 0; i < bucketCount; i++) { buckets.push({ x: i, errors: 0, warnings: 0, info: 0 }); }
+    for (const e of events) {
+        const idx = Math.min(Math.floor(((e.timestamp - start) / range) * bucketCount), bucketCount - 1);
+        if (e.level === 'error') { buckets[idx].errors++; }
+        else if (e.level === 'warning') { buckets[idx].warnings++; }
+        else { buckets[idx].info++; }
     }
-    const startLabel = formatTime(stats.startTime);
-    const endLabel = formatTime(stats.endTime);
-    return `<svg class="timeline-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
-<line class="axis-line" x1="${pad}" y1="${h - 5}" x2="${w - pad}" y2="${h - 5}"/>
-<text class="axis-label" x="${pad}" y="${h}" text-anchor="start">${startLabel}</text>
-<text class="axis-label" x="${w - pad}" y="${h}" text-anchor="end">${endLabel}</text>
-${dots}</svg>`;
+    return buckets;
 }
 
-function formatTime(epoch: number): string {
-    if (epoch === 0) { return ''; }
-    const d = new Date(epoch);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+function renderMinimap(buckets: MinimapBucket[]): string {
+    const maxHeight = 30;
+    const maxCount = Math.max(1, ...buckets.map(b => b.errors + b.warnings + b.info));
+    const bars = buckets.map(b => {
+        const total = b.errors + b.warnings + b.info;
+        const h = Math.max(2, (total / maxCount) * maxHeight);
+        const color = b.errors > 0 ? 'var(--vscode-editorError-foreground)' : b.warnings > 0 ? 'var(--vscode-editorWarning-foreground)' : 'var(--vscode-descriptionForeground)';
+        return `<div class="minimap-bar" style="height:${h}px;background:${color}" data-bucket="${b.x}"></div>`;
+    }).join('');
+    return `<div class="minimap" id="minimap"><div class="minimap-viewport" id="minimap-viewport"></div>${bars}</div>`;
 }
 
-function getScript(): string {
+function getAdvancedScript(eventsJson: string, sessionStart: number, sessionEnd: number): string {
     return `(function() {
     var vscode = acquireVsCodeApi();
-    document.addEventListener('click', function(e) {
-        var dot = e.target.closest('.timeline-dot');
-        if (dot) { vscode.postMessage({ type: 'openLine', lineNumber: parseInt(dot.dataset.line) }); }
+    var allEvents = ${eventsJson};
+    var sessionStart = ${sessionStart}, sessionEnd = ${sessionEnd};
+    var visibleSources = new Set(allEvents.map(function(e) { return e.src; }));
+    var viewStart = sessionStart, viewEnd = sessionEnd;
+    var ROW_HEIGHT = 28, VISIBLE_BUFFER = 10;
+    var container = document.getElementById('timeline-container');
+    var scrollTop = 0, containerHeight = 0;
+
+    function getFilteredEvents() {
+        return allEvents.filter(function(e) {
+            return visibleSources.has(e.src) && e.ts >= viewStart && e.ts <= viewEnd;
+        });
+    }
+
+    function renderVirtualList() {
+        var events = getFilteredEvents();
+        containerHeight = container.clientHeight;
+        var totalHeight = events.length * ROW_HEIGHT;
+        var startIdx = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - VISIBLE_BUFFER);
+        var endIdx = Math.min(events.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + VISIBLE_BUFFER);
+        var html = '<div class="virtual-spacer" style="height:' + (startIdx * ROW_HEIGHT) + 'px"></div>';
+        var lastTime = '';
+        for (var i = startIdx; i < endIdx; i++) {
+            var e = events[i];
+            var time = formatTime(e.ts);
+            var showTime = time !== lastTime; lastTime = time;
+            var levelClass = 'level-' + e.lvl;
+            var icon = e.lvl === 'error' ? '●' : e.lvl === 'warning' ? '⚠' : e.lvl === 'perf' ? '◆' : '○';
+            var srcColor = getSourceColor(e.src);
+            var srcLabel = getSourceLabel(e.src);
+            html += '<div class="event-row ' + levelClass + '" data-idx="' + i + '" data-source="' + e.src + '"' + (e.line ? ' data-line="' + e.line + '"' : '') + (e.file ? ' data-file="' + escapeAttr(e.file) + '"' : '') + '>';
+            html += '<div class="event-time">' + (showTime ? time : '') + '</div>';
+            html += '<div class="event-icon">' + icon + '</div>';
+            html += '<div class="event-source" style="color:' + srcColor + '">[' + srcLabel + ']</div>';
+            html += '<div class="event-summary">' + escapeHtml(e.sum) + '</div></div>';
+        }
+        html += '<div class="virtual-spacer" style="height:' + ((events.length - endIdx) * ROW_HEIGHT) + 'px"></div>';
+        container.innerHTML = html;
+        container.style.overflowY = 'auto';
+        updateMinimap(events);
+    }
+
+    function formatTime(ts) { var d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0'); }
+    function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escapeAttr(s) { return s.replace(/"/g,'&quot;'); }
+    var sourceColors = {debug:'var(--vscode-debugIcon-startForeground,#89d185)',terminal:'var(--vscode-terminal-foreground,#ccc)',http:'var(--vscode-charts-green,#4dc9a2)',perf:'var(--vscode-charts-purple,#b267e6)',docker:'var(--vscode-charts-blue,#75beff)',events:'var(--vscode-charts-orange,#d18616)',database:'var(--vscode-charts-yellow,#dcdcaa)',browser:'var(--vscode-charts-red,#f14c4c)'};
+    var sourceLabels = {debug:'Debug',terminal:'Terminal',http:'HTTP',perf:'Perf',docker:'Docker',events:'Events',database:'DB',browser:'Browser'};
+    function getSourceColor(s) { return sourceColors[s] || 'var(--vscode-editor-foreground)'; }
+    function getSourceLabel(s) { return sourceLabels[s] || s; }
+
+    function updateMinimap(events) {
+        var viewport = document.getElementById('minimap-viewport');
+        var range = sessionEnd - sessionStart || 1;
+        var left = ((viewStart - sessionStart) / range) * 100;
+        var width = ((viewEnd - viewStart) / range) * 100;
+        viewport.style.left = left + '%';
+        viewport.style.width = width + '%';
+    }
+
+    function updateScrubber() {
+        var range = sessionEnd - sessionStart || 1;
+        var leftPct = ((viewStart - sessionStart) / range) * 100;
+        var rightPct = ((viewEnd - sessionStart) / range) * 100;
+        document.getElementById('handle-left').style.left = leftPct + '%';
+        document.getElementById('handle-right').style.left = rightPct + '%';
+        var rangeEl = document.getElementById('scrubber-range');
+        rangeEl.style.left = leftPct + '%';
+        rangeEl.style.width = (rightPct - leftPct) + '%';
+    }
+
+    container.addEventListener('scroll', function() { scrollTop = container.scrollTop; renderVirtualList(); });
+    container.addEventListener('click', function(e) {
+        var row = e.target.closest('.event-row');
+        if (row) {
+            var src = row.dataset.source, line = row.dataset.line, file = row.dataset.file;
+            if (src === 'debug' && line) { vscode.postMessage({ type: 'openLine', lineNumber: parseInt(line) }); }
+            else if (file) { vscode.postMessage({ type: 'openSidecar', file: file }); }
+        }
     });
+
+    document.querySelectorAll('.source-filter input').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            if (cb.checked) { visibleSources.add(cb.dataset.source); }
+            else { visibleSources.delete(cb.dataset.source); }
+            renderVirtualList();
+        });
+    });
+
+    document.querySelectorAll('.export-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { vscode.postMessage({ type: 'export', format: btn.dataset.format }); });
+    });
+
+    document.querySelectorAll('.zoom-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var center = (viewStart + viewEnd) / 2, span = viewEnd - viewStart;
+            if (btn.dataset.zoom === 'in') { span = Math.max(1000, span * 0.5); }
+            else if (btn.dataset.zoom === 'out') { span = Math.min(sessionEnd - sessionStart, span * 2); }
+            else { viewStart = sessionStart; viewEnd = sessionEnd; updateScrubber(); renderVirtualList(); return; }
+            viewStart = Math.max(sessionStart, center - span / 2);
+            viewEnd = Math.min(sessionEnd, center + span / 2);
+            updateScrubber(); renderVirtualList();
+        });
+    });
+
+    document.getElementById('minimap').addEventListener('click', function(e) {
+        if (e.target.classList.contains('minimap-bar')) {
+            var bucket = parseInt(e.target.dataset.bucket);
+            var range = sessionEnd - sessionStart || 1;
+            var center = sessionStart + (bucket / 100) * range;
+            var span = viewEnd - viewStart;
+            viewStart = Math.max(sessionStart, center - span / 2);
+            viewEnd = Math.min(sessionEnd, viewStart + span);
+            updateScrubber(); renderVirtualList();
+        }
+    });
+
+    var dragging = null;
+    document.getElementById('handle-left').addEventListener('mousedown', function() { dragging = 'left'; });
+    document.getElementById('handle-right').addEventListener('mousedown', function() { dragging = 'right'; });
+    document.addEventListener('mouseup', function() { dragging = null; });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var track = document.querySelector('.scrubber-track');
+        var rect = track.getBoundingClientRect();
+        var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        var ts = sessionStart + pct * (sessionEnd - sessionStart);
+        if (dragging === 'left') { viewStart = Math.min(ts, viewEnd - 1000); }
+        else { viewEnd = Math.max(ts, viewStart + 1000); }
+        updateScrubber(); renderVirtualList();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        var selected = container.querySelector('.event-row.selected');
+        var rows = Array.from(container.querySelectorAll('.event-row'));
+        var idx = selected ? rows.indexOf(selected) : -1;
+        if (e.key === 'ArrowDown') { e.preventDefault(); selectRow(rows, idx + 1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); selectRow(rows, idx - 1); }
+        else if (e.key === 'Enter' && selected) { selected.click(); }
+    });
+
+    function selectRow(rows, idx) {
+        if (idx < 0) idx = 0;
+        if (idx >= rows.length) idx = rows.length - 1;
+        rows.forEach(function(r) { r.classList.remove('selected'); });
+        if (rows[idx]) { rows[idx].classList.add('selected'); rows[idx].scrollIntoView({ block: 'nearest' }); }
+    }
+
+    updateScrubber();
+    renderVirtualList();
+    window.addEventListener('resize', function() { containerHeight = container.clientHeight; renderVirtualList(); });
 })();`;
 }
