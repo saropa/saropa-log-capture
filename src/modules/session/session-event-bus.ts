@@ -47,6 +47,13 @@ export class EarlyOutputBuffer {
         return buffered ?? [];
     }
 
+    /** Drain and return all buffered events for every session (and clear the buffer). Use when creating the first log session so no early output is lost. */
+    drainAll(): Map<string, DapOutputBody[]> {
+        const out = new Map(this.buffer);
+        this.buffer.clear();
+        return out;
+    }
+
     /** Remove buffered events for a session. */
     delete(sessionId: string): void {
         this.buffer.delete(sessionId);

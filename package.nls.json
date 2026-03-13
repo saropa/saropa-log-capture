@@ -119,6 +119,7 @@
   "config.suppressTransientErrors.description": "Hide expected transient errors (TimeoutException, SocketException, ECONNREFUSED, etc.). Filtered lines can be expanded if needed.",
   "config.treeRefreshInterval.description": "Tree view refresh interval in seconds during active recording. 0 = adaptive (3s for small files, 10s for medium, 30s for large).",
   "config.verboseDap.description": "Log all raw DAP protocol messages (requests, responses, events) to the log file. Produces high-volume output — use for debugging adapter communication issues.",
+  "config.diagnosticCapture.description": "Log capture pipeline events (session start, output buffered/written) to the Saropa Log Capture output channel. Use when log files are empty to see if output is received and whether a session exists.",
   "config.watchPatterns.description": "Keywords to watch for in log output. Each entry has a keyword (string or /regex/) and alert type.",
 
   "config.firebase.timeRange.enum.last24Hours": "Last 24 hours",

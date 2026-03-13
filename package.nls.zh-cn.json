@@ -118,6 +118,7 @@
   "config.splitRules.description": "自动拆分日志文件的规则。所有值为 0 时禁用该规则。",
   "config.suppressTransientErrors.description": "隐藏预期的瞬态错误（TimeoutException、SocketException、ECONNREFUSED 等）。如需要，可展开已筛选的行。",
   "config.treeRefreshInterval.description": "活动录制期间的树视图刷新间隔（秒）。0 = 自适应（小文件 3 秒，中等文件 10 秒，大文件 30 秒）。",
+  "config.diagnosticCapture.description": "将捕获管道事件（会话开始、输出缓冲/写入）记录到 Saropa Log Capture 输出通道。当日志文件为空时用于调试。",
   "config.verboseDap.description": "将所有原始 DAP 协议消息（请求、响应、事件）记录到日志文件。会产生大量输出 — 用于调试适配器通信问题。",
   "config.watchPatterns.description": "要在日志输出中监视的关键字。每个条目都有一个关键字（字符串或 /regex/）和警报类型。",
 

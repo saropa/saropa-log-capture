@@ -65,4 +65,20 @@ suite('EarlyOutputBuffer', () => {
         assert.strictEqual(drained[0].output, 'line 0');
         assert.strictEqual(drained[499].output, 'line 499');
     });
+
+    test('drainAll returns all sessions and clears buffer', () => {
+        const buf = new EarlyOutputBuffer();
+        buf.add('s1', body('a'));
+        buf.add('s2', body('b'));
+        buf.add('s1', body('c'));
+        const all = buf.drainAll();
+        assert.strictEqual(all.size, 2);
+        assert.strictEqual(all.get('s1')!.length, 2);
+        assert.strictEqual(all.get('s2')!.length, 1);
+        assert.strictEqual(all.get('s1')![0].output, 'a');
+        assert.strictEqual(all.get('s1')![1].output, 'c');
+        assert.strictEqual(all.get('s2')![0].output, 'b');
+        assert.strictEqual(buf.drain('s1').length, 0);
+        assert.strictEqual(buf.drain('s2').length, 0);
+    });
 });

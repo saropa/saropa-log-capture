@@ -1220,6 +1220,11 @@
           "description": "%config.verboseDap.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.diagnosticCapture": {
+          "default": false,
+          "description": "%config.diagnosticCapture.description%",
+          "type": "boolean"
+        },
         "saropaLogCapture.watchPatterns": {
           "default": [
             {
