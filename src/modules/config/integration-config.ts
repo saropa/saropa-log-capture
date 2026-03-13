@@ -116,6 +116,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       containerNamePattern: typeof cfg.get('integrations.docker.containerNamePattern') === 'string' ? (cfg.get('integrations.docker.containerNamePattern') as string) : '',
       captureLogs: ensureBoolean(cfg.get('integrations.docker.captureLogs'), true),
       maxLogLines: clamp(cfg.get('integrations.docker.maxLogLines'), 100, 100000, 20000),
+      includeInspect: ensureBoolean(cfg.get('integrations.docker.includeInspect'), false),
     },
     integrationsLoki: {
       enabled: ensureBoolean(cfg.get('loki.enabled'), false),

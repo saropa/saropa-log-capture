@@ -315,6 +315,11 @@
         "title": "%command.shareInvestigation.title%"
       },
       {
+        "command": "saropaLogCapture.clearShareHistory",
+        "icon": "$(trash)",
+        "title": "%command.clearShareHistory.title%"
+      },
+      {
         "command": "saropaLogCapture.deleteInvestigation",
         "icon": "$(trash)",
         "title": "%command.deleteInvestigation.title%"
@@ -634,6 +639,28 @@
           "description": "%config.ai.enabled.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.ai.contextLines": {
+          "default": 10,
+          "description": "Number of surrounding log lines to include when using Explain with AI",
+          "maximum": 50,
+          "minimum": 0,
+          "type": "number"
+        },
+        "saropaLogCapture.ai.includeIntegrationData": {
+          "default": true,
+          "description": "Include performance, HTTP, and terminal context in AI error explanation",
+          "type": "boolean"
+        },
+        "saropaLogCapture.ai.cacheExplanations": {
+          "default": true,
+          "description": "Cache AI explanations to avoid repeated API calls for the same error",
+          "type": "boolean"
+        },
+        "saropaLogCapture.ai.modelPreference": {
+          "default": "",
+          "description": "Preferred LM vendor for Explain with AI (e.g. copilot, claude). Empty = first available.",
+          "type": "string"
+        },
         "saropaLogCapture.exclusions": {
           "default": [],
           "description": "%config.exclusions.description%",
@@ -926,6 +953,16 @@
           "description": "Include investigation notes in shared gist README.",
           "type": "boolean"
         },
+        "saropaLogCapture.share.uploadPutUrl": {
+          "default": "",
+          "description": "Optional PUT URL for sharing (e.g. presigned S3/Azure Blob URL). When set, Share menu shows \"Upload to configured URL\".",
+          "type": "string"
+        },
+        "saropaLogCapture.share.sharedFolderPath": {
+          "default": "",
+          "description": "Optional path for team shared folder (absolute or relative to workspace). When set, Share menu shows \"Save to shared folder\". Teammates can open the .slc from this path.",
+          "type": "string"
+        },
         "saropaLogCapture.integrations.adapters": {
           "default": [
             "packages",
@@ -1190,6 +1227,11 @@
           "minimum": 100,
           "maximum": 100000,
           "type": "number"
+        },
+        "saropaLogCapture.integrations.docker.includeInspect": {
+          "default": false,
+          "description": "Write full docker inspect output as a sidecar JSON file.",
+          "type": "boolean"
         },
         "saropaLogCapture.integrations.performance.snapshotAtStart": {
           "default": true,

@@ -16,7 +16,7 @@ Future work only. Completed work is in [CHANGELOG.md](CHANGELOG.md) and `bugs/hi
 
 ## 2. Roadmap (by effort and wow factor)
 
-Single table: **Wow** (High → Medium → Low), then **Effort** (low to high). Quick wins at the top.
+Single table: **Wow** (High → Medium → Low), then **Effort** (low to high). Quick wins at the top.****
 
 | Wow | Effort | Feature | Description | Plan |
 |-----|--------|---------|-------------|------|
@@ -24,10 +24,8 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (low to high). 
 | High | 2–4 days | Smart bookmarks | Auto-suggest bookmark at first error per run | [038](bugs/038_plan-smart-bookmarks.md) |
 | High | 2–4 days | Voice / TTS | Read selected lines or errors aloud | [036](bugs/036_plan-voice-tts.md) |
 | High | 3–5 days | Error rate over time | Chart: errors/minute over session | [030](bugs/030_plan-error-rate-over-time.md) |
-| High | 5–7 days | Session replay | Replay log with simulated timing | [037](bugs/037_plan-session-replay.md) |
-| High | 5–8 days | Regression hints | "This error pattern appeared after commit X" | [034](bugs/034_plan-regression-hints.md) |
+****| High | 5–8 days | Regression hints | "This error pattern appeared after commit X" | [034](bugs/034_plan-regression-hints.md) |
 | High | 5–8 days (MVP) | Live collaboration | Share session; others see same log and scroll position | [033](bugs/033_plan-live-collaboration.md) |
-| Medium | ~2 days | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](bugs/007_plan-docker-inspect-and-until.md) |
 | Medium | 3–5 days | Bidirectional sync | Reload/merge when log file is modified externally | [039](bugs/039_plan-bidirectional-sync.md) |
 | Medium | 3–5 days | Export Insights summary | CSV/JSON of recurring errors + hot files | [032](bugs/032_plan-export-insights-summary.md) |
 | Medium | 3–5 days | Lazy load session list | Virtualize or paginate for 100+ sessions | [028](bugs/028_plan-lazy-load-session-list.md) |
