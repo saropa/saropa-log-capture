@@ -255,7 +255,9 @@ async function showAIExplanation(
 | `src/ui/viewer-context-menu/viewer-context-menu-actions.ts` | Add action handler |
 | `src/ui/provider/viewer-message-handler.ts` | Handle message |
 | `package.json` | Add settings, command |
-| `l10n.ts` + bundles | Add localization strings |
+| `l10n.ts` + bundles | Add localization strings — **Done** |
+
+**Implementation notes:** L10n keys in `l10n.ts` for AI explain (disabled message, error prefix, panel title, Copy button, cached suffix); `package.nls.json` updated for AI enabled description. Progress notification ("Explaining with AI…") shown via `withProgress` while building context and calling the model. Cache LRU refreshed when an existing key is re-set.
 
 ---
 
@@ -264,22 +266,23 @@ async function showAIExplanation(
 ### Phase 0: Central errors front-door (prerequisite)
 - Add `src/modules/analysis/errors.ts` re-exporting from level-classifier, error-fingerprint, error-rate-alert. No behavior change; existing callers can migrate to this import over time.
 
-### Phase 1: Core integration (MVP)
-- Context gathering (error line + surrounding lines); use `classifyLevel` / `isErrorLine` / `classifyCategory` from `modules/analysis/errors`
-- Basic prompt construction
-- VS Code LM API integration
-- Simple notification with response
+### Phase 1: Core integration (MVP) — **Done**
+- Context gathering (error line + surrounding lines) via `ai-context-builder.ts`; session metadata from log header
+- Basic prompt construction in `ai-prompt.ts`
+- VS Code LM API integration in `ai-explain.ts`
+- Context menu "Explain with AI" (data-line-action); handler in viewer-message-handler; simple notification with "Copy" / "Show details" (webview panel)
+- Setting `saropaLogCapture.ai.contextLines` (default 10, max 50); requires `saropaLogCapture.ai.enabled`
 
-### Phase 2: Rich context
-- Include stack trace extraction
-- Add integration data (perf, HTTP)
-- Dedicated explanation panel with formatting
+### Phase 2: Rich context — **Done**
+- Stack trace extraction in `ai-context-builder.ts` (`extractStackTrace`): detects "at ", "#0 ", "(file:line)" patterns and returns consecutive frame lines.
+- Integration data: `loadContextData` + `loadContextFromMeta` with time window from line timestamp (or session center); mapped to `integrationData` (performance, http, terminal). Optional via `saropaLogCapture.ai.includeIntegrationData` (default true). Viewer sends `timestamp` with explainWithAi message.
+- Dedicated explanation panel: sections for error line, stack trace (if any), context at error time (perf/HTTP/terminal), and explanation; styled blocks and section titles.
 
-### Phase 3: Polish
-- Response caching
-- Model selection preference
-- "Explain selection" for multiple lines
-- Copy/share explanation
+### Phase 3: Polish — **Done**
+- **Response caching:** `ai-cache.ts` hashes context (error line + surrounding + stack snippet), stores up to 100 results in memory. `explainError(..., { useCache })` checks cache first when `saropaLogCapture.ai.cacheExplanations` is true (default). Cached replies show "(cached)" in notification and panel.
+- **Model selection:** Setting `saropaLogCapture.ai.modelPreference` (e.g. `copilot`, `claude`); passed as `{ vendor: preference }` to `selectChatModels`. Falls back to first available if none match.
+- **Explain selection:** When the user has a multi-line selection and right-clicks inside it, "Explain with AI" sends the selected text, `lineIndex` (start), `lineEndIndex` (end), and timestamp from the first selected line. `buildAIContext` uses `lineEndIndex` so surrounding lines span the selection block.
+- **Copy explanation:** Panel has a "Copy explanation" button (enableScripts + message handler) that copies the full explanation to the clipboard.
 
 ---
 
