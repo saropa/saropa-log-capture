@@ -81,6 +81,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-integration-context">
                 <span class="codicon codicon-layers"></span> Show Integration Context
             </div>
+            <div class="context-menu-item" data-action="explain-with-ai" data-line-action>
+                <span class="codicon codicon-sparkle"></span> Explain with AI
+            </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="add-watch">
                 <span class="codicon codicon-eye"></span> Add to Watch List
@@ -126,7 +129,11 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-decorations">
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Line prefix</span>
+                <span>Line decorations (dot, number, time)</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Timestamp</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
                 <span class="context-menu-check codicon codicon-check"></span>
