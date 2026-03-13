@@ -22,6 +22,8 @@ export { LineData, LineListener, SplitListener };
  */
 export class SessionManagerImpl implements SessionManager {
     private readonly sessions = new Map<string, LogSession>();
+    /** Child session id -> parent session id. Used when child starts before parent (e.g. Dart VM before Flutter). */
+    private readonly childToParentId = new Map<string, string>();
     private readonly ownerSessionIds = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
     private readonly splitListeners: SplitListener[] = [];
@@ -104,6 +106,15 @@ export class SessionManagerImpl implements SessionManager {
             this.replayEarlyBuffer(session.id);
             return;
         }
+        // Parent started after child (e.g. Flutter after Dart VM): reuse the child's LogSession so one file gets all output.
+        for (const [sid, logSession] of this.sessions) {
+            if (this.childToParentId.get(sid) === session.id) {
+                this.sessions.set(session.id, logSession);
+                this.outputChannel.appendLine(`Parent session aliased to existing child: ${session.type}`);
+                this.replayEarlyBuffer(session.id);
+                return;
+            }
+        }
         const result = await initializeSession({
             session, context,
             outputChannel: this.outputChannel,
@@ -116,6 +127,9 @@ export class SessionManagerImpl implements SessionManager {
         if (!result) { return; }
         this.sessions.set(session.id, result.logSession);
         this.ownerSessionIds.add(session.id);
+        if (session.parentSession) {
+            this.childToParentId.set(session.id, session.parentSession.id);
+        }
         this.exclusionRules = result.exclusionRules;
         this.autoTagger = result.autoTagger;
         this.floodGuard.reset();
@@ -130,6 +144,7 @@ export class SessionManagerImpl implements SessionManager {
     /** Stop and finalize a debug session's log file. */
     async stopSession(session: vscode.DebugSession): Promise<void> {
         this.earlyBuffer.delete(session.id);
+        this.childToParentId.delete(session.id);
         const logSession = this.sessions.get(session.id);
         if (!logSession) { return; }
         this.sessions.delete(session.id);
@@ -232,6 +247,7 @@ export class SessionManagerImpl implements SessionManager {
     /** Stop all sessions (called on deactivate). */
     async stopAll(): Promise<void> {
         this.earlyBuffer.clear();
+        this.childToParentId.clear();
         const unique = new Set<LogSession>(this.sessions.values());
         await Promise.allSettled([...unique].map(s => s.stop()));
         this.sessions.clear();
