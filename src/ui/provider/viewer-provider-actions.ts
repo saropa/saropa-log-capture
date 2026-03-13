@@ -11,28 +11,57 @@ import { getConfig } from "../../modules/config/config";
 import { getGitBlame } from "../../modules/git/git-blame";
 import { getCommitUrl } from "../../modules/integrations/providers/git-source-code";
 
-/** Convert tree items to a flat session list for the webview panel. */
-export function buildSessionListPayload(
+function isValidMtime(mtime: number | undefined): mtime is number {
+    return typeof mtime === 'number' && Number.isFinite(mtime) && mtime > 0;
+}
+
+/** Resolve mtime from item or by stating the file (fallback to filesystem). */
+async function resolveMtime(
+    uri: vscode.Uri,
+    currentMtime: number | undefined,
+): Promise<number> {
+    if (isValidMtime(currentMtime)) { return currentMtime; }
+    try {
+        const stat = await vscode.workspace.fs.stat(uri);
+        if (stat.mtime !== undefined && typeof stat.mtime === 'number') { return stat.mtime; }
+    } catch {
+        // File may be deleted or inaccessible; keep 0 so UI still shows the row.
+    }
+    return currentMtime ?? 0;
+}
+
+/** Convert tree items to a flat session list for the webview panel. Uses filesystem stat when mtime is missing; processes items sequentially to avoid I/O burst. */
+export async function buildSessionListPayload(
     items: readonly TreeItem[],
     activeUri: vscode.Uri | undefined,
-): Record<string, unknown>[] {
+): Promise<Record<string, unknown>[]> {
     const activeStr = activeUri?.toString();
     type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[] };
-    const toRecord = (m: Meta): Record<string, unknown> => ({
-        filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
-        size: m.size, mtime: m.mtime, formattedMtime: formatMtime(m.mtime),
-        formattedTime: formatMtimeTimeOnly(m.mtime), relativeTime: formatRelativeTime(m.mtime), date: m.date,
-        hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
-        durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
-        warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
-        fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
-        isActive: activeStr === m.uri.toString(),
-        uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
-        autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
-    });
-    return items.flatMap(item =>
-        isSplitGroup(item) ? item.parts.map(toRecord) : [toRecord(item)],
-    );
+    const toRecord = async (m: Meta): Promise<Record<string, unknown>> => {
+        const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
+        const mtime = await resolveMtime(uri, m.mtime);
+        return {
+            filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
+            size: m.size, mtime, formattedMtime: formatMtime(mtime),
+            formattedTime: formatMtimeTimeOnly(mtime), relativeTime: formatRelativeTime(mtime), date: m.date,
+            hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
+            durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
+            warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
+            fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
+            isActive: activeStr === m.uri.toString(),
+            uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
+            autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
+        };
+    };
+    const records: Record<string, unknown>[] = [];
+    for (const item of items) {
+        if (isSplitGroup(item)) {
+            for (const part of item.parts) { records.push(await toRecord(part)); }
+        } else {
+            records.push(await toRecord(item));
+        }
+    }
+    return records;
 }
 
 /** Open a source file at a specific line, optionally in a split editor. If Git integration is enabled with blameOnNavigate, shows blame (last commit, author) in the status bar. */

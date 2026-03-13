@@ -86,24 +86,26 @@ export function getSessionRenderingScript(): string {
     /* Day heading/formatting helpers and formatSessionSize are loaded
        from viewer-session-transforms.ts as a separate script. */
 
+    /* Build meta line: adapter, time (relative or clock; never blank), dots, duration, size, tags. */
     function buildSessionMeta(s, dotsHtml, fileTime) {
         var parts = [];
         if (s.adapter) parts.push(escapeHtmlText(s.adapter));
         var timePart = '';
+        var clockTime = s.formattedTime || s.formattedMtime || '';
         if (fileTime) {
             var md = new Date(s.mtime);
             var mtimeMatch = md.getHours() === fileTime.hours && md.getMinutes() === fileTime.minutes;
             if (!mtimeMatch) {
                 timePart = formatTime12hFromParts(fileTime.hours, fileTime.minutes);
             } else if (sessionDisplayOptions.showDayHeadings) {
-                timePart = s.relativeTime || '';
+                timePart = s.relativeTime || clockTime;
             } else {
                 var tl = s.formattedMtime || '';
                 timePart = s.relativeTime ? tl + ' ' + s.relativeTime : tl;
             }
         } else {
-            var timeLabel = sessionDisplayOptions.showDayHeadings ? (s.formattedTime || s.formattedMtime) : s.formattedMtime;
-            timePart = timeLabel ? (s.relativeTime ? timeLabel + ' ' + s.relativeTime : timeLabel) : '';
+            var timeLabel = sessionDisplayOptions.showDayHeadings ? clockTime : (s.formattedMtime || s.formattedTime || '');
+            timePart = timeLabel ? (s.relativeTime ? timeLabel + ' ' + s.relativeTime : timeLabel) : (s.relativeTime || clockTime);
         }
         if (timePart) parts.push(escapeHtmlText(timePart));
         if (dotsHtml) parts.push(dotsHtml);
