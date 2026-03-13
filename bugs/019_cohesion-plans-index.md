@@ -13,7 +13,7 @@ This index tracks plans for improving feature cohesion and adding intelligence �
 
 ## Quick Wins (Completed)
 
-Implemented in commit `645be25`:
+Implemented in commit `645be25` (*feat: Integration cohesion quick wins*):
 
 | Feature | What it does |
 |---------|--------------|
@@ -27,9 +27,9 @@ Implemented in commit `645be25`:
 
 | # | Plan | Solves | Effort | Status |
 |---|------|--------|--------|--------|
-| [020](020_plan-unified-timeline-view.md) | **Unified Timeline View** | Problems 1, 2 | High (7-10 days) | Planned |
-| [021](021_plan-investigation-mode.md) | **Investigation Mode** | Problems 3, 4 | Medium (8-12 days) | Planned |
-| [022](022_plan-context-popover.md) | **Context Popover** | Problems 1, 2 (partial) | Low (4-7 days) | Planned |
+| [020](history/20260312/020_plan-unified-timeline-view.md) | **Unified Timeline View** | Problems 1, 2 | High (7-10 days) | Planned |
+| [021](history/20260312/021_plan-investigation-mode.md) | **Investigation Mode** | Problems 3, 4 | Medium (8-12 days) | ✅ Complete |
+| [022](history/20260312/022_plan-context-popover.md) | **Context Popover** | Problems 1, 2 (partial) | Low (4-7 days) | Planned |
 
 ---
 
@@ -37,12 +37,12 @@ Implemented in commit `645be25`:
 
 Requires Tier 6 (Cohesion) as foundation.
 
-| # | Plan | Description | Effort | Status |
-|---|------|-------------|--------|--------|
-| [023](023_plan-ai-explain-error.md) | **AI Explain Error** | Right-click → Explain with AI | Medium (5-8 days) | Planned |
-| [024](024_plan-auto-correlation.md) | **Auto-Correlation** | Detect related events automatically | High (10-14 days) | Planned |
-| [025](025_plan-noise-learning.md) | **Noise Learning** | Learn from dismissals, suggest filters | High (10-14 days) | Planned |
-| [026](026_plan-share-investigation.md) | **Share Investigation** | Generate shareable URL for investigation | Medium (9-13 days) | Planned |
+| # | Plan | Solves | Description | Effort | Status |
+|---|------|--------|-------------|--------|--------|
+| [023](023_plan-ai-explain-error.md) | **AI Explain Error** | 2, 3, 4 | Right-click → Explain with AI | Medium (5-8 days) | Planned |
+| [024](024_plan-auto-correlation.md) | **Auto-Correlation** | 1, 2 | Detect related events automatically | High (10-14 days) | Planned |
+| [025](025_plan-noise-learning.md) | **Noise Learning** | 1, 4 | Learn from dismissals, suggest filters | High (10-14 days) | Planned |
+| [026](026_plan-share-investigation.md) | **Share Investigation** | 3 | Generate shareable URL for investigation | Medium (9-13 days) | Planned |
 
 ---
 
@@ -79,7 +79,7 @@ Requires Tier 6 (Cohesion) as foundation.
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Total estimated effort:** 55-78 days (Tier 6 + Tier 7)
+**Total estimated effort:** 55-78 days (Tier 6 + Tier 7). Sum of phase ranges; phases are sequential so no overlap.
 
 ---
 
@@ -120,7 +120,7 @@ After all plans are implemented:
 
 ## Metrics
 
-Track success via:
+Track success via the table below. Requires product analytics (implement events as plans ship).
 
 | Tier | Metric | Target |
 |------|--------|--------|
