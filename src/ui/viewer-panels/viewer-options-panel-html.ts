@@ -5,12 +5,14 @@
  *   - Display options (word wrap, decorations, font size, line height)
  *   - Layout (visual spacing)
  *   - Integrations button (opens dedicated Integrations screen)
+ *   - Help: Keyboard shortcuts… (opens shortcuts reference screen)
  *   - Audio alerts
  *   - Actions (reset to default, reset extension settings)
  *
  * Filter controls (presets, tags, exclusions) live in the filters panel.
  */
 import { getIntegrationsPanelHtml } from './viewer-integrations-panel-html';
+import { getKeyboardShortcutsViewHtml } from './viewer-keyboard-shortcuts-html';
 
 /** Returns the HTML for the options panel element. */
 export function getOptionsPanelHtml(): string {
@@ -103,6 +105,16 @@ export function getOptionsPanelHtml(): string {
             </div>
         </div>
 
+        <!-- Help: Keyboard shortcuts reference -->
+        <div class="options-section">
+            <h3 class="options-section-title">Help</h3>
+            <div class="options-row">
+                <button type="button" id="options-open-shortcuts" class="options-integrations-btn" title="View keyboard shortcuts and command palette commands">
+                    <span class="codicon codicon-keyboard"></span> Keyboard shortcuts…
+                </button>
+            </div>
+        </div>
+
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
@@ -159,5 +171,6 @@ export function getOptionsPanelHtml(): string {
         </div>
     </div>
     ${getIntegrationsPanelHtml()}
+    ${getKeyboardShortcutsViewHtml()}
 </div>`;
 }

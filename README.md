@@ -128,7 +128,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
-- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** (Gist, export .slc, Copy deep link, LAN, etc.) lets teammates open the investigation in VS Code. **To open a shared .slc file:** Investigation panel → **Open .slc file** (or Command Palette → **Import .slc Bundle**) → select the file.
+- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** (Gist, export .slc, Copy deep link, LAN, etc.) lets teammates open the investigation in VS Code. **To open a shared .slc file:** Investigation panel → **Open .slc file** (or Command Palette → **Import .slc Bundle**) → select the file. Secret gists don’t expire; delete from GitHub (Your gists → open gist → Delete) when no longer needed.
 
 ### Export
 - **Per-level export:** Right-click in the log content and choose **Export current view…** to open the export modal. Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
@@ -194,7 +194,7 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 ### Power Shortcuts (Panel Viewer)
 
-See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference.
+See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference, or open **Options** → **Keyboard shortcuts…** in the viewer.
 
 | Key           | Action                              |
 | ------------- | ----------------------------------- |

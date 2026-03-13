@@ -18,6 +18,10 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+• **Options: Keyboard shortcuts screen.** The keyboard shortcuts reference is now available from the viewer: open **Options** (gear) → **Keyboard shortcuts…** to see power shortcuts (Ctrl+F, Space, M, P, etc.) and key commands (Command Palette). Same slide-out panel pattern as Integrations; back returns to Options. [docs/keyboard-shortcuts.md](docs/keyboard-shortcuts.md) was updated to list the same commands and notes that the content is also in the viewer.
+
 ### Documentation
 
 • **Docker plan 007.** Added implementation status review to [bugs/007_plan-docker-inspect-and-until.md](bugs/007_plan-docker-inspect-and-until.md): what is implemented (inspect meta, logs with `--since`/`--tail`) vs. missing (`includeInspect` sidecar, `--until` on logs).
