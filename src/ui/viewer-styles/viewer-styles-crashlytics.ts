@@ -300,5 +300,63 @@ function getDiagnosticStyles(): string {
 .cp-btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
 .cp-open-console { margin: 8px 12px; font-size: 12px; }
 .cp-show-output { margin-left: 4px; }
+
+/* --- In-panel troubleshooting --- */
+.cp-trouble-step {
+    margin: 10px 12px;
+    padding: 8px 10px;
+    background: var(--vscode-textBlockQuote-background);
+    border-left: 3px solid var(--vscode-focusBorder);
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+.cp-trouble-step-title { font-weight: 600; margin-bottom: 6px; }
+.cp-trouble-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+}
+.cp-trouble-table th, .cp-trouble-table td {
+    padding: 4px 8px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--vscode-widget-border);
+}
+.cp-trouble-table th { font-weight: 600; }
+.cp-trouble-symptom { font-family: var(--vscode-editor-font-family); }
+.cp-trouble-details {
+    margin: 10px 12px;
+    font-size: 0.9em;
+}
+.cp-trouble-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+}
+.cp-trouble-details .cp-trouble-table { margin-top: 6px; }
+
+/* --- In-panel Help (full doc content) --- */
+.cp-help-details {
+    margin: 10px 12px 12px;
+    font-size: 0.9em;
+    border-top: 1px solid var(--vscode-widget-border);
+    padding-top: 8px;
+}
+.cp-help-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+}
+.cp-help-section { margin: 10px 0; }
+.cp-help-section-title { font-weight: 600; margin-bottom: 4px; }
+.cp-help-section-body {
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+.cp-help-section-body p { margin: 6px 0; }
+.cp-help-section-body ol, .cp-help-section-body ul { margin: 6px 0; padding-left: 20px; }
+.cp-help-section-body code { font-family: var(--vscode-editor-font-family); font-size: 0.9em; }
+.cp-help-link { color: var(--vscode-textLink-foreground); text-decoration: underline; }
+.cp-help-link:hover { color: var(--vscode-textLink-activeForeground); }
 `;
 }

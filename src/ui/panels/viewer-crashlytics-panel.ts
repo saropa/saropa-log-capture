@@ -24,6 +24,7 @@ export function getCrashlyticsPanelHtml(): string {
         <div id="cp-issues"></div>
         <div id="cp-empty" class="cp-empty" style="display:none">No open Crashlytics issues</div>
         <div id="cp-console" class="cp-console" style="display:none">Open Firebase Console</div>
+        <details class="cp-help-details"><summary>Help</summary><div id="cp-help-inner"></div></details>
     </div>
 </div>`;
 }
@@ -38,6 +39,7 @@ export function getCrashlyticsPanelScript(): string {
     var cpIssuesEl = document.getElementById('cp-issues');
     var cpEmptyEl = document.getElementById('cp-empty');
     var cpConsoleEl = document.getElementById('cp-console');
+    var cpHelpInnerEl = document.getElementById('cp-help-inner');
     var cpHeaderEl = document.getElementById('cp-header-text');
     var cpPanelOpen = false;
 
@@ -98,6 +100,16 @@ export function getCrashlyticsPanelScript(): string {
             cpConsoleEl.style.display = '';
             cpConsoleEl.setAttribute('data-url', ctx.consoleUrl);
         }
+        var sections = ctx.helpSections || [];
+        if (cpHelpInnerEl) {
+            if (sections.length > 0) {
+                cpHelpInnerEl.innerHTML = sections.map(function(s) {
+                    return '<div class="cp-help-section"><div class="cp-help-section-title">' + esc(s.title) + '</div><div class="cp-help-section-body">' + (s.html || '') + '</div></div>';
+                }).join('');
+            } else {
+                cpHelpInnerEl.innerHTML = '';
+            }
+        }
     }
 
     function renderIssue(issue) {
@@ -142,8 +154,10 @@ export function getCrashlyticsPanelScript(): string {
         var diagActions = (ctx.diagnosticCopyText || ctx.diagnosticHtml) ? buildDiagnosticActions(ctx) : '';
         var consoleUrl = ctx.consoleUrl || 'https://console.firebase.google.com/';
         var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">Open Firebase Console</a> to verify project or get project/app ID.</p>';
+        var forStep = (ctx.troubleshootingForStep || []).length ? buildTroubleshootingForStepHtml(ctx.troubleshootingForStep) : '';
+        var fullTable = (ctx.troubleshootingTable || []).length ? buildTroubleshootingCollapsible(ctx.troubleshootingTable) : '';
         cpSetupEl.innerHTML = checklistHtml + '<div class="cp-setup-header">Step ' + stepNum + ' of 3</div>'
-            + content + diagHtml + tip + diagActions + openConsole
+            + content + forStep + diagHtml + tip + diagActions + fullTable + openConsole
             + '<button class="cp-check-btn" id="cp-check-again">Check Again</button>';
         cpSetupEl.style.display = '';
         wireSetupButtons();
@@ -154,6 +168,25 @@ export function getCrashlyticsPanelScript(): string {
         var t = checklist.token === 'ok' ? '\\u2713 token' : checklist.token === 'missing' ? '\\u2717 token' : '\\u25CB token';
         var c = checklist.config === 'ok' ? '\\u2713 config' : checklist.config === 'missing' ? '\\u2717 config' : '\\u25CB config';
         return '<div class="cp-checklist">' + esc(g) + ' \\u00b7 ' + esc(t) + ' \\u00b7 ' + esc(c) + '</div>';
+    }
+
+    function buildTroubleTableRows(rows) {
+        if (!rows || rows.length === 0) return '';
+        return rows.map(function(r) {
+            return '<tr><td class="cp-trouble-symptom">' + esc(r.symptom) + '</td><td>' + esc(r.cause) + '</td><td>' + esc(r.fix) + '</td></tr>';
+        }).join('');
+    }
+
+    function buildTroubleshootingForStepHtml(rows) {
+        var body = buildTroubleTableRows(rows);
+        if (!body) return '';
+        return '<div class="cp-trouble-step"><div class="cp-trouble-step-title">If this doesn\'t work</div><table class="cp-trouble-table"><tbody>' + body + '</tbody></table></div>';
+    }
+
+    function buildTroubleshootingCollapsible(table) {
+        var body = buildTroubleTableRows(table);
+        if (!body) return '';
+        return '<details class="cp-trouble-details"><summary>Troubleshooting</summary><table class="cp-trouble-table"><thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead><tbody>' + body + '</tbody></table></details>';
     }
 
     function getGcloudStep(ctx) {
@@ -234,6 +267,7 @@ export function getCrashlyticsPanelScript(): string {
             }
             var setupBtn = e.target.closest('[data-action]');
             if (setupBtn) {
+                e.preventDefault();
                 var action = setupBtn.dataset.action;
                 if (action === 'openGcloudInstall') {
                     vscodeApi.postMessage({ type: 'openGcloudInstall' });

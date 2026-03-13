@@ -196,19 +196,15 @@ The `fingerprints` array stores string representations derived from session meta
   "buildTime": 1739097735000,
   "files": [
     {
-      "relativePath": "docs/FIREBASE_CRASHLYTICS.md",
-      "uri": "file:///d:/src/saropa-log-capture/docs/FIREBASE_CRASHLYTICS.md",
-      "sizeBytes": 4821,
+      "relativePath": "README.md",
+      "uri": "file:///workspace/README.md",
+      "sizeBytes": 2048,
       "mtime": 1739097600000,
-      "lineCount": 142,
-      "tokens": [
-        "firebase", "crashlytics", "projectid", "appid",
-        "gcloud", "accesstoken", "flutterfirecore"
-      ],
+      "lineCount": 80,
+      "tokens": ["saropa", "log", "capture", "extension"],
       "headings": [
-        { "level": 1, "text": "Firebase Crashlytics Integration", "line": 1 },
-        { "level": 2, "text": "Prerequisites", "line": 10 },
-        { "level": 2, "text": "Configuration", "line": 25 }
+        { "level": 1, "text": "Saropa Log Capture", "line": 1 },
+        { "level": 2, "text": "Features", "line": 10 }
       ]
     }
   ]
