@@ -56,10 +56,15 @@ export type IntegrationConfigBlock = {
 export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): IntegrationConfigBlock {
   return {
     integrationsBuildCi: {
+      source: ensureEnum(cfg.get('integrations.buildCi.source'), ['file', 'github', 'azure', 'gitlab'], 'file'),
       buildInfoPath: typeof cfg.get('integrations.buildCi.buildInfoPath') === 'string'
         ? (cfg.get('integrations.buildCi.buildInfoPath') as string).trim() || '.saropa/last-build.json'
         : '.saropa/last-build.json',
       fileMaxAgeMinutes: clamp(cfg.get('integrations.buildCi.fileMaxAgeMinutes'), 1, 1440, 60),
+      azureOrg: typeof cfg.get('integrations.buildCi.azureOrg') === 'string' ? (cfg.get('integrations.buildCi.azureOrg') as string).trim() : '',
+      azureProject: typeof cfg.get('integrations.buildCi.azureProject') === 'string' ? (cfg.get('integrations.buildCi.azureProject') as string).trim() : '',
+      gitlabProjectId: typeof cfg.get('integrations.buildCi.gitlabProjectId') === 'string' ? (cfg.get('integrations.buildCi.gitlabProjectId') as string).trim() : '',
+      gitlabBaseUrl: typeof cfg.get('integrations.buildCi.gitlabBaseUrl') === 'string' ? (cfg.get('integrations.buildCi.gitlabBaseUrl') as string).trim() || 'https://gitlab.com' : 'https://gitlab.com',
     },
     integrationsGit: {
       describeInHeader: ensureBoolean(cfg.get('integrations.git.describeInHeader'), true),

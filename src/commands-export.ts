@@ -9,6 +9,11 @@ import { exportToInteractiveHtml } from './modules/export/html-export-interactiv
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export/export-formats';
 import { exportSessionToSlc, importSlcBundle, type ImportSlcResult } from './modules/export/slc-bundle';
 import { exportToLoki as doExportToLoki, setLokiBearerToken } from './modules/export/loki-export';
+import {
+    setBuildCiGithubToken, deleteBuildCiGithubToken,
+    setBuildCiAzurePat, deleteBuildCiAzurePat,
+    setBuildCiGitlabToken, deleteBuildCiGitlabToken,
+} from './modules/integrations/providers/build-ci';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
     const { context, viewerProvider, historyProvider, investigationStore } = deps;
@@ -124,7 +129,42 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
             await setLokiBearerToken(context, trimmed);
             void vscode.window.showInformationMessage(t('msg.lokiApiKeyStored'));
         }),
+        buildCiTokenCmd(context, 'setBuildCiGithubToken', 'GitHub', setBuildCiGithubToken),
+        buildCiTokenCmd(context, 'clearBuildCiGithubToken', 'GitHub', undefined, deleteBuildCiGithubToken),
+        buildCiTokenCmd(context, 'setBuildCiAzurePat', 'Azure PAT', setBuildCiAzurePat),
+        buildCiTokenCmd(context, 'clearBuildCiAzurePat', 'Azure PAT', undefined, deleteBuildCiAzurePat),
+        buildCiTokenCmd(context, 'setBuildCiGitlabToken', 'GitLab', setBuildCiGitlabToken),
+        buildCiTokenCmd(context, 'clearBuildCiGitlabToken', 'GitLab', undefined, deleteBuildCiGitlabToken),
     ];
+}
+
+function buildCiTokenCmd(
+    context: vscode.ExtensionContext,
+    commandId: string,
+    label: string,
+    setFn?: (ctx: vscode.ExtensionContext, value: string) => Promise<void>,
+    clearFn?: (ctx: vscode.ExtensionContext) => Promise<void>,
+): vscode.Disposable {
+    return vscode.commands.registerCommand(`saropaLogCapture.${commandId}`, async () => {
+        if (setFn) {
+            const token = await vscode.window.showInputBox({
+                prompt: `Build/CI: enter ${label} token`,
+                password: true,
+                placeHolder: 'Token or PAT',
+            });
+            if (token === undefined) { return; }
+            const trimmed = token.trim();
+            if (!trimmed) {
+                void vscode.window.showWarningMessage('Empty value not stored.');
+                return;
+            }
+            await setFn(context, trimmed);
+            void vscode.window.showInformationMessage(`Build/CI: ${label} token stored.`);
+        } else if (clearFn) {
+            await clearFn(context);
+            void vscode.window.showInformationMessage(`Build/CI: ${label} token cleared.`);
+        }
+    });
 }
 
 function htmlExportCmd(

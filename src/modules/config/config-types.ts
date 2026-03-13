@@ -99,9 +99,20 @@ export interface ReplayConfig {
   readonly maxDelayMs: number;
 }
 
+export type BuildCiSource = 'file' | 'github' | 'azure' | 'gitlab';
+
 export interface IntegrationBuildCiConfig {
+  readonly source: BuildCiSource;
   readonly buildInfoPath: string;
   readonly fileMaxAgeMinutes: number;
+  /** Azure DevOps: organization name (required when source is azure). */
+  readonly azureOrg: string;
+  /** Azure DevOps: project name (required when source is azure). */
+  readonly azureProject: string;
+  /** GitLab: project ID (numeric or URL-encoded path, required when source is gitlab). */
+  readonly gitlabProjectId: string;
+  /** GitLab: API base URL (default https://gitlab.com). */
+  readonly gitlabBaseUrl: string;
 }
 
 export interface IntegrationGitConfig {

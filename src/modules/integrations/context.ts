@@ -13,12 +13,14 @@ export function createIntegrationContext(
     sessionContext: SessionContext,
     config: SaropaLogCaptureConfig,
     outputChannel: vscode.OutputChannel,
+    extensionContext?: vscode.ExtensionContext,
 ): IntegrationContext {
     return {
         sessionContext,
         workspaceFolder: sessionContext.workspaceFolder,
         config,
         outputChannel,
+        extensionContext,
     };
 }
 
@@ -28,11 +30,12 @@ export interface IntegrationEndContextParams {
     baseFileName: string;
     sessionStartTime: number;
     sessionEndTime: number;
+    debugProcessId?: number;
 }
 
 /** Context passed to providers at session end (meta + sidecar contributions). */
 export function createIntegrationEndContext(params: IntegrationEndContextParams): IntegrationEndContext {
-    const { base, logUri, baseFileName, sessionStartTime, sessionEndTime } = params;
+    const { base, logUri, baseFileName, sessionStartTime, sessionEndTime, debugProcessId } = params;
     const logDirUri = vscode.Uri.joinPath(logUri, '..');
     return {
         ...base,
@@ -41,5 +44,6 @@ export function createIntegrationEndContext(params: IntegrationEndContextParams)
         sessionStartTime,
         sessionEndTime,
         logDirUri,
+        debugProcessId,
     };
 }

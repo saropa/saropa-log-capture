@@ -1,7 +1,8 @@
 /**
  * Registry for integration providers. Called from session-lifecycle: getHeaderContributions
- * before LogSession.start(), runOnSessionStartAsync after start (fire-and-forget),
- * runOnSessionEnd during finalizeSession to merge meta and write sidecar files.
+ * before LogSession.start(), runOnSessionStartAsync after start (optionally merges async
+ * header + meta when options provided), runOnSessionEnd during finalizeSession to merge
+ * meta and write sidecar files.
  */
 
 import * as vscode from 'vscode';
@@ -10,6 +11,13 @@ import type {
     Contribution, MetaContribution,
 } from './types';
 import type { SessionMetadataStore } from '../session/session-metadata';
+import type { LogSession } from '../capture/log-session';
+
+/** Options for runOnSessionStartAsync: when provided, async provider contributions (header + meta) are applied to this session and merged at session end. */
+export interface RunOnSessionStartAsyncOptions {
+    logSession: LogSession;
+    pendingAsyncMeta: MetaContribution[];
+}
 
 function collectProviderEndContributions(
     p: IntegrationProvider,
@@ -34,6 +42,8 @@ function collectProviderEndContributions(
 
 export class IntegrationRegistry {
     private readonly providers: IntegrationProvider[] = [];
+    /** Keyed by log file path; one entry per session. Async contributions apply to this session's log; entry is removed in runOnSessionEnd. */
+    private pendingAsyncByLogUri = new Map<string, { logSession: LogSession; pendingAsyncMeta: MetaContribution[] }>();
 
     /** Register a provider. Called once from extension-activation for each built-in provider. */
     register(provider: IntegrationProvider): void {
@@ -101,6 +111,12 @@ export class IntegrationRegistry {
         const sidecarContributions: (Contribution & { kind: 'sidecar' })[] = [];
         const contributorIds: string[] = [];
 
+        const pending = this.pendingAsyncByLogUri.get(context.logUri.fsPath);
+        if (pending?.pendingAsyncMeta.length) {
+            metaContributions.push(...pending.pendingAsyncMeta);
+        }
+        this.pendingAsyncByLogUri.delete(context.logUri.fsPath);
+
         for (const p of this.providers) {
             const enabled = await Promise.resolve(p.isEnabled(context));
             if (!enabled || !p.onSessionEnd) { continue; }
@@ -151,12 +167,30 @@ export class IntegrationRegistry {
         return [...this.lastEndContributorIds];
     }
 
-    /** Runs onSessionStartAsync for all enabled providers. Does not merge results; use for fire-and-forget. */
-    runOnSessionStartAsync(context: IntegrationContext): void {
+    /** Runs onSessionStartAsync for all enabled providers. When options are provided, async contributions (header + meta) are applied and merged at session end. */
+    runOnSessionStartAsync(context: IntegrationContext, options?: RunOnSessionStartAsyncOptions): void {
+        if (options) {
+            this.pendingAsyncByLogUri.set(options.logSession.fileUri.fsPath, {
+                logSession: options.logSession,
+                pendingAsyncMeta: options.pendingAsyncMeta,
+            });
+        }
         for (const p of this.providers) {
             Promise.resolve(p.isEnabled(context)).then(enabled => {
                 if (!enabled || !p.onSessionStartAsync) { return; }
                 return p.onSessionStartAsync!(context);
+            }).then(contributions => {
+                if (!contributions || !options) { return; }
+                const pending = this.pendingAsyncByLogUri.get(options.logSession.fileUri.fsPath);
+                if (!pending) { return; }
+                for (const c of contributions) {
+                    if (c.kind === 'header' && c.lines.length) {
+                        pending.logSession.appendHeaderLines(c.lines);
+                    }
+                    if (c.kind === 'meta') {
+                        pending.pendingAsyncMeta.push(c);
+                    }
+                }
             }).catch(err => {
                 const msg = err instanceof Error ? err.message : String(err);
                 context.outputChannel.appendLine(`[${p.id}] onSessionStartAsync failed: ${msg}`);
