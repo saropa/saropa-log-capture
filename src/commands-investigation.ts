@@ -301,7 +301,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
             const items: { label: string; value: string; description?: string }[] = [
                 { label: '$(github) Share via GitHub Gist', value: 'gist', description: t('share.gistDescription') },
                 { label: '$(file-zip) Export as .slc file', value: 'file' },
-                { label: '$(link) ' + t('action.copyDeepLinkLocal'), value: 'copy-deep-link-local' },
+                { label: '$(link) ' + t('action.copyDeepLinkLocal'), value: 'copy-deep-link-local', description: t('share.copyDeepLinkLocalDescription') },
                 { label: '$(globe) ' + t('action.shareOnLan'), value: 'lan' },
             ];
             if (uploadPutUrl) {
@@ -355,7 +355,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                     if (outUri) {
                         const deepLink = `vscode://saropa.saropa-log-capture/import?url=${encodeURIComponent(outUri.toString())}`;
                         await vscode.env.clipboard.writeText(deepLink);
-                        vscode.window.showInformationMessage(t('msg.deepLinkCopied', ''));
+                        vscode.window.showInformationMessage(t('msg.deepLinkLocalCopied'));
                     }
                 } catch (e) {
                     vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));

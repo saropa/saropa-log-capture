@@ -88,6 +88,7 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
     </div>
 </div>
 <div class="actions-bar">
+    <button class="btn open-slc-btn">📥 ${t('action.openSlcFile')}</button>
     <button class="btn share-btn">📤 ${t('action.shareInvestigation')}</button>
     <button class="btn export-btn">📦 ${t('action.exportSlc')}</button>
     <button class="btn report-btn">📋 ${t('action.generateBugReport')}</button>
@@ -107,6 +108,7 @@ export function buildNoInvestigationHtml(): string {
     <div class="no-investigation-title">${t('title.noActiveInvestigation')}</div>
     <div class="no-investigation-text">${t('msg.noActiveInvestigationDesc')}</div>
     <button class="btn create-btn">+ ${t('action.createInvestigation')}</button>
+    <button class="btn open-slc-btn">📥 ${t('action.openSlcFile')}</button>
 </div>
 <script nonce="${nonce}">${getInvestigationPanelScript()}</script>
 </body></html>`;

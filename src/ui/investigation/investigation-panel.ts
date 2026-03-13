@@ -144,6 +144,11 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
             break;
 
+        case 'openSlc':
+            // Opens file picker for .slc (session or investigation bundle); same as Command Palette → Import .slc Bundle
+            await vscode.commands.executeCommand('saropaLogCapture.importSlc');
+            break;
+
         case 'share':
             await vscode.commands.executeCommand('saropaLogCapture.shareInvestigation');
             break;
