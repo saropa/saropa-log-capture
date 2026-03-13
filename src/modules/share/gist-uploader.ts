@@ -7,13 +7,14 @@ import type { Investigation } from '../investigation/investigation-types';
 import { exportInvestigationToBuffer } from '../export/slc-bundle';
 import { getGitHubToken } from './github-auth';
 import type { GistShareResult } from './share-types';
+import { buildItemUrl } from '../marketplace-url';
 
 const GIST_API = 'https://api.github.com/gists';
 
 function generateReadme(gistId: string, investigation: Investigation): string {
     return `# ${investigation.name}
 
-Shared via [Saropa Log Capture](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture)
+Shared via [Saropa Log Capture](${buildItemUrl('saropa.saropa-log-capture')})
 
 ## Open in VS Code
 

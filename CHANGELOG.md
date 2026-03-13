@@ -18,13 +18,21 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Fixed
+
+• **CSP: remove unsafe-inline from viewer.** Viewer and Session Comparison webviews no longer use `'unsafe-inline'` in Content-Security-Policy `style-src`. Session-perf chip and hidden-lines counter visibility are toggled via the `.u-hidden` class (in nonced styles) instead of inline styles. Plan [027](bugs/history/20260313/027_plan-csp-remove-unsafe-inline.md) completed.
+
+### Changed
+
+• **Marketplace URL: single source of truth.** Extension marketplace links (changelog, item page, bug report header, Gist README) now use `src/modules/marketplace-url.ts`. Fork maintainers can change the base URL in one place for Open VS X or other hosts. About panel changelog link only opens when URL has been set (guards against click before content load). Plan [029](bugs/history/20260313/029_plan-marketplace-url-config.md) completed.
+
 ### Added
 
 • **Options: Keyboard shortcuts screen.** The keyboard shortcuts reference is now available from the viewer: open **Options** (gear) → **Keyboard shortcuts…** to see power shortcuts (Ctrl+F, Space, M, P, etc.) and key commands (Command Palette). Same slide-out panel pattern as Integrations; back returns to Options. [docs/keyboard-shortcuts.md](docs/keyboard-shortcuts.md) was updated to list the same commands and notes that the content is also in the viewer.
 
-### Documentation
+### Added
 
-• **Docker plan 007.** Added implementation status review to [bugs/007_plan-docker-inspect-and-until.md](bugs/007_plan-docker-inspect-and-until.md): what is implemented (inspect meta, logs with `--since`/`--tail`) vs. missing (`includeInspect` sidecar, `--until` on logs).
+• **Docker integration: includeInspect and --until.** (1) New setting `integrations.docker.includeInspect` (default `false`): when enabled, full `docker inspect` output is written to `${baseFileName}.container-inspect.json` and referenced in meta as `inspectSidecar`. (2) Container logs are now bounded by session end: `docker logs` uses `--until <endEpoch>s` with a 60s lag so logs are clipped at session end instead of relying only on `--tail`. Plan [007](bugs/history/20260313/007_plan-docker-inspect-and-until.md) completed and moved to history.
 
 ### Added
 

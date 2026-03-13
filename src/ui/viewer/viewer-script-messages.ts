@@ -69,7 +69,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'setHasPerformanceData':
             var perfChip = document.getElementById('session-perf-chip');
-            if (perfChip) perfChip.style.display = msg.has ? '' : 'none';
+            if (perfChip) perfChip.classList.toggle('u-hidden', !msg.has);
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';

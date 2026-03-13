@@ -3,14 +3,14 @@
  */
 
 import * as vscode from "vscode";
+import { buildChangelogUrl as buildChangelogUrlFromBase } from "../../modules/marketplace-url";
 
-const MARKETPLACE_CHANGELOG_BASE = "https://marketplace.visualstudio.com/items";
 const MAX_EXCERPT_CHARS = 6000;
 const MAX_SECTIONS = 3;
 
 /** Build changelog URL from extension id (e.g. saropa.saropa-log-capture). */
 export function buildChangelogUrl(extensionId: string): string {
-  return `${MARKETPLACE_CHANGELOG_BASE}/${extensionId}/changelog`;
+  return buildChangelogUrlFromBase(extensionId);
 }
 
 /** Build version string for display. */
