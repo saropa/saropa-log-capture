@@ -79,7 +79,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel.
-- **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously.
+- **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously. You can also open the Saropa Log Capture tab in a new window (e.g. right‑click tab → Open in New Window); clicking a session there shows the log in that window.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
 - **Source hover preview:** Hover source links for code context popup.

@@ -22,11 +22,19 @@ import * as panelHandlers from "../shared/viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } from "./log-viewer-provider-batch";
 
-/** Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support. */
+/**
+ * Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support.
+ * Supports multiple VS Code windows: when the panel is opened in another window, resolveWebviewView is
+ * called per window. We track all views and broadcast postMessage/loadFromFile to each so clicking a
+ * session in any window shows content in that window's viewer.
+ */
 export class LogViewerProvider
   implements vscode.WebviewViewProvider, ViewerTarget, vscode.Disposable
 {
-  private view: vscode.WebviewView | undefined;
+  /** All resolved webview views (one per window when the panel is open in multiple windows). */
+  private readonly views = new Set<vscode.WebviewView>();
+  /** View that was most recently visible (for getView() and batch visibility). */
+  private visibleView: vscode.WebviewView | undefined;
   pendingLines: PendingLine[] = [];
   batchTimer: ReturnType<typeof setTimeout> | undefined;
   threadDumpState: ThreadDumpState = createThreadDumpState();
@@ -78,13 +86,25 @@ export class LogViewerProvider
   ) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
-    this.view = webviewView;
+    this.views.add(webviewView);
+    if (webviewView.visible) { this.visibleView = webviewView; }
     setupLogViewerWebview(this, webviewView);
   }
+  /** Remove a view when it is disposed (e.g. panel closed or window closed). Stops batch timer only when the last view is removed. */
+  removeView(webviewView: vscode.WebviewView): void {
+    this.views.delete(webviewView);
+    if (this.visibleView === webviewView) { this.visibleView = undefined; }
+    if (this.views.size === 0) { stopBatchTimer(this); }
+  }
+  /** Mark the view that is currently visible (so getView() and batch use the right one). */
+  setVisibleView(webviewView: vscode.WebviewView | undefined): void { this.visibleView = webviewView; }
   getCachedPresets(): readonly FilterPreset[] { return this.cachedPresets; }
   getCachedHighlightRules(): SerializedHighlightRule[] { return this.cachedHighlightRules; }
   getPendingLoadUri(): vscode.Uri | undefined { return this.pendingLoadUri; }
-  setView(view: vscode.WebviewView | undefined): void { this.view = view; }
+  setView(view: vscode.WebviewView | undefined): void {
+    if (view === undefined) { this.visibleView = undefined; }
+    else { this.views.add(view); this.visibleView = view; }
+  }
   getUnreadWatchHits(): number { return this.unreadWatchHits; }
   setUnreadWatchHits(n: number): void { this.unreadWatchHits = n; }
   getExtensionUri(): vscode.Uri { return this.extensionUri; }
@@ -193,9 +213,10 @@ export class LogViewerProvider
   async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration;
     this.pendingLoadUri = uri;
-    this.view?.show?.(true);
-    for (let i = 0; i < 20 && !this.view; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
-    if (!this.view || gen !== this.loadGeneration) { return; }
+    // Reveal viewer in every window that has the panel (multi-window fix).
+    for (const v of this.views) { v.show?.(true); }
+    for (let i = 0; i < 20 && this.views.size === 0; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
+    if (this.views.size === 0 || gen !== this.loadGeneration) { return; }
     this.stopTailing();
     this.clear();
     this.seenCategories.clear();
@@ -226,20 +247,29 @@ export class LogViewerProvider
   setTailLastLineCount(n: number): void { this.tailLastLineCount = n; }
   getTailUpdateInProgress(): boolean { return this.tailUpdateInProgress; }
   setTailUpdateInProgress(v: boolean): void { this.tailUpdateInProgress = v; }
-  getView(): vscode.WebviewView | undefined { return this.view; }
+  getView(): vscode.WebviewView | undefined {
+    return this.visibleView ?? this.views.values().next().value;
+  }
   getSeenCategories(): Set<string> { return this.seenCategories; }
   updateWatchCounts(counts: ReadonlyMap<string, number>): void {
     const obj = Object.fromEntries(counts);
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
     this.postMessage({ type: "updateWatchCounts", counts: obj });
-    if (total > this.unreadWatchHits) { this.unreadWatchHits = total; helpers.updateBadge(this.view, this.unreadWatchHits); }
+    if (total > this.unreadWatchHits) { this.unreadWatchHits = total; }
+    for (const v of [...this.views]) { helpers.updateBadge(v, this.unreadWatchHits); }
   }
 
-  dispose(): void { this.stopTailing(); stopBatchTimer(this); panelHandlers.disposeHandlers(); }
+  dispose(): void {
+    this.stopTailing();
+    stopBatchTimer(this);
+    this.views.clear();
+    this.visibleView = undefined;
+    panelHandlers.disposeHandlers();
+  }
 
   handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'viewerFocused') {
-      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; helpers.updateBadge(this.view, 0); }
+      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; for (const v of [...this.views]) { helpers.updateBadge(v, 0); } }
       return;
     }
     const ctx: ViewerMessageContext = {
@@ -265,5 +295,9 @@ export class LogViewerProvider
 
   startBatchTimer(): void { startBatchTimer(this); }
   stopBatchTimer(): void { stopBatchTimer(this); }
-  postMessage(message: unknown): void { this.view?.webview.postMessage(message); }
+  /** Send message to all resolved views (safe if a view is disposed during iteration). */
+  postMessage(message: unknown): void {
+    const snapshot = [...this.views];
+    for (const v of snapshot) { v.webview.postMessage(message); }
+  }
 }
