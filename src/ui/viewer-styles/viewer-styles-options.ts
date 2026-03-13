@@ -219,6 +219,9 @@ export function getOptionsStyles(): string {
 .integrations-view-hidden {
     display: none !important;
 }
+.shortcuts-view-hidden {
+    display: none !important;
+}
 .integrations-header {
     display: flex;
     align-items: center;
@@ -299,5 +302,39 @@ export function getOptionsStyles(): string {
 }
 .integrations-perf { }
 .integrations-when { }
+
+/* Keyboard shortcuts view */
+.shortcuts-h3 {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 16px 0 8px 0;
+    color: var(--vscode-foreground);
+}
+.shortcuts-h3:first-of-type { margin-top: 0; }
+.shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+.shortcuts-table th,
+.shortcuts-table td {
+    padding: 4px 8px 4px 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--vscode-sideBar-border, rgba(255, 255, 255, 0.1));
+}
+.shortcuts-table th {
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+}
+.shortcuts-table kbd {
+    font-family: var(--vscode-editor-font-family, var(--monaco-monospace-font));
+    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--vscode-keybindingLabel-background, rgba(128, 128, 128, 0.2));
+    border: 1px solid var(--vscode-keybindingLabel-border, rgba(128, 128, 128, 0.35));
+}
 ` + getExclusionChipStyles();
 }
