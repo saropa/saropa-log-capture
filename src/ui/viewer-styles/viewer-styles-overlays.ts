@@ -39,6 +39,19 @@ export function getOverlayStyles(): string {
     color: var(--vscode-descriptionForeground);
     font-size: 11px;
 }
+.session-perf-chip {
+    margin-left: 8px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    background: var(--vscode-textLinkActiveBackground, rgba(55, 148, 255, 0.2));
+    border: 1px solid var(--vscode-textLink-foreground, #3794ff);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.session-perf-chip:hover {
+    text-decoration: underline;
+}
 #split-breadcrumb, #session-nav {
     display: none;
     align-items: center;

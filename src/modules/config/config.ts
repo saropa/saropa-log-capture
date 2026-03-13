@@ -171,7 +171,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     treeRefreshInterval: ensureNonNegative(cfg.get("treeRefreshInterval"), 0),
     iconBarPosition: ensureEnum(cfg.get("iconBarPosition"), ["left", "right"], "left"),
     organizeFolders: ensureBoolean(cfg.get("organizeFolders"), true),
-    integrationsAdapters: ensureStringArray(cfg.get("integrations.adapters"), ["packages"]),
+    integrationsAdapters: ensureStringArray(cfg.get("integrations.adapters"), ["packages", "performance"]),
     ...getIntegrationConfig(cfg),
     projectIndex: getProjectIndexConfig(cfg),
     replay: {

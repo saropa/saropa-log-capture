@@ -137,6 +137,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         ${getRunNavHtml()}
         </span>
         <span id="session-details-inline" class="session-details-inline" aria-label="Session context"></span>
+        <button type="button" id="session-perf-chip" class="session-perf-chip" style="display:none" title="Open Performance panel" aria-label="Performance data available">Performance</button>
     </div>
     </div>
     <div id="split-breadcrumb">

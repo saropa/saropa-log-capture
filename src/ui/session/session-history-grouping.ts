@@ -32,6 +32,8 @@ export interface SessionMetadata {
     readonly partNumber?: number;
     readonly trashed?: boolean;
     readonly mtime: number; // File modification time (epoch ms)
+    /** True when session meta has performance integration data (snapshot or samples). */
+    readonly hasPerformanceData?: boolean;
 }
 
 /** Group of split files under a single parent session. */

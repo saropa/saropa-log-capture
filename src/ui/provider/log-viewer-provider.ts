@@ -187,6 +187,7 @@ export class LogViewerProvider
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.postMessage({ type: "minimapWidth", width }); }
   setIconBarPosition(position: "left" | "right"): void { this.postMessage({ type: "iconBarPosition", position }); }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
+  setHasPerformanceData(has: boolean): void { this.postMessage({ type: "setHasPerformanceData", has }); }
 
   sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
   setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
@@ -208,7 +209,7 @@ export class LogViewerProvider
     this.stopTailing();
     flushPendingBatch(this);
     this.pendingLines = []; this.currentFileUri = undefined;
-    this.postMessage({ type: "clear" }); this.setSessionInfo(null);
+    this.postMessage({ type: "clear" }); this.setSessionInfo(null); this.setHasPerformanceData(false);
   }
   async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration;

@@ -243,6 +243,16 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         /* Host shows modal confirmation; no webview feedback needed. */
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
         break;
+      case "setCaptureEnabled":
+        /* Options panel: master capture on/off; persist and echo back so checkbox stays in sync. */
+        {
+          const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+          const enabled = msg.enabled === true;
+          void cfg.update('enabled', enabled, vscode.ConfigurationTarget.Workspace).then(() => {
+            ctx.post({ type: 'captureEnabled', enabled });
+          });
+        }
+        break;
       case "setIntegrationsAdapters":
         /* Options panel toggled an integration; persist, run prep checks, then echo back. */
         {

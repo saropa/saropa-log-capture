@@ -42,6 +42,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   target.startBatchTimer();
   queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
   queueMicrotask(() => target.sendIntegrationsAdapters(getConfig().integrationsAdapters));
+  queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending!); }); }
   webviewView.onDidChangeVisibility(() => {
