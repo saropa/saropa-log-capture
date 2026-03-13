@@ -78,7 +78,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
-- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel.
+- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously. You can also open the Saropa Log Capture tab in a new window (e.g. right‑click tab → Open in New Window); clicking a session there shows the log in that window.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
@@ -112,7 +112,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Performance panel:** Icon-bar panel (graph-line): Current session tab shows grouped perf events (PERF traces, Choreographer jank, GC, timeouts) with click-to-navigate; Trends tab shows cross-session aggregated table with SVG line chart for operation duration over time. Fingerprints stored in session metadata.
 
 ### Display & Layout
-- **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), and whole-line coloring for all severity levels. Configurable in the Options panel.
+- **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), and whole-line coloring for all severity levels. Configurable in the Options panel; Timestamp can also be toggled from the right-click context menu (Options → Timestamp).
 - **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
 - **Visual spacing:** Heuristic breathing room before/after level changes, markers, and stack traces.
 - **Font size / line height:** Adjustable via sliders in the Options panel.
@@ -122,7 +122,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Options panel actions:** Reset to default (viewer options only) and Reset extension settings (all extension settings to defaults).
 
 ### Session Management
-- **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Active sessions highlighted with a recording icon. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
+- **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Ctrl/Cmd-click to select multiple sessions; context menu applies to the selection (copy links/paths, export, tag, open, replay). Active sessions highlighted with a recording icon. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
 - **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the replay bar (play/pause, scrubber, speed) to step through.
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
