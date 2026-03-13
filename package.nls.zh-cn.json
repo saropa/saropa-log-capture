@@ -56,6 +56,7 @@
   "command.removeFromInvestigation.title": "从调查中移除",
   "command.exportInvestigation.title": "将调查导出为 .slc",
   "command.deleteInvestigation.title": "删除调查",
+  "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
   "config.aiActivity.enabled.description": "在日志查看器中将 Claude Code AI 活动（工具调用、提示）与调试输出交错显示。",
   "config.aiActivity.autoDetect.description": "当检测到此工作区的 Claude Code 项目目录（~/.claude/projects/）时，自动启用 AI 活动叠加层。",

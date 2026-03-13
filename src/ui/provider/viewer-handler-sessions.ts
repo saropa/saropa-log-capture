@@ -73,6 +73,9 @@ export async function handleSessionAction(
         case 'copyFilePath':
             if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
             break;
+        case 'addToInvestigation':
+            if (item) { await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', { uri: item.uri }); }
+            break;
     }
     if (mutating.includes(action)) { await ctx.refreshList(); }
 }

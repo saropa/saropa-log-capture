@@ -36,7 +36,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...bugReportCommands(),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
-        ...registerInvestigationCommands({ context, investigationStore }),
+        ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider }),
         ...toolCommands(deps),
     );
 }

@@ -110,6 +110,8 @@ export interface IntegrationGitConfig {
   readonly blameOnNavigate: boolean;
   /** At session end, optionally capture git blame for file:line references in the log (e.g. stack frames). */
   readonly includeLineHistoryInMeta: boolean;
+  /** Resolve commit hashes to web URLs (GitHub, GitLab, Bitbucket) in blame and line history. */
+  readonly commitLinks: boolean;
 }
 
 export interface IntegrationEnvironmentConfig {

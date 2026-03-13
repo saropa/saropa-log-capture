@@ -56,6 +56,7 @@
   "command.removeFromInvestigation.title": "조사에서 제거",
   "command.exportInvestigation.title": "조사를 .slc로 내보내기",
   "command.deleteInvestigation.title": "조사 삭제",
+  "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
   "config.aiActivity.enabled.description": "Claude Code AI 활동(도구 호출, 프롬프트)을 로그 뷰어에서 디버그 출력과 함께 인터리브하여 표시합니다.",
   "config.aiActivity.autoDetect.description": "이 작업 영역에서 Claude Code 프로젝트 디렉터리(~/.claude/projects/)가 감지되면 AI 활동 오버레이를 자동으로 활성화합니다.",

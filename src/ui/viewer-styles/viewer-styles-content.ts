@@ -245,13 +245,16 @@ export function getContentStyles(): string {
    Play/pause/stop, speed, scrubber when replaying a loaded session.
    =================================================================== */
 .replay-bar {
-    /* display controlled by JavaScript; do not set here */
+    display: none !important; /* Hidden until JS shows it (setProperty(..., 'important')) */
     align-items: center;
     gap: 8px;
     padding: 4px 8px;
     background: var(--vscode-panel-background);
     border-top: 1px solid var(--vscode-panel-border);
     flex-shrink: 0;
+}
+.replay-bar.replay-bar-visible {
+    display: flex !important;
 }
 .replay-btn {
     background: none;

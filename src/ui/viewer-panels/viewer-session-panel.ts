@@ -29,6 +29,7 @@ export function getSessionPanelScript(): string {
         sessionPanelOpen = true;
         sessionPanelEl.classList.add('visible');
         requestSessionList();
+        requestInvestigations();
     };
 
     window.closeSessionPanel = function() {
@@ -43,6 +44,33 @@ export function getSessionPanelScript(): string {
         if (sessionLoadingEl) sessionLoadingEl.style.display = '';
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
         vscodeApi.postMessage({ type: 'requestSessionList' });
+    }
+    function requestInvestigations() {
+        vscodeApi.postMessage({ type: 'requestInvestigations' });
+    }
+    function renderInvestigationsList(data) {
+        var listEl = document.getElementById('session-investigations-list');
+        var createBtn = document.getElementById('session-investigations-create');
+        if (!listEl) return;
+        var invs = data.investigations || [];
+        var activeId = data.activeId || '';
+        if (invs.length === 0) {
+            listEl.innerHTML = '';
+        } else {
+            listEl.innerHTML = invs.map(function(inv) {
+                var active = inv.id === activeId ? ' session-investigation-active' : '';
+                var label = inv.name + (inv.sourceCount ? ' (' + inv.sourceCount + ')' : '');
+                var activeMark = inv.id === activeId ? ' <span class="session-investigation-check">&#10003;</span>' : '';
+                return '<div class="session-investigation-item' + active + '" data-investigation-id="' + escapeAttr(inv.id) + '">' + escapeHtmlText(label) + activeMark + '</div>';
+            }).join('');
+        }
+        if (createBtn) createBtn.onclick = function() { vscodeApi.postMessage({ type: 'runCommand', command: 'saropaLogCapture.createInvestigation' }); };
+        listEl.querySelectorAll('.session-investigation-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var id = el.getAttribute('data-investigation-id');
+                if (id) vscodeApi.postMessage({ type: 'openInvestigationById', id: id });
+            });
+        });
     }
 
     /* ---- Escaping helpers ---- */
@@ -180,6 +208,9 @@ export function getSessionPanelScript(): string {
             cachedSessions = e.data.sessions;
             renderSessionList(e.data.sessions);
             if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
+        }
+        if (e.data.type === 'investigationsList') {
+            renderInvestigationsList(e.data);
         }
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;

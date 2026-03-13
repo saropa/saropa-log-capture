@@ -21,6 +21,30 @@ import { extractImports, type ImportResults } from '../source/import-extractor';
 import { resolveSymbols, type SymbolResults } from '../source/symbol-resolver';
 import { getFirebaseContext } from '../crashlytics/firebase-crashlytics';
 import { findLintMatches, type LintReportData } from '../misc/lint-violation-reader';
+import { InvestigationStore } from '../investigation/investigation-store';
+
+/** Investigation context for bug report when an investigation is active. */
+export interface InvestigationContext {
+    readonly name: string;
+    readonly createdAt: number;
+    readonly sources: readonly { label: string; type: string; pinnedAt: number }[];
+    readonly lastSearchQuery?: string;
+    readonly lastSearchMatchCount?: number;
+    readonly notes?: string;
+}
+
+/** Collect active investigation context for bug report, if any. */
+export async function collectInvestigationContext(store: InvestigationStore): Promise<InvestigationContext | undefined> {
+    const active = await store.getActiveInvestigation();
+    if (!active) { return undefined; }
+    return {
+        name: active.name,
+        createdAt: active.createdAt,
+        sources: active.sources.map(s => ({ label: s.label, type: s.type, pinnedAt: s.pinnedAt })),
+        lastSearchQuery: active.lastSearchQuery,
+        notes: active.notes,
+    };
+}
 
 /** A classified stack frame with optional parsed source reference. */
 export interface StackFrame {
@@ -79,6 +103,7 @@ export interface BugReportData {
     readonly lineNumber: number;
     readonly firebaseMatch?: FirebaseMatch;
     readonly lintMatches?: LintReportData;
+    readonly investigationContext?: InvestigationContext;
 }
 
 const maxContextLines = 15;
@@ -89,6 +114,7 @@ const headerSeparator = '==================';
 /** Collect all bug report data for an error line. */
 export async function collectBugReportData(
     errorText: string, lineIndex: number, fileUri: vscode.Uri,
+    extensionContext?: vscode.ExtensionContext,
 ): Promise<BugReportData> {
     const raw = await vscode.workspace.fs.readFile(fileUri);
     const allLines = Buffer.from(raw).toString('utf-8').split('\n');
@@ -108,7 +134,10 @@ export async function collectBugReportData(
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches] = await Promise.all([
+    const investigationPromise = extensionContext
+        ? collectInvestigationContext(new InvestigationStore(extensionContext))
+        : Promise.resolve(undefined);
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, investigationContext] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -116,6 +145,7 @@ export async function collectBugReportData(
         collectFileAnalyses(stackTrace, sourceRef?.filePath),
         getFirebaseContext(errorTokens).catch(() => undefined),
         wsFolder ? findLintMatches(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
+        investigationPromise,
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
     const topIssue = fbCtx?.issues[0];
@@ -130,6 +160,7 @@ export async function collectBugReportData(
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
+        investigationContext,
     };
 }
 

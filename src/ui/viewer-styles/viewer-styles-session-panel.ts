@@ -171,5 +171,51 @@ export function getSessionPanelLayoutStyles(): string {
     overflow-x: hidden;
     overflow-y: auto;
 }
+
+/* --- Investigations section --- */
+.session-investigations {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBarSectionHeader-background, transparent);
+}
+.session-investigations-header {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 6px;
+}
+.session-investigations-list {
+    margin-bottom: 6px;
+}
+.session-investigation-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 3px;
+}
+.session-investigation-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.session-investigation-item.session-investigation-active {
+    background: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+.session-investigation-check {
+    margin-left: 4px;
+    font-weight: bold;
+}
+.session-investigations-create {
+    font-size: 12px;
+    padding: 4px 8px;
+    background: none;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 3px;
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+}
+.session-investigations-create:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
 `;
 }

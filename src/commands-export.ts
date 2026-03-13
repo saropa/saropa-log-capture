@@ -7,11 +7,11 @@ import { getConfig } from './modules/config/config';
 import { exportToHtml } from './modules/export/html-export';
 import { exportToInteractiveHtml } from './modules/export/html-export-interactive';
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export/export-formats';
-import { exportSessionToSlc, importSlcBundle } from './modules/export/slc-bundle';
+import { exportSessionToSlc, importSlcBundle, type ImportSlcResult } from './modules/export/slc-bundle';
 import { exportToLoki as doExportToLoki, setLokiBearerToken } from './modules/export/loki-export';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { context, viewerProvider, historyProvider } = deps;
+    const { context, viewerProvider, historyProvider, investigationStore } = deps;
     return [
         htmlExportCmd('exportHtml', exportToHtml),
         htmlExportCmd('exportHtmlInteractive', exportToInteractiveHtml),
@@ -44,7 +44,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                 title: t('title.importSlc'),
             });
             if (!uris?.length) { return; }
-            let lastResult: { mainLogUri: vscode.Uri } | undefined;
+            let lastResult: ImportSlcResult | undefined;
             await vscode.window.withProgress(
                 { location: vscode.ProgressLocation.Notification, title: t('progress.importSlc') },
                 async () => {
@@ -55,9 +55,33 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                 },
             );
             if (lastResult) {
-                historyProvider.refresh();
-                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
-                await viewerProvider.loadFromFile(lastResult.mainLogUri);
+                if ('mainLogUri' in lastResult) {
+                    historyProvider.refresh();
+                    await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                    await viewerProvider.loadFromFile(lastResult.mainLogUri);
+                } else {
+                    const inv = lastResult.investigation;
+                    const created = await investigationStore.createInvestigation({
+                        name: inv.name,
+                        notes: inv.notes,
+                    });
+                    try {
+                        for (const src of inv.sources) {
+                            await investigationStore.addSource(created.id, {
+                                type: src.type,
+                                relativePath: src.relativePath,
+                                label: src.label,
+                            });
+                        }
+                        await investigationStore.setActiveInvestigationId(created.id);
+                        historyProvider.refresh();
+                        await vscode.commands.executeCommand('saropaLogCapture.openInvestigation');
+                        vscode.window.showInformationMessage(t('msg.investigationImported', inv.name));
+                    } catch (e) {
+                        await investigationStore.deleteInvestigation(created.id).catch(() => {});
+                        vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                    }
+                }
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.exportToLoki',

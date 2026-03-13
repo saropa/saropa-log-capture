@@ -13,6 +13,8 @@ import { showBugReport } from '../panels/bug-report-panel';
 import type { SessionDisplayOptions } from '../session/session-display';
 import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import { assertDefined } from '../../modules/misc/assert';
+import { InvestigationStore } from '../../modules/investigation/investigation-store';
+import { showInvestigationPanel } from '../investigation/investigation-panel';
 
 export interface ViewerMessageContext {
     readonly currentFileUri: vscode.Uri | undefined;
@@ -107,7 +109,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "searchSessions": ctx.onSearchSessions?.(String(msg.text ?? "")); break;
       case "analyzeLine": ctx.onAnalyzeLine?.(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, -1), ctx.currentFileUri); break;
       case "generateReport":
-        if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri).catch(() => {}); }
+        if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri, ctx.context).catch(() => {}); }
         break;
       case "addToWatch": ctx.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation":
@@ -159,6 +161,35 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       case "requestBookmarks": case "deleteBookmark": case "deleteFileBookmarks": case "deleteAllBookmarks": case "editBookmarkNote": case "openBookmark": ctx.onBookmarkAction?.(msg); break;
       case "requestSessionList": ctx.onSessionListRequest?.(); break;
+      case "requestInvestigations":
+        void (async () => {
+          const store = new InvestigationStore(ctx.context);
+          const investigations = await store.listInvestigations();
+          const activeId = await store.getActiveInvestigationId();
+          ctx.post({
+            type: "investigationsList",
+            investigations: investigations.map((inv) => ({
+              id: inv.id,
+              name: inv.name,
+              sourceCount: inv.sources.length,
+              isActive: inv.id === activeId,
+            })),
+            activeId: activeId ?? undefined,
+          });
+        })();
+        break;
+      case "openInvestigationById":
+        void (async () => {
+          const id = String(msg.id ?? "");
+          if (!id) { return; }
+          const store = new InvestigationStore(ctx.context);
+          await store.setActiveInvestigationId(id);
+          await showInvestigationPanel(store);
+        })();
+        break;
+      case "runCommand":
+        void vscode.commands.executeCommand(String(msg.command ?? ""), ...(Array.isArray(msg.args) ? msg.args : []));
+        break;
       case "browseSessionRoot": void ctx.onBrowseSessionRoot?.(); break;
       case "clearSessionRoot": void ctx.onClearSessionRoot?.(); break;
       case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
