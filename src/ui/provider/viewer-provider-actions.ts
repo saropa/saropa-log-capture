@@ -9,6 +9,7 @@ import { TreeItem, isSplitGroup } from "../session/session-history-grouping";
 import { formatMtime, formatMtimeTimeOnly, formatRelativeTime } from "../session/session-display";
 import { getConfig } from "../../modules/config/config";
 import { getGitBlame } from "../../modules/git/git-blame";
+import { getCommitUrl } from "../../modules/integrations/providers/git-source-code";
 
 /** Convert tree items to a flat session list for the webview panel. */
 export function buildSessionListPayload(
@@ -59,11 +60,20 @@ export async function openSourceFile(
         config.integrationsGit.blameOnNavigate &&
         line >= 1
     ) {
-        getGitBlame(uri, line).then((blame) => {
-            if (!blame) { return; }
-            const msg = `Git: ${blame.author} · ${blame.date} · ${blame.hash} ${blame.message}`;
+        const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const loadingMsg = vscode.window.setStatusBarMessage('Git blame…');
+        getGitBlame(uri, line).then(async (blame) => {
+            if (!blame) { loadingMsg.dispose(); return; }
+            let msg = `Git: ${blame.author} · ${blame.date} · ${blame.hash} ${blame.message}`;
+            if (root && config.integrationsGit.commitLinks) {
+                const url = await getCommitUrl(root, blame.hash);
+                if (url) { msg += ` · ${url}`; }
+            }
+            loadingMsg.dispose();
             vscode.window.setStatusBarMessage(msg, 8_000);
-        }).catch(() => {});
+        }).catch(() => {
+            loadingMsg.dispose();
+        });
     }
 }
 

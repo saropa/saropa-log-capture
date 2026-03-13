@@ -27,7 +27,8 @@ export async function getGitBlame(uri: vscode.Uri, line: number): Promise<BlameL
     return parsePorcelainBlame(raw);
 }
 
-function parsePorcelainBlame(raw: string): BlameLine | undefined {
+/** Parse git blame --porcelain output. Exported for use by git provider. */
+export function parsePorcelainBlame(raw: string): BlameLine | undefined {
     const lines = raw.split('\n');
     if (lines.length === 0) { return undefined; }
     const hashMatch = /^([0-9a-f]{40})/.exec(lines[0]);

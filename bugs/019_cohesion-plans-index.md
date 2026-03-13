@@ -135,3 +135,5 @@ Track success via the table below. Requires product analytics (implement events 
 
 *Created: 2026-03-12*
 *Last updated: 2026-03-12*
+
+**Review (2026-03-12):** Phase 3/4 implementation (investigation export/import, bug report context, session panel investigations, replay bar, Git blame/commit links) reviewed. Fixes applied: investigation-only report footer, import rollback on addSource failure, v3 manifest and investigation-context tests, status bar loading until final message, replay defer comment. No blocking issues; tests pass.
