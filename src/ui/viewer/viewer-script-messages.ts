@@ -67,6 +67,10 @@ window.addEventListener('message', function(event) {
         case 'setSessionInfo':
             if (typeof applySessionInfo === 'function') applySessionInfo(msg.info);
             break;
+        case 'setHasPerformanceData':
+            var perfChip = document.getElementById('session-perf-chip');
+            if (perfChip) perfChip.style.display = msg.has ? '' : 'none';
+            break;
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateFooterText();
@@ -141,11 +145,17 @@ window.addEventListener('message', function(event) {
         case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'iconBarPosition': document.body.dataset.iconBar = msg.position || 'left'; break;
+        case 'captureEnabled':
+            window.captureEnabled = msg.enabled !== false;
+            if (typeof syncCaptureEnabledUi === 'function') syncCaptureEnabledUi();
+            break;
         case 'integrationsAdapters':
             window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : [];
             if (typeof syncIntegrationsUi === 'function') syncIntegrationsUi();
             var ibCrash = document.getElementById('ib-crashlytics');
             if (ibCrash) ibCrash.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('crashlytics') >= 0);
+            var ibPerf = document.getElementById('ib-performance');
+            if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             break;
     }
 });

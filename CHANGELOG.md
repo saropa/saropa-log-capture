@@ -20,6 +20,10 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Options: master capture switch.** The Options panel (gear) now has a **Capture** section at the top with **Enable log capture**. When off, no log files are created during debug sessions (same as `saropaLogCapture.enabled` in Settings). The checkbox is synced on load and when toggled.
+
+• **Performance: always-on by default and clearer UX.** Performance integration is now in the default `integrations.adapters` (with `packages`), so new workspaces capture a system snapshot (CPUs, RAM) for every session without turning it on per session. The Performance icon in the icon bar is shown only when Performance is enabled. Project Logs list shows a small performance icon next to logs that have performance data. When you open a log that has performance data, a **Performance** chip appears in the session bar; clicking it opens the Performance panel. The Session tab explains clearly that data cannot be added to an existing log and how to get it for the next run; overhead note added.
+
 • **Viewer icon bar: optional labels and bar-click toggle.** The log viewer’s vertical icon bar (Project Logs, Search, Bookmarks, etc.) can show text labels next to each icon. Click the bar background or the separator between icon groups (not on an icon) to toggle labels on or off. The choice is persisted in webview state so it survives reloads.
 
 • **Project Logs: multi-select with Ctrl/Cmd-click.** In the Project Logs panel you can Ctrl-click (or Cmd-click on macOS) to select multiple sessions. The context menu then applies to all selected items: Copy Deep Links / Copy File Paths (newline-separated to clipboard), Export (one file per session), Tag (dialog per session), Open (each in turn), Replay (first selected). Single-item behavior is unchanged. Trash panel remains single-selection.
