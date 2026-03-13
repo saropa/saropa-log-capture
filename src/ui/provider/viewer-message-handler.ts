@@ -275,6 +275,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); break;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
       case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
+      case "exportInsightsSummary": vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary'); break;
       case "requestAboutContent":
         void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
         break;

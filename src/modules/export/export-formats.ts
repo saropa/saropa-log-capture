@@ -225,8 +225,9 @@ function formatCsvRow(entry: LogEntry): string {
 
 /**
  * Escape a field for CSV (quote if contains comma, quote, or newline).
+ * Exported for use by insights-export-formats and tests.
  */
-function escapeCsvField(value: string): string {
+export function escapeCsvField(value: string): string {
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
         return `"${value.replace(/"/g, '""')}"`;
     }

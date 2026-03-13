@@ -39,6 +39,7 @@
   "command.exportJson.title": "JSON としてエクスポート",
   "command.exportJsonl.title": "JSONL としてエクスポート",
   "command.exportSlc.title": ".slc バンドルとしてエクスポート",
+  "command.exportInsightsSummary.title": "インサイト概要をエクスポート",
   "command.exportToLoki.title": "Loki にエクスポート",
   "command.setLokiApiKey.title": "Saropa Log Capture: Loki API キーを設定",
   "command.importSlc.title": ".slc バンドルをインポート",

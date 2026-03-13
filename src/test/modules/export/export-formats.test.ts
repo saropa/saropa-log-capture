@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { escapeCsvField } from '../../../modules/export/export-formats';
 
 // Test the parsing and formatting logic
 // Note: Full export tests require VS Code API mocking
@@ -6,14 +7,6 @@ import * as assert from 'assert';
 suite('ExportFormats', () => {
 
     suite('CSV field escaping', () => {
-        // Inline implementation for testing (mirrors export-formats.ts)
-        function escapeCsvField(value: string): string {
-            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-                return `"${value.replace(/"/g, '""')}"`;
-            }
-            return value;
-        }
-
         test('should not escape simple strings', () => {
             assert.strictEqual(escapeCsvField('hello'), 'hello');
             assert.strictEqual(escapeCsvField('simple message'), 'simple message');
