@@ -21,6 +21,7 @@ import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-th
 import * as panelHandlers from "../shared/viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } from "./log-viewer-provider-batch";
+import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 
 /**
  * Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support.
@@ -83,7 +84,16 @@ export class LogViewerProvider
     private readonly extensionUri: vscode.Uri,
     private readonly version: string,
     private readonly context: vscode.ExtensionContext,
-  ) {}
+  ) {
+    this.context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('saropaLogCapture.viewerKeybindings')) {
+          const keyToAction = getViewerKeybindingsFromConfig();
+          this.postMessage({ type: 'setViewerKeybindings', keyToAction });
+        }
+      }),
+    );
+  }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.views.add(webviewView);

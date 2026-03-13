@@ -21,11 +21,7 @@ function toggleAppOnly() {
     renderViewport(true);
 }
 
-document.addEventListener('keydown', function(e) {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key === 'a' || e.key === 'A') toggleAppOnly();
-});
+/* Key "A" for toggleAppOnly is handled by viewer-script-keyboard (configurable keybindings). */
 
 `;
 }

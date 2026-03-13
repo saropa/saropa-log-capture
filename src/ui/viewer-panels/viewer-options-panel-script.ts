@@ -272,6 +272,20 @@ var shortcutsBackBtn = document.getElementById('shortcuts-back');
 if (optionsOpenShortcutsBtn) optionsOpenShortcutsBtn.addEventListener('click', openShortcutsView);
 if (shortcutsBackBtn) shortcutsBackBtn.addEventListener('click', closeShortcutsView);
 
+// Double-click: power shortcut row -> start record key; command row -> open Keyboard Shortcuts.
+var shortcutsContent = document.querySelector('#shortcuts-view .shortcuts-content');
+if (shortcutsContent) shortcutsContent.addEventListener('dblclick', function(e) {
+    var row = e.target && e.target.closest && e.target.closest('tr');
+    if (!row || typeof vscodeApi === 'undefined') return;
+    var actionId = row.getAttribute && row.getAttribute('data-action-id');
+    if (actionId) {
+        vscodeApi.postMessage({ type: 'startRecordViewerKey', actionId: actionId });
+        return;
+    }
+    var search = row.getAttribute && row.getAttribute('data-keybinding-search');
+    if (search) vscodeApi.postMessage({ type: 'openKeybindings', search: search });
+});
+
 ${getOptionsEventHandlers()}
 `;
 }

@@ -112,6 +112,7 @@
   "config.levelDetection.markdownDescription": "Wie aggressiv Zeilen als Fehler klassifiziert werden. `strict` erfordert Schlüsselwörter an Labelposition (z. B. `Error:`, `[ERROR]`). `loose` findet Schlüsselwörter an beliebiger Stelle im Text.",
   "config.logDirectory.description": "Verzeichnis für Protokolldateien, relativ zum Arbeitsbereichsstamm.",
   "config.maxLines.description": "Maximale Zeilenanzahl pro Protokolldatei. Älteste Zeilen werden bei Überschreitung gelöscht.",
+  "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "Maximale im Viewer angezeigte Zeilen (0 = Standard 50.000). Darf maxLines nicht überschreiten.",
   "config.maxLogFiles.description": "Maximale Anzahl der zu behaltenden Protokolldateien (einschließlich Unterverzeichnisse wenn aktiviert). 0 = unbegrenzt. Älteste werden bei Überschreitung gelöscht.",
   "config.organizeFolders.description": "Protokolldateien mit Datumspräfix automatisch in datumsbasierte Unterordner verschieben (z. B. reports/20260218/).",
