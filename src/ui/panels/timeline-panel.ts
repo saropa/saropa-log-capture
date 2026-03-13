@@ -16,7 +16,8 @@ import { loadTimelineEvents, getSourceLabel, getSourceColor, type TimelineLoadRe
 import { type TimelineEvent, type TimelineSource } from '../../modules/timeline/timeline-event';
 import { formatTimestampShort } from '../../modules/timeline/timestamp-parser';
 import { detectCorrelations, type DetectorConfig } from '../../modules/correlation/correlation-detector';
-import { setCorrelations, getCorrelationByLocation } from '../../modules/correlation/correlation-store';
+import { setCorrelations, getCorrelationByLocation, getCorrelations } from '../../modules/correlation/correlation-store';
+import type { Correlation, CorrelatedEvent } from '../../modules/correlation/correlation-types';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentUri: vscode.Uri | undefined;
@@ -60,6 +61,13 @@ function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'openLine' && currentUri) {
         openLogAtLine({ uri: currentUri, filename: '', lineNumber: Number(msg.lineNumber), lineText: '', matchStart: 0, matchEnd: 0 }).catch(() => {});
     } else if (msg.type === 'openSidecar' && msg.file) {
+        vscode.window.showTextDocument(vscode.Uri.parse(String(msg.file)), { preview: true }).then(() => {}, () => {});
+    } else if (msg.type === 'openAtLocation' && msg.file && typeof msg.line === 'number') {
+        const line = Number(msg.line);
+        if (Number.isFinite(line)) {
+            openLogAtLine({ uri: vscode.Uri.parse(String(msg.file)), filename: '', lineNumber: line, lineText: '', matchStart: 0, matchEnd: 0 }).catch(() => {});
+        }
+    } else if (msg.type === 'openFile' && msg.file) {
         vscode.window.showTextDocument(vscode.Uri.parse(String(msg.file)), { preview: true }).then(() => {}, () => {});
     } else if (msg.type === 'export' && currentResult) {
         exportTimeline(String(msg.format), currentResult);
@@ -134,6 +142,8 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string, session
     });
     const eventsJson = JSON.stringify(eventsWithCorrelation);
     const minimapData = buildMinimapData(events, sessionStart, sessionEnd);
+    const correlationsSection = renderCorrelationsSection(sessionUriStr);
+    const correlationScript = correlationsSection ? getCorrelationJumpScript(nonce) : '';
 
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
@@ -141,11 +151,50 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string, session
 </head><body>
 ${renderHeader(filename)}
 ${renderToolbar(sourcesFound, stats)}
+${correlationsSection}
 ${renderTimeScrubber(sessionStart, sessionEnd)}
 ${renderMinimap(minimapData)}
 <div class="timeline-container" id="timeline-container"></div>
 <script nonce="${nonce}">${getAdvancedScript(eventsJson, sessionStart, sessionEnd)}</script>
+${correlationScript}
 </body></html>`;
+}
+
+/** Renders the Correlations block HTML when the session has detected correlations; otherwise empty string. */
+function renderCorrelationsSection(sessionUriStr: string): string {
+    const correlations = getCorrelations(sessionUriStr);
+    if (correlations.length === 0) { return ''; }
+    const body = correlations.map(c => renderCorrelationItem(c)).join('');
+    return `<div class="timeline-correlations">
+<div class="cp-header">${t('panel.correlation.title')}</div>
+<div class="cp-list">${body}</div>
+</div>`;
+}
+
+function renderCorrelationItem(c: Correlation): string {
+    const confClass = c.confidence === 'high' ? 'cp-high' : c.confidence === 'medium' ? 'cp-medium' : 'cp-low';
+    const eventsHtml = c.events.map((e: CorrelatedEvent) => {
+        const line = e.location?.line;
+        const file = e.location?.file ?? '';
+        const label = escapeHtml(e.summary.slice(0, 60) + (e.summary.length > 60 ? '…' : ''));
+        const fileEsc = escapeHtml(file);
+        if (line !== undefined && file) {
+            return `<li><button class="cp-jump" data-file="${fileEsc}" data-line="${line}" data-action="openAt" title="${t('panel.correlation.jumpTo')}">${escapeHtml(e.source)} L${line}</button> ${label}</li>`;
+        }
+        if (file) {
+            return `<li><button class="cp-jump" data-file="${fileEsc}" data-action="openFile">${escapeHtml(e.source)}</button> ${label}</li>`;
+        }
+        return `<li>${label}</li>`;
+    }).join('');
+    return `<div class="cp-item ${confClass}">
+<div class="cp-desc">${escapeHtml(c.description)}</div>
+<ul class="cp-events">${eventsHtml}</ul>
+</div>`;
+}
+
+/** Inline script that binds .cp-jump buttons to postMessage(openAtLocation/openFile). */
+function getCorrelationJumpScript(nonce: string): string {
+    return `<script nonce="${nonce}">(function(){var v=acquireVsCodeApi();document.querySelectorAll('.cp-jump').forEach(function(btn){btn.addEventListener('click',function(){var f=btn.getAttribute('data-file');var a=btn.getAttribute('data-action');if(a==='openAt'){var l=parseInt(btn.getAttribute('data-line'),10);v.postMessage({type:'openAtLocation',file:f,line:l})}else{v.postMessage({type:'openFile',file:f})}})})})();</script>`;
 }
 
 function renderHeader(filename: string): string {

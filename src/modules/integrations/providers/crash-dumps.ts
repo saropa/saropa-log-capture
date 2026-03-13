@@ -1,6 +1,7 @@
 /**
  * Crash dumps integration: at session end, scans configured directories for
  * .dmp/.mdmp/.core files whose mtime falls in the session time range.
+ * Optionally copies discovered files into the session folder (copyToSession).
  */
 
 import * as vscode from 'vscode';
@@ -8,6 +9,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
+
+/** Max total bytes to copy into session folder (500 MB). */
+const MAX_COPY_TOTAL_BYTES = 500 * 1024 * 1024;
 
 function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('crashDumps');
@@ -109,12 +113,63 @@ export const crashDumpsProvider: IntegrationProvider = {
             if (found.length >= cfg.maxFiles) { break; }
         }
         if (found.length === 0) { return undefined; }
+
+        type FileEntry = { path: string; size: number; mtime: number; copiedTo?: string };
+        let files: FileEntry[] = found.map(f => ({ path: f.path, size: f.size, mtime: f.mtime }));
+        let copiedCount = 0;
+
+        // Optional copy into session folder: sequential copies, 500 MB cap, duplicate basenames get numeric suffix.
+        if (cfg.copyToSession && context.logDirUri) {
+            const usedNames = new Set<string>();
+            let totalCopiedBytes = 0;
+
+            /** Returns a unique basename in the session folder (suffix -1, -2, … if name already used). */
+            function uniqueDestBasename(originalPath: string): string {
+                const base = path.basename(originalPath);
+                const ext = path.extname(base);
+                const stem = ext ? base.slice(0, -ext.length) : base;
+                let candidate = base;
+                let n = 0;
+                while (usedNames.has(candidate)) {
+                    n += 1;
+                    candidate = `${stem}-${n}${ext}`;
+                }
+                usedNames.add(candidate);
+                return candidate;
+            }
+
+            const newFiles: FileEntry[] = [];
+            for (const f of found) {
+                const entry: FileEntry = { path: f.path, size: f.size, mtime: f.mtime };
+                if (totalCopiedBytes + f.size > MAX_COPY_TOTAL_BYTES) {
+                    newFiles.push(entry);
+                    continue;
+                }
+                const destBasename = uniqueDestBasename(f.path);
+                const destUri = vscode.Uri.joinPath(context.logDirUri, destBasename);
+                try {
+                    await vscode.workspace.fs.copy(vscode.Uri.file(f.path), destUri);
+                    entry.copiedTo = destUri.fsPath;
+                    totalCopiedBytes += f.size;
+                    copiedCount += 1;
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    context.outputChannel.appendLine(`[crashDumps] Copy failed ${f.path}: ${msg}`);
+                }
+                newFiles.push(entry);
+            }
+            files = newFiles;
+        } else if (cfg.copyToSession && !context.logDirUri) {
+            context.outputChannel.appendLine('[crashDumps] copyToSession enabled but session folder path not available; skipping copy.');
+        }
+
         const payload = {
             count: found.length,
+            copiedCount,
             sidecar: `${baseFileName}.crash-dumps.json`,
-            files: found.map(f => ({ path: f.path, size: f.size, mtime: f.mtime })),
+            files,
         };
-        const sidecarContent = JSON.stringify({ count: found.length, files: payload.files }, null, 2);
+        const sidecarContent = JSON.stringify({ count: found.length, copiedCount, files: payload.files }, null, 2);
         return [
             { kind: 'meta', key: 'crashDumps', payload },
             { kind: 'sidecar', filename: `${baseFileName}.crash-dumps.json`, content: sidecarContent, contentType: 'json' },

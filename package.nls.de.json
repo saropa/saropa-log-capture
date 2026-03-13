@@ -151,7 +151,6 @@
 
   "view.logViewer.name": "Protokoll-Viewer",
   "view.vitalsPanel.name": "Play Vitals",
-  "view.correlationPanel.name": "Korrelationen",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "Erste Schritte mit der Protokollerfassung",

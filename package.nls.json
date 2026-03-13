@@ -151,7 +151,6 @@
 
   "view.logViewer.name": "Log Viewer",
   "view.vitalsPanel.name": "Play Vitals",
-  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "Get Started with Log Capture",
