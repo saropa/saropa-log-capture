@@ -9,11 +9,13 @@ import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import {
     getFirebaseContext, getCrashEvents, updateIssueState,
-    clearIssueListCache, gcloudInstallUrl, findBestGoogleServicesJson,
+    clearIssueListCache, gcloudInstallUrl, getGcloudInstallCommand, findBestGoogleServicesJson,
     type FirebaseContext,
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
+import { notifyCrashlyticsStatusBarUpdate } from '../crashlytics-status-bar';
+import { getOutputChannel } from '../../../modules/crashlytics/crashlytics-diagnostics';
 
 export type PostFn = (msg: unknown) => void;
 
@@ -26,9 +28,21 @@ export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
         clearIssueListCache();
         const raw = await getFirebaseContext([]);
         const ctx: FirebaseContext = raw ?? { available: false, setupHint: 'Query failed', issues: [] };
-        post({ type: 'crashlyticsData', context: serializeContext(ctx) });
+        const gcloudInstallCommand = getGcloudInstallCommand();
+        let workspaceGoogleServicesPath: string | undefined;
+        if (ctx.setupStep === 'config') {
+            const uri = await findBestGoogleServicesJson();
+            if (uri) {
+                const ws = vscode.workspace.workspaceFolders?.[0];
+                workspaceGoogleServicesPath = ws ? vscode.workspace.asRelativePath(uri) : uri.fsPath;
+            }
+        }
+        post({ type: 'crashlyticsData', context: serializeContext(ctx, { gcloudInstallCommand, workspaceGoogleServicesPath }) });
+        notifyCrashlyticsStatusBarUpdate();
     } catch {
-        post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', issues: [] }) });
+        const fallbackChecklist = { gcloud: 'missing' as const, token: 'pending' as const, config: 'pending' as const };
+        post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', setupChecklist: fallbackChecklist, issues: [] }) });
+        notifyCrashlyticsStatusBarUpdate();
     }
 }
 
@@ -111,6 +125,11 @@ export async function handleOpenGoogleServicesJson(): Promise<void> {
 /** Open the gcloud install URL. */
 export function handleOpenGcloudInstall(): void {
     vscode.env.openExternal(vscode.Uri.parse(gcloudInstallUrl)).then(undefined, () => {});
+}
+
+/** Show the Saropa Log Capture output channel (where Crashlytics logs and errors are written). */
+export function handleCrashlyticsShowOutput(): void {
+    getOutputChannel().show();
 }
 
 /** Start periodic Crashlytics auto-refresh. */

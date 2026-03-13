@@ -1,10 +1,12 @@
-/** Firebase Crashlytics integration — queries crash data via REST API with gcloud auth. */
+/** Firebase Crashlytics integration — queries crash data via REST API with gcloud or service account auth. */
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { runCmd } from './crashlytics-io';
+import { getAccessTokenFromServiceAccount } from './crashlytics-service-account';
 import { logCrashlytics, classifyGcloudError, classifyTokenError, firebaseConfigSetupHint, type DiagnosticDetails } from './crashlytics-diagnostics';
-import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig } from './crashlytics-types';
-export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext } from './crashlytics-types';
+import type { CrashlyticsIssueEvents, CrashlyticsEventDetail, FirebaseContext, FirebaseConfig, SetupChecklist } from './crashlytics-types';
+export type { CrashlyticsIssue, CrashlyticsStackFrame, CrashlyticsEventDetail, CrashlyticsIssueEvents, FirebaseContext, SetupChecklist, SetupStepStatus } from './crashlytics-types';
 import {
     queryTopIssues, updateIssueState as apiUpdateIssueState,
     getCrashEvents as apiGetCrashEvents,
@@ -30,9 +32,30 @@ async function isGcloudAvailable(): Promise<boolean> {
     return gcloudAvailable;
 }
 
-/** Get a gcloud access token (cached 30 min). */
+/** Resolve service account key path (absolute or relative to workspace root). */
+function resolveServiceAccountKeyPath(configuredPath: string): string | undefined {
+    const trimmed = configuredPath.trim();
+    if (!trimmed) { return undefined; }
+    if (path.isAbsolute(trimmed)) { return trimmed; }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { return path.resolve(trimmed); }
+    return path.join(folder.uri.fsPath, trimmed);
+}
+
+/** Get an access token: service account key file if configured, else gcloud ADC (cached 30 min). */
 export async function getAccessToken(): Promise<string | undefined> {
     if (cachedToken && Date.now() < cachedToken.expires) { return cachedToken.token; }
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+    const serviceAccountPath = cfg.get<string>('serviceAccountKeyPath', '');
+    const resolvedPath = resolveServiceAccountKeyPath(serviceAccountPath);
+    if (resolvedPath) {
+        const token = await getAccessTokenFromServiceAccount(resolvedPath);
+        if (token) {
+            cachedToken = { token, expires: Date.now() + tokenTtl };
+            return token;
+        }
+        lastDiagnostic = { step: 'token', errorType: 'auth', message: 'Service account key failed. Check path and file contents, or use gcloud.', checkedAt: Date.now() };
+    }
     try {
         const token = await runCmd('gcloud', ['auth', 'application-default', 'print-access-token']);
         if (!token) {
@@ -114,42 +137,74 @@ export function clearIssueListCache(): void {
 /** Install page for the Google Cloud CLI (gcloud), required for Crashlytics API access. */
 export const gcloudInstallUrl = 'https://docs.cloud.google.com/sdk/docs/install-sdk';
 
-/** Query Firebase Crashlytics for issues matching error tokens. Never throws; returns a safe context on any failure. */
+/** OS-specific one-liner to install gcloud (for copy/paste in terminal). Empty if no recommended command. */
+export function getGcloudInstallCommand(): string {
+    switch (process.platform) {
+        case 'win32':
+            return 'winget install -e --id Google.CloudSDK';
+        case 'darwin':
+            return 'brew install --cask google-cloud-sdk';
+        default:
+            return '';
+    }
+}
+
+/** Lightweight readiness check (token + config only, no API call). For status bar. Uses getAccessToken so service-account-only works without gcloud. */
+export async function getCrashlyticsStatus(): Promise<{ status: 'ready' | 'setup' }> {
+    try {
+        const token = await getAccessToken();
+        if (!token) { return { status: 'setup' }; }
+        const config = await detectFirebaseConfig();
+        if (!config) { return { status: 'setup' }; }
+        return { status: 'ready' };
+    } catch {
+        return { status: 'setup' };
+    }
+}
+
+/** Query Firebase Crashlytics for issues matching error tokens. Never throws; returns a safe context on any failure. Token is tried first (service account or gcloud) so SA-only users never hit the gcloud step. */
 export async function getFirebaseContext(errorTokens: readonly string[]): Promise<FirebaseContext> {
-    const safeEmpty = (setupStep: FirebaseContext['setupStep'], setupHint: string): FirebaseContext =>
-        ({ available: false, setupStep, setupHint, issues: [], diagnostics: lastDiagnostic });
+    const safeEmpty = (setupStep: FirebaseContext['setupStep'], setupHint: string, setupChecklist: SetupChecklist): FirebaseContext =>
+        ({ available: false, setupStep, setupHint, setupChecklist, issues: [], diagnostics: lastDiagnostic });
     lastDiagnostic = undefined;
     try {
-        if (!(await isGcloudAvailable())) {
-            return safeEmpty('gcloud', `Install Google Cloud CLI from ${gcloudInstallUrl}`);
-        }
         const token = await getAccessToken();
         if (!token) {
-            return safeEmpty('token', 'Run: gcloud auth application-default login');
+            const cfg = vscode.workspace.getConfiguration('saropaLogCapture.firebase');
+            const saPath = resolveServiceAccountKeyPath(cfg.get<string>('serviceAccountKeyPath', ''));
+            if (saPath) {
+                return safeEmpty('token', 'Service account key failed. Check path and file, or clear the setting to use gcloud.', { gcloud: 'ok', token: 'missing', config: 'pending' });
+            }
+            const gcloudOk = await isGcloudAvailable();
+            if (!gcloudOk) {
+                return safeEmpty('gcloud', `Install Google Cloud CLI from ${gcloudInstallUrl}`, { gcloud: 'missing', token: 'pending', config: 'pending' });
+            }
+            return safeEmpty('token', 'Run: gcloud auth application-default login', { gcloud: 'ok', token: 'missing', config: 'pending' });
         }
         const config = await detectFirebaseConfig();
         if (!config) {
-            return safeEmpty('config', firebaseConfigSetupHint);
+            return safeEmpty('config', firebaseConfigSetupHint, { gcloud: 'ok', token: 'ok', config: 'missing' });
         }
         const consoleUrl = `https://console.firebase.google.com/project/${config.projectId}/crashlytics/app/${config.appId}/issues`;
+        const fullChecklist: SetupChecklist = { gcloud: 'ok', token: 'ok', config: 'ok' };
         try {
             const issues = await queryTopIssues(config, token, errorTokens);
             logCrashlytics('info', `Fetched ${issues.length} Crashlytics issues`);
             const diag = issues.length === 0 ? (lastDiagnostic ?? getLastApiDiagnostic()) : undefined;
-            return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag };
+            return { available: true, issues, consoleUrl, queriedAt: Date.now(), diagnostics: diag, setupChecklist: fullChecklist };
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             logCrashlytics('error', `Issue query failed: ${msg}`);
             if (!lastDiagnostic) {
                 lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
             }
-            return { available: true, issues: [], consoleUrl, queriedAt: Date.now(), diagnostics: lastDiagnostic };
+            return { available: true, issues: [], consoleUrl, queriedAt: Date.now(), diagnostics: lastDiagnostic, setupChecklist: fullChecklist };
         }
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         logCrashlytics('error', `getFirebaseContext failed: ${msg}`);
         lastDiagnostic = { step: 'api', errorType: 'network', message: msg, checkedAt: Date.now() };
-        return { available: false, setupStep: 'gcloud', setupHint: 'Unexpected error; check Output for Saropa Crashlytics', issues: [], diagnostics: lastDiagnostic };
+        return { available: false, setupStep: 'gcloud', setupHint: 'Unexpected error; check Output for Saropa Crashlytics', issues: [], diagnostics: lastDiagnostic, setupChecklist: { gcloud: 'missing', token: 'pending', config: 'pending' } };
     }
 }
 

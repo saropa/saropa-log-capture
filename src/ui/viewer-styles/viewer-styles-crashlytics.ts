@@ -162,6 +162,13 @@ function getSetupStyles(): string {
     return /* css */ `
 
 /* --- Setup wizard --- */
+.cp-checklist {
+    font-size: 0.9em;
+    margin: 8px 12px 4px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    opacity: 0.9;
+}
 .cp-setup-header { font-size: 0.85em; opacity: 0.6; margin: 8px 12px; }
 .cp-setup-title { font-weight: 600; font-size: 1.1em; margin: 0 12px 4px; }
 .cp-setup-step { margin: 8px 12px; }
@@ -172,6 +179,29 @@ function getSetupStyles(): string {
     border-radius: 2px;
     font-family: var(--vscode-editor-font-family);
 }
+
+.cp-install-via { margin: 6px 0; }
+.cp-install-code { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-copy-btn {
+    margin-left: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+.cp-copy-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
+
+.cp-setup-why {
+    margin-top: 8px;
+    font-size: 0.9em;
+    opacity: 0.75;
+    font-style: italic;
+}
+.cp-use-existing { margin: 6px 0; }
 
 .cp-setup-btn {
     background: var(--vscode-button-background);
@@ -256,5 +286,19 @@ function getDiagnosticStyles(): string {
 
 .cp-diag-time { font-size: 0.8em; margin-top: 6px; opacity: 0.6; font-style: italic; }
 .cp-diag-actions { margin: 10px 12px 4px; }
+.cp-diag-actions-row {
+    margin: 10px 12px 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.cp-btn-secondary {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+.cp-btn-secondary:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.cp-open-console { margin: 8px 12px; font-size: 12px; }
+.cp-show-output { margin-left: 4px; }
 `;
 }
