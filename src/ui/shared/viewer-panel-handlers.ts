@@ -14,6 +14,7 @@ export {
     handleBrowseGoogleServices,
     handleOpenGoogleServicesJson,
     handleOpenGcloudInstall,
+    handleCrashlyticsShowOutput,
     startCrashlyticsAutoRefresh,
     stopCrashlyticsAutoRefresh,
     disposeCrashlyticsHandlers,

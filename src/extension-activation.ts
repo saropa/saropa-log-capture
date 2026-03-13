@@ -8,6 +8,7 @@ import { getConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
+import { CrashlyticsStatusBar, setCrashlyticsStatusBarUpdateCallback } from './ui/shared/crashlytics-status-bar';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { createUriHandler } from './modules/features/deep-links';
 import { importFromGist, importFromUrl } from './modules/share/gist-importer';
@@ -49,6 +50,14 @@ export interface ActivationRefs {
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
     const statusBar = new StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
+
+    const crashlyticsStatusBar = new CrashlyticsStatusBar();
+    context.subscriptions.push(crashlyticsStatusBar);
+    setCrashlyticsStatusBarUpdateCallback(() => { crashlyticsStatusBar.scheduleUpdate(); });
+    crashlyticsStatusBar.scheduleUpdate();
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(() => { crashlyticsStatusBar.scheduleUpdate(); }),
+    );
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
     const apiHandle = createApi(sessionManager);
@@ -125,7 +134,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
 
     const displayKey = 'slc.sessionDisplayOptions';
     const stored = context.workspaceState.get<Partial<SessionDisplayOptions>>(displayKey, {});
-    const displayOpts: SessionDisplayOptions = { ...defaultDisplayOptions, ...stored };
+    const displayOpts: SessionDisplayOptions = {
+        ...defaultDisplayOptions,
+        ...stored,
+        sessionListPageSize: stored.sessionListPageSize ?? initCfg.sessionListPageSize ?? defaultDisplayOptions.sessionListPageSize ?? 50,
+    };
     historyProvider.setDisplayOptions(displayOpts);
     broadcaster.sendDisplayOptions(displayOpts);
     viewerProvider.setDisplayOptionsHandler(async (options) => {
