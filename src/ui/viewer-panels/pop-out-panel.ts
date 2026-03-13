@@ -25,6 +25,7 @@ import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
+import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 
 const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
@@ -196,6 +197,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
+    queueMicrotask(() => this.post({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
     this.panel.onDidDispose(() => {
       this.stopBatchTimer();
       this.broadcaster.removeTarget(this);

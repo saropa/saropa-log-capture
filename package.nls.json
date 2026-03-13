@@ -112,6 +112,7 @@
   "config.levelDetection.markdownDescription": "How aggressively to classify lines as errors. `strict` requires keywords in label positions (e.g. `Error:`, `[ERROR]`). `loose` matches keywords anywhere in the text.",
   "config.logDirectory.description": "Directory for log files, relative to workspace root.",
   "config.maxLines.description": "Maximum lines per log file. Oldest lines dropped when exceeded.",
+  "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "Maximum lines shown in the viewer (0 = default 50,000). Must not exceed maxLines. Reduces memory use for very large files.",
   "config.maxLogFiles.description": "Maximum number of log files to retain (including subdirectories when enabled). 0 = unlimited. Oldest deleted when exceeded.",
   "config.organizeFolders.description": "Automatically move log files with a date prefix into date-based subfolders (e.g. reports/20260218/).",

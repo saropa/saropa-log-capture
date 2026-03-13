@@ -194,7 +194,7 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 ### Power Shortcuts (Panel Viewer)
 
-See [Keyboard shortcuts](docs/keyboard-shortcuts.md) for a printable reference, or open **Options** → **Keyboard shortcuts…** in the viewer.
+Open **Options** → **Keyboard shortcuts…** in the viewer for the full reference (power shortcuts and Command Palette commands). Double-click a power shortcut row to rebind it; double-click a command row to open Keyboard Shortcuts for that command. Overrides are stored in `saropaLogCapture.viewerKeybindings`.
 
 | Key           | Action                              |
 | ------------- | ----------------------------------- |
@@ -383,7 +383,7 @@ The viewer uses `aria-label` and `role` on controls and the log content (`role="
 | **N**                                | Add annotation to line at center                                    |
 | **Ctrl+scroll**                      | Zoom font size (when not over an input)                             |
 
-On macOS use **Cmd** instead of **Ctrl**. See also [Keyboard shortcuts](docs/keyboard-shortcuts.md) for printable reference and Command Palette commands.
+On macOS use **Cmd** instead of **Ctrl**. Open **Options** → **Keyboard shortcuts…** in the viewer for the full shortcut and Command Palette reference.
 
 ---
 
@@ -434,7 +434,6 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 | [CONTRIBUTING.md](CONTRIBUTING.md)                       | Developer setup, code standards, and how to contribute  |
 | [CHANGELOG.md](CHANGELOG.md)                             | Version history and release notes                       |
 | [ROADMAP.md](ROADMAP.md)                                 | Planned features, project review, and direction         |
-| [docs/keyboard-shortcuts.md](docs/keyboard-shortcuts.md) | Keyboard shortcut reference (panel viewer and commands) |
 | [STYLE_GUIDE.md](STYLE_GUIDE.md)                         | Code style conventions and patterns                     |
 
 ---
