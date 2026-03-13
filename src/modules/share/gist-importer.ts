@@ -1,6 +1,7 @@
 /**
  * Import investigation from GitHub Gist or from a URL (raw .slc or base64).
- * Shared flow: fetch → temp file → importSlcBundle → persist investigation and set active.
+ * Shared flow: fetch or read (file://) → temp file → importSlcBundle → persist investigation and set active.
+ * URL import allows: https (any host); http only for same-network LAN (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x); file:// for local .slc.
  */
 
 import * as vscode from 'vscode';
@@ -89,21 +90,67 @@ export async function importFromGist(
     return importFromSlcUri(tempUri, store);
 }
 
-function isHttpsUrl(urlStr: string): boolean {
+/** True if host is localhost or a private/LAN IP (e.g. 192.168.x.x, 10.x.x.x, 172.16–31.x.x). */
+function isPrivateOrLocalHost(hostname: string): boolean {
+    if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]') {
+        return true;
+    }
+    const parts = hostname.replace(/^\[|\]$/g, '').split('.');
+    if (parts.length !== 4) {
+        return false;
+    }
+    const [a, b] = parts.map((p) => parseInt(p, 10));
+    if (Number.isNaN(a) || Number.isNaN(b)) {
+        return false;
+    }
+    if (a === 10) {
+        return true;
+    }
+    if (a === 192 && b === 168) {
+        return true;
+    }
+    if (a === 172 && b >= 16 && b <= 31) {
+        return true;
+    }
+    return false;
+}
+
+function isAllowedImportUrl(urlStr: string): { allowed: boolean; isFile: boolean } {
     try {
         const u = new URL(urlStr);
-        return u.protocol === 'https:';
+        if (u.protocol === 'file:') {
+            return { allowed: true, isFile: true };
+        }
+        if (u.protocol === 'https:') {
+            return { allowed: true, isFile: false };
+        }
+        if (u.protocol === 'http:' && isPrivateOrLocalHost(u.hostname)) {
+            return { allowed: true, isFile: false };
+        }
+        return { allowed: false, isFile: false };
     } catch {
-        return false;
+        return { allowed: false, isFile: false };
     }
 }
 
+/** Import from URL: https, same-network http (LAN), or file://. Validates scheme/host then fetches or reads file. */
 export async function importFromUrl(
     url: string,
     store: InvestigationStore,
 ): Promise<Investigation | undefined> {
-    if (!isHttpsUrl(url)) {
+    const { allowed, isFile } = isAllowedImportUrl(url);
+    if (!allowed) {
         throw new Error(t('msg.importOnlyHttps'));
+    }
+
+    if (isFile) {
+        const uri = vscode.Uri.parse(url);
+        const data = await vscode.workspace.fs.readFile(uri);
+        if (data.length > MAX_DOWNLOAD_BYTES) {
+            throw new Error(t('msg.importFileTooLarge'));
+        }
+        const tempUri = await writeTempFile(data, '.slc');
+        return importFromSlcUri(tempUri, store);
     }
 
     const res = await fetch(url, { redirect: 'follow' });

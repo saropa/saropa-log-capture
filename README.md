@@ -127,13 +127,13 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
-- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** generates a link (GitHub Gist or .slc) so teammates can import and view the investigation in VS Code.
+- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** generates a link (GitHub Gist, **Copy deep link (local file)**, or .slc export) so teammates can import and view the investigation in VS Code. Import supports `https`, same-network `http` (LAN), and `file://` URLs. See [Share Investigation](docs/SHARE_INVESTIGATION.md).
 
 ### Export
 - **Per-level export:** Right-click in the log content and choose **Export current view…** to open the export modal. Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
 - **HTML export:** Static or interactive with search, filters, and theme toggle.
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
-- **.slc session bundle:** Export current or selected session (including split parts and metadata) to a `.slc` ZIP; command **Import .slc Bundle** restores sessions into the workspace log directory. **Investigation:** From the Investigation panel use **Share** to share via GitHub Gist (shareable link) or export as .slc file; opening a share link in VS Code imports the investigation.
+- **.slc session bundle:** Export current or selected session (including split parts and metadata) to a `.slc` ZIP; command **Import .slc Bundle** restores sessions into the workspace log directory. **Investigation:** From the Investigation panel use **Share** to share via GitHub Gist, **Copy deep link (local file)**, or export as .slc file; opening a share link in VS Code imports the investigation.
 - **Export to Loki:** Push current or selected session to Grafana Loki. Enable `saropaLogCapture.loki.enabled`, set `saropaLogCapture.loki.pushUrl`, and store your API key with **Saropa Log Capture: Set Loki API Key**. Available from command palette and session context menu.
 - **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.

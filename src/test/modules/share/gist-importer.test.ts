@@ -23,5 +23,16 @@ suite('GistImporter', () => {
                 (err: Error) => err.message.includes('https'),
             );
         });
+
+        test('rejects disallowed URL with guidance (same-network http or file)', async () => {
+            const store = {} as InvestigationStore;
+            try {
+                await importFromUrl('http://example.com/inv.slc', store);
+                assert.fail('expected importFromUrl to throw');
+            } catch (err) {
+                const msg = (err as Error).message;
+                assert.ok(msg.includes('same-network') || msg.includes('file://'), 'error should guide user to allowed URL types');
+            }
+        });
     });
 });
