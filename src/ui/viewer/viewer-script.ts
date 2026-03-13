@@ -62,6 +62,7 @@ var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
+var correlationByLineIndex = {};
 
 /** Strip HTML tags; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
 function stripTags(html) { return (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); }
