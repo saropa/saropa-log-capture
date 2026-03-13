@@ -18,9 +18,13 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Documentation
+
+• **Docker plan 007.** Added implementation status review to [bugs/007_plan-docker-inspect-and-until.md](bugs/007_plan-docker-inspect-and-until.md): what is implemented (inspect meta, logs with `--since`/`--tail`) vs. missing (`includeInspect` sidecar, `--until` on logs).
+
 ### Added
 
-• **Share Investigation follow-ups.** (1) **Gist expiration:** Documented that secret gists do not expire; added `docs/SHARE_INVESTIGATION.md` with how to delete old gists (GitHub → Your gists → Delete). Gist README and Share quick-pick description now mention deleting from GitHub when no longer needed. (2) **LAN + import:** Import from URL now accepts same-network `http` (e.g. `http://192.168.1.5:port/investigation.slc`) in addition to `https`; private/LAN hosts (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x) are allowed. (3) **Copy deep link (local file):** New Share menu option exports the investigation to a .slc file (save dialog), then copies a `vscode://…/import?url=file:///…` link to the clipboard; import supports `file://` URLs for local .slc files. (4) **UX and UI:** Doc and README clarify how to open a shared .slc (Investigation panel → **Open .slc file** or Command Palette → **Import .slc Bundle**). Investigation panel now has an **Open .slc file** button (with and without an active investigation) so recipients can open a shared file without using the command palette; toast and Share menu description point to this flow.
+• **Share Investigation follow-ups.** (1) **Gist expiration:** Documented that secret gists do not expire; README and Gist README / Share quick-pick describe how to delete old gists (GitHub → Your gists → Delete). (2) **LAN + import:** Import from URL now accepts same-network `http` (e.g. `http://192.168.1.5:port/investigation.slc`) in addition to `https`; private/LAN hosts (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x) are allowed. (3) **Copy deep link (local file):** New Share menu option exports the investigation to a .slc file (save dialog), then copies a `vscode://…/import?url=file:///…` link to the clipboard; import supports `file://` URLs for local .slc files. (4) **UX and UI:** Doc and README clarify how to open a shared .slc (Investigation panel → **Open .slc file** or Command Palette → **Import .slc Bundle**). Investigation panel now has an **Open .slc file** button (with and without an active investigation) so recipients can open a shared file without using the command palette; toast and Share menu description point to this flow.
 
 • **Central errors module.** New `src/modules/analysis/errors.ts` re-exports error types and helpers from level-classifier, error-fingerprint, error-rate-alert, and the ErrorStatus type from error-status-store. Provides a single import path for AI explain-error and other features that need “is this an error line?” and “what kind of error?”.
 
