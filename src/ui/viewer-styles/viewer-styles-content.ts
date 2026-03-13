@@ -259,7 +259,9 @@ export function getContentStyles(): string {
 }
 .replay-bar.replay-bar-visible {
     display: flex !important;
+    animation: replay-bar-enter 0.15s ease-out;
 }
+@keyframes replay-bar-enter { from { opacity: 0; } to { opacity: 1; } }
 .replay-btn {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
