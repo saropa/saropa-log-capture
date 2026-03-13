@@ -137,7 +137,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const displayOpts: SessionDisplayOptions = {
         ...defaultDisplayOptions,
         ...stored,
-        sessionListPageSize: stored.sessionListPageSize ?? initCfg.sessionListPageSize ?? defaultDisplayOptions.sessionListPageSize ?? 50,
+        sessionListPageSize: stored.sessionListPageSize ?? initCfg.sessionListPageSize ?? defaultDisplayOptions.sessionListPageSize ?? 100,
     };
     historyProvider.setDisplayOptions(displayOpts);
     broadcaster.sendDisplayOptions(displayOpts);

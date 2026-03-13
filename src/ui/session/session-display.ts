@@ -18,6 +18,8 @@ export interface SessionDisplayOptions {
     readonly panelWidth?: number;
     /** Filter sessions by modified time: all, last 7 days, or last 30 days. */
     readonly dateRange?: SessionDateRange;
+    /** Sessions per page in Project Logs list (pagination). Default 100. */
+    readonly sessionListPageSize?: number;
 }
 
 /** Default display options. */
@@ -28,6 +30,7 @@ export const defaultDisplayOptions: SessionDisplayOptions = {
     reverseSort: false,
     showLatestOnly: false,
     dateRange: 'all',
+    sessionListPageSize: 100,
 };
 
 const shortMonths = [

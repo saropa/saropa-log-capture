@@ -1,6 +1,7 @@
 /**
  * Session panel rendering functions (list, items, day headings, metadata).
  * Returns a JS fragment intended to run inside the session panel IIFE scope.
+ * Includes pagination: only the current page of sessions is rendered; bar shows "Showing X–Y of Z" and Prev/Next when total > pageSize.
  */
 
 /** Get the session panel rendering script fragment. */
@@ -11,6 +12,7 @@ export function getSessionRenderingScript(): string {
         if (!sessionListEl) return;
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
+            if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
             if (sessionEmptyEl) sessionEmptyEl.style.display = '';
             return;
         }
@@ -34,8 +36,28 @@ export function getSessionRenderingScript(): string {
             basenameCounts[bn] = (basenameCounts[bn] || 0) + 1;
         }
         var sorted = sortSessions(active);
-        var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(sorted, basenameCounts) : renderFlat(sorted, basenameCounts);
+        var total = sorted.length;
+        var pageSize = Math.max(1, sessionDisplayOptions.sessionListPageSize || 100);
+        var totalPages = Math.max(1, Math.ceil(total / pageSize));
+        if (typeof sessionListPage === 'undefined') sessionListPage = 0;
+        sessionListPage = Math.min(Math.max(0, sessionListPage), totalPages - 1);
+        var start = sessionListPage * pageSize;
+        var pageSessions = sorted.slice(start, start + pageSize);
+        var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
         sessionListEl.innerHTML = html;
+        /* Pagination: show bar only when multiple pages; render "Showing X–Y of Z" and Prev/Next. */
+        if (sessionListPaginationEl) {
+            if (totalPages <= 1) {
+                sessionListPaginationEl.style.display = 'none';
+            } else {
+                sessionListPaginationEl.style.display = '';
+                var from = start + 1, to = Math.min(start + pageSize, total);
+                var label = 'Showing ' + from + '\u2013' + to + ' of ' + total;
+                sessionListPaginationEl.innerHTML = '<span class="session-list-pagination-label">' + escapeHtmlText(label) + '</span>'
+                    + '<button type="button" id="session-pagination-prev" class="session-list-pagination-btn" title="Previous page" ' + (sessionListPage <= 0 ? ' disabled' : '') + '><span class="codicon codicon-chevron-left"></span></button>'
+                    + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="Next page" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
+            }
+        }
     }
 
     function sortSessions(sessions) {

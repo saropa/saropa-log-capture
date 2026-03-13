@@ -48,6 +48,7 @@ export function getSessionPanelHtml(): string {
             <button id="session-investigations-create" class="session-investigations-create">+ Create Investigation...</button>
         </div>
         <div id="session-list"></div>
+        <div id="session-list-pagination" class="session-list-pagination" style="display:none" aria-label="Session list pagination"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>
         <div id="session-loading" class="session-loading" style="display:none">
             <div class="session-loading-bar"><div class="session-loading-bar-fill"></div></div>
