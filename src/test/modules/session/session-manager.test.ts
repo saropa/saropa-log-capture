@@ -75,4 +75,12 @@ describe("SessionManagerImpl", () => {
       "Output should be filtered by exclusion when captureAll is false",
     );
   });
+
+  it("onProcessId stores debug target PID for later use at session end", () => {
+    const mgr = makeSessionManager();
+    mgr.onProcessId("session-1", 12345);
+    assert.strictEqual(mgr["processIds"].get("session-1"), 12345, "PID should be stored by session id");
+    mgr.onProcessId("session-1", 67890);
+    assert.strictEqual(mgr["processIds"].get("session-1"), 67890, "Later process event should overwrite PID");
+  });
 });
