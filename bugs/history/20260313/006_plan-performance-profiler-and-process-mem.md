@@ -1,5 +1,9 @@
 # Plan: Performance — profilerOutputPath and process memory
 
+**Status:** Implemented (2026-03-13). Added `integrations.performance.profilerOutputPath` (default `""`): at session end the configured profiler file is copied into the session folder (100 MB max; `${workspaceFolder}` supported; `vscode.workspace.fs.copy()`). Added `integrations.performance.processMetrics` (default `false`): when enabled, debug target PID from DAP `process` event is captured and process memory (MB) is read at session end (Windows: PowerShell; Linux: `/proc/<pid>/status`; macOS: `ps`) and stored in performance snapshot and meta. Tracker forwards `process` events to `SessionManager.onProcessId`; `IntegrationEndContext` carries optional `debugProcessId`. Shared `substituteWorkspaceFolder()` added in `workspace-path.ts` for path template resolution.
+
+---
+
 **Adapter:** `performance`
 **Provider:** `src/modules/integrations/providers/performance-snapshot.ts`
 
