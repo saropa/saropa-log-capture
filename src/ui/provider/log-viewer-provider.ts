@@ -62,7 +62,7 @@ export class LogViewerProvider
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
   private onSessionNavigate?: (direction: number) => void;
   private onFileLoaded?: (uri: vscode.Uri) => void;
-  private onSessionAction?: (action: string, uriString: string, filename: string) => void;
+  private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
   private readonly seenCategories = new Set<string>();
@@ -135,7 +135,7 @@ export class LogViewerProvider
   setBookmarkActionHandler(handler: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = handler; }
   setSessionNavigateHandler(handler: (direction: number) => void): void { this.onSessionNavigate = handler; }
   setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
-  setSessionActionHandler(handler: (action: string, uriString: string, filename: string) => void): void { this.onSessionAction = handler; }
+  setSessionActionHandler(handler: (action: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = handler; }
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
   // -- Webview state methods --

@@ -60,7 +60,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
-  private onSessionAction?: (action: string, uriString: string, filename: string) => void;
+  private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
 
@@ -109,7 +109,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = h; }
   setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = h; }
-  setSessionActionHandler(h: (a: string, u: string, f: string) => void): void { this.onSessionAction = h; }
+  setSessionActionHandler(h: (a: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = h; }
   setBrowseSessionRootHandler(h: () => Promise<void>): void { this.onBrowseSessionRoot = h; }
   setClearSessionRootHandler(h: () => Promise<void>): void { this.onClearSessionRoot = h; }
   // -- ViewerTarget state methods --

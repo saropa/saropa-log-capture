@@ -15,10 +15,12 @@ suite('ViewerSessionContextMenu', () => {
         });
     });
     suite('getSessionContextMenuScript', () => {
-        test('should post sessionAction with action and uriString', () => {
+        test('should post sessionAction with action and uriStrings/filenames', () => {
             const script = getSessionContextMenuScript();
             assert.ok(script.includes('sessionAction'));
-            assert.ok(script.includes('sessionCtxUri'));
+            assert.ok(script.includes('sessionCtxUris'));
+            assert.ok(script.includes('uriStrings'));
+            assert.ok(script.includes('filenames'));
         });
     });
 });

@@ -65,19 +65,26 @@ export function getSessionContextMenuScript(): string {
     return /* js */ `
 (function() {
     var sessionCtxMenu = document.getElementById('session-context-menu');
-    var sessionCtxUri = '';
-    var sessionCtxFilename = '';
+    var sessionCtxUris = [];
+    var sessionCtxFilenames = [];
     var sessionCtxTrashed = false;
 
-    window.showSessionContextMenu = function(x, y, uriString, filename, trashed) {
+    /* (x, y, uriOrUris, filenameOrFilenames, trashed) - single items or arrays for multi-select */
+    window.showSessionContextMenu = function(x, y, uriOrUris, filenameOrFilenames, trashed) {
         if (!sessionCtxMenu) return;
-        sessionCtxUri = uriString;
-        sessionCtxFilename = filename;
-        sessionCtxTrashed = trashed;
+        sessionCtxUris = Array.isArray(uriOrUris) ? uriOrUris : [uriOrUris || ''];
+        sessionCtxFilenames = Array.isArray(filenameOrFilenames) ? filenameOrFilenames : [filenameOrFilenames || ''];
+        sessionCtxTrashed = !!trashed;
         var normalItems = sessionCtxMenu.querySelectorAll('.session-normal-only');
         var trashedItems = sessionCtxMenu.querySelectorAll('.session-trashed-only');
         for (var i = 0; i < normalItems.length; i++) normalItems[i].style.display = trashed ? 'none' : '';
         for (var j = 0; j < trashedItems.length; j++) trashedItems[j].style.display = trashed ? '' : 'none';
+        /* Optional: pluralize labels when multiple selected */
+        var multi = sessionCtxUris.length > 1;
+        var copyLinkEl = sessionCtxMenu.querySelector('[data-session-action="copyDeepLink"]');
+        var copyPathEl = sessionCtxMenu.querySelector('[data-session-action="copyFilePath"]');
+        if (copyLinkEl && copyLinkEl.lastChild) copyLinkEl.lastChild.textContent = multi ? ' Copy Deep Links' : ' Copy Deep Link';
+        if (copyPathEl && copyPathEl.lastChild) copyPathEl.lastChild.textContent = multi ? ' Copy File Paths' : ' Copy File Path';
         sessionCtxMenu.style.left = x + 'px';
         sessionCtxMenu.style.top = y + 'px';
         sessionCtxMenu.classList.add('visible');
@@ -99,7 +106,7 @@ export function getSessionContextMenuScript(): string {
             hideSessionContextMenu();
             vscodeApi.postMessage({
                 type: 'sessionAction', action: action,
-                uriString: sessionCtxUri, filename: sessionCtxFilename,
+                uriStrings: sessionCtxUris, filenames: sessionCtxFilenames,
             });
         });
     }
