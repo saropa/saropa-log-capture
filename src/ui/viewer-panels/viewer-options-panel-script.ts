@@ -74,6 +74,8 @@ function openOptionsPanel() {
 }
 
 function closeOptionsPanel() {
+    /* Return to Options view when closing so next open shows Options, not Integrations. */
+    if (integrationsViewOpen) closeIntegrationsView();
     var panel = document.getElementById('options-panel');
     if (panel) panel.classList.remove('visible');
     optionsPanelOpen = false;
@@ -154,6 +156,35 @@ function syncIntegrationsUi() {
     }
 }
 
+var integrationsViewOpen = false;
+
+/** Show the Integrations screen (hide options content). Syncs checkboxes from window.integrationAdapters. */
+function openIntegrationsView() {
+    var optionsContent = document.querySelector('#options-panel .options-content');
+    var optionsSearch = document.querySelector('#options-panel .options-search-wrapper');
+    var integrationsView = document.getElementById('integrations-view');
+    if (!integrationsView || !optionsContent) return;
+    integrationsViewOpen = true;
+    if (optionsContent) optionsContent.classList.add('options-content-hidden');
+    if (optionsSearch) optionsSearch.classList.add('options-content-hidden');
+    integrationsView.classList.remove('integrations-view-hidden');
+    integrationsView.setAttribute('aria-hidden', 'false');
+    syncIntegrationsUi();
+}
+
+/** Hide the Integrations screen (show options content). */
+function closeIntegrationsView() {
+    var optionsContent = document.querySelector('#options-panel .options-content');
+    var optionsSearch = document.querySelector('#options-panel .options-search-wrapper');
+    var integrationsView = document.getElementById('integrations-view');
+    if (!integrationsView || !optionsContent) return;
+    integrationsViewOpen = false;
+    if (optionsContent) optionsContent.classList.remove('options-content-hidden');
+    if (optionsSearch) optionsSearch.classList.remove('options-content-hidden');
+    integrationsView.classList.add('integrations-view-hidden');
+    integrationsView.setAttribute('aria-hidden', 'true');
+}
+
 /** Sync all options panel controls from current state variables. */
 function syncOptionsPanelUi() {
     syncDisplayUi();
@@ -190,6 +221,12 @@ function resetOptionsToDefault() {
     syncOptionsPanelUi();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
+
+// Integrations screen: open (from Options) and back (to Options). Same panel, two views; no async load.
+var optionsOpenIntegrationsBtn = document.getElementById('options-open-integrations');
+var integrationsBackBtn = document.getElementById('integrations-back');
+if (optionsOpenIntegrationsBtn) optionsOpenIntegrationsBtn.addEventListener('click', openIntegrationsView);
+if (integrationsBackBtn) integrationsBackBtn.addEventListener('click', closeIntegrationsView);
 
 ${getOptionsEventHandlers()}
 `;
