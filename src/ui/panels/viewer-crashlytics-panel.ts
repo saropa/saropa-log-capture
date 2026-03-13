@@ -180,7 +180,7 @@ export function getCrashlyticsPanelScript(): string {
     function buildTroubleshootingForStepHtml(rows) {
         var body = buildTroubleTableRows(rows);
         if (!body) return '';
-        return '<div class="cp-trouble-step"><div class="cp-trouble-step-title">If this doesn\'t work</div><table class="cp-trouble-table"><tbody>' + body + '</tbody></table></div>';
+        return '<div class="cp-trouble-step"><div class="cp-trouble-step-title">If this doesn\\'t work</div><table class="cp-trouble-table"><tbody>' + body + '</tbody></table></div>';
     }
 
     function buildTroubleshootingCollapsible(table) {
