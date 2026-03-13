@@ -130,6 +130,15 @@ if (previewWarningBtn) previewWarningBtn.addEventListener('click', function(e) {
     e.preventDefault(); if (typeof previewAudioSound === 'function') previewAudioSound('warning');
 });
 
+// Export current view: open the same export modal as context menu "Export current view…".
+var optionsExportBtn = document.getElementById('options-export-btn');
+if (optionsExportBtn) {
+    optionsExportBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof window.openExportModal === 'function') window.openExportModal();
+    });
+}
+
 // Reset to default: restore all options panel values (display, layout, audio).
 var resetOptionsBtn = document.getElementById('reset-options-btn');
 if (resetOptionsBtn && typeof resetOptionsToDefault === 'function') {
