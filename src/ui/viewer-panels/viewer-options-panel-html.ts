@@ -4,32 +4,13 @@
  * Provides a slide-out panel with display and layout settings:
  *   - Display options (word wrap, decorations, font size, line height)
  *   - Layout (visual spacing)
- *   - Integrations (which adapters run per session)
+ *   - Integrations button (opens dedicated Integrations screen)
  *   - Audio alerts
  *   - Actions (reset to default, reset extension settings)
  *
  * Filter controls (presets, tags, exclusions) live in the filters panel.
  */
-import { escapeHtml } from '../../modules/capture/ansi';
-import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
-
-/** Build the Integrations section HTML (checkboxes per adapter with descriptions). */
-function getIntegrationsSectionHtml(): string {
-    const rows = INTEGRATION_ADAPTERS.map(
-        (a) => `<label class="options-row options-row-integration" title="${escapeHtml(a.description)}">
-                <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
-                <span class="options-integration-label">${escapeHtml(a.label)}</span>
-                <span class="options-integration-desc">${escapeHtml(a.description)}</span>
-            </label>`,
-    ).join('\n            ');
-    return `
-        <!-- Integrations Section -->
-        <div class="options-section" id="integrations-section">
-            <h3 class="options-section-title">Integrations</h3>
-            <p class="options-hint">Choose what to attach to each session. Session adapters add context to the log header or meta; Crashlytics shows the production-issues sidebar. Each option below describes what it does.</p>
-            ${rows}
-        </div>`;
-}
+import { getIntegrationsPanelHtml } from './viewer-integrations-panel-html';
 
 /** Returns the HTML for the options panel element. */
 export function getOptionsPanelHtml(): string {
@@ -103,8 +84,15 @@ export function getOptionsPanelHtml(): string {
             </div>
         </div>
 
-        <!-- Integrations Section (injected) -->
-        ${getIntegrationsSectionHtml()}
+        <!-- Integrations: button opens dedicated Integrations screen -->
+        <div class="options-section">
+            <h3 class="options-section-title">Integrations</h3>
+            <div class="options-row">
+                <button type="button" id="options-open-integrations" class="options-integrations-btn" title="Open Integrations screen to choose which adapters run per session">
+                    <span class="codicon codicon-plug"></span> Integrations…
+                </button>
+            </div>
+        </div>
 
         <!-- Layout Section -->
         <div class="options-section">
@@ -161,5 +149,6 @@ export function getOptionsPanelHtml(): string {
             </div>
         </div>
     </div>
+    ${getIntegrationsPanelHtml()}
 </div>`;
 }

@@ -42,4 +42,4 @@ All performance-related features live in the **Performance panel** (graph icon).
 
 ## What plugins can I add?
 
-You can add exactly these (turn on in Options → Integrations or via Command Palette → Configure integrations): packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics, performance, terminal, linuxLogs, externalLogs, security, database, http, browser. There are no other plugins; when we add one, it will appear in Options.
+You can add exactly these (turn on in Options → Integrations… (dedicated screen) or via Command Palette → Configure integrations): packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, crashlytics, performance, terminal, linuxLogs, externalLogs, security, database, http, browser. There are no other plugins; when we add one, it will appear in the Integrations screen.
