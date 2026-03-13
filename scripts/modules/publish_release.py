@@ -10,30 +10,53 @@ import json
 import os
 import re
 import tempfile
+import time
 
 from modules.constants import C, MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
-from modules.display import fail, info, ok
+from modules.display import fail, info, ok, warn
 from modules.utils import get_ovsx_pat, run
+
+# Error from yazl when a file's size changes between stat and read (e.g. watch overwriting dist).
+_YAZL_STREAM_BYTES_ERROR = "file data stream has unexpected number of bytes"
+
+_MAX_PACKAGE_ATTEMPTS = 2
 
 
 def step_package() -> str | None:
     """Package the extension into a .vsix file. Returns the file path.
 
     Uses vsce (Visual Studio Code Extensions CLI) to create a .vsix archive.
-    --no-dependencies skips bundling node_modules since esbuild already bundles
-    everything into dist/.
+    The production build was already done in the Compile step; we skip vsce's
+    prepublish (npm_config_ignore_scripts=1) so no second build runs and no
+    file is written during zip, avoiding "file data stream has unexpected
+    number of bytes" from yazl. --no-dependencies skips bundling node_modules.
     """
-    info("Packaging .vsix file...")
-    result = run(
-        ["npx", "@vscode/vsce", "package", "--no-dependencies"],
-        cwd=PROJECT_ROOT,
-    )
-    if result.returncode != 0:
+    # Skip prepublish so vsce only zips; build was done in Compile step.
+    env = os.environ.copy()
+    env["npm_config_ignore_scripts"] = "1"
+    for attempt in range(1, _MAX_PACKAGE_ATTEMPTS + 1):
+        if attempt > 1:
+            warn("Retrying packaging after stream error.")
+            time.sleep(1.5)
+        info("Packaging .vsix file...")
+        result = run(
+            ["npx", "@vscode/vsce", "package", "--no-dependencies"],
+            cwd=PROJECT_ROOT,
+            env=env,
+        )
+        if result.returncode == 0:
+            break
+        combined = (result.stdout + "\n" + result.stderr).strip()
+        is_stream_error = _YAZL_STREAM_BYTES_ERROR in combined
+        if is_stream_error and attempt < _MAX_PACKAGE_ATTEMPTS:
+            continue
         fail("Packaging failed:")
         if result.stdout.strip():
             print(result.stdout)
         if result.stderr.strip():
             print(result.stderr)
+        if is_stream_error:
+            info("Hint: Stop any running 'npm run watch' or VS Code watch tasks, then run publish again.")
         return None
 
     pattern = os.path.join(PROJECT_ROOT, "*.vsix")
