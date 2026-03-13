@@ -129,8 +129,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   clear(): void {
     flushThreadDump(this.threadDumpState, this.pendingLines);
     this.pendingLines = []; this.currentFileUri = undefined;
-    this.post({ type: "clear" }); this.setSessionInfo(null);
+    this.post({ type: "clear" }); this.setSessionInfo(null); this.setHasPerformanceData(false);
   }
+  setHasPerformanceData(has: boolean): void { this.post({ type: "setHasPerformanceData", has }); }
   setPaused(paused: boolean): void { this.post({ type: "setPaused", paused }); }
   setFilename(filename: string): void {
     this.post({ type: "setFilename", filename });

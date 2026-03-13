@@ -37,17 +37,22 @@ export function getPerformancePanelHtml(): string {
             </table>
         </div>
         <div id="pp-session-view" style="display:none" class="pp-session-view">
+            <div id="pp-session-intro" class="pp-session-intro">
+                <p class="pp-session-intro-line">This log was saved without performance data. You can't add it to this file.</p>
+                <p class="pp-session-intro-line">For your next run: enable <strong>Performance</strong> in Options → Integrations…, then press F5. The new log will include it. (For memory samples, also turn on "Sample during session" in Settings.)</p>
+                <p class="pp-session-intro-line pp-session-intro-note">Overhead: snapshot at session start is minimal; optional sampling uses a little CPU and I/O.</p>
+            </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">System snapshot</div>
-                <div id="pp-snapshot" class="pp-session-value">Not recorded. Enable the Performance integration to record CPUs, RAM, and process stats at session start.</div>
+                <div id="pp-snapshot" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">Session samples</div>
-                <div id="pp-samples" class="pp-session-value">Not recorded. Enable the Performance integration to record periodic memory/load samples during the session.</div>
+                <div id="pp-samples" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">Profiler output</div>
-                <div id="pp-profiler" class="pp-session-value">None attached. Enable the Performance integration and set a profiler output path to attach a trace or flame graph file.</div>
+                <div id="pp-profiler" class="pp-session-value">None.</div>
             </div>
         </div>
         <div id="pp-empty" class="pp-empty">No performance events found</div>
@@ -224,6 +229,12 @@ export function getPerformancePanelScript(): string {
     var ppCloseBtn = document.getElementById('pp-panel-close');
     if (ppCloseBtn) ppCloseBtn.addEventListener('click', closePerformancePanel);
 
+    var sessionPerfChip = document.getElementById('session-perf-chip');
+    if (sessionPerfChip) sessionPerfChip.addEventListener('click', function() {
+        if (typeof window.setActivePanel === 'function') window.setActivePanel('performance');
+        if (typeof openPerformancePanel === 'function') openPerformancePanel();
+    });
+
     /* ---- Outside click ---- */
 
     document.addEventListener('click', function(e) {
@@ -231,6 +242,8 @@ export function getPerformancePanelScript(): string {
         if (ppPanel && ppPanel.contains(e.target)) return;
         var ibBtn = document.getElementById('ib-performance');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
+        var perfChip = document.getElementById('session-perf-chip');
+        if (perfChip && (perfChip === e.target || perfChip.contains(e.target))) return;
         closePerformancePanel();
     });
 
@@ -248,29 +261,32 @@ export function getPerformancePanelScript(): string {
     });
 
     function renderSessionData(sessionData) {
+        var ppIntro = document.getElementById('pp-session-intro');
         var ppSnapshot = document.getElementById('pp-snapshot');
         var ppSamples = document.getElementById('pp-samples');
         var ppProfiler = document.getElementById('pp-profiler');
         var snap = sessionData && sessionData.snapshot;
+        var hasData = snap && typeof snap === 'object';
+        if (ppIntro) ppIntro.style.display = hasData ? 'none' : 'block';
         if (ppSnapshot) {
-            if (snap && typeof snap === 'object') {
+            if (hasData) {
                 var s = snap;
                 var txt = s.cpus + ' CPUs, ' + (s.totalMemMb || 0) + ' MB RAM (' + (s.freeMemMb || 0) + ' MB free)';
                 if (s.processMemMb != null) txt += '; process: ' + s.processMemMb + ' MB';
                 ppSnapshot.textContent = txt;
             } else {
-                ppSnapshot.textContent = 'Not recorded. Enable the Performance integration to record CPUs, RAM at session start.';
+                ppSnapshot.textContent = 'Not recorded for this log.';
             }
         }
         if (ppSamples) {
             if (sessionData && sessionData.samplesFile && sessionData.sampleCount != null) {
                 ppSamples.textContent = sessionData.sampleCount + ' samples in ' + sessionData.samplesFile + '. Use "Open log folder" to view.';
             } else {
-                ppSamples.textContent = 'Not recorded. Enable the Performance integration and "Sample during session" to record periodic memory/load.';
+                ppSamples.textContent = 'Not recorded for this log.';
             }
         }
         if (ppProfiler) {
-            ppProfiler.textContent = 'None attached. Use a future "Attach profiler output" command to link a trace file.';
+            ppProfiler.textContent = 'None.';
         }
     }
 

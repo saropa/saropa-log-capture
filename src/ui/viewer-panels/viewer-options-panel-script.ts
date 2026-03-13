@@ -185,8 +185,15 @@ function closeIntegrationsView() {
     integrationsView.setAttribute('aria-hidden', 'true');
 }
 
+/** Sync capture-enabled checkbox from window.captureEnabled (set by host message). */
+function syncCaptureEnabledUi() {
+    var check = document.getElementById('opt-capture-enabled');
+    if (check) check.checked = (typeof window !== 'undefined' && window.captureEnabled !== false);
+}
+
 /** Sync all options panel controls from current state variables. */
 function syncOptionsPanelUi() {
+    syncCaptureEnabledUi();
     syncDisplayUi();
     syncDecoUi();
     var vsCheck = document.getElementById('opt-visual-spacing');
