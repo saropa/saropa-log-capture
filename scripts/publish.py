@@ -73,6 +73,24 @@ except ImportError:
         capture_output=True,
     )
 
+# On Windows, ensure readline is available so the version prompt can pre-fill the input.
+if sys.platform == "win32":
+    try:
+        import readline  # noqa: F401
+    except ImportError:
+        try:
+            import pyreadline3  # noqa: F401
+        except ImportError:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "pyreadline3", "-q"],
+                check=False,
+                capture_output=True,
+            )
+            try:
+                import pyreadline3  # noqa: F401  # use now that we just installed
+            except ImportError:
+                pass
+
 from modules.constants import C, ExitCode, PROJECT_ROOT
 from modules.display import dim, heading, info, show_logo
 from modules.utils import get_installed_extension_versions, read_package_version
