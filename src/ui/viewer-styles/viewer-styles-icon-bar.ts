@@ -3,6 +3,7 @@
  *
  * Mirrors VS Code's activity bar: narrow column, codicon icons,
  * active indicator bar on the inner edge of the selected icon.
+ * Optional labels: .ib-labels-visible on #icon-bar widens the bar and shows .ib-label text.
  * Default: left side. body[data-icon-bar="right"] overrides for right.
  */
 
@@ -15,6 +16,7 @@ export function getIconBarStyles(): string {
    =================================================================== */
 :root {
     --icon-bar-width: 36px;
+    --icon-bar-width-with-labels: 160px;
 }
 
 #icon-bar {
@@ -27,11 +29,33 @@ export function getIconBarStyles(): string {
     gap: 3px;
     background: var(--vscode-activityBar-background, var(--vscode-sideBar-background, var(--vscode-panel-background)));
     border-right: 1px solid var(--vscode-activityBar-border, var(--vscode-panel-border));
+    transition: width 0.15s ease;
+    cursor: pointer;
+}
+
+#icon-bar.ib-labels-visible {
+    width: var(--icon-bar-width-with-labels);
+    align-items: stretch;
+}
+
+.ib-label {
+    display: none;
+    margin-left: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+#icon-bar.ib-labels-visible .ib-label {
+    display: inline;
 }
 
 .ib-icon {
     width: 32px;
     height: 32px;
+    min-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -42,6 +66,14 @@ export function getIconBarStyles(): string {
     border-radius: 4px;
     position: relative;
     transition: color 0.15s;
+}
+
+#icon-bar.ib-labels-visible .ib-icon {
+    width: auto;
+    min-width: 32px;
+    justify-content: flex-start;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .ib-icon:hover {
@@ -111,6 +143,12 @@ body[data-icon-bar="right"] .ib-badge {
     background: var(--vscode-panel-border);
     margin: 4px 0;
 }
+#icon-bar.ib-labels-visible .ib-separator {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 
 /* Replay icon hidden until replay mode is active. */
 #ib-replay {
@@ -125,6 +163,14 @@ body[data-icon-bar="right"] .ib-badge {
     display: none;
 }
 #ib-crashlytics.ib-integration-enabled {
+    display: flex;
+}
+
+/* Performance icon hidden until integrations.adapters includes "performance". */
+#ib-performance {
+    display: none;
+}
+#ib-performance.ib-integration-enabled {
     display: flex;
 }
 
