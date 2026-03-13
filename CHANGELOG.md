@@ -18,7 +18,13 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+• **Export Insights Summary.** Export recurring errors and hot files as CSV or JSON for reports or tooling. Command **Saropa Log Capture: Export Insights Summary** (or **Export summary** from the Cross-Session Insights panel or Recurring Errors slide-out): choose scope (current session, current investigation, last 7 days, or all sessions), format (CSV/JSON), then save. Output includes error signatures, counts, sessions, sample lines, first/last seen; hot files with session counts; and meta (session count, time range, exported-at). Capped at 500 errors and 500 files per export. Plan [032](bugs/history/20260313/032_plan-export-insights-summary.md) completed.
+
 ### Fixed
+
+• **Session summary "Open Log" button.** The "Open Log" action in the notification shown after a session ends now opens the completed log file. Previously it ran the open command, which only opens the active session; after finalize there is no active session so nothing happened. The summary now carries the log URI and opens it directly. [bugs/history/20260313/fix-session-summary-open-log.md](bugs/history/20260313/fix-session-summary-open-log.md)
 
 • **CSP: remove unsafe-inline from viewer.** Viewer and Session Comparison webviews no longer use `'unsafe-inline'` in Content-Security-Policy `style-src`. Session-perf chip and hidden-lines counter visibility are toggled via the `.u-hidden` class (in nonced styles) instead of inline styles. Plan [027](bugs/history/20260313/027_plan-csp-remove-unsafe-inline.md) completed.
 

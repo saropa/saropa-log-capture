@@ -18,7 +18,7 @@ import { detectAppVersion } from '../misc/app-version';
 import { detectTargetDevice } from '../misc/device-detector';
 import { countSeverities, extractBody } from '../../ui/session/session-severity-counts';
 import {
-    generateSummary, showSummaryNotification, SessionStats,
+    generateSummary, showSummaryNotification, withLogUri, SessionStats,
 } from './session-summary';
 import {
     getDefaultIntegrationRegistry,
@@ -34,6 +34,8 @@ export interface FinalizeSessionParams {
     readonly metadataStore: SessionMetadataStore;
     readonly debugAdapterType: string;
     readonly sessionStartTime: number;
+    /** Debug target process ID from DAP process event (if available). */
+    readonly debugProcessId?: number;
     /** Called when post-finalize metadata (correlation tags, fingerprints) has been written. Used for project index inline update. */
     readonly onReportsIndexReady?: (logUri: vscode.Uri) => void | Promise<void>;
 }
@@ -95,6 +97,7 @@ export async function finalizeSession(
         baseFileName,
         sessionStartTime,
         sessionEndTime,
+        debugProcessId: params.debugProcessId,
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
 
@@ -156,7 +159,7 @@ export async function finalizeSession(
     setTimeout(() => vscode.commands.executeCommand('saropaLogCapture.refreshRecurringErrors'), 3000);
 
     const filename = logSession.fileUri.fsPath.split(/[\\/]/).pop() ?? '';
-    showSummaryNotification(generateSummary(filename, stats));
+    showSummaryNotification(withLogUri(generateSummary(filename, stats), logSession.fileUri));
 
     if (config.autoOpen) {
         await vscode.window.showTextDocument(logSession.fileUri);
