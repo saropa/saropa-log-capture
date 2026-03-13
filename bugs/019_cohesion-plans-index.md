@@ -40,7 +40,7 @@ Requires Tier 6 (Cohesion) as foundation.
 | # | Plan | Solves | Description | Effort | Status |
 |---|------|--------|-------------|--------|--------|
 | [023](023_plan-ai-explain-error.md) | **AI Explain Error** | 2, 3, 4 | Right-click → Explain with AI | Medium (5-8 days) | Planned |
-| [024](024_plan-auto-correlation.md) | **Auto-Correlation** | 1, 2 | Detect related events automatically | High (10-14 days) | Planned |
+| [024](024_plan-auto-correlation.md) | **Auto-Correlation** | 1, 2 | Detect related events automatically | High (10-14 days) | ✅ Implemented |
 | [025](025_plan-noise-learning.md) | **Noise Learning** | 1, 4 | Learn from dismissals, suggest filters | High (10-14 days) | Planned |
 | [026](026_plan-share-investigation.md) | **Share Investigation** | 3 | Generate shareable URL for investigation | Medium (9-13 days) | Planned |
 

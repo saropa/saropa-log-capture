@@ -58,6 +58,10 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .level-error { background: color-mix(in srgb, var(--vscode-editorError-foreground, #f14c4c) 8%, transparent); }
 .level-warning { background: color-mix(in srgb, var(--vscode-editorWarning-foreground, #cca700) 5%, transparent); }
 
+.correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 4px; }
+.correlation-badge:hover { text-decoration: underline; }
+.event-row.correlation-highlight { background: var(--vscode-list-hoverBackground); outline: 1px solid var(--vscode-focusBorder); }
+
 .empty-state, .loading, .error-state { padding: 32px 16px; text-align: center; color: var(--vscode-disabledForeground); font-style: italic; }
 .loading::before { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--vscode-progressBar-background); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }

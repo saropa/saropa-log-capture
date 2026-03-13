@@ -13,8 +13,10 @@ import { getUnifiedTimelineStyles } from './timeline-panel-styles';
 import { getAdvancedScript } from './timeline-panel-script';
 import { t } from '../../l10n';
 import { loadTimelineEvents, getSourceLabel, getSourceColor, type TimelineLoadResult } from '../../modules/timeline/timeline-loader';
-import { type TimelineEvent, type TimelineSource, type TimelineLevel } from '../../modules/timeline/timeline-event';
+import { type TimelineEvent, type TimelineSource } from '../../modules/timeline/timeline-event';
 import { formatTimestampShort } from '../../modules/timeline/timestamp-parser';
+import { detectCorrelations, type DetectorConfig } from '../../modules/correlation/correlation-detector';
+import { setCorrelations, getCorrelationByLocation } from '../../modules/correlation/correlation-store';
 
 let panel: vscode.WebviewPanel | undefined;
 let currentUri: vscode.Uri | undefined;
@@ -27,9 +29,18 @@ export async function showTimeline(fileUri: vscode.Uri): Promise<void> {
 
     try {
         currentResult = await loadTimelineEvents({ sessionUri: fileUri, includeAll: true, maxEvents: 100000 });
-        if (!panel) { return; }
+        if (!panel || currentUri !== fileUri) { return; }
+        const sessionUriStr = fileUri.toString();
+        const corrConfig = getCorrelationConfig();
+        if (corrConfig.enabled && currentResult.events.length > 0) {
+            panel.webview.html = buildLoadingHtml(t('panel.timeline.detectingCorrelations'));
+            const correlations = await detectCorrelations(currentResult.events, corrConfig);
+            // Race guard: only apply if user still has this session open (e.g. did not switch to another timeline).
+            if (!panel || currentUri !== fileUri) { return; }
+            setCorrelations(sessionUriStr, correlations);
+        }
         const filename = fileUri.fsPath.split(/[\\/]/).pop() ?? '';
-        panel.webview.html = buildTimelineHtml(currentResult, filename);
+        panel.webview.html = buildTimelineHtml(currentResult, filename, sessionUriStr);
     } catch (err) {
         if (!panel) { return; }
         panel.webview.html = buildErrorHtml(err instanceof Error ? err.message : String(err));
@@ -73,9 +84,10 @@ async function exportTimeline(format: string, result: TimelineLoadResult): Promi
     vscode.window.showInformationMessage(t('msg.exportedTo', uri.fsPath));
 }
 
-function buildLoadingHtml(): string {
+function buildLoadingHtml(message?: string): string {
     const nonce = getNonce();
-    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="loading">${t('panel.timeline.loading')}</div></body></html>`;
+    const text = message ?? t('panel.timeline.loading');
+    return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="loading">${text}</div></body></html>`;
 }
 
 function buildErrorHtml(message: string): string {
@@ -83,7 +95,19 @@ function buildErrorHtml(message: string): string {
     return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body><div class="error-state">${escapeHtml(message)}</div></body></html>`;
 }
 
-function buildTimelineHtml(result: TimelineLoadResult, filename: string): string {
+function getCorrelationConfig(): DetectorConfig & { enabled: boolean } {
+    const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+    const enabled = cfg.get<boolean>('correlation.enabled', true);
+    return {
+        enabled,
+        windowMs: cfg.get<number>('correlation.windowMs', 2000),
+        minConfidence: cfg.get<'low' | 'medium' | 'high'>('correlation.minConfidence', 'medium'),
+        enabledTypes: cfg.get<string[]>('correlation.types', ['error-http', 'error-memory', 'timeout-network']) as DetectorConfig['enabledTypes'],
+        maxEvents: cfg.get<number>('correlation.maxEvents', 10000),
+    };
+}
+
+function buildTimelineHtml(result: TimelineLoadResult, filename: string, sessionUriStr: string): string {
     const nonce = getNonce();
     const { events, stats, sourcesFound, sessionStart, sessionEnd } = result;
 
@@ -91,7 +115,24 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string): string
         return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}';"><style nonce="${nonce}">${getUnifiedTimelineStyles()}</style></head><body>${renderHeader(filename)}<div class="empty-state">${t('panel.timeline.noEvents')}</div></body></html>`;
     }
 
-    const eventsJson = JSON.stringify(events.map(e => ({ ts: e.timestamp, src: e.source, lvl: e.level, sum: e.summary, line: e.location?.line, file: e.location?.file })));
+    const byLoc = getCorrelationByLocation(sessionUriStr);
+    const eventsWithCorrelation = events.map(e => {
+        const file = e.location?.file ?? '';
+        const line = e.location?.line;
+        const key = line !== undefined ? `${file}:${line}` : file;
+        const corr = byLoc.get(key);
+        return {
+            ts: e.timestamp,
+            src: e.source,
+            lvl: e.level,
+            sum: e.summary,
+            line: e.location?.line,
+            file: e.location?.file,
+            cid: corr?.id,
+            cdesc: corr?.description,
+        };
+    });
+    const eventsJson = JSON.stringify(eventsWithCorrelation);
     const minimapData = buildMinimapData(events, sessionStart, sessionEnd);
 
     return `<!DOCTYPE html><html><head>

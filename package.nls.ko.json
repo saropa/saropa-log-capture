@@ -69,6 +69,11 @@
   "config.autoOpen.description": "디버그 세션이 종료되면 편집기에서 로그 파일을 자동으로 엽니다.",
   "config.autoTagRules.description": "콘텐츠 패턴을 기반으로 세션에 자동으로 태그를 지정하는 규칙입니다.",
   "config.breakOnCritical.description": "치명적인 오류(NullPointerException, AssertionError, FATAL 등)가 나타날 때 알림을 표시합니다.",
+  "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
+  "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds).",
+  "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",
+  "config.correlation.types.description": "Correlation types to detect (e.g. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximum timeline events to scan for correlations (performance cap).",
   "config.captureAll.description": "true인 경우 카테고리에 관계없이 모든 디버그 콘솔 출력을 캡처합니다. false인 경우 'categories'에 나열된 카테고리만 캡처합니다. 제외는 항상 독립적으로 적용됩니다.",
   "config.categories.description": "캡처할 DAP 출력 카테고리. 일반적인 값: console, stdout, stderr, telemetry.",
   "config.contextViewLines.description": "컨텍스트 뷰 모달에서 앞뒤로 표시할 줄 수.",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "로그 뷰어",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "로그 캡처 시작하기",
