@@ -118,6 +118,7 @@
   "config.splitRules.description": "ログファイルを自動的に分割するルール。すべての値が 0 の場合、そのルールは無効です。",
   "config.suppressTransientErrors.description": "想定される一時的なエラー（TimeoutException、SocketException、ECONNREFUSED など）を非表示にします。必要に応じてフィルタリングされた行を展開できます。",
   "config.treeRefreshInterval.description": "アクティブな録音中のツリービュー更新間隔（秒）。0 = 適応型（小さいファイルは 3 秒、中くらいのファイルは 10 秒、大きいファイルは 30 秒）。",
+  "config.diagnosticCapture.description": "キャプチャ パイプラインのイベント（セッション開始、出力のバッファ/書き込み）を Saropa Log Capture 出力チャネルに記録します。ログ ファイルが空の場合に使用します。",
   "config.verboseDap.description": "すべての生の DAP プロトコルメッセージ（リクエスト、レスポンス、イベント）をログファイルに記録します。大量の出力が生成されます — アダプターの通信問題をデバッグする際に使用します。",
   "config.watchPatterns.description": "ログ出力で監視するキーワード。各エントリにはキーワード（文字列または /regex/）とアラートタイプがあります。",
 

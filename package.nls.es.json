@@ -118,6 +118,7 @@
   "config.splitRules.description": "Reglas para dividir automáticamente los archivos de registro. Todos los valores en 0 desactivan esa regla.",
   "config.suppressTransientErrors.description": "Ocultar errores transitorios esperados (TimeoutException, SocketException, ECONNREFUSED, etc.). Las líneas filtradas se pueden expandir si es necesario.",
   "config.treeRefreshInterval.description": "Intervalo de actualización de la vista de árbol en segundos durante la grabación activa. 0 = adaptativo (3s para archivos pequeños, 10s para medianos, 30s para grandes).",
+  "config.diagnosticCapture.description": "Registrar eventos de la canalización de captura (inicio de sesión, salida en búfer/escrita) en el canal de salida Saropa Log Capture. Usar cuando los archivos de registro estén vacíos.",
   "config.verboseDap.description": "Registrar todos los mensajes del protocolo DAP sin procesar (solicitudes, respuestas, eventos) en el archivo de registro. Produce una salida de alto volumen — úselo para depurar problemas de comunicación del adaptador.",
   "config.watchPatterns.description": "Palabras clave a vigilar en la salida del registro. Cada entrada tiene una palabra clave (cadena o /regex/) y tipo de alerta.",
 
