@@ -12,9 +12,11 @@ export function getSessionPanelScript(): string {
     var sessionPanelOpen = false;
     var sessionPanelEl = document.getElementById('session-panel');
     var sessionListEl = document.getElementById('session-list');
+    var sessionListPaginationEl = document.getElementById('session-list-pagination');
     var sessionEmptyEl = document.getElementById('session-empty');
     var sessionLoadingEl = document.getElementById('session-loading');
     var cachedSessions = null;
+    var sessionListPage = 0;
 
     var sessionDisplayOptions = {
         stripDatetime: true, normalizeNames: true, showDayHeadings: true,
@@ -110,6 +112,7 @@ export function getSessionPanelScript(): string {
         for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
         copy[key] = !copy[key];
         sessionDisplayOptions = copy;
+        sessionListPage = 0;
         syncToggleButtons();
         vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
         if (cachedSessions) renderSessionList(cachedSessions);
@@ -133,6 +136,7 @@ export function getSessionPanelScript(): string {
         for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
         copy.dateRange = dateRangeSelect.value;
         sessionDisplayOptions = copy;
+        sessionListPage = 0;
         vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
         if (cachedSessions) renderSessionList(cachedSessions);
     });
@@ -184,6 +188,14 @@ export function getSessionPanelScript(): string {
     if (closeBtn) closeBtn.addEventListener('click', closeSessionPanel);
     var refreshBtn = document.getElementById('session-refresh');
     if (refreshBtn) refreshBtn.addEventListener('click', requestSessionList);
+    if (sessionListPaginationEl) {
+        sessionListPaginationEl.addEventListener('click', function(e) {
+            var btn = e.target.closest('button');
+            if (!btn || !cachedSessions) return;
+            if (btn.id === 'session-pagination-prev') { sessionListPage--; renderSessionList(cachedSessions); }
+            if (btn.id === 'session-pagination-next') { sessionListPage++; renderSessionList(cachedSessions); }
+        });
+    }
     var tagsBtn = document.getElementById('session-filter-tags');
     if (tagsBtn) tagsBtn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -225,6 +237,7 @@ export function getSessionPanelScript(): string {
         }
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
+            sessionListPage = 0;
             renderSessionList(e.data.sessions);
             if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
@@ -234,6 +247,7 @@ export function getSessionPanelScript(): string {
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;
             sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
+            sessionListPage = 0;
             window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
             /* Update slot width for any currently open panel. */
             var slot = document.getElementById('panel-slot');
