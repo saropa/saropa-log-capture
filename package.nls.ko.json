@@ -39,6 +39,7 @@
   "command.exportJson.title": "JSON으로 내보내기",
   "command.exportJsonl.title": "JSONL로 내보내기",
   "command.exportSlc.title": ".slc 번들로 내보내기",
+  "command.exportInsightsSummary.title": "인사이트 요약 내보내기",
   "command.exportToLoki.title": "Loki로 내보내기",
   "command.setLokiApiKey.title": "Saropa Log Capture: Loki API 키 설정",
   "command.importSlc.title": ".slc 번들 가져오기",

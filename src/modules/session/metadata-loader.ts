@@ -60,3 +60,9 @@ export async function loadFilteredMetas(timeRange: TimeRange = 'all'): Promise<r
     const valid = metas.filter((m): m is LoadedMeta => m !== undefined);
     return filterByTime(valid, timeRange);
 }
+
+/** Load session metadata only for the given relative paths under the log directory. */
+export async function loadMetasForPaths(logDir: vscode.Uri, relativePaths: string[]): Promise<readonly LoadedMeta[]> {
+    const metas = await Promise.all(relativePaths.map(p => loadMeta(logDir, p)));
+    return metas.filter((m): m is LoadedMeta => m !== undefined);
+}

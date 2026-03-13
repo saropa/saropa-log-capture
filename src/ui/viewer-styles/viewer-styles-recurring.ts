@@ -135,7 +135,13 @@ export function getRecurringPanelStyles(): string {
     border-top: 1px solid var(--vscode-panel-border);
 }
 
-.recurring-footer:hover { text-decoration: underline; }
+.recurring-footer { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+#recurring-footer-insights:hover { text-decoration: underline; }
+.recurring-footer-action {
+    cursor: pointer;
+    color: var(--vscode-textLink-foreground);
+}
+.recurring-footer-action:hover { text-decoration: underline; }
 
 /* --- Category badges --- */
 .re-cat-badge {

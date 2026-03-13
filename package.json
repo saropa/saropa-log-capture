@@ -194,6 +194,11 @@
         "title": "%command.exportSlc.title%"
       },
       {
+        "command": "saropaLogCapture.exportInsightsSummary",
+        "icon": "$(graph)",
+        "title": "%command.exportInsightsSummary.title%"
+      },
+      {
         "command": "saropaLogCapture.exportToLoki",
         "icon": "$(cloud-upload)",
         "title": "%command.exportToLoki.title%",
@@ -1471,8 +1476,8 @@
           "type": "number"
         },
         "saropaLogCapture.sessionListPageSize": {
-          "default": 50,
-          "description": "Sessions per page in Project Logs list. Use pagination to avoid lag with 100+ sessions.",
+          "default": 100,
+          "description": "Sessions per page in Project Logs list. Increase to show more per page; decrease if the list feels slow.",
           "minimum": 10,
           "maximum": 500,
           "type": "number"

@@ -49,17 +49,22 @@ export interface CrossSessionInsights {
 const maxHotFiles = 20;
 const maxErrors = 30;
 
-/** Aggregate insights across all session metadata files. */
-export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
-    const filtered = await loadFilteredMetas(timeRange);
-    const envStats = buildEnvironmentStats(filtered);
+/** Build insights from an existing list of loaded session metas (e.g. for a single session or investigation). */
+export function buildInsightsFromMetas(metas: readonly LoadedMeta[]): CrossSessionInsights {
+    const envStats = buildEnvironmentStats(metas);
     return {
-        hotFiles: buildHotFiles(filtered),
-        recurringErrors: buildRecurringErrors(filtered),
-        sessionCount: filtered.length,
+        hotFiles: buildHotFiles(metas),
+        recurringErrors: buildRecurringErrors(metas),
+        sessionCount: metas.length,
         ...envStats,
         queriedAt: Date.now(),
     };
+}
+
+/** Aggregate insights across all session metadata files. */
+export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
+    const filtered = await loadFilteredMetas(timeRange);
+    return buildInsightsFromMetas(filtered);
 }
 
 function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {

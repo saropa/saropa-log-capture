@@ -67,6 +67,8 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
     } else if (msg.type === 'setErrorStatus') {
         await setErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open') as ErrorStatus);
         showInsightsPanel().catch(() => {});
+    } else if (msg.type === 'exportInsightsSummary') {
+        void vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary');
     }
 }
 
@@ -119,7 +121,8 @@ function renderHeader(insights: CrossSessionInsights): string {
 </div>
 <div class="header-right"><input id="insights-search" class="insights-search" type="text" placeholder="Filter..." />
 <select id="time-range" class="time-range-select">${opts}</select>
-<button class="refresh-btn" id="refresh-btn">Refresh</button></div>
+<button class="refresh-btn" id="refresh-btn">Refresh</button>
+<button class="export-summary-btn" id="export-summary-btn" title="Export recurring errors and hot files as CSV or JSON">Export summary</button></div>
 </div>`;
 }
 
