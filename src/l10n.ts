@@ -143,11 +143,17 @@ const strings: Record<string, string> = {
     // Timeline panel
     'panel.timeline.title': 'Unified Timeline',
     'panel.timeline.loading': 'Loading timeline data...',
+    'panel.timeline.detectingCorrelations': 'Detecting correlations…',
     'panel.timeline.noEvents': 'No events found in this session.',
     'panel.timeline.duration': 'Duration',
     'panel.timeline.total': 'Events',
     'panel.timeline.exportJson': 'Export JSON',
     'panel.timeline.exportCsv': 'Export CSV',
+    'panel.correlation.title': 'Correlations',
+    'panel.correlation.empty': 'No correlations detected for this session.',
+    'panel.correlation.related': 'Related events',
+    'panel.correlation.jumpTo': 'Jump to event',
+    'correlation.badgeTitle': 'Related to: {0}',
     'msg.noGoogleServicesJson': 'No google-services.json found in workspace. Add one (e.g. android/app/) or use Browse to select a file.',
     'msg.noAnalyzableTokens': 'No analyzable tokens found in this line.',
 

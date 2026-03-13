@@ -38,11 +38,13 @@ export function getAdvancedScript(eventsJson: string, sessionStart: number, sess
             var icon = e.lvl === 'error' ? '●' : e.lvl === 'warning' ? '⚠' : e.lvl === 'perf' ? '◆' : '○';
             var srcColor = getSourceColor(e.src);
             var srcLabel = getSourceLabel(e.src);
-            html += '<div class="event-row ' + levelClass + '" data-idx="' + i + '" data-source="' + e.src + '"' + (e.line ? ' data-line="' + e.line + '"' : '') + (e.file ? ' data-file="' + escapeAttr(e.file) + '"' : '') + '>';
+            var cid = e.cid, cdesc = e.cdesc || '';
+            var corrAttr = cid ? ' data-cid="' + escapeAttr(cid) + '" title="' + escapeAttr(cdesc) + '"' : '';
+            html += '<div class="event-row ' + levelClass + '" data-idx="' + i + '" data-source="' + e.src + '"' + (e.line ? ' data-line="' + e.line + '"' : '') + (e.file ? ' data-file="' + escapeAttr(e.file) + '"' : '') + corrAttr + '>';
             html += '<div class="event-time">' + (showTime ? time : '') + '</div>';
             html += '<div class="event-icon">' + icon + '</div>';
             html += '<div class="event-source" style="color:' + srcColor + '">[' + srcLabel + ']</div>';
-            html += '<div class="event-summary">' + escapeHtml(e.sum) + '</div></div>';
+            html += '<div class="event-summary">' + escapeHtml(e.sum) + (cid ? ' <span class="correlation-badge" title="' + escapeAttr(cdesc) + '">\\u27a4</span>' : '') + '</div></div>';
         }
         html += '<div class="virtual-spacer" style="height:' + ((events.length - endIdx) * ROW_HEIGHT) + 'px"></div>';
         container.innerHTML = html;
@@ -81,11 +83,18 @@ export function getAdvancedScript(eventsJson: string, sessionStart: number, sess
     container.addEventListener('scroll', function() { scrollTop = container.scrollTop; renderVirtualList(); });
     container.addEventListener('click', function(e) {
         var row = e.target.closest('.event-row');
-        if (row) {
-            var src = row.dataset.source, line = row.dataset.line, file = row.dataset.file;
-            if (src === 'debug' && line) { vscode.postMessage({ type: 'openLine', lineNumber: parseInt(line) }); }
-            else if (file) { vscode.postMessage({ type: 'openSidecar', file: file }); }
+        if (!row) return;
+        if (e.target.classList.contains('correlation-badge') || e.target.closest('.correlation-badge')) {
+            var cid = row.dataset.cid;
+            if (cid) {
+                container.querySelectorAll('.event-row.correlation-highlight').forEach(function(r) { r.classList.remove('correlation-highlight'); });
+                container.querySelectorAll('.event-row').forEach(function(r) { if (r.dataset.cid === cid) r.classList.add('correlation-highlight'); });
+            }
+            return;
         }
+        var src = row.dataset.source, line = row.dataset.line, file = row.dataset.file;
+        if (src === 'debug' && line) { vscode.postMessage({ type: 'openLine', lineNumber: parseInt(line) }); }
+        else if (file) { vscode.postMessage({ type: 'openSidecar', file: file }); }
     });
 
     document.querySelectorAll('.source-filter input').forEach(function(cb) {

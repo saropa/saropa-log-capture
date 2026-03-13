@@ -69,6 +69,11 @@
   "config.autoOpen.description": "Abrir automáticamente el archivo de registro en el editor cuando finaliza una sesión de depuración.",
   "config.autoTagRules.description": "Reglas para etiquetar automáticamente sesiones según patrones de contenido.",
   "config.breakOnCritical.description": "Mostrar notificación cuando aparecen errores críticos (NullPointerException, AssertionError, FATAL, etc.).",
+  "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
+  "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds).",
+  "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",
+  "config.correlation.types.description": "Correlation types to detect (e.g. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximum timeline events to scan for correlations (performance cap).",
   "config.captureAll.description": "Si es true, captura toda la salida de la consola de depuración independientemente de la categoría. Si es false, solo captura las categorías listadas en 'categories'. Las exclusiones siempre se aplican de forma independiente.",
   "config.categories.description": "Categorías de salida DAP a capturar. Valores comunes: console, stdout, stderr, telemetry.",
   "config.contextViewLines.description": "Número de líneas anteriores y posteriores que se mostrarán en el modal de vista de contexto.",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "Visor de registros",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "Comenzar con la captura de registros",
