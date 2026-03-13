@@ -124,7 +124,11 @@ window.addEventListener('message', function(event) {
                 autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
             }
             updateFooterText();
-            if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive);
+            if (typeof window.setReplayEnabled === 'function') {
+                window.setReplayEnabled(isViewingFile, isSessionActive);
+                // Defer again so replay bar visibility is applied after loadComplete layout has settled.
+                setTimeout(function() { if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive); }, 0);
+            }
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);

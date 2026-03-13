@@ -89,6 +89,7 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
 </div>
 <div class="actions-bar">
     <button class="btn export-btn">📦 ${t('action.exportSlc')}</button>
+    <button class="btn report-btn">📋 ${t('action.generateBugReport')}</button>
 </div>
 <script nonce="${nonce}">${getInvestigationPanelScript()}</script>
 </body></html>`;

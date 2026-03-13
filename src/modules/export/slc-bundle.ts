@@ -2,6 +2,7 @@
  * .slc session bundle export and import. Export produces a ZIP with manifest.json,
  * metadata.json, log file(s), and integration sidecar files; import extracts into
  * the workspace log directory and merges metadata.
+ * v3: investigation bundles (type 'investigation') with investigation.json and sources/.
  * Invoked by exportSlc command and session panel "Export as SLC".
  */
 import * as vscode from 'vscode';
@@ -10,21 +11,55 @@ import JSZip from 'jszip';
 import { getLogDirectoryUri } from '../config/config';
 import { SessionMetadataStore } from '../session/session-metadata';
 import type { SessionMeta } from '../session/session-metadata';
+import type { Investigation, InvestigationSource } from '../investigation/investigation-types';
 
 const MANIFEST_VERSION = 2;
+const MANIFEST_VERSION_INVESTIGATION = 3;
 const MANIFEST_FILENAME = 'manifest.json';
 const METADATA_FILENAME = 'metadata.json';
+const INVESTIGATION_JSON_FILENAME = 'investigation.json';
+const SOURCES_FOLDER = 'sources';
 
-export interface SlcManifest {
-    version: number;
+export interface SlcManifestSession {
+    version: 1 | 2;
     mainLog: string;
     parts: string[];
     sidecars?: string[];
     displayName?: string;
 }
 
-/** Returns true if manifest has supported version and required mainLog (for tests and import). */
+export interface SlcManifestInvestigationSource {
+    type: 'session' | 'file';
+    filename: string;
+    label: string;
+}
+
+export interface SlcManifestInvestigation {
+    name: string;
+    notes?: string;
+    lastSearchQuery?: string;
+    sources: SlcManifestInvestigationSource[];
+}
+
+/** Union manifest: session (v1/v2) or investigation (v3). */
+export interface SlcManifest {
+    version: number;
+    type?: 'session' | 'investigation';
+    mainLog?: string;
+    parts?: string[];
+    sidecars?: string[];
+    displayName?: string;
+    investigation?: SlcManifestInvestigation;
+}
+
+/** Returns true if manifest has supported version and required fields. */
 export function isSlcManifestValid(manifest: SlcManifest): boolean {
+    if (manifest.version === MANIFEST_VERSION_INVESTIGATION && manifest.type === 'investigation') {
+        return !!(
+            manifest.investigation?.name &&
+            Array.isArray(manifest.investigation.sources)
+        );
+    }
     const validVersion = manifest.version === 1 || manifest.version === 2;
     return validVersion && typeof manifest.mainLog === 'string' && manifest.mainLog.length > 0;
 }
@@ -155,11 +190,27 @@ export async function exportSessionToSlc(logUri: vscode.Uri): Promise<vscode.Uri
     return targetUri;
 }
 
+/** Result of importing a session bundle. */
+export interface ImportSessionResult {
+    mainLogUri: vscode.Uri;
+}
+
+/** Result of importing an investigation bundle. */
+export interface ImportInvestigationResult {
+    investigation: Investigation;
+}
+
+export type ImportSlcResult = ImportSessionResult | ImportInvestigationResult;
+
+/** Type guard: manifest is v3 investigation bundle. */
+function isInvestigationManifest(m: SlcManifest): m is SlcManifest & { type: 'investigation'; investigation: SlcManifestInvestigation } {
+    return m.version === MANIFEST_VERSION_INVESTIGATION && m.type === 'investigation' && !!m.investigation;
+}
+
 /**
- * Import a .slc bundle: extract log files into the workspace log directory and merge metadata.
- * Target folder is chosen via workspace folder; log files get unique names to avoid overwriting.
+ * Import a .slc bundle: dispatches to session or investigation import based on manifest type.
  */
-export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri: vscode.Uri } | undefined> {
+export async function importSlcBundle(slcUri: vscode.Uri): Promise<ImportSlcResult | undefined> {
     let raw: Uint8Array;
     try {
         raw = await vscode.workspace.fs.readFile(slcUri);
@@ -168,7 +219,13 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
         vscode.window.showErrorMessage(t('msg.slcImportReadFailed', msg));
         return undefined;
     }
-    const zip = await JSZip.loadAsync(raw);
+    let zip: JSZip;
+    try {
+        zip = await JSZip.loadAsync(raw);
+    } catch {
+        vscode.window.showErrorMessage(t('msg.slcImportInvalidManifest'));
+        return undefined;
+    }
     const manifestFile = zip.file(MANIFEST_FILENAME);
     if (!manifestFile) {
         vscode.window.showErrorMessage(t('msg.slcImportNoManifest'));
@@ -186,6 +243,16 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
         vscode.window.showErrorMessage(t('msg.slcImportInvalidManifest'));
         return undefined;
     }
+    if (isInvestigationManifest(manifest)) {
+        return importInvestigationFromSlc(slcUri, zip, manifest);
+    }
+    return importSessionFromSlc(zip, manifest);
+}
+
+/**
+ * Import a session .slc bundle: extract log files into the workspace log directory and merge metadata.
+ */
+async function importSessionFromSlc(zip: JSZip, manifest: SlcManifest): Promise<ImportSessionResult | undefined> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
         vscode.window.showErrorMessage(t('msg.slcImportNoWorkspace'));
@@ -195,21 +262,23 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
     try {
         await vscode.workspace.fs.createDirectory(logDir);
     } catch { /* may exist */ }
+    const mainLog = manifest.mainLog!;
     const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
-    const baseStem = (manifest.displayName ?? manifest.mainLog.replace(/\.log$/i, ''))
+    const baseStem = (manifest.displayName ?? mainLog.replace(/\.log$/i, ''))
         .replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'imported';
     const mainStem = `${baseStem}_${timestamp}`;
     const mainFileName = `${mainStem}.log`;
     const mainLogUri = vscode.Uri.joinPath(logDir, mainFileName);
-    const mainEntry = zip.file(manifest.mainLog);
+    const mainEntry = zip.file(mainLog);
     if (!mainEntry) {
-        vscode.window.showErrorMessage(t('msg.slcImportMissingLog', manifest.mainLog));
+        vscode.window.showErrorMessage(t('msg.slcImportMissingLog', mainLog));
         return undefined;
     }
     const mainData = await mainEntry.async('nodebuffer');
     await vscode.workspace.fs.writeFile(mainLogUri, Buffer.from(mainData));
-    for (let i = 0; i < manifest.parts.length; i++) {
-        const partEntry = zip.file(manifest.parts[i]);
+    const parts = manifest.parts ?? [];
+    for (let i = 0; i < parts.length; i++) {
+        const partEntry = zip.file(parts[i]);
         if (!partEntry) { continue; }
         const partStem = `${mainStem}_${String(i + 2).padStart(3, '0')}`;
         const partFileName = `${partStem}.log`;
@@ -239,4 +308,175 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<{ mainLogUri:
         } catch { /* optional metadata */ }
     }
     return { mainLogUri };
+}
+
+/**
+ * Resolve all file URIs for an investigation source (main + sidecars for session type).
+ */
+async function resolveInvestigationSourceUris(
+    source: InvestigationSource,
+    workspaceUri: vscode.Uri,
+): Promise<vscode.Uri[]> {
+    const mainUri = vscode.Uri.joinPath(workspaceUri, source.relativePath);
+    const uris: vscode.Uri[] = [mainUri];
+    if (source.type !== 'session') {
+        return uris;
+    }
+    const sidecars = await findSidecarUris(mainUri);
+    uris.push(...sidecars);
+    return uris;
+}
+
+/**
+ * Export an investigation to a .slc (ZIP) bundle with manifest v3, investigation.json, and sources/.
+ * Returns the saved file URI, or undefined if cancelled or failed.
+ */
+export async function exportInvestigationToSlc(
+    investigation: Investigation,
+    workspaceUri: vscode.Uri,
+): Promise<vscode.Uri | undefined> {
+    const defaultName = (investigation.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'investigation') + '.slc';
+    const picked = await vscode.window.showSaveDialog({
+        defaultUri: workspaceUri ? vscode.Uri.joinPath(workspaceUri, defaultName) : undefined,
+        filters: { [t('filter.slcBundles')]: ['slc'] },
+        saveLabel: t('action.saveSlcBundle'),
+    });
+    if (!picked) { return undefined; }
+    let targetUri = picked;
+    if (!targetUri.fsPath.toLowerCase().endsWith('.slc')) {
+        targetUri = vscode.Uri.file(targetUri.fsPath + '.slc');
+    }
+
+    const manifestSources: SlcManifestInvestigationSource[] = [];
+    const zip = new JSZip();
+    const seenBasenames = new Map<string, number>();
+
+    function uniqueFilename(basename: string): string {
+        const count = seenBasenames.get(basename) ?? 0;
+        seenBasenames.set(basename, count + 1);
+        return count === 0 ? basename : `${count}_${basename}`;
+    }
+
+    for (const source of investigation.sources) {
+        const uris = await resolveInvestigationSourceUris(source, workspaceUri);
+        const mainUri = uris[0];
+        let mainBasename: string;
+        try {
+            mainBasename = mainUri.path.split(/[/\\]/).pop() ?? 'file';
+        } catch {
+            continue;
+        }
+        const bundleFilename = uniqueFilename(mainBasename);
+        manifestSources.push({
+            type: source.type,
+            filename: bundleFilename,
+            label: source.label,
+        });
+        const stem = bundleFilename.replace(/\.log$/i, '');
+        for (let i = 0; i < uris.length; i++) {
+            try {
+                const data = await vscode.workspace.fs.readFile(uris[i]);
+                const name = i === 0 ? bundleFilename : stem + (uris[i].path.match(/\.[^.]+$/)?.[0] ?? '');
+                zip.file(`${SOURCES_FOLDER}/${name}`, data);
+            } catch {
+                /* Skip missing or unreadable files; source still appears in manifest. */
+            }
+        }
+    }
+
+    const manifest: SlcManifest = {
+        version: MANIFEST_VERSION_INVESTIGATION,
+        type: 'investigation',
+        investigation: {
+            name: investigation.name,
+            notes: investigation.notes,
+            lastSearchQuery: investigation.lastSearchQuery,
+            sources: manifestSources,
+        },
+    };
+    const investigationJson = {
+        name: investigation.name,
+        notes: investigation.notes,
+        lastSearchQuery: investigation.lastSearchQuery,
+        sources: investigation.sources.map(s => ({
+            type: s.type,
+            label: s.label,
+            pinnedAt: s.pinnedAt,
+        })),
+    };
+    zip.file(MANIFEST_FILENAME, JSON.stringify(manifest, null, 2));
+    zip.file(INVESTIGATION_JSON_FILENAME, JSON.stringify(investigationJson, null, 2));
+    const blob = await zip.generateAsync({ type: 'nodebuffer' });
+    await vscode.workspace.fs.writeFile(targetUri, Buffer.from(blob));
+    return targetUri;
+}
+
+/**
+ * Import an investigation .slc bundle: extract sources into workspace log directory and create investigation.
+ * For each manifest source we extract the main file and any sidecar files (same stem) from sources/.
+ */
+async function importInvestigationFromSlc(
+    _slcUri: vscode.Uri,
+    zip: JSZip,
+    manifest: SlcManifest & { type: 'investigation'; investigation: SlcManifestInvestigation },
+): Promise<ImportInvestigationResult | undefined> {
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) {
+        vscode.window.showErrorMessage(t('msg.slcImportNoWorkspace'));
+        return undefined;
+    }
+    const logDir = getLogDirectoryUri(folder);
+    try {
+        await vscode.workspace.fs.createDirectory(logDir);
+    } catch { /* may exist */ }
+
+    const invMeta = manifest.investigation;
+    const now = Date.now();
+    const investigationId = `${now}-${Math.random().toString(36).slice(2, 11)}`;
+    const sources: InvestigationSource[] = [];
+    const extractedPaths = new Set<string>();
+
+    for (const src of invMeta.sources) {
+        const stem = src.filename.replace(/\.log$/i, '');
+        const prefix = `${SOURCES_FOLDER}/${stem}`;
+        const toExtract: string[] = [];
+        zip.forEach((path) => {
+            if (path === `${SOURCES_FOLDER}/${src.filename}` || (path.startsWith(prefix) && path.indexOf('/', prefix.length) < 0)) {
+                toExtract.push(path);
+            }
+        });
+        for (const path of toExtract) {
+            const entry = zip.file(path);
+            if (!entry) { continue; }
+            const name = path.slice(SOURCES_FOLDER.length + 1);
+            const targetUri = vscode.Uri.joinPath(logDir, name);
+            try {
+                const data = await entry.async('nodebuffer');
+                await vscode.workspace.fs.writeFile(targetUri, Buffer.from(data));
+            } catch (e) {
+                vscode.window.showErrorMessage(t('msg.slcImportReadFailed', e instanceof Error ? e.message : String(e)));
+                return undefined;
+            }
+        }
+        const mainRelativePath = vscode.workspace.asRelativePath(vscode.Uri.joinPath(logDir, src.filename), false);
+        if (extractedPaths.has(mainRelativePath)) { continue; }
+        extractedPaths.add(mainRelativePath);
+        sources.push({
+            type: src.type,
+            relativePath: mainRelativePath,
+            label: src.label,
+            pinnedAt: now,
+        });
+    }
+
+    const investigation: Investigation = {
+        id: investigationId,
+        name: invMeta.name,
+        createdAt: now,
+        updatedAt: now,
+        sources,
+        notes: invMeta.notes,
+        lastSearchQuery: invMeta.lastSearchQuery,
+    };
+    return { investigation };
 }

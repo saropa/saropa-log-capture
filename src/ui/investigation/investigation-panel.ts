@@ -6,6 +6,10 @@
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { InvestigationStore } from '../../modules/investigation/investigation-store';
+import { collectInvestigationContext } from '../../modules/bug-report/bug-report-collector';
+import { formatBugReport } from '../../modules/bug-report/bug-report-formatter';
+import type { BugReportData } from '../../modules/bug-report/bug-report-collector';
+import { showBugReportFromMarkdown } from '../panels/bug-report-panel';
 import { buildInvestigationHtml, buildNoInvestigationHtml } from './investigation-panel-html';
 import {
     promptAddSource,
@@ -140,9 +144,30 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
             break;
 
-        case 'generateReport':
-            vscode.window.showInformationMessage(t('msg.featureComingSoon'));
+        case 'generateReport': {
+            const invContext = await collectInvestigationContext(currentStore);
+            if (!invContext) {
+                vscode.window.showWarningMessage(t('msg.noActiveInvestigation'));
+                break;
+            }
+            const minimalData: BugReportData = {
+                errorLine: '',
+                fingerprint: '',
+                stackTrace: [],
+                logContext: [],
+                environment: {},
+                devEnvironment: {},
+                logFilename: '',
+                lineNumber: 1,
+                gitHistory: [],
+                lineRangeHistory: [],
+                fileAnalyses: [],
+                investigationContext: invContext,
+            };
+            const markdown = formatBugReport(minimalData);
+            showBugReportFromMarkdown(markdown);
             break;
+        }
 
         case 'create':
             await vscode.commands.executeCommand('saropaLogCapture.createInvestigation');
