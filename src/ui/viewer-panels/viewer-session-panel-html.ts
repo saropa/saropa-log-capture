@@ -42,6 +42,11 @@ export function getSessionPanelHtml(): string {
         <div id="session-tag-chips" class="session-tag-chips"></div>
     </div>
     <div class="session-panel-content">
+        <div id="session-investigations" class="session-investigations">
+            <div class="session-investigations-header">Investigations</div>
+            <div id="session-investigations-list" class="session-investigations-list"></div>
+            <button id="session-investigations-create" class="session-investigations-create">+ Create Investigation...</button>
+        </div>
         <div id="session-list"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>
         <div id="session-loading" class="session-loading" style="display:none">

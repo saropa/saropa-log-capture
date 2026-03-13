@@ -197,6 +197,7 @@ const strings: Record<string, string> = {
     'action.createNew': 'Create New...',
     'action.closeInvestigation': 'Close Investigation',
     'action.exportSlc': 'Export as .slc',
+    'action.generateBugReport': 'Generate Bug Report',
 
     // Investigation mode
     'prompt.investigationName': 'Enter a name for this investigation',
@@ -215,9 +216,13 @@ const strings: Record<string, string> = {
     'msg.sourceRemovedFromInvestigation': 'Removed "{0}" from investigation.',
     'msg.noActiveInvestigation': 'No active investigation.',
     'msg.noSourcesInInvestigation': 'No sources in this investigation.',
+    'msg.noSessionsToAdd': 'No sessions found to add.',
+    'prompt.selectSessionsForInvestigation': 'Select sessions to add to the new investigation',
     'msg.deleteInvestigationConfirm': 'Delete investigation "{0}"? This cannot be undone.',
     'msg.investigationDeleted': 'Investigation "{0}" deleted.',
+    'msg.investigationImported': 'Investigation "{0}" imported.',
     'msg.featureComingSoon': 'This feature is coming soon.',
+    'progress.exportInvestigation': 'Exporting investigation bundle…',
 
     // Cursor IDE compatibility
     'msg.cursorIdeWarning': 'Running in Cursor IDE. Debug output capture may not work correctly due to differences in the Debug Adapter Protocol implementation.',

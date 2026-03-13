@@ -43,6 +43,10 @@ export function getSessionContextMenuHtml(): string {
         <span class="codicon codicon-copy"></span> Copy File Path
     </div>
     <div class="context-menu-separator session-normal-only"></div>
+    <div class="context-menu-item session-normal-only" data-session-action="addToInvestigation">
+        <span class="codicon codicon-pin"></span> Add to Investigation
+    </div>
+    <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="trash">
         <span class="codicon codicon-trash"></span> Move to Trash
     </div>

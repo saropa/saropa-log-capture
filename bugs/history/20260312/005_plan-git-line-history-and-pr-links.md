@@ -1,5 +1,11 @@
 # Plan: Git — includeLineHistoryInMeta and PR/commit link resolution
 
+**Status: Implemented** (2025-03-12)
+
+**Summary:** Added `onSessionEnd` to the git provider to parse log for file:line references (Dart, JS/TS, Java-style stack traces), run `git blame` per ref (cap 20, 2s timeout), and store `lineHistory` in session meta. Added `getCommitUrl` / `getRemoteBaseUrl` to resolve commit hashes to GitHub/GitLab/Bitbucket URLs; used in line history meta and in blame-on-navigate status bar. New config `integrations.git.commitLinks` (default true). Remote base URL is resolved once per session in onSessionEnd to avoid N git calls. Blame display shows "Git blame…" until result is ready. PR lookup via GitHub API left as stretch goal.
+
+---
+
 **Adapter:** `git`
 **Provider:** `src/modules/integrations/providers/git-source-code.ts`
 

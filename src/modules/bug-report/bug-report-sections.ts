@@ -185,9 +185,12 @@ export function extractSectionData(data: BugReportData): SectionData {
 export function escapePipe(text: string): string { return text.replace(/\|/g, '\\|'); }
 
 export function formatFooter(filename: string, lineNumber: number): string {
+    const origin = filename
+        ? `Report generated from \`${filename}\` at line ${lineNumber}`
+        : 'Report generated from investigation context';
     return [
         '---',
-        `*Report generated from \`${filename}\` at line ${lineNumber}*`,
+        `*${origin}*`,
         `**[Saropa Lints](https://pub.dev/packages/saropa_lints/changelog)** — Catch memory leaks, security vulnerabilities, and runtime crashes that standard linters miss. Developed by [Saropa](https://saropa.com/about) to make the world of Dart & Flutter better.`,
     ].join('\n\n');
 }

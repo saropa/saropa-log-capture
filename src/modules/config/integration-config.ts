@@ -67,6 +67,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       stashInHeader: ensureBoolean(cfg.get('integrations.git.stashInHeader'), false),
       blameOnNavigate: ensureBoolean(cfg.get('integrations.git.blameOnNavigate'), true),
       includeLineHistoryInMeta: ensureBoolean(cfg.get('integrations.git.includeLineHistoryInMeta'), false),
+      commitLinks: ensureBoolean(cfg.get('integrations.git.commitLinks'), true),
     },
     integrationsEnvironment: {
       includeEnvChecksum: ensureBoolean(cfg.get('integrations.environment.includeEnvChecksum'), false),

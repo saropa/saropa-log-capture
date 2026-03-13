@@ -141,6 +141,28 @@ suite('BugReportFormatter', () => {
             assert.ok(md.includes('abc1234'));
         });
 
+        test('should include investigation context when present', () => {
+            const md = formatBugReport(minimalData({
+                logFilename: '',
+                lineNumber: 1,
+                investigationContext: {
+                    name: 'My Investigation',
+                    createdAt: 1700000000000,
+                    sources: [{ label: 'session.log', type: 'session', pinnedAt: 1700000001000 }],
+                    lastSearchQuery: 'TimeoutException',
+                    lastSearchMatchCount: 5,
+                    notes: 'Repro steps noted.',
+                },
+            }));
+            assert.ok(md.includes('## Investigation Context'));
+            assert.ok(md.includes('My Investigation'));
+            assert.ok(md.includes('session.log'));
+            assert.ok(md.includes('TimeoutException'));
+            assert.ok(md.includes('Matches: 5'));
+            assert.ok(md.includes('Repro steps noted.'));
+            assert.ok(md.includes('Report generated from investigation context'));
+        });
+
         test('should include cross-session data when present', () => {
             const md = formatBugReport(minimalData({
                 crossSessionMatch: {

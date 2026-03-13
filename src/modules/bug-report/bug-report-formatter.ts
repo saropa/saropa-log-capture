@@ -5,7 +5,7 @@
  * suitable for pasting into GitHub Issues, StackOverflow, or Slack.
  */
 
-import type { BugReportData, StackFrame } from './bug-report-collector';
+import type { BugReportData, StackFrame, InvestigationContext } from './bug-report-collector';
 import { buildMarkdownFileLink } from '../source/link-helpers';
 import { formatLintSection } from './bug-report-lint-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
@@ -40,6 +40,7 @@ export function formatBugReport(data: BugReportData): string {
     if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
     if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
     if (data.lintMatches?.matches.length) { sections.push(formatLintSection(data.lintMatches)); }
+    if (data.investigationContext) { sections.push(formatInvestigationContext(data.investigationContext)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }
     sections.push(formatFooter(data.logFilename, data.lineNumber));
@@ -75,6 +76,29 @@ function collectSourcePaths(data: BugReportData): string[] {
         if (!paths.includes(name)) { paths.push(name); }
     }
     return paths;
+}
+
+function formatInvestigationContext(inv: InvestigationContext): string {
+    const created = new Date(inv.createdAt).toISOString();
+    const rows = inv.sources.map(s => {
+        const pinned = new Date(s.pinnedAt).toISOString();
+        return `| ${s.label} | ${s.type} | ${pinned} |`;
+    }).join('\n');
+    const table = `| Source | Type | Pinned |\n|--------|------|--------|\n${rows}`;
+    const parts = [
+        '## Investigation Context',
+        `**Investigation:** ${inv.name}`,
+        `**Created:** ${created}`,
+        `### Pinned Sources (${inv.sources.length})`,
+        table,
+    ];
+    if (inv.lastSearchQuery) {
+        parts.push(`### Recent Search\nQuery: \`${inv.lastSearchQuery}\`${inv.lastSearchMatchCount !== undefined ? `\nMatches: ${inv.lastSearchMatchCount}` : ''}`);
+    }
+    if (inv.notes?.trim()) {
+        parts.push('### Investigation Notes\n' + inv.notes.trim());
+    }
+    return parts.join('\n\n');
 }
 
 function formatError(errorLine: string, fingerprint: string): string {

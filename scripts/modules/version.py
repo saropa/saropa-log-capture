@@ -35,14 +35,14 @@ def _parse_semver(version: str) -> tuple[int, ...]:
 
 
 def _get_changelog_versions() -> list[str]:
-    """Return all versioned headings in CHANGELOG.md."""
+    """Return released version headings in CHANGELOG.md (excludes ## [x.y.z] - Unreleased)."""
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     versions: list[str] = []
     try:
         with open(changelog_path, encoding="utf-8") as f:
             for line in f:
                 m = re.match(r'^## \[(\d+\.\d+\.\d+)\]', line)
-                if m:
+                if m and not _VERSIONED_UNRELEASED_RE.match(line):
                     versions.append(m.group(1))
     except OSError:
         pass

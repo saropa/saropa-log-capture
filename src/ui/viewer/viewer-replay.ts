@@ -63,6 +63,12 @@ export function getReplayScript(): string {
     /** Track whether we're viewing a loaded file (enable replay controls when true). */
     var replayFileLoaded = false;
 
+    /** Show or hide the replay bar (uses CSS class so !important rule is overridden). */
+    function setReplayBarVisible(visible) {
+        if (!bar) return;
+        bar.classList.toggle('replay-bar-visible', !!visible);
+    }
+
     /** Show or hide the icon bar replay button. */
     function setReplayIconVisible(visible) {
         if (!ibReplay) return;
@@ -76,7 +82,7 @@ export function getReplayScript(): string {
         var hasLines = allLines && allLines.length > 0;
         if (sessionActive || !fileLoaded || !hasLines) {
             setReplayIconVisible(false);
-            if (bar) bar.style.display = 'none';
+            setReplayBarVisible(false);
             if (window.replayMode) {
                 window.exitReplayMode();
             }
@@ -103,8 +109,8 @@ export function getReplayScript(): string {
             if (typeof window.startReplay === 'function') window.startReplay();
             return;
         }
-        var visible = bar.style.display !== 'none';
-        bar.style.display = visible ? 'none' : 'flex';
+        var visible = bar.classList.contains('replay-bar-visible');
+        setReplayBarVisible(!visible);
     };
 
     /** Apply extension replay config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs). */
@@ -197,7 +203,7 @@ export function getReplayScript(): string {
     function exitReplayMode() {
         stopReplayTimer();
         window.replayMode = false;
-        if (bar) bar.style.display = 'none';
+        setReplayBarVisible(false);
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
         updateReplayIcon(false);
@@ -218,7 +224,7 @@ export function getReplayScript(): string {
         if (msg && msg.replayConfig) applyReplayConfig(msg.replayConfig);
         window.replayMode = true;
         window.replayCurrentIndex = 0;
-        if (bar) bar.style.display = 'flex';
+        setReplayBarVisible(true);
         replayPlaying = true;
         if (playBtn) playBtn.style.display = 'none';
         if (pauseBtn) pauseBtn.style.display = '';
@@ -296,6 +302,10 @@ export function getReplayScript(): string {
             }
         }
     });
+
+    /* Ensure bar and icon are hidden on startup (defense against any cached or late-applied state). */
+    setReplayBarVisible(false);
+    setReplayIconVisible(false);
 })();
 `;
 }
