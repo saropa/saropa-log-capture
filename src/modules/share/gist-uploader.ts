@@ -30,6 +30,10 @@ vscode://saropa.saropa-log-capture/import?gist=${gistId}
 ## Notes
 
 ${investigation.notes ?? 'No notes provided.'}
+
+## Remove this share
+
+Secret gists do not expire. To delete: open this gist on GitHub and use **Delete** (trash icon).
 `;
 }
 
