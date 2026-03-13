@@ -103,7 +103,7 @@ async function fetchWithTimeout(
         const res = await fetch(url, {
             ...options,
             signal: controller.signal,
-            headers: options.headers as HeadersInit,
+            headers: options.headers,
         });
         return res;
     } catch {

@@ -13,6 +13,19 @@
 - Error classification identifies critical/transient/bug errors
 - Copy with source includes surrounding log lines
 
+### Central error-related modules
+
+A single front-door **`src/modules/analysis/errors.ts`** re-exports extension-side error types and helpers so the AI feature (and future features) have one place to import from:
+
+| Re-exported from | Exports |
+|------------------|--------|
+| **level-classifier.ts** | `SeverityLevel`, `classifyLevel()`, `isActionableLevel()`, `isAnrLine()` |
+| **error-fingerprint.ts** | `CrashCategory`, `FingerprintEntry`, `classifyCategory()`, `normalizeLine()`, `hashFingerprint()`, `scanForFingerprints()` |
+| **error-rate-alert.ts** | `isErrorLine()`, `isWarningLine()` |
+| **error-status-store.ts** | `ErrorStatus` type only (persistence API stays in store) |
+
+Other error-related code (not in this barrel): **viewer-error-classification.ts** (client-side JS: transient/critical/bug); **error-status-store.ts** (open/closed/muted persistence by hash). AI context gathering should import “is this an error line?” and “what kind of error?” from **`modules/analysis/errors`**.
+
 ## What's missing
 
 1. **AI prompt construction**: Build effective prompt from log context
@@ -232,7 +245,8 @@ async function showAIExplanation(
 
 | File | Change |
 |------|--------|
-| `src/modules/ai/ai-context-builder.ts` | New: gather context for AI |
+| `src/modules/analysis/errors.ts` | New: central re-exports for error types/classification (prerequisite) |
+| `src/modules/ai/ai-context-builder.ts` | New: gather context for AI; import from `modules/analysis/errors` |
 | `src/modules/ai/ai-prompt.ts` | New: construct prompts |
 | `src/modules/ai/ai-explain.ts` | New: call VS Code LM API |
 | `src/modules/ai/ai-cache.ts` | New: explanation caching |
@@ -247,8 +261,11 @@ async function showAIExplanation(
 
 ## Phases
 
+### Phase 0: Central errors front-door (prerequisite)
+- Add `src/modules/analysis/errors.ts` re-exporting from level-classifier, error-fingerprint, error-rate-alert. No behavior change; existing callers can migrate to this import over time.
+
 ### Phase 1: Core integration (MVP)
-- Context gathering (error line + surrounding lines)
+- Context gathering (error line + surrounding lines); use `classifyLevel` / `isErrorLine` / `classifyCategory` from `modules/analysis/errors`
 - Basic prompt construction
 - VS Code LM API integration
 - Simple notification with response

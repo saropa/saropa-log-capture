@@ -19,7 +19,7 @@ The cross-session analysis system is **operational** across 28 files (14 modules
 | **Documentation scan** | [docs-scanner.ts](src/modules/docs-scanner.ts) (79 lines) | Searches project markdown files for references to analysis tokens |
 | **Import extraction** | [import-extractor.ts](src/modules/import-extractor.ts) (75 lines) | Parses imports from the crashing source file (Dart, TS, JS, Python, Go, Rust, Java, Kotlin, Swift, C/C++, C#, Ruby, PHP) |
 | **Symbol resolution** | [symbol-resolver.ts](src/modules/symbol-resolver.ts) (74 lines) | Resolves class/method names via VS Code's workspace symbol provider |
-| **Error fingerprinting** | [error-fingerprint.ts](src/modules/error-fingerprint.ts) (79 lines) | FNV-1a hash after normalizing timestamps, IDs, UUIDs, hex addresses, paths |
+| **Error fingerprinting** | [error-fingerprint.ts](src/modules/analysis/error-fingerprint.ts) (79 lines) | FNV-1a hash after normalizing timestamps, IDs, UUIDs, hex addresses, paths |
 | **Cross-session aggregation** | [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) (116 lines) | Reads all `.meta.json` sidecars to build hot-file rankings + recurring error groups |
 | **Correlation tags** | [correlation-scanner.ts](src/modules/correlation-scanner.ts) (43 lines) | Extracts `file:` and `error:` tags from log content for session metadata |
 | **Bug report generation** | [bug-report-collector.ts](src/modules/bug-report-collector.ts) + [bug-report-formatter.ts](src/modules/bug-report-formatter.ts) | One-click markdown report with error, stack trace, context, environment, dev environment, source code, git history, imports, docs, symbols, cross-session match |
@@ -101,7 +101,7 @@ analysis-panel.ts (orchestrator, 300 lines)
 ├── import-extractor.ts (dependency parsing)
 ├── symbol-resolver.ts (VS Code symbol API)
 ├── log-search.ts (cross-session file search)
-├── error-fingerprint.ts (line normalization + hashing)
+├── analysis/error-fingerprint.ts (line normalization + hashing)
 ├── cross-session-aggregator.ts (recurring error lookup)
 ├── stack-parser.ts (frame detection + date extraction)
 ├── analysis-relevance.ts (scoring + correlation)
@@ -114,7 +114,7 @@ analysis-panel.ts (orchestrator, 300 lines)
 
 bug-report-collector.ts (orchestrator, 153 lines)
 ├── source-linker.ts
-├── error-fingerprint.ts
+├── analysis/error-fingerprint.ts
 ├── stack-parser.ts
 ├── workspace-analyzer.ts
 ├── git-blame.ts
@@ -481,7 +481,7 @@ Fix Velocity: 3 errors resolved this week, 1 persisting
 | [workspace-analyzer.ts](src/modules/workspace-analyzer.ts) | 133 | Source lookup, git history, annotations |
 | [git-blame.ts](src/modules/git-blame.ts) | ~50 | `git blame` for a specific line |
 | [git-diff.ts](src/modules/git-diff.ts) | 52 | Commit diff summary (`git show --stat`) |
-| [error-fingerprint.ts](src/modules/error-fingerprint.ts) | 79 | Normalize + FNV-1a hash for error grouping |
+| [error-fingerprint.ts](src/modules/analysis/error-fingerprint.ts) | 79 | Normalize + FNV-1a hash for error grouping |
 | [cross-session-aggregator.ts](src/modules/cross-session-aggregator.ts) | 116 | Hot files + recurring errors from metadata |
 | [correlation-scanner.ts](src/modules/correlation-scanner.ts) | 43 | Extract `file:` and `error:` tags |
 | [stack-parser.ts](src/modules/stack-parser.ts) | 136 | Frame classification, stack detection, date extraction |
