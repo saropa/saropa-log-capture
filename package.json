@@ -1,6 +1,12 @@
 {
   "activationEvents": [
-    "onDebugAdapterProtocolTracker"
+    "onDebugAdapterProtocolTracker",
+    "onCommand:saropaLogCapture.setBuildCiGithubToken",
+    "onCommand:saropaLogCapture.clearBuildCiGithubToken",
+    "onCommand:saropaLogCapture.setBuildCiAzurePat",
+    "onCommand:saropaLogCapture.clearBuildCiAzurePat",
+    "onCommand:saropaLogCapture.setBuildCiGitlabToken",
+    "onCommand:saropaLogCapture.clearBuildCiGitlabToken"
   ],
   "categories": [
     "Debuggers",
@@ -205,6 +211,36 @@
         "title": "%command.setLokiApiKey.title%"
       },
       {
+        "command": "saropaLogCapture.setBuildCiGithubToken",
+        "icon": "$(key)",
+        "title": "Saropa: Set Build/CI GitHub Token"
+      },
+      {
+        "command": "saropaLogCapture.clearBuildCiGithubToken",
+        "icon": "$(clear-all)",
+        "title": "Saropa: Clear Build/CI GitHub Token"
+      },
+      {
+        "command": "saropaLogCapture.setBuildCiAzurePat",
+        "icon": "$(key)",
+        "title": "Saropa: Set Build/CI Azure PAT"
+      },
+      {
+        "command": "saropaLogCapture.clearBuildCiAzurePat",
+        "icon": "$(clear-all)",
+        "title": "Saropa: Clear Build/CI Azure PAT"
+      },
+      {
+        "command": "saropaLogCapture.setBuildCiGitlabToken",
+        "icon": "$(key)",
+        "title": "Saropa: Set Build/CI GitLab Token"
+      },
+      {
+        "command": "saropaLogCapture.clearBuildCiGitlabToken",
+        "icon": "$(clear-all)",
+        "title": "Saropa: Clear Build/CI GitLab Token"
+      },
+      {
         "command": "saropaLogCapture.importSlc",
         "icon": "$(file-directory)",
         "title": "%command.importSlc.title%"
@@ -278,6 +314,11 @@
         "command": "saropaLogCapture.exportInvestigation",
         "icon": "$(package)",
         "title": "%command.exportInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.shareInvestigation",
+        "icon": "$(link-external)",
+        "title": "%command.shareInvestigation.title%"
       },
       {
         "command": "saropaLogCapture.deleteInvestigation",
@@ -797,15 +838,31 @@
           "description": "%config.organizeFolders.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.share.gistPublic": {
+          "default": false,
+          "description": "Create public gists (visible to anyone) vs. secret gists (link-only access) when sharing investigations via GitHub Gist.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.share.includeNotes": {
+          "default": true,
+          "description": "Include investigation notes in shared gist README.",
+          "type": "boolean"
+        },
         "saropaLogCapture.integrations.adapters": {
           "default": ["packages", "performance"],
           "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": { "type": "string" },
           "type": "array"
         },
+        "saropaLogCapture.integrations.buildCi.source": {
+          "default": "file",
+          "description": "Build/CI data source: file (last-build.json), github (Actions API), azure (Azure DevOps), or gitlab (GitLab CI).",
+          "enum": ["file", "github", "azure", "gitlab"],
+          "type": "string"
+        },
         "saropaLogCapture.integrations.buildCi.buildInfoPath": {
           "default": ".saropa/last-build.json",
-          "description": "Path (relative to workspace) to last-build.json for build/CI integration.",
+          "description": "Path (relative to workspace) to last-build.json for build/CI integration (when source is file).",
           "type": "string"
         },
         "saropaLogCapture.integrations.buildCi.fileMaxAgeMinutes": {
@@ -814,6 +871,26 @@
           "minimum": 1,
           "maximum": 1440,
           "type": "number"
+        },
+        "saropaLogCapture.integrations.buildCi.azureOrg": {
+          "default": "",
+          "description": "Azure DevOps organization name (required when buildCi source is azure).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.buildCi.azureProject": {
+          "default": "",
+          "description": "Azure DevOps project name (required when buildCi source is azure).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.buildCi.gitlabProjectId": {
+          "default": "",
+          "description": "GitLab project ID, numeric or URL-encoded path (required when buildCi source is gitlab).",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.buildCi.gitlabBaseUrl": {
+          "default": "https://gitlab.com",
+          "description": "GitLab API base URL for self-hosted instances.",
+          "type": "string"
         },
         "saropaLogCapture.integrations.git.describeInHeader": {
           "default": true,

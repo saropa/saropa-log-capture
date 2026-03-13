@@ -16,6 +16,7 @@ import { SessionMetadataStore } from './session-metadata';
 import {
     getDefaultIntegrationRegistry,
     createIntegrationContext,
+    type MetaContribution,
 } from '../integrations';
 import { startTerminalCapture } from '../integrations/terminal-capture';
 import { collectDevEnvironment } from '../misc/environment-collector';
@@ -97,16 +98,18 @@ export async function initializeSession(
         .filter((r): r is ExclusionRule => r !== undefined);
     const autoTagger = new AutoTagger(config.autoTagRules);
 
-    // Integration registry: sync header contributions before start(); async runOnSessionStartAsync is fire-and-forget.
+    // Integration registry: sync header contributions before start(); async runOnSessionStartAsync merges header + meta when options provided.
     const integrationRegistry = getDefaultIntegrationRegistry();
-    const integrationContext = createIntegrationContext(sessionContext, config, outputChannel);
+    const integrationContext = createIntegrationContext(sessionContext, config, outputChannel, context);
     const { lines: extraHeaderLines, contributorIds: integrationContributorIds } =
         integrationRegistry.getHeaderContributions(integrationContext);
+
+    const pendingAsyncMeta: MetaContribution[] = [];
 
     try {
         await logSession.start(extraHeaderLines);
         outputChannel.appendLine(`Session started: ${logSession.fileUri.fsPath}`);
-        integrationRegistry.runOnSessionStartAsync(integrationContext);
+        integrationRegistry.runOnSessionStartAsync(integrationContext, { logSession, pendingAsyncMeta });
         if (config.integrationsAdapters?.includes('terminal')) {
             const termCfg = config.integrationsTerminal;
             startTerminalCapture({
