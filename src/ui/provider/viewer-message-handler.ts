@@ -18,6 +18,7 @@ import { showInvestigationPanel } from '../investigation/investigation-panel';
 import { buildAIContext } from '../../modules/ai/ai-context-builder';
 import { explainError } from '../../modules/ai/ai-explain';
 import { showAIExplanationPanel } from '../panels/ai-explain-panel';
+import { setViewerKeybinding, getViewerKeybindingsFromConfig } from '../viewer/viewer-keybindings';
 
 export interface ViewerMessageContext {
     readonly currentFileUri: vscode.Uri | undefined;
@@ -108,6 +109,26 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "exclusionAdded": case "addToExclusion": ctx.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
       case "exclusionRemoved": ctx.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
+      case "openKeybindings":
+        void vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", String(msg.search ?? "Saropa Log Capture"));
+        break;
+      case "startRecordViewerKey":
+        ctx.post({ type: 'viewerKeybindingRecordMode', active: true, actionId: String(msg.actionId ?? '') });
+        break;
+      case "viewerKeybindingRecorded": {
+        const actionId = String(msg.actionId ?? '');
+        const key = String(msg.key ?? '').trim();
+        if (actionId && key) {
+          void setViewerKeybinding(actionId, key).then(() => {
+            const keyToAction = getViewerKeybindingsFromConfig();
+            ctx.post({ type: 'setViewerKeybindings', keyToAction });
+            ctx.post({ type: 'viewerKeybindingRecordMode', active: false });
+          });
+        } else {
+          ctx.post({ type: 'viewerKeybindingRecordMode', active: false });
+        }
+        break;
+      }
       case "searchCodebase": ctx.onSearchCodebase?.(String(msg.text ?? "")); break;
       case "searchSessions": ctx.onSearchSessions?.(String(msg.text ?? "")); break;
       case "analyzeLine": ctx.onAnalyzeLine?.(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, -1), ctx.currentFileUri); break;

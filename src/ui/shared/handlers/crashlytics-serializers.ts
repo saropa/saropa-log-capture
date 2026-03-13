@@ -6,6 +6,11 @@
 
 import { escapeHtml, formatElapsedLabel } from '../../../modules/capture/ansi';
 import type { FirebaseContext } from '../../../modules/crashlytics/firebase-crashlytics';
+import {
+    CRASHLYTICS_TROUBLESHOOTING_TABLE,
+    getTroubleshootingRowsForStep,
+} from '../../../modules/crashlytics/crashlytics-troubleshooting';
+import { getCrashlyticsHelpSections } from '../../../modules/crashlytics/crashlytics-help-content';
 
 export interface SerializeContextExtras {
     /** OS-specific install one-liner for gcloud (e.g. winget on Windows). */
@@ -45,9 +50,21 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
     const refreshNote = ctx.queriedAt ? formatElapsedLabel(ctx.queriedAt) : '';
     const diagnosticCopyText = buildDiagnosticCopyText(ctx);
     const setupChecklist = ctx.setupChecklist;
+    const setupStep = ctx.setupStep;
+    // In-panel troubleshooting and help (no external doc): table + step-specific rows + full help sections.
+    const troubleshootingTable = CRASHLYTICS_TROUBLESHOOTING_TABLE.map(r => ({
+        symptom: r.symptom,
+        cause: r.cause,
+        fix: r.fix,
+    }));
+    const troubleshootingForStep =
+        setupStep && !ctx.available
+            ? getTroubleshootingRowsForStep(setupStep).map(r => ({ symptom: r.symptom, cause: r.cause, fix: r.fix }))
+            : [];
+
     return {
         available: ctx.available,
-        setupStep: ctx.setupStep,
+        setupStep,
         setupChecklist: setupChecklist ? { gcloud: setupChecklist.gcloud, token: setupChecklist.token, config: setupChecklist.config } : undefined,
         issues: ctx.issues.map(i => ({
             id: i.id, title: i.title, subtitle: i.subtitle,
@@ -61,6 +78,9 @@ export function serializeContext(ctx: FirebaseContext, extras?: SerializeContext
         refreshNote,
         gcloudInstallCommand: extras?.gcloudInstallCommand ?? '',
         workspaceGoogleServicesPath: extras?.workspaceGoogleServicesPath ?? '',
+        troubleshootingTable,
+        troubleshootingForStep,
+        helpSections: getCrashlyticsHelpSections().map(s => ({ title: s.title, html: s.html })),
     };
 }
 
