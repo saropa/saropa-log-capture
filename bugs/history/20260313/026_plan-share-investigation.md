@@ -8,7 +8,7 @@ Share Investigation is implemented: users can share an investigation via **GitHu
 
 ## Follow-ups (done)
 
-- **Gist expiration:** Secret gists do not expire. Added `docs/SHARE_INVESTIGATION.md` (how to delete old gists); Gist README and Share menu description mention deleting from GitHub when no longer needed.
+- **Gist expiration:** Secret gists do not expire. README and in-product (Gist README, Share menu description) explain how to delete old gists from GitHub.
 - **LAN + import:** `importFromUrl` now allows same-network `http` (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x) so teammates can paste a LAN URL (e.g. from Share on LAN) into Import from URL.
 - **Copy deep link (local file):** New Share option exports to .slc (save dialog) and copies `vscode://…/import?url=file:///…`; import supports `file://` URLs.
 
