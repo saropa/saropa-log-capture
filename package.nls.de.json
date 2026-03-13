@@ -118,6 +118,7 @@
   "config.splitRules.description": "Regeln zum automatischen Aufteilen von Protokolldateien. Alle Werte 0 deaktivieren die Regel.",
   "config.suppressTransientErrors.description": "Erwartete vorübergehende Fehler ausblenden (TimeoutException, SocketException, ECONNREFUSED usw.). Gefilterte Zeilen können bei Bedarf erweitert werden.",
   "config.treeRefreshInterval.description": "Baumansicht-Aktualisierungsintervall in Sekunden während der aktiven Aufnahme. 0 = adaptiv (3s für kleine Dateien, 10s für mittlere, 30s für große).",
+  "config.diagnosticCapture.description": "Ereignisse der Capture-Pipeline (Session-Start, Ausgabe gepuffert/geschrieben) in den Ausgabekanal „Saropa Log Capture“ schreiben. Verwenden, wenn Protokolldateien leer sind.",
   "config.verboseDap.description": "Alle rohen DAP-Protokollnachrichten (Anfragen, Antworten, Ereignisse) in die Protokolldatei schreiben. Erzeugt viel Ausgabe — zur Fehlerbehebung bei Adapterkommunikationsproblemen verwenden.",
   "config.watchPatterns.description": "Schlüsselwörter, auf die in der Protokollausgabe geachtet werden soll. Jeder Eintrag hat ein Schlüsselwort (Zeichenkette oder /regex/) und einen Alarmtyp.",
 

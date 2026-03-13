@@ -118,6 +118,7 @@
   "config.splitRules.description": "로그 파일을 자동으로 분할하는 규칙. 모든 값이 0이면 해당 규칙이 비활성화됩니다.",
   "config.suppressTransientErrors.description": "예상되는 일시적 오류(TimeoutException, SocketException, ECONNREFUSED 등)를 숨깁니다. 필요한 경우 필터링된 줄을 확장할 수 있습니다.",
   "config.treeRefreshInterval.description": "활성 녹화 중 트리 뷰 새로고침 간격(초). 0 = 적응형(작은 파일은 3초, 중간은 10초, 큰 파일은 30초).",
+  "config.diagnosticCapture.description": "캡처 파이프라인 이벤트(세션 시작, 버퍼/쓰기 출력)를 Saropa Log Capture 출력 채널에 기록합니다. 로그 파일이 비어 있을 때 사용합니다.",
   "config.verboseDap.description": "모든 원시 DAP 프로토콜 메시지(요청, 응답, 이벤트)를 로그 파일에 기록합니다. 대용량 출력이 생성됩니다 — 어댑터 통신 문제를 디버깅하는 데 사용하세요.",
   "config.watchPatterns.description": "로그 출력에서 감시할 키워드. 각 항목에는 키워드(문자열 또는 /regex/)와 알림 유형이 있습니다.",
 
