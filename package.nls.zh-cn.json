@@ -151,7 +151,6 @@
 
   "view.logViewer.name": "日志查看器",
   "view.vitalsPanel.name": "Play Vitals",
-  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "开始使用日志捕获",

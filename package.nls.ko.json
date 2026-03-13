@@ -151,7 +151,6 @@
 
   "view.logViewer.name": "로그 뷰어",
   "view.vitalsPanel.name": "Play Vitals",
-  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "로그 캡처 시작하기",

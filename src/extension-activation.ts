@@ -77,9 +77,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     historyProvider.onDidChangeTreeData(async () => {
         const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
         if (overrideUriStr) { return; }
-        const items = await historyProvider.getAllChildren();
-        const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
         const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'No workspace';
+        broadcaster.sendSessionListLoading(defaultLabel);
+        const items = await historyProvider.getAllChildren();
+        const payload = await buildSessionListPayload(items, historyProvider.getActiveUri());
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
 
