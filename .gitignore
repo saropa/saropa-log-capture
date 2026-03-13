@@ -20,3 +20,6 @@ AGENTS.md
 agent-transcripts/
 *.cursorrules
 .cursorrules
+
+# Saropa Log Capture (index & cache)
+.saropa/
