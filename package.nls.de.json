@@ -39,6 +39,7 @@
   "command.exportJson.title": "Als JSON exportieren",
   "command.exportJsonl.title": "Als JSONL exportieren",
   "command.exportSlc.title": "Als .slc-Bundle exportieren",
+  "command.exportInsightsSummary.title": "Insights-Zusammenfassung exportieren",
   "command.exportToLoki.title": "Export zu Loki",
   "command.setLokiApiKey.title": "Saropa Log Capture: Loki-API-Schlüssel setzen",
   "command.importSlc.title": ".slc-Bundle importieren",

@@ -34,6 +34,14 @@ body {
     padding: 4px 10px; cursor: pointer; font-size: 11px;
 }
 .refresh-btn:hover { background: var(--vscode-button-hoverBackground); }
+.export-summary-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 3px;
+    padding: 4px 10px; cursor: pointer; font-size: 11px;
+}
+.export-summary-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
 .content { padding: 8px 16px; }
 .section { margin-bottom: 12px; }
 .section-header {

@@ -5,6 +5,9 @@ export function getInsightsPanelScript(): string {
     document.getElementById('refresh-btn')?.addEventListener('click', () => {
         vscode.postMessage({ type: 'refresh' });
     });
+    document.getElementById('export-summary-btn')?.addEventListener('click', () => {
+        vscode.postMessage({ type: 'exportInsightsSummary' });
+    });
     document.getElementById('time-range')?.addEventListener('change', (e) => {
         vscode.postMessage({ type: 'setTimeRange', range: e.target.value });
     });
