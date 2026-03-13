@@ -7,6 +7,10 @@ import { t } from './l10n';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import { exportInvestigationToSlc, exportInvestigationToBuffer } from './modules/export/slc-bundle';
 import { shareViaGist } from './modules/share/gist-uploader';
+import { getShareHistory, addToShareHistory, clearShareHistory } from './modules/share/share-history';
+import { startShareServer } from './modules/share/lan-server';
+import { uploadBufferToPutUrl } from './modules/share/upload-url';
+import { saveToSharedFolder } from './modules/share/shared-folder';
 import { showInvestigationPanel, disposeInvestigationPanel, refreshInvestigationPanelIfOpen } from './ui/investigation/investigation-panel';
 import type { Investigation } from './modules/investigation/investigation-types';
 import { isSplitGroup, type SessionMetadata, type TreeItem } from './ui/session/session-history-grouping';
@@ -289,17 +293,132 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 return;
             }
 
-            const choice = await vscode.window.showQuickPick(
-                [
-                    { label: '$(github) Share via GitHub Gist', value: 'gist' },
-                    { label: '$(file-zip) Export as .slc file', value: 'file' },
-                ],
-                { title: t('title.shareInvestigation') },
-            );
+            const recent = await getShareHistory(context);
+            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+            const uploadPutUrl = (cfg.get<string>('share.uploadPutUrl') ?? '').trim();
+            const sharedFolderPath = (cfg.get<string>('share.sharedFolderPath') ?? '').trim();
+
+            const items: { label: string; value: string; description?: string }[] = [
+                { label: '$(github) Share via GitHub Gist', value: 'gist', description: t('share.gistDescription') },
+                { label: '$(file-zip) Export as .slc file', value: 'file' },
+                { label: '$(link) ' + t('action.copyDeepLinkLocal'), value: 'copy-deep-link-local' },
+                { label: '$(globe) ' + t('action.shareOnLan'), value: 'lan' },
+            ];
+            if (uploadPutUrl) {
+                items.push({ label: '$(cloud-upload) ' + t('action.uploadToUrl'), value: 'upload-url' });
+            }
+            if (sharedFolderPath) {
+                items.push({ label: '$(folder-opened) ' + t('action.saveToSharedFolder'), value: 'shared-folder' });
+            }
+            if (recent.length > 0) {
+                items.push({ label: '$(history) ' + t('action.recentShares'), value: 'recent' });
+                items.push({ label: '$(trash) ' + t('action.clearShareHistory'), value: 'clear-history' });
+            }
+
+            const choice = await vscode.window.showQuickPick(items, { title: t('title.shareInvestigation') });
             if (!choice) { return; }
+
+            if (choice.value === 'clear-history') {
+                await clearShareHistory(context);
+                vscode.window.showInformationMessage(t('msg.shareHistoryCleared'));
+                return;
+            }
+
+            if (choice.value === 'recent') {
+                const picked = await vscode.window.showQuickPick(
+                    recent.map((e) => ({
+                        label: e.investigationName,
+                        description: new Date(e.sharedAt).toLocaleString(),
+                        value: e.deepLinkUrl,
+                        gistUrl: e.gistUrl,
+                    })),
+                    { title: t('title.recentShares'), matchOnDescription: true },
+                );
+                if (picked) {
+                    await vscode.env.clipboard.writeText(picked.value);
+                    vscode.window.showInformationMessage(t('msg.deepLinkCopied', ''));
+                }
+                return;
+            }
 
             if (choice.value === 'file') {
                 await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
+                return;
+            }
+
+            if (choice.value === 'copy-deep-link-local') {
+                try {
+                    const outUri = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.exportInvestigation') },
+                        () => exportInvestigationToSlc(investigation, folder.uri),
+                    );
+                    if (outUri) {
+                        const deepLink = `vscode://saropa.saropa-log-capture/import?url=${encodeURIComponent(outUri.toString())}`;
+                        await vscode.env.clipboard.writeText(deepLink);
+                        vscode.window.showInformationMessage(t('msg.deepLinkCopied', ''));
+                    }
+                } catch (e) {
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                }
+                return;
+            }
+
+            if (choice.value === 'lan') {
+                try {
+                    const { url, stop } = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
+                        () => startShareServer(investigation, folder.uri),
+                    );
+                    const action = await vscode.window.showInformationMessage(
+                        t('msg.lanServerStarted', url),
+                        t('action.copyLink'),
+                        t('action.stopServer'),
+                    );
+                    if (action === t('action.copyLink')) {
+                        await vscode.env.clipboard.writeText(url);
+                        vscode.window.showInformationMessage(t('msg.deepLinkCopied', ''));
+                    } else if (action === t('action.stopServer')) {
+                        stop();
+                    }
+                } catch (e) {
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                }
+                return;
+            }
+
+            if (choice.value === 'upload-url') {
+                if (!uploadPutUrl) {
+                    vscode.window.showWarningMessage(t('msg.uploadUrlNotConfigured'));
+                    return;
+                }
+                try {
+                    const buffer = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
+                        () => exportInvestigationToBuffer(investigation, folder.uri),
+                    );
+                    const resultUrl = await uploadBufferToPutUrl(buffer, uploadPutUrl);
+                    await vscode.env.clipboard.writeText(resultUrl);
+                    vscode.window.showInformationMessage(t('msg.uploadedToUrl'));
+                } catch (e) {
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                }
+                return;
+            }
+
+            if (choice.value === 'shared-folder') {
+                if (!sharedFolderPath) {
+                    vscode.window.showWarningMessage(t('msg.sharedFolderNotConfigured'));
+                    return;
+                }
+                try {
+                    const fileUri = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
+                        () => saveToSharedFolder(investigation, folder.uri, sharedFolderPath),
+                    );
+                    vscode.window.showInformationMessage(t('msg.savedToSharedFolder') + ' ' + fileUri.fsPath);
+                } catch (e) {
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                }
                 return;
             }
 
@@ -324,6 +443,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                         { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
                         () => shareViaGist(investigation, folder.uri, context, buffer),
                     );
+                    await addToShareHistory(context, result, investigation.name);
                     const action = await vscode.window.showInformationMessage(
                         t('msg.investigationShared'),
                         t('action.copyLink'),
@@ -339,6 +459,11 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                     vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
                 }
             }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.clearShareHistory', async () => {
+            await clearShareHistory(context);
+            vscode.window.showInformationMessage(t('msg.shareHistoryCleared'));
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.newInvestigationFromSessions', async () => {
