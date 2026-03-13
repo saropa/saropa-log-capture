@@ -20,6 +20,16 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Central errors module.** New `src/modules/analysis/errors.ts` re-exports error types and helpers from level-classifier, error-fingerprint, error-rate-alert, and the ErrorStatus type from error-status-store. Provides a single import path for AI explain-error and other features that need “is this an error line?” and “what kind of error?”.
+
+### Fixed
+
+• **Viewer load: TypeScript and lint.** Restructured performance-data block in `log-viewer-provider-load.ts` so the try/catch parses correctly (no return inside try). Replaced `!=` with `!==` for eqeqeq. GitHub auth session check in extension activation now uses `vscode.authentication.getSession(..., { createIfNone: false })` instead of removed `getSessions`. Build/CI fetch no longer casts headers to `HeadersInit` (type not in project lib). Docs: `cross-session-analysis.md` paths for error-fingerprint updated to `src/modules/analysis/error-fingerprint.ts`.
+
+### Added
+
+• **Share Investigation.** Share an investigation via GitHub Gist or export as .slc file. From the Investigation panel click **Share** or run **Share Investigation** from the command palette: choose **Share via GitHub Gist** (requires GitHub sign-in; creates a secret gist and a `vscode://` deep link) or **Export as .slc file**. Recipients open the link in VS Code to import the investigation (read-only). Settings: `saropaLogCapture.share.gistPublic` (default false), `saropaLogCapture.share.includeNotes`. Import from URL is supported via `vscode://saropa.saropa-log-capture/import?url=...` or `?gist=...`. Large investigations (>50 MB) show a warning before upload.
+
 • **Build/CI: API sources (GitHub Actions, Azure DevOps, GitLab CI).** Build/CI integration can now use API-based sources instead of only a file. New setting `integrations.buildCi.source` (default `file`): `file` (existing last-build.json), `github`, `azure`, or `gitlab`. For GitHub, the extension calls the Actions API with the repo from git remote and current branch; for Azure/GitLab, set `azureOrg`/`azureProject` or `gitlabProjectId` (and optional `gitlabBaseUrl`). Tokens are stored in VS Code SecretStorage. Commands: **Saropa: Set Build/CI GitHub Token**, **Saropa: Set Build/CI Azure PAT**, **Saropa: Set Build/CI GitLab Token**, and matching Clear commands. API fetches run asynchronously after session start (10s timeout) and append build status and link to the log header and session meta when available.
 
 • **Options: master capture switch.** The Options panel (gear) now has a **Capture** section at the top with **Enable log capture**. When off, no log files are created during debug sessions (same as `saropaLogCapture.enabled` in Settings). The checkbox is synced on load and when toggled.
