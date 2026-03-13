@@ -5,7 +5,8 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { InvestigationStore } from './modules/investigation/investigation-store';
-import { exportInvestigationToSlc } from './modules/export/slc-bundle';
+import { exportInvestigationToSlc, exportInvestigationToBuffer } from './modules/export/slc-bundle';
+import { shareViaGist } from './modules/share/gist-uploader';
 import { showInvestigationPanel, disposeInvestigationPanel, refreshInvestigationPanelIfOpen } from './ui/investigation/investigation-panel';
 import type { Investigation } from './modules/investigation/investigation-types';
 import { isSplitGroup, type SessionMetadata, type TreeItem } from './ui/session/session-history-grouping';
@@ -17,7 +18,7 @@ export interface InvestigationCommandDeps {
 }
 
 export function registerInvestigationCommands(deps: InvestigationCommandDeps): vscode.Disposable[] {
-    const { investigationStore, historyProvider } = deps;
+    const { context, investigationStore, historyProvider } = deps;
 
     return [
         vscode.commands.registerCommand('saropaLogCapture.createInvestigation', async () => {
@@ -269,6 +270,74 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 }
             } catch (e) {
                 vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.shareInvestigation', async () => {
+            const investigation = await investigationStore.getActiveInvestigation();
+            if (!investigation) {
+                vscode.window.showWarningMessage(t('msg.noActiveInvestigation'));
+                return;
+            }
+            if (investigation.sources.length === 0) {
+                vscode.window.showWarningMessage(t('msg.noSourcesInInvestigation'));
+                return;
+            }
+            const folder = vscode.workspace.workspaceFolders?.[0];
+            if (!folder) {
+                vscode.window.showWarningMessage(t('msg.slcImportNoWorkspace'));
+                return;
+            }
+
+            const choice = await vscode.window.showQuickPick(
+                [
+                    { label: '$(github) Share via GitHub Gist', value: 'gist' },
+                    { label: '$(file-zip) Export as .slc file', value: 'file' },
+                ],
+                { title: t('title.shareInvestigation') },
+            );
+            if (!choice) { return; }
+
+            if (choice.value === 'file') {
+                await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
+                return;
+            }
+
+            if (choice.value === 'gist') {
+                try {
+                    const sizeLimitWarnMb = 50;
+                    const buffer = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
+                        () => exportInvestigationToBuffer(investigation, folder.uri),
+                    );
+                    const sizeMb = Math.round(buffer.length / (1024 * 1024));
+                    if (sizeMb > sizeLimitWarnMb) {
+                        const continueLabel = t('action.continue');
+                        const chosen = await vscode.window.showWarningMessage(
+                            t('msg.investigationTooLargeWarning', String(sizeMb)),
+                            continueLabel,
+                            t('action.cancel'),
+                        );
+                        if (chosen !== continueLabel) { return; }
+                    }
+                    const result = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
+                        () => shareViaGist(investigation, folder.uri, context, buffer),
+                    );
+                    const action = await vscode.window.showInformationMessage(
+                        t('msg.investigationShared'),
+                        t('action.copyLink'),
+                        t('action.openGist'),
+                    );
+                    if (action === t('action.copyLink')) {
+                        await vscode.env.clipboard.writeText(result.deepLinkUrl);
+                        vscode.window.showInformationMessage(t('msg.deepLinkCopied', ''));
+                    } else if (action === t('action.openGist')) {
+                        await vscode.env.openExternal(vscode.Uri.parse(result.gistUrl));
+                    }
+                } catch (e) {
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+                }
             }
         }),
 
