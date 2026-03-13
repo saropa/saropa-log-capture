@@ -197,18 +197,45 @@ export async function copyDeepLinkToClipboard(sessionFilename: string, line?: nu
     vscode.window.showInformationMessage(t('msg.deepLinkCopied', lineInfo));
 }
 
+/** Handlers for /import deep links (gist or url). Omit to only handle /open. */
+export interface ImportUriHandlers {
+    importFromGist: (gistId: string) => Promise<unknown>;
+    importFromUrl: (url: string) => Promise<unknown>;
+}
+
 /**
  * Create a URI handler instance for registration with VS Code.
  *
- * The returned handler is registered via `vscode.window.registerUriHandler()`
- * in extension.ts. VS Code then routes all vscode://saropa.saropa-log-capture/*
- * URIs to our handleUri method.
+ * The returned handler is registered via `vscode.window.registerUriHandler()`.
+ * Handles /open (session deep link) and optionally /import (gist or url) when handlers are provided.
  *
+ * @param importHandlers - When provided, /import?gist=... and /import?url=... are handled
  * @returns A UriHandler object to register with VS Code
  */
-export function createUriHandler(): vscode.UriHandler {
+export function createUriHandler(importHandlers?: ImportUriHandlers): vscode.UriHandler {
     return {
         handleUri: async (uri: vscode.Uri) => {
+            if (uri.path === '/import' && importHandlers) {
+                const params = new URLSearchParams(uri.query ?? '');
+                const gistId = params.get('gist');
+                if (gistId) {
+                    importHandlers.importFromGist(gistId).catch((err) => {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        vscode.window.showErrorMessage(t('msg.importFailed', msg));
+                    });
+                    return;
+                }
+                const url = params.get('url');
+                if (url) {
+                    importHandlers.importFromUrl(url).catch((err) => {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        vscode.window.showErrorMessage(t('msg.importFailed', msg));
+                    });
+                    return;
+                }
+                vscode.window.showErrorMessage(t('msg.importLinkMissingParams'));
+                return;
+            }
             await handleDeepLink(uri);
         },
     };
