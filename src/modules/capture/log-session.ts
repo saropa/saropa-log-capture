@@ -182,6 +182,19 @@ export class LogSession {
         this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
     }
 
+    /**
+     * Append extra header lines (e.g. from async build/CI). Call only while recording.
+     * Does not increment _lineCount; used for late-arriving integration header data.
+     */
+    appendHeaderLines(lines: readonly string[]): void {
+        if (this._state !== 'recording' || !this.writeStream || this.splitting || lines.length === 0) {
+            return;
+        }
+        const block = '\n' + lines.join('\n') + '\n';
+        this.writeStream.write(block);
+        this._bytesWritten += Buffer.byteLength(block, 'utf-8');
+    }
+
     /** Manually trigger a file split. */
     async splitNow(): Promise<void> {
         if (this._state === 'stopped' || !this.writeStream) {
