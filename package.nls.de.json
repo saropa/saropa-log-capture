@@ -56,6 +56,7 @@
   "command.removeFromInvestigation.title": "Aus Untersuchung entfernen",
   "command.exportInvestigation.title": "Untersuchung als .slc exportieren",
   "command.shareInvestigation.title": "Untersuchung teilen",
+  "command.clearShareHistory.title": "Freigabe-Verlauf löschen",
   "command.deleteInvestigation.title": "Untersuchung löschen",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
@@ -93,6 +94,7 @@
   "config.firebase.appId.description": "Firebase-App-ID für Crashlytics-Abfragen (wird automatisch aus google-services.json erkannt, wenn leer).",
   "config.firebase.packageName.description": "Android-Paketname (z. B. com.example.myapp). Wird automatisch aus google-services.json, AndroidManifest.xml oder pubspec.yaml erkannt, wenn leer.",
   "config.firebase.projectId.description": "Firebase-Projekt-ID für Crashlytics-Abfragen (wird automatisch aus google-services.json erkannt, wenn leer).",
+  "config.firebase.serviceAccountKeyPath.description": "Path to a Google Cloud service account JSON key file (absolute or relative to workspace root). When set, used instead of gcloud for Crashlytics API access. Useful when gcloud is not available (e.g. CI, locked-down machines). Do not commit the key file to the repo.",
   "config.firebase.timeRange.description": "Zeitfenster für Crashlytics-Problemabfragen.",
   "config.firebase.refreshInterval.description": "Automatisches Aktualisierungsintervall (Sekunden) für das Crashlytics-Seitenleisten-Panel. 0 zum Deaktivieren der automatischen Aktualisierung.",
   "config.firebase.versionFilter.description": "Crashlytics-Ergebnisse auf eine bestimmte App-Version filtern. Leer lassen, um automatisch aus pubspec.yaml oder build.gradle zu erkennen.",

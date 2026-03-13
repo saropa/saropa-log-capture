@@ -56,6 +56,7 @@
   "command.removeFromInvestigation.title": "从调查中移除",
   "command.exportInvestigation.title": "将调查导出为 .slc",
   "command.shareInvestigation.title": "共享调查",
+  "command.clearShareHistory.title": "清除共享历史",
   "command.deleteInvestigation.title": "删除调查",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
@@ -93,6 +94,7 @@
   "config.firebase.appId.description": "用于 Crashlytics 查询的 Firebase 应用 ID（若为空，则从 google-services.json 自动检测）。",
   "config.firebase.packageName.description": "Android 包名（例如 com.example.myapp）。若为空，则从 google-services.json、AndroidManifest.xml 或 pubspec.yaml 自动检测。",
   "config.firebase.projectId.description": "用于 Crashlytics 查询的 Firebase 项目 ID（若为空，则从 google-services.json 自动检测）。",
+  "config.firebase.serviceAccountKeyPath.description": "Path to a Google Cloud service account JSON key file (absolute or relative to workspace root). When set, used instead of gcloud for Crashlytics API access. Useful when gcloud is not available (e.g. CI, locked-down machines). Do not commit the key file to the repo.",
   "config.firebase.timeRange.description": "Crashlytics 问题查询的时间窗口。",
   "config.firebase.refreshInterval.description": "Crashlytics 侧边栏面板的自动刷新间隔（秒）。0 表示禁用自动刷新。",
   "config.firebase.versionFilter.description": "将 Crashlytics 结果筛选为特定应用版本。若为空，则从 pubspec.yaml 或 build.gradle 自动检测。",
