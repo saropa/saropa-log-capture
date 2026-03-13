@@ -71,8 +71,11 @@ function extractContext(plainText) {
     }
     return null;
 }
+/** True if line has no content or only whitespace (spaces, tabs, Unicode whitespace). */
 function isLineContentBlank(item) {
-    return !item || !item.html || stripTags(item.html).trim() === '';
+    if (!item || !item.html) return true;
+    var text = stripTags(item.html);
+    return /^\\s*$/.test(text);
 }
 function calcItemHeight(item) {
     if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.userHidden) return 0;
