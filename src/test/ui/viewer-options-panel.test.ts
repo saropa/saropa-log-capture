@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { getIntegrationsPanelHtml } from '../../ui/viewer-panels/viewer-integrations-panel-html';
+import { getKeyboardShortcutsViewHtml } from '../../ui/viewer-panels/viewer-keyboard-shortcuts-html';
 import { getOptionsPanelHtml, getOptionsPanelScript } from '../../ui/viewer-panels/viewer-options-panel';
 
 suite('ViewerOptionsPanel', () => {
@@ -27,6 +28,14 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('id="integrations-back"'));
             assert.ok(html.includes('id="integrations-section"'));
         });
+
+        test('should include Keyboard shortcuts button and shortcuts view', () => {
+            const html = getOptionsPanelHtml();
+            assert.ok(html.includes('id="options-open-shortcuts"'));
+            assert.ok(html.includes('Keyboard shortcuts…'));
+            assert.ok(html.includes('id="shortcuts-view"'));
+            assert.ok(html.includes('id="shortcuts-back"'));
+        });
     });
 
     suite('getIntegrationsPanelHtml (Integrations screen)', () => {
@@ -44,6 +53,18 @@ suite('ViewerOptionsPanel', () => {
             const html = getIntegrationsPanelHtml();
             assert.ok(html.includes('data-adapter-id="packages"'));
             assert.ok(html.includes('data-adapter-id="git"'));
+        });
+    });
+
+    suite('getKeyboardShortcutsViewHtml (Keyboard shortcuts screen)', () => {
+        test('should return shortcuts view with back button and power shortcuts table', () => {
+            const html = getKeyboardShortcutsViewHtml();
+            assert.ok(html.includes('id="shortcuts-view"'));
+            assert.ok(html.includes('id="shortcuts-back"'));
+            assert.ok(html.includes('Keyboard shortcuts'));
+            assert.ok(html.includes('Power shortcuts (panel viewer)'));
+            assert.ok(html.includes('Ctrl+F'));
+            assert.ok(html.includes('Key commands (Command Palette)'));
         });
     });
 
@@ -68,6 +89,13 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('closeIntegrationsView'));
             assert.ok(script.includes('integrationsViewOpen'));
             assert.ok(script.includes('syncIntegrationsUi'));
+        });
+
+        test('should define Keyboard shortcuts view switch (open/back)', () => {
+            const script = getOptionsPanelScript();
+            assert.ok(script.includes('openShortcutsView'));
+            assert.ok(script.includes('closeShortcutsView'));
+            assert.ok(script.includes('shortcutsViewOpen'));
         });
     });
 });
