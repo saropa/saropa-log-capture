@@ -163,6 +163,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     verboseDap: ensureBoolean(cfg.get("verboseDap"), false),
+    diagnosticCapture: ensureBoolean(cfg.get("diagnosticCapture"), false),
     fileTypes: ensureStringArray(cfg.get("fileTypes"), DEFAULT_FILE_TYPES),
     tailPatterns: ensureStringArray(cfg.get("tailPatterns"), ["**/*.log"]),
     docsScanDirs: ensureStringArray(cfg.get("docsScanDirs"), ["bugs", "docs"]),
@@ -175,7 +176,8 @@ export function getConfig(): SaropaLogCaptureConfig {
     projectIndex: getProjectIndexConfig(cfg),
     replay: {
       defaultMode: ensureEnum(cfg.get("replay.defaultMode"), ["timed", "fast"], "timed"),
-      defaultSpeed: clamp(cfg.get("replay.defaultSpeed"), 0.25, 10, 1),
+      /* 0.1–10 to match viewer speed dropdown (0.1x–10x). */
+      defaultSpeed: clamp(cfg.get("replay.defaultSpeed"), 0.1, 10, 1),
       minLineDelayMs: clamp(cfg.get("replay.minLineDelayMs"), 0, 1000, 10),
       maxDelayMs: clamp(cfg.get("replay.maxDelayMs"), 1000, 300000, 30000),
     },
