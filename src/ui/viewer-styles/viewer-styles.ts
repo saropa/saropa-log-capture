@@ -29,6 +29,8 @@ import { getContextPopoverStyles } from './viewer-styles-ui';
 
 export function getViewerStyles(): string {
     return /* css */ `
+/* Utility: hide element without inline style (CSP-friendly) */
+.u-hidden { display: none !important; }
 
 /* ===================================================================
    Reset & Root Layout

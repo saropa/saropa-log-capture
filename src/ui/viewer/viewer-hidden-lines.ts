@@ -136,10 +136,10 @@ function updateHiddenDisplay() {
     if (!hiddenCounterEl) return;
     var count = hiddenLineIndices.size;
     if (count === 0) {
-        hiddenCounterEl.style.display = 'none';
+        hiddenCounterEl.classList.add('u-hidden');
         hiddenCounterEl.classList.remove('peeking');
     } else {
-        hiddenCounterEl.style.display = 'inline-flex';
+        hiddenCounterEl.classList.remove('u-hidden');
         var label = count === 1 ? '1 hidden' : count + ' hidden';
         hiddenCounterEl.querySelector('.hidden-count-text').textContent = label;
         hiddenCounterEl.classList.toggle('peeking', isPeeking);

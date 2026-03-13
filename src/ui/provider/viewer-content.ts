@@ -109,9 +109,10 @@ export function getEffectiveViewerLines(maxLines: number, viewerMaxLines: number
 export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     const { nonce, extensionUri, version, cspSource, codiconCssUri } = opts;
     const fontSrc = cspSource ? `font-src ${cspSource};` : '';
+    /* style-src: nonce only (no unsafe-inline) for CSP strictness; visibility toggles use .u-hidden class */
     const styleSrc = cspSource
-        ? `style-src 'nonce-${nonce}' 'unsafe-inline' ${cspSource};`
-        : `style-src 'nonce-${nonce}' 'unsafe-inline';`;
+        ? `style-src 'nonce-${nonce}' ${cspSource};`
+        : `style-src 'nonce-${nonce}';`;
     const codiconLink = codiconCssUri ? `<link rel="stylesheet" href="${codiconCssUri}">` : '';
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -137,7 +138,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         ${getRunNavHtml()}
         </span>
         <span id="session-details-inline" class="session-details-inline" aria-label="Session context"></span>
-        <button type="button" id="session-perf-chip" class="session-perf-chip" style="display:none" title="Open Performance panel" aria-label="Performance data available">Performance</button>
+        <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Open Performance panel" aria-label="Performance data available">Performance</button>
     </div>
     </div>
     <div id="split-breadcrumb">
@@ -191,7 +192,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <span id="line-count"></span>
-        <span id="hidden-lines-counter" class="hidden-lines-counter" style="display: none;" role="button" title="Click to peek at hidden lines" aria-label="Hidden lines counter">
+        <span id="hidden-lines-counter" class="hidden-lines-counter u-hidden" role="button" title="Click to peek at hidden lines" aria-label="Hidden lines counter">
             <span class="codicon codicon-eye-closed"></span>
             <span class="hidden-count-text">0 hidden</span>
         </span>
