@@ -65,6 +65,11 @@ export function getInvestigationPanelScript(): string {
             return;
         }
         
+        if (target.closest('.open-slc-btn')) {
+            vscode.postMessage({ type: 'openSlc' });
+            return;
+        }
+        
         if (target.closest('.share-btn')) {
             vscode.postMessage({ type: 'share' });
             return;
