@@ -69,6 +69,11 @@
   "config.autoOpen.description": "调试会话结束时自动在编辑器中打开日志文件。",
   "config.autoTagRules.description": "根据内容模式自动为会话添加标签的规则。",
   "config.breakOnCritical.description": "当出现严重错误（NullPointerException、AssertionError、FATAL 等）时显示通知。",
+  "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
+  "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds).",
+  "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",
+  "config.correlation.types.description": "Correlation types to detect (e.g. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximum timeline events to scan for correlations (performance cap).",
   "config.captureAll.description": "若为 true，则捕获所有调试控制台输出，不受类别限制。若为 false，则仅捕获 'categories' 中列出的类别。排除项始终独立应用。",
   "config.categories.description": "要捕获的 DAP 输出类别。常见值：console、stdout、stderr、telemetry。",
   "config.contextViewLines.description": "上下文视图模态中显示的前后行数。",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "日志查看器",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "开始使用日志捕获",

@@ -25,8 +25,13 @@ window.addEventListener('message', function(event) {
             }
             break;
         }
+        case 'setCorrelationByLineIndex':
+            correlationByLineIndex = msg.correlationByLineIndex || {};
+            if (typeof renderViewport === 'function') renderViewport(true);
+            break;
         case 'clear':
             loadTruncatedInfo = null;
+            correlationByLineIndex = {};
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;

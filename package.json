@@ -356,6 +356,40 @@
           "description": "%config.breakOnCritical.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.correlation.enabled": {
+          "default": true,
+          "description": "%config.correlation.enabled.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.correlation.windowMs": {
+          "default": 2000,
+          "description": "%config.correlation.windowMs.description%",
+          "maximum": 10000,
+          "minimum": 500,
+          "type": "number"
+        },
+        "saropaLogCapture.correlation.minConfidence": {
+          "default": "medium",
+          "description": "%config.correlation.minConfidence.description%",
+          "enum": ["low", "medium", "high"],
+          "type": "string"
+        },
+        "saropaLogCapture.correlation.types": {
+          "default": ["error-http", "error-memory", "timeout-network"],
+          "description": "%config.correlation.types.description%",
+          "items": {
+            "enum": ["error-http", "error-memory", "error-cpu", "error-terminal", "timeout-network", "crash-resource", "perf-cascade"],
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "saropaLogCapture.correlation.maxEvents": {
+          "default": 10000,
+          "description": "%config.correlation.maxEvents.description%",
+          "maximum": 50000,
+          "minimum": 1000,
+          "type": "number"
+        },
         "saropaLogCapture.captureAll": {
           "default": true,
           "description": "%config.captureAll.description%",
@@ -1237,6 +1271,12 @@
           "name": "%view.vitalsPanel.name%",
           "type": "webview",
           "when": "config.saropaLogCapture.playConsole.enabled"
+        },
+        {
+          "icon": "$(link)",
+          "id": "saropaLogCapture.correlationPanel",
+          "name": "%view.correlationPanel.name%",
+          "type": "webview"
         }
       ]
     },
