@@ -62,6 +62,19 @@ body { background: var(--vscode-editor-background); color: var(--vscode-editor-f
 .correlation-badge:hover { text-decoration: underline; }
 .event-row.correlation-highlight { background: var(--vscode-list-hoverBackground); outline: 1px solid var(--vscode-focusBorder); }
 
+.timeline-correlations { padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border); background: var(--vscode-sideBar-background); flex-shrink: 0; }
+.timeline-correlations .cp-header { font-weight: 600; margin-bottom: 6px; font-size: 12px; }
+.timeline-correlations .cp-list { display: flex; flex-direction: column; gap: 8px; }
+.timeline-correlations .cp-item { border: 1px solid var(--vscode-panel-border); border-radius: 4px; padding: 6px 10px; }
+.timeline-correlations .cp-desc { font-size: 11px; margin-bottom: 4px; font-weight: 500; }
+.timeline-correlations .cp-events { margin: 0; padding-left: 18px; font-size: 11px; }
+.timeline-correlations .cp-events li { margin: 2px 0; list-style: disc; }
+.timeline-correlations .cp-jump { background: none; border: none; color: var(--vscode-textLink-foreground); cursor: pointer; padding: 0; margin-right: 4px; text-decoration: underline; font-size: inherit; transition: color 0.12s ease; }
+.timeline-correlations .cp-jump:hover { color: var(--vscode-textLink-activeForeground); }
+.timeline-correlations .cp-high { border-left: 3px solid var(--vscode-testing-iconPassed); }
+.timeline-correlations .cp-medium { border-left: 3px solid var(--vscode-editorWarning-foreground); }
+.timeline-correlations .cp-low { border-left: 3px solid var(--vscode-descriptionForeground); }
+
 .empty-state, .loading, .error-state { padding: 32px 16px; text-align: center; color: var(--vscode-disabledForeground); font-style: italic; }
 .loading::before { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--vscode-progressBar-background); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }

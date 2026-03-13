@@ -96,6 +96,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       lagMinutes: configNonNegative(cfg, 'integrations.crashDumps.lagMinutes', 5),
       maxFiles: clamp(cfg.get('integrations.crashDumps.maxFiles'), 1, 100, 20),
       includeInHeader: ensureBoolean(cfg.get('integrations.crashDumps.includeInHeader'), true),
+      copyToSession: ensureBoolean(cfg.get('integrations.crashDumps.copyToSession'), false),
     },
     integrationsWindowsEvents: {
       logs: ensureStringArray(cfg.get('integrations.windowsEvents.logs'), ['Application', 'System']),
@@ -120,6 +121,9 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       sampleDuringSession: ensureBoolean(cfg.get('integrations.performance.sampleDuringSession'), false),
       sampleIntervalSeconds: clamp(cfg.get('integrations.performance.sampleIntervalSeconds'), 1, 300, 5),
       includeInHeader: ensureBoolean(cfg.get('integrations.performance.includeInHeader'), true),
+      profilerOutputPath: typeof cfg.get('integrations.performance.profilerOutputPath') === 'string'
+        ? (cfg.get('integrations.performance.profilerOutputPath') as string).trim() : '',
+      processMetrics: ensureBoolean(cfg.get('integrations.performance.processMetrics'), false),
     },
     integrationsTerminal: {
       whichTerminals: ensureEnum(cfg.get('integrations.terminal.whichTerminals'), ['all', 'active', 'linked'], 'active'),

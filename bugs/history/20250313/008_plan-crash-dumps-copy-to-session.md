@@ -1,5 +1,9 @@
 # Plan: Crash Dumps — copyToSession
 
+**Status:** Implemented (2025-03-13). Added `integrations.crashDumps.copyToSession` (default `false`). When enabled, discovered dumps are copied into the session folder (500 MB cap, duplicate basenames get numeric suffix). Sidecar includes `copiedTo` per file and meta includes `copiedCount`. Uses `vscode.workspace.fs.copy()`; copy failures are logged and skipped.
+
+---
+
 **Adapter:** `crashDumps`
 **Provider:** `src/modules/integrations/providers/crash-dumps.ts`
 
