@@ -19,7 +19,7 @@ Future work only. Completed work is in [CHANGELOG.md](CHANGELOG.md) and `bugs/hi
 | Status | Items |
 |--------|--------|
 | **Partially implemented** | **Docker** ([007](bugs/007_plan-docker-inspect-and-until.md)): inspect/logs done; `includeInspect` sidecar and `--until` not. **Adapters** ([001](bugs/001_integration-specs-index.md)): database, externalLogs, http, browser, security — specs exist, full implementation not. |
-| **Not implemented** | AI Explain Error, Noise Learning, Share Investigation; integration specs [009](bugs/009_integration-spec-application-file-logs.md) [010](bugs/010_integration-spec-http-network.md) [011](bugs/011_integration-spec-database-query-logs.md) [012](bugs/012_integration-spec-browser-devtools.md) [013](bugs/013_integration-spec-security-audit-logs.md) (externalLogs, http, database, browser, security). |
+| **Not implemented** | AI Explain Error, Noise Learning; integration specs [009](bugs/009_integration-spec-application-file-logs.md) [010](bugs/010_integration-spec-http-network.md) [011](bugs/011_integration-spec-database-query-logs.md) [012](bugs/012_integration-spec-browser-devtools.md) [013](bugs/013_integration-spec-security-audit-logs.md) (externalLogs, http, database, browser, security). |
 
 ---
 
@@ -31,13 +31,13 @@ See [bugs/019_cohesion-plans-index.md](bugs/019_cohesion-plans-index.md) for coh
 |---|---------|-------------|------|--------|
 | 110 | AI Explain Error | Right-click → Explain with AI (VS Code Language Model API) | [023](bugs/023_plan-ai-explain-error.md) | 5-8 days |
 | 112 | Noise Learning | Learn from user dismissals, suggest filters | [025](bugs/025_plan-noise-learning.md) | 10-14 days |
-| 113 | Share Investigation | Generate shareable URL for investigation. *Depends on Investigation Mode.* | [026](bugs/026_plan-share-investigation.md) | 9-13 days |
+| 113 | Share Investigation | Generate shareable URL for investigation. *Depends on Investigation Mode.* | [026](bugs/history/20260313/026_plan-share-investigation.md) ✓ | Done |
 
 ### Implementation order
 
 1. **AI Explain Error** [023](bugs/023_plan-ai-explain-error.md) (5-8 days) — Right-click → Explain with AI; uses Context Popover data.
 2. **Noise Learning** [025](bugs/025_plan-noise-learning.md) (10-14 days) — Learn from dismissals, suggest exclusion rules.
-3. **Share Investigation** [026](bugs/026_plan-share-investigation.md) (9-13 days) — Shareable URL/gist; depends on Investigation Mode.
+3. **Share Investigation** [026](bugs/history/20260313/026_plan-share-investigation.md) — Done. Share via Gist or .slc; import from deep link.
 
 ---
 

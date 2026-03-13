@@ -65,6 +65,11 @@ export function getInvestigationPanelScript(): string {
             return;
         }
         
+        if (target.closest('.share-btn')) {
+            vscode.postMessage({ type: 'share' });
+            return;
+        }
+        
         if (target.closest('.export-btn')) {
             vscode.postMessage({ type: 'export' });
             return;
