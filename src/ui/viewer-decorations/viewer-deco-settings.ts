@@ -7,7 +7,8 @@
  *
  * State variables (decoShowDot, decoShowCounter, decoShowTimestamp,
  * decoLineColorMode) are globals shared with viewer-decorations.ts
- * via the concatenated script scope.
+ * via the concatenated script scope. Timestamp is also toggleable from
+ * the viewer context menu (Options → Timestamp).
  *
  * Auto-off rule: when all checkboxes are unchecked AND coloring is "none",
  * the master showDecorations toggle is automatically turned off.
@@ -121,6 +122,21 @@ function toggleDecoSettings() {
     } else {
         openDecoSettings();
     }
+}
+
+/**
+ * Toggle timestamp in the line decoration prefix.
+ * Callable from the context menu (Options → Timestamp).
+ * If turning on and decorations are off, turns decorations on so the timestamp is visible.
+ */
+function toggleTimestamp() {
+    decoShowTimestamp = !decoShowTimestamp;
+    if (decoShowTimestamp && !showDecorations) {
+        showDecorations = true;
+        if (typeof updateDecoButton === 'function') updateDecoButton();
+    }
+    syncDecoSettingsUi();
+    if (typeof renderViewport === 'function') renderViewport(true);
 }
 
 /** Sync checkbox/select UI elements from the current state variables. */

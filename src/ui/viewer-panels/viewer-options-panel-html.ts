@@ -165,6 +165,7 @@ export function getOptionsPanelHtml(): string {
         <div class="options-section">
             <h3 class="options-section-title">Actions</h3>
             <div class="options-row">
+                <button id="options-export-btn" class="options-action-btn" title="Export current view to HTML">Export current view</button>
                 <button id="reset-options-btn" class="options-action-btn" title="Reset display, layout, and audio to default">Reset to default</button>
                 <button id="reset-settings-btn" class="options-action-btn" title="Reset all extension settings to defaults">Reset extension settings</button>
             </div>
