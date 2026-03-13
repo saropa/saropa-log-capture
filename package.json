@@ -283,6 +283,11 @@
         "command": "saropaLogCapture.deleteInvestigation",
         "icon": "$(trash)",
         "title": "%command.deleteInvestigation.title%"
+      },
+      {
+        "command": "saropaLogCapture.newInvestigationFromSessions",
+        "icon": "$(folder-opened)",
+        "title": "%command.newInvestigationFromSessions.title%"
       }
     ],
     "configuration": {
@@ -799,6 +804,11 @@
         "saropaLogCapture.integrations.git.includeLineHistoryInMeta": {
           "default": false,
           "description": "At session end, capture git blame for file:line references in the log (e.g. stack traces) and store in session meta.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.git.commitLinks": {
+          "default": true,
+          "description": "Resolve commit hashes to web URLs (GitHub, GitLab, Bitbucket) in blame and line history.",
           "type": "boolean"
         },
         "saropaLogCapture.integrations.environment.includeEnvChecksum": {

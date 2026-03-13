@@ -22,7 +22,7 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `security` | [013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md) | Partial |
 
-**API:** [docs/integrations/INTEGRATION_API.md](../docs/integrations/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
+**API:** [docs/history/INTEGRATION_API.md](../docs/history/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 
 ---
 
