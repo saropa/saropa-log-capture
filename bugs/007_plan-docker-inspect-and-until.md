@@ -3,6 +3,30 @@
 **Adapter:** `docker`
 **Provider:** `src/modules/integrations/providers/docker-containers.ts`
 
+## Review (implementation status)
+
+**Implemented (current behavior):**
+
+- `docker-containers.ts`: resolves container ID (config or `docker ps` + pattern), runs `docker inspect`, parses `image` / `imageId` from first array element, runs `docker logs --since <epoch>s --tail <maxLogLines> <containerId>` when `captureLogs` is true, writes `baseFileName.container.log` sidecar and meta with `containerId`, `image`, `imageId`, `runtime`, `sidecar`.
+- Config: `IntegrationDockerConfig` has `runtime`, `containerId`, `containerNamePattern`, `captureLogs`, `maxLogLines`; `integration-config.ts` and `package.json` expose these (no `includeInspect`).
+- `IntegrationEndContext` already has `sessionEndTime` (used by crash-dumps, linux-logs, windows-events, security, etc.), so no API change needed for `--until`.
+
+**Not implemented:**
+
+1. **includeInspect**
+   - `IntegrationDockerConfig` does not have `includeInspect`.
+   - `integration-config.ts` does not read `integrations.docker.includeInspect`.
+   - `package.json` has no `saropaLogCapture.integrations.docker.includeInspect`.
+   - `docker-containers.ts` does not add a `.container-inspect.json` sidecar or set `inspectSidecar` in meta.
+
+2. **--until on logs**
+   - Logs command is still `docker logs --since <since>s --tail <n> <id>` (no `--until`).
+   - `sessionEndTime` is not destructured or used in the provider; end epoch and lag buffer are not applied.
+
+**Summary:** Plan is accurate; both sub-features remain to be implemented. No conflicting or duplicate logic found.
+
+---
+
 ## What exists
 
 At session end: resolves container ID, runs `docker inspect` (parses image/imageId only), runs `docker logs --since ... --tail N` when `captureLogs` is true. Writes container.log sidecar and meta.
