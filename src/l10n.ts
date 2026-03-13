@@ -295,6 +295,19 @@ const strings: Record<string, string> = {
     'title.noActiveInvestigation': 'No Active Investigation',
     'msg.noActiveInvestigationDesc': 'Create or open an investigation to pin sessions and files, search across sources, and export bundles.',
     'title.selectSourcesToPin': 'Select files to pin to investigation',
+
+    // Export Insights Summary
+    'insightsExport.scopeTitle': 'Export scope',
+    'insightsExport.scopePlaceholder': 'Choose which sessions to include',
+    'insightsExport.scope.currentSession': 'Current session',
+    'insightsExport.scope.investigation': 'Current investigation',
+    'insightsExport.scope.last7Days': 'Last 7 days',
+    'insightsExport.scope.all': 'All sessions',
+    'insightsExport.formatTitle': 'Export format',
+    'insightsExport.formatPlaceholder': 'CSV or JSON',
+    'insightsExport.saveTitle': 'Save Insights Summary',
+    'insightsExport.progress': 'Building insights summary…',
+    'insightsExport.noData': 'No session data for the selected scope. Open a log or add sessions to an investigation.',
 };
 
 /**
