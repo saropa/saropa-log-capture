@@ -57,6 +57,13 @@ async function loadMetadata(
     return meta;
 }
 
+/** True when session meta has performance integration data (snapshot or samples). */
+function hasPerformanceData(sidecar: SessionMeta): boolean {
+    const perf = sidecar.integrations?.performance as Record<string, unknown> | undefined;
+    if (!perf || typeof perf !== 'object') { return false; }
+    return (perf.snapshot != null && typeof perf.snapshot === 'object') || (typeof perf.samplesFile === 'string' && perf.samplesFile.length > 0);
+}
+
 /** Merge sidecar metadata into the parsed session metadata. */
 function applySidecar(
     target: LoadMetadataTarget,
@@ -69,6 +76,7 @@ function applySidecar(
     if (sidecar.autoTags?.length) { result = { ...result, autoTags: sidecar.autoTags }; }
     if (sidecar.correlationTags?.length) { result = { ...result, correlationTags: sidecar.correlationTags }; }
     if (sidecar.trashed) { result = { ...result, trashed: true }; }
+    if (hasPerformanceData(sidecar)) { result = { ...result, hasPerformanceData: true }; }
     if (ctx.hasCachedSev) {
         return { ...result, errorCount: sidecar.errorCount, warningCount: sidecar.warningCount, perfCount: sidecar.perfCount, anrCount: sidecar.anrCount, fwCount: sidecar.fwCount, infoCount: sidecar.infoCount };
     }

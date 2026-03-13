@@ -26,6 +26,15 @@ export function getOptionsPanelHtml(): string {
     </div>
 
     <div class="options-content">
+        <!-- Capture master switch -->
+        <div class="options-section">
+            <h3 class="options-section-title">Capture</h3>
+            <label class="options-row" title="Enable or disable automatic log capture during debug sessions (F5). When off, no log files are created.">
+                <input type="checkbox" id="opt-capture-enabled" />
+                <span>Enable log capture</span>
+            </label>
+        </div>
+
         <!-- Display Section -->
         <div class="options-section">
             <h3 class="options-section-title">Display</h3>
@@ -47,7 +56,7 @@ export function getOptionsPanelHtml(): string {
             </label>
             <label class="options-row" title="Show severity dot, line number, and timestamp before each line">
                 <input type="checkbox" id="opt-decorations" />
-                <span>Line prefix (&#x1F7E2; N T00:00:00)</span>
+                <span>Line decorations (&#x1F7E2; N T00:00:00)</span>
             </label>
             <div class="options-indent" id="decoration-options">
                 <label class="options-row" title="Show colored circle indicating log severity">

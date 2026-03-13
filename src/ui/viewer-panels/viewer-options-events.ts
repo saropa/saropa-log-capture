@@ -5,6 +5,13 @@ export function getOptionsEventHandlers(): string {
 var optionsCloseBtn = document.querySelector('#options-panel .options-close');
 if (optionsCloseBtn) optionsCloseBtn.addEventListener('click', closeOptionsPanel);
 
+// Capture master switch
+var optCaptureEnabled = document.getElementById('opt-capture-enabled');
+if (optCaptureEnabled) optCaptureEnabled.addEventListener('change', function(e) {
+    var enabled = !!e.target.checked;
+    vscodeApi.postMessage({ type: 'setCaptureEnabled', enabled: enabled });
+});
+
 // Options search filter
 var optionsSearchInput = document.getElementById('options-search');
 var optionsSearchClear = document.getElementById('options-search-clear');
