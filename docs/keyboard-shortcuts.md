@@ -1,6 +1,6 @@
 # Keyboard shortcuts — Saropa Log Capture
 
-Quick reference for the log viewer panel. For full commands, see the README.
+Quick reference for the log viewer panel. The same content is available in the viewer: **Options** (gear icon) → **Keyboard shortcuts…**.
 
 ## Power shortcuts (panel viewer)
 
@@ -33,11 +33,18 @@ Quick reference for the log viewer panel. For full commands, see the README.
 | Saropa Log Capture: Insert Marker | Insert a visual separator into the log |
 | Saropa Log Capture: Open Active Log File | Open the current log file in the editor |
 | Saropa Log Capture: Open Log Folder | Reveal the log directory in the file explorer |
+| Saropa Log Capture: Clear Current Session | Reset the line counter |
+| Saropa Log Capture: Delete Log File | Delete log files from the reports directory |
+| Saropa Log Capture: Split Log File Now | Manually split the current log file |
 | Saropa Log Capture: Search Log Files | Search across all log files with Quick Pick |
 | Saropa Log Capture: Apply Filter Preset | Apply a saved filter preset |
 | Saropa Log Capture: Save Current Filters as Preset | Save current filter state as a named preset |
+| Saropa Log Capture: Toggle Inline Log Decorations | Toggle inline log decorations in the editor |
 | Saropa Log Capture: Compare Sessions | Side-by-side diff of two log sessions |
 | Saropa Log Capture: Apply Session Template | Apply a saved session template |
 | Saropa Log Capture: Save Settings as Template | Save current settings as a reusable template |
+| Saropa Log Capture: Open Tailed File | Open a workspace log file and tail it live |
+| Saropa Log Capture: Import .slc Bundle | Import a `.slc` session bundle into the log dir |
+| Saropa Log Capture: Configure integrations | Quick Pick to enable/disable integration adapters |
 
 See [README — Key Commands](../README.md#key-commands) for the full list.

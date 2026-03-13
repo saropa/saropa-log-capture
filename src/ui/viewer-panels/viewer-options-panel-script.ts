@@ -74,8 +74,9 @@ function openOptionsPanel() {
 }
 
 function closeOptionsPanel() {
-    /* Return to Options view when closing so next open shows Options, not Integrations. */
+    /* Return to Options view when closing so next open shows Options, not Integrations/shortcuts. */
     if (integrationsViewOpen) closeIntegrationsView();
+    if (shortcutsViewOpen) closeShortcutsView();
     var panel = document.getElementById('options-panel');
     if (panel) panel.classList.remove('visible');
     optionsPanelOpen = false;
@@ -160,6 +161,7 @@ var integrationsViewOpen = false;
 
 /** Show the Integrations screen (hide options content). Syncs checkboxes from window.integrationAdapters. */
 function openIntegrationsView() {
+    if (shortcutsViewOpen) closeShortcutsView();
     var optionsContent = document.querySelector('#options-panel .options-content');
     var optionsSearch = document.querySelector('#options-panel .options-search-wrapper');
     var integrationsView = document.getElementById('integrations-view');
@@ -183,6 +185,35 @@ function closeIntegrationsView() {
     if (optionsSearch) optionsSearch.classList.remove('options-content-hidden');
     integrationsView.classList.add('integrations-view-hidden');
     integrationsView.setAttribute('aria-hidden', 'true');
+}
+
+var shortcutsViewOpen = false;
+
+/** Show the Keyboard Shortcuts screen (hide options content). Content is static HTML; no sync needed. */
+function openShortcutsView() {
+    if (integrationsViewOpen) closeIntegrationsView();
+    var optionsContent = document.querySelector('#options-panel .options-content');
+    var optionsSearch = document.querySelector('#options-panel .options-search-wrapper');
+    var shortcutsView = document.getElementById('shortcuts-view');
+    if (!shortcutsView || !optionsContent) return;
+    shortcutsViewOpen = true;
+    if (optionsContent) optionsContent.classList.add('options-content-hidden');
+    if (optionsSearch) optionsSearch.classList.add('options-content-hidden');
+    shortcutsView.classList.remove('shortcuts-view-hidden');
+    shortcutsView.setAttribute('aria-hidden', 'false');
+}
+
+/** Hide the Keyboard Shortcuts screen (show options content). */
+function closeShortcutsView() {
+    var optionsContent = document.querySelector('#options-panel .options-content');
+    var optionsSearch = document.querySelector('#options-panel .options-search-wrapper');
+    var shortcutsView = document.getElementById('shortcuts-view');
+    if (!shortcutsView || !optionsContent) return;
+    shortcutsViewOpen = false;
+    if (optionsContent) optionsContent.classList.remove('options-content-hidden');
+    if (optionsSearch) optionsSearch.classList.remove('options-content-hidden');
+    shortcutsView.classList.add('shortcuts-view-hidden');
+    shortcutsView.setAttribute('aria-hidden', 'true');
 }
 
 /** Sync capture-enabled checkbox from window.captureEnabled (set by host message). */
@@ -234,6 +265,12 @@ var optionsOpenIntegrationsBtn = document.getElementById('options-open-integrati
 var integrationsBackBtn = document.getElementById('integrations-back');
 if (optionsOpenIntegrationsBtn) optionsOpenIntegrationsBtn.addEventListener('click', openIntegrationsView);
 if (integrationsBackBtn) integrationsBackBtn.addEventListener('click', closeIntegrationsView);
+
+// Keyboard shortcuts screen: open and back.
+var optionsOpenShortcutsBtn = document.getElementById('options-open-shortcuts');
+var shortcutsBackBtn = document.getElementById('shortcuts-back');
+if (optionsOpenShortcutsBtn) optionsOpenShortcutsBtn.addEventListener('click', openShortcutsView);
+if (shortcutsBackBtn) shortcutsBackBtn.addEventListener('click', closeShortcutsView);
 
 ${getOptionsEventHandlers()}
 `;
