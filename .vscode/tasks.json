@@ -95,6 +95,14 @@
 			"args": ["${workspaceFolder}"],
 			"problemMatcher": [],
 			"presentation": { "reveal": "silent" }
+		},
+		{
+			"label": "Extension Tests",
+			"type": "npm",
+			"script": "test",
+			"group": "test",
+			"problemMatcher": "$tsc",
+			"presentation": { "reveal": "always", "panel": "shared" }
 		}
 	]
 }
