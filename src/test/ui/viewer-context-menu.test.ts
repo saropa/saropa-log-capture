@@ -171,11 +171,13 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('> Options\n'));
             assert.ok(html.includes('data-action="toggle-wrap"'));
             assert.ok(html.includes('data-action="toggle-decorations"'));
+            assert.ok(html.includes('data-action="toggle-timestamp"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
             assert.ok(html.includes('Word wrap'));
-            assert.ok(html.includes('Line prefix'));
+            assert.ok(html.includes('Line decorations (dot, number, time)'));
+            assert.ok(html.includes('Timestamp'));
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Comfortable line height'));
             assert.ok(html.includes('Hide blank lines'));
