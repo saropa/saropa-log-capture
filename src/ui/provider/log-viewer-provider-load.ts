@@ -11,6 +11,7 @@ import { getRunSummaries } from "../../modules/session/run-summaries";
 import { countSeverities } from "../session/session-severity-counts";
 import { getEffectiveViewerLines } from "./viewer-content";
 import * as helpers from "./viewer-provider-helpers";
+import { getCorrelationByLocation } from "../../modules/correlation/correlation-store";
 
 export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
@@ -71,6 +72,20 @@ export async function executeLoadContent(
     const runSummaries = getRunSummaries(contentLines, runStartIndices, getTimestampForLine, countSeveritiesForSlice);
     post({ type: "runBoundaries", boundaries, runStartIndices, runSummaries });
   }
+  // Map correlation data to content line index for viewer badges (main log only; key is "file:line").
+  const byLoc = getCorrelationByLocation(uri.toString());
+  const correlationByLineIndex: Record<number, { id: string; description: string }> = {};
+  for (const [key, value] of byLoc) {
+    const colon = key.indexOf(":");
+    if (colon === -1) { continue; }
+    const file = key.slice(0, colon);
+    if (file !== uri.toString()) { continue; }
+    const line = parseInt(key.slice(colon + 1), 10);
+    if (!Number.isFinite(line)) { continue; }
+    const contentIdx = line - 1 - headerEnd;
+    if (contentIdx >= 0 && contentIdx < contentLines.length) { correlationByLineIndex[contentIdx] = value; }
+  }
+  if (Object.keys(correlationByLineIndex).length > 0) { post({ type: "setCorrelationByLineIndex", correlationByLineIndex }); }
   target.postMessage({ type: "loadComplete" });
   return { sessionMidnightMs: ctx.sessionMidnightMs, contentLength: contentLines.length };
 }

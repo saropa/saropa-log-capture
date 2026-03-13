@@ -69,6 +69,11 @@
   "config.autoOpen.description": "Automatically open the log file in the editor when a debug session ends.",
   "config.autoTagRules.description": "Rules for automatically tagging sessions based on content patterns.",
   "config.breakOnCritical.description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.).",
+  "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
+  "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds). Events within this window may be linked.",
+  "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",
+  "config.correlation.types.description": "Correlation types to detect (e.g. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximum number of timeline events to scan for correlations (performance cap).",
   "config.captureAll.description": "If true, capture all Debug Console output regardless of category. When false, only captures categories listed in 'categories'. Exclusions always apply independently.",
   "config.categories.description": "DAP output categories to capture. Common values: console, stdout, stderr, telemetry.",
   "config.contextViewLines.description": "Number of lines before and after to show in the context view modal.",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "Log Viewer",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "Get Started with Log Capture",

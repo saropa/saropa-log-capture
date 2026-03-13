@@ -69,6 +69,11 @@
   "config.autoOpen.description": "Protokolldatei automatisch im Editor öffnen, wenn eine Debug-Sitzung endet.",
   "config.autoTagRules.description": "Regeln für die automatische Kennzeichnung von Sitzungen anhand von Inhaltsmustern.",
   "config.breakOnCritical.description": "Benachrichtigung anzeigen, wenn kritische Fehler auftreten (NullPointerException, AssertionError, FATAL usw.).",
+  "config.correlation.enabled.description": "Automatische Korrelationserkennung aktivieren (zugehörige Ereignisse in Debug, HTTP, Perf, Terminal hervorheben).",
+  "config.correlation.windowMs.description": "Zeitfenster für die Korrelationserkennung (Millisekunden). Ereignisse in diesem Fenster können verknüpft werden.",
+  "config.correlation.minConfidence.description": "Mindest-Konfidenzstufe für angezeigte Korrelationen (niedrig, mittel, hoch).",
+  "config.correlation.types.description": "Zu erkennende Korrelationstypen (z. B. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximale Anzahl von Timeline-Ereignissen für die Korrelationssuche (Leistungsbegrenzung).",
   "config.captureAll.description": "Bei true wird die gesamte Debug-Konsolenausgabe unabhängig von der Kategorie erfasst. Bei false werden nur die in 'categories' aufgeführten Kategorien erfasst. Ausschlüsse werden immer unabhängig angewendet.",
   "config.categories.description": "Zu erfassende DAP-Ausgabekategorien. Häufige Werte: console, stdout, stderr, telemetry.",
   "config.contextViewLines.description": "Anzahl der vor und nach dem aktuellen Eintrag anzuzeigenden Zeilen im Kontextansichts-Modal.",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "Protokoll-Viewer",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Korrelationen",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "Erste Schritte mit der Protokollerfassung",

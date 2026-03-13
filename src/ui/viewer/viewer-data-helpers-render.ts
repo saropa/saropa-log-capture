@@ -105,6 +105,8 @@ function renderItem(item, idx, prevVis) {
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
+    var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
+    if (corr) badge += '<span class="correlation-badge" data-correlation-id="' + (corr.id || '').replace(/"/g, '&quot;') + '" title="' + (corr.description || '').replace(/"/g, '&quot;') + '">\\u27a4</span> ';
     var titleAttr = '';
     if (typeof applyHighlightStyles === 'function') {
         var plainText = stripTags(item.html);

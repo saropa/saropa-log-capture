@@ -69,6 +69,11 @@
   "config.autoOpen.description": "デバッグセッション終了時に、ログファイルをエディターで自動的に開きます。",
   "config.autoTagRules.description": "コンテンツパターンに基づいてセッションに自動タグを付けるルール。",
   "config.breakOnCritical.description": "重大なエラー（NullPointerException、AssertionError、FATAL など）が表示されたときに通知を表示します。",
+  "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
+  "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds).",
+  "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",
+  "config.correlation.types.description": "Correlation types to detect (e.g. error-http, error-memory, timeout-network).",
+  "config.correlation.maxEvents.description": "Maximum timeline events to scan for correlations (performance cap).",
   "config.captureAll.description": "true の場合、カテゴリに関係なくすべてのデバッグコンソール出力をキャプチャします。false の場合、'categories' にリストされたカテゴリのみをキャプチャします。除外は常に独立して適用されます。",
   "config.categories.description": "キャプチャする DAP 出力カテゴリ。一般的な値：console、stdout、stderr、telemetry。",
   "config.contextViewLines.description": "コンテキストビューモーダルに表示する前後の行数。",
@@ -146,6 +151,7 @@
 
   "view.logViewer.name": "ログビューアー",
   "view.vitalsPanel.name": "Play Vitals",
+  "view.correlationPanel.name": "Correlations",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
 
   "walkthrough.getStarted.title": "ログキャプチャを始める",
