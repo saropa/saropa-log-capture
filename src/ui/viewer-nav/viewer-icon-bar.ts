@@ -1,52 +1,52 @@
 /**
  * Icon bar HTML and script for the vertical activity bar.
  *
- * Provides toggle buttons (sessions, search, info, options) that open
+ * Provides toggle buttons (sessions, search, options, etc.) that open
  * their corresponding slide-out panels with mutual exclusion.
+ * Optional text labels: click the bar background or separator (not a button) to toggle;
+ * preference is persisted in webview state (iconBarLabelsVisible).
  */
 
-/** Generate the icon bar HTML with codicon-based buttons. */
+/** Generate the icon bar HTML with codicon-based buttons and optional labels. */
 export function getIconBarHtml(): string {
     return /* html */ `
-<div id="icon-bar" role="toolbar" aria-label="Log viewer tools">
+<div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
     <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs" aria-label="Project Logs">
-        <span class="codicon codicon-files"></span>
+        <span class="codicon codicon-files"></span><span class="ib-label">Project Logs</span>
     </button>
     <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)" aria-label="Search (Ctrl+F)">
-        <span class="codicon codicon-search"></span>
+        <span class="codicon codicon-search"></span><span class="ib-label">Search</span>
     </button>
     <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
-        <span class="codicon codicon-list-filter"></span>
+        <span class="codicon codicon-list-filter"></span><span class="ib-label">Find</span>
     </button>
     <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks" aria-label="Bookmarks">
-        <span class="codicon codicon-bookmark"></span>
-        <span id="ib-bookmarks-badge" class="ib-badge"></span>
+        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks</span>
     </button>
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
-        <span class="codicon codicon-filter"></span>
+        <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
     </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
-        <span class="codicon codicon-trash"></span>
-        <span id="ib-trash-badge" class="ib-badge"></span>
+        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
     </button>
     <button id="ib-options" class="ib-icon" tabindex="0" title="Options" aria-label="Options">
-        <span class="codicon codicon-settings-gear"></span>
+        <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
     </button>
     <div class="ib-separator"></div>
     <button id="ib-replay" class="ib-icon" tabindex="0" title="Replay controls" aria-label="Replay controls">
-        <span class="codicon codicon-debug-start"></span>
+        <span class="codicon codicon-debug-start"></span><span class="ib-label">Replay</span>
     </button>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
-        <span class="codicon codicon-flame"></span>
+        <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
     <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors" aria-label="Recurring Errors">
-        <span class="codicon codicon-bug"></span>
+        <span class="codicon codicon-bug"></span><span class="ib-label">Recurring</span>
     </button>
     <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance" aria-label="Performance">
-        <span class="codicon codicon-graph-line"></span>
+        <span class="codicon codicon-graph-line"></span><span class="ib-label">Performance</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa" aria-label="About Saropa">
-        <span class="codicon codicon-home"></span>
+        <span class="codicon codicon-home"></span><span class="ib-label">About</span>
     </button>
 </div>`;
 }
@@ -57,7 +57,27 @@ export function getIconBarScript(): string {
 (function() {
     var activePanel = null;
     var panelSlot = document.getElementById('panel-slot');
+    var iconBar = document.getElementById('icon-bar');
     var MIN_PANEL_WIDTH = 560;
+
+    /** Restore and persist icon bar label visibility (uses same webview state as other viewer UI). */
+    var api = typeof vscodeApi !== 'undefined' ? vscodeApi : (window._vscodeApi || null);
+    function getLabelsVisible() {
+        if (!api) return false;
+        var st = api.getState();
+        return st && st.iconBarLabelsVisible === true;
+    }
+    function setLabelsVisible(visible) {
+        if (!api) return;
+        var st = api.getState() || {};
+        st.iconBarLabelsVisible = !!visible;
+        api.setState(st);
+    }
+    function applyLabelsVisible() {
+        var visible = getLabelsVisible();
+        if (iconBar) iconBar.classList.toggle('ib-labels-visible', visible);
+    }
+    applyLabelsVisible();
 
     /** Pending transitionend handler so we can remove it if user switches panel before transition ends (avoids listener accumulation). */
     var pendingOpenHandler = null;
@@ -226,6 +246,20 @@ export function getIconBarScript(): string {
     if (replayBtn) {
         replayBtn.addEventListener('click', function() {
             if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
+        });
+    }
+
+    /** Click on bar background or separator (not on an icon button) toggles label visibility. */
+    if (iconBar) {
+        iconBar.addEventListener('click', function(e) {
+            var t = e.target;
+            if (!t) return;
+            while (t && t !== iconBar) {
+                if (t.classList && t.classList.contains('ib-icon')) return;
+                t = t.parentElement;
+            }
+            setLabelsVisible(!getLabelsVisible());
+            applyLabelsVisible();
         });
     }
 
