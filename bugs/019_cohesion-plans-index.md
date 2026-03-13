@@ -27,9 +27,9 @@ Implemented in commit `645be25` (*feat: Integration cohesion quick wins*):
 
 | # | Plan | Solves | Effort | Status |
 |---|------|--------|--------|--------|
-| [020](history/20260312/020_plan-unified-timeline-view.md) | **Unified Timeline View** | Problems 1, 2 | High (7-10 days) | Planned |
+| [020](history/20260312/020_plan-unified-timeline-view.md) | **Unified Timeline View** | Problems 1, 2 | High (7-10 days) | ✅ Complete |
 | [021](history/20260312/021_plan-investigation-mode.md) | **Investigation Mode** | Problems 3, 4 | Medium (8-12 days) | ✅ Complete |
-| [022](history/20260312/022_plan-context-popover.md) | **Context Popover** | Problems 1, 2 (partial) | Low (4-7 days) | Planned |
+| [022](history/20260312/022_plan-context-popover.md) | **Context Popover** | Problems 1, 2 (partial) | Low (4-7 days) | ✅ Complete |
 
 ---
 
