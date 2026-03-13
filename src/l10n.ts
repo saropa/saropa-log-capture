@@ -79,6 +79,7 @@ const strings: Record<string, string> = {
     'msg.noWorkspaceOpen': 'No workspace open. Please open a workspace first.',
     'msg.logFileNotFound': 'Log file not found: {0}',
     'msg.deepLinkCopied': 'Deep link copied{0}',
+    'msg.deepLinkLocalCopied': 'Link copied. Recipient: Investigation panel → Open .slc file → select the file.',
     'msg.importLinkMissingParams': 'Import link missing gist or url parameter.',
     'msg.importFailed': 'Failed to import: {0}',
     'msg.importGistNotFound': 'Gist not found or not accessible.',
@@ -94,6 +95,7 @@ const strings: Record<string, string> = {
     // AI Explain
     'msg.aiExplainDisabled': 'Enable "Saropa Log Capture > AI: Enabled" in Settings to use Explain with AI.',
     'msg.aiExplainError': 'Explain with AI: {0}',
+    'msg.aiExplainProgress': 'Explaining with AI…',
     'panel.aiExplainTitle': 'AI Explanation',
     'panel.aiExplainCopyBtn': 'Copy explanation',
     'panel.aiExplainCached': ' (cached)',
@@ -220,6 +222,7 @@ const strings: Record<string, string> = {
     'action.createNew': 'Create New...',
     'action.closeInvestigation': 'Close Investigation',
     'action.exportSlc': 'Export as .slc',
+    'action.openSlcFile': 'Open .slc file',
     'action.generateBugReport': 'Generate Bug Report',
 
     // Investigation mode
@@ -259,6 +262,7 @@ const strings: Record<string, string> = {
     'action.uploadToUrl': 'Upload to configured URL',
     'action.saveToSharedFolder': 'Save to shared folder',
     'action.copyDeepLinkLocal': 'Copy deep link (local file)',
+    'share.copyDeepLinkLocalDescription': 'Export to .slc and copy link. Recipient opens via Investigation panel → Open .slc file.',
     'share.gistDescription': 'Secret gists do not expire; delete from GitHub when no longer needed.',
     'action.stopServer': 'Stop server',
     'msg.lanServerStarted': 'LAN server started. Teammates can download: {0}',

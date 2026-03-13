@@ -76,6 +76,7 @@ function handleToggleAction(action) {
     var toggleFns = {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
         'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
+        'toggle-timestamp': typeof toggleTimestamp === 'function' ? toggleTimestamp : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
@@ -151,6 +152,22 @@ function onContextMenuAction(action) {
         case 'search-sessions': vscodeApi.postMessage({ type: 'searchSessions', text: plainText }); break;
         case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText, lineIndex: lineIdx }); break;
         case 'generate-report': vscodeApi.postMessage({ type: 'generateReport', text: plainText, lineIndex: lineIdx }); break;
+        case 'explain-with-ai': {
+            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var lo = Math.min(start, end);
+            var hi = Math.max(start, end);
+            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
+            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+                var lines = getSelectedLines();
+                var selText = lines.length > 0 ? linesToPlainText(lines) : plainText;
+                var firstTs = (allLines[lo] && (allLines[lo].ts || allLines[lo].timestamp)) || lineData.ts || lineData.timestamp;
+                vscodeApi.postMessage({ type: 'explainWithAi', text: selText, lineIndex: lo, lineEndIndex: hi, timestamp: firstTs });
+            } else {
+                vscodeApi.postMessage({ type: 'explainWithAi', text: plainText, lineIndex: lineIdx, timestamp: lineData.ts || lineData.timestamp });
+            }
+            break;
+        }
         case 'add-watch': vscodeApi.postMessage({ type: 'addToWatch', text: plainText }); break;
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
         case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); break;
