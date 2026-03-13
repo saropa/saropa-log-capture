@@ -7,6 +7,12 @@
  * or timestamp delta; in Fast mode a fixed short delay is used. Config (min/max delay,
  * default speed/mode) is sent with startReplay from the extension.
  *
+ * Speed options: 0.1x, 0.25x, 0.5x, 0.75x, 1x, 2x, 5x, 10x. The speed dropdown is
+ * set via closest-option matching to avoid float display issues (e.g. 0.5x).
+ *
+ * Visibility: The replay bar is shown whenever a loaded file has lines (and no
+ * active recording), so Play/Speed/Mode are visible without clicking the icon first.
+ *
  * Richer context: When replay is started from the session list, the extension
  * loads the session and can attach session metadata (displayName, tags) and
  * integration data (build, git, test results) for the session timeline.
@@ -25,10 +31,14 @@ export function getReplayBarHtml(): string {
     </select>
     <span class="replay-speed-label">Speed:</span>
     <select id="replay-speed" class="replay-speed" title="Playback speed" aria-label="Playback speed">
+        <option value="0.1">0.1x</option>
+        <option value="0.25">0.25x</option>
         <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
         <option value="1" selected>1x</option>
         <option value="2">2x</option>
         <option value="5">5x</option>
+        <option value="10">10x</option>
     </select>
     <input type="range" id="replay-scrubber" class="replay-scrubber" min="0" max="1" value="0" title="Seek to line" aria-label="Replay position" />
     <span id="replay-status" class="replay-status" aria-live="polite">0 / 0</span>
@@ -63,6 +73,8 @@ export function getReplayScript(): string {
     /** Track whether we're viewing a loaded file (enable replay controls when true). */
     var replayFileLoaded = false;
 
+    function hasLines() { return allLines && allLines.length > 0; }
+
     /** Show or hide the replay bar (uses CSS class so !important rule is overridden). */
     function setReplayBarVisible(visible) {
         if (!bar) return;
@@ -75,19 +87,19 @@ export function getReplayScript(): string {
         ibReplay.classList.toggle('ib-replay-active', visible);
     }
 
-    /** Enable/disable replay icon based on file loaded state and session state. */
+    /** Enable/disable replay icon and bar based on file loaded state and session state. */
     window.setReplayEnabled = function(fileLoaded, sessionActive) {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
-        var hasLines = allLines && allLines.length > 0;
-        if (sessionActive || !fileLoaded || !hasLines) {
+        if (sessionActive || !fileLoaded || !hasLines()) {
             setReplayIconVisible(false);
             setReplayBarVisible(false);
             if (window.replayMode) {
                 window.exitReplayMode();
             }
-        } else if (fileLoaded && hasLines && !window.replayMode) {
+        } else if (fileLoaded && hasLines()) {
             setReplayIconVisible(true);
+            if (!window.replayMode) setReplayBarVisible(true);
         }
     };
 
@@ -104,7 +116,7 @@ export function getReplayScript(): string {
     window.toggleReplayBar = function() {
         if (!bar) return;
         if (replaySessionActive || !replayFileLoaded) return;
-        if (!allLines || allLines.length === 0) return;
+        if (!hasLines()) return;
         if (!window.replayMode) {
             if (typeof window.startReplay === 'function') window.startReplay();
             return;
@@ -112,6 +124,21 @@ export function getReplayScript(): string {
         var visible = bar.classList.contains('replay-bar-visible');
         setReplayBarVisible(!visible);
     };
+
+    /** Set speed dropdown to closest option for a given factor (avoids float mismatch e.g. 0.5). */
+    function setSpeedSelectValue(factor) {
+        if (!speedSelect || !speedSelect.options.length) return;
+        var opts = speedSelect.options;
+        var best = opts[0];
+        var bestDiff = 1e9;
+        for (var i = 0; i < opts.length; i++) {
+            var val = parseFloat(opts[i].value);
+            if (!Number.isFinite(val)) continue;
+            var d = Math.abs(val - factor);
+            if (d < bestDiff) { bestDiff = d; best = opts[i]; }
+        }
+        if (best) { speedSelect.value = best.value; replaySpeedFactor = parseFloat(best.value) || 1; }
+    }
 
     /** Apply extension replay config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs). */
     function applyReplayConfig(cfg) {
@@ -122,10 +149,7 @@ export function getReplayScript(): string {
         if (typeof cfg.maxDelayMs === 'number' && cfg.maxDelayMs > 0) REPLAY_MAX_MS = cfg.maxDelayMs;
         if (typeof cfg.minLineDelayMs === 'number' && cfg.minLineDelayMs >= 0) REPLAY_FAST_MS = Math.max(10, cfg.minLineDelayMs);
         if (modeSelect) modeSelect.value = replayTimedMode ? 'timed' : 'fast';
-        if (speedSelect) {
-            var v = String(replaySpeedFactor);
-            if ([0.5, 1, 2, 5].indexOf(replaySpeedFactor) >= 0) speedSelect.value = v;
-        }
+        if (speedSelect) setSpeedSelectValue(replaySpeedFactor);
     }
 
     /** Delay before showing line at lineIdx: Timed = elapsedMs or timestamp delta (clamped); Fast = fixed. */
@@ -148,7 +172,7 @@ export function getReplayScript(): string {
     }
 
     function updateReplayUi() {
-        var total = allLines ? allLines.length : 0;
+        var total = hasLines() ? allLines.length : 0;
         if (total === 0) {
             if (window.replayMode) window.exitReplayMode();
             return;
@@ -203,12 +227,12 @@ export function getReplayScript(): string {
     function exitReplayMode() {
         stopReplayTimer();
         window.replayMode = false;
-        setReplayBarVisible(false);
+        var showBar = replayFileLoaded && !replaySessionActive && hasLines();
+        setReplayBarVisible(showBar);
         if (playBtn) playBtn.style.display = '';
         if (pauseBtn) pauseBtn.style.display = 'none';
         updateReplayIcon(false);
-        var hasLines = allLines && allLines.length > 0;
-        if (replayFileLoaded && !replaySessionActive && hasLines) {
+        if (replayFileLoaded && !replaySessionActive && hasLines()) {
             setReplayIconVisible(true);
         } else {
             setReplayIconVisible(false);
