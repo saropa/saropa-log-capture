@@ -34,6 +34,7 @@ export interface ViewerTarget {
   setPresets(presets: readonly FilterPreset[]): void;
   setCurrentFile(uri: vscode.Uri | undefined): void;
   setSessionInfo(info: Record<string, string> | null): void;
+  setHasPerformanceData(has: boolean): void;
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void;
   sendSessionListLoading(folderPath: string): void;
   sendDisplayOptions(options: SessionDisplayOptions): void;

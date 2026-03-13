@@ -55,6 +55,15 @@ export function getSessionListStyles(): string {
     white-space: nowrap;
 }
 
+.session-item-perf {
+    display: inline-flex;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: var(--vscode-charts-purple, #b267e6);
+    font-size: 12px;
+}
+.session-item-perf .codicon { font-size: 12px; }
+
 .session-item-meta {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
