@@ -328,25 +328,12 @@ async function resolveInvestigationSourceUris(
 }
 
 /**
- * Export an investigation to a .slc (ZIP) bundle with manifest v3, investigation.json, and sources/.
- * Returns the saved file URI, or undefined if cancelled or failed.
+ * Build an investigation .slc (ZIP) bundle in memory. Used for file export and Gist upload.
  */
-export async function exportInvestigationToSlc(
+export async function buildInvestigationZipBuffer(
     investigation: Investigation,
     workspaceUri: vscode.Uri,
-): Promise<vscode.Uri | undefined> {
-    const defaultName = (investigation.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'investigation') + '.slc';
-    const picked = await vscode.window.showSaveDialog({
-        defaultUri: workspaceUri ? vscode.Uri.joinPath(workspaceUri, defaultName) : undefined,
-        filters: { [t('filter.slcBundles')]: ['slc'] },
-        saveLabel: t('action.saveSlcBundle'),
-    });
-    if (!picked) { return undefined; }
-    let targetUri = picked;
-    if (!targetUri.fsPath.toLowerCase().endsWith('.slc')) {
-        targetUri = vscode.Uri.file(targetUri.fsPath + '.slc');
-    }
-
+): Promise<Buffer> {
     const manifestSources: SlcManifestInvestigationSource[] = [];
     const zip = new JSZip();
     const seenBasenames = new Map<string, number>();
@@ -407,7 +394,41 @@ export async function exportInvestigationToSlc(
     zip.file(MANIFEST_FILENAME, JSON.stringify(manifest, null, 2));
     zip.file(INVESTIGATION_JSON_FILENAME, JSON.stringify(investigationJson, null, 2));
     const blob = await zip.generateAsync({ type: 'nodebuffer' });
-    await vscode.workspace.fs.writeFile(targetUri, Buffer.from(blob));
+    return Buffer.from(blob);
+}
+
+/**
+ * Export an investigation to a .slc (ZIP) buffer in memory. Use for Gist upload or other in-memory use.
+ */
+export async function exportInvestigationToBuffer(
+    investigation: Investigation,
+    workspaceUri: vscode.Uri,
+): Promise<Buffer> {
+    return buildInvestigationZipBuffer(investigation, workspaceUri);
+}
+
+/**
+ * Export an investigation to a .slc (ZIP) bundle with manifest v3, investigation.json, and sources/.
+ * Returns the saved file URI, or undefined if cancelled or failed.
+ */
+export async function exportInvestigationToSlc(
+    investigation: Investigation,
+    workspaceUri: vscode.Uri,
+): Promise<vscode.Uri | undefined> {
+    const defaultName = (investigation.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'investigation') + '.slc';
+    const picked = await vscode.window.showSaveDialog({
+        defaultUri: workspaceUri ? vscode.Uri.joinPath(workspaceUri, defaultName) : undefined,
+        filters: { [t('filter.slcBundles')]: ['slc'] },
+        saveLabel: t('action.saveSlcBundle'),
+    });
+    if (!picked) { return undefined; }
+    let targetUri = picked;
+    if (!targetUri.fsPath.toLowerCase().endsWith('.slc')) {
+        targetUri = vscode.Uri.file(targetUri.fsPath + '.slc');
+    }
+
+    const buffer = await buildInvestigationZipBuffer(investigation, workspaceUri);
+    await vscode.workspace.fs.writeFile(targetUri, buffer);
     return targetUri;
 }
 

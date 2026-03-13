@@ -55,6 +55,7 @@
   "command.addToInvestigation.title": "調査に追加",
   "command.removeFromInvestigation.title": "調査から削除",
   "command.exportInvestigation.title": "調査を .slc としてエクスポート",
+  "command.shareInvestigation.title": "調査を共有",
   "command.deleteInvestigation.title": "調査を削除",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
