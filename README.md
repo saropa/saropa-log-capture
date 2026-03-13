@@ -92,6 +92,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Scroll position memory:** Viewer remembers scroll position per file when switching between logs.
 - **Tail mode:** Command **Saropa Log Capture: Open Tailed File** opens any workspace file matching `saropaLogCapture.tailPatterns` (default `**/*.log`); the viewer appends new lines as the file grows.
 - **Run navigation:** Logs with multiple app runs (e.g. Flutter launch, hot restart, hot reload) show "Run 1 of N" with Prev/Next in the title bar; run separators (bar with run number, time range, duration, issue counts) appear above each run in the list.
+- **Explain with AI:** Right-click a log line (or selection) → **Explain with AI** to get an explanation from the VS Code Language Model (e.g. GitHub Copilot). Requires **Saropa Log Capture > AI: Enabled** in Settings. Context includes surrounding lines, stack trace, and optional integration data; responses are cached and a progress notification is shown while the request runs.
 
 ### Search & Filter
 - **Search panel:** Slide-out search with regex, case sensitivity, and whole word toggles. Search history (last 10 terms) shown on open. Clear button (×) in input.
@@ -127,13 +128,13 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
-- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** generates a link (GitHub Gist, **Copy deep link (local file)**, or .slc export) so teammates can import and view the investigation in VS Code. Import supports `https`, same-network `http` (LAN), and `file://` URLs. See [Share Investigation](docs/SHARE_INVESTIGATION.md).
+- **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** (Gist, export .slc, Copy deep link, LAN, etc.) lets teammates open the investigation in VS Code. **To open a shared .slc file:** Investigation panel → **Open .slc file** (or Command Palette → **Import .slc Bundle**) → select the file.
 
 ### Export
 - **Per-level export:** Right-click in the log content and choose **Export current view…** to open the export modal. Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
 - **HTML export:** Static or interactive with search, filters, and theme toggle.
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
-- **.slc session bundle:** Export current or selected session (including split parts and metadata) to a `.slc` ZIP; command **Import .slc Bundle** restores sessions into the workspace log directory. **Investigation:** From the Investigation panel use **Share** to share via GitHub Gist, **Copy deep link (local file)**, or export as .slc file; opening a share link in VS Code imports the investigation.
+- **.slc session bundle:** Export to `.slc` ZIP; **Import .slc Bundle** (Ctrl+Shift+P → type the name) restores sessions or opens a shared investigation; in the file dialog, pick the .slc file. Investigation panel **Share**: Gist, export .slc, Copy deep link (local file), LAN, etc.
 - **Export to Loki:** Push current or selected session to Grafana Loki. Enable `saropaLogCapture.loki.enabled`, set `saropaLogCapture.loki.pushUrl`, and store your API key with **Saropa Log Capture: Set Loki API Key**. Available from command palette and session context menu.
 - **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
 - **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.
