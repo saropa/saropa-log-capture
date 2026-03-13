@@ -36,7 +36,7 @@ export async function buildSessionListPayload(
     activeUri: vscode.Uri | undefined,
 ): Promise<Record<string, unknown>[]> {
     const activeStr = activeUri?.toString();
-    type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[] };
+    type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean };
     const toRecord = async (m: Meta): Promise<Record<string, unknown>> => {
         const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
         const mtime = await resolveMtime(uri, m.mtime);
@@ -51,6 +51,7 @@ export async function buildSessionListPayload(
             isActive: activeStr === m.uri.toString(),
             uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
             autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
+            hasPerformanceData: m.hasPerformanceData ?? false,
         };
     };
     const records: Record<string, unknown>[] = [];
