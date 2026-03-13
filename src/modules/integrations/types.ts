@@ -39,6 +39,8 @@ export interface IntegrationContext {
     readonly workspaceFolder: vscode.WorkspaceFolder;
     readonly config: SaropaLogCaptureConfig;
     readonly outputChannel: vscode.OutputChannel;
+    /** Optional extension context for SecretStorage (e.g. build/CI tokens). */
+    readonly extensionContext?: vscode.ExtensionContext;
 }
 
 /** Context passed to providers at session end. */
@@ -48,6 +50,8 @@ export interface IntegrationEndContext extends IntegrationContext {
     readonly sessionStartTime: number;
     readonly sessionEndTime: number;
     readonly logDirUri: vscode.Uri;
+    /** Debug target process ID from DAP process event (if available). */
+    readonly debugProcessId?: number;
 }
 
 /** Provider contract: contributes data at start (sync/async) and end. */
