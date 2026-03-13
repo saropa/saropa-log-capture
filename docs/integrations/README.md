@@ -4,7 +4,7 @@
 
 This folder contains **full, detailed design documents** for **planned** integration points (not yet implemented). Implemented integrations are documented elsewhere:
 
-- **Options → Integrations** — Enable/disable and see which adapters are available (packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics).
+- **Options → Integrations…** — Button opens a dedicated Integrations screen to enable/disable adapters and see long descriptions, performance notes, and when-to-disable (packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics, etc.).
 - **Provider code** — `src/modules/integrations/providers/` (each provider has JSDoc describing behavior and config).
 - **Implementation specs** — [bugs/001_integration-specs-index.md](../../bugs/001_integration-specs-index.md) and the linked `integration-spec-*.md` files for each adapter (except **packages**, which has no bugs spec; see `package-lockfile.ts`).
 
