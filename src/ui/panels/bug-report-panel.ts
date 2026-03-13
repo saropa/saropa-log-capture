@@ -19,6 +19,7 @@ let lastSubject = '';
 /** Generate a bug report and show it in the preview panel. */
 export async function showBugReport(
     errorText: string, lineIndex: number, fileUri: vscode.Uri,
+    extensionContext?: vscode.ExtensionContext,
 ): Promise<void> {
     ensurePanel();
     panel!.webview.html = buildLoadingHtml();
@@ -26,13 +27,23 @@ export async function showBugReport(
         { location: vscode.ProgressLocation.Notification, title: 'Generating Bug Report', cancellable: false },
         async (progress) => {
             progress.report({ message: 'Collecting error context...' });
-            return collectBugReportData(errorText, lineIndex, fileUri);
+            return collectBugReportData(errorText, lineIndex, fileUri, extensionContext);
         },
     );
     lastMarkdown = formatBugReport(data);
     lastSubject = deriveSubject(data.errorLine, data.fingerprint);
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     await vscode.env.clipboard.writeText(lastMarkdown);
+    vscode.window.showInformationMessage(t('msg.bugReportCopied'));
+}
+
+/** Show the bug report panel with pre-built markdown (e.g. from investigation context). */
+export function showBugReportFromMarkdown(markdown: string): void {
+    ensurePanel();
+    lastMarkdown = markdown;
+    lastSubject = 'investigation';
+    if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
+    vscode.env.clipboard.writeText(lastMarkdown);
     vscode.window.showInformationMessage(t('msg.bugReportCopied'));
 }
 

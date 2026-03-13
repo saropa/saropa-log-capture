@@ -5,16 +5,19 @@
 import * as vscode from 'vscode';
 import { t } from './l10n';
 import { InvestigationStore } from './modules/investigation/investigation-store';
+import { exportInvestigationToSlc } from './modules/export/slc-bundle';
 import { showInvestigationPanel, disposeInvestigationPanel, refreshInvestigationPanelIfOpen } from './ui/investigation/investigation-panel';
 import type { Investigation } from './modules/investigation/investigation-types';
+import { isSplitGroup, type SessionMetadata, type TreeItem } from './ui/session/session-history-grouping';
 
 export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
     readonly investigationStore: InvestigationStore;
+    readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
 }
 
 export function registerInvestigationCommands(deps: InvestigationCommandDeps): vscode.Disposable[] {
-    const { investigationStore } = deps;
+    const { investigationStore, historyProvider } = deps;
 
     return [
         vscode.commands.registerCommand('saropaLogCapture.createInvestigation', async () => {
@@ -244,7 +247,82 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 return;
             }
 
-            vscode.window.showInformationMessage(t('msg.featureComingSoon'));
+            const folder = vscode.workspace.workspaceFolders?.[0];
+            if (!folder) {
+                vscode.window.showWarningMessage(t('msg.slcImportNoWorkspace'));
+                return;
+            }
+
+            try {
+                const outUri = await vscode.window.withProgress(
+                    { location: vscode.ProgressLocation.Notification, title: t('progress.exportInvestigation') },
+                    () => exportInvestigationToSlc(investigation, folder.uri),
+                );
+                if (outUri) {
+                    const action = await vscode.window.showInformationMessage(
+                        t('msg.exportedTo', outUri.fsPath.split(/[\\/]/).pop() ?? ''),
+                        t('action.open'),
+                    );
+                    if (action === t('action.open')) {
+                        await vscode.window.showTextDocument(outUri);
+                    }
+                }
+            } catch (e) {
+                vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.newInvestigationFromSessions', async () => {
+            if (!historyProvider) {
+                vscode.window.showWarningMessage(t('msg.noSessionsToAdd'));
+                return;
+            }
+            const items: readonly TreeItem[] = await historyProvider.getAllChildren();
+            const sessions: { uri: vscode.Uri; filename: string }[] = [];
+            for (const item of items) {
+                if (isSplitGroup(item)) {
+                    for (const part of item.parts) {
+                        sessions.push({ uri: part.uri, filename: part.filename });
+                    }
+                } else {
+                    const meta = item as SessionMetadata;
+                    sessions.push({ uri: meta.uri, filename: meta.filename });
+                }
+            }
+            if (sessions.length === 0) {
+                vscode.window.showInformationMessage(t('msg.noSessionsToAdd'));
+                return;
+            }
+            const folder = vscode.workspace.workspaceFolders?.[0];
+            if (!folder) { return; }
+            const picks = await vscode.window.showQuickPick(
+                sessions.map((s) => ({ label: (s.filename || s.uri.path.split(/[/\\]/).pop()) ?? '', uri: s.uri })),
+                { canPickMany: true, placeHolder: t('prompt.selectSessionsForInvestigation') },
+            );
+            if (!picks?.length) { return; }
+            const name = await vscode.window.showInputBox({
+                prompt: t('prompt.investigationName'),
+                placeHolder: t('placeholder.investigationName'),
+                validateInput: (v) => (!v || !v.trim() ? t('validation.nameRequired') : undefined),
+            });
+            if (!name?.trim()) { return; }
+            try {
+                const investigation = await investigationStore.createInvestigation({ name: name.trim() });
+                await investigationStore.setActiveInvestigationId(investigation.id);
+                for (const p of picks) {
+                    const relativePath = vscode.workspace.asRelativePath(p.uri, false);
+                    const label = p.uri.path.split(/[/\\]/).pop() ?? relativePath;
+                    await investigationStore.addSource(investigation.id, {
+                        type: 'session',
+                        relativePath,
+                        label,
+                    });
+                }
+                await showInvestigationPanel(investigationStore);
+                vscode.window.showInformationMessage(t('msg.investigationCreated', name.trim()));
+            } catch (e) {
+                vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+            }
         }),
     ];
 }
