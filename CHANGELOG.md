@@ -30,6 +30,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 • **Explain with AI (Phase 3): polish.** Explanations are cached in memory (configurable via `saropaLogCapture.ai.cacheExplanations`; default on) so the same error returns instantly. Optional model preference: `saropaLogCapture.ai.modelPreference` (e.g. `copilot`, `claude`) filters available chat models. Multi-line selection: when you select several log lines and right-click → **Explain with AI**, the selection is sent as the error block and context is built around it. The explanation panel has a **Copy explanation** button; notifications show "(cached)" when the result came from cache.
 
+• **Explain with AI: localization and loading feedback.** All user-facing strings for the feature use `l10n.ts` (and `package.nls.json` for the AI enabled setting description). A progress notification ("Explaining with AI…") is shown while context is built and the model is called. Cache eviction refreshes LRU when an existing key is re-set.
+
 ### Fixed
 
 • **Viewer load: TypeScript and lint.** Restructured performance-data block in `log-viewer-provider-load.ts` so the try/catch parses correctly (no return inside try). Replaced `!=` with `!==` for eqeqeq. GitHub auth session check in extension activation now uses `vscode.authentication.getSession(..., { createIfNone: false })` instead of removed `getSessions`. Build/CI fetch no longer casts headers to `HeadersInit` (type not in project lib). Docs: `cross-session-analysis.md` paths for error-fingerprint updated to `src/modules/analysis/error-fingerprint.ts`.

@@ -15,6 +15,9 @@ import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import { assertDefined } from '../../modules/misc/assert';
 import { InvestigationStore } from '../../modules/investigation/investigation-store';
 import { showInvestigationPanel } from '../investigation/investigation-panel';
+import { buildAIContext } from '../../modules/ai/ai-context-builder';
+import { explainError } from '../../modules/ai/ai-explain';
+import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 
 export interface ViewerMessageContext {
     readonly currentFileUri: vscode.Uri | undefined;
@@ -111,6 +114,41 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "generateReport":
         if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri, ctx.context).catch(() => {}); }
         break;
+      case "explainWithAi": {
+        const uri = ctx.currentFileUri;
+        const text = String(msg.text ?? "").trim();
+        const lineIdx = safeLineIndex(msg.lineIndex, 0);
+        if (!uri || !text) { break; }
+        const aiCfg = vscode.workspace.getConfiguration("saropaLogCapture.ai");
+        if (!aiCfg.get<boolean>("enabled", false)) {
+          void vscode.window.showInformationMessage(t("msg.aiExplainDisabled"));
+          break;
+        }
+        void vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: t("msg.aiExplainProgress"), cancellable: false },
+          async () => {
+            try {
+              const contextLines = Math.max(0, Math.min(50, aiCfg.get<number>("contextLines", 10)));
+              const lineTimestampMs = typeof msg.timestamp === "number" ? msg.timestamp : undefined;
+              const includeIntegrationData = aiCfg.get<boolean>("includeIntegrationData", true);
+              const cacheExplanations = aiCfg.get<boolean>("cacheExplanations", true);
+              const lineEndIndex = typeof msg.lineEndIndex === "number" && msg.lineEndIndex >= lineIdx ? msg.lineEndIndex : undefined;
+              const context = await buildAIContext(uri, lineIdx, text, contextLines, { lineTimestampMs, includeIntegrationData, lineEndIndex });
+              const result = await explainError(context, { useCache: cacheExplanations });
+              const explanation = result.explanation;
+              const suffix = result.cached ? t("panel.aiExplainCached") : "";
+              const toShow = (explanation.length > 500 ? explanation.slice(0, 497) + "…" : explanation) + suffix;
+              const choice = await vscode.window.showInformationMessage(toShow, "Copy", "Show details");
+              if (choice === "Copy") { void vscode.env.clipboard.writeText(explanation); }
+              if (choice === "Show details") { showAIExplanationPanel(context, result); }
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              void vscode.window.showErrorMessage(t("msg.aiExplainError", message));
+            }
+          },
+        );
+        break;
+      }
       case "addToWatch": ctx.onAddToWatch?.(String(msg.text ?? "")); break;
       case "promptAnnotation":
         ctx.onAnnotationPrompt?.(safeLineIndex(msg.lineIndex, 0), String(msg.current ?? ""));
