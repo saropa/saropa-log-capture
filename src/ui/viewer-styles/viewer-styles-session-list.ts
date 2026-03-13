@@ -21,6 +21,13 @@ export function getSessionListStyles(): string {
     background: var(--vscode-list-hoverBackground);
 }
 
+.session-item-selected {
+    background: var(--vscode-list-inactiveSelectionBackground, var(--vscode-list-hoverBackground));
+}
+.session-item-selected:hover {
+    background: var(--vscode-list-activeSelectionBackground, var(--vscode-list-hoverBackground));
+}
+
 .session-item-active .session-item-icon .codicon {
     color: var(--vscode-charts-red, #f44336);
 }

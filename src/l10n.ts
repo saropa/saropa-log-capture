@@ -79,6 +79,8 @@ const strings: Record<string, string> = {
     'msg.noWorkspaceOpen': 'No workspace open. Please open a workspace first.',
     'msg.logFileNotFound': 'Log file not found: {0}',
     'msg.deepLinkCopied': 'Deep link copied{0}',
+    'msg.deepLinksCopied': '{0} deep links copied to clipboard',
+    'msg.filePathsCopied': '{0} file paths copied to clipboard',
 
     // Watch list
     'msg.alreadyInWatchList': '"{0}" is already in watch list.',

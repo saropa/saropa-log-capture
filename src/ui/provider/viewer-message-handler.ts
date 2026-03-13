@@ -46,7 +46,7 @@ export interface ViewerMessageContext {
     readonly onFindNavigateMatch?: (u: string, i: number) => void;
     readonly onBookmarkAction?: (m: Record<string, unknown>) => void;
     readonly onSessionNavigate?: (d: number) => void;
-    readonly onSessionAction?: (a: string, u: string, f: string) => void;
+    readonly onSessionAction?: (a: string, uriStrings: string[], filenames: string[]) => void;
     readonly onBrowseSessionRoot?: () => Promise<void>;
     readonly onClearSessionRoot?: () => Promise<void>;
 }
@@ -193,7 +193,12 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "browseSessionRoot": void ctx.onBrowseSessionRoot?.(); break;
       case "clearSessionRoot": void ctx.onClearSessionRoot?.(); break;
       case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); break;
-      case "sessionAction": ctx.onSessionAction?.(String(msg.action ?? ""), String(msg.uriString ?? ""), String(msg.filename ?? "")); break;
+      case "sessionAction": {
+        const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [String(msg.uriString ?? "")];
+        const filenames = Array.isArray(msg.filenames) ? (msg.filenames as string[]) : [String(msg.filename ?? "")];
+        ctx.onSessionAction?.(String(msg.action ?? ""), uriStrings, filenames);
+        break;
+      }
       case "popOutViewer": ctx.onPopOutRequest?.(); break;
       case "revealLogFile":
         if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }

@@ -40,7 +40,7 @@ interface HandlerTarget {
   setAddToWatchHandler(h: (t: string) => void): void;
   setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void;
   setSessionListHandler(h: () => void): void;
-  setSessionActionHandler(h: (action: string, uriString: string, filename: string) => void): void;
+  setSessionActionHandler(h: (action: string, uriStrings: string[], filenames: string[]) => void): void;
   setAddBookmarkHandler(h: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void;
   setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void;
   setBrowseSessionRootHandler?(h: () => Promise<void>): void;
@@ -197,8 +197,8 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     }
     await refreshSessionList();
   });
-  target.setSessionActionHandler((action, uriString, filename) => {
-    void handleSessionAction(action, uriString, filename, {
+  target.setSessionActionHandler((action, uriStrings, filenames) => {
+    void handleSessionAction(action, uriStrings, filenames, {
       historyProvider, refreshList: refreshSessionList, openSessionForReplay: deps.openSessionForReplay,
     });
   });

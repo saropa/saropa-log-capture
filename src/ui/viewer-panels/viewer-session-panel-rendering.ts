@@ -62,7 +62,8 @@ export function getSessionRenderingScript(): string {
     function renderItem(s, bnCounts) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
         var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
-        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '');
+        /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. */
+        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
         var rawName = s.displayName || s.filename;
         var bn = getSessionBasename(rawName);
         /* Only show subfolder when basenames collide for disambiguation. */

@@ -21,6 +21,8 @@ export function getSessionPanelScript(): string {
         reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
     };
     var MIN_PANEL_WIDTH = 560;
+    /** Ctrl/Cmd-click multi-select: uriString -> true */
+    var selectedSessionUris = Object.create(null);
     /* Shared with icon bar: all slide-out panels use this width so the sidebar does not resize when switching (Options, Project Logs, etc.). */
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
@@ -143,20 +145,37 @@ export function getSessionPanelScript(): string {
         }
     });
 
-    /* Handle clicks on session items. */
+    /* Handle clicks on session items. Ctrl/Cmd-click toggles multi-select; normal click opens. */
     if (sessionListEl) {
         sessionListEl.addEventListener('click', function(e) {
             var item = e.target.closest('.session-item');
             if (!item) return;
-            vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: item.getAttribute('data-uri') || '' });
+            var uri = item.getAttribute('data-uri') || '';
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                selectedSessionUris[uri] = !selectedSessionUris[uri];
+                if (cachedSessions) renderSessionList(cachedSessions);
+                return;
+            }
+            /* Clear multi-select and re-render so selection highlight does not persist after open. */
+            selectedSessionUris = Object.create(null);
+            if (cachedSessions) renderSessionList(cachedSessions);
+            vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
         });
         sessionListEl.addEventListener('contextmenu', function(e) {
             var item = e.target.closest('.session-item');
             if (!item) return;
             e.preventDefault();
-            if (typeof showSessionContextMenu === 'function') {
-                showSessionContextMenu(e.clientX, e.clientY, item.getAttribute('data-uri') || '', item.getAttribute('data-filename') || '', false);
-            }
+            if (typeof showSessionContextMenu !== 'function') return;
+            var selected = sessionListEl.querySelectorAll('.session-item-selected');
+            var useMulti = selected.length > 0 && Array.prototype.indexOf.call(selected, item) >= 0;
+            var uris = useMulti
+                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-uri') || ''; })
+                : [item.getAttribute('data-uri') || ''];
+            var filenames = useMulti
+                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-filename') || ''; })
+                : [item.getAttribute('data-filename') || ''];
+            showSessionContextMenu(e.clientX, e.clientY, uris, filenames, false);
         });
     }
 

@@ -4,6 +4,8 @@
  */
 
 import * as vscode from "vscode";
+import { t } from "../../l10n";
+import { generateDeepLink } from "../../modules/features/deep-links";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 
 /** Context for dispatching session actions. */
@@ -13,68 +15,117 @@ export interface SessionActionContext {
     readonly openSessionForReplay?: (uri: vscode.Uri) => Promise<void>;
 }
 
-/** Dispatch a session action (open, trash, export, etc.) from the webview session panel. */
+/**
+ * Dispatch a session action (open, trash, export, etc.) from the webview session panel.
+ * Supports multi-select: when multiple sessions are selected, actions run per session
+ * (sequentially for open/export/tag/trash to avoid overlapping dialogs).
+ */
 export async function handleSessionAction(
-    action: string, uriString: string, filename: string, ctx: SessionActionContext,
+    action: string, uriStrings: string[], filenames: string[], ctx: SessionActionContext,
 ): Promise<void> {
-    const uri = uriString ? vscode.Uri.parse(uriString) : undefined;
-    const item = uri ? { uri, filename } : undefined;
+    const n = Math.max(uriStrings.length, filenames.length);
+    const items = Array.from({ length: n }, (_, i) => {
+        const uri = uriStrings[i] ? vscode.Uri.parse(uriStrings[i]) : undefined;
+        const filename = filenames[i] ?? '';
+        return uri ? { uri, filename } : undefined;
+    }).filter((x): x is { uri: vscode.Uri; filename: string } => x !== undefined);
+
     const mutating = ['trash', 'restore', 'emptyTrash', 'deletePermanently', 'rename', 'tag'];
     switch (action) {
         case 'open':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.openSession', item); }
-            break;
-        case 'replay':
-            if (uri && ctx.openSessionForReplay) {
-                await ctx.openSessionForReplay(uri);
-            } else if (item) {
+            for (const item of items) {
                 await vscode.commands.executeCommand('saropaLogCapture.openSession', item);
             }
             break;
+        case 'replay':
+            if (items.length > 0 && ctx.openSessionForReplay) {
+                await ctx.openSessionForReplay(items[0].uri);
+            } else if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.openSession', items[0]);
+            }
+            break;
         case 'trash':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.trashSession', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.trashSession', item);
+            }
             break;
         case 'restore':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.restoreSession', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.restoreSession', item);
+            }
             break;
         case 'emptyTrash':
             await vscode.commands.executeCommand('saropaLogCapture.emptyTrash');
             break;
         case 'deletePermanently':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.deleteSession', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.deleteSession', item);
+            }
             break;
         case 'rename':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.renameSession', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.renameSession', item);
+            }
             break;
         case 'tag':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.tagSession', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.tagSession', item);
+            }
             break;
         case 'exportHtml':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportHtml', item);
+            }
             break;
         case 'exportCsv':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportCsv', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportCsv', item);
+            }
             break;
         case 'exportJson':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJson', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportJson', item);
+            }
             break;
         case 'exportJsonl':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportJsonl', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportJsonl', item);
+            }
             break;
         case 'exportSlc':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportSlc', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportSlc', item);
+            }
             break;
         case 'exportToLoki':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.exportToLoki', item); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.exportToLoki', item);
+            }
             break;
-        case 'copyDeepLink':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyDeepLink', item); }
+        case 'copyDeepLink': {
+            const lines = items.map((it) => generateDeepLink(it.filename)).filter(Boolean);
+            if (lines.length > 0) {
+                await vscode.env.clipboard.writeText(lines.join('\n'));
+                vscode.window.showInformationMessage(
+                    lines.length === 1 ? t('msg.deepLinkCopied', '') : t('msg.deepLinksCopied', String(lines.length)),
+                );
+            }
             break;
-        case 'copyFilePath':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.copyFilePath', item); }
+        }
+        case 'copyFilePath': {
+            const paths = items.map((it) => it.uri.fsPath);
+            if (paths.length > 0) {
+                await vscode.env.clipboard.writeText(paths.join('\n'));
+                vscode.window.showInformationMessage(
+                    paths.length === 1 ? t('msg.filePathCopied') : t('msg.filePathsCopied', String(paths.length)),
+                );
+            }
             break;
+        }
         case 'addToInvestigation':
-            if (item) { await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', { uri: item.uri }); }
+            for (const item of items) {
+                await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', { uri: item.uri });
+            }
             break;
     }
     if (mutating.includes(action)) { await ctx.refreshList(); }
