@@ -144,6 +144,10 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
             break;
 
+        case 'share':
+            await vscode.commands.executeCommand('saropaLogCapture.shareInvestigation');
+            break;
+
         case 'generateReport': {
             const invContext = await collectInvestigationContext(currentStore);
             if (!invContext) {

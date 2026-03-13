@@ -1,12 +1,6 @@
 {
   "activationEvents": [
-    "onDebugAdapterProtocolTracker",
-    "onCommand:saropaLogCapture.setBuildCiGithubToken",
-    "onCommand:saropaLogCapture.clearBuildCiGithubToken",
-    "onCommand:saropaLogCapture.setBuildCiAzurePat",
-    "onCommand:saropaLogCapture.clearBuildCiAzurePat",
-    "onCommand:saropaLogCapture.setBuildCiGitlabToken",
-    "onCommand:saropaLogCapture.clearBuildCiGitlabToken"
+    "onDebugAdapterProtocolTracker"
   ],
   "categories": [
     "Debuggers",
@@ -266,7 +260,7 @@
         "title": "%command.toggleTrash.title%"
       },
       {
-        "command":         "saropaLogCapture.resetAllSettings",
+        "command": "saropaLogCapture.resetAllSettings",
         "icon": "$(clear-all)",
         "title": "%command.resetAllSettings.title%"
       },
@@ -412,14 +406,30 @@
         "saropaLogCapture.correlation.minConfidence": {
           "default": "medium",
           "description": "%config.correlation.minConfidence.description%",
-          "enum": ["low", "medium", "high"],
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
           "type": "string"
         },
         "saropaLogCapture.correlation.types": {
-          "default": ["error-http", "error-memory", "timeout-network"],
+          "default": [
+            "error-http",
+            "error-memory",
+            "timeout-network"
+          ],
           "description": "%config.correlation.types.description%",
           "items": {
-            "enum": ["error-http", "error-memory", "error-cpu", "error-terminal", "timeout-network", "crash-resource", "perf-cascade"],
+            "enum": [
+              "error-http",
+              "error-memory",
+              "error-cpu",
+              "error-terminal",
+              "timeout-network",
+              "crash-resource",
+              "perf-cascade"
+            ],
             "type": "string"
           },
           "type": "array"
@@ -500,28 +510,92 @@
         },
         "saropaLogCapture.projectIndex.sources": {
           "default": [
-            { "path": "docs", "fileTypes": [".md", ".txt"] },
-            { "path": "doc", "fileTypes": [".md", ".txt", ".rst", ".rdoc"] },
-            { "path": "bugs", "fileTypes": [".md", ".txt"] },
-            { "path": ".github", "fileTypes": [".md", ".yml", ".yaml"] },
-            { "path": "adr", "fileTypes": [".md"] },
-            { "path": "rfcs", "fileTypes": [".md"] },
-            { "path": "design", "fileTypes": [".md", ".txt"] },
-            { "path": "wiki", "fileTypes": [".md"] },
-            { "path": "guides", "fileTypes": [".md"] }
+            {
+              "path": "docs",
+              "fileTypes": [
+                ".md",
+                ".txt"
+              ]
+            },
+            {
+              "path": "doc",
+              "fileTypes": [
+                ".md",
+                ".txt",
+                ".rst",
+                ".rdoc"
+              ]
+            },
+            {
+              "path": "bugs",
+              "fileTypes": [
+                ".md",
+                ".txt"
+              ]
+            },
+            {
+              "path": ".github",
+              "fileTypes": [
+                ".md",
+                ".yml",
+                ".yaml"
+              ]
+            },
+            {
+              "path": "adr",
+              "fileTypes": [
+                ".md"
+              ]
+            },
+            {
+              "path": "rfcs",
+              "fileTypes": [
+                ".md"
+              ]
+            },
+            {
+              "path": "design",
+              "fileTypes": [
+                ".md",
+                ".txt"
+              ]
+            },
+            {
+              "path": "wiki",
+              "fileTypes": [
+                ".md"
+              ]
+            },
+            {
+              "path": "guides",
+              "fileTypes": [
+                ".md"
+              ]
+            }
           ],
           "description": "Directories to index for project knowledge. Each entry: path (relative to workspace root) and fileTypes. Non-existent dirs are skipped.",
           "items": {
             "properties": {
-              "path": { "type": "string", "description": "Directory path relative to workspace root." },
+              "path": {
+                "type": "string",
+                "description": "Directory path relative to workspace root."
+              },
               "fileTypes": {
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "type": "array",
                 "description": "File extensions to include (e.g. .md, .txt)."
               },
-              "enabled": { "default": true, "type": "boolean", "description": "Enable this source." }
+              "enabled": {
+                "default": true,
+                "type": "boolean",
+                "description": "Enable this source."
+              }
             },
-            "required": ["path"],
+            "required": [
+              "path"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -585,7 +659,9 @@
           "type": "array"
         },
         "saropaLogCapture.tailPatterns": {
-          "default": ["**/*.log"],
+          "default": [
+            "**/*.log"
+          ],
           "description": "%config.tailPatterns.description%",
           "items": {
             "type": "string"
@@ -625,7 +701,9 @@
               },
               "levels": {
                 "description": "%config.filterPresets.levels.description%",
-                "items": { "type": "string" },
+                "items": {
+                  "type": "string"
+                },
                 "type": "array"
               },
               "appOnlyMode": {
@@ -849,15 +927,25 @@
           "type": "boolean"
         },
         "saropaLogCapture.integrations.adapters": {
-          "default": ["packages", "performance"],
+          "default": [
+            "packages",
+            "performance"
+          ],
           "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.buildCi.source": {
           "default": "file",
           "description": "Build/CI data source: file (last-build.json), github (Actions API), azure (Azure DevOps), or gitlab (GitLab CI).",
-          "enum": ["file", "github", "azure", "gitlab"],
+          "enum": [
+            "file",
+            "github",
+            "azure",
+            "gitlab"
+          ],
           "type": "string"
         },
         "saropaLogCapture.integrations.buildCi.buildInfoPath": {
@@ -930,7 +1018,9 @@
         "saropaLogCapture.integrations.environment.configFiles": {
           "default": [],
           "description": "Paths (relative to workspace) to config files to include content hashes for.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.environment.includeInHeader": {
@@ -941,7 +1031,10 @@
         "saropaLogCapture.integrations.testResults.source": {
           "default": "file",
           "description": "Test results source: file (last-test-run.json) or junit (JUnit XML).",
-          "enum": ["file", "junit"],
+          "enum": [
+            "file",
+            "junit"
+          ],
           "type": "string"
         },
         "saropaLogCapture.integrations.testResults.lastRunPath": {
@@ -979,13 +1072,21 @@
         "saropaLogCapture.integrations.crashDumps.searchPaths": {
           "default": [],
           "description": "Paths to scan for crash dumps (e.g. ${workspaceFolder}, ${env:TEMP}). Empty = workspace + common OS paths.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.crashDumps.extensions": {
-          "default": [".dmp", ".mdmp", ".core"],
+          "default": [
+            ".dmp",
+            ".mdmp",
+            ".core"
+          ],
           "description": "File extensions for crash dump discovery.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.crashDumps.leadMinutes": {
@@ -1018,15 +1119,26 @@
           "type": "boolean"
         },
         "saropaLogCapture.integrations.windowsEvents.logs": {
-          "default": ["Application", "System"],
+          "default": [
+            "Application",
+            "System"
+          ],
           "description": "Windows Event Log names to query (Windows only).",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.windowsEvents.levels": {
-          "default": ["Critical", "Error", "Warning"],
+          "default": [
+            "Critical",
+            "Error",
+            "Warning"
+          ],
           "description": "Event levels to include.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.windowsEvents.leadMinutes": {
@@ -1051,7 +1163,10 @@
         "saropaLogCapture.integrations.docker.runtime": {
           "default": "docker",
           "description": "Container runtime CLI: docker or podman.",
-          "enum": ["docker", "podman"],
+          "enum": [
+            "docker",
+            "podman"
+          ],
           "type": "string"
         },
         "saropaLogCapture.integrations.docker.containerId": {
@@ -1111,7 +1226,11 @@
         "saropaLogCapture.integrations.terminal.whichTerminals": {
           "default": "active",
           "description": "Which terminals to capture: all open terminals, only the active terminal at session start, or only user-linked terminals.",
-          "enum": ["all", "active", "linked"],
+          "enum": [
+            "all",
+            "active",
+            "linked"
+          ],
           "type": "string"
         },
         "saropaLogCapture.integrations.terminal.writeSidecar": {
@@ -1134,13 +1253,22 @@
         "saropaLogCapture.integrations.linuxLogs.when": {
           "default": "wsl",
           "description": "When to capture Linux system logs: only when targeting WSL, on any remote Linux, or always.",
-          "enum": ["wsl", "remote", "always"],
+          "enum": [
+            "wsl",
+            "remote",
+            "always"
+          ],
           "type": "string"
         },
         "saropaLogCapture.integrations.linuxLogs.sources": {
-          "default": ["dmesg", "journalctl"],
+          "default": [
+            "dmesg",
+            "journalctl"
+          ],
           "description": "Linux log sources to capture at session end.",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         "saropaLogCapture.integrations.linuxLogs.leadMinutes": {
@@ -1195,7 +1323,10 @@
         "saropaLogCapture.replay.defaultMode": {
           "default": "timed",
           "description": "Default replay mode: use actual line timing when available (timed) or fixed short delay (fast).",
-          "enum": ["timed", "fast"],
+          "enum": [
+            "timed",
+            "fast"
+          ],
           "type": "string"
         },
         "saropaLogCapture.replay.defaultSpeed": {
