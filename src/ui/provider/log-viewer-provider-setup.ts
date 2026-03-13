@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
 import { getConfig } from "../../modules/config/config";
 import * as helpers from "./viewer-provider-helpers";
+import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 
 export interface LogViewerSetupTarget {
   getExtensionUri(): vscode.Uri;
@@ -43,6 +44,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
   queueMicrotask(() => target.sendIntegrationsAdapters(getConfig().integrationsAdapters));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
+  queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending!); }); }
   webviewView.onDidChangeVisibility(() => {
