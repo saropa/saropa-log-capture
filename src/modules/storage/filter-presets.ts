@@ -155,7 +155,7 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
 
     const selected = await vscode.window.showQuickPick(items, {
         placeHolder: t('prompt.selectPreset'),
-        title: 'Filter Presets',
+        title: 'Quick Filters',
     });
 
     return selected?.preset;
@@ -198,7 +198,7 @@ prompt: t('prompt.presetName'),
                 placeHolder: t('prompt.presetPlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-                return 'Preset name cannot be empty';
+                return 'Quick Filter name cannot be empty';
             }
             return undefined;
         },
