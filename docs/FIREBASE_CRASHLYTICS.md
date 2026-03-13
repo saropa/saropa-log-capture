@@ -38,11 +38,21 @@ Your Google account needs the **Firebase Crashlytics Viewer** role (or broader r
 
 | Step | Detail |
 |------|--------|
-| First analysis | Runs `gcloud auth application-default print-access-token` (~500ms) |
+| First analysis | Runs `gcloud auth application-default print-access-token` or reads service account key (~500ms) |
 | Subsequent analyses | Uses cached token (0ms) |
 | After 30 minutes | Token cache expires, next analysis re-fetches |
 | Token expired upstream | `gcloud` auto-refreshes from the stored credential file |
-| No credentials | Panel shows: "Run: `gcloud auth application-default login`" |
+| No credentials | Panel shows: "Run: `gcloud auth application-default login`" or service account hint |
+
+### Service account key (alternative)
+
+When `gcloud` is not available (e.g. CI, locked-down machines), you can use a **Google Cloud service account JSON key file**:
+
+1. In Google Cloud Console: IAM & Admin → Service Accounts → create or select an account → Keys → Add key → JSON. Grant the account the **Firebase Crashlytics Viewer** role (or **Firebase Admin**) on the project.
+2. Set the extension setting **`saropaLogCapture.firebase.serviceAccountKeyPath`** to the path to the JSON file (absolute, or relative to the workspace root).
+3. Do **not** commit the key file to the repo; add it to `.gitignore` and use a secure path (e.g. outside the workspace) or environment-specific config.
+
+The extension will use this key to obtain an access token instead of running `gcloud`. If the path is set but the file is missing or invalid, the panel shows the token step with a "Service account key failed" message.
 
 ## Project Configuration
 

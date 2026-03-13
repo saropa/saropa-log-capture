@@ -16,6 +16,8 @@ const strings: Record<string, string> = {
     'statusBar.pausedLines': 'Paused ({0} lines)',
     'statusBar.adaptersSuffix': ' | $(check-all) {0} adapters',
     'statusBar.singleAdapterSuffix': ' | $(package) {0}',
+    'statusBar.crashlyticsReady': 'Crashlytics: ready',
+    'statusBar.crashlyticsSetupNeeded': 'Crashlytics: complete setup in panel',
 
     // Integration labels
     'integration.packages': 'Packages',
@@ -127,11 +129,11 @@ const strings: Record<string, string> = {
     'msg.fileRetentionMoved': 'Saropa Log Capture: Moved {0} old file(s) to trash (maxLogFiles: {1}).',
     'msg.sourceFileNotFound': 'Source file "{0}" not found in workspace.',
 
-    // Filter presets
-    'msg.noFilterPresets': 'No filter presets configured.',
-    'msg.filterPresetSaved': 'Filter preset "{0}" saved.',
-    'prompt.selectPreset': 'Select a filter preset to apply',
-    'prompt.presetName': 'Enter a name for this filter preset',
+    // Quick Filters (saved filter presets)
+    'msg.noFilterPresets': 'No Quick Filters configured.',
+    'msg.filterPresetSaved': 'Quick Filter "{0}" saved.',
+    'prompt.selectPreset': 'Select a Quick Filter to apply',
+    'prompt.presetName': 'Enter a name for this Quick Filter',
     'prompt.presetPlaceholder': 'e.g., Errors Only, SQL Queries, Network Debug',
 
     // Templates
