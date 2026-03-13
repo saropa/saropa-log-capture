@@ -51,16 +51,15 @@ def _run_npm_install() -> bool:
 
 
 def step_compile() -> bool:
-    """Run the full compile: type-check + lint + esbuild bundle.
+    """Run the full compile: type-check + lint + production esbuild bundle.
 
-    This runs `npm run compile` which chains:
-      1. tsc --noEmit (type checking)
-      2. eslint src (linting)
-      3. node esbuild.js (bundle into dist/extension.js)
+    This runs `npm run package` (same as vscode:prepublish) so the pipeline
+    builds once. Packaging then runs vsce with prepublish skipped to avoid
+    a second build and the resulting zip stream errors.
     """
     from modules.display import info
-    info("Running npm run compile...")
-    result = run(["npm", "run", "compile"], cwd=PROJECT_ROOT, check=False)
+    info("Running npm run package (type-check + lint + production build)...")
+    result = run(["npm", "run", "package"], cwd=PROJECT_ROOT, check=False)
     if result.returncode != 0:
         fail("Compile failed:")
         if result.stdout.strip():
@@ -68,7 +67,7 @@ def step_compile() -> bool:
         if result.stderr.strip():
             print(result.stderr)
         return False
-    ok("Compile passed (type-check + lint + esbuild)")
+    ok("Compile passed (type-check + lint + production esbuild)")
     return True
 
 
