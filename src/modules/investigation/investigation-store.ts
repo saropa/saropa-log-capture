@@ -72,6 +72,22 @@ export class InvestigationStore implements vscode.Disposable {
         return file.investigations.find(inv => inv.id === id);
     }
 
+    /** Add an existing investigation (e.g. from import). Fails if at MAX_INVESTIGATIONS. */
+    async addInvestigation(investigation: Investigation): Promise<void> {
+        const file = await this.load();
+        if (file.investigations.length >= MAX_INVESTIGATIONS) {
+            throw new Error(`Maximum of ${MAX_INVESTIGATIONS} investigations reached.`);
+        }
+        if (file.investigations.some(inv => inv.id === investigation.id)) {
+            return;
+        }
+        const updated: InvestigationsFile = {
+            ...file,
+            investigations: [...file.investigations, investigation],
+        };
+        await this.save(updated);
+    }
+
     /** Add a source to an investigation. */
     async addSource(investigationId: string, input: AddSourceInput): Promise<void> {
         const file = await this.load();

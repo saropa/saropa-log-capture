@@ -55,6 +55,7 @@
   "command.addToInvestigation.title": "Añadir a investigación",
   "command.removeFromInvestigation.title": "Eliminar de investigación",
   "command.exportInvestigation.title": "Exportar investigación como .slc",
+  "command.shareInvestigation.title": "Compartir investigación",
   "command.deleteInvestigation.title": "Eliminar investigación",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
 
