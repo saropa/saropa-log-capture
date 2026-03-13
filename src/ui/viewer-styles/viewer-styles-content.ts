@@ -48,6 +48,10 @@ export function getContentStyles(): string {
 .anr-badge { color: var(--vscode-editorWarning-foreground, #fc0); margin-right: 4px; }
 .anr-warning { color: var(--vscode-editorWarning-foreground, #fc0); }
 
+/* Correlation badge: line is part of a detected correlation */
+.correlation-badge { color: var(--vscode-textLink-foreground); cursor: pointer; margin-left: 2px; }
+.correlation-badge:hover { text-decoration: underline; }
+
 /* ===================================================================
    Jump-to-Top / Jump-to-Bottom Buttons
    Floating buttons in log-content-wrapper, shown when content
