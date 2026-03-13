@@ -23,6 +23,8 @@ export interface SessionSummary {
     readonly title: string;
     readonly lines: string[];
     readonly stats: SessionStats;
+    /** When present, "Open Log" opens this URI instead of relying on active session. */
+    readonly logUri?: vscode.Uri;
 }
 
 /**
@@ -90,6 +92,11 @@ export function generateSummary(
     };
 }
 
+/** Add logUri to a summary so "Open Log" can open the file when the session is no longer active. */
+export function withLogUri(summary: SessionSummary, logUri: vscode.Uri): SessionSummary {
+    return { ...summary, logUri };
+}
+
 /**
  * Format duration in a human-readable way.
  */
@@ -147,8 +154,12 @@ export function showSummaryNotification(summary: SessionSummary): void {
         message,
         t('action.openLog'),
     ).then((selection) => {
-        if (selection === t('action.openLog')) {
-            vscode.commands.executeCommand('saropaLogCapture.open');
+        if (selection !== t('action.openLog')) { return; }
+        // After finalize there is no active session; open the finalized log when we have its URI.
+        if (summary.logUri) {
+            void vscode.window.showTextDocument(summary.logUri);
+        } else {
+            void vscode.commands.executeCommand('saropaLogCapture.open');
         }
     });
 }

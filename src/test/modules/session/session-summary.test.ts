@@ -1,9 +1,11 @@
 import * as assert from 'assert';
+import * as vscode from 'vscode';
 import {
     generateSummary,
     formatDuration,
     formatBytes,
     defaultSessionStats,
+    withLogUri,
 } from '../../../modules/session/session-summary';
 
 suite('SessionSummary', () => {
@@ -103,6 +105,26 @@ suite('SessionSummary', () => {
             assert.strictEqual(stats.bytesWritten, 0);
             assert.strictEqual(stats.durationMs, 0);
             assert.strictEqual(stats.partCount, 1);
+        });
+    });
+
+    suite('withLogUri', () => {
+        test('should add logUri to summary without mutating original', () => {
+            const stats = defaultSessionStats();
+            const base = generateSummary('app.log', stats);
+            assert.strictEqual(base.logUri, undefined);
+            const uri = vscode.Uri.file('/logs/app.log');
+            const withUri = withLogUri(base, uri);
+            assert.strictEqual(withUri.logUri?.toString(), uri.toString());
+            assert.strictEqual(base.logUri, undefined);
+        });
+
+        test('should preserve title and lines', () => {
+            const stats = { ...defaultSessionStats(), lineCount: 10 };
+            const base = generateSummary('test.log', stats);
+            const withUri = withLogUri(base, vscode.Uri.file('/x/test.log'));
+            assert.strictEqual(withUri.title, base.title);
+            assert.deepStrictEqual(withUri.lines, base.lines);
         });
     });
 });
