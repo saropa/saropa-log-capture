@@ -11,9 +11,11 @@
   // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
   "typescript.tsc.autoDetect": "off",
   "cSpell.words": [
+    "Affordances",
     "basenames",
     "clippy",
     "colorama",
+    "cpuprofile",
     "debuggee",
     "Dedup",
     "Deduplicator",
@@ -38,8 +40,10 @@
     "mousemove",
     "mouseup",
     "myapp",
+    "nonced",
     "oneline",
     "OPENVSX",
+    "overscan",
     "OVSX",
     "playcore",
     "pointercancel",
@@ -49,6 +53,7 @@
     "popout",
     "prereqs",
     "pubspec",
+    "rebindable",
     "recalc",
     "Rescan",
     "Rescanning",
@@ -67,6 +72,7 @@
     "visibilitychange",
     "vscodeignore",
     "vsixignore",
+    "winget",
     "Wireshark"
   ],
   "chat.tools.terminal.autoApprove": {
