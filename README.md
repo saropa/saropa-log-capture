@@ -177,7 +177,7 @@ The extension runs in the **workspace** context, so when you open a folder via *
 3. Output is automatically captured to the `reports/` directory
 4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
 
-**Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host.
+**Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host. To run the test suite in the IDE, install the recommended **Extension Test Runner** and use the Testing view; see Contributing for details.
 
 ---
 
@@ -410,6 +410,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for developer setup, code quality standar
 
 **Testing the extension (F5):**  
 Open this repo in **VS Code** (not Cursor): **File → Open Folder** → select the repo, then press **F5**. A second VS Code window opens (Extension Development Host) with the extension loaded. Click the **Saropa Log Capture** icon in the activity bar (left) to open the viewer. If you use Cursor, the F5 host may still be Cursor and the extension may not load; use VS Code for reliable testing.
+
+**Running the extension test suite (integrated):**  
+Install the recommended extension **Extension Test Runner** (ms-vscode.extension-test-runner). It discovers the repo’s `.vscode-test.mjs` and shows tests in the **Testing** view (beaker icon). You can run and debug tests from there. Alternatively: **Terminal → Run Task… → Extension Tests**, or run `npm test` in the terminal. On Windows, if you see “Error mutex already exists”, delete the folder `.vscode-test/user-data` and run tests again.
 
 **Reporting issues:**
 
