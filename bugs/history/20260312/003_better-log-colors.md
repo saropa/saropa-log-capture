@@ -8,6 +8,8 @@ Empty lines (empty or whitespace-only) should not get decoration chevrons or tim
 
 **Fix:** Added blank-line check to `getDecorationPrefix()` in `viewer-decorations.ts`. Function now returns empty string when `isLineContentBlank(item)` is true, consistent with how severity bars already skip blank lines.
 
+**Update (2026-03):** Blank is now defined explicitly as `/^\s*$/` on stripped HTML (empty or any Unicode whitespace). Hide-blank-lines uses the same check. Decoration prefix is always hidden on such lines; severity bar on blank lines inherits from the previous line.
+
 ## Issue 2: Level-based text coloring lost
 
 Line text was all default foreground color despite severity dots working correctly. The `!hasDeco` guard in `renderItem()` suppressed text colors whenever decorations were enabled (the default).
