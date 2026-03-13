@@ -5,7 +5,7 @@
 - **Footer:** Stats (filename/line count), error breakpoint toggle, level-dot summary (click opens level flyup), filter badge, version/About link. No duplicate filter controls.
 - **Icon bar:** Project Logs, Search, Find, Bookmarks, **Filters**, Session Info, Trash, **Options**, Crashlytics, Recurring, Performance, About. Search and Options are in the icon bar rather than the footer.
 - **Filters panel** (icon bar): Quick Filters (presets + reset), Output Channels (category checkboxes), Log Tags, Noise Reduction (exclusions + app-only). Single source of truth for preset, categories, exclusions, app-only.
-- **Options panel** (icon bar): Display (font size, line height, **word wrap**, decorations), Integrations, Layout, Audio, Actions (reset to default, reset extension settings). Export is available via context menu "Export current view…" and optionally from Options/Actions in future.
+- **Options panel** (icon bar): Display (font size, line height, **word wrap**, decorations), **Integrations** (button opens dedicated Integrations screen with descriptions and performance notes), Layout, Audio, Actions (reset to default, reset extension settings). Export is available via context menu "Export current view…" and optionally from Options/Actions in future.
 - **Level filters:** Footer shows compact level dots; clicking opens the level flyup. Options panel does not duplicate level checkboxes.
 
 The plan’s “Proposed” moves are done: Excl/App Only/Preset/Categories live in the Filters panel; No Wrap in Options > Display; Export in context menu. Remaining optional polish (e.g. Export button in Options Actions, or renaming “Presets” → “Quick Filters” in UI copy) can be done ad hoc. This plan is closed.
