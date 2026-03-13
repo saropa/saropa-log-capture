@@ -169,6 +169,18 @@ export function getPerformancePanelStyles(): string {
 
 /* --- Session tab (snapshot, samples, profiler) --- */
 .pp-session-view { padding: 8px 12px; }
+.pp-session-intro {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    background: var(--vscode-textBlockQuote-background, rgba(128, 128, 128, 0.15));
+    border-left: 3px solid var(--vscode-focusBorder, rgba(128, 128, 128, 0.5));
+    font-size: 12px;
+    color: var(--vscode-foreground);
+    line-height: 1.45;
+}
+.pp-session-intro-line { margin: 0 0 6px 0; }
+.pp-session-intro-line:last-child { margin-bottom: 0; }
+.pp-session-intro-note { font-size: 11px; opacity: 0.85; }
 .pp-session-block {
     margin-bottom: 14px;
     padding-bottom: 10px;
@@ -185,6 +197,7 @@ export function getPerformancePanelStyles(): string {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     line-height: 1.4;
+    white-space: pre-line;
 }
 
 /* --- Empty / loading --- */

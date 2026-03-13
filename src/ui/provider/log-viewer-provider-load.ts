@@ -5,6 +5,7 @@
 
 import * as vscode from "vscode";
 import { getConfig } from "../../modules/config/config";
+import { SessionMetadataStore } from "../../modules/session/session-metadata";
 import { findHeaderEnd, sendFileLines, parseHeaderFields, computeSessionMidnight, parseTimeToMs, parseRawLinesToPending } from "../viewer/viewer-file-loader";
 import { detectRunBoundaries, getRunStartIndices } from "../../modules/session/run-boundaries";
 import { getRunSummaries } from "../../modules/session/run-summaries";
@@ -17,6 +18,7 @@ export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
   setFilename(name: string): void;
   setSessionInfo(info: Record<string, string> | null): void;
+  setHasPerformanceData?(has: boolean): void;
   getSeenCategories(): Set<string>;
 }
 
@@ -46,6 +48,18 @@ export async function executeLoadContent(
   target.setFilename(vscode.workspace.asRelativePath(uri, false));
   const fields = parseHeaderFields(rawLines);
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
+  if (target.setHasPerformanceData) {
+    try {
+      const store = new SessionMetadataStore();
+      const meta = await store.loadMetadata(uri);
+      if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; /* load superseded */
+      const perf = meta.integrations?.performance as Record<string, unknown> | undefined;
+      const has = !!(perf && typeof perf === "object" && (perf.snapshot != null || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
+      target.setHasPerformanceData(has);
+    } catch {
+      target.setHasPerformanceData(false);
+    }
+  }
   const headerEnd = findHeaderEnd(rawLines);
   let contentLines = rawLines.slice(headerEnd);
   const cfg = getConfig();
