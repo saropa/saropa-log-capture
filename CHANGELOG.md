@@ -16,7 +16,15 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [3.2.0] - Unreleased
+## [3.2.1] - Unreleased
+
+### Fixed
+
+- **Flutter/Dart: empty log file when child session starts before parent.** When the Dart VM (child) debug session started before the Flutter (parent) session, the extension created a second log file for the parent that never received output. The parent now reuses the child's log session so a single file captures all debug output.
+
+---
+
+## [3.2.0]
 
 ### Added
 
