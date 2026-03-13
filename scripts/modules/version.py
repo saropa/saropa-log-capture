@@ -19,6 +19,11 @@ from modules.publish_git import is_version_tagged
 _UNPUBLISHED_HEADING_RE = re.compile(
     r'^##\s*\[(?:Unreleased|Unpublished|Undefined)\]', re.IGNORECASE | re.MULTILINE
 )
+# Versioned heading with " - Unreleased" suffix (Keep a Changelog style).
+_VERSIONED_UNRELEASED_RE = re.compile(
+    r'^##\s*\[(\d+\.\d+\.\d+)\]\s*-\s*(?:Unreleased|Unpublished|Undefined)\s*$',
+    re.IGNORECASE | re.MULTILINE,
+)
 
 # First release heading: ## [x.y.z]
 _FIRST_RELEASE_HEADING_RE = re.compile(r'^##\s*\[\d+\.\d+\.\d+\]', re.MULTILINE)
@@ -53,12 +58,14 @@ def _get_changelog_max_version() -> str | None:
 
 
 def _changelog_has_unpublished_heading() -> bool:
-    """True if CHANGELOG has ## [Unreleased], [Unpublished], or [Undefined]."""
+    """True if CHANGELOG has ## [Unreleased], [Unpublished], [Undefined], or ## [x.y.z] - Unreleased."""
     changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
     try:
         with open(changelog_path, encoding="utf-8") as f:
             for line in f:
                 if _UNPUBLISHED_HEADING_RE.match(line):
+                    return True
+                if _VERSIONED_UNRELEASED_RE.match(line):
                     return True
     except OSError:
         pass
@@ -145,7 +152,7 @@ def _write_package_version(version: str) -> bool:
 
 
 def _stamp_changelog(version: str) -> bool:
-    """Replace '## [Unreleased]' with '## [version]', then add new Unreleased.
+    """Replace '## [Unreleased]' or '## [version] - Unreleased' with '## [version]', then add new Unreleased.
 
     Version-only heading (no date). Called during validation so the
     CHANGELOG is finalized before packaging. After stamping, inserts a
@@ -160,9 +167,17 @@ def _stamp_changelog(version: str) -> bool:
         return False
 
     replacement = f'## [{version}]'
-    updated, count = _UNPUBLISHED_HEADING_RE.subn(replacement, content)
+
+    # First try stripping " - Unreleased" from ## [version] - Unreleased
+    versioned_unreleased = re.compile(
+        rf'^##\s*\[{re.escape(version)}\]\s*-\s*(?:Unreleased|Unpublished|Undefined)\s*$',
+        re.IGNORECASE | re.MULTILINE,
+    )
+    updated, count = versioned_unreleased.subn(replacement, content)
     if count == 0:
-        fail("Could not find '## [Unreleased]' in CHANGELOG.md")
+        updated, count = _UNPUBLISHED_HEADING_RE.subn(replacement, content)
+    if count == 0:
+        fail("Could not find '## [Unreleased]' or '## [version] - Unreleased' in CHANGELOG.md")
         return False
 
     # Insert a new ## [Unreleased] section before the just-stamped version
@@ -183,33 +198,39 @@ def _stamp_changelog(version: str) -> bool:
 def _prompt_version(suggested: str, min_version: str) -> str | None:
     """Prompt user to accept suggested version or enter custom.
 
-    Pre-fills the input with the suggested version for easy editing.
+    Prompt shows default; empty Enter accepts it. Readline pre-fills when available.
     The chosen version must be >= min_version.
     """
     if not sys.stdin.isatty():
         return suggested
 
-    # Pre-fill input with suggested version (cross-platform)
+    prompt = f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}): "
+    rl = None
     try:
-        import readline
-        def prefill():
-            readline.insert_text(suggested)
-            readline.redisplay()
-        readline.set_startup_hook(prefill)
+        import readline as rl
     except ImportError:
-        pass  # readline not available (some Windows setups)
+        if sys.platform == "win32":
+            try:
+                import pyreadline3 as rl  # type: ignore[no-redef]
+            except ImportError:
+                pass
+    if rl is not None:
+        def prefill():
+            rl.insert_text(suggested)
+            rl.redisplay()
+        rl.set_startup_hook(prefill)
 
     try:
-        answer = input(f"  {C.YELLOW}Version: {C.RESET}").strip()
+        answer = input(prompt).strip()
     except (EOFError, KeyboardInterrupt):
         print()
         return None
     finally:
-        try:
-            import readline
-            readline.set_startup_hook()
-        except ImportError:
-            pass
+        if rl is not None:
+            try:
+                rl.set_startup_hook()
+            except Exception:
+                pass
 
     if not answer:
         return suggested
