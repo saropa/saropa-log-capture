@@ -27,7 +27,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](bugs/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](bugs/007_plan-docker-inspect-and-until.md) |
 | Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](bugs/039_plan-bidirectional-sync.md) |
-| Medium | Low | Lazy load session list | Virtualize or paginate for 100+ sessions | [028](bugs/028_plan-lazy-load-session-list.md) |
+| Medium | Low | ~~Lazy load session list~~ | *Done: pagination (100 per page, configurable).* | [028](bugs/history/20260313/028_plan-lazy-load-session-list.md) |
 | Medium | Medium | Log diff from Git | Compare session to previous commit | [035](bugs/035_plan-log-diff-from-git.md) |
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](bugs/031_plan-session-comparison-three-way.md) |
 | Medium | High | Noise Learning | Learn from dismissals, suggest exclusion rules | [025](bugs/025_plan-noise-learning.md) |

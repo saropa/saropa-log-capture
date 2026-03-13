@@ -67,6 +67,8 @@ export interface SaropaLogCaptureConfig {
   readonly docsScanDirs: readonly string[];
   readonly includeSubfolders: boolean;
   readonly treeRefreshInterval: number;
+  /** Sessions per page in Project Logs panel (pagination). */
+  readonly sessionListPageSize: number;
   readonly iconBarPosition: "left" | "right";
   readonly organizeFolders: boolean;
   readonly integrationsAdapters: readonly string[];

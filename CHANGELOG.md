@@ -20,6 +20,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Project Logs: pagination.** The session list in the Project Logs panel is now paginated so 100+ sessions load and scroll without lag. Only the current page is rendered; a bar shows "Showing X–Y of Z" with Previous/Next when there are multiple pages. Page size defaults to 100 and is configurable via **Saropa Log Capture › Session List Page Size** (`saropaLogCapture.sessionListPageSize`, 10–500). Page resets when you refresh, change date range, or other filters. Plan [028](bugs/history/20260313/028_plan-lazy-load-session-list.md) completed.
+
 • **Export Insights Summary.** Export recurring errors and hot files as CSV or JSON for reports or tooling. Command **Saropa Log Capture: Export Insights Summary** (or **Export summary** from the Cross-Session Insights panel or Recurring Errors slide-out): choose scope (current session, current investigation, last 7 days, or all sessions), format (CSV/JSON), then save. Output includes error signatures, counts, sessions, sample lines, first/last seen; hot files with session counts; and meta (session count, time range, exported-at). Capped at 500 errors and 500 files per export. Plan [032](bugs/history/20260313/032_plan-export-insights-summary.md) completed.
 
 ### Fixed
