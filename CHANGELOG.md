@@ -16,7 +16,13 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [3.3.0] - Unreleased
+## [Unreleased]
+
+---
+
+## [3.3.0]
+
+Auto-correlation across debug, HTTP, perf, and terminal in the Session Timeline; Git line history and commit links in session meta; and Investigation Mode Phase 3–4 (export/import, bug-report context, and UX polish).
 
 ### Added
 
