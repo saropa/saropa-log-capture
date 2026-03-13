@@ -171,6 +171,8 @@ export interface IntegrationDockerConfig {
   readonly containerNamePattern: string;
   readonly captureLogs: boolean;
   readonly maxLogLines: number;
+  /** When true, write full docker inspect output as a sidecar JSON file. */
+  readonly includeInspect: boolean;
 }
 
 /** Grafana Loki export (push log session to Loki). */

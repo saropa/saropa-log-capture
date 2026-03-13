@@ -50,7 +50,7 @@ export const dockerContainersProvider: IntegrationProvider = {
 
     async onSessionEnd(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
         if (!isEnabled(context)) { return undefined; }
-        const { baseFileName, sessionStartTime } = context;
+        const { baseFileName, sessionStartTime, sessionEndTime } = context;
         const cfg = context.config.integrationsDocker;
         const runtime = cfg.runtime;
         const containerId = resolveContainerId(context, runtime);
@@ -72,18 +72,22 @@ export const dockerContainersProvider: IntegrationProvider = {
         let logContent = '';
         if (cfg.captureLogs) {
             const since = Math.floor((sessionStartTime - 60) / 1000);
+            const until = Math.ceil((sessionEndTime + 60_000) / 1000); // 60s lag to avoid clipping late logs
             const { stdout } = runCli(runtime, [
-                'logs', '--since', `${since}s`, '--tail', String(cfg.maxLogLines), containerId,
+                'logs', '--since', `${since}s`, '--until', `${until}s`, '--tail', String(cfg.maxLogLines), containerId,
             ], 15000);
             logContent = stdout || '';
         }
-        const payload = {
+        const addInspectSidecar = cfg.includeInspect && inspectResult.ok && inspectResult.stdout;
+        const inspectSidecarName = `${baseFileName}.container-inspect.json`;
+        const payload: Record<string, unknown> = {
             containerId,
             image,
             imageId,
             runtime,
             sidecar: `${baseFileName}.container.log`,
         };
+        if (addInspectSidecar) { payload.inspectSidecar = inspectSidecarName; }
         const result: Contribution[] = [
             { kind: 'meta', key: 'docker', payload },
         ];
@@ -92,6 +96,14 @@ export const dockerContainersProvider: IntegrationProvider = {
                 kind: 'sidecar',
                 filename: `${baseFileName}.container.log`,
                 content: logContent,
+                contentType: 'utf8',
+            });
+        }
+        if (addInspectSidecar) {
+            result.push({
+                kind: 'sidecar',
+                filename: inspectSidecarName,
+                content: inspectResult.stdout,
                 contentType: 'utf8',
             });
         }
