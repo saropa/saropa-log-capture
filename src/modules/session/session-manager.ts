@@ -13,6 +13,7 @@ import { initializeSession } from './session-lifecycle-init';
 import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
 import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
+import { replayEarlyBuffer as replayEarlyBufferHelper, replayAllOtherEarlyBuffers as replayAllOtherEarlyBuffersHelper } from './session-manager-replay';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
@@ -22,9 +23,17 @@ export { LineData, LineListener, SplitListener };
  */
 export class SessionManagerImpl implements SessionManager {
     private readonly sessions = new Map<string, LogSession>();
+    /** Debug session id -> debug target process ID (from DAP process event). */
+    private readonly processIds = new Map<string, number>();
     /** Child session id -> parent session id. Used when child starts before parent (e.g. Dart VM before Flutter). */
     private readonly childToParentId = new Map<string, string>();
+    /** Owner session id -> creation time (ms). Used for fallback when child has no parentSession set. */
+    private readonly ownerSessionCreatedAt = new Map<string, number>();
     private readonly ownerSessionIds = new Set<string>();
+    /** Session ids we've already logged "buffering output" for (avoid log spam). */
+    private readonly bufferingLoggedFor = new Set<string>();
+    /** Session ids we've logged "output written" for (diagnosticCapture, once per session). */
+    private readonly diagnosticWrittenLoggedFor = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
     private readonly splitListeners: SplitListener[] = [];
     private watcher: KeywordWatcher;
@@ -79,10 +88,28 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
+        let effectiveSessionId = sessionId;
+        if (!this.sessions.has(sessionId)) {
+            // Single-session fallback: route to the one open log so we don't drop output when the adapter uses a different session id.
+            if (this.ownerSessionIds.size === 1) {
+                effectiveSessionId = this.ownerSessionIds.values().next().value as string;
+                if (this.cachedConfig.diagnosticCapture) {
+                    this.outputChannel.appendLine(`Capture diagnostic: routing output to single active session (incoming sessionId=${sessionId})`);
+                }
+            } else {
+                if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
+                    this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
+                }
+                this.bufferingLoggedFor.add(sessionId);
+            }
+        } else if (this.cachedConfig.diagnosticCapture && !this.diagnosticWrittenLoggedFor.has(sessionId)) {
+            this.diagnosticWrittenLoggedFor.add(sessionId);
+            this.outputChannel.appendLine(`Capture diagnostic: output written to log sessionId=${sessionId}`);
+        }
         const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
         processOutputEvent(
             { sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
-            { counters, broadcastLine: (data) => this.broadcastLine(data) }, sessionId, body,
+            { counters, broadcastLine: (data) => this.broadcastLine(data) }, effectiveSessionId, body,
         );
         this.floodSuppressedTotal = counters.floodSuppressedTotal;
     }
@@ -92,6 +119,11 @@ export class SessionManagerImpl implements SessionManager {
         processDapMessage({ config: this.cachedConfig, sessions: this.sessions }, sessionId, msg, direction);
     }
 
+    /** Called by the DAP tracker when a process event with systemProcessId is received. */
+    onProcessId(sessionId: string, processId: number): void {
+        this.processIds.set(sessionId, processId);
+    }
+
     /** Start capturing a debug session. */
     async startSession(
         session: vscode.DebugSession,
@@ -99,11 +131,12 @@ export class SessionManagerImpl implements SessionManager {
     ): Promise<void> {
         this.cachedConfig = getConfig();
         if (!this.cachedConfig.enabled) { return; }
+
         // Child debug sessions (e.g. Dart VM) share the parent's LogSession so output goes to one file.
         if (session.parentSession && this.sessions.has(session.parentSession.id)) {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
-            this.replayEarlyBuffer(session.id);
+            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
             return;
         }
         // Parent started after child (e.g. Flutter after Dart VM): reuse the child's LogSession so one file gets all output.
@@ -111,7 +144,27 @@ export class SessionManagerImpl implements SessionManager {
             if (this.childToParentId.get(sid) === session.id) {
                 this.sessions.set(session.id, logSession);
                 this.outputChannel.appendLine(`Parent session aliased to existing child: ${session.type}`);
-                this.replayEarlyBuffer(session.id);
+                replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+                return;
+            }
+        }
+        // Fallback: child may have started first without parentSession set. If exactly one owner session was created in the last 15s, alias to it.
+        if (!session.parentSession && this.ownerSessionIds.size >= 1) {
+            const now = Date.now();
+            const RECENT_MS = 15_000;
+            let recentCount = 0;
+            let candidateLogSession: LogSession | null = null;
+            for (const sid of this.ownerSessionIds) {
+                const createdAt = this.ownerSessionCreatedAt.get(sid);
+                if (createdAt !== undefined && now - createdAt < RECENT_MS) {
+                    recentCount++;
+                    candidateLogSession = this.sessions.get(sid) ?? null;
+                }
+            }
+            if (recentCount === 1 && candidateLogSession) {
+                this.sessions.set(session.id, candidateLogSession);
+                this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
+                replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
                 return;
             }
         }
@@ -125,8 +178,12 @@ export class SessionManagerImpl implements SessionManager {
             },
         });
         if (!result) { return; }
+        if (this.cachedConfig.diagnosticCapture) {
+            this.outputChannel.appendLine(`Capture diagnostic: new log session created sessionId=${session.id} type=${session.type}`);
+        }
         this.sessions.set(session.id, result.logSession);
         this.ownerSessionIds.add(session.id);
+        this.ownerSessionCreatedAt.set(session.id, Date.now());
         if (session.parentSession) {
             this.childToParentId.set(session.id, session.parentSession.id);
         }
@@ -138,16 +195,22 @@ export class SessionManagerImpl implements SessionManager {
         this.floodSuppressedTotal = 0;
         this.statusBar.show();
         this.statusBar.updateIntegrationAdapters(result.integrationContributorIds);
-        this.replayEarlyBuffer(session.id);
+        replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+        replayAllOtherEarlyBuffersHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.cachedConfig, this.outputChannel);
     }
 
     /** Stop and finalize a debug session's log file. */
     async stopSession(session: vscode.DebugSession): Promise<void> {
         this.earlyBuffer.delete(session.id);
         this.childToParentId.delete(session.id);
+        this.ownerSessionCreatedAt.delete(session.id);
+        this.bufferingLoggedFor.delete(session.id);
+        this.diagnosticWrittenLoggedFor.delete(session.id);
         const logSession = this.sessions.get(session.id);
         if (!logSession) { return; }
         this.sessions.delete(session.id);
+        const debugProcessId = this.processIds.get(session.id);
+        this.processIds.delete(session.id);
         if (!this.ownerSessionIds.has(session.id)) { return; }
         this.ownerSessionIds.delete(session.id);
 
@@ -168,6 +231,7 @@ export class SessionManagerImpl implements SessionManager {
             autoTagger: this.autoTagger, metadataStore: this.metadataStore,
             debugAdapterType: session.type,
             sessionStartTime: this.sessionStartTime,
+            debugProcessId,
             onReportsIndexReady,
         }, stats);
 
@@ -248,6 +312,8 @@ export class SessionManagerImpl implements SessionManager {
     async stopAll(): Promise<void> {
         this.earlyBuffer.clear();
         this.childToParentId.clear();
+        this.ownerSessionCreatedAt.clear();
+        this.bufferingLoggedFor.clear();
         const unique = new Set<LogSession>(this.sessions.values());
         await Promise.allSettled([...unique].map(s => s.stop()));
         this.sessions.clear();
@@ -260,14 +326,7 @@ export class SessionManagerImpl implements SessionManager {
     /** Recreate the keyword watcher from current config. */
     refreshWatcher(): void { this.watcher = this.createWatcher(); }
 
-    // --- Private: early buffer replay, line/split broadcast, watcher ---
-
-    private replayEarlyBuffer(sessionId: string): void {
-        const buffered = this.earlyBuffer.drain(sessionId);
-        if (buffered.length === 0) { return; }
-        this.outputChannel.appendLine(`Replaying ${buffered.length} early output event(s)`);
-        for (const body of buffered) { this.onOutputEvent(sessionId, body); }
-    }
+    // --- Private: line/split broadcast, watcher ---
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
         const hits = data.isMarker ? [] : this.watcher.testLine(data.text);

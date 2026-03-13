@@ -60,6 +60,8 @@ export interface SaropaLogCaptureConfig {
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   readonly verboseDap: boolean;
+  /** When true, log capture pipeline events to Output (session/buffer/write) for debugging empty logs. */
+  readonly diagnosticCapture: boolean;
   readonly fileTypes: readonly string[];
   readonly tailPatterns: readonly string[];
   readonly docsScanDirs: readonly string[];

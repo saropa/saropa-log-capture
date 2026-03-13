@@ -129,6 +129,7 @@ export function generateContextHeader(
 ): string {
     const lines: string[] = [];
     lines.push('=== SAROPA LOG CAPTURE — SESSION START ===');
+    lines.push(`Extension version: ${ctx.extensionVersion}`);
     lines.push(`Date:           ${ctx.date.toISOString()}`);
     lines.push(`Project:        ${ctx.projectName}`);
     lines.push(`Debug Adapter:  ${ctx.debugAdapterType}`);
