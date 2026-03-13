@@ -39,6 +39,7 @@
   "command.exportJson.title": "导出为 JSON",
   "command.exportJsonl.title": "导出为 JSONL",
   "command.exportSlc.title": "导出为 .slc 包",
+  "command.exportInsightsSummary.title": "导出见解摘要",
   "command.exportToLoki.title": "导出到 Loki",
   "command.setLokiApiKey.title": "Saropa Log Capture: 设置 Loki API 密钥",
   "command.importSlc.title": "导入 .slc 包",
