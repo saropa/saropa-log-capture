@@ -8,7 +8,7 @@ export type {
     Contribution, HeaderContribution, MetaContribution, SidecarContribution,
     IntegrationProvider, IntegrationContext, IntegrationEndContext,
 } from './types';
-export { IntegrationRegistry } from './registry';
+export { IntegrationRegistry, type RunOnSessionStartAsyncOptions } from './registry';
 export {
     createIntegrationContext,
     createIntegrationEndContext,
