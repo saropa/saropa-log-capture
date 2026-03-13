@@ -140,6 +140,8 @@ export interface IntegrationCrashDumpsConfig {
   readonly lagMinutes: number;
   readonly maxFiles: number;
   readonly includeInHeader: boolean;
+  /** When true, copy discovered crash dump files into the session folder for portability. */
+  readonly copyToSession: boolean;
 }
 
 export interface IntegrationWindowsEventsConfig {
@@ -169,6 +171,10 @@ export interface IntegrationPerformanceConfig {
   readonly sampleDuringSession: boolean;
   readonly sampleIntervalSeconds: number;
   readonly includeInHeader: boolean;
+  /** Path to an external profiler output file (e.g. .cpuprofile, .trace). Copied into the session folder at session end. */
+  readonly profilerOutputPath: string;
+  /** Capture memory usage of the debug target process (requires active debug session). */
+  readonly processMetrics: boolean;
 }
 
 export interface IntegrationTerminalConfig {

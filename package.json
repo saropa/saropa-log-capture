@@ -935,6 +935,11 @@
           "description": "Add crash dumps summary line to header when any found.",
           "type": "boolean"
         },
+        "saropaLogCapture.integrations.crashDumps.copyToSession": {
+          "default": false,
+          "description": "Copy discovered crash dump files into the session folder for portability.",
+          "type": "boolean"
+        },
         "saropaLogCapture.integrations.windowsEvents.logs": {
           "default": ["Application", "System"],
           "description": "Windows Event Log names to query (Windows only).",
@@ -1014,6 +1019,16 @@
         "saropaLogCapture.integrations.performance.includeInHeader": {
           "default": true,
           "description": "Include system snapshot line in context header.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.performance.profilerOutputPath": {
+          "default": "",
+          "description": "Path to an external profiler output file (e.g. .cpuprofile, .trace). Copied into the session folder at session end.",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.performance.processMetrics": {
+          "default": false,
+          "description": "Capture memory usage of the debug target process (requires active debug session).",
           "type": "boolean"
         },
         "saropaLogCapture.integrations.terminal.whichTerminals": {
@@ -1271,12 +1286,6 @@
           "name": "%view.vitalsPanel.name%",
           "type": "webview",
           "when": "config.saropaLogCapture.playConsole.enabled"
-        },
-        {
-          "icon": "$(link)",
-          "id": "saropaLogCapture.correlationPanel",
-          "name": "%view.correlationPanel.name%",
-          "type": "webview"
         }
       ]
     },

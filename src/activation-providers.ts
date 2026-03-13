@@ -7,14 +7,12 @@
 import * as vscode from 'vscode';
 import { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import { VitalsPanelProvider } from './ui/panels/vitals-panel';
-import { CorrelationPanelProvider } from './ui/panels/correlation-panel';
 import { CrashlyticsCodeLensProvider } from './ui/shared/crashlytics-codelens';
 import { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 
 export interface WebviewProviders {
     viewerProvider: LogViewerProvider;
     vitalsPanel: VitalsPanelProvider;
-    correlationPanel: CorrelationPanelProvider;
     crashCodeLens: CrashlyticsCodeLensProvider;
     inlineDecorations: InlineDecorationsProvider;
 }
@@ -46,16 +44,10 @@ export function setupWebviewProviders(
         'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
     ));
 
-    const correlationPanel = new CorrelationPanelProvider();
-    context.subscriptions.push(correlationPanel);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(CorrelationPanelProvider.viewType, correlationPanel),
-    );
-
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
 
-    return { viewerProvider, vitalsPanel, correlationPanel, crashCodeLens, inlineDecorations };
+    return { viewerProvider, vitalsPanel, crashCodeLens, inlineDecorations };
 }
 
 /**

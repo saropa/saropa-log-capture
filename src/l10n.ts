@@ -150,7 +150,6 @@ const strings: Record<string, string> = {
     'panel.timeline.exportJson': 'Export JSON',
     'panel.timeline.exportCsv': 'Export CSV',
     'panel.correlation.title': 'Correlations',
-    'panel.correlation.empty': 'No correlations detected for this session.',
     'panel.correlation.related': 'Related events',
     'panel.correlation.jumpTo': 'Jump to event',
     'correlation.badgeTitle': 'Related to: {0}',
