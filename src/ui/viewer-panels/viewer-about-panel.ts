@@ -5,6 +5,8 @@
  * in a slide-out panel following the icon-bar panel pattern.
  */
 
+import { buildItemUrl } from "../../modules/marketplace-url";
+
 /** Generate the about panel HTML with static content. */
 export function getAboutPanelHtml(): string {
     return /* html */ `
@@ -21,7 +23,7 @@ export function getAboutPanelHtml(): string {
         <p class="ab-tagline">Built for Resilience. Designed for Peace of Mind.</p>
         <p class="ab-blurb">A technology firm rooted in financial services and online security. We build digital safeguards\u2009\u2014\u2009developer extensions that just work and a crisis management platform trusted by 50,000+ users.</p>
         <div class="ab-section">Recent changes</div>
-        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="https://marketplace.visualstudio.com/items/Saropa.saropa-log-capture/changelog">Full changelog on Marketplace</a>
+        <a id="about-changelog-link" href="#" class="ab-changelog-link" data-url="#">Full changelog on Marketplace</a>
         <div id="about-changelog" class="ab-changelog"><span class="ab-changelog-loading">Loading…</span></div>
         <div class="ab-section">Projects</div>
         ${getProjectLinksHtml()}
@@ -89,7 +91,7 @@ export function getAboutPanelScript(): string {
             if (changelogLink) {
                 e.preventDefault();
                 var url = changelogLink.getAttribute('data-url');
-                if (url && typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openUrl', url: url });
+                if (url && url !== '#' && typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'openUrl', url: url });
                 return;
             }
             if (!link) return;
@@ -136,10 +138,10 @@ function getProjectLinksHtml(): string {
         linkHtml({ icon: '\u{1F4CB}', title: 'Saropa Log Capture',
             badge: 'VS Code Marketplace',
             desc: 'The Debugger\u2019s Safety Net. Automatically saves all Debug Console output to persistent log files. No setup required\u2009\u2014\u2009just hit F5 and your logs are safe.',
-            url: 'https://marketplace.visualstudio.com/items?itemName=saropa.saropa-log-capture' }),
+            url: buildItemUrl('saropa.saropa-log-capture') }),
         linkHtml({ icon: '\u{1F6E1}\uFE0F', title: 'Saropa Claude Guard', badge: 'VS Code Marketplace',
             desc: 'AI Governance. Tracks Claude API costs in real-time by tailing local logs. Enforce daily/monthly budgets and monitor spend directly from the status bar.',
-            url: 'https://marketplace.visualstudio.com/items?itemName=Saropa.saropa-claude-guard' }),
+            url: buildItemUrl('Saropa.saropa-claude-guard') }),
         linkHtml({ icon: '\u{1F50D}', title: 'saropa_lints', badge: 'pub.dev \u00b7 Dart & Flutter',
             desc: '1700+ custom rules. Catch memory leaks, security vulnerabilities (mapped to OWASP Top 10), and runtime crashes. Includes AI-ready diagnostics for faster repairs.',
             url: 'https://pub.dev/packages/saropa_lints' }),
