@@ -63,9 +63,18 @@ function renderItem(item, idx, prevVis) {
     }
     var isBlank = isLineContentBlank(item);
     var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && item.level && !item.isContext && !isBlank) {
-        var hasSeverity = item.level === 'error' || item.level === 'warning' || item.level === 'performance';
-        barCls = (item.fw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + item.level;
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext) {
+        var level = item.level;
+        // Blank lines: inherit severity bar from previous line for visual continuity (no decoration prefix).
+        if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
+            level = allLines[idx - 1].level;
+            var prevFw = allLines[idx - 1].fw;
+            var hasSeverity = level === 'error' || level === 'warning' || level === 'performance';
+            barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+        } else if (!isBlank && level) {
+            var hasSeverity = level === 'error' || level === 'warning' || level === 'performance';
+            barCls = (item.fw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+        }
     }
     if (item.type === 'stack-header') {
         var ch, sf;

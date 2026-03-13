@@ -88,7 +88,7 @@ function updateDecoButton() {
 /**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
- * Returns empty string for markers, stack-frame sub-lines, blank lines, or when off.
+ * Returns empty string for markers, stack-frame sub-lines, blank (whitespace-only) lines, or when off.
  *
  * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
