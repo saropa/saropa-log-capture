@@ -1,5 +1,5 @@
 /** Client-side JS for the log viewer: virtual scrolling, stack traces, auto-scroll. */
-import { getKeyboardScript } from './viewer-script-keyboard';
+import { getKeyboardScriptWithDefaults } from './viewer-script-keyboard';
 import { getViewerScriptMessageHandler } from './viewer-script-messages';
 
 export function getViewerScript(maxLines: number): string {
@@ -228,7 +228,7 @@ function updateLineCount() {
 }
 
 ${getViewerScriptMessageHandler()}
-${getKeyboardScript()}
+${getKeyboardScriptWithDefaults()}
 
 var _resizeRaf = false;
 new ResizeObserver(function() {

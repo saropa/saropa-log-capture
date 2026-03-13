@@ -1,39 +1,65 @@
-/** Keyboard shortcuts for the log viewer (keydown handler). */
-export function getKeyboardScript(): string {
-    return /* javascript */ `
+/** Keyboard shortcuts for the log viewer (keydown handler). Uses configurable keyToAction map. */
+import { getDefaultKeyToAction } from './viewer-keybindings';
+
+/** Returns the JavaScript keyboard handler. Initial keyToAction is injected so keys work before first setViewerKeybindings message. */
+export function getKeyboardScript(initialKeyToAction: Record<string, string>): string {
+  const defaultMapJson = JSON.stringify(initialKeyToAction);
+  return /* javascript */ `
+window.viewerKeyMap = window.viewerKeyMap || ${defaultMapJson};
+window.viewerKeybindingRecordingFor = null;
+
+/** Must match normalizeKeyDescriptor() in viewer-keybindings.ts (same key string format). */
+function normalizeViewerKey(e) {
+    var parts = [];
+    if (e.ctrlKey || e.metaKey) parts.push('ctrl');
+    if (e.shiftKey) parts.push('shift');
+    if (e.altKey) parts.push('alt');
+    var k = (e.key || '').toLowerCase();
+    if (k === ' ') k = 'space';
+    if (k === 'pageup') k = 'pageup';
+    if (k === 'pagedown') k = 'pagedown';
+    parts.push(k);
+    return parts.join('+');
+}
+
 document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'c' && typeof copyAsPlainText === 'function') {
-        if (selectionStart >= 0) { e.preventDefault(); copyAsPlainText(); return; }
+    if (window.viewerKeybindingRecordingFor) {
+        e.preventDefault();
+        var key = normalizeViewerKey(e);
+        if (key === 'escape') {
+            vscodeApi.postMessage({ type: 'viewerKeybindingRecordCancelled' });
+        } else {
+            vscodeApi.postMessage({ type: 'viewerKeybindingRecorded', actionId: window.viewerKeybindingRecordingFor, key: key });
+        }
+        window.viewerKeybindingRecordingFor = null;
+        return;
+    }
+    var key = normalizeViewerKey(e);
+    var action = window.viewerKeyMap && window.viewerKeyMap[key];
+    if (!action) return;
+
+    if (action === 'copyPlain') {
+        if (typeof copyAsPlainText === 'function' && selectionStart >= 0) { e.preventDefault(); copyAsPlainText(); return; }
         var nSel = window.getSelection();
         var nTxt = nSel ? nSel.toString() : '';
-        if (nTxt.trim()) {
-            e.preventDefault();
-            vscodeApi.postMessage({ type: 'copyToClipboard', text: nTxt });
-            return;
-        }
+        if (nTxt.trim()) { e.preventDefault(); vscodeApi.postMessage({ type: 'copyToClipboard', text: nTxt }); return; }
+        return;
     }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C' && typeof copyAsMarkdown === 'function') {
-        e.preventDefault(); copyAsMarkdown(); return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A' && typeof copyAllToClipboard === 'function') {
-        e.preventDefault(); copyAllToClipboard(); return;
-    }
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+    if (action === 'copyMarkdown') { e.preventDefault(); if (typeof copyAsMarkdown === 'function') copyAsMarkdown(); return; }
+    if (action === 'copyAll') { e.preventDefault(); if (typeof copyAllToClipboard === 'function') copyAllToClipboard(); return; }
+    if (action === 'openFindPanel') {
         e.preventDefault();
         if (typeof setActivePanel === 'function') setActivePanel('find');
         return;
     }
-    if (e.key === 'F3' || ((e.ctrlKey || e.metaKey) && e.key === 'f')) {
+    if (action === 'openSearch') {
         e.preventDefault();
         if (typeof setActivePanel === 'function') setActivePanel('search');
         else if (typeof openSearch === 'function') openSearch();
         return;
     }
-    if (e.key === 'Escape') {
-        if (typeof closeContextModal === 'function' && typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0) {
-            closeContextModal();
-            return;
-        }
+    if (action === 'escape') {
+        if (typeof closeContextModal === 'function' && typeof peekTargetIdx !== 'undefined' && peekTargetIdx >= 0) { closeContextModal(); return; }
         if (typeof closeGotoLine === 'function') closeGotoLine(true);
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
@@ -42,23 +68,37 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-        e.preventDefault(); var r = document.createRange(); r.selectNodeContents(viewportEl);
-        var s = window.getSelection(); if (s) { s.removeAllRanges(); s.addRange(r); } return;
+    if (action === 'selectAll') {
+        e.preventDefault();
+        var r = document.createRange(); r.selectNodeContents(viewportEl);
+        var s = window.getSelection(); if (s) { s.removeAllRanges(); s.addRange(r); }
+        return;
     }
-    if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'g') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
-    if (e.key === ' ') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); }
-    else if (e.key === 'w' || e.key === 'W') { toggleWrap(); }
-    else if (e.key === 'Home') { if (window.isContextMenuOpen) return; if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false; }
-    else if (e.key === 'End') { jumpToBottom(); }
-    else if (e.key === 'PageUp') { logEl.scrollTop -= logEl.clientHeight * 0.8; autoScroll = false; }
-    else if (e.key === 'PageDown') { logEl.scrollTop += logEl.clientHeight * 0.8; }
-    else if (e.key === 'm' || e.key === 'M') { vscodeApi.postMessage({ type: 'insertMarker' }); }
-    else if ((e.key === 'p' || e.key === 'P') && typeof togglePin === 'function') { togglePin(getCenterIdx()); }
-    else if ((e.key === 'n' || e.key === 'N') && typeof promptAnnotation === 'function') { promptAnnotation(getCenterIdx()); }
+    if (action === 'fontSizeUp') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize + 1); return; }
+    if (action === 'fontSizeDown') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(logFontSize - 1); return; }
+    if (action === 'fontSizeReset') { e.preventDefault(); if (typeof setFontSize === 'function') setFontSize(13); return; }
+    if (action === 'gotoLine') { e.preventDefault(); if (typeof openGotoLine === 'function') openGotoLine(); return; }
+    if (action === 'togglePause') { e.preventDefault(); vscodeApi.postMessage({ type: 'togglePause' }); return; }
+    if (action === 'toggleWrap') { e.preventDefault(); toggleWrap(); return; }
+    if (action === 'home') {
+        e.preventDefault();
+        if (window.isContextMenuOpen) return;
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+        suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false; autoScroll = false;
+        return;
+    }
+    if (action === 'end') { e.preventDefault(); jumpToBottom(); return; }
+    if (action === 'pageUp') { e.preventDefault(); logEl.scrollTop -= logEl.clientHeight * 0.8; autoScroll = false; return; }
+    if (action === 'pageDown') { e.preventDefault(); logEl.scrollTop += logEl.clientHeight * 0.8; return; }
+    if (action === 'insertMarker') { e.preventDefault(); vscodeApi.postMessage({ type: 'insertMarker' }); return; }
+    if (action === 'togglePin' && typeof togglePin === 'function') { e.preventDefault(); togglePin(getCenterIdx()); return; }
+    if (action === 'annotate' && typeof promptAnnotation === 'function') { e.preventDefault(); promptAnnotation(getCenterIdx()); return; }
+    if (action === 'toggleAppOnly' && typeof toggleAppOnly === 'function') { e.preventDefault(); toggleAppOnly(); return; }
 });
 `;
+}
+
+/** Get keyboard script with default keybindings injected. */
+export function getKeyboardScriptWithDefaults(): string {
+  return getKeyboardScript(getDefaultKeyToAction());
 }
