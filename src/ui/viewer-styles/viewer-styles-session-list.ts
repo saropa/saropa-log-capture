@@ -88,6 +88,42 @@ export function getSessionListStyles(): string {
     z-index: 1;
 }
 
+/* --- Session list pagination --- */
+.session-list-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
+}
+.session-list-pagination-label {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    margin-right: auto;
+}
+.session-list-pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border-radius: 2px;
+    cursor: pointer;
+}
+.session-list-pagination-btn:hover:not(:disabled) {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+.session-list-pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 /* --- Session context menu --- */
 .session-context-menu {
     display: none; position: fixed; z-index: 300;
