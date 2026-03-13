@@ -164,7 +164,7 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     const items = overrideUri
       ? await historyProvider.getAllChildrenFromRoot(overrideUri)
       : await historyProvider.getAllChildren();
-    const payload = buildSessionListPayload(items, historyProvider.getActiveUri());
+    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri());
     const rootLabel = getSessionRootPath(deps.context);
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
