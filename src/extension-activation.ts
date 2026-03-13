@@ -10,6 +10,8 @@ import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { createUriHandler } from './modules/features/deep-links';
+import { importFromGist, importFromUrl } from './modules/share/gist-importer';
+import { clearGitHubToken } from './modules/share/github-auth';
 import { loadPresets } from './modules/storage/filter-presets';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
@@ -92,7 +94,21 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     context.subscriptions.push(investigationStore);
     context.subscriptions.push({ dispose: disposeInvestigationPanel });
 
-    context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler()));
+    const importHandlers = {
+        importFromGist: (gistId: string) => importFromGist(gistId, investigationStore),
+        importFromUrl: (url: string) => importFromUrl(url, investigationStore),
+    };
+    context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler(importHandlers)));
+
+    context.subscriptions.push(
+        vscode.authentication.onDidChangeSessions(async (e) => {
+            if (e.provider.id !== 'github') { return; }
+            const session = await vscode.authentication.getSession('github', [], { createIfNone: false });
+            if (!session) {
+                await clearGitHubToken(context);
+            }
+        }),
+    );
 
     broadcaster.setPresets(loadPresets());
     const initCfg = getConfig();

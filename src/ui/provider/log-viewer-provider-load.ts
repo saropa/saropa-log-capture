@@ -49,16 +49,19 @@ export async function executeLoadContent(
   const fields = parseHeaderFields(rawLines);
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
   if (target.setHasPerformanceData) {
+    let hasPerf = false;
     try {
+      // Avoid return inside try so TS parses try/catch reliably; checkGen() may invalidate this load.
+      if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
       const store = new SessionMetadataStore();
       const meta = await store.loadMetadata(uri);
-      if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; /* load superseded */
+      if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
       const perf = meta.integrations?.performance as Record<string, unknown> | undefined;
-      const has = !!(perf && typeof perf === "object" && (perf.snapshot != null || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
-      target.setHasPerformanceData(has);
-    } catch {
-      target.setHasPerformanceData(false);
+      hasPerf = !!(perf && typeof perf === "object" && ((perf.snapshot !== null && perf.snapshot !== undefined) || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
+    } catch (_) {
+      // ignore
     }
+    target.setHasPerformanceData(hasPerf);
   }
   const headerEnd = findHeaderEnd(rawLines);
   let contentLines = rawLines.slice(headerEnd);
@@ -131,7 +134,7 @@ export function createTailWatcher(
       target.setTailLastLineCount(contentLines.length);
       target.postMessage({ type: "addLines", lines: pending, lineCount: contentLines.length });
       helpers.sendNewCategories(pending, target.getSeenCategories(), (msg) => target.postMessage(msg));
-    } catch {
+    } catch (_) {
       // File may be locked or deleted
     } finally {
       target.setTailUpdateInProgress(false);
