@@ -84,7 +84,12 @@ export function getCrashlyticsPanelScript(): string {
             if (cpIssuesEl) cpIssuesEl.innerHTML = ctx.issues.map(renderIssue).join('');
         } else if (ctx.diagnosticHtml) {
             // When query fails (e.g. 404), offer to open the config file used for projectId/appId.
-            var openBtn = '<div class="cp-diag-actions"><button class="cp-setup-btn" data-action="crashlyticsOpenGoogleServicesJson">Open google-services.json</button></div>';
+            lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
+            var openBtn = '<div class="cp-diag-actions"><button class="cp-setup-btn" data-action="crashlyticsOpenGoogleServicesJson">Open google-services.json</button>';
+            if (ctx.diagnosticCopyText) openBtn += ' <button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">Copy diagnostic</button>';
+            openBtn += ' <a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">Show Output</a>';
+            if (ctx.consoleUrl) openBtn += ' <a class="cp-setup-link" data-action="openUrl" data-url="' + esc(ctx.consoleUrl) + '">Open Firebase Console</a>';
+            openBtn += '</div>';
             if (cpIssuesEl) cpIssuesEl.innerHTML = '<div class="cp-error">Query failed</div>' + ctx.diagnosticHtml + openBtn;
         } else {
             if (cpEmptyEl) cpEmptyEl.style.display = '';
@@ -129,34 +134,78 @@ export function getCrashlyticsPanelScript(): string {
         if (!cpSetupEl) return;
         var step = ctx.setupStep || 'gcloud';
         var stepNum = step === 'gcloud' ? 1 : step === 'token' ? 2 : 3;
-        var content = step === 'gcloud' ? getGcloudStep()
-            : step === 'token' ? getTokenStep() : getConfigStep();
+        var checklistHtml = ctx.setupChecklist ? buildChecklistHtml(ctx.setupChecklist) : '';
+        var content = step === 'gcloud' ? getGcloudStep(ctx)
+            : step === 'token' ? getTokenStep(ctx) : getConfigStep(ctx);
         var diagHtml = ctx.diagnosticHtml || '';
         var tip = '<p class="cp-setup-tip">Tip: Google Cloud may prompt you to enable billing, but Crashlytics API access is free.</p>';
-        cpSetupEl.innerHTML = '<div class="cp-setup-header">Step ' + stepNum + ' of 3</div>'
-            + content + diagHtml + tip
+        var diagActions = (ctx.diagnosticCopyText || ctx.diagnosticHtml) ? buildDiagnosticActions(ctx) : '';
+        var consoleUrl = ctx.consoleUrl || 'https://console.firebase.google.com/';
+        var openConsole = '<p class="cp-open-console"><a class="cp-setup-link" data-action="openUrl" data-url="' + esc(consoleUrl) + '">Open Firebase Console</a> to verify project or get project/app ID.</p>';
+        cpSetupEl.innerHTML = checklistHtml + '<div class="cp-setup-header">Step ' + stepNum + ' of 3</div>'
+            + content + diagHtml + tip + diagActions + openConsole
             + '<button class="cp-check-btn" id="cp-check-again">Check Again</button>';
         cpSetupEl.style.display = '';
         wireSetupButtons();
     }
 
-    function getGcloudStep() {
+    function buildChecklistHtml(checklist) {
+        var g = checklist.gcloud === 'ok' ? '\\u2713 gcloud' : '\\u2717 gcloud';
+        var t = checklist.token === 'ok' ? '\\u2713 token' : checklist.token === 'missing' ? '\\u2717 token' : '\\u25CB token';
+        var c = checklist.config === 'ok' ? '\\u2713 config' : checklist.config === 'missing' ? '\\u2717 config' : '\\u25CB config';
+        return '<div class="cp-checklist">' + esc(g) + ' \\u00b7 ' + esc(t) + ' \\u00b7 ' + esc(c) + '</div>';
+    }
+
+    function getGcloudStep(ctx) {
+        var installCmd = (ctx.gcloudInstallCommand || '').trim();
+        var installLine = installCmd
+            ? '<p class="cp-install-via">Install via: <code class="cp-install-code">' + esc(installCmd) + '</code>'
+            + ' <button class="cp-copy-btn" data-copy="' + esc(installCmd) + '" title="Copy">Copy</button></p>'
+            : '';
+        var why = '<p class="cp-setup-why">If <code>gcloud</code> is not in PATH after installing, restart the terminal or VS Code.</p>';
         return '<div class="cp-setup-step"><div class="cp-setup-title">Install Google Cloud CLI</div>'
             + '<p>The <code>gcloud</code> CLI is needed to authenticate with Firebase Crashlytics.</p>'
-            + '<a class="cp-setup-link" data-action="openGcloudInstall">Download Google Cloud CLI</a></div>';
+            + installLine
+            + '<a class="cp-setup-link" data-action="openGcloudInstall">Download Google Cloud CLI</a>'
+            + why + '</div>';
     }
 
-    function getTokenStep() {
+    function getTokenStep(ctx) {
+        var authCmd = 'gcloud auth application-default login';
+        var externalHint = '<p class="cp-setup-why">If sign-in fails in the VS Code terminal, run the command below in an external terminal (where <code>gcloud</code> is in PATH), then click Check Again.</p>'
+            + '<p class="cp-install-via"><code class="cp-install-code">' + esc(authCmd) + '</code>'
+            + ' <button class="cp-copy-btn" data-copy="' + esc(authCmd) + '" title="Copy">Copy</button></p>';
+        var why = '<p class="cp-setup-why">If you see &quot;Permission denied&quot;, your account needs the Firebase Crashlytics Viewer role on the project.</p>';
+        var saHint = '<p class="cp-setup-why">Alternatively, set <code>saropaLogCapture.firebase.serviceAccountKeyPath</code> to a service account JSON key file (e.g. when gcloud is not available).</p>';
         return '<div class="cp-setup-step"><div class="cp-setup-title">Sign in to Google Cloud</div>'
             + '<p>Authenticate with your Google account to access Crashlytics data.</p>'
-            + '<button class="cp-setup-btn" data-action="crashlyticsRunGcloudAuth">Sign in to Google Cloud</button></div>';
+            + '<button class="cp-setup-btn" data-action="crashlyticsRunGcloudAuth">Sign in to Google Cloud</button>'
+            + externalHint + why + saHint + '</div>';
     }
 
-    function getConfigStep() {
+    var lastDiagnosticCopyText = '';
+    function buildDiagnosticActions(ctx) {
+        lastDiagnosticCopyText = ctx.diagnosticCopyText || '';
+        var parts = [];
+        if (ctx.diagnosticCopyText) {
+            parts.push('<button class="cp-setup-btn cp-btn-secondary" data-action="crashlyticsCopyDiagnostic">Copy diagnostic</button>');
+        }
+        parts.push('<a class="cp-setup-link cp-show-output" data-action="crashlyticsShowOutput">Show Output</a>');
+        return '<div class="cp-diag-actions-row">' + parts.join(' ') + '</div>';
+    }
+
+    function getConfigStep(ctx) {
+        var workspacePath = (ctx.workspaceGoogleServicesPath || '').trim();
+        var useExisting = workspacePath
+            ? '<p class="cp-use-existing"><button class="cp-setup-btn" data-action="crashlyticsUseWorkspaceConfig">Use existing file: ' + esc(workspacePath) + '</button></p>'
+            : '';
+        var why = '<p class="cp-setup-why">Find project ID and app ID in Firebase Console under Project Settings &rarr; General.</p>';
         return '<div class="cp-setup-step"><div class="cp-setup-title">Add Firebase Config</div>'
             + '<p>Provide your <code>google-services.json</code> file or configure the project manually.</p>'
+            + useExisting
             + '<button class="cp-setup-btn" data-action="crashlyticsBrowseGoogleServices">Browse for google-services.json</button>'
-            + '<a class="cp-setup-settings" data-action="openCrashlyticsSettings">Or configure in settings</a></div>';
+            + '<a class="cp-setup-settings" data-action="openCrashlyticsSettings">Or configure in settings</a>'
+            + why + '</div>';
     }
 
     function wireSetupButtons() {
@@ -177,6 +226,12 @@ export function getCrashlyticsPanelScript(): string {
                 vscodeApi.postMessage({ type: actionBtn.dataset.action, issueId: actionBtn.dataset.issue });
                 return;
             }
+            var copyBtn = e.target.closest('.cp-copy-btn');
+            if (copyBtn && copyBtn.dataset.copy) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'copyToClipboard', text: copyBtn.dataset.copy });
+                return;
+            }
             var setupBtn = e.target.closest('[data-action]');
             if (setupBtn) {
                 var action = setupBtn.dataset.action;
@@ -186,6 +241,17 @@ export function getCrashlyticsPanelScript(): string {
                     vscodeApi.postMessage({ type: 'openSettings', setting: 'saropaLogCapture.firebase' });
                 } else if (action === 'crashlyticsOpenGoogleServicesJson') {
                     vscodeApi.postMessage({ type: 'crashlyticsOpenGoogleServicesJson' });
+                } else if (action === 'crashlyticsUseWorkspaceConfig') {
+                    showLoading();
+                    vscodeApi.postMessage({ type: 'crashlyticsCheckAgain' });
+                } else if (action === 'crashlyticsCopyDiagnostic') {
+                    vscodeApi.postMessage({ type: 'copyToClipboard', text: lastDiagnosticCopyText });
+                } else if (action === 'crashlyticsShowOutput') {
+                    vscodeApi.postMessage({ type: 'crashlyticsShowOutput' });
+                } else if (action === 'openUrl' && setupBtn.dataset.url) {
+                    vscodeApi.postMessage({ type: 'openUrl', url: setupBtn.dataset.url });
+                } else if (action === 'openFirebaseConsole') {
+                    vscodeApi.postMessage({ type: 'openUrl', url: 'https://console.firebase.google.com/' });
                 } else {
                     vscodeApi.postMessage({ type: action });
                 }

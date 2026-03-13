@@ -16,11 +16,22 @@ export interface CrashlyticsIssue {
     readonly lastVersion?: string;
 }
 
+/** Per-step status for the setup checklist (ok, missing, or not yet checked because a prior step failed). */
+export type SetupStepStatus = 'ok' | 'missing' | 'pending';
+
+export interface SetupChecklist {
+    readonly gcloud: 'ok' | 'missing';
+    readonly token: SetupStepStatus;
+    readonly config: SetupStepStatus;
+}
+
 export interface FirebaseContext {
     readonly available: boolean;
     readonly setupHint?: string;
     /** Which setup step failed — drives the wizard UI in the panel. */
     readonly setupStep?: 'gcloud' | 'token' | 'config';
+    /** Per-step status for checklist when available is false or when diagnostics are shown. */
+    readonly setupChecklist?: SetupChecklist;
     readonly issues: readonly CrashlyticsIssue[];
     readonly consoleUrl?: string;
     readonly queriedAt?: number;

@@ -268,6 +268,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(ctx.post).catch(() => {}); break;
       case "crashlyticsOpenGoogleServicesJson": panelHandlers.handleOpenGoogleServicesJson().catch(() => {}); break;
       case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
+      case "crashlyticsShowOutput": panelHandlers.handleCrashlyticsShowOutput(); break;
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); break;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
       case "requestRecurringErrors": panelHandlers.handleRecurringRequest(ctx.post).catch(() => {}); break;

@@ -760,6 +760,11 @@
           "description": "%config.firebase.projectId.description%",
           "type": "string"
         },
+        "saropaLogCapture.firebase.serviceAccountKeyPath": {
+          "default": "",
+          "description": "%config.firebase.serviceAccountKeyPath.description%",
+          "type": "string"
+        },
         "saropaLogCapture.firebase.timeRange": {
           "default": "LAST_7_DAYS",
           "description": "%config.firebase.timeRange.description%",
@@ -1465,6 +1470,13 @@
           "minimum": 0,
           "type": "number"
         },
+        "saropaLogCapture.sessionListPageSize": {
+          "default": 50,
+          "description": "Sessions per page in Project Logs list. Use pagination to avoid lag with 100+ sessions.",
+          "minimum": 10,
+          "maximum": 500,
+          "type": "number"
+        },
         "saropaLogCapture.verboseDap": {
           "default": false,
           "description": "%config.verboseDap.description%",
@@ -1614,6 +1626,7 @@
   },
   "description": "%description%",
   "dependencies": {
+    "google-auth-library": "^9.15.0",
     "jszip": "^3.10.1"
   },
   "overrides": {
