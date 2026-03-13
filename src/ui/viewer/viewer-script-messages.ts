@@ -157,6 +157,12 @@ window.addEventListener('message', function(event) {
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
             break;
+        case 'setViewerKeybindings':
+            if (msg.keyToAction && typeof msg.keyToAction === 'object') window.viewerKeyMap = msg.keyToAction;
+            break;
+        case 'viewerKeybindingRecordMode':
+            window.viewerKeybindingRecordingFor = msg.active ? (msg.actionId || null) : null;
+            break;
     }
 });
 `;

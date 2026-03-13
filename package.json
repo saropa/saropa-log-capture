@@ -401,6 +401,12 @@
           "description": "%config.breakOnCritical.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.viewerKeybindings": {
+          "default": {},
+          "description": "%config.viewerKeybindings.description%",
+          "additionalProperties": { "type": "string" },
+          "type": "object"
+        },
         "saropaLogCapture.correlation.enabled": {
           "default": true,
           "description": "%config.correlation.enabled.description%",

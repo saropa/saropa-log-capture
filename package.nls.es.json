@@ -112,6 +112,7 @@
   "config.levelDetection.markdownDescription": "Con qué agresividad clasificar las líneas como errores. `strict` requiere palabras clave en posiciones de etiqueta (p. ej. `Error:`, `[ERROR]`). `loose` encuentra palabras clave en cualquier parte del texto.",
   "config.logDirectory.description": "Directorio para archivos de registro, relativo a la raíz del espacio de trabajo.",
   "config.maxLines.description": "Número máximo de líneas por archivo de registro. Las líneas más antiguas se eliminan cuando se supera el límite.",
+  "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "Líneas máximas mostradas en el visor (0 = predeterminado 50.000). No debe superar maxLines.",
   "config.maxLogFiles.description": "Número máximo de archivos de registro a conservar (incluyendo subdirectorios cuando está habilitado). 0 = ilimitado. Los más antiguos se eliminan cuando se supera el límite.",
   "config.organizeFolders.description": "Mover automáticamente archivos de registro con prefijo de fecha a subcarpetas basadas en fecha (p. ej. reports/20260218/).",
