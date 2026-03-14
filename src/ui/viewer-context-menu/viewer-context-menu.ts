@@ -104,9 +104,14 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var anyHidden = (typeof hasHiddenLines === 'function') && hasHiddenLines();
     var selectionHasHidden = hasShiftSelection && (typeof hasSelectionWithHidden === 'function') && hasSelectionWithHidden();
 
-    // Show hide-lines submenu if we have a line OR there are hidden lines to unhide
+    // Show hide submenu if we have a line, there are hidden lines, or text is selected
     var hideSubmenu = contextMenuEl.querySelector('#hide-lines-submenu');
-    if (hideSubmenu) hideSubmenu.style.display = (hasLine || anyHidden) ? '' : 'none';
+    if (hideSubmenu) hideSubmenu.style.display = (hasLine || anyHidden || hasTextSelection) ? '' : 'none';
+
+    // Text-selection-based auto-hide items (browser text selection, not shift-click)
+    contextMenuEl.querySelectorAll('[data-text-selection-action]').forEach(function(el) {
+        el.style.display = hasTextSelection ? '' : 'none';
+    });
 
     // Selection-based items
     contextMenuEl.querySelectorAll('[data-selection-action]').forEach(function(el) {

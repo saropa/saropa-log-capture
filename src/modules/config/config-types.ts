@@ -39,6 +39,8 @@ export interface SaropaLogCaptureConfig {
   readonly gitignoreCheck: boolean;
   readonly redactEnvVars: readonly string[];
   readonly exclusions: readonly string[];
+  /** Text patterns to auto-hide in the viewer. Lines containing any pattern (case-insensitive) are hidden. */
+  readonly autoHidePatterns: readonly string[];
   readonly showElapsedTime: boolean;
   readonly slowGapThreshold: number;
   readonly watchPatterns: readonly WatchPatternSetting[];

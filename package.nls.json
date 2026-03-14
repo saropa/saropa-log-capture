@@ -88,6 +88,7 @@
   "config.enabled.description": "Enable or disable automatic log capture during debug sessions.",
   "config.ai.enabled.description": "Enable AI features: crash summaries in the analysis panel and Explain with AI in the log viewer (requires VS Code Language Model API access).",
   "config.exclusions.description": "Patterns to exclude from the viewer. Plain strings match case-insensitively; /regex/ patterns are supported.",
+  "config.autoHidePatterns.description": "Text patterns to auto-hide in the viewer. Lines containing any pattern (case-insensitive) are hidden automatically. Manage via right-click > Hide > Hide Selection (Always).",
   "config.fileTypes.description": "File extensions to include when listing sessions in the reports directory. Reload window after changes.",
   "config.tailPatterns.description": "Glob patterns for tail mode. Files matching these patterns can be opened with 'Open Tailed File'; the viewer will append new lines as the file grows (e.g. **/*.log).",
   "config.filterContextLines.description": "Number of preceding lines to show (dimmed) when filtering by log level.",
