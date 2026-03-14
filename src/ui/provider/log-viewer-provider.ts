@@ -196,6 +196,7 @@ export class LogViewerProvider
   setMinimapShowInfo(show: boolean): void { this.postMessage({ type: "minimapShowInfo", show }); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.postMessage({ type: "minimapWidth", width }); }
   setIconBarPosition(position: "left" | "right"): void { this.postMessage({ type: "iconBarPosition", position }); }
+  setAutoHidePatterns(patterns: readonly string[]): void { this.postMessage({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
   setHasPerformanceData(has: boolean): void { this.postMessage({ type: "setHasPerformanceData", has }); }
 

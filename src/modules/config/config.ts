@@ -143,6 +143,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     gitignoreCheck: ensureBoolean(cfg.get("gitignoreCheck"), true),
     redactEnvVars: ensureStringArray(cfg.get("redactEnvVars"), []),
     exclusions: ensureStringArray(cfg.get("exclusions"), []),
+    autoHidePatterns: ensureStringArray(cfg.get("autoHidePatterns"), []),
     showElapsedTime: ensureBoolean(cfg.get("showElapsedTime"), false),
     includeSourceLocation: ensureBoolean(cfg.get("includeSourceLocation"), false),
     includeElapsedTime: ensureBoolean(cfg.get("includeElapsedTime"), false),

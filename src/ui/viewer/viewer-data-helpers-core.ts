@@ -78,7 +78,9 @@ function isLineContentBlank(item) {
     return /^\\s*$/.test(text);
 }
 function calcItemHeight(item) {
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.userHidden) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
+    var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
+    if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
     if (typeof hideBlankLines !== 'undefined' && hideBlankLines && item.type === 'line' && isLineContentBlank(item)) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;

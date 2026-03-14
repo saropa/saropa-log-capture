@@ -45,4 +45,5 @@ export interface ViewerTarget {
   setMinimapShowInfo(show: boolean): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
   setIconBarPosition(position: "left" | "right"): void;
+  setAutoHidePatterns(patterns: readonly string[]): void;
 }

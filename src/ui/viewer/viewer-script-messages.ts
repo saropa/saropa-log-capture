@@ -44,6 +44,7 @@ window.addEventListener('message', function(event) {
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; }
+            if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
@@ -83,6 +84,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'setExclusions':
             if (typeof handleSetExclusions === 'function') handleSetExclusions(msg);
+            break;
+        case 'setAutoHidePatterns':
+            if (typeof handleSetAutoHidePatterns === 'function') handleSetAutoHidePatterns(msg);
             break;
         case 'loadAnnotations':
             if (typeof handleLoadAnnotations === 'function') handleLoadAnnotations(msg);

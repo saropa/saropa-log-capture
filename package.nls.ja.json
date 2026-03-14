@@ -88,6 +88,7 @@
   "config.enabled.description": "デバッグセッション中の自動ログキャプチャを有効または無効にします。",
   "config.ai.enabled.description": "分析パネルで AI による障害サマリーを有効にします（VS Code Language Model API へのアクセスが必要）。",
   "config.exclusions.description": "ビューアーから除外するパターン。プレーン文字列は大文字と小文字を区別せずに一致します；/regex/ パターンもサポートされています。",
+  "config.autoHidePatterns.description": "ビューアーで自動的に非表示にするテキストパターン。いずれかのパターンを含む行（大文字と小文字を区別しない）は自動的に非表示になります。右クリック > 非表示 > 選択を非表示にする（常に）から管理できます。",
   "config.fileTypes.description": "レポートディレクトリでセッションをリストする際に含めるファイル拡張子。変更後はウィンドウを再読み込みしてください。",
   "config.tailPatterns.description": "テールモード用のグロブパターン。一致するファイルは「テールファイルを開く」で開けます。ファイルが増えると新しい行が追加表示されます（例: **/*.log）。",
   "config.filterContextLines.description": "ログレベルでフィルタリングする際に表示する（薄暗く表示される）前置行数。",

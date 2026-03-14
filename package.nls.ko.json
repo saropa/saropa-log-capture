@@ -88,6 +88,7 @@
   "config.enabled.description": "디버그 세션 중 자동 로그 캡처를 활성화하거나 비활성화합니다.",
   "config.ai.enabled.description": "분석 패널에서 AI 기반 충돌 요약을 활성화합니다(VS Code Language Model API 접근 필요).",
   "config.exclusions.description": "뷰어에서 제외할 패턴. 일반 문자열은 대소문자를 구분하지 않고 일치합니다; /regex/ 패턴이 지원됩니다.",
+  "config.autoHidePatterns.description": "뷰어에서 자동으로 숨길 텍스트 패턴. 패턴을 포함하는 줄(대소문자 구분 없음)은 자동으로 숨겨집니다. 마우스 오른쪽 버튼 클릭 > 숨기기 > 선택 항목 숨기기(항상)로 관리합니다.",
   "config.fileTypes.description": "보고서 디렉터리에서 세션을 나열할 때 포함할 파일 확장자. 변경 후 창을 다시 로드하세요.",
   "config.tailPatterns.description": "테일 모드용 글로브 패턴. 일치하는 파일은 '테일 파일 열기'로 열 수 있으며, 파일이 커지면 뷰어에 새 줄이 추가됩니다(예: **/*.log).",
   "config.filterContextLines.description": "로그 수준으로 필터링할 때 표시할(흐리게 표시) 앞줄 수.",

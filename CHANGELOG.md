@@ -19,6 +19,26 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+- **Auto-hide patterns.** Select text in the log viewer, right-click > Hide, and choose "Hide Selection (Always)" to permanently suppress matching lines across all sessions. Patterns are stored in `saropaLogCapture.autoHidePatterns` setting. "Hide Selection" and "Hide Selection (This Session)" hide for the current session only.
+- **Auto-hide pattern management modal.** Double-click the hidden counter in the footer to view and remove auto-hide patterns (both session and persistent).
+
+### Changed
+
+- Renamed "Hide Lines" context submenu to "Hide".
+- Hidden counter in footer now shows icon + count only (no background pill or "hidden" text), matching the style of other filter indicators.
+- Peek mode now reveals both manually hidden and auto-hidden lines.
+
+### Fixed
+
+- Auto-hide now applies to stack headers and repeat notifications, not just regular lines.
+- Hidden counter no longer double-counts lines that are both manually hidden and auto-hidden.
+- Session auto-hide patterns are cleared when the viewer is cleared.
+- Removed redundant "Hide Selection" context menu item (kept "This Session" and "Always").
+- Single-quote characters in auto-hide patterns are now HTML-escaped in the management modal.
+- Auto-hidden count is decremented before splice in trimData, preventing incorrect counts after trim.
+
 ---
 
 ## [3.4.2]

@@ -15,6 +15,7 @@ import { getPinScript } from '../viewer/viewer-pin';
 import { getExclusionScript } from '../viewer-search-filter/viewer-exclusions';
 import { getCopyScript } from '../viewer/viewer-copy';
 import { getHiddenLinesScript } from '../viewer/viewer-hidden-lines';
+import { getAutoHideModalScript, getAutoHideModalHtml } from '../viewer/viewer-auto-hide-modal';
 import { getAnnotationScript } from '../viewer/viewer-annotations';
 import { getTimingScript } from '../viewer/viewer-timing';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
@@ -192,9 +193,9 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
         <span id="line-count"></span>
-        <span id="hidden-lines-counter" class="hidden-lines-counter u-hidden" role="button" title="Click to peek at hidden lines" aria-label="Hidden lines counter">
+        <span id="hidden-lines-counter" class="hidden-lines-counter u-hidden" role="button" title="Click to peek, double-click to manage" aria-label="Hidden lines counter">
             <span class="codicon codicon-eye-closed"></span>
-            <span class="hidden-count-text">0 hidden</span>
+            <span class="hidden-count-text"></span>
         </span>
         <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
@@ -208,6 +209,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${getDecoSettingsHtml()}
     ${getExportModalHtml()}
     ${getEditModalHtml()}
+    ${getAutoHideModalHtml()}
     <div id="level-flyup">
         <div class="level-flyup-title">Level Filters</div>
         <div class="level-flyup-header">
@@ -237,6 +239,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getExclusionScript())}
     ${scriptTag(nonce, getCopyScript())}
     ${scriptTag(nonce, getHiddenLinesScript())}
+    ${scriptTag(nonce, getAutoHideModalScript())}
     ${scriptTag(nonce, getAnnotationScript())}
     ${scriptTag(nonce, getTimingScript())}
     ${scriptTag(nonce, getReplayScript())}
