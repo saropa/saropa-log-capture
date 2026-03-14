@@ -11,33 +11,40 @@ export function getContextMenuHtml(): string {
         <span class="codicon codicon-copy"></span> Copy Full Path
     </div>
     <div class="context-menu-separator" data-source-action></div>
-    <div class="context-menu-item" data-action="copy-selection">
-        <span class="codicon codicon-copy"></span> Copy
-    </div>
-    <div class="context-menu-item" data-action="copy" data-line-action>
-        <span class="codicon codicon-copy"></span> Copy Line
-    </div>
-    <div class="context-menu-item" data-action="copy-all">
-        <span class="codicon codicon-clippy"></span> Copy All
-    </div>
-    <div class="context-menu-item" data-action="copy-all-decorated">
-        <span class="codicon codicon-clippy"></span> Copy All Decorated
-    </div>
-    <div class="context-menu-item" data-action="copy-as-snippet">
-        <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
-    </div>
-    <div class="context-menu-item" data-action="copy-with-source">
-        <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
-    </div>
-    <div class="context-menu-item" data-action="select-all">
-        <span class="codicon codicon-list-flat"></span> Select All
-    </div>
-    <div class="context-menu-item" data-action="export-current-view">
-        <span class="codicon codicon-export"></span> Export current view…
-    </div>
-    <div class="context-menu-separator" data-line-action></div>
-    <div class="context-menu-item" data-action="copy-to-search" data-line-action>
-        <span class="codicon codicon-search"></span> Copy to Search
+    <!-- Copy & Export submenu: shortens main menu so it fits on screen; Copy to Search after separator (line-only). -->
+    <div class="context-menu-submenu" id="copy-export-submenu">
+        <span class="codicon codicon-clippy"></span> Copy & Export
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+            <div class="context-menu-item" data-action="copy-selection">
+                <span class="codicon codicon-copy"></span> Copy
+            </div>
+            <div class="context-menu-item" data-action="copy" data-line-action>
+                <span class="codicon codicon-copy"></span> Copy Line
+            </div>
+            <div class="context-menu-item" data-action="copy-all">
+                <span class="codicon codicon-clippy"></span> Copy All
+            </div>
+            <div class="context-menu-item" data-action="copy-all-decorated">
+                <span class="codicon codicon-clippy"></span> Copy All Decorated
+            </div>
+            <div class="context-menu-item" data-action="copy-as-snippet">
+                <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
+            </div>
+            <div class="context-menu-item" data-action="copy-with-source">
+                <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
+            </div>
+            <div class="context-menu-item" data-action="select-all">
+                <span class="codicon codicon-list-flat"></span> Select All
+            </div>
+            <div class="context-menu-item" data-action="export-current-view">
+                <span class="codicon codicon-export"></span> Export current view…
+            </div>
+            <div class="context-menu-separator" data-line-action></div>
+            <div class="context-menu-item" data-action="copy-to-search" data-line-action>
+                <span class="codicon codicon-search"></span> Copy to Search
+            </div>
+        </div>
     </div>
     <div class="context-menu-item" data-action="open-source" data-line-action>
         <span class="codicon codicon-go-to-file"></span> Open Source File
