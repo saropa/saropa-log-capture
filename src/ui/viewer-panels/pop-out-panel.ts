@@ -165,6 +165,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
+  setAutoHidePatterns(patterns: readonly string[]): void { this.post({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
     this.post({ type: "sessionList", sessions, ...rootInfo });

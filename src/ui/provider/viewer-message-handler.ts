@@ -108,6 +108,30 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
         break;
       case "exclusionAdded": case "addToExclusion": ctx.onExclusionAdded?.(String(msg.pattern ?? msg.text ?? "")); break;
       case "exclusionRemoved": ctx.onExclusionRemoved?.(String(msg.pattern ?? "")); break;
+      case "addAutoHidePattern": {
+        const pattern = String(msg.pattern ?? "").trim();
+        if (pattern) {
+          const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+          const current = cfg.get<string[]>("autoHidePatterns") ?? [];
+          if (!current.some(p => p.toLowerCase() === pattern.toLowerCase())) {
+            void cfg.update("autoHidePatterns", [...current, pattern], vscode.ConfigurationTarget.Workspace);
+          }
+        }
+        break;
+      }
+      case "removeAutoHidePattern": {
+        const pattern = String(msg.pattern ?? "").trim();
+        if (pattern) {
+          const cfg = vscode.workspace.getConfiguration("saropaLogCapture");
+          const current = cfg.get<string[]>("autoHidePatterns") ?? [];
+          const lower = pattern.toLowerCase();
+          const updated = current.filter(p => p.toLowerCase() !== lower);
+          if (updated.length !== current.length) {
+            void cfg.update("autoHidePatterns", updated, vscode.ConfigurationTarget.Workspace);
+          }
+        }
+        break;
+      }
       case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); break;
       case "openKeybindings":
         void vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", String(msg.search ?? "Saropa Log Capture"));

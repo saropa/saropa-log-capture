@@ -101,7 +101,7 @@ export function getContextMenuHtml(): string {
         </div>
     </div>
     <div class="context-menu-submenu" id="hide-lines-submenu">
-        <span class="codicon codicon-eye-closed"></span> Hide Lines
+        <span class="codicon codicon-eye-closed"></span> Hide
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
             <div class="context-menu-item" data-action="hide-line" data-line-action>
@@ -116,6 +116,13 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item" data-action="unhide-selection" data-selection-action data-requires-hidden>
                 <span class="codicon codicon-eye"></span> Unhide Selection
+            </div>
+            <div class="context-menu-separator" data-text-selection-action></div>
+            <div class="context-menu-item" data-action="hide-text-session" data-text-selection-action>
+                <span class="codicon codicon-eye-closed"></span> Hide Selection (This Session)
+            </div>
+            <div class="context-menu-item" data-action="hide-text-always" data-text-selection-action>
+                <span class="codicon codicon-eye-closed"></span> Hide Selection (Always)
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="hide-all-visible">

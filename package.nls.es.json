@@ -88,6 +88,7 @@
   "config.enabled.description": "Habilitar o deshabilitar la captura automática de registros durante las sesiones de depuración.",
   "config.ai.enabled.description": "Habilitar resúmenes de fallos con IA en el panel de análisis (requiere acceso a VS Code Language Model API).",
   "config.exclusions.description": "Patrones para excluir del visor. Las cadenas simples coinciden sin distinción de mayúsculas/minúsculas; se admiten patrones /regex/.",
+  "config.autoHidePatterns.description": "Patrones de texto para ocultar automáticamente en el visor. Las líneas que contienen cualquier patrón (sin distinción de mayúsculas/minúsculas) se ocultan automáticamente. Gestionar mediante clic derecho > Ocultar > Ocultar selección (siempre).",
   "config.fileTypes.description": "Extensiones de archivo a incluir al listar sesiones en el directorio de informes. Recargue la ventana tras los cambios.",
   "config.tailPatterns.description": "Patrones glob para el modo tail. Los archivos que coincidan se pueden abrir con 'Abrir archivo en modo tail'; el visor añadirá nuevas líneas al crecer el archivo (ej. **/*.log).",
   "config.filterContextLines.description": "Número de líneas previas a mostrar (atenuadas) al filtrar por nivel de registro.",

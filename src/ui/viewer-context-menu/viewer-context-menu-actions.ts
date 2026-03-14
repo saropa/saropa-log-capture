@@ -47,6 +47,18 @@ function handleGlobalAction(action) {
         if (typeof window.openExportModal === 'function') window.openExportModal();
         return true;
     }
+    if (action === 'hide-text-session') {
+        var sel = window.getSelection();
+        var text = sel ? sel.toString().trim() : '';
+        if (text && typeof addAutoHidePatternSession === 'function') addAutoHidePatternSession(text);
+        return true;
+    }
+    if (action === 'hide-text-always') {
+        var sel = window.getSelection();
+        var text = sel ? sel.toString().trim() : '';
+        if (text && typeof addAutoHidePatternAlways === 'function') addAutoHidePatternAlways(text);
+        return true;
+    }
     return false;
 }
 

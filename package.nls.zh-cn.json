@@ -88,6 +88,7 @@
   "config.enabled.description": "启用或禁用调试会话期间的自动日志捕获。",
   "config.ai.enabled.description": "在分析面板中启用 AI 驱动的崩溃摘要（需要 VS Code Language Model API 访问权限）。",
   "config.exclusions.description": "从查看器中排除的模式。纯字符串不区分大小写匹配；支持 /regex/ 模式。",
+  "config.autoHidePatterns.description": "在查看器中自动隐藏的文本模式。包含任何模式的行（不区分大小写）将自动隐藏。通过右键单击 > 隐藏 > 隐藏选择（始终）进行管理。",
   "config.fileTypes.description": "在报告目录中列出会话时包含的文件扩展名。更改后请重新加载窗口。",
   "config.tailPatterns.description": "尾随模式的 glob 模式。匹配的文件可用“打开尾随文件”打开；文件增长时查看器会追加新行（如 **/*.log）。",
   "config.filterContextLines.description": "按日志级别筛选时，显示的前置行数（灰显）。",

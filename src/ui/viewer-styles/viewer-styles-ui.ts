@@ -84,34 +84,25 @@ export function getUiStyles(): string {
 .hidden-lines-counter {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    font-size: 11px;
+    gap: 2px;
+    padding: 0 4px;
+    font-size: 10px;
     color: var(--vscode-descriptionForeground);
-    background: var(--vscode-badge-background, rgba(0, 0, 0, 0.2));
-    border-radius: 10px;
     cursor: pointer;
     white-space: nowrap;
-    transition: background 0.15s ease, color 0.15s ease;
     user-select: none;
 }
 .hidden-lines-counter:hover {
-    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.5));
     color: var(--vscode-foreground);
 }
 .hidden-lines-counter.peeking {
-    background: var(--vscode-inputValidation-infoBackground, rgba(0, 127, 212, 0.2));
     color: var(--vscode-inputValidation-infoForeground, #75beff);
-}
-.hidden-lines-counter.peeking .codicon {
-    transform: rotate(180deg);
 }
 .hidden-lines-counter.peeking .codicon::before {
     content: "\\eb99"; /* codicon-eye */
 }
 .hidden-lines-counter .codicon {
     font-size: 12px;
-    transition: transform 0.2s ease;
 }
 
 /* ===================================================================
@@ -164,6 +155,40 @@ export function getUiStyles(): string {
 }
 .scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7)); }
 .scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.4)); }
+
+/* ===================================================================
+   Auto-Hide Modal
+   Pattern management popup for auto-hide feature.
+   =================================================================== */
+.auto-hide-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; }
+.auto-hide-modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
+.auto-hide-modal-content {
+    position: relative; z-index: 1; width: 400px; max-height: 60vh;
+    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+    border-radius: 6px; display: flex; flex-direction: column; overflow: hidden;
+}
+.auto-hide-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; font-size: 13px; font-weight: 600;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.auto-hide-modal-close { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.auto-hide-modal-close:hover { color: var(--vscode-errorForeground, #f44); }
+.auto-hide-modal-list { overflow-y: auto; max-height: 50vh; padding: 4px 0; }
+.auto-hide-item {
+    display: flex; align-items: center; gap: 6px; padding: 4px 12px; font-size: 12px;
+}
+.auto-hide-item:hover { background: var(--vscode-list-hoverBackground); }
+.auto-hide-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auto-hide-badge {
+    font-size: 9px; padding: 1px 4px; border-radius: 3px;
+    background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
+}
+.auto-hide-badge.session { opacity: 0.6; }
+.auto-hide-remove { background: none; border: none; color: var(--vscode-descriptionForeground); font-size: 14px; cursor: pointer; padding: 0 2px; }
+.auto-hide-remove:hover { color: var(--vscode-errorForeground, #f44); }
+.auto-hide-modal-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--vscode-descriptionForeground); }
 
 `;
 }

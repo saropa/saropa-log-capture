@@ -680,6 +680,14 @@
           },
           "type": "array"
         },
+        "saropaLogCapture.autoHidePatterns": {
+          "default": [],
+          "description": "%config.autoHidePatterns.description%",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "saropaLogCapture.fileTypes": {
           "default": [
             ".csv",
