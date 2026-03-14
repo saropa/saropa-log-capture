@@ -116,4 +116,7 @@ export class ViewerBroadcaster implements ViewerTarget {
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }
   }
+  setAutoHidePatterns(patterns: readonly string[]): void {
+    for (const t of this.targets) { t.setAutoHidePatterns(patterns); }
+  }
 }
