@@ -40,7 +40,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
                     if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
                 }
             }
-            var sfItem = { html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false };
+            var sfItem = { html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false };
             if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
             allLines.push(sfItem);
             activeGroupHeader.frameCount++;
@@ -51,13 +51,16 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
         var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
         if (lTagH && lTagH === sTagH) lTagH = null;
         var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
-        var hdr = { html: html, type: 'stack-header', height: ROW_HEIGHT, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false };
+        var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
+        var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
+        if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
+        var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
         groupHeaderMap[gid] = hdr;
         activeGroupHeader = hdr;
-        totalHeight += ROW_HEIGHT;
+        totalHeight += hdrH;
         return;
     }
     if (activeGroupHeader) {
@@ -113,10 +116,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
         var repeatHtml = '<span class="repeat-notification">' +
             'Repeated #' + repeatTracker.count +
             ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
+        var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
+        var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
+        if (repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var repeatItem = {
             html: repeatHtml,
             type: 'repeat-notification',
-            height: ROW_HEIGHT,
+            height: repeatH,
             category: category,
             groupId: -1,
             timestamp: ts,
@@ -130,12 +136,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
             isSeparator: false,
             sourcePath: sp || null,
             scopeFiltered: false,
-            isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText))
+            isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
+            autoHidden: repeatAutoHide
         };
         allLines.push(repeatItem);
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
-        totalHeight += ROW_HEIGHT;
+        totalHeight += repeatH;
     } else {
         // New unique message - reset tracker
         repeatTracker.lastHash = currentHash;
@@ -155,11 +162,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
 
         var appHidden = (typeof appOnlyMode !== 'undefined' && appOnlyMode && fw);
         var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
+        var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
         var lineH = (errorSuppressed || appHidden || classHidden) ? 0 : ROW_HEIGHT;
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        var finalH = scopeFilt ? 0 : lineH;
+        var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
+        if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
@@ -192,6 +201,7 @@ function trimData() {
         if (typeof unregisterSourceTag === 'function') unregisterSourceTag(allLines[i]);
         if (typeof unregisterClassTags === 'function') unregisterClassTags(allLines[i]);
         if (allLines[i].type === 'stack-header') delete groupHeaderMap[allLines[i].groupId];
+        if (allLines[i].autoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount--;
         removedHeight += allLines[i].height;
         totalHeight -= allLines[i].height;
     }

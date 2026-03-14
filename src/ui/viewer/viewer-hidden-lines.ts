@@ -1,14 +1,22 @@
 /**
- * Client-side JavaScript for manual line hiding in the log viewer.
+ * Client-side JavaScript for manual line hiding and auto-hide patterns in the log viewer.
  * Allows users to hide individual lines, selections, or all visible lines via context menu.
- * Hidden lines are tracked by index and displayed with a counter that supports peek.
- * New logs are NOT hidden by default — only explicitly hidden lines are tracked.
+ * Auto-hide patterns match text substrings (case-insensitive) to hide lines automatically.
+ * Hidden lines are tracked by index; auto-hidden lines are tracked by pattern match.
+ * New logs are checked against auto-hide patterns on arrival (in addToData).
  */
 export function getHiddenLinesScript(): string {
     return /* javascript */ `
 var hiddenLineIndices = new Set();
 var isPeeking = false;
 var hiddenCounterEl = null;
+
+/** Session-only auto-hide patterns (cleared when session ends). */
+var sessionAutoHidePatterns = [];
+/** Persistent auto-hide patterns (from VS Code settings). */
+var persistentAutoHidePatterns = [];
+/** Count of lines hidden by auto-hide patterns (for combined counter). */
+var autoHiddenCount = 0;
 
 /** Refresh viewport after hiding changes. */
 function refreshHiddenView() {
@@ -21,6 +29,11 @@ function initHiddenLines() {
     hiddenCounterEl = document.getElementById('hidden-lines-counter');
     if (hiddenCounterEl) {
         hiddenCounterEl.addEventListener('click', togglePeek);
+        hiddenCounterEl.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof openAutoHideModal === 'function') openAutoHideModal();
+        });
     }
 }
 
@@ -110,12 +123,17 @@ function togglePeek() {
     refreshHiddenView();
 }
 
+/** Combined count of hidden lines, avoiding double-counting lines that are both userHidden and autoHidden. */
 function getHiddenCount() {
-    return hiddenLineIndices.size;
+    var overlap = 0;
+    hiddenLineIndices.forEach(function(idx) {
+        if (idx < allLines.length && allLines[idx].autoHidden) overlap++;
+    });
+    return hiddenLineIndices.size + autoHiddenCount - overlap;
 }
 
 function hasHiddenLines() {
-    return hiddenLineIndices.size > 0;
+    return hiddenLineIndices.size > 0 || autoHiddenCount > 0;
 }
 
 function hasSelectionWithHidden() {
@@ -132,32 +150,119 @@ function isLineHidden(idx) {
     return hiddenLineIndices.has(idx);
 }
 
+/** Test whether plain text matches any auto-hide pattern (case-insensitive). */
+function testAutoHide(plainText) {
+    if (sessionAutoHidePatterns.length === 0 && persistentAutoHidePatterns.length === 0) return false;
+    var lower = plainText.toLowerCase();
+    for (var i = 0; i < sessionAutoHidePatterns.length; i++) {
+        if (lower.indexOf(sessionAutoHidePatterns[i]) >= 0) return true;
+    }
+    for (var j = 0; j < persistentAutoHidePatterns.length; j++) {
+        if (lower.indexOf(persistentAutoHidePatterns[j]) >= 0) return true;
+    }
+    return false;
+}
+
+/** Apply auto-hide patterns to all existing lines. */
+function applyAutoHide() {
+    autoHiddenCount = 0;
+    for (var i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        if (item.type === 'marker') continue;
+        var plain = stripTags(item.html || '');
+        item.autoHidden = testAutoHide(plain);
+        if (item.autoHidden) autoHiddenCount++;
+    }
+    refreshHiddenView();
+}
+
+/** Add a session-only auto-hide pattern. */
+function addAutoHidePatternSession(text) {
+    var pattern = text.trim().toLowerCase();
+    if (!pattern) return;
+    if (sessionAutoHidePatterns.indexOf(pattern) >= 0) return;
+    if (persistentAutoHidePatterns.indexOf(pattern) >= 0) return;
+    sessionAutoHidePatterns.push(pattern);
+    applyAutoHide();
+}
+
+/** Add a persistent auto-hide pattern (session + saved to settings). */
+function addAutoHidePatternAlways(text) {
+    var pattern = text.trim().toLowerCase();
+    if (!pattern) return;
+    if (persistentAutoHidePatterns.indexOf(pattern) < 0) {
+        persistentAutoHidePatterns.push(pattern);
+    }
+    /* Remove from session-only if it was there */
+    var si = sessionAutoHidePatterns.indexOf(pattern);
+    if (si >= 0) sessionAutoHidePatterns.splice(si, 1);
+    vscodeApi.postMessage({ type: 'addAutoHidePattern', pattern: text.trim() });
+    applyAutoHide();
+}
+
+/** Handle setAutoHidePatterns message from extension. */
+function handleSetAutoHidePatterns(msg) {
+    if (!Array.isArray(msg.patterns)) return;
+    persistentAutoHidePatterns = [];
+    for (var i = 0; i < msg.patterns.length; i++) {
+        var p = (msg.patterns[i] || '').trim().toLowerCase();
+        if (p) persistentAutoHidePatterns.push(p);
+    }
+    applyAutoHide();
+}
+
 function updateHiddenDisplay() {
     if (!hiddenCounterEl) return;
-    var count = hiddenLineIndices.size;
+    var count = getHiddenCount();
     if (count === 0) {
         hiddenCounterEl.classList.add('u-hidden');
         hiddenCounterEl.classList.remove('peeking');
     } else {
         hiddenCounterEl.classList.remove('u-hidden');
-        var label = count === 1 ? '1 hidden' : count + ' hidden';
-        hiddenCounterEl.querySelector('.hidden-count-text').textContent = label;
+        hiddenCounterEl.querySelector('.hidden-count-text').textContent = String(count);
         hiddenCounterEl.classList.toggle('peeking', isPeeking);
         hiddenCounterEl.title = isPeeking
-            ? 'Peeking at hidden lines - click to re-hide'
-            : 'Click to peek at hidden lines';
+            ? 'Peeking at hidden lines \\u2014 click to re-hide'
+            : count + ' hidden \\u2014 click to peek, double-click to manage';
     }
 }
 
 function adjustHiddenIndicesAfterTrim(excessCount) {
-    if (excessCount <= 0 || hiddenLineIndices.size === 0) return;
-    var newSet = new Set();
-    hiddenLineIndices.forEach(function(idx) {
-        var newIdx = idx - excessCount;
-        if (newIdx >= 0) newSet.add(newIdx);
-    });
-    hiddenLineIndices = newSet;
+    if (excessCount <= 0) return;
+    /* autoHiddenCount already decremented in trimData's pre-splice loop. */
+    if (hiddenLineIndices.size > 0) {
+        var newSet = new Set();
+        hiddenLineIndices.forEach(function(idx) {
+            var newIdx = idx - excessCount;
+            if (newIdx >= 0) newSet.add(newIdx);
+        });
+        hiddenLineIndices = newSet;
+    }
     updateHiddenDisplay();
+}
+
+/** Get all auto-hide patterns (session + persistent) for the modal. */
+function getAllAutoHidePatterns() {
+    var result = [];
+    for (var i = 0; i < persistentAutoHidePatterns.length; i++) {
+        result.push({ pattern: persistentAutoHidePatterns[i], persistent: true });
+    }
+    for (var j = 0; j < sessionAutoHidePatterns.length; j++) {
+        result.push({ pattern: sessionAutoHidePatterns[j], persistent: false });
+    }
+    return result;
+}
+
+/** Remove an auto-hide pattern by value. */
+function removeAutoHidePattern(pattern, persistent) {
+    var lower = pattern.toLowerCase();
+    if (persistent) {
+        persistentAutoHidePatterns = persistentAutoHidePatterns.filter(function(p) { return p !== lower; });
+        vscodeApi.postMessage({ type: 'removeAutoHidePattern', pattern: pattern });
+    } else {
+        sessionAutoHidePatterns = sessionAutoHidePatterns.filter(function(p) { return p !== lower; });
+    }
+    applyAutoHide();
 }
 
 if (document.readyState === 'loading') {
