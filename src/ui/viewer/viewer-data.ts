@@ -13,6 +13,7 @@ export function getViewerDataScript(): string {
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs) {
     /* elapsedMs: optional per-line delay (from [+Nms] in file) for session replay timing. */
+    if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
