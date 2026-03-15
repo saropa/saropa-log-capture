@@ -1,7 +1,6 @@
 {
   "displayName": "Saropa Log Capture",
   "description": "Speichert die Ausgabe der VS Code-Debug-Konsole automatisch in persistenten Protokolldateien",
-
   "command.start.title": "Saropa Log Capture: Aufnahme starten",
   "command.stop.title": "Saropa Log Capture: Aufnahme stoppen",
   "command.pause.title": "Saropa Log Capture: Aufnahme pausieren/fortsetzen",
@@ -29,6 +28,7 @@
   "command.popOutViewer.title": "Saropa Log Capture: Viewer in neuem Fenster öffnen",
   "command.showInsights.title": "Saropa Log Capture: Sitzungsübergreifende Einblicke",
   "command.generateReport.title": "Saropa Log Capture: Fehlerbericht generieren",
+  "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: Sitzungszeitplan anzeigen",
   "command.compareSessions.title": "Saropa Log Capture: Sitzungen vergleichen",
   "command.markForComparison.title": "Zum Vergleich markieren",
@@ -60,14 +60,12 @@
   "command.clearShareHistory.title": "Freigabe-Verlauf löschen",
   "command.deleteInvestigation.title": "Untersuchung löschen",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
-
   "config.aiActivity.enabled.description": "Claude Code AI-Aktivität (Tool-Aufrufe, Eingabeaufforderungen) im Log-Viewer zusammen mit Debug-Ausgaben anzeigen.",
   "config.aiActivity.autoDetect.description": "AI-Aktivitäts-Overlay automatisch aktivieren, wenn ein Claude Code-Projektverzeichnis (~/.claude/projects/) für diesen Arbeitsbereich erkannt wird.",
   "config.aiActivity.lookbackMinutes.description": "Wie weit zurück nach AI-Aktivität gesucht werden soll, wenn eine Debug-Sitzung startet (Minuten).",
   "config.aiActivity.showPrompts.description": "Benutzer-Eingabeaufforderungen (was der Entwickler die KI gefragt hat) im Log-Viewer anzeigen.",
   "config.aiActivity.showReadOperations.description": "AI-Leseoperationen (Read, Grep, Glob) anzeigen. Kann ausführlich sein — standardmäßig deaktiviert.",
   "config.aiActivity.showSystemWarnings.description": "AI-Systemwarnungen (Rate-Limits, Hook-Blockierungen) anzeigen, die auf unterbrochene Änderungen hinweisen können.",
-
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "Protokolldatei automatisch im Editor öffnen, wenn eine Debug-Sitzung endet.",
   "config.autoTagRules.description": "Regeln für die automatische Kennzeichnung von Sitzungen anhand von Inhaltsmustern.",
@@ -112,6 +110,7 @@
   "config.includeTimestamp.description": "Jede erfasste Zeile mit einem Zeitstempel versehen.",
   "config.levelDetection.markdownDescription": "Wie aggressiv Zeilen als Fehler klassifiziert werden. `strict` erfordert Schlüsselwörter an Labelposition (z. B. `Error:`, `[ERROR]`). `loose` findet Schlüsselwörter an beliebiger Stelle im Text.",
   "config.logDirectory.description": "Verzeichnis für Protokolldateien, relativ zum Arbeitsbereichsstamm.",
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.maxLines.description": "Maximale Zeilenanzahl pro Protokolldatei. Älteste Zeilen werden bei Überschreitung gelöscht.",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "Maximale im Viewer angezeigte Zeilen (0 = Standard 50.000). Darf maxLines nicht überschreiten.",
@@ -127,12 +126,10 @@
   "config.diagnosticCapture.description": "Ereignisse der Capture-Pipeline (Session-Start, Ausgabe gepuffert/geschrieben) in den Ausgabekanal „Saropa Log Capture“ schreiben. Verwenden, wenn Protokolldateien leer sind.",
   "config.verboseDap.description": "Alle rohen DAP-Protokollnachrichten (Anfragen, Antworten, Ereignisse) in die Protokolldatei schreiben. Erzeugt viel Ausgabe — zur Fehlerbehebung bei Adapterkommunikationsproblemen verwenden.",
   "config.watchPatterns.description": "Schlüsselwörter, auf die in der Protokollausgabe geachtet werden soll. Jeder Eintrag hat ein Schlüsselwort (Zeichenkette oder /regex/) und einen Alarmtyp.",
-
   "config.firebase.timeRange.enum.last24Hours": "Letzte 24 Stunden",
   "config.firebase.timeRange.enum.last7Days": "Letzte 7 Tage",
   "config.firebase.timeRange.enum.last30Days": "Letzte 30 Tage",
   "config.firebase.timeRange.enum.last90Days": "Letzte 90 Tage",
-
   "config.autoTagRules.pattern.description": "Text oder /regex/-Muster zum Abgleich mit Protokollzeilen.",
   "config.autoTagRules.tag.description": "Tag, der bei Musterübereinstimmung angewendet wird.",
   "config.filterPresets.categories.description": "Anzuzeigende DAP-Kategorien (leer = alle).",
@@ -155,11 +152,9 @@
   "config.splitRules.silenceMinutes.description": "Datei nach dieser Anzahl von Minuten Stille aufteilen. 0 = deaktiviert.",
   "config.watchPatterns.alert.description": "Alarmtyp: flash (visueller Puls), badge (Seitenleisten-Zähler), none (nur Zähler).",
   "config.watchPatterns.keyword.description": "Text oder /regex/-Muster, auf das in der Protokollausgabe geachtet werden soll.",
-
   "view.logViewer.name": "Protokoll-Viewer",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
-
   "walkthrough.getStarted.title": "Erste Schritte mit der Protokollerfassung",
   "walkthrough.getStarted.description": "Erfahren Sie, wie Sie Debug-Ausgaben mit Saropa Log Capture erfassen und analysieren.",
   "walkthrough.browseHistory.title": "Sitzungsverlauf durchsuchen",

@@ -1,7 +1,6 @@
 {
   "displayName": "Saropa Log Capture",
   "description": "自动将 VS Code 调试控制台输出保存到持久日志文件",
-
   "command.start.title": "Saropa Log Capture: 开始捕获",
   "command.stop.title": "Saropa Log Capture: 停止捕获",
   "command.pause.title": "Saropa Log Capture: 暂停/恢复捕获",
@@ -29,6 +28,7 @@
   "command.popOutViewer.title": "Saropa Log Capture: 在新窗口中弹出查看器",
   "command.showInsights.title": "Saropa Log Capture: 跨会话洞察",
   "command.generateReport.title": "Saropa Log Capture: 生成错误报告",
+  "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: 显示会话时间轴",
   "command.compareSessions.title": "Saropa Log Capture: 比较会话",
   "command.markForComparison.title": "标记以供比较",
@@ -60,14 +60,12 @@
   "command.clearShareHistory.title": "清除共享历史",
   "command.deleteInvestigation.title": "删除调查",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
-
   "config.aiActivity.enabled.description": "在日志查看器中将 Claude Code AI 活动（工具调用、提示）与调试输出交错显示。",
   "config.aiActivity.autoDetect.description": "当检测到此工作区的 Claude Code 项目目录（~/.claude/projects/）时，自动启用 AI 活动叠加层。",
   "config.aiActivity.lookbackMinutes.description": "调试会话启动时回溯搜索 AI 活动的时间（分钟）。",
   "config.aiActivity.showPrompts.description": "在日志查看器中显示用户提示面包屑（开发者向 AI 提出的请求）。",
   "config.aiActivity.showReadOperations.description": "显示 AI 读取操作（Read、Grep、Glob）。可能内容较多 — 默认禁用。",
   "config.aiActivity.showSystemWarnings.description": "显示 AI 系统警告（速率限制、钩子阻止），可能表示变更被中断。",
-
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "调试会话结束时自动在编辑器中打开日志文件。",
   "config.autoTagRules.description": "根据内容模式自动为会话添加标签的规则。",
@@ -108,10 +106,11 @@
   "config.highlightRules.description": "基于模式的高亮规则，用于为日志行着色。每条规则指定一个模式和视觉样式。",
   "config.includeElapsedTime.description": "在日志文件中显示自上一日志行以来的已用时间（例如 [+125ms]）。",
   "config.includeSourceLocation.description": "在每条日志行中包含 DAP 源文件路径和行号（例如 [app.ts:42]）。",
-  "config.includeSubfolders.description": "在\u201c项目日志\u201d面板、搜索和分析中包含日志目录子目录中的日志文件。不影响文件保留。",
+  "config.includeSubfolders.description": "在“项目日志”面板、搜索和分析中包含日志目录子目录中的日志文件。不影响文件保留。",
   "config.includeTimestamp.description": "为每条捕获的行添加时间戳前缀。",
   "config.levelDetection.markdownDescription": "将行分类为错误的严格程度。`strict` 要求关键字出现在标签位置（例如 `Error:`、`[ERROR]`）。`loose` 在文本任意位置匹配关键字。",
   "config.logDirectory.description": "日志文件目录，相对于工作区根目录。",
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.maxLines.description": "每个日志文件的最大行数。超出后删除最旧的行。",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "查看器中显示的最大行数（0 = 默认 50,000）。不得超过 maxLines。",
@@ -127,12 +126,10 @@
   "config.diagnosticCapture.description": "将捕获管道事件（会话开始、输出缓冲/写入）记录到 Saropa Log Capture 输出通道。当日志文件为空时用于调试。",
   "config.verboseDap.description": "将所有原始 DAP 协议消息（请求、响应、事件）记录到日志文件。会产生大量输出 — 用于调试适配器通信问题。",
   "config.watchPatterns.description": "要在日志输出中监视的关键字。每个条目都有一个关键字（字符串或 /regex/）和警报类型。",
-
   "config.firebase.timeRange.enum.last24Hours": "最近 24 小时",
   "config.firebase.timeRange.enum.last7Days": "最近 7 天",
   "config.firebase.timeRange.enum.last30Days": "最近 30 天",
   "config.firebase.timeRange.enum.last90Days": "最近 90 天",
-
   "config.autoTagRules.pattern.description": "用于匹配日志行的文本或 /regex/ 模式。",
   "config.autoTagRules.tag.description": "模式匹配时应用的标签。",
   "config.filterPresets.categories.description": "要显示的 DAP 类别（空 = 全部）。",
@@ -155,11 +152,9 @@
   "config.splitRules.silenceMinutes.description": "静默达到此分钟数后拆分文件。0 = 禁用。",
   "config.watchPatterns.alert.description": "警报类型：flash（视觉脉冲）、badge（侧边栏计数）、none（仅计数器）。",
   "config.watchPatterns.keyword.description": "要在日志输出中监视的文本或 /regex/ 模式。",
-
   "view.logViewer.name": "日志查看器",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
-
   "walkthrough.getStarted.title": "开始使用日志捕获",
   "walkthrough.getStarted.description": "了解如何使用 Saropa Log Capture 捕获和分析调试输出。",
   "walkthrough.browseHistory.title": "浏览会话历史",
