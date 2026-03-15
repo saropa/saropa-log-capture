@@ -452,6 +452,41 @@ class LearningStore {
 
 ---
 
+## Context from Cohesion Index (019)
+
+### Problems this solves
+
+| # | Problem | Current State |
+|---|---------|---------------|
+| 1 | **No Unified Timeline** | Debug Console, terminal, integrations viewed separately |
+| 4 | **Search Is Siloed** | Find-in-files only searches logs, not sidecars |
+
+### Shared infrastructure
+
+| Component | Used by | Location |
+|-----------|---------|----------|
+| Interaction tracker | Noise Learning | `src/modules/learning/interaction-tracker.ts` |
+
+### Recommended order
+
+This is Phase 6 of the intelligence tier, after Auto-Correlation (Phase 5). Requires Tier 6 (Cohesion) as foundation — all three cohesion plans (Unified Timeline, Investigation Mode, Context Popover) are complete.
+
+### Target metrics
+
+| Metric | Target |
+|--------|--------|
+| Suggested filters accepted | 60%+ acceptance rate |
+
+### Completed sibling plans
+
+| # | Plan | Status |
+|---|------|--------|
+| [023](history/20260313/023_plan-ai-explain-error.md) | AI Explain Error | Complete |
+| [024](history/20260312/024_plan-auto-correlation.md) | Auto-Correlation | Complete |
+| [026](history/20260313/026_plan-share-investigation.md) | Share Investigation | Complete |
+
+---
+
 ## Success Criteria
 
 1. User dismisses Flutter framework lines multiple times
