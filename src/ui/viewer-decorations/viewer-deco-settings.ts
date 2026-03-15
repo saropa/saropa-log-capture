@@ -6,7 +6,7 @@
  *   - A dropdown for line-coloring mode (none / whole line)
  *
  * State variables (decoShowDot, decoShowCounter, decoShowTimestamp,
- * decoLineColorMode) are globals shared with viewer-decorations.ts
+ * decoShowSessionElapsed, decoLineColorMode) are globals shared with viewer-decorations.ts
  * via the concatenated script scope. Timestamp is also toggleable from
  * the viewer context menu (Options → Timestamp).
  *
@@ -43,6 +43,10 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-elapsed" />
         Elapsed time (+Nms)
     </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-session-elapsed" />
+        Session time (T+)
+    </label>
     <div class="deco-settings-separator"></div>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-line-colors" checked />
@@ -73,6 +77,8 @@ var decoShowCounter = true;
 var decoShowTimestamp = true;
 /** Sub-toggle: show elapsed time (+Nms) between log lines. */
 var showElapsed = false;
+/** Sub-toggle: show session elapsed time (T+M:SS) from first log line. */
+var decoShowSessionElapsed = false;
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
 /** Show severity bar (colored left border). */
@@ -146,6 +152,7 @@ function syncDecoSettingsUi() {
     var ts = document.getElementById('deco-opt-timestamp');
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
+    var sessEl = document.getElementById('deco-opt-session-elapsed');
     var bar = document.getElementById('deco-opt-bar');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
@@ -154,6 +161,7 @@ function syncDecoSettingsUi() {
     if (ts) ts.checked = decoShowTimestamp;
     if (ms) ms.checked = showMilliseconds;
     if (elapsed) elapsed.checked = showElapsed;
+    if (sessEl) sessEl.checked = decoShowSessionElapsed;
     if (bar) bar.checked = decoShowBar;
     if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
@@ -171,6 +179,7 @@ function onDecoOptionChange() {
     var ts = document.getElementById('deco-opt-timestamp');
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
+    var sessEl = document.getElementById('deco-opt-session-elapsed');
     var bar = document.getElementById('deco-opt-bar');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
@@ -179,10 +188,11 @@ function onDecoOptionChange() {
     decoShowTimestamp = ts ? ts.checked : true;
     showMilliseconds = ms ? ms.checked : false;
     showElapsed = elapsed ? elapsed.checked : false;
+    decoShowSessionElapsed = sessEl ? sessEl.checked : false;
     decoShowBar = bar ? bar.checked : false;
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
-    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowBar && decoLineColorMode === 'none';
+    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowSessionElapsed && !decoShowBar && decoLineColorMode === 'none';
     if (allOff) {
         showDecorations = false;
         closeDecoSettings();
@@ -199,6 +209,7 @@ var decoOptCounter = document.getElementById('deco-opt-counter');
 var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
 var decoOptMilliseconds = document.getElementById('deco-opt-milliseconds');
 var decoOptElapsed = document.getElementById('deco-opt-elapsed');
+var decoOptSessionElapsed = document.getElementById('deco-opt-session-elapsed');
 var decoOptBar = document.getElementById('deco-opt-bar');
 var decoOptLineColors = document.getElementById('deco-opt-line-colors');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
@@ -210,6 +221,7 @@ if (decoOptCounter) decoOptCounter.addEventListener('change', onDecoOptionChange
 if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionChange);
 if (decoOptMilliseconds) decoOptMilliseconds.addEventListener('change', onDecoOptionChange);
 if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange);
+if (decoOptSessionElapsed) decoOptSessionElapsed.addEventListener('change', onDecoOptionChange);
 if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
 if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
