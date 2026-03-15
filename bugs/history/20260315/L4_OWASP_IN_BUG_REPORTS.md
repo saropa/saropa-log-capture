@@ -1,6 +1,6 @@
 # L4: OWASP Violations in Bug Reports
 
-## Status: Specification
+## Status: Done
 
 ## Summary
 
