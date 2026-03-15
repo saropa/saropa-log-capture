@@ -1,7 +1,6 @@
 {
   "displayName": "Saropa Log Capture",
   "description": "VS Code 디버그 콘솔 출력을 자동으로 영구 로그 파일에 저장합니다",
-
   "command.start.title": "Saropa Log Capture: 캡처 시작",
   "command.stop.title": "Saropa Log Capture: 캡처 중지",
   "command.pause.title": "Saropa Log Capture: 캡처 일시정지/재개",
@@ -29,6 +28,7 @@
   "command.popOutViewer.title": "Saropa Log Capture: 새 창에 뷰어 팝아웃",
   "command.showInsights.title": "Saropa Log Capture: 크로스 세션 인사이트",
   "command.generateReport.title": "Saropa Log Capture: 버그 리포트 생성",
+  "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: 세션 타임라인 표시",
   "command.compareSessions.title": "Saropa Log Capture: 세션 비교",
   "command.markForComparison.title": "비교용으로 표시",
@@ -60,14 +60,12 @@
   "command.clearShareHistory.title": "공유 기록 지우기",
   "command.deleteInvestigation.title": "조사 삭제",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
-
   "config.aiActivity.enabled.description": "Claude Code AI 활동(도구 호출, 프롬프트)을 로그 뷰어에서 디버그 출력과 함께 인터리브하여 표시합니다.",
   "config.aiActivity.autoDetect.description": "이 작업 영역에서 Claude Code 프로젝트 디렉터리(~/.claude/projects/)가 감지되면 AI 활동 오버레이를 자동으로 활성화합니다.",
   "config.aiActivity.lookbackMinutes.description": "디버그 세션 시작 시 AI 활동을 얼마나 과거까지 검색할지 설정합니다(분).",
   "config.aiActivity.showPrompts.description": "사용자 프롬프트 표시(개발자가 AI에게 요청한 내용)를 로그 뷰어에 표시합니다.",
   "config.aiActivity.showReadOperations.description": "AI 읽기 작업(Read, Grep, Glob)을 표시합니다. 내용이 많을 수 있습니다 — 기본적으로 비활성화됨.",
   "config.aiActivity.showSystemWarnings.description": "중단된 변경을 나타낼 수 있는 AI 시스템 경고(속도 제한, 훅 차단)를 표시합니다.",
-
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "디버그 세션이 종료되면 편집기에서 로그 파일을 자동으로 엽니다.",
   "config.autoTagRules.description": "콘텐츠 패턴을 기반으로 세션에 자동으로 태그를 지정하는 규칙입니다.",
@@ -112,6 +110,7 @@
   "config.includeTimestamp.description": "캡처된 각 줄에 타임스탬프를 접두사로 추가합니다.",
   "config.levelDetection.markdownDescription": "줄을 오류로 분류하는 적극성. `strict`는 키워드가 레이블 위치(예: `Error:`, `[ERROR]`)에 있어야 합니다. `loose`는 텍스트 어디에서나 키워드를 일치시킵니다.",
   "config.logDirectory.description": "로그 파일 디렉터리, 작업 영역 루트에 대한 상대 경로.",
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.maxLines.description": "로그 파일당 최대 줄 수. 초과하면 가장 오래된 줄이 삭제됩니다.",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "뷰어에 표시할 최대 줄 수(0 = 기본 50,000). maxLines를 초과할 수 없습니다.",
@@ -127,12 +126,10 @@
   "config.diagnosticCapture.description": "캡처 파이프라인 이벤트(세션 시작, 버퍼/쓰기 출력)를 Saropa Log Capture 출력 채널에 기록합니다. 로그 파일이 비어 있을 때 사용합니다.",
   "config.verboseDap.description": "모든 원시 DAP 프로토콜 메시지(요청, 응답, 이벤트)를 로그 파일에 기록합니다. 대용량 출력이 생성됩니다 — 어댑터 통신 문제를 디버깅하는 데 사용하세요.",
   "config.watchPatterns.description": "로그 출력에서 감시할 키워드. 각 항목에는 키워드(문자열 또는 /regex/)와 알림 유형이 있습니다.",
-
   "config.firebase.timeRange.enum.last24Hours": "지난 24시간",
   "config.firebase.timeRange.enum.last7Days": "지난 7일",
   "config.firebase.timeRange.enum.last30Days": "지난 30일",
   "config.firebase.timeRange.enum.last90Days": "지난 90일",
-
   "config.autoTagRules.pattern.description": "로그 줄과 일치시킬 텍스트 또는 /regex/ 패턴.",
   "config.autoTagRules.tag.description": "패턴이 일치할 때 적용할 태그.",
   "config.filterPresets.categories.description": "표시할 DAP 카테고리(비어 있으면 모두).",
@@ -155,11 +152,9 @@
   "config.splitRules.silenceMinutes.description": "이 분 수의 침묵 후 파일을 분할합니다. 0 = 비활성화.",
   "config.watchPatterns.alert.description": "알림 유형: flash(시각적 펄스), badge(사이드바 카운트), none(카운터만).",
   "config.watchPatterns.keyword.description": "로그 출력에서 감시할 텍스트 또는 /regex/ 패턴.",
-
   "view.logViewer.name": "로그 뷰어",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
-
   "walkthrough.getStarted.title": "로그 캡처 시작하기",
   "walkthrough.getStarted.description": "Saropa Log Capture로 디버그 출력을 캡처하고 분석하는 방법을 알아보세요.",
   "walkthrough.browseHistory.title": "세션 기록 탐색",

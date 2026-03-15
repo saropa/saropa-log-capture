@@ -34,6 +34,7 @@ export const stringsA: Record<string, string> = {
     'integration.environment': 'Environment',
     'integration.crashlytics': 'Crashlytics',
 
+    'msg.noActiveSession': 'No active session. Open a log file in the viewer first.',
     'msg.noActiveSessionToSplit': 'No active debug session to split.',
     'msg.logFileSplit': 'Log file split. Now on part {0}.',
     'msg.deleteFileConfirm': 'Delete {0}?',
@@ -138,6 +139,7 @@ export const stringsA: Record<string, string> = {
     'msg.selectTailedFile': 'Select a file to open and tail',
 
     'msg.bugReportCopied': 'Bug report markdown copied to clipboard.',
+    'msg.reportFileCreated': 'Bug report created: {0}',
     'msg.reportSavedTo': 'Report saved to {0}',
     'msg.rightClickForTimeline': 'Right-click a session in Session History to show its timeline.',
     'msg.rightClickForBugReport': 'Right-click an error line in the log viewer to generate a bug report.',

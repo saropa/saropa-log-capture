@@ -1,7 +1,6 @@
 {
   "displayName": "Saropa Log Capture",
   "description": "Captura automáticamente la salida de la consola de depuración de VS Code en archivos de registro persistentes",
-
   "command.start.title": "Saropa Log Capture: Iniciar captura",
   "command.stop.title": "Saropa Log Capture: Detener captura",
   "command.pause.title": "Saropa Log Capture: Pausar/Reanudar captura",
@@ -29,6 +28,7 @@
   "command.popOutViewer.title": "Saropa Log Capture: Abrir visor en nueva ventana",
   "command.showInsights.title": "Saropa Log Capture: Información entre sesiones",
   "command.generateReport.title": "Saropa Log Capture: Generar informe de errores",
+  "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: Mostrar línea de tiempo de sesión",
   "command.compareSessions.title": "Saropa Log Capture: Comparar sesiones",
   "command.markForComparison.title": "Marcar para comparación",
@@ -60,14 +60,12 @@
   "command.clearShareHistory.title": "Borrar historial de compartidos",
   "command.deleteInvestigation.title": "Eliminar investigación",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
-
   "config.aiActivity.enabled.description": "Mostrar actividad de AI de Claude Code (llamadas a herramientas, prompts) intercalada con la salida de depuración en el visor de registros.",
   "config.aiActivity.autoDetect.description": "Activar automáticamente la superposición de actividad AI cuando se detecta un directorio de proyecto Claude Code (~/.claude/projects/) para este espacio de trabajo.",
   "config.aiActivity.lookbackMinutes.description": "Cuántos minutos atrás buscar actividad AI cuando se inicia una sesión de depuración.",
   "config.aiActivity.showPrompts.description": "Mostrar indicadores de prompts del usuario (lo que el desarrollador pidió a la AI) en el visor de registros.",
   "config.aiActivity.showReadOperations.description": "Mostrar operaciones de lectura de AI (Read, Grep, Glob). Puede ser verboso — desactivado por defecto.",
   "config.aiActivity.showSystemWarnings.description": "Mostrar advertencias del sistema AI (límites de tasa, bloqueos de hooks) que pueden indicar cambios interrumpidos.",
-
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "Abrir automáticamente el archivo de registro en el editor cuando finaliza una sesión de depuración.",
   "config.autoTagRules.description": "Reglas para etiquetar automáticamente sesiones según patrones de contenido.",
@@ -112,6 +110,7 @@
   "config.includeTimestamp.description": "Anteponer una marca de tiempo a cada línea capturada.",
   "config.levelDetection.markdownDescription": "Con qué agresividad clasificar las líneas como errores. `strict` requiere palabras clave en posiciones de etiqueta (p. ej. `Error:`, `[ERROR]`). `loose` encuentra palabras clave en cualquier parte del texto.",
   "config.logDirectory.description": "Directorio para archivos de registro, relativo a la raíz del espacio de trabajo.",
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.maxLines.description": "Número máximo de líneas por archivo de registro. Las líneas más antiguas se eliminan cuando se supera el límite.",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "Líneas máximas mostradas en el visor (0 = predeterminado 50.000). No debe superar maxLines.",
@@ -127,12 +126,10 @@
   "config.diagnosticCapture.description": "Registrar eventos de la canalización de captura (inicio de sesión, salida en búfer/escrita) en el canal de salida Saropa Log Capture. Usar cuando los archivos de registro estén vacíos.",
   "config.verboseDap.description": "Registrar todos los mensajes del protocolo DAP sin procesar (solicitudes, respuestas, eventos) en el archivo de registro. Produce una salida de alto volumen — úselo para depurar problemas de comunicación del adaptador.",
   "config.watchPatterns.description": "Palabras clave a vigilar en la salida del registro. Cada entrada tiene una palabra clave (cadena o /regex/) y tipo de alerta.",
-
   "config.firebase.timeRange.enum.last24Hours": "Últimas 24 horas",
   "config.firebase.timeRange.enum.last7Days": "Últimos 7 días",
   "config.firebase.timeRange.enum.last30Days": "Últimos 30 días",
   "config.firebase.timeRange.enum.last90Days": "Últimos 90 días",
-
   "config.autoTagRules.pattern.description": "Texto o patrón /regex/ para coincidir con las líneas de registro.",
   "config.autoTagRules.tag.description": "Etiqueta a aplicar cuando el patrón coincide.",
   "config.filterPresets.categories.description": "Categorías DAP a mostrar (vacío = todas).",
@@ -155,11 +152,9 @@
   "config.splitRules.silenceMinutes.description": "Dividir el archivo después de este número de minutos de silencio. 0 = deshabilitado.",
   "config.watchPatterns.alert.description": "Tipo de alerta: flash (pulso visual), badge (recuento en la barra lateral), none (solo contador).",
   "config.watchPatterns.keyword.description": "Texto o patrón /regex/ a vigilar en la salida del registro.",
-
   "view.logViewer.name": "Visor de registros",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
-
   "walkthrough.getStarted.title": "Comenzar con la captura de registros",
   "walkthrough.getStarted.description": "Aprenda a capturar y analizar la salida de depuración con Saropa Log Capture.",
   "walkthrough.browseHistory.title": "Explorar el historial de sesiones",

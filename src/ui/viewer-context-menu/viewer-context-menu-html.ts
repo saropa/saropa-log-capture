@@ -67,6 +67,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="generate-report">
                 <span class="codicon codicon-report"></span> Generate Bug Report
             </div>
+            <div class="context-menu-item" data-action="create-report-file">
+                <span class="codicon codicon-new-file"></span> Create Bug Report File
+            </div>
         </div>
     </div>
     <div class="context-menu-submenu" data-line-action>

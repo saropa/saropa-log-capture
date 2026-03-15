@@ -164,6 +164,38 @@ function onContextMenuAction(action) {
         case 'search-sessions': vscodeApi.postMessage({ type: 'searchSessions', text: plainText }); break;
         case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText, lineIndex: lineIdx }); break;
         case 'generate-report': vscodeApi.postMessage({ type: 'generateReport', text: plainText, lineIndex: lineIdx }); break;
+        case 'create-report-file': {
+            var crStart = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var crEnd = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var crLo = Math.min(crStart, crEnd);
+            var crHi = Math.max(crStart, crEnd);
+            var crMulti = crStart >= 0 && crHi > crLo && lineIdx >= crLo && lineIdx <= crHi;
+            var crSelText, crSelStart, crSelEnd;
+            if (crMulti && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+                var crLines = getSelectedLines();
+                crSelText = crLines.length > 0 ? linesToPlainText(crLines) : plainText;
+                crSelStart = crLo;
+                crSelEnd = crHi;
+            } else {
+                crSelText = plainText;
+                crSelStart = lineIdx;
+                crSelEnd = lineIdx;
+            }
+            var crAllLines = typeof getAllCopyableLines === 'function' ? getAllCopyableLines() : [];
+            var crDecorated = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(crAllLines) : '';
+            vscodeApi.postMessage({
+                type: 'createReportFile',
+                selectedText: crSelText,
+                selectedLineStart: crSelStart,
+                selectedLineEnd: crSelEnd,
+                fullDecoratedOutput: crDecorated,
+                fullOutputLineCount: crAllLines.length,
+                lineIndex: lineIdx,
+                text: plainText,
+                sessionInfo: typeof sessionInfoData !== 'undefined' ? sessionInfoData : null,
+            });
+            break;
+        }
         case 'explain-with-ai': {
             var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
             var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
