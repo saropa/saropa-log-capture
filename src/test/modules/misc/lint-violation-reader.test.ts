@@ -23,6 +23,8 @@ suite('formatLintSection', () => {
             timestamp: overrides.timestamp ?? new Date().toISOString(),
             isStale: overrides.isStale ?? false,
             hasExtension: overrides.hasExtension ?? false,
+            filesAnalyzed: overrides.filesAnalyzed ?? 50,
+            byImpact: overrides.byImpact ?? {},
         };
     }
 
@@ -57,6 +59,7 @@ suite('formatLintSection', () => {
             matches: [{ file: 'lib/a.dart', line: 1, rule: 'r1', message: 'msg', severity: 'info', impact: 'low', owasp: { mobile: [], web: [] } }],
             totalInExport: 1, tier: 'comprehensive', version: undefined,
             timestamp: new Date().toISOString(), isStale: false, hasExtension: false,
+            filesAnalyzed: 50, byImpact: {},
         };
         const result = formatLintSection(data);
         assert.ok(result.includes('saropa_lints,'));
@@ -77,6 +80,22 @@ suite('formatLintSection', () => {
         assert.ok(result.includes('may be stale'));
         assert.ok(result.includes('Run analysis in Saropa Lints'));
         assert.ok(!result.includes('dart run custom_lint'));
+    });
+
+    test('should include impact breakdown when byImpact has non-zero counts', () => {
+        const data = buildData({ byImpact: { critical: 2, high: 5, medium: 0, low: 3 } });
+        const result = formatLintSection(data);
+        assert.ok(result.includes('2 critical, 5 high, 3 low'));
+        // Breakdown should appear before the violations count line.
+        const breakdownIdx = result.indexOf('2 critical');
+        const countIdx = result.indexOf('1 lint violation');
+        assert.ok(breakdownIdx < countIdx, 'breakdown should appear before violation count');
+    });
+
+    test('should omit breakdown when byImpact is empty', () => {
+        const result = formatLintSection(buildData({ byImpact: {} }));
+        assert.ok(!result.includes('critical'));
+        assert.ok(!result.includes('high'));
     });
 
     test('should not show staleness warning when fresh', () => {
