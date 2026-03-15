@@ -35,7 +35,7 @@ window.addEventListener('message', function(event) {
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
-            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1;
+            allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0;
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');

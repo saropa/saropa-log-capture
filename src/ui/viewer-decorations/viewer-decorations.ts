@@ -5,6 +5,7 @@
  *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error, 🟣 performance, 🔵 framework)
  *   - Sequential counter (1, 2, ...)
  *   - Wall-clock timestamp (T07:23:36)
+ *   - Session elapsed time (T+M:SS)
  *
  * Also provides whole-line severity tinting (subtle background colors).
  *
@@ -19,6 +20,9 @@ export function getDecorationsScript(): string {
     return /* javascript */ `
 /** Master switch — when false, all decoration rendering is skipped. */
 var showDecorations = false;
+
+/** Epoch ms of the first timestamped line — used for T+ session elapsed display. */
+var sessionStartTs = 0;
 
 /**
  * Map log level to a colored dot emoji.
@@ -59,6 +63,33 @@ function formatDecoTimestamp(ts) {
 }
 
 /**
+ * Format session-elapsed ms as T+M:SS, T+H:MM:SS, or T+Nd H:MM:SS.
+ * Hours appear only when elapsed >= 1h. Days appear only when >= 24h.
+ * Respects the showMilliseconds toggle for sub-second precision.
+ */
+function formatSessionElapsed(ms) {
+    if (ms < 0) ms = 0;
+    var totalSec = Math.floor(ms / 1000);
+    var sec = totalSec % 60;
+    var totalMin = Math.floor(totalSec / 60);
+    var min = totalMin % 60;
+    var totalHr = Math.floor(totalMin / 60);
+    var hr = totalHr % 24;
+    var days = Math.floor(totalHr / 24);
+    var ss = ('0' + sec).slice(-2);
+    var msFrac = showMilliseconds ? '.' + ('00' + (ms % 1000)).slice(-3) : '';
+    if (totalHr >= 24) {
+        var mm = ('0' + min).slice(-2);
+        return 'T+' + days + 'd ' + hr + ':' + mm + ':' + ss + msFrac;
+    }
+    if (totalHr >= 1) {
+        var mm = ('0' + min).slice(-2);
+        return 'T+' + hr + ':' + mm + ':' + ss + msFrac;
+    }
+    return 'T+' + min + ':' + ss + msFrac;
+}
+
+/**
  * Reset all sub-toggles to their defaults.
  * Called when the master toggle turns ON so the user starts
  * with a clean, fully-enabled decoration state.
@@ -67,6 +98,7 @@ function resetDecoDefaults() {
     decoShowDot = true;
     decoShowCounter = true;
     decoShowTimestamp = true;
+    decoShowSessionElapsed = false;
     decoLineColorMode = 'none';
     decoShowBar = true;
 }
@@ -109,6 +141,9 @@ function getDecorationPrefix(item) {
     if (decoShowTimestamp) {
         var ts = formatDecoTimestamp(item.timestamp);
         if (ts) parts.push(ts);
+    }
+    if (decoShowSessionElapsed && item.timestamp && sessionStartTs) {
+        parts.push(formatSessionElapsed(item.timestamp - sessionStartTs));
     }
     if (parts.length === 0) return '';
     return '<span class="line-decoration">'
