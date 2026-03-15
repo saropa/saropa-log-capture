@@ -628,7 +628,7 @@
         },
         "saropaLogCapture.projectIndex.includeReports": {
           "default": true,
-          "description": "Index completed (non-active, non-trashed) log sessions from reports using .meta.json sidecars.",
+          "description": "Index completed (non-active, non-trashed) log sessions from the reports directory.",
           "type": "boolean"
         },
         "saropaLogCapture.projectIndex.maxFilesPerSource": {

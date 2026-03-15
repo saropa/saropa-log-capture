@@ -1,6 +1,7 @@
 /**
  * Migration of .meta.json sidecars into the central .session-metadata.json store.
- * Extracted from session-metadata.ts to keep the main file under the line limit.
+ * Also cleans up orphan sidecars (created by a bug where the extension wrote .meta.json
+ * next to arbitrary files outside the log directory).
  */
 
 import * as vscode from 'vscode';
@@ -9,11 +10,18 @@ import type { SessionMeta } from './session-metadata';
 
 const maxScanDepth = 10;
 
+/** Returns true if parsed JSON matches the extension's session metadata shape. */
+export function isOurSidecar(obj: unknown): boolean {
+    if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) { return false; }
+    const rec = obj as Record<string, unknown>;
+    return typeof rec['errorCount'] === 'number' || typeof rec['infoCount'] === 'number'
+        || typeof rec['fwCount'] === 'number' || typeof rec['warningCount'] === 'number';
+}
+
 /**
  * Migrate .meta.json sidecars in a given directory into the central metadata store.
- * When workspaceFolder is provided, all metadata goes in configured log dir's .session-metadata.json
- * (keys = workspace-relative paths). When not (e.g. single-folder workspace), uses logDir/.session-metadata.json.
- * @returns Number of sidecar files migrated and removed.
+ * Orphan sidecars (no matching tracked file) are deleted if they match our format.
+ * @returns Number of sidecar files migrated or cleaned up.
  */
 export async function migrateSidecarsInDirectory(
     logDir: vscode.Uri,
@@ -31,22 +39,17 @@ export async function migrateSidecarsInDirectory(
         data = JSON.parse(Buffer.from(raw).toString('utf-8')) as MetaMap;
     } catch { /* no central file yet */ }
     let migrated = 0;
+    let cleaned = 0;
     for (const rel of sidecarRels) {
+        const sidecarUri = vscode.Uri.joinPath(logDir, rel);
         const base = rel.replace(/\.meta\.json$/i, '');
-        let logRel: string | undefined;
-        for (const ext of fileTypes) {
-            const e = ext.startsWith('.') ? ext : `.${ext}`;
-            const candidate = base + e;
-            try {
-                await vscode.workspace.fs.stat(vscode.Uri.joinPath(logDir, candidate));
-                logRel = candidate.replace(/\\/g, '/');
-                break;
-            } catch { /* try next */ }
+        const logRel = await findTrackedFile(logDir, base, fileTypes);
+        if (!logRel) {
+            cleaned += await deleteIfOurs(sidecarUri);
+            continue;
         }
-        if (!logRel) { continue; }
         const logUri = vscode.Uri.joinPath(logDir, logRel);
         const key = vscode.workspace.asRelativePath(logUri).replace(/\\/g, '/');
-        const sidecarUri = vscode.Uri.joinPath(logDir, rel);
         try {
             const raw = await vscode.workspace.fs.readFile(sidecarUri);
             const meta = JSON.parse(Buffer.from(raw).toString('utf-8')) as SessionMeta;
@@ -60,7 +63,33 @@ export async function migrateSidecarsInDirectory(
         try { await vscode.workspace.fs.createDirectory(dir); } catch { /* may exist */ }
         await vscode.workspace.fs.writeFile(centralUri, Buffer.from(JSON.stringify(data, null, 2), 'utf-8'));
     }
-    return migrated;
+    return migrated + cleaned;
+}
+
+/** Find a tracked file matching the sidecar base name. */
+async function findTrackedFile(
+    logDir: vscode.Uri, base: string, fileTypes: readonly string[],
+): Promise<string | undefined> {
+    for (const ext of fileTypes) {
+        const e = ext.startsWith('.') ? ext : `.${ext}`;
+        const candidate = base + e;
+        try {
+            await vscode.workspace.fs.stat(vscode.Uri.joinPath(logDir, candidate));
+            return candidate.replace(/\\/g, '/');
+        } catch { /* try next */ }
+    }
+    return undefined;
+}
+
+/** Delete a sidecar file only if its content matches our metadata format. Returns 1 if deleted. */
+async function deleteIfOurs(uri: vscode.Uri): Promise<number> {
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as unknown;
+        if (!isOurSidecar(parsed)) { return 0; }
+        await vscode.workspace.fs.delete(uri);
+        return 1;
+    } catch { return 0; }
 }
 
 /** Migrate sidecars in the configured log dir. Convenience for migrateSidecarsInDirectory(getLogDirectoryUri(folder)). */
