@@ -249,10 +249,10 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('codicon-eye-closed'));
         });
 
-        test('should include Hide Lines submenu with actions', () => {
+        test('should include Hide submenu with actions', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('id="hide-lines-submenu"'));
-            assert.ok(html.includes('> Hide Lines\n'));
+            assert.ok(html.includes('> Hide\n'));
             assert.ok(html.includes('Hide This Line'));
             assert.ok(html.includes('Unhide This Line'));
             assert.ok(html.includes('Hide Selection'));
