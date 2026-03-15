@@ -20,7 +20,12 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
-Bug report staleness warnings now guide extension users to the right tool instead of a deprecated CLI command.
+Bug reports now show a project health score and lint impact breakdown for immediate codebase context.
+
+### Added
+
+- **Project health score in bug report header.** Shows "Project health: N/100" with tier and total violation count when lint data is available.
+- **Per-impact breakdown in Known Lint Issues section.** Lists non-zero violation counts by impact level (critical, high, medium, low, opinionated) above the violations table.
 
 ### Changed
 

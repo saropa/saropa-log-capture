@@ -206,6 +206,50 @@ suite('BugReportFormatter', () => {
         });
     });
 
+    suite('formatBugReport — health score', () => {
+
+        test('should include health score in header when lintMatches present', () => {
+            const md = formatBugReport(minimalData({
+                lintMatches: {
+                    matches: [],
+                    totalInExport: 42,
+                    tier: 'comprehensive',
+                    version: '4.14.0',
+                    timestamp: new Date().toISOString(),
+                    isStale: false,
+                    hasExtension: false,
+                    filesAnalyzed: 100,
+                    byImpact: { critical: 1, medium: 5 },
+                },
+            }));
+            assert.ok(md.includes('Project health:'));
+            assert.ok(md.includes('/100'));
+            assert.ok(md.includes('comprehensive tier'));
+            assert.ok(md.includes('42 violations'));
+        });
+
+        test('should not include health score when no lintMatches', () => {
+            const md = formatBugReport(minimalData());
+            assert.ok(!md.includes('Project health:'));
+        });
+
+        test('should not include health score when filesAnalyzed is 0', () => {
+            const md = formatBugReport(minimalData({
+                lintMatches: {
+                    matches: [],
+                    totalInExport: 0,
+                    tier: 'unknown',
+                    timestamp: new Date().toISOString(),
+                    isStale: false,
+                    hasExtension: false,
+                    filesAnalyzed: 0,
+                    byImpact: {},
+                },
+            }));
+            assert.ok(!md.includes('Project health:'));
+        });
+    });
+
     suite('formatBugReport — singular/plural', () => {
 
         test('should use singular for 1 session', () => {
