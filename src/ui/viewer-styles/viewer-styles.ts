@@ -26,6 +26,7 @@ import { getPerformancePanelStyles } from './viewer-styles-performance';
 import { getAiStyles } from './viewer-styles-ai';
 import { getRunSeparatorStyles } from './viewer-styles-run-separator';
 import { getContextPopoverStyles } from './viewer-styles-ui';
+import { getReplayStyles } from './viewer-styles-replay';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -260,5 +261,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
+` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
 }

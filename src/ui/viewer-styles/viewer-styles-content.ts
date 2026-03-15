@@ -244,56 +244,5 @@ export function getContentStyles(): string {
     margin-bottom: 12px;
 }
 
-/* ===================================================================
-   Session Replay Bar
-   Play/pause/stop, speed, scrubber when replaying a loaded session.
-   =================================================================== */
-.replay-bar {
-    display: none !important; /* Hidden until JS shows it (setProperty(..., 'important')) */
-    align-items: center;
-    gap: 8px;
-    padding: 4px 8px;
-    background: var(--vscode-panel-background);
-    border-top: 1px solid var(--vscode-panel-border);
-    flex-shrink: 0;
-}
-.replay-bar.replay-bar-visible {
-    display: flex !important;
-    animation: replay-bar-enter 0.15s ease-out;
-}
-@keyframes replay-bar-enter { from { opacity: 0; } to { opacity: 1; } }
-.replay-btn {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    padding: 2px 6px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-.replay-btn:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
-.replay-mode-label { font-size: 11px; color: var(--vscode-descriptionForeground); }
-.replay-mode {
-    font-size: 11px;
-    padding: 1px 4px;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 3px;
-}
-.replay-speed-label { font-size: 11px; color: var(--vscode-descriptionForeground); }
-.replay-speed {
-    font-size: 11px;
-    padding: 1px 4px;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border);
-    border-radius: 3px;
-}
-.replay-scrubber { flex: 1; min-width: 60px; max-width: 200px; }
-.replay-status { font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-
 `;
 }
