@@ -1,18 +1,21 @@
 /** Markdown formatter for the "Known Lint Issues" bug report section. */
 
 import type { LintReportData, LintViolation } from '../misc/lint-violation-reader';
+import { formatHealthScoreBreakdown } from '../misc/health-score';
 import { escapePipe } from './bug-report-sections';
 
 /** Format matched lint violations into a markdown section. */
 export function formatLintSection(data: LintReportData): string {
     const count = data.matches.length;
     const noun = count === 1 ? 'violation' : 'violations';
-    const lines = [
-        `## Known Lint Issues`,
+    const lines = [`## Known Lint Issues`];
+    const breakdown = formatHealthScoreBreakdown(data.byImpact);
+    if (breakdown) { lines.push(breakdown); }
+    lines.push(
         `${count} lint ${noun} found in files appearing in this stack trace.`,
         formatTable(data.matches),
         formatSource(data),
-    ];
+    );
     if (data.isStale) { lines.push(formatStaleness(data.timestamp, data.hasExtension)); }
     return lines.join('\n\n');
 }
