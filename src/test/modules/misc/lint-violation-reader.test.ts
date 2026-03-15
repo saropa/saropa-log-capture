@@ -22,6 +22,7 @@ suite('formatLintSection', () => {
             version: overrides.version ?? '4.14.0',
             timestamp: overrides.timestamp ?? new Date().toISOString(),
             isStale: overrides.isStale ?? false,
+            hasExtension: overrides.hasExtension ?? false,
         };
     }
 
@@ -55,18 +56,27 @@ suite('formatLintSection', () => {
         const data: LintReportData = {
             matches: [{ file: 'lib/a.dart', line: 1, rule: 'r1', message: 'msg', severity: 'info', impact: 'low', owasp: { mobile: [], web: [] } }],
             totalInExport: 1, tier: 'comprehensive', version: undefined,
-            timestamp: new Date().toISOString(), isStale: false,
+            timestamp: new Date().toISOString(), isStale: false, hasExtension: false,
         };
         const result = formatLintSection(data);
         assert.ok(result.includes('saropa_lints,'));
         assert.ok(!result.includes('saropa_lints v'));
     });
 
-    test('should show staleness warning when stale', () => {
+    test('should show CLI staleness warning when no extension', () => {
         const old = new Date(Date.now() - 3 * 86_400_000).toISOString();
-        const result = formatLintSection(buildData({ timestamp: old, isStale: true }));
+        const result = formatLintSection(buildData({ timestamp: old, isStale: true, hasExtension: false }));
         assert.ok(result.includes('may be stale'));
         assert.ok(result.includes('dart run custom_lint'));
+        assert.ok(!result.includes('Saropa Lints'));
+    });
+
+    test('should show extension staleness warning when extension detected', () => {
+        const old = new Date(Date.now() - 3 * 86_400_000).toISOString();
+        const result = formatLintSection(buildData({ timestamp: old, isStale: true, hasExtension: true }));
+        assert.ok(result.includes('may be stale'));
+        assert.ok(result.includes('Run analysis in Saropa Lints'));
+        assert.ok(!result.includes('dart run custom_lint'));
     });
 
     test('should not show staleness warning when fresh', () => {
