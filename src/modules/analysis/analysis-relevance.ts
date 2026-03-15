@@ -28,6 +28,8 @@ export interface SectionData {
     readonly relatedFileCount?: number;
     readonly lintViolationCount?: number;
     readonly lintCriticalCount?: number;
+    readonly owaspViolationCount?: number;
+    readonly owaspCategories?: string;
     readonly githubBlamePr?: boolean;
     readonly githubPrCount?: number;
     readonly githubIssueCount?: number;
@@ -67,6 +69,7 @@ export function scoreRelevance(data: SectionData): RelevanceResult {
     scoreGitHistory(data, levels);
     scoreAffectedFiles(data, findings);
     scoreLint(data, findings, levels);
+    scoreOwasp(data, findings, levels);
 
     findings.sort((a, b) => levelOrder(a.level) - levelOrder(b.level));
     return { findings: findings.slice(0, 4), sectionLevels: levels };
@@ -207,6 +210,17 @@ function scoreLint(data: SectionData, findings: SectionFinding[], levels: Map<st
         findings.push({ icon: '⚠️', text: `${count} lint violation${count !== 1 ? 's' : ''} in stack trace files`, level: 'medium', sectionId: 'lint' });
         levels.set('lint', 'medium');
     } else { levels.set('lint', 'none'); }
+}
+
+function scoreOwasp(data: SectionData, findings: SectionFinding[], levels: Map<string, RelevanceLevel>): void {
+    const count = data.owaspViolationCount ?? 0;
+    if (count === 0) { return; }
+    const cats = data.owaspCategories ? ` (${data.owaspCategories})` : '';
+    findings.push({
+        icon: '🛡️', text: `${count} OWASP-mapped violation${count !== 1 ? 's' : ''} in stack trace files${cats}`,
+        level: 'high', sectionId: 'owasp',
+    });
+    levels.set('owasp', 'high');
 }
 
 /** Parse YYYY-MM-DD and return days since today. Returns Infinity for unparseable dates. */
