@@ -12,16 +12,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
+Each version (and [Unreleased]) has a short commentary line in plain language—what this release is about for humans. Only discuss user-facing features; vary the phrasing.
+
 For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 ---
 
-
 ## [Unreleased]
 
----
+Bug report staleness warnings now guide extension users to the right tool instead of a deprecated CLI command.
+
+### Changed
+
+- Bug report staleness message now says "Run analysis in Saropa Lints" instead of `dart run custom_lint` when the Saropa Lints VS Code extension is detected in the workspace.
 
 ## [3.4.3]
+
+Auto-hide patterns let you permanently suppress matching log lines with a right-click, plus a management modal to review and remove patterns.
 
 ### Added
 
@@ -47,10 +54,11 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [3.4.2]
 
+Tames the overflowing context menu by grouping copy and export actions into a submenu, and splits six files that exceeded the 300-line limit into focused modules.
+
 • **Viewer context menu: Copy & Export submenu.** The right-click menu was too long and could overflow the screen. Copy, Copy Line, Copy All, Copy All Decorated, Copy as snippet, Copy with source, Select All, and Export current view are now under a **Copy & Export** submenu; **Copy to Search** is in the same submenu after a separator. Behavior and visibility rules are unchanged; existing tests pass.
 
 • **Modularized files over 300-line limit.** Split investigation commands (share/export into `investigation-commands-share.ts`, `investigation-commands-export.ts`), l10n strings into `l10n/strings-a.ts` and `l10n/strings-b.ts`, .slc bundle logic into `slc-types.ts`, `slc-session-files.ts`, `slc-session.ts`, and `slc-investigation.ts`, Build/CI API fetchers into `build-ci-api.ts`, and viewer-styles (Crashlytics setup/diagnostic, options integrations/shortcuts) into dedicated style modules. No behavior changes; existing tests and public API unchanged.
-
 
 ---
 
@@ -103,8 +111,6 @@ In this version we add paginated Project Logs and Export Insights Summary; impro
 • **Replay all early output when creating the first session.** Output that arrives before any log session exists is buffered by session id. We used to replay only the buffer for the session that had just started, so output that had been tagged with a different id was never replayed and the log stayed empty. When we create the first log session we now replay every buffered session’s output into that session, so no early output is dropped.
 
 • **Why it broke after v3.1.3:** The 3.1.3 refactor (modularization only) likely changed the order/timing of tracker registration and event delivery. Output then often arrived before a session existed or under a different session id; we only replayed the “just started” session’s buffer, so other output was dropped. The fixes above (replay all early output + single-session fallback) address that.
-
-
 
 • **Performance integration: profiler output copy and process memory.** New setting `integrations.performance.profilerOutputPath` (default empty): at session end, an external profiler file (e.g. `.cpuprofile`, `.trace`) is copied into the session folder when the path is set (supports `${workspaceFolder}`; 100 MB max). New setting `integrations.performance.processMetrics` (default `false`): when enabled, the extension captures the debug target process memory (MB) from the DAP `process` event and records it in the performance snapshot and session meta. Process memory is read at session end (Windows: PowerShell; Linux: `/proc/<pid>/status`; macOS: `ps`). If the adapter does not send a process ID or the read fails, the field is omitted.
 
@@ -168,13 +174,13 @@ Investigation Mode Phase 2 (cross-source search), Cursor IDE compatibility warni
 ### Added
 
 • **Investigation Mode: Cross-source search (Phase 2).** Search across all pinned sources in an investigation, including auto-resolved session sidecars (`.terminal.log`, `.requests.json`, `.events.json`, `.queries.json`, `.browser.json`). Features include:
-    • Search options: case sensitivity, regex mode, configurable context lines
-    • Search history dropdown with last 10 queries
-    • Progress bar showing file-by-file search status
-    • Cancellation support (new search auto-cancels previous)
-    • Large file handling with warning badges (>10MB searched partially)
-    • Missing source detection with warning badges
-    • Context lines before/after matches (dimmed, clickable)
+• Search options: case sensitivity, regex mode, configurable context lines
+• Search history dropdown with last 10 queries
+• Progress bar showing file-by-file search status
+• Cancellation support (new search auto-cancels previous)
+• Large file handling with warning badges (>10MB searched partially)
+• Missing source detection with warning badges
+• Context lines before/after matches (dimmed, clickable)
 • **Cursor IDE (in)compatibility warning.** Detects when running in Cursor IDE and warns that debug output capture may not work due to differences in the Debug Adapter Protocol implementation. Shows a one-time dismissible notification with workaround guidance.
 • **Empty state watermark.** When log content is empty, a centered watermark now displays with context-aware messages ("Empty log file" or "No log entries") instead of a blank area.
 • **File info panel.** A metadata panel at the bottom of the log viewer shows file name (clickable to reveal), folder (clickable to open), modification date/time, and stats (line count, file size, errors, warnings, performance issues).
