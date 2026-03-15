@@ -1,7 +1,6 @@
 {
   "displayName": "Saropa Log Capture",
   "description": "VS Code デバッグコンソールの出力を自動的に永続ログファイルに保存します",
-
   "command.start.title": "Saropa Log Capture: キャプチャを開始",
   "command.stop.title": "Saropa Log Capture: キャプチャを停止",
   "command.pause.title": "Saropa Log Capture: キャプチャを一時停止/再開",
@@ -29,6 +28,7 @@
   "command.popOutViewer.title": "Saropa Log Capture: ビューアーを新しいウィンドウに切り出す",
   "command.showInsights.title": "Saropa Log Capture: クロスセッションインサイト",
   "command.generateReport.title": "Saropa Log Capture: バグレポートを生成",
+  "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: セッションタイムラインを表示",
   "command.compareSessions.title": "Saropa Log Capture: セッションを比較",
   "command.markForComparison.title": "比較のためにマーク",
@@ -60,14 +60,12 @@
   "command.clearShareHistory.title": "共有履歴をクリア",
   "command.deleteInvestigation.title": "調査を削除",
   "command.newInvestigationFromSessions.title": "New Investigation from Sessions...",
-
   "config.aiActivity.enabled.description": "Claude Code AIアクティビティ（ツール呼び出し、プロンプト）をデバッグ出力と一緒にログビューアーに表示します。",
   "config.aiActivity.autoDetect.description": "このワークスペースでClaude Codeプロジェクトディレクトリ（~/.claude/projects/）が検出された場合、AIアクティビティオーバーレイを自動的に有効にします。",
   "config.aiActivity.lookbackMinutes.description": "デバッグセッション開始時にAIアクティビティを遡って検索する時間（分）。",
   "config.aiActivity.showPrompts.description": "ユーザープロンプトのパンくずリスト（開発者がAIに何を依頼したか）をログビューアーに表示します。",
   "config.aiActivity.showReadOperations.description": "AI読み取り操作（Read、Grep、Glob）を表示します。冗長になる場合があります — デフォルトで無効。",
   "config.aiActivity.showSystemWarnings.description": "中断された変更を示す可能性のあるAIシステム警告（レート制限、フックブロック）を表示します。",
-
   "config.title": "Saropa Log Capture",
   "config.autoOpen.description": "デバッグセッション終了時に、ログファイルをエディターで自動的に開きます。",
   "config.autoTagRules.description": "コンテンツパターンに基づいてセッションに自動タグを付けるルール。",
@@ -112,6 +110,7 @@
   "config.includeTimestamp.description": "キャプチャされた各行にタイムスタンプのプレフィックスを付けます。",
   "config.levelDetection.markdownDescription": "行をエラーとして分類する積極性。`strict` はキーワードがラベル位置（例：`Error:`、`[ERROR]`）にあることを必要とします。`loose` はテキストの任意の場所でキーワードを一致させます。",
   "config.logDirectory.description": "ログファイルのディレクトリ（ワークスペースルートからの相対パス）。",
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.maxLines.description": "ログファイルあたりの最大行数。超えた場合は最も古い行が削除されます。",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
   "config.viewerMaxLines.description": "ビューアに表示する最大行数（0 = 既定の50,000）。maxLinesを超えてはいけません。",
@@ -127,12 +126,10 @@
   "config.diagnosticCapture.description": "キャプチャ パイプラインのイベント（セッション開始、出力のバッファ/書き込み）を Saropa Log Capture 出力チャネルに記録します。ログ ファイルが空の場合に使用します。",
   "config.verboseDap.description": "すべての生の DAP プロトコルメッセージ（リクエスト、レスポンス、イベント）をログファイルに記録します。大量の出力が生成されます — アダプターの通信問題をデバッグする際に使用します。",
   "config.watchPatterns.description": "ログ出力で監視するキーワード。各エントリにはキーワード（文字列または /regex/）とアラートタイプがあります。",
-
   "config.firebase.timeRange.enum.last24Hours": "過去 24 時間",
   "config.firebase.timeRange.enum.last7Days": "過去 7 日間",
   "config.firebase.timeRange.enum.last30Days": "過去 30 日間",
   "config.firebase.timeRange.enum.last90Days": "過去 90 日間",
-
   "config.autoTagRules.pattern.description": "ログ行と照合するテキストまたは /regex/ パターン。",
   "config.autoTagRules.tag.description": "パターンが一致したときに適用するタグ。",
   "config.filterPresets.categories.description": "表示する DAP カテゴリ（空 = すべて）。",
@@ -155,11 +152,9 @@
   "config.splitRules.silenceMinutes.description": "この分数の沈黙が続くとファイルを分割します。0 = 無効。",
   "config.watchPatterns.alert.description": "アラートタイプ：flash（視覚的なパルス）、badge（サイドバーのカウント）、none（カウンターのみ）。",
   "config.watchPatterns.keyword.description": "ログ出力で監視するテキストまたは /regex/ パターン。",
-
   "view.logViewer.name": "ログビューアー",
   "view.vitalsPanel.name": "Play Vitals",
   "viewContainer.saropaLogCapture.title": "Saropa Log Capture",
-
   "walkthrough.getStarted.title": "ログキャプチャを始める",
   "walkthrough.getStarted.description": "Saropa Log Capture を使用してデバッグ出力をキャプチャおよび分析する方法を学びます。",
   "walkthrough.browseHistory.title": "セッション履歴を参照",
