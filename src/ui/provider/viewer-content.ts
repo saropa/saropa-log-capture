@@ -177,8 +177,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <div id="copy-float" class="codicon codicon-copy" title="Copy line" role="button" aria-label="Copy line"></div>
     ${getScrollbarMinimapHtml()}
     ${getGotoLineHtml()}
-    </div>
     ${getReplayBarHtml()}
+    </div>
     <div id="footer">
         <span id="footer-text" data-version="${version ? `v${version}` : ''}">Waiting for debug session...</span>
         ${getErrorBreakpointHtml()}

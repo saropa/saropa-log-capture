@@ -10,26 +10,26 @@
  * Speed options: 0.1x, 0.25x, 0.5x, 0.75x, 1x, 2x, 5x, 10x. The speed dropdown is
  * set via closest-option matching to avoid float display issues (e.g. 0.5x).
  *
- * Visibility: The replay bar is shown whenever a loaded file has lines (and no
- * active recording), so Play/Speed/Mode are visible without clicking the icon first.
- *
- * Richer context: When replay is started from the session list, the extension
- * loads the session and can attach session metadata (displayName, tags) and
- * integration data (build, git, test results) for the session timeline.
+ * Visibility: A floating toggle button in the top-right corner of the log area.
+ * The full replay panel (vertical layout) is hidden by default; the toggle or icon
+ * bar button reveals it. During active recording, both toggle and panel hide.
  */
 
 export function getReplayBarHtml(): string {
     return /* html */ `
-<div id="replay-bar" class="replay-bar" role="region" aria-label="Session replay controls" style="display: none;">
-    <button id="replay-play" class="replay-btn" title="Play" aria-label="Play replay"><span class="codicon codicon-debug-start"></span></button>
-    <button id="replay-pause" class="replay-btn" title="Pause" aria-label="Pause replay"><span class="codicon codicon-debug-pause"></span></button>
-    <button id="replay-stop" class="replay-btn" title="Stop and exit replay" aria-label="Stop replay"><span class="codicon codicon-debug-stop"></span></button>
-    <span class="replay-mode-label">Mode:</span>
-    <select id="replay-mode" class="replay-mode" title="Timed uses line deltas when available; Fast uses fixed short delay" aria-label="Replay mode">
+<button id="replay-toggle" class="replay-toggle" title="Replay controls" aria-label="Toggle replay controls">
+    <span class="codicon codicon-debug-start"></span>
+</button>
+<div id="replay-bar" class="replay-bar" role="region" aria-label="Session replay controls">
+    <div class="replay-btn-row">
+        <button id="replay-play" class="replay-btn" title="Play" aria-label="Play replay"><span class="codicon codicon-debug-start"></span></button>
+        <button id="replay-pause" class="replay-btn" title="Pause" aria-label="Pause replay"><span class="codicon codicon-debug-pause"></span></button>
+        <button id="replay-stop" class="replay-btn" title="Stop and exit replay" aria-label="Stop replay"><span class="codicon codicon-debug-stop"></span></button>
+    </div>
+    <select id="replay-mode" class="replay-mode" title="Timed uses line deltas; Fast uses fixed delay" aria-label="Replay mode">
         <option value="timed">Timed</option>
         <option value="fast">Fast</option>
     </select>
-    <span class="replay-speed-label">Speed:</span>
     <select id="replay-speed" class="replay-speed" title="Playback speed" aria-label="Playback speed">
         <option value="0.1">0.1x</option>
         <option value="0.25">0.25x</option>
@@ -59,6 +59,7 @@ export function getReplayScript(): string {
     var REPLAY_FAST_MS = 50;
 
     var bar = document.getElementById('replay-bar');
+    var toggleBtn = document.getElementById('replay-toggle');
     var playBtn = document.getElementById('replay-play');
     var pauseBtn = document.getElementById('replay-pause');
     var stopBtn = document.getElementById('replay-stop');
@@ -87,29 +88,37 @@ export function getReplayScript(): string {
         ibReplay.classList.toggle('ib-replay-active', visible);
     }
 
-    /** Enable/disable replay icon and bar based on file loaded state and session state. */
+    /** Show or hide the floating toggle button in the top-right corner. */
+    function setToggleVisible(visible) {
+        if (toggleBtn) toggleBtn.classList.toggle('replay-toggle-visible', !!visible);
+    }
+
+    /** Enable/disable replay controls based on file loaded state and session state. */
     window.setReplayEnabled = function(fileLoaded, sessionActive) {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
         if (sessionActive || !fileLoaded || !hasLines()) {
             setReplayIconVisible(false);
+            setToggleVisible(false);
             setReplayBarVisible(false);
-            if (window.replayMode) {
-                window.exitReplayMode();
-            }
+            if (window.replayMode) window.exitReplayMode();
         } else if (fileLoaded && hasLines()) {
             setReplayIconVisible(true);
-            if (!window.replayMode) setReplayBarVisible(true);
+            setToggleVisible(true);
         }
     };
 
-    /** Update the icon bar replay icon to reflect play/pause state. */
+    /** Update icon bar and toggle button icons to reflect play/pause state. */
     function updateReplayIcon(playing) {
-        if (!ibReplay) return;
-        var icon = ibReplay.querySelector('.codicon');
-        if (!icon) return;
-        icon.className = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
-        ibReplay.title = playing ? 'Replay (playing)' : 'Replay (paused)';
+        var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
+        if (ibReplay) {
+            var ic = ibReplay.querySelector('.codicon');
+            if (ic) { ic.className = cls; ibReplay.title = playing ? 'Replay (playing)' : 'Replay (paused)'; }
+        }
+        if (toggleBtn) {
+            var tc = toggleBtn.querySelector('.codicon');
+            if (tc) { tc.className = cls; toggleBtn.title = playing ? 'Replay (playing)' : 'Replay controls'; }
+        }
     }
 
     /** Toggle the replay bar visibility. */
@@ -202,9 +211,7 @@ export function getReplayScript(): string {
         var next = window.replayCurrentIndex + 1;
         if (next >= allLines.length) {
             replayPlaying = false;
-            if (playBtn) playBtn.style.display = '';
-            if (pauseBtn) pauseBtn.style.display = 'none';
-            updateReplayIcon(false);
+            setPlayingUi(false);
             if (statusEl) statusEl.textContent = 'Complete';
             if (typeof renderViewport === 'function') renderViewport(true);
             return;
@@ -224,19 +231,21 @@ export function getReplayScript(): string {
         replayPlaying = false;
     }
 
+    /** Update play/pause button visibility and icon state. */
+    function setPlayingUi(playing) {
+        if (playBtn) playBtn.style.display = playing ? 'none' : '';
+        if (pauseBtn) pauseBtn.style.display = playing ? '' : 'none';
+        updateReplayIcon(playing);
+    }
+
     function exitReplayMode() {
         stopReplayTimer();
         window.replayMode = false;
-        var showBar = replayFileLoaded && !replaySessionActive && hasLines();
-        setReplayBarVisible(showBar);
-        if (playBtn) playBtn.style.display = '';
-        if (pauseBtn) pauseBtn.style.display = 'none';
-        updateReplayIcon(false);
-        if (replayFileLoaded && !replaySessionActive && hasLines()) {
-            setReplayIconVisible(true);
-        } else {
-            setReplayIconVisible(false);
-        }
+        setReplayBarVisible(false);
+        setPlayingUi(false);
+        var canReplay = replayFileLoaded && !replaySessionActive && hasLines();
+        setReplayIconVisible(canReplay);
+        setToggleVisible(canReplay);
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
     }
@@ -250,13 +259,15 @@ export function getReplayScript(): string {
         window.replayCurrentIndex = 0;
         setReplayBarVisible(true);
         replayPlaying = true;
-        if (playBtn) playBtn.style.display = 'none';
-        if (pauseBtn) pauseBtn.style.display = '';
+        setPlayingUi(true);
         setReplayIconVisible(true);
-        updateReplayIcon(true);
         updateReplayUi();
         scheduleNext();
     };
+
+    if (toggleBtn) toggleBtn.addEventListener('click', function() {
+        if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
+    });
 
     if (modeSelect) modeSelect.addEventListener('change', function() {
         replayTimedMode = (modeSelect.value === 'timed');
@@ -265,17 +276,12 @@ export function getReplayScript(): string {
     if (playBtn) playBtn.addEventListener('click', function() {
         if (!window.replayMode) return;
         replayPlaying = true;
-        playBtn.style.display = 'none';
-        if (pauseBtn) pauseBtn.style.display = '';
-        updateReplayIcon(true);
+        setPlayingUi(true);
         scheduleNext();
     });
     if (pauseBtn) pauseBtn.addEventListener('click', function() {
         stopReplayTimer();
-        replayPlaying = false;
-        playBtn.style.display = '';
-        pauseBtn.style.display = 'none';
-        updateReplayIcon(false);
+        setPlayingUi(false);
     });
     if (stopBtn) stopBtn.addEventListener('click', exitReplayMode);
     if (speedSelect) speedSelect.addEventListener('change', function() {
@@ -289,9 +295,7 @@ export function getReplayScript(): string {
         var total = allLines ? allLines.length : 0;
         window.replayCurrentIndex = Math.max(0, Math.min(total - 1, raw));
         replayPlaying = false;
-        if (playBtn) playBtn.style.display = '';
-        if (pauseBtn) pauseBtn.style.display = 'none';
-        updateReplayIcon(false);
+        setPlayingUi(false);
         updateReplayUi();
     });
 
@@ -313,22 +317,18 @@ export function getReplayScript(): string {
             ev.preventDefault();
             if (replayPlaying) {
                 stopReplayTimer();
-                replayPlaying = false;
-                if (playBtn) playBtn.style.display = '';
-                if (pauseBtn) pauseBtn.style.display = 'none';
-                updateReplayIcon(false);
+                setPlayingUi(false);
             } else {
                 replayPlaying = true;
-                if (playBtn) playBtn.style.display = 'none';
-                if (pauseBtn) pauseBtn.style.display = '';
-                updateReplayIcon(true);
+                setPlayingUi(true);
                 scheduleNext();
             }
         }
     });
 
-    /* Ensure bar and icon are hidden on startup (defense against any cached or late-applied state). */
+    /* Ensure bar, toggle and icon are hidden on startup (defense against cached state). */
     setReplayBarVisible(false);
+    setToggleVisible(false);
     setReplayIconVisible(false);
 })();
 `;
