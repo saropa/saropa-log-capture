@@ -22,6 +22,11 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 Replay controls now live in a compact floating vertical panel instead of a full-width horizontal bar.
 
+### Added
+
+- **Create Bug Report File.** Right-click selected lines in the log viewer and choose "Create Bug Report File" to auto-create a comprehensive `.md` report. Includes selected text, session info, full decorated output (in a collapsible block), cross-session analysis, environment details, and user-fillable sections. Also available from the Command Palette (without selection).
+- **`saropaLogCapture.reportFolder` setting.** Configure where bug report files are created (default: `bugs/`, relative to workspace root).
+
 ### Changed
 
 - **Replay bar: collapsible vertical layout.** The replay controls (play/pause/stop, mode, speed, scrubber) are now a floating vertical panel toggled by an icon in the top-right corner of the log area. The bar is hidden by default — no more wasted vertical space when you're not replaying. The vertical scrubber stretches to fill the available height.

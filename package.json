@@ -144,6 +144,11 @@
         "title": "%command.generateReport.title%"
       },
       {
+        "command": "saropaLogCapture.createReportFile",
+        "icon": "$(new-file)",
+        "title": "%command.createReportFile.title%"
+      },
+      {
         "command": "saropaLogCapture.showTimeline",
         "icon": "$(graph-line)",
         "title": "%command.showTimeline.title%"
@@ -942,6 +947,11 @@
         "saropaLogCapture.logDirectory": {
           "default": "reports",
           "description": "%config.logDirectory.description%",
+          "type": "string"
+        },
+        "saropaLogCapture.reportFolder": {
+          "default": "bugs",
+          "description": "%config.reportFolder.description%",
           "type": "string"
         },
         "saropaLogCapture.maxLines": {

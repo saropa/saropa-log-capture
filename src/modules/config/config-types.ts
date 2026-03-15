@@ -34,6 +34,8 @@ export interface SaropaLogCaptureConfig {
   readonly includeTimestamp: boolean;
   readonly format: "plaintext" | "html";
   readonly logDirectory: string;
+  /** Folder for auto-created bug report files (relative to workspace root, or absolute path). */
+  readonly reportFolder: string;
   readonly autoOpen: boolean;
   readonly maxLogFiles: number;
   readonly gitignoreCheck: boolean;

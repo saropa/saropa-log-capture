@@ -10,6 +10,7 @@ import * as helpers from "./viewer-provider-helpers";
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { showBugReport } from '../panels/bug-report-panel';
+import { createBugReportFile } from '../../modules/bug-report/report-file-writer';
 import type { SessionDisplayOptions } from '../session/session-display';
 import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import { assertDefined } from '../../modules/misc/assert';
@@ -167,6 +168,22 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "analyzeLine": ctx.onAnalyzeLine?.(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, -1), ctx.currentFileUri); break;
       case "generateReport":
         if (ctx.currentFileUri) { showBugReport(String(msg.text ?? ""), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri, ctx.context).catch(() => {}); }
+        break;
+      case "createReportFile":
+        if (ctx.currentFileUri) {
+          createBugReportFile({
+            selectedText: String(msg.selectedText ?? ""),
+            selectedLineStart: safeLineIndex(msg.selectedLineStart, 0),
+            selectedLineEnd: safeLineIndex(msg.selectedLineEnd, 0),
+            sessionInfo: (msg.sessionInfo as Record<string, string>) ?? {},
+            fullDecoratedOutput: String(msg.fullDecoratedOutput ?? ""),
+            fullOutputLineCount: typeof msg.fullOutputLineCount === "number" ? msg.fullOutputLineCount : 0,
+            fileUri: ctx.currentFileUri,
+            errorText: String(msg.text ?? ""),
+            lineIndex: safeLineIndex(msg.lineIndex, 0),
+            extensionContext: ctx.context,
+          }).catch(() => {});
+        }
         break;
       case "explainWithAi": {
         const uri = ctx.currentFileUri;
