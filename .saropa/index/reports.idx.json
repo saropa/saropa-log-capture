@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceId": "reports",
-  "buildTime": 1772939118229,
+  "buildTime": 1773531975794,
   "files": [
     {
       "relativePath": "reports/20260307/20260307_214522_saropa-log-capture.log",
@@ -16,6 +16,16 @@
       "uri": "file:///d%3A/src/saropa-log-capture/reports/20260307/20260307_220407_saropa-log-capture.log",
       "sizeBytes": 2617,
       "mtime": 1772939118124,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260314/20260314_194546_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260314/20260314_194546_saropa-log-capture.log",
+      "sizeBytes": 2635,
+      "mtime": 1773531975700,
       "correlationTokens": [],
       "fingerprints": [],
       "errorCount": 0,
