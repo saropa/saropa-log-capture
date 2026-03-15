@@ -71,10 +71,6 @@ export const stringsB: Record<string, string> = {
     'action.authenticate': 'Authenticate',
     'action.continue': 'Continue',
 
-    'msg.cursorIdeWarning': 'Running in Cursor IDE. Debug output capture may not work correctly due to differences in the Debug Adapter Protocol implementation.',
-    'action.learnMore': 'Learn More',
-    'action.dontShowAgain': "Don't Show Again",
-
     'msg.investigationSources': '{0} pinned source(s)',
     'label.pinnedSources': 'Pinned Sources',
     'label.notes': 'Notes',
