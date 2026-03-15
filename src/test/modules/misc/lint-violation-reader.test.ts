@@ -94,8 +94,11 @@ suite('formatLintSection', () => {
 
     test('should omit breakdown when byImpact is empty', () => {
         const result = formatLintSection(buildData({ byImpact: {} }));
-        assert.ok(!result.includes('critical'));
-        assert.ok(!result.includes('high'));
+        // The breakdown line would appear between the heading and the count line.
+        // With empty byImpact, the count line should immediately follow the heading.
+        const sections = result.split('\n\n');
+        assert.strictEqual(sections[0], '## Known Lint Issues');
+        assert.ok(sections[1].startsWith('1 lint violation'));
     });
 
     test('should not show staleness warning when fresh', () => {
