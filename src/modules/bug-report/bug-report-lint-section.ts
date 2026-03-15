@@ -13,7 +13,7 @@ export function formatLintSection(data: LintReportData): string {
         formatTable(data.matches),
         formatSource(data),
     ];
-    if (data.isStale) { lines.push(formatStaleness(data.timestamp)); }
+    if (data.isStale) { lines.push(formatStaleness(data.timestamp, data.hasExtension)); }
     return lines.join('\n\n');
 }
 
@@ -33,12 +33,15 @@ function formatSource(data: LintReportData): string {
     return `> Source: saropa_lints${version}, ${data.tier} tier, analyzed ${ts}`;
 }
 
-function formatStaleness(timestamp: string): string {
+function formatStaleness(timestamp: string, hasExtension: boolean): string {
+    const refreshHint = hasExtension
+        ? 'Run analysis in Saropa Lints to refresh.'
+        : 'Run `dart run custom_lint` to refresh.';
     const ms = Date.parse(timestamp);
-    if (isNaN(ms)) { return '> Lint data may be stale. Run `dart run custom_lint` to refresh.'; }
+    if (isNaN(ms)) { return `> Lint data may be stale. ${refreshHint}`; }
     const days = Math.floor((Date.now() - ms) / 86_400_000);
     const age = days === 1 ? '1 day ago' : `${days} days ago`;
-    return `> Lint data may be stale (analyzed ${age}). Run \`dart run custom_lint\` to refresh.`;
+    return `> Lint data may be stale (analyzed ${age}). ${refreshHint}`;
 }
 
 function formatShortTimestamp(ts: string): string {

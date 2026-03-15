@@ -31,6 +31,12 @@ export interface LintReportData {
     readonly version?: string;
     readonly timestamp: string;
     readonly isStale: boolean;
+    /** True if the Saropa Lints VS Code extension has been used in this workspace. */
+    readonly hasExtension: boolean;
+    /** Number of files analyzed in the lint run (for health score). */
+    readonly filesAnalyzed: number;
+    /** Violation counts by impact level (for health score). */
+    readonly byImpact: Record<string, number>;
 }
 
 const staleThresholdMs = 24 * 60 * 60 * 1000;
@@ -50,14 +56,15 @@ export async function findLintMatches(
     const stackFiles = collectStackFiles(stackTrace);
     if (stackFiles.size === 0) { return undefined; }
 
+    const hasExt = await detectExtension(wsRoot);
     const fileIndex: Record<string, number> = raw.summary?.issuesByFile ?? {};
     const relevantFiles = filterRelevantFiles(stackFiles, fileIndex);
     if (relevantFiles.size === 0) {
-        return buildResult([], raw);
+        return buildResult([], raw, hasExt);
     }
 
     const matches = filterAndSort(raw.violations ?? [], relevantFiles, stackTrace);
-    return buildResult(matches, raw);
+    return buildResult(matches, raw, hasExt);
 }
 
 interface RawExport {
@@ -65,7 +72,12 @@ interface RawExport {
     readonly version?: string;
     readonly timestamp?: string;
     readonly config?: { readonly tier?: string };
-    readonly summary?: { readonly totalViolations?: number; readonly issuesByFile?: Record<string, number> };
+    readonly summary?: {
+        readonly totalViolations?: number;
+        readonly issuesByFile?: Record<string, number>;
+        readonly filesAnalyzed?: number;
+        readonly byImpact?: Record<string, number>;
+    };
     readonly violations?: readonly RawViolation[];
 }
 
@@ -78,6 +90,21 @@ interface RawViolation {
     readonly severity?: string;
     readonly impact?: string;
     readonly owasp?: { readonly mobile?: readonly string[]; readonly web?: readonly string[] };
+}
+
+/** Check if the Saropa Lints extension has been used (extension report files exist). */
+async function detectExtension(wsRoot: vscode.Uri): Promise<boolean> {
+    const reportsUri = vscode.Uri.joinPath(wsRoot, 'reports');
+    try {
+        const entries = await vscode.workspace.fs.readDirectory(reportsUri);
+        for (const [name, type] of entries) {
+            if (type !== vscode.FileType.Directory || !/^\d{8}$/.test(name)) { continue; }
+            const dirUri = vscode.Uri.joinPath(reportsUri, name);
+            const files = await vscode.workspace.fs.readDirectory(dirUri);
+            if (files.some(([f]) => f.endsWith('_saropa_extension.md'))) { return true; }
+        }
+    } catch { /* reports/ doesn't exist or can't be read */ }
+    return false;
 }
 
 async function readExportFile(wsRoot: vscode.Uri): Promise<RawExport | undefined> {
@@ -182,7 +209,7 @@ function buildFrameLineMap(frames: readonly StackFrame[]): Map<string, number[]>
     return map;
 }
 
-function buildResult(matches: LintViolation[], raw: RawExport): LintReportData {
+function buildResult(matches: LintViolation[], raw: RawExport, hasExtension: boolean): LintReportData {
     const ts = raw.timestamp ?? '';
     const exportTime = Date.parse(ts);
     const isStale = isNaN(exportTime) || (Date.now() - exportTime) > staleThresholdMs;
@@ -193,5 +220,8 @@ function buildResult(matches: LintViolation[], raw: RawExport): LintReportData {
         version: raw.version,
         timestamp: ts,
         isStale,
+        hasExtension,
+        filesAnalyzed: raw.summary?.filesAnalyzed ?? 0,
+        byImpact: raw.summary?.byImpact ?? {},
     };
 }
