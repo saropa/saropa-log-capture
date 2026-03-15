@@ -11,6 +11,7 @@ import { buildMarkdownFileLink } from '../source/link-helpers';
 import { buildItemUrl } from '../marketplace-url';
 import { formatHealthScoreLine } from '../misc/health-score';
 import { formatLintSection } from './bug-report-lint-section';
+import { formatOwaspSection } from './bug-report-owasp-section';
 import { formatThreadGroupedLines } from './bug-report-thread-format';
 import {
     type ReportCtx, shortName,
@@ -42,7 +43,11 @@ export function formatBugReport(data: BugReportData): string {
     if (data.imports) { sections.push(formatImports(data.imports)); }
     if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
     if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
-    if (data.lintMatches?.matches.length) { sections.push(formatLintSection(data.lintMatches)); }
+    if (data.lintMatches?.matches.length) {
+        sections.push(formatLintSection(data.lintMatches));
+        const owaspSection = formatOwaspSection(data.lintMatches.matches, data.primarySourcePath);
+        if (owaspSection) { sections.push(owaspSection); }
+    }
     if (data.investigationContext) { sections.push(formatInvestigationContext(data.investigationContext)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }

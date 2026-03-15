@@ -8,6 +8,7 @@ import type { ImportResults } from '../source/import-extractor';
 import type { SymbolResults } from '../source/symbol-resolver';
 import { type SectionData, scoreRelevance } from '../analysis/analysis-relevance';
 import { extractDateFromFilename } from '../analysis/stack-parser';
+import { countOwaspCategories } from './bug-report-owasp-section';
 import { buildVscodeFileUri, buildGitHubCommitUrl, buildMarkdownFileLink, type GitLinkContext } from '../source/link-helpers';
 
 export interface ReportCtx {
@@ -179,6 +180,7 @@ export function extractSectionData(data: BugReportData): SectionData {
         affectedFileCount: data.fileAnalyses.length,
         lintViolationCount: data.lintMatches?.matches.length ?? 0,
         lintCriticalCount: data.lintMatches?.matches.filter(v => v.impact === 'critical').length ?? 0,
+        ...countOwaspCategories(data.lintMatches?.matches ?? []),
     };
 }
 
