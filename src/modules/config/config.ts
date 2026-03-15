@@ -138,6 +138,10 @@ export function getConfig(): SaropaLogCaptureConfig {
       const v = cfg.get("logDirectory");
       return typeof v === "string" && v.trim().length > 0 ? v.trim() : "reports";
     })(),
+    reportFolder: (() => {
+      const v = cfg.get("reportFolder");
+      return typeof v === "string" && v.trim().length > 0 ? v.trim() : "bugs";
+    })(),
     autoOpen: ensureBoolean(cfg.get("autoOpen"), false),
     maxLogFiles: ensureNonNegative(cfg.get("maxLogFiles"), 0),
     gitignoreCheck: ensureBoolean(cfg.get("gitignoreCheck"), true),
@@ -197,6 +201,20 @@ export function getLogDirectoryUri(
     return vscode.Uri.file(path.join(process.cwd(), config.logDirectory));
   }
   return vscode.Uri.joinPath(workspaceFolder.uri, config.logDirectory);
+}
+
+/** URI for the bug report output folder. */
+export function getReportFolderUri(
+  workspaceFolder: vscode.WorkspaceFolder | undefined | null,
+): vscode.Uri {
+  const config = getConfig();
+  if (path.isAbsolute(config.reportFolder)) {
+    return vscode.Uri.file(config.reportFolder);
+  }
+  if (!workspaceFolder?.uri) {
+    return vscode.Uri.file(path.join(process.cwd(), config.reportFolder));
+  }
+  return vscode.Uri.joinPath(workspaceFolder.uri, config.reportFolder);
 }
 
 /** URI for extension tooling root (.saropa/). Index and caches live under here. */
