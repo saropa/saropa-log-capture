@@ -18,7 +18,7 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.5.0]
 
 Bug reports now show a project health score and lint impact breakdown for immediate codebase context.
 

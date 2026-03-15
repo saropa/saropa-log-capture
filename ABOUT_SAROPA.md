@@ -37,7 +37,7 @@ Kykto is built on the idea that simply writing a kyk down is often all the organ
 - **Smart Features:**
   - **Zero-friction capture:** One tap to add a kyk. No folders, no tags, no dates.
   - **24-hour decay:** Every kyk moves to the vault after 24 hours. Fresh start, every day.
-  - **Export tray:** Route kyks to calendar, messages, email, or clipboard.
+  - **Export tray:** Route notes to calendar, messages, email, or clipboard.
   - **Snooze:** Long-press to grant one extra 24-hour cycle. Max 3 active.
 - **Platform:** Android, iOS, Windows, macOS, Linux (mobile and desktop)
 - **Package:** saropa_kykto (Flutter)
@@ -51,9 +51,9 @@ _Production-hardened tools for VS Code, Dart, and Flutter._
 
 ### Dart & Flutter Packages
 
-| Package                                                                            | Description                                                                                                                                                                                                                                           |
-| :--------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[saropa_lints](https://pub.dev/packages/saropa_lints)**                          | **1700+ Custom Rules.** Catch memory leaks, security vulnerabilities (mapped to OWASP Top 10), and runtime crashes that standard linters miss. Includes AI-ready diagnostics for faster repairs.                                                      |
+| Package                                                                            | Description                                                                                                                                                                                                                                            |
+| :--------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[saropa_lints](https://pub.dev/packages/saropa_lints)**                          | **1700+ Custom Rules.** Catch memory leaks, security vulnerabilities (mapped to OWASP Top 10), and runtime crashes that standard linters miss. Includes AI-ready diagnostics for faster repairs.                                                       |
 | **[saropa_dart_utils](https://pub.dev/packages/saropa_dart_utils)**                | **The "Swiss Army" Library.** Stop writing boilerplate. Access 280+ production-hardened extension methods for Strings, Dates, and Lists extracted from real-world apps.                                                                                |
 | **[saropa_drift_viewer](https://pub.dev/packages/saropa_drift_viewer)**            | **Debug-only SQLite/Drift inspector.** Exposes your database as JSON and a minimal web UI: table list, pagination, schema, CSV export, read-only SQL runner, snapshot/diff, and optional auth. Use from any Flutter/Dart app with Drift or raw SQLite. |
 | **[saropa_package_validator](https://github.com/saropa/saropa_package_validator)** | **Dependency Health Scanner.** Analyzes Flutter project dependencies for community vibrancy. Queries Pub.dev and GitHub APIs, computes a Vibrancy Score (0–100), and categorizes packages as Vibrant, Quiet, Legacy-Locked, or End of Life.            |
