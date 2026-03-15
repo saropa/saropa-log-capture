@@ -18,7 +18,7 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.5.1]
 
 Replay controls now live in a compact floating vertical panel instead of a full-width horizontal bar.
 
