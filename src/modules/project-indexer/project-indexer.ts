@@ -1,6 +1,6 @@
 /**
  * Lightweight, delta-aware project indexer for docs/bugs/root and reports.
- * Index files live in .saropa/index/; reports use .meta.json sidecars only.
+ * Index files live in .saropa/index/; reports use .session-metadata.json.
  */
 
 import * as vscode from 'vscode';
