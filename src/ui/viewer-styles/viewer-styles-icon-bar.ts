@@ -16,7 +16,7 @@ export function getIconBarStyles(): string {
    =================================================================== */
 :root {
     --icon-bar-width: 36px;
-    --icon-bar-width-with-labels: 160px;
+    --icon-bar-width-with-labels: 140px;
 }
 
 #icon-bar {
