@@ -113,7 +113,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Performance panel:** Icon-bar panel (graph-line): Current session tab shows grouped perf events (PERF traces, Choreographer jank, GC, timeouts) with click-to-navigate; Trends tab shows cross-session aggregated table with SVG line chart for operation duration over time. Fingerprints stored in session metadata. Performance is in the default integration adapters; the icon is shown only when the adapter is enabled. Logs with performance data show an icon in Project Logs and a **Performance** chip in the session bar when opened (click to open the panel).
 
 ### Display & Layout
-- **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), and whole-line coloring for all severity levels. Configurable in the Options panel; Timestamp can also be toggled from the right-click context menu (Options → Timestamp).
+- **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), session elapsed time (T+), and whole-line coloring for all severity levels. Configurable in the Options panel; Timestamp can also be toggled from the right-click context menu (Options → Timestamp).
 - **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
 - **Visual spacing:** Heuristic breathing room before/after level changes, markers, and stack traces.
 - **Font size / line height:** Adjustable via sliders in the Options panel.

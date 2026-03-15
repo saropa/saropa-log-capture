@@ -18,6 +18,12 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Session time (T+) decoration.** New "Session time (T+)" checkbox in the decoration settings panel shows elapsed time from the first log line (e.g., `T+0:00`, `T+3:42`, `T+1:23:42`). Hours appear only when elapsed exceeds 1 hour; days appear only past 24 hours. Respects the existing milliseconds toggle. Can be shown independently of or alongside the wall-clock timestamp.
+
 ## [3.5.0]
 
 Bug reports now show a project health score and lint impact breakdown for immediate codebase context.
@@ -30,6 +36,12 @@ Bug reports now show a project health score and lint impact breakdown for immedi
 ### Changed
 
 - Bug report staleness message now says "Run analysis in Saropa Lints" instead of `dart run custom_lint` when the Saropa Lints VS Code extension is detected in the workspace.
+
+### Removed
+
+- **Cursor IDE warning.** Removed the startup warning for Cursor IDE users — log capture works fine in Cursor.
+
+--
 
 ## [3.4.3]
 
