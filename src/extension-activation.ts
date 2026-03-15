@@ -22,6 +22,7 @@ import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer
 import { getLogDirectoryUri } from './modules/config/config';
 import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
+import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { BookmarkStore } from './modules/storage/bookmark-store';
@@ -219,6 +220,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     if (folder) {
         migrateCrashlyticsCacheToSaropa(folder).catch(() => {});
         checkGitignoreSaropa(context, folder).catch(() => {});
+        // Clean up orphan .meta.json sidecars left by older versions (scans workspace root).
+        migrateSidecarsInDirectory(folder.uri, folder).catch(() => {});
     }
 
     outputChannel.appendLine('Saropa Log Capture activated.');
