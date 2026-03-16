@@ -36,7 +36,11 @@ function handleMinimapShowInfo(msg) {
 function handleMinimapWidth(msg) {
     if (!minimapEl) return;
     var sizes = { small: '40px', medium: '60px', large: '90px' };
-    minimapEl.style.width = sizes[msg.width] || '60px';
+    var w = sizes[msg.width] || '60px';
+    minimapEl.style.width = w;
+    /* Keep --mm-w in sync so absolute-positioned overlays (replay bar) clear the minimap */
+    var wrapper = document.getElementById('log-content-wrapper');
+    if (wrapper) wrapper.style.setProperty('--mm-w', w);
 }
 
 /** Read VS Code theme colors with fallbacks. */

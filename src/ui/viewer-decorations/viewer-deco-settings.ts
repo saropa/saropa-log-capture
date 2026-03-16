@@ -145,6 +145,21 @@ function toggleTimestamp() {
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
+/**
+ * Toggle session elapsed time (T+) in the line decoration prefix.
+ * Callable from the context menu (Options → Session time).
+ * If turning on and decorations are off, turns decorations on so the time is visible.
+ */
+function toggleSessionElapsed() {
+    decoShowSessionElapsed = !decoShowSessionElapsed;
+    if (decoShowSessionElapsed && !showDecorations) {
+        showDecorations = true;
+        if (typeof updateDecoButton === 'function') updateDecoButton();
+    }
+    syncDecoSettingsUi();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
 /** Sync checkbox/select UI elements from the current state variables. */
 function syncDecoSettingsUi() {
     var dot = document.getElementById('deco-opt-dot');
