@@ -3,13 +3,12 @@
 
 import json
 import os
-import shutil
+import re
 import subprocess
 import sys
 import time
 
 from modules.constants import MARKETPLACE_EXTENSION_ID, PROJECT_ROOT
-from modules.display import info
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
@@ -20,6 +19,10 @@ def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
     avoids quoting issues. stdin=DEVNULL prevents commands from waiting
     for user input (which would hang the script).
     """
+    # On Windows, CREATE_NO_WINDOW prevents cmd.exe console windows from
+    # flashing when shell=True invokes .cmd batch files.
+    if sys.platform == "win32" and "creationflags" not in kwargs:
+        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
     return subprocess.run(
         cmd,
         capture_output=True,
@@ -59,36 +62,55 @@ def get_ovsx_pat() -> str:
     return ""
 
 
-# Cache for `editor --list-extensions --show-versions` output.
-# Keyed by editor name ("code", "cursor"). Each call to the CLI can
-# spawn a VS Code / Cursor window on Windows, so we cache to call once.
+# Cached extension sets keyed by editor name ("code", "cursor").
 _extensions_cache: dict[str, set[str]] = {}
+
+# Map editor CLI name to its extensions directory (relative to $HOME).
+_EDITOR_EXT_DIRS = {
+    "code": os.path.join(".vscode", "extensions"),
+    "cursor": os.path.join(".cursor", "extensions"),
+}
+
+# Matches the semver version suffix in extension folder names,
+# e.g. "connor4312.esbuild-problem-matchers-0.0.4" → version "0.0.4".
+_VERSION_RE = re.compile(r"-(\d+\.\d+\.\d+.*)$")
 
 
 def list_editor_extensions(editor: str = "code") -> set[str]:
-    """Return cached set of lowercase extension lines from the editor CLI.
+    """Return cached set of lowercase extension lines for the editor.
 
-    Each line looks like 'publisher.name@version'. Returns empty set
-    if the CLI isn't available or the command fails. The result is
-    cached so the CLI is invoked at most once per editor per run.
+    Each line looks like 'publisher.name@version'. Reads from the
+    editor's extensions directory on disk instead of calling the CLI,
+    which avoids spawning editor windows on Windows.
     """
     if editor in _extensions_cache:
         return _extensions_cache[editor]
-    if not shutil.which(editor):
+
+    rel_dir = _EDITOR_EXT_DIRS.get(editor)
+    if not rel_dir:
         _extensions_cache[editor] = set()
         return set()
-    if sys.platform == "win32":
-        label = "VS Code" if editor == "code" else editor.capitalize()
-        info(f"Querying {label} CLI (a {label} window may briefly appear)...")
-    result = run(
-        [editor, "--list-extensions", "--show-versions"], check=False,
-    )
-    if result.returncode != 0:
+
+    ext_dir = os.path.join(os.path.expanduser("~"), rel_dir)
+    if not os.path.isdir(ext_dir):
         _extensions_cache[editor] = set()
         return set()
-    lines = set(result.stdout.strip().lower().splitlines())
-    _extensions_cache[editor] = lines
-    return lines
+
+    extensions: set[str] = set()
+    try:
+        for entry in os.scandir(ext_dir):
+            if not entry.is_dir():
+                continue
+            m = _VERSION_RE.search(entry.name)
+            if m:
+                name = entry.name[:m.start()]
+                version = m.group(1)
+                extensions.add(f"{name.lower()}@{version.lower()}")
+    except OSError:
+        pass
+
+    _extensions_cache[editor] = extensions
+    return extensions
 
 
 def get_installed_extension_versions(
@@ -96,7 +118,7 @@ def get_installed_extension_versions(
 ) -> dict[str, str]:
     """Return installed version per editor: {"vscode": "2.0.15", "cursor": "2.0.14"}.
 
-    Uses cached CLI output so each editor is queried at most once.
+    Uses cached filesystem scan so each editor is checked at most once.
     Only includes editors where the extension is installed. Empty dict = not installed.
     """
     out: dict[str, str] = {}
