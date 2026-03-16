@@ -152,6 +152,10 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Timestamp</span>
             </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Session time (T+)</span>
+            </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Visual spacing</span>

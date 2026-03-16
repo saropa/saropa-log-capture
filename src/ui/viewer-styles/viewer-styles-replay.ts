@@ -11,7 +11,7 @@ export function getReplayStyles(): string {
     display: none;
     position: absolute;
     top: 46px;
-    right: 20px;
+    right: calc(20px + var(--mm-w, 60px));
     z-index: 16;
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
@@ -34,7 +34,7 @@ export function getReplayStyles(): string {
     display: none !important;
     position: absolute;
     top: 82px;
-    right: 8px;
+    right: calc(8px + var(--mm-w, 60px));
     bottom: 44px; /* above #jump-btn (bottom: 8px + ~28px height + 8px gap) */
     z-index: 16;
     flex-direction: column;
