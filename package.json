@@ -1004,7 +1004,10 @@
         "saropaLogCapture.integrations.adapters": {
           "default": [
             "packages",
-            "performance"
+            "git",
+            "environment",
+            "performance",
+            "terminal"
           ],
           "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": {
@@ -1741,5 +1744,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.5.2"
+  "version": "3.5.3"
 }

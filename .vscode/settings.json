@@ -98,6 +98,8 @@
     }
   ],
   "saropaLogCapture.integrations.adapters": [
-    "packages"
+    "packages",
+    "git",
+    "environment"
   ]
 }

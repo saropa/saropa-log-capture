@@ -116,6 +116,7 @@ body[data-icon-bar="right"] #panel-content-row {
    Flex row containing the scrollable log area and the minimap panel.
    =================================================================== */
 #log-content-wrapper {
+    --mm-w: 60px; /* minimap width — updated by JS when size changes */
     min-width: 80px;
     position: relative;
     flex: 1;
