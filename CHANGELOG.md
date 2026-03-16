@@ -18,6 +18,20 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+Replay controls redesigned for a cleaner, less intrusive UX.
+
+### Changed
+
+- **Replay panel is now horizontal and anchored to the bottom-right** of the log area, replacing the tall vertical strip that obscured content.
+- **Top/Bottom jump buttons moved to the left side** so they no longer overlap the scrollbar minimap.
+- **Replay button added to the viewer footer** (before the version number) for quick access without the floating toggle.
+
+### Removed
+
+- **Removed the floating replay toggle button** that overlapped the top-right corner. Replay is now triggered from the footer button or the icon bar.
+
 ## [3.5.3]
 
 ### Fixed
