@@ -11,6 +11,14 @@ function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('database');
 }
 
+/** Try to parse a JSON string as an object, returning undefined on failure. */
+function tryParseJsonObject(line: string): Record<string, unknown> | undefined {
+    try {
+        const obj = JSON.parse(line) as Record<string, unknown>;
+        return obj && typeof obj === 'object' ? obj : undefined;
+    } catch { return undefined; }
+}
+
 export const databaseQueryLogsProvider: IntegrationProvider = {
     id: 'database',
 
@@ -28,12 +36,8 @@ export const databaseQueryLogsProvider: IntegrationProvider = {
             const lines = raw.split(/\r?\n/).filter(Boolean);
             const queries: unknown[] = [];
             for (const line of lines.slice(-2000)) {
-                try {
-                    const obj = JSON.parse(line) as Record<string, unknown>;
-                    if (obj && typeof obj === 'object') {queries.push(obj);}
-                } catch {
-                    // skip non-JSON lines
-                }
+                const obj = tryParseJsonObject(line);
+                if (obj) { queries.push(obj); }
             }
             if (queries.length === 0) {return undefined;}
             const sidecarContent = JSON.stringify({ queries }, null, 2);

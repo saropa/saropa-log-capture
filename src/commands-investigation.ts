@@ -96,43 +96,8 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.addToInvestigation', async (item?: { uri: vscode.Uri }) => {
-            let investigation = await investigationStore.getActiveInvestigation();
-
-            if (!investigation) {
-                const investigations = await investigationStore.listInvestigations();
-                if (investigations.length === 0) {
-                    const name = await vscode.window.showInputBox({
-                        prompt: t('prompt.investigationName'),
-                        placeHolder: t('placeholder.investigationName'),
-                    });
-                    if (!name) { return; }
-                    investigation = await investigationStore.createInvestigation({ name });
-                    await investigationStore.setActiveInvestigationId(investigation.id);
-                } else {
-                    const items: { label: string; investigation: Investigation | null }[] = investigations.map(inv => ({
-                        label: inv.name,
-                        investigation: inv,
-                    }));
-                    items.push({ label: `$(add) ${t('action.createNew')}`, investigation: null });
-
-                    const picked = await vscode.window.showQuickPick(items, {
-                        placeHolder: t('prompt.selectInvestigationToAdd'),
-                    });
-                    if (!picked) { return; }
-
-                    if (picked.investigation === null) {
-                        const name = await vscode.window.showInputBox({
-                            prompt: t('prompt.investigationName'),
-                            placeHolder: t('placeholder.investigationName'),
-                        });
-                        if (!name) { return; }
-                        investigation = await investigationStore.createInvestigation({ name });
-                    } else {
-                        investigation = picked.investigation;
-                    }
-                    await investigationStore.setActiveInvestigationId(investigation.id);
-                }
-            }
+            const investigation = await resolveOrPickInvestigation(investigationStore);
+            if (!investigation) { return; }
 
             let uri = item?.uri;
             if (!uri) {
@@ -244,4 +209,40 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
 
         ...shareAndExport,
     ];
+}
+
+/** Resolve the active investigation, or prompt user to pick/create one. Returns undefined if cancelled. */
+async function resolveOrPickInvestigation(store: InvestigationStore): Promise<Investigation | undefined> {
+    const active = await store.getActiveInvestigation();
+    if (active) { return active; }
+
+    const investigations = await store.listInvestigations();
+    let result: Investigation | undefined;
+    if (investigations.length === 0) {
+        result = await promptCreateInvestigation(store);
+    } else {
+        const items: { label: string; investigation: Investigation | null }[] = investigations.map(inv => ({
+            label: inv.name,
+            investigation: inv,
+        }));
+        items.push({ label: `$(add) ${t('action.createNew')}`, investigation: null });
+
+        const picked = await vscode.window.showQuickPick(items, {
+            placeHolder: t('prompt.selectInvestigationToAdd'),
+        });
+        if (!picked) { return undefined; }
+        result = picked.investigation ?? await promptCreateInvestigation(store);
+    }
+    if (result) { await store.setActiveInvestigationId(result.id); }
+    return result;
+}
+
+/** Prompt the user to create a new investigation. Returns undefined if cancelled. */
+async function promptCreateInvestigation(store: InvestigationStore): Promise<Investigation | undefined> {
+    const name = await vscode.window.showInputBox({
+        prompt: t('prompt.investigationName'),
+        placeHolder: t('placeholder.investigationName'),
+    });
+    if (!name) { return undefined; }
+    return store.createInvestigation({ name });
 }

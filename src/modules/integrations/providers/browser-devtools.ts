@@ -11,6 +11,15 @@ function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('browser');
 }
 
+/** Parse a JSONL string into an array of events, skipping invalid lines. */
+function parseJsonlEvents(raw: string, maxEvents: number): unknown[] {
+    const events: unknown[] = [];
+    for (const line of raw.split(/\r?\n/).filter(Boolean).slice(-maxEvents)) {
+        try { events.push(JSON.parse(line)); } catch { /* skip */ }
+    }
+    return events;
+}
+
 export const browserDevtoolsProvider: IntegrationProvider = {
     id: 'browser',
 
@@ -25,15 +34,9 @@ export const browserDevtoolsProvider: IntegrationProvider = {
         try {
             const uri = resolveWorkspaceFileUri(context.workspaceFolder, cfg.browserLogPath);
             const raw = fs.readFileSync(uri.fsPath, 'utf-8');
-            const events: unknown[] = [];
+            let events: unknown[] = [];
             if (cfg.browserLogFormat === 'jsonl') {
-                for (const line of raw.split(/\r?\n/).filter(Boolean).slice(-cfg.maxEvents)) {
-                    try {
-                        events.push(JSON.parse(line));
-                    } catch {
-                        // skip
-                    }
-                }
+                events = parseJsonlEvents(raw, cfg.maxEvents);
             } else {
                 try {
                     const arr = JSON.parse(raw);
