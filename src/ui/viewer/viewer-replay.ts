@@ -10,16 +10,13 @@
  * Speed options: 0.1x, 0.25x, 0.5x, 0.75x, 1x, 2x, 5x, 10x. The speed dropdown is
  * set via closest-option matching to avoid float display issues (e.g. 0.5x).
  *
- * Visibility: A floating toggle button in the top-right corner of the log area.
- * The full replay panel (vertical layout) is hidden by default; the toggle or icon
- * bar button reveals it. During active recording, both toggle and panel hide.
+ * Visibility: The replay panel (horizontal layout) is anchored to the bottom-right
+ * of the log area. It is hidden by default; the footer replay button or icon bar
+ * button reveals it. During active recording, the panel hides.
  */
 
 export function getReplayBarHtml(): string {
     return /* html */ `
-<button id="replay-toggle" class="replay-toggle" title="Replay controls" aria-label="Toggle replay controls">
-    <span class="codicon codicon-debug-start"></span>
-</button>
 <div id="replay-bar" class="replay-bar" role="region" aria-label="Session replay controls">
     <div class="replay-btn-row">
         <button id="replay-play" class="replay-btn" title="Play" aria-label="Play replay"><span class="codicon codicon-debug-start"></span></button>
@@ -40,7 +37,7 @@ export function getReplayBarHtml(): string {
         <option value="5">5x</option>
         <option value="10">10x</option>
     </select>
-    <input type="range" id="replay-scrubber" class="replay-scrubber" min="0" max="1" value="0" title="Seek to line" aria-label="Replay position" />
+    <input type="range" id="replay-scrubber" class="replay-scrubber" min="0" max="1" value="0" title="Seek to line" aria-label="Replay position">
     <span id="replay-status" class="replay-status" aria-live="polite">0 / 0</span>
 </div>`;
 }
@@ -59,7 +56,6 @@ export function getReplayScript(): string {
     var REPLAY_FAST_MS = 50;
 
     var bar = document.getElementById('replay-bar');
-    var toggleBtn = document.getElementById('replay-toggle');
     var playBtn = document.getElementById('replay-play');
     var pauseBtn = document.getElementById('replay-pause');
     var stopBtn = document.getElementById('replay-stop');
@@ -68,6 +64,7 @@ export function getReplayScript(): string {
     var scrubber = document.getElementById('replay-scrubber');
     var statusEl = document.getElementById('replay-status');
     var ibReplay = document.getElementById('ib-replay');
+    var footerReplayBtn = document.getElementById('footer-replay-btn');
 
     /** Track whether a recording session is active (hide replay controls during recording). */
     var replaySessionActive = false;
@@ -88,9 +85,10 @@ export function getReplayScript(): string {
         ibReplay.classList.toggle('ib-replay-active', visible);
     }
 
-    /** Show or hide the floating toggle button in the top-right corner. */
-    function setToggleVisible(visible) {
-        if (toggleBtn) toggleBtn.classList.toggle('replay-toggle-visible', !!visible);
+    /** Show or hide the footer replay button. */
+    function setFooterReplayVisible(visible) {
+        if (!footerReplayBtn) return;
+        footerReplayBtn.classList.toggle('footer-replay-visible', !!visible);
     }
 
     /** Enable/disable replay controls based on file loaded state and session state. */
@@ -99,25 +97,21 @@ export function getReplayScript(): string {
         replaySessionActive = sessionActive;
         if (sessionActive || !fileLoaded || !hasLines()) {
             setReplayIconVisible(false);
-            setToggleVisible(false);
+            setFooterReplayVisible(false);
             setReplayBarVisible(false);
             if (window.replayMode) window.exitReplayMode();
         } else if (fileLoaded && hasLines()) {
             setReplayIconVisible(true);
-            setToggleVisible(true);
+            setFooterReplayVisible(true);
         }
     };
 
-    /** Update icon bar and toggle button icons to reflect play/pause state. */
+    /** Update icon bar icon to reflect play/pause state. */
     function updateReplayIcon(playing) {
         var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
         if (ibReplay) {
             var ic = ibReplay.querySelector('.codicon');
             if (ic) { ic.className = cls; ibReplay.title = playing ? 'Replay (playing)' : 'Replay (paused)'; }
-        }
-        if (toggleBtn) {
-            var tc = toggleBtn.querySelector('.codicon');
-            if (tc) { tc.className = cls; toggleBtn.title = playing ? 'Replay (playing)' : 'Replay controls'; }
         }
     }
 
@@ -245,7 +239,7 @@ export function getReplayScript(): string {
         setPlayingUi(false);
         var canReplay = replayFileLoaded && !replaySessionActive && hasLines();
         setReplayIconVisible(canReplay);
-        setToggleVisible(canReplay);
+        setFooterReplayVisible(canReplay);
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
     }
@@ -265,10 +259,6 @@ export function getReplayScript(): string {
         scheduleNext();
     };
 
-    if (toggleBtn) toggleBtn.addEventListener('click', function() {
-        if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
-    });
-
     if (modeSelect) modeSelect.addEventListener('change', function() {
         replayTimedMode = (modeSelect.value === 'timed');
     });
@@ -284,6 +274,9 @@ export function getReplayScript(): string {
         setPlayingUi(false);
     });
     if (stopBtn) stopBtn.addEventListener('click', exitReplayMode);
+    if (footerReplayBtn) footerReplayBtn.addEventListener('click', function() {
+        if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
+    });
     if (speedSelect) speedSelect.addEventListener('change', function() {
         replaySpeedFactor = parseFloat(speedSelect.value) || 1;
     });
@@ -326,10 +319,10 @@ export function getReplayScript(): string {
         }
     });
 
-    /* Ensure bar, toggle and icon are hidden on startup (defense against cached state). */
+    /* Ensure bar, icon and footer button are hidden on startup (defense against cached state). */
     setReplayBarVisible(false);
-    setToggleVisible(false);
     setReplayIconVisible(false);
+    setFooterReplayVisible(false);
 })();
 `;
 }
