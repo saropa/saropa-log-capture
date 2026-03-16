@@ -166,5 +166,8 @@
   "walkthrough.useKeyboardShortcuts.title": "Scorciatoie da tastiera",
   "walkthrough.useKeyboardShortcuts.description": "**Spazio** per sospendere, **Ctrl+F** per cercare, **P** per fissare righe, **N** per annotare, **M** per inserire marcatori.",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
-  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path)."
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
+  "walkthrough.aboutSaropa.title": "Informazioni su Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — soluzioni digitali di protezione dal 2010.\n\nPackage Dart, estensioni VS Code e app consumer per sviluppatori che apprezzano l'affidabilità.\n\n[Visita saropa.com](https://saropa.com/)",
+  "command.openWalkthrough.title": "Saropa Log Capture: Inizia"
 }

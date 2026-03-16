@@ -166,5 +166,8 @@
   "walkthrough.useKeyboardShortcuts.title": "鍵盤快速鍵",
   "walkthrough.useKeyboardShortcuts.description": "**空白鍵** 暫停、**Ctrl+F** 搜尋、**P** 釘選行、**N** 註解、**M** 插入標記。",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
-  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path)."
+  "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
+  "walkthrough.aboutSaropa.title": "關於 Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 自 2010 年起打造數位防護解決方案。\n\n為重視可靠性的開發者提供 Dart 套件、VS Code 擴充功能與消費者應用程式。\n\n[造訪 saropa.com](https://saropa.com/)",
+  "command.openWalkthrough.title": "Saropa Log Capture：開始使用"
 }

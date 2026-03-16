@@ -166,5 +166,8 @@
   "walkthrough.startDebugging.title": "Iniciar una sesión de depuración",
   "walkthrough.startDebugging.description": "La captura de registros se inicia automáticamente al depurar. Pulse **F5** o use el panel **Ejecutar y depurar** para comenzar.\n\n[Iniciar depuración](command:workbench.action.debug.start)",
   "walkthrough.useKeyboardShortcuts.title": "Dominar los atajos de teclado",
-  "walkthrough.useKeyboardShortcuts.description": "Use **Espacio** para pausar, **Ctrl+F** para buscar, **P** para anclar líneas, **N** para anotar y **M** para insertar marcadores."
+  "walkthrough.useKeyboardShortcuts.description": "Use **Espacio** para pausar, **Ctrl+F** para buscar, **P** para anclar líneas, **N** para anotar y **M** para insertar marcadores.",
+  "walkthrough.aboutSaropa.title": "Acerca de Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — creando salvaguardas digitales desde 2010.\n\nPaquetes Dart, extensiones de VS Code y aplicaciones para desarrolladores que valoran la fiabilidad.\n\n[Visitar saropa.com](https://saropa.com/)",
+  "command.openWalkthrough.title": "Saropa Log Capture: Comenzar"
 }
