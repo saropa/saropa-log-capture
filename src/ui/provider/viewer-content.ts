@@ -200,6 +200,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
         <span class="footer-spacer"></span>
+        <button id="footer-replay-btn" class="footer-btn footer-replay-btn" title="Replay session" aria-label="Replay session"><span class="codicon codicon-debug-start"></span> Replay</button>
+        <span class="footer-dot">&middot;</span>
         <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa" aria-label="About Saropa Log Capture">${version ? `v${version}` : ''}</a>
     </div>
     </div>

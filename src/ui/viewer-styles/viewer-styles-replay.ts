@@ -1,52 +1,27 @@
-/** CSS for the floating replay toggle button and vertical replay panel. */
+/** CSS for the horizontal replay panel anchored to bottom-right. */
 export function getReplayStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Session Replay — floating toggle + vertical panel (top-right)
+   Session Replay — horizontal panel (bottom-right of log area)
    =================================================================== */
 
-/* Toggle button — sits below #jump-top-btn in the top-right corner */
-.replay-toggle {
-    display: none;
-    position: absolute;
-    top: 46px;
-    right: calc(20px + var(--mm-w, 60px));
-    z-index: 16;
-    background: var(--vscode-editorWidget-background);
-    color: var(--vscode-editorWidget-foreground);
-    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
-    padding: 4px 6px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
-    opacity: 0.85;
-    pointer-events: auto;
-}
-.replay-toggle.replay-toggle-visible { display: block; }
-.replay-toggle:hover {
-    opacity: 1;
-    background: var(--vscode-list-hoverBackground);
-}
-
-/* Vertical floating panel — below the toggle, stretches toward bottom */
+/* Horizontal floating panel — bottom-right, above footer */
 .replay-bar {
     display: none !important;
     position: absolute;
-    top: 82px;
+    bottom: 8px;
     right: calc(8px + var(--mm-w, 60px));
-    bottom: 44px; /* above #jump-btn (bottom: 8px + ~28px height + 8px gap) */
     z-index: 16;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     gap: 6px;
-    padding: 8px 6px;
+    padding: 6px 10px;
     background: var(--vscode-editorWidget-background);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     pointer-events: auto;
-    min-width: 36px;
 }
 .replay-bar.replay-bar-visible {
     display: flex !important;
@@ -73,11 +48,10 @@ export function getReplayStyles(): string {
     color: var(--vscode-button-foreground);
 }
 
-/* Mode & speed selects — compact vertical stack */
+/* Mode & speed selects — compact inline */
 .replay-mode, .replay-speed {
     font-size: 10px;
     padding: 1px 2px;
-    width: 100%;
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border);
@@ -85,13 +59,11 @@ export function getReplayStyles(): string {
     text-align: center;
 }
 
-/* Vertical scrubber — fills remaining vertical space */
+/* Horizontal scrubber — fills remaining horizontal space */
 .replay-scrubber {
-    writing-mode: vertical-lr;
-    direction: rtl;
     flex: 1;
-    min-height: 40px;
-    width: 20px;
+    min-width: 80px;
+    height: 16px;
 }
 
 /* Status text */
