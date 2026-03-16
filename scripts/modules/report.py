@@ -11,7 +11,7 @@ import os
 import webbrowser
 
 from modules.constants import C, MARKETPLACE_URL, OPENVSX_URL, PROJECT_ROOT, REPO_URL
-from modules.display import heading, ok
+from modules.display import ask_yn, heading, ok
 from modules.utils import elapsed_str
 
 
@@ -114,7 +114,8 @@ def print_success_banner(version: str, vsix_path: str) -> None:
   {C.CYAN}VSIX:{C.RESET}
     {C.WHITE}{os.path.basename(vsix_path)}{C.RESET}
 """)
-    try:
-        webbrowser.open(MARKETPLACE_URL)
-    except Exception:
-        pass
+    if ask_yn("Open Marketplace in browser?", default=False):
+        try:
+            webbrowser.open(MARKETPLACE_URL)
+        except Exception:
+            pass
