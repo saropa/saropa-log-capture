@@ -10,6 +10,9 @@ import { exportToInteractiveHtml } from './modules/export/html-export-interactiv
 import { exportToCsv, exportToJson, exportToJsonl } from './modules/export/export-formats';
 import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from './modules/export/insights-export-formats';
 import { exportSessionToSlc, importSlcBundle, type ImportSlcResult } from './modules/export/slc-bundle';
+import type { Investigation } from './modules/investigation/investigation-types';
+import type { InvestigationStore } from './modules/investigation/investigation-store';
+import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { exportToLoki as doExportToLoki, setLokiBearerToken } from './modules/export/loki-export';
 import {
     setBuildCiGithubToken, deleteBuildCiGithubToken,
@@ -65,34 +68,12 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                     }
                 },
             );
-            if (lastResult) {
-                if ('mainLogUri' in lastResult) {
-                    historyProvider.refresh();
-                    await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
-                    await viewerProvider.loadFromFile(lastResult.mainLogUri);
-                } else {
-                    const inv = lastResult.investigation;
-                    const created = await investigationStore.createInvestigation({
-                        name: inv.name,
-                        notes: inv.notes,
-                    });
-                    try {
-                        for (const src of inv.sources) {
-                            await investigationStore.addSource(created.id, {
-                                type: src.type,
-                                relativePath: src.relativePath,
-                                label: src.label,
-                            });
-                        }
-                        await investigationStore.setActiveInvestigationId(created.id);
-                        historyProvider.refresh();
-                        await vscode.commands.executeCommand('saropaLogCapture.openInvestigation');
-                        vscode.window.showInformationMessage(t('msg.investigationImported', inv.name));
-                    } catch (e) {
-                        await investigationStore.deleteInvestigation(created.id).catch(() => {});
-                        vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
-                    }
-                }
+            if (lastResult && 'mainLogUri' in lastResult) {
+                historyProvider.refresh();
+                await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
+                await viewerProvider.loadFromFile(lastResult.mainLogUri);
+            } else if (lastResult) {
+                await importInvestigationFromSlc(lastResult.investigation, investigationStore, historyProvider);
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.exportToLoki',
@@ -135,12 +116,12 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
             await setLokiBearerToken(context, trimmed);
             void vscode.window.showInformationMessage(t('msg.lokiApiKeyStored'));
         }),
-        buildCiTokenCmd(context, 'setBuildCiGithubToken', 'GitHub', setBuildCiGithubToken),
-        buildCiTokenCmd(context, 'clearBuildCiGithubToken', 'GitHub', undefined, deleteBuildCiGithubToken),
-        buildCiTokenCmd(context, 'setBuildCiAzurePat', 'Azure PAT', setBuildCiAzurePat),
-        buildCiTokenCmd(context, 'clearBuildCiAzurePat', 'Azure PAT', undefined, deleteBuildCiAzurePat),
-        buildCiTokenCmd(context, 'setBuildCiGitlabToken', 'GitLab', setBuildCiGitlabToken),
-        buildCiTokenCmd(context, 'clearBuildCiGitlabToken', 'GitLab', undefined, deleteBuildCiGitlabToken),
+        buildCiTokenCmd(context, { commandId: 'setBuildCiGithubToken', label: 'GitHub', setFn: setBuildCiGithubToken }),
+        buildCiTokenCmd(context, { commandId: 'clearBuildCiGithubToken', label: 'GitHub', clearFn: deleteBuildCiGithubToken }),
+        buildCiTokenCmd(context, { commandId: 'setBuildCiAzurePat', label: 'Azure PAT', setFn: setBuildCiAzurePat }),
+        buildCiTokenCmd(context, { commandId: 'clearBuildCiAzurePat', label: 'Azure PAT', clearFn: deleteBuildCiAzurePat }),
+        buildCiTokenCmd(context, { commandId: 'setBuildCiGitlabToken', label: 'GitLab', setFn: setBuildCiGitlabToken }),
+        buildCiTokenCmd(context, { commandId: 'clearBuildCiGitlabToken', label: 'GitLab', clearFn: deleteBuildCiGitlabToken }),
     ];
 }
 
@@ -242,13 +223,18 @@ async function resolveInsights(
     return aggregateInsights('all');
 }
 
+interface CiTokenCmdOptions {
+    commandId: string;
+    label: string;
+    setFn?: (ctx: vscode.ExtensionContext, value: string) => Promise<void>;
+    clearFn?: (ctx: vscode.ExtensionContext) => Promise<void>;
+}
+
 function buildCiTokenCmd(
     context: vscode.ExtensionContext,
-    commandId: string,
-    label: string,
-    setFn?: (ctx: vscode.ExtensionContext, value: string) => Promise<void>,
-    clearFn?: (ctx: vscode.ExtensionContext) => Promise<void>,
+    opts: CiTokenCmdOptions,
 ): vscode.Disposable {
+    const { commandId, label, setFn, clearFn } = opts;
     return vscode.commands.registerCommand(`saropaLogCapture.${commandId}`, async () => {
         if (setFn) {
             const token = await vscode.window.showInputBox({
@@ -296,4 +282,25 @@ function fileExportCmd(
         );
         if (action === t('action.open')) { await vscode.window.showTextDocument(outUri); }
     });
+}
+
+/** Import an investigation from an SLC bundle result into the store. */
+async function importInvestigationFromSlc(
+    inv: Investigation,
+    store: InvestigationStore,
+    historyProvider: SessionHistoryProvider,
+): Promise<void> {
+    const created = await store.createInvestigation({ name: inv.name, notes: inv.notes });
+    try {
+        for (const src of inv.sources) {
+            await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
+        }
+        await store.setActiveInvestigationId(created.id);
+        historyProvider.refresh();
+        await vscode.commands.executeCommand('saropaLogCapture.openInvestigation');
+        vscode.window.showInformationMessage(t('msg.investigationImported', inv.name));
+    } catch (e) {
+        await store.deleteInvestigation(created.id).catch(() => {});
+        vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
+    }
 }

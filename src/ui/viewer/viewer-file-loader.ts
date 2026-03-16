@@ -165,26 +165,26 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
     if (timeElapsedCat) {
         const ts = parseTimeToMs(timeElapsedCat[1], ctx.sessionMidnightMs);
         const elapsed = parseElapsedToMs(timeElapsedCat[2]);
-        return buildFileLine(timeElapsedCat[4], timeElapsedCat[3], ctx.classifyFrame, ts, elapsed);
+        return buildFileLine({ text: timeElapsedCat[4], category: timeElapsedCat[3], classifyFrame: ctx.classifyFrame, timestamp: ts, elapsedMs: elapsed });
     }
     // [time] [category] rest
     const tsMatch = raw.match(/^\[([\d:.]+)\]\s*\[([\w-]+)\]\s?(.*)$/);
     if (tsMatch) {
         const ts = parseTimeToMs(tsMatch[1], ctx.sessionMidnightMs);
-        return buildFileLine(tsMatch[3], tsMatch[2], ctx.classifyFrame, ts);
+        return buildFileLine({ text: tsMatch[3], category: tsMatch[2], classifyFrame: ctx.classifyFrame, timestamp: ts });
     }
     // [+elapsed] [category] rest (no absolute time)
     const elapsedCat = raw.match(/^\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/);
     if (elapsedCat) {
         const elapsed = parseElapsedToMs(elapsedCat[1]);
-        return buildFileLine(elapsedCat[3], elapsedCat[2], ctx.classifyFrame, 0, elapsed);
+        return buildFileLine({ text: elapsedCat[3], category: elapsedCat[2], classifyFrame: ctx.classifyFrame, timestamp: 0, elapsedMs: elapsed });
     }
     // [category] rest
     const catMatch = raw.match(/^\[([\w-]+)\]\s?(.*)$/);
     if (catMatch) {
-        return buildFileLine(catMatch[2], catMatch[1], ctx.classifyFrame, 0);
+        return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0 });
     }
-    return buildFileLine(raw, 'console', ctx.classifyFrame, 0);
+    return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0 });
 }
 
 /** Build a PendingLine for a visual separator (marker, session end, etc.). */
@@ -198,22 +198,24 @@ function buildMarkerLine(text: string): PendingLine {
     };
 }
 
+interface FileLineOptions {
+    text: string;
+    category: string;
+    classifyFrame: (text: string) => boolean | undefined;
+    timestamp: number;
+    elapsedMs?: number;
+}
+
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
-function buildFileLine(
-    text: string,
-    category: string,
-    classifyFrame: (text: string) => boolean | undefined,
-    timestamp: number,
-    elapsedMs?: number,
-): PendingLine {
+function buildFileLine(opts: FileLineOptions): PendingLine {
     return {
-        text: linkifyUrls(linkifyHtml(ansiToHtml(text))),
+        text: linkifyUrls(linkifyHtml(ansiToHtml(opts.text))),
         isMarker: false,
         lineCount: 0,
-        category,
-        timestamp,
-        ...(elapsedMs !== undefined && elapsedMs >= 0 ? { elapsedMs } : {}),
-        fw: classifyFrame(text),
+        category: opts.category,
+        timestamp: opts.timestamp,
+        ...(opts.elapsedMs !== undefined && opts.elapsedMs >= 0 ? { elapsedMs: opts.elapsedMs } : {}),
+        fw: opts.classifyFrame(opts.text),
     };
 }
 

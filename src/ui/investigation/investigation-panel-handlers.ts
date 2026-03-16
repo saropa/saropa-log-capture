@@ -10,7 +10,7 @@ import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { InvestigationStore } from '../../modules/investigation/investigation-store';
 import { searchInvestigation, checkSourceExists, escapeRegex } from '../../modules/investigation/investigation-search';
-import type { Investigation, SearchOptions, InvestigationSearchResult } from '../../modules/investigation/investigation-types';
+import type { Investigation, SearchOptions, SearchMatch, InvestigationSearchResult } from '../../modules/investigation/investigation-types';
 
 let currentSearchCancellation: vscode.CancellationTokenSource | undefined;
 
@@ -177,28 +177,7 @@ function renderSearchResults(result: InvestigationSearchResult, query: string): 
         html += `</div>`;
 
         for (const match of sourceResult.matches) {
-            if (match.contextBefore && match.contextBefore.length > 0) {
-                for (let i = 0; i < match.contextBefore.length; i++) {
-                    const contextLine = match.line - (match.contextBefore.length - i);
-                    html += `<div class="result-context" data-path="${escapeHtml(sourceResult.sourceFile)}" data-line="${contextLine}">`;
-                    html += `<span class="result-line context-line">:${contextLine}</span>${escapeHtml(match.contextBefore[i])}`;
-                    html += `</div>`;
-                }
-            }
-
-            const highlighted = highlightMatches(match.text, query);
-            html += `<div class="result-item" data-path="${escapeHtml(sourceResult.sourceFile)}" data-line="${match.line}">`;
-            html += `<span class="result-line">:${match.line}</span>${highlighted}`;
-            html += `</div>`;
-
-            if (match.contextAfter && match.contextAfter.length > 0) {
-                for (let i = 0; i < match.contextAfter.length; i++) {
-                    const contextLine = match.line + i + 1;
-                    html += `<div class="result-context" data-path="${escapeHtml(sourceResult.sourceFile)}" data-line="${contextLine}">`;
-                    html += `<span class="result-line context-line">:${contextLine}</span>${escapeHtml(match.contextAfter[i])}`;
-                    html += `</div>`;
-                }
-            }
+            html += renderMatchHtml(match, sourceResult.sourceFile, query);
         }
 
         if (sourceResult.truncated) {
@@ -207,6 +186,32 @@ function renderSearchResults(result: InvestigationSearchResult, query: string): 
         html += `</div>`;
     }
 
+    return html;
+}
+
+/** Render a single search match with its context lines as HTML. */
+function renderMatchHtml(match: SearchMatch, sourceFile: string, query: string): string {
+    let html = '';
+    if (match.contextBefore && match.contextBefore.length > 0) {
+        for (let i = 0; i < match.contextBefore.length; i++) {
+            const contextLine = match.line - (match.contextBefore.length - i);
+            html += `<div class="result-context" data-path="${escapeHtml(sourceFile)}" data-line="${contextLine}">`;
+            html += `<span class="result-line context-line">:${contextLine}</span>${escapeHtml(match.contextBefore[i])}`;
+            html += `</div>`;
+        }
+    }
+    const highlighted = highlightMatches(match.text, query);
+    html += `<div class="result-item" data-path="${escapeHtml(sourceFile)}" data-line="${match.line}">`;
+    html += `<span class="result-line">:${match.line}</span>${highlighted}`;
+    html += `</div>`;
+    if (match.contextAfter && match.contextAfter.length > 0) {
+        for (let i = 0; i < match.contextAfter.length; i++) {
+            const contextLine = match.line + i + 1;
+            html += `<div class="result-context" data-path="${escapeHtml(sourceFile)}" data-line="${contextLine}">`;
+            html += `<span class="result-line context-line">:${contextLine}</span>${escapeHtml(match.contextAfter[i])}`;
+            html += `</div>`;
+        }
+    }
     return html;
 }
 

@@ -3,7 +3,6 @@
  * coverage-summary.json at session start and adds coverage line to header and meta.
  */
 
-import * as vscode from 'vscode';
 import * as fs from 'fs';
 import type { IntegrationProvider, IntegrationContext, Contribution } from '../types';
 import { resolveWorkspaceFileUri } from '../workspace-path';

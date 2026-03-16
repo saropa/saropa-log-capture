@@ -7,9 +7,8 @@
 import * as vscode from "vscode";
 import { t } from "../../l10n";
 import * as helpers from "./viewer-provider-helpers";
-import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
-import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { showBugReport } from '../panels/bug-report-panel';
+import { dispatchPanelMessage, safeLineIndex } from './viewer-message-handler-panels';
 import { createBugReportFile } from '../../modules/bug-report/report-file-writer';
 import type { SessionDisplayOptions } from '../session/session-display';
 import { logExtensionWarn } from '../../modules/misc/extension-logger';
@@ -20,55 +19,15 @@ import { buildAIContext } from '../../modules/ai/ai-context-builder';
 import { explainError } from '../../modules/ai/ai-explain';
 import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLabel } from '../viewer/viewer-keybindings';
+import type { ViewerMessageContext } from './viewer-message-types';
 
-export interface ViewerMessageContext {
-    readonly currentFileUri: vscode.Uri | undefined;
-    readonly isSessionActive: boolean;
-    readonly context: vscode.ExtensionContext;
-    readonly extensionVersion?: string;
-    readonly post: (msg: unknown) => void;
-    readonly load: (uri: vscode.Uri) => Promise<void>;
-    readonly onMarkerRequest?: () => void;
-    readonly onTogglePause?: () => void;
-    readonly onExclusionAdded?: (p: string) => void;
-    readonly onExclusionRemoved?: (p: string) => void;
-    readonly onAnnotationPrompt?: (i: number, c: string) => void;
-    readonly onSearchCodebase?: (t: string) => void;
-    readonly onSearchSessions?: (t: string) => void;
-    readonly onAnalyzeLine?: (t: string, i: number, u: vscode.Uri | undefined) => void;
-    readonly onAddToWatch?: (t: string) => void;
-    readonly onLinkClick?: (p: string, l: number, c: number, s: boolean) => void;
-    readonly onPartNavigate?: (p: number) => void;
-    readonly onSavePresetRequest?: (f: Record<string, unknown>) => void;
-    readonly onSessionListRequest?: () => void;
-    readonly onOpenSessionFromPanel?: (u: string) => void;
-    readonly onDisplayOptionsChange?: (o: SessionDisplayOptions) => void;
-    readonly onPopOutRequest?: () => void;
-    readonly onRevealLogFile?: (u: string) => void;
-    readonly onAddBookmark?: (i: number, t: string, u: vscode.Uri | undefined) => void;
-    readonly onFindInFiles?: (q: string, o: Record<string, unknown>) => void;
-    readonly onOpenFindResult?: (u: string, q: string, o: Record<string, unknown>) => void;
-    readonly onFindNavigateMatch?: (u: string, i: number) => void;
-    readonly onBookmarkAction?: (m: Record<string, unknown>) => void;
-    readonly onSessionNavigate?: (d: number) => void;
-    readonly onSessionAction?: (a: string, uriStrings: string[], filenames: string[]) => void;
-    readonly onBrowseSessionRoot?: () => Promise<void>;
-    readonly onClearSessionRoot?: () => Promise<void>;
-}
+export type { ViewerMessageContext };
 
 /**
  * Route a webview message to the appropriate handler.
  * @param msg - Incoming message with at least `type`; payload fields vary by type.
  * @param ctx - Callbacks and state (current file, post, load, etc.) for handling the message.
  */
-/** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
-const MAX_SAFE_INDEX = 10_000_000;
-function safeLineIndex(v: unknown, fallback: number): number {
-  const n = Number(v);
-  if (!Number.isFinite(n) || n < 0 || n > MAX_SAFE_INDEX) {return fallback;}
-  return Math.floor(n);
-}
-
 /** Only allow http, https, or vscode URIs for openUrl to avoid javascript: etc. */
 function isAllowedExternalUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -204,7 +163,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
               const includeIntegrationData = aiCfg.get<boolean>("includeIntegrationData", true);
               const cacheExplanations = aiCfg.get<boolean>("cacheExplanations", true);
               const lineEndIndex = typeof msg.lineEndIndex === "number" && msg.lineEndIndex >= lineIdx ? msg.lineEndIndex : undefined;
-              const context = await buildAIContext(uri, lineIdx, text, contextLines, { lineTimestampMs, includeIntegrationData, lineEndIndex });
+              const context = await buildAIContext(uri, lineIdx, text, { contextLines, lineTimestampMs, includeIntegrationData, lineEndIndex });
               const result = await explainError(context, { useCache: cacheExplanations });
               const explanation = result.explanation;
               const suffix = result.cached ? t("panel.aiExplainCached") : "";
@@ -329,69 +288,8 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
           })
           .then((v) => { if (v) { ctx.post({ type: "scrollToLine", line: parseInt(v, 10) }); } });
         break;
-      case "scriptError":
-        ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
-        break;
-      case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(ctx.post).catch(() => {}); break;
-      case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), ctx.post).catch(() => {}); break;
-      case "crashlyticsCloseIssue": case "crashlyticsMuteIssue": panelHandlers.handleCrashlyticsAction(String(msg.issueId ?? ''), msg.type === "crashlyticsCloseIssue" ? 'CLOSED' : 'MUTED', ctx.post).catch(() => {}); break;
-      case "crashlyticsRunGcloudAuth": panelHandlers.handleGcloudAuth(ctx.post); break;
-      case "crashlyticsBrowseGoogleServices": panelHandlers.handleBrowseGoogleServices(ctx.post).catch(() => {}); break;
-      case "crashlyticsOpenGoogleServicesJson": panelHandlers.handleOpenGoogleServicesJson().catch(() => {}); break;
-      case "openGcloudInstall": panelHandlers.handleOpenGcloudInstall(); break;
-      case "crashlyticsShowOutput": panelHandlers.handleCrashlyticsShowOutput(); break;
-      case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); break;
-      case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); break;
-      case "requestRecurringErrors": panelHandlers.handleRecurringRequest(ctx.post).catch(() => {}); break;
-      case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); break;
-      case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); break;
-      case "openInsights": vscode.commands.executeCommand('saropaLogCapture.showInsights'); break;
-      case "exportInsightsSummary": vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary'); break;
-      case "requestAboutContent":
-        void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
-        break;
-      case "resetAllSettings":
-        /* Host shows modal confirmation; no webview feedback needed. */
-        void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
-        break;
-      case "setCaptureEnabled":
-        /* Options panel: master capture on/off; persist and echo back so checkbox stays in sync. */
-        {
-          const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-          const enabled = msg.enabled === true;
-          void cfg.update('enabled', enabled, vscode.ConfigurationTarget.Workspace).then(() => {
-            ctx.post({ type: 'captureEnabled', enabled });
-          });
-        }
-        break;
-      case "setIntegrationsAdapters":
-        /* Options panel toggled an integration; persist, run prep checks, then echo back. */
-        {
-          const raw = msg.adapterIds;
-          const adapterIds = Array.isArray(raw)
-            ? (raw as unknown[]).filter((x): x is string => typeof x === 'string')
-            : [];
-          const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-          void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
-            .then(() => {
-              ctx.post({ type: 'integrationsAdapters', adapterIds });
-              void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(adapterIds));
-            });
-        }
-        break;
-      case "showIntegrationContext":
-        panelHandlers.handleIntegrationContextRequest(
-          ctx.currentFileUri,
-          safeLineIndex(msg.lineIndex, 0),
-          msg.timestamp as number | undefined,
-          ctx.post,
-        ).catch(() => {});
-        break;
-      case "openFullIntegrationContext":
-        panelHandlers.handleIntegrationContextDocument(
-          ctx.currentFileUri,
-          safeLineIndex(msg.lineIndex, 0),
-        ).catch(() => {});
+      default:
+        dispatchPanelMessage(msg, ctx);
         break;
     }
 }

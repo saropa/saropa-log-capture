@@ -59,28 +59,29 @@ const TIMESTAMP_PATTERNS: { regex: RegExp; parse: (m: RegExpMatchArray, midnight
     },
 ];
 
+/** Session time context for timestamp extraction. */
+export interface SessionTimeContext {
+    /** Epoch ms of session start. */
+    sessionStart: number;
+    /** Epoch ms of session end. */
+    sessionEnd: number;
+    /** Epoch ms for midnight of the session date (for time-only parsing). */
+    sessionMidnightMs?: number;
+}
+
 /**
  * Extract timestamp from a log line's text content.
  *
  * Tries multiple common timestamp patterns. If none match, infers an approximate
  * timestamp from the line's position within the session time window.
- *
- * @param lineText - The raw text content of the log line.
- * @param lineIndex - Zero-based index of the line within the log file.
- * @param totalLines - Total number of lines in the log file.
- * @param sessionStart - Epoch ms of session start (from metadata).
- * @param sessionEnd - Epoch ms of session end (from metadata).
- * @param sessionMidnightMs - Epoch ms for midnight of the session date (for time-only parsing).
- * @returns Timestamp result with confidence level.
  */
 export function extractLineTimestamp(
     lineText: string,
     lineIndex: number,
     totalLines: number,
-    sessionStart: number,
-    sessionEnd: number,
-    sessionMidnightMs: number = 0,
+    session: SessionTimeContext,
 ): LineTimestampResult {
+    const { sessionStart, sessionEnd, sessionMidnightMs = 0 } = session;
     for (const pattern of TIMESTAMP_PATTERNS) {
         const match = lineText.match(pattern.regex);
         if (match) {
@@ -121,6 +122,14 @@ export function extractLineTimestamp(
     };
 }
 
+/** Options for extracting a timestamp from a line with a pre-parsed value. */
+export interface ParsedTimestampOptions {
+    parsedTimestamp?: number;
+    lineText: string;
+    lineIndex: number;
+    totalLines: number;
+}
+
 /**
  * Extract timestamp from a line that already has a parsed timestamp value.
  *
@@ -128,20 +137,15 @@ export function extractLineTimestamp(
  * Falls back to extraction from text if the provided timestamp is zero.
  */
 export function extractLineTimestampFromParsed(
-    parsedTimestamp: number | undefined,
-    lineText: string,
-    lineIndex: number,
-    totalLines: number,
-    sessionStart: number,
-    sessionEnd: number,
-    sessionMidnightMs: number = 0,
+    opts: ParsedTimestampOptions,
+    session: SessionTimeContext,
 ): LineTimestampResult {
-    if (parsedTimestamp && parsedTimestamp > 0) {
+    if (opts.parsedTimestamp && opts.parsedTimestamp > 0) {
         return {
-            timestamp: parsedTimestamp,
+            timestamp: opts.parsedTimestamp,
             confidence: 'exact',
             source: 'parsed',
         };
     }
-    return extractLineTimestamp(lineText, lineIndex, totalLines, sessionStart, sessionEnd, sessionMidnightMs);
+    return extractLineTimestamp(opts.lineText, opts.lineIndex, opts.totalLines, session);
 }
