@@ -125,6 +125,26 @@ export interface CopySourceRef {
     line: number;
 }
 
+/** Format a source file snippet for clipboard output. */
+async function formatSourceSnippet(uri: vscode.Uri, path: string, lineNum: number): Promise<string[]> {
+    try {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const displayPath = vscode.workspace.asRelativePath(uri, false);
+        const start = Math.max(0, lineNum - 1 - 2);
+        const end = Math.min(doc.lineCount - 1, lineNum - 1 + 2);
+        const lines = [`Source: ${displayPath}:${lineNum}`];
+        for (let i = start; i <= end; i++) {
+            const num = i + 1;
+            const prefix = num === lineNum ? '  > ' : '    ';
+            lines.push(prefix + `${num}| ${doc.lineAt(i).text}`);
+        }
+        lines.push('');
+        return lines;
+    } catch {
+        return [`Source: ${path}:${lineNum}`, '  (could not read file)', ''];
+    }
+}
+
 /** Build log excerpt plus source file names and line content for clipboard. Never throws. */
 export async function buildCopyWithSource(logText: string, sourceRefs: CopySourceRef[]): Promise<string> {
     const lines: string[] = [];
@@ -146,28 +166,10 @@ export async function buildCopyWithSource(logText: string, sourceRefs: CopySourc
             seen.add(key);
             const uri = resolveSourceUri(path);
             if (!uri) {
-                lines.push(`Source: ${path}:${lineNum}`);
-                lines.push('  (file not resolved)');
-                lines.push('');
+                lines.push(`Source: ${path}:${lineNum}`, '  (file not resolved)', '');
                 continue;
             }
-            try {
-                const doc = await vscode.workspace.openTextDocument(uri);
-                const displayPath = vscode.workspace.asRelativePath(uri, false);
-                const start = Math.max(0, lineNum - 1 - 2);
-                const end = Math.min(doc.lineCount - 1, lineNum - 1 + 2);
-                lines.push(`Source: ${displayPath}:${lineNum}`);
-                for (let i = start; i <= end; i++) {
-                    const num = i + 1;
-                    const prefix = num === lineNum ? '  > ' : '    ';
-                    lines.push(prefix + `${num}| ${doc.lineAt(i).text}`);
-                }
-                lines.push('');
-            } catch {
-                lines.push(`Source: ${path}:${lineNum}`);
-                lines.push('  (could not read file)');
-                lines.push('');
-            }
+            lines.push(...await formatSourceSnippet(uri, path, lineNum));
         }
     }
     return lines.join('\n').trim() || trimmed;

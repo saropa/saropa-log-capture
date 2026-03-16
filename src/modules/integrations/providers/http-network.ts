@@ -11,6 +11,14 @@ function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('http');
 }
 
+/** Try to parse a JSON string as an object, returning undefined on failure. */
+function tryParseJsonObject(line: string): Record<string, unknown> | undefined {
+    try {
+        const obj = JSON.parse(line) as Record<string, unknown>;
+        return obj && typeof obj === 'object' ? obj : undefined;
+    } catch { return undefined; }
+}
+
 export const httpNetworkProvider: IntegrationProvider = {
     id: 'http',
 
@@ -29,12 +37,8 @@ export const httpNetworkProvider: IntegrationProvider = {
             const requests: unknown[] = [];
             const cap = Math.min(cfg.maxRequestsPerSession, lines.length);
             for (const line of lines.slice(-cap)) {
-                try {
-                    const obj = JSON.parse(line) as Record<string, unknown>;
-                    if (obj && typeof obj === 'object') {requests.push(obj);}
-                } catch {
-                    // skip non-JSON lines
-                }
+                const obj = tryParseJsonObject(line);
+                if (obj) { requests.push(obj); }
             }
             if (requests.length === 0) {return undefined;}
             const sidecarContent = JSON.stringify({ requests }, null, 2);
