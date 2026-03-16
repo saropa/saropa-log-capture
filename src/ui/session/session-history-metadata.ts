@@ -61,7 +61,7 @@ async function loadMetadata(
 function hasPerformanceData(sidecar: SessionMeta): boolean {
     const perf = sidecar.integrations?.performance as Record<string, unknown> | undefined;
     if (!perf || typeof perf !== 'object') { return false; }
-    return (perf.snapshot != null && typeof perf.snapshot === 'object') || (typeof perf.samplesFile === 'string' && perf.samplesFile.length > 0);
+    return (perf.snapshot !== null && perf.snapshot !== undefined && typeof perf.snapshot === 'object') || (typeof perf.samplesFile === 'string' && perf.samplesFile.length > 0);
 }
 
 /** Merge sidecar metadata into the parsed session metadata. */

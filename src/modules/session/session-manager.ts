@@ -194,9 +194,8 @@ export class SessionManagerImpl implements SessionManager {
         this.sessionStartTime = Date.now();
         this.floodSuppressedTotal = 0;
         this.statusBar.show();
-        this.statusBar.updateIntegrationAdapters(result.integrationContributorIds);
         replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-        replayAllOtherEarlyBuffersHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.cachedConfig, this.outputChannel);
+        replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
     }
 
     /** Stop and finalize a debug session's log file. */
@@ -236,7 +235,6 @@ export class SessionManagerImpl implements SessionManager {
         }, stats);
 
         if (this.ownerSessionIds.size === 0) {
-            this.statusBar.updateIntegrationAdapters([]);
             this.statusBar.hide();
         }
     }
