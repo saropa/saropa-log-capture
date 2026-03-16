@@ -33,6 +33,8 @@ export interface BuildAIContextOptions {
     includeIntegrationData?: boolean;
     /** End line index for multi-line selection (inclusive). When set, surrounding lines span [lineIndex - n, lineEndIndex + n]. */
     lineEndIndex?: number;
+    /** Number of surrounding context lines to include. Default 10. */
+    contextLines?: number;
 }
 
 const DEFAULT_CONTEXT_LINES = 10;
@@ -82,7 +84,7 @@ function getSessionCenterTime(integrations: Record<string, unknown> | undefined)
         const data = value as Record<string, unknown>;
         if (typeof data.capturedAt === 'number') { return data.capturedAt; }
         const sw = data.sessionWindow as { start?: number; end?: number } | undefined;
-        if (sw?.start != null && sw?.end != null) {
+        if (sw?.start !== null && sw?.start !== undefined && sw?.end !== null && sw?.end !== undefined) {
             return Math.round((sw.start + sw.end) / 2);
         }
     }
@@ -96,7 +98,7 @@ function mapContextDataToIntegrationData(
     if (data.performance && data.performance.length > 0) {
         const p = data.performance[0];
         const mem = `${p.freeMemMb} MB free`;
-        const cpu = p.loadAvg1 != null ? `load ${p.loadAvg1.toFixed(2)}` : 'N/A';
+        const cpu = p.loadAvg1 !== null && p.loadAvg1 !== undefined ? `load ${p.loadAvg1.toFixed(2)}` : 'N/A';
         out.performance = { memory: mem, cpu };
     }
     if (data.http && data.http.length > 0) {
@@ -120,10 +122,9 @@ export async function buildAIContext(
     logUri: vscode.Uri,
     lineIndex: number,
     lineText: string,
-    contextLines: number = DEFAULT_CONTEXT_LINES,
     options: BuildAIContextOptions = {},
 ): Promise<AIContext> {
-    const { lineTimestampMs, includeIntegrationData = true, lineEndIndex } = options;
+    const { lineTimestampMs, includeIntegrationData = true, lineEndIndex, contextLines = DEFAULT_CONTEXT_LINES } = options;
 
     let rawLines: string[] = [];
     const fields: Record<string, string> = {};
@@ -131,7 +132,6 @@ export async function buildAIContext(
         const raw = await vscode.workspace.fs.readFile(logUri);
         const text = Buffer.from(raw).toString('utf-8');
         rawLines = text.split(/\r?\n/);
-        const headerEnd = findHeaderEnd(rawLines);
         Object.assign(fields, parseHeaderFields(rawLines));
     } catch {
         // Use only lineText and placeholders if file read fails
@@ -140,7 +140,7 @@ export async function buildAIContext(
     const contentStart = findHeaderEnd(rawLines);
     const contentLines = rawLines.slice(contentStart);
     const n = Math.max(0, Math.min(50, contextLines));
-    const endLine = lineEndIndex != null && lineEndIndex >= lineIndex ? lineEndIndex : lineIndex;
+    const endLine = lineEndIndex !== null && lineEndIndex !== undefined && lineEndIndex >= lineIndex ? lineEndIndex : lineIndex;
     const lo = Math.max(0, lineIndex - n);
     const hi = Math.min(contentLines.length - 1, endLine + n);
     const surroundingLines: string[] = [];

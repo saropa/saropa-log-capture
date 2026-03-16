@@ -18,6 +18,21 @@ import {
     MAX_RESULTS_PER_SOURCE,
 } from './investigation-types';
 
+/** Gather surrounding context lines around an index, truncated to 200 chars. */
+function gatherContext(
+    lines: string[], index: number, contextLines: number,
+): { before: string[]; after: string[] } {
+    const before: string[] = [];
+    for (let j = Math.max(0, index - contextLines); j < index; j++) {
+        before.push(lines[j].slice(0, 200));
+    }
+    const after: string[] = [];
+    for (let j = index + 1; j <= Math.min(lines.length - 1, index + contextLines); j++) {
+        after.push(lines[j].slice(0, 200));
+    }
+    return { before, after };
+}
+
 /**
  * Resolve all searchable files for an investigation source.
  * For 'session' type, includes the main log and all searchable sidecars.
@@ -130,24 +145,13 @@ async function searchFile(
                 break;
             }
 
-            const contextBefore: string[] = [];
-            const contextAfter: string[] = [];
-
-            if (contextLines > 0) {
-                for (let j = Math.max(0, i - contextLines); j < i; j++) {
-                    contextBefore.push(lines[j].slice(0, 200));
-                }
-                for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextLines); j++) {
-                    contextAfter.push(lines[j].slice(0, 200));
-                }
-            }
-
+            const ctx = contextLines > 0 ? gatherContext(lines, i, contextLines) : undefined;
             matches.push({
                 line: i + 1,
                 column: match.index + 1,
                 text: line.slice(0, 300),
-                contextBefore: contextBefore.length > 0 ? contextBefore : undefined,
-                contextAfter: contextAfter.length > 0 ? contextAfter : undefined,
+                contextBefore: ctx?.before.length ? ctx.before : undefined,
+                contextAfter: ctx?.after.length ? ctx.after : undefined,
             });
         }
     }
@@ -199,24 +203,13 @@ async function searchJsonSidecar(
                 break;
             }
 
-            const contextBefore: string[] = [];
-            const contextAfter: string[] = [];
-
-            if (contextLines > 0) {
-                for (let j = Math.max(0, i - contextLines); j < i; j++) {
-                    contextBefore.push(lines[j].slice(0, 200));
-                }
-                for (let j = i + 1; j <= Math.min(lines.length - 1, i + contextLines); j++) {
-                    contextAfter.push(lines[j].slice(0, 200));
-                }
-            }
-
+            const ctx = contextLines > 0 ? gatherContext(lines, i, contextLines) : undefined;
             matches.push({
                 line: i + 1,
                 column: 1,
                 text: line.slice(0, 300),
-                contextBefore: contextBefore.length > 0 ? contextBefore : undefined,
-                contextAfter: contextAfter.length > 0 ? contextAfter : undefined,
+                contextBefore: ctx?.before.length ? ctx.before : undefined,
+                contextAfter: ctx?.after.length ? ctx.after : undefined,
             });
         }
     }

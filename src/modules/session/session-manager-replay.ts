@@ -20,14 +20,18 @@ export function replayEarlyBuffer(
     for (const body of buffered) { onOutput(sessionId, body); }
 }
 
+/** Options for replaying all other sessions' early-buffered output into the current session. */
+export interface ReplayAllOptions {
+    earlyBuffer: EarlyOutputBuffer;
+    sessionId: string;
+    onOutput: (sessionId: string, body: DapOutputBody) => void;
+    config: SaropaLogCaptureConfig;
+    outputChannel: { appendLine: (s: string) => void };
+}
+
 /** Replay all other session ids' buffered output into this session so no early output is lost. */
-export function replayAllOtherEarlyBuffers(
-    earlyBuffer: EarlyOutputBuffer,
-    sessionId: string,
-    onOutput: (sessionId: string, body: DapOutputBody) => void,
-    config: SaropaLogCaptureConfig,
-    outputChannel: { appendLine: (s: string) => void },
-): void {
+export function replayAllOtherEarlyBuffers(opts: ReplayAllOptions): void {
+    const { earlyBuffer, sessionId, onOutput, config, outputChannel } = opts;
     const rest = earlyBuffer.drainAll();
     for (const [sid, bodies] of rest) {
         if (sid === sessionId || bodies.length === 0) { continue; }
