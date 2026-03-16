@@ -58,7 +58,7 @@ export async function executeLoadContent(
       if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
       const perf = meta.integrations?.performance as Record<string, unknown> | undefined;
       hasPerf = !!(perf && typeof perf === "object" && ((perf.snapshot !== null && perf.snapshot !== undefined) || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
-    } catch (_) {
+    } catch {
       // ignore
     }
     target.setHasPerformanceData(hasPerf);
@@ -134,7 +134,7 @@ export function createTailWatcher(
       target.setTailLastLineCount(contentLines.length);
       target.postMessage({ type: "addLines", lines: pending, lineCount: contentLines.length });
       helpers.sendNewCategories(pending, target.getSeenCategories(), (msg) => target.postMessage(msg));
-    } catch (_) {
+    } catch {
       // File may be locked or deleted
     } finally {
       target.setTailUpdateInProgress(false);
