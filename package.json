@@ -9,6 +9,10 @@
   "contributes": {
     "commands": [
       {
+        "command": "saropaLogCapture.openWalkthrough",
+        "title": "%command.openWalkthrough.title%"
+      },
+      {
         "command": "saropaLogCapture.start",
         "icon": "$(play)",
         "title": "%command.start.title%"
@@ -1647,6 +1651,14 @@
               "markdown": "media/walkthrough/keyboard-shortcuts.md"
             },
             "title": "%walkthrough.useKeyboardShortcuts.title%"
+          },
+          {
+            "description": "%walkthrough.aboutSaropa.description%",
+            "id": "saropaLogCapture.aboutSaropa",
+            "media": {
+              "markdown": "media/walkthrough/about-saropa.md"
+            },
+            "title": "%walkthrough.aboutSaropa.title%"
           }
         ],
         "title": "%walkthrough.getStarted.title%"
@@ -1729,5 +1741,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.5.1"
+  "version": "3.5.2"
 }

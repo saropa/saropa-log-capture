@@ -166,5 +166,8 @@
   "walkthrough.startDebugging.title": "Debug-Sitzung starten",
   "walkthrough.startDebugging.description": "Die Protokollerfassung startet beim Debuggen automatisch. Drücken Sie **F5** oder nutzen Sie das **Ausführen und Debuggen**-Panel zum Starten.\n\n[Debuggen starten](command:workbench.action.debug.start)",
   "walkthrough.useKeyboardShortcuts.title": "Tastaturkürzel beherrschen",
-  "walkthrough.useKeyboardShortcuts.description": "**Leertaste** zum Pausieren, **Strg+F** zum Suchen, **P** zum Anheften von Zeilen, **N** zum Annotieren und **M** zum Einfügen von Markierungen."
+  "walkthrough.useKeyboardShortcuts.description": "**Leertaste** zum Pausieren, **Strg+F** zum Suchen, **P** zum Anheften von Zeilen, **N** zum Annotieren und **M** zum Einfügen von Markierungen.",
+  "walkthrough.aboutSaropa.title": "Über Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — entwickelt digitale Schutzlösungen seit 2010.\n\nDart-Pakete, VS Code-Erweiterungen und Verbraucher-Apps für Entwickler, die Zuverlässigkeit schätzen.\n\n[saropa.com besuchen](https://saropa.com/)",
+  "command.openWalkthrough.title": "Saropa Log Capture: Erste Schritte"
 }

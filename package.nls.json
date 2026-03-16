@@ -173,5 +173,9 @@
   "walkthrough.startDebugging.title": "Start a Debug Session",
   "walkthrough.startDebugging.description": "Log capture starts automatically when you debug. Press **F5** or use the **Run and Debug** panel to start.\n\n[Start Debugging](command:workbench.action.debug.start)",
   "walkthrough.useKeyboardShortcuts.title": "Master Keyboard Shortcuts",
-  "walkthrough.useKeyboardShortcuts.description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers."
+  "walkthrough.useKeyboardShortcuts.description": "Use **Space** to pause, **Ctrl+F** to search, **P** to pin lines, **N** to annotate, and **M** to insert markers.",
+  "walkthrough.aboutSaropa.title": "About Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — building digital safeguards since 2010.\n\nDart packages, VS Code extensions, and consumer apps for developers who value reliability.\n\n[Visit saropa.com](https://saropa.com/)",
+
+  "command.openWalkthrough.title": "Saropa Log Capture: Getting Started"
 }

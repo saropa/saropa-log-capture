@@ -224,6 +224,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         migrateSidecarsInDirectory(folder.uri, folder).catch(() => {});
     }
 
+    showWalkthroughOnFirstInstall(context);
+
     outputChannel.appendLine('Saropa Log Capture activated.');
     return {
         api: apiHandle.api,
@@ -234,4 +236,17 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         projectIndexer,
         popOutPanel,
     };
+}
+
+const walkthroughShownKey = 'slc.walkthroughShown';
+
+/** Show the Getting Started walkthrough once on first install. */
+function showWalkthroughOnFirstInstall(context: vscode.ExtensionContext): void {
+    if (context.globalState.get<boolean>(walkthroughShownKey)) { return; }
+    void context.globalState.update(walkthroughShownKey, true);
+    void vscode.commands.executeCommand(
+        'workbench.action.openWalkthrough',
+        'saropa.saropa-log-capture#saropaLogCapture.getStarted',
+        false,
+    );
 }
