@@ -64,7 +64,7 @@ export function getContentStyles(): string {
 #jump-btn, #jump-top-btn {
     display: none;
     position: absolute;
-    right: 20px;
+    left: 8px;
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
@@ -144,6 +144,12 @@ export function getContentStyles(): string {
 /* Selection count (lines + chars) when text is selected in viewport */
 .footer-selection { white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
 .footer-selection:empty { display: none; }
+
+/* Footer replay button — hidden by default, shown when file is loaded */
+.footer-replay-btn { display: none; }
+.footer-replay-btn.footer-replay-visible { display: inline-flex; align-items: center; gap: 3px; }
+.footer-dot { display: none; color: var(--vscode-descriptionForeground); }
+.footer-replay-btn.footer-replay-visible + .footer-dot { display: inline; }
 
 /* Version link at far right — opens About panel */
 .footer-version-link {
