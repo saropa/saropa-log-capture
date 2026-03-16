@@ -166,5 +166,8 @@
   "walkthrough.startDebugging.title": "开始调试会话",
   "walkthrough.startDebugging.description": "调试时日志捕获自动开始。按 **F5** 或使用**运行和调试**面板开始。\n\n[开始调试](command:workbench.action.debug.start)",
   "walkthrough.useKeyboardShortcuts.title": "掌握键盘快捷键",
-  "walkthrough.useKeyboardShortcuts.description": "使用**空格**暂停，**Ctrl+F** 搜索，**P** 固定行，**N** 添加注释，**M** 插入标记。"
+  "walkthrough.useKeyboardShortcuts.description": "使用**空格**暂停，**Ctrl+F** 搜索，**P** 固定行，**N** 添加注释，**M** 插入标记。",
+  "walkthrough.aboutSaropa.title": "关于 Saropa",
+  "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 自 2010 年起构建数字安全防护。\n\n为注重可靠性的开发者提供 Dart 包、VS Code 扩展和消费级应用。\n\n[访问 saropa.com](https://saropa.com/)",
+  "command.openWalkthrough.title": "Saropa Log Capture: 开始使用"
 }

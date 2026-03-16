@@ -240,6 +240,7 @@ Open **Options** → **Keyboard shortcuts…** in the viewer for the full refere
 | `Saropa Log Capture: Open Tailed File`               | Open a workspace log file and tail it live        |
 | `Saropa Log Capture: Import .slc Bundle`             | Import a `.slc` session bundle into the log dir   |
 | `Saropa Log Capture: Configure integrations`         | Quick Pick to enable/disable integration adapters |
+| `Saropa Log Capture: Getting Started`                | Open the Getting Started walkthrough              |
 
 ---
 

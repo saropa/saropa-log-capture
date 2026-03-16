@@ -38,7 +38,19 @@ export function registerCommands(deps: CommandDeps): void {
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider }),
         ...toolCommands(deps),
+        walkthroughCommand(),
     );
+}
+
+/** Opens the Getting Started walkthrough in VS Code's native walkthrough UI. */
+function walkthroughCommand(): vscode.Disposable {
+    return vscode.commands.registerCommand('saropaLogCapture.openWalkthrough', () => {
+        void vscode.commands.executeCommand(
+            'workbench.action.openWalkthrough',
+            'saropa.saropa-log-capture#saropaLogCapture.getStarted',
+            false,
+        );
+    });
 }
 
 function correlationCommands(deps: CommandDeps): vscode.Disposable[] {
