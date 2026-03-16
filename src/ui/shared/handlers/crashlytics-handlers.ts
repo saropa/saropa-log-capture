@@ -14,7 +14,6 @@ import {
 } from '../../../modules/crashlytics/firebase-crashlytics';
 import { renderCrashDetail } from '../../analysis/analysis-crash-detail';
 import { serializeContext } from './crashlytics-serializers';
-import { notifyCrashlyticsStatusBarUpdate } from '../crashlytics-status-bar';
 import { getOutputChannel } from '../../../modules/crashlytics/crashlytics-diagnostics';
 
 export type PostFn = (msg: unknown) => void;
@@ -38,11 +37,9 @@ export async function handleCrashlyticsRequest(post: PostFn): Promise<void> {
             }
         }
         post({ type: 'crashlyticsData', context: serializeContext(ctx, { gcloudInstallCommand, workspaceGoogleServicesPath }) });
-        notifyCrashlyticsStatusBarUpdate();
     } catch {
         const fallbackChecklist = { gcloud: 'missing' as const, token: 'pending' as const, config: 'pending' as const };
         post({ type: 'crashlyticsData', context: serializeContext({ available: false, setupHint: 'Unexpected error', setupChecklist: fallbackChecklist, issues: [] }) });
-        notifyCrashlyticsStatusBarUpdate();
     }
 }
 

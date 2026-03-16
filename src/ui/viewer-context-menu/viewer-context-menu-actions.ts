@@ -89,6 +89,7 @@ function handleToggleAction(action) {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
         'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
         'toggle-timestamp': typeof toggleTimestamp === 'function' ? toggleTimestamp : null,
+        'toggle-session-elapsed': typeof toggleSessionElapsed === 'function' ? toggleSessionElapsed : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
