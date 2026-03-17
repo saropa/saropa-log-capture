@@ -59,6 +59,27 @@ document.addEventListener('click', function(e) {
         vscodeApi.postMessage({ type: 'navigateCrashEvent', issueId: iid, eventIndex: cur + dir });
         return;
     }
+    // Error action bar handlers
+    var triageBtn = e.target.closest('.triage-btn');
+    if (triageBtn) {
+        vscodeApi.postMessage({ type: 'setTriageStatus', hash: triageBtn.dataset.triageHash, status: triageBtn.dataset.triageStatus });
+        // Optimistic UI update
+        var group = triageBtn.closest('.triage-group');
+        if (group) { group.querySelectorAll('.triage-btn').forEach(function(b) { b.classList.remove('triage-active'); }); }
+        triageBtn.classList.add('triage-active');
+        return;
+    }
+    var actionBtn = e.target.closest('.err-action');
+    if (actionBtn) {
+        var action = actionBtn.dataset.action;
+        if (action === 'copyContext') { vscodeApi.postMessage({ type: 'copyErrorContext' }); }
+        else if (action === 'bugReport') { vscodeApi.postMessage({ type: 'generateBugReport' }); }
+        else if (action === 'exportSlc') { vscodeApi.postMessage({ type: 'exportError', format: 'slc' }); }
+        else if (action === 'exportJson') { vscodeApi.postMessage({ type: 'exportError', format: 'json' }); }
+        else if (action === 'exportCsv') { vscodeApi.postMessage({ type: 'exportError', format: 'csv' }); }
+        else if (action === 'aiExplain') { vscodeApi.postMessage({ type: 'aiExplain' }); }
+        return;
+    }
     var frame = e.target.closest('.frame-app[data-frame-file]');
     if (frame && !frame.classList.contains('frame-loading')) {
         frame.classList.add('frame-loading');
@@ -73,10 +94,12 @@ document.addEventListener('click', function(e) {
 window.addEventListener('message', function(e) {
     if (e.data.type === 'sectionReady') {
         var slot = document.getElementById('section-' + e.data.id);
-        if (slot) { slot.outerHTML = e.data.html; }
-        pendingCount--;
-        updateProgressBar();
-        if (pendingCount <= 0) { completeProgress(); }
+        if (slot) {
+            slot.outerHTML = e.data.html;
+            pendingCount--;
+            updateProgressBar();
+            if (pendingCount <= 0) { completeProgress(); }
+        }
     } else if (e.data.type === 'sectionProgress') {
         var pSlot = document.getElementById('section-' + e.data.id);
         if (pSlot) {
