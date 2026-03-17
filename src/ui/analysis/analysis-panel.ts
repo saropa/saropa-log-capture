@@ -5,8 +5,8 @@ import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
 import { openLogAtLine } from '../../modules/search/log-search';
-import { extractAnalysisTokens } from '../../modules/analysis/line-analyzer';
-import { extractSourceReference } from '../../modules/source/source-linker';
+import { type AnalysisToken, extractAnalysisTokens } from '../../modules/analysis/line-analyzer';
+import { type SourceReference, extractSourceReference } from '../../modules/source/source-linker';
 import { parseSourceTag } from '../../modules/source/source-tag-parser';
 import { extractFrames, analyzeFrame } from './analysis-frame-handler';
 import type { SectionData } from '../../modules/analysis/analysis-relevance';
@@ -24,7 +24,7 @@ import {
     runCrossSessionLookup, runReferencedFiles, runGitHubLookup, runFirebaseLookup,
 } from './analysis-panel-streams';
 import { classifyLevel, isActionableLevel } from '../../modules/analysis/level-classifier';
-import { buildErrorContext, runTriageLookup, runErrorTimeline, runOccurrenceScan } from './analysis-error-streams';
+import { type ErrorContext, buildErrorContext, runTriageLookup, runErrorTimeline, runOccurrenceScan } from './analysis-error-streams';
 import { handleTriageToggle, handleCopyContext, handleBugReport, handleExportAction, handleAiExplain } from './analysis-error-actions';
 
 let panel: vscode.WebviewPanel | undefined;
@@ -38,6 +38,18 @@ function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 
 let lastLineText = '';
 let lastErrorHash = '';
+let lastLineIndex = 0;
+
+interface WaveInput {
+    readonly abort: AbortController;
+    readonly lineText: string;
+    readonly lineIndex: number;
+    readonly tokens: readonly AnalysisToken[];
+    readonly sourceRef: SourceReference | undefined;
+    readonly sourceTag: string | null;
+    readonly fileUri: vscode.Uri | undefined;
+    readonly errCtx: ErrorContext | undefined;
+}
 
 /** Run analysis for a log line and show results in the panel. */
 export async function showAnalysis(lineText: string, lineIndex?: number, fileUri?: vscode.Uri): Promise<void> {
@@ -49,65 +61,71 @@ export async function showAnalysis(lineText: string, lineIndex?: number, fileUri
     cancelAnalysis();
     const abort = new AbortController();
     activeAbort = abort;
-
-    // Detect if this is an error/warning line
     const level = classifyLevel(lineText, 'stdout', false);
     const isError = isActionableLevel(level) && (level === 'error' || level === 'warning');
     const errCtx = isError ? buildErrorContext(lineText, undefined) : undefined;
     lastLineText = lineText;
     lastErrorHash = errCtx?.hash ?? '';
+    lastLineIndex = lineIndex ?? 0;
 
     ensurePanel();
     lastFileUri = fileUri;
     const sourceRef = extractSourceReference(lineText);
-    const sourceToken = tokens.find(t => t.type === 'source-file');
     const sourceTag = parseSourceTag(lineText);
     const frames = await extractFrames(fileUri, lineIndex);
-    const hasTag = !!sourceTag;
     panel!.webview.html = buildProgressiveShell({
         nonce: getNonce(), lineText, tokens, hasSource: !!sourceRef,
-        frames: frames.length > 0 ? frames : undefined, hasTag,
+        frames: frames.length > 0 ? frames : undefined, hasTag: !!sourceTag,
         isError, errorHash: errCtx?.hash,
     });
+    await runAnalysisWaves({ abort, lineText, lineIndex: lineIndex ?? -1, tokens, sourceRef, sourceTag, fileUri, errCtx });
+}
 
+/** Execute wave 1 (related-lines) and wave 2 (parallel streams). */
+async function runAnalysisWaves(w: WaveInput): Promise<void> {
+    const { abort, lineIndex, sourceRef, sourceTag, fileUri, errCtx, tokens } = w;
     const posted = new Set<string>();
     const post = (id: string, html: string): void => {
         posted.add(id);
         if (!abort.signal.aborted) { panel?.webview.postMessage({ type: 'sectionReady', id, html }); }
     };
-
-    // Wave 1: quick related-lines scan enriches tokens for all subsequent streams
+    const hasTag = !!sourceTag;
     let related: RelatedLinesResult | undefined;
     if (sourceTag && fileUri) {
-        related = await raceTimeout(scanRelatedLines(fileUri, sourceTag, lineIndex ?? -1), 5000).catch(() => undefined);
+        related = await raceTimeout(scanRelatedLines(fileUri, sourceTag, lineIndex), 5000).catch(() => undefined);
     }
     if (abort.signal.aborted) { return; }
     const allTokens = related?.enhancedTokens?.length ? related.enhancedTokens : tokens;
-    if (related) { post('related', renderRelatedLinesSection(related, lineIndex ?? -1)); }
+    if (related) { post('related', renderRelatedLinesSection(related, lineIndex)); }
     else if (hasTag) { post('related', emptySlot('related', '📋 No related lines found')); }
-
-    // Wave 2: all streams in parallel with enriched tokens + error streams
     const ctx: StreamCtx = { post, signal: abort.signal, progress: postProgress };
-    const errorStreams = errCtx ? [
-        raceTimeout(runTriageLookup(ctx, lineText, errCtx), streamTimeout),
-        raceTimeout(runErrorTimeline(ctx, errCtx), streamTimeout),
-        raceTimeout(runOccurrenceScan(ctx, errCtx, fileUri), streamTimeout),
-    ] : [];
-    const results = await Promise.allSettled([
-        raceTimeout(runSourceChain(ctx, sourceToken?.value, sourceRef?.line), streamTimeout),
-        raceTimeout(runDocsScan(ctx, allTokens), streamTimeout),
-        raceTimeout(runSymbolResolution(ctx, allTokens), streamTimeout),
-        raceTimeout(runTokenSearch(ctx, allTokens), streamTimeout),
-        raceTimeout(runCrossSessionLookup(postProgress, lineText), streamTimeout),
-        raceTimeout(runReferencedFiles(ctx, related), streamTimeout),
-        raceTimeout(runGitHubLookup(ctx, related, allTokens), streamTimeout),
-        raceTimeout(runFirebaseLookup(ctx, allTokens), streamTimeout),
-        ...errorStreams,
-    ]);
+    const results = await Promise.allSettled(buildStreamPromises(ctx, w, allTokens, related));
     if (abort.signal.aborted) { return; }
     postPendingSlots(posted, post, { hasSource: !!sourceRef, hasTag, hasError: errCtx !== undefined });
     const relatedMetrics: Partial<SectionData> = related ? { relatedLineCount: related.lines.length } : {};
     postFinalization(post, mergeResults(results, relatedMetrics), abort.signal, panel);
+}
+
+/** Build the array of parallel stream promises for wave 2. */
+function buildStreamPromises(
+    ctx: StreamCtx, w: WaveInput, allTokens: readonly AnalysisToken[], related: RelatedLinesResult | undefined,
+): Promise<Partial<SectionData>>[] {
+    const sourceToken = w.tokens.find(tk => tk.type === 'source-file');
+    return [
+        raceTimeout(runSourceChain(ctx, sourceToken?.value, w.sourceRef?.line), streamTimeout),
+        raceTimeout(runDocsScan(ctx, allTokens), streamTimeout),
+        raceTimeout(runSymbolResolution(ctx, allTokens), streamTimeout),
+        raceTimeout(runTokenSearch(ctx, allTokens), streamTimeout),
+        raceTimeout(runCrossSessionLookup(postProgress, w.lineText), streamTimeout),
+        raceTimeout(runReferencedFiles(ctx, related), streamTimeout),
+        raceTimeout(runGitHubLookup(ctx, related, allTokens), streamTimeout),
+        raceTimeout(runFirebaseLookup(ctx, allTokens), streamTimeout),
+        ...(w.errCtx ? [
+            raceTimeout(runTriageLookup(ctx, w.lineText, w.errCtx), streamTimeout),
+            raceTimeout(runErrorTimeline(ctx, w.errCtx), streamTimeout),
+            raceTimeout(runOccurrenceScan(ctx, w.errCtx, w.fileUri), streamTimeout),
+        ] : []),
+    ];
 }
 /** Dispose the singleton panel. */
 export function disposeAnalysisPanel(): void { cancelAnalysis(); panel?.dispose(); panel = undefined; }
@@ -158,12 +176,11 @@ function handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'navigateCrashEvent') { fetchCrashDetail(String(msg.issueId ?? ''), Number(msg.eventIndex ?? 0)).catch(() => {}); return; }
     // Error action bar handlers
     if (msg.type === 'setTriageStatus') {
-        const post = (id: string, html: string): void => { panel?.webview.postMessage({ type: 'sectionReady', id, html }); };
-        handleTriageToggle(String(msg.hash ?? ''), String(msg.status ?? 'open'), post).catch(() => {});
+        handleTriageToggle(String(msg.hash ?? ''), String(msg.status ?? 'open')).catch(() => {});
         return;
     }
     if (msg.type === 'copyErrorContext') { handleCopyContext(lastLineText, lastErrorHash).catch(() => {}); return; }
-    if (msg.type === 'generateBugReport') { handleBugReport(lastLineText, 0, lastFileUri).catch(() => {}); return; }
+    if (msg.type === 'generateBugReport') { handleBugReport(lastLineText, lastLineIndex, lastFileUri).catch(() => {}); return; }
     if (msg.type === 'exportError') { handleExportAction(String(msg.format ?? '')); return; }
     if (msg.type === 'aiExplain') { handleAiExplain(lastLineText); return; }
     if (msg.type === 'openMatch') {
