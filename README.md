@@ -356,6 +356,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 ## Known Limitations
 
+- **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header or one line, use **Prev/Next** in the viewer (output may be in the other log from the same run) and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](bugs/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a `.terminal.log` sidecar at session end.
 

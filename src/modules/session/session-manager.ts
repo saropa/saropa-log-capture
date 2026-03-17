@@ -49,6 +49,8 @@ export class SessionManagerImpl implements SessionManager {
     private autoTagger: AutoTagger | null = null;
     private readonly metadataStore = new SessionMetadataStore();
     private readonly earlyBuffer = new EarlyOutputBuffer();
+    /** Called when output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession). */
+    private onOutputBufferedWithNoSession: ((sessionId: string) => void) | undefined;
     /** Cached config snapshot — avoids 30+ cfg.get() calls per DAP message. */
     private cachedConfig: SaropaLogCaptureConfig = getConfig();
     private projectIndexer: ProjectIndexer | null = null;
@@ -68,6 +70,14 @@ export class SessionManagerImpl implements SessionManager {
     /** Set project indexer for inline reports index updates after session finalization. */
     setProjectIndexer(indexer: ProjectIndexer | null): void {
         this.projectIndexer = indexer;
+    }
+
+    /**
+     * When output is buffered and no log session exists (e.g. onDidStartDebugSession never fired for this adapter),
+     * the extension can try to start capture using the active debug session. Set by extension-lifecycle.
+     */
+    setOnOutputBufferedWithNoSession(callback: ((sessionId: string) => void) | undefined): void {
+        this.onOutputBufferedWithNoSession = callback;
     }
 
     get activeSessionCount(): number { return this.ownerSessionIds.size; }
@@ -106,7 +116,7 @@ export class SessionManagerImpl implements SessionManager {
                 if (newestId) {
                     effectiveSessionId = newestId;
                     if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
-                        this.outputChannel.appendLine(`Capture diagnostic: routing output to most recent session (incoming sessionId=${sessionId})`);
+                        this.outputChannel.appendLine(`Capture diagnostic: routing output to most recent session (incoming sessionId=${sessionId}). If the open log looks empty, use Prev/Next in the viewer to switch to the other log.`);
                     }
                 } else {
                     if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
@@ -126,6 +136,8 @@ export class SessionManagerImpl implements SessionManager {
                     this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
                 }
                 this.bufferingLoggedFor.add(sessionId);
+                // Extension lifecycle may start capture via active debug session (late-start fallback for Dart run / Cursor); it guards with lateStartTriggered so startSession is only invoked once per session.
+                this.onOutputBufferedWithNoSession?.(sessionId);
             }
         } else if (this.cachedConfig.diagnosticCapture && !this.diagnosticWrittenLoggedFor.has(sessionId)) {
             this.diagnosticWrittenLoggedFor.add(sessionId);
@@ -175,8 +187,8 @@ export class SessionManagerImpl implements SessionManager {
                 return;
             }
         }
-        // Fallback: child may have started first without parentSession set. If exactly one owner was created in the last 15s, alias to it.
-        const recentChild = !session.parentSession ? this.getSingleRecentOwnerSession(15_000) : null;
+        // Fallback: child may have started first without parentSession set. If exactly one owner was created in the last 30s, alias to it.
+        const recentChild = !session.parentSession ? this.getSingleRecentOwnerSession(30_000) : null;
         if (recentChild) {
             this.sessions.set(session.id, recentChild.logSession);
             this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
@@ -272,6 +284,11 @@ export class SessionManagerImpl implements SessionManager {
     getActiveSession(): LogSession | undefined {
         const active = vscode.debug.activeDebugSession;
         return active ? this.sessions.get(active.id) : undefined;
+    }
+
+    /** Last write time (ms since epoch) for the active session; used for "updated in last minute" indicator. */
+    getActiveLastWriteTime(): number | undefined {
+        return this.getActiveSession()?.lastWriteTime;
     }
 
     /** Get the log file path for the active session (relative or full). */
