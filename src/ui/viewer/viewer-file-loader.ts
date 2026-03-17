@@ -20,6 +20,8 @@ export interface PendingLine {
     readonly elapsedMs?: number;
     readonly fw?: boolean;
     readonly sourcePath?: string;
+    /** Per-file line coverage percent (0–100) for stack frames referencing app code. */
+    readonly qualityPercent?: number;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */

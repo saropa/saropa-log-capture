@@ -69,7 +69,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
         id: 'coverage',
         label: 'Code coverage',
         description: 'Coverage % from lcov/Cobertura in header',
-        descriptionLong: 'Parses lcov.info, cobertura.xml, or similar and adds coverage percentage (and optionally summary) to the session header.',
+        descriptionLong: 'Parses lcov.info, cobertura.xml, or similar and adds coverage percentage to the session header. Also shows per-file coverage badges on stack frame lines and writes a quality.json sidecar at session end.',
         performanceNote: '\u26A0\uFE0F Low to moderate — needs a report path configured; parsing large coverage reports can be slow.',
         whenToDisable: 'You haven\'t configured a coverage report path, or reports are large enough to slow session start.',
     },

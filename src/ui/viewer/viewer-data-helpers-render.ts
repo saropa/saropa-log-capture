@@ -91,10 +91,12 @@ function renderItem(item, idx, prevVis) {
             sf = hiddenCount > 0 ? '  [+' + hiddenCount + ' more]' : '';
         }
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
-        return '<div class="stack-header' + matchCls + spacingCls + barCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + html.trim() + dup + sf + '</div>';
+        var hdrQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
+        return '<div class="stack-header' + matchCls + spacingCls + barCls + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + hdrQb + html.trim() + dup + sf + '</div>';
     }
     if (item.type === 'stack-frame') {
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + '"' + idxAttr + '>' + html + '</div>';
+        var sfQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + '"' + idxAttr + '>' + sfQb + html + '</div>';
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
@@ -114,6 +116,7 @@ function renderItem(item, idx, prevVis) {
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
+    if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
     if (corr) badge += '<span class="correlation-badge" data-correlation-id="' + (corr.id || '').replace(/"/g, '&quot;') + '" title="' + (corr.description || '').replace(/"/g, '&quot;') + '">\\u27a4</span> ';
     var titleAttr = '';

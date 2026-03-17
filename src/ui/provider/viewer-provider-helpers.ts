@@ -8,8 +8,11 @@
 import * as vscode from "vscode";
 import { t } from "../../l10n";
 import { findHeaderEnd } from "../viewer/viewer-file-loader";
-import { isFrameworkFrame, isFrameworkLogLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
+import { isFrameworkFrame, isFrameworkLogLine, isStackFrameLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
 import { stripAnsi } from "../../modules/capture/ansi";
+import { extractSourceReference } from "../../modules/source/source-linker";
+import { getPerFileCoverageMap } from "../../modules/integrations/providers/code-coverage";
+import { lookupCoverage } from "../../modules/integrations/providers/coverage-per-file";
 import { PendingLine } from "../viewer/viewer-file-loader";
 import { logExtensionError } from "../../modules/misc/extension-logger";
 
@@ -160,6 +163,20 @@ export function classifyFrame(text: string): boolean | undefined {
 		return isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 	}
 	return isFrameworkLogLine(text);
+}
+
+/**
+ * Look up per-file coverage for an app-code stack frame line.
+ * Returns coverage percent (0–100) or undefined if not applicable.
+ */
+export function lookupQuality(text: string, fw: boolean | undefined): number | undefined {
+	if (fw !== false) { return undefined; }
+	if (!isStackFrameLine(text)) { return undefined; }
+	const map = getPerFileCoverageMap();
+	if (!map) { return undefined; }
+	const ref = extractSourceReference(text);
+	if (!ref) { return undefined; }
+	return lookupCoverage(map, ref.filePath);
 }
 
 /** If the raw text is a thread header, return styled HTML; otherwise return the original html. */
