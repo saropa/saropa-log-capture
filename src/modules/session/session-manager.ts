@@ -148,25 +148,22 @@ export class SessionManagerImpl implements SessionManager {
                 return;
             }
         }
-        // Fallback: child may have started first without parentSession set. If exactly one owner session was created in the last 15s, alias to it.
-        if (!session.parentSession && this.ownerSessionIds.size >= 1) {
-            const now = Date.now();
-            const RECENT_MS = 15_000;
-            let recentCount = 0;
-            let candidateLogSession: LogSession | null = null;
-            for (const sid of this.ownerSessionIds) {
-                const createdAt = this.ownerSessionCreatedAt.get(sid);
-                if (createdAt !== undefined && now - createdAt < RECENT_MS) {
-                    recentCount++;
-                    candidateLogSession = this.sessions.get(sid) ?? null;
-                }
-            }
-            if (recentCount === 1 && candidateLogSession) {
-                this.sessions.set(session.id, candidateLogSession);
-                this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
-                replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-                return;
-            }
+        // Fallback: child may have started first without parentSession set. If exactly one owner was created in the last 15s, alias to it.
+        const recentChild = !session.parentSession ? this.getSingleRecentOwnerSession(15_000) : null;
+        if (recentChild) {
+            this.sessions.set(session.id, recentChild.logSession);
+            this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
+            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+            return;
+        }
+        // Race guard: one session was just created (e.g. other half of parent/child); alias to it so we don't create two files (one empty).
+        const recentRace = this.getSingleRecentOwnerSession(3000);
+        if (recentRace) {
+            this.sessions.set(session.id, recentRace.logSession);
+            this.outputChannel.appendLine(`Session aliased to just-created session (race guard): ${session.type}`);
+            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+            replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
+            return;
         }
         const result = await initializeSession({
             session, context,
@@ -324,7 +321,21 @@ export class SessionManagerImpl implements SessionManager {
     /** Recreate the keyword watcher from current config. */
     refreshWatcher(): void { this.watcher = this.createWatcher(); }
 
-    // --- Private: line/split broadcast, watcher ---
+    // --- Private: session lookup, line/split broadcast, watcher ---
+
+    /** Returns the single owner session if exactly one exists and was created within windowMs. Used by fallback and race guard. */
+    private getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null {
+        if (this.ownerSessionIds.size !== 1) { return null; }
+        const now = Date.now();
+        for (const sid of this.ownerSessionIds) {
+            const createdAt = this.ownerSessionCreatedAt.get(sid);
+            if (createdAt !== undefined && now - createdAt < windowMs) {
+                const logSession = this.sessions.get(sid) ?? null;
+                return logSession ? { sid, logSession } : null;
+            }
+        }
+        return null;
+    }
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
         const hits = data.isMarker ? [] : this.watcher.testLine(data.text);
