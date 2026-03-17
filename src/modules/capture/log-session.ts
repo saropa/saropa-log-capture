@@ -44,6 +44,7 @@ export class LogSession {
     private _bytesWritten = 0;
     private _partStartTime = Date.now();
     private _lastLineTime = 0;
+    private _lastWriteTime = 0;
     private _previousTimestamp: Date | undefined;
     private _baseFileName = '';
     private onSplit?: SplitCallback;
@@ -54,6 +55,8 @@ export class LogSession {
     get partNumber(): number { return this._partNumber; }
     get bytesWritten(): number { return this._bytesWritten; }
     get startTime(): number { return this._partStartTime; }
+    /** Time (ms since epoch) of last write to this session (for "recent updates" UI). */
+    get lastWriteTime(): number { return this._lastWriteTime; }
     /** Session context (for integration API). */
     get sessionContext(): SessionContext { return this.context; }
 
@@ -144,6 +147,7 @@ export class LogSession {
         }
 
         this._lastLineTime = Date.now();
+        this._lastWriteTime = this._lastLineTime;
         this.onLineCountChanged(this._lineCount);
     }
 
@@ -163,6 +167,7 @@ export class LogSession {
         const markerLine = `\n--- MARKER: ${label} ---\n`;
 
         this.writeStream.write(markerLine + '\n');
+        this._lastWriteTime = Date.now();
         this._lineCount++;
         this.onLineCountChanged(this._lineCount);
         return markerLine.trim();

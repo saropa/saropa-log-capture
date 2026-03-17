@@ -5,6 +5,7 @@ import { t } from './l10n';
 import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import type { CommandDeps } from './commands-deps';
 import { handleDeleteCommand } from './modules/features/delete-command';
+import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
 
 export function sessionLifecycleCommands(deps: CommandDeps): vscode.Disposable[] {
     const { context, sessionManager, viewerProvider } = deps;
@@ -73,6 +74,7 @@ export function historyBrowseCommands(deps: CommandDeps): vscode.Disposable[] {
             if (!item?.uri) { return; }
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
             await viewerProvider.loadFromFile(item.uri);
+            await updateLastViewed(deps.context, item.uri);
         }),
         vscode.commands.registerCommand('saropaLogCapture.replay', async () => {
             await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');

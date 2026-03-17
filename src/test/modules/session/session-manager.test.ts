@@ -82,4 +82,9 @@ describe("SessionManagerImpl", () => {
     mgr.onProcessId("session-1", 67890);
     assert.strictEqual(mgr["processIds"].get("session-1"), 67890, "Later process event should overwrite PID");
   });
+
+  it("getActiveLastWriteTime returns undefined when no active debug session", () => {
+    const mgr = makeSessionManager();
+    assert.strictEqual(mgr.getActiveLastWriteTime(), undefined, "no active session => undefined");
+  });
 });
