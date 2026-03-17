@@ -58,11 +58,11 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-search"></span> Search Codebase
             </div>
             <div class="context-menu-item" data-action="search-sessions">
-                <span class="codicon codicon-history"></span> Search Past Sessions
+                <span class="codicon codicon-history"></span> Search Past Logs
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="analyze-line">
-                <span class="codicon codicon-search-fuzzy"></span> Analyze Across Sessions
+                <span class="codicon codicon-search-fuzzy"></span> Analyze Across Logs
             </div>
             <div class="context-menu-item" data-action="generate-report">
                 <span class="codicon codicon-report"></span> Generate Bug Report
@@ -122,7 +122,7 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-separator" data-text-selection-action></div>
             <div class="context-menu-item" data-action="hide-text-session" data-text-selection-action>
-                <span class="codicon codicon-eye-closed"></span> Hide Selection (This Session)
+                <span class="codicon codicon-eye-closed"></span> Hide Selection (This Log)
             </div>
             <div class="context-menu-item" data-action="hide-text-always" data-text-selection-action>
                 <span class="codicon codicon-eye-closed"></span> Hide Selection (Always)
@@ -154,7 +154,7 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed">
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Session time (T+)</span>
+                <span>Log time (T+)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
                 <span class="context-menu-check codicon codicon-check"></span>

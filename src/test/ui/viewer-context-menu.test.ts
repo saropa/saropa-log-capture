@@ -150,8 +150,8 @@ suite('ViewerContextMenu', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('> Search\n'));
             assert.ok(html.includes('Search Codebase'));
-            assert.ok(html.includes('Search Past Sessions'));
-            assert.ok(html.includes('Analyze Across Sessions'));
+            assert.ok(html.includes('Search Past Logs'));
+            assert.ok(html.includes('Analyze Across Logs'));
             assert.ok(html.includes('Generate Bug Report'));
         });
 
