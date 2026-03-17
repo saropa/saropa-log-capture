@@ -21,6 +21,7 @@ import { securityAuditProvider } from './modules/integrations/providers/security
 import { databaseQueryLogsProvider } from './modules/integrations/providers/database-query-logs';
 import { httpNetworkProvider } from './modules/integrations/providers/http-network';
 import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
+import { codeQualityMetricsProvider } from './modules/integrations/providers/code-quality-metrics';
 
 /** Register all built-in integration providers with the global registry. */
 export function registerAllIntegrations(): void {
@@ -30,6 +31,9 @@ export function registerAllIntegrations(): void {
     registry.register(gitSourceCodeProvider);
     registry.register(environmentSnapshotProvider);
     registry.register(testResultsProvider);
+    // codeQuality must run before coverage: it snapshots the per-file map
+    // that codeCoverageProvider.onSessionEnd clears.
+    registry.register(codeQualityMetricsProvider);
     registry.register(codeCoverageProvider);
     registry.register(crashDumpsProvider);
     registry.register(windowsEventLogProvider);
