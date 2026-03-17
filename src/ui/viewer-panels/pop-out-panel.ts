@@ -119,10 +119,13 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     if (!this.panel?.visible) { return; }
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
+    const fw = helpers.classifyFrame(data.text);
+    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
     const line: PendingLine = {
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),
-      fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
+      fw, sourcePath: data.sourcePath,
+      ...(qualityPercent !== undefined ? { qualityPercent } : {}),
     };
     processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
   }

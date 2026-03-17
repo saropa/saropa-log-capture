@@ -30,10 +30,13 @@ export function addLineToBatch(target: BatchTarget, data: LineData): void {
     if (!target.getView()?.visible) { return; }
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
+    const fw = helpers.classifyFrame(data.text);
+    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
     const line: PendingLine = {
         text: html, isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
-        fw: helpers.classifyFrame(data.text), sourcePath: data.sourcePath,
+        fw, sourcePath: data.sourcePath,
+        ...(qualityPercent !== undefined ? { qualityPercent } : {}),
     };
     processLineForThreadDump(target.threadDumpState, line, data.text, target.pendingLines);
 }

@@ -5,6 +5,7 @@ node_modules
 media/codicons/
 .vscode-test/
 coverage/
+.nyc_output/
 *.vsix
 /reports
 nul
