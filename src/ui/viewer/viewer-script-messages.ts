@@ -9,7 +9,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
@@ -160,6 +160,9 @@ window.addEventListener('message', function(event) {
             if (ibCrash) ibCrash.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('crashlytics') >= 0);
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
+            break;
+        case 'errorHoverData':
+            if (typeof handleErrorHoverData === 'function') handleErrorHoverData(msg);
             break;
         case 'setViewerKeybindings':
             if (msg.keyToAction && typeof msg.keyToAction === 'object') window.viewerKeyMap = msg.keyToAction;
