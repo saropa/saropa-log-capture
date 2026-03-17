@@ -9,6 +9,7 @@ import type {
     IntegrationEnvironmentConfig,
     IntegrationTestResultsConfig,
     IntegrationCoverageConfig,
+    IntegrationCodeQualityConfig,
     IntegrationCrashDumpsConfig,
     IntegrationWindowsEventsConfig,
     IntegrationDockerConfig,
@@ -39,6 +40,7 @@ export type IntegrationConfigBlock = {
   integrationsEnvironment: IntegrationEnvironmentConfig;
   integrationsTestResults: IntegrationTestResultsConfig;
   integrationsCoverage: IntegrationCoverageConfig;
+  integrationsCodeQuality: IntegrationCodeQualityConfig;
   integrationsCrashDumps: IntegrationCrashDumpsConfig;
   integrationsWindowsEvents: IntegrationWindowsEventsConfig;
   integrationsDocker: IntegrationDockerConfig;
@@ -93,6 +95,13 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
         ? (cfg.get('integrations.coverage.reportPath') as string).trim() || 'coverage/lcov.info'
         : 'coverage/lcov.info',
       includeInHeader: ensureBoolean(cfg.get('integrations.coverage.includeInHeader'), true),
+    },
+    integrationsCodeQuality: {
+      lintReportPath: typeof cfg.get('integrations.codeQuality.lintReportPath') === 'string'
+        ? (cfg.get('integrations.codeQuality.lintReportPath') as string).trim()
+        : '',
+      scanComments: ensureBoolean(cfg.get('integrations.codeQuality.scanComments'), false),
+      coverageStaleMaxHours: configNonNegative(cfg, 'integrations.codeQuality.coverageStaleMaxHours', 24),
     },
     integrationsCrashDumps: {
       searchPaths: ensureStringArray(cfg.get('integrations.crashDumps.searchPaths'), []),
