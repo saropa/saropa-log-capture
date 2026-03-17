@@ -81,6 +81,7 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsEnvironment: IntegrationEnvironmentConfig;
   readonly integrationsTestResults: IntegrationTestResultsConfig;
   readonly integrationsCoverage: IntegrationCoverageConfig;
+  readonly integrationsCodeQuality: IntegrationCodeQualityConfig;
   readonly integrationsCrashDumps: IntegrationCrashDumpsConfig;
   readonly integrationsWindowsEvents: IntegrationWindowsEventsConfig;
   readonly integrationsDocker: IntegrationDockerConfig;
@@ -150,6 +151,12 @@ export interface IntegrationTestResultsConfig {
 export interface IntegrationCoverageConfig {
   readonly reportPath: string;
   readonly includeInHeader: boolean;
+}
+
+export interface IntegrationCodeQualityConfig {
+  readonly lintReportPath: string;
+  readonly scanComments: boolean;
+  readonly coverageStaleMaxHours: number;
 }
 
 export interface IntegrationCrashDumpsConfig {

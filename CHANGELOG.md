@@ -18,9 +18,9 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.6.0]
 
-Code coverage is now enforced and visible.
+Enhanced error analysis with hover popups and inline triage controls.
 
 ### Added
 
@@ -31,6 +31,10 @@ Code coverage is now enforced and visible.
 - **Quality sidecar** — session end writes a `quality.json` sidecar with per-file coverage data for referenced code.
 - **Coverage parser improvements** — single file read for both aggregate and per-file parsing, Cobertura attribute order flexibility, safe JSON parsing, ambiguous basename guard.
 - **Code Quality Metrics integration design doc** — per-file coverage, lint, and doc density overlay for code referenced in log stack traces (`bugs/100_code-quality-metrics.md`).
+- **Code Quality Metrics provider** — `codeQuality` integration provider assembles per-file coverage, lint warnings/errors (ESLint JSON), and comment density into an enriched `quality.json` sidecar at session end.
+- **Lint report reader** — parses ESLint `--format json` output to extract per-file warning/error counts for log-referenced files.
+- **Comment density scanner** — scans referenced source files for comment-to-code ratio and JSDoc/dartdoc coverage on exported symbols.
+- **Code quality settings** — `integrations.codeQuality.lintReportPath`, `scanComments`, and `coverageStaleMaxHours` settings for configuring quality data sources.
 - **AI module tests** — unit tests for JSONL parser, line formatter, prompt builder, and type helpers (ai-jsonl-parser, ai-jsonl-types, ai-line-formatter, ai-prompt).
 - **Bug report tests** — unit tests for keyword extraction and thread-aware stack trace formatting (report-file-keywords, bug-report-thread-format).
 - **Crashlytics event parser tests** — unit tests for structured thread parsing, raw trace parsing, device/custom key extraction.
