@@ -20,6 +20,7 @@ import { getAnnotationScript } from '../viewer/viewer-annotations';
 import { getTimingScript } from '../viewer/viewer-timing';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
 import { getDecoSettingsScript, getDecoSettingsHtml } from '../viewer-decorations/viewer-deco-settings';
+import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
 import { getStackFilterScript } from '../viewer-stack-tags/viewer-stack-filter';
 import { getStackDedupScript } from '../viewer-stack-tags/viewer-stack-dedup';
 import { getSplitNavScript } from '../viewer-nav/viewer-split-nav';
@@ -48,6 +49,9 @@ import { getLayoutScript } from './viewer-layout';
 import { getScrollAnchorScript } from '../viewer/viewer-scroll-anchor';
 import { getViewerVisibilityScript } from '../viewer/viewer-visibility';
 import { getErrorClassificationScript } from '../viewer-decorations/viewer-error-classification';
+import { getErrorHoverScript } from '../viewer-decorations/viewer-error-hover-script';
+import { getErrorHoverStyles } from '../viewer-decorations/viewer-error-hover-styles';
+import { getQualityBadgeStyles } from '../viewer-styles/viewer-styles-quality';
 import { getScopeFilterScript } from '../viewer-search-filter/viewer-scope-filter';
 import { getErrorHandlerScript } from '../viewer-decorations/viewer-error-handler';
 import { getIconBarHtml, getIconBarScript } from '../viewer-nav/viewer-icon-bar';
@@ -126,6 +130,8 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <style nonce="${nonce}">
         ${getViewerStyles()}
         ${getGotoLineStyles()}
+        ${getErrorHoverStyles()}
+        ${getQualityBadgeStyles()}
     </style>
 </head>
 <body>
@@ -133,12 +139,12 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     <div id="session-nav-wrapper" class="session-nav-wrapper">
     <div id="session-nav">
         <span class="session-nav-controls">
-        <button id="session-prev" title="Previous session (older)" aria-label="Previous session (older)" disabled>&#x25C0; Prev</button>
-        <span class="nav-bar-label">Session <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
-        <button id="session-next" title="Next session (newer)" aria-label="Next session (newer)" disabled>Next &#x25B6;</button>
+        <button id="session-prev" title="Previous log (older)" aria-label="Previous log (older)" disabled>&#x25C0; Prev</button>
+        <span class="nav-bar-label">Log <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
+        <button id="session-next" title="Next log (newer)" aria-label="Next log (newer)" disabled>Next &#x25B6;</button>
         ${getRunNavHtml()}
         </span>
-        <span id="session-details-inline" class="session-details-inline" aria-label="Session context"></span>
+        <span id="session-details-inline" class="session-details-inline" aria-label="Log context"></span>
         <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Open Performance panel" aria-label="Performance data available">Performance</button>
     </div>
     </div>
@@ -200,7 +206,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
         <span class="footer-spacer"></span>
-        <button id="footer-replay-btn" class="footer-btn footer-replay-btn" title="Replay session" aria-label="Replay session"><span class="codicon codicon-debug-start"></span> Replay</button>
+        <button id="footer-replay-btn" class="footer-btn footer-replay-btn" title="Replay log" aria-label="Replay log"><span class="codicon codicon-debug-start"></span> Replay</button>
         <span class="footer-dot">&middot;</span>
         <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa" aria-label="About Saropa Log Capture">${version ? `v${version}` : ''}</a>
     </div>
@@ -247,6 +253,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getReplayScript())}
     ${scriptTag(nonce, getDecorationsScript())}
     ${scriptTag(nonce, getDecoSettingsScript())}
+    ${scriptTag(nonce, getQualityBadgeScript())}
     ${scriptTag(nonce, getStackDedupScript())}
     ${scriptTag(nonce, getStackFilterScript())}
     ${scriptTag(nonce, getSplitNavScript())}
@@ -287,6 +294,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     ${scriptTag(nonce, getSessionHeaderScript())}
     ${scriptTag(nonce, getExportScript())}
     ${scriptTag(nonce, getErrorClassificationScript())}
+    ${scriptTag(nonce, getErrorHoverScript())}
     ${scriptTag(nonce, getGotoLineScript())}
     ${scriptTag(nonce, getRunNavScript())}
 </body>
