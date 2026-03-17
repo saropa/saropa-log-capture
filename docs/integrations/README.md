@@ -17,3 +17,4 @@ Each design document below is standalone and covers problem & goal, data sources
 | [HTTP and Network](http-network.md) | Capture or correlate HTTP requests with log lines (proxy, devtools) |
 | [Browser and DevTools](browser-devtools.md) | Web apps: correlate browser console with debug console via CDP or extension |
 | [Security and Audit Logs](security-audit-logs.md) | Auth events and audit trail correlation (e.g. Windows Security log) |
+| [Code Quality Metrics](../../bugs/100_code-quality-metrics.md) | Per-file coverage, lint, and doc density for code referenced in stack traces |
