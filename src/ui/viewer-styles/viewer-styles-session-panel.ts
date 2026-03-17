@@ -183,10 +183,79 @@ export function getSessionPanelLayoutStyles(): string {
     font-weight: 600;
     text-transform: uppercase;
     color: var(--vscode-descriptionForeground);
-    margin-bottom: 6px;
+    margin-bottom: 2px;
+}
+.session-investigations-hint {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    margin: 0 0 6px 0;
+    line-height: 1.3;
 }
 .session-investigations-list {
     margin-bottom: 6px;
+}
+.session-investigations-create-row {
+    margin-bottom: 0;
+}
+.session-investigations-create-form {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.session-investigations-name-input {
+    font-size: 12px;
+    padding: 4px 8px;
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 3px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    width: 100%;
+    box-sizing: border-box;
+}
+.session-investigations-name-input:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+    outline-offset: -1px;
+}
+.session-investigations-create-form-actions {
+    display: flex;
+    gap: 6px;
+}
+.session-investigations-create-confirm {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.session-investigations-create-confirm:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+.session-investigations-create-confirm:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+.session-investigations-name-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.session-investigations-create-cancel {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.session-investigations-create-cancel:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+.session-investigations-create-error {
+    font-size: 11px;
+    color: var(--vscode-errorForeground);
 }
 .session-investigation-item {
     padding: 4px 8px;

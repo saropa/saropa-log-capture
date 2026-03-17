@@ -20,11 +20,21 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
-Project Logs recent-updates indicators and last-viewed tracking.
+Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runbook and diagnostic message); Project Logs recent-updates indicators and last-viewed tracking; investigation UX improvements.
 
 ### Added
 
+• **Late-start fallback** — when output is buffered and no log session exists (e.g. Dart run or Cursor never fired `onDidStartDebugSession`), the extension starts capture using the active debug session so logs are still written.
+
+• **Recent-child alias window** — parent/child fallback now aliases when exactly one owner was created in the last 30s (was 15s) to reduce two-file races for Dart/Flutter.
+
 • **Recent-updates indicators in Project Logs** — Session list shows an **orange** dot for logs that have new lines since you last viewed them, and a **red** dot for logs updated in the last minute. "Last viewed" is updated when you open a session from the list or panel; the list refreshes periodically while a session is recording so the red indicator stays accurate. Active (recording) session continues to use the recording icon only.
+
+• **Investigation UX** — In Project Logs, clicking "+ Create Investigation..." now shows an inline name field in the panel (instead of the VS Code input at the top of the window) so focus stays where the user is looking. Create/Cancel buttons and Enter/Escape keyboard support; loading state ("Creating…") prevents double-submit. Short hint under the Investigations header explains: "Pin sessions and files to search and export together." README clarifies how Investigations differ from Recurring (error-pattern analysis) and Performance (perf analysis).
+
+### Documentation
+
+• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): "Still empty?" first steps (Prev/Next, diagnosticCapture), clearer multi-session fallback steps, note that performance integration does not cause empty logs. Diagnostic message when routing to most recent session now tells users to use Prev/Next if the open log looks empty.
 
 ---
 
@@ -46,17 +56,9 @@ Empty log file fixes and capture safeguards: replay all early output, single- an
 
 • **Buffer timeout warning** — after 30s of buffered output with no log session for that id, a one-time warning is logged to the Saropa Log Capture output channel.
 
-• **Late-start fallback** — when output is buffered and no log session exists (e.g. Dart run or Cursor never fired `onDidStartDebugSession`), the extension starts capture using the active debug session so logs are still written.
-
-• **Recent-child alias window** — parent/child fallback now aliases when exactly one owner was created in the last 30s (was 15s) to reduce two-file races for Dart/Flutter.
-
 ### Fixed
 
 • Empty logs / dropped output regression introduced in 3.1.3 (replay and session routing).
-
-### Documentation
-
-• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): "Still empty?" first steps (Prev/Next, diagnosticCapture), clearer multi-session fallback steps, note that performance integration does not cause empty logs. Diagnostic message when routing to most recent session now tells users to use Prev/Next if the open log looks empty.
 
 ---
 
