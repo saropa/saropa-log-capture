@@ -1,0 +1,10 @@
+{
+	"exclude": ["src/test/**", "out/test/**"],
+	"reporter": ["text", "lcov", "html"],
+	"report-dir": "coverage",
+	"check-coverage": true,
+	"branches": 45,
+	"lines": 50,
+	"functions": 50,
+	"statements": 50
+}
