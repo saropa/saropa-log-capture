@@ -1,5 +1,12 @@
 # Runbook: Missing or empty log files
 
+## Still empty or "1 line"? Do this first
+
+- **Use Prev/Next** in the log viewer. The extension often creates two log files (e.g. Dart/Flutter parent and child); output is routed to the **most recent** one. The file you have open may be the older, empty one — switch to the other log.
+- **Turn on diagnostics:** Settings → `saropaLogCapture.diagnosticCapture` = `true`, run again, then **Output → Saropa Log Capture**. If you see "routing output to most recent session" or "new log session created" twice, use Prev/Next to open the log that received the output.
+
+---
+
 ## Why it may have stopped working since v3.1.3
 
 **What changed in the capture path after 3.1.3**
@@ -17,6 +24,8 @@ In 3.1.3, the refactor likely changed **when** things run (e.g. when the DAP tra
 So the regression is probably **timing + session id mismatch**: the 3.1.3 refactor didn’t change capture logic but changed execution order so that “early output under a different id” became common, and we didn’t handle that until the recent fixes (replay all early output, single-session fallback).
 
 **3.2.1** only added parent/child merging; it didn’t fix the “early output under different id” case, which is what the replay-all and single-session fallback address.
+
+**Performance / other integrations:** The performance integration (and other adapters in default `integrations.adapters`) run at session start: sync header contributions (e.g. system snapshot) and optional async work. The sync path is minimal (no blocking I/O) and does not register with or delay the debug lifecycle. Empty logs are not caused by performance tracking being enabled.
 
 ---
 
@@ -36,9 +45,16 @@ So the regression is probably **timing + session id mismatch**: the 3.1.3 refact
 
 So: one log file should get all output even when the adapter or host uses different session ids, ordering, or a parent/child race; and you get a warning if output is stuck buffered.
 
-## If the file appears in Project Logs but is empty when you open it
+## If the file appears in Project Logs but is empty (or "1 line") when you open it
 
-Debug Console has output but the open log shows only a header (or nothing): often a **second log file** was created and output went to the other one. The race guard (5s) and multi-session fallback (route unknown-id output to the newest session) reduce this. If it still happens: enable **`diagnosticCapture`** (step 2 below) and run again; look for "new log session created" twice or "routing output to most recent session". Use **Prev/Next** in the viewer to switch to the other log; the newest session is the one that receives routed output.
+Debug Console has output but the open log shows only a header or one line: often a **second log file** was created and output was routed to the other one. Do this first:
+
+1. **Use Prev/Next in the viewer** — Click **Next** (or **Prev**) in the log viewer bar. The extension routes unknown session-id output to the **most recently created** log, so the other file often has the content. Try both if you have several logs from the same run.
+2. **Enable capture diagnostics** — In Settings set `saropaLogCapture.diagnosticCapture` to `true`, run the same debug scenario again, then open **Output → Saropa Log Capture**. Look for:
+   - **"new log session created"** twice → two files were created (e.g. parent/child race); the second one gets routed output.
+   - **"routing output to most recent session"** → output was sent to the newest log; use Prev/Next to open that file.
+
+The race guard (5s) and multi-session fallback reduce duplicate files and route output to one file; if you still see two files, the newest one is the one that receives routed output.
 
 ## If you still get missing or empty logs
 
