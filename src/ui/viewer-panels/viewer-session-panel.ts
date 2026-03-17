@@ -3,11 +3,13 @@
  * Displays a list of past log sessions loaded from the extension host.
  */
 export { getSessionPanelHtml } from './viewer-session-panel-html';
+import { getSessionPanelEventsScript } from './viewer-session-panel-events';
+import { getSessionInvestigationsScript } from './viewer-session-panel-investigations';
 import { getSessionRenderingScript } from './viewer-session-panel-rendering';
 
 /** Generate the session panel script. */
 export function getSessionPanelScript(): string {
-    return /* js */ `
+  return /* js */ `
 (function() {
     var sessionPanelOpen = false;
     var sessionPanelEl = document.getElementById('session-panel');
@@ -23,9 +25,7 @@ export function getSessionPanelScript(): string {
         reverseSort: false, showLatestOnly: false, panelWidth: 0, dateRange: 'all',
     };
     var MIN_PANEL_WIDTH = 560;
-    /** Ctrl/Cmd-click multi-select: uriString -> true */
     var selectedSessionUris = Object.create(null);
-    /* Shared with icon bar: all slide-out panels use this width so the sidebar does not resize when switching (Options, Project Logs, etc.). */
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
     window.openSessionPanel = function() {
@@ -52,286 +52,13 @@ export function getSessionPanelScript(): string {
     function requestInvestigations() {
         vscodeApi.postMessage({ type: 'requestInvestigations' });
     }
-    /** Whether create-investigation request is in flight; used to disable form and prevent double-submit. */
     var createInvestigationInProgress = false;
 
-    function setCreateInvestigationLoading(loading) {
-        createInvestigationInProgress = loading;
-        var input = document.getElementById('session-investigations-name-input');
-        var confirmBtn = document.getElementById('session-investigations-create-confirm');
-        if (input) input.disabled = loading;
-        if (confirmBtn) {
-            confirmBtn.disabled = loading;
-            confirmBtn.textContent = loading ? 'Creating…' : 'Create';
-        }
-    }
+    ${getSessionInvestigationsScript()}
 
-    function showCreateInvestigationForm(show) {
-        var row = document.getElementById('session-investigations-create-row');
-        var form = document.getElementById('session-investigations-create-form');
-        var input = document.getElementById('session-investigations-name-input');
-        var errEl = document.getElementById('session-investigations-create-error');
-        if (row) row.style.display = show ? 'none' : '';
-        if (form) form.style.display = show ? 'flex' : 'none';
-        if (input) {
-            input.value = '';
-            input.disabled = createInvestigationInProgress;
-            if (show) {
-                input.focus();
-            }
-        }
-        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-        var confirmBtn = document.getElementById('session-investigations-create-confirm');
-        if (confirmBtn) {
-            confirmBtn.disabled = createInvestigationInProgress;
-            confirmBtn.textContent = createInvestigationInProgress ? 'Creating…' : 'Create';
-        }
-    }
-
-    function renderInvestigationsList(data) {
-        var listEl = document.getElementById('session-investigations-list');
-        var createBtn = document.getElementById('session-investigations-create');
-        if (!listEl) return;
-        var invs = data.investigations || [];
-        var activeId = data.activeId || '';
-        if (invs.length === 0) {
-            listEl.innerHTML = '';
-        } else {
-            listEl.innerHTML = invs.map(function(inv) {
-                var active = inv.id === activeId ? ' session-investigation-active' : '';
-                var label = inv.name + (inv.sourceCount ? ' (' + inv.sourceCount + ')' : '');
-                var activeMark = inv.id === activeId ? ' <span class="session-investigation-check">&#10003;</span>' : '';
-                return '<div class="session-investigation-item' + active + '" data-investigation-id="' + escapeAttr(inv.id) + '">' + escapeHtmlText(label) + activeMark + '</div>';
-            }).join('');
-        }
-        if (createBtn) {
-            createBtn.onclick = function() { showCreateInvestigationForm(true); };
-        }
-        listEl.querySelectorAll('.session-investigation-item').forEach(function(el) {
-            el.addEventListener('click', function() {
-                var id = el.getAttribute('data-investigation-id');
-                if (id) vscodeApi.postMessage({ type: 'openInvestigationById', id: id });
-            });
-        });
-        showCreateInvestigationForm(false);
-    }
-
-    /** Inline create-investigation form: name input in-panel so focus stays here instead of top-of-window input. */
-    function bindCreateInvestigationForm() {
-        var form = document.getElementById('session-investigations-create-form');
-        var input = document.getElementById('session-investigations-name-input');
-        var confirmBtn = document.getElementById('session-investigations-create-confirm');
-        var cancelBtn = document.getElementById('session-investigations-create-cancel');
-        var errEl = document.getElementById('session-investigations-create-error');
-        if (!form || !input || !confirmBtn || !cancelBtn || !errEl) return;
-        function hideError() { errEl.style.display = 'none'; errEl.textContent = ''; }
-        function showError(msg) { errEl.textContent = msg; errEl.style.display = ''; }
-        /* Client-side validation messages mirror l10n validation.nameRequired / validation.nameTooLong. */
-        function submit() {
-            if (createInvestigationInProgress) return;
-            var name = (input.value || '').trim();
-            if (!name) { showError('Name is required'); return; }
-            if (name.length > 100) { showError('Name must be 100 characters or less'); return; }
-            hideError();
-            setCreateInvestigationLoading(true);
-            vscodeApi.postMessage({ type: 'createInvestigationWithName', name: name });
-        }
-        confirmBtn.addEventListener('click', submit);
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); submit(); }
-            if (e.key === 'Escape') { e.preventDefault(); showCreateInvestigationForm(false); }
-        });
-        cancelBtn.addEventListener('click', function() { showCreateInvestigationForm(false); });
-    }
-
-    /* ---- Escaping helpers ---- */
-    function escapeAttr(str) { return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
-    function escapeHtmlText(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    /* ---- Rendering (from viewer-session-panel-rendering.ts) ---- */
     ${getSessionRenderingScript()}
 
-    /* ---- Toggle buttons ---- */
-
-    function syncToggleButtons() {
-        var ids = {
-            'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
-            'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
-            'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
-            'session-toggle-reverse': sessionDisplayOptions.reverseSort,
-            'session-toggle-latest': sessionDisplayOptions.showLatestOnly,
-        };
-        for (var id in ids) {
-            var el = document.getElementById(id);
-            if (el) el.classList.toggle('active', ids[id]);
-        }
-        var sortBtn = document.getElementById('session-toggle-reverse');
-        if (sortBtn) {
-            var icon = sortBtn.querySelector('.codicon');
-            if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
-        }
-        var dateRangeEl = document.getElementById('session-date-range');
-        if (dateRangeEl && dateRangeEl.value !== (sessionDisplayOptions.dateRange || 'all')) dateRangeEl.value = sessionDisplayOptions.dateRange || 'all';
-    }
-
-    function toggleOption(key) {
-        var copy = {};
-        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
-        copy[key] = !copy[key];
-        sessionDisplayOptions = copy;
-        sessionListPage = 0;
-        syncToggleButtons();
-        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
-        if (cachedSessions) renderSessionList(cachedSessions);
-    }
-
-    function bindToggle(id, key) {
-        var btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleOption(key); });
-    }
-
-    bindToggle('session-toggle-strip', 'stripDatetime');
-    bindToggle('session-toggle-normalize', 'normalizeNames');
-    bindToggle('session-toggle-headings', 'showDayHeadings');
-    bindToggle('session-toggle-reverse', 'reverseSort');
-    bindToggle('session-toggle-latest', 'showLatestOnly');
-
-    /* Date range dropdown: persist choice via setSessionDisplayOptions and re-render list. */
-    var dateRangeSelect = document.getElementById('session-date-range');
-    if (dateRangeSelect) dateRangeSelect.addEventListener('change', function() {
-        var copy = {};
-        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
-        copy.dateRange = dateRangeSelect.value;
-        sessionDisplayOptions = copy;
-        sessionListPage = 0;
-        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
-        if (cachedSessions) renderSessionList(cachedSessions);
-    });
-
-    initSessionPanelResize(sessionPanelEl, function(w) {
-        if (w > 0) {
-            sessionDisplayOptions.panelWidth = w;
-            window.__sharedPanelWidth = w;
-            vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
-        }
-    });
-
-    /* Handle clicks on session items. Ctrl/Cmd-click toggles multi-select; normal click opens. */
-    if (sessionListEl) {
-        sessionListEl.addEventListener('click', function(e) {
-            var item = e.target.closest('.session-item');
-            if (!item) return;
-            var uri = item.getAttribute('data-uri') || '';
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                selectedSessionUris[uri] = !selectedSessionUris[uri];
-                if (cachedSessions) renderSessionList(cachedSessions);
-                return;
-            }
-            /* Clear multi-select and re-render so selection highlight does not persist after open. */
-            selectedSessionUris = Object.create(null);
-            if (cachedSessions) renderSessionList(cachedSessions);
-            vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
-        });
-        sessionListEl.addEventListener('contextmenu', function(e) {
-            var item = e.target.closest('.session-item');
-            if (!item) return;
-            e.preventDefault();
-            if (typeof showSessionContextMenu !== 'function') return;
-            var selected = sessionListEl.querySelectorAll('.session-item-selected');
-            var useMulti = selected.length > 0 && Array.prototype.indexOf.call(selected, item) >= 0;
-            var uris = useMulti
-                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-uri') || ''; })
-                : [item.getAttribute('data-uri') || ''];
-            var filenames = useMulti
-                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-filename') || ''; })
-                : [item.getAttribute('data-filename') || ''];
-            showSessionContextMenu(e.clientX, e.clientY, uris, filenames, false);
-        });
-    }
-
-    /* Close, refresh, and tag filter buttons. */
-    var closeBtn = document.getElementById('session-close');
-    if (closeBtn) closeBtn.addEventListener('click', closeSessionPanel);
-    var refreshBtn = document.getElementById('session-refresh');
-    if (refreshBtn) refreshBtn.addEventListener('click', requestSessionList);
-    if (sessionListPaginationEl) {
-        sessionListPaginationEl.addEventListener('click', function(e) {
-            var btn = e.target.closest('button');
-            if (!btn || !cachedSessions) return;
-            if (btn.id === 'session-pagination-prev') { sessionListPage--; renderSessionList(cachedSessions); }
-            if (btn.id === 'session-pagination-next') { sessionListPage++; renderSessionList(cachedSessions); }
-        });
-    }
-    var tagsBtn = document.getElementById('session-filter-tags');
-    if (tagsBtn) tagsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (typeof toggleSessionTagsSection === 'function') toggleSessionTagsSection();
-    });
-
-    /* Close on outside click (skip context menu — it's a sibling element). */
-    document.addEventListener('click', function(e) {
-        if (!sessionPanelOpen) return;
-        if (sessionPanelEl && sessionPanelEl.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-sessions');
-        if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-        var ctxMenu = document.getElementById('session-context-menu');
-        if (ctxMenu && ctxMenu.contains(e.target)) return;
-        closeSessionPanel();
-    });
-
-    /* Header: show suffix ( · path) only when non-default folder; whole title area clickable to browse. */
-    function updateHeaderPath(rootLabel, isDefault) {
-        var headerPathEl = document.getElementById('session-header-path');
-        var pathText = document.getElementById('session-path-text');
-        var resetBtn = document.getElementById('session-reset-root');
-        if (headerPathEl) headerPathEl.style.display = isDefault ? 'none' : '';
-        if (pathText) pathText.textContent = isDefault ? '' : (rootLabel || 'No workspace');
-        if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
-    }
-
-    var headerClickableEl = document.getElementById('session-header-clickable');
-    if (headerClickableEl) headerClickableEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
-    var resetRootBtn = document.getElementById('session-reset-root');
-    if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
-
-    /* Listen for messages from the extension. */
-    window.addEventListener('message', function(e) {
-        if (!e.data) return;
-        if (e.data.type === 'sessionListLoading') {
-            var labelEl = document.getElementById('session-loading-label');
-            if (labelEl) labelEl.textContent = (e.data.folderPath ? 'Loading ' + e.data.folderPath + '…' : 'Loading…');
-        }
-        if (e.data.type === 'sessionList') {
-            cachedSessions = e.data.sessions;
-            sessionListPage = 0;
-            renderSessionList(e.data.sessions);
-            if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
-        }
-        if (e.data.type === 'investigationsList') {
-            setCreateInvestigationLoading(false);
-            renderInvestigationsList(e.data);
-            showCreateInvestigationForm(false);
-        }
-        if (e.data.type === 'createInvestigationError') {
-            setCreateInvestigationLoading(false);
-            var errEl = document.getElementById('session-investigations-create-error');
-            if (errEl) { errEl.textContent = e.data.message || 'Failed to create investigation'; errEl.style.display = ''; }
-        }
-        if (e.data.type === 'sessionDisplayOptions') {
-            var opts = e.data.options || sessionDisplayOptions;
-            sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
-            sessionListPage = 0;
-            window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
-            /* Update slot width for any currently open panel. */
-            var slot = document.getElementById('panel-slot');
-            if (slot && parseInt(slot.style.width, 10) > 0) {
-                slot.style.width = window.__sharedPanelWidth + 'px';
-            }
-            syncToggleButtons();
-            if (cachedSessions) renderSessionList(cachedSessions);
-        }
-    });
+    ${getSessionPanelEventsScript()}
 
     bindCreateInvestigationForm();
     syncToggleButtons();
