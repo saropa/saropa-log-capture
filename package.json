@@ -1149,6 +1149,22 @@
           "description": "Include coverage line in context header.",
           "type": "boolean"
         },
+        "saropaLogCapture.integrations.codeQuality.lintReportPath": {
+          "default": "",
+          "description": "Path to lint report (ESLint JSON format). Empty to skip lint data.",
+          "type": "string"
+        },
+        "saropaLogCapture.integrations.codeQuality.scanComments": {
+          "default": false,
+          "description": "Scan referenced source files for comment density and documentation coverage.",
+          "type": "boolean"
+        },
+        "saropaLogCapture.integrations.codeQuality.coverageStaleMaxHours": {
+          "default": 24,
+          "description": "Ignore coverage report older than this many hours (0 = no limit).",
+          "minimum": 0,
+          "type": "number"
+        },
         "saropaLogCapture.integrations.crashDumps.searchPaths": {
           "default": [],
           "description": "Paths to scan for crash dumps (e.g. ${workspaceFolder}, ${env:TEMP}). Empty = workspace + common OS paths.",
