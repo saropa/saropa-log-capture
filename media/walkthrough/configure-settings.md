@@ -41,4 +41,4 @@ Fine-tune the extension to match your workflow.
 - `logDirectory` - Change output folder
 - `maxLogFiles` - Retention limit
 - `showElapsedTime` - Show timing between lines
-- `autoTagRules` - Auto-tag sessions by content
+- `autoTagRules` - Auto-tag logs by content
