@@ -56,7 +56,7 @@ function populateAutoHideModal() {
     for (var i = 0; i < patterns.length; i++) {
         var p = patterns[i];
         var escaped = (p.pattern || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        var badge = p.persistent ? '<span class="auto-hide-badge">always</span>' : '<span class="auto-hide-badge session">session</span>';
+        var badge = p.persistent ? '<span class="auto-hide-badge">always</span>' : '<span class="auto-hide-badge session">this log</span>';
         parts.push(
             '<div class="auto-hide-item">'
             + '<span class="auto-hide-text">' + escaped + '</span>'
