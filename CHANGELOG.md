@@ -18,6 +18,10 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [3.6.1]
+
+---
+
 ## [3.6.0]
 
 Enhanced error analysis with hover popups and inline triage controls.
@@ -222,7 +226,11 @@ In this version we add paginated Project Logs and Export Insights Summary; impro
 
 • **Why it broke after v3.1.3:** The 3.1.3 refactor (modularization only) likely changed the order/timing of tracker registration and event delivery. Output then often arrived before a session existed or under a different session id; we only replayed the “just started” session’s buffer, so other output was dropped. The fixes above (replay all early output + single-session fallback) address that.
 
-• **Race guard when creating a session.** If we're about to create a new log session but exactly one session was created in the last 3 seconds (e.g. the other half of a parent/child pair), we now alias the new session to that one instead of creating a second file. Fixes the case where Project Logs shows the file but it stays empty because output went to a different log file created in the same run.
+• **Race guard when creating a session.** If we're about to create a new log session but exactly one session was created in the last 5 seconds (e.g. the other half of a parent/child pair), we now alias the new session to that one instead of creating a second file. Fixes the case where Project Logs shows the file but it stays empty because output went to a different log file created in the same run.
+
+• **Multi-session fallback.** When output arrives for an unknown session id and there are 2+ active log sessions, we now route that output to the most recently created session so it is not dropped. Ensures at least one file receives output when a race created two files.
+
+• **Buffer timeout warning.** If output has been buffered for a session id for over 30 seconds with no log session ever created, we log a one-time warning to the Saropa Log Capture output channel so you can see that capture may be misconfigured or the session never started.
 
 • **Performance integration: profiler output copy and process memory.** New setting `integrations.performance.profilerOutputPath` (default empty): at session end, an external profiler file (e.g. `.cpuprofile`, `.trace`) is copied into the session folder when the path is set (supports `${workspaceFolder}`; 100 MB max). New setting `integrations.performance.processMetrics` (default `false`): when enabled, the extension captures the debug target process memory (MB) from the DAP `process` event and records it in the performance snapshot and session meta. Process memory is read at session end (Windows: PowerShell; Linux: `/proc/<pid>/status`; macOS: `ps`). If the adapter does not send a process ID or the read fails, the field is omitted.
 

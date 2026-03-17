@@ -28,13 +28,17 @@ So the regression is probably **timing + session id mismatch**: the 3.1.3 refact
 2. **Output under unknown session id when one session exists**  
    If output arrives for a session id we don’t have a log for, but there is exactly one active log session, we route that output to that session and write it.
 
-3. **Race guard:** If we're about to create a new session but one was created in the last 3s, we alias to it so we don't create two files (one empty).
+3. **Race guard:** If we're about to create a new session but one was created in the last 5s, we alias to it so we don't create two files (one empty).
 
-So: one log file should get all output even when the adapter or host uses different session ids, ordering, or a parent/child race.
+4. **Multi-session fallback:** When output arrives for an unknown session id and we have 2+ log sessions (e.g. two files were created), we route that output to the **most recently created** session so it isn't dropped. At least one file gets the output.
+
+5. **Buffer timeout warning:** If output is buffered for a session id for over 30s with no log session ever created, we log a one-time warning to the Saropa Log Capture output channel so you know capture may be misconfigured or the session never started.
+
+So: one log file should get all output even when the adapter or host uses different session ids, ordering, or a parent/child race; and you get a warning if output is stuck buffered.
 
 ## If the file appears in Project Logs but is empty when you open it
 
-Debug Console has output but the open log shows only a header (or nothing): often a **second log file** was created and output went to the other one. The race guard (above) reduces this. After updating, if it still happens: enable **`diagnosticCapture`** (step 2 below) and run again; look for "new log session created" twice — that means two sessions were created. One will have content; use **Prev/Next** in the viewer to switch to the other log.
+Debug Console has output but the open log shows only a header (or nothing): often a **second log file** was created and output went to the other one. The race guard (5s) and multi-session fallback (route unknown-id output to the newest session) reduce this. If it still happens: enable **`diagnosticCapture`** (step 2 below) and run again; look for "new log session created" twice or "routing output to most recent session". Use **Prev/Next** in the viewer to switch to the other log; the newest session is the one that receives routed output.
 
 ## If you still get missing or empty logs
 
@@ -45,6 +49,7 @@ Debug Console has output but the open log shows only a header (or nothing): ofte
    Set `saropaLogCapture.diagnosticCapture` to `true`, run a debug session, then open **Output → Saropa Log Capture**:
    - **"replaying N early event(s) from sessionId=X into log"** — early output was buffered under another id and is now being replayed into the log.
    - **"routing output to single active session"** — output was for an unknown id and was routed to the single open session.
+   - **"routing output to most recent session"** — output was for an unknown id and was routed to the newest of two or more log sessions (multi-session fallback).
    - **"output written to log sessionId=…"** — output is being written.
    - **"output buffered (no session yet)"** and you never see a session created — session never started (e.g. capture disabled, or `initializeSession` returned undefined).
    - **No capture lines at all** — the DAP tracker is not receiving output (adapter or host not sending output events to the tracker).
