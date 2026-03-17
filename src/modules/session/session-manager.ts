@@ -34,6 +34,10 @@ export class SessionManagerImpl implements SessionManager {
     private readonly bufferingLoggedFor = new Set<string>();
     /** Session ids we've logged "output written" for (diagnosticCapture, once per session). */
     private readonly diagnosticWrittenLoggedFor = new Set<string>();
+    /** First time we buffered output for a session id (for timeout warning). */
+    private readonly firstBufferTime = new Map<string, number>();
+    /** Session ids we've already warned about buffer timeout (once per id). */
+    private readonly bufferTimeoutWarnedFor = new Set<string>();
     private readonly lineListeners: LineListener[] = [];
     private readonly splitListeners: SplitListener[] = [];
     private watcher: KeywordWatcher;
@@ -96,7 +100,28 @@ export class SessionManagerImpl implements SessionManager {
                 if (this.cachedConfig.diagnosticCapture) {
                     this.outputChannel.appendLine(`Capture diagnostic: routing output to single active session (incoming sessionId=${sessionId})`);
                 }
+            } else if (this.ownerSessionIds.size >= 2) {
+                // Multi-session fallback: route to the most recently created session so we don't drop output when we have two files (e.g. race).
+                const newestId = this.getMostRecentOwnerSessionId();
+                if (newestId) {
+                    effectiveSessionId = newestId;
+                    if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
+                        this.outputChannel.appendLine(`Capture diagnostic: routing output to most recent session (incoming sessionId=${sessionId})`);
+                    }
+                } else {
+                    if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
+                        this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
+                    }
+                    this.bufferingLoggedFor.add(sessionId);
+                }
             } else {
+                const now = Date.now();
+                if (!this.firstBufferTime.has(sessionId)) { this.firstBufferTime.set(sessionId, now); }
+                const bufferingMs = now - (this.firstBufferTime.get(sessionId) ?? now);
+                if (bufferingMs > 30_000 && !this.bufferTimeoutWarnedFor.has(sessionId)) {
+                    this.bufferTimeoutWarnedFor.add(sessionId);
+                    this.outputChannel.appendLine(`Saropa Log Capture: output has been buffered for sessionId=${sessionId} for over 30s with no log session — enable diagnosticCapture or check capture is enabled.`);
+                }
                 if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
                     this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
                 }
@@ -137,6 +162,7 @@ export class SessionManagerImpl implements SessionManager {
             this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
             this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
             replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+            this.clearBufferTimeoutState();
             return;
         }
         // Parent started after child (e.g. Flutter after Dart VM): reuse the child's LogSession so one file gets all output.
@@ -145,6 +171,7 @@ export class SessionManagerImpl implements SessionManager {
                 this.sessions.set(session.id, logSession);
                 this.outputChannel.appendLine(`Parent session aliased to existing child: ${session.type}`);
                 replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+                this.clearBufferTimeoutState();
                 return;
             }
         }
@@ -154,15 +181,17 @@ export class SessionManagerImpl implements SessionManager {
             this.sessions.set(session.id, recentChild.logSession);
             this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
             replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+            this.clearBufferTimeoutState();
             return;
         }
         // Race guard: one session was just created (e.g. other half of parent/child); alias to it so we don't create two files (one empty).
-        const recentRace = this.getSingleRecentOwnerSession(3000);
+        const recentRace = this.getSingleRecentOwnerSession(5000);
         if (recentRace) {
             this.sessions.set(session.id, recentRace.logSession);
             this.outputChannel.appendLine(`Session aliased to just-created session (race guard): ${session.type}`);
             replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
             replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
+            this.clearBufferTimeoutState();
             return;
         }
         const result = await initializeSession({
@@ -193,6 +222,7 @@ export class SessionManagerImpl implements SessionManager {
         this.statusBar.show();
         replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
         replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
+        this.clearBufferTimeoutState();
     }
 
     /** Stop and finalize a debug session's log file. */
@@ -202,6 +232,8 @@ export class SessionManagerImpl implements SessionManager {
         this.ownerSessionCreatedAt.delete(session.id);
         this.bufferingLoggedFor.delete(session.id);
         this.diagnosticWrittenLoggedFor.delete(session.id);
+        this.firstBufferTime.delete(session.id);
+        this.bufferTimeoutWarnedFor.delete(session.id);
         const logSession = this.sessions.get(session.id);
         if (!logSession) { return; }
         this.sessions.delete(session.id);
@@ -309,6 +341,7 @@ export class SessionManagerImpl implements SessionManager {
         this.childToParentId.clear();
         this.ownerSessionCreatedAt.clear();
         this.bufferingLoggedFor.clear();
+        this.clearBufferTimeoutState();
         const unique = new Set<LogSession>(this.sessions.values());
         await Promise.allSettled([...unique].map(s => s.stop()));
         this.sessions.clear();
@@ -335,6 +368,26 @@ export class SessionManagerImpl implements SessionManager {
             }
         }
         return null;
+    }
+
+    /** Clear buffer-timeout tracking (call when a session is created or aliased so we don't carry stale state). */
+    private clearBufferTimeoutState(): void {
+        this.firstBufferTime.clear();
+        this.bufferTimeoutWarnedFor.clear();
+    }
+
+    /** Returns the owner session id that was created most recently (for multi-session fallback routing). */
+    private getMostRecentOwnerSessionId(): string | null {
+        let newestId: string | null = null;
+        let newestAt = 0;
+        for (const sid of this.ownerSessionIds) {
+            const at = this.ownerSessionCreatedAt.get(sid) ?? 0;
+            if (at > newestAt && this.sessions.has(sid)) {
+                newestAt = at;
+                newestId = sid;
+            }
+        }
+        return newestId;
     }
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
