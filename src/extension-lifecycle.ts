@@ -26,57 +26,83 @@ interface DebugLifecycleDeps {
     readonly fireSessionEnd: (event: SaropaSessionEvent) => void;
 }
 
+/** Session ids we've already triggered a late start for (output arrived before onDidStartDebugSession). */
+const lateStartTriggered = new Set<string>();
+
+/** Apply UI state after a session has started (shared by onDidStartDebugSession and late-start fallback). */
+function applySessionStartedState(
+    deps: DebugLifecycleDeps,
+    session: vscode.DebugSession,
+): void {
+    const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart } = deps;
+    const activeSession = sessionManager.getActiveSession();
+    const filename = sessionManager.getActiveFilename();
+    if (filename) { broadcaster.setFilename(filename); }
+    broadcaster.setSessionActive(true);
+    viewerProvider.setSessionNavInfo(false, false, 0, 0);
+    if (activeSession?.fileUri) { broadcaster.setCurrentFile(activeSession.fileUri); }
+    broadcaster.setSplitInfo(1, 1);
+    broadcaster.setSessionInfo({
+        'Date': new Date().toISOString(),
+        'Project': session.workspaceFolder?.name ?? 'Unknown',
+        'Debug Adapter': session.type,
+        'launch.json': session.configuration.name,
+        'VS Code': vscode.version,
+        'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
+        'OS': `${os.type()} ${os.release()} (${os.arch()})`,
+    });
+    const cfg = getConfig();
+    if (cfg.exclusions.length > 0) { broadcaster.setExclusions(cfg.exclusions); }
+    if (cfg.autoHidePatterns.length > 0) { broadcaster.setAutoHidePatterns(cfg.autoHidePatterns); }
+    if (cfg.showElapsedTime) { broadcaster.setShowElapsed(true); }
+    if (cfg.showDecorations) { broadcaster.setShowDecorations(true); }
+    broadcaster.setErrorClassificationSettings(
+        cfg.suppressTransientErrors ?? false,
+        cfg.breakOnCritical ?? false,
+        cfg.levelDetection ?? "strict",
+        cfg.deemphasizeFrameworkLevels ?? false
+    );
+    if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }
+    broadcaster.setContextLines(cfg.filterContextLines);
+    broadcaster.setContextViewLines(cfg.contextViewLines);
+    broadcaster.setCopyContextLines(cfg.copyContextLines);
+    broadcaster.setPresets(loadPresets());
+    historyProvider.setActiveUri(activeSession?.fileUri);
+    historyProvider.refresh();
+    fireSessionStart({
+        debugSessionId: session.id,
+        debugAdapterType: session.type,
+        projectName: session.workspaceFolder?.name ?? 'Unknown',
+        fileUri: activeSession?.fileUri,
+    });
+    startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
+}
+
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
     const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart, fireSessionEnd } = deps;
+
+    // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
+    // try to start capture using the active debug session so dart run and similar still get logs.
+    sessionManager.setOnOutputBufferedWithNoSession((sessionId: string) => {
+        const active = vscode.debug.activeDebugSession;
+        if (!active || active.id !== sessionId) { return; }
+        if (lateStartTriggered.has(sessionId)) { return; }
+        lateStartTriggered.add(sessionId);
+        void sessionManager.startSession(active, context).then(() => {
+            broadcaster.setPaused(false);
+            applySessionStartedState(deps, active);
+        }).catch(() => { /* avoid unhandled rejection if startSession fails */ });
+    });
+
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
-            // Session start: create log session, then push state to broadcaster and history.
             broadcaster.setPaused(false);
             await sessionManager.startSession(session, context);
-            const activeSession = sessionManager.getActiveSession();
-            const filename = sessionManager.getActiveFilename();
-            if (filename) { broadcaster.setFilename(filename); }
-            broadcaster.setSessionActive(true);
-            viewerProvider.setSessionNavInfo(false, false, 0, 0);
-            if (activeSession?.fileUri) { broadcaster.setCurrentFile(activeSession.fileUri); }
-            broadcaster.setSplitInfo(1, 1);
-            broadcaster.setSessionInfo({
-                'Date': new Date().toISOString(),
-                'Project': session.workspaceFolder?.name ?? 'Unknown',
-                'Debug Adapter': session.type,
-                'launch.json': session.configuration.name,
-                'VS Code': vscode.version,
-                'Extension': `saropa-log-capture v${context.extension.packageJSON.version ?? '0.0.0'}`,
-                'OS': `${os.type()} ${os.release()} (${os.arch()})`,
-            });
-            const cfg = getConfig();
-            if (cfg.exclusions.length > 0) { broadcaster.setExclusions(cfg.exclusions); }
-            if (cfg.autoHidePatterns.length > 0) { broadcaster.setAutoHidePatterns(cfg.autoHidePatterns); }
-            if (cfg.showElapsedTime) { broadcaster.setShowElapsed(true); }
-            if (cfg.showDecorations) { broadcaster.setShowDecorations(true); }
-            broadcaster.setErrorClassificationSettings(
-                cfg.suppressTransientErrors ?? false,
-                cfg.breakOnCritical ?? false,
-                cfg.levelDetection ?? "strict",
-                cfg.deemphasizeFrameworkLevels ?? false
-            );
-            if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }
-            broadcaster.setContextLines(cfg.filterContextLines);
-            broadcaster.setContextViewLines(cfg.contextViewLines);
-            broadcaster.setCopyContextLines(cfg.copyContextLines);
-            broadcaster.setPresets(loadPresets());
-            historyProvider.setActiveUri(activeSession?.fileUri);
-            historyProvider.refresh();
-            fireSessionStart({
-                debugSessionId: session.id,
-                debugAdapterType: session.type,
-                projectName: session.workspaceFolder?.name ?? 'Unknown',
-                fileUri: activeSession?.fileUri,
-            });
-            startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
+            applySessionStartedState(deps, session);
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
+            lateStartTriggered.delete(session.id);
             // Fire API event before stopping so fileUri is still valid for consumers.
             const ending = sessionManager.getActiveSession();
             fireSessionEnd({

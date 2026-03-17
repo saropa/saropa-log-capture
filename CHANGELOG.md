@@ -36,9 +36,17 @@ Empty log file fixes and capture safeguards: replay all early output, single- an
 
 • **Buffer timeout warning** — after 30s of buffered output with no log session for that id, a one-time warning is logged to the Saropa Log Capture output channel.
 
+• **Late-start fallback** — when output is buffered and no log session exists (e.g. Dart run or Cursor never fired `onDidStartDebugSession`), the extension starts capture using the active debug session so logs are still written.
+
+• **Recent-child alias window** — parent/child fallback now aliases when exactly one owner was created in the last 30s (was 15s) to reduce two-file races for Dart/Flutter.
+
 ### Fixed
 
 • Empty logs / dropped output regression introduced in 3.1.3 (replay and session routing).
+
+### Documentation
+
+• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): "Still empty?" first steps (Prev/Next, diagnosticCapture), clearer multi-session fallback steps, note that performance integration does not cause empty logs. Diagnostic message when routing to most recent session now tells users to use Prev/Next if the open log looks empty.
 
 ---
 
