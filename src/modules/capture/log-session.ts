@@ -14,9 +14,10 @@ import {
     SessionContext,
     SourceLocation,
     generateBaseFileName,
-    formatDateFolder,
     formatLine,
     generateContextHeader,
+    getLogDirUri,
+    computeElapsed as computeElapsedMs,
 } from './log-session-helpers';
 import { getPartFileName, performFileSplit } from './log-session-split';
 export { SessionContext };
@@ -76,7 +77,7 @@ export class LogSession {
 
     /** Create log directory, open first part file, write context header (and optional integration header lines). */
     async start(extraHeaderLines?: readonly string[]): Promise<void> {
-        const logDirUri = this.getLogDirUri();
+        const logDirUri = getLogDirUri(this.context, this.config);
         const logDirPath = logDirUri.fsPath;
 
         await fs.promises.mkdir(logDirPath, { recursive: true });
@@ -121,7 +122,7 @@ export class LogSession {
             return; // This line is not written; the split marker in the new file documents the boundary.
         }
 
-        const elapsedMs = this.computeElapsed(timestamp);
+        const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, timestamp);
         const formatted = formatLine(text, category, {
             timestamp,
             includeTimestamp: this.config.includeTimestamp,
@@ -218,7 +219,7 @@ export class LogSession {
         try {
             const result = await performFileSplit({
                 writeStream: this.writeStream,
-                logDirPath: this.getLogDirUri().fsPath,
+                logDirPath: getLogDirUri(this.context, this.config).fsPath,
                 baseFileName: this._baseFileName,
                 partNumber: this._partNumber,
                 context: this.context,
@@ -283,19 +284,5 @@ export class LogSession {
         this.onLineCountChanged(0);
     }
 
-    /** Compute elapsed ms since previous line. */
-    private computeElapsed(current: Date): number | undefined {
-        if (!this.config.includeElapsedTime || !this._previousTimestamp) {
-            return undefined;
-        }
-        return current.getTime() - this._previousTimestamp.getTime();
-    }
-
-    private getLogDirUri(): vscode.Uri {
-        const base = path.isAbsolute(this.config.logDirectory)
-            ? vscode.Uri.file(this.config.logDirectory)
-            : vscode.Uri.joinPath(this.context.workspaceFolder.uri, this.config.logDirectory);
-        return vscode.Uri.joinPath(base, formatDateFolder(this.context.date));
-    }
 }
 
