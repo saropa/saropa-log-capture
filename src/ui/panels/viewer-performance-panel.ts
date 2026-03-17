@@ -5,6 +5,8 @@
  * "Trends" requests cross-session aggregated data from the extension.
  */
 import { getPerformanceCurrentScript } from './viewer-performance-current';
+import { getPerformanceTrendsScript } from './viewer-performance-trends';
+import { getPerformanceSessionTabScript } from './viewer-performance-session-tab';
 
 /** Generate the performance panel HTML. */
 export function getPerformancePanelHtml(): string {
@@ -97,7 +99,14 @@ export function getPerformancePanelScript(): string {
         if (typeof clearActivePanel === 'function') clearActivePanel('performance');
     };
 
-    /* ---- Tab switching ---- */
+    function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function fmtTs(ts) { if (!ts) return ''; var d = new Date(ts); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+    function fmtNum(n) { return n.toLocaleString(); }
+    function fmtKB(kb) { if (kb >= 1024 * 1024) return (kb / (1024 * 1024)).toFixed(1) + ' GB'; if (kb >= 1024) return (kb / 1024).toFixed(1) + ' MB'; return kb + ' KB'; }
+
+    ${getPerformanceSessionTabScript()}
+    ${getPerformanceTrendsScript()}
 
     function switchTab(tab) {
         ppActiveTab = tab;
@@ -116,87 +125,11 @@ export function getPerformancePanelScript(): string {
         }
     }
 
-    function setSessionTabLoading(loading) {
-        var ppSnapshot = document.getElementById('pp-snapshot');
-        var ppSamples = document.getElementById('pp-samples');
-        var ppProfiler = document.getElementById('pp-profiler');
-        var msg = loading ? 'Loading\u2026' : '';
-        if (ppSnapshot && loading) ppSnapshot.textContent = msg;
-        if (ppSamples && loading) ppSamples.textContent = msg;
-        if (ppProfiler && loading) ppProfiler.textContent = msg;
-    }
-
     if (ppTabCurrent) ppTabCurrent.addEventListener('click', function() { switchTab('current'); });
     if (ppTabTrends) ppTabTrends.addEventListener('click', function() { switchTab('trends'); });
     if (ppTabSession) ppTabSession.addEventListener('click', function() { switchTab('session'); });
 
     ${getPerformanceCurrentScript()}
-
-    /* ---- Trends view ---- */
-
-    function requestTrends() {
-        if (ppEmpty) ppEmpty.style.display = 'none';
-        if (ppLoading) ppLoading.style.display = '';
-        vscodeApi.postMessage({ type: 'requestPerformanceData' });
-    }
-
-    function renderTrends(trends) {
-        if (ppLoading) ppLoading.style.display = 'none';
-        if (!trends || trends.length === 0) {
-            if (ppTrendBody) ppTrendBody.innerHTML = '';
-            if (ppChartArea) ppChartArea.style.display = 'none';
-            if (ppEmpty && ppActiveTab === 'trends') ppEmpty.style.display = '';
-            return;
-        }
-        if (ppEmpty) ppEmpty.style.display = 'none';
-        ppTrendsData = trends;
-        renderTrendTable(trends);
-        renderChart(trends[0]);
-    }
-
-    function renderTrendTable(trends) {
-        if (!ppTrendBody) return;
-        ppTrendBody.innerHTML = trends.map(function(t, i) {
-            var arrow = t.trend === 'degrading' ? '<span class="pp-trend-up">\\u2191</span>'
-                : t.trend === 'improving' ? '<span class="pp-trend-down">\\u2193</span>'
-                : '<span class="pp-trend-stable">\\u2192</span>';
-            var cls = i === 0 ? ' class="pp-selected"' : '';
-            return '<tr' + cls + ' data-pp-trend="' + i + '"><td>' + esc(t.name) + '</td><td>' + t.overallAvgMs + 'ms</td><td>' + t.sessionCount + '</td><td>' + arrow + '</td></tr>';
-        }).join('');
-    }
-
-    function renderChart(trend) {
-        if (!ppChartSvg || !ppChartArea || !trend || !trend.timeline || trend.timeline.length < 2) {
-            if (ppChartArea) ppChartArea.style.display = 'none';
-            return;
-        }
-        ppChartArea.style.display = '';
-        if (ppChartTitle) ppChartTitle.textContent = trend.name;
-        var tl = trend.timeline;
-        var maxMs = Math.max.apply(null, tl.map(function(p) { return p.avgMs; }));
-        var minMs = Math.min.apply(null, tl.map(function(p) { return p.avgMs; }));
-        var range = maxMs - minMs || 1;
-        var w = 380, h = 120, pad = 30, plotW = w - pad * 2, plotH = h - pad;
-        var points = tl.map(function(p, i) {
-            var x = pad + (tl.length === 1 ? plotW / 2 : (i / (tl.length - 1)) * plotW);
-            var y = pad + plotH - ((p.avgMs - minMs) / range) * (plotH - 10);
-            return { x: x, y: y, ms: p.avgMs, session: p.session };
-        });
-        var polyline = points.map(function(p) { return p.x + ',' + p.y; }).join(' ');
-        var dots = points.map(function(p) {
-            return '<circle class="pp-chart-dot" cx="' + p.x + '" cy="' + p.y + '" r="3"><title>' + p.ms + 'ms</title></circle>';
-        }).join('');
-        var yTop = Math.round(maxMs) + 'ms';
-        var yBot = Math.round(minMs) + 'ms';
-        ppChartSvg.innerHTML =
-            '<line class="pp-chart-axis" x1="' + pad + '" y1="' + pad + '" x2="' + pad + '" y2="' + (h - 5) + '"/>' +
-            '<line class="pp-chart-axis" x1="' + pad + '" y1="' + (h - 5) + '" x2="' + (w - 5) + '" y2="' + (h - 5) + '"/>' +
-            '<text class="pp-chart-label" x="2" y="' + (pad + 4) + '">' + yTop + '</text>' +
-            '<text class="pp-chart-label" x="2" y="' + (h - 8) + '">' + yBot + '</text>' +
-            '<polyline class="pp-chart-line" points="' + polyline + '"/>' + dots;
-    }
-
-    /* ---- Click handlers ---- */
 
     if (ppCurrentView) ppCurrentView.addEventListener('click', function(e) {
         var row = e.target.closest('.pp-event-row');
@@ -235,8 +168,6 @@ export function getPerformancePanelScript(): string {
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
 
-    /* ---- Outside click ---- */
-
     document.addEventListener('click', function(e) {
         if (!ppOpen) return;
         if (ppPanel && ppPanel.contains(e.target)) return;
@@ -246,8 +177,6 @@ export function getPerformancePanelScript(): string {
         if (perfChip && (perfChip === e.target || perfChip.contains(e.target))) return;
         closePerformancePanel();
     });
-
-    /* ---- Message listener ---- */
 
     window.addEventListener('message', function(e) {
         if (!e.data) return;
@@ -259,55 +188,6 @@ export function getPerformancePanelScript(): string {
             }
         }
     });
-
-    function renderSessionData(sessionData) {
-        var ppIntro = document.getElementById('pp-session-intro');
-        var ppSnapshot = document.getElementById('pp-snapshot');
-        var ppSamples = document.getElementById('pp-samples');
-        var ppProfiler = document.getElementById('pp-profiler');
-        var snap = sessionData && sessionData.snapshot;
-        var hasData = snap && typeof snap === 'object';
-        if (ppIntro) ppIntro.style.display = hasData ? 'none' : 'block';
-        if (ppSnapshot) {
-            if (hasData) {
-                var s = snap;
-                var txt = s.cpus + ' CPUs, ' + (s.totalMemMb || 0) + ' MB RAM (' + (s.freeMemMb || 0) + ' MB free)';
-                if (s.processMemMb != null) txt += '; process: ' + s.processMemMb + ' MB';
-                ppSnapshot.textContent = txt;
-            } else {
-                ppSnapshot.textContent = 'Not recorded for this log.';
-            }
-        }
-        if (ppSamples) {
-            if (sessionData && sessionData.samplesFile && sessionData.sampleCount != null) {
-                ppSamples.textContent = sessionData.sampleCount + ' samples in ' + sessionData.samplesFile + '. Use "Open log folder" to view.';
-            } else {
-                ppSamples.textContent = 'Not recorded for this log.';
-            }
-        }
-        if (ppProfiler) {
-            ppProfiler.textContent = 'None.';
-        }
-    }
-
-    /* ---- Helpers ---- */
-
-    function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-    function fmtTs(ts) {
-        if (!ts) return '';
-        var d = new Date(ts);
-        return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
-    }
-
-    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
-    function fmtNum(n) { return n.toLocaleString(); }
-
-    function fmtKB(kb) {
-        if (kb >= 1024 * 1024) return (kb / (1024 * 1024)).toFixed(1) + ' GB';
-        if (kb >= 1024) return (kb / 1024).toFixed(1) + ' MB';
-        return kb + ' KB';
-    }
 })();
 `;
 }

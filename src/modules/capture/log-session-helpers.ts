@@ -5,6 +5,7 @@
  * filename generation, line formatting, and context header creation.
  */
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { SaropaLogCaptureConfig, shouldRedactEnvVar } from '../config/config';
 import { SplitReason, formatSplitReason } from '../misc/file-splitter';
@@ -192,4 +193,24 @@ function redactEnv(
         result[key] = shouldRedactEnvVar(key, patterns) ? '***REDACTED***' : value;
     }
     return result;
+}
+
+/** Resolve the log directory URI for a session (date subfolder under config.logDirectory). */
+export function getLogDirUri(context: SessionContext, config: SaropaLogCaptureConfig): vscode.Uri {
+    const base = path.isAbsolute(config.logDirectory)
+        ? vscode.Uri.file(config.logDirectory)
+        : vscode.Uri.joinPath(context.workspaceFolder.uri, config.logDirectory);
+    return vscode.Uri.joinPath(base, formatDateFolder(context.date));
+}
+
+/** Compute elapsed ms since previous line for optional [+Nms] in log lines. */
+export function computeElapsed(
+    includeElapsedTime: boolean,
+    previousTimestamp: Date | undefined,
+    current: Date,
+): number | undefined {
+    if (!includeElapsedTime || !previousTimestamp) {
+        return undefined;
+    }
+    return current.getTime() - previousTimestamp.getTime();
 }

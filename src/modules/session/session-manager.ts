@@ -9,11 +9,12 @@ import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
-import { initializeSession } from './session-lifecycle-init';
-import { finalizeSession, buildSessionStats } from './session-lifecycle-finalize';
 import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
-import { replayEarlyBuffer as replayEarlyBufferHelper, replayAllOtherEarlyBuffers as replayAllOtherEarlyBuffersHelper } from './session-manager-replay';
+import { resolveEffectiveSessionId } from './session-manager-routing';
+import { startSessionImpl, type StartSessionDeps } from './session-manager-start';
+import { stopSessionImpl, type StopSessionDeps } from './session-manager-stop';
+import { replayEarlyBuffer, replayAllOtherEarlyBuffers } from './session-manager-replay';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
@@ -102,47 +103,19 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {
-        let effectiveSessionId = sessionId;
-        if (!this.sessions.has(sessionId)) {
-            // Single-session fallback: route to the one open log so we don't drop output when the adapter uses a different session id.
-            if (this.ownerSessionIds.size === 1) {
-                effectiveSessionId = this.ownerSessionIds.values().next().value as string;
-                if (this.cachedConfig.diagnosticCapture) {
-                    this.outputChannel.appendLine(`Capture diagnostic: routing output to single active session (incoming sessionId=${sessionId})`);
-                }
-            } else if (this.ownerSessionIds.size >= 2) {
-                // Multi-session fallback: route to the most recently created session so we don't drop output when we have two files (e.g. race).
-                const newestId = this.getMostRecentOwnerSessionId();
-                if (newestId) {
-                    effectiveSessionId = newestId;
-                    if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
-                        this.outputChannel.appendLine(`Capture diagnostic: routing output to most recent session (incoming sessionId=${sessionId}). If the open log looks empty, use Prev/Next in the viewer to switch to the other log.`);
-                    }
-                } else {
-                    if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
-                        this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
-                    }
-                    this.bufferingLoggedFor.add(sessionId);
-                }
-            } else {
-                const now = Date.now();
-                if (!this.firstBufferTime.has(sessionId)) { this.firstBufferTime.set(sessionId, now); }
-                const bufferingMs = now - (this.firstBufferTime.get(sessionId) ?? now);
-                if (bufferingMs > 30_000 && !this.bufferTimeoutWarnedFor.has(sessionId)) {
-                    this.bufferTimeoutWarnedFor.add(sessionId);
-                    this.outputChannel.appendLine(`Saropa Log Capture: output has been buffered for sessionId=${sessionId} for over 30s with no log session — enable diagnosticCapture or check capture is enabled.`);
-                }
-                if (this.cachedConfig.diagnosticCapture && !this.bufferingLoggedFor.has(sessionId)) {
-                    this.outputChannel.appendLine(`Capture diagnostic: output buffered (no session yet) sessionId=${sessionId}`);
-                }
-                this.bufferingLoggedFor.add(sessionId);
-                // Extension lifecycle may start capture via active debug session (late-start fallback for Dart run / Cursor); it guards with lateStartTriggered so startSession is only invoked once per session.
-                this.onOutputBufferedWithNoSession?.(sessionId);
-            }
-        } else if (this.cachedConfig.diagnosticCapture && !this.diagnosticWrittenLoggedFor.has(sessionId)) {
-            this.diagnosticWrittenLoggedFor.add(sessionId);
-            this.outputChannel.appendLine(`Capture diagnostic: output written to log sessionId=${sessionId}`);
-        }
+        const effectiveSessionId = resolveEffectiveSessionId(sessionId, {
+            sessions: this.sessions,
+            ownerSessionIds: this.ownerSessionIds,
+            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            bufferingLoggedFor: this.bufferingLoggedFor,
+            bufferTimeoutWarnedFor: this.bufferTimeoutWarnedFor,
+            firstBufferTime: this.firstBufferTime,
+            diagnosticWrittenLoggedFor: this.diagnosticWrittenLoggedFor,
+            config: this.cachedConfig,
+            outputChannel: this.outputChannel,
+            onOutputBufferedWithNoSession: this.onOutputBufferedWithNoSession,
+            getMostRecentOwnerSessionId: () => this.getMostRecentOwnerSessionId(),
+        });
         const counters = { categoryCounts: this.categoryCounts, floodSuppressedTotal: this.floodSuppressedTotal };
         processOutputEvent(
             { sessions: this.sessions, earlyBuffer: this.earlyBuffer, config: this.cachedConfig, exclusionRules: this.exclusionRules, floodGuard: this.floodGuard },
@@ -167,55 +140,23 @@ export class SessionManagerImpl implements SessionManager {
         context: vscode.ExtensionContext,
     ): Promise<void> {
         this.cachedConfig = getConfig();
-        if (!this.cachedConfig.enabled) { return; }
-
-        // Child debug sessions (e.g. Dart VM) share the parent's LogSession so output goes to one file.
-        if (session.parentSession && this.sessions.has(session.parentSession.id)) {
-            this.sessions.set(session.id, this.sessions.get(session.parentSession.id)!);
-            this.outputChannel.appendLine(`Child session aliased to parent: ${session.type}`);
-            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-            this.clearBufferTimeoutState();
-            return;
-        }
-        // Parent started after child (e.g. Flutter after Dart VM): reuse the child's LogSession so one file gets all output.
-        for (const [sid, logSession] of this.sessions) {
-            if (this.childToParentId.get(sid) === session.id) {
-                this.sessions.set(session.id, logSession);
-                this.outputChannel.appendLine(`Parent session aliased to existing child: ${session.type}`);
-                replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-                this.clearBufferTimeoutState();
-                return;
-            }
-        }
-        // Fallback: child may have started first without parentSession set. If exactly one owner was created in the last 30s, alias to it.
-        const recentChild = !session.parentSession ? this.getSingleRecentOwnerSession(30_000) : null;
-        if (recentChild) {
-            this.sessions.set(session.id, recentChild.logSession);
-            this.outputChannel.appendLine(`Parent session aliased to recent child (fallback): ${session.type}`);
-            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-            this.clearBufferTimeoutState();
-            return;
-        }
-        // Race guard: one session was just created (e.g. other half of parent/child); alias to it so we don't create two files (one empty).
-        const recentRace = this.getSingleRecentOwnerSession(5000);
-        if (recentRace) {
-            this.sessions.set(session.id, recentRace.logSession);
-            this.outputChannel.appendLine(`Session aliased to just-created session (race guard): ${session.type}`);
-            replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-            replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
-            this.clearBufferTimeoutState();
-            return;
-        }
-        const result = await initializeSession({
-            session, context,
+        const deps: StartSessionDeps = {
+            config: this.cachedConfig,
+            sessions: this.sessions,
+            ownerSessionIds: this.ownerSessionIds,
+            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            childToParentId: this.childToParentId,
+            earlyBuffer: this.earlyBuffer,
             outputChannel: this.outputChannel,
-            onLineCount: (count) => this.statusBar.updateLineCount(count),
-            onSplit: (newUri, partNumber) => {
-                this.broadcastSplit(newUri, partNumber + 1);
-                this.outputChannel.appendLine(`File split: Part ${partNumber + 1} at ${newUri.fsPath}`);
-            },
-        });
-        if (!result) { return; }
+            getSingleRecentOwnerSession: (windowMs) => this.getSingleRecentOwnerSession(windowMs),
+            statusBar: this.statusBar,
+            broadcastSplit: (uri, totalParts) => this.broadcastSplit(uri, totalParts),
+            onOutputEvent: (id, b) => this.onOutputEvent(id, b),
+            clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+        };
+        const outcome = await startSessionImpl(session, context, deps);
+        if (outcome.kind === 'aliased' || outcome.kind === 'skipped') { return; }
+        const result = outcome.result;
         if (this.cachedConfig.diagnosticCapture) {
             this.outputChannel.appendLine(`Capture diagnostic: new log session created sessionId=${session.id} type=${session.type}`);
         }
@@ -232,52 +173,34 @@ export class SessionManagerImpl implements SessionManager {
         this.sessionStartTime = Date.now();
         this.floodSuppressedTotal = 0;
         this.statusBar.show();
-        replayEarlyBufferHelper(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-        replayAllOtherEarlyBuffersHelper({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
+        replayEarlyBuffer(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
+        replayAllOtherEarlyBuffers({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
         this.clearBufferTimeoutState();
     }
 
     /** Stop and finalize a debug session's log file. */
     async stopSession(session: vscode.DebugSession): Promise<void> {
-        this.earlyBuffer.delete(session.id);
-        this.childToParentId.delete(session.id);
-        this.ownerSessionCreatedAt.delete(session.id);
-        this.bufferingLoggedFor.delete(session.id);
-        this.diagnosticWrittenLoggedFor.delete(session.id);
-        this.firstBufferTime.delete(session.id);
-        this.bufferTimeoutWarnedFor.delete(session.id);
-        const logSession = this.sessions.get(session.id);
-        if (!logSession) { return; }
-        this.sessions.delete(session.id);
-        const debugProcessId = this.processIds.get(session.id);
-        this.processIds.delete(session.id);
-        if (!this.ownerSessionIds.has(session.id)) { return; }
-        this.ownerSessionIds.delete(session.id);
-
-        const stats = buildSessionStats({
-            logSession, sessionStartTime: this.sessionStartTime,
-            categoryCounts: this.categoryCounts,
-            watcher: this.watcher, floodSuppressedTotal: this.floodSuppressedTotal,
-        });
-        const onReportsIndexReady = this.projectIndexer && getConfig().projectIndex.enabled
-            ? (logUri: vscode.Uri) => {
-                this.metadataStore.loadMetadata(logUri).then((meta) => {
-                    this.projectIndexer!.upsertReportEntryFromMeta(logUri, meta).catch(() => {});
-                }).catch(() => {});
-            }
-            : undefined;
-        await finalizeSession({
-            logSession, outputChannel: this.outputChannel,
-            autoTagger: this.autoTagger, metadataStore: this.metadataStore,
-            debugAdapterType: session.type,
+        await stopSessionImpl(session, {
+            earlyBuffer: this.earlyBuffer,
+            childToParentId: this.childToParentId,
+            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            bufferingLoggedFor: this.bufferingLoggedFor,
+            diagnosticWrittenLoggedFor: this.diagnosticWrittenLoggedFor,
+            firstBufferTime: this.firstBufferTime,
+            bufferTimeoutWarnedFor: this.bufferTimeoutWarnedFor,
+            sessions: this.sessions,
+            processIds: this.processIds,
+            ownerSessionIds: this.ownerSessionIds,
             sessionStartTime: this.sessionStartTime,
-            debugProcessId,
-            onReportsIndexReady,
-        }, stats);
-
-        if (this.ownerSessionIds.size === 0) {
-            this.statusBar.hide();
-        }
+            categoryCounts: this.categoryCounts,
+            watcher: this.watcher,
+            floodSuppressedTotal: this.floodSuppressedTotal,
+            outputChannel: this.outputChannel,
+            statusBar: this.statusBar,
+            metadataStore: this.metadataStore,
+            autoTagger: this.autoTagger,
+            projectIndexer: this.projectIndexer,
+        } as StopSessionDeps);
     }
 
     /** Get the active LogSession for the current debug session. */
