@@ -23,6 +23,22 @@ import type { ViewerMessageContext } from './viewer-message-types';
 
 export type { ViewerMessageContext };
 
+/** Build and post investigationsList payload from store; used by requestInvestigations and after createInvestigationWithName. */
+async function postInvestigationsList(ctx: ViewerMessageContext, store: InvestigationStore): Promise<void> {
+  const investigations = await store.listInvestigations();
+  const activeId = await store.getActiveInvestigationId();
+  ctx.post({
+    type: "investigationsList",
+    investigations: investigations.map((inv) => ({
+      id: inv.id,
+      name: inv.name,
+      sourceCount: inv.sources.length,
+      isActive: inv.id === activeId,
+    })),
+    activeId: activeId ?? undefined,
+  });
+}
+
 /**
  * Route a webview message to the appropriate handler.
  * @param msg - Incoming message with at least `type`; payload fields vary by type.
@@ -232,18 +248,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
       case "requestInvestigations":
         void (async () => {
           const store = new InvestigationStore(ctx.context);
-          const investigations = await store.listInvestigations();
-          const activeId = await store.getActiveInvestigationId();
-          ctx.post({
-            type: "investigationsList",
-            investigations: investigations.map((inv) => ({
-              id: inv.id,
-              name: inv.name,
-              sourceCount: inv.sources.length,
-              isActive: inv.id === activeId,
-            })),
-            activeId: activeId ?? undefined,
-          });
+          await postInvestigationsList(ctx, store);
         })();
         break;
       case "openInvestigationById":
@@ -255,6 +260,32 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
           await showInvestigationPanel(store);
         })();
         break;
+      case "createInvestigationWithName": {
+        /* In-panel create: avoid top-of-window input; webview sends name and we create then post updated list. */
+        const name = String(msg.name ?? "").trim();
+        if (!name) {
+          ctx.post({ type: "createInvestigationError", message: t("validation.nameRequired") });
+          break;
+        }
+        if (name.length > 100) {
+          ctx.post({ type: "createInvestigationError", message: t("validation.nameTooLong") });
+          break;
+        }
+        void (async () => {
+          const store = new InvestigationStore(ctx.context);
+          try {
+            const investigation = await store.createInvestigation({ name });
+            await store.setActiveInvestigationId(investigation.id);
+            await showInvestigationPanel(store);
+            await postInvestigationsList(ctx, store);
+            vscode.window.showInformationMessage(t("msg.investigationCreated", name));
+          } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            ctx.post({ type: "createInvestigationError", message });
+          }
+        })();
+        break;
+      }
       case "runCommand":
         void vscode.commands.executeCommand(String(msg.command ?? ""), ...(Array.isArray(msg.args) ? msg.args : []));
         break;

@@ -52,6 +52,42 @@ export function getSessionPanelScript(): string {
     function requestInvestigations() {
         vscodeApi.postMessage({ type: 'requestInvestigations' });
     }
+    /** Whether create-investigation request is in flight; used to disable form and prevent double-submit. */
+    var createInvestigationInProgress = false;
+
+    function setCreateInvestigationLoading(loading) {
+        createInvestigationInProgress = loading;
+        var input = document.getElementById('session-investigations-name-input');
+        var confirmBtn = document.getElementById('session-investigations-create-confirm');
+        if (input) input.disabled = loading;
+        if (confirmBtn) {
+            confirmBtn.disabled = loading;
+            confirmBtn.textContent = loading ? 'Creating…' : 'Create';
+        }
+    }
+
+    function showCreateInvestigationForm(show) {
+        var row = document.getElementById('session-investigations-create-row');
+        var form = document.getElementById('session-investigations-create-form');
+        var input = document.getElementById('session-investigations-name-input');
+        var errEl = document.getElementById('session-investigations-create-error');
+        if (row) row.style.display = show ? 'none' : '';
+        if (form) form.style.display = show ? 'flex' : 'none';
+        if (input) {
+            input.value = '';
+            input.disabled = createInvestigationInProgress;
+            if (show) {
+                input.focus();
+            }
+        }
+        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+        var confirmBtn = document.getElementById('session-investigations-create-confirm');
+        if (confirmBtn) {
+            confirmBtn.disabled = createInvestigationInProgress;
+            confirmBtn.textContent = createInvestigationInProgress ? 'Creating…' : 'Create';
+        }
+    }
+
     function renderInvestigationsList(data) {
         var listEl = document.getElementById('session-investigations-list');
         var createBtn = document.getElementById('session-investigations-create');
@@ -68,13 +104,44 @@ export function getSessionPanelScript(): string {
                 return '<div class="session-investigation-item' + active + '" data-investigation-id="' + escapeAttr(inv.id) + '">' + escapeHtmlText(label) + activeMark + '</div>';
             }).join('');
         }
-        if (createBtn) createBtn.onclick = function() { vscodeApi.postMessage({ type: 'runCommand', command: 'saropaLogCapture.createInvestigation' }); };
+        if (createBtn) {
+            createBtn.onclick = function() { showCreateInvestigationForm(true); };
+        }
         listEl.querySelectorAll('.session-investigation-item').forEach(function(el) {
             el.addEventListener('click', function() {
                 var id = el.getAttribute('data-investigation-id');
                 if (id) vscodeApi.postMessage({ type: 'openInvestigationById', id: id });
             });
         });
+        showCreateInvestigationForm(false);
+    }
+
+    /** Inline create-investigation form: name input in-panel so focus stays here instead of top-of-window input. */
+    function bindCreateInvestigationForm() {
+        var form = document.getElementById('session-investigations-create-form');
+        var input = document.getElementById('session-investigations-name-input');
+        var confirmBtn = document.getElementById('session-investigations-create-confirm');
+        var cancelBtn = document.getElementById('session-investigations-create-cancel');
+        var errEl = document.getElementById('session-investigations-create-error');
+        if (!form || !input || !confirmBtn || !cancelBtn || !errEl) return;
+        function hideError() { errEl.style.display = 'none'; errEl.textContent = ''; }
+        function showError(msg) { errEl.textContent = msg; errEl.style.display = ''; }
+        /* Client-side validation messages mirror l10n validation.nameRequired / validation.nameTooLong. */
+        function submit() {
+            if (createInvestigationInProgress) return;
+            var name = (input.value || '').trim();
+            if (!name) { showError('Name is required'); return; }
+            if (name.length > 100) { showError('Name must be 100 characters or less'); return; }
+            hideError();
+            setCreateInvestigationLoading(true);
+            vscodeApi.postMessage({ type: 'createInvestigationWithName', name: name });
+        }
+        confirmBtn.addEventListener('click', submit);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); submit(); }
+            if (e.key === 'Escape') { e.preventDefault(); showCreateInvestigationForm(false); }
+        });
+        cancelBtn.addEventListener('click', function() { showCreateInvestigationForm(false); });
     }
 
     /* ---- Escaping helpers ---- */
@@ -242,7 +309,14 @@ export function getSessionPanelScript(): string {
             if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
         if (e.data.type === 'investigationsList') {
+            setCreateInvestigationLoading(false);
             renderInvestigationsList(e.data);
+            showCreateInvestigationForm(false);
+        }
+        if (e.data.type === 'createInvestigationError') {
+            setCreateInvestigationLoading(false);
+            var errEl = document.getElementById('session-investigations-create-error');
+            if (errEl) { errEl.textContent = e.data.message || 'Failed to create investigation'; errEl.style.display = ''; }
         }
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;
@@ -259,6 +333,7 @@ export function getSessionPanelScript(): string {
         }
     });
 
+    bindCreateInvestigationForm();
     syncToggleButtons();
 })();
 `;
