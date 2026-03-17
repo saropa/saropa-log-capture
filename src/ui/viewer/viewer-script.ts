@@ -100,6 +100,22 @@ logEl.addEventListener('wheel', function(e) {
 }, { passive: false });
 
 viewportEl.addEventListener('click', function(e) {
+    var badge = e.target.closest('.error-badge-interactive');
+    if (badge) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof closeErrorHover === 'function') { closeErrorHover(); }
+        var lineEl = badge.closest('[data-idx]');
+        if (lineEl) {
+            var idx = parseInt(lineEl.dataset.idx, 10);
+            var item = allLines[idx];
+            if (item) {
+                var plain = stripTags(item.html || '');
+                vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, lineIndex: idx });
+            }
+        }
+        return;
+    }
     var urlLink = e.target.closest('.url-link');
     if (urlLink) {
         e.preventDefault();
