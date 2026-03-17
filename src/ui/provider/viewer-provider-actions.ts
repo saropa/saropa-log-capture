@@ -30,16 +30,48 @@ async function resolveMtime(
     return currentMtime ?? 0;
 }
 
+/** Workspace state key for "last viewed" timestamps per log URI (Record<uriString, number>). */
+export const LOG_LAST_VIEWED_KEY = 'saropaLogCapture.logLastViewed';
+
+/** Options for recent-updates indicators (orange = since last viewed, red = last minute). */
+export interface SessionListPayloadOptions {
+    /** Returns last write time (ms) for the active session, if any. */
+    getActiveLastWriteTime?: () => number | undefined;
+    /** Returns last viewed time (ms) for a log URI. */
+    getLastViewedAt?: (uri: string) => number | undefined;
+}
+
+/** Update "last viewed" timestamp for a log (used for "updated since last viewed" indicator). Best-effort per-uri; concurrent opens may race. */
+export async function updateLastViewed(context: vscode.ExtensionContext, uri: vscode.Uri | string): Promise<void> {
+    const uriStr = typeof uri === 'string' ? uri : uri.toString();
+    const map = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+    map[uriStr] = Date.now();
+    await context.workspaceState.update(LOG_LAST_VIEWED_KEY, map);
+}
+
 /** Convert tree items to a flat session list for the webview panel. Uses filesystem stat when mtime is missing; processes items sequentially to avoid I/O burst. */
 export async function buildSessionListPayload(
     items: readonly TreeItem[],
     activeUri: vscode.Uri | undefined,
+    options?: SessionListPayloadOptions,
 ): Promise<Record<string, unknown>[]> {
     const activeStr = activeUri?.toString();
+    const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
+    const now = Date.now();
+    const oneMinuteAgo = now - 60 * 1000;
+    /* Recent-updates: lastUpdatedAt is active session's lastWriteTime or file mtime; compare to lastViewed and oneMinuteAgo. */
     type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean };
     const toRecord = async (m: Meta): Promise<Record<string, unknown>> => {
         const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
         const mtime = await resolveMtime(uri, m.mtime);
+        const uriStr = m.uri.toString();
+        const isActive = activeStr === uriStr;
+        const lastUpdatedAt = isActive && getActiveLastWriteTime
+            ? (getActiveLastWriteTime() ?? mtime)
+            : mtime;
+        const lastViewedAt = getLastViewedAt?.(uriStr);
+        const updatedInLastMinute = lastUpdatedAt >= oneMinuteAgo;
+        const updatedSinceViewed = lastViewedAt !== undefined && lastUpdatedAt > lastViewedAt;
         return {
             filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
             size: m.size, mtime, formattedMtime: formatMtime(mtime),
@@ -48,8 +80,10 @@ export async function buildSessionListPayload(
             durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
             warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
             fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
-            isActive: activeStr === m.uri.toString(),
-            uriString: m.uri.toString(), trashed: m.trashed ?? false, tags: m.tags ?? [],
+            isActive,
+            updatedSinceViewed,
+            updatedInLastMinute,
+            uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
             autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
             hasPerformanceData: m.hasPerformanceData ?? false,
         };
