@@ -6,6 +6,8 @@
 import * as vscode from "vscode";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
+import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
+import { showAnalysis } from '../analysis/analysis-panel';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
@@ -86,6 +88,12 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           ctx.currentFileUri,
           safeLineIndex(msg.lineIndex, 0),
         ).catch(() => {});
+        return true;
+      case "requestErrorHoverData":
+        handleErrorHoverRequest(String(msg.text ?? ''), safeLineIndex(msg.lineIndex, 0), ctx.post).catch(() => {});
+        return true;
+      case "openErrorAnalysis":
+        showAnalysis(String(msg.text ?? ''), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri).catch(() => {});
         return true;
       default:
         return false;

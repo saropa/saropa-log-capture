@@ -10,8 +10,10 @@ import type { ImportResults } from '../../modules/source/import-extractor';
 import type { SymbolResults } from '../../modules/source/symbol-resolver';
 import type { CommitDiff } from '../../modules/git/git-diff';
 import { getAnalysisStyles } from './analysis-panel-styles';
+import { getAnalysisErrorStyles } from './analysis-error-styles';
 import { getAnalysisScript } from './analysis-panel-script';
 import { type StackFrameInfo, renderFrameSection } from './analysis-frame-render';
+import { renderActionBar } from './analysis-error-render';
 
 export interface TokenResultGroup { readonly token: AnalysisToken; readonly results: SearchResults; }
 
@@ -27,13 +29,21 @@ interface ShellOptions {
     readonly hasSource: boolean;
     readonly frames?: readonly StackFrameInfo[];
     readonly hasTag?: boolean;
+    readonly isError?: boolean;
+    readonly errorHash?: string;
 }
 
 /** Build the initial progressive-loading HTML shell with spinner placeholders. */
 export function buildProgressiveShell(opts: ShellOptions): string {
-    const { nonce, lineText, tokens, hasSource, frames, hasTag = false } = opts;
+    const { nonce, lineText, tokens, hasSource, frames, hasTag = false, isError = false, errorHash } = opts;
     const tokenList = tokens.map(t => `<span class="token">${typeIcons[t.type] ?? '🔍'} ${escapeHtml(t.label)}</span>`).join('');
     let slots = '';
+    // Error-specific sections at the top
+    if (isError) {
+        slots += loadingSlot('error-header', '🔍 Loading error classification...');
+        slots += loadingSlot('error-timeline', '📊 Loading error history...');
+        slots += loadingSlot('error-occurrences', '🔁 Scanning session occurrences...');
+    }
     if (frames && frames.length > 0) { slots += renderFrameSection(frames); }
     if (hasTag) { slots += loadingSlot('related', '📋 Scanning related lines...'); }
     slots += loadingSlot('trend', '📊 Checking cross-session history...');
@@ -48,11 +58,14 @@ export function buildProgressiveShell(opts: ShellOptions): string {
     slots += loadingSlot('tokens', `🔍 Searching ${tokens.length} token${tokens.length > 1 ? 's' : ''}... ${tokenList}`);
     slots += loadingSlot('github', '🔗 Querying GitHub...');
     slots += loadingSlot('firebase', '🔥 Querying Firebase Crashlytics...');
-    const sectionCount = (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 6;
+    const errorSlots = isError ? 3 : 0; // error-header, error-timeline, error-occurrences
+    // 6 = trend + docs + symbols + tokens + github + firebase
+    const sectionCount = errorSlots + (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 6;
+    const actionBar = isError && errorHash ? renderActionBar(errorHash, true) : '';
     return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
         <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn">Stop</button></div>
         <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" data-total="${sectionCount}" style="width:0%"></div></div></div>
-        <div id="executive-summary"></div><div class="content">${slots}</div>`);
+        <div id="executive-summary"></div><div class="content">${slots}</div>${actionBar}`);
 }
 
 function loadingSlot(id: string, message: string): string {
@@ -211,6 +224,6 @@ export function errorSlot(id: string, label: string): string {
 export function wrapHtml(nonce: string, body: string): string {
     return /* html */ `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getAnalysisStyles()}</style></head><body>${body}
+<style nonce="${nonce}">${getAnalysisStyles()}${getAnalysisErrorStyles()}</style></head><body>${body}
 <script nonce="${nonce}">${getAnalysisScript()}</script></body></html>`;
 }
