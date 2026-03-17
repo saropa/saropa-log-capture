@@ -28,7 +28,13 @@ So the regression is probably **timing + session id mismatch**: the 3.1.3 refact
 2. **Output under unknown session id when one session exists**  
    If output arrives for a session id we don’t have a log for, but there is exactly one active log session, we route that output to that session and write it.
 
-So: one log file should get all output even when the adapter or host uses different session ids or ordering.
+3. **Race guard:** If we're about to create a new session but one was created in the last 3s, we alias to it so we don't create two files (one empty).
+
+So: one log file should get all output even when the adapter or host uses different session ids, ordering, or a parent/child race.
+
+## If the file appears in Project Logs but is empty when you open it
+
+Debug Console has output but the open log shows only a header (or nothing): often a **second log file** was created and output went to the other one. The race guard (above) reduces this. After updating, if it still happens: enable **`diagnosticCapture`** (step 2 below) and run again; look for "new log session created" twice — that means two sessions were created. One will have content; use **Prev/Next** in the viewer to switch to the other log.
 
 ## If you still get missing or empty logs
 
