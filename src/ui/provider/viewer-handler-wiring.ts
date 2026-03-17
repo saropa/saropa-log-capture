@@ -16,7 +16,7 @@ import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
-import { buildSessionListPayload, openSourceFile } from "./viewer-provider-helpers";
+import { buildSessionListPayload, openSourceFile, LOG_LAST_VIEWED_KEY } from "./viewer-provider-helpers";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
@@ -157,22 +157,38 @@ function getSessionRootPath(context: vscode.ExtensionContext): string {
 
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
-  const { historyProvider, broadcaster } = deps;
+  const { historyProvider, broadcaster, sessionManager } = deps;
   const refreshSessionList = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const items = overrideUri
       ? await historyProvider.getAllChildrenFromRoot(overrideUri)
       : await historyProvider.getAllChildren();
-    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri());
+    const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), {
+      getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
+      getLastViewedAt: (uri) => lastViewedMap[uri],
+    });
     const rootLabel = getSessionRootPath(deps.context);
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
-  let sessionListTimer: ReturnType<typeof setTimeout> | undefined;
+  const ref: { timer?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } = {};
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
-    if (sessionListTimer) { clearTimeout(sessionListTimer); }
-    sessionListTimer = setTimeout(() => { void refreshSessionList(); }, 150);
+    if (ref.timer) { clearTimeout(ref.timer); }
+    ref.timer = setTimeout(() => {
+      void refreshSessionList();
+      if (ref.interval) { clearInterval(ref.interval); }
+      ref.interval = setInterval(() => {
+        if (sessionManager.getActiveSession()) { void refreshSessionList(); }
+      }, 30000);
+    }, 150);
+  });
+  deps.context.subscriptions.push({
+    dispose() {
+      if (ref.timer) { clearTimeout(ref.timer); ref.timer = undefined; }
+      if (ref.interval) { clearInterval(ref.interval); ref.interval = undefined; }
+    },
   });
   target.setBrowseSessionRootHandler?.(async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];

@@ -84,8 +84,10 @@ export function getSessionRenderingScript(): string {
     function renderItem(s, bnCounts) {
         var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
         var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
-        /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. */
-        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
+        if (s.updatedInLastMinute) iconTitle = 'Log updated in the last minute';
+        else if (s.updatedSinceViewed) iconTitle = 'Log has new lines since last viewed';
+        /* selectedSessionUris is defined in session panel IIFE; multi-select state for Ctrl-click. Update dots only for non-active logs. */
+        var cls = 'session-item' + (s.isActive ? ' session-item-active' : '') + (!s.isActive && s.updatedInLastMinute ? ' session-item-updated-recent' : '') + (!s.isActive && s.updatedSinceViewed && !s.updatedInLastMinute ? ' session-item-updated-since-viewed' : '') + (typeof selectedSessionUris !== 'undefined' && selectedSessionUris[s.uriString] ? ' session-item-selected' : '');
         var rawName = s.displayName || s.filename;
         var bn = getSessionBasename(rawName);
         /* Only show subfolder when basenames collide for disambiguation. */
@@ -95,8 +97,10 @@ export function getSessionRenderingScript(): string {
         var dots = renderSeverityDots(s);
         var meta = buildSessionMeta(s, dots, fileTime);
         var perfBadge = s.hasPerformanceData ? '<span class="session-item-perf" title="Performance data available"><span class="codicon codicon-graph-line"></span></span>' : '';
+        /* Dot: red = updated in last minute, orange = new since last viewed; only for non-active logs. */
+        var updateDot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed) ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? 'Updated in the last minute' : 'New lines since last viewed') + '"></span>' : '';
         return '<div class="' + cls + '" data-uri="' + escapeAttr(s.uriString || '') + '" data-filename="' + escapeAttr(s.filename || '') + '">'
-            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span></span>'
+            + '<span class="session-item-icon" title="' + iconTitle + '"><span class="codicon ' + icon + '"></span>' + updateDot + '</span>'
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + perfBadge + '</span>'
             + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')

@@ -16,7 +16,7 @@ import { lookupCoverage } from "../../modules/integrations/providers/coverage-pe
 import { PendingLine } from "../viewer/viewer-file-loader";
 import { logExtensionError } from "../../modules/misc/extension-logger";
 
-export { buildSessionListPayload, openSourceFile, copySourcePath, buildCopyWithSource, type CopySourceRef } from "./viewer-provider-actions";
+export { buildSessionListPayload, openSourceFile, copySourcePath, buildCopyWithSource, LOG_LAST_VIEWED_KEY, updateLastViewed, type CopySourceRef, type SessionListPayloadOptions } from "./viewer-provider-actions";
 
 /** Input data for editing a log line. */
 export interface EditLineInput {
