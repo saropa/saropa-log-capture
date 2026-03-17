@@ -5,7 +5,6 @@
  */
 
 import * as vscode from "vscode";
-import { getConfig } from "../../modules/config/config";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -22,6 +21,7 @@ import * as panelHandlers from "../shared/viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
 import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } from "./log-viewer-provider-batch";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
+import * as state from "./log-viewer-provider-state";
 
 /**
  * Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support.
@@ -149,78 +149,59 @@ export class LogViewerProvider
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
   // -- Webview state methods --
-  scrollToLine(line: number): void { this.postMessage({ type: "scrollToLine", line }); }
-  setExclusions(patterns: readonly string[]): void { this.postMessage({ type: "setExclusions", patterns }); }
-  setAnnotation(lineIndex: number, text: string): void { this.postMessage({ type: "setAnnotation", lineIndex, text }); }
-  loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { this.postMessage({ type: "loadAnnotations", annotations }); }
-
-  setSplitInfo(currentPart: number, totalParts: number): void { this.postMessage({ type: "splitInfo", currentPart, totalParts }); }
-  setSessionNavInfo(hasPrev: boolean, hasNext: boolean, index: number, total: number): void { this.postMessage({ type: "sessionNavInfo", hasPrev, hasNext, index, total }); }
+  scrollToLine(line: number): void { state.scrollToLineImpl(this, line); }
+  setExclusions(patterns: readonly string[]): void { state.setExclusionsImpl(this, patterns); }
+  setAnnotation(lineIndex: number, text: string): void { state.setAnnotationImpl(this, lineIndex, text); }
+  loadAnnotations(annotations: readonly { lineIndex: number; text: string }[]): void { state.loadAnnotationsImpl(this, annotations); }
+  setSplitInfo(currentPart: number, totalParts: number): void { state.setSplitInfoImpl(this, currentPart, totalParts); }
+  setSessionNavInfo(hasPrev: boolean, hasNext: boolean, index: number, total: number): void { state.setSessionNavInfoImpl(this, { hasPrev, hasNext, index, total }); }
   getCurrentFileUri(): vscode.Uri | undefined { return this.currentFileUri; }
-  updateFooter(text: string): void { this.postMessage({ type: "updateFooter", text }); }
-  setPaused(paused: boolean): void { this.postMessage({ type: "setPaused", paused }); }
-  setFilename(filename: string): void {
-    this.postMessage({ type: "setFilename", filename });
-    const levels = helpers.getSavedLevelFilters(this.context, filename);
-    if (levels) { this.postMessage({ type: "restoreLevelFilters", levels }); }
-  }
-  setContextLines(count: number): void { this.postMessage({ type: "setContextLines", count }); }
-  setContextViewLines(count: number): void { this.postMessage({ type: "setContextViewLines", count }); }
-  setCopyContextLines(count: number): void { this.postMessage({ type: "setCopyContextLines", count }); }
-  setShowElapsed(show: boolean): void { this.postMessage({ type: "setShowElapsed", show }); }
-  setShowDecorations(show: boolean): void { this.postMessage({ type: "setShowDecorations", show }); }
-  /** Start replay on the currently loaded log (e.g. from Replay command). Sends replay config from settings. */
-  startReplay(): void {
-    this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
-  }
-  /** Replay settings from workspace config for startReplay / loadFromFile(..., { replay: true }). */
-  private getReplayConfig(): { defaultMode: string; defaultSpeed: number; minLineDelayMs: number; maxDelayMs: number } {
-    const r = getConfig().replay;
-    return { defaultMode: r.defaultMode, defaultSpeed: r.defaultSpeed, minLineDelayMs: r.minLineDelayMs, maxDelayMs: r.maxDelayMs };
-  }
-  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { this.postMessage({ type: "errorClassificationSettings", suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
-  applyPreset(name: string): void { this.postMessage({ type: "applyPreset", name }); }
+  updateFooter(text: string): void { state.updateFooterImpl(this, text); }
+  setPaused(paused: boolean): void { state.setPausedImpl(this, paused); }
+  setFilename(filename: string): void { state.setFilenameImpl(this, filename); }
+  setContextLines(count: number): void { state.setContextLinesImpl(this, count); }
+  setContextViewLines(count: number): void { state.setContextViewLinesImpl(this, count); }
+  setCopyContextLines(count: number): void { state.setCopyContextLinesImpl(this, count); }
+  setShowElapsed(show: boolean): void { state.setShowElapsedImpl(this, show); }
+  setShowDecorations(show: boolean): void { state.setShowDecorationsImpl(this, show); }
+  startReplay(): void { state.postStartReplayImpl(this); }
+  private getReplayConfig() { return state.getReplayConfig(); }
+  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { state.setErrorClassificationSettingsImpl(this, { suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
+  applyPreset(name: string): void { state.applyPresetImpl(this, name); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);
-    this.postMessage({ type: "setHighlightRules", rules: this.cachedHighlightRules });
+    state.setHighlightRulesImpl(this, this.cachedHighlightRules);
   }
   setPresets(presets: readonly FilterPreset[]): void {
     this.cachedPresets = presets;
-    const lastUsed = this.context.workspaceState.get<string>("saropaLogCapture.lastUsedPresetName");
-    this.postMessage({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
+    state.setPresetsImpl(this, presets);
   }
   addLine(data: LineData): void { addLineToBatch(this, data); }
-
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
-  setScopeContext(ctx: ScopeContext): void { this.postMessage({ type: "setScopeContext", ...ctx }); }
-  setMinimapShowInfo(show: boolean): void { this.postMessage({ type: "minimapShowInfo", show }); }
-  setMinimapWidth(width: "small" | "medium" | "large"): void { this.postMessage({ type: "minimapWidth", width }); }
-  setIconBarPosition(position: "left" | "right"): void { this.postMessage({ type: "iconBarPosition", position }); }
-  setAutoHidePatterns(patterns: readonly string[]): void { this.postMessage({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
-  setSessionInfo(info: Record<string, string> | null): void { this.postMessage({ type: "setSessionInfo", info }); }
-  setHasPerformanceData(has: boolean): void { this.postMessage({ type: "setHasPerformanceData", has }); }
-
-  sendFindResults(results: unknown): void { this.postMessage({ type: "findResults", ...results as Record<string, unknown> }); }
-  setupFindSearch(query: string, options: Record<string, unknown>): void { this.postMessage({ type: "setupFindSearch", query, ...options }); }
-  findNextMatch(): void { this.postMessage({ type: "findNextMatch" }); }
-  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
-    this.postMessage({ type: "sessionList", sessions, ...rootInfo });
-  }
-  sendSessionListLoading(folderPath: string): void {
-    this.postMessage({ type: "sessionListLoading", folderPath });
-  }
-  sendBookmarkList(files: Record<string, unknown>): void { this.postMessage({ type: "bookmarkList", files }); }
-  sendDisplayOptions(options: SessionDisplayOptions): void { this.postMessage({ type: "sessionDisplayOptions", options }); }
-  sendIntegrationsAdapters(adapterIds: readonly string[]): void {
-    this.postMessage({ type: "integrationsAdapters", adapterIds: [...adapterIds] });
-  }
-  setSessionActive(active: boolean): void { this.isSessionActive = active; this.postMessage({ type: "sessionState", active }); }
+  setScopeContext(ctx: ScopeContext): void { state.setScopeContextImpl(this, ctx); }
+  setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
+  setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
+  setIconBarPosition(position: "left" | "right"): void { state.setIconBarPositionImpl(this, position); }
+  setAutoHidePatterns(patterns: readonly string[]): void { state.setAutoHidePatternsImpl(this, patterns); }
+  setSessionInfo(info: Record<string, string> | null): void { state.setSessionInfoImpl(this, info); }
+  setHasPerformanceData(has: boolean): void { state.setHasPerformanceDataImpl(this, has); }
+  sendFindResults(results: unknown): void { state.sendFindResultsImpl(this, results); }
+  setupFindSearch(query: string, options: Record<string, unknown>): void { state.setupFindSearchImpl(this, query, options); }
+  findNextMatch(): void { state.findNextMatchImpl(this); }
+  sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void { state.sendSessionListImpl(this, sessions, rootInfo); }
+  sendSessionListLoading(folderPath: string): void { state.sendSessionListLoadingImpl(this, folderPath); }
+  sendBookmarkList(files: Record<string, unknown>): void { state.sendBookmarkListImpl(this, files); }
+  sendDisplayOptions(options: SessionDisplayOptions): void { state.sendDisplayOptionsImpl(this, options); }
+  sendIntegrationsAdapters(adapterIds: readonly string[]): void { state.sendIntegrationsAdaptersImpl(this, adapterIds); }
+  setSessionActive(active: boolean): void { this.isSessionActive = active; state.setSessionStateImpl(this, active); }
 
   clear(): void {
     this.stopTailing();
     flushPendingBatch(this);
     this.pendingLines = []; this.currentFileUri = undefined;
-    this.postMessage({ type: "clear" }); this.setSessionInfo(null); this.setHasPerformanceData(false);
+    this.postMessage({ type: "clear" });
+    state.setSessionInfoImpl(this, null);
+    state.setHasPerformanceDataImpl(this, false);
   }
   async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration;

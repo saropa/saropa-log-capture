@@ -15,6 +15,9 @@
  * button reveals it. During active recording, the panel hides.
  */
 
+import { getReplayControlsScript } from './viewer-replay-controls';
+import { getReplayTimingScript } from './viewer-replay-timing';
+
 export function getReplayBarHtml(): string {
     return /* html */ `
 <div id="replay-bar" class="replay-bar" role="region" aria-label="Session replay controls">
@@ -43,7 +46,7 @@ export function getReplayBarHtml(): string {
 }
 
 export function getReplayScript(): string {
-    return /* javascript */ `
+  return /* javascript */ `
 (function() {
     window.replayMode = false;
     window.replayCurrentIndex = 0;
@@ -51,9 +54,6 @@ export function getReplayScript(): string {
     var replayTimer = null;
     var replaySpeedFactor = 1;
     var replayTimedMode = true;
-    var REPLAY_MIN_MS = 10;
-    var REPLAY_MAX_MS = 30000;
-    var REPLAY_FAST_MS = 50;
 
     var bar = document.getElementById('replay-bar');
     var playBtn = document.getElementById('replay-play');
@@ -66,32 +66,26 @@ export function getReplayScript(): string {
     var ibReplay = document.getElementById('ib-replay');
     var footerReplayBtn = document.getElementById('footer-replay-btn');
 
-    /** Track whether a recording session is active (hide replay controls during recording). */
     var replaySessionActive = false;
-    /** Track whether we're viewing a loaded file (enable replay controls when true). */
     var replayFileLoaded = false;
 
     function hasLines() { return allLines && allLines.length > 0; }
 
-    /** Show or hide the replay bar (uses CSS class so !important rule is overridden). */
     function setReplayBarVisible(visible) {
         if (!bar) return;
         bar.classList.toggle('replay-bar-visible', !!visible);
     }
 
-    /** Show or hide the icon bar replay button. */
     function setReplayIconVisible(visible) {
         if (!ibReplay) return;
         ibReplay.classList.toggle('ib-replay-active', visible);
     }
 
-    /** Show or hide the footer replay button. */
     function setFooterReplayVisible(visible) {
         if (!footerReplayBtn) return;
         footerReplayBtn.classList.toggle('footer-replay-visible', !!visible);
     }
 
-    /** Enable/disable replay controls based on file loaded state and session state. */
     window.setReplayEnabled = function(fileLoaded, sessionActive) {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
@@ -106,7 +100,6 @@ export function getReplayScript(): string {
         }
     };
 
-    /** Update icon bar icon to reflect play/pause state. */
     function updateReplayIcon(playing) {
         var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
         if (ibReplay) {
@@ -115,7 +108,6 @@ export function getReplayScript(): string {
         }
     }
 
-    /** Toggle the replay bar visibility. */
     window.toggleReplayBar = function() {
         if (!bar) return;
         if (replaySessionActive || !replayFileLoaded) return;
@@ -128,201 +120,8 @@ export function getReplayScript(): string {
         setReplayBarVisible(!visible);
     };
 
-    /** Set speed dropdown to closest option for a given factor (avoids float mismatch e.g. 0.5). */
-    function setSpeedSelectValue(factor) {
-        if (!speedSelect || !speedSelect.options.length) return;
-        var opts = speedSelect.options;
-        var best = opts[0];
-        var bestDiff = 1e9;
-        for (var i = 0; i < opts.length; i++) {
-            var val = parseFloat(opts[i].value);
-            if (!Number.isFinite(val)) continue;
-            var d = Math.abs(val - factor);
-            if (d < bestDiff) { bestDiff = d; best = opts[i]; }
-        }
-        if (best) { speedSelect.value = best.value; replaySpeedFactor = parseFloat(best.value) || 1; }
-    }
-
-    /** Apply extension replay config (defaultMode, defaultSpeed, minLineDelayMs, maxDelayMs). */
-    function applyReplayConfig(cfg) {
-        if (!cfg) return;
-        if (cfg.defaultMode === 'fast' || cfg.defaultMode === 'timed') replayTimedMode = (cfg.defaultMode === 'timed');
-        if (typeof cfg.defaultSpeed === 'number' && cfg.defaultSpeed > 0) replaySpeedFactor = cfg.defaultSpeed;
-        if (typeof cfg.minLineDelayMs === 'number' && cfg.minLineDelayMs >= 0) REPLAY_MIN_MS = cfg.minLineDelayMs;
-        if (typeof cfg.maxDelayMs === 'number' && cfg.maxDelayMs > 0) REPLAY_MAX_MS = cfg.maxDelayMs;
-        if (typeof cfg.minLineDelayMs === 'number' && cfg.minLineDelayMs >= 0) REPLAY_FAST_MS = Math.max(10, cfg.minLineDelayMs);
-        if (modeSelect) modeSelect.value = replayTimedMode ? 'timed' : 'fast';
-        if (speedSelect) setSpeedSelectValue(replaySpeedFactor);
-    }
-
-    /** Delay before showing line at lineIdx: Timed = elapsedMs or timestamp delta (clamped); Fast = fixed. */
-    function getDelayMs(lineIdx) {
-        if (lineIdx <= 0 || !allLines || lineIdx >= allLines.length) return 0;
-        if (!replayTimedMode) return Math.max(REPLAY_MIN_MS, REPLAY_FAST_MS / replaySpeedFactor);
-        var curr = allLines[lineIdx];
-        var prev = allLines[lineIdx - 1];
-        if (curr && curr.elapsedMs != null && curr.elapsedMs >= 0) {
-            var scaled = curr.elapsedMs / replaySpeedFactor;
-            return Math.max(REPLAY_MIN_MS, Math.min(REPLAY_MAX_MS, scaled));
-        }
-        if (curr && prev && curr.timestamp && prev.timestamp) {
-            var delta = curr.timestamp - prev.timestamp;
-            if (delta < 0) return REPLAY_FAST_MS;
-            var scaled = delta / replaySpeedFactor;
-            return Math.max(REPLAY_MIN_MS, Math.min(REPLAY_MAX_MS, scaled));
-        }
-        return REPLAY_FAST_MS / replaySpeedFactor;
-    }
-
-    function updateReplayUi() {
-        var total = hasLines() ? allLines.length : 0;
-        if (total === 0) {
-            if (window.replayMode) window.exitReplayMode();
-            return;
-        }
-        if (scrubber) {
-            scrubber.max = Math.max(0, total - 1);
-            scrubber.value = window.replayCurrentIndex;
-        }
-        if (statusEl) statusEl.textContent = (window.replayCurrentIndex + 1) + ' / ' + total;
-        if (typeof renderViewport === 'function') renderViewport(true);
-        if (autoScroll !== undefined && typeof window.setProgrammaticScroll === 'function' && logEl) {
-            window.setProgrammaticScroll();
-            suppressScroll = true;
-            var ch = 0;
-            if (typeof prefixSums !== 'undefined' && prefixSums && window.replayCurrentIndex + 1 < prefixSums.length) {
-                ch = prefixSums[window.replayCurrentIndex + 1] || 0;
-            } else if (allLines) {
-                for (var i = 0; i < window.replayCurrentIndex && i < allLines.length; i++) ch += allLines[i].height;
-            }
-            logEl.scrollTop = Math.max(0, ch - logEl.clientHeight / 2);
-            suppressScroll = false;
-        }
-    }
-
-    function scheduleNext() {
-        if (!replayPlaying || !allLines || allLines.length === 0) return;
-        var next = window.replayCurrentIndex + 1;
-        if (next >= allLines.length) {
-            replayPlaying = false;
-            setPlayingUi(false);
-            if (statusEl) statusEl.textContent = 'Complete';
-            if (typeof renderViewport === 'function') renderViewport(true);
-            return;
-        }
-        var delay = getDelayMs(next);
-        replayTimer = setTimeout(function() {
-            replayTimer = null;
-            if (!window.replayMode || !replayPlaying) return; /* avoid race if user stopped replay */
-            window.replayCurrentIndex = next;
-            updateReplayUi();
-            scheduleNext();
-        }, delay);
-    }
-
-    function stopReplayTimer() {
-        if (replayTimer) { clearTimeout(replayTimer); replayTimer = null; }
-        replayPlaying = false;
-    }
-
-    /** Update play/pause button visibility and icon state. */
-    function setPlayingUi(playing) {
-        if (playBtn) playBtn.style.display = playing ? 'none' : '';
-        if (pauseBtn) pauseBtn.style.display = playing ? '' : 'none';
-        updateReplayIcon(playing);
-    }
-
-    function exitReplayMode() {
-        stopReplayTimer();
-        window.replayMode = false;
-        setReplayBarVisible(false);
-        setPlayingUi(false);
-        var canReplay = replayFileLoaded && !replaySessionActive && hasLines();
-        setReplayIconVisible(canReplay);
-        setFooterReplayVisible(canReplay);
-        if (typeof renderViewport === 'function') renderViewport(true);
-        if (typeof updateFooterText === 'function') updateFooterText();
-    }
-    window.exitReplayMode = exitReplayMode;
-
-    window.startReplay = function(msg) {
-        if (!allLines || allLines.length === 0) return;
-        if (replaySessionActive) return;
-        if (msg && msg.replayConfig) applyReplayConfig(msg.replayConfig);
-        window.replayMode = true;
-        window.replayCurrentIndex = 0;
-        setReplayBarVisible(true);
-        replayPlaying = true;
-        setPlayingUi(true);
-        setReplayIconVisible(true);
-        updateReplayUi();
-        scheduleNext();
-    };
-
-    if (modeSelect) modeSelect.addEventListener('change', function() {
-        replayTimedMode = (modeSelect.value === 'timed');
-    });
-
-    if (playBtn) playBtn.addEventListener('click', function() {
-        if (!window.replayMode) return;
-        replayPlaying = true;
-        setPlayingUi(true);
-        scheduleNext();
-    });
-    if (pauseBtn) pauseBtn.addEventListener('click', function() {
-        stopReplayTimer();
-        setPlayingUi(false);
-    });
-    if (stopBtn) stopBtn.addEventListener('click', exitReplayMode);
-    if (footerReplayBtn) footerReplayBtn.addEventListener('click', function() {
-        if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
-    });
-    if (speedSelect) speedSelect.addEventListener('change', function() {
-        replaySpeedFactor = parseFloat(speedSelect.value) || 1;
-    });
-    if (scrubber) scrubber.addEventListener('input', function() {
-        if (!window.replayMode) return;
-        var raw = parseInt(scrubber.value, 10);
-        if (isNaN(raw)) return;
-        stopReplayTimer();
-        var total = allLines ? allLines.length : 0;
-        window.replayCurrentIndex = Math.max(0, Math.min(total - 1, raw));
-        replayPlaying = false;
-        setPlayingUi(false);
-        updateReplayUi();
-    });
-
-    window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'startReplay') {
-            if (typeof window.startReplay === 'function') window.startReplay(e.data);
-        }
-        if (e.data && e.data.type === 'setReplayConfig' && e.data.replayConfig) {
-            applyReplayConfig(e.data.replayConfig);
-        }
-    });
-
-    /* Space = play/pause when replay is active and focus is not in an input. */
-    document.addEventListener('keydown', function(ev) {
-        if (!window.replayMode || ev.repeat) return;
-        var tag = (ev.target && ev.target.tagName) ? ev.target.tagName.toUpperCase() : '';
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-        if (ev.code === 'Space' || ev.key === ' ') {
-            ev.preventDefault();
-            if (replayPlaying) {
-                stopReplayTimer();
-                setPlayingUi(false);
-            } else {
-                replayPlaying = true;
-                setPlayingUi(true);
-                scheduleNext();
-            }
-        }
-    });
-
-    /* Ensure bar, icon and footer button are hidden on startup (defense against cached state). */
-    setReplayBarVisible(false);
-    setReplayIconVisible(false);
-    setFooterReplayVisible(false);
+    ${getReplayTimingScript()}
+    ${getReplayControlsScript()}
 })();
 `;
 }
