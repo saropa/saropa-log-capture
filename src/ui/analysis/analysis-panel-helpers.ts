@@ -19,10 +19,12 @@ export function mergeResults(settled: PromiseSettledResult<Partial<SectionData>>
 }
 
 /** Post timeout errors for any sections that never completed. */
-export function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, hasSource: boolean, hasTag = false): void {
+export function postPendingSlots(posted: ReadonlySet<string>, post: PostFn, flags: { hasSource: boolean; hasTag?: boolean; hasError?: boolean }): void {
+    const { hasSource, hasTag = false, hasError = false } = flags;
     const expected = ['docs', 'symbols', 'tokens', 'github', 'firebase',
         ...(hasSource ? ['source', 'line-history', 'imports'] : []),
-        ...(hasTag ? ['related', 'files'] : [])];
+        ...(hasTag ? ['related', 'files'] : []),
+        ...(hasError ? ['error-header', 'error-timeline', 'error-occurrences'] : [])];
     for (const id of expected) {
         if (!posted.has(id)) { post(id, errorSlot(id, '⏱ Analysis timed out')); }
     }

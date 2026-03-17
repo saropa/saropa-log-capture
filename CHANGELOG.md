@@ -18,6 +18,33 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+Code coverage is now enforced and visible.
+
+### Added
+
+- **Error hover popup** — hovering over error badges (CRITICAL/TRANSIENT/BUG) in the log viewer shows a floating popup with classification, crash category, cross-session history, triage status, and fingerprint hash. Includes an "Analyze" button to open the full analysis panel.
+- **Error analysis in Analysis Panel** — when analyzing an error/warning line, the panel now includes error-specific sections: classification header with triage controls (open/closed/muted), cross-session timeline sparkline, session occurrence count, and an action bar with Copy Context, Bug Report, Export (.slc/JSON/CSV), and AI Explain buttons.
+- **Clickable error badges** — error classification badges in the log viewer are now clickable to open the analysis panel directly for that error line.
+- **Per-file coverage badges** — stack frame lines in the viewer now show a coverage percentage badge (green/yellow/red) when a coverage report is configured. Toggleable via Decoration Settings. Badges render on both stack-header and stack-frame lines.
+- **Quality sidecar** — session end writes a `quality.json` sidecar with per-file coverage data for referenced code.
+- **Coverage parser improvements** — single file read for both aggregate and per-file parsing, Cobertura attribute order flexibility, safe JSON parsing, ambiguous basename guard.
+- **Code Quality Metrics integration design doc** — per-file coverage, lint, and doc density overlay for code referenced in log stack traces (`bugs/100_code-quality-metrics.md`).
+- **AI module tests** — unit tests for JSONL parser, line formatter, prompt builder, and type helpers (ai-jsonl-parser, ai-jsonl-types, ai-line-formatter, ai-prompt).
+- **Bug report tests** — unit tests for keyword extraction and thread-aware stack trace formatting (report-file-keywords, bug-report-thread-format).
+- **Crashlytics event parser tests** — unit tests for structured thread parsing, raw trace parsing, device/custom key extraction.
+- **Insights export format tests** — unit tests for CSV and JSON export serialization.
+
+### Changed
+
+- **Terminology standardization** — replaced user-facing "session" with "log" across all locales, webview UI, context menus, performance panel, walkthrough docs, and setting descriptions (per CONTRIBUTING.md). Internal identifiers, setting keys, command IDs, and "debug session" (VS Code concept) are unchanged.
+- **Updated feature discipline rule** in `.claude/rules/global.md` — replaced stale reference to non-existent `docs/PLAN_SAROPA_LOG_CAPTURE.md` with references to `ROADMAP.md` and `bugs/*.md` plans.
+
+- **Added nyc coverage configuration** with Istanbul instrumentation, text/lcov/HTML reporters, and 50% threshold gates. Uses nyc instead of c8 because c8 cannot collect V8 coverage from VS Code's Extension Host process.
+- **CI now runs coverage** instead of plain tests, and uploads the coverage report as an artifact (14-day retention).
+- **Added coverage badge** to README linking to CI runs.
+
 ## [3.5.4]
 
 Replay controls redesigned for a cleaner, less intrusive UX.
