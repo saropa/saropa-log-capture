@@ -25,7 +25,7 @@ import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
 import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { BookmarkStore } from './modules/storage/bookmark-store';
-import { buildSessionListPayload } from './ui/provider/viewer-provider-helpers';
+import { buildSessionListPayload, LOG_LAST_VIEWED_KEY, updateLastViewed } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
@@ -83,7 +83,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         const defaultLabel = folder ? getLogDirectoryUri(folder).fsPath : 'No workspace';
         broadcaster.sendSessionListLoading(defaultLabel);
         const items = await historyProvider.getAllChildren();
-        const payload = await buildSessionListPayload(items, historyProvider.getActiveUri());
+        const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+        const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), {
+            getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
+            getLastViewedAt: (uri) => lastViewedMap[uri],
+        });
         broadcaster.sendSessionList(payload, { label: defaultLabel, path: defaultLabel, isDefault: true });
     });
 
@@ -170,6 +174,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
         if (!uriString) { return; }
         await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
+        await updateLastViewed(context, uriString);
     });
     viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
     viewerProvider.setRevealLogFileHandler(async () => {

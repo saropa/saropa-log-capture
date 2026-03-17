@@ -32,8 +32,24 @@ export function getSessionListStyles(): string {
     color: var(--vscode-charts-red, #f44336);
 }
 
+/* Recent-updates indicators: orange = new since last viewed, red = updated in last minute */
+.session-item-update-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-left: 4px;
+    flex-shrink: 0;
+    vertical-align: middle;
+    transition: opacity 0.15s ease;
+}
+.session-item-updated-recent .session-item-update-dot { background: var(--vscode-charts-red, #f44336); }
+.session-item-updated-since-viewed .session-item-update-dot { background: var(--vscode-charts-orange, #e65100); }
+
 .session-item-icon {
     user-select: none;
+    display: inline-flex;
+    align-items: center;
 }
 .session-item-icon .codicon {
     font-size: 14px;
