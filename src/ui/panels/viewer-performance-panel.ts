@@ -22,7 +22,7 @@ export function getPerformancePanelHtml(): string {
     <div class="pp-tabs">
         <button id="pp-tab-current" class="pp-tab active">Current</button>
         <button id="pp-tab-trends" class="pp-tab">Trends</button>
-        <button id="pp-tab-session" class="pp-tab">Session</button>
+        <button id="pp-tab-session" class="pp-tab">Log</button>
     </div>
     <div class="performance-panel-content">
         <div id="pp-current-view"></div>
@@ -32,7 +32,7 @@ export function getPerformancePanelHtml(): string {
                 <svg id="pp-chart" class="pp-chart" viewBox="0 0 380 120"></svg>
             </div>
             <table class="pp-trend-table">
-                <thead><tr><th>Operation</th><th>Avg</th><th>Sessions</th><th></th></tr></thead>
+                <thead><tr><th>Operation</th><th>Avg</th><th>Logs</th><th></th></tr></thead>
                 <tbody id="pp-trend-body"></tbody>
             </table>
         </div>
@@ -47,7 +47,7 @@ export function getPerformancePanelHtml(): string {
                 <div id="pp-snapshot" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
-                <div class="pp-session-title">Session samples</div>
+                <div class="pp-session-title">Log samples</div>
                 <div id="pp-samples" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
