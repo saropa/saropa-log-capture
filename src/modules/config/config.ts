@@ -31,6 +31,7 @@ export type {
   IntegrationEnvironmentConfig,
   IntegrationTestResultsConfig,
   IntegrationCoverageConfig,
+  IntegrationCodeQualityConfig,
   IntegrationCrashDumpsConfig,
   IntegrationWindowsEventsConfig,
   IntegrationDockerConfig,
