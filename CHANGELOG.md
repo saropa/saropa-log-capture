@@ -18,7 +18,7 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.6.2]
 
 Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runbook and diagnostic message); Project Logs recent-updates indicators and last-viewed tracking; investigation UX improvements.
 
@@ -34,7 +34,7 @@ Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runb
 
 ### Documentation
 
-• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): "Still empty?" first steps (Prev/Next, diagnosticCapture), clearer multi-session fallback steps, note that performance integration does not cause empty logs. Diagnostic message when routing to most recent session now tells users to use Prev/Next if the open log looks empty.
+• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): clearer steps when a log file is empty or near-empty (enable `diagnosticCapture` to inspect the pipeline; runbook reorganized with first steps up front).
 
 ---
 
