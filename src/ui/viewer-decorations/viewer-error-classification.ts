@@ -112,13 +112,13 @@ function getErrorBadge(classification) {
     if (!classification) return '';
 
     if (classification === 'critical') {
-        return '<span class="error-badge error-badge-critical" title="Critical Error">\\ud83d\\udd25 CRITICAL</span> ';
+        return '<span class="error-badge error-badge-critical error-badge-interactive" title="Critical Error \\u2014 hover for details">\\ud83d\\udd25 CRITICAL</span> ';
     }
     if (classification === 'transient') {
-        return '<span class="error-badge error-badge-transient" title="Transient Error (expected)">\\u26a1 TRANSIENT</span> ';
+        return '<span class="error-badge error-badge-transient error-badge-interactive" title="Transient Error \\u2014 hover for details">\\u26a1 TRANSIENT</span> ';
     }
     if (classification === 'bug') {
-        return '<span class="error-badge error-badge-bug" title="Likely Bug">\\ud83d\\udc1b BUG</span> ';
+        return '<span class="error-badge error-badge-bug error-badge-interactive" title="Likely Bug \\u2014 hover for details">\\ud83d\\udc1b BUG</span> ';
     }
 
     return '';
