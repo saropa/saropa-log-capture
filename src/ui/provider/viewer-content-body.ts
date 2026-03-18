@@ -35,7 +35,7 @@ export interface ViewerBodyOptions {
 export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     const version = opts.version ?? '';
     return /* html */ `
-    <div id="main-content">
+    <div id="main-content" role="main">
     <div id="session-nav-wrapper" class="session-nav-wrapper">
     <div id="session-nav">
         <span class="session-nav-controls">
@@ -95,7 +95,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
             <span class="level-dot-group" data-level="notice" title="Notice" role="img" aria-label="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
             <span id="level-trigger-label" class="level-trigger-label">All</span>
         </span>
-        <span id="line-count"></span>
+        <span id="line-count" aria-live="polite" aria-atomic="true"></span>
         <span id="hidden-lines-counter" class="hidden-lines-counter u-hidden" role="button" title="Click to peek, double-click to manage" aria-label="Hidden lines counter">
             <span class="codicon codicon-eye-closed"></span>
             <span class="hidden-count-text"></span>
@@ -118,8 +118,8 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="level-flyup">
         <div class="level-flyup-title">Level Filters</div>
         <div class="level-flyup-header">
-            <a id="level-select-all" href="#" class="active">All</a>
-            <a id="level-select-none" href="#">None</a>
+            <button type="button" id="level-select-all" class="active">All</button>
+            <button type="button" id="level-select-none">None</button>
         </div>
         <button id="level-info-toggle" class="level-circle active" title="Info" aria-label="Toggle Info level"><span class="level-emoji">🟢</span><span class="level-label">Info</span><span class="level-count"></span></button>
         <button id="level-warning-toggle" class="level-circle active" title="Warning" aria-label="Toggle Warning level"><span class="level-emoji">🟠</span><span class="level-label">Warning</span><span class="level-count"></span></button>

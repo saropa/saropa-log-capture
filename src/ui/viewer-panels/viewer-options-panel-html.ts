@@ -16,15 +16,15 @@ import { getKeyboardShortcutsViewHtml } from './viewer-keyboard-shortcuts-html';
 
 /** Returns the HTML for the options panel element. */
 export function getOptionsPanelHtml(): string {
-    return `<div id="options-panel" class="options-panel">
+    return `<div id="options-panel" class="options-panel" role="region" aria-label="Options">
     <div class="options-header">
         <span>Options</span>
-        <button class="options-close" title="Close"><span class="codicon codicon-close"></span></button>
+        <button class="options-close" type="button" title="Close" aria-label="Close options"><span class="codicon codicon-close"></span></button>
     </div>
 
     <div class="options-search-wrapper">
-        <input id="options-search" type="text" placeholder="Filter options\u2026" />
-        <button id="options-search-clear" class="options-search-clear" title="Clear filter">&times;</button>
+        <input id="options-search" type="text" placeholder="Filter options\u2026" aria-label="Filter options" />
+        <button id="options-search-clear" class="options-search-clear" type="button" title="Clear filter" aria-label="Clear filter">&times;</button>
     </div>
 
     <div class="options-content">

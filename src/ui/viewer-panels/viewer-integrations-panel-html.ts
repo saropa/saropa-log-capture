@@ -30,9 +30,9 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
 export function getIntegrationsPanelHtml(): string {
     const rows = INTEGRATION_ADAPTERS.map(renderIntegrationRow).join('\n');
     return `
-    <div id="integrations-view" class="integrations-view integrations-view-hidden" aria-hidden="true">
+    <div id="integrations-view" class="integrations-view integrations-view-hidden" role="region" aria-label="Integrations" aria-hidden="true">
         <div class="integrations-header">
-            <button type="button" id="integrations-back" class="integrations-back" title="Back to Options"><span class="codicon codicon-arrow-left"></span></button>
+            <button type="button" id="integrations-back" class="integrations-back" title="Back to Options" aria-label="Back to Options"><span class="codicon codicon-arrow-left"></span></button>
             <span class="integrations-title">Integrations</span>
         </div>
         <div class="integrations-content">

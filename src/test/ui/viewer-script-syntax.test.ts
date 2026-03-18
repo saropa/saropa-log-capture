@@ -42,6 +42,12 @@ suite('Viewer HTML', () => {
             assert.ok(html.includes('role="log"'), 'log region should have role=log');
             assert.ok(html.includes('aria-label="Log content"'), 'log region should have aria-label');
         });
+
+        test('main content has role=main and line-count has aria-live for announcements', () => {
+            const html = buildViewerHtml({ nonce: getNonce(), version: '0.0.0' });
+            assert.ok(html.includes('id="main-content" role="main"'), 'primary content should have main landmark');
+            assert.ok(html.includes('id="line-count"') && html.includes('aria-live="polite"'), 'line-count should announce updates to screen readers');
+        });
     });
 
     suite('codicon stylesheet', () => {
