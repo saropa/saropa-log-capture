@@ -35,6 +35,14 @@ export interface StopSessionDeps {
     projectIndexer: ProjectIndexer | null;
 }
 
+/** Shape of manager passed to buildStopSessionDeps (keeps session-manager.ts under line limit). */
+export interface StopSessionDepsSource extends StopSessionDeps {}
+
+/** Build StopSessionDeps from a manager that has the same shape. */
+export function buildStopSessionDeps(manager: StopSessionDepsSource): StopSessionDeps {
+    return manager;
+}
+
 /**
  * Stop a debug session: cleanup state, build stats, and finalize the log session.
  */
