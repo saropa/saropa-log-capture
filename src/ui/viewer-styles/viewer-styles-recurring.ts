@@ -95,6 +95,11 @@ export function getRecurringPanelStyles(): string {
 
 .re-meta { font-size: 0.9em; opacity: 0.8; margin-top: 2px; }
 
+.re-regression { font-size: 0.85em; opacity: 0.85; margin-top: 2px; }
+.re-regression .re-commit-link { color: var(--vscode-textLink-foreground); }
+.re-regression .re-commit-link:hover { text-decoration: underline; }
+.re-regression code { font-size: 0.95em; }
+
 .re-actions { display: flex; gap: 4px; margin-top: 3px; }
 
 .re-action {
