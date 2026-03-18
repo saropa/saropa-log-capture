@@ -269,7 +269,8 @@ def validate_version_changelog() -> tuple[str, bool]:
 
     info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
     if max_cl and _parse_semver(pkg_version) < _parse_semver(max_cl):
-        suggested = _bump_patch(max_cl)
+        # CHANGELOG ahead of package: assume dev wants the changelog version, don't bump again
+        suggested = max_cl
     else:
         suggested = pkg_version
 
