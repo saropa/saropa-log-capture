@@ -152,16 +152,6 @@ export function getSessionPanelEventsScript(): string {
             renderSessionList(e.data.sessions);
             if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
         }
-        if (e.data.type === 'investigationsList') {
-            setCreateInvestigationLoading(false);
-            renderInvestigationsList(e.data);
-            showCreateInvestigationForm(false);
-        }
-        if (e.data.type === 'createInvestigationError') {
-            setCreateInvestigationLoading(false);
-            var errEl = document.getElementById('session-investigations-create-error');
-            if (errEl) { errEl.textContent = e.data.message || 'Failed to create investigation'; errEl.style.display = ''; }
-        }
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;
             sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });

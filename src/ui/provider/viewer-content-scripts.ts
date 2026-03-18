@@ -51,7 +51,7 @@ import { getBookmarkPanelScript } from '../viewer-panels/viewer-bookmark-panel';
 import { getFiltersPanelScript } from '../viewer-search-filter/viewer-filters-panel';
 import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
-import { getRecurringPanelScript } from '../panels/viewer-recurring-panel';
+import { getInsightPanelScript } from '../panels/viewer-insight-panel';
 import { getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
 import { getIconBarScript } from '../viewer-nav/viewer-icon-bar';
@@ -126,7 +126,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getFiltersPanelScript()) +
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
-        scriptTag(nonce, getRecurringPanelScript()) +
+        scriptTag(nonce, getInsightPanelScript()) +
         scriptTag(nonce, getPerformancePanelScript()) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +

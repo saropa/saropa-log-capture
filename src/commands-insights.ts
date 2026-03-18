@@ -1,14 +1,22 @@
-/** Command registration for cross-session insights. */
+/** Command registration for cross-session insights. Retargets to the unified Insight panel in the viewer. */
 
 import * as vscode from 'vscode';
-import { showInsightsPanel } from './ui/insights/insights-panel';
+import type { CommandDeps } from './commands-deps';
 
-/** Register cross-session insights commands. */
-export function insightsCommands(): vscode.Disposable[] {
+/** Register cross-session insights commands. Opens the viewer's Insight panel (no separate WebviewPanel). */
+export function insightsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
             'saropaLogCapture.showInsights',
-            () => { showInsightsPanel().catch(() => {}); },
+            () => {
+                deps.viewerProvider.postMessage({ type: 'openInsight', tab: 'recurring' });
+            },
+        ),
+        vscode.commands.registerCommand(
+            'saropaLogCapture.refreshRecurringErrors',
+            () => {
+                deps.viewerProvider.postMessage({ type: 'insightRefreshRecurring' });
+            },
         ),
     ];
 }

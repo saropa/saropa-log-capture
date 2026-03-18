@@ -42,22 +42,6 @@ export function getSessionPanelHtml(): string {
         <div id="session-tag-chips" class="session-tag-chips"></div>
     </div>
     <div class="session-panel-content">
-        <div id="session-investigations" class="session-investigations">
-            <div class="session-investigations-header">Investigations</div>
-            <p id="session-investigations-hint" class="session-investigations-hint">Pin sessions and files to search and export together.</p>
-            <div id="session-investigations-list" class="session-investigations-list"></div>
-            <div id="session-investigations-create-row" class="session-investigations-create-row">
-                <button id="session-investigations-create" class="session-investigations-create">+ Create Investigation...</button>
-            </div>
-            <div id="session-investigations-create-form" class="session-investigations-create-form" style="display:none">
-                <input type="text" id="session-investigations-name-input" class="session-investigations-name-input" placeholder="e.g., Auth Timeout Bug #1234" maxlength="100" />
-                <div class="session-investigations-create-form-actions">
-                    <button type="button" id="session-investigations-create-confirm" class="session-investigations-create-confirm">Create</button>
-                    <button type="button" id="session-investigations-create-cancel" class="session-investigations-create-cancel">Cancel</button>
-                </div>
-                <div id="session-investigations-create-error" class="session-investigations-create-error" style="display:none"></div>
-            </div>
-        </div>
         <div id="session-list"></div>
         <div id="session-list-pagination" class="session-list-pagination" style="display:none" aria-label="Session list pagination"></div>
         <div id="session-empty" class="session-empty">No sessions found</div>

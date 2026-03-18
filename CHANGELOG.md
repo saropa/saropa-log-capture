@@ -20,6 +20,10 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+• **Unified Insight panel** — Recurring Errors, Performance, and Investigations (Cases) are now in a single **Insight** panel (icon bar, lightbulb) with three tabs: Cases, Recurring, Performance. Project Logs shows only the session list; create and open investigations from Insight → Cases. Command **Saropa Log Capture: Open Insight** (formerly Cross-Log Insights) opens the panel; Add to Investigation and create/open investigation open Insight to the Cases tab. Last active tab is remembered. The separate Cross-Session Insights WebviewPanel is retired (same command opens the viewer's Insight panel). Session bar **Performance** chip opens Insight on the Performance tab. Recurring data refreshes when the extension triggers refresh after session finalize. Cases and Recurring tabs show loading state while fetching. Plan moved to `bugs/history/20260317/041_plan-unify-investigation-recurring-performance.md`.
+
 ### Administration
 
 • **Modularized 11 files over 300-line limit.** Split into smaller modules to satisfy ESLint `max-lines` (300, excluding blanks/comments). No behavior or API changes. New modules: `commands-export-insights`, `commands-export-helpers`; `log-session-helpers` (extended); `investigation-search-file`, `investigation-store-io`, `investigation-store-workspace`; `session-manager-routing`, `session-manager-start`, `session-manager-stop`; `viewer-content-body`, `viewer-content-scripts`; `viewer-message-handler-actions`, `viewer-message-handler-investigation`; `log-viewer-provider-state`; `viewer-performance-trends`, `viewer-performance-session-tab`; `viewer-replay-timing`, `viewer-replay-controls`; `viewer-session-panel-investigations`, `viewer-session-panel-events`. Callers still import from the original entry files where applicable.

@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { escapeHtml, formatElapsedLabel } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
-import { aggregateInsights, type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../../modules/misc/cross-session-aggregator';
+import { type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../../modules/misc/cross-session-aggregator';
 import { findInWorkspace } from '../../modules/misc/workspace-analyzer';
 import { searchLogFiles, openLogAtLine } from '../../modules/search/log-search';
 import { getInsightsStyles } from './insights-panel-styles';
@@ -18,29 +18,23 @@ import { renderEnvironmentSection } from './insights-panel-environment';
 import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
 import { getInsightsPanelScript } from './insights-panel-script';
 import { getDrillDownStyles } from './insights-drill-down-styles';
-import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
-import { startCrashlyticsBridge } from './insights-crashlytics-bridge';
+import { setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
 
 let panel: vscode.WebviewPanel | undefined;
-let currentTimeRange: TimeRange = 'all';
+const _currentTimeRange: TimeRange = 'all';
 
-/** Show the cross-session insights panel. */
-export async function showInsightsPanel(timeRange?: TimeRange): Promise<void> {
-    if (timeRange) { currentTimeRange = timeRange; }
-    ensurePanel();
-    panel!.webview.html = buildLoadingHtml();
-    const insights = await aggregateInsights(currentTimeRange);
-    const statuses = await getErrorStatusBatch(insights.recurringErrors.map(e => e.hash));
-    if (panel) {
-        panel.webview.html = buildResultsHtml(insights, statuses);
-        startCrashlyticsBridge(panel, insights.recurringErrors);
-    }
+/**
+ * Show the cross-session insights panel.
+ * Retired: the separate WebviewPanel is no longer used. This now opens the unified Insight panel in the viewer.
+ */
+export async function showInsightsPanel(_timeRange?: TimeRange): Promise<void> {
+    await vscode.commands.executeCommand('saropaLogCapture.showInsights');
 }
 
 /** Dispose the singleton panel. */
 export function disposeInsightsPanel(): void { panel?.dispose(); panel = undefined; }
 
-function ensurePanel(): void {
+function _ensurePanel(): void {
     if (panel) { return; }
     panel = vscode.window.createWebviewPanel(
         'saropaLogCapture.insights', 'Saropa Cross-Session Insights',
@@ -81,7 +75,7 @@ async function handleDrillDown(hash: string, normalized: string): Promise<void> 
     panel.webview.postMessage({ type: 'drillDownResults', hash, html });
 }
 
-function buildLoadingHtml(): string {
+function _buildLoadingHtml(): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
@@ -89,7 +83,7 @@ function buildLoadingHtml(): string {
 </head><body><div class="loading">Analyzing sessions...</div></body></html>`;
 }
 
-function buildResultsHtml(insights: CrossSessionInsights, statuses: Record<string, ErrorStatus>): string {
+function _buildResultsHtml(insights: CrossSessionInsights, statuses: Record<string, ErrorStatus>): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
@@ -105,15 +99,15 @@ ${renderEnvironmentSection(insights)}
 </body></html>`;
 }
 
-function renderTimeRangeOption(value: string, label: string): string {
-    return `<option value="${value}"${currentTimeRange === value ? ' selected' : ''}>${label}</option>`;
+function _renderTimeRangeOption(value: string, label: string): string {
+    return `<option value="${value}"${_currentTimeRange === value ? ' selected' : ''}>${label}</option>`;
 }
 
 function renderHeader(insights: CrossSessionInsights): string {
     const fileCount = insights.hotFiles.length;
     const errorCount = insights.recurringErrors.length;
-    const opts = renderTimeRangeOption('all', 'All time') + renderTimeRangeOption('30d', 'Last 30 days')
-        + renderTimeRangeOption('7d', 'Last 7 days') + renderTimeRangeOption('24h', 'Last 24 hours');
+    const opts = _renderTimeRangeOption('all', 'All time') + _renderTimeRangeOption('30d', 'Last 30 days')
+        + _renderTimeRangeOption('7d', 'Last 7 days') + _renderTimeRangeOption('24h', 'Last 24 hours');
     return `<div class="header">
 <div class="header-left">
 <div class="title">Saropa Cross-Session Insights</div>
