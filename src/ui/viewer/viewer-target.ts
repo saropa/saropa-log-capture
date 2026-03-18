@@ -44,6 +44,7 @@ export interface ViewerTarget {
   setScopeContext(context: ScopeContext): void;
   setMinimapShowInfo(show: boolean): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
+  setScrollbarVisible(show: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
   setAutoHidePatterns(patterns: readonly string[]): void;
 }

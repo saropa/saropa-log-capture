@@ -118,12 +118,14 @@ body[data-icon-bar="right"] #panel-content-row {
    =================================================================== */
 #log-content-wrapper {
     --mm-w: 60px; /* minimap width — updated by JS when size changes */
+    --scrollbar-w: 0; /* native vertical scrollbar width when showScrollbar is on */
     min-width: 80px;
     position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
 }
+body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
 
 /* ===================================================================
    Log Content Area
@@ -142,6 +144,7 @@ body[data-icon-bar="right"] #panel-content-row {
     position: relative;
 }
 #log-content::-webkit-scrollbar { width: 0; height: 10px; }
+body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
 #log-content::-webkit-scrollbar-thumb {
     background: var(--vscode-scrollbarSlider-background);
     border-radius: 4px;

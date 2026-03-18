@@ -113,6 +113,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setMinimapWidth(width: "small" | "medium" | "large"): void {
     for (const t of this.targets) { t.setMinimapWidth(width); }
   }
+  setScrollbarVisible(show: boolean): void {
+    for (const t of this.targets) { t.setScrollbarVisible(show); }
+  }
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }
   }

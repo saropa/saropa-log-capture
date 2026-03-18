@@ -92,6 +92,9 @@ export function setMinimapShowInfoImpl(target: ProviderStateTarget, show: boolea
 export function setMinimapWidthImpl(target: ProviderStateTarget, width: "small" | "medium" | "large"): void {
   target.postMessage({ type: "minimapWidth", width });
 }
+export function setScrollbarVisibleImpl(target: ProviderStateTarget, show: boolean): void {
+  target.postMessage({ type: "scrollbarVisible", show });
+}
 export function setIconBarPositionImpl(target: ProviderStateTarget, position: "left" | "right"): void {
   target.postMessage({ type: "iconBarPosition", position });
 }
