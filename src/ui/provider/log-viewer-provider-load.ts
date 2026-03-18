@@ -20,6 +20,8 @@ export interface LogViewerLoadTarget {
   setFilename(name: string): void;
   setSessionInfo(info: Record<string, string> | null): void;
   setHasPerformanceData?(has: boolean): void;
+  /** Pass code quality payload (meta.integrations.codeQuality) for the loaded log. */
+  setCodeQualityPayload?(payload: unknown): void;
   getSeenCategories(): Set<string>;
 }
 
@@ -55,20 +57,29 @@ export async function executeLoadContent(
   target.setFilename(vscode.workspace.asRelativePath(uri, false));
   const fields = parseHeaderFields(rawLines);
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
-  if (target.setHasPerformanceData) {
+  if (target.setHasPerformanceData || target.setCodeQualityPayload) {
     let hasPerf = false;
+    let codeQualityPayload: unknown = undefined;
     try {
-      // Avoid return inside try so TS parses try/catch reliably; checkGen() may invalidate this load.
       if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
       const store = new SessionMetadataStore();
       const meta = await store.loadMetadata(uri);
       if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
       const perf = meta.integrations?.performance as Record<string, unknown> | undefined;
       hasPerf = !!(perf && typeof perf === "object" && ((perf.snapshot !== null && perf.snapshot !== undefined) || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
+      const cq = meta.integrations?.codeQuality;
+      if (cq && typeof cq === "object" && cq !== null && "files" in cq) {
+        codeQualityPayload = cq;
+      }
     } catch {
       // ignore
     }
-    target.setHasPerformanceData(hasPerf);
+    if (target.setHasPerformanceData) {
+        target.setHasPerformanceData(hasPerf);
+    }
+    if (target.setCodeQualityPayload && codeQualityPayload) {
+        target.setCodeQualityPayload(codeQualityPayload);
+    }
   }
   const headerEnd = findHeaderEnd(rawLines);
   let contentLines = rawLines.slice(headerEnd);

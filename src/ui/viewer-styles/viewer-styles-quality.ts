@@ -31,5 +31,16 @@ export function getQualityBadgeStyles(): string {
     color: var(--vscode-errorForeground, #f48771);
     border: 1px solid rgba(255, 0, 0, 0.3);
 }
+
+/* Heatmap: subtle line background for stack frames by coverage (when quality badge is shown). */
+.line-quality-high {
+    background: rgba(0, 200, 83, 0.06);
+}
+.line-quality-med {
+    background: rgba(255, 165, 0, 0.06);
+}
+.line-quality-low {
+    background: rgba(255, 0, 0, 0.06);
+}
 `;
 }

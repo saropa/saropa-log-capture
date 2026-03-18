@@ -153,6 +153,16 @@
         "title": "%command.createReportFile.title%"
       },
       {
+        "command": "saropaLogCapture.showCodeQualityForFrame",
+        "icon": "$(symbol-misc)",
+        "title": "%command.showCodeQualityForFrame.title%"
+      },
+      {
+        "command": "saropaLogCapture.openQualityReport",
+        "icon": "$(file-code)",
+        "title": "%command.openQualityReport.title%"
+      },
+      {
         "command": "saropaLogCapture.showTimeline",
         "icon": "$(graph-line)",
         "title": "%command.showTimeline.title%"
@@ -1179,6 +1189,11 @@
           "description": "Ignore coverage report older than this many hours (0 = no limit).",
           "minimum": 0,
           "type": "number"
+        },
+        "saropaLogCapture.integrations.codeQuality.includeInBugReport": {
+          "default": false,
+          "description": "Include quality summary (low coverage, lint issues) for referenced files in bug reports.",
+          "type": "boolean"
         },
         "saropaLogCapture.integrations.crashDumps.searchPaths": {
           "default": [],

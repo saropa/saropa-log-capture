@@ -102,6 +102,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
         : '',
       scanComments: ensureBoolean(cfg.get('integrations.codeQuality.scanComments'), false),
       coverageStaleMaxHours: configNonNegative(cfg, 'integrations.codeQuality.coverageStaleMaxHours', 24),
+      includeInBugReport: ensureBoolean(cfg.get('integrations.codeQuality.includeInBugReport'), false),
     },
     integrationsCrashDumps: {
       searchPaths: ensureStringArray(cfg.get('integrations.crashDumps.searchPaths'), []),

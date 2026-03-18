@@ -91,6 +91,12 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-integration-context">
                 <span class="codicon codicon-layers"></span> Show Integration Context
             </div>
+            <div class="context-menu-item" data-action="show-code-quality" data-line-action>
+                <span class="codicon codicon-symbol-misc"></span> Show code quality
+            </div>
+            <div class="context-menu-item" data-action="open-quality-report">
+                <span class="codicon codicon-file-code"></span> Open quality report
+            </div>
             <div class="context-menu-item" data-action="explain-with-ai" data-line-action>
                 <span class="codicon codicon-sparkle"></span> Explain with AI
             </div>
