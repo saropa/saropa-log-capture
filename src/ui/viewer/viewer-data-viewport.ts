@@ -53,11 +53,19 @@ function renderViewport(force) {
         if (endIdx > cap) endIdx = cap;
         if (startIdx > cap) startIdx = cap;
     }
-    // Hysteresis: only rebuild DOM when visible area shifts past half the overscan buffer
+    // Hysteresis: only rebuild DOM when visible area shifts past half the overscan buffer.
+    // When we skip the rebuild (e.g. during tailing with user selection), still update spacers
+    // so scroll height stays correct and the user can keep selecting text without DOM replace.
     var hyst = Math.floor(OVERSCAN / 2);
+    var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
+        ? totalHeight - prefixSums[endIdx + 1] : 0;
     if (!force && lastStart >= 0 &&
         Math.abs(startIdx - lastStart) < hyst &&
-        Math.abs(endIdx - lastEnd) < hyst) { return; }
+        Math.abs(endIdx - lastEnd) < hyst) {
+        spacerTop.style.height = startOffset + 'px';
+        spacerBottom.style.height = bottomH + 'px';
+        return;
+    }
     lastStart = startIdx; lastEnd = endIdx;
     // Find previous visible line before viewport start for spacing calculation
     var prevVis = null;
@@ -87,8 +95,6 @@ function renderViewport(force) {
         ci = ni - 1;
     }
     spacerTop.style.height = startOffset + 'px';
-    var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
-        ? totalHeight - prefixSums[endIdx + 1] : 0;
     spacerBottom.style.height = bottomH + 'px';
     // Re-apply row selection highlight after DOM replace so shift-click selection is preserved (e.g. on right-click context menu).
     if (typeof updateSelectionHighlight === 'function') updateSelectionHighlight();
