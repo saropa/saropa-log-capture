@@ -53,6 +53,7 @@
   "command.closeInvestigation.title": "Saropa Log Capture: Fechar investigação",
   "command.switchInvestigation.title": "Saropa Log Capture: Alternar investigação",
   "command.addToInvestigation.title": "Adicionar à investigação",
+  "command.addInsightItemToCase.title": "Adicionar item ao caso",
   "command.removeFromInvestigation.title": "Remover da investigação",
   "command.exportInvestigation.title": "Exportar investigação como .slc",
   "command.shareInvestigation.title": "Compartilhar investigação",
