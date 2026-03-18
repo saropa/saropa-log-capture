@@ -67,6 +67,8 @@ export interface SaropaLogCaptureConfig {
   readonly breakOnCritical: boolean;
   readonly minimapShowInfoMarkers: boolean;
   readonly minimapWidth: "small" | "medium" | "large";
+  /** When true, show the native vertical scrollbar in the log viewer (default: false). */
+  readonly showScrollbar: boolean;
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   readonly smartBookmarks: SmartBookmarksConfig;
