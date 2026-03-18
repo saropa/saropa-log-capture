@@ -9,20 +9,31 @@ import { InvestigationStore } from "../../modules/investigation/investigation-st
 import { showInvestigationPanel } from "../investigation/investigation-panel";
 import type { ViewerMessageContext } from "./viewer-message-types";
 
-/** Build and post investigationsList payload from store. */
-export async function postInvestigationsList(ctx: ViewerMessageContext, store: InvestigationStore): Promise<void> {
+/** Build investigationsList payload from store (for posting to webview). */
+export async function getInvestigationsListPayload(store: InvestigationStore): Promise<{
+  type: "investigationsList";
+  investigations: { id: string; name: string; sourceCount: number; isActive: boolean; updatedAt?: number }[];
+  activeId: string | undefined;
+}> {
   const investigations = await store.listInvestigations();
   const activeId = await store.getActiveInvestigationId();
-  ctx.post({
+  return {
     type: "investigationsList",
     investigations: investigations.map((inv) => ({
       id: inv.id,
       name: inv.name,
       sourceCount: inv.sources.length,
       isActive: inv.id === activeId,
+      updatedAt: inv.updatedAt,
     })),
     activeId: activeId ?? undefined,
-  });
+  };
+}
+
+/** Build and post investigationsList payload from store. */
+export async function postInvestigationsList(ctx: ViewerMessageContext, store: InvestigationStore): Promise<void> {
+  const payload = await getInvestigationsListPayload(store);
+  ctx.post(payload);
 }
 
 /**
@@ -62,6 +73,7 @@ export function dispatchInvestigationMessage(msg: Record<string, unknown>, ctx: 
           await store.setActiveInvestigationId(investigation.id);
           await showInvestigationPanel(store);
           await postInvestigationsList(ctx, store);
+          ctx.post({ type: "createInvestigationSucceeded", id: investigation.id });
           vscode.window.showInformationMessage(t("msg.investigationCreated", name));
         } catch (e) {
           const message = e instanceof Error ? e.message : String(e);
