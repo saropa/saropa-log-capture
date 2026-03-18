@@ -20,6 +20,12 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Fixed
+
+• **Session panel crash** — Project Logs no longer throws "escapeHtmlText is not defined". Shared helpers `escapeAttr` and `escapeHtmlText` are defined once in the session panel bootstrap; inlined fragments (rendering, events) use them. A runtime test runs the same script combination the webview uses and dispatches a sessionList message to catch missing dependencies.
+
+• **Extension development** — Declared `terminalDataWriteEvent` in `package.json` `enabledApiProposals` and added `--enable-proposed-api=saropa.saropa-log-capture` to both launch configurations so F5 / Run Extension allows capture to start and sessions to appear in Project Logs.
+
 ### Changed
 
 • Rename **Insight** menu and panel labels to **Insights** (lightbulb icon in the viewer and command palette entry) for consistency with cross-session Insights terminology.
