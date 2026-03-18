@@ -12,7 +12,12 @@ const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception
 const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
 const warnPattern = /\b(warn(ing)?|caution)\b/i;
 const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
+// Performance: PERF/jank/GC/ANR — well-established patterns.
 const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+(?:pause|freed|concurrent)|anr|application\s+not\s+responding)\b/i;
+// Flutter/Dart memory: applied only when line has Flutter/Dart context (logcat tag or package path).
+// High-confidence phrases only; no bare "heap"/"memory" to avoid false positives in other runtimes.
+const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)\s|package\/(?:flutter|dart)\b)/i;
+const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:old|new)\s+gen\s|retained\s+\d+|leak\s+detected|potential\s+leak)\b/i;
 const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
 const noticePattern = /\b(notice|note|important)\b/i;
@@ -41,6 +46,7 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
     const ep = strict ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) { return 'error'; }
     if (perfPattern.test(plainText)) { return 'performance'; }
+    if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) { return 'performance'; }
     if (todoPattern.test(plainText)) { return 'todo'; }
     if (prefix === 'V' || prefix === 'D' || debugPattern.test(plainText)) { return 'debug'; }
     if (noticePattern.test(plainText)) { return 'notice'; }
@@ -50,6 +56,7 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
 function classifyNonError(plainText: string): SeverityLevel {
     if (warnPattern.test(plainText)) { return 'warning'; }
     if (perfPattern.test(plainText)) { return 'performance'; }
+    if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) { return 'performance'; }
     if (todoPattern.test(plainText)) { return 'todo'; }
     if (debugPattern.test(plainText)) { return 'debug'; }
     if (noticePattern.test(plainText)) { return 'notice'; }

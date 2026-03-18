@@ -6,6 +6,9 @@ var strictErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|excepti
 var strictLevelDetection = true;
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
 var perfPattern = /\\b(perf(?:ormance)?|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+(?:pause|freed|concurrent)|anr|application\\s+not\\s+responding)\\b/i;
+// Flutter/Dart memory: same context + phrase rules as level-classifier.ts (keep in sync).
+var flutterDartContextRe = /(?:^[VDIW]\\/(?:flutter|dart)\\s|package\\/(?:flutter|dart)\\b)/i;
+var memoryPhraseRe = /\\b(Memory\\s*:\\s*\\d+|memory\\s+(?:pressure|usage|leak)|(?:old|new)\\s+gen\\s|retained\\s+\\d+|leak\\s+detected|potential\\s+leak)\\b/i;
 var todoPattern = /\\b(TODO|FIXME|HACK|XXX)\\b/i;
 var debugPattern = /\\b(breadcrumb|trace|debug)\\b/i;
 var noticePattern = /\\b(notice|note|important)\\b/i;
@@ -23,6 +26,7 @@ function classifyLevel(plainText, category) {
         if (L === 'W') return 'warning';
         if (ep.test(plainText)) return 'error';
         if (perfPattern.test(plainText)) return 'performance';
+        if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) return 'performance';
         if (todoPattern.test(plainText)) return 'todo';
         if (L === 'V' || L === 'D') return 'debug';
         if (debugPattern.test(plainText)) return 'debug';
@@ -32,6 +36,7 @@ function classifyLevel(plainText, category) {
     if (ep.test(plainText)) return 'error';
     if (warnPattern.test(plainText)) return 'warning';
     if (perfPattern.test(plainText)) return 'performance';
+    if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) return 'performance';
     if (todoPattern.test(plainText)) return 'todo';
     if (debugPattern.test(plainText)) return 'debug';
     if (noticePattern.test(plainText)) return 'notice';
