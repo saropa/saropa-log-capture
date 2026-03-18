@@ -13,6 +13,7 @@ import { countSeverities } from "../session/session-severity-counts";
 import { getEffectiveViewerLines } from "./viewer-content";
 import * as helpers from "./viewer-provider-helpers";
 import { getCorrelationByLocation } from "../../modules/correlation/correlation-store";
+import { findFirstErrorLines, type FirstErrorResult } from "../../modules/bookmarks/first-error";
 
 export interface LogViewerLoadTarget {
   postMessage(msg: unknown): void;
@@ -31,15 +32,21 @@ export interface LogViewerTailTarget extends LogViewerLoadTarget {
   setTailUpdateInProgress(v: boolean): void;
 }
 
+/** Load result for smart bookmark suggestion (first error/warning in this log). */
+export interface LoadResultFirstError {
+  firstError?: FirstErrorResult;
+  firstWarning?: FirstErrorResult;
+}
+
 /**
  * Execute the core load: read file, parse header, send content lines, run boundaries.
- * Returns { sessionMidnightMs, contentLength } for optional tailing.
+ * Returns { sessionMidnightMs, contentLength, firstError?, firstWarning? } for optional tailing and smart bookmarks.
  */
 export async function executeLoadContent(
   target: LogViewerLoadTarget,
   uri: vscode.Uri,
   checkGen: () => boolean,
-): Promise<{ sessionMidnightMs: number; contentLength: number }> {
+): Promise<{ sessionMidnightMs: number; contentLength: number } & LoadResultFirstError> {
   const raw = await vscode.workspace.fs.readFile(uri);
   if (!checkGen()) { return { sessionMidnightMs: 0, contentLength: 0 }; }
   const text = Buffer.from(raw).toString("utf-8");
@@ -103,8 +110,24 @@ export async function executeLoadContent(
     if (contentIdx >= 0 && contentIdx < contentLines.length) { correlationByLineIndex[contentIdx] = value; }
   }
   if (Object.keys(correlationByLineIndex).length > 0) { post({ type: "setCorrelationByLineIndex", correlationByLineIndex }); }
+  // Smart bookmarks: find first error/warning for post-load suggestion (if enabled).
+  let firstError: FirstErrorResult | undefined;
+  let firstWarning: FirstErrorResult | undefined;
+  if (cfg.smartBookmarks.suggestFirstError || cfg.smartBookmarks.suggestFirstWarning) {
+    const found = findFirstErrorLines(contentLines, {
+      strict: cfg.levelDetection === "strict",
+      includeWarning: cfg.smartBookmarks.suggestFirstWarning,
+    });
+    firstError = found.firstError;
+    firstWarning = found.firstWarning;
+  }
   target.postMessage({ type: "loadComplete" });
-  return { sessionMidnightMs: ctx.sessionMidnightMs, contentLength: contentLines.length };
+  return {
+    sessionMidnightMs: ctx.sessionMidnightMs,
+    contentLength: contentLines.length,
+    ...(firstError && { firstError }),
+    ...(firstWarning && { firstWarning }),
+  };
 }
 
 /** Create a file watcher that appends new lines to the viewer. Caller must dispose when done. */

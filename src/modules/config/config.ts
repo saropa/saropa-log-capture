@@ -168,6 +168,10 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
+    smartBookmarks: {
+      suggestFirstError: ensureBoolean(cfg.get("smartBookmarks.suggestFirstError"), true),
+      suggestFirstWarning: ensureBoolean(cfg.get("smartBookmarks.suggestFirstWarning"), false),
+    },
     verboseDap: ensureBoolean(cfg.get("verboseDap"), false),
     diagnosticCapture: ensureBoolean(cfg.get("diagnosticCapture"), false),
     fileTypes: ensureStringArray(cfg.get("fileTypes"), DEFAULT_FILE_TYPES),
