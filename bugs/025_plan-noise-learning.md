@@ -2,7 +2,9 @@
 
 **Feature:** Learn from user interactions (dismissals, filters) to suggest exclusion rules and reduce log noise over time.
 
-**Depends on:** All cohesion features (users interact across Timeline, Investigation, Context Popover).
+**Context (Insights):** Investigations, Recurring errors, and cross-session data are unified in the **Insights panel** (lightbulb icon): Active Cases, Recurring errors, Frequently modified files, Environment, Performance. Suggestion UI (e.g. "Review filter suggestions") can live in the Insights panel (e.g. a collapsible "Filter suggestions" section or a prompt that opens the suggestions panel) or as a notification that opens the dedicated suggestions panel. Export summary and recurring triage already run from Insights.
+
+**Depends on:** Cohesion features (Timeline, Insights panel including Cases and Recurring, Context Popover).
 
 ---
 
@@ -287,9 +289,9 @@ async function checkAndShowSuggestions(): Promise<void> {
 }
 ```
 
-**Suggestions panel:**
+**Suggestions panel:** (Can be a section within the Insights panel or a dedicated panel opened from Insights/notification.)
 
-Create `src/ui/panels/suggestions-panel.ts`:
+Create `src/ui/panels/suggestions-panel.ts` (or implement as an Insights panel section):
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -469,7 +471,7 @@ class LearningStore {
 
 ### Recommended order
 
-This is Phase 6 of the intelligence tier, after Auto-Correlation (Phase 5). Requires Tier 6 (Cohesion) as foundation — all three cohesion plans (Unified Timeline, Investigation Mode, Context Popover) are complete.
+This is Phase 6 of the intelligence tier, after Auto-Correlation (Phase 5). Requires Tier 6 (Cohesion) as foundation. The unified Insights panel (Plan 041) is in place: Cases, Recurring, Hot files, Environment, and Performance live in one panel; filter suggestions can integrate there (e.g. section or entry point) or via a dedicated suggestions panel opened from a notification.
 
 ### Target metrics
 
