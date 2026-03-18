@@ -8,10 +8,16 @@ import { t } from './l10n';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import { showInvestigationPanel, disposeInvestigationPanel, refreshInvestigationPanelIfOpen } from './ui/investigation/investigation-panel';
 import type { TreeItem } from './ui/session/session-history-grouping';
-import type { Investigation } from './modules/investigation/investigation-types';
 import { registerShareCommands } from './investigation-commands-share';
 import { registerExportInvestigationCommand } from './investigation-commands-export';
 import { getInvestigationsListPayload } from './ui/provider/viewer-message-handler-investigation';
+import {
+    formatInsightItemLine,
+    resolveOrPickInvestigation,
+    type AddInsightItemToCasePayload,
+} from './investigation-commands-helpers';
+
+export type { AddInsightItemToCasePayload };
 
 export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
@@ -19,24 +25,6 @@ export interface InvestigationCommandDeps {
     readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
     /** Used to open the viewer's Insight panel to the Cases tab after add/create/open. */
     readonly viewerProvider?: { postMessage(message: unknown): void };
-}
-
-/** Payload from Insight panel "+" (add to case) for recurring error or hot file. */
-export type AddInsightItemToCasePayload =
-    | { type: 'recurring'; normalizedText?: string; exampleLine?: string }
-    | { type: 'hotfile'; filename?: string };
-
-function formatInsightItemLine(payload: AddInsightItemToCasePayload | undefined): string {
-    if (!payload) { return ''; }
-    if (payload.type === 'recurring') {
-        const text = (payload.exampleLine ?? payload.normalizedText ?? '').trim();
-        return text ? `Recurring: ${text}` : '';
-    }
-    if (payload.type === 'hotfile') {
-        const name = (payload.filename ?? '').trim();
-        return name ? `Hot file: ${name}` : '';
-    }
-    return '';
 }
 
 export function registerInvestigationCommands(deps: InvestigationCommandDeps): vscode.Disposable[] {
@@ -278,40 +266,4 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
 
         ...shareAndExport,
     ];
-}
-
-/** Resolve the active investigation, or prompt user to pick/create one. Returns undefined if cancelled. */
-async function resolveOrPickInvestigation(store: InvestigationStore): Promise<Investigation | undefined> {
-    const active = await store.getActiveInvestigation();
-    if (active) { return active; }
-
-    const investigations = await store.listInvestigations();
-    let result: Investigation | undefined;
-    if (investigations.length === 0) {
-        result = await promptCreateInvestigation(store);
-    } else {
-        const items: { label: string; investigation: Investigation | null }[] = investigations.map(inv => ({
-            label: inv.name,
-            investigation: inv,
-        }));
-        items.push({ label: `$(add) ${t('action.createNew')}`, investigation: null });
-
-        const picked = await vscode.window.showQuickPick(items, {
-            placeHolder: t('prompt.selectInvestigationToAdd'),
-        });
-        if (!picked) { return undefined; }
-        result = picked.investigation ?? await promptCreateInvestigation(store);
-    }
-    if (result) { await store.setActiveInvestigationId(result.id); }
-    return result;
-}
-
-/** Prompt the user to create a new investigation. Returns undefined if cancelled. */
-async function promptCreateInvestigation(store: InvestigationStore): Promise<Investigation | undefined> {
-    const name = await vscode.window.showInputBox({
-        prompt: t('prompt.investigationName'),
-        placeHolder: t('placeholder.investigationName'),
-    });
-    if (!name) { return undefined; }
-    return store.createInvestigation({ name });
 }
