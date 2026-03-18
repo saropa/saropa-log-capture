@@ -77,13 +77,14 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'stack-header') {
+        // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (use \u25b6/\u25bc/\u25b7, not literal \u strings)
         var ch, sf;
         if (item.collapsed === true) {
-            ch = '\\\\u25b6';
+            ch = '\u25b6';
             sf = item.frameCount > 1 ? '  [+' + (item.frameCount - 1) + ' frames]' : '';
-        } else if (item.collapsed === false) { ch = '\\\\u25bc'; sf = ''; }
+        } else if (item.collapsed === false) { ch = '\u25bc'; sf = ''; }
         else {
-            ch = '\\\\u25b7';
+            ch = '\u25b7';
             var appFrames = item._appFrameCount || 0;
             var totalFrames = item.frameCount || 0;
             var fwFrames = totalFrames - appFrames;
