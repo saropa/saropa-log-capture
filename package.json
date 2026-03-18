@@ -314,6 +314,11 @@
         "title": "%command.addToInvestigation.title%"
       },
       {
+        "command": "saropaLogCapture.addInsightItemToCase",
+        "icon": "$(add)",
+        "title": "%command.addInsightItemToCase.title%"
+      },
+      {
         "command": "saropaLogCapture.removeFromInvestigation",
         "icon": "$(pinned)",
         "title": "%command.removeFromInvestigation.title%"
@@ -1762,5 +1767,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "3.6.2"
+  "version": "3.7.0"
 }

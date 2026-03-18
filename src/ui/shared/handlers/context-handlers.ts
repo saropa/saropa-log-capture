@@ -4,12 +4,49 @@
  * Handlers for integration context popover and document display.
  */
 
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { loadContextData, loadContextFromMeta, type ContextWindow } from '../../../modules/context/context-loader';
 import { aggregatePerformance } from '../../../modules/misc/perf-aggregator';
+import { parseJSONOrDefault } from '../../../modules/misc/safe-json';
 import type { PostFn } from './crashlytics-handlers';
+
+const MAX_SPARKLINE_POINTS = 48;
+
+interface PerfSample { t: number; freememMb: number; loadAvg1?: number }
+
+/** Load and downsample .perf.json for hero sparkline. Returns undefined if no samples. */
+async function loadHeroSparklineData(logUri: vscode.Uri, sessionData: Record<string, unknown> | undefined): Promise<{ times: number[]; freememMb: number[]; loadAvg1: number[] } | undefined> {
+    const samplesFile = sessionData?.samplesFile as string | undefined;
+    if (!samplesFile || typeof samplesFile !== 'string' || !samplesFile.endsWith('.perf.json')) {
+        return undefined;
+    }
+    const logDir = path.dirname(logUri.fsPath);
+    const sidecarPath = path.join(logDir, samplesFile);
+    try {
+        const content = await vscode.workspace.fs.readFile(vscode.Uri.file(sidecarPath));
+        const data = parseJSONOrDefault<{ samples?: PerfSample[] }>(Buffer.from(content).toString('utf-8'), {});
+        const raw = data.samples && Array.isArray(data.samples) ? data.samples : [];
+        if (raw.length < 2) { return undefined; }
+        const n = Math.min(MAX_SPARKLINE_POINTS, raw.length);
+        const step = (raw.length - 1) / (n - 1);
+        const times: number[] = [];
+        const freememMb: number[] = [];
+        const loadAvg1: number[] = [];
+        for (let i = 0; i < n; i++) {
+            const idx = i === n - 1 ? raw.length - 1 : Math.round(i * step);
+            const s = raw[idx];
+            times.push(s.t);
+            freememMb.push(typeof s.freememMb === 'number' ? s.freememMb : 0);
+            loadAvg1.push(typeof s.loadAvg1 === 'number' ? s.loadAvg1 : 0);
+        }
+        return { times, freememMb, loadAvg1 };
+    } catch {
+        return undefined;
+    }
+}
 
 /** Format a single integration entry into display lines. */
 function formatIntegrationEntry(key: string, value: unknown): string[] {
@@ -56,25 +93,51 @@ function getSessionCenterTime(integrations: Record<string, unknown> | undefined)
     return 0;
 }
 
+function buildSnapshotSummary(sessionData: Record<string, unknown> | undefined): string | undefined {
+    const snap = sessionData?.snapshot as { cpus?: number; totalMemMb?: number; freeMemMb?: number; processMemMb?: number } | undefined;
+    if (!snap || typeof snap !== 'object') { return undefined; }
+    const parts: string[] = [];
+    if (typeof snap.cpus === 'number') parts.push(`${snap.cpus} CPUs`);
+    if (typeof snap.totalMemMb === 'number') parts.push(`${snap.totalMemMb} MB RAM`);
+    if (typeof snap.processMemMb === 'number') parts.push(`process ${snap.processMemMb} MB`);
+    return parts.length > 0 ? parts.join(', ') : undefined;
+}
+
 /** Aggregate performance fingerprints and optional session data for current log. */
 export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri): Promise<void> {
-    const [insights, sessionData] = await Promise.all([
+    const [insights, logContext] = await Promise.all([
         aggregatePerformance('all').catch(() => undefined),
         logUri ? (async () => {
             try {
                 const store = new SessionMetadataStore();
                 const meta = await store.loadMetadata(logUri);
-                return meta.integrations?.performance as Record<string, unknown> | undefined;
+                const sessionData = meta.integrations?.performance as Record<string, unknown> | undefined;
+                const snapshotSummary = buildSnapshotSummary(sessionData);
+                const heroSparklineData = await loadHeroSparklineData(logUri, sessionData);
+                return {
+                    sessionData,
+                    errorCount: meta.errorCount,
+                    warningCount: meta.warningCount,
+                    snapshotSummary,
+                    heroSparklineData,
+                };
             } catch {
                 return undefined;
             }
         })() : Promise.resolve(undefined),
     ]);
+    const currentLogLabel = logUri ? path.basename(logUri.fsPath) : undefined;
+    const sessionData = logContext?.sessionData;
     post({
         type: 'performanceData',
         trends: insights?.trends ?? [],
         sessionCount: insights?.sessionCount ?? 0,
         sessionData: sessionData ?? undefined,
+        currentLogLabel: currentLogLabel ?? undefined,
+        heroErrorCount: logContext?.errorCount,
+        heroWarningCount: logContext?.warningCount,
+        heroSnapshotSummary: logContext?.snapshotSummary,
+        heroSparklineData: logContext?.heroSparklineData,
     });
 }
 
