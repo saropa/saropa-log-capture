@@ -8,78 +8,86 @@ import { getPerformanceCurrentScript } from './viewer-performance-current';
 import { getPerformanceTrendsScript } from './viewer-performance-trends';
 import { getPerformanceSessionTabScript } from './viewer-performance-session-tab';
 
-/** Generate the performance panel HTML. */
-export function getPerformancePanelHtml(): string {
+/**
+ * When prefix is 'insight-', IDs become insight-pp-panel, insight-pp-current-view, etc.
+ * Used when embedding the performance panel inside the Insight panel.
+ */
+export function getPerformancePanelHtml(prefix?: string): string {
+    const id = prefix ? prefix + 'pp-panel' : 'performance-panel';
+    const pid = (p: string) => (prefix ? prefix + 'pp-' + p : 'pp-' + p);
     return /* html */ `
-<div id="performance-panel" class="performance-panel">
+<div id="${id}" class="performance-panel">
     <div class="performance-panel-header">
         <span>Performance</span>
         <div class="performance-panel-actions">
-            <button id="pp-refresh" class="pp-action" title="Refresh">
+            <button id="${pid('refresh')}" class="pp-action" title="Refresh">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="pp-panel-close" class="pp-close" title="Close">&times;</button>
+            <button id="${pid('panel-close')}" class="pp-close" title="Close">&times;</button>
         </div>
     </div>
     <div class="pp-tabs">
-        <button id="pp-tab-current" class="pp-tab active">Current</button>
-        <button id="pp-tab-trends" class="pp-tab">Trends</button>
-        <button id="pp-tab-session" class="pp-tab">Log</button>
+        <button id="${pid('tab-current')}" class="pp-tab active">Current</button>
+        <button id="${pid('tab-trends')}" class="pp-tab">Trends</button>
+        <button id="${pid('tab-session')}" class="pp-tab">Log</button>
     </div>
     <div class="performance-panel-content">
-        <div id="pp-current-view"></div>
-        <div id="pp-trends-view" style="display:none">
-            <div id="pp-chart-area" class="pp-chart-container" style="display:none">
-                <div class="pp-chart-title" id="pp-chart-title">Select an operation</div>
-                <svg id="pp-chart" class="pp-chart" viewBox="0 0 380 120"></svg>
+        <div id="${pid('current-view')}"></div>
+        <div id="${pid('trends-view')}" style="display:none">
+            <div id="${pid('chart-area')}" class="pp-chart-container" style="display:none">
+                <div class="pp-chart-title" id="${pid('chart-title')}">Select an operation</div>
+                <svg id="${pid('chart')}" class="pp-chart" viewBox="0 0 380 120"></svg>
             </div>
             <table class="pp-trend-table">
                 <thead><tr><th>Operation</th><th>Avg</th><th>Logs</th><th></th></tr></thead>
-                <tbody id="pp-trend-body"></tbody>
+                <tbody id="${pid('trend-body')}"></tbody>
             </table>
         </div>
-        <div id="pp-session-view" style="display:none" class="pp-session-view">
-            <div id="pp-session-intro" class="pp-session-intro">
+        <div id="${pid('session-view')}" style="display:none" class="pp-session-view">
+            <div id="${pid('session-intro')}" class="pp-session-intro">
                 <p class="pp-session-intro-line">This log was saved without performance data. You can't add it to this file.</p>
                 <p class="pp-session-intro-line">For your next run: enable <strong>Performance</strong> in Options → Integrations…, then press F5. The new log will include it. (For memory samples, also turn on "Sample during session" in Settings.)</p>
                 <p class="pp-session-intro-line pp-session-intro-note">Overhead: snapshot at session start is minimal; optional sampling uses a little CPU and I/O.</p>
             </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">System snapshot</div>
-                <div id="pp-snapshot" class="pp-session-value">Not recorded for this log.</div>
+                <div id="${pid('snapshot')}" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">Log samples</div>
-                <div id="pp-samples" class="pp-session-value">Not recorded for this log.</div>
+                <div id="${pid('samples')}" class="pp-session-value">Not recorded for this log.</div>
             </div>
             <div class="pp-session-block">
                 <div class="pp-session-title">Profiler output</div>
-                <div id="pp-profiler" class="pp-session-value">None.</div>
+                <div id="${pid('profiler')}" class="pp-session-value">None.</div>
             </div>
         </div>
-        <div id="pp-empty" class="pp-empty">No performance events found</div>
-        <div id="pp-loading" class="pp-loading" style="display:none">Loading\u2026</div>
+        <div id="${pid('empty')}" class="pp-empty">No performance events found</div>
+        <div id="${pid('loading')}" class="pp-loading" style="display:none">Loading\u2026</div>
     </div>
 </div>`;
 }
 
-/** Generate the performance panel script. */
-export function getPerformancePanelScript(): string {
+/** Generate the performance panel script. When prefix is 'insight-', binds to insight-pp-* elements (set window.__insightPerfIdPrefix before this script runs). */
+export function getPerformancePanelScript(prefix?: string): string {
+    const ppIdPrefix = prefix !== undefined ? `'${prefix}'` : `(typeof window.__insightPerfIdPrefix !== 'undefined' ? window.__insightPerfIdPrefix : '')`;
+    const pid = (s: string) => `document.getElementById(${ppIdPrefix} + 'pp-${s}')`;
     return /* javascript */ `
 (function() {
-    var ppPanel = document.getElementById('performance-panel');
-    var ppCurrentView = document.getElementById('pp-current-view');
-    var ppTrendsView = document.getElementById('pp-trends-view');
-    var ppEmpty = document.getElementById('pp-empty');
-    var ppLoading = document.getElementById('pp-loading');
-    var ppTrendBody = document.getElementById('pp-trend-body');
-    var ppChartArea = document.getElementById('pp-chart-area');
-    var ppChartSvg = document.getElementById('pp-chart');
-    var ppChartTitle = document.getElementById('pp-chart-title');
-    var ppTabCurrent = document.getElementById('pp-tab-current');
-    var ppTabTrends = document.getElementById('pp-tab-trends');
-    var ppTabSession = document.getElementById('pp-tab-session');
-    var ppSessionView = document.getElementById('pp-session-view');
+    var ppIdPrefix = ${ppIdPrefix};
+    var ppPanel = document.getElementById(ppIdPrefix ? ppIdPrefix + 'pp-panel' : 'performance-panel');
+    var ppCurrentView = ${pid('current-view')};
+    var ppTrendsView = ${pid('trends-view')};
+    var ppEmpty = ${pid('empty')};
+    var ppLoading = ${pid('loading')};
+    var ppTrendBody = ${pid('trend-body')};
+    var ppChartArea = ${pid('chart-area')};
+    var ppChartSvg = ${pid('chart')};
+    var ppChartTitle = ${pid('chart-title')};
+    var ppTabCurrent = ${pid('tab-current')};
+    var ppTabTrends = ${pid('tab-trends')};
+    var ppTabSession = ${pid('tab-session')};
+    var ppSessionView = ${pid('session-view')};
     var ppOpen = false;
     var ppActiveTab = 'current';
     var ppTrendsData = null;
@@ -87,14 +95,14 @@ export function getPerformancePanelScript(): string {
     window.openPerformancePanel = function() {
         if (!ppPanel) return;
         ppOpen = true;
-        ppPanel.classList.add('visible');
+        if (!ppIdPrefix) ppPanel.classList.add('visible');
         if (ppActiveTab === 'current') { buildCurrentView(); }
         else if (ppActiveTab === 'trends') { requestTrends(); }
     };
 
     window.closePerformancePanel = function() {
         if (!ppPanel) return;
-        ppPanel.classList.remove('visible');
+        if (!ppIdPrefix) ppPanel.classList.remove('visible');
         ppOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('performance');
     };
@@ -153,25 +161,27 @@ export function getPerformancePanelScript(): string {
         renderChart(ppTrendsData[idx]);
     });
 
-    var ppRefresh = document.getElementById('pp-refresh');
+    var ppRefresh = document.getElementById(ppIdPrefix + 'pp-refresh');
     if (ppRefresh) ppRefresh.addEventListener('click', function() {
         if (ppActiveTab === 'current') buildCurrentView();
         else if (ppActiveTab === 'trends') requestTrends();
     });
 
-    var ppCloseBtn = document.getElementById('pp-panel-close');
+    var ppCloseBtn = document.getElementById(ppIdPrefix + 'pp-panel-close');
     if (ppCloseBtn) ppCloseBtn.addEventListener('click', closePerformancePanel);
 
     var sessionPerfChip = document.getElementById('session-perf-chip');
     if (sessionPerfChip) sessionPerfChip.addEventListener('click', function() {
-        if (typeof window.setActivePanel === 'function') window.setActivePanel('performance');
+        if (typeof window.setActivePanel === 'function') window.setActivePanel('insight');
+        if (typeof openInsightPanel === 'function') openInsightPanel();
+        if (typeof window.setInsightTab === 'function') window.setInsightTab('performance');
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
 
     document.addEventListener('click', function(e) {
         if (!ppOpen) return;
         if (ppPanel && ppPanel.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-performance');
+        var ibBtn = document.getElementById('ib-insight');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
         var perfChip = document.getElementById('session-perf-chip');
         if (perfChip && (perfChip === e.target || perfChip.contains(e.target))) return;
