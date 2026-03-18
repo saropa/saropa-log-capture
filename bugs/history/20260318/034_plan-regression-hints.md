@@ -1,13 +1,21 @@
+# Plan: Regression hints (implemented 2026-03-18)
+
+**Implementation summary:** Blame-based hints: `getGitBlame` + `getCommitUrl` used in Analysis panel (source section hash is a link) and error hover (when line has file:line). First-seen hints: Git provider stores `commit` at session start and in session-end meta; `regression-hint-service` loads first-seen session meta and reads `integrations.git.commit`; Insights recurring cards and "Recurring in this log" show "Introduced in commit X" with optional link. Batch first-seen loading parallelized with `Promise.all`. Commit links respect `integrations.git.commitLinks`.
+
+---
+
 # Plan: Regression hints
 
 **Feature:** Show hints like "This error pattern appeared after commit X" by correlating errors with Git history.
+
+**Context (Insights):** Recurring errors and session aggregation now live in the **unified Insights panel** (lightbulb icon; one scroll: Active Cases, Recurring errors, Frequently modified files, Environment, Performance). Regression hints should surface where users triage errors: the **Insights panel** (Recurring / Recurring in this log), the **Analysis panel** (when analyzing a specific error line), and the error hover popup in the viewer.
 
 ---
 
 ## What exists
 
 - Git integration (blame, commit URLs); possibly blame-to-PR in analysis.
-- Error grouping or fingerprinting; session and log data.
+- Error grouping or fingerprinting; session and log data; recurring errors and "first/last seen" in Insights.
 - GitHub/context features that map lines to commits and PRs.
 
 ## What's missing
@@ -29,15 +37,18 @@
 
 ### 3. UI
 
-- In context menu or inline: "Regression hint" / "Introduced in"; show commit, date, link. Optional: "View blame" for current line.
+- **Insights panel:** On recurring error cards (and "Recurring in this log"), show "Introduced in commit X" when first-seen maps to a commit; link to commit/PR.
+- **Analysis panel:** When analyzing an error line, show "Introduced in commit X" (blame or first-seen) with link. Optional: "View blame" for current line.
+- **Viewer:** Context menu or error hover: "Regression hint" / "Introduced in"; show commit, date, link.
 
 ## Files to create/modify
 
 | File | Change |
 |------|--------|
 | New: regression hint service | Blame for line; optional first-seen + session→commit mapping |
-| Analysis/context UI | Show "Introduced in commit X" with link |
-| Recurring/session metadata | Optional: store or query first-seen per error signature; link to commit |
+| Insights panel (recurring cards) | Show "Introduced in commit X" for recurring patterns with first-seen data |
+| Analysis panel / error hover | Show "Introduced in commit X" with link; optional "View blame" |
+| Recurring/session metadata (cross-session aggregator or store) | Optional: store or query first-seen per error signature; link to commit |
 
 ## Considerations
 

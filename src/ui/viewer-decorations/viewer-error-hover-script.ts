@@ -104,9 +104,20 @@ function handleErrorHoverData(msg) {
     }
 
     var hash = escapeForAttr(msg.hash || '');
+    var regressionHtml = '';
+    if (msg.regressionHint && msg.regressionHint.hash) {
+        var label = msg.regressionHint.label === 'first-seen' ? 'Introduced in' : 'Last changed in';
+        var commitText = escapeForAttr(msg.regressionHint.hash);
+        if (msg.regressionHint.commitUrl) {
+            regressionHtml = '<div class="eh-stat eh-regression"><span class="eh-regression-label">' + escapeForAttr(label) + ' commit </span><a class="eh-regression-link" href="' + escapeForAttr(msg.regressionHint.commitUrl) + '" target="_blank" rel="noopener noreferrer">' + commitText + '</a></div>';
+        } else {
+            regressionHtml = '<div class="eh-stat eh-regression">' + escapeForAttr(label) + ' commit <code>' + commitText + '</code></div>';
+        }
+    }
     stats.innerHTML = '<div class="eh-stat">' + category + triage + '</div>' +
         '<div class="eh-stat">' + logs + (total ? ' &middot; ' + total : '') + '</div>' +
         seen +
+        regressionHtml +
         '<div class="eh-stat eh-hash" title="Fingerprint: ' + hash + '">#' + hash + '</div>';
 }
 

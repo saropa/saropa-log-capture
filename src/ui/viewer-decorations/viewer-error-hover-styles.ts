@@ -85,6 +85,9 @@ export function getErrorHoverStyles(): string {
 .eh-stat-loading { font-style: italic; }
 .eh-stat-new { color: var(--vscode-textLink-foreground); font-weight: 500; }
 .eh-hash { font-family: var(--vscode-editor-font-family, monospace); font-size: 10px; opacity: 0.7; }
+.eh-regression { flex-wrap: wrap; }
+.eh-regression-link { color: var(--vscode-textLink-foreground); }
+.eh-regression-link:hover { text-decoration: underline; }
 .eh-crash-cat {
     font-size: 9px;
     font-weight: 700;

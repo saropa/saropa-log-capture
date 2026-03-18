@@ -73,10 +73,13 @@ function loadingSlot(id: string, message: string): string {
 }
 
 /** Render the source + blame + diff section (replaces spinner). */
-export function renderSourceSection(info: WorkspaceFileInfo, blame?: BlameLine, diff?: CommitDiff): string {
+export function renderSourceSection(info: WorkspaceFileInfo, blame?: BlameLine, diff?: CommitDiff, blameCommitUrl?: string): string {
     let html = renderSourcePreview(info);
     if (blame) {
-        html += `<div class="blame-line">Last changed by <strong>${escapeHtml(blame.author)}</strong> on ${escapeHtml(blame.date)} · <code>${escapeHtml(blame.hash)}</code> ${escapeHtml(blame.message)}</div>`;
+        const hashHtml = blameCommitUrl
+            ? `<a class="blame-commit-link" href="${escapeHtml(blameCommitUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(blame.hash)}</a>`
+            : `<code>${escapeHtml(blame.hash)}</code>`;
+        html += `<div class="blame-line">Last changed by <strong>${escapeHtml(blame.author)}</strong> on ${escapeHtml(blame.date)} · ${hashHtml} ${escapeHtml(blame.message)}</div>`;
     }
     if (diff) {
         html += `<div class="diff-summary">${diff.filesChanged} file${diff.filesChanged !== 1 ? 's' : ''} changed · +${diff.insertions} -${diff.deletions}</div>`;

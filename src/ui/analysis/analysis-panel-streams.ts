@@ -6,6 +6,8 @@ import { extractPackageHint } from '../../modules/source/source-linker';
 import { analyzeSourceFile } from '../../modules/misc/workspace-analyzer';
 import { getGitBlame } from '../../modules/git/git-blame';
 import { getCommitDiff } from '../../modules/git/git-diff';
+import { getCommitUrl } from '../../modules/integrations/providers/git-source-code';
+import { getConfig } from '../../modules/config/config';
 import { scanDocsForTokens } from '../../modules/misc/docs-scanner';
 import { extractImports } from '../../modules/source/import-extractor';
 import { resolveSymbols } from '../../modules/source/symbol-resolver';
@@ -51,7 +53,12 @@ export async function runSourceChain(
     if (signal.aborted) { return {}; }
     const diff = blame ? await getCommitDiff(blame.hash).catch(() => undefined) : undefined;
     if (signal.aborted) { return {}; }
-    post('source', renderSourceSection(wsInfo, blame, diff));
+    let blameCommitUrl: string | undefined;
+    if (blame && getConfig().integrationsGit?.commitLinks) {
+        const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (cwd) { blameCommitUrl = await getCommitUrl(cwd, blame.hash).catch(() => undefined); }
+    }
+    post('source', renderSourceSection(wsInfo, blame, diff, blameCommitUrl));
     post('line-history', renderLineHistorySection(wsInfo.lineCommits));
     const metrics = buildSourceMetrics(wsInfo, blame);
     try {
