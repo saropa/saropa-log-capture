@@ -110,8 +110,8 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Error breakpoints:** Visual and audio alerts when errors appear—flash border, sound, counter badge, optional modal popup.
 - **Multi-level classification:** Seven severity levels—Error, Warning, Info, Performance, TODO, Debug/Trace, and Notice—each auto-detected with dedicated colors and filters.
 
-### Insight (Cases, Recurring, Performance)
-- **Insight panel:** Single icon-bar panel (lightbulb) with three tabs: **Cases** (investigations—create and open named collections of sessions/files), **Recurring** (aggregated error patterns across sessions, with Export summary), and **Performance** (Current/Trends/Log for the active session). One place for cross-session analysis. Project Logs shows only the session list; create and manage investigations from Insight → Cases. Logs with performance data show a **Performance** chip in the session bar (click to open Insight on the Performance tab).
+### Insight (Cases, Recurring, Hot files, Performance)
+- **Insight panel:** Single icon-bar panel (lightbulb), one scroll, no tabs. Accordion sections: **Active Cases** (investigations—create and open named collections of sessions/files; top 3 + View All), **Recurring errors** (aggregated error patterns across sessions; top 5; Export summary), **Frequently modified files** (hot files across sessions; collapsed by default), and **Performance** (Current/Trends/Log when a log is open). Context-aware: with no log selected you see Cases, Recurring, and Hot files; with a log selected Performance moves to the top. Project Logs shows only the session list; create and manage investigations from Insight → Cases. Session bar **Performance** chip opens Insight and focuses the Performance section.
 
 ### Display & Layout
 - **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), session elapsed time (T+), and whole-line coloring for all severity levels. Configurable in the Options panel; Timestamp can also be toggled from the right-click context menu (Options → Timestamp).
@@ -125,7 +125,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ### Session Management
 - **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Ctrl/Cmd-click to select multiple sessions; context menu applies to the selection (copy links/paths, export, tag, open, replay). Active sessions highlighted with a recording icon. **Orange dot** = log has new lines since you last viewed it; **red dot** = log updated in the last minute. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
-- **Insight: Cases, Recurring, Performance:** One **Insight** panel with three tabs. **Cases** = named investigations you create—pin multiple sessions and files into one “case,” then search across them and export as a bundle (e.g. for a bug that spans several runs). **Recurring** = aggregated error patterns (read-only). **Performance** = perf data for the current log or trends. Command **Open Insight** opens the panel; Add to Investigation and create/open investigation open Insight to the Cases tab.
+- **Insight: Cases, Recurring, Hot files, Performance:** One **Insight** panel, one scroll (no tabs). Accordion sections: **Cases** = named investigations—pin sessions and files, search and export. **Recurring** = aggregated error patterns. **Frequently modified files** = hot files across sessions. **Performance** = perf data when a log is open (moves to top). Command **Open Insight** opens the panel; Add to Investigation and create/open investigation focus the Cases section.
 - **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the **Replay** button in the footer bar or the icon bar to show the horizontal replay panel (play/pause, scrubber, speed).
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
@@ -363,9 +363,9 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 ### Keyboard shortcuts and accessibility
 
-The viewer uses `aria-label` and `role` on controls and the log content (`role="log"`) for screen readers. Keyboard shortcuts are listed below.
+**Accessibility:** The webview viewer is built for keyboard and assistive tech use. The main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` and a live region that announces line-count updates when filtering or loading. Slide-out panels (Options, Project Logs, etc.) have `region` landmarks and labeled controls; when you open a panel, focus moves into it, and **Escape** or the panel’s Close button returns focus to the icon bar. Native controls (buttons, selects, range inputs) are focusable and operable with Enter/Space. Replay controls, session/split navigation, and level filters are labeled. VS Code’s webview hosts this UI, so focus behavior at the editor boundary follows the host. For a full audit and remaining work, see [bugs/028_plan-webview-accessibility.md](bugs/028_plan-webview-accessibility.md) and [bugs/028_webview-a11y-audit.md](bugs/028_webview-a11y-audit.md).
 
-**When the log viewer has focus:**
+**Keyboard shortcuts** (when the log viewer has focus):
 
 | Shortcut                             | Action                                                              |
 | ------------------------------------ | ------------------------------------------------------------------- |

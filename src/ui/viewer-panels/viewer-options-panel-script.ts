@@ -59,7 +59,7 @@ function toggleOptionsPanel() {
     }
 }
 
-/** Open the options panel (called from icon bar). */
+/** Open the options panel (called from icon bar). Moves focus into panel for a11y. */
 function openOptionsPanel() {
     if (optionsPanelOpen) return;
     optionsPanelOpen = true;
@@ -70,6 +70,10 @@ function openOptionsPanel() {
     if (panel) {
         syncOptionsPanelUi();
         panel.classList.add('visible');
+        requestAnimationFrame(function() {
+            var first = panel.querySelector('button.options-close, #options-search');
+            if (first) first.focus();
+        });
     }
 }
 
@@ -81,6 +85,9 @@ function closeOptionsPanel() {
     if (panel) panel.classList.remove('visible');
     optionsPanelOpen = false;
     if (typeof clearActivePanel === 'function') clearActivePanel('options');
+    /* Return focus to icon bar for keyboard/screen-reader users (a11y). */
+    var optsBtn = document.getElementById('ib-options');
+    if (optsBtn) optsBtn.focus();
 }
 
 /** Sync display checkboxes and sliders from state. */
