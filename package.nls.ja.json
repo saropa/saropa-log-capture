@@ -54,6 +54,7 @@
   "command.closeInvestigation.title": "Saropa Log Capture: 調査を閉じる",
   "command.switchInvestigation.title": "Saropa Log Capture: 調査を切り替え",
   "command.addToInvestigation.title": "調査に追加",
+  "command.addInsightItemToCase.title": "ケースにインサイト項目を追加",
   "command.removeFromInvestigation.title": "調査から削除",
   "command.exportInvestigation.title": "調査を .slc としてエクスポート",
   "command.shareInvestigation.title": "調査を共有",
