@@ -18,7 +18,7 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
     var heroLoading = false;
     var createInvestigationInProgress = false;
     var investigationsData = { investigations: [], activeId: '' };
-    var insightDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [] };
+    var insightDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {} };
     var sectionExpanded = { 'session-details': false, 'this-log': true, cases: true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
