@@ -27,7 +27,7 @@
   "command.savePreset.title": "Saropa Log Capture: Save current filters as Quick Filter",
   "command.toggleInlineDecorations.title": "Saropa Log Capture: Toggle Inline Log Decorations",
   "command.popOutViewer.title": "Saropa Log Capture: Pop Out Viewer to New Window",
-  "command.showInsights.title": "Saropa Log Capture: Open Insight",
+  "command.showInsights.title": "Saropa Log Capture: Open Insights",
   "command.generateReport.title": "Saropa Log Capture: Generate Bug Report",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showTimeline.title": "Saropa Log Capture: Show Log Timeline",
