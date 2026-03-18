@@ -72,6 +72,10 @@ export const stringsA: Record<string, string> = {
     'msg.deleteBookmarksForFile': 'Delete all bookmarks for {0}?',
     'msg.deleteAllBookmarks': 'Delete all {0} bookmark{1}?',
     'prompt.editBookmarkNote': 'Edit bookmark note',
+    'msg.smartBookmarkFirstError': 'First error at line {0}. Add bookmark?',
+    'msg.smartBookmarkFirstWarning': 'First warning at line {0}. Add bookmark?',
+    'action.addBookmark': 'Add bookmark',
+    'action.dismiss': 'Dismiss',
 
     'msg.noLogFileLoaded': 'No log file is currently loaded for editing.',
     'msg.debugSessionActiveEdit': 'A debug session is active. Editing the log file now may cause data loss or corruption.',
