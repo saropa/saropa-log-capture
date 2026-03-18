@@ -20,7 +20,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 
 | Wow | Effort | Feature | Description | Plan |
 |-----|--------|---------|-------------|------|
-| High | Low | Smart bookmarks | Auto-suggest bookmark at first error per run | [038](bugs/038_plan-smart-bookmarks.md) |
+| High | Low | ~~Smart bookmarks~~ | *Done: suggest bookmark at first error/warning when opening a log.* | [038](bugs/history/20260318/038_plan-smart-bookmarks.md) |
 | High | Low | Voice / TTS | Read selected lines or errors aloud | [036](bugs/036_plan-voice-tts.md) |
 | High | Low | Error rate over time | Chart: errors/minute over session | [030](bugs/030_plan-error-rate-over-time.md) |
 | High | Medium | Regression hints | "This error pattern appeared after commit X" | [034](bugs/034_plan-regression-hints.md) |

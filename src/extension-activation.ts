@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { t } from './l10n';
 import { getConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
@@ -32,6 +33,8 @@ import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
 import { createApi } from './api';
 import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
+import type { LoadResultFirstError } from './ui/provider/log-viewer-provider-load';
+import type { FirstErrorResult } from './modules/bookmarks/first-error';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import { disposeInvestigationPanel } from './ui/investigation/investigation-panel';
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
@@ -45,6 +48,46 @@ export interface ActivationRefs {
     sessionManager: SessionManagerImpl;
     projectIndexer: ProjectIndexer | null;
     popOutPanel: PopOutPanel;
+}
+
+/**
+ * Smart bookmarks: after a log loads, suggest adding a bookmark at the first error (or warning) line.
+ * One suggestion per file per session; skipped if that line already has a bookmark.
+ */
+async function maybeSuggestSmartBookmark(
+    uri: vscode.Uri,
+    loadResult: LoadResultFirstError | undefined,
+    bookmarkStore: BookmarkStore,
+    suggestedForUri: Set<string>,
+): Promise<void> {
+    if (!loadResult) { return; }
+    const cfg = getConfig().smartBookmarks;
+    const candidate: FirstErrorResult | undefined = cfg.suggestFirstError && loadResult.firstError
+        ? loadResult.firstError
+        : (cfg.suggestFirstWarning && loadResult.firstWarning) ? loadResult.firstWarning : undefined;
+    if (!candidate) { return; }
+    const uriStr = uri.toString();
+    if (suggestedForUri.has(uriStr)) { return; }
+    const existing = bookmarkStore.getForFile(uriStr);
+    if (existing.some((b) => b.lineIndex === candidate.lineIndex)) { return; }
+    const lineNum = candidate.lineIndex + 1;
+    const message = candidate.level === 'error'
+        ? t('msg.smartBookmarkFirstError', String(lineNum))
+        : t('msg.smartBookmarkFirstWarning', String(lineNum));
+    const addLabel = t('action.addBookmark');
+    const dismissLabel = t('action.dismiss');
+    const choice = await vscode.window.showInformationMessage(message, addLabel, dismissLabel);
+    suggestedForUri.add(uriStr);
+    if (choice === addLabel) {
+        const filename = uri.path.split(/[/\\]/).pop() ?? '';
+        bookmarkStore.add({
+            fileUri: uriStr,
+            filename,
+            lineIndex: candidate.lineIndex,
+            lineText: candidate.lineText,
+            note: '',
+        });
+    }
 }
 
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
@@ -162,7 +205,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         const adj = await historyProvider.getAdjacentSessions(uri);
         viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
     };
-    viewerProvider.setFileLoadedHandler(() => { updateSessionNav().catch(() => {}); });
+    const smartBookmarkSuggestedForUri = new Set<string>();
+    viewerProvider.setFileLoadedHandler((uri, loadResult) => {
+        void updateSessionNav();
+        void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
+    });
     viewerProvider.setSessionNavigateHandler(async (direction) => {
         const uri = viewerProvider.getCurrentFileUri();
         if (!uri) { return; }
