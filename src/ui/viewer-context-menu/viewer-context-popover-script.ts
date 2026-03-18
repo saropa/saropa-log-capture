@@ -6,11 +6,14 @@
  * a clicked log line. Triggered from the context menu "Show Integration Context".
  */
 
+import { getQualityPopoverScript } from './viewer-quality-popover-script';
+
 /**
  * Returns the JavaScript code for the context popover in the webview.
  */
 export function getContextPopoverScript(): string {
-    return /* javascript */ `
+    return (
+        /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
 
@@ -266,13 +269,20 @@ function handleContextPopoverData(msg) {
     }
     showContextPopover(lineIdx, anchorX, anchorY, msg);
 }
-
+` +
+        getQualityPopoverScript() +
+        `
 // Register message handler
 window.addEventListener('message', function(event) {
     var msg = event.data;
     if (msg.type === 'contextPopoverData') {
         handleContextPopoverData(msg);
     }
+    if (msg.type === 'codeQualityPopoverData') {
+        handleCodeQualityPopoverData(msg);
+    }
 });
-`;
+`
+    );
 }
+

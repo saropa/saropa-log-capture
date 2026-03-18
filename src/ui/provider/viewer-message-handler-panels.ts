@@ -8,6 +8,7 @@ import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
 import { showAnalysis } from '../analysis/analysis-panel';
+import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
@@ -98,6 +99,17 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         return true;
       case "openErrorAnalysis":
         showAnalysis(String(msg.text ?? ''), safeLineIndex(msg.lineIndex, 0), ctx.currentFileUri).catch(() => {});
+        return true;
+      case "showCodeQualityForFrame":
+        handleCodeQualityForFrameRequest(
+          ctx.currentFileUri,
+          safeLineIndex(msg.lineIndex, 0),
+          String(msg.lineText ?? msg.text ?? ''),
+          ctx.post,
+        ).catch(() => {});
+        return true;
+      case "openQualityReport":
+        void vscode.commands.executeCommand('saropaLogCapture.openQualityReport');
         return true;
       default:
         return false;

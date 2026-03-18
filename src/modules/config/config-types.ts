@@ -164,6 +164,8 @@ export interface IntegrationCodeQualityConfig {
   readonly lintReportPath: string;
   readonly scanComments: boolean;
   readonly coverageStaleMaxHours: number;
+  /** Include quality summary (low coverage, lint issues) for referenced files in bug reports. */
+  readonly includeInBugReport: boolean;
 }
 
 export interface IntegrationCrashDumpsConfig {
