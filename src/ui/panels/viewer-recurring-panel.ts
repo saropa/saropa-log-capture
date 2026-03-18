@@ -1,8 +1,8 @@
 /**
  * Recurring Errors panel HTML and script for the webview.
  *
- * Displays top recurring error patterns across sessions in a
- * slide-out panel, following the icon-bar panel pattern.
+ * Superseded by the unified Insight panel (Recurring tab). This file is no longer
+ * loaded; kept for reference. Styles in viewer-styles-recurring.ts are still used by Insight.
  */
 
 /** Generate the recurring errors panel HTML. */

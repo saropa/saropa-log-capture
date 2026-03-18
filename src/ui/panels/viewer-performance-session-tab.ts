@@ -5,9 +5,9 @@
 export function getPerformanceSessionTabScript(): string {
   return `
     function setSessionTabLoading(loading) {
-        var ppSnapshot = document.getElementById('pp-snapshot');
-        var ppSamples = document.getElementById('pp-samples');
-        var ppProfiler = document.getElementById('pp-profiler');
+        var ppSnapshot = document.getElementById(ppIdPrefix + 'pp-snapshot');
+        var ppSamples = document.getElementById(ppIdPrefix + 'pp-samples');
+        var ppProfiler = document.getElementById(ppIdPrefix + 'pp-profiler');
         var msg = loading ? 'Loading\\u2026' : '';
         if (ppSnapshot && loading) ppSnapshot.textContent = msg;
         if (ppSamples && loading) ppSamples.textContent = msg;
@@ -15,10 +15,10 @@ export function getPerformanceSessionTabScript(): string {
     }
 
     function renderSessionData(sessionData) {
-        var ppIntro = document.getElementById('pp-session-intro');
-        var ppSnapshot = document.getElementById('pp-snapshot');
-        var ppSamples = document.getElementById('pp-samples');
-        var ppProfiler = document.getElementById('pp-profiler');
+        var ppIntro = document.getElementById(ppIdPrefix + 'pp-session-intro');
+        var ppSnapshot = document.getElementById(ppIdPrefix + 'pp-snapshot');
+        var ppSamples = document.getElementById(ppIdPrefix + 'pp-samples');
+        var ppProfiler = document.getElementById(ppIdPrefix + 'pp-profiler');
         var snap = sessionData && sessionData.snapshot;
         var hasData = snap && typeof snap === 'object';
         if (ppIntro) ppIntro.style.display = hasData ? 'none' : 'block';
