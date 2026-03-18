@@ -23,6 +23,7 @@ export {
 export {
     handleRecurringRequest,
     handleSetErrorStatus,
+    handleInsightDataRequest,
 } from './handlers/recurring-handlers';
 
 export {

@@ -177,7 +177,10 @@ export class LogViewerProvider
     state.setPresetsImpl(this, presets);
   }
   addLine(data: LineData): void { addLineToBatch(this, data); }
-  setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
+  setCurrentFile(uri: vscode.Uri | undefined): void {
+    this.currentFileUri = uri;
+    this.postMessage({ type: 'currentLogChanged', currentFileUri: uri?.toString() });
+  }
   setScopeContext(ctx: ScopeContext): void { state.setScopeContextImpl(this, ctx); }
   setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
