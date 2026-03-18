@@ -7,6 +7,7 @@
 /** Get the session panel rendering script fragment. */
 export function getSessionRenderingScript(): string {
     return /* javascript */ `
+    /* escapeAttr and escapeHtmlText are provided by the session panel IIFE bootstrap. */
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;

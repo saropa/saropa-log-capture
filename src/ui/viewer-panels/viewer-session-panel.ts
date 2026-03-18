@@ -10,6 +10,10 @@ import { getSessionRenderingScript } from './viewer-session-panel-rendering';
 export function getSessionPanelScript(): string {
   return /* js */ `
 (function() {
+    /* Shared helpers for inlined fragments (rendering, events, etc.). Do not remove; fragments rely on these. */
+    function escapeAttr(str) { return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+    function escapeHtmlText(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
     var sessionPanelOpen = false;
     var sessionPanelEl = document.getElementById('session-panel');
     var sessionListEl = document.getElementById('session-list');
