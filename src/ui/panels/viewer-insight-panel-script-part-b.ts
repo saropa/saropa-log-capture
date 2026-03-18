@@ -119,6 +119,13 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
     });
     bindCreateInvestigationForm();
 
+    function regressionHintHtml(hint) {
+        if (!hint || !hint.hash) return '';
+        var link = hint.commitUrl
+            ? '<a class="re-commit-link" href="' + escapeAttr(hint.commitUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(hint.hash) + '</a>'
+            : '<code>' + esc(hint.hash) + '</code>';
+        return '<div class="re-regression">Introduced in commit ' + link + '</div>';
+    }
     function renderRecurringList() {
         var listEl = document.getElementById('insight-recurring-list');
         var emptyEl = document.getElementById('insight-recurring-empty');
@@ -143,7 +150,8 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
             var displayText = truncateForDisplay(fullText);
             var titleAttr = esc((e.exampleLine || fullText).trim() || '');
             var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-            return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div><div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
+            var intro = regressionHintHtml((insightDataCache.regressionHints || {})[e.hash]);
+            return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
         }).join('');
     }
     function renderHotFiles() {
@@ -178,7 +186,8 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
                 var displayText = truncateForDisplay(fullText);
                 var titleAttr = esc((e.exampleLine || fullText).trim() || '');
                 var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-                return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div><div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
+                var intro = regressionHintHtml((insightDataCache.regressionHints || {})[e.hash]);
+                return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
             }).join('');
         }
     }

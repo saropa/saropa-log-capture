@@ -135,7 +135,8 @@ export function getInsightScriptPartC(): string {
                 errors: e.data.errors || [], statuses: e.data.statuses || {}, hotFiles: e.data.hotFiles || [],
                 recurringInThisLog: e.data.recurringInThisLog || [], errorsInThisLog: e.data.errorsInThisLog || [],
                 errorsInThisLogTotal: e.data.errorsInThisLogTotal,
-                platforms: e.data.platforms || [], sdkVersions: e.data.sdkVersions || [], debugAdapters: e.data.debugAdapters || []
+                platforms: e.data.platforms || [], sdkVersions: e.data.sdkVersions || [], debugAdapters: e.data.debugAdapters || [],
+                regressionHints: e.data.regressionHints || {}
             };
             var loadEl = document.getElementById('insight-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';

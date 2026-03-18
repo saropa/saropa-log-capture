@@ -20,14 +20,12 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 
 | Wow | Effort | Feature | Description | Plan |
 |-----|--------|---------|-------------|------|
-| High | Low | ~~Smart bookmarks~~ | *Done: suggest bookmark at first error/warning when opening a log.* | [038](bugs/history/20260318/038_plan-smart-bookmarks.md) |
 | High | Low | Voice / TTS | Read selected lines or errors aloud | [036](bugs/036_plan-voice-tts.md) |
 | High | Low | Error rate over time | Chart: errors/minute over session | [030](bugs/030_plan-error-rate-over-time.md) |
-| High | Medium | Regression hints | "This error pattern appeared after commit X" | [034](bugs/034_plan-regression-hints.md) |
+| High | Medium | Regression hints | "This error pattern appeared after commit X" | [034](bugs/history/20260318/034_plan-regression-hints.md) ✓ |
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](bugs/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](bugs/007_plan-docker-inspect-and-until.md) |
 | Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](bugs/039_plan-bidirectional-sync.md) |
-| Medium | Low | ~~Lazy load session list~~ | *Done: pagination (100 per page, configurable).* | [028](bugs/history/20260313/028_plan-lazy-load-session-list.md) |
 | Medium | Medium | Log diff from Git | Compare session to previous commit | [035](bugs/035_plan-log-diff-from-git.md) |
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](bugs/031_plan-session-comparison-three-way.md) |
 | Medium | High | Noise Learning | Learn from dismissals, suggest exclusion rules | [025](bugs/025_plan-noise-learning.md) |

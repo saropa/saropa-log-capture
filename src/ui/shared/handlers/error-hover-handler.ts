@@ -3,12 +3,24 @@
  *
  * Computes fingerprint, looks up cross-session history and triage status,
  * then posts enriched data back to the webview for the hover popup.
+ * Optionally includes regression hint (first-seen commit or blame for file:line).
  */
 
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from '../../../modules/analysis/error-fingerprint';
 import { aggregateInsights, type RecurringError } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, type ErrorStatus } from '../../../modules/misc/error-status-store';
+import { getRegressionHintsForError, type RegressionHintsResult } from '../../../modules/regression/regression-hint-service';
+import { extractSourceReference } from '../../../modules/source/source-linker';
+import { resolveSourceUri } from '../../../modules/source/source-resolver';
+import { getConfig } from '../../../modules/config/config';
 import type { PostFn } from './crashlytics-handlers';
+
+/** Regression hint for error hover: "Introduced in" or "Last changed in" commit X. */
+export interface ErrorHoverRegressionHint {
+    readonly hash: string;
+    readonly commitUrl?: string;
+    readonly label: 'first-seen' | 'blame';
+}
 
 /** Hover data sent back to the webview. */
 export interface ErrorHoverData {
@@ -21,6 +33,7 @@ export interface ErrorHoverData {
     readonly totalOccurrences: number;
     readonly firstSeen: string | undefined;
     readonly lastSeen: string | undefined;
+    readonly regressionHint?: ErrorHoverRegressionHint;
 }
 
 /**
@@ -50,6 +63,30 @@ export async function handleErrorHoverRequest(
     const match: RecurringError | undefined = insights?.recurringErrors.find(e => e.hash === hash);
     const triageStatus = statuses[hash] ?? 'open';
 
+    const resolveUrls = getConfig().integrationsGit?.commitLinks ?? true;
+    const sourceRef = extractSourceReference(text);
+    const fileUri = sourceRef ? resolveSourceUri(sourceRef.filePath) : undefined;
+    const hints = await getRegressionHintsForError(hash, {
+        fileUri,
+        line: sourceRef?.line,
+        resolveCommitUrls: resolveUrls,
+    }).catch((): RegressionHintsResult => ({}));
+
+    let regressionHint: ErrorHoverRegressionHint | undefined;
+    if (hints.firstSeen) {
+        regressionHint = {
+            hash: hints.firstSeen.hash,
+            commitUrl: hints.firstSeen.commitUrl,
+            label: 'first-seen',
+        };
+    } else if (hints.blame) {
+        regressionHint = {
+            hash: hints.blame.hash,
+            commitUrl: hints.blame.commitUrl,
+            label: 'blame',
+        };
+    }
+
     const data: ErrorHoverData = {
         lineIndex,
         hash,
@@ -60,6 +97,7 @@ export async function handleErrorHoverRequest(
         totalOccurrences: match?.totalOccurrences ?? 0,
         firstSeen: match?.firstSeen,
         lastSeen: match?.lastSeen,
+        regressionHint,
     };
 
     post({ type: 'errorHoverData', ...data });

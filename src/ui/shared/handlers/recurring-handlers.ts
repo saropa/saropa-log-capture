@@ -6,12 +6,20 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getLogDirectoryUri } from '../../../modules/config/config';
+import { getConfig, getLogDirectoryUri } from '../../../modules/config/config';
 import type { RecurringError } from '../../../modules/misc/cross-session-aggregator';
 import { aggregateInsights } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
+import { getFirstSeenHintsForErrors } from '../../../modules/regression/regression-hint-service';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import type { PostFn } from './crashlytics-handlers';
+
+/** First-seen regression hint for display in Insights (commit for session where error first appeared). */
+export interface RegressionHintPayload {
+    readonly hash: string;
+    readonly session: string;
+    readonly commitUrl?: string;
+}
 
 /** Top errors in one session (from fingerprints). */
 export interface ErrorInThisLogItem {
@@ -54,6 +62,12 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
     const sdkVersions = insights?.sdkVersions ?? [];
     const debugAdapters = insights?.debugAdapters ?? [];
     const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
+
+    const commitLinks = getConfig().integrationsGit?.commitLinks ?? true;
+    const regressionHints = await getFirstSeenHintsForErrors(errors.map(e => e.hash), {
+        resolveCommitUrls: commitLinks,
+        cap: 15,
+    }).catch(() => ({}));
 
     let recurringInThisLog: RecurringError[] | undefined;
     let errorsInThisLog: ErrorInThisLogItem[] | undefined;
@@ -100,5 +114,6 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         recurringInThisLog,
         errorsInThisLog,
         errorsInThisLogTotal,
+        regressionHints,
     });
 }
