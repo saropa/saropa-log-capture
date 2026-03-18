@@ -70,6 +70,8 @@
   "config.autoOpen.description": "Automatically open the log file in the editor when a debug session ends.",
   "config.autoTagRules.description": "Rules for automatically tagging logs based on content patterns.",
   "config.breakOnCritical.description": "Show notification when critical errors appear (NullPointerException, AssertionError, FATAL, etc.).",
+  "config.smartBookmarks.suggestFirstError.description": "When opening a log, suggest adding a bookmark at the first error line if that line is not already bookmarked (one suggestion per session).",
+  "config.smartBookmarks.suggestFirstWarning.description": "When suggesting the first error is disabled or absent, suggest a bookmark at the first warning line instead.",
   "config.correlation.enabled.description": "Enable automatic correlation detection (highlight related events across debug, HTTP, perf, terminal).",
   "config.correlation.windowMs.description": "Time window for correlation detection (milliseconds).",
   "config.correlation.minConfidence.description": "Minimum confidence level to show correlations (low, medium, high).",

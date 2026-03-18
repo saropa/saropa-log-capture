@@ -8,6 +8,12 @@ import type { HighlightRule } from "../storage/highlight-rules";
 import type { SplitRules } from "../misc/file-splitter";
 import type { AutoTagRule } from "../misc/auto-tagger";
 
+/** Smart bookmarks: suggest bookmark at first error (or warning) per session. */
+export interface SmartBookmarksConfig {
+  readonly suggestFirstError: boolean;
+  readonly suggestFirstWarning: boolean;
+}
+
 /** Watch pattern entry from user settings. */
 export interface WatchPatternSetting {
   readonly keyword: string;
@@ -63,6 +69,7 @@ export interface SaropaLogCaptureConfig {
   readonly minimapWidth: "small" | "medium" | "large";
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
+  readonly smartBookmarks: SmartBookmarksConfig;
   readonly verboseDap: boolean;
   /** When true, log capture pipeline events to Output (session/buffer/write) for debugging empty logs. */
   readonly diagnosticCapture: boolean;
