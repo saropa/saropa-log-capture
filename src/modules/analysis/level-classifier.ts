@@ -16,7 +16,7 @@ const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+
 const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+(?:pause|freed|concurrent)|anr|application\s+not\s+responding)\b/i;
 // Flutter/Dart memory: applied only when line has Flutter/Dart context (logcat tag or package path).
 // High-confidence phrases only; no bare "heap"/"memory" to avoid false positives in other runtimes.
-const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)\s|package\/(?:flutter|dart)\b)/i;
+const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)[\s:]|package[\/:](?:flutter|dart)\b)/i;
 const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:old|new)\s+gen\s|retained\s+\d+|leak\s+detected|potential\s+leak)\b/i;
 const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
@@ -54,6 +54,8 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
 }
 
 function classifyNonError(plainText: string): SeverityLevel {
+    // Memory phrases without Flutter/Dart context stay info (e.g. "memory pressure warning")
+    if (memoryPhraseRe.test(plainText) && !flutterDartContextRe.test(plainText)) { return 'info'; }
     if (warnPattern.test(plainText)) { return 'warning'; }
     if (perfPattern.test(plainText)) { return 'performance'; }
     if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) { return 'performance'; }
