@@ -27,18 +27,26 @@ export function getSessionPanelScript(): string {
     var selectedSessionUris = Object.create(null);
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
 
+    /** Opens panel and moves focus into it for a11y (keyboard/screen-reader). */
     window.openSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelOpen = true;
         sessionPanelEl.classList.add('visible');
         requestSessionList();
+        requestAnimationFrame(function() {
+            var first = sessionPanelEl.querySelector('button[id="session-close"], #session-date-range, button.session-panel-action');
+            if (first) first.focus();
+        });
     };
 
+    /** Closes panel and returns focus to icon bar for a11y. */
     window.closeSessionPanel = function() {
         if (!sessionPanelEl) return;
         sessionPanelEl.classList.remove('visible');
         sessionPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('sessions');
+        var sessionsBtn = document.getElementById('ib-sessions');
+        if (sessionsBtn) sessionsBtn.focus();
     };
     window.rerenderSessionList = function() { if (cachedSessions) renderSessionList(cachedSessions); };
 

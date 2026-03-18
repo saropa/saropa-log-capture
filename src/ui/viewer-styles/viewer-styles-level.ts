@@ -97,7 +97,8 @@ export function getLevelStyles(): string {
     margin-bottom: 2px;
     font-size: 11px;
 }
-.level-flyup-header a {
+/* All/None toggles: buttons for keyboard a11y (plan 028). */
+.level-flyup-header button {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
     color: var(--vscode-descriptionForeground);
@@ -107,12 +108,12 @@ export function getLevelStyles(): string {
     border-radius: 3px;
     text-decoration: none;
 }
-.level-flyup-header a.active {
+.level-flyup-header button.active {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
     border-color: var(--vscode-button-background);
 }
-.level-flyup-header a:hover {
+.level-flyup-header button:hover {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
