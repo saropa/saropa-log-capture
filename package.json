@@ -1716,9 +1716,6 @@
     "typescript-eslint": "^8.57.0"
   },
   "displayName": "%displayName%",
-  "enabledApiProposals": [
-    "terminalDataWriteEvent"
-  ],
   "engines": {
     "vscode": "^1.105.0"
   },
