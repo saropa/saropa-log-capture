@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
-import { executeLoadContent, createTailWatcher } from "./log-viewer-provider-load";
+import { executeLoadContent, createTailWatcher, type LoadResultFirstError } from "./log-viewer-provider-load";
 import { setupLogViewerWebview } from "./log-viewer-provider-setup";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { SerializedHighlightRule, serializeHighlightRules } from "../viewer-decorations/viewer-highlight-serializer";
@@ -62,7 +62,7 @@ export class LogViewerProvider
   private onFindNavigateMatch?: (uriString: string, matchIndex: number) => void;
   private onBookmarkAction?: (msg: Record<string, unknown>) => void;
   private onSessionNavigate?: (direction: number) => void;
-  private onFileLoaded?: (uri: vscode.Uri) => void;
+  private onFileLoaded?: (uri: vscode.Uri, loadResult?: LoadResultFirstError) => void;
   private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
@@ -144,7 +144,7 @@ export class LogViewerProvider
   setFindNavigateMatchHandler(handler: (uriString: string, matchIndex: number) => void): void { this.onFindNavigateMatch = handler; }
   setBookmarkActionHandler(handler: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = handler; }
   setSessionNavigateHandler(handler: (direction: number) => void): void { this.onSessionNavigate = handler; }
-  setFileLoadedHandler(handler: (uri: vscode.Uri) => void): void { this.onFileLoaded = handler; }
+  setFileLoadedHandler(handler: (uri: vscode.Uri, loadResult?: LoadResultFirstError) => void): void { this.onFileLoaded = handler; }
   setSessionActionHandler(handler: (action: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = handler; }
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
@@ -217,12 +217,12 @@ export class LogViewerProvider
     this.clear();
     this.seenCategories.clear();
     this.currentFileUri = uri;
-    const { sessionMidnightMs, contentLength } = await executeLoadContent(this, uri, () => gen === this.loadGeneration);
+    const loadResult = await executeLoadContent(this, uri, () => gen === this.loadGeneration);
     if (gen !== this.loadGeneration) { return; }
-    this.onFileLoaded?.(uri);
+    this.onFileLoaded?.(uri, loadResult);
     this.pendingLoadUri = undefined;
     if (options?.tail) {
-      this.startTailing(uri, sessionMidnightMs, contentLength);
+      this.startTailing(uri, loadResult.sessionMidnightMs, loadResult.contentLength);
     }
     if (options?.replay) {
       this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });

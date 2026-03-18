@@ -415,6 +415,16 @@
           "description": "%config.breakOnCritical.description%",
           "type": "boolean"
         },
+        "saropaLogCapture.smartBookmarks.suggestFirstError": {
+          "default": true,
+          "description": "%config.smartBookmarks.suggestFirstError.description%",
+          "type": "boolean"
+        },
+        "saropaLogCapture.smartBookmarks.suggestFirstWarning": {
+          "default": false,
+          "description": "%config.smartBookmarks.suggestFirstWarning.description%",
+          "type": "boolean"
+        },
         "saropaLogCapture.viewerKeybindings": {
           "default": {},
           "description": "%config.viewerKeybindings.description%",
