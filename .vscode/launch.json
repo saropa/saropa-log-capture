@@ -7,7 +7,8 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--enable-proposed-api=saropa.saropa-log-capture"
 			],
 			"env": {
 				"NODE_OPTIONS": "--no-deprecation"
@@ -24,7 +25,8 @@
 			"runtimeExecutable": "${env:LOCALAPPDATA}\\Programs\\Microsoft VS Code\\Code.exe",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--disable-extensions"
+				"--disable-extensions",
+				"--enable-proposed-api=saropa.saropa-log-capture"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/**/*.js"
