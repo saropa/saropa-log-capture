@@ -47,6 +47,10 @@ function handleGlobalAction(action) {
         if (typeof window.openExportModal === 'function') window.openExportModal();
         return true;
     }
+    if (action === 'open-quality-report') {
+        vscodeApi.postMessage({ type: 'openQualityReport' });
+        return true;
+    }
     if (action === 'hide-text-session') {
         var sel = window.getSelection();
         var text = sel ? sel.toString().trim() : '';
@@ -230,6 +234,11 @@ function onContextMenuAction(action) {
         case 'show-integration-context': {
             var ts = lineData.ts || lineData.timestamp;
             vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts });
+            break;
+        }
+        case 'show-code-quality': {
+            if (typeof showPopoverToast === 'function') showPopoverToast('Loading code quality…');
+            vscodeApi.postMessage({ type: 'showCodeQualityForFrame', lineIndex: lineIdx, lineText: plainText });
             break;
         }
         case 'hide-line':

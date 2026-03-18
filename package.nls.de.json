@@ -29,6 +29,8 @@
   "command.showInsights.title": "Saropa Log Capture: Protokollübergreifende Einblicke",
   "command.generateReport.title": "Saropa Log Capture: Fehlerbericht generieren",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.showCodeQualityForFrame.title": "Saropa Log Capture: Code-Qualität für Frame anzeigen",
+  "command.openQualityReport.title": "Saropa Log Capture: Qualitätsbericht öffnen",
   "command.showTimeline.title": "Saropa Log Capture: Protokoll-Zeitlinie anzeigen",
   "command.compareSessions.title": "Saropa Log Capture: Protokolle vergleichen",
   "command.markForComparison.title": "Zum Vergleich markieren",

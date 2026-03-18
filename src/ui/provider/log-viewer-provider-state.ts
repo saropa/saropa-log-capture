@@ -104,6 +104,9 @@ export function setSessionInfoImpl(target: ProviderStateTarget, info: Record<str
 export function setHasPerformanceDataImpl(target: ProviderStateTarget, has: boolean): void {
   target.postMessage({ type: "setHasPerformanceData", has });
 }
+export function setCodeQualityPayloadImpl(target: ProviderStateTarget, payload: unknown): void {
+  target.postMessage({ type: "setCodeQualityPayload", payload });
+}
 export function sendFindResultsImpl(target: ProviderStateTarget, results: unknown): void {
   target.postMessage({ type: "findResults", ...(results as Record<string, unknown>) });
 }

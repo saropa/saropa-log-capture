@@ -1,5 +1,11 @@
 # Integration: Code Quality Metrics
 
+**Status: Implemented (Phase 3 complete).** Moved to `bugs/history/20260318/` after implementation. Commands "Show code quality for frame" and "Open quality report"; quality popover on stack frame context menu; `includeInBugReport` and bug-report section; heatmap line backgrounds; codeQuality payload sent to viewer on load.
+
+**Context (Insights):** Quality metrics are **viewer- and session-centric**: coverage badges and quality data apply to the log being viewed and the stack frames in it. The **Insights panel** (lightbulb icon) unifies Cases, Recurring errors, Frequently modified files, Environment, and Performance; it does not replace the viewer's per-frame quality UI. Commands like "Show code quality for frame" and the expandable quality panel live in the **log viewer** and **Analysis panel** (error analysis). The `quality.json` sidecar remains the session-end artifact. No change to the code quality integration scope.
+
+---
+
 ## Implementation Status
 
 | Phase | Component | Status | Files |
@@ -13,10 +19,10 @@
 | 2 | Comment density scanner | Done | `quality-comment-scanner.ts`, `quality-comment-scanner.test.ts` |
 | 2 | `codeQuality` provider (orchestrator + enriched sidecar) | Done | `code-quality-metrics.ts`, `code-quality-metrics.test.ts` |
 | 2 | Settings (`lintReportPath`, `scanComments`, `coverageStaleMaxHours`) | Done | `package.json`, `config-types.ts`, `integration-config.ts` |
-| 3 | Commands ("Show code quality for frame", "Open quality report") | Not started | — |
-| 3 | Expandable quality panel in viewer | Not started | — |
-| 3 | Bug report integration (`includeInBugReport` setting) | Not started | — |
-| 3 | Heatmap (color-code frames by coverage) | Not started | — |
+| 3 | Commands ("Show code quality for frame", "Open quality report") | Done | `commands-quality.ts`, `viewer-message-handler-panels.ts`, context menu |
+| 3 | Expandable quality panel in viewer | Done | Quality popover: `viewer-quality-popover-script.ts`, `code-quality-handlers.ts`; `setCodeQualityPayload` on load |
+| 3 | Bug report integration (`includeInBugReport` setting) | Done | `config-types.ts`, `integration-config.ts`, `bug-report-collector.ts`, `bug-report-sections.ts`, `bug-report-formatter.ts` |
+| 3 | Heatmap (color-code frames by coverage) | Done | `viewer-data-helpers-render.ts`, `viewer-styles-quality.ts` |
 | — | Dart analyze JSON lint format | Not started | — |
 | — | `enabled` / `coverageReportPath` / `includeUncoveredRanges` settings | Not needed (reuses `coverage` provider settings) | — |
 
@@ -103,13 +109,13 @@ For each referenced file:
 | `lintReportPath`        | string  | `""`    | Done    | Path to cached lint output (ESLint JSON); empty = skip                      |
 | `scanComments`          | boolean | `false` | Done    | Scan referenced source files for comment/doc density                        |
 | `coverageStaleMaxHours` | number  | `24`    | Done    | Ignore coverage report older than this (hours); 0 = no limit                |
-| `includeInBugReport`    | boolean | `false` | Phase 3 | Include quality summary in bug report for referenced files                  |
+| `includeInBugReport`    | boolean | `false` | Done    | Include quality summary in bug report for referenced files                  |
 
 Coverage report path and enablement are handled by the existing `coverage` provider settings. The `codeQuality` provider is enabled by including `'codeQuality'` in the `integrations.adapters` array.
 
 ### Commands
 
-- **"Saropa Log Capture: Show code quality for frame"** — From viewer with a selected stack frame, show the quality panel for that file.
+- **"Saropa Log Capture: Show code quality for frame"** — From viewer with a selected stack frame, show the quality panel for that file (viewer/Analysis panel context; not in the Insights panel).
 - **"Saropa Log Capture: Open quality report"** — Open the `basename.quality.json` sidecar in the editor.
 
 ### UI
@@ -167,21 +173,21 @@ Coverage report path and enablement are handled by the existing `coverage` provi
    - Config type: `IntegrationCodeQualityConfig` in `config-types.ts`.
    - Enabled via `'codeQuality'` in `integrationsAdapters` array.
 
-### Components — Phase 3 (Not Started)
+### Components — Phase 3 (Done)
 
 8. **Commands**
-   - "Saropa Log Capture: Show code quality for frame" — context menu on stack frames.
-   - "Saropa Log Capture: Open quality report" — open `quality.json` sidecar.
+   - "Saropa Log Capture: Show code quality for frame" — context menu on stack frames; from palette shows hint to right-click a frame.
+   - "Saropa Log Capture: Open quality report" — opens `basename.quality.json` sidecar for current log.
 
-9. **Expandable quality panel in viewer**
-   - Webview receives `meta.integrations.codeQuality` when loading a log.
-   - "Code Quality" expandable panel: coverage bars, lint counts, doc density, uncovered ranges near the referenced line.
+9. **Quality panel in viewer**
+   - Webview receives `meta.integrations.codeQuality` when loading a log (`setCodeQualityPayload`).
+   - Right-click stack frame → "Show code quality" opens a popover: coverage %, lint warnings/errors, doc density for that file. Data from meta or sidecar.
 
 10. **Bug report integration**
-    - `includeInBugReport` setting; include quality summary for referenced files with low coverage or lint issues.
+    - `includeInBugReport` setting (default false); when true, bug report includes "Code Quality (referenced files)" table for files with low coverage (<80%) or lint issues.
 
 11. **Heatmap**
-    - Color-code stack frames by coverage — green (>80%), yellow (50–80%), red (<50%), grey (no data).
+    - Stack frame/header lines get class `line-quality-high` / `line-quality-med` / `line-quality-low` when quality badge is shown; subtle background tint in `viewer-styles-quality.ts`.
 
 ### Future Enhancements
 

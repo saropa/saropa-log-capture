@@ -7,7 +7,12 @@
  */
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { stripAnsi } from '../capture/ansi';
+import { getConfig } from '../config/config';
+import { parseJSONOrDefault } from '../misc/safe-json';
+import type { CodeQualityPayload, FileQualityMetrics } from '../integrations/providers/quality-types';
+import { normalizeForLookup } from '../integrations/providers/quality-types';
 import { extractSourceReference, extractPackageHint, type SourceReference } from '../source/source-linker';
 import { normalizeLine, hashFingerprint } from '../analysis/error-fingerprint';
 import { isFrameworkFrame, isStackFrameLine, parseThreadHeader } from '../analysis/stack-parser';
@@ -81,6 +86,14 @@ export interface FirebaseMatch {
     readonly lastVersion?: string;
 }
 
+/** Per-file quality summary for bug report (low coverage or lint issues). */
+export interface QualitySummaryEntry {
+    readonly filePath: string;
+    readonly linePercent?: number;
+    readonly lintWarnings: number;
+    readonly lintErrors: number;
+}
+
 /** All data gathered for a bug report. */
 export interface BugReportData {
     readonly errorLine: string;
@@ -104,12 +117,52 @@ export interface BugReportData {
     readonly firebaseMatch?: FirebaseMatch;
     readonly lintMatches?: LintReportData;
     readonly investigationContext?: InvestigationContext;
+    /** Quality summary for referenced files with low coverage or lint issues (when includeInBugReport). */
+    readonly qualitySummary?: readonly QualitySummaryEntry[];
 }
 
 const maxContextLines = 15;
 const maxStackFrames = 100;
 const maxAnalyzedFiles = 5;
 const headerSeparator = '==================';
+
+const LOW_COVERAGE_THRESHOLD = 80;
+
+/** Load quality summary for referenced files (low coverage or lint issues) when includeInBugReport is true. */
+async function collectQualitySummary(
+    fileUri: vscode.Uri,
+    referencedPaths: Set<string>,
+): Promise<QualitySummaryEntry[] | undefined> {
+    const config = getConfig();
+    if (!config.integrationsCodeQuality.includeInBugReport) { return undefined; }
+    if (!(config.integrationsAdapters ?? []).includes('codeQuality')) { return undefined; }
+    const logDir = path.dirname(fileUri.fsPath);
+    const baseFileName = path.basename(fileUri.fsPath);
+    const qualityPath = path.join(logDir, `${baseFileName}.quality.json`);
+    let payload: CodeQualityPayload;
+    try {
+        const content = await vscode.workspace.fs.readFile(vscode.Uri.file(qualityPath));
+        payload = parseJSONOrDefault<CodeQualityPayload>(Buffer.from(content).toString('utf-8'), {} as CodeQualityPayload);
+    } catch {
+        return undefined;
+    }
+    if (!payload?.files || typeof payload.files !== 'object') { return undefined; }
+    const referencedNorm = new Set([...referencedPaths].map(normalizeForLookup));
+    const entries: QualitySummaryEntry[] = [];
+    for (const [filePath, m] of Object.entries(payload.files as Record<string, FileQualityMetrics>)) {
+        const norm = normalizeForLookup(filePath);
+        if (!referencedNorm.has(norm)) { continue; }
+        const linePercent = m.linePercent;
+        const lintWarnings = m.lintWarnings ?? 0;
+        const lintErrors = m.lintErrors ?? 0;
+        const lowCov = linePercent !== undefined && linePercent < LOW_COVERAGE_THRESHOLD;
+        const hasLint = lintWarnings + lintErrors > 0;
+        if (lowCov || hasLint) {
+            entries.push({ filePath, linePercent, lintWarnings, lintErrors });
+        }
+    }
+    return entries.length > 0 ? entries : undefined;
+}
 
 /** Collect all bug report data for an error line. */
 export async function collectBugReportData(
@@ -130,6 +183,16 @@ export async function collectBugReportData(
     const stackTrace = extractStackTrace(allLines, fileLineIndex);
     const sourceRef = extractSourceReference(cleanError);
 
+    const referencedPaths = new Set<string>();
+    if (sourceRef?.filePath) {
+        referencedPaths.add(sourceRef.filePath);
+    }
+    for (const f of stackTrace) {
+        if (f.sourceRef?.filePath) {
+            referencedPaths.add(f.sourceRef.filePath);
+        }
+    }
+
     const tokens = extractAnalysisTokens(cleanError);
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
@@ -137,7 +200,7 @@ export async function collectBugReportData(
     const investigationPromise = extensionContext
         ? collectInvestigationContext(new InvestigationStore(extensionContext))
         : Promise.resolve(undefined);
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, investigationContext] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, investigationContext, qualitySummary] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -146,6 +209,7 @@ export async function collectBugReportData(
         getFirebaseContext(errorTokens).catch(() => undefined),
         wsFolder ? findLintMatches(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
         investigationPromise,
+        collectQualitySummary(fileUri, referencedPaths),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
     const topIssue = fbCtx?.issues[0];
@@ -160,7 +224,7 @@ export async function collectBugReportData(
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
-        investigationContext,
+        investigationContext, qualitySummary,
     };
 }
 

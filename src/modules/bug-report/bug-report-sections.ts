@@ -1,6 +1,6 @@
 /** Individual section formatters for bug report markdown generation. */
 
-import type { BugReportData, CrossSessionMatch, FirebaseMatch, FileAnalysis } from './bug-report-collector';
+import type { BugReportData, CrossSessionMatch, FirebaseMatch, FileAnalysis, QualitySummaryEntry } from './bug-report-collector';
 import type { BlameLine } from '../git/git-blame';
 import type { SourceCodePreview, GitCommit } from '../misc/workspace-analyzer';
 import type { DocScanResults } from '../misc/docs-scanner';
@@ -51,6 +51,22 @@ export function formatBlame(blame: BlameLine, ctx: ReportCtx): string {
 
 export function formatGitHistory(commits: readonly GitCommit[], ctx: ReportCtx): string {
     return formatCommitTable('## Recent Git History', commits, ctx);
+}
+
+export function formatCodeQualitySection(entries: readonly QualitySummaryEntry[]): string {
+    if (entries.length === 0) { return ''; }
+    const rows = entries.map(e => {
+        const cov = e.linePercent !== undefined ? `${e.linePercent}%` : '—';
+        return `| \`${escapePipe(e.filePath)}\` | ${cov} | ${e.lintWarnings} | ${e.lintErrors} |`;
+    });
+    return [
+        '## Code Quality (referenced files)',
+        'Files in the stack trace with low coverage (<80%) or lint issues.',
+        '',
+        '| File | Line coverage | Warnings | Errors |',
+        '|------|---------------|----------|--------|',
+        ...rows,
+    ].join('\n');
 }
 
 export function formatCrossSession(match: CrossSessionMatch): string {

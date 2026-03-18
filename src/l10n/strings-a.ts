@@ -121,6 +121,8 @@ export const stringsA: Record<string, string> = {
     'msg.reportSavedTo': 'Report saved to {0}',
     'msg.rightClickForTimeline': 'Right-click a log in Log History to show its timeline.',
     'msg.rightClickForBugReport': 'Right-click an error line in the log viewer to generate a bug report.',
+    'msg.rightClickShowCodeQuality': 'Right-click a stack frame line in the log viewer and choose "Show code quality".',
+    'msg.noQualityReportFound': 'No quality report found for this log. Run a session with the codeQuality integration enabled.',
 
     'panel.timeline.title': 'Unified Timeline',
     'panel.timeline.loading': 'Loading timeline data...',
