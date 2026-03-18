@@ -40,7 +40,8 @@ details[open] > .group-header::before { content: '▼ '; }
 .target-line { background: var(--vscode-editor-findMatchHighlightBackground, rgba(255, 200, 0, 0.2)); border-left: 3px solid var(--vscode-editorWarning-foreground, #cca700); padding-left: 21px; }
 .target-line:hover { background: var(--vscode-editor-findMatchHighlightBackground, rgba(255, 200, 0, 0.3)); }
 .blame-line { padding: 6px 12px; font-size: 12px; color: var(--vscode-descriptionForeground); border-bottom: 1px solid var(--vscode-panel-border); }
-.blame-line code { color: var(--vscode-textLink-foreground); }
+.blame-line code, .blame-line .blame-commit-link { color: var(--vscode-textLink-foreground); }
+.blame-line .blame-commit-link:hover { text-decoration: underline; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 .section-slot { margin-bottom: 8px; border: 1px solid var(--vscode-panel-border); border-radius: 4px; overflow: hidden; transition: opacity 0.3s ease; }

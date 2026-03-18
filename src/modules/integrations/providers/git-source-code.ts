@@ -39,6 +39,11 @@ function getDescribe(cwd: string): string | undefined {
     return runGitSync(cwd, ['describe', '--tags', '--always']);
 }
 
+/** Short commit hash at HEAD (for first-seen regression hints). */
+function getHeadCommit(cwd: string): string | undefined {
+    return runGitSync(cwd, ['rev-parse', '--short', 'HEAD']);
+}
+
 function getUncommittedPaths(cwd: string): string[] {
     const out = runGitSync(cwd, ['status', '--porcelain']);
     if (!out) { return []; }
@@ -174,6 +179,10 @@ export const gitSourceCodeProvider: IntegrationProvider = {
                 payload.describe = describe;
             }
         }
+        const headCommit = getHeadCommit(cwd);
+        if (headCommit) {
+            payload.commit = headCommit;
+        }
 
         if (uncommittedInHeader) {
             const paths = getUncommittedPaths(cwd);
@@ -256,9 +265,16 @@ export const gitSourceCodeProvider: IntegrationProvider = {
             lineHistory.push(entry);
         }
 
-        if (lineHistory.length === 0) { return undefined; }
-        return [
-            { kind: 'meta', key: 'git', payload: { lineHistory } },
-        ];
+        const describe = getDescribe(cwd);
+        const commit = getHeadCommit(cwd);
+
+        if (lineHistory.length === 0) {
+            if (!describe && !commit) { return undefined; }
+            return [{ kind: 'meta', key: 'git', payload: { describe, commit } }];
+        }
+        const payload: Record<string, unknown> = { lineHistory };
+        if (describe) { payload.describe = describe; }
+        if (commit) { payload.commit = commit; }
+        return [{ kind: 'meta', key: 'git', payload }];
     },
 };
