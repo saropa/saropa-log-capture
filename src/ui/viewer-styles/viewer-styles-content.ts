@@ -55,7 +55,8 @@ export function getContentStyles(): string {
 /* ===================================================================
    Jump-to-Top / Jump-to-Bottom Buttons
    Floating buttons in log-content-wrapper, shown when content
-   exceeds SCROLL_BTN_THRESHOLD of viewport height.
+   exceeds SCROLL_BTN_THRESHOLD of viewport height. Positioned on the
+   right so they do not cover the minimap or native scrollbar when visible.
    =================================================================== */
 #log-content {
     position: relative;
@@ -64,7 +65,8 @@ export function getContentStyles(): string {
 #jump-btn, #jump-top-btn {
     display: none;
     position: absolute;
-    left: 8px;
+    left: auto;
+    right: calc(var(--mm-w, 0px) + var(--scrollbar-w, 0px) + 8px);
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));

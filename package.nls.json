@@ -89,6 +89,7 @@
   "config.copyContextLines.description": "Number of log lines before and after the selection to include when using Copy with source (e.g. for stack traces). 0 = selection only.",
   "config.minimapShowInfoMarkers.markdownDescription": "Show **info**-level markers (green) on the scrollbar minimap. When disabled (default), only error, warning, performance, and other higher-severity markers appear. Enable to see a green dot for every info-level line.",
   "config.minimapWidth.description": "Width of the scrollbar minimap: small (40px), medium (60px), or large (90px).",
+  "config.showScrollbar.description": "Show the native vertical scrollbar in the log viewer. When off (default), the minimap is the only scroll indicator.",
   "config.deemphasizeFrameworkLevels.markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix.",
   "config.docsScanDirs.description": "Directories to scan for project documentation references during analysis (relative to workspace root).",
   "config.enabled.description": "Enable or disable automatic log capture during debug sessions.",

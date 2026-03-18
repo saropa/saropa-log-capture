@@ -324,11 +324,11 @@ The minimap container has `cursor: pointer` and receives mouse events directly (
 
 ### Scrollbar Visibility
 
-Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. The native scrollbar is always hidden:
+Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. By default the native vertical scrollbar is hidden (minimap is the only scroll indicator). When `saropaLogCapture.showScrollbar` is true, the native vertical scrollbar is shown (10px) and `#log-content-wrapper` gets `--scrollbar-w: 10px` so jump buttons and other right-edge overlays stay clear. Default (scrollbar off):
 
 ```css
 #log-content { scrollbar-width: none; }
-#log-content::-webkit-scrollbar { display: none; }
+#log-content::-webkit-scrollbar { width: 0; height: 10px; } /* vertical hidden, horizontal styled */
 ```
 
 ### Marker Rules

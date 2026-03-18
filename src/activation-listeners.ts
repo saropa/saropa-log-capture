@@ -78,6 +78,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
         }
+        if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
+            broadcaster.setScrollbarVisible(cfg.showScrollbar);
+        }
         if (e.affectsConfiguration('saropaLogCapture.autoHidePatterns')) {
             broadcaster.setAutoHidePatterns(cfg.autoHidePatterns);
         }
