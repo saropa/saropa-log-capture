@@ -18,7 +18,9 @@ window.addEventListener('message', function(event) {
                 else { buildPrefixSums(); }
             }
             if (!isHidden) {
-                renderViewport(true);
+                // Use hysteresis (force=false) so we skip full DOM replace when visible range unchanged,
+                // preserving text selection while the log is being written to.
+                renderViewport(false);
                 if (typeof scheduleMinimap === 'function') scheduleMinimap();
                 if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
                 updateFooterText();
@@ -151,6 +153,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
+        case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); break;
         case 'iconBarPosition': document.body.dataset.iconBar = msg.position || 'left'; break;
         case 'captureEnabled':
             window.captureEnabled = msg.enabled !== false;

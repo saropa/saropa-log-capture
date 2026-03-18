@@ -539,6 +539,11 @@
           ],
           "type": "string"
         },
+        "saropaLogCapture.showScrollbar": {
+          "default": false,
+          "description": "%config.showScrollbar.description%",
+          "type": "boolean"
+        },
         "saropaLogCapture.deemphasizeFrameworkLevels": {
           "default": false,
           "markdownDescription": "%config.deemphasizeFrameworkLevels.markdownDescription%",
