@@ -44,9 +44,9 @@ export function getPerformancePanelHtml(prefix?: string): string {
             </table>
         </div>
         <div id="${pid('session-view')}" style="display:none" class="pp-session-view">
-            <div id="${pid('session-intro')}" class="pp-session-intro">
-                <p class="pp-session-intro-line">This log was saved without performance data. You can't add it to this file.</p>
-                <p class="pp-session-intro-line">For your next run: enable <strong>Performance</strong> in Options → Integrations…, then press F5. The new log will include it. (For memory samples, also turn on "Sample during session" in Settings.)</p>
+            <div id="${pid('session-intro')}" class="pp-session-intro pp-copyable-message" title="Right-click to copy">
+                <p class="pp-session-intro-line">This log file was saved without performance data. You can't add it to this file.</p>
+                <p class="pp-session-intro-line">For your next run: if <strong>Performance</strong> is enabled in Options → Integrations…, press F5 and the new log will include it. (For memory samples, also turn on "Sample during session" in Settings.)</p>
                 <p class="pp-session-intro-line pp-session-intro-note">Overhead: snapshot at session start is minimal; optional sampling uses a little CPU and I/O.</p>
             </div>
             <div class="pp-session-block">
@@ -65,12 +65,18 @@ export function getPerformancePanelHtml(prefix?: string): string {
         <div id="${pid('empty')}" class="pp-empty">No performance events found</div>
         <div id="${pid('loading')}" class="pp-loading" style="display:none">Loading\u2026</div>
     </div>
+    <div id="${pid('copy-message-menu')}" class="context-menu pp-copy-message-menu">
+        <div class="context-menu-item" data-action="copy-message"><span class="codicon codicon-copy"></span> Copy message</div>
+    </div>
 </div>`;
 }
 
 /** Generate the performance panel script. When prefix is 'insight-', binds to insight-pp-* elements (set window.__insightPerfIdPrefix before this script runs). */
 export function getPerformancePanelScript(prefix?: string): string {
-    const ppIdPrefix = prefix !== undefined ? `'${prefix}'` : `(typeof window.__insightPerfIdPrefix !== 'undefined' ? window.__insightPerfIdPrefix : '')`;
+    // Positive condition (Sonar S7735): use prefix when it is a string; otherwise emit runtime fallback.
+    const ppIdPrefix = typeof prefix === 'string'
+        ? `'${prefix}'`
+        : `(typeof window.__insightPerfIdPrefix === 'undefined' ? '' : window.__insightPerfIdPrefix)`;
     const pid = (s: string) => `document.getElementById(${ppIdPrefix} + 'pp-${s}')`;
     return /* javascript */ `
 (function() {
@@ -88,6 +94,9 @@ export function getPerformancePanelScript(prefix?: string): string {
     var ppTabTrends = ${pid('tab-trends')};
     var ppTabSession = ${pid('tab-session')};
     var ppSessionView = ${pid('session-view')};
+    var ppSessionIntro = ${pid('session-intro')};
+    var ppCopyMessageMenu = ${pid('copy-message-menu')};
+    var ppCopyMessagePendingText = '';
     var ppOpen = false;
     var ppActiveTab = 'current';
     var ppTrendsData = null;
