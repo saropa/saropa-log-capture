@@ -39,8 +39,8 @@ export function getIconBarHtml(): string {
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
-    <button id="ib-insight" class="ib-icon" tabindex="0" title="Insight" aria-label="Insight">
-        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insight</span>
+    <button id="ib-insight" class="ib-icon" tabindex="0" title="Insights" aria-label="Insights">
+        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insights</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>

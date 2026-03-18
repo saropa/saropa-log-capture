@@ -24,9 +24,9 @@ export function getInsightPanelHtml(): string {
     const emptyRecurring = t('insight.emptyRecurring');
     const emptyHotFiles = t('insight.emptyHotFiles');
     return /* html */ `
-<div id="insight-panel" class="insight-panel" role="region" aria-label="Insight">
+<div id="insight-panel" class="insight-panel" role="region" aria-label="Insights">
     <div class="insight-panel-header">
-        <span>Insight</span>
+        <span>Insights</span>
         <button id="insight-panel-close" class="insight-panel-close" title="Close" aria-label="Close">&times;</button>
     </div>
     <div id="insight-scroll" class="insight-panel-content">
