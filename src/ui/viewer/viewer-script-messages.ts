@@ -72,6 +72,9 @@ window.addEventListener('message', function(event) {
             var perfChip = document.getElementById('session-perf-chip');
             if (perfChip) perfChip.classList.toggle('u-hidden', !msg.has);
             break;
+        case 'setCodeQualityPayload':
+            if (typeof window !== 'undefined') window.codeQualityPayload = msg.payload || null;
+            break;
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateFooterText();

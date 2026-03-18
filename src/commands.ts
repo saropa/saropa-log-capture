@@ -12,6 +12,7 @@ import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
 import { insightsCommands } from './commands-insights';
 import { bugReportCommands } from './commands-bug-report';
+import { qualityCommands } from './commands-quality';
 import { timelineCommands } from './commands-timeline';
 import { trashCommands } from './commands-trash';
 import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands, historyEditCommands } from './commands-session';
@@ -34,6 +35,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...correlationCommands(deps),
         ...insightsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
+        ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
