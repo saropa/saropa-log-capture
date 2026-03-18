@@ -54,6 +54,7 @@
   "command.closeInvestigation.title": "Saropa Log Capture: 조사 닫기",
   "command.switchInvestigation.title": "Saropa Log Capture: 조사 전환",
   "command.addToInvestigation.title": "조사에 추가",
+  "command.addInsightItemToCase.title": "케이스에 인사이트 항목 추가",
   "command.removeFromInvestigation.title": "조사에서 제거",
   "command.exportInvestigation.title": "조사를 .slc로 내보내기",
   "command.shareInvestigation.title": "조사 공유",
