@@ -11,6 +11,7 @@ import type { TreeItem } from './ui/session/session-history-grouping';
 import type { Investigation } from './modules/investigation/investigation-types';
 import { registerShareCommands } from './investigation-commands-share';
 import { registerExportInvestigationCommand } from './investigation-commands-export';
+import { getInvestigationsListPayload } from './ui/provider/viewer-message-handler-investigation';
 
 export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
@@ -18,6 +19,24 @@ export interface InvestigationCommandDeps {
     readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
     /** Used to open the viewer's Insight panel to the Cases tab after add/create/open. */
     readonly viewerProvider?: { postMessage(message: unknown): void };
+}
+
+/** Payload from Insight panel "+" (add to case) for recurring error or hot file. */
+export type AddInsightItemToCasePayload =
+    | { type: 'recurring'; normalizedText?: string; exampleLine?: string }
+    | { type: 'hotfile'; filename?: string };
+
+function formatInsightItemLine(payload: AddInsightItemToCasePayload | undefined): string {
+    if (!payload) { return ''; }
+    if (payload.type === 'recurring') {
+        const text = (payload.exampleLine ?? payload.normalizedText ?? '').trim();
+        return text ? `Recurring: ${text}` : '';
+    }
+    if (payload.type === 'hotfile') {
+        const name = (payload.filename ?? '').trim();
+        return name ? `Hot file: ${name}` : '';
+    }
+    return '';
 }
 
 export function registerInvestigationCommands(deps: InvestigationCommandDeps): vscode.Disposable[] {
@@ -209,6 +228,51 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 await investigationStore.deleteInvestigation(investigation.id);
                 disposeInvestigationPanel();
                 vscode.window.showInformationMessage(t('msg.investigationDeleted', investigation.name));
+            }
+        }),
+
+        vscode.commands.registerCommand('saropaLogCapture.addInsightItemToCase', async (payload?: AddInsightItemToCasePayload) => {
+            const line = formatInsightItemLine(payload);
+            if (!line) {
+                vscode.window.showWarningMessage(t('msg.nothingToAddToCase'));
+                return;
+            }
+            const investigations = await investigationStore.listInvestigations();
+            if (investigations.length === 0) {
+                const create = await vscode.window.showInformationMessage(
+                    t('msg.noInvestigations'),
+                    t('action.createInvestigation'),
+                );
+                if (create === t('action.createInvestigation')) {
+                    await vscode.commands.executeCommand('saropaLogCapture.createInvestigation');
+                }
+                return;
+            }
+            const activeId = await investigationStore.getActiveInvestigationId();
+            const items = investigations.map(inv => ({
+                label: inv.name,
+                description: inv.id === activeId ? '$(check) Active' : undefined,
+                investigation: inv,
+            }));
+            const picked = await vscode.window.showQuickPick(items, {
+                placeHolder: t('prompt.selectInvestigation'),
+                matchOnDescription: true,
+            });
+            if (!picked) { return; }
+            const inv = picked.investigation;
+            const currentNotes = inv.notes ?? '';
+            const newNotes = currentNotes ? `${currentNotes}\n${line}` : line;
+            try {
+                await investigationStore.updateNotes(inv.id, newNotes);
+                await investigationStore.setActiveInvestigationId(inv.id);
+                await showInvestigationPanel(investigationStore);
+                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
+                const listPayload = await getInvestigationsListPayload(investigationStore);
+                viewerProvider?.postMessage(listPayload);
+                viewerProvider?.postMessage({ type: 'addToCaseCompleted' });
+                vscode.window.showInformationMessage(t('msg.sourceAddedToInvestigation', line.slice(0, 50), inv.name));
+            } catch (e) {
+                vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
             }
         }),
 

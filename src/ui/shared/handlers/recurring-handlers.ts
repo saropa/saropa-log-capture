@@ -10,7 +10,15 @@ import { getLogDirectoryUri } from '../../../modules/config/config';
 import type { RecurringError } from '../../../modules/misc/cross-session-aggregator';
 import { aggregateInsights } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
+import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import type { PostFn } from './crashlytics-handlers';
+
+/** Top errors in one session (from fingerprints). */
+export interface ErrorInThisLogItem {
+    readonly normalizedText: string;
+    readonly exampleLine: string;
+    readonly count: number;
+}
 
 /** Normalize path segment for comparison with timeline session (forward slashes). */
 function normSession(s: string): string {
@@ -48,6 +56,8 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
     const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
 
     let recurringInThisLog: RecurringError[] | undefined;
+    let errorsInThisLog: ErrorInThisLogItem[] | undefined;
+    let errorsInThisLogTotal: number | undefined;
     if (currentFileUri) {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (folder) {
@@ -57,6 +67,25 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
             if (!rel.startsWith('..') && sessionRel.length > 0) {
                 recurringInThisLog = filterRecurringInSession(errors, sessionRel);
             }
+        }
+        try {
+            const store = new SessionMetadataStore();
+            const meta = await store.loadMetadata(currentFileUri);
+            const fps = meta?.fingerprints ?? [];
+            const top3 = [...fps]
+                .sort((a, b) => (b.c ?? 0) - (a.c ?? 0))
+                .slice(0, 3)
+                .map(f => ({
+                    normalizedText: f.n ?? '',
+                    exampleLine: f.e ?? '',
+                    count: f.c ?? 0,
+                }));
+            if (top3.length > 0) {
+                errorsInThisLog = top3;
+            }
+            errorsInThisLogTotal = fps.length;
+        } catch {
+            // ignore
         }
     }
 
@@ -69,5 +98,7 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         sdkVersions,
         debugAdapters,
         recurringInThisLog,
+        errorsInThisLog,
+        errorsInThisLogTotal,
     });
 }
