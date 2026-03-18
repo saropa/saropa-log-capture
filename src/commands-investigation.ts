@@ -16,10 +16,12 @@ export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
     readonly investigationStore: InvestigationStore;
     readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
+    /** Used to open the viewer's Insight panel to the Cases tab after add/create/open. */
+    readonly viewerProvider?: { postMessage(message: unknown): void };
 }
 
 export function registerInvestigationCommands(deps: InvestigationCommandDeps): vscode.Disposable[] {
-    const { context, investigationStore, historyProvider } = deps;
+    const { context, investigationStore, historyProvider, viewerProvider } = deps;
 
     const shareAndExport = [
         registerExportInvestigationCommand(investigationStore),
@@ -47,6 +49,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 const investigation = await investigationStore.createInvestigation({ name });
                 await investigationStore.setActiveInvestigationId(investigation.id);
                 await showInvestigationPanel(investigationStore);
+                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
                 vscode.window.showInformationMessage(t('msg.investigationCreated', name));
             } catch (e) {
                 vscode.window.showErrorMessage(t('msg.investigationCreateFailed', e instanceof Error ? e.message : String(e)));
@@ -83,6 +86,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
             if (picked) {
                 await investigationStore.setActiveInvestigationId(picked.investigation.id);
                 await showInvestigationPanel(investigationStore);
+                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
             }
         }),
 
@@ -121,6 +125,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                     label,
                 });
                 await refreshInvestigationPanelIfOpen();
+                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
                 vscode.window.showInformationMessage(t('msg.sourceAddedToInvestigation', label, investigation.name));
             } catch (e) {
                 vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));

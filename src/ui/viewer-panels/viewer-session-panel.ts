@@ -4,7 +4,6 @@
  */
 export { getSessionPanelHtml } from './viewer-session-panel-html';
 import { getSessionPanelEventsScript } from './viewer-session-panel-events';
-import { getSessionInvestigationsScript } from './viewer-session-panel-investigations';
 import { getSessionRenderingScript } from './viewer-session-panel-rendering';
 
 /** Generate the session panel script. */
@@ -33,7 +32,6 @@ export function getSessionPanelScript(): string {
         sessionPanelOpen = true;
         sessionPanelEl.classList.add('visible');
         requestSessionList();
-        requestInvestigations();
     };
 
     window.closeSessionPanel = function() {
@@ -49,18 +47,11 @@ export function getSessionPanelScript(): string {
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
         vscodeApi.postMessage({ type: 'requestSessionList' });
     }
-    function requestInvestigations() {
-        vscodeApi.postMessage({ type: 'requestInvestigations' });
-    }
-    var createInvestigationInProgress = false;
-
-    ${getSessionInvestigationsScript()}
 
     ${getSessionRenderingScript()}
 
     ${getSessionPanelEventsScript()}
 
-    bindCreateInvestigationForm();
     syncToggleButtons();
 })();
 `;

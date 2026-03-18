@@ -39,11 +39,8 @@ export function getIconBarHtml(): string {
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
-    <button id="ib-recurring" class="ib-icon" tabindex="0" title="Recurring Errors" aria-label="Recurring Errors">
-        <span class="codicon codicon-bug"></span><span class="ib-label">Recurring</span>
-    </button>
-    <button id="ib-performance" class="ib-icon" tabindex="0" title="Performance" aria-label="Performance">
-        <span class="codicon codicon-graph-line"></span><span class="ib-label">Performance</span>
+    <button id="ib-insight" class="ib-icon" tabindex="0" title="Insight" aria-label="Insight">
+        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insight</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>
@@ -134,8 +131,7 @@ export function getIconBarScript(): string {
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
-        recurring: document.getElementById('ib-recurring'),
-        performance: document.getElementById('ib-performance'),
+        insight: document.getElementById('ib-insight'),
         about: document.getElementById('ib-about'),
     };
 
@@ -147,8 +143,7 @@ export function getIconBarScript(): string {
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
-        if (typeof closeRecurringPanel === 'function') closeRecurringPanel();
-        if (typeof closePerformancePanel === 'function') closePerformancePanel();
+        if (typeof closeInsightPanel === 'function') closeInsightPanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
@@ -190,10 +185,8 @@ export function getIconBarScript(): string {
             openOptionsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
-        } else if (name === 'recurring' && typeof openRecurringPanel === 'function') {
-            openRecurringPanel();
-        } else if (name === 'performance' && typeof openPerformancePanel === 'function') {
-            openPerformancePanel();
+        } else if (name === 'insight' && typeof openInsightPanel === 'function') {
+            openInsightPanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
             openAboutPanel();
         }
@@ -232,11 +225,8 @@ export function getIconBarScript(): string {
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
     }
-    if (iconButtons.recurring) {
-        iconButtons.recurring.addEventListener('click', function() { setActivePanel('recurring'); });
-    }
-    if (iconButtons.performance) {
-        iconButtons.performance.addEventListener('click', function() { setActivePanel('performance'); });
+    if (iconButtons.insight) {
+        iconButtons.insight.addEventListener('click', function() { setActivePanel('insight'); });
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });

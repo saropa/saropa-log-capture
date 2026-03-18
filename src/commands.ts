@@ -32,11 +32,11 @@ export function registerCommands(deps: CommandDeps): void {
         ...exportCommands(deps),
         ...comparisonCommands(context.extensionUri),
         ...correlationCommands(deps),
-        ...insightsCommands(),
+        ...insightsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
-        ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider }),
+        ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
         walkthroughCommand(),
     );
