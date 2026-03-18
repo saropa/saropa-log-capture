@@ -39,23 +39,28 @@ export function startTerminalCapture(options: {
         activeTerminalId = t._id ?? t.name ?? 'active';
     }
 
-    const win = vscode.window as unknown as { onDidWriteTerminalData?: (e: { terminal: vscode.Terminal; data: string }) => vscode.Disposable };
-    if (typeof win.onDidWriteTerminalData !== 'function') {
-        return;
-    }
-    const which = options.whichTerminals;
-    const linked = options.linkedTerminalIds ?? new Set<string>();
+    /* terminalDataWriteEvent is a proposed API; skip terminal capture when unavailable or not allowed. */
+    try {
+        const win = vscode.window as unknown as { onDidWriteTerminalData?: (e: { terminal: vscode.Terminal; data: string }) => vscode.Disposable };
+        if (typeof win.onDidWriteTerminalData !== 'function') {
+            return;
+        }
+        const which = options.whichTerminals;
+        const linked = options.linkedTerminalIds ?? new Set<string>();
 
-    const sub = (win.onDidWriteTerminalData as unknown as (cb: (e: { terminal: vscode.Terminal; data: string }) => void) => vscode.Disposable)((e) => {
-        const term = e.terminal as vscode.Terminal & { _id?: string; name?: string };
-        const id = term._id ?? term.name ?? 'terminal';
-        const name = term.name ?? id;
-        if (which === 'linked' && !linked.has(String(id))) {return;}
-        if (which === 'active' && activeTerminalId !== undefined && String(id) !== activeTerminalId) {return;}
-        append(e.data, name);
-    });
-    if (sub && typeof (sub as vscode.Disposable).dispose === 'function') {
-        disposables.push(sub as vscode.Disposable);
+        const sub = (win.onDidWriteTerminalData as unknown as (cb: (e: { terminal: vscode.Terminal; data: string }) => void) => vscode.Disposable)((e) => {
+            const term = e.terminal as vscode.Terminal & { _id?: string; name?: string };
+            const id = term._id ?? term.name ?? 'terminal';
+            const name = term.name ?? id;
+            if (which === 'linked' && !linked.has(String(id))) {return;}
+            if (which === 'active' && activeTerminalId !== undefined && String(id) !== activeTerminalId) {return;}
+            append(e.data, name);
+        });
+        if (sub && typeof (sub as vscode.Disposable).dispose === 'function') {
+            disposables.push(sub as vscode.Disposable);
+        }
+    } catch {
+        /* Proposed API not allowed (e.g. marketplace build). Terminal capture skipped. */
     }
 }
 
