@@ -128,6 +128,17 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('GC pause 200ms', 'stdout', true), 'performance');
         });
 
+        test('should classify Flutter/Dart memory lines as performance only with Flutter/Dart context', () => {
+            assert.strictEqual(classifyLevel('memory pressure warning', 'stdout', true), 'info');
+            assert.strictEqual(classifyLevel('I/flutter (123): memory pressure warning', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('I/flutter: Memory: 120 MB', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('D/dart: old gen 80%', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('I/flutter: retained 1024 bytes', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('potential leak in Widget', 'stdout', true), 'info');
+            assert.strictEqual(classifyLevel('I/flutter: potential leak in Widget', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('at package:flutter/src/widgets.dart:123: memory usage high', 'stdout', true), 'performance');
+        });
+
         test('should classify TODO/FIXME/HACK', () => {
             assert.strictEqual(classifyLevel('TODO: fix this', 'stdout', true), 'todo');
             assert.strictEqual(classifyLevel('FIXME: broken', 'stdout', true), 'todo');
