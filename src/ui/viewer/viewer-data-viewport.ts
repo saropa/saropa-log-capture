@@ -90,6 +90,8 @@ function renderViewport(force) {
     var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
         ? totalHeight - prefixSums[endIdx + 1] : 0;
     spacerBottom.style.height = bottomH + 'px';
+    // Re-apply row selection highlight after DOM replace so shift-click selection is preserved (e.g. on right-click context menu).
+    if (typeof updateSelectionHighlight === 'function') updateSelectionHighlight();
 }
 `;
 }
