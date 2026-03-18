@@ -13,8 +13,16 @@ import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './sess
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
 import { resolveEffectiveSessionId } from './session-manager-routing';
 import { startSessionImpl, type StartSessionDeps } from './session-manager-start';
-import { stopSessionImpl, type StopSessionDeps } from './session-manager-stop';
-import { replayEarlyBuffer, replayAllOtherEarlyBuffers } from './session-manager-replay';
+import { stopSessionImpl, buildStopSessionDeps, type StopSessionDepsSource } from './session-manager-stop';
+import {
+    getSingleRecentOwnerSession as getSingleRecentOwnerSessionImpl,
+    clearBufferTimeoutState as clearBufferTimeoutStateImpl,
+    getMostRecentOwnerSessionId as getMostRecentOwnerSessionIdImpl,
+    createWatcher as createWatcherImpl,
+    broadcastLine as broadcastLineImpl,
+    broadcastSplit as broadcastSplitImpl,
+    applyStartResult,
+} from './session-manager-internals';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 export { LineData, LineListener, SplitListener };
 
@@ -60,7 +68,7 @@ export class SessionManagerImpl implements SessionManager {
         private readonly statusBar: StatusBar,
         private readonly outputChannel: vscode.OutputChannel,
     ) {
-        this.watcher = this.createWatcher();
+        this.watcher = createWatcherImpl();
     }
 
     /** Refresh the cached config (call on settings change). */
@@ -156,51 +164,21 @@ export class SessionManagerImpl implements SessionManager {
         };
         const outcome = await startSessionImpl(session, context, deps);
         if (outcome.kind === 'aliased' || outcome.kind === 'skipped') { return; }
-        const result = outcome.result;
-        if (this.cachedConfig.diagnosticCapture) {
-            this.outputChannel.appendLine(`Capture diagnostic: new log session created sessionId=${session.id} type=${session.type}`);
-        }
-        this.sessions.set(session.id, result.logSession);
-        this.ownerSessionIds.add(session.id);
-        this.ownerSessionCreatedAt.set(session.id, Date.now());
-        if (session.parentSession) {
-            this.childToParentId.set(session.id, session.parentSession.id);
-        }
-        this.exclusionRules = result.exclusionRules;
-        this.autoTagger = result.autoTagger;
-        this.floodGuard.reset();
-        this.categoryCounts = {};
-        this.sessionStartTime = Date.now();
-        this.floodSuppressedTotal = 0;
-        this.statusBar.show();
-        replayEarlyBuffer(this.earlyBuffer, session.id, (id, b) => this.onOutputEvent(id, b), this.outputChannel);
-        replayAllOtherEarlyBuffers({ earlyBuffer: this.earlyBuffer, sessionId: session.id, onOutput: (id, b) => this.onOutputEvent(id, b), config: this.cachedConfig, outputChannel: this.outputChannel });
-        this.clearBufferTimeoutState();
+        const onOut = (id: string, b: import('../capture/tracker').DapOutputBody) => this.onOutputEvent(id, b);
+        applyStartResult({
+            sessions: this.sessions, ownerSessionIds: this.ownerSessionIds, ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            childToParentId: this.childToParentId, earlyBuffer: this.earlyBuffer, outputChannel: this.outputChannel,
+            config: this.cachedConfig, onOutputEvent: onOut, clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+            statusBar: this.statusBar, setExclusionRules: (r) => { this.exclusionRules = r; }, setAutoTagger: (a) => { this.autoTagger = a; },
+            floodGuard: this.floodGuard, categoryCounts: this.categoryCounts,
+            setSessionStartTime: (v) => { this.sessionStartTime = v; }, setFloodSuppressedTotal: (v) => { this.floodSuppressedTotal = v; },
+        }, session, outcome.result);
     }
 
     /** Stop and finalize a debug session's log file. */
     async stopSession(session: vscode.DebugSession): Promise<void> {
-        await stopSessionImpl(session, {
-            earlyBuffer: this.earlyBuffer,
-            childToParentId: this.childToParentId,
-            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
-            bufferingLoggedFor: this.bufferingLoggedFor,
-            diagnosticWrittenLoggedFor: this.diagnosticWrittenLoggedFor,
-            firstBufferTime: this.firstBufferTime,
-            bufferTimeoutWarnedFor: this.bufferTimeoutWarnedFor,
-            sessions: this.sessions,
-            processIds: this.processIds,
-            ownerSessionIds: this.ownerSessionIds,
-            sessionStartTime: this.sessionStartTime,
-            categoryCounts: this.categoryCounts,
-            watcher: this.watcher,
-            floodSuppressedTotal: this.floodSuppressedTotal,
-            outputChannel: this.outputChannel,
-            statusBar: this.statusBar,
-            metadataStore: this.metadataStore,
-            autoTagger: this.autoTagger,
-            projectIndexer: this.projectIndexer,
-        } as StopSessionDeps);
+        // Cast: buildStopSessionDeps expects public shape; we pass this (private fields match at runtime).
+        await stopSessionImpl(session, buildStopSessionDeps(this as unknown as StopSessionDepsSource));
     }
 
     /** Get the active LogSession for the current debug session. */
@@ -209,16 +187,13 @@ export class SessionManagerImpl implements SessionManager {
         return active ? this.sessions.get(active.id) : undefined;
     }
 
-    /** Last write time (ms since epoch) for the active session; used for "updated in last minute" indicator. */
-    getActiveLastWriteTime(): number | undefined {
-        return this.getActiveSession()?.lastWriteTime;
-    }
+    /** Last write time (ms since epoch) for the active session. */
+    getActiveLastWriteTime(): number | undefined { return this.getActiveSession()?.lastWriteTime; }
 
     /** Get the log file path for the active session (relative or full). */
     getActiveFilename(): string | undefined {
         const uri = this.getActiveSession()?.fileUri;
-        if (!uri) { return undefined; }
-        return vscode.workspace.asRelativePath(uri, false);
+        return uri ? vscode.workspace.asRelativePath(uri, false) : undefined;
     }
 
     /** Check if a debug session already has an active log session. */
@@ -292,65 +267,30 @@ export class SessionManagerImpl implements SessionManager {
     getWatcher(): KeywordWatcher { return this.watcher; }
 
     /** Recreate the keyword watcher from current config. */
-    refreshWatcher(): void { this.watcher = this.createWatcher(); }
+    refreshWatcher(): void { this.watcher = createWatcherImpl(); }
 
-    // --- Private: session lookup, line/split broadcast, watcher ---
-
-    /** Returns the single owner session if exactly one exists and was created within windowMs. Used by fallback and race guard. */
     private getSingleRecentOwnerSession(windowMs: number): { sid: string; logSession: LogSession } | null {
-        if (this.ownerSessionIds.size !== 1) { return null; }
-        const now = Date.now();
-        for (const sid of this.ownerSessionIds) {
-            const createdAt = this.ownerSessionCreatedAt.get(sid);
-            if (createdAt !== undefined && now - createdAt < windowMs) {
-                const logSession = this.sessions.get(sid) ?? null;
-                return logSession ? { sid, logSession } : null;
-            }
-        }
-        return null;
+        return getSingleRecentOwnerSessionImpl(this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions, windowMs);
     }
 
-    /** Clear buffer-timeout tracking (call when a session is created or aliased so we don't carry stale state). */
     private clearBufferTimeoutState(): void {
-        this.firstBufferTime.clear();
-        this.bufferTimeoutWarnedFor.clear();
+        clearBufferTimeoutStateImpl(this.firstBufferTime, this.bufferTimeoutWarnedFor);
     }
 
-    /** Returns the owner session id that was created most recently (for multi-session fallback routing). */
     private getMostRecentOwnerSessionId(): string | null {
-        let newestId: string | null = null;
-        let newestAt = 0;
-        for (const sid of this.ownerSessionIds) {
-            const at = this.ownerSessionCreatedAt.get(sid) ?? 0;
-            if (at > newestAt && this.sessions.has(sid)) {
-                newestAt = at;
-                newestId = sid;
-            }
-        }
-        return newestId;
+        return getMostRecentOwnerSessionIdImpl(this.ownerSessionIds, this.ownerSessionCreatedAt, this.sessions);
     }
 
     private broadcastLine(data: Omit<LineData, 'watchHits'>): void {
-        const hits = data.isMarker ? [] : this.watcher.testLine(data.text);
-        const watchHits = hits.length > 0 ? hits.map((h) => h.label) : undefined;
-        const lineData: LineData = { ...data, watchHits };
-        for (const listener of this.lineListeners) { listener(lineData); }
-        if (hits.some((h) => h.alert === 'flash' || h.alert === 'badge')) {
-            this.statusBar.updateWatchCounts(this.watcher.getCounts());
-        }
-        if (!data.isMarker && this.autoTagger) { this.autoTagger.processLine(data.text); }
+        broadcastLineImpl(data, {
+            watcher: this.watcher,
+            lineListeners: this.lineListeners,
+            statusBar: this.statusBar,
+            autoTagger: this.autoTagger,
+        });
     }
 
     private broadcastSplit(newUri: vscode.Uri, totalParts: number): void {
-        for (const listener of this.splitListeners) { listener(newUri, totalParts, totalParts); }
-    }
-
-    private createWatcher(): KeywordWatcher {
-        const config = getConfig();
-        const patterns = config.watchPatterns.map((p) => ({
-            keyword: p.keyword,
-            alert: p.alert ?? ('flash' as const),
-        }));
-        return new KeywordWatcher(patterns);
+        broadcastSplitImpl(newUri, totalParts, this.splitListeners);
     }
 }
