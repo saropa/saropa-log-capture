@@ -29,6 +29,8 @@
   "command.showInsights.title": "Saropa Log Capture: 크로스 로그 인사이트",
   "command.generateReport.title": "Saropa Log Capture: 버그 리포트 생성",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
+  "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.showTimeline.title": "Saropa Log Capture: 로그 타임라인 표시",
   "command.compareSessions.title": "Saropa Log Capture: 로그 비교",
   "command.markForComparison.title": "비교용으로 표시",

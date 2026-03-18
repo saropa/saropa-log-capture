@@ -29,6 +29,8 @@
   "command.showInsights.title": "Saropa Log Capture: 跨日志洞察",
   "command.generateReport.title": "Saropa Log Capture: 生成错误报告",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
+  "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.showTimeline.title": "Saropa Log Capture: 显示日志时间轴",
   "command.compareSessions.title": "Saropa Log Capture: 比较日志",
   "command.markForComparison.title": "标记以供比较",

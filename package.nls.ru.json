@@ -169,6 +169,8 @@
   "walkthrough.useKeyboardShortcuts.title": "Горячие клавиши",
   "walkthrough.useKeyboardShortcuts.description": "**Пробел** — пауза, **Ctrl+F** — поиск, **P** — закрепить строки, **N** — аннотировать, **M** — вставить маркеры.",
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
+  "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
+  "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "walkthrough.aboutSaropa.title": "О Saropa",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — создаём цифровые средства защиты с 2010 года.\n\nПакеты Dart, расширения VS Code и пользовательские приложения для разработчиков, ценящих надёжность.\n\n[Перейти на saropa.com](https://saropa.com/)",

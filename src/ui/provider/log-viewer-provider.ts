@@ -188,6 +188,7 @@ export class LogViewerProvider
   setAutoHidePatterns(patterns: readonly string[]): void { state.setAutoHidePatternsImpl(this, patterns); }
   setSessionInfo(info: Record<string, string> | null): void { state.setSessionInfoImpl(this, info); }
   setHasPerformanceData(has: boolean): void { state.setHasPerformanceDataImpl(this, has); }
+  setCodeQualityPayload(payload: unknown): void { state.setCodeQualityPayloadImpl(this, payload); }
   sendFindResults(results: unknown): void { state.sendFindResultsImpl(this, results); }
   setupFindSearch(query: string, options: Record<string, unknown>): void { state.setupFindSearchImpl(this, query, options); }
   findNextMatch(): void { state.findNextMatchImpl(this); }
@@ -205,6 +206,7 @@ export class LogViewerProvider
     this.postMessage({ type: "clear" });
     state.setSessionInfoImpl(this, null);
     state.setHasPerformanceDataImpl(this, false);
+    state.setCodeQualityPayloadImpl(this, null);
   }
   async loadFromFile(uri: vscode.Uri, options?: { tail?: boolean; replay?: boolean }): Promise<void> {
     const gen = ++this.loadGeneration;
