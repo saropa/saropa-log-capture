@@ -156,6 +156,12 @@ export function getInsightScriptPartC(): string {
         return lines.join('\\n');
     }
 
+    /* Open in new tab: opens Insights as a main editor tab; extension handles via onOpenInsightTabRequest. */
+    var openTabBtn = document.getElementById('insight-panel-open-tab');
+    if (openTabBtn) openTabBtn.addEventListener('click', function() {
+        vscodeApi.postMessage({ type: 'openInsightTab' });
+    });
+
     /* Copy entire Insights case to clipboard as markdown (header button). */
     var copyMdBtn = document.getElementById('insight-panel-copy-md');
     if (copyMdBtn) copyMdBtn.addEventListener('click', function() {

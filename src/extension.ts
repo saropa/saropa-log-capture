@@ -12,6 +12,7 @@ import { runActivation, ActivationRefs } from './extension-activation';
 import { disposeComparisonPanel } from './ui/session/session-comparison';
 import { disposeAnalysisPanel } from './ui/analysis/analysis-panel';
 import { disposeInsightsPanel } from './ui/insights/insights-panel';
+import { disposeInsightTabPanel } from './ui/viewer-panels/insight-tab-panel';
 import { disposeBugReportPanel } from './ui/panels/bug-report-panel';
 import { disposeTimelinePanel } from './ui/panels/timeline-panel';
 import type { SaropaLogCaptureApi } from './api-types';
@@ -43,6 +44,7 @@ export function deactivate(): void {
     disposeComparisonPanel();
     disposeAnalysisPanel();
     disposeInsightsPanel();
+    disposeInsightTabPanel();
     disposeBugReportPanel();
     disposeTimelinePanel();
 }

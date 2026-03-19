@@ -79,9 +79,9 @@ export function dispatchViewerActionMessage(msg: Record<string, unknown>, ctx: V
       }
       return true;
     }
-    case "openSettings": void vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")); return true;
+    case "openSettings": vscode.commands.executeCommand("workbench.action.openSettings", String(msg.setting ?? "")).then(undefined, () => {}); return true;
     case "openKeybindings":
-      void vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", String(msg.search ?? "Saropa Log Capture"));
+      vscode.commands.executeCommand("workbench.action.openGlobalKeybindings", String(msg.search ?? "Saropa Log Capture")).then(undefined, () => {});
       return true;
     case "startRecordViewerKey": {
       const actionId = String(msg.actionId ?? '');
@@ -219,8 +219,8 @@ export function dispatchViewerActionMessage(msg: Record<string, unknown>, ctx: V
     case "runCommand":
       void vscode.commands.executeCommand(String(msg.command ?? ""), ...(Array.isArray(msg.args) ? msg.args : []));
       return true;
-    case "browseSessionRoot": void ctx.onBrowseSessionRoot?.(); return true;
-    case "clearSessionRoot": void ctx.onClearSessionRoot?.(); return true;
+    case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
+    case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(String(msg.uriString ?? "")); return true;
     case "sessionAction": {
       const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [String(msg.uriString ?? "")];
@@ -229,6 +229,7 @@ export function dispatchViewerActionMessage(msg: Record<string, unknown>, ctx: V
       return true;
     }
     case "popOutViewer": ctx.onPopOutRequest?.(); return true;
+    case "openInsightTab": ctx.onOpenInsightTabRequest?.(); return true;
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
@@ -247,7 +248,7 @@ export function dispatchViewerActionMessage(msg: Record<string, unknown>, ctx: V
           prompt: t('prompt.goToLine'),
           validateInput: (v) => /^\d+$/.test(v) ? null : t('prompt.goToLineValidate'),
         })
-        .then((v) => { if (v) { ctx.post({ type: "scrollToLine", line: parseInt(v, 10) }); } });
+        .then((v) => { if (v) { ctx.post({ type: "scrollToLine", line: Number.parseInt(v, 10) }); } });
       return true;
     default:
       return false;
