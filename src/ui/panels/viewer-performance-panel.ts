@@ -3,6 +3,8 @@
  *
  * Two-tab panel: "Current" scans allLines for perf events (client-side),
  * "Trends" requests cross-session aggregated data from the extension.
+ * Log tab: when the log has no performance data, an intro message is shown;
+ * right-click on that message opens a context menu to copy the full text to the clipboard.
  */
 import { getPerformanceCurrentScript } from './viewer-performance-current';
 import { getPerformanceTrendsScript } from './viewer-performance-trends';
@@ -111,6 +113,7 @@ export function getPerformancePanelScript(prefix?: string): string {
 
     window.closePerformancePanel = function() {
         if (!ppPanel) return;
+        hideCopyMessageMenu();
         if (!ppIdPrefix) ppPanel.classList.remove('visible');
         ppOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('performance');
@@ -169,6 +172,41 @@ export function getPerformancePanelScript(prefix?: string): string {
         for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('pp-selected', i === idx);
         renderChart(ppTrendsData[idx]);
     });
+
+    function hideCopyMessageMenu() {
+        if (ppCopyMessageMenu) ppCopyMessageMenu.classList.remove('visible');
+    }
+    /** Right-click on session intro (no-perf-data message) shows this menu; Copy message sends text via copyToClipboard. */
+    function showCopyMessageMenu(x, y, text) {
+        if (!ppCopyMessageMenu) return;
+        ppCopyMessagePendingText = text || '';
+        ppCopyMessageMenu.style.left = x + 'px';
+        ppCopyMessageMenu.style.top = y + 'px';
+        ppCopyMessageMenu.classList.add('visible');
+    }
+    if (ppSessionIntro) {
+        ppSessionIntro.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var text = (ppSessionIntro && ppSessionIntro.innerText) ? ppSessionIntro.innerText.trim() : '';
+            if (text) showCopyMessageMenu(e.clientX, e.clientY, text);
+        });
+    }
+    if (ppCopyMessageMenu) {
+        ppCopyMessageMenu.addEventListener('click', function(e) {
+            var item = e.target.closest('.context-menu-item[data-action="copy-message"]');
+            if (item && ppCopyMessagePendingText) {
+                vscodeApi.postMessage({ type: 'copyToClipboard', text: ppCopyMessagePendingText });
+                hideCopyMessageMenu();
+            }
+        });
+        document.addEventListener('click', function(e) {
+            if (ppCopyMessageMenu && ppCopyMessageMenu.classList.contains('visible') && !ppCopyMessageMenu.contains(e.target) && !(ppSessionIntro && ppSessionIntro.contains(e.target))) hideCopyMessageMenu();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') hideCopyMessageMenu();
+        });
+    }
 
     var ppRefresh = document.getElementById(ppIdPrefix + 'pp-refresh');
     if (ppRefresh) ppRefresh.addEventListener('click', function() {
