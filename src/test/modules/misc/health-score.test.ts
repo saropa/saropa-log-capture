@@ -3,9 +3,22 @@ import {
     computeHealthScore,
     formatHealthScoreLine,
     formatHealthScoreBreakdown,
+    getHealthScoreParams,
 } from '../../../modules/misc/health-score';
 
 suite('health-score', () => {
+
+    suite('getHealthScoreParams', () => {
+        test('should return built-in impactWeights and decayRate when extension absent', () => {
+            const params = getHealthScoreParams();
+            assert.strictEqual(params.decayRate, 0.3);
+            assert.strictEqual(params.impactWeights.critical, 8);
+            assert.strictEqual(params.impactWeights.high, 3);
+            assert.strictEqual(params.impactWeights.medium, 1);
+            assert.strictEqual(params.impactWeights.low, 0.25);
+            assert.strictEqual(params.impactWeights.opinionated, 0.05);
+        });
+    });
 
     suite('computeHealthScore', () => {
         test('should return ~94 for 10 medium violations across 50 files', () => {
@@ -65,6 +78,17 @@ suite('health-score', () => {
             );
             assert.ok(result);
             assert.strictEqual(result.score, 86);
+        });
+
+        test('should use explicit params when provided', () => {
+            const customParams = {
+                impactWeights: { critical: 10, high: 5, medium: 1, low: 0.1, opinionated: 0.01 },
+                decayRate: 0.2,
+            };
+            const result = computeHealthScore({ critical: 2, high: 4 }, 100, customParams);
+            assert.ok(result);
+            // weighted = 2*10 + 4*5 = 40, density = 0.4, exp(-0.08) ≈ 0.923 → 92
+            assert.strictEqual(result.score, 92);
         });
     });
 

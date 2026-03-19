@@ -131,6 +131,40 @@ suite('formatLintSection', () => {
         const tableRow = result.split('\n').find(l => l.includes('r1'));
         assert.ok(tableRow && tableRow.length < longMsg.length + 100);
     });
+
+    test('should filter by impact level essential (critical + high only)', () => {
+        const data = buildData({
+            matches: [
+                { file: 'lib/a.dart', line: 1, rule: 'r1', message: 'm1', severity: 'error', impact: 'critical', owasp: { mobile: [], web: [] } },
+                { file: 'lib/b.dart', line: 2, rule: 'r2', message: 'm2', severity: 'warning', impact: 'high', owasp: { mobile: [], web: [] } },
+                { file: 'lib/c.dart', line: 3, rule: 'r3', message: 'm3', severity: 'info', impact: 'medium', owasp: { mobile: [], web: [] } },
+            ],
+        });
+        const result = formatLintSection(data, 'essential');
+        assert.ok(result.includes('## Known Lint Issues (critical + high only)'));
+        assert.ok(result.includes('2 lint violations found'));
+        assert.ok(result.includes('r1') && result.includes('r2'));
+        assert.ok(!result.includes('r3'));
+    });
+
+    test('should filter by impact level recommended and show up-to-medium label', () => {
+        const data = buildData({
+            matches: [
+                { file: 'lib/a.dart', line: 1, rule: 'r1', message: 'm1', severity: 'info', impact: 'low', owasp: { mobile: [], web: [] } },
+                { file: 'lib/b.dart', line: 2, rule: 'r2', message: 'm2', severity: 'warning', impact: 'medium', owasp: { mobile: [], web: [] } },
+            ],
+        });
+        const result = formatLintSection(data, 'recommended');
+        assert.ok(result.includes('## Known Lint Issues (up to medium)'));
+        assert.ok(result.includes('1 lint violation found'));
+        assert.ok(result.includes('r2'));
+        assert.ok(!result.includes('r1'));
+    });
+
+    test('should show no suffix for impact level full', () => {
+        const result = formatLintSection(buildData(), 'full');
+        assert.strictEqual(result.split('\n')[0], '## Known Lint Issues');
+    });
 });
 
 suite('StackFrame helper', () => {

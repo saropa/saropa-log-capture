@@ -1,7 +1,9 @@
 /**
  * Reads and filters the Saropa Lints structured violation export.
  *
- * Looks for `reports/.saropa_lints/violations.json` in the workspace root.
+ * When the Saropa Lints extension is installed and exposes an API, uses
+ * getViolationsData() for the current workspace; otherwise reads
+ * `reports/.saropa_lints/violations.json` from the workspace root.
  * Returns matched violations for files appearing in a stack trace, or
  * undefined if the file is missing, invalid, or has an incompatible schema.
  *
@@ -10,6 +12,7 @@
 
 import * as vscode from 'vscode';
 import type { StackFrame } from '../bug-report/bug-report-collector';
+import { SAROPA_LINTS_EXTENSION_ID, type SaropaLintsApi } from './saropa-lints-api';
 
 /** A single lint violation from the export. */
 export interface LintViolation {
@@ -46,7 +49,7 @@ const impactOrder = ['critical', 'high', 'medium', 'low', 'opinionated'];
 export async function findLintMatches(
     stackTrace: readonly StackFrame[], wsRoot: vscode.Uri,
 ): Promise<LintReportData | undefined> {
-    const raw = await readExportFile(wsRoot);
+    const raw = await getRawExport(wsRoot);
     if (!raw) { return undefined; }
     if (!isCompatibleSchema(raw.schema)) {
         console.warn(`[Saropa] Unsupported lint export schema "${raw.schema}" — expected major version 1`);
@@ -56,7 +59,8 @@ export async function findLintMatches(
     const stackFiles = collectStackFiles(stackTrace);
     if (stackFiles.size === 0) { return undefined; }
 
-    const hasExt = await detectExtension(wsRoot);
+    const usedApi = raw.source === 'api';
+    const hasExt = usedApi ? true : await detectExtension(wsRoot);
     const fileIndex: Record<string, number> = raw.summary?.issuesByFile ?? {};
     const relevantFiles = filterRelevantFiles(stackFiles, fileIndex);
     if (relevantFiles.size === 0) {
@@ -65,6 +69,41 @@ export async function findLintMatches(
 
     const matches = filterAndSort(raw.violations ?? [], relevantFiles, stackTrace);
     return buildResult(matches, raw, hasExt);
+}
+
+/**
+ * Get raw violations export: try Saropa Lints extension API first (sync, in-memory);
+ * on null or throw, fall back to reading reports/.saropa_lints/violations.json from wsRoot.
+ */
+async function getRawExport(wsRoot: vscode.Uri): Promise<(RawExport & { source?: 'api' | 'file' }) | undefined> {
+    const api = getSaropaLintsApi();
+    if (api) {
+        try {
+            const data = api.getViolationsData();
+            if (data && typeof data === 'object') {
+                return {
+                    schema: data.schema,
+                    version: data.version,
+                    timestamp: data.timestamp,
+                    config: data.config,
+                    summary: data.summary,
+                    violations: data.violations,
+                    source: 'api' as const,
+                };
+            }
+        } catch {
+            /* fall through to file read */
+        }
+    }
+    const fileData = await readExportFile(wsRoot);
+    return fileData ? { ...fileData, source: 'file' } : undefined;
+}
+
+/** Get Saropa Lints API from the extension if installed and exposing the API. */
+function getSaropaLintsApi(): SaropaLintsApi | undefined {
+    const ext = vscode.extensions.getExtension<SaropaLintsApi>(SAROPA_LINTS_EXTENSION_ID);
+    if (!ext?.exports || typeof ext.exports.getViolationsData !== 'function') { return undefined; }
+    return ext.exports;
 }
 
 interface RawExport {
@@ -212,7 +251,7 @@ function buildFrameLineMap(frames: readonly StackFrame[]): Map<string, number[]>
 function buildResult(matches: LintViolation[], raw: RawExport, hasExtension: boolean): LintReportData {
     const ts = raw.timestamp ?? '';
     const exportTime = Date.parse(ts);
-    const isStale = isNaN(exportTime) || (Date.now() - exportTime) > staleThresholdMs;
+    const isStale = Number.isNaN(exportTime) || (Date.now() - exportTime) > staleThresholdMs;
     return {
         matches,
         totalInExport: raw.summary?.totalViolations ?? 0,
