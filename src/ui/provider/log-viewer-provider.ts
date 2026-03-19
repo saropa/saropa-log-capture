@@ -23,12 +23,6 @@ import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } fr
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import * as state from "./log-viewer-provider-state";
 
-/**
- * Webview view provider for the sidebar; displays captured debug output with auto-scroll and theme support.
- * Supports multiple VS Code windows: when the panel is opened in another window, resolveWebviewView is
- * called per window. We track all views and broadcast postMessage/loadFromFile to each so clicking a
- * session in any window shows content in that window's viewer.
- */
 export class LogViewerProvider
   implements vscode.WebviewViewProvider, ViewerTarget, vscode.Disposable
 {
@@ -101,13 +95,11 @@ export class LogViewerProvider
     if (webviewView.visible) { this.visibleView = webviewView; }
     setupLogViewerWebview(this, webviewView);
   }
-  /** Remove a view when it is disposed (e.g. panel closed or window closed). Stops batch timer only when the last view is removed. */
   removeView(webviewView: vscode.WebviewView): void {
     this.views.delete(webviewView);
     if (this.visibleView === webviewView) { this.visibleView = undefined; }
     if (this.views.size === 0) { stopBatchTimer(this); }
   }
-  /** Mark the view that is currently visible (so getView() and batch use the right one). */
   setVisibleView(webviewView: vscode.WebviewView | undefined): void { this.visibleView = webviewView; }
   getCachedPresets(): readonly FilterPreset[] { return this.cachedPresets; }
   getCachedHighlightRules(): SerializedHighlightRule[] { return this.cachedHighlightRules; }
@@ -296,7 +288,6 @@ export class LogViewerProvider
 
   startBatchTimer(): void { startBatchTimer(this); }
   stopBatchTimer(): void { stopBatchTimer(this); }
-  /** Send message to all resolved views (safe if a view is disposed during iteration). */
   postMessage(message: unknown): void {
     const snapshot = [...this.views];
     for (const v of snapshot) { v.webview.postMessage(message); }
