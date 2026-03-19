@@ -80,7 +80,7 @@ function applySessionStartedState(
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart, fireSessionEnd } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd } = deps;
 
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.

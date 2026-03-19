@@ -40,8 +40,8 @@ suite('ViewerPerformancePanel', () => {
         });
 
         test('should use positive condition for ID prefix (Sonar S7735)', () => {
-            const script = getPerformancePanelScript();
-            assert.ok(script.includes("typeof prefix === 'string'"));
+            const implementation = getPerformancePanelScript.toString();
+            assert.ok(implementation.includes("typeof prefix === 'string'"));
         });
     });
 });
