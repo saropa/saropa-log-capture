@@ -1,6 +1,11 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import type { StackFrame } from '../../../modules/bug-report/bug-report-collector';
 import type { LintReportData } from '../../../modules/misc/lint-violation-reader';
+import {
+    collectAppStackRelativePaths,
+    isLintExportTimestampStale,
+    LINT_EXPORT_STALE_THRESHOLD_MS,
+} from '../../../modules/misc/lint-violation-reader';
 import { formatLintSection } from '../../../modules/bug-report/bug-report-lint-section';
 
 /** Helper to build a minimal stack frame. */
@@ -8,26 +13,26 @@ function frame(filePath: string, line: number, isApp = true): StackFrame {
     return { text: `at ${filePath}:${line}`, isApp, sourceRef: { filePath, line } };
 }
 
-suite('formatLintSection', () => {
-    function buildData(overrides: Partial<LintReportData> = {}): LintReportData {
-        return {
-            matches: overrides.matches ?? [{
-                file: 'lib/auth.dart', line: 42, rule: 'require_field_dispose',
-                message: 'TextEditingController is never disposed',
-                severity: 'error', impact: 'critical',
-                owasp: { mobile: ['m9'], web: [] },
-            }],
-            totalInExport: overrides.totalInExport ?? 1,
-            tier: overrides.tier ?? 'comprehensive',
-            version: overrides.version ?? '4.14.0',
-            timestamp: overrides.timestamp ?? new Date().toISOString(),
-            isStale: overrides.isStale ?? false,
-            hasExtension: overrides.hasExtension ?? false,
-            filesAnalyzed: overrides.filesAnalyzed ?? 50,
-            byImpact: overrides.byImpact ?? {},
-        };
-    }
+function buildData(overrides: Partial<LintReportData> = {}): LintReportData {
+    return {
+        matches: overrides.matches ?? [{
+            file: 'lib/auth.dart', line: 42, rule: 'require_field_dispose',
+            message: 'TextEditingController is never disposed',
+            severity: 'error', impact: 'critical',
+            owasp: { mobile: ['m9'], web: [] },
+        }],
+        totalInExport: overrides.totalInExport ?? 1,
+        tier: overrides.tier ?? 'comprehensive',
+        version: overrides.version ?? '4.14.0',
+        timestamp: overrides.timestamp ?? new Date().toISOString(),
+        isStale: overrides.isStale ?? false,
+        hasExtension: overrides.hasExtension ?? false,
+        filesAnalyzed: overrides.filesAnalyzed ?? 50,
+        byImpact: overrides.byImpact ?? {},
+    };
+}
 
+suite('formatLintSection', () => {
     test('should format single violation', () => {
         const result = formatLintSection(buildData());
         assert.ok(result.includes('## Known Lint Issues'));
@@ -35,6 +40,8 @@ suite('formatLintSection', () => {
         assert.ok(result.includes('require_field_dispose'));
         assert.ok(result.includes('critical'));
         assert.ok(result.includes('lib/auth.dart'));
+        assert.ok(result.includes('saropa-lints:explainRule'));
+        assert.ok(result.includes('Explain'));
     });
 
     test('should pluralize for multiple violations', () => {
@@ -115,7 +122,7 @@ suite('formatLintSection', () => {
             }],
         });
         const result = formatLintSection(data);
-        assert.ok(result.includes('value \\| must be checked'));
+        assert.ok(result.includes(String.raw`value \| must be checked`));
     });
 
     test('should truncate long messages', () => {
@@ -129,7 +136,9 @@ suite('formatLintSection', () => {
         });
         const result = formatLintSection(data);
         const tableRow = result.split('\n').find(l => l.includes('r1'));
-        assert.ok(tableRow && tableRow.length < longMsg.length + 100);
+        // Row includes an extra "Explain" column; keep it bounded to ensure the
+        // full long message is not embedded into the link href.
+        assert.ok(tableRow && tableRow.length < longMsg.length + 250);
     });
 
     test('should filter by impact level essential (critical + high only)', () => {
@@ -164,6 +173,34 @@ suite('formatLintSection', () => {
     test('should show no suffix for impact level full', () => {
         const result = formatLintSection(buildData(), 'full');
         assert.strictEqual(result.split('\n')[0], '## Known Lint Issues');
+    });
+});
+
+suite('lint export staleness and stack paths', () => {
+    test('isLintExportTimestampStale is true for empty or invalid timestamp', () => {
+        assert.strictEqual(isLintExportTimestampStale(''), true);
+        assert.strictEqual(isLintExportTimestampStale('not-a-date'), true);
+    });
+
+    test('isLintExportTimestampStale is false for recent ISO timestamp', () => {
+        const recent = new Date().toISOString();
+        assert.strictEqual(isLintExportTimestampStale(recent), false);
+    });
+
+    test('isLintExportTimestampStale is true when older than threshold', () => {
+        const old = new Date(Date.now() - LINT_EXPORT_STALE_THRESHOLD_MS - 60_000).toISOString();
+        assert.strictEqual(isLintExportTimestampStale(old), true);
+    });
+
+    test('collectAppStackRelativePaths dedupes and caps', () => {
+        const frames: StackFrame[] = [
+            { text: '', isApp: true, sourceRef: { filePath: 'lib/a.dart', line: 1 } },
+            { text: '', isApp: true, sourceRef: { filePath: 'lib/a.dart', line: 2 } },
+            { text: '', isApp: false, sourceRef: { filePath: 'lib/b.dart', line: 1 } },
+        ];
+        const paths = collectAppStackRelativePaths(frames, 10);
+        assert.strictEqual(paths.length, 1);
+        assert.strictEqual(paths[0], 'lib/a.dart');
     });
 });
 
