@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import { getContextMenuScript, getContextMenuHtml } from '../../ui/viewer-context-menu/viewer-context-menu';
 
 suite('ViewerContextMenu', () => {
@@ -127,6 +127,13 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('flip-submenu-vertical'));
             assert.ok(script.includes('rect.bottom + submenuMaxH > window.innerHeight'));
         });
+
+        test('should push submenu content down when menu is near top so flyout top is not cropped', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('flip-submenu-vertical-top'));
+            assert.ok(script.includes('--submenu-content-top'));
+            assert.ok(script.includes('rect.top <'));
+        });
     });
 
     suite('getContextMenuHtml', () => {
@@ -172,12 +179,14 @@ suite('ViewerContextMenu', () => {
             assert.ok(html.includes('data-action="toggle-wrap"'));
             assert.ok(html.includes('data-action="toggle-decorations"'));
             assert.ok(html.includes('data-action="toggle-timestamp"'));
+            assert.ok(html.includes('data-action="toggle-session-elapsed"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line decorations (dot, number, time)'));
             assert.ok(html.includes('Timestamp'));
+            assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Comfortable line height'));
             assert.ok(html.includes('Hide blank lines'));
