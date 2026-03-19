@@ -20,13 +20,19 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+Improves the log viewer with Insights in a tab, markdown copy, and scrollbar control; fixes text selection while tailing and refines session elapsed display and jump-button placement.
+
 ### Fixed
+
+• **Code quality** — Addressed multiple findings: merged duplicate config imports and combined `context.subscriptions.push()` calls in activation; replaced nested ternary in smart bookmarks with explicit if/else; iterated `Set` directly in log viewer (no array copy); refactored viewer action dispatch into two handlers plus small helpers to reduce cognitive complexity and switch case count; introduced `msgStr()` for safe message field string coercion; replaced `void` with `.then(undefined, () => {})` and `parseInt` with `Number.parseInt`. Behavior unchanged.
 
 • **Performance panel script (code quality)** — Replaced negated condition in `getPerformancePanelScript` with a positive check so ID prefix selection satisfies Sonar rule S7735; behavior unchanged.
 
 • **Text selection during tailing** — Selecting text in the log viewer while the log is being written to no longer fails: the viewport uses the existing hysteresis so it skips a full DOM re-render when the visible line range is unchanged, preserving the user’s selection. Spacer heights are still updated so scroll height stays correct.
 
 ### Changed
+
+• **Session elapsed display format** — Session elapsed time in the log viewer no longer uses clock-style `T+M:SS` (e.g. `T+5:15`). It now uses duration-style text with unit suffixes (e.g. `45s`, `5m 15s`, `1h 5m 15s`, `2d 1h 5m 15s`) so it is unambiguous as elapsed time. Labels in the decoration settings and context menu (Options) were updated from "Session time (T+)" / "Log time (T+)" to "Session elapsed".
 
 • **Jump-to-top / jump-to-bottom buttons** — Buttons are now positioned on the right side of the log area so they do not cover the scrollbar minimap or the native vertical scrollbar when it is enabled. Right offset uses CSS variables `--mm-w` and `--scrollbar-w` so layout stays correct for all minimap sizes and scrollbar settings.
 
@@ -43,6 +49,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 ---
 
 ## [3.8.0]
+
+Adds code quality metrics in the viewer, regression hints (blame and first-seen), and smart bookmark suggestions; fixes context menu and selection behavior.
 
 ### Fixed
 
