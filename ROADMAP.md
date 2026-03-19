@@ -1,6 +1,6 @@
 # Roadmap
 
-Future work only. Completed work is in [CHANGELOG.md](CHANGELOG.md) and `bugs/history/`. *Updated: 2026-03-13.*
+Future work only. Completed work is in [CHANGELOG.md](../CHANGELOG.md) and `bugs/history/`. *Updated: 2026-03-13.*
 
 ---
 
@@ -46,4 +46,4 @@ See [bugs/019_cohesion-plans-index.md](bugs/019_cohesion-plans-index.md) for coh
 
 ---
 
-*For changelog, see [CHANGELOG.md](CHANGELOG.md). For code standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*
+*For changelog, see [CHANGELOG.md](../CHANGELOG.md). For code standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*

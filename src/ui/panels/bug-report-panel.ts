@@ -77,19 +77,30 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             await vscode.workspace.fs.writeFile(uri, Buffer.from(lastMarkdown, 'utf-8'));
             vscode.window.showInformationMessage(t('msg.reportSavedTo', uri.fsPath.split(/[\\/]/).pop() ?? ''));
         }
+    } else if (msg.type === 'explainLintRule') {
+        const violation = msg.violation;
+        if (!violation || typeof violation !== 'object') {
+            vscode.window.showWarningMessage('Invalid Saropa Lints violation payload for explanation.');
+            return;
+        }
+        void vscode.commands.executeCommand(
+            'saropaLints.explainRule',
+            // saropa_lints expects an IssueTreeNode-like object; it unwraps `node.violation`.
+            { kind: 'violation', violation },
+        );
     }
 }
 
 function deriveSubject(errorLine: string, fingerprint: string): string {
-    const fileMatch = errorLine.match(/[\\/]([^\\/]+?)\.\w+:\d+/);
-    return (fileMatch ? fileMatch[1] : fingerprint).replace(/[^\w-]/g, '_').slice(0, 40);
+    const fileMatch = /[\\/]([^\\/]+?)\.\w+:\d+/.exec(errorLine);
+    return (fileMatch ? fileMatch[1] : fingerprint).replaceAll(/[^\w-]/g, '_').slice(0, 40);
 }
 
 function buildDefaultFilename(): string {
     const d = new Date();
     const p = (n: number): string => String(n).padStart(2, '0');
     const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-    const project = vscode.workspace.workspaceFolders?.[0]?.name.replace(/[^\w-]/g, '_') ?? '';
+    const project = vscode.workspace.workspaceFolders?.[0]?.name.replaceAll(/[^\w-]/g, '_') ?? '';
     const parts = [ts, 'saropa_log_capture', project, lastSubject, 'bug_report'].filter(Boolean);
     return `${parts.join('_')}.md`;
 }
@@ -125,20 +136,20 @@ ${html}
 
 function markdownToHtml(md: string): string {
     return md
-        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^---$/gm, '<hr>')
-        .replace(/```\n([\s\S]*?)```/g, (_, code) => `<pre>${escapeHtml(code.trimEnd())}</pre>`)
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-        .replace(/^- (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-        .replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, convertTable)
-        .replace(/\n{2,}/g, '\n')
-        .replace(/^(?!<[huplo]|<\/|<li|<hr|<str|<em|<cod)(.+)$/gm, '<p>$1</p>');
+        .replaceAll(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replaceAll(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replaceAll(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replaceAll(/^---$/gm, '<hr>')
+        .replaceAll(/```\n([\s\S]*?)```/g, (_, code) => `<pre>${escapeHtml(code.trimEnd())}</pre>`)
+        .replaceAll(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replaceAll(/\*(.+?)\*/g, '<em>$1</em>')
+        .replaceAll(/`([^`\n]+)`/g, '<code>$1</code>')
+        .replaceAll(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+        .replaceAll(/^- (.+)$/gm, '<li>$1</li>')
+        .replaceAll(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        .replaceAll(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, convertTable)
+        .replaceAll(/\n{2,}/g, '\n')
+        .replaceAll(/^(?!<(?:h|u|p|l|o)|<\/|<li|<hr|<str|<em|<cod)(.+)$/gm, '<p>$1</p>');
 }
 
 function convertTable(_: string, header: string, body: string): string {
@@ -155,5 +166,39 @@ function getScript(): string {
     var vscode = acquireVsCodeApi();
     document.getElementById('copy-btn').addEventListener('click', function() { vscode.postMessage({ type: 'copy' }); });
     document.getElementById('save-btn').addEventListener('click', function() { vscode.postMessage({ type: 'save' }); });
+
+    // Explain links for lint table rows.
+    // href format from bug-report-lint-section.ts:
+    //   saropa-lints:explainRule?payload=<encoded JSON>
+    Array.prototype.forEach.call(
+        document.querySelectorAll('a[href^="saropa-lints:explainRule"]'),
+        function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                var href = link.getAttribute('href') || '';
+                var match = href.match(/payload=([^?&]+)/);
+                if (!match || !match[1]) { return; }
+                try {
+                    var decoded = decodeURIComponent(match[1]);
+                    var violation = JSON.parse(decoded);
+                    // Restore the visible message text from the table cell. This keeps
+                    // the href payload small while still providing a useful message
+                    // to Saropa Lints' Explain rule panel.
+                    var tr = link.closest('tr');
+                    if (tr) {
+                        var tds = tr.querySelectorAll('td');
+                        // Columns: File (0), Line (1), Rule (2), Impact (3), Message (4), Explain (5)
+                        if (tds && tds.length >= 5) {
+                            var msg = (tds[4].textContent || '').trim();
+                            if (msg) { violation.message = msg; }
+                        }
+                    }
+                    vscode.postMessage({ type: 'explainLintRule', violation: violation });
+                } catch (_err) {
+                    // Best-effort: ignore malformed payloads.
+                }
+            });
+        }
+    );
 })();`;
 }

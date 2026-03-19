@@ -47,13 +47,37 @@ export function formatLintSection(data: LintReportData, impactLevel: LintReportI
 }
 
 function formatTable(matches: readonly LintViolation[]): string {
-    const header = '| File | Line | Rule | Impact | Message |';
-    const sep = '|------|------|------|--------|---------|';
+    const header = '| File | Line | Rule | Impact | Message | Explain |';
+    const sep = '|------|------|------|--------|---------|---------|';
     const rows = matches.map(v => {
-        const msg = escapePipe(v.message).slice(0, 120);
-        return `| ${escapePipe(v.file)} | ${v.line} | ${v.rule} | ${v.impact} | ${msg} |`;
+        const msg = escapePipe(v.message).slice(0, 80);
+        const explainHref = buildExplainHref(v);
+        return `| ${escapePipe(v.file)} | ${v.line} | ${v.rule} | ${v.impact} | ${msg} | [Explain](${explainHref}) |`;
     });
     return [header, sep, ...rows].join('\n');
+}
+
+function buildExplainHref(v: LintViolation): string {
+    // Custom link scheme handled by `bug-report-panel.ts`:
+    // - decodes the payload
+    // - calls `saropaLints.explainRule` with a violation-like object
+    // Keep the payload compact: the payload is embedded into the markdown
+    // table as a link href. The long message itself is not stored in the href
+    // (it is instead pulled from the table cell by the webview click handler).
+    const shortFile = v.file.split(/[\\/]/).pop() ?? v.file;
+    const hasOwasp = v.owasp.mobile.length > 0 || v.owasp.web.length > 0;
+    const payload = {
+        file: shortFile,
+        line: v.line,
+        rule: v.rule,
+        // The extension requires `message` as a string; we overwrite it on click.
+        message: '',
+        correction: undefined,
+        severity: v.severity,
+        impact: v.impact,
+        owasp: hasOwasp ? v.owasp : undefined,
+    };
+    return `saropa-lints:explainRule?payload=${encodeURIComponent(JSON.stringify(payload))}`;
 }
 
 function formatSource(data: LintReportData): string {
@@ -74,6 +98,6 @@ function formatStaleness(timestamp: string, hasExtension: boolean): string {
 }
 
 function formatShortTimestamp(ts: string): string {
-    const m = ts.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+    const m = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/.exec(ts);
     return m ? m[1] + 'Z' : ts;
 }

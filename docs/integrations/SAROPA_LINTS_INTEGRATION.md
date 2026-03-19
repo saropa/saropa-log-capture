@@ -8,7 +8,9 @@ This document is the single source for (1) design and rationale and (2) the full
 **Implementation status (saropa-log-capture):**
 - **Phase 1 — Done.** Setting `lintReportImpactLevel`, impact filter and section label in bug report, when-clause on lint-related commands (showCodeQualityForFrame, openQualityReport).
 - **Phase 2 (Log Capture) — Done.** TypeScript API types (`saropa-lints-api.ts`), violations from extension API when present else file, health score params from extension API when present else built-in. *Extension side (B1–B7) is in saropa_lints repo.*
-- **Phases 3–5 — Not started.**
+- **Phase 3 (Log Capture) — Done.** Staleness/missing prompt before bug report collect (`saropa-lints-refresh-prompt.ts`): `runAnalysis`, `runAnalysisForFiles` or `runAnalysis({ files })`, progress notification, 24h threshold, stack paths capped at 50. *Extension B8–B9 (`runAnalysisForFiles` implementation) is in saropa_lints repo.*
+- **Phase 4 (Log Capture) — Done.** Health-score params for the bug report header prefer `reports/.saropa_lints/consumer_contract.json` when present; fallback order is consumer contract → Saropa Lints extension API → built-in constants.
+- **Phase 5 (Bug report / Investigation) — Done.** Add per-violation “Explain” action link in the bug report lint table (invokes `saropaLints.explainRule`), add an executive-summary one-liner for critical/high OWASP in the crash file, and optionally pin a lint snapshot (`reports/.saropa_lints/violations.json`) when adding a session to an investigation.
 
 ---
 

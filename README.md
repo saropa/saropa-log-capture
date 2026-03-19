@@ -440,7 +440,7 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 | Document                                                 | Description                                             |
 | -------------------------------------------------------- | ------------------------------------------------------- |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                       | Developer setup, code standards, and how to contribute  |
-| [CHANGELOG.md](CHANGELOG.md)                             | Version history and release notes                       |
+| [CHANGELOG.md](../CHANGELOG.md)                             | Version history and release notes                       |
 | [ROADMAP.md](ROADMAP.md)                                 | Planned features, project review, and direction         |
 | [STYLE_GUIDE.md](STYLE_GUIDE.md)                         | Code style conventions and patterns                     |
 
