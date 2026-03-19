@@ -45,7 +45,7 @@ export function getDecoSettingsHtml(): string {
     </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-session-elapsed" />
-        Session time (T+)
+        Session elapsed
     </label>
     <div class="deco-settings-separator"></div>
     <label class="deco-settings-row">
@@ -81,7 +81,7 @@ var decoShowCounter = true;
 var decoShowTimestamp = true;
 /** Sub-toggle: show elapsed time (+Nms) between log lines. */
 var showElapsed = false;
-/** Sub-toggle: show session elapsed time (T+M:SS) from first log line. */
+/** Sub-toggle: show session elapsed time (e.g. 5m 15s) from first log line. */
 var decoShowSessionElapsed = false;
 /** Line coloring mode: 'none' (default) or 'line' (whole-line tint). */
 var decoLineColorMode = 'none';
@@ -150,8 +150,8 @@ function toggleTimestamp() {
 }
 
 /**
- * Toggle session elapsed time (T+) in the line decoration prefix.
- * Callable from the context menu (Options → Session time).
+ * Toggle session elapsed time in the line decoration prefix.
+ * Callable from the context menu (Options → Session elapsed).
  * If turning on and decorations are off, turns decorations on so the time is visible.
  */
 function toggleSessionElapsed() {

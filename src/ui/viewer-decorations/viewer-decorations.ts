@@ -5,7 +5,7 @@
  *   - Colored severity dot (🟢 info, 🟠 warning, 🔴 error, 🟣 performance, 🔵 framework)
  *   - Sequential counter (1, 2, ...)
  *   - Wall-clock timestamp (T07:23:36)
- *   - Session elapsed time (T+M:SS)
+ *   - Session elapsed time (e.g. 5m 15s)
  *
  * Also provides whole-line severity tinting (subtle background colors).
  *
@@ -21,7 +21,7 @@ export function getDecorationsScript(): string {
 /** Master switch — when false, all decoration rendering is skipped. */
 var showDecorations = false;
 
-/** Epoch ms of the first timestamped line — used for T+ session elapsed display. */
+/** Epoch ms of the first timestamped line — used for session elapsed display. */
 var sessionStartTs = 0;
 
 /**
@@ -63,9 +63,9 @@ function formatDecoTimestamp(ts) {
 }
 
 /**
- * Format session-elapsed ms as T+M:SS, T+H:MM:SS, or T+Nd H:MM:SS.
- * Hours appear only when elapsed >= 1h. Days appear only when >= 24h.
- * Respects the showMilliseconds toggle for sub-second precision.
+ * Format session-elapsed ms as duration with unit suffixes (e.g. 5m 15s, 1h 5m 15s).
+ * Unambiguous as elapsed time, not clock time. Hours appear when elapsed >= 1h; days when >= 24h.
+ * Respects the showMilliseconds toggle for sub-second precision on the seconds part.
  */
 function formatSessionElapsed(ms) {
     if (ms < 0) ms = 0;
@@ -76,17 +76,20 @@ function formatSessionElapsed(ms) {
     var totalHr = Math.floor(totalMin / 60);
     var hr = totalHr % 24;
     var days = Math.floor(totalHr / 24);
-    var ss = ('0' + sec).slice(-2);
     var msFrac = showMilliseconds ? '.' + ('00' + (ms % 1000)).slice(-3) : '';
+    var sPart = sec + msFrac + 's';
     if (totalHr >= 24) {
         var mm = ('0' + min).slice(-2);
-        return 'T+' + days + 'd ' + hr + ':' + mm + ':' + ss + msFrac;
+        return days + 'd ' + hr + 'h ' + mm + 'm ' + sPart;
     }
     if (totalHr >= 1) {
         var mm = ('0' + min).slice(-2);
-        return 'T+' + hr + ':' + mm + ':' + ss + msFrac;
+        return hr + 'h ' + mm + 'm ' + sPart;
     }
-    return 'T+' + min + ':' + ss + msFrac;
+    if (totalMin >= 1) {
+        return min + 'm ' + sPart;
+    }
+    return sPart;
 }
 
 /**
