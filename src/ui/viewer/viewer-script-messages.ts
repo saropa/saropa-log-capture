@@ -77,6 +77,9 @@ window.addEventListener('message', function(event) {
         case 'setCodeQualityPayload':
             if (typeof window !== 'undefined') window.codeQualityPayload = msg.payload || null;
             break;
+        case 'setDriftAdvisorAvailable':
+            if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available;
+            break;
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateFooterText();

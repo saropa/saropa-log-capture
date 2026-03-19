@@ -180,7 +180,8 @@ export async function handleIntegrationContextRequest(
             contextData = { ...contextData, ...metaContext, hasData: Object.keys(metaContext).length > 0 };
         }
 
-        if (!contextData.hasData) {
+        // Allow popover when only Drift Advisor meta exists (no sidecar data).
+        if (!contextData.hasData && !meta.integrations?.['saropa-drift-advisor']) {
             post({ type: 'contextPopoverData', error: t('msg.noIntegrationData') });
             return;
         }
@@ -190,7 +191,7 @@ export async function handleIntegrationContextRequest(
             lineIndex,
             timestamp: centerTime,
             windowMs,
-            data: contextData,
+            data: { ...contextData, integrationsMeta: meta.integrations },
         });
     } catch {
         post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });

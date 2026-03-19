@@ -20,6 +20,12 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+• **Drift Advisor integration (Log Capture side)** — Optional integration with the Drift Advisor extension: **Drift Advisor** appears in Configure integrations (adapter id `driftAdvisor`). When the Drift Advisor extension is installed, right-click a log line with category `drift-perf` or `drift-query` to show **Open in Drift Advisor** (invokes the Drift Advisor command). The **Show Integration Context** popover shows a **Drift Advisor** block (query count, avg duration, slow count, health) and an **Open in Drift Advisor** button when the session has `meta.integrations['saropa-drift-advisor']`. No dependency on Drift Advisor at install time; when only one extension is installed, no errors. Design: [docs/integrations/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](docs/integrations/SAROPA_DRIFT_ADVISOR_INTEGRATION.md).
+
+• **Multi-source view and source filter** — When a log has a `.terminal.log` sidecar (from the Terminal integration), the viewer shows both Debug Console and Terminal output. A **Sources** section in the Filters panel (Filters → Sources) lets you show only Debug output, only Terminal, or both. Quick Filter presets **"Just debug output"** and **"Complete (all sources)"** apply the source filter in one click. Presets can now store a `sources` filter (e.g. `["debug"]`). Reset all filters restores all sources.
+
 ### Changed
 
 • **Viewer: blank lines and line numbers** — Blank lines no longer show a severity dot (the vertical severity bar still runs through them for continuity). The line-number counter is hidden on blank lines by default so “double line break” gaps are visually minimal. **Decoration settings** (gear next to the Deco button) now include **Show line number on blank lines** (off by default): when enabled, blank lines show their file line number so references like “see line 53” and Go to Line match the file. The displayed counter uses file line number (idx+1) when available so the sequence never skips.
