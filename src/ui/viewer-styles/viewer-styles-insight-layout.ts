@@ -36,6 +36,30 @@ export function getInsightLayoutStyles(): string {
     flex-shrink: 0;
 }
 
+.insight-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.insight-panel-copy-md {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.12s ease, background 0.12s ease;
+}
+
+.insight-panel-copy-md:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+
 .insight-panel-close {
     background: none;
     border: none;
@@ -45,6 +69,7 @@ export function getInsightLayoutStyles(): string {
     line-height: 1;
     padding: 2px 6px;
     border-radius: 3px;
+    transition: color 0.12s ease, background 0.12s ease;
 }
 
 .insight-panel-close:hover {
