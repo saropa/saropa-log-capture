@@ -38,6 +38,15 @@
         "title": "%command.openFolder.title%"
       },
       {
+        "command": "saropaLogCapture.addExternalLogPath",
+        "title": "%command.addExternalLogPath.title%"
+      },
+      {
+        "command": "saropaLogCapture.openExternalLogsForSession",
+        "icon": "$(output)",
+        "title": "%command.openExternalLogsForSession.title%"
+      },
+      {
         "command": "saropaLogCapture.clear",
         "icon": "$(clear-all)",
         "title": "%command.clear.title%"
@@ -159,11 +168,13 @@
       },
       {
         "command": "saropaLogCapture.showCodeQualityForFrame",
+        "enablement": "extension:saropa.saropa-lints",
         "icon": "$(symbol-misc)",
         "title": "%command.showCodeQualityForFrame.title%"
       },
       {
         "command": "saropaLogCapture.openQualityReport",
+        "enablement": "extension:saropa.saropa-lints",
         "icon": "$(file-code)",
         "title": "%command.openQualityReport.title%"
       },
@@ -993,6 +1004,21 @@
         "saropaLogCapture.reportFolder": {
           "default": "bugs",
           "description": "%config.reportFolder.description%",
+          "type": "string"
+        },
+        "saropaLogCapture.lintReportImpactLevel": {
+          "default": "recommended",
+          "description": "%config.lintReportImpactLevel.description%",
+          "enum": [
+            "essential",
+            "recommended",
+            "full"
+          ],
+          "enumDescriptions": [
+            "%config.lintReportImpactLevel.enum.essential%",
+            "%config.lintReportImpactLevel.enum.recommended%",
+            "%config.lintReportImpactLevel.enum.full%"
+          ],
           "type": "string"
         },
         "saropaLogCapture.maxLines": {
