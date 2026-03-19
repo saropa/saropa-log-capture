@@ -77,7 +77,7 @@ function renderItem(item, idx, prevVis) {
         }
     }
     if (item.type === 'stack-header') {
-        // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (use \u25b6/\u25bc/\u25b7, not literal \u strings)
+        // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (code uses \\u25b6/\\u25bc/\\u25b7)
         var ch, sf;
         if (item.collapsed === true) {
             ch = '\u25b6';

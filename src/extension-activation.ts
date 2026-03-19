@@ -150,9 +150,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         importFromGist: (gistId: string) => importFromGist(gistId, investigationStore),
         importFromUrl: (url: string) => importFromUrl(url, investigationStore),
     };
-    context.subscriptions.push(vscode.window.registerUriHandler(createUriHandler(importHandlers)));
-
     context.subscriptions.push(
+        vscode.window.registerUriHandler(createUriHandler(importHandlers)),
         vscode.authentication.onDidChangeSessions(async (e) => {
             if (e.provider.id !== 'github') { return; }
             const session = await vscode.authentication.getSession('github', [], { createIfNone: false });

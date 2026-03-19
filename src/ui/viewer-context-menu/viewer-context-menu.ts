@@ -152,6 +152,17 @@ function positionContextMenu(x, y) {
     contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
     var submenuMaxH = 220; /* max height of any submenu panel; flip vertical when near bottom */
     contextMenuEl.classList.toggle('flip-submenu-vertical', rect.bottom + submenuMaxH > window.innerHeight);
+    /* Near top: push submenu flyout down so its top is not cropped (toolbar/content area). safeTop px from viewport top; threshold 80 px. */
+    var safeTopPx = 12;
+    var nearTopThresholdPx = 80;
+    var nearTop = rect.top < nearTopThresholdPx;
+    contextMenuEl.classList.toggle('flip-submenu-vertical-top', nearTop);
+    if (nearTop) {
+        var submenuContentTop = Math.max(0, safeTopPx - rect.top);
+        contextMenuEl.style.setProperty('--submenu-content-top', submenuContentTop + 'px');
+    } else {
+        contextMenuEl.style.removeProperty('--submenu-content-top');
+    }
 }
 
 function hideContextMenu() {

@@ -1,0 +1,8 @@
+feat(insights): open Insights as main editor tab for easier reading
+
+- Add insight-tab-panel: WebviewPanel with same Insight content as sidebar
+- Command 'Open Insights in New Tab' and header button (link-external)
+- Tab stays in sync with current log; close via tab X or panel Close
+- Fix race: post openInsight only after webview signals insightTabReady
+- Register no-restore serializer for saropaLogCapture.insightTab
+- CHANGELOG and plan 041 updated
