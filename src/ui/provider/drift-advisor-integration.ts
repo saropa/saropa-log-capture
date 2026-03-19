@@ -1,11 +1,12 @@
 /**
- * Constants for optional integration with the Drift Advisor extension.
- * Used to detect the extension and invoke its commands from the log viewer.
- * Command ID must match Drift Advisor's package.json contributes.commands.
+ * Re-exports Drift Advisor constants for the log viewer (webview setup, message handler).
+ * Canonical definitions: src/modules/integrations/drift-advisor-constants.ts
  */
 
-/** VS Code extension ID for Drift Advisor (publisher.extensionName). */
-export const DRIFT_ADVISOR_EXTENSION_ID = 'saropa.drift-viewer';
-
-/** Command to open Drift Advisor (e.g. watch panel). Update when Drift Advisor defines its commands. */
-export const DRIFT_ADVISOR_OPEN_COMMAND = 'saropa.drift-viewer.openWatchPanel';
+export {
+    DRIFT_ADVISOR_EXTENSION_ID,
+    DRIFT_ADVISOR_OPEN_COMMAND,
+    DRIFT_ADVISOR_SESSION_FILE_SEGMENTS,
+    DRIFT_ADVISOR_META_KEY,
+    DRIFT_ADVISOR_SNAPSHOT_TIMEOUT_MS,
+} from '../../modules/integrations/drift-advisor-constants';
