@@ -55,6 +55,7 @@ export class LogViewerProvider
   private onOpenSessionFromPanel?: (uriString: string) => void;
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onPopOutRequest?: () => void;
+  private onOpenInsightTabRequest?: () => void;
   private onRevealLogFile?: (uriString: string) => void;
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
   private onFindInFiles?: (query: string, options: Record<string, unknown>) => void;
@@ -137,6 +138,7 @@ export class LogViewerProvider
   setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
   setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
   setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
+  setOpenInsightTabHandler(handler: () => void): void { this.onOpenInsightTabRequest = handler; }
   setRevealLogFileHandler(handler: (uriString: string) => void): void { this.onRevealLogFile = handler; }
   setAddBookmarkHandler(handler: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void { this.onAddBookmark = handler; }
   setFindInFilesHandler(handler: (query: string, options: Record<string, unknown>) => void): void { this.onFindInFiles = handler; }
@@ -255,7 +257,7 @@ export class LogViewerProvider
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
     this.postMessage({ type: "updateWatchCounts", counts: obj });
     if (total > this.unreadWatchHits) { this.unreadWatchHits = total; }
-    for (const v of [...this.views]) { helpers.updateBadge(v, this.unreadWatchHits); }
+    for (const v of this.views) { helpers.updateBadge(v, this.unreadWatchHits); }
   }
 
   dispose(): void {
@@ -268,7 +270,7 @@ export class LogViewerProvider
 
   handleMessage(msg: Record<string, unknown>): void {
     if (msg.type === 'viewerFocused') {
-      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; for (const v of [...this.views]) { helpers.updateBadge(v, 0); } }
+      if (this.unreadWatchHits > 0) { this.unreadWatchHits = 0; for (const v of this.views) { helpers.updateBadge(v, 0); } }
       return;
     }
     const ctx: ViewerMessageContext = {
@@ -283,7 +285,7 @@ export class LogViewerProvider
       onPartNavigate: this.onPartNavigate, onSavePresetRequest: this.onSavePresetRequest,
       onSessionListRequest: this.onSessionListRequest, onOpenSessionFromPanel: this.onOpenSessionFromPanel,
       onDisplayOptionsChange: this.onDisplayOptionsChange, onPopOutRequest: this.onPopOutRequest,
-      onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
+      onOpenInsightTabRequest: this.onOpenInsightTabRequest, onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
       onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
       onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
       onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,

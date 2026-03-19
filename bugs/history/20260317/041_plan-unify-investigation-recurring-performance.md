@@ -12,6 +12,8 @@ Phase 1–3, retirement, and **Unified Insight Model (Phase 2)** are complete. *
 
 **14 UX enhancements (2026-03-17):** Empty states with clear copy for Cases, Recurring, Hot files; loading indicators (cases, recurring); "This log" single empty message when both errors-in-log and recurring-in-log are empty; keyboard navigation (Arrow Up/Down, Enter/Space) on section headers; after add-to-case and create-case, Cases section expands and scrolls into view (addToCaseCompleted, createInvestigationSucceeded); Session details one-line hint; recurring and errors-in-log text truncated (90 chars) with full text in tooltip; "Top 3 of N" when errors-in-log has 3 items and total &gt; 3; cases list shows "N source(s) · Updated X ago" (updatedAt in payload); hero shows "0 errors · 0 warnings" or "No errors or warnings recorded" when applicable; sparkline "Session trend" label; export command shows confirmation after save. Section order in State A: Cases → Across your logs → Environment.
 
+**Open in New Tab (2026-03):** Optional "openInsightTab" from the plan is implemented as **Open Insights in New Tab**: Insights can be opened as a main editor tab (command and header button) for easier reading; same content and data as the sidebar, synced with current log. See [insight-tab-panel.ts](src/ui/viewer-panels/insight-tab-panel.ts).
+
 ---
 
 ## Goal
