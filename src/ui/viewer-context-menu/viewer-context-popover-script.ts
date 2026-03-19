@@ -76,6 +76,15 @@ function showContextPopover(lineIdx, anchorX, anchorY, data) {
         });
     }
 
+    var driftOpenBtn = popover.querySelector('.popover-drift-open');
+    if (driftOpenBtn) {
+        driftOpenBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            vscodeApi.postMessage({ type: 'openDriftAdvisor' });
+            closeContextPopover();
+        });
+    }
+
     // Close on click outside
     setTimeout(function() {
         document.addEventListener('click', onPopoverOutsideClick);
@@ -214,6 +223,30 @@ function buildPopoverContent(lineIdx, data) {
             var evt = eventItems[i];
             html += '<div class="popover-item">[' + evt.source + '] ' + escapeHtmlBasic(evt.message) + '</div>';
         }
+        html += '</div></div>';
+    }
+
+    // Drift Advisor section: summary + "Open in Drift Advisor" (meta from session end when driftAdvisor adapter enabled).
+    var driftMeta = data.data && data.data.integrationsMeta && data.data.integrationsMeta['saropa-drift-advisor'];
+    if (driftMeta && typeof driftMeta === 'object') {
+        hasContent = true;
+        html += '<div class="popover-section popover-section-drift">';
+        html += '<div class="popover-section-header"><span class="popover-icon">\\ud83d\\udcbb</span> Drift Advisor</div>';
+        html += '<div class="popover-section-content">';
+        var perf = driftMeta.performance;
+        if (perf && typeof perf === 'object') {
+            var q = perf.totalQueries;
+            var avg = perf.avgDurationMs;
+            var slow = perf.slowCount;
+            if (typeof q === 'number' || typeof avg === 'number' || typeof slow === 'number') {
+                html += '<div class="popover-item">Queries: ' + (typeof q === 'number' ? q : '-') + ', avg ' + (typeof avg === 'number' ? avg.toFixed(0) : '-') + ' ms' + (typeof slow === 'number' && slow > 0 ? ', ' + slow + ' slow' : '') + '</div>';
+            }
+        }
+        var health = driftMeta.health;
+        if (health && typeof health === 'object' && 'ok' in health) {
+            html += '<div class="popover-item">Health: ' + (health.ok ? 'OK' : 'Issues') + '</div>';
+        }
+        html += '<button class="popover-btn popover-drift-open" type="button">Open in Drift Advisor</button>';
         html += '</div></div>';
     }
 

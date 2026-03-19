@@ -169,6 +169,14 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
         performanceNote: '\u26A0\uFE0F Only for browser targets — reading a file is light; CDP connection has some overhead.',
         whenToDisable: 'You\'re not debugging a browser target, or you don\'t need console/DevTools data.',
     },
+    {
+        id: 'driftAdvisor',
+        label: 'Drift Advisor',
+        description: 'Query performance and schema summary in session meta and sidecar',
+        descriptionLong: 'When the Drift Advisor extension is installed, adds Drift query performance, anomalies, schema summary, and health to session metadata and a .drift-advisor.json sidecar. Use "Open in Drift Advisor" on drift-perf/drift-query lines.',
+        performanceNote: 'Low — Drift Advisor bridge fetches data at session end; parallel requests with timeout.',
+        whenToDisable: 'Drift Advisor extension not installed, or you don\'t use Drift/SQLite in this project.',
+    },
 ];
 
 interface AdapterQuickPickItem extends vscode.QuickPickItem {
