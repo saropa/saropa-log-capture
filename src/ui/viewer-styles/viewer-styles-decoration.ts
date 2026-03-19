@@ -195,6 +195,8 @@ export function getDecorationStyles(): string {
 .level-bar-info { --bar-color: var(--vscode-charts-yellow, #ffc107); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
+/* Blank lines: no dot, keep vertical bar (connector) */
+.line-blank[class*="level-bar-"]::before { display: none; }
 
 /* Connector bars join consecutive dots — scale with zoom via em */
 .bar-down::after, .bar-up::after {
