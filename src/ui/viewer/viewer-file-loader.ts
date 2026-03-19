@@ -8,6 +8,15 @@
 
 import { ansiToHtml, escapeHtml } from '../../modules/capture/ansi';
 import { linkifyHtml, linkifyUrls } from '../../modules/source/source-linker';
+export {
+    SOURCE_TERMINAL,
+    SOURCE_EXTERNAL_PREFIX,
+    parseTerminalSidecarToPending,
+    externalSidecarLabelFromFileName,
+    parseExternalSidecarToPending,
+    parseUnifiedJsonlToPending,
+    sendPendingLinesBatched,
+} from './viewer-file-loader-sources';
 
 /** Stream source id for multi-source filtering (debug = DAP, terminal = terminal sidecar, etc.). */
 export const SOURCE_DEBUG = 'debug';
@@ -240,138 +249,3 @@ export function parseRawLinesToPending(lines: string[], ctx: FileParseContext): 
     return lines.map((raw) => parseFileLine(raw, ctx));
 }
 
-/** Source id for terminal sidecar lines. */
-export const SOURCE_TERMINAL = 'terminal';
-
-/**
- * Parse terminal sidecar content (plain text lines) into PendingLine[] with source 'terminal'.
- * Used when loading a log that has a .terminal.log sidecar for the multi-source viewer.
- */
-export function parseTerminalSidecarToPending(content: string): PendingLine[] {
-    const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
-    return lines.map((raw) => ({
-        text: linkifyUrls(linkifyHtml(ansiToHtml(raw))),
-        isMarker: false,
-        lineCount: 0,
-        category: 'console',
-        timestamp: 0,
-        source: SOURCE_TERMINAL,
-    }));
-}
-
-/** Source id prefix for external log sidecars. */
-export const SOURCE_EXTERNAL_PREFIX = 'external:';
-
-/**
- * Derive the external-log label from a sidecar filename next to main log `basename.log`
- * (e.g. main `session.log`, sidecar `session.app.log` → `app`).
- */
-export function externalSidecarLabelFromFileName(mainLogBase: string, sidecarFileName: string): string {
-    if (sidecarFileName.startsWith(mainLogBase + '.') && sidecarFileName.endsWith('.log')) {
-        return sidecarFileName.slice(mainLogBase.length + 1, -4);
-    }
-    return 'external';
-}
-
-/**
- * Parse external log sidecar content into PendingLine[] with source 'external:<label>'.
- * Lines may be prefixed with [label] in the file; we pass raw text to the viewer.
- */
-export function parseExternalSidecarToPending(content: string, label: string): PendingLine[] {
-    const sourceId = SOURCE_EXTERNAL_PREFIX + label;
-    const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
-    return lines.map((raw) => ({
-        text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
-        isMarker: false,
-        lineCount: 0,
-        category: 'console',
-        timestamp: 0,
-        source: sourceId,
-    }));
-}
-
-/**
- * Parse `basename.unified.jsonl` (one JSON object per line: source + text).
- * Uses the regular raw-line parser so markers/timestamps/categories/ANSI handling
- * match the normal multi-source viewer.
- */
-export function parseUnifiedJsonlToPending(
-    content: string,
-    baseCtx: FileParseContext,
-): { lines: PendingLine[]; sources: string[] } {
-    const records: Array<{ source: string; text: string }> = [];
-    const sourcesOrder: string[] = [];
-    const seenSources = new Set<string>();
-
-    for (const line of content.split(/\r?\n/)) {
-        if (line.trim() === '') { continue; }
-        let rec: unknown;
-        try {
-            rec = JSON.parse(line);
-        } catch {
-            continue;
-        }
-        const obj = rec as { source?: unknown; text?: unknown };
-        if (typeof obj?.source !== 'string' || typeof obj?.text !== 'string') { continue; }
-        if (!seenSources.has(obj.source)) {
-            seenSources.add(obj.source);
-            sourcesOrder.push(obj.source);
-        }
-        records.push({ source: obj.source, text: obj.text });
-    }
-
-    const out: Array<PendingLine | undefined> = new Array(records.length);
-    const bySource = new Map<string, { indices: number[]; texts: string[] }>();
-
-    for (let i = 0; i < records.length; i++) {
-        const r = records[i];
-        const group = bySource.get(r.source) ?? { indices: [], texts: [] };
-        group.indices.push(i);
-        group.texts.push(r.text);
-        bySource.set(r.source, group);
-    }
-
-    for (const [source, group] of bySource.entries()) {
-        const groupCtx: FileParseContext = { ...baseCtx, source };
-        const parsed = parseRawLinesToPending(group.texts, groupCtx);
-        for (let j = 0; j < group.indices.length; j++) {
-            out[group.indices[j]] = parsed[j];
-        }
-    }
-
-    return {
-        lines: out.filter((x): x is PendingLine => x !== undefined),
-        sources: sourcesOrder.length > 0 ? sourcesOrder : [SOURCE_DEBUG],
-    };
-}
-
-/** Send pre-built PendingLine batches to the webview (used for unified JSONL load). */
-export async function sendPendingLinesBatched(
-    pending: readonly PendingLine[],
-    postMessage: (msg: unknown) => void,
-    seenCategories: Set<string>,
-): Promise<void> {
-    const batchSize = 500;
-    const cats = new Set<string>();
-    for (let i = 0; i < pending.length; i += batchSize) {
-        const batch = pending.slice(i, i + batchSize);
-        for (const ln of batch) {
-            if (!ln.isMarker) { cats.add(ln.category); }
-        }
-        postMessage({
-            type: 'addLines',
-            lines: batch,
-            lineCount: Math.min(i + batchSize, pending.length),
-        });
-        if (i + batchSize < pending.length) {
-            await new Promise<void>((r) => setTimeout(r, 10));
-        }
-    }
-    const newCats = [...cats].filter((c) => !seenCategories.has(c));
-    for (const c of newCats) {
-        seenCategories.add(c);
-    }
-    if (newCats.length > 0) {
-        postMessage({ type: 'setCategories', categories: newCats });
-    }
-}
