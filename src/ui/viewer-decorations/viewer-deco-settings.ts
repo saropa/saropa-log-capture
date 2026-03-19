@@ -31,6 +31,10 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-counter" checked />
         Counter
     </label>
+    <label class="deco-settings-row deco-indent">
+        <input type="checkbox" id="deco-opt-counter-on-blank" title="Show line number on blank lines so Go to Line matches file" />
+        Show line number on blank lines
+    </label>
     <label class="deco-settings-row">
         <input type="checkbox" id="deco-opt-timestamp" checked />
         Timestamp
@@ -77,6 +81,8 @@ export function getDecoSettingsScript(): string {
 var decoShowDot = true;
 /** Sub-toggle: show sequential counter in decoration prefix. */
 var decoShowCounter = true;
+/** Sub-toggle: show counter on blank lines (file line number); off by default. */
+var decoShowCounterOnBlank = false;
 /** Sub-toggle: show wall-clock timestamp in decoration prefix. */
 var decoShowTimestamp = true;
 /** Sub-toggle: show elapsed time (+Nms) between log lines. */
@@ -168,6 +174,7 @@ function toggleSessionElapsed() {
 function syncDecoSettingsUi() {
     var dot = document.getElementById('deco-opt-dot');
     var ctr = document.getElementById('deco-opt-counter');
+    var ctrBlank = document.getElementById('deco-opt-counter-on-blank');
     var ts = document.getElementById('deco-opt-timestamp');
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
@@ -178,6 +185,7 @@ function syncDecoSettingsUi() {
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
     if (ctr) ctr.checked = decoShowCounter;
+    if (ctrBlank) ctrBlank.checked = decoShowCounterOnBlank;
     if (ts) ts.checked = decoShowTimestamp;
     if (ms) ms.checked = showMilliseconds;
     if (elapsed) elapsed.checked = showElapsed;
@@ -197,6 +205,7 @@ function syncDecoSettingsUi() {
 function onDecoOptionChange() {
     var dot = document.getElementById('deco-opt-dot');
     var ctr = document.getElementById('deco-opt-counter');
+    var ctrBlank = document.getElementById('deco-opt-counter-on-blank');
     var ts = document.getElementById('deco-opt-timestamp');
     var ms = document.getElementById('deco-opt-milliseconds');
     var elapsed = document.getElementById('deco-opt-elapsed');
@@ -207,6 +216,7 @@ function onDecoOptionChange() {
     var mode = document.getElementById('deco-line-color-mode');
     decoShowDot = dot ? dot.checked : true;
     decoShowCounter = ctr ? ctr.checked : true;
+    decoShowCounterOnBlank = ctrBlank ? ctrBlank.checked : false;
     decoShowTimestamp = ts ? ts.checked : true;
     showMilliseconds = ms ? ms.checked : false;
     showElapsed = elapsed ? elapsed.checked : false;
@@ -229,6 +239,7 @@ var decoSettingsBtn = document.getElementById('deco-settings-btn');
 var decoCloseBtn = document.querySelector('.deco-settings-close');
 var decoOptDot = document.getElementById('deco-opt-dot');
 var decoOptCounter = document.getElementById('deco-opt-counter');
+var decoOptCounterOnBlank = document.getElementById('deco-opt-counter-on-blank');
 var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
 var decoOptMilliseconds = document.getElementById('deco-opt-milliseconds');
 var decoOptElapsed = document.getElementById('deco-opt-elapsed');
@@ -242,6 +253,7 @@ if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSetting
 if (decoCloseBtn) decoCloseBtn.addEventListener('click', closeDecoSettings);
 if (decoOptDot) decoOptDot.addEventListener('change', onDecoOptionChange);
 if (decoOptCounter) decoOptCounter.addEventListener('change', onDecoOptionChange);
+if (decoOptCounterOnBlank) decoOptCounterOnBlank.addEventListener('change', onDecoOptionChange);
 if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionChange);
 if (decoOptMilliseconds) decoOptMilliseconds.addEventListener('change', onDecoOptionChange);
 if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange);
