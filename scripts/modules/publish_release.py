@@ -156,7 +156,13 @@ def extract_changelog_section(version: str) -> str:
         with open(changelog_path, encoding="utf-8") as f:
             lines = f.readlines()
     except OSError:
-        return f"Release {version}"
+        # Compatibility fallback for older workspace layouts.
+        fallback = os.path.join(PROJECT_ROOT, "docs", "CHANGELOG.md")
+        try:
+            with open(fallback, encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            return f"Release {version}"
 
     collecting = False
     section: list[str] = []

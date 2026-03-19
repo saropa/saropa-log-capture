@@ -28,6 +28,18 @@ _VERSIONED_UNRELEASED_RE = re.compile(
 # First release heading: ## [x.y.z]
 _FIRST_RELEASE_HEADING_RE = re.compile(r'^##\s*\[\d+\.\d+\.\d+\]', re.MULTILINE)
 
+_CHANGELOG_FILENAME = "CHANGELOG.md"
+_CHANGELOG_PATH_ROOT = os.path.join(PROJECT_ROOT, _CHANGELOG_FILENAME)
+_CHANGELOG_PATH_DOCS = os.path.join(PROJECT_ROOT, "docs", _CHANGELOG_FILENAME)
+
+
+def _resolve_changelog_path() -> str:
+    # Prefer the project front-door changelog at repo root.
+    # Fall back to `docs/` for compatibility with older workspace layouts.
+    if os.path.exists(_CHANGELOG_PATH_ROOT):
+        return _CHANGELOG_PATH_ROOT
+    return _CHANGELOG_PATH_DOCS
+
 
 def _parse_semver(version: str) -> tuple[int, ...]:
     """Parse a semver string into a tuple of ints for comparison."""
@@ -36,7 +48,7 @@ def _parse_semver(version: str) -> tuple[int, ...]:
 
 def _get_changelog_versions() -> list[str]:
     """Return released version headings in CHANGELOG.md (excludes ## [x.y.z] - Unreleased)."""
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    changelog_path = _resolve_changelog_path()
     versions: list[str] = []
     try:
         with open(changelog_path, encoding="utf-8") as f:
@@ -59,7 +71,7 @@ def _get_changelog_max_version() -> str | None:
 
 def _changelog_has_unpublished_heading() -> bool:
     """True if CHANGELOG has ## [Unreleased], [Unpublished], [Undefined], or ## [x.y.z] - Unreleased."""
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    changelog_path = _resolve_changelog_path()
     try:
         with open(changelog_path, encoding="utf-8") as f:
             for line in f:
@@ -80,7 +92,7 @@ def _ensure_unreleased_section() -> bool:
     """
     if _changelog_has_unpublished_heading():
         return True
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    changelog_path = _resolve_changelog_path()
     try:
         with open(changelog_path, encoding="utf-8") as f:
             content = f.read()
@@ -158,7 +170,7 @@ def _stamp_changelog(version: str) -> bool:
     CHANGELOG is finalized before packaging. After stamping, inserts a
     fresh '## [Unreleased]' section at the top for future development.
     """
-    changelog_path = os.path.join(PROJECT_ROOT, "CHANGELOG.md")
+    changelog_path = _resolve_changelog_path()
     try:
         with open(changelog_path, encoding="utf-8") as f:
             content = f.read()

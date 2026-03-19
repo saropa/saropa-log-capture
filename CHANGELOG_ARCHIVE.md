@@ -1,6 +1,6 @@
 # Changelog Archive
 
-Versions prior to 3.0.0. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+Versions prior to 3.0.0. For current changes see [CHANGELOG.md](../CHANGELOG.md).
 
 ---
 

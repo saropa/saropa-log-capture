@@ -28,8 +28,20 @@ export async function loadAndPostAboutContent(
   const version = formatAboutVersion(extensionVersion);
   const changelogUrl = buildChangelogUrl(extensionId);
   try {
-    const uri = vscode.Uri.joinPath(extensionUri, "CHANGELOG.md");
-    const buf = await vscode.workspace.fs.readFile(uri);
+    // After repository re-org, the changelog lives under `docs/`, but keep
+    // a fallback to the legacy root path to avoid packaging/runtime issues.
+    const candidatePaths = ["CHANGELOG.md", "docs/CHANGELOG.md"];
+    let buf: Uint8Array | undefined;
+    for (const candidate of candidatePaths) {
+      try {
+        const uri = vscode.Uri.joinPath(extensionUri, ...candidate.split("/"));
+        buf = await vscode.workspace.fs.readFile(uri);
+        break;
+      } catch {
+        // Try next candidate.
+      }
+    }
+    if (!buf) throw new Error("CHANGELOG not found");
     const full = Buffer.from(buf).toString("utf-8");
     const sections = full.split(/\n(?=##\s)/);
     const excerpt = sections.slice(0, MAX_SECTIONS).join("\n").slice(0, MAX_EXCERPT_CHARS);

@@ -56,7 +56,7 @@ export function formatGitHistory(commits: readonly GitCommit[], ctx: ReportCtx):
 export function formatCodeQualitySection(entries: readonly QualitySummaryEntry[]): string {
     if (entries.length === 0) { return ''; }
     const rows = entries.map(e => {
-        const cov = e.linePercent !== undefined ? `${e.linePercent}%` : '—';
+        const cov = e.linePercent === undefined ? '—' : `${e.linePercent}%`;
         return `| \`${escapePipe(e.filePath)}\` | ${cov} | ${e.lintWarnings} | ${e.lintErrors} |`;
     });
     return [
@@ -174,7 +174,28 @@ export function formatSymbolDefs(results: SymbolResults): string {
 export function formatExecutiveSummary(data: BugReportData): string | undefined {
     const sectionData = extractSectionData(data);
     const { findings } = scoreRelevance(sectionData);
-    const bullets = findings.filter(f => f.text && (f.level === 'high' || f.level === 'medium'));
+    // Optional: if the crash file has critical/high OWASP violations, make that explicit.
+    const crashFile = data.primarySourcePath;
+    const owaspCriticalHighInCrash = crashFile
+        ? (data.lintMatches?.matches ?? []).filter(v =>
+            v.file === crashFile &&
+            (v.impact === 'critical' || v.impact === 'high') &&
+            (v.owasp.mobile.length > 0 || v.owasp.web.length > 0),
+        ).length
+        : 0;
+
+    const adjustedFindings = owaspCriticalHighInCrash > 0
+        ? findings.map(f =>
+            f.sectionId === 'owasp'
+                ? {
+                    ...f,
+                    text: `${owaspCriticalHighInCrash} critical/high OWASP-mapped violation${owaspCriticalHighInCrash === 1 ? '' : 's'} in crash file`,
+                }
+                : f,
+        )
+        : findings;
+
+    const bullets = adjustedFindings.filter(f => f.text && (f.level === 'high' || f.level === 'medium'));
     if (bullets.length === 0) { return undefined; }
     const lines = bullets.map(f => `- ${f.icon} ${f.text}`);
     return `## Key Findings\n\n${lines.join('\n')}`;
@@ -200,7 +221,7 @@ export function extractSectionData(data: BugReportData): SectionData {
     };
 }
 
-export function escapePipe(text: string): string { return text.replace(/\|/g, '\\|'); }
+export function escapePipe(text: string): string { return text.replaceAll('|', String.raw`\|`); }
 
 export function formatFooter(filename: string, lineNumber: number): string {
     const origin = filename
