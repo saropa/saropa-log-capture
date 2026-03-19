@@ -5,6 +5,7 @@
 import * as vscode from "vscode";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
 import { getConfig } from "../../modules/config/config";
+import { DRIFT_ADVISOR_EXTENSION_ID } from "./drift-advisor-integration";
 import * as helpers from "./viewer-provider-helpers";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 
@@ -43,6 +44,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   target.startBatchTimer();
   queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
   queueMicrotask(() => target.sendIntegrationsAdapters(getConfig().integrationsAdapters));
+  queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   const pending = target.getPendingLoadUri();

@@ -51,6 +51,10 @@ function handleGlobalAction(action) {
         vscodeApi.postMessage({ type: 'openQualityReport' });
         return true;
     }
+    if (action === 'open-drift-advisor') {
+        vscodeApi.postMessage({ type: 'openDriftAdvisor' });
+        return true;
+    }
     if (action === 'hide-text-session') {
         var sel = window.getSelection();
         var text = sel ? sel.toString().trim() : '';

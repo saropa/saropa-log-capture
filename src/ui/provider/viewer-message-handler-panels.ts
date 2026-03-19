@@ -4,6 +4,7 @@
  */
 
 import * as vscode from "vscode";
+import { DRIFT_ADVISOR_EXTENSION_ID, DRIFT_ADVISOR_OPEN_COMMAND } from "./drift-advisor-integration";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
@@ -76,6 +77,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
           .then(() => {
             ctx.post({ type: 'integrationsAdapters', adapterIds });
+            ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) });
             void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(adapterIds));
           });
         return true;
@@ -110,6 +112,9 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         return true;
       case "openQualityReport":
         void vscode.commands.executeCommand('saropaLogCapture.openQualityReport');
+        return true;
+      case "openDriftAdvisor":
+        void vscode.commands.executeCommand(DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => {});
         return true;
       default:
         return false;
