@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { t } from './l10n';
-import { getConfig } from './modules/config/config';
+import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
@@ -18,8 +18,8 @@ import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
 import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
+import { openInsightTab } from './ui/viewer-panels/insight-tab-panel';
 import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
-import { getLogDirectoryUri } from './modules/config/config';
 import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
 import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
@@ -62,9 +62,14 @@ async function maybeSuggestSmartBookmark(
 ): Promise<void> {
     if (!loadResult) { return; }
     const cfg = getConfig().smartBookmarks;
-    const candidate: FirstErrorResult | undefined = cfg.suggestFirstError && loadResult.firstError
-        ? loadResult.firstError
-        : (cfg.suggestFirstWarning && loadResult.firstWarning) ? loadResult.firstWarning : undefined;
+    let candidate: FirstErrorResult | undefined;
+    if (cfg.suggestFirstError && loadResult.firstError) {
+        candidate = loadResult.firstError;
+    } else if (cfg.suggestFirstWarning && loadResult.firstWarning) {
+        candidate = loadResult.firstWarning;
+    } else {
+        candidate = undefined;
+    }
     if (!candidate) { return; }
     const uriStr = uri.toString();
     if (suggestedForUri.has(uriStr)) { return; }
@@ -139,8 +144,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     bookmarkStore.onDidChange(() => { broadcaster.sendBookmarkList(bookmarkStore.getAll() as Record<string, unknown>); });
 
     const investigationStore = new InvestigationStore(context);
-    context.subscriptions.push(investigationStore);
-    context.subscriptions.push({ dispose: disposeInvestigationPanel });
+    context.subscriptions.push(investigationStore, { dispose: disposeInvestigationPanel });
 
     const importHandlers = {
         importFromGist: (gistId: string) => importFromGist(gistId, investigationStore),
@@ -225,6 +229,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         await updateLastViewed(context, uriString);
     });
     viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
+    viewerProvider.setOpenInsightTabHandler(() => {
+        openInsightTab({
+            getCurrentFileUri: () => viewerProvider.getCurrentFileUri(),
+            context,
+            extensionUri: context.extensionUri,
+            version,
+        });
+    });
     viewerProvider.setRevealLogFileHandler(async () => {
         await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
     });

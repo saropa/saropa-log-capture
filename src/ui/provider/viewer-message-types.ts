@@ -29,6 +29,7 @@ export interface ViewerMessageContext {
     readonly onOpenSessionFromPanel?: (u: string) => void;
     readonly onDisplayOptionsChange?: (o: SessionDisplayOptions) => void;
     readonly onPopOutRequest?: () => void;
+    readonly onOpenInsightTabRequest?: () => void;
     readonly onRevealLogFile?: (u: string) => void;
     readonly onAddBookmark?: (i: number, t: string, u: vscode.Uri | undefined) => void;
     readonly onFindInFiles?: (q: string, o: Record<string, unknown>) => void;

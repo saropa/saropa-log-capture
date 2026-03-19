@@ -28,6 +28,9 @@ export function getInsightPanelHtml(): string {
     <div class="insight-panel-header">
         <span>Insights</span>
         <div class="insight-panel-actions">
+            <button id="insight-panel-open-tab" class="insight-panel-copy-md" title="Open in new tab" aria-label="Open Insights in new tab">
+                <span class="codicon codicon-link-external"></span>
+            </button>
             <button id="insight-panel-copy-md" class="insight-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
                 <span class="codicon codicon-copy"></span>
             </button>
