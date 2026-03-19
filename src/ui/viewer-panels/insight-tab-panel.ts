@@ -139,7 +139,7 @@ export function openInsightTab(deps: OpenInsightTabDeps): void {
     context,
     extensionVersion: version,
     post: (msg: unknown) => {
-      if (panel?.webview) panel.webview.postMessage(msg);
+      if (panel?.webview) { panel.webview.postMessage(msg); }
     },
     load: async () => {},
   };

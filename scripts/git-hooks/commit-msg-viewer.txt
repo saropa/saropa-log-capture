@@ -1,0 +1,9 @@
+Viewer: jump buttons on right, showScrollbar setting (off by default)
+
+- Position jump-to-top/jump-to-bottom on the right so they do not cover
+  the minimap or native scrollbar; use right: calc(var(--mm-w) + var(--scrollbar-w) + 8px).
+- Add saropaLogCapture.showScrollbar (default false) to show native vertical
+  scrollbar when enabled; body.scrollbar-visible drives --scrollbar-w and
+  scrollbar width in CSS.
+- Wire showScrollbar through config, broadcaster, provider state, and
+  webview message handler; document in CHANGELOG and STYLE_GUIDE.
