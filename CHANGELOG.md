@@ -18,6 +18,18 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+• **Viewer: blank lines and line numbers** — Blank lines no longer show a severity dot (the vertical severity bar still runs through them for continuity). The line-number counter is hidden on blank lines by default so “double line break” gaps are visually minimal. **Decoration settings** (gear next to the Deco button) now include **Show line number on blank lines** (off by default): when enabled, blank lines show their file line number so references like “see line 53” and Go to Line match the file. The displayed counter uses file line number (idx+1) when available so the sequence never skips.
+
+### Fixed
+
+• **Context menu submenu cropped at top (terminal)** — The Copy & Export (and other) submenu could still have its top cut off when the right-click menu was opened near the top of the viewer (e.g. in the terminal panel under the tab bar). The safe top margin is increased (12px → 48px) and the “near top” threshold widened (80px → 100px) so the submenu flyout is pushed down enough to stay below toolbars and panel headers.
+
+---
+
 ## [3.9.1]
 
 Fixes footer path gestures: double-click opens the log’s containing folder (not its parent), and hold-to-copy path shows a status bar confirmation.

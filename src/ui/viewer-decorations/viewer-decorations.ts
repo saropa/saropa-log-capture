@@ -100,6 +100,7 @@ function formatSessionElapsed(ms) {
 function resetDecoDefaults() {
     decoShowDot = true;
     decoShowCounter = true;
+    decoShowCounterOnBlank = false;
     decoShowTimestamp = true;
     decoShowSessionElapsed = false;
     decoLineColorMode = 'none';
@@ -123,29 +124,34 @@ function updateDecoButton() {
 /**
  * Build the decoration prefix HTML for a single log line.
  * Only includes parts whose sub-toggle is enabled.
- * Returns empty string for markers, stack-frame sub-lines, blank (whitespace-only) lines, or when off.
+ * Returns empty string for markers, stack-frame sub-lines, or when off.
+ * Blank lines: no prefix by default; optional decoShowCounterOnBlank shows file line number.
+ * Counter uses file line number (idx+1) when available so sequencing never skips.
  *
  * Example output: <span class="line-decoration"><span class="deco-counter">    1</span> T07:23:36 » </span>
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
-function getDecorationPrefix(item) {
+function getDecorationPrefix(item, idx) {
     if (!showDecorations) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
-    if (typeof isLineContentBlank === 'function' && isLineContentBlank(item)) return '';
+
+    var isBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
+    if (isBlank && (typeof decoShowCounterOnBlank === 'undefined' || !decoShowCounterOnBlank)) return '';
 
     var parts = [];
     // Emoji dots are NOT shown in the visual prefix — the CSS severity bar
     // (level-bar-*) is the visual indicator. Emoji dots appear only in
     // decorated copy format (see decorateLine() in viewer-copy.ts).
-    if (decoShowCounter) {
-        var seqStr = item.seq !== undefined ? String(item.seq) : '?';
+    /* Show counter when Counter is on, or when blank and "Show line number on blank lines" is on. */
+    if (decoShowCounter || (isBlank && decoShowCounterOnBlank)) {
+        var seqStr = (typeof idx === 'number') ? String(idx + 1) : (item.seq !== undefined ? String(item.seq) : '?');
         parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
     }
-    if (decoShowTimestamp) {
+    if (!isBlank && decoShowTimestamp) {
         var ts = formatDecoTimestamp(item.timestamp);
         if (ts) parts.push(ts);
     }
-    if (decoShowSessionElapsed && item.timestamp && sessionStartTs) {
+    if (!isBlank && decoShowSessionElapsed && item.timestamp && sessionStartTs) {
         parts.push(formatSessionElapsed(item.timestamp - sessionStartTs));
     }
     if (parts.length === 0) return '';
