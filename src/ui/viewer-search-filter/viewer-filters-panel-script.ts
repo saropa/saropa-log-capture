@@ -78,6 +78,51 @@ function closeFiltersPanel() {
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
 }
 
+/** Human-readable label for a stream source id. */
+function sourceFilterLabel(id) {
+    if (id === 'debug') return 'Debug output';
+    if (id === 'terminal') return 'Terminal';
+    return id;
+}
+
+/** Sync source filter checkboxes from window.availableSources / window.enabledSources. Called after setSources. */
+function syncSourceFilterUi() {
+    var section = document.getElementById('source-filter-section');
+    var list = document.getElementById('source-filter-list');
+    if (!section || !list) return;
+    var available = (typeof window !== 'undefined' && window.availableSources) ? window.availableSources : [];
+    if (available.length < 2) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = '';
+    var enabled = (typeof window !== 'undefined' && window.enabledSources) ? window.enabledSources : null;
+    var allEnabled = !enabled || enabled.length === available.length;
+    while (list.firstChild) list.removeChild(list.firstChild);
+    for (var i = 0; i < available.length; i++) {
+        var sid = available[i];
+        var label = document.createElement('label');
+        label.className = 'options-row';
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.dataset.source = sid;
+        cb.checked = allEnabled || (enabled && enabled.indexOf(sid) >= 0);
+        cb.addEventListener('change', function() {
+            var boxes = list.querySelectorAll('input[type="checkbox"]');
+            var checked = [];
+            for (var j = 0; j < boxes.length; j++) {
+                if (boxes[j].checked) checked.push(boxes[j].dataset.source);
+            }
+            window.enabledSources = checked.length === boxes.length ? null : checked;
+            if (typeof recalcHeights === 'function') recalcHeights();
+            if (typeof renderViewport === 'function') renderViewport(true);
+        });
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(' ' + sourceFilterLabel(sid)));
+        list.appendChild(label);
+    }
+}
+
 /** Sync filter-related checkboxes from current state. */
 function syncFiltersPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
@@ -88,6 +133,7 @@ function syncFiltersPanelUi() {
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof syncScopeUi === 'function') syncScopeUi();
+    if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
     if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
 }
 

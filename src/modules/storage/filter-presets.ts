@@ -28,6 +28,9 @@ export interface FilterPreset {
 
     /** Whether app-only mode (hide framework logs) should be enabled. */
     readonly appOnlyMode?: boolean;
+
+    /** Which stream sources to show (e.g. ["debug"], ["debug", "terminal"]). Empty/undefined = all sources. */
+    readonly sources?: string[];
 }
 
 /**
@@ -46,6 +49,14 @@ export const builtInPresets: readonly FilterPreset[] = [
     {
         name: 'No Framework Noise',
         appOnlyMode: true,
+    },
+    {
+        name: 'Just debug output',
+        sources: ['debug'],
+    },
+    {
+        name: 'Complete (all sources)',
+        sources: [], // empty = show all (debug + terminal + any external)
     },
 ];
 
@@ -166,6 +177,11 @@ export async function pickPreset(): Promise<FilterPreset | undefined> {
  */
 function buildPresetDescription(preset: FilterPreset): string {
     const parts: string[] = [];
+    if (preset.sources && preset.sources.length > 0) {
+        parts.push(`sources: ${preset.sources.join(', ')}`);
+    } else if (preset.sources && preset.sources.length === 0) {
+        parts.push('all sources');
+    }
     if (preset.levels && preset.levels.length > 0) {
         parts.push(`levels: ${preset.levels.join(', ')}`);
     }
@@ -192,6 +208,7 @@ export async function promptSavePreset(currentFilters: {
     levels?: string[];
     searchPattern?: string;
     exclusionsEnabled?: boolean;
+    sources?: string[];
 }): Promise<FilterPreset | undefined> {
     const name = await vscode.window.showInputBox({
 prompt: t('prompt.presetName'),

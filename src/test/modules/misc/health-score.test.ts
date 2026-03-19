@@ -4,6 +4,7 @@ import {
     formatHealthScoreLine,
     formatHealthScoreBreakdown,
     getHealthScoreParams,
+    parseConsumerContractHealthScoreParams,
 } from '../../../modules/misc/health-score';
 
 suite('health-score', () => {
@@ -17,6 +18,27 @@ suite('health-score', () => {
             assert.strictEqual(params.impactWeights.medium, 1);
             assert.strictEqual(params.impactWeights.low, 0.25);
             assert.strictEqual(params.impactWeights.opinionated, 0.05);
+        });
+    });
+
+    suite('parseConsumerContractHealthScoreParams', () => {
+        test('should parse healthScore from consumer contract JSON', () => {
+            const parsed = parseConsumerContractHealthScoreParams({
+                healthScore: {
+                    impactWeights: { critical: 8, high: 3 },
+                    decayRate: 0.3,
+                },
+            });
+            assert.ok(parsed);
+            assert.deepStrictEqual(parsed?.impactWeights.critical, 8);
+            assert.deepStrictEqual(parsed?.decayRate, 0.3);
+        });
+
+        test('should return undefined for invalid contract', () => {
+            const parsed = parseConsumerContractHealthScoreParams({
+                healthScore: { impactWeights: { critical: 'bad' }, decayRate: 0.3 },
+            });
+            assert.strictEqual(parsed, undefined);
         });
     });
 
@@ -94,9 +116,12 @@ suite('health-score', () => {
 
     suite('formatHealthScoreLine', () => {
         test('should produce correct markdown with tier and count', () => {
-            const line = formatHealthScoreLine(
-                { medium: 10 }, 50, 'comprehensive', 10,
-            );
+            const line = formatHealthScoreLine({
+                byImpact: { medium: 10 },
+                filesAnalyzed: 50,
+                tier: 'comprehensive',
+                totalViolations: 10,
+            });
             assert.strictEqual(
                 line,
                 '**Project health: 94/100** (comprehensive tier, 10 violations)',
@@ -105,7 +130,7 @@ suite('health-score', () => {
 
         test('should return undefined when filesAnalyzed is 0', () => {
             assert.strictEqual(
-                formatHealthScoreLine({}, 0, 'comprehensive', 0),
+                formatHealthScoreLine({ byImpact: {}, filesAnalyzed: 0, tier: 'comprehensive', totalViolations: 0 }),
                 undefined,
             );
         });

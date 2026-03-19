@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as path from 'node:path';
 import { getConfig } from '../config/config';
 import { LogSession } from '../capture/log-session';
 import { AutoTagger } from '../misc/auto-tagger';
@@ -25,6 +25,8 @@ import {
     createIntegrationContext,
     createIntegrationEndContext,
 } from '../integrations';
+import { stopExternalLogTailers } from '../integrations/external-log-tailer';
+import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
 
 /** Parameters for session finalization. */
 export interface FinalizeSessionParams {
@@ -100,6 +102,9 @@ export async function finalizeSession(
         debugProcessId: params.debugProcessId,
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
+    // Always dispose external log watchers (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
+    stopExternalLogTailers();
+    await writeUnifiedSessionLogIfEnabled(logSession.fileUri, baseFileName, config, outputChannel);
 
     // Save auto-tags if any watch patterns triggered during the session.
     if (autoTagger?.hasTriggeredTags()) {

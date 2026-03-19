@@ -181,4 +181,6 @@
   "walkthrough.aboutSaropa.title": "Über Saropa",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — entwickelt digitale Schutzlösungen seit 2010.\n\nDart-Pakete, VS Code-Erweiterungen und Verbraucher-Apps für Entwickler, die Zuverlässigkeit schätzen.\n\n[saropa.com besuchen](https://saropa.com/)",
   "command.openWalkthrough.title": "Saropa Log Capture: Erste Schritte"
+  ,"command.addExternalLogPath.title": "Saropa Log Capture: Add external log path"
+  ,"command.openExternalLogsForSession.title": "Saropa Log Capture: Open external logs for this session"
 }

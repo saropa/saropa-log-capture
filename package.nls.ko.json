@@ -180,5 +180,7 @@
   "walkthrough.useKeyboardShortcuts.description": "**Space**로 일시정지, **Ctrl+F**로 검색, **P**로 줄 고정, **N**으로 주석 달기, **M**으로 마커 삽입.",
   "walkthrough.aboutSaropa.title": "Saropa 소개",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 2010년부터 디지털 보호 솔루션을 구축하고 있습니다.\n\n신뢰성을 중시하는 개발자를 위한 Dart 패키지, VS Code 확장 및 소비자 앱을 제공합니다.\n\n[saropa.com 방문](https://saropa.com/)",
-  "command.openWalkthrough.title": "Saropa Log Capture: 시작하기"
+  "command.openWalkthrough.title": "Saropa Log Capture: 시작하기",
+  "command.addExternalLogPath.title": "Saropa Log Capture: Add external log path",
+  "command.openExternalLogsForSession.title": "Saropa Log Capture: Open external logs for this session"
 }
