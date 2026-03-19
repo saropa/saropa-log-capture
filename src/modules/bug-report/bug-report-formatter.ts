@@ -7,6 +7,7 @@
 
 import type { BugReportData, StackFrame, InvestigationContext } from './bug-report-collector';
 import type { LintReportData } from '../misc/lint-violation-reader';
+import { getConfig } from '../config/config';
 import { buildMarkdownFileLink } from '../source/link-helpers';
 import { buildItemUrl } from '../marketplace-url';
 import { formatHealthScoreLine } from '../misc/health-score';
@@ -44,7 +45,8 @@ export function formatBugReport(data: BugReportData): string {
     if (data.docMatches?.matches.length) { sections.push(formatDocMatches(data.docMatches)); }
     if (data.resolvedSymbols?.symbols.length) { sections.push(formatSymbolDefs(data.resolvedSymbols)); }
     if (data.lintMatches?.matches.length) {
-        sections.push(formatLintSection(data.lintMatches));
+        const impactLevel = getConfig().lintReportImpactLevel;
+        sections.push(formatLintSection(data.lintMatches, impactLevel));
         const owaspSection = formatOwaspSection(data.lintMatches.matches, data.primarySourcePath);
         if (owaspSection) { sections.push(owaspSection); }
     }
