@@ -1,6 +1,15 @@
-# Integration adapter specs
+# Integration adapter specs index
 
-Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaLogCapture.integrations.adapters`. Design docs for **planned** integrations live in [docs/integrations/](../docs/integrations/). Implemented adapters are marked **Done** and documented in the spec (or provider code); **Pending** rows are planned.
+Implementation specs for log-capture integration adapters. Each adapter is opt-in via `saropaLogCapture.integrations.adapters`.
+
+Folder navigation:
+
+- Folder guide and canonical links: [README.md](README.md)
+- Task ordering and rough effort: [TASK_BREAKDOWN_AND_EASE.md](TASK_BREAKDOWN_AND_EASE.md)
+- Runbook for empty/missing capture logs: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
+- Long-form design docs (background): `application-file-logs.md`, `http-network.md`, `database-query-logs.md`, `browser-devtools.md`, `security-audit-logs.md`
+
+Implemented adapters are marked **Done** and documented in the spec (or provider code); **Partial** and **Pending** rows link to active plans/specs.
 
 | Adapter id | Spec | Status |
 |------------|------|--------|
@@ -14,7 +23,7 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `windowsEvents` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `docker` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `database` | [011_integration-spec-database-query-logs.md](011_integration-spec-database-query-logs.md) | Partial |
-| `externalLogs` | [009_integration-spec-application-file-logs.md](009_integration-spec-application-file-logs.md) | Partial |
+| `externalLogs` | [009_integration-spec-application-file-logs.md](009_integration-spec-application-file-logs.md) | Done (v1; see spec for deferred items) |
 | `performance` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `http` | [010_integration-spec-http-network.md](010_integration-spec-http-network.md) | Partial |
 | `terminal` | *(implemented)* — spec moved to [history/](history/) | Done |
@@ -22,7 +31,7 @@ Implementation specs for log-capture integration adapters. Each adapter is opt-i
 | `linuxLogs` | *(implemented)* — spec moved to [history/](history/) | Done |
 | `security` | [013_integration-spec-security-audit-logs.md](013_integration-spec-security-audit-logs.md) | Partial |
 
-**API:** [docs/history/INTEGRATION_API.md](../docs/history/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
+**API:** [INTEGRATION_API.md](../history/INTEGRATION_API.md) — provider contract, lifecycle, performance/UX, status bar.
 
 ---
 

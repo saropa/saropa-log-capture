@@ -180,5 +180,7 @@
   "config.lintReportImpactLevel.enum.full": "All impact levels including low and opinionated.",
   "walkthrough.aboutSaropa.title": "À propos de Saropa",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — des solutions numériques de protection depuis 2010.\n\nPackages Dart, extensions VS Code et applications grand public pour les développeurs qui privilégient la fiabilité.\n\n[Visiter saropa.com](https://saropa.com/)",
-  "command.openWalkthrough.title": "Saropa Log Capture : Démarrer"
+  "command.openWalkthrough.title": "Saropa Log Capture : Démarrer",
+  "command.addExternalLogPath.title": "Saropa Log Capture: Add external log path",
+  "command.openExternalLogsForSession.title": "Saropa Log Capture: Open external logs for this session"
 }

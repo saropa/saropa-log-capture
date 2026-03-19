@@ -7,7 +7,7 @@
  */
 
 import * as vscode from "vscode";
-import * as path from "path";
+import * as path from "node:path";
 import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 import type { HighlightRule } from "../storage/highlight-rules";
@@ -44,6 +44,7 @@ export type {
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
   IntegrationBrowserConfig,
+  IntegrationUnifiedLogConfig,
   ProjectIndexSourceConfig,
   ProjectIndexConfig,
 } from "./config-types";
@@ -76,23 +77,57 @@ function normalizeWatchPatterns(raw: unknown): WatchPatternSetting[] {
   return out.length > 0 ? out : DEFAULT_WATCH_PATTERNS;
 }
 
+function asObjectRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object") { return undefined; }
+  return value as Record<string, unknown>;
+}
+
+function readOptionalString(o: Record<string, unknown>, key: string): string | undefined {
+  const v = o[key];
+  return typeof v === "string" ? v : undefined;
+}
+
+function readOptionalScope(o: Record<string, unknown>): "line" | "keyword" | undefined {
+  const v = o.scope;
+  if (v === "line") { return "line"; }
+  if (v === "keyword") { return "keyword"; }
+  return undefined;
+}
+
+function readPattern(o: Record<string, unknown>): string | undefined {
+  const v = o.pattern;
+  if (typeof v !== "string") { return undefined; }
+  const t = v.trim();
+  return t.length > 0 ? t : undefined;
+}
+
+function readBooleanOrFalse(o: Record<string, unknown>, key: string): boolean {
+  const v = o[key];
+  return typeof v === "boolean" ? v : false;
+}
+
+function normalizeHighlightRuleItem(item: unknown): HighlightRule | undefined {
+  const o = asObjectRecord(item);
+  if (!o) { return undefined; }
+  const pattern = readPattern(o);
+  if (!pattern) { return undefined; }
+  return {
+    pattern,
+    color: readOptionalString(o, "color"),
+    label: readOptionalString(o, "label"),
+    bold: readBooleanOrFalse(o, "bold"),
+    italic: readBooleanOrFalse(o, "italic"),
+    scope: readOptionalScope(o),
+    backgroundColor: readOptionalString(o, "backgroundColor"),
+  };
+}
+
 function normalizeHighlightRules(raw: unknown): HighlightRule[] {
   if (!Array.isArray(raw)) {return defaultHighlightRules();}
   const out: HighlightRule[] = [];
   for (const item of raw) {
-    if (!item || typeof item !== "object") {continue;}
-    const o = item as Record<string, unknown>;
-    if (typeof o.pattern !== "string" || !o.pattern.trim()) {continue;}
-    const scopeVal = o.scope === "line" || o.scope === "keyword" ? o.scope : undefined;
-    out.push({
-      pattern: o.pattern.trim(),
-      color: typeof o.color === "string" ? o.color : undefined,
-      label: typeof o.label === "string" ? o.label : undefined,
-      bold: typeof o.bold === "boolean" ? o.bold : false,
-      italic: typeof o.italic === "boolean" ? o.italic : false,
-      scope: scopeVal,
-      backgroundColor: typeof o.backgroundColor === "string" ? o.backgroundColor : undefined,
-    });
+    const rule = normalizeHighlightRuleItem(item);
+    if (rule) { out.push(rule); }
   }
   return out.length > 0 ? out : defaultHighlightRules();
 }
@@ -154,7 +189,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     includeSourceLocation: ensureBoolean(cfg.get("includeSourceLocation"), false),
     includeElapsedTime: ensureBoolean(cfg.get("includeElapsedTime"), false),
     showDecorations: ensureBoolean(cfg.get("showDecorations"), true),
-    slowGapThreshold: clamp(cfg.get("slowGapThreshold"), 0, 86400_000, 1000),
+    slowGapThreshold: clamp(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),
     watchPatterns: normalizeWatchPatterns(cfg.get("watchPatterns")),
     splitRules: parseSplitRules((cfg.get("splitRules") as Record<string, unknown>) ?? {}),
     autoTagRules: normalizeAutoTagRules(cfg.get("autoTagRules")),
