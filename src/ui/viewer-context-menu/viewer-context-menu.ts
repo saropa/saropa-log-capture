@@ -152,9 +152,9 @@ function positionContextMenu(x, y) {
     contextMenuEl.classList.toggle('flip-submenu', rect.right + 160 > window.innerWidth);
     var submenuMaxH = 220; /* max height of any submenu panel; flip vertical when near bottom */
     contextMenuEl.classList.toggle('flip-submenu-vertical', rect.bottom + submenuMaxH > window.innerHeight);
-    /* Near top: push submenu flyout down so its top is not cropped (toolbar/content area). safeTop px from viewport top; threshold 80 px. */
-    var safeTopPx = 12;
-    var nearTopThresholdPx = 80;
+    /* Near top: push submenu flyout down so its top is not cropped (e.g. terminal tab bar, toolbar). 48px clears typical panel header height; threshold 100px. */
+    var safeTopPx = 48;
+    var nearTopThresholdPx = 100;
     var nearTop = rect.top < nearTopThresholdPx;
     contextMenuEl.classList.toggle('flip-submenu-vertical-top', nearTop);
     if (nearTop) {
