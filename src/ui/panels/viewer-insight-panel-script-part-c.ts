@@ -50,6 +50,119 @@ export function getInsightScriptPartC(): string {
             heroBlock.classList.toggle('insight-hero-has-warnings', typeof heroWarningCount === 'number' && heroWarningCount > 0);
         }
     }
+
+    /** Build a single markdown string from current Insight state and Performance DOM (for copy-to-clipboard). */
+    function buildInsightMarkdown() {
+        var lines = [];
+        lines.push('# Insights');
+        lines.push('');
+        lines.push('## Current log');
+        lines.push(hasLog && currentLogLabel ? currentLogLabel : 'No log open');
+        lines.push('');
+        if (hasLog && (typeof heroErrorCount === 'number' || typeof heroWarningCount === 'number' || heroSnapshotSummary)) {
+            var heroParts = [];
+            if (typeof heroErrorCount === 'number') heroParts.push('Errors: ' + heroErrorCount);
+            if (typeof heroWarningCount === 'number') heroParts.push('Warnings: ' + heroWarningCount);
+            if (heroParts.length) lines.push(heroParts.join(' \\u00b7 '));
+            if (heroSnapshotSummary) lines.push(heroSnapshotSummary);
+            lines.push('');
+        }
+        var perfView = document.getElementById('insight-pp-current-view');
+        if (perfView && perfView.children.length > 0) {
+            lines.push('## Session details \\u2014 Performance');
+            lines.push('');
+            var groups = perfView.querySelectorAll('.pp-group');
+            for (var g = 0; g < groups.length; g++) {
+                var grp = groups[g];
+                var header = grp.querySelector('.pp-group-header');
+                var statsEl = grp.querySelector('.pp-group-stats');
+                var title = (header && header.textContent) ? header.textContent.trim() : 'Performance';
+                lines.push('### ' + title);
+                if (statsEl && statsEl.textContent) lines.push(statsEl.textContent.trim());
+                var rows = grp.querySelectorAll('.pp-event-row');
+                for (var r = 0; r < rows.length; r++) {
+                    var rowText = rows[r].textContent ? rows[r].textContent.trim() : '';
+                    if (rowText) lines.push('- ' + rowText);
+                }
+                lines.push('');
+            }
+        }
+        var errorsInLog = (insightDataCache.errorsInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var recurringInLog = (insightDataCache.recurringInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        if (hasLog && (errorsInLog.length > 0 || recurringInLog.length > 0)) {
+            lines.push('## This log');
+            lines.push('');
+            if (errorsInLog.length > 0) {
+                lines.push('### Errors in this log');
+                var totalErr = insightDataCache.errorsInThisLogTotal != null ? insightDataCache.errorsInThisLogTotal : errorsInLog.length;
+                if (totalErr > errorsInLog.length) lines.push('Top ' + errorsInLog.length + ' of ' + totalErr + ':');
+                for (var i = 0; i < errorsInLog.length; i++) {
+                    var err = errorsInLog[i];
+                    var text = (err.normalizedText || err.exampleLine || '').trim();
+                    if (text) lines.push('- ' + text);
+                }
+                lines.push('');
+            }
+            if (recurringInLog.length > 0) {
+                lines.push('### Recurring in this log');
+                for (var j = 0; j < recurringInLog.length; j++) {
+                    var rec = recurringInLog[j];
+                    var recText = (rec.normalizedText || rec.exampleLine || '').trim();
+                    if (recText) lines.push('- ' + recText);
+                }
+                lines.push('');
+            }
+        }
+        var invs = (investigationsData.investigations || []);
+        if (invs.length > 0) {
+            lines.push('## Your cases');
+            lines.push('');
+            for (var k = 0; k < invs.length; k++) lines.push('- ' + (invs[k].name || 'Unnamed'));
+            lines.push('');
+        }
+        var recurring = (insightDataCache.errors || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var hotFiles = insightDataCache.hotFiles || [];
+        if (recurring.length > 0 || hotFiles.length > 0) {
+            lines.push('## Across your logs');
+            lines.push('');
+            if (recurring.length > 0) {
+                lines.push('### Recurring errors');
+                for (var r = 0; r < recurring.length; r++) {
+                    var t = (recurring[r].normalizedText || recurring[r].exampleLine || '').trim();
+                    if (t) lines.push('- ' + t);
+                }
+                lines.push('');
+            }
+            if (hotFiles.length > 0) {
+                lines.push('### Frequently modified files');
+                for (var h = 0; h < hotFiles.length; h++) {
+                    var f = hotFiles[h];
+                    var fn = (f.filename || f.path || '').trim();
+                    if (fn) lines.push('- ' + fn);
+                }
+                lines.push('');
+            }
+        }
+        var platforms = insightDataCache.platforms || [];
+        var sdks = insightDataCache.sdkVersions || [];
+        var adapters = insightDataCache.debugAdapters || [];
+        if (platforms.length > 0 || sdks.length > 0 || adapters.length > 0) {
+            lines.push('## Environment');
+            lines.push('');
+            if (platforms.length > 0) lines.push('- **Platforms:** ' + platforms.join(', '));
+            if (sdks.length > 0) lines.push('- **SDK versions:** ' + sdks.join(', '));
+            if (adapters.length > 0) lines.push('- **Debug adapters:** ' + adapters.join(', '));
+        }
+        return lines.join('\\n');
+    }
+
+    /* Copy entire Insights case to clipboard as markdown (header button). */
+    var copyMdBtn = document.getElementById('insight-panel-copy-md');
+    if (copyMdBtn) copyMdBtn.addEventListener('click', function() {
+        var md = buildInsightMarkdown();
+        if (md) vscodeApi.postMessage({ type: 'copyToClipboard', text: md });
+    });
+
     var recurringListEl = document.getElementById('insight-recurring-list');
     if (recurringListEl) recurringListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
