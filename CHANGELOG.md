@@ -18,7 +18,9 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.10.0]
+
+This release makes Log Capture more useful day to day with broader ecosystem support and smoother cross-source debugging.
 
 ### Added
 
