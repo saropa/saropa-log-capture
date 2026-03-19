@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drift-advisor-session.json",
+  "title": "Drift Advisor session snapshot (file contract)",
+  "description": "Optional workspace file `.saropa/drift-advisor-session.json`. Same loose shape as Drift Advisor extension `getSessionSnapshot()`. See SAROPA_DRIFT_ADVISOR_INTEGRATION.md §7 and Phase 6.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "baseUrl": { "type": "string" },
+    "generatedAt": { "type": "string", "description": "ISO-8601 timestamp when snapshot was written" },
+    "performance": { "type": ["object", "null"] },
+    "anomalies": { "type": ["array", "null"], "items": { "type": "object" } },
+    "schemaSummary": {
+      "type": ["object", "null"],
+      "properties": {
+        "tableCount": { "type": "integer" },
+        "tableNames": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "health": {
+      "type": ["object", "null"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "extensionConnected": { "type": "boolean" }
+      }
+    },
+    "indexSuggestionsCount": { "type": "integer" },
+    "issuesSummary": { "type": "object" },
+    "issues": { "type": "array", "items": { "type": "object" } }
+  }
+}

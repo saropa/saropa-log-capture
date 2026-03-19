@@ -4,7 +4,7 @@
  * Handlers for integration context popover and document display.
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { t } from '../../../l10n';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
@@ -63,7 +63,14 @@ function formatIntegrationEntry(key: string, value: unknown): string[] {
     }
     for (const [k, v] of Object.entries(data)) {
         if (k === 'capturedAt' || k === 'sessionWindow') { continue; }
-        const formatted = typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v);
+        let formatted: string;
+        if (typeof v === 'object' && v !== null) {
+            formatted = JSON.stringify(v, null, 2);
+        } else if (typeof v === 'string') {
+            formatted = v;
+        } else {
+            formatted = String(v);
+        }
         if (formatted.includes('\n')) {
             lines.push(`  ${k}:`);
             formatted.split('\n').forEach(line => lines.push(`    ${line}`));
@@ -186,12 +193,16 @@ export async function handleIntegrationContextRequest(
             return;
         }
 
+        const driftAdvisorMeta = meta.integrations?.['saropa-drift-advisor'];
+        const integrationsMeta = driftAdvisorMeta
+            ? { 'saropa-drift-advisor': driftAdvisorMeta }
+            : undefined;
         post({
             type: 'contextPopoverData',
             lineIndex,
             timestamp: centerTime,
             windowMs,
-            data: { ...contextData, integrationsMeta: meta.integrations },
+            data: { ...contextData, integrationsMeta },
         });
     } catch {
         post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
