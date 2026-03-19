@@ -97,6 +97,9 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="open-quality-report">
                 <span class="codicon codicon-file-code"></span> Open quality report
             </div>
+            <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action>
+                <span class="codicon codicon-database"></span> Open in Drift Advisor
+            </div>
             <div class="context-menu-item" data-action="explain-with-ai" data-line-action>
                 <span class="codicon codicon-sparkle"></span> Explain with AI
             </div>

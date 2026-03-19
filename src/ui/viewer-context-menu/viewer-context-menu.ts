@@ -119,6 +119,13 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = hasShiftSelection ? '' : 'none';
     });
 
+    // Open in Drift Advisor: only for drift-perf / drift-query lines when Drift Advisor extension is present
+    var driftLineCat = lineData && (lineData.category === 'drift-perf' || lineData.category === 'drift-query');
+    var driftAvailable = (typeof window !== 'undefined' && window.driftAdvisorAvailable);
+    contextMenuEl.querySelectorAll('[data-drift-line-action]').forEach(function(el) {
+        el.style.display = (hasLine && driftLineCat && driftAvailable) ? '' : 'none';
+    });
+
     // Unhide line (only if this line is hidden)
     var unhideLineItem = contextMenuEl.querySelector('[data-action="unhide-line"]');
     if (unhideLineItem) unhideLineItem.style.display = lineIsHidden ? '' : 'none';
