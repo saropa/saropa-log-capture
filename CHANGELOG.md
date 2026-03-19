@@ -18,6 +18,18 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [3.9.1]
+
+Fixes footer path gestures: double-click opens the log’s containing folder (not its parent), and hold-to-copy path shows a status bar confirmation.
+
+### Fixed
+
+• **Footer: double-click to open folder** — Double-clicking the path in the log viewer footer now opens the folder that contains the current log file (e.g. `reports/20260316`) instead of its parent (`reports`). The extension now reveals the current file in the OS so the file manager opens the correct containing folder.
+
+• **Footer: hold to copy path feedback** — After holding on the footer path to copy it to the clipboard, a status bar message (“File path copied to clipboard”) is shown for 2 seconds so users get clear confirmation that the copy succeeded.
+
+---
+
 ## [3.9.0]
 
 Improves the log viewer with Insights in a tab, markdown copy, and scrollbar control; fixes text selection while tailing and refines session elapsed display and jump-button placement.
