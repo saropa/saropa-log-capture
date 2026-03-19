@@ -252,13 +252,19 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;
+    // Hold-to-copy path: show status bar confirmation so users get visible feedback.
     case "copyCurrentFilePath":
-      if (ctx.currentFileUri) { vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(() => {}, () => {}); }
+      if (ctx.currentFileUri) {
+        vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(
+          () => { vscode.window.setStatusBarMessage(t('msg.filePathCopied'), 2000); },
+          () => {},
+        );
+      }
       return true;
+    // Reveal current file in OS so the containing folder opens (not the parent folder).
     case "openCurrentFileFolder":
       if (ctx.currentFileUri) {
-        const parentUri = vscode.Uri.joinPath(ctx.currentFileUri, '..');
-        vscode.commands.executeCommand('revealFileInOS', parentUri).then(() => {}, () => {});
+        vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => {}, () => {});
       }
       return true;
     case "setSessionDisplayOptions": ctx.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); return true;
