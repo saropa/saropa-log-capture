@@ -97,9 +97,9 @@ function buildSnapshotSummary(sessionData: Record<string, unknown> | undefined):
     const snap = sessionData?.snapshot as { cpus?: number; totalMemMb?: number; freeMemMb?: number; processMemMb?: number } | undefined;
     if (!snap || typeof snap !== 'object') { return undefined; }
     const parts: string[] = [];
-    if (typeof snap.cpus === 'number') parts.push(`${snap.cpus} CPUs`);
-    if (typeof snap.totalMemMb === 'number') parts.push(`${snap.totalMemMb} MB RAM`);
-    if (typeof snap.processMemMb === 'number') parts.push(`process ${snap.processMemMb} MB`);
+    if (typeof snap.cpus === 'number') { parts.push(`${snap.cpus} CPUs`); }
+    if (typeof snap.totalMemMb === 'number') { parts.push(`${snap.totalMemMb} MB RAM`); }
+    if (typeof snap.processMemMb === 'number') { parts.push(`process ${snap.processMemMb} MB`); }
     return parts.length > 0 ? parts.join(', ') : undefined;
 }
 

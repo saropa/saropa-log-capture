@@ -212,7 +212,9 @@ export function getOverlayStyles(): string {
 .context-menu-submenu:hover > .context-menu-submenu-content { display: block; }
 /* Flip submenus left when context menu is near right viewport edge */
 .context-menu.flip-submenu .context-menu-submenu-content { left: auto; right: 100%; }
-/* Align submenu bottom with trigger when near bottom so panel opens upward */
+/* When menu is near top, push submenu content down so top is not cropped (e.g. by toolbar). */
+.context-menu.flip-submenu-vertical-top .context-menu-submenu-content { top: var(--submenu-content-top, 0); }
+/* Align submenu bottom with trigger when near bottom so panel opens upward (order: this overrides -top when both apply). */
 .context-menu.flip-submenu-vertical .context-menu-submenu-content { top: auto; bottom: 0; }
 
 /* --- Toggle items (checkmark + label) --- */
