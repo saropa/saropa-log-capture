@@ -180,5 +180,7 @@
   "walkthrough.useKeyboardShortcuts.description": "**スペース** で一時停止、**Ctrl+F** で検索、**P** で行をピン留め、**N** で注釈付け、**M** でマーカー挿入。",
   "walkthrough.aboutSaropa.title": "Saropa について",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 2010年からデジタルセーフガードを構築。\n\nDart パッケージ、VS Code 拡張機能、信頼性を重視する開発者向けのコンシューマーアプリを提供しています。\n\n[saropa.com を訪問](https://saropa.com/)",
-  "command.openWalkthrough.title": "Saropa Log Capture: はじめに"
+  "command.openWalkthrough.title": "Saropa Log Capture: はじめに",
+  "command.addExternalLogPath.title": "Saropa Log Capture: Add external log path",
+  "command.openExternalLogsForSession.title": "Saropa Log Capture: Open external logs for this session"
 }

@@ -59,6 +59,12 @@ export interface SaropaLintsApi {
     /** Run full analysis (and optionally focus on given files when supported). Returns success. */
     runAnalysis(options?: { files?: string[] }): Promise<boolean>;
 
+    /**
+     * Run analysis scoped to the given workspace-relative file paths (e.g. stack-trace files).
+     * Optional: when absent, Log Capture falls back to runAnalysis({ files }).
+     */
+    runAnalysisForFiles?(files: string[]): Promise<boolean>;
+
     /** Extension or package version for attribution and compatibility. */
     getVersion(): string;
 }

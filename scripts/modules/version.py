@@ -125,6 +125,17 @@ def has_unreleased_section() -> bool:
     return _changelog_has_unpublished_heading()
 
 
+def _try_write_changelog_file(changelog_path: str, updated: str) -> bool:
+    """Best-effort write of CHANGELOG.md with the module's error handling."""
+    try:
+        with open(changelog_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+    except OSError:
+        fail("Could not write CHANGELOG.md")
+        return False
+    return True
+
+
 def _bump_patch(version: str) -> str:
     """Increment the patch component of a semver string."""
     major, minor, patch = version.split(".")
@@ -196,15 +207,36 @@ def _stamp_changelog(version: str) -> bool:
     new_unreleased = "## [Unreleased]\n\n---\n\n"
     updated = updated.replace(replacement, new_unreleased + replacement, 1)
 
-    try:
-        with open(changelog_path, "w", encoding="utf-8") as f:
-            f.write(updated)
-    except OSError:
-        fail("Could not write CHANGELOG.md")
+    if not _try_write_changelog_file(changelog_path, updated):
         return False
 
     ok(f"CHANGELOG: [Unreleased] -> [{version}]")
     return True
+
+
+def _load_readline_module():
+    """Try to import `readline` (or `pyreadline3` on Windows)."""
+    try:
+        import readline as rl
+
+        return rl
+    except ImportError:
+        if sys.platform != "win32":
+            return None
+        try:
+            import pyreadline3 as rl  # type: ignore[no-redef]
+
+            return rl
+        except ImportError:
+            return None
+
+
+def _clear_readline_startup_hook(rl) -> None:
+    """Clear startup hook; readline implementations may throw."""
+    try:
+        rl.set_startup_hook()
+    except Exception:
+        pass
 
 
 def _prompt_version(suggested: str, min_version: str) -> str | None:
@@ -217,15 +249,7 @@ def _prompt_version(suggested: str, min_version: str) -> str | None:
         return suggested
 
     prompt = f"  {C.YELLOW}Version{C.RESET} (Enter = {C.WHITE}{suggested}{C.RESET}): "
-    rl = None
-    try:
-        import readline as rl
-    except ImportError:
-        if sys.platform == "win32":
-            try:
-                import pyreadline3 as rl  # type: ignore[no-redef]
-            except ImportError:
-                pass
+    rl = _load_readline_module()
     if rl is not None:
         def prefill():
             rl.insert_text(suggested)
@@ -239,10 +263,7 @@ def _prompt_version(suggested: str, min_version: str) -> str | None:
         return None
     finally:
         if rl is not None:
-            try:
-                rl.set_startup_hook()
-            except Exception:
-                pass
+            _clear_readline_startup_hook(rl)
 
     if not answer:
         return suggested
@@ -259,6 +280,56 @@ def _prompt_version(suggested: str, min_version: str) -> str | None:
         return None
 
     return answer
+
+
+def _suggest_version(pkg_version: str, max_cl: str | None) -> str:
+    """Pick the version we should start from."""
+    if max_cl and _parse_semver(pkg_version) < _parse_semver(max_cl):
+        # CHANGELOG ahead of package: assume dev wants the changelog version, don't bump again
+        return max_cl
+    return pkg_version
+
+
+def _resolve_version(suggested: str, min_version: str, pkg_version: str) -> tuple[str, bool]:
+    """Return (version, ok). When ok is False, `version` is the original pkg_version."""
+    if os.environ.get("PUBLISH_YES"):
+        return suggested, True
+    version = _prompt_version(suggested, min_version)
+    if version is None:
+        fail("Version not confirmed.")
+        return pkg_version, False
+    return version, True
+
+
+def _sync_package_version(pkg_version: str, version: str) -> bool:
+    """Update package.json version when needed."""
+    if version == pkg_version:
+        return True
+    if not _write_package_version(version):
+        return False
+    fix(f"package.json: {pkg_version} -> {C.WHITE}{version}{C.RESET}")
+    return True
+
+
+def _log_tag_status(version: str) -> bool:
+    """Log whether a version tag already exists. Returns True when tag exists."""
+    is_republish = is_version_tagged(version)
+    if is_republish:
+        info(f"Tag 'v{version}' exists (re-publish / sync)")
+    else:
+        ok(f"Tag 'v{version}' is available")
+    return is_republish
+
+
+def _maybe_stamp_changelog(version: str, is_republish: bool, version_in_changelog: bool) -> bool:
+    """Stamp CHANGELOG.md only when this version isn't already recorded."""
+    if is_republish or version_in_changelog:
+        return True
+
+    # Merge "ensure unreleased section needed?" with "ensure succeeded?".
+    if not has_unreleased_section() and not _ensure_unreleased_section():
+        return False
+    return _stamp_changelog(version)
 
 
 def validate_version_changelog() -> tuple[str, bool]:
@@ -280,39 +351,21 @@ def validate_version_changelog() -> tuple[str, bool]:
     min_version = max_cl if max_cl else "0.0.0"
 
     info(f"package.json v{pkg_version}, CHANGELOG max v{max_cl}")
-    if max_cl and _parse_semver(pkg_version) < _parse_semver(max_cl):
-        # CHANGELOG ahead of package: assume dev wants the changelog version, don't bump again
-        suggested = max_cl
-    else:
-        suggested = pkg_version
+    suggested = _suggest_version(pkg_version, max_cl)
 
-    if os.environ.get("PUBLISH_YES"):
-        version = suggested
-    else:
-        version = _prompt_version(suggested, min_version)
-        if version is None:
-            fail("Version not confirmed.")
-            return pkg_version, False
+    version, ok_to_continue = _resolve_version(suggested, min_version, pkg_version)
+    if not ok_to_continue:
+        return version, False
 
-    if version != pkg_version:
-        if not _write_package_version(version):
-            return pkg_version, False
-        fix(f"package.json: {pkg_version} -> {C.WHITE}{version}{C.RESET}")
+    if not _sync_package_version(pkg_version, version):
+        return pkg_version, False
 
-    is_republish = is_version_tagged(version)
-    if is_republish:
-        info(f"Tag 'v{version}' exists (re-publish / sync)")
-    else:
-        ok(f"Tag 'v{version}' is available")
+    is_republish = _log_tag_status(version)
 
     # Only stamp changelog if this version doesn't already have an entry
     version_in_changelog = version in _get_changelog_versions()
-    if not is_republish and not version_in_changelog:
-        if not has_unreleased_section():
-            if not _ensure_unreleased_section():
-                return version, False
-        if not _stamp_changelog(version):
-            return version, False
+    if not _maybe_stamp_changelog(version, is_republish, version_in_changelog):
+        return version, False
 
     ok(f"Version {C.WHITE}{version}{C.RESET} validated")
     return version, True

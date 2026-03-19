@@ -17,6 +17,7 @@ export const SIDECAR_EXTENSIONS = [
     '.browser.json',
     '.security.json',
     '.audit.json',
+    '.unified.jsonl',
 ];
 
 /**

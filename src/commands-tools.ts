@@ -35,6 +35,86 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             );
             vscode.window.showInformationMessage('Project index rebuilt.');
         }),
+        vscode.commands.registerCommand('saropaLogCapture.debugProjectIndexRanking', async () => {
+            const indexer = getGlobalProjectIndexer();
+            if (!indexer) {
+                vscode.window.showWarningMessage('Project index is not available (no workspace folder).');
+                return;
+            }
+            const raw = await vscode.window.showInputBox({
+                placeHolder: 'Enter tokens (space/comma separated), e.g. firebase projectId permission',
+                prompt: 'Show ranked project-index doc matches for tokens',
+                ignoreFocusOut: true,
+            });
+            if (!raw) { return; }
+            const tokens = raw.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+            if (tokens.length === 0) {
+                vscode.window.showInformationMessage('No tokens provided.');
+                return;
+            }
+            await indexer.getOrRebuild(60_000);
+            const ranked = indexer.queryDocEntriesByTokensWithDebug(tokens).slice(0, 20);
+            if (ranked.length === 0) {
+                vscode.window.showInformationMessage(`No project-index docs matched: ${tokens.join(', ')}`);
+                return;
+            }
+            const items = ranked.map((r) => ({
+                label: `${r.score}  ${r.doc.relativePath}`,
+                description: `${r.doc.tokens.length} tokens`,
+                doc: r.doc,
+                row: r,
+            }));
+            const picked = await vscode.window.showQuickPick(items, {
+                title: `Project index ranking (${tokens.join(', ')})`,
+                placeHolder: 'Pick an entry to open',
+                matchOnDescription: true,
+            });
+            if (!picked) { return; }
+            const action = await vscode.window.showQuickPick(
+                [
+                    { label: 'Open file', value: 'open' },
+                    { label: 'Copy score breakdown', value: 'copy' },
+                    { label: 'Copy top 100 as JSON', value: 'copyJson' },
+                ],
+                { title: 'Debug ranking action' },
+            );
+            if (!action) { return; }
+            if (action.value === 'copy') {
+                const lines = ranked.map((r) => {
+                    const detail = r.contributions
+                        .map((c) => `${c.points}:${c.kind}:${c.token}`)
+                        .join(', ');
+                    return `${r.score}\t${r.doc.relativePath}\t${detail}`;
+                });
+                const payload = [
+                    `tokens\t${tokens.join(',')}`,
+                    'score\tpath\tcontributions(points:kind:token)',
+                    ...lines,
+                ].join('\n');
+                await vscode.env.clipboard.writeText(payload);
+                vscode.window.showInformationMessage('Copied project index score breakdown to clipboard.');
+                return;
+            }
+            if (action.value === 'copyJson') {
+                const top = indexer.queryDocEntriesByTokensWithDebug(tokens).slice(0, 100);
+                const payload = JSON.stringify({
+                    version: 1,
+                    tokens,
+                    generatedAt: new Date().toISOString(),
+                    results: top.map((r) => ({
+                        score: r.score,
+                        path: r.doc.relativePath,
+                        uri: r.doc.uri,
+                        tokenCount: r.doc.tokens.length,
+                        contributions: r.contributions,
+                    })),
+                }, null, 2);
+                await vscode.env.clipboard.writeText(payload);
+                vscode.window.showInformationMessage('Copied top 100 project index results as JSON.');
+                return;
+            }
+            await vscode.window.showTextDocument(vscode.Uri.parse(picked.doc.uri), { preview: true });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();

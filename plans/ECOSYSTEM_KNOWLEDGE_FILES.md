@@ -2,8 +2,8 @@
 
 Catalog of project folders and files that contain indexable knowledge, organized by ecosystem. Used by the project indexer (see `PLAN_PROJECT_INDEXER.md`) to inform default scan sources and guide future file-type support.
 
-**Current indexer support:** `.md`, `.txt` (content tokenization).
-**Planned:** Ecosystem-specific parsers for config files (YAML, JSON, XML, TOML).
+**Current indexer support:** `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`, `.xml`, `.arb`, `.rules`, `.rst`, `.adoc`, `.gradle`, `.gradle.kts`.
+**Planned:** Deeper ecosystem-specific extraction quality and structured entity scoring per file type.
 
 ---
 
@@ -208,7 +208,7 @@ For reference — many Flutter projects have companion backends or tooling in No
 
 For the project indexer's initial release, support is tiered:
 
-### Tier 1 — Ship with v1 (content tokenization)
+### Tier 1 — Shipped (content tokenization + structured extraction)
 
 File types with straightforward text parsing:
 
@@ -216,18 +216,28 @@ File types with straightforward text parsing:
 |-----------|--------|------------|
 | `.md` | Markdown-aware (headings, code blocks, bold) | All |
 | `.txt` | Whitespace-split | All |
+| `.json` | Keys + key paths + string values | Node.js, Flutter, Firebase |
+| `.yaml` / `.yml` | Keys + key paths + scalar string values | Flutter, GitHub, Python, Rust |
+| `.toml` | Keys + table paths + string values | Rust, Python |
+| `.xml` | Tag names + attributes + text values | iOS, Android, Java |
+| `.arb` | JSON-style keys + message values | Flutter l10n |
+| `.rules` | Match paths + allow clauses + body tokens | Firebase |
+| `.rst` / `.adoc` | Heading-aware + prose tokens | Python, Java, enterprise docs |
+| `.gradle` / `.gradle.kts` | Dependency/plugin focused token extraction | Android, Java |
 
-### Tier 2 — Fast follow (structured parsing)
+### Tier 2 — Fast follow (quality improvements)
 
-Config files where key-value extraction adds real value:
+Config and build files where extraction quality can be tightened:
 
 | Extension | Parser | Key extraction | Ecosystems |
 |-----------|--------|----------------|------------|
-| `.yaml` / `.yml` | YAML keys + string values | Dependency names, rule IDs, config keys | Flutter, GitHub, Python, Rust |
-| `.json` | JSON keys + string values | Package names, script names, config values | Node.js, Flutter, Firebase |
-| `.toml` | TOML keys + string values | Crate names, Python packages, config | Rust, Python |
+| `.yaml` / `.yml` | Better list/object handling | Dependency names, rule IDs, config keys | Flutter, GitHub, Python, Rust |
+| `.json` | Value typing and weighting | Package names, script names, config values | Node.js, Flutter, Firebase |
+| `.toml` | Inline table/array parsing depth | Crate names, Python packages, config | Rust, Python |
+| `.xml` | Manifest/plist-aware field extraction | Permissions, bundle IDs, package names | iOS, Android |
+| `.gradle` / `.gradle.kts` | Stronger dependency declaration parsing | Artifact IDs, versions, plugin IDs | Android, Java |
 
-### Tier 3 — Future (specialized parsers)
+### Tier 3 — Future (ecosystem-deep parsers)
 
 Files needing ecosystem-specific parsing logic:
 

@@ -26,6 +26,8 @@ import { extractImports, type ImportResults } from '../source/import-extractor';
 import { resolveSymbols, type SymbolResults } from '../source/symbol-resolver';
 import { getFirebaseContext } from '../crashlytics/firebase-crashlytics';
 import { findLintMatches, type LintReportData } from '../misc/lint-violation-reader';
+import { getHealthScoreParamsForWorkspace, type HealthScoreParams } from '../misc/health-score';
+import { offerSaropaLintRefreshIfNeeded } from '../misc/saropa-lints-refresh-prompt';
 import { InvestigationStore } from '../investigation/investigation-store';
 
 /** Investigation context for bug report when an investigation is active. */
@@ -116,6 +118,8 @@ export interface BugReportData {
     readonly lineNumber: number;
     readonly firebaseMatch?: FirebaseMatch;
     readonly lintMatches?: LintReportData;
+    /** Health-score constants for the lint header. Prefer consumer_contract.json when available. */
+    readonly lintHealthScoreParams?: HealthScoreParams;
     readonly investigationContext?: InvestigationContext;
     /** Quality summary for referenced files with low coverage or lint issues (when includeInBugReport). */
     readonly qualitySummary?: readonly QualitySummaryEntry[];
@@ -200,7 +204,10 @@ export async function collectBugReportData(
     const investigationPromise = extensionContext
         ? collectInvestigationContext(new InvestigationStore(extensionContext))
         : Promise.resolve(undefined);
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, investigationContext, qualitySummary] = await Promise.all([
+    if (wsFolder) {
+        await offerSaropaLintRefreshIfNeeded(wsFolder.uri, stackTrace);
+    }
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, investigationContext, qualitySummary] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -208,6 +215,7 @@ export async function collectBugReportData(
         collectFileAnalyses(stackTrace, sourceRef?.filePath),
         getFirebaseContext(errorTokens).catch(() => undefined),
         wsFolder ? findLintMatches(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
+        wsFolder ? getHealthScoreParamsForWorkspace(wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
         investigationPromise,
         collectQualitySummary(fileUri, referencedPaths),
     ]);
@@ -224,6 +232,7 @@ export async function collectBugReportData(
         crossSessionMatch, lineRangeHistory, docMatches, imports,
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
+        lintHealthScoreParams,
         investigationContext, qualitySummary,
     };
 }
