@@ -32,6 +32,10 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Insights panel: Copy to Markdown** — A copy button in the Insights panel header copies the full case to the clipboard as markdown: current log name, errors/warnings summary, Session details (Performance groups and events from the Current tab), This log (errors and recurring), Your cases, Across your logs (recurring errors and hot files), and Environment. Uses the same `copyToClipboard` message as other viewer copy actions; no loading state (builds synchronously from in-memory state and Performance DOM).
+
+• **Performance panel (Log tab): right-click to copy message** — When the log has no performance data, the explanatory message block in the Log tab is copyable: right-click it and choose **Copy message** to copy the full text to the clipboard. The message wording was clarified (this log file / if Performance is enabled) so it does not imply the user has not enabled the integration.
+
 • **Show scrollbar setting** — New setting `saropaLogCapture.showScrollbar` (default: false) controls whether the native vertical scrollbar is shown in the log viewer. When off, the minimap is the only scroll indicator; when on, the native scrollbar is visible (10px) and the jump buttons keep clear of it.
 
 ---

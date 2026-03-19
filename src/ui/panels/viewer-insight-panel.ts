@@ -27,7 +27,12 @@ export function getInsightPanelHtml(): string {
 <div id="insight-panel" class="insight-panel" role="region" aria-label="Insights">
     <div class="insight-panel-header">
         <span>Insights</span>
-        <button id="insight-panel-close" class="insight-panel-close" title="Close" aria-label="Close">&times;</button>
+        <div class="insight-panel-actions">
+            <button id="insight-panel-copy-md" class="insight-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
+                <span class="codicon codicon-copy"></span>
+            </button>
+            <button id="insight-panel-close" class="insight-panel-close" title="Close" aria-label="Close">&times;</button>
+        </div>
     </div>
     <div id="insight-scroll" class="insight-panel-content">
         <!-- Current log at a glance (no section header) -->
