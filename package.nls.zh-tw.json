@@ -174,6 +174,10 @@
   "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
   "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
+  "config.lintReportImpactLevel.description": "Which lint impact levels to include in the bug report 'Known Lint Issues' section. Essential = critical and high only; recommended = plus medium; full = all (including low and opinionated).",
+  "config.lintReportImpactLevel.enum.essential": "Critical and high only (least noise).",
+  "config.lintReportImpactLevel.enum.recommended": "Critical, high, and medium (default).",
+  "config.lintReportImpactLevel.enum.full": "All impact levels including low and opinionated.",
   "walkthrough.aboutSaropa.title": "關於 Saropa",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 自 2010 年起打造數位防護解決方案。\n\n為重視可靠性的開發者提供 Dart 套件、VS Code 擴充功能與消費者應用程式。\n\n[造訪 saropa.com](https://saropa.com/)",
   "command.openWalkthrough.title": "Saropa Log Capture：開始使用"
