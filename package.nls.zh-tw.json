@@ -180,5 +180,7 @@
   "config.lintReportImpactLevel.enum.full": "All impact levels including low and opinionated.",
   "walkthrough.aboutSaropa.title": "關於 Saropa",
   "walkthrough.aboutSaropa.description": "Saropa Pty Limited — 自 2010 年起打造數位防護解決方案。\n\n為重視可靠性的開發者提供 Dart 套件、VS Code 擴充功能與消費者應用程式。\n\n[造訪 saropa.com](https://saropa.com/)",
-  "command.openWalkthrough.title": "Saropa Log Capture：開始使用"
+  "command.openWalkthrough.title": "Saropa Log Capture：開始使用",
+  "command.addExternalLogPath.title": "Saropa Log Capture: Add external log path",
+  "command.openExternalLogsForSession.title": "Saropa Log Capture: Open external logs for this session"
 }

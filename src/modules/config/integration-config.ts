@@ -22,6 +22,7 @@ import type {
     IntegrationDatabaseConfig,
     IntegrationHttpConfig,
     IntegrationBrowserConfig,
+    IntegrationUnifiedLogConfig,
     ProjectIndexConfig,
     ProjectIndexSourceConfig,
 } from './config';
@@ -32,6 +33,21 @@ function configNonNegative(cfg: vscode.WorkspaceConfiguration, key: string, defa
   const v = cfg.get(key);
   const n = Number(v);
   return Number.isFinite(n) && n >= 0 ? n : defaultVal;
+}
+
+function readStringOrDefault(cfg: vscode.WorkspaceConfiguration, key: string, defaultVal: string): string {
+  const v = cfg.get(key);
+  return typeof v === 'string' ? v : defaultVal;
+}
+
+function readTrimmedStringOrDefault(cfg: vscode.WorkspaceConfiguration, key: string, defaultVal: string): string {
+  const v = cfg.get(key);
+  return typeof v === 'string' ? v.trim() : defaultVal;
+}
+
+function readTrimmedNonEmptyStringOrDefault(cfg: vscode.WorkspaceConfiguration, key: string, defaultVal: string): string {
+  const t = readTrimmedStringOrDefault(cfg, key, defaultVal);
+  return t.length > 0 ? t : defaultVal;
 }
 
 export type IntegrationConfigBlock = {
@@ -53,20 +69,52 @@ export type IntegrationConfigBlock = {
   integrationsDatabase: IntegrationDatabaseConfig;
   integrationsHttp: IntegrationHttpConfig;
   integrationsBrowser: IntegrationBrowserConfig;
+  integrationsUnifiedLog: IntegrationUnifiedLogConfig;
 };
+
+function parseProjectIndexSources(
+  rawSources: unknown,
+  docsDirs: readonly string[],
+): ProjectIndexSourceConfig[] {
+  if (!Array.isArray(rawSources)) {
+    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
+  }
+  if (rawSources.length === 0) {
+    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
+  }
+
+  const sources: ProjectIndexSourceConfig[] = [];
+  for (const s of rawSources) {
+    if (!s) { continue; }
+    if (typeof s !== 'object') { continue; }
+    const o = s as Record<string, unknown>;
+
+    let pathVal = '';
+    if (typeof o.path === 'string') {
+      pathVal = o.path.trim();
+    }
+    if (!pathVal) { continue; }
+
+    let fileTypes = ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'];
+    if (Array.isArray(o.fileTypes)) {
+      fileTypes = (o.fileTypes as unknown[]).filter((x): x is string => typeof x === 'string');
+    }
+
+    sources.push({ path: pathVal, fileTypes, enabled: o.enabled !== false });
+  }
+  return sources;
+}
 
 export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): IntegrationConfigBlock {
   return {
     integrationsBuildCi: {
       source: ensureEnum(cfg.get('integrations.buildCi.source'), ['file', 'github', 'azure', 'gitlab'], 'file'),
-      buildInfoPath: typeof cfg.get('integrations.buildCi.buildInfoPath') === 'string'
-        ? (cfg.get('integrations.buildCi.buildInfoPath') as string).trim() || '.saropa/last-build.json'
-        : '.saropa/last-build.json',
+      buildInfoPath: readTrimmedNonEmptyStringOrDefault(cfg, 'integrations.buildCi.buildInfoPath', '.saropa/last-build.json'),
       fileMaxAgeMinutes: clamp(cfg.get('integrations.buildCi.fileMaxAgeMinutes'), 1, 1440, 60),
-      azureOrg: typeof cfg.get('integrations.buildCi.azureOrg') === 'string' ? (cfg.get('integrations.buildCi.azureOrg') as string).trim() : '',
-      azureProject: typeof cfg.get('integrations.buildCi.azureProject') === 'string' ? (cfg.get('integrations.buildCi.azureProject') as string).trim() : '',
-      gitlabProjectId: typeof cfg.get('integrations.buildCi.gitlabProjectId') === 'string' ? (cfg.get('integrations.buildCi.gitlabProjectId') as string).trim() : '',
-      gitlabBaseUrl: typeof cfg.get('integrations.buildCi.gitlabBaseUrl') === 'string' ? (cfg.get('integrations.buildCi.gitlabBaseUrl') as string).trim() || 'https://gitlab.com' : 'https://gitlab.com',
+      azureOrg: readTrimmedStringOrDefault(cfg, 'integrations.buildCi.azureOrg', ''),
+      azureProject: readTrimmedStringOrDefault(cfg, 'integrations.buildCi.azureProject', ''),
+      gitlabProjectId: readTrimmedStringOrDefault(cfg, 'integrations.buildCi.gitlabProjectId', ''),
+      gitlabBaseUrl: readTrimmedNonEmptyStringOrDefault(cfg, 'integrations.buildCi.gitlabBaseUrl', 'https://gitlab.com'),
     },
     integrationsGit: {
       describeInHeader: ensureBoolean(cfg.get('integrations.git.describeInHeader'), true),
@@ -83,23 +131,17 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
     },
     integrationsTestResults: {
       source: ensureEnum(cfg.get('integrations.testResults.source'), ['file', 'junit'], 'file'),
-      lastRunPath: typeof cfg.get('integrations.testResults.lastRunPath') === 'string'
-        ? (cfg.get('integrations.testResults.lastRunPath') as string).trim() || '.saropa/last-test-run.json'
-        : '.saropa/last-test-run.json',
-      junitPath: typeof cfg.get('integrations.testResults.junitPath') === 'string' ? (cfg.get('integrations.testResults.junitPath') as string) : '',
+      lastRunPath: readTrimmedNonEmptyStringOrDefault(cfg, 'integrations.testResults.lastRunPath', '.saropa/last-test-run.json'),
+      junitPath: readStringOrDefault(cfg, 'integrations.testResults.junitPath', ''),
       fileMaxAgeHours: clamp(cfg.get('integrations.testResults.fileMaxAgeHours'), 1, 168, 24),
       includeFailedListInHeader: ensureBoolean(cfg.get('integrations.testResults.includeFailedListInHeader'), false),
     },
     integrationsCoverage: {
-      reportPath: typeof cfg.get('integrations.coverage.reportPath') === 'string'
-        ? (cfg.get('integrations.coverage.reportPath') as string).trim() || 'coverage/lcov.info'
-        : 'coverage/lcov.info',
+      reportPath: readTrimmedNonEmptyStringOrDefault(cfg, 'integrations.coverage.reportPath', 'coverage/lcov.info'),
       includeInHeader: ensureBoolean(cfg.get('integrations.coverage.includeInHeader'), true),
     },
     integrationsCodeQuality: {
-      lintReportPath: typeof cfg.get('integrations.codeQuality.lintReportPath') === 'string'
-        ? (cfg.get('integrations.codeQuality.lintReportPath') as string).trim()
-        : '',
+      lintReportPath: readTrimmedStringOrDefault(cfg, 'integrations.codeQuality.lintReportPath', ''),
       scanComments: ensureBoolean(cfg.get('integrations.codeQuality.scanComments'), false),
       coverageStaleMaxHours: configNonNegative(cfg, 'integrations.codeQuality.coverageStaleMaxHours', 24),
       includeInBugReport: ensureBoolean(cfg.get('integrations.codeQuality.includeInBugReport'), false),
@@ -122,23 +164,22 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
     },
     integrationsDocker: {
       runtime: ensureEnum(cfg.get('integrations.docker.runtime'), ['docker', 'podman'], 'docker'),
-      containerId: typeof cfg.get('integrations.docker.containerId') === 'string' ? (cfg.get('integrations.docker.containerId') as string) : '',
-      containerNamePattern: typeof cfg.get('integrations.docker.containerNamePattern') === 'string' ? (cfg.get('integrations.docker.containerNamePattern') as string) : '',
+      containerId: readStringOrDefault(cfg, 'integrations.docker.containerId', ''),
+      containerNamePattern: readStringOrDefault(cfg, 'integrations.docker.containerNamePattern', ''),
       captureLogs: ensureBoolean(cfg.get('integrations.docker.captureLogs'), true),
       maxLogLines: clamp(cfg.get('integrations.docker.maxLogLines'), 100, 100000, 20000),
       includeInspect: ensureBoolean(cfg.get('integrations.docker.includeInspect'), false),
     },
     integrationsLoki: {
       enabled: ensureBoolean(cfg.get('loki.enabled'), false),
-      pushUrl: typeof cfg.get('loki.pushUrl') === 'string' ? (cfg.get('loki.pushUrl') as string).trim() : '',
+      pushUrl: readTrimmedStringOrDefault(cfg, 'loki.pushUrl', ''),
     },
     integrationsPerformance: {
       snapshotAtStart: ensureBoolean(cfg.get('integrations.performance.snapshotAtStart'), true),
       sampleDuringSession: ensureBoolean(cfg.get('integrations.performance.sampleDuringSession'), false),
       sampleIntervalSeconds: clamp(cfg.get('integrations.performance.sampleIntervalSeconds'), 1, 300, 5),
       includeInHeader: ensureBoolean(cfg.get('integrations.performance.includeInHeader'), true),
-      profilerOutputPath: typeof cfg.get('integrations.performance.profilerOutputPath') === 'string'
-        ? (cfg.get('integrations.performance.profilerOutputPath') as string).trim() : '',
+      profilerOutputPath: readTrimmedStringOrDefault(cfg, 'integrations.performance.profilerOutputPath', ''),
       processMetrics: ensureBoolean(cfg.get('integrations.performance.processMetrics'), false),
     },
     integrationsTerminal: {
@@ -153,7 +194,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       leadMinutes: configNonNegative(cfg, 'integrations.linuxLogs.leadMinutes', 2),
       lagMinutes: configNonNegative(cfg, 'integrations.linuxLogs.lagMinutes', 5),
       maxLines: clamp(cfg.get('integrations.linuxLogs.maxLines'), 100, 10000, 1000),
-      wslDistro: typeof cfg.get('integrations.linuxLogs.wslDistro') === 'string' ? (cfg.get('integrations.linuxLogs.wslDistro') as string).trim() : '',
+      wslDistro: readTrimmedStringOrDefault(cfg, 'integrations.linuxLogs.wslDistro', ''),
     },
     integrationsExternalLogs: {
       paths: ensureStringArray(cfg.get('integrations.externalLogs.paths'), []),
@@ -163,27 +204,31 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
     },
     integrationsSecurity: {
       windowsSecurityLog: ensureBoolean(cfg.get('integrations.security.windowsSecurityLog'), false),
-      auditLogPath: typeof cfg.get('integrations.security.auditLogPath') === 'string' ? (cfg.get('integrations.security.auditLogPath') as string).trim() : '',
+      auditLogPath: readTrimmedStringOrDefault(cfg, 'integrations.security.auditLogPath', ''),
       redactSecurityEvents: ensureBoolean(cfg.get('integrations.security.redactSecurityEvents'), true),
     },
     integrationsDatabase: {
       mode: ensureEnum(cfg.get('integrations.database.mode'), ['parse', 'file', 'api'], 'parse'),
-      queryLogPath: typeof cfg.get('integrations.database.queryLogPath') === 'string' ? (cfg.get('integrations.database.queryLogPath') as string).trim() : '',
-      requestIdPattern: typeof cfg.get('integrations.database.requestIdPattern') === 'string' ? (cfg.get('integrations.database.requestIdPattern') as string).trim() : '',
+      queryLogPath: readTrimmedStringOrDefault(cfg, 'integrations.database.queryLogPath', ''),
+      requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.database.requestIdPattern', ''),
       timeWindowSeconds: clamp(cfg.get('integrations.database.timeWindowSeconds'), 1, 120, 5),
       maxQueriesPerLookup: clamp(cfg.get('integrations.database.maxQueriesPerLookup'), 1, 200, 20),
     },
     integrationsHttp: {
-      requestIdPattern: typeof cfg.get('integrations.http.requestIdPattern') === 'string' ? (cfg.get('integrations.http.requestIdPattern') as string).trim() : '',
-      requestLogPath: typeof cfg.get('integrations.http.requestLogPath') === 'string' ? (cfg.get('integrations.http.requestLogPath') as string).trim() : '',
+      requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.http.requestIdPattern', ''),
+      requestLogPath: readTrimmedStringOrDefault(cfg, 'integrations.http.requestLogPath', ''),
       timeWindowSeconds: clamp(cfg.get('integrations.http.timeWindowSeconds'), 1, 120, 10),
       maxRequestsPerSession: clamp(cfg.get('integrations.http.maxRequestsPerSession'), 10, 5000, 500),
     },
     integrationsBrowser: {
       mode: ensureEnum(cfg.get('integrations.browser.mode'), ['file', 'cdp'], 'file'),
-      browserLogPath: typeof cfg.get('integrations.browser.browserLogPath') === 'string' ? (cfg.get('integrations.browser.browserLogPath') as string).trim() : '',
+      browserLogPath: readTrimmedStringOrDefault(cfg, 'integrations.browser.browserLogPath', ''),
       browserLogFormat: ensureEnum(cfg.get('integrations.browser.browserLogFormat'), ['jsonl', 'json'], 'jsonl'),
       maxEvents: clamp(cfg.get('integrations.browser.maxEvents'), 100, 100000, 10000),
+    },
+    integrationsUnifiedLog: {
+      writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
+      maxLinesPerSource: clamp(cfg.get('integrations.unifiedLog.maxLinesPerSource'), 1000, 500000, 50000),
     },
   };
 }
@@ -191,22 +236,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
 export function getProjectIndexConfig(cfg: vscode.WorkspaceConfiguration): ProjectIndexConfig {
   const rawSources = cfg.get("projectIndex.sources");
   const docsDirs = ensureStringArray(cfg.get("docsScanDirs"), ["bugs", "docs"]);
-  let sources: ProjectIndexSourceConfig[];
-  if (Array.isArray(rawSources) && rawSources.length > 0) {
-    sources = [];
-    for (const s of rawSources) {
-      if (!s || typeof s !== 'object') {continue;}
-      const o = s as Record<string, unknown>;
-      const path = typeof o.path === 'string' ? o.path.trim() : '';
-      if (!path) {continue;}
-      const fileTypes = Array.isArray(o.fileTypes)
-        ? (o.fileTypes as unknown[]).filter((x): x is string => typeof x === 'string')
-        : ['.md', '.txt'];
-      sources.push({ path, fileTypes, enabled: o.enabled !== false });
-    }
-  } else {
-    sources = docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt'], enabled: true }));
-  }
+  const sources = parseProjectIndexSources(rawSources, docsDirs);
   return {
     enabled: ensureBoolean(cfg.get('projectIndex.enabled'), true),
     sources,

@@ -19,6 +19,7 @@ import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands,
 import { exportCommands } from './commands-export';
 import { toolCommands } from './commands-tools';
 import { registerInvestigationCommands } from './commands-investigation';
+import { externalLogsCommands } from './commands-external-logs';
 
 export type { CommandDeps } from './commands-deps';
 
@@ -40,6 +41,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
         ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
+        ...externalLogsCommands(deps),
         walkthroughCommand(),
     );
 }

@@ -1,0 +1,21 @@
+# Commit message for multi-source view feature.
+# Run from a terminal where the hook won't see an injected trailer, e.g.:
+#   git commit -F scripts/git-hooks/commit-msg-multi-source.txt
+# Or use the first line only: git commit -m "feat(viewer): multi-source view and source filter (complete debug perspective)"
+
+feat(viewer): multi-source view and source filter (complete debug perspective)
+
+- When a log has a .terminal.log sidecar, viewer shows Debug + Terminal with
+  a Sources section in the Filters panel (Debug output / Terminal checkboxes).
+- Quick Filter presets: "Just debug output" (sources: debug only) and
+  "Complete (all sources)"; presets can store optional sources filter.
+- PendingLine gains optional source (debug | terminal); load pipeline
+  discovers terminal sidecar via findSidecarUris and merges lines with
+  setSources/addLines. calcItemHeight hides lines by enabledSources.
+- Reset all filters restores all sources. getCurrentFilters includes
+  sources when saving a preset.
+- Plan doc docs/COMPLETE_DEBUG_PERSPECTIVE_PLAN.md with implementation
+  status (Phases 1-2 done; 3-4 not done). CHANGELOG and README updated.
+- Race: checkGen() before terminal sidecar posts so switching log during
+  load does not apply stale setSources/addLines. Use SOURCE_TERMINAL
+  constant for consistency.

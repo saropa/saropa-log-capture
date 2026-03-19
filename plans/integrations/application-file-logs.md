@@ -1,5 +1,14 @@
 # Integration: Application and File Logs
 
+## Implementation status (v1)
+
+- **Tail during session:** `fs.watch` per configured file; new bytes appended after session start are buffered (cap `maxLinesPerFile`). Missing paths are skipped with an output-channel line.
+- **Session end:** `externalLogs` provider snapshots buffers, then stops watchers; writes `basename.<label>.log` sidecars (label from `pathToLabel`). Fallback: if no tail buffers (e.g. tailers never started), reads last N lines from each path.
+- **Viewer:** Same unified multi-source flow as terminal: discovers `basename.<label>.log` next to the main log (excluding `.terminal.log`); source id `external:<label>`; Filters → Sources checkboxes.
+- **Commands:** Add external log path; Open external logs for this session (progress notification when opening multiple files).
+- **Unified JSONL (Phase 4, separate setting):** `integrations.unifiedLog.writeAtSessionEnd` writes `basename.unified.jsonl` merging main + terminal + external sidecars; not part of the external-logs adapter toggle.
+- **Deferred / not in v1:** `createIfMissing`, `followRotation`, glob paths, status bar “Tailing N files”.
+
 ## Problem and Goal
 
 The debuggee is only one source of truth. Many setups use **multiple processes** (API server, worker, frontend dev server) or **external services** that write to **log files** (e.g. `logs/app.log`, `nginx/error.log`, IIS logs). When something fails, developers often need to open several files and mentally align timestamps. This integration allows **tailing or attaching one or more external log files** to the capture workflow so that their content appears **alongside** the Debug Console output—in a unified timeline, a separate panel, or as a merged view—making multi-process and multi-source debugging easier.

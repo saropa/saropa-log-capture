@@ -1,8 +1,5 @@
-feat(insights): open Insights as main editor tab for easier reading
+fix(viewer): prevent context menu submenu from being cropped at top
 
-- Add insight-tab-panel: WebviewPanel with same Insight content as sidebar
-- Command 'Open Insights in New Tab' and header button (link-external)
-- Tab stays in sync with current log; close via tab X or panel Close
-- Fix race: post openInsight only after webview signals insightTabReady
-- Register no-restore serializer for saropaLogCapture.insightTab
-- CHANGELOG and plan 041 updated
+Increase safe top margin (12px to 48px) and near-top threshold (80px to 100px)
+so Copy & Export and other submenus stay below terminal tab bar and panel
+headers.

@@ -1,5 +1,12 @@
-import * as assert from 'assert';
-import { parseRawLinesToPending, findHeaderEnd, parseElapsedToMs } from '../../ui/viewer/viewer-file-loader';
+import * as assert from 'node:assert';
+import {
+    parseRawLinesToPending,
+    findHeaderEnd,
+    parseElapsedToMs,
+    externalSidecarLabelFromFileName,
+    parseExternalSidecarToPending,
+    parseUnifiedJsonlToPending,
+} from '../../ui/viewer/viewer-file-loader';
 import type { FileParseContext } from '../../ui/viewer/viewer-file-loader';
 
 suite('Viewer file loader', () => {
@@ -62,6 +69,41 @@ suite('Viewer file loader', () => {
             assert.strictEqual(parseElapsedToMs(''), undefined);
             assert.strictEqual(parseElapsedToMs('125ms'), undefined);
             assert.strictEqual(parseElapsedToMs('+1.5m'), undefined);
+        });
+    });
+
+    suite('externalSidecarLabelFromFileName', () => {
+        test('extracts label between main base and .log', () => {
+            assert.strictEqual(externalSidecarLabelFromFileName('session', 'session.app.log'), 'app');
+        });
+        test('returns external when pattern does not match', () => {
+            assert.strictEqual(externalSidecarLabelFromFileName('session', 'other.app.log'), 'external');
+        });
+    });
+
+    suite('parseExternalSidecarToPending', () => {
+        test('assigns source external:label per line', () => {
+            const pending = parseExternalSidecarToPending('line one\nline two', 'app');
+            assert.strictEqual(pending.length, 2);
+            assert.strictEqual(pending[0].source, 'external:app');
+            assert.strictEqual(pending[1].source, 'external:app');
+        });
+    });
+
+    suite('parseUnifiedJsonlToPending', () => {
+        test('parses JSONL lines and preserves source order', () => {
+            const content = '{"source":"debug","text":"a"}\n{"source":"terminal","text":"b"}\n';
+            const { lines, sources } = parseUnifiedJsonlToPending(content, ctx);
+            assert.strictEqual(lines.length, 2);
+            assert.strictEqual(lines[0].source, 'debug');
+            assert.strictEqual(lines[1].source, 'terminal');
+            assert.deepStrictEqual(sources, ['debug', 'terminal']);
+        });
+        test('skips invalid lines', () => {
+            const content = 'not json\n{"source":"debug","text":"ok"}\n';
+            const { lines, sources } = parseUnifiedJsonlToPending(content, ctx);
+            assert.strictEqual(lines.length, 1);
+            assert.strictEqual(sources[0], 'debug');
         });
     });
 

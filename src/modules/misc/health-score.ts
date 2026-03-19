@@ -28,6 +28,63 @@ export function getHealthScoreParams(): HealthScoreParams {
     return { impactWeights: BUILT_IN_IMPACT_WEIGHTS, decayRate: BUILT_IN_DECAY_RATE };
 }
 
+interface ConsumerContractJsonHealthScore {
+    readonly impactWeights?: unknown;
+    readonly decayRate?: unknown;
+}
+
+interface ConsumerContractJson {
+    readonly healthScore?: ConsumerContractJsonHealthScore;
+}
+
+function parseHealthScoreParams(obj: unknown): HealthScoreParams | undefined {
+    if (!obj || typeof obj !== 'object') { return undefined; }
+    const h = obj as ConsumerContractJsonHealthScore;
+    const impactWeightsRaw = h.impactWeights;
+    const decayRateRaw = h.decayRate;
+    if (typeof decayRateRaw !== 'number' || !Number.isFinite(decayRateRaw)) { return undefined; }
+    if (!impactWeightsRaw || typeof impactWeightsRaw !== 'object') { return undefined; }
+    const impactWeightsObj = impactWeightsRaw as Record<string, unknown>;
+    const impactWeights: Record<string, number> = {};
+    for (const [key, value] of Object.entries(impactWeightsObj)) {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            impactWeights[key] = value;
+        }
+    }
+    if (Object.keys(impactWeights).length === 0) { return undefined; }
+    return { impactWeights, decayRate: decayRateRaw };
+}
+
+/**
+ * Parse `reports/.saropa_lints/consumer_contract.json` (best-effort).
+ *
+ * Used by bug report health score so the file contract is the single source
+ * of truth when the Saropa Lints extension API is unavailable.
+ */
+export function parseConsumerContractHealthScoreParams(json: unknown): HealthScoreParams | undefined {
+    if (!json || typeof json !== 'object') { return undefined; }
+    const contract = json as ConsumerContractJson;
+    return parseHealthScoreParams(contract.healthScore);
+}
+
+/**
+ * Prefer consumer manifest (`consumer_contract.json`) for health score params.
+ * Fallback: Saropa Lints extension API when available; else built-in constants.
+ */
+export async function getHealthScoreParamsForWorkspace(wsRoot: vscode.Uri): Promise<HealthScoreParams> {
+    // consumer_contract.json is additive; missing/invalid files must not break bug report generation.
+    const uri = vscode.Uri.joinPath(wsRoot, 'reports', '.saropa_lints', 'consumer_contract.json');
+    try {
+        const raw = await vscode.workspace.fs.readFile(uri);
+        const parsed = JSON.parse(Buffer.from(raw).toString('utf-8')) as unknown;
+        const fromFile = parseConsumerContractHealthScoreParams(parsed);
+        if (fromFile) { return fromFile; }
+    } catch {
+        /* fall back */
+    }
+    return getHealthScoreParams();
+}
+
 /** Result of a health score computation. */
 export interface HealthScore {
     readonly score: number;
@@ -56,15 +113,24 @@ export function computeHealthScore(
 }
 
 /** Format the one-liner for bug report header. Uses extension API for params when present. */
-export function formatHealthScoreLine(
-    byImpact: Record<string, number>,
-    filesAnalyzed: number,
-    tier: string,
-    totalViolations: number,
-): string | undefined {
-    const health = computeHealthScore(byImpact, filesAnalyzed, getHealthScoreParams());
+export interface HealthScoreLineInput {
+    readonly byImpact: Record<string, number>;
+    readonly filesAnalyzed: number;
+    readonly tier: string;
+    readonly totalViolations: number;
+    /** When provided, used instead of calling extension API / built-in constants. */
+    readonly params?: HealthScoreParams;
+}
+
+/** Format the one-liner for bug report header. */
+export function formatHealthScoreLine(input: HealthScoreLineInput): string | undefined {
+    const health = computeHealthScore(
+        input.byImpact,
+        input.filesAnalyzed,
+        input.params ?? getHealthScoreParams(),
+    );
     if (!health) { return undefined; }
-    return `**Project health: ${health.score}/100** (${tier} tier, ${totalViolations} violations)`;
+    return `**Project health: ${health.score}/100** (${input.tier} tier, ${input.totalViolations} violations)`;
 }
 
 /** Format the per-impact breakdown for the lint section (no score prefix). */

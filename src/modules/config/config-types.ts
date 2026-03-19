@@ -105,6 +105,8 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsDatabase: IntegrationDatabaseConfig;
   readonly integrationsHttp: IntegrationHttpConfig;
   readonly integrationsBrowser: IntegrationBrowserConfig;
+  /** Optional merged session artifact (Phase 4): `basename.unified.jsonl` next to main log. */
+  readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
 }
@@ -269,6 +271,13 @@ export interface IntegrationBrowserConfig {
   readonly maxEvents: number;
 }
 
+/** Write `basename.unified.jsonl` merging main log + terminal + external sidecars (Phase 4). */
+export interface IntegrationUnifiedLogConfig {
+  readonly writeAtSessionEnd: boolean;
+  /** Max lines per source (tail); bounds memory and file size. */
+  readonly maxLinesPerSource: number;
+}
+
 /** Single source entry for project index (path + file types). */
 export interface ProjectIndexSourceConfig {
   readonly path: string;
@@ -293,15 +302,15 @@ export interface ProjectIndexConfig {
  */
 export function defaultHighlightRules(): HighlightRule[] {
   return [
-    { pattern: "/\\b(fatal|panic|critical)\\b/i", color: "var(--vscode-errorForeground)", bold: true, label: "Fatal" },
-    { pattern: "/\\b(error|exception|fail(ed|ure)?)\\b/i", color: "var(--vscode-errorForeground)", label: "Error" },
-    { pattern: "/\\b(warn(ing)?|caution)\\b/i", color: "var(--vscode-editorWarning-foreground)", label: "Warning" },
-    { pattern: "/\\b(todo|fixme|xxx)\\b/i", color: "var(--vscode-editorWarning-foreground)", italic: true, label: "TODO" },
-    { pattern: "/\\b(hack|workaround|kludge)\\b/i", color: "var(--vscode-editorWarning-foreground)", italic: true, label: "Hack" },
-    { pattern: "/\\bdeprecated\\b/i", color: "var(--vscode-descriptionForeground)", italic: true, label: "Deprecated" },
-    { pattern: "/\\b(success(ful(ly)?)?|passed|succeeded)\\b/i", color: "var(--vscode-debugConsole-sourceForeground)", label: "Success" },
-    { pattern: "/\\b(info(rmation)?|notice)\\b/i", color: "var(--vscode-debugConsole-infoForeground)", label: "Info" },
-    { pattern: "/\\b(debug|trace|verbose)\\b/i", color: "var(--vscode-descriptionForeground)", label: "Debug" },
+    { pattern: String.raw`/\b(fatal|panic|critical)\b/i`, color: "var(--vscode-errorForeground)", bold: true, label: "Fatal" },
+    { pattern: String.raw`/\b(error|exception|fail(ed|ure)?)\b/i`, color: "var(--vscode-errorForeground)", label: "Error" },
+    { pattern: String.raw`/\b(warn(ing)?|caution)\b/i`, color: "var(--vscode-editorWarning-foreground)", label: "Warning" },
+    { pattern: String.raw`/\b(todo|fixme|xxx)\b/i`, color: "var(--vscode-editorWarning-foreground)", italic: true, label: "TODO" },
+    { pattern: String.raw`/\b(hack|workaround|kludge)\b/i`, color: "var(--vscode-editorWarning-foreground)", italic: true, label: "Hack" },
+    { pattern: String.raw`/\bdeprecated\b/i`, color: "var(--vscode-descriptionForeground)", italic: true, label: "Deprecated" },
+    { pattern: String.raw`/\b(success(ful(ly)?)?|passed|succeeded)\b/i`, color: "var(--vscode-debugConsole-sourceForeground)", label: "Success" },
+    { pattern: String.raw`/\b(info(rmation)?|notice)\b/i`, color: "var(--vscode-debugConsole-infoForeground)", label: "Info" },
+    { pattern: String.raw`/\b(debug|trace|verbose)\b/i`, color: "var(--vscode-descriptionForeground)", label: "Debug" },
     { pattern: "[Awesome Notifications]", color: "var(--vscode-terminal-ansiGreen, #89d185)", scope: "keyword", label: "Awesome Notifications" },
   ];
 }

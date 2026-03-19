@@ -40,6 +40,12 @@ export function getFiltersPanelHtml(): string {
             </div>
         </div>
 
+        <!-- Stream sources (Debug / Terminal); shown when log has multiple sources -->
+        <div class="options-section" id="source-filter-section" style="display:none">
+            <h3 class="options-section-title">Sources</h3>
+            <div id="source-filter-list" class="options-row-list"></div>
+        </div>
+
         <!-- Source Scope Section -->
         <div class="options-section" id="scope-section">
             <h3 class="options-section-title">Source Scope</h3>

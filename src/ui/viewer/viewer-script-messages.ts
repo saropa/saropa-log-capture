@@ -9,7 +9,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source);
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
@@ -34,6 +34,7 @@ window.addEventListener('message', function(event) {
         case 'clear':
             loadTruncatedInfo = null;
             correlationByLineIndex = {};
+            if (typeof window !== 'undefined') { window.enabledSources = null; window.availableSources = []; }
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
@@ -83,6 +84,23 @@ window.addEventListener('message', function(event) {
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateFooterText();
+            break;
+        case 'setSources':
+            // Multi-source view: which streams exist (debug, terminal, …) and which are visible.
+            if (typeof window !== 'undefined') {
+                window.availableSources = Array.isArray(msg.sources) ? msg.sources : [];
+                window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null;
+            }
+            if (typeof recalcHeights === 'function') recalcHeights();
+            if (typeof renderViewport === 'function') renderViewport(true);
+            if (typeof updateFooterText === 'function') updateFooterText();
+            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
+            break;
+        case 'setEnabledSources':
+            if (typeof window !== 'undefined' && Array.isArray(msg.enabledSources)) window.enabledSources = msg.enabledSources;
+            if (typeof recalcHeights === 'function') recalcHeights();
+            if (typeof renderViewport === 'function') renderViewport(true);
+            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
             break;
         case 'setCategories':
             handleSetCategories(msg);

@@ -19,6 +19,7 @@ import {
     type MetaContribution,
 } from '../integrations';
 import { startTerminalCapture } from '../integrations/terminal-capture';
+import { startExternalLogTailers } from '../integrations/external-log-tailer';
 import { collectDevEnvironment } from '../misc/environment-collector';
 
 /** Result of initializing a new log session. */
@@ -117,6 +118,14 @@ export async function initializeSession(
                 maxLines: termCfg.maxLines,
                 prefixTimestamp: termCfg.prefixTimestamp,
             });
+        }
+        if (config.integrationsAdapters?.includes('externalLogs') && config.integrationsExternalLogs.paths.length > 0) {
+            startExternalLogTailers(
+                workspaceFolder,
+                config.integrationsExternalLogs.paths,
+                config.integrationsExternalLogs,
+                outputChannel,
+            );
         }
         return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     } catch (err) {

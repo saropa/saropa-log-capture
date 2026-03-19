@@ -27,6 +27,8 @@ const SIDECAR_TYPES: SidecarType[] = [
 
 /**
  * Find sidecar files for a given log file.
+ * Includes fixed types (.perf.json, .requests.json, .terminal.log) and
+ * external log sidecars (basename.<label>.log, e.g. basename.app.log).
  *
  * @param logUri - URI of the main log file.
  * @returns Array of sidecar file URIs found in the same directory.
@@ -35,6 +37,7 @@ export async function findSidecarUris(logUri: vscode.Uri): Promise<vscode.Uri[]>
     const logPath = logUri.fsPath;
     const lastDot = logPath.lastIndexOf('.');
     const basePath = lastDot > 0 ? logPath.substring(0, lastDot) : logPath;
+    const baseName = basePath.slice(Math.max(basePath.lastIndexOf('/'), basePath.lastIndexOf('\\')) + 1) || basePath;
 
     const sidecars: vscode.Uri[] = [];
     for (const type of SIDECAR_TYPES) {
@@ -46,6 +49,20 @@ export async function findSidecarUris(logUri: vscode.Uri): Promise<vscode.Uri[]>
         } catch {
             // Sidecar doesn't exist, skip
         }
+    }
+
+    try {
+        const dirUri = vscode.Uri.joinPath(logUri, '..');
+        const entries = await vscode.workspace.fs.readDirectory(dirUri);
+        const prefix = baseName + '.';
+        const terminalSuffix = baseName + '.terminal.log';
+        for (const [name] of entries) {
+            if (name.startsWith(prefix) && name.endsWith('.log') && name !== terminalSuffix) {
+                sidecars.push(vscode.Uri.joinPath(dirUri, name));
+            }
+        }
+    } catch {
+        // Directory read failed, skip external sidecar discovery
     }
     return sidecars;
 }

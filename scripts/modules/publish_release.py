@@ -21,6 +21,9 @@ _YAZL_STREAM_BYTES_ERROR = "file data stream has unexpected number of bytes"
 
 _MAX_PACKAGE_ATTEMPTS = 2
 
+# vsce CLI package name used in `npx` (deduplicated to satisfy lints).
+_VSCE_CLI = "@vscode/vsce"
+
 
 def step_package() -> str | None:
     """Package the extension into a .vsix file. Returns the file path.
@@ -40,7 +43,7 @@ def step_package() -> str | None:
             time.sleep(1.5)
         info("Packaging .vsix file...")
         result = run(
-            ["npx", "@vscode/vsce", "package", "--no-dependencies"],
+            ["npx", _VSCE_CLI, "package", "--no-dependencies"],
             cwd=PROJECT_ROOT,
             env=env,
         )
@@ -79,7 +82,7 @@ def get_marketplace_published_version() -> str | None:
     """
     info("Checking marketplace version (this may take up to 60s)...")
     result = run(
-        ["npx", "@vscode/vsce", "show", MARKETPLACE_EXTENSION_ID, "--json"],
+        ["npx", _VSCE_CLI, "show", MARKETPLACE_EXTENSION_ID, "--json"],
         cwd=PROJECT_ROOT,
     )
     if result.returncode != 0 or not result.stdout.strip():
@@ -105,7 +108,7 @@ def publish_marketplace(vsix_path: str) -> bool:
     vsix_name = os.path.basename(vsix_path)
     info(f"Publishing {vsix_name} to marketplace...")
     result = run(
-        ["npx", "@vscode/vsce", "publish", "--packagePath", vsix_path],
+        ["npx", _VSCE_CLI, "publish", "--packagePath", vsix_path],
         cwd=PROJECT_ROOT,
     )
     if result.returncode != 0:
@@ -235,6 +238,6 @@ def _print_gh_troubleshooting() -> None:
     """Print troubleshooting hints for GitHub release failures."""
     info("Troubleshooting:")
     info(f"  1. Check auth: {C.YELLOW}gh auth status{C.RESET}")
-    info(f"  2. If GITHUB_TOKEN is set, clear it:")
+    info("  2. If GITHUB_TOKEN is set, clear it:")
     info(f"     PowerShell: {C.YELLOW}$env:GITHUB_TOKEN = \"\"{C.RESET}")
     info(f"     Bash: {C.YELLOW}unset GITHUB_TOKEN{C.RESET}")

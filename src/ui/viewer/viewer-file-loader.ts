@@ -9,6 +9,9 @@
 import { ansiToHtml, escapeHtml } from '../../modules/capture/ansi';
 import { linkifyHtml, linkifyUrls } from '../../modules/source/source-linker';
 
+/** Stream source id for multi-source filtering (debug = DAP, terminal = terminal sidecar, etc.). */
+export const SOURCE_DEBUG = 'debug';
+
 /** A parsed log line ready for the webview. */
 export interface PendingLine {
     readonly text: string;
@@ -22,12 +25,16 @@ export interface PendingLine {
     readonly sourcePath?: string;
     /** Per-file line coverage percent (0–100) for stack frames referencing app code. */
     readonly qualityPercent?: number;
+    /** Stream source id for filtering (e.g. 'debug', 'terminal'). Omitted = debug. */
+    readonly source?: string;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */
 export interface FileParseContext {
     readonly classifyFrame: (text: string) => boolean | undefined;
     readonly sessionMidnightMs: number;
+    /** Stream source id for multi-source view (e.g. SOURCE_DEBUG). Omit for default 'debug'. */
+    readonly source?: string;
 }
 
 /**
@@ -87,7 +94,7 @@ export function parseHeaderFields(
 export function computeSessionMidnight(isoDate: string): number {
     if (!isoDate) { return 0; }
     const d = new Date(isoDate);
-    if (isNaN(d.getTime())) { return 0; }
+    if (Number.isNaN(d.getTime())) { return 0; }
     d.setHours(0, 0, 0, 0);
     return d.getTime();
 }
@@ -97,18 +104,18 @@ export function parseTimeToMs(timeStr: string, midnightMs: number): number {
     if (midnightMs === 0) { return 0; }
     const parts = timeStr.split(/[:.]/);
     if (parts.length < 3) { return 0; }
-    const h = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10);
-    const s = parseInt(parts[2], 10);
-    const ms = parts.length > 3 ? parseInt(parts[3], 10) : 0;
+    const h = Number.parseInt(parts[0], 10);
+    const m = Number.parseInt(parts[1], 10);
+    const s = Number.parseInt(parts[2], 10);
+    const ms = parts.length > 3 ? Number.parseInt(parts[3], 10) : 0;
     return midnightMs + (h * 3600000) + (m * 60000) + (s * 1000) + ms;
 }
 
 /** Parse elapsed prefix "+125ms", "+1.5s", "+15s" into ms. Returns undefined if not matched. */
 export function parseElapsedToMs(elapsedStr: string): number | undefined {
-    const m = elapsedStr.match(/^\+(\d+(?:\.\d+)?)(ms|s)$/);
+    const m = /^\+(\d+(?:\.\d+)?)(ms|s)$/.exec(elapsedStr);
     if (!m) { return undefined; }
-    const val = parseFloat(m[1]);
+    const val = Number.parseFloat(m[1]);
     if (!Number.isFinite(val) || val < 0) { return undefined; }
     return m[2] === 's' ? Math.round(val * 1000) : Math.round(val);
 }
@@ -155,48 +162,50 @@ export async function sendFileLines(
  * Detects markers, session boundaries, and extracts timestamps, optional [+Nms] elapsed, and category.
  */
 function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
+    const src = ctx.source ?? SOURCE_DEBUG;
     if (/^---\s*(MARKER:|MAX LINES)/.test(raw)) {
         const label = raw.replace(/^-+\s*/, '').replace(/\s*-+$/, '');
-        return buildMarkerLine(label);
+        return buildMarkerLine(label, src);
     }
     if (/^===\s*(SESSION END|SPLIT)/.test(raw)) {
-        return buildMarkerLine(raw);
+        return buildMarkerLine(raw, src);
     }
     // [time] [+elapsed] [category] rest
-    const timeElapsedCat = raw.match(/^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/);
+    const timeElapsedCat = /^\[([\d:.]+)\]\s*\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (timeElapsedCat) {
         const ts = parseTimeToMs(timeElapsedCat[1], ctx.sessionMidnightMs);
         const elapsed = parseElapsedToMs(timeElapsedCat[2]);
-        return buildFileLine({ text: timeElapsedCat[4], category: timeElapsedCat[3], classifyFrame: ctx.classifyFrame, timestamp: ts, elapsedMs: elapsed });
+        return buildFileLine({ text: timeElapsedCat[4], category: timeElapsedCat[3], classifyFrame: ctx.classifyFrame, timestamp: ts, elapsedMs: elapsed, source: src });
     }
     // [time] [category] rest
-    const tsMatch = raw.match(/^\[([\d:.]+)\]\s*\[([\w-]+)\]\s?(.*)$/);
+    const tsMatch = /^\[([\d:.]+)\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (tsMatch) {
         const ts = parseTimeToMs(tsMatch[1], ctx.sessionMidnightMs);
-        return buildFileLine({ text: tsMatch[3], category: tsMatch[2], classifyFrame: ctx.classifyFrame, timestamp: ts });
+        return buildFileLine({ text: tsMatch[3], category: tsMatch[2], classifyFrame: ctx.classifyFrame, timestamp: ts, source: src });
     }
     // [+elapsed] [category] rest (no absolute time)
-    const elapsedCat = raw.match(/^\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/);
+    const elapsedCat = /^\[(\+\d+(?:\.\d+)?(?:ms|s))\]\s*\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (elapsedCat) {
         const elapsed = parseElapsedToMs(elapsedCat[1]);
-        return buildFileLine({ text: elapsedCat[3], category: elapsedCat[2], classifyFrame: ctx.classifyFrame, timestamp: 0, elapsedMs: elapsed });
+        return buildFileLine({ text: elapsedCat[3], category: elapsedCat[2], classifyFrame: ctx.classifyFrame, timestamp: 0, elapsedMs: elapsed, source: src });
     }
     // [category] rest
-    const catMatch = raw.match(/^\[([\w-]+)\]\s?(.*)$/);
+    const catMatch = /^\[([\w-]+)\]\s?(.*)$/.exec(raw);
     if (catMatch) {
-        return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0 });
+        return buildFileLine({ text: catMatch[2], category: catMatch[1], classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
     }
-    return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0 });
+    return buildFileLine({ text: raw, category: 'console', classifyFrame: ctx.classifyFrame, timestamp: 0, source: src });
 }
 
 /** Build a PendingLine for a visual separator (marker, session end, etc.). */
-function buildMarkerLine(text: string): PendingLine {
+function buildMarkerLine(text: string, source?: string): PendingLine {
     return {
         text: escapeHtml(text),
         isMarker: true,
         lineCount: 0,
         category: 'console',
         timestamp: 0,
+        ...(source ? { source } : {}),
     };
 }
 
@@ -206,6 +215,7 @@ interface FileLineOptions {
     classifyFrame: (text: string) => boolean | undefined;
     timestamp: number;
     elapsedMs?: number;
+    source?: string;
 }
 
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
@@ -218,6 +228,7 @@ function buildFileLine(opts: FileLineOptions): PendingLine {
         timestamp: opts.timestamp,
         ...(opts.elapsedMs !== undefined && opts.elapsedMs >= 0 ? { elapsedMs: opts.elapsedMs } : {}),
         fw: opts.classifyFrame(opts.text),
+        ...(opts.source ? { source: opts.source } : {}),
     };
 }
 
@@ -227,4 +238,140 @@ function buildFileLine(opts: FileLineOptions): PendingLine {
  */
 export function parseRawLinesToPending(lines: string[], ctx: FileParseContext): PendingLine[] {
     return lines.map((raw) => parseFileLine(raw, ctx));
+}
+
+/** Source id for terminal sidecar lines. */
+export const SOURCE_TERMINAL = 'terminal';
+
+/**
+ * Parse terminal sidecar content (plain text lines) into PendingLine[] with source 'terminal'.
+ * Used when loading a log that has a .terminal.log sidecar for the multi-source viewer.
+ */
+export function parseTerminalSidecarToPending(content: string): PendingLine[] {
+    const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
+    return lines.map((raw) => ({
+        text: linkifyUrls(linkifyHtml(ansiToHtml(raw))),
+        isMarker: false,
+        lineCount: 0,
+        category: 'console',
+        timestamp: 0,
+        source: SOURCE_TERMINAL,
+    }));
+}
+
+/** Source id prefix for external log sidecars. */
+export const SOURCE_EXTERNAL_PREFIX = 'external:';
+
+/**
+ * Derive the external-log label from a sidecar filename next to main log `basename.log`
+ * (e.g. main `session.log`, sidecar `session.app.log` → `app`).
+ */
+export function externalSidecarLabelFromFileName(mainLogBase: string, sidecarFileName: string): string {
+    if (sidecarFileName.startsWith(mainLogBase + '.') && sidecarFileName.endsWith('.log')) {
+        return sidecarFileName.slice(mainLogBase.length + 1, -4);
+    }
+    return 'external';
+}
+
+/**
+ * Parse external log sidecar content into PendingLine[] with source 'external:<label>'.
+ * Lines may be prefixed with [label] in the file; we pass raw text to the viewer.
+ */
+export function parseExternalSidecarToPending(content: string, label: string): PendingLine[] {
+    const sourceId = SOURCE_EXTERNAL_PREFIX + label;
+    const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
+    return lines.map((raw) => ({
+        text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
+        isMarker: false,
+        lineCount: 0,
+        category: 'console',
+        timestamp: 0,
+        source: sourceId,
+    }));
+}
+
+/**
+ * Parse `basename.unified.jsonl` (one JSON object per line: source + text).
+ * Uses the regular raw-line parser so markers/timestamps/categories/ANSI handling
+ * match the normal multi-source viewer.
+ */
+export function parseUnifiedJsonlToPending(
+    content: string,
+    baseCtx: FileParseContext,
+): { lines: PendingLine[]; sources: string[] } {
+    const records: Array<{ source: string; text: string }> = [];
+    const sourcesOrder: string[] = [];
+    const seenSources = new Set<string>();
+
+    for (const line of content.split(/\r?\n/)) {
+        if (line.trim() === '') { continue; }
+        let rec: unknown;
+        try {
+            rec = JSON.parse(line);
+        } catch {
+            continue;
+        }
+        const obj = rec as { source?: unknown; text?: unknown };
+        if (typeof obj?.source !== 'string' || typeof obj?.text !== 'string') { continue; }
+        if (!seenSources.has(obj.source)) {
+            seenSources.add(obj.source);
+            sourcesOrder.push(obj.source);
+        }
+        records.push({ source: obj.source, text: obj.text });
+    }
+
+    const out: Array<PendingLine | undefined> = new Array(records.length);
+    const bySource = new Map<string, { indices: number[]; texts: string[] }>();
+
+    for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        const group = bySource.get(r.source) ?? { indices: [], texts: [] };
+        group.indices.push(i);
+        group.texts.push(r.text);
+        bySource.set(r.source, group);
+    }
+
+    for (const [source, group] of bySource.entries()) {
+        const groupCtx: FileParseContext = { ...baseCtx, source };
+        const parsed = parseRawLinesToPending(group.texts, groupCtx);
+        for (let j = 0; j < group.indices.length; j++) {
+            out[group.indices[j]] = parsed[j];
+        }
+    }
+
+    return {
+        lines: out.filter((x): x is PendingLine => x !== undefined),
+        sources: sourcesOrder.length > 0 ? sourcesOrder : [SOURCE_DEBUG],
+    };
+}
+
+/** Send pre-built PendingLine batches to the webview (used for unified JSONL load). */
+export async function sendPendingLinesBatched(
+    pending: readonly PendingLine[],
+    postMessage: (msg: unknown) => void,
+    seenCategories: Set<string>,
+): Promise<void> {
+    const batchSize = 500;
+    const cats = new Set<string>();
+    for (let i = 0; i < pending.length; i += batchSize) {
+        const batch = pending.slice(i, i + batchSize);
+        for (const ln of batch) {
+            if (!ln.isMarker) { cats.add(ln.category); }
+        }
+        postMessage({
+            type: 'addLines',
+            lines: batch,
+            lineCount: Math.min(i + batchSize, pending.length),
+        });
+        if (i + batchSize < pending.length) {
+            await new Promise<void>((r) => setTimeout(r, 10));
+        }
+    }
+    const newCats = [...cats].filter((c) => !seenCategories.has(c));
+    for (const c of newCats) {
+        seenCategories.add(c);
+    }
+    if (newCats.length > 0) {
+        postMessage({ type: 'setCategories', categories: newCats });
+    }
 }

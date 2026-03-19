@@ -79,6 +79,15 @@ function applyPreset(presetName) {
         setAppOnlyMode(preset.appOnlyMode);
     }
 
+    if (preset.sources !== undefined) {
+        if (typeof window !== 'undefined') {
+            window.enabledSources = (preset.sources.length === 0) ? null : preset.sources.slice();
+        }
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof renderViewport === 'function') renderViewport(true);
+        if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
+    }
+
     applyingPreset = false;
     updatePresetDropdown();
     vscodeApi.postMessage({ type: 'presetApplied', name: preset.name });
@@ -158,6 +167,9 @@ function getCurrentFilters() {
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
+    if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
+        filters.sources = window.enabledSources.slice();
+    }
     return filters;
 }
 
@@ -203,11 +215,15 @@ function resetAllFilters() {
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
     clearSearchFilter();
+    if (typeof window !== 'undefined') window.enabledSources = null;
     activePresetName = null;
     updatePresetDropdown();
     if (typeof applyLevelFilter === 'function') applyLevelFilter();
     if (typeof applyExclusions === 'function') applyExclusions();
     applyFilter();
+    if (typeof recalcHeights === 'function') recalcHeights();
+    if (typeof renderViewport === 'function') renderViewport(true);
+    if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
     if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
     if (typeof updateFilterBadge === 'function') updateFilterBadge();
 }

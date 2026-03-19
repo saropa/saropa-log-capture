@@ -107,6 +107,7 @@ export interface InvestigationSearchResult {
 /** Known sidecar extensions that can be searched. */
 export const SEARCHABLE_SIDECAR_EXTENSIONS = [
     '.terminal.log',
+    '.unified.jsonl',
     '.requests.json',
     '.events.json',
     '.queries.json',
