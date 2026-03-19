@@ -143,6 +143,11 @@
         "title": "%command.showInsights.title%"
       },
       {
+        "command": "saropaLogCapture.openInsightsInTab",
+        "icon": "$(link-external)",
+        "title": "%command.openInsightsInTab.title%"
+      },
+      {
         "command": "saropaLogCapture.generateReport",
         "icon": "$(report)",
         "title": "%command.generateReport.title%"

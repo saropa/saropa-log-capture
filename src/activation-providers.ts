@@ -28,21 +28,19 @@ export function setupWebviewProviders(
     context.subscriptions.push(inlineDecorations);
 
     const viewerProvider = new LogViewerProvider(context.extensionUri, version, context);
-    context.subscriptions.push(viewerProvider);
     context.subscriptions.push(
+        viewerProvider,
         vscode.window.registerWebviewViewProvider('saropaLogCapture.logViewer', viewerProvider, {
             webviewOptions: { retainContextWhenHidden: true },
         }),
     );
 
     const vitalsPanel = new VitalsPanelProvider();
-    context.subscriptions.push(vitalsPanel);
     context.subscriptions.push(
+        vitalsPanel,
         vscode.window.registerWebviewViewProvider(VitalsPanelProvider.viewType, vitalsPanel),
+        vscode.commands.registerCommand('saropaLogCapture.refreshVitals', () => vitalsPanel.refresh()),
     );
-    context.subscriptions.push(vscode.commands.registerCommand(
-        'saropaLogCapture.refreshVitals', () => vitalsPanel.refresh(),
-    ));
 
     const crashCodeLens = new CrashlyticsCodeLensProvider();
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ scheme: 'file' }, crashCodeLens));
@@ -58,9 +56,10 @@ export function registerNoRestoreSerializers(context: vscode.ExtensionContext): 
         deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
     };
     for (const viewType of [
-        'saropaLogCapture.insights', 'saropaLogCapture.bugReport',
+        'saropaLogCapture.insights', 'saropaLogCapture.insightTab', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
         'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
+        'saropaLogCapture.popOutViewer',
     ]) {
         context.subscriptions.push(
             vscode.window.registerWebviewPanelSerializer(viewType, noRestore),
