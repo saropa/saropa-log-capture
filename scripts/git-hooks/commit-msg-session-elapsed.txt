@@ -1,0 +1,5 @@
+Session elapsed: use duration format (5m 15s) instead of clock-style T+M:SS
+
+- Format session elapsed as 45s, 5m 15s, 1h 5m 15s, 2d 1h 5m 15s
+- Rename labels to Session elapsed in decoration settings and context menu
+- Update CHANGELOG, README, and context menu test
