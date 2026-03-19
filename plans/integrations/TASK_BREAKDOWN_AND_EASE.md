@@ -1,5 +1,11 @@
 # Pending Integrations: Task Breakdown & Ease Ranking
 
+Navigation:
+
+- Folder guide and canonical links: [README.md](README.md)
+- Active adapter spec index: [001_integration-specs-index.md](001_integration-specs-index.md)
+- Empty/missing logs runbook: [010_runbook-missing-or-empty-logs.md](010_runbook-missing-or-empty-logs.md)
+
 Task lists for the 5 remaining pending integrations, ranked **easiest → hardest** to implement.
 
 Performance, Terminal, and WSL/Linux logs are implemented — see providers in `src/modules/integrations/providers/`.
@@ -11,13 +17,13 @@ Performance, Terminal, and WSL/Linux logs are implemented — see providers in `
 **Why medium:** Introduces **file tailing** during session: watch N paths, accumulate lines, write N sidecars at end. Rest is config + viewer tabs; no correlation logic.
 
 ### Task list
-- [ ] Add config: `integrations.externalLogs.*` or `saropaLogCapture.externalLogs.*` (enabled, paths, writeSidecars, prefixLines, maxLinesPerFile, createIfMissing, followRotation) in integration-config and types.
-- [ ] Implement **file tailer** utility: given a list of paths (resolved vs workspace), start watching (e.g. `fs.watch` or `vscode.workspace.createFileSystemWatcher` + read on change); append new lines to per-file buffers; cap at maxLinesPerFile; support “create if missing.” Path resolution: workspace-relative and absolute; encoding UTF-8.
-- [ ] Session lifecycle: when session starts and externalLogs enabled, start tailers; when session ends, stop tailers and ask “external logs” module for buffered content (or provider reads from module). **Design:** Same as terminal: a module holds buffers; provider’s `onSessionEnd` returns sidecars from that module; lifecycle starts/stops the tailer module.
-- [ ] Provider: `onSessionEnd` returns meta + one sidecar per tailed file (`basename.<label>.log`). Optional header line.
-- [ ] Viewer: tabs or “Open external logs” per sidecar; load content like other sidecars.
-- [ ] Commands: “Add external log path”, “Open external logs for this session.”
-- [ ] Register provider; add `externalLogs` to UI and adapter list.
+- [x] Add config: `integrations.externalLogs.*` (paths, writeSidecars, prefixLines, maxLinesPerFile) in integration-config and types. *(createIfMissing / followRotation still optional.)*
+- [x] Implement **file tailer** (`external-log-tailer.ts`): `fs.watch`, read new bytes from EOF at session start, per-file buffers, cap at maxLinesPerFile; workspace-relative and absolute paths; UTF-8.
+- [x] Session lifecycle: start tailers when session starts and adapter enabled; `onSessionEnd` snapshots buffers then stops watchers (order matters — do not clear buffers before provider runs).
+- [x] Provider: `onSessionEnd` meta + sidecars `basename.<label>.log`; fallback read last N lines if no buffers.
+- [x] Viewer: unified multi-source load (same as terminal); `external:<label>` sources; discover sidecars via directory listing.
+- [x] Commands: Add external log path; Open external logs for this session (with progress when multiple).
+- [x] Register provider; `externalLogs` in integrations UI.
 
 **Rough size:** Tailer module (~150–250 LOC), provider (~80), config, viewer tabs. **Blocker for others:** Database, HTTP, and Browser (file mode) can reuse this tailer.
 

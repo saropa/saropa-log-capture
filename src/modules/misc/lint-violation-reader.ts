@@ -42,8 +42,52 @@ export interface LintReportData {
     readonly byImpact: Record<string, number>;
 }
 
-const staleThresholdMs = 24 * 60 * 60 * 1000;
+/** Same threshold as Phase 3 staleness prompt (24h initial release). */
+export const LINT_EXPORT_STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 const impactOrder = ['critical', 'high', 'medium', 'low', 'opinionated'];
+
+/** Minimal stack frame shape for collecting workspace-relative paths (avoids circular imports). */
+export interface LintStackPathFrame {
+    readonly isApp: boolean;
+    readonly sourceRef?: { readonly filePath: string };
+}
+
+/** True if export timestamp is missing or older than {@link LINT_EXPORT_STALE_THRESHOLD_MS}. */
+export function isLintExportTimestampStale(timestamp: string, nowMs: number = Date.now()): boolean {
+    const exportTime = Date.parse(timestamp);
+    if (Number.isNaN(exportTime)) { return true; }
+    return (nowMs - exportTime) > LINT_EXPORT_STALE_THRESHOLD_MS;
+}
+
+/**
+ * Snapshot of violations export for refresh prompt (same source as findLintMatches: API then file).
+ * Undefined when no export exists.
+ */
+export async function getLintViolationsExportSnapshot(wsRoot: vscode.Uri): Promise<{ timestamp: string } | undefined> {
+    const raw = await getRawExport(wsRoot);
+    if (!raw) { return undefined; }
+    return { timestamp: raw.timestamp ?? '' };
+}
+
+/**
+ * Workspace-relative forward-slash paths from app stack frames (for dart analyze file list).
+ * Deduped; capped at maxFiles (default 50) per CLI length risk in integration plan.
+ */
+export function collectAppStackRelativePaths(frames: readonly LintStackPathFrame[], maxFiles = 50): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const f of frames) {
+        if (!f.isApp || !f.sourceRef) { continue; }
+        const rel = toRelativeForwardSlash(f.sourceRef.filePath);
+        if (!rel) { continue; }
+        const key = rel.toLowerCase();
+        if (seen.has(key)) { continue; }
+        seen.add(key);
+        out.push(rel);
+        if (out.length >= maxFiles) { break; }
+    }
+    return out;
+}
 
 /** Find lint violations matching files in a stack trace. */
 export async function findLintMatches(
@@ -250,8 +294,7 @@ function buildFrameLineMap(frames: readonly StackFrame[]): Map<string, number[]>
 
 function buildResult(matches: LintViolation[], raw: RawExport, hasExtension: boolean): LintReportData {
     const ts = raw.timestamp ?? '';
-    const exportTime = Date.parse(ts);
-    const isStale = Number.isNaN(exportTime) || (Date.now() - exportTime) > staleThresholdMs;
+    const isStale = isLintExportTimestampStale(ts);
     return {
         matches,
         totalInExport: raw.summary?.totalViolations ?? 0,

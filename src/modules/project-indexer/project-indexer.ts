@@ -6,7 +6,8 @@
 import * as vscode from 'vscode';
 import { getConfig, getSaropaIndexDirUri } from '../config/config';
 import type { ProjectIndexSourceConfig } from '../config/config';
-import { extractTokensFromMarkdown, extractTokensFromText } from './token-extractor';
+import { buildRootPatternsForDocFileTypes, DEFAULT_DOC_FILE_TYPES, extractDocTokensByType, FIND_FILES_EXCLUDE_GLOB, isBlockedRelativePath, matchesDocFileType, normalizeDocFileTypes } from './project-indexer-file-types';
+import { rankDocEntriesByQueriesWithDebug, rankDocEntriesByQueriesWithScores } from './project-indexer-ranking';
 import { buildReportIndex } from './build-report-index';
 import type {
     DocIndexEntry,
@@ -17,6 +18,7 @@ import type {
     IndexManifest,
 } from './project-indexer-types';
 import { tokenCountOfEntry } from './project-indexer-types';
+import type { RankedDocDebugEntry, RankedDocEntry } from './project-indexer-ranking';
 
 export type { DocIndexEntry, ReportIndexEntry, IndexEntry, SourceIndexFile, ManifestSourceMeta, IndexManifest } from './project-indexer-types';
 
@@ -127,9 +129,9 @@ export class ProjectIndexer {
             await this.writeSourceIndex(id, idx);
         }
         if (cfg.includeRootFiles) {
-            const rootIdx = await this.buildSourceDocs('root-files', { path: '.', fileTypes: ['.md', '.txt'], enabled: true });
+            const rootIdx = await this.buildSourceDocs('root-files', { path: '.', fileTypes: [...DEFAULT_DOC_FILE_TYPES], enabled: true });
             sourcesMeta.push({
-                id: 'root-files', path: '.', enabled: true, fileTypes: ['.md', '.txt'], lastIndexed: now,
+                id: 'root-files', path: '.', enabled: true, fileTypes: [...DEFAULT_DOC_FILE_TYPES], lastIndexed: now,
                 fileCount: rootIdx.files.length, tokenCount: rootIdx.files.reduce((s, f) => s + tokenCountOfEntry(f), 0),
             });
             this.sourceIndexes.set('root-files', rootIdx);
@@ -173,7 +175,7 @@ export class ProjectIndexer {
     }
 
     private async findRootFileUris(fileTypes: string[], maxFiles: number, rel: (u: vscode.Uri) => string): Promise<vscode.Uri[]> {
-        const patterns = fileTypes.map((ext) => `*${ext}`);
+        const patterns = buildRootPatternsForDocFileTypes(fileTypes);
         const results = await Promise.all(patterns.map((p) => vscode.workspace.findFiles(new vscode.RelativePattern(this.workspaceFolder, p), null, maxFiles)));
         const seen = new Set<string>();
         const uris: vscode.Uri[] = [];
@@ -188,7 +190,7 @@ export class ProjectIndexer {
 
     private async buildSourceDocs(sourceId: string, src: ProjectIndexSourceConfig): Promise<SourceIndexFile> {
         const maxFiles = getConfig().projectIndex.maxFilesPerSource;
-        const fileTypes = (src.fileTypes ?? ['.md', '.txt']).map((e) => e.startsWith('.') ? e : `.${e}`);
+        const fileTypes = normalizeDocFileTypes(src.fileTypes);
         const existing = this.sourceIndexes.get(sourceId)?.files ?? [];
         const existingByPath = new Map(existing.map((e) => [e.relativePath, e]));
         const rel = (u: vscode.Uri): string => vscode.workspace.asRelativePath(u).replace(/\\/g, '/');
@@ -196,13 +198,13 @@ export class ProjectIndexer {
             ? await this.findRootFileUris(fileTypes, maxFiles, rel)
             : await vscode.workspace.findFiles(
                 new vscode.RelativePattern(this.workspaceFolder, `${src.path}/**/*`),
-                '**/node_modules/**',
+                FIND_FILES_EXCLUDE_GLOB,
                 maxFiles,
             );
         const filtered = uris.filter((u) => {
             const r = rel(u);
-            const ext = r.includes('.') ? r.slice(r.lastIndexOf('.')) : '';
-            return fileTypes.includes(ext);
+            if (isBlockedRelativePath(r)) { return false; }
+            return matchesDocFileType(r, fileTypes);
         }).slice(0, maxFiles);
         const entries: DocIndexEntry[] = [];
         for (let i = 0; i < filtered.length; i += BATCH_SIZE) {
@@ -224,7 +226,8 @@ export class ProjectIndexer {
             const content = Buffer.from(raw).toString('utf-8');
             const lineCount = content.split(/\r?\n/).length;
             const ext = uri.fsPath.slice(uri.fsPath.lastIndexOf('.'));
-            const { tokens, headings } = ext === '.md' ? extractTokensFromMarkdown(content) : { tokens: extractTokensFromText(content), headings: [] };
+            const lowerPath = uri.fsPath.toLowerCase();
+            const { tokens, headings } = extractDocTokensByType(content, ext, lowerPath);
             return {
                 relativePath, uri: uri.toString(), sizeBytes: stat.size, mtime: stat.mtime,
                 lineCount, tokens, headings,
@@ -282,17 +285,34 @@ export class ProjectIndexer {
 
     /** Query: return doc entries whose tokens intersect the given tokens (for docs sources). */
     queryDocEntriesByTokens(tokens: string[]): DocIndexEntry[] {
+        return this.queryDocEntriesByTokensWithScores(tokens).map((item) => item.doc);
+    }
+
+    /** Query: return ranked doc entries and scores for debugging/tuning relevance. */
+    queryDocEntriesByTokensWithScores(tokens: string[]): RankedDocEntry[] {
         const lower = tokens.map((t) => t.toLowerCase());
         const result: DocIndexEntry[] = [];
         for (const [, idx] of this.sourceIndexes) {
             if (idx.sourceId === 'reports') { continue; }
             for (const f of idx.files) {
                 const doc = f as DocIndexEntry;
-                if (!doc.tokens) { continue; }
-                const match = lower.some((t) => doc.tokens.includes(t));
-                if (match) { result.push(doc); }
+                if (doc.tokens) { result.push(doc); }
             }
         }
-        return result;
+        return rankDocEntriesByQueriesWithScores(result, lower);
+    }
+
+    /** Query: ranked doc entries and token-level score contributions for debugging/tuning relevance. */
+    queryDocEntriesByTokensWithDebug(tokens: string[]): RankedDocDebugEntry[] {
+        const lower = tokens.map((t) => t.toLowerCase());
+        const result: DocIndexEntry[] = [];
+        for (const [, idx] of this.sourceIndexes) {
+            if (idx.sourceId === 'reports') { continue; }
+            for (const f of idx.files) {
+                const doc = f as DocIndexEntry;
+                if (doc.tokens) { result.push(doc); }
+            }
+        }
+        return rankDocEntriesByQueriesWithDebug(result, lower);
     }
 }

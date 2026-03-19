@@ -149,7 +149,7 @@ function markdownToHtml(md: string): string {
         .replaceAll(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
         .replaceAll(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, convertTable)
         .replaceAll(/\n{2,}/g, '\n')
-        .replaceAll(/^(?!<(?:h|u|p|l|o)|<\/|<li|<hr|<str|<em|<cod)(.+)$/gm, '<p>$1</p>');
+        .replaceAll(/^(?!<[hupol]|<\/|<li|<hr|<str|<em|<cod)(.+)$/gm, '<p>$1</p>');
 }
 
 function convertTable(_: string, header: string, body: string): string {

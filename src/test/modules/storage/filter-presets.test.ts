@@ -20,6 +20,15 @@ suite('FilterPresets', () => {
             assert.ok(errorsOnly, 'Should have Errors Only preset');
             assert.ok(errorsOnly.levels, 'Errors Only should have levels filter');
         });
+
+        test('should include Just debug output and Complete (all sources) presets', () => {
+            const justDebug = builtInPresets.find(p => p.name === 'Just debug output');
+            assert.ok(justDebug, 'Should have Just debug output preset');
+            assert.deepStrictEqual(justDebug.sources, ['debug']);
+            const complete = builtInPresets.find(p => p.name === 'Complete (all sources)');
+            assert.ok(complete, 'Should have Complete (all sources) preset');
+            assert.deepStrictEqual(complete.sources, []);
+        });
     });
 
     suite('FilterPreset interface', () => {
@@ -36,11 +45,13 @@ suite('FilterPresets', () => {
                 categories: ['stderr', 'console'],
                 searchPattern: '/error/i',
                 exclusionsEnabled: true,
+                sources: ['debug'],
             };
             assert.strictEqual(preset.name, 'Full Preset');
             assert.deepStrictEqual(preset.categories, ['stderr', 'console']);
             assert.strictEqual(preset.searchPattern, '/error/i');
             assert.strictEqual(preset.exclusionsEnabled, true);
+            assert.deepStrictEqual(preset.sources, ['debug']);
         });
     });
 });
