@@ -114,7 +114,8 @@ function renderItem(item, idx, prevVis) {
     var sepCls = item.isSeparator ? ' separator-line' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
-    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item) : '';
+    /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
+    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
