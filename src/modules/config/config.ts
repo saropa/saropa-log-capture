@@ -143,6 +143,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       const v = cfg.get("reportFolder");
       return typeof v === "string" && v.trim().length > 0 ? v.trim() : "bugs";
     })(),
+    lintReportImpactLevel: ensureEnum(cfg.get("lintReportImpactLevel"), ["essential", "recommended", "full"], "recommended"),
     autoOpen: ensureBoolean(cfg.get("autoOpen"), false),
     maxLogFiles: ensureNonNegative(cfg.get("maxLogFiles"), 0),
     gitignoreCheck: ensureBoolean(cfg.get("gitignoreCheck"), true),

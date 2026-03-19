@@ -42,6 +42,8 @@ export interface SaropaLogCaptureConfig {
   readonly logDirectory: string;
   /** Folder for auto-created bug report files (relative to workspace root, or absolute path). */
   readonly reportFolder: string;
+  /** Bug report lint section: which impact levels to include (essential = critical+high; recommended = +medium; full = all). */
+  readonly lintReportImpactLevel: "essential" | "recommended" | "full";
   readonly autoOpen: boolean;
   readonly maxLogFiles: number;
   readonly gitignoreCheck: boolean;
