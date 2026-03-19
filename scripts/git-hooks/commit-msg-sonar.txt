@@ -1,0 +1,6 @@
+fix: address SonarQube findings and fix TS comment in viewer-data-helpers-render
+
+- extension-activation: merge duplicate config import; replace nested ternary in smart bookmarks with if/else; combine subscriptions.push calls
+- viewer-message-handler-actions: refactor to two handlers + helpers for complexity/case count; add msgStr() for safe string coercion; replace void with .then(undefined, () => {}); use Number.parseInt
+- viewer-data-helpers-render: fix comment so \u in comment does not parse as unicode escape (TS1125)
+- CHANGELOG: document Sonar/code quality fixes under Unreleased
