@@ -18,6 +18,28 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+• **Settings UI titles for all extension options** — Every `saropaLogCapture.*` configuration key now has a **`title`** in addition to its description, so VS Code Settings shows a clear row label and search matches work better. English titles are derived from each setting’s description (non-English `package.nls.*.json` files use the same strings until translated).
+
+### Fixed
+
+• **Performance chip / title bar control** — The nav **Performance** control opens the Performance block inside **Insights › Session details**. The panel script still looked for the old standalone `#performance-panel` node (removed when Performance moved into Insights), so the control did nothing; the script now targets the embedded `insight-pp-*` markup. Visibility is also stricter now: the chip appears only when session metadata has meaningful performance snapshot metrics or a real samples file path, not just a placeholder snapshot object.
+
+• **Log viewer scroll flicker (filters, tail, end of log)** — Virtual-scroll “hysteresis” used line-index slack, which fails when many lines are height 0: every small scroll rebuilt the viewport DOM and caused flashing. Rebuilds are skipped only when the visible line range is unchanged. Tail-follow (`autoScroll`) now uses a Schmitt-trigger band so distance-to-bottom jitter does not flip follow mode every frame.
+
+• **Jump Top / Bottom on wrong horizontal edge** — Some 3.10.0 installs still used older `left: 8px` positioning. Jump buttons are anchored to the log wrapper’s **right** (clear of minimap / scrollbar) again, with a final CSS block so placement cannot be overridden.
+
+• **Context menu submenu clipped at top (short webviews)** — If the viewer is short enough that both vertical flip rules applied, a later CSS rule canceled the “safe top” submenu offset; the offset now takes precedence so flyouts stay below panel chrome.
+
+### Removed
+
+• **Icon bar Replay button** — Session replay is opened from the footer **Replay** control and the log-area replay bar only, not from a sidebar/toolbar entry.
+
+---
+
 ## [3.10.0]
 
 This release makes Log Capture more useful day to day with broader ecosystem support and smoother cross-source debugging.
