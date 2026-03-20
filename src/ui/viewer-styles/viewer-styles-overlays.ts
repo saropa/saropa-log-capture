@@ -24,8 +24,54 @@ export function getOverlayStyles(): string {
 .session-nav-wrapper.has-content {
     max-height: 88px;
 }
+/* Suggestion row below session nav when many consecutive duplicate lines are detected */
+.session-nav-wrapper.has-content.compress-suggest-visible {
+    max-height: 130px;
+}
 .session-nav-wrapper.smart-header-hidden.has-content {
     max-height: 0;
+}
+.compress-suggest-banner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 4px 8px 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--vscode-foreground);
+    background: var(--vscode-inputValidation-infoBackground, rgba(55, 148, 255, 0.12));
+    border-top: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-focusBorder));
+}
+.compress-suggest-msg {
+    flex: 1 1 180px;
+    min-width: 0;
+}
+.compress-suggest-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    padding: 2px 10px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.compress-suggest-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+.compress-suggest-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 4px;
+    border-radius: 2px;
+}
+.compress-suggest-dismiss:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground);
 }
 .session-details-inline {
     margin-left: 8px;
@@ -79,7 +125,10 @@ export function getOverlayStyles(): string {
     user-select: none;
 }
 .nav-bar-label { font-weight: bold; }
-#split-breadcrumb button, #session-nav button, #run-nav button {
+/* Only prev/next (and run nav inside the same strip)—not the compact find widget or perf chip. */
+#split-breadcrumb button,
+#session-nav .session-nav-controls button,
+#run-nav button {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
     color: var(--vscode-descriptionForeground);
@@ -88,11 +137,15 @@ export function getOverlayStyles(): string {
     cursor: pointer;
     border-radius: 3px;
 }
-#split-breadcrumb button:hover, #session-nav button:hover, #run-nav button:hover {
+#split-breadcrumb button:hover,
+#session-nav .session-nav-controls button:hover,
+#run-nav button:hover {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
-#split-breadcrumb button:disabled, #session-nav button:disabled, #run-nav button:disabled {
+#split-breadcrumb button:disabled,
+#session-nav .session-nav-controls button:disabled,
+#run-nav button:disabled {
     opacity: 0.4;
     cursor: default;
 }

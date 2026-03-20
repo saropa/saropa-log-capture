@@ -5,7 +5,7 @@
  * - Font size control (8-22px)
  * - Line height control (0.5-4.0) and compressed/comfortable preset toggle
  * - Dynamic ROW_HEIGHT measurement via hidden probe element
- * - Visual spacing and hide-blank-lines toggles
+ * - Visual spacing, hide-blank-lines, and compress-lines (consecutive dedupe) toggles
  * - Updates CSS variables and triggers viewport recalculation
  */
 
@@ -25,6 +25,9 @@ var visualSpacingEnabled = true;
 
 /** Hide lines that are empty or only whitespace. */
 var hideBlankLines = false;
+
+/** Collapse consecutive duplicate log lines to one row with a count badge; also hides blank lines while on. */
+var compressLinesMode = false;
 
 /**
  * Measure actual line height from the DOM and update ROW_HEIGHT / MARKER_HEIGHT.
@@ -115,12 +118,55 @@ function toggleHideBlankLines() {
     }
 }
 
+/**
+ * Sync activity bar compress icon with compressLinesMode (toggle state, not a slide-out panel).
+ */
+function syncCompressIconButton() {
+    var btn = document.getElementById('ib-compress');
+    if (btn) {
+        var on = !!compressLinesMode;
+        btn.classList.toggle('ib-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+}
+
+function hideCompressSuggestionBanner() {
+    var b = document.getElementById('compress-suggest-banner');
+    var w = document.getElementById('session-nav-wrapper');
+    if (b) b.classList.add('u-hidden');
+    if (w) w.classList.remove('compress-suggest-visible');
+}
+
+/** Shown when streaming detects many consecutive duplicate lines (see viewer-data streak). */
+function showCompressSuggestionBanner() {
+    if (typeof compressLinesMode !== 'undefined' && compressLinesMode) return;
+    var b = document.getElementById('compress-suggest-banner');
+    var w = document.getElementById('session-nav-wrapper');
+    if (b) b.classList.remove('u-hidden');
+    if (w) w.classList.add('compress-suggest-visible');
+}
+
+/**
+ * Toggle compress lines: hide blanks, collapse runs of identical consecutive log lines
+ * to the last line with a repeat count badge.
+ */
+function toggleCompressLines() {
+    compressLinesMode = !compressLinesMode;
+    syncCompressIconButton();
+    if (compressLinesMode) hideCompressSuggestionBanner();
+    if (typeof recalcAndRender === 'function') recalcAndRender();
+    else {
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof renderViewport === 'function') renderViewport(true);
+    }
+}
+
 // Initialize CSS variables on load
 document.documentElement.style.setProperty('--log-font-size', logFontSize + 'px');
 document.documentElement.style.setProperty('--log-line-height', logLineHeight.toString());
 
 // Measure actual row height after all CSS is applied
-requestAnimationFrame(function() { measureRowHeight(); });
+requestAnimationFrame(function() { measureRowHeight(); syncCompressIconButton(); });
 
 // Ctrl+scroll to zoom font size
 var _logContentEl = document.getElementById('log-content');

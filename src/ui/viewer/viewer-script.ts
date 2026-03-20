@@ -1,15 +1,50 @@
-/** Client-side JS for the log viewer: virtual scrolling, stack traces, auto-scroll. */
+/**
+ * Client-side log viewer script (virtual scroll, tail-follow, jump controls, etc.), emitted as a
+ * string for the webview `<script>` tag.
+ *
+ * **Embedded template literal safety:** The returned body is a TypeScript template literal. Do not
+ * put backtick characters inside the embedded JavaScript or CSS text — they terminate the TS string
+ * and break compilation or silently truncate the runtime script. Use slash-star block comments or
+ * single-quoted strings only inside the embedded code.
+ */
 import { getKeyboardScriptWithDefaults } from './viewer-script-keyboard';
 import { getViewerScriptMessageHandler } from './viewer-script-messages';
 
 export function getViewerScript(maxLines: number): string {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
+var logWrapEl = document.getElementById('log-content-wrapper');
 var spacerTop = document.getElementById('spacer-top');
 var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
+/* Pin jump buttons to the log pane top-right / bottom-right using viewport coordinates.
+   position:fixed plus #log-content getBoundingClientRect avoids bad containing blocks (some webviews
+   mis-resolve absolute + right so controls appear on the text left edge). */
+function syncJumpButtonInset() {
+    if (!logEl || !jumpBtn) return;
+    var lr = logEl.getBoundingClientRect();
+    if (lr.width < 8 || lr.height < 8) return;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var rightPx = Math.max(8, Math.round(vw - lr.right + 8));
+    var replayBar = document.getElementById('replay-bar');
+    var replayNudge = replayBar && replayBar.classList.contains('replay-bar-visible') ? 44 : 0;
+    jumpBtn.style.setProperty('position', 'fixed', 'important');
+    jumpBtn.style.setProperty('right', rightPx + 'px', 'important');
+    jumpBtn.style.setProperty('left', 'auto', 'important');
+    jumpBtn.style.setProperty('bottom', Math.round(vh - lr.bottom + 8 + replayNudge) + 'px', 'important');
+    jumpBtn.style.setProperty('top', 'auto', 'important');
+    if (jumpTopBtn) {
+        jumpTopBtn.style.setProperty('position', 'fixed', 'important');
+        jumpTopBtn.style.setProperty('right', rightPx + 'px', 'important');
+        jumpTopBtn.style.setProperty('left', 'auto', 'important');
+        jumpTopBtn.style.setProperty('top', Math.round(lr.top + 8) + 'px', 'important');
+        jumpTopBtn.style.setProperty('bottom', 'auto', 'important');
+    }
+}
+syncJumpButtonInset();
 /** Only show scroll buttons when content exceeds this fraction of the viewport height. */
 var SCROLL_BTN_THRESHOLD = 1.5;
 /** Schmitt-trigger band for tail-follow: avoids autoScroll flipping when distance-to-bottom jitters (layout/subpixel). */
@@ -255,9 +290,24 @@ ${getViewerScriptMessageHandler()}
 ${getKeyboardScriptWithDefaults()}
 
 var _resizeRaf = false;
-new ResizeObserver(function() {
+function onLogOrWrapResize() {
     if (_resizeRaf) return; _resizeRaf = true;
-    requestAnimationFrame(function() { _resizeRaf = false; if (allLines.length > 0 && logEl.clientHeight > 0) { renderViewport(false); if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; } } });
-}).observe(logEl);
+    requestAnimationFrame(function() {
+        _resizeRaf = false;
+        syncJumpButtonInset();
+        if (allLines.length > 0 && logEl.clientHeight > 0) {
+            renderViewport(false);
+            if (autoScroll && !window.isContextMenuOpen) {
+                if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+                suppressScroll = true;
+                logEl.scrollTop = logEl.scrollHeight;
+                suppressScroll = false;
+            }
+        }
+    });
+}
+new ResizeObserver(onLogOrWrapResize).observe(logEl);
+if (logWrapEl) new ResizeObserver(onLogOrWrapResize).observe(logWrapEl);
+requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); });
 `;
 }
