@@ -11,8 +11,8 @@
  * set via closest-option matching to avoid float display issues (e.g. 0.5x).
  *
  * Visibility: The replay panel (horizontal layout) is anchored to the bottom-right
- * of the log area. It is hidden by default; the footer replay button or icon bar
- * button reveals it. During active recording, the panel hides.
+ * of the log area. It is hidden by default; the footer **Replay** button toggles it.
+ * During active recording, the panel hides.
  */
 
 import { getReplayControlsScript } from './viewer-replay-controls';
@@ -63,7 +63,6 @@ export function getReplayScript(): string {
     var speedSelect = document.getElementById('replay-speed');
     var scrubber = document.getElementById('replay-scrubber');
     var statusEl = document.getElementById('replay-status');
-    var ibReplay = document.getElementById('ib-replay');
     var footerReplayBtn = document.getElementById('footer-replay-btn');
 
     var replaySessionActive = false;
@@ -76,11 +75,6 @@ export function getReplayScript(): string {
         bar.classList.toggle('replay-bar-visible', !!visible);
     }
 
-    function setReplayIconVisible(visible) {
-        if (!ibReplay) return;
-        ibReplay.classList.toggle('ib-replay-active', visible);
-    }
-
     function setFooterReplayVisible(visible) {
         if (!footerReplayBtn) return;
         footerReplayBtn.classList.toggle('footer-replay-visible', !!visible);
@@ -90,22 +84,21 @@ export function getReplayScript(): string {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
         if (sessionActive || !fileLoaded || !hasLines()) {
-            setReplayIconVisible(false);
             setFooterReplayVisible(false);
             setReplayBarVisible(false);
             if (window.replayMode) window.exitReplayMode();
         } else if (fileLoaded && hasLines()) {
-            setReplayIconVisible(true);
             setFooterReplayVisible(true);
         }
     };
 
     function updateReplayIcon(playing) {
+        if (!footerReplayBtn) return;
+        var ic = footerReplayBtn.querySelector('.codicon');
         var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
-        if (ibReplay) {
-            var ic = ibReplay.querySelector('.codicon');
-            if (ic) { ic.className = cls; ibReplay.title = playing ? 'Replay (playing)' : 'Replay (paused)'; }
-        }
+        if (ic) ic.className = cls;
+        footerReplayBtn.title = playing ? 'Replay playing — click to show or hide controls' : 'Replay log — click to show or hide controls';
+        footerReplayBtn.setAttribute('aria-label', playing ? 'Replay playing' : 'Replay log');
     }
 
     window.toggleReplayBar = function() {

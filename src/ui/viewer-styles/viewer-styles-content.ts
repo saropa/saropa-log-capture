@@ -55,8 +55,11 @@ export function getContentStyles(): string {
 /* ===================================================================
    Jump-to-Top / Jump-to-Bottom Buttons
    Floating buttons in log-content-wrapper, shown when content
-   exceeds SCROLL_BTN_THRESHOLD of viewport height. Positioned on the
-   right so they do not cover the minimap or native scrollbar when visible.
+   exceeds SCROLL_BTN_THRESHOLD of viewport height. Anchored on the right
+   side of the log column: inset by --mm-w (minimap) + --scrollbar-w
+   (10px when saropaLogCapture.showScrollbar is on) + 8px gap — so buttons
+   sit to the left of the minimap and are not drawn on top of the native
+   vertical scrollbar when it is visible.
    =================================================================== */
 #log-content {
     position: relative;
@@ -81,6 +84,8 @@ export function getContentStyles(): string {
     pointer-events: auto;
 }
 #jump-btn { bottom: 8px; }
+/* Replay bar shares bottom-right corner with higher z-index; nudge jump so it stays clickable. */
+#log-content-wrapper:has(.replay-bar.replay-bar-visible) #jump-btn { bottom: 52px; }
 #jump-top-btn { top: 8px; }
 #jump-btn:hover, #jump-top-btn:hover {
     opacity: 1;
@@ -252,5 +257,16 @@ export function getContentStyles(): string {
     margin-bottom: 12px;
 }
 
+`;
+}
+
+/** Appended last in `getViewerStyles()` so horizontal placement wins over any stale rule. Same inset as above (minimap + native scrollbar when on). */
+export function getJumpScrollButtonAnchorStyles(): string {
+    return /* css */ `
+#log-content-wrapper > #jump-btn,
+#log-content-wrapper > #jump-top-btn {
+    left: auto !important;
+    right: calc(var(--mm-w, 0px) + var(--scrollbar-w, 0px) + 8px) !important;
+}
 `;
 }
