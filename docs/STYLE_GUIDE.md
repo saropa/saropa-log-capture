@@ -201,7 +201,7 @@ All colors use VS Code theme variables with fallbacks:
 | Error text | `--vscode-debugConsole-errorForeground` | `#f48771` |
 | Warning text | `--vscode-debugConsole-warningForeground` | `#cca700` |
 | Performance text | `--vscode-debugConsole-infoForeground` | `#b695f8` |
-| Info text | default foreground | — |
+| Info text (`.line.level-info`) | `--vscode-debugConsole-infoForeground` | `#b695f8` (shared rule with performance) |
 | Links | `--vscode-textLink-foreground` | `#3794ff` |
 | Muted text | `--vscode-descriptionForeground` | — |
 | Panel background | `--vscode-panel-background` | — |
@@ -307,7 +307,8 @@ The minimap is an always-on 60px wide interactive panel that **replaces** the na
 
 ```
 #log-content-wrapper (display: flex)
-  #log-content (flex: 1, native scrollbar always hidden)
+  #log-content (flex: 1, native scrollbar hidden unless setting is on)
+  jump Top/Bottom buttons (absolute; horizontal inset from syncJumpButtonInset)
   #scrollbar-minimap (width: 60px, flex-shrink: 0)
 ```
 
@@ -324,7 +325,7 @@ The minimap container has `cursor: pointer` and receives mouse events directly (
 
 ### Scrollbar Visibility
 
-Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. By default the native vertical scrollbar is hidden (minimap is the only scroll indicator). When `saropaLogCapture.showScrollbar` is true, the native vertical scrollbar is shown (10px) and `#log-content-wrapper` gets `--scrollbar-w: 10px` so jump buttons and other right-edge overlays stay clear. Default (scrollbar off):
+Native browser scrollbars are opaque compositor elements that render above page content. The minimap panel avoids this entirely by being a sibling element. By default the native vertical scrollbar is hidden (minimap is the only scroll indicator). When `saropaLogCapture.showScrollbar` is true, the native vertical scrollbar is shown (10px) and `#log-content-wrapper` sets `--scrollbar-w: 10px` for CSS that depends on gutter width; jump buttons also call **`syncJumpButtonInset()`** after the toggle so measured layout stays correct. Default (scrollbar off):
 
 ```css
 #log-content { scrollbar-width: none; }
