@@ -57,6 +57,8 @@ function renderSearchHistory() {
     if (!searchHistoryEl) return;
     if (!searchHistory.length || searchInputEl.value) {
         searchHistoryEl.innerHTML = '';
+        /* Clear fixed positioning left from a previous open list (see positionSearchFloatingPanels). */
+        if (typeof window.positionSearchFloatingPanels === 'function') window.positionSearchFloatingPanels();
         return;
     }
     var html = '<div class="search-history-header">Recent</div>';
@@ -65,6 +67,7 @@ function renderSearchHistory() {
             + escapeHtml(searchHistory[i]) + '</div>';
     }
     searchHistoryEl.innerHTML = html;
+    if (typeof window.positionSearchFloatingPanels === 'function') window.positionSearchFloatingPanels();
 }
 
 if (searchHistoryEl) {

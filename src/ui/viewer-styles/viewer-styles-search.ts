@@ -1,7 +1,8 @@
 /**
- * CSS styles for search panel and watch features in the viewer webview.
+ * CSS styles for search in the log viewer webview.
  *
- * Covers search slide-out panel and match highlighting.
+ * Compact filter field in the session nav; match highlighting; floating
+ * history and options (position fixed via script to escape overflow clip).
  */
 import { getSearchHistoryStyles } from '../viewer-search-filter/viewer-search-history';
 
@@ -9,64 +10,31 @@ export function getSearchStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Search Panel
-   Slide-out panel. Contains search input, mode toggles, match count,
-   and prev/next navigation.
-   Mirrors the options panel pattern (position:fixed, .visible class).
+   Session nav — compact find row (align with editor find / input options)
    =================================================================== */
-#search-bar {
+.session-nav-search-outer {
+    position: relative;
+    margin-left: auto;
+    flex: 0 1 auto;
+    min-width: 120px;
+    max-width: min(400px, 46vw);
+    align-self: center;
+}
+.session-search-compact {
     width: 100%;
-    min-width: 280px;
-    height: 100%;
-    background: var(--vscode-sideBar-background, var(--vscode-editor-background));
-    border-right: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    display: none;
-    flex-direction: column;
+}
+.session-search-input-shell {
+    display: flex;
+    align-items: stretch;
+    min-height: 24px;
+    box-sizing: border-box;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 2px;
     overflow: hidden;
 }
-#search-bar.visible {
-    display: flex;
-}
-.search-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: var(--vscode-sideBarTitle-background, var(--vscode-panel-background));
-    border-bottom: 1px solid var(--vscode-sideBar-border, var(--vscode-panel-border));
-    font-weight: bold;
-    font-size: 13px;
-}
-.search-close {
-    background: none;
-    border: none;
-    color: var(--vscode-descriptionForeground);
-    cursor: pointer;
-    padding: 2px;
-    border-radius: 3px;
-    font-size: 14px;
-}
-.search-close:hover {
-    color: var(--vscode-errorForeground, #f44);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
-.search-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.search-input-wrapper {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    background: var(--vscode-input-background);
-    border: 1px solid var(--vscode-input-border, transparent);
-}
-.search-input-wrapper:focus-within {
+.session-search-input-shell:focus-within {
     border-color: var(--vscode-focusBorder);
 }
 #search-input {
@@ -75,88 +43,158 @@ export function getSearchStyles(): string {
     background: transparent;
     color: var(--vscode-input-foreground);
     border: none;
-    padding: 4px 2px 4px 8px;
-    font-size: 12px;
-    font-family: inherit;
+    padding: 3px 4px 3px 6px;
+    font-size: 13px;
+    font-family: var(--vscode-font-family);
+    line-height: 18px;
     outline: none;
 }
-.search-input-actions {
+.session-search-trailing {
     display: flex;
     align-items: center;
-    gap: 1px;
-    padding: 1px 2px;
     flex-shrink: 0;
+    gap: 0;
+    padding: 0 3px 0 0;
+    border-left: 1px solid var(--vscode-input-border, var(--vscode-widget-border, rgba(127, 127, 127, 0.3)));
+    margin-left: 2px;
+    padding-left: 3px;
 }
-.search-input-btn {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--vscode-descriptionForeground);
-    cursor: pointer;
-    padding: 1px;
-    border-radius: 3px;
+.session-search-match-count {
+    font-size: 11px;
+    line-height: 1;
+    font-family: var(--vscode-font-family);
+    color: var(--vscode-input-foreground);
+    opacity: 0.85;
+    white-space: nowrap;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 5px 0 3px;
+    user-select: none;
+}
+/* Borderless icon buttons — same idea as find widget / workbench toolbar */
+.session-search-icon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 22px;
-    height: 20px;
-    font-size: 14px;
-}
-.search-input-btn:hover {
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
-.search-input-btn.active {
-    color: var(--vscode-inputOption-activeForeground, #fff);
-    background: var(--vscode-inputOption-activeBackground, rgba(0, 120, 215, 0.6));
-    border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder, #007fd4));
-}
-.search-toggles {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-.search-toggles button {
-    background: var(--vscode-button-secondaryBackground, transparent);
-    border: 1px solid var(--vscode-input-border, var(--vscode-descriptionForeground));
-    color: var(--vscode-descriptionForeground);
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    box-sizing: border-box;
+    background: transparent;
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
     cursor: pointer;
-    font-size: 11px;
-    padding: 2px 6px;
+}
+.session-search-icon-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+}
+.session-search-icon-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    background: transparent;
+}
+.session-search-icon-btn .codicon {
+    font-size: 16px;
+}
+.session-search-funnel-btn[aria-expanded="true"] {
+    background: var(--vscode-toolbar-activeBackground, var(--vscode-button-secondaryBackground));
+    color: var(--vscode-toolbar-activeForeground, var(--vscode-foreground));
+}
+
+/* Options popover (fixed position; coordinates from script) */
+.search-options-popover {
+    margin: 0;
+    padding: 0;
+    background: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
     border-radius: 3px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
-.search-toggles button:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
+.search-options-popover[hidden] {
+    display: none !important;
 }
-.search-nav {
+.search-options-popover-inner {
+    padding: 5px 6px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.search-options-toggles {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
-.search-nav button {
+.search-options-toggles .search-input-btn {
     background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
+    border: 1px solid transparent;
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+}
+.search-options-toggles .search-input-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+}
+/* Match find-input-actions in find panel (not high-contrast inputOption pills unless theme sets them). */
+.search-options-toggles .search-input-btn.active {
+    color: var(--vscode-foreground);
+    background: var(--vscode-button-secondaryBackground);
+    border-color: var(--vscode-focusBorder);
+}
+.search-options-toggles .search-input-btn .codicon {
+    font-size: 16px;
+}
+.search-mode-toggle {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--vscode-foreground);
     cursor: pointer;
     font-size: 12px;
-    padding: 2px 6px;
+    font-family: var(--vscode-font-family);
+    line-height: 18px;
+    padding: 4px 6px;
+    border-radius: 2px;
+}
+.search-mode-toggle:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+}
+.search-mode-toggle.active {
+    background: var(--vscode-toolbar-activeBackground, var(--vscode-button-secondaryBackground));
+    color: var(--vscode-toolbar-activeForeground, var(--vscode-foreground));
+}
+
+/* Floating search history under the field */
+.session-search-history:not(:empty) {
+    overflow-y: auto;
+    background: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, var(--vscode-panel-border)));
     border-radius: 3px;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
-.search-nav button:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
-#match-count {
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    white-space: nowrap;
-}
+
 /* --- Search match highlighting --- */
 mark {
     background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33));
     color: inherit;
     border-radius: 2px;
 }
-/* Currently focused match gets a brighter highlight + brief pulse on navigation */
 @keyframes match-pulse { 0% { box-shadow: 0 0 0 0 rgba(234, 92, 0, 0.4); } 100% { box-shadow: 0 0 0 4px transparent; } }
 .current-match mark {
     background: var(--vscode-editor-findMatchBackground, rgba(255, 150, 50, 0.6));

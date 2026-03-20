@@ -101,6 +101,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("'toggle-spacing'"));
             assert.ok(script.includes("'toggle-line-height'"));
             assert.ok(script.includes("'toggle-hide-blank-lines'"));
+            assert.ok(script.includes("'toggle-compress-lines'"));
         });
 
         test('should sync toggle checkmarks from state variables', () => {
@@ -111,6 +112,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('visualSpacingEnabled'));
             assert.ok(script.includes('logLineHeight'));
             assert.ok(script.includes('hideBlankLines'));
+            assert.ok(script.includes('compressLinesMode'));
         });
 
         test('should clamp menu to viewport so bottom/right are never cropped', () => {
