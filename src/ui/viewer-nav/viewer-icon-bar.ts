@@ -33,9 +33,6 @@ export function getIconBarHtml(): string {
         <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
     </button>
     <div class="ib-separator"></div>
-    <button id="ib-replay" class="ib-icon" tabindex="0" title="Replay controls" aria-label="Replay controls">
-        <span class="codicon codicon-debug-start"></span><span class="ib-label">Replay</span>
-    </button>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
@@ -230,13 +227,6 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });
-    }
-
-    var replayBtn = document.getElementById('ib-replay');
-    if (replayBtn) {
-        replayBtn.addEventListener('click', function() {
-            if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
-        });
     }
 
     /** Click on bar background or separator (not on an icon button) toggles label visibility. */
