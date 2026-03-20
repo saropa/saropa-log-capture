@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import { getIconBarHtml, getIconBarScript } from '../../ui/viewer-nav/viewer-icon-bar';
 
 suite('ViewerIconBar', () => {
@@ -31,6 +31,12 @@ suite('ViewerIconBar', () => {
             assert.ok(html.includes('id="ib-sessions"'));
             assert.ok(html.includes('id="ib-options"'));
             assert.ok(html.includes('id="ib-about"'));
+        });
+
+        test('should not include replay in icon bar (replay is footer + log overlay only)', () => {
+            const html = getIconBarHtml();
+            assert.ok(!html.includes('id="ib-replay"'));
+            assert.ok(!html.includes('>Replay</span>'));
         });
     });
 
