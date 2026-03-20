@@ -4,7 +4,7 @@
  */
 
 import { getRunNavHtml } from '../viewer-nav/viewer-run-nav';
-import { getSearchPanelHtml } from '../viewer-search-filter/viewer-search';
+import { getSessionNavSearchHtml } from '../viewer-search-filter/viewer-search-html';
 import { getSessionPanelHtml } from '../viewer-panels/viewer-session-panel';
 import { getSessionContextMenuHtml } from '../viewer-context-menu/viewer-session-context-menu';
 import { getFindPanelHtml } from '../viewer-panels/viewer-find-panel';
@@ -46,6 +46,12 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         </span>
         <span id="session-details-inline" class="session-details-inline" aria-label="Log context"></span>
         <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Open Performance panel" aria-label="Performance data available">Performance</button>
+        ${getSessionNavSearchHtml()}
+    </div>
+    <div id="compress-suggest-banner" class="compress-suggest-banner u-hidden" role="status" aria-live="polite">
+        <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (toolbar or Options → Layout).</span>
+        <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">Enable</button>
+        <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="Dismiss">×</button>
     </div>
     </div>
     <div id="split-breadcrumb">
@@ -56,7 +62,6 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="pinned-section"></div>
     <div id="panel-content-row">
     <div id="panel-slot">
-    ${getSearchPanelHtml()}
     ${getSessionPanelHtml()}
     ${getSessionContextMenuHtml()}
     ${getFindPanelHtml()}

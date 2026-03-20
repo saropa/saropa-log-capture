@@ -31,6 +31,8 @@ suite('ViewerIconBar', () => {
             assert.ok(html.includes('id="ib-sessions"'));
             assert.ok(html.includes('id="ib-options"'));
             assert.ok(html.includes('id="ib-about"'));
+            assert.ok(html.includes('id="ib-compress"'));
+            assert.ok(html.includes('codicon-collapse-all'));
         });
 
         test('should not include replay in icon bar (replay is footer + log overlay only)', () => {
@@ -46,6 +48,13 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('iconBarLabelsVisible'));
             assert.ok(script.includes('getState'));
             assert.ok(script.includes('setState'));
+        });
+
+        test('should wire compress toggle without panel mutual exclusion', () => {
+            const script = getIconBarScript();
+            assert.ok(script.includes("getElementById('ib-compress')"));
+            assert.ok(script.includes('toggleCompressLines'));
+            assert.ok(!script.includes('setActivePanel(\'compress\')'));
         });
 
         test('should toggle labels on bar click, not on icon button click', () => {

@@ -88,6 +88,11 @@ if (optHideBlankLines) optHideBlankLines.addEventListener('change', function(e) 
     if (typeof toggleHideBlankLines === 'function') toggleHideBlankLines();
     syncOptionsPanelUi();
 });
+var optCompressLines = document.getElementById('opt-compress-lines');
+if (optCompressLines) optCompressLines.addEventListener('change', function(e) {
+    if (typeof toggleCompressLines === 'function') toggleCompressLines();
+    syncOptionsPanelUi();
+});
 
 // Audio
 var optAudio = document.getElementById('opt-audio');
