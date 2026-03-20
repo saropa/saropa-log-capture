@@ -1,9 +1,13 @@
 #!/bin/sh
-# Reject any commit message containing a "Made with Cursor" (or similar) trailer.
-# This repo does not credit editor/tool trailers.
+# Strip editor/tool attribution trailers from commit messages (repo policy: no credit lines).
+# Some environments append "Made-with: Cursor" after the author message; remove it in-place.
 # Install: cp scripts/git-hooks/commit-msg .git/hooks/commit-msg && chmod +x .git/hooks/commit-msg
-if grep -qiE 'Made-with:\s*Cursor|Made with:\s*Cursor' "$1"; then
-	echo "Commit rejected: remove 'Made-with: Cursor' (and similar) trailer from the message." >&2
-	exit 1
+msg_file="$1"
+if [ -z "$msg_file" ] || [ ! -f "$msg_file" ]; then
+	exit 0
 fi
+tmp="${msg_file}.strip.$$"
+# Drop CRLF for matching; drop whole lines matching Cursor attribution (same patterns as before).
+tr -d '\r' < "$msg_file" | grep -viE '^[[:space:]]*(made-with|made[[:space:]]+with):[[:space:]]*cursor[[:space:]]*$' > "$tmp" || true
+mv -f "$tmp" "$msg_file"
 exit 0

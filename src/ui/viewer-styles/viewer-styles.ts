@@ -8,7 +8,7 @@
  * Terminal tabs). Panel-scoped elements use --vscode-panel-background to
  * blend seamlessly with the surrounding panel chrome.
  */
-import { getContentStyles, getJumpScrollButtonAnchorStyles } from './viewer-styles-content';
+import { getContentStyles } from './viewer-styles-content';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
 import { getTagStyles } from './viewer-styles-tags';
@@ -237,7 +237,9 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-warning {
     color: var(--vscode-debugConsole-warningForeground, #cca700);
 }
-.line.level-performance {
+/* Perf + info: same token as Debug Console info tint and in-log "Info" highlights (config highlight rules). */
+.line.level-performance,
+.line.level-info {
     color: var(--vscode-debugConsole-infoForeground, #b695f8);
 }
 .line.level-todo {
@@ -250,9 +252,6 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 }
 .line.level-notice {
     color: var(--vscode-charts-blue, #2196f3);
-}
-.line.level-info {
-    color: var(--vscode-terminal-ansiYellow, #dcdcaa);
 }
 
 /* --- ASCII separator lines (===, ---, +---, etc.) --- */
@@ -271,5 +270,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getJumpScrollButtonAnchorStyles();
+` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
 }
