@@ -43,5 +43,11 @@ suite('ViewerPerformancePanel', () => {
             const implementation = getPerformancePanelScript.toString();
             assert.ok(implementation.includes("typeof prefix === 'string'"));
         });
+
+        test('webview should bind to embedded insight- panel IDs', () => {
+            const script = getPerformancePanelScript('insight-');
+            assert.ok(script.includes("'insight-'"));
+            assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("insight-pp-panel"));
+        });
     });
 });

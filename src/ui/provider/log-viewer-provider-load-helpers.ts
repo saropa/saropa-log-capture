@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getConfig } from "../../modules/config/config";
-import { SessionMetadataStore } from "../../modules/session/session-metadata";
+import { hasMeaningfulPerformanceData, SessionMetadataStore } from "../../modules/session/session-metadata";
 import { UNIFIED_SESSION_LOG_SUFFIX } from "../../modules/session/unified-session-log-writer";
 import { findHeaderEnd, parseHeaderFields, computeSessionMidnight, parseTimeToMs, sendPendingLinesBatched, parseUnifiedJsonlToPending, SOURCE_DEBUG, SOURCE_TERMINAL, externalSidecarLabelFromFileName, parseTerminalSidecarToPending, parseExternalSidecarToPending } from "../viewer/viewer-file-loader";
 import { detectRunBoundaries, getRunStartIndices } from "../../modules/session/run-boundaries";
@@ -88,8 +88,7 @@ export async function loadPerfAndCodeQualityPayload(
     if (!checkGen()) { return { cancelled: true, hasPerf: false, codeQualityPayload: undefined }; }
     const meta = await new SessionMetadataStore().loadMetadata(uri);
     if (!checkGen()) { return { cancelled: true, hasPerf: false, codeQualityPayload: undefined }; }
-    const perf = meta.integrations?.performance as Record<string, unknown> | undefined;
-    hasPerf = !!(perf && typeof perf === "object" && ((perf.snapshot !== null && perf.snapshot !== undefined) || (typeof perf.samplesFile === "string" && perf.samplesFile.length > 0)));
+    hasPerf = hasMeaningfulPerformanceData(meta.integrations?.performance);
     const cq = meta.integrations?.codeQuality;
     if (cq && typeof cq === "object" && cq !== null && "files" in cq) { codeQualityPayload = cq as Record<string, unknown>; }
   } catch {

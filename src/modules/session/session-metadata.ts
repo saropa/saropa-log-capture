@@ -50,6 +50,24 @@ export interface SessionMeta {
 
 type MetaMap = Record<string, SessionMeta>;
 
+/**
+ * Whether performance integration payload contains meaningful session-level data.
+ * Used for UI affordances (session badges/chips), so empty placeholder objects should not count.
+ */
+export function hasMeaningfulPerformanceData(perf: unknown): boolean {
+    if (!perf || typeof perf !== 'object') { return false; }
+    const data = perf as Record<string, unknown>;
+    if (typeof data.samplesFile === 'string' && data.samplesFile.trim().length > 0) { return true; }
+    const snap = data.snapshot as Record<string, unknown> | undefined;
+    if (!snap || typeof snap !== 'object') { return false; }
+    return (
+        typeof snap.cpus === 'number' ||
+        typeof snap.totalMemMb === 'number' ||
+        typeof snap.freeMemMb === 'number' ||
+        typeof snap.processMemMb === 'number'
+    );
+}
+
 export { migrateSidecarsInDirectory, migrateAllSidecarsToCentral, isOurSidecar } from './session-metadata-migration';
 
 /** Manages session metadata in <logDir>/.session-metadata.json (no sidecars in log dir). */
