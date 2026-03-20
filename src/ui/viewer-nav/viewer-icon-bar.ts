@@ -1,8 +1,10 @@
 /**
  * Icon bar HTML and script for the vertical activity bar.
  *
- * Provides toggle buttons (sessions, search, options, etc.) that open
- * their corresponding slide-out panels with mutual exclusion.
+ * Most tools open a slide-out panel in `#panel-slot` with mutual exclusion. **Search** is an
+ * exception: it focuses the session-nav field and must not animate panel width
+ * (`updatePanelSlotWidth` returns early for `name === 'search'`).
+ *
  * Optional text labels: click the bar background or separator (not a button) to toggle;
  * preference is persisted in webview state (iconBarLabelsVisible).
  */
@@ -25,6 +27,9 @@ export function getIconBarHtml(): string {
     </button>
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
+    </button>
+    <button id="ib-compress" class="ib-icon" tabindex="0" title="Compress lines (hide blanks + collapse consecutive duplicates)" aria-label="Compress lines" aria-pressed="false">
+        <span class="codicon codicon-collapse-all"></span><span class="ib-label">Compress</span>
     </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
@@ -84,6 +89,16 @@ export function getIconBarScript(): string {
     /** Set panel-slot width to show/hide the active panel with animation. Open: keep overflow hidden until transition ends so panel slides in without overlapping. */
     function updatePanelSlotWidth(name) {
         if (!panelSlot) return;
+        /* In-log search lives in the session nav; never reserve slide-out width for it. */
+        if (name === 'search') {
+            panelSlot.classList.remove('open');
+            panelSlot.style.width = '0';
+            if (pendingOpenHandler) {
+                panelSlot.removeEventListener('transitionend', pendingOpenHandler);
+                pendingOpenHandler = null;
+            }
+            return;
+        }
         if (!name) {
             panelSlot.classList.remove('open');
             panelSlot.style.width = '0';
@@ -212,6 +227,13 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.filters) {
         iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
+    }
+    var compressBtn = document.getElementById('ib-compress');
+    if (compressBtn) {
+        compressBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (typeof toggleCompressLines === 'function') toggleCompressLines();
+        });
     }
     if (iconButtons.trash) {
         iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });
