@@ -1,8 +1,9 @@
 /** Low-level I/O helpers for Crashlytics: CLI runner and event cache read/write. */
 
 import * as vscode from 'vscode';
-import { execFile } from 'child_process';
+import { execFile } from 'node:child_process';
 import { getLogDirectoryUri, getSaropaCacheCrashlyticsUri } from '../config/config';
+import { readDirectoryIfExistsAsDirectory } from '../misc/vscode-fs-read-directory-safe';
 import type { CrashlyticsIssueEvents, CrashlyticsEventDetail } from './crashlytics-types';
 
 /** Shared timeout (ms) for both CLI commands and HTTP requests. */
@@ -13,8 +14,16 @@ export function runCmd(cmd: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
         execFile(cmd, args, { timeout: apiTimeout, shell: true }, (err, stdout, stderr) => {
             if (err) {
-                (err as Error & { stderr?: string }).stderr = (stderr ?? '').trim();
-                reject(err);
+                let error: Error;
+                if (err instanceof Error) {
+                    error = err;
+                } else if (typeof err === 'string') {
+                    error = new Error(err);
+                } else {
+                    error = new Error('Command failed');
+                }
+                (error as Error & { stderr?: string }).stderr = (stderr ?? '').trim();
+                reject(error);
                 return;
             }
             resolve((stdout ?? '').trim());
@@ -55,17 +64,19 @@ export async function writeCacheEvents(issueId: string, data: CrashlyticsIssueEv
     }
 }
 
-/** One-time migration: move reports/crashlytics/*.json to .saropa/cache/crashlytics/. Call on activation. Never throws. */
+/**
+ * One-time migration: move legacy `{logDirectory}/crashlytics/*.json` into
+ * `.saropa/cache/crashlytics/`. Invoked from extension activation.
+ *
+ * Uses {@link readDirectoryIfExistsAsDirectory} so workspaces that never had the old
+ * folder do not hit `readDirectory` on a missing path (avoids spurious host console noise).
+ * Migration failures are swallowed; data loss is limited to failing mid-copy (extremely rare).
+ */
 export async function migrateCrashlyticsCacheToSaropa(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
     try {
         const oldDir = vscode.Uri.joinPath(getLogDirectoryUri(workspaceFolder), 'crashlytics');
         const newDir = getSaropaCacheCrashlyticsUri(workspaceFolder);
-        let entries: [string, vscode.FileType][];
-        try {
-            entries = await vscode.workspace.fs.readDirectory(oldDir);
-        } catch {
-            return;
-        }
+        const entries = await readDirectoryIfExistsAsDirectory(vscode.workspace.fs, oldDir);
         const files = entries.filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.json'));
         if (files.length === 0) { return; }
         await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(newDir, '..'));

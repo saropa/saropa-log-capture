@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { getSaropaCacheCrashlyticsUri } from '../../modules/config/config';
+import { readDirectoryIfExistsAsDirectory } from '../../modules/misc/vscode-fs-read-directory-safe';
 
 /** Cached mapping: filename → { issueCount, totalEvents, totalUsers }. */
 let crashIndex: Map<string, CrashFileInfo> | undefined;
@@ -32,7 +33,7 @@ export class CrashlyticsCodeLensProvider implements vscode.CodeLensProvider {
         const info = index.get(filename);
         if (!info) { return []; }
         const range = new vscode.Range(0, 0, 0, 0);
-        const label = `Crashlytics: ${info.issueCount} issue${info.issueCount !== 1 ? 's' : ''}, ${info.totalEvents} cached event${info.totalEvents !== 1 ? 's' : ''}`;
+        const label = `Crashlytics: ${info.issueCount} issue${info.issueCount === 1 ? '' : 's'}, ${info.totalEvents} cached event${info.totalEvents === 1 ? '' : 's'}`;
         return [new vscode.CodeLens(range, { title: label, command: '' })];
     }
 }
@@ -54,8 +55,7 @@ async function buildIndexFromCache(): Promise<Map<string, CrashFileInfo>> {
     const index = new Map<string, CrashFileInfo>();
     const cacheDir = getCrashlyticsDir();
     if (!cacheDir) { return index; }
-    let entries: [string, vscode.FileType][];
-    try { entries = await vscode.workspace.fs.readDirectory(cacheDir); } catch { return index; }
+    const entries = await readDirectoryIfExistsAsDirectory(vscode.workspace.fs, cacheDir);
     for (const [name, type] of entries) {
         if (type !== vscode.FileType.File || !name.endsWith('.json')) { continue; }
         try {
