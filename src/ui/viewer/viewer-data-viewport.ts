@@ -53,17 +53,14 @@ function renderViewport(force) {
         if (endIdx > cap) endIdx = cap;
         if (startIdx > cap) startIdx = cap;
     }
-    // Hysteresis: only rebuild DOM when visible area shifts past half the overscan buffer.
-    // When we skip the rebuild (e.g. during tailing with user selection), still update spacers
-    // so scroll height stays correct and the user can keep selecting text without DOM replace.
-    var hyst = Math.floor(OVERSCAN / 2);
+    // Skip full DOM replace only when the visible line range is unchanged. Index-based
+    // hysteresis (e.g. |startIdx-lastStart| < N) breaks when many lines have height 0
+    // (filtered view): a tiny pixel scroll can jump startIdx by hundreds, forcing a
+    // rebuild every frame and severe flicker. Equality matches the real virtual-scroll contract.
     var bottomH = (prefixSums && endIdx + 1 < prefixSums.length)
         ? totalHeight - prefixSums[endIdx + 1] : 0;
     if (!force && lastStart >= 0 &&
-        Math.abs(startIdx - lastStart) < hyst &&
-        Math.abs(endIdx - lastEnd) < hyst) {
-        spacerTop.style.height = startOffset + 'px';
-        spacerBottom.style.height = bottomH + 'px';
+        startIdx === lastStart && endIdx === lastEnd) {
         return;
     }
     lastStart = startIdx; lastEnd = endIdx;
