@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { SessionMetadataStore, type SessionMeta } from '../../modules/session/session-metadata';
+import { hasMeaningfulPerformanceData, SessionMetadataStore, type SessionMeta } from '../../modules/session/session-metadata';
 import { SessionMetadata } from './session-history-grouping';
 import { parseHeader } from './session-history-helpers';
 
@@ -59,9 +59,7 @@ async function loadMetadata(
 
 /** True when session meta has performance integration data (snapshot or samples). */
 function hasPerformanceData(sidecar: SessionMeta): boolean {
-    const perf = sidecar.integrations?.performance as Record<string, unknown> | undefined;
-    if (!perf || typeof perf !== 'object') { return false; }
-    return (perf.snapshot !== null && perf.snapshot !== undefined && typeof perf.snapshot === 'object') || (typeof perf.samplesFile === 'string' && perf.samplesFile.length > 0);
+    return hasMeaningfulPerformanceData(sidecar.integrations?.performance);
 }
 
 /** Merge sidecar metadata into the parsed session metadata. */

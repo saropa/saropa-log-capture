@@ -1,5 +1,5 @@
-import * as assert from 'assert';
-import { SessionMetadataStore, SessionMeta, Annotation, isOurSidecar } from '../../../modules/session/session-metadata';
+import * as assert from 'node:assert';
+import { SessionMetadataStore, SessionMeta, Annotation, hasMeaningfulPerformanceData, isOurSidecar } from '../../../modules/session/session-metadata';
 
 suite('SessionMetadataStore', () => {
 
@@ -59,5 +59,21 @@ suite('SessionMetadataStore', () => {
         assert.strictEqual(meta.tags?.length, 2);
         assert.strictEqual(meta.annotations?.length, 1);
         assert.strictEqual(meta.annotations?.[0].lineIndex, 0);
+    });
+
+    test('hasMeaningfulPerformanceData should reject placeholder snapshots (false positive guard)', () => {
+        assert.strictEqual(hasMeaningfulPerformanceData(undefined), false);
+        assert.strictEqual(hasMeaningfulPerformanceData(null), false);
+        assert.strictEqual(hasMeaningfulPerformanceData({}), false);
+        assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: {} }), false);
+        assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { note: 'placeholder' } }), false);
+        assert.strictEqual(hasMeaningfulPerformanceData({ samplesFile: '   ' }), false);
+    });
+
+    test('hasMeaningfulPerformanceData should accept real snapshot/sample metadata', () => {
+        assert.strictEqual(hasMeaningfulPerformanceData({ samplesFile: 'session.perf.json' }), true);
+        assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { cpus: 8 } }), true);
+        assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { totalMemMb: 16384, freeMemMb: 8000 } }), true);
+        assert.strictEqual(hasMeaningfulPerformanceData({ snapshot: { processMemMb: 512 } }), true);
     });
 });

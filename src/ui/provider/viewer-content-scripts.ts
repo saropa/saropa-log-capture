@@ -127,7 +127,8 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
         scriptTag(nonce, getInsightPanelScript()) +
-        scriptTag(nonce, getPerformancePanelScript()) +
+        // Performance UI lives only inside Insight (insight-pp-*); standalone performance-panel was removed.
+        scriptTag(nonce, getPerformancePanelScript('insight-')) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +
         scriptTag(nonce, getErrorBreakpointScript()) +
