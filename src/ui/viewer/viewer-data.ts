@@ -5,17 +5,19 @@
  * (recalcHeights, calcItemHeight), and the virtual scrolling renderer
  * (renderItem, renderViewport).
  */
+import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
 
 export function getViewerDataScript(): string {
-    return getViewerDataHelpers() + /* javascript */ `
+    return getViewerDataHelpers() + getCompressStreakScript() + /* javascript */ `
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
     var lineSource = source || 'debug';
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
+        resetCompressDupStreak();
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
             if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
@@ -29,6 +31,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         return;
     }
     if (isStackFrameText(html)) {
+        resetCompressDupStreak();
         var plainFrame = stripTags(html);
         var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
 
@@ -143,6 +146,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             source: lineSource
         };
         allLines.push(repeatItem);
+        resetCompressDupStreak();
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
         totalHeight += repeatH;
@@ -178,6 +182,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
         totalHeight += finalH;
+        updateCompressDupStreakAfterLine(plain);
     }
 }
 
@@ -227,12 +232,77 @@ function trimData() {
 }
 
 /**
+ * When compressLinesMode is on: collapse consecutive identical type==='line' rows (normalized
+ * plain text). Earlier rows in each run get compressDupHidden; the last gets compressDupCount.
+ * Markers, stack traces, repeat-notification rows, etc. break runs.
+ *
+ * Always clears compressDupHidden / compressDupCount on every call first, then returns early if
+ * compress is off — so toggling compress off cannot leave stale flags on line objects.
+ *
+ * Performance: O(n) over allLines per recalcHeights. With compress on, addLines must call
+ * recalcHeights (see viewer-script-messages) because a new tail line can change which prior
+ * line is hidden in a duplicate run.
+ */
+function applyCompressConsecutiveDedup() {
+    var i;
+    for (i = 0; i < allLines.length; i++) {
+        var cleared = allLines[i];
+        if (cleared.compressDupHidden) cleared.compressDupHidden = false;
+        if (cleared.compressDupCount != null) delete cleared.compressDupCount;
+    }
+    if (typeof compressLinesMode === 'undefined' || !compressLinesMode) return;
+
+    var emptyLineKey = '__SAROPA_COMPRESS_EMPTY__';
+    function lineDedupeKey(row) {
+        if (!row || row.type !== 'line') return null;
+        var t = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
+        return t.length === 0 ? emptyLineKey : t;
+    }
+
+    var runStart = -1;
+    var runKey = null;
+
+    function flushRun(endInclusive) {
+        if (runStart < 0) return;
+        var runLen = endInclusive - runStart + 1;
+        if (runLen > 1) {
+            var j;
+            for (j = runStart; j < endInclusive; j++) {
+                allLines[j].compressDupHidden = true;
+            }
+            allLines[endInclusive].compressDupCount = runLen;
+        }
+        runStart = -1;
+        runKey = null;
+    }
+
+    for (i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        var k = lineDedupeKey(item);
+        if (k === null) {
+            flushRun(i - 1);
+            continue;
+        }
+        if (runKey === null) {
+            runStart = i;
+            runKey = k;
+        } else if (k !== runKey) {
+            flushRun(i - 1);
+            runStart = i;
+            runKey = k;
+        }
+    }
+    flushRun(allLines.length - 1);
+}
+
+/**
  * Recalculate all line heights from scratch.
  * Called by every filter (category, exclusion, level) after setting their flags,
  * and by toggleStackGroup after toggling collapsed state. This is the single
  * source of truth for height — individual filters never manipulate heights directly.
  */
 function recalcHeights() {
+    applyCompressConsecutiveDedup();
     totalHeight = 0;
     for (var i = 0; i < allLines.length; i++) {
         allLines[i].height = calcItemHeight(allLines[i]);

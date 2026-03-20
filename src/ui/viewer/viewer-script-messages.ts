@@ -13,7 +13,11 @@ window.addEventListener('message', function(event) {
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
-            if (typeof buildPrefixSums === 'function' && typeof appendPrefixSums === 'function') {
+            /* Compress mode mutates heights of prior lines when a new line extends a dup run; must full recalc, not appendPrefixSums only. */
+            if (typeof compressLinesMode !== 'undefined' && compressLinesMode) {
+                if (typeof recalcHeights === 'function') recalcHeights();
+                if (typeof buildPrefixSums === 'function') buildPrefixSums();
+            } else if (typeof buildPrefixSums === 'function' && typeof appendPrefixSums === 'function') {
                 if (prefixSums && prefixSums.length + msg.lines.length === allLines.length + 1) { appendPrefixSums(); }
                 else { buildPrefixSums(); }
             }
@@ -47,6 +51,9 @@ window.addEventListener('message', function(event) {
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; }
+            if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
+            if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
+            if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
             if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
             footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
@@ -174,8 +181,11 @@ window.addEventListener('message', function(event) {
             break;
         case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
-        case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); break;
-        case 'iconBarPosition': document.body.dataset.iconBar = msg.position || 'left'; break;
+        case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;
+        case 'iconBarPosition':
+            document.body.dataset.iconBar = msg.position || 'left';
+            syncJumpButtonInset();
+            break;
         case 'captureEnabled':
             window.captureEnabled = msg.enabled !== false;
             if (typeof syncCaptureEnabledUi === 'function') syncCaptureEnabledUi();

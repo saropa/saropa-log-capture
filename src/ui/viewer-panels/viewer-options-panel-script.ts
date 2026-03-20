@@ -238,6 +238,9 @@ function syncOptionsPanelUi() {
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
     var hideBlankCheck = document.getElementById('opt-hide-blank-lines');
     if (hideBlankCheck && typeof hideBlankLines !== 'undefined') hideBlankCheck.checked = hideBlankLines;
+    var compressCheck = document.getElementById('opt-compress-lines');
+    if (compressCheck && typeof compressLinesMode !== 'undefined') compressCheck.checked = compressLinesMode;
+    if (typeof syncCompressIconButton === 'function') syncCompressIconButton();
     syncIntegrationsUi();
     syncAudioUi();
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
@@ -258,13 +261,15 @@ function resetOptionsToDefault() {
     if (typeof updateDecoButton === 'function') updateDecoButton();
     if (typeof visualSpacingEnabled !== 'undefined') visualSpacingEnabled = true;
     if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
+    if (typeof compressLinesMode !== 'undefined') compressLinesMode = false;
     if (typeof audioEnabled !== 'undefined') audioEnabled = false;
     if (typeof audioRateLimit !== 'undefined') audioRateLimit = 2000;
     if (typeof setAudioVolume === 'function') setAudioVolume(30);
     if (typeof updateAudioButton === 'function') updateAudioButton();
     if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
     syncOptionsPanelUi();
-    if (typeof renderViewport === 'function') renderViewport(true);
+    if (typeof recalcAndRender === 'function') recalcAndRender();
+    else if (typeof renderViewport === 'function') renderViewport(true);
 }
 
 // Integrations screen: open (from Options) and back (to Options). Same panel, two views; no async load.
