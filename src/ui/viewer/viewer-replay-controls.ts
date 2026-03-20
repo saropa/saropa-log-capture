@@ -67,7 +67,6 @@ export function getReplayControlsScript(): string {
         setReplayBarVisible(false);
         setPlayingUi(false);
         var canReplay = replayFileLoaded && !replaySessionActive && hasLines();
-        setReplayIconVisible(canReplay);
         setFooterReplayVisible(canReplay);
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
@@ -83,7 +82,6 @@ export function getReplayControlsScript(): string {
         setReplayBarVisible(true);
         replayPlaying = true;
         setPlayingUi(true);
-        setReplayIconVisible(true);
         updateReplayUi();
         scheduleNext();
     };
@@ -148,7 +146,6 @@ export function getReplayControlsScript(): string {
     });
 
     setReplayBarVisible(false);
-    setReplayIconVisible(false);
     setFooterReplayVisible(false);
 `;
 }

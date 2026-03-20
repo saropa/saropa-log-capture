@@ -150,14 +150,6 @@ body[data-icon-bar="right"] .ib-badge {
 }
 
 
-/* Replay icon hidden until replay mode is active. */
-#ib-replay {
-    display: none;
-}
-#ib-replay.ib-replay-active {
-    display: flex;
-}
-
 /* Crashlytics icon hidden until integrations.adapters includes "crashlytics". */
 #ib-crashlytics {
     display: none;

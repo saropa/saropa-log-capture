@@ -8,7 +8,7 @@
  * Terminal tabs). Panel-scoped elements use --vscode-panel-background to
  * blend seamlessly with the surrounding panel chrome.
  */
-import { getContentStyles } from './viewer-styles-content';
+import { getContentStyles, getJumpScrollButtonAnchorStyles } from './viewer-styles-content';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
 import { getTagStyles } from './viewer-styles-tags';
@@ -142,6 +142,11 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
     overflow-anchor: none;
     padding: 4px 0 40px;
     position: relative;
+    /* Hide native vertical scrollbar when showScrollbar is off (WebKit rules below; this catches overlay/standard behavior). */
+    scrollbar-width: none;
+}
+body.scrollbar-visible #log-content {
+    scrollbar-width: auto;
 }
 #log-content::-webkit-scrollbar { width: 0; height: 10px; }
 body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -266,5 +271,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
+` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getJumpScrollButtonAnchorStyles();
 }
