@@ -12,6 +12,9 @@ var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
 /** Only show scroll buttons when content exceeds this fraction of the viewport height. */
 var SCROLL_BTN_THRESHOLD = 1.5;
+/** Schmitt-trigger band for tail-follow: avoids autoScroll flipping when distance-to-bottom jitters (layout/subpixel). */
+var AT_BOTTOM_ON_PX = 36;
+var AT_BOTTOM_OFF_PX = 56;
 var footerEl = document.getElementById('footer');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
@@ -81,10 +84,15 @@ function isStackFrameText(html) {
 
 function handleScroll() {
     if (typeof suppressScroll !== 'undefined' && suppressScroll) return;
-    var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 30;
-    autoScroll = atBottom; renderViewport(false);
+    var distBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight;
+    if (autoScroll) {
+        if (distBottom > AT_BOTTOM_OFF_PX) autoScroll = false;
+    } else {
+        if (distBottom < AT_BOTTOM_ON_PX) autoScroll = true;
+    }
+    renderViewport(false);
     var isTall = logEl.scrollHeight > logEl.clientHeight * SCROLL_BTN_THRESHOLD;
-    jumpBtn.style.display = (!atBottom && isTall) ? 'block' : 'none';
+    if (jumpBtn) jumpBtn.style.display = (distBottom > AT_BOTTOM_ON_PX && isTall) ? 'block' : 'none';
     if (jumpTopBtn) jumpTopBtn.style.display = (logEl.scrollTop > logEl.clientHeight * 0.5 && isTall) ? 'block' : 'none';
 }
 
@@ -142,7 +150,7 @@ viewportEl.addEventListener('click', function(e) {
 
 function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
-jumpBtn.addEventListener('click', jumpToBottom);
+if (jumpBtn) jumpBtn.addEventListener('click', jumpToBottom);
 if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {
     if (window.isContextMenuOpen) return;
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
@@ -162,7 +170,7 @@ function jumpToBottom() {
     if (window.isContextMenuOpen) return;
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false;
-    autoScroll = true; jumpBtn.style.display = 'none';
+    autoScroll = true; if (jumpBtn) jumpBtn.style.display = 'none';
 }
 
 function formatNumber(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
