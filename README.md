@@ -78,7 +78,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **AI Activity (opt-in):** When enabled, Claude Code AI activity (tool calls, prompts, system warnings) can be streamed into the log viewer interleaved with debug output; AI lines have distinct colored borders and `[AI ...]` prefixes, filterable by category. Settings under `saropaLogCapture.aiActivity.*`; auto-detects `~/.claude/projects/` when `autoDetect` is on.
 
 ### Viewer
-- **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar).
+- **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar). Virtual scroll rebuilds only when the visible line range changes (stable when filters hide most lines); tail-follow uses hysteresis so it does not thrash near the end of the log.
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Search, Options, and Pop Out. Clicking an icon toggles its slide-out panel. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously. You can also open the Saropa Log Capture tab in a new window (e.g. right‑click tab → Open in New Window); clicking a session there shows the log in that window.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
