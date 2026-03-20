@@ -80,10 +80,12 @@ function isLineContentBlank(item) {
 function calcItemHeight(item) {
     // Multi-source filter: hide line if its source is not in the enabled set (e.g. "Just debug").
     if (typeof window !== 'undefined' && window.enabledSources && item.source && window.enabledSources.indexOf(item.source) < 0) return 0;
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden) return 0;
     var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
     if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
-    if (typeof hideBlankLines !== 'undefined' && hideBlankLines && item.type === 'line' && isLineContentBlank(item)) return 0;
+    var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines) ||
+        (typeof compressLinesMode !== 'undefined' && compressLinesMode);
+    if (hideBlanks && item.type === 'line' && isLineContentBlank(item)) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);

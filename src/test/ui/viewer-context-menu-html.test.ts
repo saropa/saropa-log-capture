@@ -49,6 +49,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
+            assert.ok(html.includes('data-action="toggle-compress-lines"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line decorations (dot, number, time)'));
             assert.ok(html.includes('Timestamp'));
@@ -56,6 +57,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Comfortable line height'));
             assert.ok(html.includes('Hide blank lines'));
+            assert.ok(html.includes('Compress lines'));
         });
 
         test('should include data-action attributes', () => {

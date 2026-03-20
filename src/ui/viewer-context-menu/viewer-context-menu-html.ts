@@ -177,6 +177,10 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Hide blank lines</span>
             </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Compress lines (blanks + consecutive dupes)</span>
+            </div>
         </div>
     </div>
 </div>`;

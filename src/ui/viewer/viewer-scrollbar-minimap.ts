@@ -41,6 +41,7 @@ function handleMinimapWidth(msg) {
     /* Keep --mm-w in sync so absolute-positioned overlays (replay bar) clear the minimap */
     var wrapper = document.getElementById('log-content-wrapper');
     if (wrapper) wrapper.style.setProperty('--mm-w', w);
+    if (typeof syncJumpButtonInset === 'function') syncJumpButtonInset();
 }
 
 /** Read VS Code theme colors with fallbacks. */

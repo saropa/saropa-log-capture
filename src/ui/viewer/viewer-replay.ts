@@ -73,6 +73,7 @@ export function getReplayScript(): string {
     function setReplayBarVisible(visible) {
         if (!bar) return;
         bar.classList.toggle('replay-bar-visible', !!visible);
+        if (typeof syncJumpButtonInset === 'function') syncJumpButtonInset();
     }
 
     function setFooterReplayVisible(visible) {

@@ -18,6 +18,32 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
+## [3.12.0]
+
+### Added
+
+• **Regression tests (session-nav search)** — `viewer-session-nav-search.test.ts` asserts viewer body wiring (no slide-out `#search-bar`, no `getSearchPanelHtml`), panel-slot ordering, icon-bar width skip for search, and stable search DOM ids.
+
+• **Compress lines** — Options › Layout, the **activity bar Compress** icon (collapse-all codicon, next to Filters), and the log context menu (**Options** submenu) toggle **Compress lines**: blank lines are hidden and **consecutive identical** normal log rows collapse to the **last** occurrence with an **(×N)** badge. Markers, stack blocks, run separators, and other non-line rows **break** dedupe runs so structure stays intact. Live capture recomputes layout when this mode is on so new lines merge correctly with the previous row. When compress mode is **off**, **20 consecutive duplicate lines** (O(1) per line) can show a **one-time suggestion banner** under the session bar with **Enable** / dismiss — cleared logs reset the hint.
+
+### Changed
+
+• **Session bar in-log search** — The compact find field and options popover no longer inherit the thick bordered “Prev / Next” nav button style (that rule is scoped to `.session-nav-controls` only). Controls use **borderless toolbar icons**, **editor widget** border/shadow tokens (`widget.shadow` where available), and **find-panel–style** active toggles so the strip matches the rest of VS Code.
+
+• **Info line color in the log viewer** — Lines classified as **info** (e.g. `I/flutter` / Drift SQL) now use **`debugConsole.infoForeground`**, the same VS Code theme token as the Debug Console info tint and in-log “Info” highlights, instead of terminal yellow.
+
+• **Log search in the title bar** — In-log search is a compact filter field on the **right side of the session nav** (same row as log prev/next and context), similar to VS Code’s filter input, instead of a wide slide-out panel. Match case, whole word, regex, and highlight vs filter mode live under the **funnel** button; recent terms still appear in a floating list when the field is focused and empty. The activity bar **Search** control and **Ctrl+F** focus this field without opening the side panel.
+
+### Fixed
+
+• **Search history floating panel** — When the recent-queries list is cleared (typing in the field or empty history), inline styles from `positionSearchFloatingPanels` are reset so a stale `position: fixed` box does not linger on screen.
+
+• **Developer console noise on activation (Crashlytics cache)** — Workspaces that never had a legacy **`{logDirectory}/crashlytics`** folder no longer trigger a failed **`readdir`** during the one-time migration to **`.saropa/cache/crashlytics`**; the extension **`stat`**s the old folder first so the host does not log **`ENOENT`** / **`scandir`** for a missing path. The Crashlytics CodeLens cache scan uses the same **`stat`**-first pattern for **`.saropa/cache/crashlytics`**.
+
+• **Jump Top / Bottom horizontal placement** — Prior fixes still left `position: absolute` + `right` resolving on the **wrong** edge in the embedded webview. Jump controls now use **`position: fixed`** with **`syncJumpButtonInset()`** driven by **`#log-content.getBoundingClientRect()`** and **`window.innerWidth`/`innerHeight`** (viewport coordinates, no containing-block guesswork). Replay-bar visibility, **icon bar side**, resize, minimap width, and scrollbar visibility trigger a sync; jump fade-in animation is **opacity-only** so `transform` does not fight layout.
+
+---
+
 ## [3.11.0]
 
 ### Changed

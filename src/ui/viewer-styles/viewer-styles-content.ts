@@ -54,22 +54,18 @@ export function getContentStyles(): string {
 
 /* ===================================================================
    Jump-to-Top / Jump-to-Bottom Buttons
-   Floating buttons in log-content-wrapper, shown when content
-   exceeds SCROLL_BTN_THRESHOLD of viewport height. Anchored on the right
-   side of the log column: inset by --mm-w (minimap) + --scrollbar-w
-   (10px when saropaLogCapture.showScrollbar is on) + 8px gap — so buttons
-   sit to the left of the minimap and are not drawn on top of the native
-   vertical scrollbar when it is visible.
+   Position and inset come from syncJumpButtonInset() (fixed + viewport rects). Opacity-only
+   animation avoids transform on the buttons conflicting with compositor positioning.
    =================================================================== */
 #log-content {
     position: relative;
 }
-@keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 0.85; transform: translateY(0); } }
+@keyframes jump-btn-fade-in { from { opacity: 0; } to { opacity: 0.85; } }
 #jump-btn, #jump-top-btn {
     display: none;
-    position: absolute;
+    position: fixed;
     left: auto;
-    right: calc(var(--mm-w, 0px) + var(--scrollbar-w, 0px) + 8px);
+    right: 8px;
     background: var(--vscode-editorWidget-background);
     color: var(--vscode-editorWidget-foreground);
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
@@ -80,12 +76,10 @@ export function getContentStyles(): string {
     opacity: 0.85;
     z-index: 15;
     transition: opacity 0.2s ease;
-    animation: fade-in 0.2s ease-out;
+    animation: jump-btn-fade-in 0.2s ease-out;
     pointer-events: auto;
 }
 #jump-btn { bottom: 8px; }
-/* Replay bar shares bottom-right corner with higher z-index; nudge jump so it stays clickable. */
-#log-content-wrapper:has(.replay-bar.replay-bar-visible) #jump-btn { bottom: 52px; }
 #jump-top-btn { top: 8px; }
 #jump-btn:hover, #jump-top-btn:hover {
     opacity: 1;
@@ -230,6 +224,15 @@ export function getContentStyles(): string {
     opacity: 0.7;
     margin-left: 4px;
 }
+/* Consecutive duplicate lines collapsed in compress mode (same styling family as stack dedup). */
+.compress-dup-badge {
+    font-size: 10px;
+    opacity: 0.75;
+    margin-right: 6px;
+    color: var(--vscode-descriptionForeground);
+    font-style: normal;
+    vertical-align: baseline;
+}
 
 /* ===================================================================
    Repeat Notifications
@@ -257,16 +260,5 @@ export function getContentStyles(): string {
     margin-bottom: 12px;
 }
 
-`;
-}
-
-/** Appended last in `getViewerStyles()` so horizontal placement wins over any stale rule. Same inset as above (minimap + native scrollbar when on). */
-export function getJumpScrollButtonAnchorStyles(): string {
-    return /* css */ `
-#log-content-wrapper > #jump-btn,
-#log-content-wrapper > #jump-top-btn {
-    left: auto !important;
-    right: calc(var(--mm-w, 0px) + var(--scrollbar-w, 0px) + 8px) !important;
-}
 `;
 }

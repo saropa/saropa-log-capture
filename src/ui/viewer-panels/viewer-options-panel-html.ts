@@ -126,6 +126,10 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-hide-blank-lines" />
                 <span>Hide blank lines</span>
             </label>
+            <label class="options-row" title="Hide blank lines and collapse consecutive identical log lines into one row with a repeat count (markers and stack traces break runs)">
+                <input type="checkbox" id="opt-compress-lines" />
+                <span>Compress lines (hide blanks + dedupe consecutive)</span>
+            </label>
         </div>
 
         <!-- Audio Section -->

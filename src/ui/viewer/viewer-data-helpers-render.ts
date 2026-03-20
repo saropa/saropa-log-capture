@@ -105,7 +105,11 @@ function renderItem(item, idx, prevVis) {
         var aiCat = item.category;
         var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
         var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
-        return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiBody + '</div>';
+        var aiCompress = '';
+        if (typeof compressLinesMode !== 'undefined' && compressLinesMode && item.compressDupCount > 1) {
+            aiCompress = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' consecutive identical lines">(×' + item.compressDupCount + ')</span> ';
+        }
+        return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
     var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
@@ -118,6 +122,10 @@ function renderItem(item, idx, prevVis) {
     var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '';
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
+    var compressDupBadge = '';
+    if (typeof compressLinesMode !== 'undefined' && compressLinesMode && item.compressDupCount > 1) {
+        compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' consecutive identical lines">(×' + item.compressDupCount + ')</span> ';
+    }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
@@ -140,7 +148,7 @@ function renderItem(item, idx, prevVis) {
         tintCls = ' line-tint-' + allLines[idx - 1].level;
     }
     var blankCls = isBlank ? ' line-blank' : '';
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + '</div>' + annHtml;
 }
 `;
 }

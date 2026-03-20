@@ -1,47 +1,33 @@
 /**
- * Client-side JavaScript and HTML for the search panel in the log viewer.
- * Provides regex search, match highlighting, and F3/Shift+F3 navigation.
- * Panel slides in from the right, matching the options panel pattern.
+ * In-log search — webview script (injected string) for the Saropa Log Capture viewer.
+ *
+ * **Where it runs:** Bundled into the log viewer webview with other `get*Script()` modules.
+ * **UI:** The DOM lives in the session nav (`getSessionNavSearchHtml`); there is no `#search-bar`
+ * slide-out. Options and history use `position: fixed` panels positioned by
+ * `positionSearchFloatingPanels()` so the session-nav wrapper’s `overflow` does not clip them.
+ *
+ * **Lifecycle:** `openSearch` / `closeSearch` gate the document-level “click outside to dismiss”
+ * behaviour and sync the activity bar’s active panel. `searchInput` `focus` calls `openSearch`
+ * so keyboard users get the same semantics as Ctrl+F. Escape closes the options popover first,
+ * then the search session.
+ *
+ * **Integration:** `window.setupFromFindInFiles` applies cross-file find options without opening
+ * a panel. `window.positionSearchFloatingPanels` is called from search history rendering when
+ * the list is cleared as well as when it is shown (see `viewer-search-history.ts`).
  */
 
-/** Returns the HTML for the search slide-out panel. */
-export function getSearchPanelHtml(): string {
-    return /* html */ `<div id="search-bar">
-    <div class="search-header">
-        <span>Search</span>
-        <button class="search-close" id="search-close" title="Close (Escape)"><span class="codicon codicon-close"></span></button>
-    </div>
-    <div class="search-content">
-        <div class="search-input-wrapper">
-            <input id="search-input" type="text" placeholder="Search..." />
-            <div class="search-input-actions">
-                <button id="search-case-toggle" class="search-input-btn" title="Match Case"><span class="codicon codicon-case-sensitive"></span></button>
-                <button id="search-word-toggle" class="search-input-btn" title="Match Whole Word"><span class="codicon codicon-whole-word"></span></button>
-                <button id="search-regex-toggle" class="search-input-btn" title="Use Regular Expression"><span class="codicon codicon-regex"></span></button>
-            </div>
-        </div>
-        <div id="search-history" class="search-history"></div>
-        <div class="search-toggles">
-            <button id="search-mode-toggle" title="Toggle highlight/filter mode">Mode: Highlight</button>
-        </div>
-        <div class="search-nav">
-            <span id="match-count"></span>
-            <button id="search-prev" title="Previous (Shift+F3)">&#x25B2; Prev</button>
-            <button id="search-next" title="Next (F3)">&#x25BC; Next</button>
-        </div>
-    </div>
-</div>`;
-}
-
-/** Returns the JavaScript for the search panel logic. */
+/** Returns the JavaScript for search (highlight, filter, F3 navigation). */
 export function getSearchScript(): string {
     return /* javascript */ `
-var searchBarEl = document.getElementById('search-bar');
+var sessionNavSearchOuter = document.getElementById('session-nav-search-outer');
 var searchInputEl = document.getElementById('search-input');
 var matchCountEl = document.getElementById('match-count');
 var searchModeToggleEl = document.getElementById('search-mode-toggle');
+var searchFunnelBtn = document.getElementById('search-funnel-btn');
+var searchOptionsPopover = document.getElementById('search-options-popover');
 
 var searchOpen = false;
+var searchOptionsOpen = false;
 var searchRegex = null;
 var matchIndices = [];
 var currentMatchIdx = -1;
@@ -51,23 +37,86 @@ var searchRegexMode = false;
 var searchCaseSensitive = false;
 var searchWholeWord = false;
 
+function closeSearchOptionsPopover() {
+    searchOptionsOpen = false;
+    if (searchOptionsPopover) searchOptionsPopover.hidden = true;
+    if (searchFunnelBtn) searchFunnelBtn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleSearchOptionsPopover() {
+    if (!searchOptionsPopover || !searchFunnelBtn) return;
+    searchOptionsOpen = !searchOptionsOpen;
+    if (searchOptionsOpen) {
+        searchOptionsPopover.hidden = false;
+        searchFunnelBtn.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(positionSearchFloatingPanels);
+    } else {
+        closeSearchOptionsPopover();
+    }
+}
+
+/** Place history and options popovers under the compact search field (fixed; avoids session-nav overflow clip). */
+function positionSearchFloatingPanels() {
+    var shell = document.querySelector('.session-search-input-shell');
+    var hist = document.getElementById('search-history');
+    var opt = document.getElementById('search-options-popover');
+    if (!shell) return;
+    var r = shell.getBoundingClientRect();
+    var w = Math.max(220, r.width);
+    if (hist && hist.innerHTML.trim() !== '') {
+        hist.style.position = 'fixed';
+        hist.style.left = r.left + 'px';
+        hist.style.top = (r.bottom + 2) + 'px';
+        hist.style.width = w + 'px';
+        hist.style.zIndex = '20000';
+        hist.style.maxHeight = 'min(240px, 40vh)';
+    } else if (hist) {
+        hist.style.position = '';
+        hist.style.left = '';
+        hist.style.top = '';
+        hist.style.width = '';
+        hist.style.zIndex = '';
+        hist.style.maxHeight = '';
+    }
+    if (opt && !opt.hidden) {
+        opt.style.position = 'fixed';
+        opt.style.left = r.left + 'px';
+        opt.style.top = (r.bottom + 2) + 'px';
+        opt.style.width = Math.max(260, w) + 'px';
+        opt.style.zIndex = '20001';
+    } else if (opt) {
+        opt.style.position = '';
+        opt.style.left = '';
+        opt.style.top = '';
+        opt.style.width = '';
+        opt.style.zIndex = '';
+    }
+}
+window.positionSearchFloatingPanels = positionSearchFloatingPanels;
+
+var logContentForSearchPanels = document.getElementById('log-content');
+if (logContentForSearchPanels) {
+    logContentForSearchPanels.addEventListener('scroll', function() { positionSearchFloatingPanels(); }, { passive: true });
+}
+window.addEventListener('resize', function() { positionSearchFloatingPanels(); });
+
 function openSearch() {
     if (searchOpen) { searchInputEl.focus(); return; }
     searchOpen = true;
     if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
     if (typeof closeSessionPanel === 'function') closeSessionPanel();
-    searchBarEl.classList.add('visible');
     searchInputEl.focus();
     if (searchInputEl.value) { updateSearch(); } else { clearSearchState(); }
     updateClearButton();
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
+    requestAnimationFrame(positionSearchFloatingPanels);
 }
 
 function closeSearch() {
     if (!searchOpen) return;
+    closeSearchOptionsPopover();
     if (typeof addToSearchHistory === 'function' && searchInputEl.value.trim()) addToSearchHistory(searchInputEl.value.trim());
     searchOpen = false;
-    searchBarEl.classList.remove('visible');
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
     clearSearchFilter();
@@ -83,6 +132,10 @@ function clearSearchState() {
     matchIndices = [];
     currentMatchIdx = -1;
     matchCountEl.textContent = '';
+    var sp = document.getElementById('search-prev');
+    var sn = document.getElementById('search-next');
+    if (sp) sp.disabled = true;
+    if (sn) sn.disabled = true;
 }
 
 function escapeForRegex(s) {
@@ -159,6 +212,11 @@ function updateMatchDisplay() {
     } else {
         matchCountEl.textContent = (currentMatchIdx + 1) + '/' + matchIndices.length;
     }
+    var sp = document.getElementById('search-prev');
+    var sn = document.getElementById('search-next');
+    var navDisabled = matchIndices.length === 0;
+    if (sp) sp.disabled = navDisabled;
+    if (sn) sn.disabled = navDisabled;
 }
 
 function searchNext() {
@@ -208,27 +266,46 @@ function isCurrentMatch(idx) {
     return currentMatchIdx >= 0 && matchIndices[currentMatchIdx] === idx;
 }
 
+searchInputEl.addEventListener('focus', function() {
+    if (!searchOpen) { openSearch(); }
+});
+
 searchInputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.shiftKey ? searchPrev() : searchNext(); e.preventDefault(); }
-    if (e.key === 'Escape') { closeSearch(); e.preventDefault(); }
+    if (e.key === 'Escape') {
+        if (searchOptionsOpen) { closeSearchOptionsPopover(); }
+        else { closeSearch(); }
+        e.preventDefault();
+    }
 });
 document.getElementById('search-next').addEventListener('click', searchNext);
 document.getElementById('search-prev').addEventListener('click', searchPrev);
-document.getElementById('search-close').addEventListener('click', closeSearch);
+if (searchFunnelBtn) {
+    searchFunnelBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSearchOptionsPopover();
+    });
+}
 
 function updateClearButton() {
     /* no-op — retained for compatibility with search history input handler */
 }
 
-/* Prevent clicks inside the search panel from reaching the
+/* Prevent clicks inside the session search strip from reaching the
    document-level close handler that calls closeSearch(). */
-searchBarEl.addEventListener('click', function(e) { e.stopPropagation(); });
+if (sessionNavSearchOuter) {
+    sessionNavSearchOuter.addEventListener('click', function(e) { e.stopPropagation(); });
+}
 
-/* Close search panel when clicking outside it. */
+/* Close search when clicking outside the strip (and close options popover on any outside click). */
 document.addEventListener('click', function(e) {
+    if (searchOptionsOpen && searchOptionsPopover && !searchOptionsPopover.contains(e.target) && searchFunnelBtn && !searchFunnelBtn.contains(e.target)) {
+        closeSearchOptionsPopover();
+    }
     if (!searchOpen) return;
     var ibBtn = document.getElementById('ib-search');
     if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
+    if (sessionNavSearchOuter && sessionNavSearchOuter.contains(e.target)) return;
     closeSearch();
 });
 

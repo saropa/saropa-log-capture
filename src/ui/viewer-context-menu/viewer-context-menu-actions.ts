@@ -101,6 +101,7 @@ function handleToggleAction(action) {
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
+        'toggle-compress-lines': typeof toggleCompressLines === 'function' ? toggleCompressLines : null,
     };
     var fn = toggleFns[action];
     if (!fn) return false;
