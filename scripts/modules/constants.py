@@ -56,6 +56,8 @@ class ExitCode:
     RELEASE_FAILED = 13
     USER_CANCELLED = 14
     OPENVSX_FAILED = 15
+    # Store API report: package.json version != one or both registries (see check-stores-version.ps1).
+    STORE_VERSION_MISMATCH = 16
 
 
 # ── Color Setup ──────────────────────────────────────────────

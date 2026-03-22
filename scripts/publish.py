@@ -31,6 +31,7 @@
 #     Step 13: Publish to VS Code Marketplace
 #     Step 14: Publish to Open VSX (Cursor / VSCodium)
 #     Step 15: Create GitHub release (attach .vsix)
+#     Step 16: Verify registries (Open VSX + VS Marketplace APIs vs package.json)
 #
 # .USAGE
 #   python scripts/publish.py                   # full analyze + publish pipeline
@@ -40,6 +41,7 @@
 #   python scripts/publish.py --skip-global-npm # skip global npm package checks
 #   python scripts/publish.py --auto-install    # auto-install .vsix (no prompt)
 #   python scripts/publish.py --no-logo         # suppress Saropa ASCII art
+#   python scripts/publish.py --store-versions  # only Step 16 (registries vs package.json)
 #
 # .NOTES
 #   Version:      4.0.0
@@ -55,10 +57,13 @@
 #    5  COMPILE_FAILED      13  RELEASE_FAILED
 #    6  TEST_FAILED         14  USER_CANCELLED
 #    7  QUALITY_FAILED      15  OPENVSX_FAILED
+#                       16  STORE_VERSION_MISMATCH
 #
 # ##############################################################################
 
 import argparse
+import os
+import shutil
 import subprocess
 import sys
 
@@ -117,6 +122,10 @@ _CLI_FLAGS = [
     ("--skip-global-npm", "Skip global npm package checks."),
     ("--auto-install", "Auto-install .vsix without prompting (for CI)."),
     ("--no-logo", "Suppress the Saropa ASCII art logo."),
+    (
+        "--store-versions",
+        "Report Open VSX + VS Marketplace versions vs package.json (scripts/check-stores-version.ps1).",
+    ),
 ]
 
 
@@ -169,6 +178,36 @@ def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
 # ── Main ─────────────────────────────────────────────────────
 
 
+def run_store_versions_report(expected_version: str) -> int:
+    """Run scripts/check-stores-version.ps1 -ReportOnly; store HTTP logic lives only in PowerShell."""
+    ps = shutil.which("pwsh") or shutil.which("powershell") or shutil.which("powershell.exe")
+    if not ps:
+        print(
+            "ERROR: PowerShell not found (install PowerShell Core 'pwsh', or use Windows PowerShell).",
+            file=sys.stderr,
+        )
+        return ExitCode.PREREQUISITE_FAILED
+    script = os.path.join(PROJECT_ROOT, "scripts", "check-stores-version.ps1")
+    if not os.path.isfile(script):
+        print(f"ERROR: Missing {script}", file=sys.stderr)
+        return ExitCode.PREREQUISITE_FAILED
+    cmd = [
+        ps,
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        script,
+        "-ReportOnly",
+        "-ExpectedVersion",
+        expected_version,
+    ]
+    proc = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    if proc.returncode != 0:
+        return ExitCode.STORE_VERSION_MISMATCH
+    return ExitCode.SUCCESS
+
+
 def _print_banner(args: argparse.Namespace, version: str) -> None:
     """Print the script banner (logo or compact header)."""
     if not args.no_logo:
@@ -186,10 +225,16 @@ def main() -> int:
     1. Run analysis phase (Steps 1-10) — all must pass
     2. Package .vsix and offer local install (always)
     3. If --analyze-only: stop here
-    4. Otherwise: confirm → credentials → publish (Steps 11-15)
+    4. Otherwise: confirm → credentials → publish (Steps 11-15) → store API check (Step 16)
     """
     args = parse_args()
     version = read_package_version()
+
+    if args.store_versions:
+        _print_banner(args, version)
+        heading("Store versions (registries vs package.json)")
+        return run_store_versions_report(version)
+
     results: list[tuple[str, bool, float]] = []
 
     _print_banner(args, version)
@@ -227,6 +272,10 @@ def main() -> int:
     if not run_publish(version, vsix_path, results, stores):
         return _exit_code_from_results(results)
 
+    heading("Store versions (registries vs package.json)")
+    store_rc = run_store_versions_report(version)
+    if store_rc != ExitCode.SUCCESS:
+        return store_rc
     return ExitCode.SUCCESS
 
 
