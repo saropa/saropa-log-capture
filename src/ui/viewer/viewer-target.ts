@@ -45,6 +45,7 @@ export interface ViewerTarget {
   setMinimapShowInfo(show: boolean): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
   setScrollbarVisible(show: boolean): void;
+  setSearchMatchOptionsAlwaysVisible(always: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
   setAutoHidePatterns(patterns: readonly string[]): void;
 }

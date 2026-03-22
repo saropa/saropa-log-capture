@@ -1,6 +1,10 @@
 /**
  * PostMessage-based state updates for LogViewerProvider (set* / send*).
  * Extracted to keep log-viewer-provider.ts under the line limit.
+ *
+ * Viewer-affecting workspace settings (e.g. `showScrollbar`, `viewerAlwaysShowSearchMatchOptions`) are
+ * read in the extension host, then pushed here as small typed messages; the webview applies `body` classes
+ * or DOM updates in `viewer-script-messages.ts` — avoid duplicating config parsing inside the iframe.
  */
 
 import * as vscode from "vscode";
@@ -94,6 +98,9 @@ export function setMinimapWidthImpl(target: ProviderStateTarget, width: "small" 
 }
 export function setScrollbarVisibleImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "scrollbarVisible", show });
+}
+export function setSearchMatchOptionsAlwaysVisibleImpl(target: ProviderStateTarget, always: boolean): void {
+  target.postMessage({ type: "searchMatchOptionsAlwaysVisible", always });
 }
 export function setIconBarPositionImpl(target: ProviderStateTarget, position: "left" | "right"): void {
   target.postMessage({ type: "iconBarPosition", position });

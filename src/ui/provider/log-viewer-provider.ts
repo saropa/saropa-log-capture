@@ -179,6 +179,7 @@ export class LogViewerProvider
   setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
+  setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }
   setIconBarPosition(position: "left" | "right"): void { state.setIconBarPositionImpl(this, position); }
   setAutoHidePatterns(patterns: readonly string[]): void { state.setAutoHidePatternsImpl(this, patterns); }
   setSessionInfo(info: Record<string, string> | null): void { state.setSessionInfoImpl(this, info); }

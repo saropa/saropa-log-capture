@@ -21,21 +21,30 @@ function toggleSearchMode() {
 function toggleRegexMode() {
     searchRegexMode = !searchRegexMode;
     var btn = document.getElementById('search-regex-toggle');
-    if (btn) btn.classList.toggle('active', searchRegexMode);
+    if (btn) {
+        btn.classList.toggle('active', searchRegexMode);
+        btn.setAttribute('aria-pressed', searchRegexMode ? 'true' : 'false');
+    }
     if (searchInputEl.value) updateSearch();
 }
 
 function toggleCaseSensitive() {
     searchCaseSensitive = !searchCaseSensitive;
     var btn = document.getElementById('search-case-toggle');
-    if (btn) btn.classList.toggle('active', searchCaseSensitive);
+    if (btn) {
+        btn.classList.toggle('active', searchCaseSensitive);
+        btn.setAttribute('aria-pressed', searchCaseSensitive ? 'true' : 'false');
+    }
     if (searchInputEl.value) updateSearch();
 }
 
 function toggleWholeWord() {
     searchWholeWord = !searchWholeWord;
     var btn = document.getElementById('search-word-toggle');
-    if (btn) btn.classList.toggle('active', searchWholeWord);
+    if (btn) {
+        btn.classList.toggle('active', searchWholeWord);
+        btn.setAttribute('aria-pressed', searchWholeWord ? 'true' : 'false');
+    }
     if (searchInputEl.value) updateSearch();
 }
 
