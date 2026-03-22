@@ -44,4 +44,10 @@ export default [{
     rules: {
         "@typescript-eslint/no-explicit-any": "off",
     },
+}, {
+    // Single module emits the full webview client script as one template literal; line budget is higher than typical TS.
+    files: ["src/ui/viewer/viewer-script.ts"],
+    rules: {
+        "max-lines": ["warn", { max: 340, skipBlankLines: true, skipComments: true }],
+    },
 }];

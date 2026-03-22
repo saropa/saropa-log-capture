@@ -86,6 +86,37 @@ export function getContentStyles(): string {
     background: var(--vscode-list-hoverBackground);
 }
 
+/* Compress lines: display toggle pinned to log pane (same syncJumpButtonInset() as jump buttons). */
+#log-compress-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--vscode-editorWidget-background);
+    color: var(--vscode-editorWidget-foreground);
+    opacity: 0.9;
+    z-index: 15;
+    pointer-events: auto;
+}
+#log-compress-toggle:hover {
+    opacity: 1;
+    background: var(--vscode-list-hoverBackground);
+}
+#log-compress-toggle.log-compress-toggle--on {
+    background: var(--vscode-toolbar-activeBackground, var(--vscode-list-activeSelectionBackground));
+    color: var(--vscode-toolbar-activeForeground, var(--vscode-list-activeSelectionForeground));
+    border-color: var(--vscode-focusBorder, var(--vscode-widget-border, var(--vscode-panel-border)));
+}
+#log-compress-toggle .codicon {
+    font-size: 16px;
+}
+
 /* ===================================================================
    Footer Bar
    Sticky bar at the bottom showing line count, watch chips, level

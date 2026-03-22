@@ -1,12 +1,25 @@
 /**
- * Viewer Layout Script
+ * Viewer Layout Script (embedded webview JavaScript)
  *
- * Provides dynamic layout adjustments for the log viewer:
- * - Font size control (8-22px)
- * - Line height control (0.5-4.0) and compressed/comfortable preset toggle
- * - Dynamic ROW_HEIGHT measurement via hidden probe element
- * - Visual spacing, hide-blank-lines, and compress-lines (consecutive dedupe) toggles
- * - Updates CSS variables and triggers viewport recalculation
+ * Emits the first script block in the viewer bundle (see `viewer-content-scripts.ts` order). It runs
+ * before virtual-scroll / data scripts and defines global layout state and helpers consumed by
+ * options UI, context menu actions, and streak/suggestion logic.
+ *
+ * Responsibilities:
+ * - **Typography:** `logFontSize`, `logLineHeight`, CSS variables `--log-font-size` / `--log-line-height`,
+ *   and `measureRowHeight()` (hidden probe) so `ROW_HEIGHT` / `MARKER_HEIGHT` match themed CSS.
+ * - **Line presentation:** `visualSpacingEnabled`, `hideBlankLines`, and **`compressLinesMode`**
+ *   (hide blank lines + collapse consecutive duplicate normal lines with an (×N) badge on the last row).
+ * - **Compress UI sync:** `toggleCompressLines()` flips `compressLinesMode`, re-renders via
+ *   `recalcAndRender` / `recalcHeights` + `renderViewport`, and calls `syncCompressIconButton()` so the
+ *   log-pane `#log-compress-toggle`, Options panel checkbox, and context menu stay aligned. The helper
+ *   name retains "IconButton" for backward compatibility with older emitted references in options scripts.
+ * - **Suggestion banner:** `showCompressSuggestionBanner` / `hideCompressSuggestionBanner` coordinate
+ *   with `viewer-data-compress-streak.ts` when compress is off and many identical lines stream in.
+ * - **Input:** Ctrl/Meta + wheel on `#log-content` adjusts font size.
+ *
+ * **Ordering / safety:** Do not call into data-layer functions before they exist; helpers use
+ * `typeof fn === 'function'` guards. `compressLinesMode` is plain boolean state — no async or recursion.
  */
 
 /**
@@ -119,13 +132,13 @@ function toggleHideBlankLines() {
 }
 
 /**
- * Sync activity bar compress icon with compressLinesMode (toggle state, not a slide-out panel).
+ * Sync log-pane compress toggle with compressLinesMode (display option, not a slide-out panel).
  */
 function syncCompressIconButton() {
-    var btn = document.getElementById('ib-compress');
+    var btn = document.getElementById('log-compress-toggle');
     if (btn) {
         var on = !!compressLinesMode;
-        btn.classList.toggle('ib-active', on);
+        btn.classList.toggle('log-compress-toggle--on', on);
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
 }
