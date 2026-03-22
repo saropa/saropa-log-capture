@@ -72,6 +72,8 @@ export interface SaropaLogCaptureConfig {
   readonly minimapWidth: "small" | "medium" | "large";
   /** When true, show the native vertical scrollbar in the log viewer (default: false). */
   readonly showScrollbar: boolean;
+  /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */
+  readonly viewerAlwaysShowSearchMatchOptions: boolean;
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   readonly smartBookmarks: SmartBookmarksConfig;

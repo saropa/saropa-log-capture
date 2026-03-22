@@ -89,6 +89,8 @@
   "config.minimapWidth.description": "滚动条缩略图的宽度：small（40px）、medium（60px）或 large（90px）。",
   "config.showScrollbar.description": "在日志查看器中显示原生垂直滚动条。关闭（默认）时，缩略图是唯一的滚动指示器。",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
+  "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
+  "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.deemphasizeFrameworkLevels.markdownDescription": "抑制框架日志行的错误/警告文本着色。Android 系统代码通常在 `E/` 或 `W/` 级别记录日志，这些问题在内部已处理，不影响用户。启用后，框架行无论日志级别前缀如何，均使用中性样式。",
   "config.docsScanDirs.description": "分析时扫描项目文档引用的目录（相对于工作区根目录）。",
   "config.enabled.description": "启用或禁用调试会话期间的自动日志捕获。",

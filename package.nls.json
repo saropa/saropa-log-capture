@@ -289,6 +289,8 @@
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
   "config.showScrollbar.description": "Show the native vertical scrollbar in the log viewer. When off (default), the minimap is the only scroll indicator.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
+  "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
+  "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.slowGapThreshold.description": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",
   "config.slowGapThreshold.title": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",
   "config.smartBookmarks.suggestFirstError.description": "When opening a log, suggest adding a bookmark at the first error line if that line is not already bookmarked (one suggestion per session).",
