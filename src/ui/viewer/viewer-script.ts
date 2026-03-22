@@ -19,11 +19,14 @@ var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
+var logCompressToggle = document.getElementById('log-compress-toggle');
 /* Pin jump buttons to the log pane top-right / bottom-right using viewport coordinates.
    position:fixed plus #log-content getBoundingClientRect avoids bad containing blocks (some webviews
    mis-resolve absolute + right so controls appear on the text left edge). */
 function syncJumpButtonInset() {
-    if (!logEl || !jumpBtn) return;
+    /* Require log rect only: jump buttons and log compress toggle share this sync; do not skip
+       positioning the compress control if a jump button were ever absent from the DOM. */
+    if (!logEl) return;
     var lr = logEl.getBoundingClientRect();
     if (lr.width < 8 || lr.height < 8) return;
     var vw = window.innerWidth;
@@ -31,17 +34,26 @@ function syncJumpButtonInset() {
     var rightPx = Math.max(8, Math.round(vw - lr.right + 8));
     var replayBar = document.getElementById('replay-bar');
     var replayNudge = replayBar && replayBar.classList.contains('replay-bar-visible') ? 44 : 0;
-    jumpBtn.style.setProperty('position', 'fixed', 'important');
-    jumpBtn.style.setProperty('right', rightPx + 'px', 'important');
-    jumpBtn.style.setProperty('left', 'auto', 'important');
-    jumpBtn.style.setProperty('bottom', Math.round(vh - lr.bottom + 8 + replayNudge) + 'px', 'important');
-    jumpBtn.style.setProperty('top', 'auto', 'important');
+    if (jumpBtn) {
+        jumpBtn.style.setProperty('position', 'fixed', 'important');
+        jumpBtn.style.setProperty('right', rightPx + 'px', 'important');
+        jumpBtn.style.setProperty('left', 'auto', 'important');
+        jumpBtn.style.setProperty('bottom', Math.round(vh - lr.bottom + 8 + replayNudge) + 'px', 'important');
+        jumpBtn.style.setProperty('top', 'auto', 'important');
+    }
     if (jumpTopBtn) {
         jumpTopBtn.style.setProperty('position', 'fixed', 'important');
         jumpTopBtn.style.setProperty('right', rightPx + 'px', 'important');
         jumpTopBtn.style.setProperty('left', 'auto', 'important');
         jumpTopBtn.style.setProperty('top', Math.round(lr.top + 8) + 'px', 'important');
         jumpTopBtn.style.setProperty('bottom', 'auto', 'important');
+    }
+    if (logCompressToggle) {
+        logCompressToggle.style.setProperty('position', 'fixed', 'important');
+        logCompressToggle.style.setProperty('left', Math.round(lr.left + 8) + 'px', 'important');
+        logCompressToggle.style.setProperty('right', 'auto', 'important');
+        logCompressToggle.style.setProperty('top', Math.round(lr.top + 8) + 'px', 'important');
+        logCompressToggle.style.setProperty('bottom', 'auto', 'important');
     }
 }
 syncJumpButtonInset();
@@ -191,6 +203,10 @@ if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false;
     autoScroll = false; jumpTopBtn.style.display = 'none';
+});
+if (logCompressToggle) logCompressToggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (typeof toggleCompressLines === 'function') toggleCompressLines();
 });
 
 function getCenterIdx() {

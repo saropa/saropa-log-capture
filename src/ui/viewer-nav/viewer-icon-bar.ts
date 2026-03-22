@@ -1,9 +1,8 @@
 /**
  * Icon bar HTML and script for the vertical activity bar.
  *
- * Most tools open a slide-out panel in `#panel-slot` with mutual exclusion. **Search** is an
- * exception: it focuses the session-nav field and must not animate panel width
- * (`updatePanelSlotWidth` returns early for `name === 'search'`).
+ * Tools open a slide-out panel in `#panel-slot` with mutual exclusion. In-log search lives only
+ * in the session-nav field (top bar); use Ctrl+F / focus the search input — not an icon here.
  *
  * Optional text labels: click the bar background or separator (not a button) to toggle;
  * preference is persisted in webview state (iconBarLabelsVisible).
@@ -16,9 +15,6 @@ export function getIconBarHtml(): string {
     <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs" aria-label="Project Logs">
         <span class="codicon codicon-files"></span><span class="ib-label">Project Logs</span>
     </button>
-    <button id="ib-search" class="ib-icon" tabindex="0" title="Search (Ctrl+F)" aria-label="Search (Ctrl+F)">
-        <span class="codicon codicon-search"></span><span class="ib-label">Search</span>
-    </button>
     <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
         <span class="codicon codicon-list-filter"></span><span class="ib-label">Find</span>
     </button>
@@ -27,9 +23,6 @@ export function getIconBarHtml(): string {
     </button>
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
-    </button>
-    <button id="ib-compress" class="ib-icon" tabindex="0" title="Compress lines (hide blanks + collapse consecutive duplicates)" aria-label="Compress lines" aria-pressed="false">
-        <span class="codicon codicon-collapse-all"></span><span class="ib-label">Compress</span>
     </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
@@ -90,15 +83,6 @@ export function getIconBarScript(): string {
     function updatePanelSlotWidth(name) {
         if (!panelSlot) return;
         /* In-log search lives in the session nav; never reserve slide-out width for it. */
-        if (name === 'search') {
-            panelSlot.classList.remove('open');
-            panelSlot.style.width = '0';
-            if (pendingOpenHandler) {
-                panelSlot.removeEventListener('transitionend', pendingOpenHandler);
-                pendingOpenHandler = null;
-            }
-            return;
-        }
         if (!name) {
             panelSlot.classList.remove('open');
             panelSlot.style.width = '0';
@@ -136,7 +120,6 @@ export function getIconBarScript(): string {
 
     var iconButtons = {
         sessions: document.getElementById('ib-sessions'),
-        search: document.getElementById('ib-search'),
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
         filters: document.getElementById('ib-filters'),
@@ -183,8 +166,6 @@ export function getIconBarScript(): string {
         updatePanelSlotWidth(name);
         if (name === 'sessions' && typeof openSessionPanel === 'function') {
             openSessionPanel();
-        } else if (name === 'search' && typeof openSearch === 'function') {
-            openSearch();
         } else if (name === 'find' && typeof openFindPanel === 'function') {
             openFindPanel();
         } else if (name === 'bookmarks' && typeof openBookmarkPanel === 'function') {
@@ -216,9 +197,6 @@ export function getIconBarScript(): string {
     if (iconButtons.sessions) {
         iconButtons.sessions.addEventListener('click', function() { setActivePanel('sessions'); });
     }
-    if (iconButtons.search) {
-        iconButtons.search.addEventListener('click', function() { setActivePanel('search'); });
-    }
     if (iconButtons.find) {
         iconButtons.find.addEventListener('click', function() { setActivePanel('find'); });
     }
@@ -227,13 +205,6 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.filters) {
         iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
-    }
-    var compressBtn = document.getElementById('ib-compress');
-    if (compressBtn) {
-        compressBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (typeof toggleCompressLines === 'function') toggleCompressLines();
-        });
     }
     if (iconButtons.trash) {
         iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });
