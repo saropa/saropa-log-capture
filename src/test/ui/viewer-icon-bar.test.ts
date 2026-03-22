@@ -20,7 +20,8 @@ suite('ViewerIconBar', () => {
             const html = getIconBarHtml();
             assert.ok(html.includes('class="ib-label"'));
             assert.ok(html.includes('>Project Logs</span>'));
-            assert.ok(html.includes('>Search</span>'));
+            assert.ok(html.includes('>Find</span>'));
+            assert.ok(!html.includes('id="ib-search"'), 'in-log search is session-nav only, not an icon bar tool');
             assert.ok(html.includes('>Bookmarks</span>'));
             assert.ok(html.includes('>Options</span>'));
         });
@@ -31,8 +32,7 @@ suite('ViewerIconBar', () => {
             assert.ok(html.includes('id="ib-sessions"'));
             assert.ok(html.includes('id="ib-options"'));
             assert.ok(html.includes('id="ib-about"'));
-            assert.ok(html.includes('id="ib-compress"'));
-            assert.ok(html.includes('codicon-collapse-all'));
+            assert.ok(!html.includes('id="ib-compress"'), 'compress is a log-pane display toggle, not an activity bar tool');
         });
 
         test('should not include replay in icon bar (replay is footer + log overlay only)', () => {
@@ -48,13 +48,6 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('iconBarLabelsVisible'));
             assert.ok(script.includes('getState'));
             assert.ok(script.includes('setState'));
-        });
-
-        test('should wire compress toggle without panel mutual exclusion', () => {
-            const script = getIconBarScript();
-            assert.ok(script.includes("getElementById('ib-compress')"));
-            assert.ok(script.includes('toggleCompressLines'));
-            assert.ok(!script.includes('setActivePanel(\'compress\')'));
         });
 
         test('should toggle labels on bar click, not on icon button click', () => {

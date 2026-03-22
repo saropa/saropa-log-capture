@@ -33,6 +33,12 @@ suite('ViewerJumpScrollPlacement', () => {
 		assert.ok(script.includes('replayNudge'));
 	});
 
+	test('syncJumpButtonInset positions log compress toggle from log-content rect', () => {
+		const script = getViewerScript(5000);
+		assert.ok(script.includes('log-compress-toggle'));
+		assert.ok(script.includes("lr.left + 8"));
+	});
+
 	test('layout sync is scheduled after paint via chained requestAnimationFrame', () => {
 		const script = getViewerScript(5000);
 		assert.ok(script.includes('requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); })'));
