@@ -13,6 +13,11 @@ export function getSessionNavSearchHtml(): string {
         <div class="session-search-input-shell">
             <input id="search-input" type="text" placeholder="Filter or search in log…" autocomplete="off" />
             <div class="session-search-trailing">
+                <div class="session-search-toggles-inline search-input-actions" role="group" aria-label="Match options">
+                    <button type="button" id="search-case-toggle" class="search-input-btn" title="Match Case" aria-label="Match Case" aria-pressed="false"><span class="codicon codicon-case-sensitive"></span></button>
+                    <button type="button" id="search-word-toggle" class="search-input-btn" title="Match Whole Word" aria-label="Match Whole Word" aria-pressed="false"><span class="codicon codicon-whole-word"></span></button>
+                    <button type="button" id="search-regex-toggle" class="search-input-btn" title="Use Regular Expression" aria-label="Use Regular Expression" aria-pressed="false"><span class="codicon codicon-regex"></span></button>
+                </div>
                 <span id="match-count" class="session-search-match-count"></span>
                 <button type="button" id="search-prev" class="session-search-icon-btn" title="Previous match (Shift+F3)" aria-label="Previous match">
                     <span class="codicon codicon-chevron-up"></span>
@@ -20,19 +25,14 @@ export function getSessionNavSearchHtml(): string {
                 <button type="button" id="search-next" class="session-search-icon-btn" title="Next match (F3)" aria-label="Next match">
                     <span class="codicon codicon-chevron-down"></span>
                 </button>
-                <button type="button" id="search-funnel-btn" class="session-search-icon-btn session-search-funnel-btn" title="Match options and mode" aria-expanded="false" aria-haspopup="true" aria-label="Search options">
+                <button type="button" id="search-funnel-btn" class="session-search-icon-btn session-search-funnel-btn" title="Highlight vs filter mode" aria-expanded="false" aria-haspopup="true" aria-label="Search display mode">
                     <span class="codicon codicon-filter"></span>
                 </button>
             </div>
         </div>
     </div>
-    <div id="search-options-popover" class="search-options-popover" role="dialog" aria-label="Search options" hidden>
+    <div id="search-options-popover" class="search-options-popover" role="dialog" aria-label="Search display mode" hidden>
         <div class="search-options-popover-inner">
-            <div class="search-input-actions search-options-toggles">
-                <button type="button" id="search-case-toggle" class="search-input-btn" title="Match Case"><span class="codicon codicon-case-sensitive"></span></button>
-                <button type="button" id="search-word-toggle" class="search-input-btn" title="Match Whole Word"><span class="codicon codicon-whole-word"></span></button>
-                <button type="button" id="search-regex-toggle" class="search-input-btn" title="Use Regular Expression"><span class="codicon codicon-regex"></span></button>
-            </div>
             <button type="button" id="search-mode-toggle" class="search-mode-toggle" title="Toggle highlight/filter mode">Mode: Highlight</button>
         </div>
     </div>

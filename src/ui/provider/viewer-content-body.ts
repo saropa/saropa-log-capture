@@ -39,9 +39,9 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     <div id="session-nav-wrapper" class="session-nav-wrapper">
     <div id="session-nav">
         <span class="session-nav-controls">
-        <button id="session-prev" title="Previous log (older)" aria-label="Previous log (older)" disabled>&#x25C0; Prev</button>
+        <button type="button" id="session-prev" class="session-nav-icon-btn" title="Previous log (older)" aria-label="Previous log (older)" disabled><span class="codicon codicon-chevron-left" aria-hidden="true"></span></button>
         <span class="nav-bar-label">Log <span id="session-nav-current">1</span> of <span id="session-nav-total">1</span></span>
-        <button id="session-next" title="Next log (newer)" aria-label="Next log (newer)" disabled>Next &#x25B6;</button>
+        <button type="button" id="session-next" class="session-nav-icon-btn" title="Next log (newer)" aria-label="Next log (newer)" disabled><span class="codicon codicon-chevron-right" aria-hidden="true"></span></button>
         ${getRunNavHtml()}
         </span>
         <span id="session-details-inline" class="session-details-inline" aria-label="Log context"></span>

@@ -116,6 +116,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setScrollbarVisible(show: boolean): void {
     for (const t of this.targets) { t.setScrollbarVisible(show); }
   }
+  setSearchMatchOptionsAlwaysVisible(always: boolean): void {
+    for (const t of this.targets) { t.setSearchMatchOptionsAlwaysVisible(always); }
+  }
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }
   }

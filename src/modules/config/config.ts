@@ -203,6 +203,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapShowInfoMarkers: ensureBoolean(cfg.get("minimapShowInfoMarkers"), false),
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
+    viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     smartBookmarks: {

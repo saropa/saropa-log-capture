@@ -60,7 +60,7 @@ const DEFAULT_ACTION_TO_KEY: Record<ViewerKeybindingActionId, string> = {
 
 /** Short labels for status bar when recording a keybinding. */
 export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
-  openSearch: 'Open search panel',
+  openSearch: 'Focus log search',
   openFindPanel: 'Open find panel',
   escape: 'Escape',
   copyPlain: 'Copy selection',

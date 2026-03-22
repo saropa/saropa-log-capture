@@ -36,7 +36,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
   private pendingLines: PendingLine[] = [];
   private batchTimer: ReturnType<typeof setTimeout> | undefined;
-  private threadDumpState: ThreadDumpState = createThreadDumpState();
+  private readonly threadDumpState: ThreadDumpState = createThreadDumpState();
   private readonly seenCategories = new Set<string>();
   private cachedPresets: readonly FilterPreset[] = [];
   private cachedHighlightRules: SerializedHighlightRule[] = [];
@@ -125,7 +125,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       text: html, isMarker: data.isMarker, lineCount: data.lineCount,
       category: data.category, timestamp: data.timestamp.getTime(),
       fw, sourcePath: data.sourcePath,
-      ...(qualityPercent !== undefined ? { qualityPercent } : {}),
+      ...(qualityPercent === undefined ? {} : { qualityPercent }),
     };
     processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
   }
@@ -168,6 +168,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
+  setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
   setAutoHidePatterns(patterns: readonly string[]): void { this.post({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
