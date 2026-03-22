@@ -18,7 +18,7 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ---
 
-## [Unreleased]
+## [3.12.1]
 
 ### Added
 
