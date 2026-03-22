@@ -7,7 +7,9 @@
  */
 import * as assert from 'node:assert';
 import { getViewerDataScript } from '../../ui/viewer/viewer-data';
+import { getViewerScript } from '../../ui/viewer/viewer-script';
 import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-messages';
+import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getOverlayStyles } from '../../ui/viewer-styles/viewer-styles-overlays';
 import { getSearchStyles } from '../../ui/viewer-styles/viewer-styles-search';
 import { getOptionsPanelHtml } from '../../ui/viewer-panels/viewer-options-panel-html';
@@ -87,11 +89,50 @@ suite('Search strip and options (compress UI wiring)', () => {
         assert.ok(layout.includes('compressLinesMode'));
     });
 
-    test('layout syncs compress icon and suggestion banner helpers', () => {
+    test('layout syncs compress toggle and suggestion banner helpers', () => {
         const layout = getLayoutScript();
         assert.ok(layout.includes('function syncCompressIconButton'));
+        assert.ok(layout.includes("getElementById('log-compress-toggle')"));
         assert.ok(layout.includes('function showCompressSuggestionBanner'));
         assert.ok(layout.includes('function hideCompressSuggestionBanner'));
+    });
+
+    test('viewer body includes log-pane compress toggle', () => {
+        const html = getViewerBodyHtml({ version: '0' });
+        assert.ok(html.includes('id="log-compress-toggle"'));
+        assert.ok(html.includes('codicon-collapse-all'));
+    });
+
+    test('content styles include log compress toggle rules', () => {
+        const css = getViewerStyles();
+        assert.ok(css.includes('#log-compress-toggle'));
+        assert.ok(css.includes('log-compress-toggle--on'));
+    });
+});
+
+suite('Viewer main script (compress toggle placement, false-positive guards)', () => {
+    const mainScript = getViewerScript(5000);
+
+    test('wires log-pane compress toggle to toggleCompressLines', () => {
+        assert.ok(mainScript.includes('log-compress-toggle'));
+        assert.ok(mainScript.includes('logCompressToggle.addEventListener'));
+        assert.ok(mainScript.includes('toggleCompressLines'));
+    });
+
+    test('does not reference removed activity bar ib-compress control', () => {
+        assert.ok(!mainScript.includes('ib-compress'));
+    });
+
+    test('syncJumpButtonInset guards on logEl only, styles jumpBtn when present', () => {
+        const fn = mainScript.indexOf('function syncJumpButtonInset');
+        assert.ok(fn >= 0);
+        const block = mainScript.slice(fn, fn + 1200);
+        assert.ok(block.includes('if (!logEl) return'));
+        assert.ok(block.includes('if (jumpBtn)'));
+        assert.ok(
+            !block.includes('if (!logEl || !jumpBtn) return'),
+            'must not bail out before positioning log-compress-toggle when jumpBtn missing',
+        );
     });
 });
 
