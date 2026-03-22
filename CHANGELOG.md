@@ -20,7 +20,17 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [Unreleased]
 
+### Added
+
+• **`saropaLogCapture.viewerAlwaysShowSearchMatchOptions`** — When `true`, the log viewer always shows **match case**, **whole word**, and **regex** toggles in the session-bar search field. Default `false`: toggles appear only while the field is focused or has text (keeps the title bar compact).
+
 ### Changed
+
+• **Session bar log navigation** — **Previous / next log** use **icon-only** chevron buttons (tooltips and `aria-label` unchanged: “Previous log (older)” / “Next log (newer)”).
+
+• **Session bar layout** — Session nav can **wrap** to a second row when space is tight; match-option toggles use **progressive disclosure** unless the new setting above is enabled.
+
+• **Find-in-files hook** — `window.setupFromFindInFiles` moved to a dedicated injected script chunk (`viewer-search-setup-from-find.ts`) so the main search script stays within lint line limits; load order is unchanged (after search + toggles + history).
 
 • **Compress lines control** — The toggle moved from the **activity icon bar** to a **fixed button at the top-left of the log pane** (same viewport-based positioning as Jump Top/Bottom). **Options → Layout**, the log **context menu → Options**, and behavior (blanks hidden, consecutive duplicate lines collapsed with **(×N)**) are unchanged.
 
@@ -45,6 +55,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 ### Fixed
 
 • **Search history floating panel** — When the recent-queries list is cleared (typing in the field or empty history), inline styles from `positionSearchFloatingPanels` are reset so a stale `position: fixed` box does not linger on screen.
+
+<!-- cspell:ignore ENOENT scandir -->
 
 • **Developer console noise on activation (Crashlytics cache)** — Workspaces that never had a legacy **`{logDirectory}/crashlytics`** folder no longer trigger a failed **`readdir`** during the one-time migration to **`.saropa/cache/crashlytics`**; the extension **`stat`**s the old folder first so the host does not log **`ENOENT`** / **`scandir`** for a missing path. The Crashlytics CodeLens cache scan uses the same **`stat`**-first pattern for **`.saropa/cache/crashlytics`**.
 

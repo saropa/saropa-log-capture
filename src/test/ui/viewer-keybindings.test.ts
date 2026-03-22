@@ -63,7 +63,7 @@ suite('ViewerKeybindings', () => {
   suite('getViewerActionLabel', () => {
     test('returns label for known action', () => {
       assert.strictEqual(getViewerActionLabel('togglePause'), 'Toggle pause');
-      assert.strictEqual(getViewerActionLabel('openSearch'), 'Open search panel');
+      assert.strictEqual(getViewerActionLabel('openSearch'), 'Focus log search');
     });
     test('returns actionId for unknown', () => {
       assert.strictEqual(getViewerActionLabel('unknown'), 'unknown');

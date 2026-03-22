@@ -86,6 +86,8 @@
   "config.minimapWidth.description": "Width of the scrollbar minimap: small (40px), medium (60px), or large (90px).",
   "config.showScrollbar.description": "Mostra la barra di scorrimento verticale nativa nel visualizzatore di log. Se disattivata (predefinito), la minimappa è l'unico indicatore di scorrimento.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
+  "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
+  "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.deemphasizeFrameworkLevels.markdownDescription": "Suppress error/warning text coloring on framework log lines. Android system code often logs at `E/` or `W/` level for issues that are handled internally and have no user impact. When enabled, framework lines get neutral styling regardless of their log level prefix.",
   "config.docsScanDirs.description": "Directories to scan for project documentation references during analysis (relative to workspace root).",
   "config.enabled.description": "Enable or disable automatic log capture during debug sessions.",

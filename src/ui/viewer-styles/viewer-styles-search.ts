@@ -1,8 +1,18 @@
 /**
  * CSS styles for search in the log viewer webview.
  *
- * Compact filter field in the session nav; match highlighting; floating
- * history and options (position fixed via script to escape overflow clip).
+ * **Layout:** The compact find row sits in `#session-nav` (see `viewer-content-body.ts`), not in `#panel-slot`.
+ *
+ * **Match-option toggles (case / whole word / regex):** By default they are hidden (`display: none`) until
+ * either the search shell has `:focus-within` or `.session-search-compact` has `.has-search-query` (set from
+ * script when the input has non-whitespace text). The workspace setting
+ * `saropaLogCapture.viewerAlwaysShowSearchMatchOptions` adds `body.search-match-options-always`, which
+ * forces the toggles visible at all times for power users.
+ *
+ * **Floating UI:** History and the highlight/filter mode popover use `position: fixed`; coordinates are
+ * applied in `viewer-search.ts` (`positionSearchFloatingPanels`) so parent `overflow` does not clip them.
+ *
+ * **Highlighting:** `mark` / `.current-match` use editor find-match theme tokens where available.
  */
 import { getSearchHistoryStyles } from '../viewer-search-filter/viewer-search-history';
 
@@ -15,9 +25,10 @@ export function getSearchStyles(): string {
 .session-nav-search-outer {
     position: relative;
     margin-left: auto;
-    flex: 0 1 auto;
-    min-width: 120px;
-    max-width: min(400px, 46vw);
+    /* Shrink on one row; when the nav wraps, this row can use the full panel width. */
+    flex: 1 1 200px;
+    min-width: min(120px, 100%);
+    max-width: 100%;
     align-self: center;
 }
 .session-search-compact {
@@ -58,6 +69,24 @@ export function getSearchStyles(): string {
     border-left: 1px solid var(--vscode-input-border, var(--vscode-widget-border, rgba(127, 127, 127, 0.3)));
     margin-left: 2px;
     padding-left: 3px;
+}
+/* Case / whole word / regex — editor-style controls, shown only while searching (focus or active query) to keep the title bar calm. */
+.session-search-toggles-inline {
+    display: none;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0;
+    padding: 0 4px 0 2px;
+    border-right: 1px solid var(--vscode-input-border, var(--vscode-widget-border, rgba(127, 127, 127, 0.3)));
+    margin-right: 2px;
+}
+.session-search-input-shell:focus-within .session-search-toggles-inline,
+.session-search-compact.has-search-query .session-search-toggles-inline {
+    display: flex;
+}
+/* Workspace setting: always show case / whole word / regex (overrides progressive disclosure). */
+body.search-match-options-always .session-search-toggles-inline {
+    display: flex;
 }
 .session-search-match-count {
     font-size: 11px;
@@ -129,6 +158,7 @@ export function getSearchStyles(): string {
     align-items: center;
     gap: 2px;
 }
+.session-search-toggles-inline .search-input-btn,
 .search-options-toggles .search-input-btn {
     background: none;
     border: 1px solid transparent;
@@ -143,16 +173,19 @@ export function getSearchStyles(): string {
     height: 22px;
     box-sizing: border-box;
 }
+.session-search-toggles-inline .search-input-btn:hover,
 .search-options-toggles .search-input-btn:hover {
     background: var(--vscode-toolbar-hoverBackground);
     color: var(--vscode-icon-foreground, var(--vscode-foreground));
 }
 /* Match find-input-actions in find panel (not high-contrast inputOption pills unless theme sets them). */
+.session-search-toggles-inline .search-input-btn.active,
 .search-options-toggles .search-input-btn.active {
     color: var(--vscode-foreground);
     background: var(--vscode-button-secondaryBackground);
     border-color: var(--vscode-focusBorder);
 }
+.session-search-toggles-inline .search-input-btn .codicon,
 .search-options-toggles .search-input-btn .codicon {
     font-size: 16px;
 }

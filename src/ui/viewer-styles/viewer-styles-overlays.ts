@@ -22,11 +22,12 @@ export function getOverlayStyles(): string {
     transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .session-nav-wrapper.has-content {
-    max-height: 88px;
+    /* Two rows when session nav wraps (log controls + full-width search strip). */
+    max-height: 120px;
 }
 /* Suggestion row below session nav when many consecutive duplicate lines are detected */
 .session-nav-wrapper.has-content.compress-suggest-visible {
-    max-height: 130px;
+    max-height: 162px;
 }
 .session-nav-wrapper.smart-header-hidden.has-content {
     max-height: 0;
@@ -101,7 +102,9 @@ export function getOverlayStyles(): string {
 #split-breadcrumb, #session-nav {
     display: none;
     align-items: center;
-    gap: 4px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+    column-gap: 4px;
     padding: 2px 8px;
     background: var(--vscode-panel-background);
     border-bottom: 1px solid var(--vscode-panel-border);
@@ -136,6 +139,20 @@ export function getOverlayStyles(): string {
     padding: 1px 6px;
     cursor: pointer;
     border-radius: 3px;
+}
+/* Icon-only session log prev/next (chevrons); tooltips carry the full phrase. */
+#session-nav .session-nav-controls button.session-nav-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    padding: 0;
+    box-sizing: border-box;
+}
+#session-nav .session-nav-controls button.session-nav-icon-btn .codicon {
+    font-size: 16px;
 }
 #split-breadcrumb button:hover,
 #session-nav .session-nav-controls button:hover,

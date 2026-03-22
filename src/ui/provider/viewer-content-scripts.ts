@@ -28,6 +28,7 @@ import { getSplitNavScript } from '../viewer-nav/viewer-split-nav';
 import { getSessionNavScript } from '../viewer-nav/viewer-session-nav';
 import { getJsonScript } from '../viewer/viewer-json';
 import { getSearchScript } from '../viewer-search-filter/viewer-search';
+import { getSearchSetupFromFindInFilesScript } from '../viewer-search-filter/viewer-search-setup-from-find';
 import { getSearchTogglesScript } from '../viewer-search-filter/viewer-search-toggles';
 import { getSearchHistoryScript } from '../viewer-search-filter/viewer-search-history';
 import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filter';
@@ -105,6 +106,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getSearchScript()) +
         scriptTag(nonce, getSearchTogglesScript()) +
         scriptTag(nonce, getSearchHistoryScript()) +
+        scriptTag(nonce, getSearchSetupFromFindInFilesScript()) +
         scriptTag(nonce, getLevelFilterScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +

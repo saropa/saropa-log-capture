@@ -124,6 +124,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
     broadcaster.setScrollbarVisible(initCfg.showScrollbar);
+    broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);
 
     setupConfigListener(context, sessionManager, broadcaster);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });

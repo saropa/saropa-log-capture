@@ -50,15 +50,13 @@ suite('Viewer session nav search', () => {
         );
     });
 
-    test('icon bar script skips panel width animation for active search tool', () => {
-        const src = readSrc('ui/viewer-nav/viewer-icon-bar.ts');
-        assert.ok(src.includes("name === 'search'"), 'updatePanelSlotWidth should special-case search');
-        const fnStart = src.indexOf('function updatePanelSlotWidth');
-        assert.ok(fnStart >= 0, 'expected updatePanelSlotWidth');
-        const fnEnd = src.indexOf('window.setPanelSlotWidth', fnStart);
-        assert.ok(fnEnd > fnStart, 'expected setPanelSlotWidth after updatePanelSlotWidth');
-        const searchInFn = src.indexOf("name === 'search'", fnStart);
-        assert.ok(searchInFn >= fnStart && searchInFn < fnEnd, 'search case must be inside updatePanelSlotWidth only');
+    test('keyboard openSearch focuses strip via openSearch, not icon bar setActivePanel', () => {
+        const src = readSrc('ui/viewer/viewer-script-keyboard.ts');
+        assert.ok(src.includes("action === 'openSearch'"), 'expected openSearch action branch');
+        assert.ok(
+            src.includes('openSearch()') && !src.includes("setActivePanel('search')"),
+            'Ctrl+F should call openSearch only (search is not an icon bar panel)',
+        );
     });
 
     test('search script targets session nav outer wrapper, not #search-bar', () => {
@@ -74,6 +72,7 @@ suite('Viewer session nav search', () => {
         const fragment = getSessionNavSearchHtml();
         const required = [
             'id="search-input"',
+            'session-search-toggles-inline',
             'id="search-funnel-btn"',
             'id="search-options-popover"',
             'id="search-case-toggle"',

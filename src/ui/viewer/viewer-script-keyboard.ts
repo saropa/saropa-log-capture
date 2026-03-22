@@ -54,8 +54,7 @@ document.addEventListener('keydown', function(e) {
     }
     if (action === 'openSearch') {
         e.preventDefault();
-        if (typeof setActivePanel === 'function') setActivePanel('search');
-        else if (typeof openSearch === 'function') openSearch();
+        if (typeof openSearch === 'function') openSearch();
         return;
     }
     if (action === 'escape') {
