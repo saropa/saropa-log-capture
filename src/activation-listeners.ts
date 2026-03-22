@@ -81,6 +81,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
             broadcaster.setScrollbarVisible(cfg.showScrollbar);
         }
+        if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
+            broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
+        }
         if (e.affectsConfiguration('saropaLogCapture.autoHidePatterns')) {
             broadcaster.setAutoHidePatterns(cfg.autoHidePatterns);
         }

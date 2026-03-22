@@ -89,6 +89,8 @@
   "config.minimapWidth.description": "스크롤바 미니맵의 너비: small(40px), medium(60px), large(90px).",
   "config.showScrollbar.description": "로그 뷰어에서 기본 세로 스크롤바를 표시합니다. 끄면(기본값) 미니맵만 스크롤 표시로 사용됩니다.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
+  "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
+  "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.deemphasizeFrameworkLevels.markdownDescription": "프레임워크 로그 줄에서 오류/경고 텍스트 색상을 억제합니다. Android 시스템 코드는 내부적으로 처리되어 사용자에게 영향이 없는 문제에 대해 `E/` 또는 `W/` 수준으로 기록하는 경우가 많습니다. 활성화하면 프레임워크 줄은 로그 수준 접두사에 관계없이 중립적인 스타일을 갖습니다.",
   "config.docsScanDirs.description": "분석 중 프로젝트 문서 참조를 검색할 디렉터리(작업 영역 루트에 대한 상대 경로).",
   "config.enabled.description": "디버그 세션 중 자동 로그 캡처를 활성화하거나 비활성화합니다.",

@@ -589,6 +589,12 @@
           "title": "%config.showScrollbar.title%",
           "type": "boolean"
         },
+        "saropaLogCapture.viewerAlwaysShowSearchMatchOptions": {
+          "default": false,
+          "description": "%config.viewerAlwaysShowSearchMatchOptions.description%",
+          "title": "%config.viewerAlwaysShowSearchMatchOptions.title%",
+          "type": "boolean"
+        },
         "saropaLogCapture.deemphasizeFrameworkLevels": {
           "default": false,
           "markdownDescription": "%config.deemphasizeFrameworkLevels.markdownDescription%",

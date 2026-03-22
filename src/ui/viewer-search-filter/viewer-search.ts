@@ -7,12 +7,12 @@
  * `positionSearchFloatingPanels()` so the session-nav wrapper’s `overflow` does not clip them.
  *
  * **Lifecycle:** `openSearch` / `closeSearch` gate the document-level “click outside to dismiss”
- * behaviour and sync the activity bar’s active panel. `searchInput` `focus` calls `openSearch`
+ * behaviour. `searchInput` `focus` calls `openSearch`
  * so keyboard users get the same semantics as Ctrl+F. Escape closes the options popover first,
  * then the search session.
  *
- * **Integration:** `window.setupFromFindInFiles` applies cross-file find options without opening
- * a panel. `window.positionSearchFloatingPanels` is called from search history rendering when
+ * **Integration:** `window.setupFromFindInFiles` is defined in `viewer-search-setup-from-find.ts`
+ * (injected after this script). `window.positionSearchFloatingPanels` is called from search history rendering when
  * the list is cleared as well as when it is shown (see `viewer-search-history.ts`).
  */
 
@@ -25,6 +25,13 @@ var matchCountEl = document.getElementById('match-count');
 var searchModeToggleEl = document.getElementById('search-mode-toggle');
 var searchFunnelBtn = document.getElementById('search-funnel-btn');
 var searchOptionsPopover = document.getElementById('search-options-popover');
+var sessionSearchCompactEl = document.querySelector('.session-search-compact');
+
+/** Show case/word/regex toggles when the field is focused or there is a non-empty query (keeps the nav bar compact otherwise). */
+function syncSearchMatchOptionsVisibility() {
+    if (!sessionSearchCompactEl) return;
+    sessionSearchCompactEl.classList.toggle('has-search-query', !!(searchInputEl.value && searchInputEl.value.trim()));
+}
 
 var searchOpen = false;
 var searchOptionsOpen = false;
@@ -110,6 +117,7 @@ function openSearch() {
     updateClearButton();
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
     requestAnimationFrame(positionSearchFloatingPanels);
+    syncSearchMatchOptionsVisibility();
 }
 
 function closeSearch() {
@@ -121,6 +129,7 @@ function closeSearch() {
     searchRegex = null;
     clearSearchFilter();
     renderViewport(true); // clears match highlighting (and covers non-filter case)
+    syncSearchMatchOptionsVisibility();
 }
 
 function toggleSearchPanel() {
@@ -143,42 +152,46 @@ function escapeForRegex(s) {
 }
 
 function updateSearch() {
-    var query = searchInputEl.value;
-    if (!query) {
-        clearSearchState();
-        clearSearchFilter();
-        renderViewport(true);
-        return;
-    }
     try {
-        var pattern = searchRegexMode ? query : escapeForRegex(query);
-        if (searchWholeWord && !searchRegexMode) {
-            pattern = '\\\\b' + pattern + '\\\\b';
+        var query = searchInputEl.value;
+        if (!query) {
+            clearSearchState();
+            clearSearchFilter();
+            renderViewport(true);
+            return;
         }
-        var flags = 'g' + (searchCaseSensitive ? '' : 'i');
-        searchRegex = new RegExp(pattern, flags);
-    } catch (e) {
-        clearSearchState();
-        matchCountEl.textContent = 'Invalid regex';
-        return;
-    }
-    matchIndices = [];
-    for (var i = 0; i < allLines.length; i++) {
-        var plain = stripTags(allLines[i].html);
-        searchRegex.lastIndex = 0;
-        if (searchRegex.test(plain)) {
-            matchIndices.push(i);
+        try {
+            var pattern = searchRegexMode ? query : escapeForRegex(query);
+            if (searchWholeWord && !searchRegexMode) {
+                pattern = '\\\\b' + pattern + '\\\\b';
+            }
+            var flags = 'g' + (searchCaseSensitive ? '' : 'i');
+            searchRegex = new RegExp(pattern, flags);
+        } catch (e) {
+            clearSearchState();
+            matchCountEl.textContent = 'Invalid regex';
+            return;
         }
+        matchIndices = [];
+        for (var i = 0; i < allLines.length; i++) {
+            var plain = stripTags(allLines[i].html);
+            searchRegex.lastIndex = 0;
+            if (searchRegex.test(plain)) {
+                matchIndices.push(i);
+            }
+        }
+        currentMatchIdx = matchIndices.length > 0 ? 0 : -1;
+        updateMatchDisplay();
+        if (searchFilterMode) {
+            applySearchFilter();
+        } else {
+            clearSearchFilter();
+            renderViewport(true);
+        }
+        if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
+    } finally {
+        syncSearchMatchOptionsVisibility();
     }
-    currentMatchIdx = matchIndices.length > 0 ? 0 : -1;
-    updateMatchDisplay();
-    if (searchFilterMode) {
-        applySearchFilter();
-    } else {
-        clearSearchFilter();
-        renderViewport(true);
-    }
-    if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
 }
 
 function applySearchFilter() {
@@ -303,21 +316,8 @@ document.addEventListener('click', function(e) {
         closeSearchOptionsPopover();
     }
     if (!searchOpen) return;
-    var ibBtn = document.getElementById('ib-search');
-    if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
     if (sessionNavSearchOuter && sessionNavSearchOuter.contains(e.target)) return;
     closeSearch();
 });
-
-/** Activate in-file search from Find in Files without opening the search panel. */
-window.setupFromFindInFiles = function(msg) {
-    searchCaseSensitive = !!msg.caseSensitive;
-    searchRegexMode = !!msg.useRegex;
-    searchWholeWord = !!msg.wholeWord;
-    searchInputEl.value = msg.query || '';
-    searchFilterMode = false;
-    updateSearch();
-    if (currentMatchIdx >= 0) scrollToMatch();
-};
 `;
 }

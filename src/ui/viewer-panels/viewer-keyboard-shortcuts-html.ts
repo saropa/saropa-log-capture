@@ -20,7 +20,7 @@ export function getKeyboardShortcutsViewHtml(): string {
             <table class="shortcuts-table" id="shortcuts-power-table">
                 <thead><tr><th>Key</th><th>Action</th></tr></thead>
                 <tbody>
-                    <tr data-action-id="openSearch"><td><kbd>Ctrl+F</kbd></td><td>Open search panel</td></tr>
+                    <tr data-action-id="openSearch"><td><kbd>Ctrl+F</kbd></td><td>Focus log search</td></tr>
                     <tr><td><kbd>F3</kbd> / <kbd>Shift+F3</kbd></td><td>Next / previous search match</td></tr>
                     <tr data-action-id="escape"><td><kbd>Escape</kbd></td><td>Close search panel / inline peek</td></tr>
                     <tr data-action-id="togglePause"><td><kbd>Space</kbd></td><td>Toggle pause/resume</td></tr>
