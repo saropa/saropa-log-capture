@@ -89,6 +89,8 @@
   "config.minimapWidth.description": "Ancho del minimapa de la barra de desplazamiento: small (40px), medium (60px) o large (90px).",
   "config.showScrollbar.description": "Mostrar la barra de desplazamiento vertical nativa en el visor de registros. Cuando está desactivada (valor predeterminado), el minimapa es el único indicador de desplazamiento.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
+  "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",
+  "config.viewerAlwaysShowSearchMatchOptions.title": "Always show log search match options",
   "config.deemphasizeFrameworkLevels.markdownDescription": "Suprimir la coloración de texto de error/advertencia en las líneas de registro del framework. El código del sistema Android a menudo registra en nivel `E/` o `W/` para problemas que se manejan internamente y no tienen impacto en el usuario. Cuando está habilitado, las líneas del framework tienen estilo neutro independientemente de su prefijo de nivel de registro.",
   "config.docsScanDirs.description": "Directorios para escanear referencias de documentación del proyecto durante el análisis (relativos a la raíz del espacio de trabajo).",
   "config.enabled.description": "Habilitar o deshabilitar la captura automática de registros durante las sesiones de depuración.",
