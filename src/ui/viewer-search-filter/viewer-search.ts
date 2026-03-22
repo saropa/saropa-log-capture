@@ -11,7 +11,7 @@
  * so keyboard users get the same semantics as Ctrl+F. Escape closes the options popover first,
  * then the search session.
  *
- * **Integration:** `window.setupFromFindInFiles` is defined in `viewer-search-setup-from-find.ts`
+ * **Integration:** Cross-file find wiring is in `viewer-search-setup-from-find.ts`
  * (injected after this script). `window.positionSearchFloatingPanels` is called from search history rendering when
  * the list is cleared as well as when it is shown (see `viewer-search-history.ts`).
  */
