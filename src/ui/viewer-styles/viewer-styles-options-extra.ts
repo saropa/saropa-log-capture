@@ -56,6 +56,19 @@ export function getOptionsExtraStyles(): string {
     line-height: 1.4;
     margin: 0 0 12px 0;
 }
+.integrations-search-wrapper {
+    margin: 0 0 10px 0;
+}
+.integrations-search-wrapper input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--vscode-input-border, transparent);
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+}
 .integrations-row {
     display: flex;
     flex-wrap: wrap;
@@ -89,6 +102,15 @@ export function getOptionsExtraStyles(): string {
     line-height: 1.35;
     margin: 4px 0 0 24px;
 }
+.integrations-desc-toggle {
+    margin-left: 6px;
+    border: none;
+    background: none;
+    color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+}
 .integrations-note {
     flex: 1 1 100%;
     font-size: 10px;
@@ -99,6 +121,9 @@ export function getOptionsExtraStyles(): string {
     font-style: italic;
 }
 .integrations-perf { }
+.integrations-perf-warning {
+    margin: 0 3px 0 4px;
+}
 .integrations-when { }
 
 /* Keyboard shortcuts view */

@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import { getIntegrationsPanelHtml } from '../../ui/viewer-panels/viewer-integrations-panel-html';
 import { getKeyboardShortcutsViewHtml } from '../../ui/viewer-panels/viewer-keyboard-shortcuts-html';
 import { getOptionsPanelHtml, getOptionsPanelScript } from '../../ui/viewer-panels/viewer-options-panel';
@@ -49,10 +49,24 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('Choose what to attach to each debug session'));
         });
 
+        test('should include integrations search input', () => {
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('id="integrations-search"'));
+            assert.ok(html.includes('placeholder="Search integrations…'));
+        });
+
         test('should include integration rows with data-adapter-id for sync', () => {
             const html = getIntegrationsPanelHtml();
             assert.ok(html.includes('data-adapter-id="packages"'));
             assert.ok(html.includes('data-adapter-id="git"'));
+        });
+
+        test('should render split preview/full description spans for safe toggle text updates', () => {
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('class="integrations-desc-preview"'));
+            assert.ok(html.includes('class="integrations-desc-full options-filtered-hidden"'));
+            assert.ok(!html.includes('data-preview="'));
+            assert.ok(!html.includes('data-full="'));
         });
     });
 
@@ -75,6 +89,12 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('syncOptionsPanelUi'));
         });
 
+        test('should wire export button to openExportModal', () => {
+            const script = getOptionsPanelScript();
+            assert.ok(script.includes('options-export-btn'));
+            assert.ok(script.includes('window.openExportModal'));
+        });
+
         test('should reset display, layout, and audio defaults', () => {
             const script = getOptionsPanelScript();
             assert.ok(script.includes('setFontSize(13)'));
@@ -89,6 +109,13 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('closeIntegrationsView'));
             assert.ok(script.includes('integrationsViewOpen'));
             assert.ok(script.includes('syncIntegrationsUi'));
+        });
+
+        test('should include integrations helper wiring for filter and expand/collapse', () => {
+            const script = getOptionsPanelScript();
+            assert.ok(script.includes('function filterIntegrations(query)'));
+            assert.ok(script.includes('function initIntegrationsOptionsHandlers()'));
+            assert.ok(script.includes('initIntegrationsOptionsHandlers()'));
         });
 
         test('should define Keyboard shortcuts view switch (open/back)', () => {
