@@ -78,10 +78,15 @@ function closeFiltersPanel() {
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
 }
 
-/** Human-readable label for a stream source id. */
+/** Human-readable label for a stream source id (debug, terminal, or external sidecar prefix). */
 function sourceFilterLabel(id) {
     if (id === 'debug') return 'Debug output';
     if (id === 'terminal') return 'Terminal';
+    if (typeof id === 'string' && id.indexOf('external:') === 0) {
+        var rest = id.slice(9);
+        if (!rest || rest === 'external') return 'External (sidecar log)';
+        return 'External · ' + rest;
+    }
     return id;
 }
 

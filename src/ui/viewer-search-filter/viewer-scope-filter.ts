@@ -62,8 +62,13 @@ function handleScopeContextMessage(msg) {
     scopeContext.workspaceFolder = msg.workspaceFolder || null;
     scopeContext.packageRoot = msg.packageRoot || null;
     scopeContext.activeDirectory = msg.activeDirectory || null;
+    if (!scopeContext.activeFilePath && scopeLevel !== 'all') {
+        scopeLevel = 'all';
+        applyScopeFilter();
+    }
     updateScopeStatus();
     updateScopeRadioDisabled();
+    updateScopeNarrowingVisibility();
     if (scopeLevel !== 'all') applyScopeFilter();
 }
 
@@ -80,8 +85,19 @@ function syncScopeUi() {
     updateScopeRadios();
     updateScopeRadioDisabled();
     updateScopeStatus();
+    updateScopeNarrowingVisibility();
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = scopeHideUnattributed;
+}
+
+/** Show workspace/package/directory/file controls only when an active editor file exists. */
+function updateScopeNarrowingVisibility() {
+    var block = document.getElementById('scope-narrowing-block');
+    var hint = document.getElementById('scope-no-context-hint');
+    if (!block || !hint) return;
+    var hasFile = !!scopeContext.activeFilePath;
+    block.style.display = hasFile ? '' : 'none';
+    hint.style.display = hasFile ? 'none' : '';
 }
 
 function updateScopeRadios() {
@@ -112,11 +128,12 @@ function updateScopeStatus() {
     var el = document.getElementById('scope-status');
     if (!el) return;
     if (!scopeContext.activeFilePath) {
-        el.textContent = 'No active editor';
+        el.textContent = 'No active editor — location filters are unavailable';
+        el.removeAttribute('title');
         return;
     }
     var parts = scopeContext.activeFilePath.split('/');
-    el.textContent = parts[parts.length - 1] || 'Unknown';
+    el.textContent = 'Active file: ' + (parts[parts.length - 1] || 'Unknown');
     el.title = scopeContext.activeFilePath;
 }
 
