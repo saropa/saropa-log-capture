@@ -566,6 +566,54 @@
           "type": "number",
           "title": "%config.copyContextLines.title%"
         },
+        "saropaLogCapture.repeatCollapseGlobalMinCount": {
+          "default": 2,
+          "markdownDescription": "%config.repeatCollapseGlobalMinCount.markdownDescription%",
+          "maximum": 50,
+          "minimum": 2,
+          "type": "number",
+          "title": "%config.repeatCollapseGlobalMinCount.title%"
+        },
+        "saropaLogCapture.repeatCollapseReadMinCount": {
+          "default": 2,
+          "markdownDescription": "%config.repeatCollapseReadMinCount.markdownDescription%",
+          "maximum": 50,
+          "minimum": 2,
+          "type": "number",
+          "title": "%config.repeatCollapseReadMinCount.title%"
+        },
+        "saropaLogCapture.repeatCollapseTransactionMinCount": {
+          "default": 3,
+          "markdownDescription": "%config.repeatCollapseTransactionMinCount.markdownDescription%",
+          "maximum": 50,
+          "minimum": 2,
+          "type": "number",
+          "title": "%config.repeatCollapseTransactionMinCount.title%"
+        },
+        "saropaLogCapture.repeatCollapseDmlMinCount": {
+          "default": 4,
+          "markdownDescription": "%config.repeatCollapseDmlMinCount.markdownDescription%",
+          "maximum": 50,
+          "minimum": 2,
+          "type": "number",
+          "title": "%config.repeatCollapseDmlMinCount.title%"
+        },
+        "saropaLogCapture.viewerSqlPatternChipMinCount": {
+          "default": 2,
+          "markdownDescription": "%config.viewerSqlPatternChipMinCount.markdownDescription%",
+          "maximum": 50,
+          "minimum": 1,
+          "type": "number",
+          "title": "%config.viewerSqlPatternChipMinCount.title%"
+        },
+        "saropaLogCapture.viewerSqlPatternMaxChips": {
+          "default": 20,
+          "markdownDescription": "%config.viewerSqlPatternMaxChips.markdownDescription%",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "number",
+          "title": "%config.viewerSqlPatternMaxChips.title%"
+        },
         "saropaLogCapture.minimapShowInfoMarkers": {
           "default": false,
           "markdownDescription": "%config.minimapShowInfoMarkers.markdownDescription%",
@@ -1255,6 +1303,12 @@
           "minimum": 0,
           "type": "number",
           "title": "%config.viewerMaxLines.title%"
+        },
+        "saropaLogCapture.viewerDbInsightsEnabled": {
+          "default": true,
+          "description": "%config.viewerDbInsightsEnabled.description%",
+          "type": "boolean",
+          "title": "%config.viewerDbInsightsEnabled.title%"
         },
         "saropaLogCapture.maxLogFiles": {
           "default": 0,

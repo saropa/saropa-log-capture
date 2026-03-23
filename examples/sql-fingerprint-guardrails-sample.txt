@@ -1,7 +1,9 @@
-# SQL fingerprint guardrails (DB_02) — manual QA samples
+# SQL fingerprint guardrails (DB_02) + Top SQL Patterns (DB_05) — manual QA samples
 #
 # Paste into a log session with Flutter-style prefixes so lines get source tag `database`.
 # Expect: same *shape* below shares one normalized fingerprint; args differ only in `with args`.
+# DB_05: Filters panel section **Top SQL Patterns**; tune chip min count / max chips with
+#   `saropaLogCapture.viewerSqlPatternChipMinCount` and `saropaLogCapture.viewerSqlPatternMaxChips`.
 #
 # --- Same fingerprint (literals / spacing / keyword case) ---
 I/flutter ( 1234): Drift: Sent SELECT * FROM "items" WHERE "id" = ? LIMIT 1; with args [1]
@@ -15,5 +17,5 @@ I/flutter ( 1234): Drift: Sent SELECT * FROM t WHERE id = 660e8400-e29b-41d4-a71
 I/flutter ( 1234): Drift: Sent SELECT * FROM t WHERE id = ?; with args [1]
 I/flutter ( 1234): Drift: Sent DELETE FROM t WHERE id = ?; with args [1]
 #
-# --- Low frequency: single line with a unique shape → SQL Patterns "Other SQL" until count >= 2 ---
+# --- Low frequency: single line with a unique shape → Top SQL Patterns "Other SQL" until count >= min (default 2) ---
 I/flutter ( 1234): Drift: Sent PRAGMA foreign_keys = ON; with args []
