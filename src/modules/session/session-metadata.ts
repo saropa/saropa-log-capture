@@ -5,6 +5,7 @@ import type { FingerprintEntry } from '../analysis/error-fingerprint';
 import { parseJSONOrDefault } from '../misc/safe-json';
 import { logExtensionError } from '../misc/extension-logger';
 import type { PerfFingerprintEntry } from '../misc/perf-fingerprint';
+import type { PersistedDriftSqlFingerprintSummaryV1 } from '../db/drift-sql-fingerprint-summary-persist';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -46,6 +47,8 @@ export interface SessionMeta {
     trashed?: boolean;
     /** Integration provider payloads keyed by provider id (e.g. buildCi, windowsEvents). */
     integrations?: Record<string, unknown>;
+    /** Drift `Sent` SQL fingerprint rollup (plan DB_10); validate `schemaVersion` on read. */
+    driftSqlFingerprintSummary?: PersistedDriftSqlFingerprintSummaryV1;
 }
 
 type MetaMap = Record<string, SessionMeta>;
@@ -153,6 +156,15 @@ export class SessionMetadataStore {
     async setPerfFingerprints(logUri: vscode.Uri, perfFingerprints: PerfFingerprintEntry[]): Promise<void> {
         const meta = await this.loadMetadata(logUri);
         meta.perfFingerprints = perfFingerprints;
+        await this.saveMetadata(logUri, meta);
+    }
+
+    async setDriftSqlFingerprintSummary(
+        logUri: vscode.Uri,
+        summary: PersistedDriftSqlFingerprintSummaryV1,
+    ): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        meta.driftSqlFingerprintSummary = summary;
         await this.saveMetadata(logUri, meta);
     }
 

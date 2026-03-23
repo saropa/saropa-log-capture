@@ -103,5 +103,70 @@ body {
 .line.common {
     border-left: 3px solid transparent;
 }
+.db-fp-section {
+    flex-shrink: 0;
+    max-height: 240px;
+    overflow: auto;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-sideBar-background);
+    font-size: 12px;
+}
+.db-fp-section summary {
+    cursor: pointer;
+    padding: 8px 12px;
+    font-weight: 600;
+    list-style-position: outside;
+    margin-left: 8px;
+}
+.db-fp-section .db-fp-hint {
+    padding: 4px 12px 8px 28px;
+    color: var(--vscode-descriptionForeground);
+}
+.db-fp-table-wrap {
+    padding: 0 8px 10px 12px;
+    overflow-x: auto;
+}
+.db-fp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+.db-fp-table th, .db-fp-table td {
+    text-align: left;
+    padding: 4px 8px 4px 0;
+    vertical-align: top;
+    border-bottom: 1px solid var(--vscode-widget-border, rgba(128,128,128,0.25));
+}
+.db-fp-table th { color: var(--vscode-descriptionForeground); font-weight: 600; }
+.db-fp-fp {
+    font-family: var(--vscode-editor-font-family, monospace);
+    word-break: break-all;
+    max-width: 42vw;
+}
+.db-kind {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.db-kind-new { background: var(--vscode-diffEditor-insertedTextBackground, rgba(0,200,0,0.2)); }
+.db-kind-removed { background: var(--vscode-diffEditor-removedTextBackground, rgba(255,0,0,0.2)); }
+.db-kind-more { background: rgba(255, 165, 0, 0.25); }
+.db-kind-fewer { background: rgba(100, 149, 237, 0.2); }
+.db-kind-same { background: var(--vscode-badge-background, rgba(128,128,128,0.25)); color: var(--vscode-badge-foreground); }
+.db-fp-trunc { opacity: 0.85; }
+.db-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-editor-background);
+    flex-shrink: 0;
+}
+.db-jump-cell { white-space: nowrap; }
+.db-jump { padding: 2px 8px; font-size: 11px; }
 `;
 }

@@ -1,0 +1,25 @@
+QA — Saropa Log Comparison + Database (Drift SQL) section
+===========================================================
+
+Purpose
+-------
+Validate the **Compare two sessions** panel when logs contain **`Drift: Sent …`** lines (after the
+Saropa session header). The panel should list fingerprint deltas, optional avg-ms columns when
+`[+Nms]` appears on lines, **Jump A/B** opening the correct file at the first matching fingerprint
+line, and (when a live viewer is open) **SQL baseline: A → viewer** / **B → viewer** / **Clear**.
+
+Suggested steps
+---------------
+1. Capture or open two `.log` files that both include Drift SQL traffic (or one with and one without
+   to see the “no Drift: Sent lines” hint).
+2. Run **Saropa Log Capture: Compare Log Sessions** (or the command your build registers) and pick
+   file A and file B.
+3. Expand **Database (Drift SQL)** — counts and change badges should match expectations; with
+   large diffs, confirm the “first N rows” truncation note appears.
+4. Click **Jump A** on a row where session A count > 0 — editor should land on a line containing
+   that fingerprint’s Drift payload (or metadata first-line hint if finalized with summary).
+5. Optional: with the log viewer focused, use **SQL baseline: A → viewer** then confirm DB detectors
+   see the baseline map (e.g. compare-mode hints if enabled).
+
+Related code: `session-comparison.ts`, `session-comparison-html.ts`, `db-session-fingerprint-diff.ts`,
+`compareLogSessionsWithDbFingerprints` in `diff-engine.ts`, `drift-sql-fingerprint-summary-persist.ts`.

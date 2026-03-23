@@ -27,6 +27,7 @@ import {
 } from '../integrations';
 import { stopExternalLogTailers } from '../integrations/external-log-tailer';
 import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
+import { scanAndPersistDriftSqlFingerprintSummary } from './session-drift-sql-fingerprint-persist';
 
 /** Parameters for session finalization. */
 export interface FinalizeSessionParams {
@@ -143,7 +144,9 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to scan perf fingerprints: ${err}`);
     });
 
-    Promise.allSettled([pCorr, pFp, pPerf]).then(() => {
+    const pDriftSql = scanAndPersistDriftSqlFingerprintSummary(logSession.fileUri, metadataStore, outputChannel);
+
+    Promise.allSettled([pCorr, pFp, pPerf, pDriftSql]).then(() => {
         params.onReportsIndexReady?.(logSession.fileUri);
     }).catch(() => {});
 

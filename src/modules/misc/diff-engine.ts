@@ -11,6 +11,14 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from '../capture/ansi';
+import {
+    compareScannedSaropaDbFingerprints,
+    scanSaropaLogDatabaseFingerprints,
+} from '../db/db-session-fingerprint-diff';
+import type { SessionDbFingerprintCompareResult } from '../db/db-session-fingerprint-diff';
+import type { DbFingerprintSummaryEntry } from '../db/db-detector-types';
+
+export type { SessionDbFingerprintCompareResult } from '../db/db-session-fingerprint-diff';
 
 /** A line from a log session with its original index. */
 export interface LogLine {
@@ -40,64 +48,13 @@ export interface DiffResult {
     readonly commonCount: number;
 }
 
-/**
- * Compare two log sessions and produce a diff result.
- * Uses normalized line text (stripped of ANSI, timestamps) for comparison.
- */
-export async function compareLogSessions(
-    uriA: vscode.Uri,
-    uriB: vscode.Uri,
-): Promise<DiffResult> {
-    const [linesA, linesB] = await Promise.all([
-        loadLogLines(uriA),
-        loadLogLines(uriB),
-    ]);
-
-    // Build set of normalized lines for each session
-    const normalizedB = new Set(linesB.map(l => normalizeLine(l.text)));
-    const normalizedA = new Set(linesA.map(l => normalizeLine(l.text)));
-
-    // Mark lines in A
-    const diffA: DiffLine[] = [];
-    let uniqueA = 0;
-    for (const line of linesA) {
-        const normalized = normalizeLine(line.text);
-        const status = normalizedB.has(normalized) ? 'common' : 'unique';
-        if (status === 'unique') {
-            uniqueA++;
-        }
-        diffA.push({ line, status });
-    }
-
-    // Mark lines in B
-    const diffB: DiffLine[] = [];
-    let uniqueB = 0;
-    for (const line of linesB) {
-        const normalized = normalizeLine(line.text);
-        const status = normalizedA.has(normalized) ? 'common' : 'unique';
-        if (status === 'unique') {
-            uniqueB++;
-        }
-        diffB.push({ line, status });
-    }
-
-    // Count common (use A's count since common lines exist in both)
-    const commonCount = linesA.length - uniqueA;
-
-    return {
-        sessionA: { uri: uriA, lines: diffA, uniqueCount: uniqueA },
-        sessionB: { uri: uriB, lines: diffB, uniqueCount: uniqueB },
-        commonCount,
-    };
+async function readLogFileUtf8(uri: vscode.Uri): Promise<string> {
+    const data = await vscode.workspace.fs.readFile(uri);
+    return Buffer.from(data).toString('utf-8');
 }
 
-/**
- * Load log lines from a file.
- */
-async function loadLogLines(uri: vscode.Uri): Promise<LogLine[]> {
-    const data = await vscode.workspace.fs.readFile(uri);
-    const content = Buffer.from(data).toString('utf-8');
-    const rawLines = content.split('\n');
+function parseLogLinesFromContent(content: string): LogLine[] {
+    const rawLines = content.split(/\r?\n/);
 
     const lines: LogLine[] = [];
     for (let i = 0; i < rawLines.length; i++) {
@@ -114,6 +71,99 @@ async function loadLogLines(uri: vscode.Uri): Promise<LogLine[]> {
     }
 
     return lines;
+}
+
+function diffParsedLogLines(
+    linesA: LogLine[],
+    linesB: LogLine[],
+    uriA: vscode.Uri,
+    uriB: vscode.Uri,
+): DiffResult {
+    const normalizedB = new Set(linesB.map(l => normalizeLine(l.text)));
+    const normalizedA = new Set(linesA.map(l => normalizeLine(l.text)));
+
+    const diffA: DiffLine[] = [];
+    let uniqueA = 0;
+    for (const line of linesA) {
+        const normalized = normalizeLine(line.text);
+        const status = normalizedB.has(normalized) ? 'common' : 'unique';
+        if (status === 'unique') {
+            uniqueA++;
+        }
+        diffA.push({ line, status });
+    }
+
+    const diffB: DiffLine[] = [];
+    let uniqueB = 0;
+    for (const line of linesB) {
+        const normalized = normalizeLine(line.text);
+        const status = normalizedA.has(normalized) ? 'common' : 'unique';
+        if (status === 'unique') {
+            uniqueB++;
+        }
+        diffB.push({ line, status });
+    }
+
+    const commonCount = linesA.length - uniqueA;
+
+    return {
+        sessionA: { uri: uriA, lines: diffA, uniqueCount: uniqueA },
+        sessionB: { uri: uriB, lines: diffB, uniqueCount: uniqueB },
+        commonCount,
+    };
+}
+
+/**
+ * Compare two log sessions and produce a diff result.
+ * Uses normalized line text (stripped of ANSI, timestamps) for comparison.
+ */
+export async function compareLogSessions(
+    uriA: vscode.Uri,
+    uriB: vscode.Uri,
+): Promise<DiffResult> {
+    const [textA, textB] = await Promise.all([
+        readLogFileUtf8(uriA),
+        readLogFileUtf8(uriB),
+    ]);
+    return diffParsedLogLines(
+        parseLogLinesFromContent(textA),
+        parseLogLinesFromContent(textB),
+        uriA,
+        uriB,
+    );
+}
+
+export interface CompareLogSessionsWithDbResult {
+    readonly diff: DiffResult;
+    readonly dbFingerprints: SessionDbFingerprintCompareResult;
+    readonly summaryMapA: Map<string, DbFingerprintSummaryEntry>;
+    readonly summaryMapB: Map<string, DbFingerprintSummaryEntry>;
+}
+
+/**
+ * One read per file: line diff plus Drift SQL fingerprint summary diff (plan DB_10).
+ */
+export async function compareLogSessionsWithDbFingerprints(
+    uriA: vscode.Uri,
+    uriB: vscode.Uri,
+): Promise<CompareLogSessionsWithDbResult> {
+    const [textA, textB] = await Promise.all([
+        readLogFileUtf8(uriA),
+        readLogFileUtf8(uriB),
+    ]);
+    const scanA = scanSaropaLogDatabaseFingerprints(textA);
+    const scanB = scanSaropaLogDatabaseFingerprints(textB);
+    return {
+        diff: diffParsedLogLines(
+            parseLogLinesFromContent(textA),
+            parseLogLinesFromContent(textB),
+            uriA,
+            uriB,
+        ),
+        dbFingerprints: compareScannedSaropaDbFingerprints(scanA, scanB),
+        summaryMapA: scanA.summary,
+        summaryMapB: scanB.summary,
+    };
 }
 
 /**

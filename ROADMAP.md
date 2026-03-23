@@ -1,6 +1,6 @@
 # Roadmap
 
-Future work only. Completed work is in [CHANGELOG.md](../CHANGELOG.md) and `bugs/history/`. *Updated: 2026-03-13.*
+Future work only. Completed work is in [CHANGELOG.md](../CHANGELOG.md) and `bugs/history/`. *Updated: 2026-03-23.*
 
 ---
 
@@ -22,7 +22,6 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 |-----|--------|---------|-------------|------|
 | High | Low | Voice / TTS | Read selected lines or errors aloud | [036](bugs/036_plan-voice-tts.md) |
 | High | Low | Error rate over time | Chart: errors/minute over session | [030](bugs/030_plan-error-rate-over-time.md) |
-| High | Medium | Regression hints | "This error pattern appeared after commit X" | [034](bugs/history/20260318/034_plan-regression-hints.md) ✓ |
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](bugs/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](bugs/007_plan-docker-inspect-and-until.md) |
 | Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](bugs/039_plan-bidirectional-sync.md) |

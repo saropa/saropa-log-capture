@@ -123,6 +123,13 @@ suite('SourceTagParser', () => {
             );
         });
 
+        test('should classify Drift SQL statements as database source tag', () => {
+            assert.strictEqual(
+                parseSourceTag('I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [sar-c4bd35cd-c72d-4f95-b5a2-405348819d01]'),
+                'database',
+            );
+        });
+
         test('should extract bracket sub-tag from flutter', () => {
             assert.strictEqual(
                 parseSourceTag('I/flutter ( 9812): [Awesome Notifications] channel created'),

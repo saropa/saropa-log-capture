@@ -102,6 +102,14 @@ export function setupConfigListener(
             broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
         }
         if (
+            e.affectsConfiguration('saropaLogCapture.viewerSlowBurstSlowQueryMs')
+            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstMinCount')
+            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstWindowMs')
+            || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstCooldownMs')
+        ) {
+            broadcaster.setViewerSlowBurstThresholds(cfg.viewerSlowBurstThresholds);
+        }
+        if (
             e.affectsConfiguration('saropaLogCapture.viewerSqlPatternChipMinCount')
             || e.affectsConfiguration('saropaLogCapture.viewerSqlPatternMaxChips')
         ) {

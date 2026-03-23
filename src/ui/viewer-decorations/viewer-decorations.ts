@@ -23,6 +23,8 @@ var showDecorations = false;
 
 /** Epoch ms of the first timestamped line — used for session elapsed display. */
 var sessionStartTs = 0;
+/** Last digit count applied to CSS vars; prevents repeated style writes in hot paths. */
+var lastAppliedCounterDigits = -1;
 
 /**
  * Map log level to a colored dot emoji.
@@ -107,6 +109,39 @@ function resetDecoDefaults() {
     decoShowBar = true;
 }
 
+/**
+ * Compute counter digit width from the current max line number.
+ * Keeps a 5-char minimum, then grows for 6+ digits.
+ */
+function getCounterDigitsForLayout() {
+    var maxCount = 0;
+    if (typeof lineCount === 'number' && lineCount > 0) {
+        maxCount = lineCount;
+    } else if (typeof allLines !== 'undefined' && allLines && allLines.length > 0) {
+        maxCount = allLines.length;
+    }
+    var digits = String(Math.max(1, maxCount)).length;
+    return Math.max(5, digits);
+}
+
+/**
+ * Keep decorated-line hanging indent in sync with counter digit width.
+ * Base layout assumes up to 4 digits; add 1em per extra digit.
+ * Runs often while streaming, so skip CSS writes unless digit width changed.
+ */
+function applyDecorationLayoutWidth() {
+    var root = document.documentElement;
+    if (!root || !root.style) return;
+    var digits = getCounterDigitsForLayout();
+    if (digits === lastAppliedCounterDigits) return;
+    var extraDigits = Math.max(0, digits - 4);
+    var contentIndentEm = 13 + extraDigits;
+    var totalPaddingEm = 1.25 + contentIndentEm; // 1.25em keeps severity bar clear.
+    root.style.setProperty('--deco-content-indent-em', contentIndentEm + 'em');
+    root.style.setProperty('--deco-prefix-width-em', totalPaddingEm + 'em');
+    lastAppliedCounterDigits = digits;
+}
+
 /** Update the Deco button style and tooltip to reflect the master toggle state. */
 function updateDecoButton() {
     var btn = document.getElementById('deco-toggle');
@@ -145,7 +180,7 @@ function getDecorationPrefix(item, idx) {
     /* Show counter when Counter is on, or when blank and "Show line number on blank lines" is on. */
     if (decoShowCounter || (isBlank && decoShowCounterOnBlank)) {
         var seqStr = (typeof idx === 'number') ? String(idx + 1) : (item.seq !== undefined ? String(item.seq) : '?');
-        parts.push('<span class="deco-counter">' + seqStr.padStart(5, '\\u00a0') + '</span>');
+        parts.push('<span class="deco-counter">' + seqStr.padStart(getCounterDigitsForLayout(), '\\u00a0') + '</span>');
     }
     if (!isBlank && decoShowTimestamp) {
         var ts = formatDecoTimestamp(item.timestamp);
@@ -181,6 +216,7 @@ function handleSetShowDecorations(msg) {
     }
     if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
     updateDecoButton();
+    applyDecorationLayoutWidth();
     renderViewport(true);
 }
 
@@ -194,6 +230,7 @@ function toggleDecorations() {
     }
     if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
     updateDecoButton();
+    applyDecorationLayoutWidth();
     renderViewport(true);
 }
 
@@ -202,5 +239,6 @@ var decoToggleBtn = document.getElementById('deco-toggle');
 if (decoToggleBtn) {
     decoToggleBtn.addEventListener('click', toggleDecorations);
 }
+applyDecorationLayoutWidth();
 `;
 }

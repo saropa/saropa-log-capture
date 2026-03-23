@@ -6,13 +6,38 @@
  * (renderItem, renderViewport).
  */
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
+import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
 import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
 
-export function getViewerDataScript(repeatThresholds?: Partial<ViewerRepeatThresholds>): string {
-    return getViewerDataHelpers(repeatThresholds) + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
+export function getViewerDataScript(
+    repeatThresholds?: Partial<ViewerRepeatThresholds>,
+    viewerDbInsightsEnabled = true,
+    slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
+): string {
+    return getViewerDataHelpers(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds) + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
+
+function scrollToAnchorSeq(seq) {
+    if (seq == null || !isFinite(seq) || allLines.length === 0 || window.isContextMenuOpen) return;
+    var i, it;
+    for (i = 0; i < allLines.length; i++) {
+        it = allLines[i];
+        if (it && it.seq === seq && it.height > 0) {
+            var offset = 0;
+            for (var j = 0; j < i; j++) offset += allLines[j].height;
+            if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+            suppressScroll = true;
+            logEl.scrollTop = Math.max(0, offset - logEl.clientHeight / 2 + (it.height || ROW_HEIGHT) / 2);
+            suppressScroll = false;
+            autoScroll = false;
+            if (typeof jumpBtn !== 'undefined' && jumpBtn) jumpBtn.style.display = 'block';
+            if (typeof renderViewport === 'function') renderViewport(false);
+            return;
+        }
+    }
+}
 
 function trimData() {
     if (allLines.length <= MAX_LINES) return;
@@ -44,6 +69,12 @@ function trimData() {
     }
     if (typeof finalizeSqlPatternState === 'function') finalizeSqlPatternState();
     else if (typeof buildPrefixSums === 'function') buildPrefixSums();
+    if (typeof pruneDbDetectorStateAfterTrim === 'function' && allLines.length > 0) {
+        var oldestKept = allLines[0].timestamp;
+        if (typeof oldestKept === 'number' && isFinite(oldestKept)) {
+            pruneDbDetectorStateAfterTrim(oldestKept);
+        }
+    }
 }
 
 /**

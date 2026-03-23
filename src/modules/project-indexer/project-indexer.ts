@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import { getConfig, getSaropaIndexDirUri } from '../config/config';
 import type { ProjectIndexSourceConfig } from '../config/config';
 import { buildRootPatternsForDocFileTypes, DEFAULT_DOC_FILE_TYPES, extractDocTokensByType, FIND_FILES_EXCLUDE_GLOB, isBlockedRelativePath, matchesDocFileType, normalizeDocFileTypes } from './project-indexer-file-types';
-import { rankDocEntriesByQueriesWithDebug, rankDocEntriesByQueriesWithScores } from './project-indexer-ranking';
 import { buildReportIndex } from './build-report-index';
 import type {
     DocIndexEntry,
@@ -19,20 +18,13 @@ import type {
 } from './project-indexer-types';
 import { tokenCountOfEntry } from './project-indexer-types';
 import type { RankedDocDebugEntry, RankedDocEntry } from './project-indexer-ranking';
+import { queryDocEntriesByTokensWithDebugFromIndexes, queryDocEntriesByTokensWithScoresFromIndexes } from './project-indexer-query';
+export { getGlobalProjectIndexer, setGlobalProjectIndexer } from './project-indexer-global';
 
 export type { DocIndexEntry, ReportIndexEntry, IndexEntry, SourceIndexFile, ManifestSourceMeta, IndexManifest } from './project-indexer-types';
 
 const INDEX_VERSION = 1;
 const BATCH_SIZE = 10;
-
-let globalIndexer: ProjectIndexer | null = null;
-/** Set by extension when workspace is available. Used by trash/restore to update reports index. */
-export function setGlobalProjectIndexer(indexer: ProjectIndexer | null): void {
-    globalIndexer = indexer;
-}
-export function getGlobalProjectIndexer(): ProjectIndexer | null {
-    return globalIndexer;
-}
 
 export class ProjectIndexer {
     private manifest: IndexManifest | undefined;
@@ -290,29 +282,11 @@ export class ProjectIndexer {
 
     /** Query: return ranked doc entries and scores for debugging/tuning relevance. */
     queryDocEntriesByTokensWithScores(tokens: string[]): RankedDocEntry[] {
-        const lower = tokens.map((t) => t.toLowerCase());
-        const result: DocIndexEntry[] = [];
-        for (const [, idx] of this.sourceIndexes) {
-            if (idx.sourceId === 'reports') { continue; }
-            for (const f of idx.files) {
-                const doc = f as DocIndexEntry;
-                if (doc.tokens) { result.push(doc); }
-            }
-        }
-        return rankDocEntriesByQueriesWithScores(result, lower);
+        return queryDocEntriesByTokensWithScoresFromIndexes(this.sourceIndexes, tokens);
     }
 
     /** Query: ranked doc entries and token-level score contributions for debugging/tuning relevance. */
     queryDocEntriesByTokensWithDebug(tokens: string[]): RankedDocDebugEntry[] {
-        const lower = tokens.map((t) => t.toLowerCase());
-        const result: DocIndexEntry[] = [];
-        for (const [, idx] of this.sourceIndexes) {
-            if (idx.sourceId === 'reports') { continue; }
-            for (const f of idx.files) {
-                const doc = f as DocIndexEntry;
-                if (doc.tokens) { result.push(doc); }
-            }
-        }
-        return rankDocEntriesByQueriesWithDebug(result, lower);
+        return queryDocEntriesByTokensWithDebugFromIndexes(this.sourceIndexes, tokens);
     }
 }

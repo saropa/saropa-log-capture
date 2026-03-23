@@ -132,6 +132,33 @@ suite('Viewer scope filter hint (behavior)', () => {
         assert.ok(hintEl.innerHTML.includes('no debugger file path'));
     });
 
+    test('does not show no-path guidance when hide-unattrib is on (false positive guard)', () => {
+        const { allLines, api, hintEl } = createScopeHintRuntime();
+        api.setActiveFilePath('/w/x.dart');
+        api.setScopeHideUnattrib(true);
+        for (let i = 0; i < 10; i++) {
+            allLines.push({
+                type: 'line',
+                sourcePath: i < 7 ? null : '/w/x.dart',
+            });
+        }
+        api.setScopeLevel('file');
+        assert.ok(!hintEl.innerHTML.includes('no debugger file path'));
+    });
+
+    test('clears hint when widening scope to all after active narrowing', () => {
+        const { allLines, api, hintEl } = createScopeHintRuntime();
+        api.setActiveFilePath('/w/x.dart');
+        for (let i = 0; i < 10; i++) {
+            allLines.push({ type: 'line', sourcePath: '/z/other.dart' });
+        }
+        api.setScopeLevel('file');
+        assert.ok(hintEl.innerHTML.includes('Reset to All logs'));
+        api.setScopeLevel('all');
+        assert.strictEqual(hintEl.style.display, 'none');
+        assert.strictEqual(hintEl.innerHTML, '');
+    });
+
     test('hint reset button sets scope to all', () => {
         const { allLines, api, hintEl } = createScopeHintRuntime();
         api.setActiveFilePath('/w/x.dart');

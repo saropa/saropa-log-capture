@@ -11,7 +11,9 @@ import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
+import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 
 /** Contract for a webview that renders captured debug output. */
 export interface ViewerTarget {
@@ -47,10 +49,18 @@ export interface ViewerTarget {
   setMinimapShowSqlDensity(show: boolean): void;
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
   setViewerDbInsightsEnabled(enabled: boolean): void;
+  setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void;
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
   setScrollbarVisible(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
   setAutoHidePatterns(patterns: readonly string[]): void;
+  /**
+   * Optional DB_10 / DB_15: normalized fingerprint → summary entry for compare-aware detectors in the viewer.
+   * Pass null to clear.
+   */
+  setDbBaselineFingerprintSummary(
+    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
+  ): void;
 }

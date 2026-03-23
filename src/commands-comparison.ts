@@ -4,12 +4,13 @@ import * as vscode from 'vscode';
 import { t } from './l10n';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from './modules/config/config';
 import { getComparisonPanel } from './ui/session/session-comparison';
+import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 
 /** URI of session marked for comparison (first selection). */
 let comparisonMarkUri: vscode.Uri | undefined;
 
 /** Register session comparison commands. */
-export function comparisonCommands(extensionUri: vscode.Uri): vscode.Disposable[] {
+export function comparisonCommands(extensionUri: vscode.Uri, broadcaster: ViewerBroadcaster): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand('saropaLogCapture.markForComparison',
           (item: { uri: vscode.Uri; filename: string }) => {
@@ -39,7 +40,7 @@ export function comparisonCommands(extensionUri: vscode.Uri): vscode.Disposable[
         vscode.commands.registerCommand('saropaLogCapture.compareSessions', async () => {
             const sessions = await pickTwoSessions();
             if (sessions) {
-                const panel = getComparisonPanel(extensionUri);
+                const panel = getComparisonPanel(extensionUri, broadcaster);
                 await panel.compare(sessions[0], sessions[1]);
             }
         }),

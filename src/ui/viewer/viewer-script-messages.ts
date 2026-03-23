@@ -65,6 +65,7 @@ window.addEventListener('message', function(event) {
                 repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
             }
             if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
+            if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') setDbBaselineFingerprintSummaryFromHost(null);
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
@@ -101,6 +102,11 @@ window.addEventListener('message', function(event) {
             break;
         case 'setDriftAdvisorAvailable':
             if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available;
+            break;
+        case 'setDbBaselineFingerprintSummary':
+            if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') {
+                setDbBaselineFingerprintSummaryFromHost(msg.fingerprints || null);
+            }
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';

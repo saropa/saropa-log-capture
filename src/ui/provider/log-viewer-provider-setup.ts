@@ -48,6 +48,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     viewerMaxLines,
     viewerRepeatThresholds: cfg.viewerRepeatThresholds,
     viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+    viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
     viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
     viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
   });
@@ -65,6 +66,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.postMessage({
     type: 'setViewerDbInsightsEnabled',
     enabled: getConfig().viewerDbInsightsEnabled,
+  }));
+  queueMicrotask(() => target.postMessage({
+    type: 'setViewerSlowBurstThresholds',
+    thresholds: getConfig().viewerSlowBurstThresholds,
   }));
   queueMicrotask(() => target.postMessage({
     type: 'setViewerSqlPatternChipSettings',
