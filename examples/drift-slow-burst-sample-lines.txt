@@ -1,0 +1,15 @@
+# Sample lines for slow-query burst markers (DB_08).
+# Requires: [database] category, Drift-style SQL text, and [+Nms] elapsed on each line (replay / file format).
+# Defaults: 5+ queries with duration >= 50ms within 2s log time → green "Slow query burst" marker; click scrolls to completing line.
+# Tune: saropaLogCapture.viewerSlowBurstSlowQueryMs, viewerSlowBurstMinCount, viewerSlowBurstWindowMs, viewerSlowBurstCooldownMs
+# Disable all DB detectors: saropaLogCapture.viewerDbInsightsEnabled = false
+
+[10:00:00.000] [+60ms] [database] Drift: Sent SELECT 1;
+[10:00:00.050] [+55ms] [database] Drift: Sent SELECT 1;
+[10:00:00.100] [+62ms] [database] Drift: Sent SELECT 1;
+[10:00:00.150] [+58ms] [database] Drift: Sent SELECT 1;
+[10:00:00.200] [+70ms] [database] Drift: Sent SELECT 1;
+
+# Counterexample (should NOT trigger a burst): five lines all under 50ms
+# [10:00:01.000] [+10ms] [database] Drift: Sent SELECT 1;
+# (repeat four more with +10ms within 2s)
