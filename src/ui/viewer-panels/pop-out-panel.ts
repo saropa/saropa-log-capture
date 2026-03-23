@@ -8,6 +8,8 @@
 
 import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
@@ -182,6 +184,22 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     this.post({ type: "setViewerDbInsightsEnabled", enabled });
   }
+  setDbBaselineFingerprintSummary(
+    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
+  ): void {
+    this.post({ type: "setDbBaselineFingerprintSummary", fingerprints: entries });
+  }
+  setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
+    this.post({
+      type: "setViewerSlowBurstThresholds",
+      thresholds: {
+        slowQueryMs: thresholds.slowQueryMs,
+        burstMinCount: thresholds.burstMinCount,
+        burstWindowMs: thresholds.burstWindowMs,
+        cooldownMs: thresholds.cooldownMs,
+      },
+    });
+  }
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
     this.post({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
   }
@@ -227,6 +245,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerMaxLines,
       viewerRepeatThresholds: cfg.viewerRepeatThresholds,
       viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+      viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
       viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
       viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
     });
@@ -237,6 +256,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     queueMicrotask(() => this.post({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
     queueMicrotask(() => this.post({ type: 'setViewerRepeatThresholds', thresholds: getConfig().viewerRepeatThresholds }));
     queueMicrotask(() => this.post({ type: 'setViewerDbInsightsEnabled', enabled: getConfig().viewerDbInsightsEnabled }));
+    queueMicrotask(() => this.post({ type: 'setViewerSlowBurstThresholds', thresholds: getConfig().viewerSlowBurstThresholds }));
     queueMicrotask(() => this.post({
       type: 'setViewerSqlPatternChipSettings',
       chipMinCount: getConfig().viewerSqlPatternChipMinCount,

@@ -9,6 +9,8 @@
 
 import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { SessionDisplayOptions } from "../session/session-display";
@@ -110,6 +112,23 @@ export function setViewerRepeatThresholdsImpl(target: ProviderStateTarget, thres
 }
 export function setViewerDbInsightsEnabledImpl(target: ProviderStateTarget, enabled: boolean): void {
   target.postMessage({ type: "setViewerDbInsightsEnabled", enabled });
+}
+export function setDbBaselineFingerprintSummaryImpl(
+  target: ProviderStateTarget,
+  entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
+): void {
+  target.postMessage({ type: "setDbBaselineFingerprintSummary", fingerprints: entries });
+}
+export function setViewerSlowBurstThresholdsImpl(target: ProviderStateTarget, thresholds: ViewerSlowBurstThresholds): void {
+  target.postMessage({
+    type: "setViewerSlowBurstThresholds",
+    thresholds: {
+      slowQueryMs: thresholds.slowQueryMs,
+      burstMinCount: thresholds.burstMinCount,
+      burstWindowMs: thresholds.burstWindowMs,
+      cooldownMs: thresholds.cooldownMs,
+    },
+  });
 }
 export function setViewerSqlPatternChipSettingsImpl(
   target: ProviderStateTarget,

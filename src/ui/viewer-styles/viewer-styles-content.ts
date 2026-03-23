@@ -12,6 +12,15 @@ export function getContentStyles(): string {
     font-style: italic;
     line-height: 1.5;
 }
+.slow-query-burst-marker {
+    cursor: pointer;
+    font-style: italic;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.slow-query-burst-marker:hover {
+    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+}
 
 /* --- Stack Trace Groups --- */
 .stack-group { margin: 0; }

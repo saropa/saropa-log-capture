@@ -26,9 +26,13 @@
  * - Sandbox `parseSourceTag` is a **minimal** subset of `viewer-source-tags.ts` /
  *   `source-tag-parser.ts` (Drift gate + logcat prefix). If production tagging diverges,
  *   update this regex or share a generated test fixture — otherwise VM results may drift.
+ * - **DB_06:** SQL repeat drilldown snapshot, variant cap, expand/collapse height, false positives
+ *   (non-SQL has no toggle; unknown `seq` toggle is no-op). Does not exercise DOM click/Escape (see
+ *   `viewer-script.ts`).
  * - Does not exercise DOM, virtual scroll, or `applyCompressDedupModes` (out of scope for DB_03).
  *
  * @see plans/history/20260323/DB_03_sql-repeat-compression.md
+ * @see plans/history/20260323/DB_06_expand-sql-repeats-drilldown.md
  * @see viewer-data-add.ts — `addToData` repeat branch
  */
 import * as assert from 'node:assert';
@@ -48,6 +52,14 @@ interface RepeatTrackerVm {
     count: number;
     lastLineIndex: number;
     streakSqlFp: boolean;
+    sqlStreakFingerprint: string | null;
+}
+
+interface SqlRepeatDrilldownVm {
+    fingerprint: string;
+    repeatCount: number;
+    variants: { argsKey: string; count: number }[];
+    moreVariantCount: number;
 }
 
 interface LineItemVm {
@@ -55,6 +67,9 @@ interface LineItemVm {
     html?: string;
     height: number;
     repeatHidden?: boolean;
+    seq?: number;
+    sqlRepeatDrilldown?: SqlRepeatDrilldownVm;
+    sqlRepeatDrilldownOpen?: boolean;
 }
 
 interface SandboxVm {
@@ -65,6 +80,9 @@ interface SandboxVm {
     repeatTracker: RepeatTrackerVm;
     cleanupTrailingRepeats: () => void;
     parseSqlFingerprint: ((plain: string) => { fingerprint: string } | null) | undefined;
+    recalcHeights: () => void;
+    toggleSqlRepeatDrilldown: (seq: number) => void;
+    calcItemHeight: (item: LineItemVm) => number;
 }
 
 function buildSandboxScript(): string {
@@ -100,6 +118,15 @@ function registerSourceTag() {}
 function registerSqlPattern() {}
 function resetCompressDupStreak() {}
 function updateCompressDupStreakAfterLine() {}
+
+function recalcHeights() {
+    totalHeight = 0;
+    for (var i = 0; i < allLines.length; i++) {
+        allLines[i].height = calcItemHeight(allLines[i]);
+        totalHeight += allLines[i].height;
+    }
+}
+function renderViewport() {}
 
 /* Minimal parseSourceTag aligned with source-tag-parser driftStatementPattern gate. */
 function parseSourceTag(plainText) {
@@ -239,6 +266,67 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.strictEqual(repeats.length, 2);
         assert.ok(repeats.every((r) => r.html?.includes('Repeated #')));
         assert.ok(repeats.every((r) => !r.html?.includes('SQL repeated')));
+        assert.ok(repeats.every((r) => !r.html?.includes('sql-repeat-drilldown-toggle')));
+    });
+
+    test('DB_06: SQL repeat rows carry drilldown snapshot and toggle; expand increases height', () => {
+        const s = loadViewerRepeatSandbox();
+        const t0 = 8_000_000;
+        s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
+        s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
+        s.addToData(driftSelectWithArgs(3), false, 'stdout', t0 + 200, false, null, undefined, undefined, 'debug');
+
+        const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
+        assert.strictEqual(repeats.length, 2);
+        const tail = repeats[1];
+        assert.ok(tail.html?.includes('sql-repeat-drilldown-toggle'));
+        assert.ok(tail.sqlRepeatDrilldown);
+        assert.strictEqual(tail.sqlRepeatDrilldown.repeatCount, 3);
+        assert.strictEqual(tail.sqlRepeatDrilldown.variants.length, 3);
+        assert.strictEqual(tail.sqlRepeatDrilldown.moreVariantCount, 0);
+
+        const hCollapsed = s.calcItemHeight(tail);
+        assert.strictEqual(hCollapsed, ROW_HEIGHT_EXPECTED);
+        s.toggleSqlRepeatDrilldown(tail.seq as number);
+        assert.strictEqual(tail.sqlRepeatDrilldownOpen, true);
+        assert.ok(tail.html?.includes('sql-repeat-drilldown-detail'));
+        s.recalcHeights();
+        const hOpen = s.calcItemHeight(tail);
+        assert.ok(hOpen > ROW_HEIGHT_EXPECTED);
+    });
+
+    test('DB_06: more than 10 distinct arg variants surface moreVariantCount', () => {
+        const s = loadViewerRepeatSandbox();
+        const t0 = 9_000_000;
+        s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
+        for (let k = 2; k <= 11; k++) {
+            s.addToData(driftSelectWithArgs(k), false, 'stdout', t0 + k * 10, false, null, undefined, undefined, 'debug');
+        }
+        const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
+        const tail = repeats[repeats.length - 1];
+        assert.ok(tail.sqlRepeatDrilldown);
+        assert.strictEqual(tail.sqlRepeatDrilldown.variants.length, 10);
+        assert.strictEqual(tail.sqlRepeatDrilldown.moreVariantCount, 1);
+    });
+
+    test('DB_06: collapsed rows have no detail HTML; second toggle closes; unknown seq is no-op', () => {
+        const s = loadViewerRepeatSandbox();
+        const t0 = 10_000_000;
+        s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
+        s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
+        s.addToData(driftSelectWithArgs(3), false, 'stdout', t0 + 200, false, null, undefined, undefined, 'debug');
+        const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
+        const tail = repeats[repeats.length - 1];
+        assert.ok(!tail.html?.includes('sql-repeat-drilldown-detail'));
+        assert.strictEqual(tail.sqlRepeatDrilldownOpen, false);
+        const thBefore = s.totalHeight;
+        s.toggleSqlRepeatDrilldown(4_000_000);
+        assert.strictEqual(s.totalHeight, thBefore);
+        s.toggleSqlRepeatDrilldown(tail.seq as number);
+        assert.ok(tail.html?.includes('sql-repeat-drilldown-detail'));
+        s.toggleSqlRepeatDrilldown(tail.seq as number);
+        assert.strictEqual(tail.sqlRepeatDrilldownOpen, false);
+        assert.ok(!tail.html?.includes('sql-repeat-drilldown-detail'));
     });
 
     test('marker boundary restores hidden anchor row and clears repeat tracker state', () => {
@@ -257,6 +345,8 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.strictEqual(s.repeatTracker.count, 0);
         assert.strictEqual(s.repeatTracker.lastHash, null);
         assert.strictEqual(s.repeatTracker.lastLineIndex, -1);
+        assert.strictEqual(s.repeatTracker.sqlStreakFingerprint, null);
+        assert.strictEqual(s.repeatTracker.streakSqlFp, false);
 
         const anchorAfter = s.allLines.find((l) => l.type === 'line');
         assert.ok(anchorAfter);

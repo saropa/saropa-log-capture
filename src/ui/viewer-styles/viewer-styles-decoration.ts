@@ -26,8 +26,8 @@ export function getDecorationStyles(): string {
 /* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
 /* When time/number are shown, reserve 1.25em left for severity bar (dot at 0.69em + 0.54em) so the bar does not cover the numbers. */
 .line:has(.line-decoration) {
-    padding-left: 14.25em; /* 1.25em bar clearance + 13em decoration width */
-    text-indent: -13em;
+    padding-left: var(--deco-prefix-width-em, 14.25em); /* 1.25em bar clearance + dynamic decoration width */
+    text-indent: calc(-1 * var(--deco-content-indent-em, 13em));
 }
 .line:has(.line-decoration) .line-decoration {
     /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */

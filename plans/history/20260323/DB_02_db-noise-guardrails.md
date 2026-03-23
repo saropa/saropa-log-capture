@@ -10,6 +10,7 @@
 - **Performance** — Streaming uses `applySqlPatternFilterForNewLine` (no scroll anchor); trim uses batched `unregisterSqlPattern` + `finalizeSqlPatternState` with anchored `applySqlPatternFilter`.
 - **Tests** — `src/test/modules/db/drift-sql-fingerprint-normalize.test.ts` (shape collapse, UUID, args isolation, false-positive distinct statements).
 - **Examples** — `examples/sql-fingerprint-guardrails-sample.txt`.
+- **DB_15** — All embed detectors (`parseSqlFingerprint` → **`db.n-plus-one`**, repeat key **`::sqlfp::`**, rollup keys) must keep using this normalizer; do not fork fingerprint strings in new detector modules.
 
 ## Original plan (archived)
 

@@ -111,6 +111,15 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
     var hasDur = typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs);
     if (!hasSql && !hasDur) return;
     try {
+        var baselineForCtx = null;
+        if (typeof dbBaselineFingerprintSummary !== 'undefined' && dbBaselineFingerprintSummary && typeof dbBaselineFingerprintSummary === 'object') {
+            baselineForCtx = new Map();
+            for (var bKey in dbBaselineFingerprintSummary) {
+                if (Object.prototype.hasOwnProperty.call(dbBaselineFingerprintSummary, bKey)) {
+                    baselineForCtx.set(bKey, dbBaselineFingerprintSummary[bKey]);
+                }
+            }
+        }
         var ctx = {
             timestampMs: nowTs,
             sessionId: null,
@@ -119,7 +128,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
             plainText: plain || '',
             durationMs: hasDur ? elapsedMs : undefined,
             sql: sqlMeta || null,
-            baselineFingerprintSummary: null,
+            baselineFingerprintSummary: baselineForCtx,
             anchorSeq: (typeof anchorSeq === 'number' && isFinite(anchorSeq)) ? anchorSeq : undefined
         };
         var merged = runDbDetectors(ctx);
