@@ -4,7 +4,8 @@
  * Slide-out panel from the right side with organized sections for all
  * viewer filter controls:
  *   - Quick Filters (presets + reset)
- *   - Source Scope (file/directory/package/workspace radio buttons)
+ *   - Log Streams (debug / terminal / external sidecars when merged)
+ *   - Code Location Scope (narrow by active editor path metadata)
  *   - Output Channels (DAP category checkboxes)
  *   - Log Tags (source tag chips)
  *   - Code Tags (class/method tag chips)
@@ -40,25 +41,30 @@ export function getFiltersPanelHtml(): string {
             </div>
         </div>
 
-        <!-- Stream sources (Debug / Terminal); shown when log has multiple sources -->
+        <!-- Log streams (debug / terminal / external sidecars); shown when session has multiple inputs -->
         <div class="options-section" id="source-filter-section" style="display:none">
-            <h3 class="options-section-title">Sources</h3>
+            <h3 class="options-section-title">Log Streams</h3>
+            <div id="source-streams-intro" class="options-hint">Choose which inputs to show (debug console, terminal capture, or merged external log files).</div>
             <div id="source-filter-list" class="options-row-list"></div>
         </div>
 
-        <!-- Source Scope Section -->
+        <!-- Code location scope: DAP source path relative to active editor (separate from Log Streams above) -->
         <div class="options-section" id="scope-section">
-            <h3 class="options-section-title">Source Scope</h3>
+            <h3 class="options-section-title">Code Location Scope</h3>
+            <div id="scope-intro" class="options-hint">Narrow the view using file paths attached to log lines by the debugger—not the same as Log Streams above.</div>
             <div id="scope-status" class="options-hint">No active editor</div>
             <label class="options-row"><input type="radio" name="scope" value="all" checked /> All logs</label>
-            <label class="options-row"><input type="radio" name="scope" value="workspace" disabled /> Workspace folder</label>
-            <label class="options-row"><input type="radio" name="scope" value="package" disabled /> Package</label>
-            <label class="options-row"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
-            <label class="options-row"><input type="radio" name="scope" value="file" disabled /> File</label>
-            <label class="options-row" title="Hide lines with no DAP source path when a scope filter is active">
-                <input type="checkbox" id="scope-hide-unattrib" />
-                <span>Hide unattributed</span>
-            </label>
+            <div id="scope-no-context-hint" class="options-hint">Open a source file from your workspace to enable folder and file scope.</div>
+            <div id="scope-narrowing-block" style="display:none">
+                <label class="options-row"><input type="radio" name="scope" value="workspace" disabled /> Workspace folder</label>
+                <label class="options-row"><input type="radio" name="scope" value="package" disabled /> Package</label>
+                <label class="options-row"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
+                <label class="options-row"><input type="radio" name="scope" value="file" disabled /> File</label>
+                <label class="options-row" title="When a location scope is active, hide lines with no file path from the debugger">
+                    <input type="checkbox" id="scope-hide-unattrib" />
+                    <span>Hide lines without file path</span>
+                </label>
+            </div>
         </div>
 
         <!-- Output Channels Section (populated dynamically) -->
