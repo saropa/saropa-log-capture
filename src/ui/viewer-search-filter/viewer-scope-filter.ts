@@ -13,6 +13,9 @@ export function getScopeFilterScript(): string {
 var scopeLevel = 'all';
 var scopeHideUnattributed = false;
 var scopeContext = { activeFilePath: null, workspaceFolder: null, packageRoot: null, activeDirectory: null };
+var scopeHintMinLines = 8;
+var scopeHintHiddenRatio = 0.75;
+var scopeHintNoPathRatio = 0.25;
 
 function normScopePath(p) {
     if (!p) return null;
@@ -184,7 +187,7 @@ function updateScopeFilterHint() {
         if (item.scopeFiltered) scopeHidden++;
         if (!item.sourcePath) noPath++;
     }
-    if (total < 10) {
+    if (total < scopeHintMinLines) {
         el.textContent = '';
         el.style.display = 'none';
         return;
@@ -192,10 +195,12 @@ function updateScopeFilterHint() {
     var ratioHidden = scopeHidden / total;
     var ratioNoPath = noPath / total;
     var messages = [];
-    if (ratioHidden >= 0.85) {
+    var suggestReset = false;
+    if (ratioHidden >= scopeHintHiddenRatio) {
         messages.push('Most lines are hidden by this location scope. Try All logs or a wider scope (e.g. Workspace) if the view looks empty.');
+        suggestReset = true;
     }
-    if (ratioNoPath >= 0.35 && !scopeHideUnattributed) {
+    if (ratioNoPath >= scopeHintNoPathRatio && !scopeHideUnattributed) {
         messages.push('Many lines have no debugger file path. Enable Hide lines without file path to drop them while a location scope is on.');
     }
     if (messages.length === 0) {
@@ -203,8 +208,22 @@ function updateScopeFilterHint() {
         el.style.display = 'none';
         return;
     }
-    el.textContent = messages.join(' ');
+    var html = '<span>' + messages.join(' ') + '</span>';
+    if (suggestReset) {
+        html += ' <button type="button" class="scope-hint-reset-btn" data-scope-reset="all">Reset to All logs</button>';
+    }
+    el.innerHTML = html;
     el.style.display = '';
+}
+
+var scopeHintEl = document.getElementById('scope-filter-hint');
+if (scopeHintEl) {
+    scopeHintEl.addEventListener('click', function(e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-scope-reset="all"]') : null;
+        if (!btn) return;
+        setScopeLevel('all');
+        updateScopeFilterHint();
+    });
 }
 
 var _origRecalcForScopeHint = typeof recalcHeights === 'function' ? recalcHeights : null;
