@@ -1,7 +1,8 @@
 /**
  * Optional host-side `compare()` detector: surfaces fingerprints where the target session ran **more**
- * queries than the baseline (DB_10 / DB_15 follow-up). Consumers use `runDbDetectorsCompare`; the log
- * viewer embed uses a separate streaming marker (`db.baseline-volume-hint`).
+ * queries than the baseline (DB_10 / DB_15 follow-up). Used via **`runDefaultSessionDbCompareDetectors`**
+ * from **`compareLogSessionsWithDbFingerprints`** (session comparison webview) and tests; the log viewer
+ * embed uses a separate streaming marker (`db.baseline-volume-hint`).
  *
  * **Threshold note:** batch compare here uses `MIN_BASELINE_COUNT` **5** to limit noise on thin baselines.
  * The streaming embed hint uses **3** (`viewer-db-detector-framework-script.ts`) so live tailing can fire
