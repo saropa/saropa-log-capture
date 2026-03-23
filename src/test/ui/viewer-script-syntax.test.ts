@@ -1,12 +1,12 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 import { buildViewerHtml, getNonce, getEffectiveViewerLines } from '../../ui/provider/viewer-content';
 
 suite('Viewer HTML', () => {
 
     suite('getEffectiveViewerLines', () => {
-        test('returns MAX_VIEWER_LINES (50000) when viewerMaxLines is 0', () => {
-            assert.strictEqual(getEffectiveViewerLines(100_000, 0), 50_000);
-            assert.strictEqual(getEffectiveViewerLines(30_000, 0), 50_000);
+        test('returns maxLines when viewerMaxLines is 0', () => {
+            assert.strictEqual(getEffectiveViewerLines(100_000, 0), 100_000);
+            assert.strictEqual(getEffectiveViewerLines(30_000, 0), 30_000);
         });
 
         test('returns min(viewerMaxLines, maxLines) when viewerMaxLines > 0', () => {
@@ -30,9 +30,9 @@ suite('Viewer HTML', () => {
             assert.ok(html.includes('var MAX_LINES = 25000'), 'viewer script should cap at 25000');
         });
 
-        test('uses default MAX_VIEWER_LINES when viewerMaxLines omitted', () => {
+        test('uses default viewer cap when viewerMaxLines omitted', () => {
             const html = buildViewerHtml({ nonce: getNonce(), version: '0.0.0' });
-            assert.ok(html.includes('var MAX_LINES = 50000'), 'viewer script should default to 50000');
+            assert.ok(html.includes('var MAX_LINES = 100000'), 'viewer script should default to 100000');
         });
     });
 
