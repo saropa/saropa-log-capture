@@ -1,0 +1,10 @@
+# Sample Drift-style lines for manual N+1 heuristic testing (DB_07).
+# Expect: after ~8 lines with distinct args within 2s window, viewer may insert a synthetic insight row.
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-aa]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-bb]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-cc]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-dd]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-ee]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-ff]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-gg]
+I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-hh]

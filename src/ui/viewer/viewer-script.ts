@@ -170,6 +170,25 @@ viewportEl.addEventListener('click', function(e) {
         vscodeApi.postMessage({ type: 'openUrl', url: urlLink.dataset.url || '' });
         return;
     }
+    /* N+1 insight row actions (see viewer-data-add.ts + drift-n-plus-one-detector.ts). */
+    var n1Action = e.target.closest('.n1-action');
+    if (n1Action) {
+        e.preventDefault();
+        e.stopPropagation();
+        var action = n1Action.dataset.action || '';
+        if (action === 'focus-db' && typeof soloSourceTag === 'function') {
+            soloSourceTag('database');
+        } else if (action === 'focus-fingerprint') {
+            var fp = n1Action.dataset.fingerprint || '';
+            var searchInput = document.getElementById('search-input');
+            if (searchInput && fp) {
+                searchInput.value = fp;
+                if (typeof openSearch === 'function') openSearch();
+                if (typeof updateSearch === 'function') updateSearch();
+            }
+        }
+        return;
+    }
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();
