@@ -8,6 +8,7 @@
 
 import * as vscode from "vscode";
 import * as path from "node:path";
+import { normalizeViewerRepeatThresholds } from "../db/drift-db-repeat-thresholds";
 import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 import type { HighlightRule } from "../storage/highlight-rules";
@@ -205,6 +206,15 @@ export function getConfig(): SaropaLogCaptureConfig {
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
+    viewerRepeatThresholds: normalizeViewerRepeatThresholds({
+      globalMinCount: cfg.get("repeatCollapseGlobalMinCount"),
+      readMinCount: cfg.get("repeatCollapseReadMinCount"),
+      transactionMinCount: cfg.get("repeatCollapseTransactionMinCount"),
+      dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
+    }),
+    viewerDbInsightsEnabled: ensureBoolean(cfg.get("viewerDbInsightsEnabled"), true),
+    viewerSqlPatternChipMinCount: clamp(cfg.get("viewerSqlPatternChipMinCount"), 1, 50, 2),
+    viewerSqlPatternMaxChips: clamp(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     smartBookmarks: {

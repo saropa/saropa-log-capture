@@ -1,5 +1,15 @@
 /**
- * SQL pattern chips for database (Drift) log lines in the filters panel (plan DB_02).
+ * SQL pattern chips for database (Drift) log lines in the filters panel (plans DB_02, DB_05).
+ *
+ * ## Developer guide (extension host ↔ webview)
+ * - **Build time:** `getSqlPatternTagsScript(min, max)` embeds initial `sqlChipMinCount` / `sqlPatternMaxChips`
+ *   (clamped in TypeScript before string injection so the template cannot emit invalid numbers).
+ * - **Runtime:** The extension posts `{ type: 'setViewerSqlPatternChipSettings', chipMinCount, chipMaxChips }`
+ *   after webview load and when workspace settings change (`activation-listeners`, `extension-activation`,
+ *   `log-viewer-provider-setup`, `pop-out-panel`). Handler: `viewer-script-messages.ts`.
+ * - **Safety:** `applyViewerSqlPatternChipSettings` reclamps inside the iframe (defense in depth if a message is
+ *   malformed). It does **not** recurse: it calls `applySqlPatternFilter` once (no feedback loop into settings).
+ *   Concurrent rapid posts are last-write-wins; acceptable for editor settings.
  *
  * ## Behavior
  * - **Chip key** = normalized SQL fingerprint when `sqlPatternRawCounts[fingerprint] >= sqlChipMinCount`
@@ -14,26 +24,32 @@
  * - **`trimData`**: `unregisterSqlPattern` is O(1) per removed row; **`finalizeSqlPatternState`** runs once after
  *   the trim batch and uses full **`applySqlPatternFilter`** (anchored) so scroll position stays stable.
  * - **`toggleSqlPattern` / select-all / deselect-all**: use anchored **`applySqlPatternFilter`**.
+ * - **Settings apply:** `applyViewerSqlPatternChipSettings` is O(lines × fingerprints touched); only runs on user
+ *   config change, not per log line.
  *
  * ## Logic & invariants
  * - Promote/demote when raw count crosses `sqlChipMinCount` reassigns `sqlPatternChipKey` on all matching lines.
  * - `ensureAtLeastOneTagVisible` uses **live** line counts per key so toggling cannot leave an empty “all hidden”
  *   chip set without falling back to all visible (same contract as log tags).
+ * - After lowering min count, `pruneSqlPatternHiddenForCurrentKeys` drops hidden state for chip keys that no longer
+ *   exist so stale object keys cannot confuse the UI.
  *
  * Integration: `viewer-data-add.ts` → `registerSqlPattern`; `viewer-data.ts` `trimData` → `unregisterSqlPattern` +
  * `finalizeSqlPatternState`; `viewer-data-helpers-core.ts` → `sqlPatternFiltered` in `calcItemHeight`; clear →
  * `resetSqlPatternTags`.
  */
 
-/** Returns the JavaScript for SQL pattern chip tracking and filtering. */
-export function getSqlPatternTagsScript(): string {
+/** @param chipMinCount - Clamped 1–50; default 2. @param chipMaxChips - Clamped 1–100; default 20. */
+export function getSqlPatternTagsScript(chipMinCount = 2, chipMaxChips = 20): string {
+    const mc = Math.max(1, Math.min(50, Math.floor(Number.isFinite(chipMinCount) ? chipMinCount : 2)));
+    const mx = Math.max(1, Math.min(100, Math.floor(Number.isFinite(chipMaxChips) ? chipMaxChips : 20)));
     return /* javascript */ `
 var sqlPatternRawCounts = {};
 var hiddenSqlPatterns = {};
 var sqlOtherKey = '__other_sql__';
-var sqlChipMinCount = 2;
+var sqlChipMinCount = ${mc};
 var sqlPatternShowAll = false;
-var sqlPatternMaxChips = 20;
+var sqlPatternMaxChips = ${mx};
 
 function shouldTrackSqlPatternLine(item) {
     if (!item || item.type === 'marker') return false;
@@ -157,6 +173,44 @@ function getSqlPatternChipKeys() {
     if (lineCounts[sqlOtherKey]) keys.push(sqlOtherKey);
     keys.sort(function(a, b) { return (lineCounts[b] || 0) - (lineCounts[a] || 0); });
     return keys;
+}
+
+/** Drop hidden entries for chip keys that no longer exist (e.g. after raising min count). */
+function pruneSqlPatternHiddenForCurrentKeys() {
+    var keys = getSqlPatternChipKeys();
+    var keep = {};
+    var i, k;
+    for (i = 0; i < keys.length; i++) {
+        k = keys[i];
+        if (hiddenSqlPatterns[k]) keep[k] = true;
+    }
+    hiddenSqlPatterns = keep;
+}
+
+/**
+ * Host message: apply settings without reload; re-promotes/demotes fingerprints and refreshes layout.
+ */
+function applyViewerSqlPatternChipSettings(minCount, maxChips) {
+    var mc = typeof minCount === 'number' ? minCount : parseInt(minCount, 10);
+    var mx = typeof maxChips === 'number' ? maxChips : parseInt(maxChips, 10);
+    if (!isFinite(mc)) mc = 2;
+    if (!isFinite(mx)) mx = 20;
+    mc = Math.max(1, Math.min(50, Math.floor(mc)));
+    mx = Math.max(1, Math.min(100, Math.floor(mx)));
+    sqlChipMinCount = mc;
+    sqlPatternMaxChips = mx;
+    var fp;
+    for (fp in sqlPatternRawCounts) {
+        if (!Object.prototype.hasOwnProperty.call(sqlPatternRawCounts, fp)) continue;
+        var c = sqlPatternRawCounts[fp];
+        if (c >= sqlChipMinCount) promoteSqlFingerprintChip(fp);
+        else demoteSqlFingerprintChip(fp);
+    }
+    pruneSqlPatternHiddenForCurrentKeys();
+    hiddenSqlPatterns = ensureAtLeastOneTagVisible(hiddenSqlPatterns, countSqlPatternLinesByKey());
+    applySqlPatternFilter();
+    rebuildSqlPatternChips();
+    if (typeof markPresetDirty === 'function') markPresetDirty();
 }
 
 function formatSqlPatternChipLabel(key) {
