@@ -70,6 +70,7 @@ function handleScopeContextMessage(msg) {
     updateScopeRadioDisabled();
     updateScopeNarrowingVisibility();
     if (scopeLevel !== 'all') applyScopeFilter();
+    if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
 }
 
 function resetScopeFilter() {
@@ -88,6 +89,7 @@ function syncScopeUi() {
     updateScopeNarrowingVisibility();
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = scopeHideUnattributed;
+    if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
 }
 
 /** Show workspace/package/directory/file controls only when an active editor file exists. */
@@ -153,6 +155,64 @@ if (scopeUnattribCb) {
         if (scopeLevel !== 'all') applyScopeFilter();
         if (typeof markPresetDirty === 'function') markPresetDirty();
     });
+}
+
+/**
+ * When a location scope is active, show short guidance if most lines are scope-hidden
+ * or many lines lack a debugger path (helps empty-looking logs).
+ */
+function updateScopeFilterHint() {
+    var el = document.getElementById('scope-filter-hint');
+    if (!el) return;
+    if (typeof scopeLevel === 'undefined' || scopeLevel === 'all' || !scopeContext.activeFilePath) {
+        el.textContent = '';
+        el.style.display = 'none';
+        return;
+    }
+    if (typeof allLines === 'undefined' || !allLines.length) {
+        el.textContent = '';
+        el.style.display = 'none';
+        return;
+    }
+    var total = 0;
+    var scopeHidden = 0;
+    var noPath = 0;
+    for (var hi = 0; hi < allLines.length; hi++) {
+        var item = allLines[hi];
+        if (item.type === 'marker') continue;
+        total++;
+        if (item.scopeFiltered) scopeHidden++;
+        if (!item.sourcePath) noPath++;
+    }
+    if (total < 10) {
+        el.textContent = '';
+        el.style.display = 'none';
+        return;
+    }
+    var ratioHidden = scopeHidden / total;
+    var ratioNoPath = noPath / total;
+    var messages = [];
+    if (ratioHidden >= 0.85) {
+        messages.push('Most lines are hidden by this location scope. Try All logs or a wider scope (e.g. Workspace) if the view looks empty.');
+    }
+    if (ratioNoPath >= 0.35 && !scopeHideUnattributed) {
+        messages.push('Many lines have no debugger file path. Enable Hide lines without file path to drop them while a location scope is on.');
+    }
+    if (messages.length === 0) {
+        el.textContent = '';
+        el.style.display = 'none';
+        return;
+    }
+    el.textContent = messages.join(' ');
+    el.style.display = '';
+}
+
+var _origRecalcForScopeHint = typeof recalcHeights === 'function' ? recalcHeights : null;
+if (_origRecalcForScopeHint) {
+    recalcHeights = function() {
+        _origRecalcForScopeHint();
+        if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
+    };
 }
 `;
 }

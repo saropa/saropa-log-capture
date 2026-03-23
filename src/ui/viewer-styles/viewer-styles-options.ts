@@ -183,6 +183,21 @@ export function getOptionsStyles(): string {
     padding: 0 0 4px 24px;
 }
 
+/* Log Streams: subheading before external sidecar checkboxes */
+.source-external-group-title {
+    margin-top: 8px;
+    padding-top: 4px;
+    font-weight: 600;
+    opacity: 0.95;
+}
+
+/* Code Location Scope: contextual warning when narrowing hides most lines */
+.scope-filter-hint {
+    margin-top: 6px;
+    padding-left: 8px;
+    border-left: 2px solid var(--vscode-editorWarning-foreground);
+}
+
 /* Integrations button in options (opens Integrations screen) */
 .options-integrations-btn {
     display: inline-flex;
