@@ -1,4 +1,5 @@
 import { getOptionsEventHandlers } from './viewer-options-events';
+import { getOptionsIntegrationsHelperScript } from './viewer-options-integrations-helper';
 import { getOptionsPanelViewsScript } from './viewer-options-panel-views';
 
 /** Returns the JavaScript code for the options panel. */
@@ -152,6 +153,7 @@ function syncAudioUi() {
 }
 
 ${getOptionsPanelViewsScript()}
+${getOptionsIntegrationsHelperScript()}
 
 /** Sync capture-enabled checkbox from window.captureEnabled (set by host message). */
 function syncCaptureEnabledUi() {
