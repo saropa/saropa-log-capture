@@ -210,6 +210,7 @@ window.addEventListener('message', function(event) {
             if (ibCrash) ibCrash.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('crashlytics') >= 0);
             var ibPerf = document.getElementById('ib-performance');
             if (ibPerf) ibPerf.classList.toggle('ib-integration-enabled', window.integrationAdapters.indexOf('performance') >= 0);
+            if (typeof window.applyFooterQualityReportState === 'function') window.applyFooterQualityReportState();
             break;
         case 'errorHoverData':
             if (typeof handleErrorHoverData === 'function') handleErrorHoverData(msg);

@@ -94,9 +94,6 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="show-code-quality" data-line-action>
                 <span class="codicon codicon-symbol-misc"></span> Show code quality
             </div>
-            <div class="context-menu-item" data-action="open-quality-report">
-                <span class="codicon codicon-file-code"></span> Open quality report
-            </div>
             <div class="context-menu-item" data-action="open-drift-advisor" data-line-action data-drift-line-action>
                 <span class="codicon codicon-database"></span> Open in Drift Advisor
             </div>
@@ -145,6 +142,7 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
+                <span class="codicon codicon-blank" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Hide blank lines</span>
             </div>
@@ -155,34 +153,42 @@ export function getContextMenuHtml(): string {
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
             <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap">
+                <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Word wrap</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-decorations">
+                <span class="codicon codicon-symbol-event" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Line decorations (dot, number, time)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
+                <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Timestamp</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed">
+                <span class="codicon codicon-watch" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Session elapsed</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
+                <span class="codicon codicon-layout-panel" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Visual spacing</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height">
+                <span class="codicon codicon-unfold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Comfortable line height</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
+                <span class="codicon codicon-fold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Compress lines (consecutive dupes)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global">
+                <span class="codicon codicon-fold-down" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Compress lines (non-consecutive dupes)</span>
             </div>
