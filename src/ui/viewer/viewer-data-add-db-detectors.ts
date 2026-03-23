@@ -196,13 +196,13 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
             }]);
         }
         if (lineItemForDbInsight && typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sourceTag === 'database') {
-            var pln0 = plain || '';
-            var di0 = pln0.indexOf('Drift:');
-            var rawSnip0 = di0 >= 0 ? pln0.substring(di0).trim() : pln0.trim();
-            var snipDb0 = rawSnip0.length > 500 ? rawSnip0.substring(0, 497) + '...' : rawSnip0;
+            var plainForSnip = plain || '';
+            var snipFallback = (typeof driftSqlSnippetFromPlain === 'function')
+                ? driftSqlSnippetFromPlain(plainForSnip)
+                : plainForSnip;
             if (sqlMeta && sqlMeta.fingerprint) {
                 var rollupDb = (typeof peekDbInsightRollup === 'function') ? peekDbInsightRollup(sqlMeta.fingerprint) : null;
-                var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : snipDb0;
+                var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : snipFallback;
                 lineItemForDbInsight.dbInsight = {
                     fingerprint: sqlMeta.fingerprint,
                     sqlSnippet: snipDb,
@@ -213,7 +213,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
             } else {
                 lineItemForDbInsight.dbInsight = {
                     fingerprint: null,
-                    sqlSnippet: snipDb0,
+                    sqlSnippet: snipFallback,
                     seenCount: 1,
                     avgDurationMs: undefined,
                     maxDurationMs: undefined

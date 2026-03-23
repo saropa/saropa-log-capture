@@ -22,6 +22,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('sqlSnippet'));
         assert.ok(chunk.includes('function updateDbInsightRollup'));
         assert.ok(chunk.includes('function peekDbInsightRollup'));
+        assert.ok(chunk.includes('function driftSqlSnippetFromPlain'));
         assert.ok(chunk.includes('function getDriftRepeatMinN'));
         assert.ok(chunk.includes('dbRepeatThresholds'));
     });
