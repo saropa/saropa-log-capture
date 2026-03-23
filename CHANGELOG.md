@@ -24,6 +24,10 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+• **Tests — Drift SQL fingerprint summary persist (DB_10)** — `drift-sql-fingerprint-summary-persist.test.ts` covers v1 validation (including rejecting **`fingerprints` arrays** as malformed), round-trip maps, baseline record shapes, **`trimSummaryForPersistence`** caps, and explicit **before/after** exclusion of low-count keys when trimming.
+
+• **Examples — session comparison QA** — `examples/session-comparison-drift-sql-qa.txt` notes how to validate the **Database (Drift SQL)** comparison section, jump actions, and optional SQL baseline buttons.
+
 • **Log viewer — slow query burst markers (DB_08)** — For **`database`**-tagged Drift lines with per-line **`[+Nms]`** duration metadata, **five or more** queries at or above a configurable slow threshold (default **50ms**) inside a rolling window (default **2s**) insert a **Slow query burst** marker row; clicking scrolls to the line that completed the threshold. Cooldown (default **10s** log time) limits marker spam. Requires **`saropaLogCapture.viewerDbInsightsEnabled`**. Settings: **`viewerSlowBurstSlowQueryMs`**, **`viewerSlowBurstMinCount`**, **`viewerSlowBurstWindowMs`**, **`viewerSlowBurstCooldownMs`**. Implementation: `drift-db-slow-burst-detector.ts`, `viewer-db-detector-framework-script.ts`, `viewer-data-add-db-detectors.ts`. QA: **`examples/drift-slow-burst-sample-lines.txt`**.
 
 • **Log viewer — SQL repeat drilldown (DB_06)** — Fingerprint-keyed **SQL repeated #N** rows include an expand control: inline fingerprint, time span, monospaced SQL snippet, and up to **10** `with args` variants (first-seen order) with a truncation note. **Escape** collapses when focus is on that line. Non-SQL **Repeated #** rows unchanged. Implementation: `viewer-data-helpers-core.ts`, `viewer-data-add.ts`, `viewer-script.ts`, `viewer-styles-sql-repeat-drilldown.ts`; VM tests in `viewer-sql-repeat-compression.test.ts`.
@@ -49,6 +53,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 • **Log viewer — adaptive repeat collapse for Drift SQL** — Real-time duplicate collapse keys **`database`** Drift lines by **normalized SQL fingerprint** (same shape, different args still count as one streak). **SELECT / WITH / PRAGMA** use a lower default minimum count than **BEGIN / COMMIT / ROLLBACK**, and **INSERT / UPDATE / DELETE** use a higher default so writes stay visible longer. Tune with **`saropaLogCapture.repeatCollapseGlobalMinCount`**, **`repeatCollapseReadMinCount`**, **`repeatCollapseTransactionMinCount`**, and **`repeatCollapseDmlMinCount`** (each ≥ 2, capped at 50). Non-SQL lines use the global setting only. Sparse repeats may not reach a high threshold inside the existing repeat time window.
 
 ### Changed
+
+• **Compare logs — webview implementation** — Session comparison HTML and embedded script live in **`session-comparison-html.ts`** and **`session-comparison-webview-script.ts`** (ESLint `max-lines` / `max-params`); the webview sets **`localResourceRoots`** to the extension URI for consistency with other panels. Embedded scroll/sync handlers guard missing DOM nodes; **`isPersistedDriftSqlFingerprintSummaryV1`** rejects array **`fingerprints`** values (JS **`typeof [] === 'object'`** false positive).
 
 • **Log viewer — Drift SQL ingest** — `addToData` calls `parseSqlFingerprint(plain)` **once** per normal log line; repeat hashing, optional `dbInsight` rollup, and **`emitDbLineDetectors`** (N+1 / DB_15) all reuse the same `sqlMeta`. Embed regressions live in `viewer-data-add-embed.test.ts`.
 

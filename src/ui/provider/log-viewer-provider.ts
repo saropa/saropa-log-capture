@@ -6,6 +6,8 @@
 
 import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -184,6 +186,14 @@ export class LogViewerProvider
   }
   setViewerDbInsightsEnabled(enabled: boolean): void {
     state.setViewerDbInsightsEnabledImpl(this, enabled);
+  }
+  setDbBaselineFingerprintSummary(
+    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
+  ): void {
+    state.setDbBaselineFingerprintSummaryImpl(this, entries);
+  }
+  setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
+    state.setViewerSlowBurstThresholdsImpl(this, thresholds);
   }
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
     state.setViewerSqlPatternChipSettingsImpl(this, chipMinCount, chipMaxChips);

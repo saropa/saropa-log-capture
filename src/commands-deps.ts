@@ -10,6 +10,7 @@ import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 import type { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
+import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import type { InvestigationStore } from './modules/investigation/investigation-store';
 
 export interface CommandDeps {
@@ -20,4 +21,5 @@ export interface CommandDeps {
     readonly inlineDecorations: InlineDecorationsProvider;
     readonly popOutPanel: PopOutPanel;
     readonly investigationStore: InvestigationStore;
+    readonly broadcaster: ViewerBroadcaster;
 }

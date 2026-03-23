@@ -5,6 +5,14 @@
  * editor file. Supports 5 scope levels: all, workspace, package,
  * directory, file. Lines without a source path ("unattributed") can
  * optionally be hidden.
+ *
+ * **Scope filter hint (UX):** When narrowing is active, a hint may appear under
+ * the controls. Hint text is computed with an O(n) scan over `allLines`.
+ * To avoid multiplying that cost on every `recalcHeights()` (which runs very
+ * often during virtual-scroll layout), updates are **debounced** from the
+ * `recalcHeights` hook. Call `flushScopeFilterHint()` after scope-affecting
+ * changes (e.g. `applyScopeFilter`) so the hint updates immediately when the
+ * user changes a radio or scope context.
  */
 
 /** Returns the JavaScript code for the scope filter. */
@@ -16,6 +24,8 @@ var scopeContext = { activeFilePath: null, workspaceFolder: null, packageRoot: n
 var scopeHintMinLines = 8;
 var scopeHintHiddenRatio = 0.75;
 var scopeHintNoPathRatio = 0.25;
+var scopeHintDebounceMs = 200;
+var scopeHintDebounceTimer = null;
 
 function normScopePath(p) {
     if (!p) return null;
@@ -51,6 +61,7 @@ function applyScopeFilter() {
     }
     recalcHeights();
     renderViewport(true);
+    if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
 }
 
 function setScopeLevel(level) {
@@ -73,7 +84,7 @@ function handleScopeContextMessage(msg) {
     updateScopeRadioDisabled();
     updateScopeNarrowingVisibility();
     if (scopeLevel !== 'all') applyScopeFilter();
-    if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
+    else if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
 }
 
 function resetScopeFilter() {
@@ -92,7 +103,7 @@ function syncScopeUi() {
     updateScopeNarrowingVisibility();
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = scopeHideUnattributed;
-    if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
+    if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
 }
 
 /** Show workspace/package/directory/file controls only when an active editor file exists. */
@@ -160,6 +171,43 @@ if (scopeUnattribCb) {
     });
 }
 
+function clearScopeFilterHint() {
+    var el = document.getElementById('scope-filter-hint');
+    if (!el) return;
+    el.innerHTML = '';
+    el.style.display = 'none';
+}
+
+/** Debounced hint refresh for high-frequency layout passes (e.g. virtual scroll). */
+function scheduleScopeFilterHint() {
+    if (scopeLevel === 'all' || !scopeContext.activeFilePath) {
+        if (scopeHintDebounceTimer) {
+            clearTimeout(scopeHintDebounceTimer);
+            scopeHintDebounceTimer = null;
+        }
+        clearScopeFilterHint();
+        return;
+    }
+    if (scopeHintDebounceTimer) clearTimeout(scopeHintDebounceTimer);
+    scopeHintDebounceTimer = setTimeout(function() {
+        scopeHintDebounceTimer = null;
+        updateScopeFilterHint();
+    }, scopeHintDebounceMs);
+}
+
+/** Run hint logic immediately (after user-driven scope changes). */
+function flushScopeFilterHint() {
+    if (scopeHintDebounceTimer) {
+        clearTimeout(scopeHintDebounceTimer);
+        scopeHintDebounceTimer = null;
+    }
+    if (scopeLevel === 'all' || !scopeContext.activeFilePath) {
+        clearScopeFilterHint();
+        return;
+    }
+    updateScopeFilterHint();
+}
+
 /**
  * When a location scope is active, show short guidance if most lines are scope-hidden
  * or many lines lack a debugger path (helps empty-looking logs).
@@ -168,13 +216,11 @@ function updateScopeFilterHint() {
     var el = document.getElementById('scope-filter-hint');
     if (!el) return;
     if (typeof scopeLevel === 'undefined' || scopeLevel === 'all' || !scopeContext.activeFilePath) {
-        el.textContent = '';
-        el.style.display = 'none';
+        clearScopeFilterHint();
         return;
     }
     if (typeof allLines === 'undefined' || !allLines.length) {
-        el.textContent = '';
-        el.style.display = 'none';
+        clearScopeFilterHint();
         return;
     }
     var total = 0;
@@ -204,8 +250,7 @@ function updateScopeFilterHint() {
         messages.push('Many lines have no debugger file path. Enable Hide lines without file path to drop them while a location scope is on.');
     }
     if (messages.length === 0) {
-        el.textContent = '';
-        el.style.display = 'none';
+        clearScopeFilterHint();
         return;
     }
     var html = '<span>' + messages.join(' ') + '</span>';
@@ -222,7 +267,6 @@ if (scopeHintEl) {
         var btn = e.target && e.target.closest ? e.target.closest('[data-scope-reset="all"]') : null;
         if (!btn) return;
         setScopeLevel('all');
-        updateScopeFilterHint();
     });
 }
 
@@ -230,7 +274,7 @@ var _origRecalcForScopeHint = typeof recalcHeights === 'function' ? recalcHeight
 if (_origRecalcForScopeHint) {
     recalcHeights = function() {
         _origRecalcForScopeHint();
-        if (typeof updateScopeFilterHint === 'function') updateScopeFilterHint();
+        if (typeof scheduleScopeFilterHint === 'function') scheduleScopeFilterHint();
     };
 }
 `;

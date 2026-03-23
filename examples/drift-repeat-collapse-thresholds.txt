@@ -39,3 +39,10 @@ lives in **`src/test/ui/viewer-sql-repeat-compression.test.ts`** (runs productio
 
 Tune: `saropaLogCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
 `repeatCollapseTransactionMinCount`, `repeatCollapseDmlMinCount` (2–50 each).
+
+## SQL repeat drilldown (DB_06)
+
+When a row shows **SQL repeated #N** (fingerprint-keyed collapse), the label is a **button**: click to
+expand an inline panel (fingerprint, time span, SQL snippet, up to 10 arg variants, truncation note).
+**Escape** collapses when focus is on that log line. Plain **Repeated #** rows (non-SQL) have **no**
+drilldown control — regression: `viewer-sql-repeat-compression.test.ts` (`DB_06` cases).
