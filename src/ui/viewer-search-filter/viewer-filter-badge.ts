@@ -38,6 +38,10 @@ function updateFilterBadge() {
     if (typeof hiddenClassTags !== 'undefined'
         && Object.keys(hiddenClassTags).length > 0) count++;
 
+    // SQL pattern chips hidden
+    if (typeof hiddenSqlPatterns !== 'undefined'
+        && Object.keys(hiddenSqlPatterns).length > 0) count++;
+
     // Category filter active
     if (typeof activeFilters !== 'undefined' && activeFilters !== null) count++;
 
@@ -89,6 +93,8 @@ if (filterBadgeEl) {
             && Object.keys(hiddenSourceTags).length > 0) other++;
         if (typeof hiddenClassTags !== 'undefined'
             && Object.keys(hiddenClassTags).length > 0) other++;
+        if (typeof hiddenSqlPatterns !== 'undefined'
+            && Object.keys(hiddenSqlPatterns).length > 0) other++;
         if (typeof activeFilters !== 'undefined' && activeFilters !== null) other++;
         if (typeof searchFilterMode !== 'undefined' && searchFilterMode
             && typeof searchRegex !== 'undefined' && searchRegex) other++;
