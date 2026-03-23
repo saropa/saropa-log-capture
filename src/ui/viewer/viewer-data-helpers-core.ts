@@ -1,6 +1,8 @@
 /**
  * Core viewer data helpers: escapeHtml, repeat tracking, separator/context detection, calcItemHeight.
  * Extracted to keep viewer-data-helpers.ts under the line limit.
+ *
+ * Drift N+1 burst detection lives in `viewer-data-n-plus-one-script.ts` (loaded before this chunk).
  */
 export function getViewerDataHelpersCore(): string {
     return /* javascript */ `
