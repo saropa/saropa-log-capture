@@ -89,10 +89,13 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('syncOptionsPanelUi'));
         });
 
-        test('should wire export button to openExportModal', () => {
+        test('should not wire removed Options export button (export is footer Actions)', () => {
+            const html = getOptionsPanelHtml();
             const script = getOptionsPanelScript();
-            assert.ok(script.includes('options-export-btn'));
-            assert.ok(script.includes('window.openExportModal'));
+            assert.ok(!html.includes('options-export-btn'), 'Export moved to footer Actions menu');
+            assert.ok(!html.includes('Export current view'));
+            assert.ok(!script.includes('options-export-btn'));
+            assert.ok(!script.includes('openExportModal'));
         });
 
         test('should reset display, layout, and audio defaults', () => {
