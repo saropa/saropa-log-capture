@@ -20,6 +20,8 @@ suite('DriftNPlusOneDetector', () => {
         assert.ok(a && b);
         assert.strictEqual(a.fingerprint, b.fingerprint);
         assert.notStrictEqual(a.argsKey, b.argsKey);
+        assert.ok(a.sqlSnippet.includes('SELECT'));
+        assert.strictEqual(a.sqlSnippet, b.sqlSnippet);
     });
 
     test('before: fewer than minRepeats does not emit insight', () => {
