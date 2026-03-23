@@ -25,7 +25,7 @@ function renderItem(item, idx, prevVis) {
             // No spacing-before for context lines; gap goes after the error instead
         } else if (item.type === 'stack-header') {
             if (spPrev && spPrev.type !== 'stack-frame' && spPrev.type !== 'stack-header') spacingCls += ' spacing-before';
-        } else if (item.type !== 'stack-frame' && item.type !== 'repeat-notification') {
+        } else if (item.type !== 'stack-frame' && item.type !== 'repeat-notification' && item.type !== 'n-plus-one-insight') {
             if (spPrev && spPrev.type !== 'marker') {
                 if (item.level && spPrev.level && item.level !== spPrev.level) spacingCls += ' spacing-before';
                 else if (item.isSeparator && !spPrev.isSeparator) spacingCls += ' spacing-before';
@@ -58,7 +58,7 @@ function renderItem(item, idx, prevVis) {
             '<span class="run-sep-duration">' + durStr + '</span>' +
             '<span class="run-sep-counts">' + dots + '</span></div></div>';
     }
-    if (item.type === 'repeat-notification') {
+    if (item.type === 'repeat-notification' || item.type === 'n-plus-one-insight') {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
     var isBlank = isLineContentBlank(item);

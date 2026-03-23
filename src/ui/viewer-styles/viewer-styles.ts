@@ -9,6 +9,7 @@
  * blend seamlessly with the surrounding panel chrome.
  */
 import { getContentStyles } from './viewer-styles-content';
+import { getNPlusOneInsightStyles } from './viewer-styles-n-plus-one-insight';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
 import { getTagStyles } from './viewer-styles-tags';
@@ -270,5 +271,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
+` + getContentStyles() + getNPlusOneInsightStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
 }
