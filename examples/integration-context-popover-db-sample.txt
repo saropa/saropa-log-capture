@@ -1,0 +1,13 @@
+# QA samples — Integration context popover → Database insight
+#
+# Open a log containing lines like these in the Log Capture viewer, right-click a line,
+# choose "Show integration context". Expect a "Database insight" block (fingerprint,
+# seen count, SQL snippet) when the line is tagged database (Drift Sent SQL).
+#
+# Drift-style lines (map to database source tag when prefixed with logcat, e.g. I/flutter):
+
+I/flutter (12345): Drift: Sent SELECT * FROM "users" WHERE "id" = ? LIMIT 1; with args [42]
+I/flutter (12345): Drift: Sent SELECT * FROM "users" WHERE "id" = ? LIMIT 1; with args [43]
+
+# Same fingerprint twice above → second line's popover "Seen in session" should be ×2
+# (rollup is per normalized fingerprint for the session).

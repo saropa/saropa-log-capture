@@ -12,9 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
+**Changelog at release** — For each shipped version `x.y.z`, GitHub keeps the exact `CHANGELOG.md` from git tag **`vx.y.z`** (created when publishing). Example: [CHANGELOG.md as of v3.12.0](https://github.com/saropa/saropa-log-capture/blob/v3.12.0/CHANGELOG.md) vs [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md). Each `[x.y.z]` section below links to its tagged file; **[Unreleased]** has no snapshot.
+
 Each version (and [Unreleased]) has a short commentary line in plain language—what this release is about for humans. Only discuss user-facing features; vary the phrasing.
 
-For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 ---
 
@@ -22,11 +24,41 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Log viewer — integration context popover — database insight** — For **`database`**-tagged lines (Drift `Sent` SQL), **Show integration context** includes a **Database insight** section: normalized fingerprint, session **seen** count, optional avg/max duration when lines carry `elapsedMs`, truncated **SQL** with full text on hover, and **Open in Drift Advisor** when that extension is installed. The popover can open on DB lines even when the ±time window has no HTTP/perf sidecar data. Context menu **Open in Drift Advisor** also applies to database-tagged lines. See `viewer-context-popover-script.ts`, `viewer-data-add.ts`, `context-handlers.ts`, and `examples/integration-context-popover-db-sample.txt`.
+
 • **Log viewer — minimap SQL density** — Optional right-edge **blue** (SQL activity) and **amber** (slow-SQL signal) density bands on the scrollbar minimap, composed under severity and search markers. Toggle **`saropaLogCapture.minimapShowSqlDensity`** (default on) from **Options → Layout** or settings. The minimap `title` tooltip includes SQL/slow hit counts for quick legend-style context. Shared heuristics live in `viewer-scrollbar-minimap-sql-heuristics.ts` (embedded into the webview script) with unit tests in `viewer-scrollbar-minimap-sql-heuristics.test.ts`.
 
 • **Log viewer — N+1 query hint (Drift SQL)** — Bursts of the same normalized `Drift: Sent …` statement with **different** `with args` payloads inside a short window can insert a synthetic insight line with confidence (low/medium/high), plus **Focus DB** (database source tag) and **Find fingerprint** (in-log search). Detection is wrapped so it **cannot throw** and block line ingest. See `src/modules/db/drift-n-plus-one-detector.ts` and `examples/drift-n-plus-one-sample-lines.txt` for QA samples.
 
+### Changed
+
+• **Footer — Actions menu** — **Replay**, **Export**, and **Open quality report** (when the **codeQuality** integration has data) sit under one **Actions** control in the footer bar instead of a standalone Replay control. **Options → Actions** no longer lists **Export current view**; use **Actions → Export** or the log context menu. **Open quality report** stays disabled until the session exposes quality data.
+
+• **Filters panel (slide-out sidebar)** — **Sources** is renamed **Log Streams** with short intro copy so it is obvious this is debug / terminal / external file inputs. **Code Location Scope** is a separate section (debugger file paths), with hints when narrowing hides most lines or many lines lack paths. External sidecar sources are grouped under **External sidecars (N)** with readable labels. Workspace / package / directory / file radios stay hidden until an active editor file exists; when the editor closes, scope resets to **All logs**.
+
+• **Options — Configure integrations** — **Search** field filters the adapter list. Long descriptions show a **short preview** with **Show more** for full text. **Performance** notes use a dedicated warning marker (split from body text for layout and accessibility); adapters are listed in alphabetical order.
+
+• **Source tags — Drift SQL** — `Drift: Sent …` statement lines (common SQL verbs) map to the **`database`** tag in the extension parser (`source-tag-parser.ts`) and the log viewer, so filtering and DB-oriented tooling agree on the same bucket.
+
+• **Log tags — chip row** — Tag chips use the same eligibility rules as the section summary (minimum occurrence threshold; no chip for the synthetic catch-all bucket), instead of listing every raw key from counts.
+
+• **Line decorations — wide counters** — When the counter (or counter-on-blank) is on, prefix width and hanging indent scale with **5+ digit** sequence numbers via CSS variables, and layout skips redundant style writes until digit width changes.
+
+• **Context menu — Options / Hide** — Toggle rows now show a **leading codicon** (e.g. word wrap, clock, fold) in addition to the checkmark, so every option row has a clear visual icon.
+
+• **Filters — Code Location Scope hint** — Contextual “empty log” guidance under location narrowing is **debounced** from virtual-scroll `recalcHeights` (avoids an O(n) line scan on every layout pass) while **flushing immediately** after user-driven scope changes (`applyScopeFilter` / `syncScopeUi` / context messages). See `viewer-scope-filter.ts` and `viewer-scope-filter-hint.test.ts`.
+
+### Fixed
+
+• **Drift SQL false-positive severity in log viewer** — `I/flutter ... Drift: Sent ...` lines are no longer promoted to **error** just because SQL args contain tokens such as `ApplicationLogError`. Drift statement logs now keep their logcat-driven level (`info` for `I/`, `debug` for `D/`/`V/`), so informational DB traffic does not render as red errors.
+
+• **Context menu — code quality** — **Show code quality** is **disabled** (with tooltip) when the **codeQuality** session integration is not enabled, instead of opening an empty popover.
+
+• **Compress lines (×N)** — Consecutive and non-consecutive duplicate collapse only counts lines that would still be visible under the active level, source, search, scope, app-only, and blank-line rules, so filtered-out duplicates no longer inflate **(×N)** on a surviving row.
+
 ## [3.12.1]
+
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.12.1`](https://github.com/saropa/saropa-log-capture/blob/v3.12.1/CHANGELOG.md)
 
 ### Added
 
@@ -42,19 +74,11 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 • **Compress lines control** — The toggle moved from the **activity icon bar** to a **fixed button at the top-left of the log pane** (same viewport-based positioning as Jump Top/Bottom). **Options → Layout**, the log **context menu → Options**, and behavior (blanks hidden, consecutive duplicate lines collapsed with **(×N)**) are unchanged.
 
-### Fixed
-
-• **Drift SQL false-positive severity in log viewer** — `I/flutter ... Drift: Sent ...` lines are no longer promoted to **error** just because SQL args contain tokens such as `ApplicationLogError`. Drift statement logs now keep their logcat-driven level (`info` for `I/`, `debug` for `D/`/`V/`), so informational DB traffic does not render as red errors.
-
-• **Context menu — code quality** — **Show code quality** is **disabled** (with tooltip) when the **codeQuality** session integration is not enabled, instead of opening an empty popover. **Open quality report** moved to the **footer Actions** menu (next to Replay / Export); it stays **disabled** until **codeQuality** is enabled and posts `openQualityReport` like before.
-
-• **Log viewer footer** — **Replay** and **Export** (and **Open quality report** when applicable) live under a single **Actions** menu in the status/footer bar instead of a standalone Replay control. **Options → Actions** no longer includes **Export current view** (same export flow as before, via **Actions → Export** or the context menu).
-
-• **Context menu — Options / Hide** — Toggle rows now show a **leading codicon** (e.g. word wrap, clock, fold) in addition to the checkmark, so every option row has a clear visual icon.
-
 ---
 
 ## [3.12.0]
+
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.12.0`](https://github.com/saropa/saropa-log-capture/blob/v3.12.0/CHANGELOG.md)
 
 ### Added
 
@@ -84,6 +108,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [3.11.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.11.0`](https://github.com/saropa/saropa-log-capture/blob/v3.11.0/CHANGELOG.md)
+
 ### Changed
 
 • **Settings UI titles for all extension options** — Every `saropaLogCapture.*` configuration key now has a **`title`** in addition to its description, so VS Code Settings shows a clear row label and search matches work better. English titles are derived from each setting’s description (non-English `package.nls.*.json` files use the same strings until translated).
@@ -106,6 +132,7 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ## [3.10.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.10.0`](https://github.com/saropa/saropa-log-capture/blob/v3.10.0/CHANGELOG.md)
 This release makes Log Capture more useful day to day with broader ecosystem support and smoother cross-source debugging.
 
 ### Added
@@ -142,6 +169,7 @@ This release makes Log Capture more useful day to day with broader ecosystem sup
 
 ## [3.9.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.9.1`](https://github.com/saropa/saropa-log-capture/blob/v3.9.1/CHANGELOG.md)
 Fixes footer path gestures: double-click opens the log’s containing folder (not its parent), and hold-to-copy path shows a status bar confirmation.
 
 ### Fixed
@@ -154,6 +182,7 @@ Fixes footer path gestures: double-click opens the log’s containing folder (no
 
 ## [3.9.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.9.0`](https://github.com/saropa/saropa-log-capture/blob/v3.9.0/CHANGELOG.md)
 Improves the log viewer with Insights in a tab, markdown copy, and scrollbar control; fixes text selection while tailing and refines session elapsed display and jump-button placement.
 
 ### Fixed
@@ -184,6 +213,7 @@ Improves the log viewer with Insights in a tab, markdown copy, and scrollbar con
 
 ## [3.8.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.8.0`](https://github.com/saropa/saropa-log-capture/blob/v3.8.0/CHANGELOG.md)
 Adds code quality metrics in the viewer, regression hints (blame and first-seen), and smart bookmark suggestions; fixes context menu and selection behavior.
 
 ### Fixed
@@ -206,6 +236,7 @@ Adds code quality metrics in the viewer, regression hints (blame and first-seen)
 
 ## [3.7.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.7.1`](https://github.com/saropa/saropa-log-capture/blob/v3.7.1/CHANGELOG.md)
 Stabilizes Project Logs and extension development by fixing a crash, wiring proposed APIs correctly, and aligning Insight → Insights naming.
 
 ### Fixed
@@ -226,6 +257,7 @@ Stabilizes Project Logs and extension development by fixing a crash, wiring prop
 
 ## [3.7.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.7.0`](https://github.com/saropa/saropa-log-capture/blob/v3.7.0/CHANGELOG.md)
 Major UX release focused on webview accessibility, a unified Insights panel, smarter Flutter/Dart memory classification, and modularizing large files.
 
 ### Added
@@ -244,6 +276,7 @@ Major UX release focused on webview accessibility, a unified Insights panel, sma
 
 ## [3.6.2]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.6.2`](https://github.com/saropa/saropa-log-capture/blob/v3.6.2/CHANGELOG.md)
 Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runbook and diagnostic message); Project Logs recent-updates indicators and last-viewed tracking; investigation UX improvements.
 
 ### Added
@@ -264,6 +297,7 @@ Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runb
 
 ## [3.6.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.6.1`](https://github.com/saropa/saropa-log-capture/blob/v3.6.1/CHANGELOG.md)
 Empty log file fixes and capture safeguards: replay all early output, single- and multi-session fallbacks, race guard, buffer timeout warning, and optional diagnosticCapture.
 
 ### Added
@@ -288,6 +322,7 @@ Empty log file fixes and capture safeguards: replay all early output, single- an
 
 ## [3.6.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.6.0`](https://github.com/saropa/saropa-log-capture/blob/v3.6.0/CHANGELOG.md)
 Enhanced error analysis with hover popups and inline triage controls.
 
 ### Added
@@ -336,6 +371,7 @@ Enhanced error analysis with hover popups and inline triage controls.
 
 ## [3.5.4]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.5.4`](https://github.com/saropa/saropa-log-capture/blob/v3.5.4/CHANGELOG.md)
 Replay controls redesigned for a cleaner, less intrusive UX.
 
 ### Changed
@@ -351,6 +387,8 @@ Replay controls redesigned for a cleaner, less intrusive UX.
 • **Removed the floating replay toggle button** that overlapped the top-right corner. Replay is now triggered from the footer button or the icon bar.
 
 ## [3.5.3]
+
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.5.3`](https://github.com/saropa/saropa-log-capture/blob/v3.5.3/CHANGELOG.md)
 
 ### Fixed
 
@@ -380,6 +418,8 @@ Replay controls redesigned for a cleaner, less intrusive UX.
 
 ## [3.5.2]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.5.2`](https://github.com/saropa/saropa-log-capture/blob/v3.5.2/CHANGELOG.md)
+
 ### Fixed
 
 • **Publish script spawns unwanted windows on Windows.** Extension listing now reads the filesystem (`~/.vscode/extensions/`, `~/.cursor/extensions/`) instead of calling `code --list-extensions` / `cursor --list-extensions`, which spawned persistent editor windows. Added `CREATE_NO_WINDOW` flag to all subprocess calls to suppress cmd.exe console flashes. Marketplace browser open after publish is now prompted instead of automatic.
@@ -396,6 +436,7 @@ Replay controls redesigned for a cleaner, less intrusive UX.
 
 ## [3.5.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.5.1`](https://github.com/saropa/saropa-log-capture/blob/v3.5.1/CHANGELOG.md)
 Replay controls now live in a compact floating vertical panel instead of a full-width horizontal bar.
 
 ### Added
@@ -410,6 +451,7 @@ Replay controls now live in a compact floating vertical panel instead of a full-
 
 ## [3.5.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.5.0`](https://github.com/saropa/saropa-log-capture/blob/v3.5.0/CHANGELOG.md)
 Track elapsed session time with T+ decorations in the log viewer, and get instant codebase context from project health scores and lint breakdowns in bug reports.
 
 ### Added
@@ -432,6 +474,7 @@ Track elapsed session time with T+ decorations in the log viewer, and get instan
 
 ## [3.4.3]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.4.3`](https://github.com/saropa/saropa-log-capture/blob/v3.4.3/CHANGELOG.md)
 Auto-hide patterns let you permanently suppress matching log lines with a right-click, plus a management modal to review and remove patterns.
 
 ### Added
@@ -466,6 +509,7 @@ Auto-hide patterns let you permanently suppress matching log lines with a right-
 
 ## [3.4.2]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.4.2`](https://github.com/saropa/saropa-log-capture/blob/v3.4.2/CHANGELOG.md)
 Tames the overflowing context menu by grouping copy and export actions into a submenu, and splits six files that exceeded the 300-line limit into focused modules.
 
 • **Viewer context menu: Copy & Export submenu.** The right-click menu was too long and could overflow the screen. Copy, Copy Line, Copy All, Copy All Decorated, Copy as snippet, Copy with source, Select All, and Export current view are now under a **Copy & Export** submenu; **Copy to Search** is in the same submenu after a separator. Behavior and visibility rules are unchanged; existing tests pass.
@@ -476,6 +520,7 @@ Tames the overflowing context menu by grouping copy and export actions into a su
 
 ## [3.4.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.4.0`](https://github.com/saropa/saropa-log-capture/blob/v3.4.0/CHANGELOG.md)
 In this version we add paginated Project Logs and Export Insights Summary; improve Crashlytics setup and Share Investigation (LAN, file links, Gist docs); introduce Explain with AI, Share Investigation (Gist/LAN/upload/shared folder), Build/CI API sources, and performance/crash-dump options; fix empty logs (replay and single-session fallback), session summary Open Log, CSP unsafe-inline, replay speeds and bar visibility, viewer in new window, and session list time display; and consolidate Marketplace URL config, viewer decorations, and correlations into the Session Timeline.
 
 ### Added
@@ -564,6 +609,7 @@ In this version we add paginated Project Logs and Export Insights Summary; impro
 
 ## [3.3.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.3.0`](https://github.com/saropa/saropa-log-capture/blob/v3.3.0/CHANGELOG.md)
 Auto-correlation across debug, HTTP, perf, and terminal in the Session Timeline; Git line history and commit links in session meta; and Investigation Mode Phase 3–4 (export/import, bug-report context, and UX polish).
 
 ### Added
@@ -580,6 +626,7 @@ Auto-correlation across debug, HTTP, perf, and terminal in the Session Timeline;
 
 ## [3.2.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.2.1`](https://github.com/saropa/saropa-log-capture/blob/v3.2.1/CHANGELOG.md)
 Fixes empty log file when Flutter/Dart child session starts before parent so a single file captures all debug output.
 
 ### Fixed
@@ -590,6 +637,7 @@ Fixes empty log file when Flutter/Dart child session starts before parent so a s
 
 ## [3.2.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.2.0`](https://github.com/saropa/saropa-log-capture/blob/v3.2.0/CHANGELOG.md)
 Investigation Mode Phase 2 (cross-source search), Cursor IDE compatibility warning, empty state watermark, file info panel, and empty-line decoration fix.
 
 ### Added
@@ -617,6 +665,7 @@ Investigation Mode Phase 2 (cross-source search), Cursor IDE compatibility warni
 
 ## [3.1.3]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.1.3`](https://github.com/saropa/saropa-log-capture/blob/v3.1.3/CHANGELOG.md)
 Modularized six oversized files, fixed replay bar when log is empty, and aligned @types/vscode with engine for packaging.
 
 ### Changed
@@ -633,6 +682,7 @@ Modularized six oversized files, fixed replay bar when log is empty, and aligned
 
 ## [3.1.2]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.1.2`](https://github.com/saropa/saropa-log-capture/blob/v3.1.2/CHANGELOG.md)
 Enables Cursor IDE compatibility by lowering the VS Code engine requirement to 1.105.0.
 
 ### Changed
@@ -643,6 +693,7 @@ Enables Cursor IDE compatibility by lowering the VS Code engine requirement to 1
 
 ## [3.1.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.1.1`](https://github.com/saropa/saropa-log-capture/blob/v3.1.1/CHANGELOG.md)
 Failed release (reverted) — the engine change was incorrectly applied and had to be redone in 3.1.2.
 
 ~~### Changed~~
@@ -653,6 +704,7 @@ Failed release (reverted) — the engine change was incorrectly applied and had 
 
 ## [3.1.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.1.0`](https://github.com/saropa/saropa-log-capture/blob/v3.1.0/CHANGELOG.md)
 Major feature release: unified timeline view correlates all log sources on one time axis, context popovers show related data around any log line, and you can now hide/unhide lines manually.
 
 ### Added
@@ -683,6 +735,7 @@ Major feature release: unified timeline view correlates all log sources on one t
 
 ## [3.0.6]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.6`](https://github.com/saropa/saropa-log-capture/blob/v3.0.6/CHANGELOG.md)
 Exposes a public API so other VS Code extensions can subscribe to log events and inject lines, plus reduces VS Code window spawns during publish.
 
 ### Fixed
@@ -699,6 +752,7 @@ Exposes a public API so other VS Code extensions can subscribe to log events and
 
 ## [3.0.5]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.5`](https://github.com/saropa/saropa-log-capture/blob/v3.0.5/CHANGELOG.md)
 Streamlines the session UI — metadata moves to a tooltip, the replay bar tucks behind an icon, and severity connectors fade back so the dots stand out.
 
 ### Added
@@ -731,6 +785,7 @@ Streamlines the session UI — metadata moves to a tooltip, the replay bar tucks
 
 ## [3.0.4]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.4`](https://github.com/saropa/saropa-log-capture/blob/v3.0.4/CHANGELOG.md)
 Fixes multi-line severity inheritance and localized strings showing raw keys, adds scroll-to-top and find-in-files sorting, and improves Project Logs list performance.
 
 ### Fixed
@@ -775,10 +830,12 @@ Fixes multi-line severity inheritance and localized strings showing raw keys, ad
 
 ## [3.0.3]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.3`](https://github.com/saropa/saropa-log-capture/blob/v3.0.3/CHANGELOG.md)
 Automated release to publish accumulated fixes; no user-facing changes beyond what shipped in 3.0.2.
 
 ## [3.0.2]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.2`](https://github.com/saropa/saropa-log-capture/blob/v3.0.2/CHANGELOG.md)
 In this release we add eight new integration adapters (performance, terminal, WSL, security, and more), one-click export to Grafana Loki, session replay with timing, and full support for remote workspaces (SSH, WSL, Dev Containers).
 
 ### Added
@@ -807,6 +864,7 @@ In this release we add eight new integration adapters (performance, terminal, WS
 
 ## [3.0.1]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.1`](https://github.com/saropa/saropa-log-capture/blob/v3.0.1/CHANGELOG.md)
 We improved the docs and added ARCHITECTURE.md, made config and JSON parsing safer, and tightened deep links and split rules.
 
 ### Added
@@ -827,6 +885,7 @@ We improved the docs and added ARCHITECTURE.md, made config and JSON parsing saf
 
 ## [3.0.0]
 
+*Changelog as released:* [view `CHANGELOG.md` at tag `v3.0.0`](https://github.com/saropa/saropa-log-capture/blob/v3.0.0/CHANGELOG.md)
 In this release we add tail mode for live file watching, .slc session bundle export/import, a configurable viewer line cap, session date filter, copy-as-snippet for GitHub/GitLab, and accessibility improvements, plus a lot of refactoring under the hood.
 
 ### Added
@@ -895,4 +954,4 @@ In this release we add tail mode for live file watching, .slc session bundle exp
 
 ---
 
-For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).

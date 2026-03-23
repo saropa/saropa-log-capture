@@ -41,7 +41,28 @@ function parseSqlFingerprint(plainText) {
         .trim()
         .toLowerCase();
     if (!fp) return null;
-    return { fingerprint: fp, argsKey: argsPart || '[]' };
+    return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart };
+}
+var dbInsightSessionRollup = Object.create(null);
+/** Per normalized SQL fingerprint: session-wide seen count and duration stats (elapsedMs when present on lines). */
+function updateDbInsightRollup(fingerprint, elapsedMs) {
+    if (!fingerprint) return null;
+    var e = dbInsightSessionRollup[fingerprint];
+    if (!e) {
+        e = { count: 0, sumMs: 0, maxMs: 0, countWithMs: 0 };
+        dbInsightSessionRollup[fingerprint] = e;
+    }
+    e.count++;
+    if (typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs)) {
+        e.sumMs += elapsedMs;
+        e.countWithMs++;
+        if (elapsedMs > e.maxMs) e.maxMs = elapsedMs;
+    }
+    return {
+        seenCount: e.count,
+        avgDurationMs: e.countWithMs > 0 ? e.sumMs / e.countWithMs : undefined,
+        maxDurationMs: e.countWithMs > 0 ? e.maxMs : undefined
+    };
 }
 function pruneNPlusOneFingerprints(now) {
     var keys = Object.keys(nPlusOneDetector.byFingerprint);

@@ -51,6 +51,8 @@ export type NPlusOneConfidence = 'low' | 'medium' | 'high';
 export interface DriftSqlFingerprint {
     readonly fingerprint: string;
     readonly argsKey: string;
+    /** Raw SQL before ` with args ` (same field the webview embed exposes as `sqlSnippet`). */
+    readonly sqlSnippet: string;
 }
 
 export interface NPlusOneInsight {
@@ -98,7 +100,7 @@ export function parseDriftSqlFingerprint(plainText: string): DriftSqlFingerprint
     if (!fp) {
         return null;
     }
-    return { fingerprint: fp, argsKey: argsPart || '[]' };
+    return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sql };
 }
 
 function confidenceFor(distinctRatio: number, repeats: number): NPlusOneConfidence {

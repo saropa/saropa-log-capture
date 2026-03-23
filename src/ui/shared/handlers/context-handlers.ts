@@ -2,6 +2,14 @@
  * Integration Context Handlers
  *
  * Handlers for integration context popover and document display.
+ *
+ * ## Database-tagged lines (Drift SQL)
+ *
+ * The webview attaches `dbInsight` to `sourceTag === 'database'` rows and may send
+ * `hasDatabaseLine: true` with **Show integration context**. When there is no HTTP/perf/etc.
+ * data in the ±window and no `saropa-drift-advisor` session meta, we still open the popover
+ * so **Database insight** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
+ * encodes that gate for tests and keeps the “empty context” decision in one place.
  */
 
 import * as path from 'node:path';
@@ -14,6 +22,23 @@ import { parseJSONOrDefault } from '../../../modules/misc/safe-json';
 import type { PostFn } from './crashlytics-handlers';
 
 const MAX_SPARKLINE_POINTS = 48;
+
+/**
+ * Whether to respond with `noIntegrationData` for the context popover.
+ * False positives to avoid: opening an empty popover when the line is not database-tagged
+ * and there is truly no integration payload; those stay on the error path.
+ */
+export function shouldPostNoIntegrationDataError(params: {
+    hasContextWindowData: boolean;
+    hasDriftAdvisorIntegrationMeta: boolean;
+    hasDatabaseLine: boolean;
+}): boolean {
+    return (
+        !params.hasContextWindowData &&
+        !params.hasDriftAdvisorIntegrationMeta &&
+        !params.hasDatabaseLine
+    );
+}
 
 interface PerfSample { t: number; freememMb: number; loadAvg1?: number }
 
@@ -155,8 +180,8 @@ export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri
 export async function handleIntegrationContextRequest(
     logUri: vscode.Uri | undefined,
     lineIndex: number,
-    timestamp: number | undefined,
     post: PostFn,
+    options?: { timestamp?: number; hasDatabaseLine?: boolean },
 ): Promise<void> {
     if (!logUri) {
         post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
@@ -170,9 +195,15 @@ export async function handleIntegrationContextRequest(
             .getConfiguration('saropaLogCapture')
             .get<number>('contextWindowSeconds', 5) * 1000;
 
-        const centerTime = timestamp && timestamp > 0
+        const timestamp = options?.timestamp;
+        const hasDatabaseLine = options?.hasDatabaseLine === true;
+        let centerTime = timestamp && timestamp > 0
             ? timestamp
             : getSessionCenterTime(meta.integrations);
+        // Database-tagged lines still show line-local insight even without a captured timestamp.
+        if (centerTime === 0 && hasDatabaseLine) {
+            centerTime = Date.now();
+        }
 
         if (centerTime === 0) {
             post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
@@ -187,8 +218,13 @@ export async function handleIntegrationContextRequest(
             contextData = { ...contextData, ...metaContext, hasData: Object.keys(metaContext).length > 0 };
         }
 
-        // Allow popover when only Drift Advisor meta exists (no sidecar data).
-        if (!contextData.hasData && !meta.integrations?.['saropa-drift-advisor']) {
+        if (
+            shouldPostNoIntegrationDataError({
+                hasContextWindowData: contextData.hasData,
+                hasDriftAdvisorIntegrationMeta: !!meta.integrations?.['saropa-drift-advisor'],
+                hasDatabaseLine,
+            })
+        ) {
             post({ type: 'contextPopoverData', error: t('msg.noIntegrationData') });
             return;
         }
