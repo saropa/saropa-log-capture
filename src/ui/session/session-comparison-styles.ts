@@ -103,6 +103,19 @@ body {
 .line.common {
     border-left: 3px solid transparent;
 }
+.db-compare-markers-wrap {
+    margin: 0.35rem 0 0.5rem;
+}
+.db-compare-markers {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+}
+.db-compare-marker-item {
+    margin: 0.15rem 0;
+    font-size: 0.92em;
+    color: var(--vscode-descriptionForeground);
+}
+
 .db-fp-section {
     flex-shrink: 0;
     max-height: 240px;

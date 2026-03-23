@@ -27,7 +27,7 @@ import {
     regressionFingerprintsForRootCauseHints,
     type SessionDbFingerprintCompareResult,
 } from '../../modules/db/db-session-fingerprint-diff';
-import type { DbFingerprintSummaryEntry } from '../../modules/db/db-detector-types';
+import type { DbDetectorResult, DbFingerprintSummaryEntry } from '../../modules/db/db-detector-types';
 import { SessionMetadataStore } from '../../modules/session/session-metadata';
 import { fingerprintSummaryMapToBaselineRecord } from '../../modules/db/drift-sql-fingerprint-summary-persist';
 import type { ViewerBroadcaster } from '../provider/viewer-broadcaster';
@@ -43,6 +43,7 @@ export class SessionComparisonPanel implements vscode.Disposable {
     private uriB: vscode.Uri | undefined;
     private summaryMapA = new Map<string, DbFingerprintSummaryEntry>();
     private summaryMapB = new Map<string, DbFingerprintSummaryEntry>();
+    private dbCompareDetectorResults: readonly DbDetectorResult[] = [];
     private readonly metadataStore = new SessionMetadataStore();
     private syncScrolling = true;
     private readonly disposables: vscode.Disposable[] = [];
@@ -56,16 +57,15 @@ export class SessionComparisonPanel implements vscode.Disposable {
      * Open or focus the comparison panel with two sessions.
      */
     async compare(uriA: vscode.Uri, uriB: vscode.Uri): Promise<void> {
-        const { diff, dbFingerprints, summaryMapA, summaryMapB } = await compareLogSessionsWithDbFingerprints(
-            uriA,
-            uriB,
-        );
+        const { diff, dbFingerprints, summaryMapA, summaryMapB, dbCompareDetectorResults } =
+            await compareLogSessionsWithDbFingerprints(uriA, uriB);
         this.diffResult = diff;
         this.dbFingerprints = dbFingerprints;
         this.uriA = uriA;
         this.uriB = uriB;
         this.summaryMapA = new Map(summaryMapA);
         this.summaryMapB = new Map(summaryMapB);
+        this.dbCompareDetectorResults = dbCompareDetectorResults;
         this.pushRootCauseHintsSessionDiffToViewers();
 
         if (this.panel) {
@@ -196,6 +196,7 @@ export class SessionComparisonPanel implements vscode.Disposable {
             driftInstalled,
             showDbToolbar: !!this.broadcaster && this.dbFingerprints.hasDriftSql,
             db: this.dbFingerprints,
+            dbCompareDetectorResults: this.dbCompareDetectorResults,
             sessionA: { uniqueCount: sessionA.uniqueCount, lines: sessionA.lines },
             sessionB: { uniqueCount: sessionB.uniqueCount, lines: sessionB.lines },
         });

@@ -7,6 +7,7 @@ import {
   mergeDbDetectorResultsByStableKey,
   runDbDetectorsCompare,
   runDbDetectorsIngest,
+  runDefaultSessionDbCompareDetectors,
 } from "../../../modules/db/db-detector-framework";
 import { createBaselineVolumeCompareDetector } from "../../../modules/db/drift-db-baseline-volume-compare-detector";
 import type { DbDetectorContext, DbDetectorDefinition, DbDetectorResult } from "../../../modules/db/db-detector-types";
@@ -269,6 +270,45 @@ test("applyDbAnnotateLineResultsToLineItems: skips non-annotate kinds", () => {
   ]);
   assert.strictEqual(n, 1);
   assert.strictEqual(lines[0].height, 0);
+});
+
+test("runDbDetectorsCompare: optional annotateTargetLines applies annotate-line from merged results", () => {
+  const lines = [{ seq: 1, height: 20 }];
+  const ann: DbDetectorDefinition = {
+    id: "ann-compare",
+    priority: 0,
+    feed: () => [],
+    compare: () => [
+      {
+        kind: "annotate-line",
+        detectorId: "ann-compare",
+        stableKey: "ann::1",
+        priority: 1,
+        payload: { targetSeq: 1, patch: { height: 0 } },
+      },
+    ],
+  };
+  const state = createDbDetectorSessionState();
+  let deltaSum = 0;
+  runDbDetectorsCompare([ann], { baseline: new Map(), target: new Map() }, state, {
+    annotateTargetLines: lines,
+    onAnnotateHeightDelta: (d) => {
+      deltaSum += d;
+    },
+  });
+  assert.strictEqual(lines[0].height, 0);
+  assert.strictEqual(deltaSum, -20);
+});
+
+test("runDefaultSessionDbCompareDetectors: same marker count as manual registry for volume regression", () => {
+  const baseline = new Map([["fp1", { count: 10 }]]);
+  const target = new Map([["fp1", { count: 20 }]]);
+  const stateA = createDbDetectorSessionState();
+  const stateB = createDbDetectorSessionState();
+  const a = runDefaultSessionDbCompareDetectors({ baseline, target }, stateA);
+  const b = runDbDetectorsCompare([createBaselineVolumeCompareDetector()], { baseline, target }, stateB);
+  assert.strictEqual(a.length, b.length);
+  assert.strictEqual(a[0]?.detectorId, b[0]?.detectorId);
 });
 
 test("runDbDetectorsIngest: insightsEnabled false returns empty", () => {
