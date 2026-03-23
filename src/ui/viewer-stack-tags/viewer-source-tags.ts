@@ -28,6 +28,7 @@ var hiddenSourceTags = {};
 var otherKey = '__other__';
 var sourceTagShowAll = false;
 var sourceTagMaxChips = 20;
+var sourceTagMinChip = 2;
 
 /**
  * Regex to parse source tags from plain text (start of line only).
@@ -43,8 +44,38 @@ var inlineTagPattern = /\\[([A-Za-z][A-Za-z0-9 _-]*)\\]/g;
 /** ALL-CAPS prefix at start of message body (e.g. HERO-DEBUG, MY_APP). */
 var capsPrefix = /^([A-Z][A-Z0-9_-]+) /;
 
+/** Drift SQL statement logs should map to a dedicated database source tag. */
+var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+
 /** Generic logcat tags where sub-tag detection looks into the message body. */
 var genericLogcatTags = { 'flutter': 1, 'android': 1, 'system.err': 1 };
+
+/**
+ * Guardrail: reject dynamic/noisy tokens so tag chips stay useful.
+ * This filters timestamp-like ids (08:45:23.606), mostly numeric tokens,
+ * and long hash-like identifiers that create high-cardinality noise.
+ */
+function isNoisySourceTag(tag) {
+    if (!tag) return true;
+    var t = tag.toLowerCase();
+    if (t === 'other') return true;
+    if (t.length < 2) return true;
+    if (t.length > 64) return true;
+
+    // Purely numeric or mostly numeric tokens are usually counters/ids.
+    if (/^[0-9]+$/.test(t)) return true;
+    var digits = (t.match(/[0-9]/g) || []).length;
+    if (digits > 0 && (digits / t.length) >= 0.4) return true;
+
+    // Time-like or date-time fragments.
+    if (/^\\d{1,2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,6})?)?$/.test(t)) return true;
+    if (/^\\d{4}-\\d{2}-\\d{2}(?:[t_ ]\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,6})?)?)?$/.test(t)) return true;
+
+    // UUID / long hex-ish tokens.
+    if (/^[0-9a-f]{8,}$/.test(t)) return true;
+    if (/^[0-9a-f]{8}-[0-9a-f-]{8,}$/.test(t)) return true;
+    return false;
+}
 
 /** Extract a sub-tag from the message body of a generic logcat line. */
 function extractSubTag(body) {
@@ -70,16 +101,37 @@ function parseSourceTag(plainText) {
         var raw = m[2] || m[3];
         if (!raw) return null;
         var tag = raw.toLowerCase();
+        var body = plainText.slice(m[0].length);
+        if (driftStatementPattern.test(body)) return 'database';
         if (m[2] && genericLogcatTags[tag]) {
-            var sub = extractSubTag(plainText.slice(m[0].length));
-            if (sub) return sub;
+            var sub = extractSubTag(body);
+            if (sub && !isNoisySourceTag(sub)) return sub;
+            // Bracket/caps sub-tag was only a time-like or hash token — do not fall back to generic "flutter"/"android".
+            if (sub && isNoisySourceTag(sub)) return null;
+            // Leading [token] not matched by extractSubTag (inline pattern requires a letter after "[") may still be noise (e.g. [08:45:23.606]).
+            var leadBracket = /^\\s*\\[([^\\]]+)\\]/.exec(body);
+            if (leadBracket && leadBracket[1] && isNoisySourceTag(leadBracket[1].toLowerCase())) return null;
         }
-        return tag;
+        return isNoisySourceTag(tag) ? null : tag;
     }
     inlineTagPattern.lastIndex = 0;
     var inlineMatch = inlineTagPattern.exec(plainText);
-    if (inlineMatch && inlineMatch[1]) return inlineMatch[1].toLowerCase();
+    if (inlineMatch && inlineMatch[1]) {
+        var inlineTag = inlineMatch[1].toLowerCase();
+        return isNoisySourceTag(inlineTag) ? null : inlineTag;
+    }
     return null;
+}
+
+/** Return source-tag keys eligible for chips/summaries (excludes low-signal buckets). */
+function getSourceTagChipKeys() {
+    var keys = Object.keys(sourceTagCounts);
+    var chipKeys = [];
+    for (var ki = 0; ki < keys.length; ki++) {
+        var key = keys[ki];
+        if (key !== otherKey && sourceTagCounts[key] >= sourceTagMinChip) chipKeys.push(key);
+    }
+    return chipKeys;
 }
 
 /** Increment the count for a line item's source tag (and logcat parent tag if different). */
@@ -160,11 +212,16 @@ function deselectAllTags() {
 function updateTagSummary() {
     var el = document.getElementById('source-tag-summary');
     if (!el) { return; }
-    var total = Object.keys(sourceTagCounts).length;
+    var chipKeys = getSourceTagChipKeys();
+    var chipKeySet = {};
+    for (var ci = 0; ci < chipKeys.length; ci++) chipKeySet[chipKeys[ci]] = true;
+    var total = chipKeys.length;
     var hiddenKeys = Object.keys(hiddenSourceTags);
     var hidden = 0;
     for (var hi = 0; hi < hiddenKeys.length; hi++) {
-        if (sourceTagCounts[hiddenKeys[hi]]) { hidden++; }
+        if (chipKeySet[hiddenKeys[hi]]) {
+            hidden++;
+        }
     }
     el.textContent = total + ' tag' + (total !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
