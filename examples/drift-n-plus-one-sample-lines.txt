@@ -1,5 +1,6 @@
 # Sample Drift-style lines for manual N+1 heuristic testing (DB_07).
 # Expect: after ~8 lines with distinct args within 2s window, viewer may insert a synthetic insight row.
+# On that insight row: Focus DB, Find fingerprint (in-log search), Static sources (workspace index QuickPick — heuristic).
 I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-aa]
 I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-bb]
 I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [id-cc]
