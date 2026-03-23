@@ -17,6 +17,7 @@ import { type PendingLine } from "../viewer/viewer-file-loader";
 import { SerializedHighlightRule, serializeHighlightRules } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ScopeContext } from "../../modules/storage/scope-context";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-thread-grouping";
@@ -187,6 +188,9 @@ export class LogViewerProvider
   setViewerDbInsightsEnabled(enabled: boolean): void {
     state.setViewerDbInsightsEnabledImpl(this, enabled);
   }
+  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
+    state.setViewerDbDetectorTogglesImpl(this, toggles);
+  }
   setDbBaselineFingerprintSummary(
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void {
@@ -313,5 +317,9 @@ export class LogViewerProvider
   postMessage(message: unknown): void {
     const snapshot = [...this.views];
     for (const v of snapshot) { v.webview.postMessage(message); }
+  }
+
+  postToWebview(message: unknown): void {
+    this.postMessage(message);
   }
 }

@@ -1,15 +1,35 @@
 /**
- * Embedded DB detector framework (plan **DB_15**). Loaded after `getNPlusOneDetectorScript`
- * so `detectNPlusOneInsight` / `parseSqlFingerprint` exist. Keep merge/run semantics aligned
- * with `src/modules/db/db-detector-framework.ts`.
+ * Embedded DB detector framework (plan **DB_15**).
+ *
+ * **Load order:** This script is concatenated after `getNPlusOneDetectorScript` so globals such as
+ * `detectNPlusOneInsight`, `parseSqlFingerprint`, and `updateDbInsightRollup` already exist. Detector
+ * registration order is by `priority`; results are merged by `stableKey` like the TypeScript
+ * `runDbDetectors` / `mergeDbDetectorResultsByStableKey` helpers in `db-detector-framework.ts`.
+ *
+ * **Built-in detectors:** Slow-query burst (DB_08), optional baseline volume hint when the host sets
+ * `dbBaselineFingerprintSummary` / `dbBaselineFingerprintSummaryMap` and live rollup count exceeds
+ * baseline (min baseline count 3), N+1 synthetic rows (DB_07). Each can be gated via
+ * `viewerDbDetector*` toggles baked from extension config.
+ *
+ * **Session rollup patches:** Detectors may return `kind: 'session-rollup-patch'`; `emitDbLineDetectors`
+ * applies them via `applyDbSessionRollupPatches`, which calls `updateDbInsightRollup` up to 1000 repeats
+ * per payload to avoid runaway work.
+ *
+ * **State:** `resetDbInsightDetectorSession` clears disabled flags, N+1/slow-burst accumulators, rollup
+ * map, and baseline hint dedupe; it does not clear the host-provided baseline object/map (host sends null
+ * to clear).
  */
 import { normalizeViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import { SLOW_QUERY_BURST_DETECTOR_ID } from "../../modules/db/drift-db-slow-burst-detector";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+
+const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
 
 export function getViewerDbDetectorFrameworkScript(
   dbInsightsEnabled: boolean,
   slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
+  detectorToggles?: Partial<ViewerDbDetectorToggles>,
 ): string {
   const enabledJs = dbInsightsEnabled ? "true" : "false";
   const sb = normalizeViewerSlowBurstThresholds(slowBurstThresholds);
@@ -19,19 +39,37 @@ export function getViewerDbDetectorFrameworkScript(
     burstWindowMs: sb.burstWindowMs,
     cooldownMs: sb.cooldownMs,
   });
+  const nPlusOneJs = detectorToggles?.nPlusOneEnabled !== false ? "true" : "false";
+  const slowBurstEnJs = detectorToggles?.slowBurstEnabled !== false ? "true" : "false";
+  const baselineHintsJs = detectorToggles?.baselineHintsEnabled !== false ? "true" : "false";
   return /* javascript */ `
 var viewerDbInsightsEnabled = ${enabledJs};
 var viewerSlowBurstThresholds = ${burstJson};
+var viewerDbDetectorNPlusOneEnabled = ${nPlusOneJs};
+var viewerDbDetectorSlowBurstEnabled = ${slowBurstEnJs};
+var viewerDbDetectorBaselineHintsEnabled = ${baselineHintsJs};
 var dbDetectorRegistry = [];
 var dbDetectorSessionDisabled = Object.create(null);
 var dbDetectorErrorLogged = Object.create(null);
+/** One marker per fingerprint when session count exceeds SQL baseline (DB_10 optional follow-up). */
+var baselineVolumeHintEmitted = Object.create(null);
 /** Optional compare baseline from host (setDbBaselineFingerprintSummary); fingerprint → entry object. */
 var dbBaselineFingerprintSummary = null;
+/** Map mirror built when the host sets the baseline — avoids rebuilding from the object on every DB line. */
+var dbBaselineFingerprintSummaryMap = null;
 function setDbBaselineFingerprintSummaryFromHost(fingerprints) {
     if (!fingerprints || typeof fingerprints !== 'object') {
         dbBaselineFingerprintSummary = null;
+        dbBaselineFingerprintSummaryMap = null;
     } else {
         dbBaselineFingerprintSummary = fingerprints;
+        var m = new Map();
+        for (var bk in fingerprints) {
+            if (Object.prototype.hasOwnProperty.call(fingerprints, bk)) {
+                m.set(bk, fingerprints[bk]);
+            }
+        }
+        dbBaselineFingerprintSummaryMap = m;
     }
 }
 /** Per-session slow-burst sliding window (plan DB_08). */
@@ -54,6 +92,22 @@ function mergeDbDetectorResultsByStableKey(results) {
     var out = [];
     for (i = 0; i < order.length; i++) out.push(map[order[i]]);
     return out;
+}
+/** Apply session-rollup-patch results into dbInsightSessionRollup (same math as live Drift lines). */
+function applyDbSessionRollupPatches(results) {
+    if (!results || !results.length) return;
+    if (typeof updateDbInsightRollup !== 'function') return;
+    var i, r, p, k, reps, j;
+    for (i = 0; i < results.length; i++) {
+        r = results[i];
+        if (!r || r.kind !== 'session-rollup-patch' || !r.payload) continue;
+        p = r.payload;
+        if (!p.fingerprint) continue;
+        reps = (typeof p.repeatCount === 'number' && p.repeatCount > 0) ? Math.min(p.repeatCount, 1000) : 1;
+        for (j = 0; j < reps; j++) {
+            updateDbInsightRollup(p.fingerprint, p.elapsedMs);
+        }
+    }
 }
 function runDbDetectors(ctx) {
     if (typeof viewerDbInsightsEnabled !== 'undefined' && !viewerDbInsightsEnabled) return [];
@@ -129,12 +183,14 @@ function resetDbInsightDetectorSession() {
     if (typeof dbInsightSessionRollup !== 'undefined') {
         dbInsightSessionRollup = Object.create(null);
     }
+    baselineVolumeHintEmitted = Object.create(null);
 }
 function registerBuiltinDbDetectors() {
     registerDbDetector({
         id: '${SLOW_QUERY_BURST_DETECTOR_ID}',
         priority: 85,
         feed: function(ctx) {
+            if (typeof viewerDbDetectorSlowBurstEnabled !== 'undefined' && !viewerDbDetectorSlowBurstEnabled) return [];
             if (!ctx || !viewerSlowBurstThresholds) return [];
             var sid = (ctx.sessionId != null && ctx.sessionId !== '') ? String(ctx.sessionId) : 'default';
             var st = slowBurstBySession[sid];
@@ -172,9 +228,39 @@ function registerBuiltinDbDetectors() {
         }
     });
     registerDbDetector({
+        id: '${BASELINE_VOLUME_HINT_ID}',
+        priority: 92,
+        feed: function(ctx) {
+            if (typeof viewerDbDetectorBaselineHintsEnabled !== 'undefined' && !viewerDbDetectorBaselineHintsEnabled) return [];
+            if (!ctx || !ctx.sql || !ctx.sql.fingerprint) return [];
+            if (!ctx.baselineFingerprintSummary || typeof ctx.baselineFingerprintSummary.get !== 'function') return [];
+            var fp = ctx.sql.fingerprint;
+            var bEnt = ctx.baselineFingerprintSummary.get(fp);
+            if (!bEnt || typeof bEnt.count !== 'number' || bEnt.count < 3) return [];
+            if (baselineVolumeHintEmitted[fp]) return [];
+            var roll = typeof dbInsightSessionRollup !== 'undefined' ? dbInsightSessionRollup[fp] : null;
+            var cur = roll && typeof roll.count === 'number' ? roll.count : 0;
+            if (cur <= bEnt.count) return [];
+            baselineVolumeHintEmitted[fp] = true;
+            var anc = ctx.anchorSeq;
+            return [{
+                kind: 'marker',
+                detectorId: '${BASELINE_VOLUME_HINT_ID}',
+                stableKey: '${BASELINE_VOLUME_HINT_ID}::' + fp,
+                priority: 92,
+                payload: {
+                    category: 'db-insight',
+                    label: 'SQL count above baseline (' + cur + ' vs ' + bEnt.count + ')',
+                    anchorSeq: anc
+                }
+            }];
+        }
+    });
+    registerDbDetector({
         id: 'db.n-plus-one',
         priority: 100,
         feed: function(ctx) {
+            if (typeof viewerDbDetectorNPlusOneEnabled !== 'undefined' && !viewerDbDetectorNPlusOneEnabled) return [];
             if (!ctx || !ctx.sql || !ctx.sql.fingerprint) return [];
             if (typeof detectNPlusOneInsight !== 'function') return [];
             var insight = detectNPlusOneInsight(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);

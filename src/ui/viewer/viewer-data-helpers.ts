@@ -7,6 +7,7 @@
  */
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
+import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getViewerDataHelpersCore } from './viewer-data-helpers-core';
 import { getViewerDataHelpersRender } from './viewer-data-helpers-render';
 import { getNPlusOneDetectorScript } from './viewer-data-n-plus-one-script';
@@ -16,10 +17,11 @@ export function getViewerDataHelpers(
     repeatThresholds?: Partial<ViewerRepeatThresholds>,
     viewerDbInsightsEnabled = true,
     slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
+    dbDetectorToggles?: Partial<ViewerDbDetectorToggles>,
 ): string {
     return (
         getNPlusOneDetectorScript(repeatThresholds) +
-        getViewerDbDetectorFrameworkScript(viewerDbInsightsEnabled, slowBurstThresholds) +
+        getViewerDbDetectorFrameworkScript(viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) +
         getViewerDataHelpersCore() +
         getViewerDataHelpersRender()
     );
