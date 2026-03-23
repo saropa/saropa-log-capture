@@ -8,6 +8,7 @@
  *   - Code Location Scope (narrow by active editor path; contextual hint when too few lines match)
  *   - Output Channels (DAP category checkboxes)
  *   - Log Tags (source tag chips)
+ *   - SQL Patterns (normalized Drift SQL fingerprints + Other SQL bucket)
  *   - Code Tags (class/method tag chips)
  *   - Noise Reduction (exclusions + app-only)
  *
@@ -81,6 +82,15 @@ export function getFiltersPanelHtml(): string {
                 <span id="source-tag-summary" class="source-tag-summary"></span>
             </div>
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
+        </div>
+
+        <!-- SQL pattern chips (Drift fingerprints; low-frequency → Other SQL) -->
+        <div class="options-section" id="sql-patterns-section" style="display:none">
+            <h3 class="options-section-title">SQL Patterns</h3>
+            <div class="options-row">
+                <span id="sql-pattern-summary" class="source-tag-summary"></span>
+            </div>
+            <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
         </div>
 
         <!-- Code Tags Section (populated dynamically) -->
