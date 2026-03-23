@@ -192,6 +192,11 @@ window.addEventListener('message', function(event) {
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
         case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
+        case 'minimapShowSqlDensity':
+            if (typeof minimapShowSqlDensity !== 'undefined') minimapShowSqlDensity = msg.show !== false;
+            if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity(msg);
+            if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+            break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;
         case 'searchMatchOptionsAlwaysVisible': document.body.classList.toggle('search-match-options-always', msg.always === true); break;

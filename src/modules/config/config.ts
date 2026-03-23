@@ -201,6 +201,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     suppressTransientErrors: ensureBoolean(cfg.get("suppressTransientErrors"), false),
     breakOnCritical: ensureBoolean(cfg.get("breakOnCritical"), false),
     minimapShowInfoMarkers: ensureBoolean(cfg.get("minimapShowInfoMarkers"), false),
+    minimapShowSqlDensity: ensureBoolean(cfg.get("minimapShowSqlDensity"), true),
     minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
