@@ -58,7 +58,7 @@ export function getReplayControlsScript(): string {
     function setPlayingUi(playing) {
         if (playBtn) playBtn.style.display = playing ? 'none' : '';
         if (pauseBtn) pauseBtn.style.display = playing ? '' : 'none';
-        updateReplayIcon(playing);
+        updateReplayAction(playing);
     }
 
     function exitReplayMode() {
@@ -67,7 +67,7 @@ export function getReplayControlsScript(): string {
         setReplayBarVisible(false);
         setPlayingUi(false);
         var canReplay = replayFileLoaded && !replaySessionActive && hasLines();
-        setFooterReplayVisible(canReplay);
+        setFooterActionsVisible(canReplay);
         if (typeof renderViewport === 'function') renderViewport(true);
         if (typeof updateFooterText === 'function') updateFooterText();
     }
@@ -101,9 +101,6 @@ export function getReplayControlsScript(): string {
         setPlayingUi(false);
     });
     if (stopBtn) stopBtn.addEventListener('click', exitReplayMode);
-    if (footerReplayBtn) footerReplayBtn.addEventListener('click', function() {
-        if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
-    });
     if (speedSelect) speedSelect.addEventListener('change', function() {
         replaySpeedFactor = parseFloat(speedSelect.value) || 1;
     });
@@ -146,6 +143,6 @@ export function getReplayControlsScript(): string {
     });
 
     setReplayBarVisible(false);
-    setFooterReplayVisible(false);
+    setFooterActionsVisible(false);
 `;
 }
