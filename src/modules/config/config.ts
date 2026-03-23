@@ -9,6 +9,7 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import { normalizeViewerRepeatThresholds } from "../db/drift-db-repeat-thresholds";
+import { normalizeViewerSlowBurstThresholds } from "../db/drift-db-slow-burst-thresholds";
 import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 import type { HighlightRule } from "../storage/highlight-rules";
@@ -213,6 +214,12 @@ export function getConfig(): SaropaLogCaptureConfig {
       dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
     }),
     viewerDbInsightsEnabled: ensureBoolean(cfg.get("viewerDbInsightsEnabled"), true),
+    viewerSlowBurstThresholds: normalizeViewerSlowBurstThresholds({
+      slowQueryMs: cfg.get("viewerSlowBurstSlowQueryMs"),
+      burstMinCount: cfg.get("viewerSlowBurstMinCount"),
+      burstWindowMs: cfg.get("viewerSlowBurstWindowMs"),
+      cooldownMs: cfg.get("viewerSlowBurstCooldownMs"),
+    }),
     viewerSqlPatternChipMinCount: clamp(cfg.get("viewerSqlPatternChipMinCount"), 1, 50, 2),
     viewerSqlPatternMaxChips: clamp(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
