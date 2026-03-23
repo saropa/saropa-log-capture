@@ -107,9 +107,6 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="add-watch">
                 <span class="codicon codicon-eye"></span> Add to Watch List
             </div>
-            <div class="context-menu-item" data-action="add-exclusion">
-                <span class="codicon codicon-eye-closed"></span> Add to Exclusions
-            </div>
         </div>
     </div>
     <div class="context-menu-submenu" id="hide-lines-submenu">
@@ -136,12 +133,20 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="hide-text-always" data-text-selection-action>
                 <span class="codicon codicon-eye-closed"></span> Hide Selection (Always)
             </div>
+            <div class="context-menu-item" data-action="add-exclusion" data-line-action>
+                <span class="codicon codicon-eye-closed"></span> Hide This Text (Always)
+            </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="hide-all-visible">
                 <span class="codicon codicon-eye-closed"></span> Hide All Visible
             </div>
             <div class="context-menu-item" data-action="unhide-all" data-requires-any-hidden>
                 <span class="codicon codicon-eye"></span> Unhide All
+            </div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Hide blank lines</span>
             </div>
         </div>
     </div>
@@ -172,10 +177,6 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height">
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Comfortable line height</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span>Hide blank lines</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
                 <span class="context-menu-check codicon codicon-check"></span>
