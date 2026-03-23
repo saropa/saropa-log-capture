@@ -158,8 +158,8 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = hasShiftSelection ? '' : 'none';
     });
 
-    // Open in Drift Advisor: only for drift-perf / drift-query lines when Drift Advisor extension is present
-    var driftLineCat = lineData && (lineData.category === 'drift-perf' || lineData.category === 'drift-query');
+    // Open in Drift Advisor: Drift categories or database-tagged (Drift SQL) lines when extension is present
+    var driftLineCat = lineData && (lineData.category === 'drift-perf' || lineData.category === 'drift-query' || lineData.sourceTag === 'database');
     var driftAvailable = (typeof window !== 'undefined' && window.driftAdvisorAvailable);
     contextMenuEl.querySelectorAll('[data-drift-line-action]').forEach(function(el) {
         el.style.display = (hasLine && driftLineCat && driftAvailable) ? '' : 'none';

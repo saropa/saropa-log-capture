@@ -235,7 +235,8 @@ function onContextMenuAction(action) {
         case 'show-context': if (typeof openContextModal === 'function') openContextModal(lineIdx); break;
         case 'show-integration-context': {
             var ts = lineData.ts || lineData.timestamp;
-            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts });
+            var hasDbLine = !!(lineData && lineData.sourceTag === 'database');
+            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts, hasDatabaseLine: hasDbLine });
             break;
         }
         case 'show-code-quality': {

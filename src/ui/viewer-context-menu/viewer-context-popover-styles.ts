@@ -192,5 +192,32 @@ export function getContextPopoverStyles(): string {
 .popover-btn.popover-full:hover {
     background: var(--vscode-button-hoverBackground);
 }
+
+/* Line-local database insight (Drift SQL fingerprint + snippet) */
+.popover-meta-label {
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin-right: 4px;
+}
+.popover-fingerprint {
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 10px;
+    word-break: break-all;
+}
+.popover-sql-wrap {
+    display: block;
+    margin-top: 4px;
+}
+.popover-sql-snippet {
+    display: inline-block;
+    max-width: 100%;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 10px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    user-select: text;
+    cursor: text;
+    color: var(--vscode-editor-foreground);
+}
 `;
 }

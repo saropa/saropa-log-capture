@@ -179,17 +179,38 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         totalHeight += finalH;
         updateCompressDupStreakAfterLine(plain);
 
+        // One parse per line: shared by dbInsight rollup and N+1 detector (Drift SQL only).
+        var sqlMetaLine = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
+
+        if (sTag === 'database') {
+            var rollupDb = (sqlMetaLine && typeof updateDbInsightRollup === 'function')
+                ? updateDbInsightRollup(sqlMetaLine.fingerprint, lineItem.elapsedMs)
+                : null;
+            var snipDb = sqlMetaLine && sqlMetaLine.sqlSnippet ? sqlMetaLine.sqlSnippet : null;
+            if (!snipDb) {
+                var di = plain.indexOf('Drift:');
+                var rawSnip = di >= 0 ? plain.substring(di).trim() : plain.trim();
+                snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
+            }
+            lineItem.dbInsight = {
+                fingerprint: sqlMetaLine ? sqlMetaLine.fingerprint : null,
+                sqlSnippet: snipDb,
+                seenCount: rollupDb ? rollupDb.seenCount : 1,
+                avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
+                maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
+            };
+        }
+
         // N+1 detector: bursts of the same Drift SQL fingerprint with varying args (must not throw).
         try {
-            var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
-            if (sqlMeta && typeof detectNPlusOneInsight === 'function') {
-                var insight = detectNPlusOneInsight(now, sqlMeta.fingerprint, sqlMeta.argsKey);
+            if (sqlMetaLine && typeof detectNPlusOneInsight === 'function') {
+                var insight = detectNPlusOneInsight(now, sqlMetaLine.fingerprint, sqlMetaLine.argsKey);
                 if (insight) {
                     var windowSec = (insight.windowSpanMs / 1000).toFixed(2);
                     var confLabel = insight.confidence.toUpperCase();
-                    var previewFingerprint = sqlMeta.fingerprint.length > 96
-                        ? sqlMeta.fingerprint.substring(0, 96) + '...'
-                        : sqlMeta.fingerprint;
+                    var previewFingerprint = sqlMetaLine.fingerprint.length > 96
+                        ? sqlMetaLine.fingerprint.substring(0, 96) + '...'
+                        : sqlMetaLine.fingerprint;
                     var n1Html = '<span class="repeat-notification n1-insight">'
                         + '\\u26a0 Potential N+1 query '
                         + '<span class="n1-conf n1-conf-' + insight.confidence + '">[' + confLabel + ']</span> '
@@ -198,7 +219,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                         + ' <span class="n1-actions">'
                         + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
                         + ' · '
-                        + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
+                        + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMetaLine.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
                         + '</span>'
                         + '</span>';
                     var n1Item = {
