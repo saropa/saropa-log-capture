@@ -123,6 +123,12 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
+    broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
+    broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
+    broadcaster.setViewerSqlPatternChipSettings(
+        initCfg.viewerSqlPatternChipMinCount,
+        initCfg.viewerSqlPatternMaxChips,
+    );
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
     broadcaster.setScrollbarVisible(initCfg.showScrollbar);
     broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);

@@ -10,6 +10,7 @@ import type { LineData } from "../../modules/session/session-manager";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { ScopeContext } from "../../modules/storage/scope-context";
+import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
 
 /** Contract for a webview that renders captured debug output. */
@@ -44,6 +45,9 @@ export interface ViewerTarget {
   setScopeContext(context: ScopeContext): void;
   setMinimapShowInfo(show: boolean): void;
   setMinimapShowSqlDensity(show: boolean): void;
+  setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
+  setViewerDbInsightsEnabled(enabled: boolean): void;
+  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
   setScrollbarVisible(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;

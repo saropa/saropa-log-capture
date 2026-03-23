@@ -5,6 +5,7 @@
  */
 
 import * as vscode from "vscode";
+import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
@@ -178,6 +179,15 @@ export class LogViewerProvider
   setScopeContext(ctx: ScopeContext): void { state.setScopeContextImpl(this, ctx); }
   setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
   setMinimapShowSqlDensity(show: boolean): void { state.setMinimapShowSqlDensityImpl(this, show); }
+  setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
+    state.setViewerRepeatThresholdsImpl(this, thresholds);
+  }
+  setViewerDbInsightsEnabled(enabled: boolean): void {
+    state.setViewerDbInsightsEnabledImpl(this, enabled);
+  }
+  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
+    state.setViewerSqlPatternChipSettingsImpl(this, chipMinCount, chipMaxChips);
+  }
   setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }

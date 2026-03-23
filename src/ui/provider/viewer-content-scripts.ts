@@ -80,14 +80,33 @@ export interface ViewerScriptsOptions {
     /** Max lines for getViewerScript (caller should pass from getEffectiveViewerLines or MAX_VIEWER_LINES). */
     readonly viewerMaxLines: number;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
+    /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
+    readonly viewerDbInsightsEnabled?: boolean;
+    /** Fingerprint chip thresholds (plan DB_05). */
+    readonly viewerSqlPatternChipMinCount?: number;
+    readonly viewerSqlPatternMaxChips?: number;
 }
 
 /** Build all script tags in the order required by the viewer. */
 export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerRepeatThresholds } = opts;
+    const {
+        nonce,
+        extensionUri,
+        viewerMaxLines: maxLines,
+        viewerRepeatThresholds,
+        viewerDbInsightsEnabled,
+        viewerSqlPatternChipMinCount,
+        viewerSqlPatternMaxChips,
+    } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
-        scriptTag(nonce, getLayoutScript(), getViewerDataScript(viewerRepeatThresholds), getViewerScript(maxLines), getViewerVisibilityScript()) +
+        scriptTag(
+            nonce,
+            getLayoutScript(),
+            getViewerDataScript(viewerRepeatThresholds, viewerDbInsightsEnabled !== false),
+            getViewerScript(maxLines),
+            getViewerVisibilityScript(),
+        ) +
         scriptTag(nonce, getScrollAnchorScript()) +
         scriptTag(nonce, getFilterScript()) +
         scriptTag(nonce, getWatchScript()) +
@@ -115,7 +134,13 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +
-        scriptTag(nonce, getSqlPatternTagsScript()) +
+        scriptTag(
+            nonce,
+            getSqlPatternTagsScript(
+                viewerSqlPatternChipMinCount ?? 2,
+                viewerSqlPatternMaxChips ?? 20,
+            ),
+        ) +
         scriptTag(nonce, getHighlightScript()) +
         scriptTag(nonce, getScopeFilterScript()) +
         scriptTag(nonce, getPresetsScript()) +
