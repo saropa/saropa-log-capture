@@ -49,7 +49,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         ${getSessionNavSearchHtml()}
     </div>
     <div id="compress-suggest-banner" class="compress-suggest-banner u-hidden" role="status" aria-live="polite">
-        <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (button above the log or Options → Layout).</span>
+        <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (Options → Layout or right-click → Options).</span>
         <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">Enable</button>
         <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="Dismiss">×</button>
     </div>
@@ -80,9 +80,6 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <div id="viewport"></div>
         <div id="spacer-bottom"></div>
     </div>
-    <button type="button" id="log-compress-toggle" class="log-compress-toggle" title="Compress lines (hide blanks + collapse consecutive duplicates)" aria-label="Compress lines" aria-pressed="false">
-        <span class="codicon codicon-collapse-all" aria-hidden="true"></span>
-    </button>
     <button id="jump-top-btn" title="Scroll to top" aria-label="Scroll to top">&#x2B06; Top</button>
     <button id="jump-btn" title="Scroll to bottom" aria-label="Scroll to bottom">&#x2B07; Bottom</button>
     <div id="copy-float" class="codicon codicon-copy" title="Copy line" role="button" aria-label="Copy line"></div>

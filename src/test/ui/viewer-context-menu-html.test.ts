@@ -36,7 +36,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Edit Line'));
             assert.ok(html.includes('Show Context'));
             assert.ok(html.includes('Add to Watch List'));
-            assert.ok(html.includes('Add to Exclusions'));
+            assert.ok(!html.includes('Add to Exclusions'));
         });
 
         test('should include Options submenu with toggle items', () => {
@@ -48,7 +48,6 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-session-elapsed"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
-            assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
             assert.ok(html.includes('data-action="toggle-compress-lines"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line decorations (dot, number, time)'));
@@ -56,8 +55,18 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Comfortable line height'));
-            assert.ok(html.includes('Hide blank lines'));
             assert.ok(html.includes('Compress lines'));
+        });
+
+        test('should keep hide-only controls out of Options submenu', () => {
+            const html = getContextMenuHtml();
+            const optionsStart = html.indexOf('> Options');
+            assert.ok(optionsStart >= 0);
+            const optionsEnd = html.indexOf('</div>\n    </div>\n</div>', optionsStart);
+            const optionsBlock = optionsEnd > optionsStart ? html.slice(optionsStart, optionsEnd) : html.slice(optionsStart);
+            assert.ok(!optionsBlock.includes('toggle-hide-blank-lines'));
+            assert.ok(!optionsBlock.includes('Hide blank lines'));
+            assert.ok(!optionsBlock.includes('Hide This Text (Always)'));
         });
 
         test('should include data-action attributes', () => {
@@ -129,8 +138,12 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Unhide This Line'));
             assert.ok(html.includes('Hide Selection'));
             assert.ok(html.includes('Unhide Selection'));
+            assert.ok(html.includes('Hide This Text (Always)'));
             assert.ok(html.includes('Hide All Visible'));
             assert.ok(html.includes('Unhide All'));
+            assert.ok(html.includes('data-action="toggle-hide-blank-lines"'));
+            assert.ok(html.includes('Hide blank lines'));
+            assert.ok(html.includes('data-action="add-exclusion"'));
         });
 
         test('should include hide/unhide action data attributes', () => {

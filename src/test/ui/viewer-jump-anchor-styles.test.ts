@@ -33,10 +33,35 @@ suite('ViewerJumpScrollPlacement', () => {
 		assert.ok(script.includes('replayNudge'));
 	});
 
-	test('syncJumpButtonInset positions log compress toggle from log-content rect', () => {
+	test('syncJumpButtonInset still anchors controls from log-content rect', () => {
 		const script = getViewerScript(5000);
-		assert.ok(script.includes('log-compress-toggle'));
-		assert.ok(script.includes("lr.left + 8"));
+		assert.ok(script.includes('syncJumpButtonInset'));
+		assert.ok(script.includes('getBoundingClientRect'));
+	});
+
+	test('syncJumpButtonInset does not include removed log-compress-toggle anchoring', () => {
+		const script = getViewerScript(5000);
+		assert.ok(!script.includes("var logCompressToggle = document.getElementById('log-compress-toggle');"));
+		assert.ok(!script.includes("if (logCompressToggle) {"));
+		assert.ok(!script.includes("logCompressToggle.style.setProperty('position', 'fixed', 'important');"));
+		assert.ok(!script.includes("logCompressToggle.style.setProperty('left'"));
+		assert.ok(!script.includes("logCompressToggle.style.setProperty('top'"));
+	});
+
+	test('compress toggle click wiring is removed from viewer script', () => {
+		const script = getViewerScript(5000);
+		assert.ok(
+			!script.includes("if (logCompressToggle) logCompressToggle.addEventListener('click', function(e) {"),
+			'removed button must not keep listener wiring',
+		);
+		assert.ok(
+			!script.includes("if (typeof toggleCompressLines === 'function') toggleCompressLines();"),
+			'viewer script should not contain the removed button click handler branch',
+		);
+		assert.ok(
+			!script.includes("if (jumpBtn) jumpBtn.addEventListener('click', function(e) {"),
+			'false-positive guard: jump button wiring remains separate',
+		);
 	});
 
 	test('layout sync is scheduled after paint via chained requestAnimationFrame', () => {

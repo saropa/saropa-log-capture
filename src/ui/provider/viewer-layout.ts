@@ -10,10 +10,9 @@
  *   and `measureRowHeight()` (hidden probe) so `ROW_HEIGHT` / `MARKER_HEIGHT` match themed CSS.
  * - **Line presentation:** `visualSpacingEnabled`, `hideBlankLines`, and **`compressLinesMode`**
  *   (hide blank lines + collapse consecutive duplicate normal lines with an (×N) badge on the last row).
- * - **Compress UI sync:** `toggleCompressLines()` flips `compressLinesMode`, re-renders via
- *   `recalcAndRender` / `recalcHeights` + `renderViewport`, and calls `syncCompressIconButton()` so the
- *   log-pane `#log-compress-toggle`, Options panel checkbox, and context menu stay aligned. The helper
- *   name retains "IconButton" for backward compatibility with older emitted references in options scripts.
+ * - **Compress UI sync:** `toggleCompressLines()` flips `compressLinesMode` and re-renders via
+ *   `recalcAndRender` / `recalcHeights` + `renderViewport` so Options panel checkbox and context menu
+ *   stay aligned.
  * - **Suggestion banner:** `showCompressSuggestionBanner` / `hideCompressSuggestionBanner` coordinate
  *   with `viewer-data-compress-streak.ts` when compress is off and many identical lines stream in.
  * - **Input:** Ctrl/Meta + wheel on `#log-content` adjusts font size.
@@ -131,18 +130,6 @@ function toggleHideBlankLines() {
     }
 }
 
-/**
- * Sync log-pane compress toggle with compressLinesMode (display option, not a slide-out panel).
- */
-function syncCompressIconButton() {
-    var btn = document.getElementById('log-compress-toggle');
-    if (btn) {
-        var on = !!compressLinesMode;
-        btn.classList.toggle('log-compress-toggle--on', on);
-        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-}
-
 function hideCompressSuggestionBanner() {
     var b = document.getElementById('compress-suggest-banner');
     var w = document.getElementById('session-nav-wrapper');
@@ -165,7 +152,6 @@ function showCompressSuggestionBanner() {
  */
 function toggleCompressLines() {
     compressLinesMode = !compressLinesMode;
-    syncCompressIconButton();
     if (compressLinesMode) hideCompressSuggestionBanner();
     if (typeof recalcAndRender === 'function') recalcAndRender();
     else {
@@ -179,7 +165,7 @@ document.documentElement.style.setProperty('--log-font-size', logFontSize + 'px'
 document.documentElement.style.setProperty('--log-line-height', logLineHeight.toString());
 
 // Measure actual row height after all CSS is applied
-requestAnimationFrame(function() { measureRowHeight(); syncCompressIconButton(); });
+requestAnimationFrame(function() { measureRowHeight(); });
 
 // Ctrl+scroll to zoom font size
 var _logContentEl = document.getElementById('log-content');
