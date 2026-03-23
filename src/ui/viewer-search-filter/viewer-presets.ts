@@ -212,6 +212,7 @@ function resetAllFilters() {
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
     if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
     if (typeof selectAllTags === 'function') selectAllTags();
+    if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
     clearSearchFilter();

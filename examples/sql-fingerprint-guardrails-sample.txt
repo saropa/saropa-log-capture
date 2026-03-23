@@ -1,0 +1,19 @@
+# SQL fingerprint guardrails (DB_02) — manual QA samples
+#
+# Paste into a log session with Flutter-style prefixes so lines get source tag `database`.
+# Expect: same *shape* below shares one normalized fingerprint; args differ only in `with args`.
+#
+# --- Same fingerprint (literals / spacing / keyword case) ---
+I/flutter ( 1234): Drift: Sent SELECT * FROM "items" WHERE "id" = ? LIMIT 1; with args [1]
+I/flutter ( 1234): Drift: Sent select * from "items" where "id" = ? limit 1; with args [2]
+#
+# --- Same fingerprint (unquoted UUID in SQL text) ---
+I/flutter ( 1234): Drift: Sent SELECT * FROM t WHERE id = 550e8400-e29b-41d4-a716-446655440000; with args []
+I/flutter ( 1234): Drift: Sent SELECT * FROM t WHERE id = 660e8400-e29b-41d4-a716-446655440999; with args []
+#
+# --- Different fingerprints (false positive check: should NOT merge) ---
+I/flutter ( 1234): Drift: Sent SELECT * FROM t WHERE id = ?; with args [1]
+I/flutter ( 1234): Drift: Sent DELETE FROM t WHERE id = ?; with args [1]
+#
+# --- Low frequency: single line with a unique shape → SQL Patterns "Other SQL" until count >= 2 ---
+I/flutter ( 1234): Drift: Sent PRAGMA foreign_keys = ON; with args []

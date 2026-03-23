@@ -5,6 +5,7 @@
 
 import { getErrorHandlerScript } from '../viewer-decorations/viewer-error-handler';
 import { getLayoutScript } from './viewer-layout';
+import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import { getViewerDataScript } from '../viewer/viewer-data';
 import { getViewerScript } from '../viewer/viewer-script';
 import { getViewerVisibilityScript } from '../viewer/viewer-visibility';
@@ -35,6 +36,7 @@ import { getSearchHistoryScript } from '../viewer-search-filter/viewer-search-hi
 import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filter';
 import { getSourceTagsScript } from '../viewer-stack-tags/viewer-source-tags';
 import { getClassTagsScript } from '../viewer-stack-tags/viewer-class-tags';
+import { getSqlPatternTagsScript } from '../viewer-stack-tags/viewer-sql-pattern-tags';
 import { getHighlightScript } from '../viewer-decorations/viewer-highlight';
 import { getScopeFilterScript } from '../viewer-search-filter/viewer-scope-filter';
 import { getPresetsScript } from '../viewer-search-filter/viewer-presets';
@@ -77,14 +79,15 @@ export interface ViewerScriptsOptions {
     readonly extensionUri?: string;
     /** Max lines for getViewerScript (caller should pass from getEffectiveViewerLines or MAX_VIEWER_LINES). */
     readonly viewerMaxLines: number;
+    readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
 }
 
 /** Build all script tags in the order required by the viewer. */
 export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
-    const { nonce, extensionUri, viewerMaxLines: maxLines } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerRepeatThresholds } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
-        scriptTag(nonce, getLayoutScript(), getViewerDataScript(), getViewerScript(maxLines), getViewerVisibilityScript()) +
+        scriptTag(nonce, getLayoutScript(), getViewerDataScript(viewerRepeatThresholds), getViewerScript(maxLines), getViewerVisibilityScript()) +
         scriptTag(nonce, getScrollAnchorScript()) +
         scriptTag(nonce, getFilterScript()) +
         scriptTag(nonce, getWatchScript()) +
@@ -112,6 +115,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +
+        scriptTag(nonce, getSqlPatternTagsScript()) +
         scriptTag(nonce, getHighlightScript()) +
         scriptTag(nonce, getScopeFilterScript()) +
         scriptTag(nonce, getPresetsScript()) +
