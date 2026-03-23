@@ -15,6 +15,7 @@
  */
 
 import type { DiffLine } from '../../modules/misc/diff-engine';
+import type { DbDetectorResult } from '../../modules/db/db-detector-types';
 import {
     SESSION_DB_FP_COMPARE_MAX_ROWS,
     type SessionDbFingerprintCompareResult,
@@ -49,6 +50,8 @@ export interface SessionComparisonHtmlArgs {
     /** When false, Drift SQL toolbar buttons are omitted. */
     readonly showDbToolbar: boolean;
     readonly db: SessionDbFingerprintCompareResult;
+    /** Batch compare detector markers (e.g. SQL volume up); empty when DB insights are off or no hits. */
+    readonly dbCompareDetectorResults: readonly DbDetectorResult[];
     readonly sessionA: SessionComparisonPaneViewModel;
     readonly sessionB: SessionComparisonPaneViewModel;
 }
@@ -72,6 +75,7 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
         driftInstalled,
         showDbToolbar,
         db,
+        dbCompareDetectorResults,
         sessionA,
         sessionB,
     } = args;
@@ -100,7 +104,7 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
         </button>
     </div>
     ${toolbar}
-    ${renderDatabaseFingerprintSection(db, nameA, nameB)}
+    ${renderDatabaseFingerprintSection(db, nameA, nameB, dbCompareDetectorResults)}
     <div class="comparison">
         <div class="pane pane-a">
             <div class="pane-header">${escapeHtml(nameA)}</div>
@@ -147,19 +151,47 @@ function renderLines(lines: readonly DiffLine[], side: 'a' | 'b'): string {
         .join('\n');
 }
 
+function renderDbCompareDetectorMarkers(results: readonly DbDetectorResult[]): string {
+    const markers = results.filter((r) => r.kind === 'marker');
+    if (markers.length === 0) {
+        return '';
+    }
+    const items = markers
+        .map((r) => {
+            const pl = r.payload as { label?: string; category?: string };
+            const label = typeof pl.label === 'string' ? pl.label : '';
+            if (!label) {
+                return '';
+            }
+            return `<li class="db-compare-marker-item">${escapeHtml(label)}</li>`;
+        })
+        .filter(Boolean)
+        .join('\n');
+    if (!items) {
+        return '';
+    }
+    return /* html */ `<div class="db-compare-markers-wrap" role="region" aria-label="SQL compare detector notes">
+<p class="db-fp-hint">Detector highlights (batch compare)</p>
+<ul class="db-compare-markers">${items}</ul>
+</div>`;
+}
+
 function renderDatabaseFingerprintSection(
     db: SessionDbFingerprintCompareResult,
     nameA: string,
     nameB: string,
+    dbCompareDetectorResults: readonly DbDetectorResult[],
 ): string {
     const labelA = escapeHtml(nameA);
     const labelB = escapeHtml(nameB);
     const summaryLine = db.hasDriftSql
         ? `Database (Drift SQL) — ${db.totalStatementsA} exec A / ${db.totalStatementsB} exec B · ${db.distinctFingerprintsA} fp A / ${db.distinctFingerprintsB} fp B`
         : 'Database (Drift SQL)';
+    const markersBlock = renderDbCompareDetectorMarkers(dbCompareDetectorResults);
     if (!db.hasDriftSql) {
         return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
+${markersBlock}
 <p class="db-fp-hint">No <code>Drift: Sent …</code> lines found in these logs (after the session header).</p>
 </details>`;
     }
@@ -188,6 +220,7 @@ ${slowHead}<th>Jump</th>
     const body = rows.map((r) => renderDbFingerprintRow(r, db.hasSlowQueryStats)).join('\n');
     return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
+${markersBlock}
 <div class="db-fp-table-wrap">
 <table class="db-fp-table" aria-label="SQL fingerprint comparison">
 ${head}

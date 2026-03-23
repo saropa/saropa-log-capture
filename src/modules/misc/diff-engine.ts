@@ -17,7 +17,11 @@ import {
     scanSaropaLogDatabaseFingerprints,
 } from '../db/db-session-fingerprint-diff';
 import type { SessionDbFingerprintCompareResult } from '../db/db-session-fingerprint-diff';
-import type { DbFingerprintSummaryEntry } from '../db/db-detector-types';
+import type { DbDetectorResult, DbFingerprintSummaryEntry } from '../db/db-detector-types';
+import {
+    createDbDetectorSessionState,
+    runDefaultSessionDbCompareDetectors,
+} from '../db/db-detector-framework';
 
 export type { SessionDbFingerprintCompareResult } from '../db/db-session-fingerprint-diff';
 
@@ -139,6 +143,8 @@ export interface CompareLogSessionsWithDbResult {
     readonly dbFingerprints: SessionDbFingerprintCompareResult;
     readonly summaryMapA: Map<string, DbFingerprintSummaryEntry>;
     readonly summaryMapB: Map<string, DbFingerprintSummaryEntry>;
+    /** Batch `compare()` detector output (baseline volume markers when DB insights are enabled). */
+    readonly dbCompareDetectorResults: readonly DbDetectorResult[];
 }
 
 /**
@@ -156,6 +162,14 @@ export async function compareLogSessionsWithDbFingerprints(
     const scanOpts = typeof slowMs === 'number' && slowMs > 0 ? { slowQueryMs: slowMs } : undefined;
     const scanA = scanSaropaLogDatabaseFingerprints(textA, scanOpts);
     const scanB = scanSaropaLogDatabaseFingerprints(textB, scanOpts);
+    const insightsOn = getConfig().viewerDbInsightsEnabled;
+    const dbCompareState = createDbDetectorSessionState();
+    const dbCompareDetectorResults = insightsOn
+        ? runDefaultSessionDbCompareDetectors(
+              { baseline: scanA.summary, target: scanB.summary },
+              dbCompareState,
+          )
+        : [];
     return {
         diff: diffParsedLogLines(
             parseLogLinesFromContent(textA),
@@ -166,6 +180,7 @@ export async function compareLogSessionsWithDbFingerprints(
         dbFingerprints: compareScannedSaropaDbFingerprints(scanA, scanB),
         summaryMapA: scanA.summary,
         summaryMapB: scanB.summary,
+        dbCompareDetectorResults,
     };
 }
 

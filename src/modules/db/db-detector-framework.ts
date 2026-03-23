@@ -1,9 +1,10 @@
 /**
- * DB detector orchestration (plan **DB_15**). Extension-side / test harness only —
- * the webview embed mirrors merge + run ordering.
+ * DB detector orchestration (plan **DB_15**). Used by the extension host (session compare, tests) and mirrored
+ * in the webview embed for streaming ingest.
  */
 
 import { buildDbFingerprintSummaryDiff } from "./db-fingerprint-summary";
+import { createBaselineVolumeCompareDetector } from "./drift-db-baseline-volume-compare-detector";
 import type {
   DbAnnotateLinePayload,
   DbDetectorContext,
@@ -17,6 +18,30 @@ import type {
 export interface DbDetectorsCompareMaps {
   readonly baseline: ReadonlyMap<string, DbFingerprintSummaryEntry>;
   readonly target: ReadonlyMap<string, DbFingerprintSummaryEntry>;
+}
+
+/** Mutable rows (e.g. preview lines with `seq`) that may receive **`annotate-line`** patches from compare output. */
+export type DbAnnotateTargetLineRow = { seq?: number; height?: number } & Record<string, unknown>;
+
+export interface RunDbDetectorsCompareOptions {
+  readonly insightsEnabled?: boolean;
+  /** When set, applies **`annotate-line`** entries in the merged compare results (same phase order as embed rollup phase). */
+  readonly annotateTargetLines?: DbAnnotateTargetLineRow[];
+  readonly onAnnotateHeightDelta?: (delta: number) => void;
+}
+
+/** Default registry for log comparison: baseline volume markers (`createBaselineVolumeCompareDetector`). */
+export const DEFAULT_SESSION_DB_COMPARE_REGISTRY: readonly DbDetectorDefinition[] = [
+  createBaselineVolumeCompareDetector(),
+];
+
+/** Run **`DEFAULT_SESSION_DB_COMPARE_REGISTRY`** (session compare panel / `compareLogSessionsWithDbFingerprints`). */
+export function runDefaultSessionDbCompareDetectors(
+  maps: DbDetectorsCompareMaps,
+  state: DbDetectorSessionState,
+  options?: RunDbDetectorsCompareOptions,
+): DbDetectorResult[] {
+  return runDbDetectorsCompare(DEFAULT_SESSION_DB_COMPARE_REGISTRY, maps, state, options);
 }
 
 /**
@@ -84,7 +109,7 @@ export function runDbDetectorsCompare(
   registry: readonly DbDetectorDefinition[],
   maps: DbDetectorsCompareMaps,
   state: DbDetectorSessionState,
-  options?: { readonly insightsEnabled?: boolean },
+  options?: RunDbDetectorsCompareOptions,
 ): DbDetectorResult[] {
   if (options?.insightsEnabled === false) {
     return [];
@@ -113,7 +138,12 @@ export function runDbDetectorsCompare(
       state.disabledDetectorIds.add(d.id);
     }
   }
-  return mergeDbDetectorResultsByStableKey(collected);
+  const merged = mergeDbDetectorResultsByStableKey(collected);
+  const lines = options?.annotateTargetLines;
+  if (lines !== undefined && lines.length > 0) {
+    applyDbAnnotateLineResultsToLineItems(lines, merged, options?.onAnnotateHeightDelta);
+  }
+  return merged;
 }
 
 export function createDbDetectorSessionState(): DbDetectorSessionState {
