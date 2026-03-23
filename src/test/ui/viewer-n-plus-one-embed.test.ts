@@ -59,6 +59,8 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(data.includes('function emitDbLineDetectors'));
         assert.ok(data.includes('applyDbAnnotateLineResult'));
         assert.ok(data.includes('db.ingest-rollup'));
+        assert.ok(data.includes('function applyDbDetectorResultsInPriorityOrder'));
+        assert.ok(data.includes('function peekDbInsightRollup'));
         assert.ok(data.includes('registerBuiltinDbDetectors'));
         assert.ok(data.includes('pruneDbDetectorStateAfterTrim'));
         assert.ok(data.includes('applyDbMarkerResults'));

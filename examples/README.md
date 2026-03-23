@@ -21,3 +21,7 @@ See `root-cause-hypotheses-sample.txt` for expected UI behavior, false-negative/
 ## Session comparison — Drift SQL diff, baseline, slow columns (`DB_10` / `DB_15`)
 
 Use `session-comparison-drift-sql-qa.txt` for the **Database (Drift SQL)** section, fingerprint jump actions, optional SQL baseline from compare (drives **SQL count above baseline** markers when live counts exceed baseline and sub-toggle **baseline hints** is on), and **Slow A / B / Δ slow** columns when scans use duration metadata and the slow threshold. Lines without `[+Nms]` must not contribute to slow counts.
+
+## Log viewer — DB detector pipeline order (`DB_15`)
+
+For a single `database` Drift line with insights enabled, rollup updates run before built-in detectors (N+1 synthetic row should still appear **above** slow-burst markers when both fire). There is no standalone sample file yet: combine `drift-n-plus-one-sample-lines.txt` with `drift-slow-burst-sample-lines.txt` and confirm ordering. Future detectors may emit **`annotate-line`** (patch an existing row by `seq`); wrong `targetSeq` must not break ingest. String regression checks live in `src/test/ui/viewer-n-plus-one-embed.test.ts`.
