@@ -9,6 +9,9 @@
  *
  * Fingerprint normalization must match `normalizeDriftSqlFingerprintSql` in
  * `modules/db/drift-sql-fingerprint-normalize.ts` (uses `DRIFT_SQL_KEYWORD_ALT`).
+ *
+ * Also emits `driftSqlSnippetFromPlain` for dbInsight fallback text (kept in sync with
+ * `viewer-data-add-db-detectors.ts`).
  */
 import { N_PLUS_ONE_EMBED_CONFIG as N1 } from '../../modules/db/drift-n-plus-one-detector';
 import {
@@ -72,6 +75,13 @@ function parseSqlFingerprint(plainText) {
     var fp = normalizeDriftSqlFingerprintSql(sql);
     if (!fp) return null;
     return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart, verb: verbMatch[1].toUpperCase() };
+}
+/* Fallback dbInsight snippet from plain text: substring from first Drift: onward, max 500 chars (shared with emitDbLineDetectors). */
+function driftSqlSnippetFromPlain(plain) {
+    if (!plain) return '';
+    var di = plain.indexOf('Drift:');
+    var raw = di >= 0 ? plain.substring(di).trim() : plain.trim();
+    return raw.length > 500 ? raw.substring(0, 497) + '...' : raw;
 }
 var dbInsightSessionRollup = Object.create(null);
 /** Per normalized SQL fingerprint: session-wide seen count and duration stats (elapsedMs when present on lines). */
