@@ -215,6 +215,7 @@ if (isSessionActive) { return; }
 ### Where tests live
 
 - Unit tests are in `src/test/`, mirroring `src/`: e.g. `src/test/modules/config/config.test.ts` for `src/modules/config/config.ts`.
+- **Embedded viewer script:** Some suites (e.g. `viewer-sql-repeat-compression.test.ts` for DB_03) execute production script strings in `node:vm` so `addToData` / repeat logic stays covered without a browser; string-level guards remain in `viewer-data-add-embed.test.ts`.
 - Tests use the **Mocha** API (`suite`, `test`) and run via **vscode-test** (Extension Development Host). Run with: `npm run test`.
 
 ### What to test

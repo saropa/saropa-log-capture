@@ -1,0 +1,41 @@
+# QA: adaptive repeat collapse (DB_04)
+
+These lines are for manual or automated checks of **real-time** repeat collapse in the log viewer
+(not "Compress lines" / global dedupe).
+
+## Requirements
+
+- Lines must be tagged **`database`** by the extension (Drift `Drift: Sent …` pattern). The same text
+  on another source uses **global** repeat threshold only.
+- Repeats must arrive within the viewer **repeat time window** (`repeatWindowMs`, default 3s) or the
+  streak resets.
+
+## Sample A — SELECT collapses before UPDATE (defaults)
+
+Use the **same** normalized fingerprint for args variants (only literals differ), e.g.:
+
+  I/flutter: Drift: Sent SELECT * FROM "t" WHERE id = ?; with args [1]
+  I/flutter: Drift: Sent SELECT * FROM "t" WHERE id = ?; with args [2]
+  → With default read N=2, the **second** SELECT should enter repeat-collapse.
+
+For UPDATE with default dml N=4, you need **four** matching UPDATE fingerprints within the window
+before collapse.
+
+## Sample B — false positive guard
+
+Plain stderr text that mentions `Drift: Sent SELECT` but is **not** `database`-tagged must behave
+like any other log line: **global** threshold only (no read/DML tier without the tag).
+
+Same idea without any logcat/bracket prefix (bare `Drift: Sent …` line): must **not** show
+**SQL repeated #** — only the generic **Repeated #** duplicate row if thresholds are met.
+
+## Automated regression (DB_03)
+
+Behavioral coverage for fingerprint-keyed repeat collapse, time-window reset, and marker cleanup
+lives in **`src/test/ui/viewer-sql-repeat-compression.test.ts`** (runs production embed chunks in
+`node:vm`). Embed string guards remain in **`src/test/ui/viewer-data-add-embed.test.ts`**.
+
+## Settings
+
+Tune: `saropaLogCapture.repeatCollapseGlobalMinCount`, `repeatCollapseReadMinCount`,
+`repeatCollapseTransactionMinCount`, `repeatCollapseDmlMinCount` (2–50 each).
