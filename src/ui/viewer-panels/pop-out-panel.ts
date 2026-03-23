@@ -7,6 +7,7 @@
  */
 
 import * as vscode from "vscode";
+import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
@@ -167,6 +168,23 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setMinimapShowSqlDensity(show: boolean): void { this.post({ type: "minimapShowSqlDensity", show }); }
+  setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
+    this.post({
+      type: "setViewerRepeatThresholds",
+      thresholds: {
+        globalMinCount: thresholds.globalMinCount,
+        readMinCount: thresholds.readMinCount,
+        transactionMinCount: thresholds.transactionMinCount,
+        dmlMinCount: thresholds.dmlMinCount,
+      },
+    });
+  }
+  setViewerDbInsightsEnabled(enabled: boolean): void {
+    this.post({ type: "setViewerDbInsightsEnabled", enabled });
+  }
+  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
+    this.post({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
+  }
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
@@ -200,12 +218,30 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const codiconCssUri = wv.asWebviewUri(vscode.Uri.joinPath(codiconsUri, 'codicon.css')).toString();
     const cfg = getConfig();
     const viewerMaxLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
-    wv.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: this.version, cspSource: wv.cspSource, codiconCssUri, viewerMaxLines });
+    wv.html = buildViewerHtml({
+      nonce: getNonce(),
+      extensionUri: audioWebviewUri,
+      version: this.version,
+      cspSource: wv.cspSource,
+      codiconCssUri,
+      viewerMaxLines,
+      viewerRepeatThresholds: cfg.viewerRepeatThresholds,
+      viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+      viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
+      viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
+    });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
     queueMicrotask(() => this.post({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
     queueMicrotask(() => this.post({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
+    queueMicrotask(() => this.post({ type: 'setViewerRepeatThresholds', thresholds: getConfig().viewerRepeatThresholds }));
+    queueMicrotask(() => this.post({ type: 'setViewerDbInsightsEnabled', enabled: getConfig().viewerDbInsightsEnabled }));
+    queueMicrotask(() => this.post({
+      type: 'setViewerSqlPatternChipSettings',
+      chipMinCount: getConfig().viewerSqlPatternChipMinCount,
+      chipMaxChips: getConfig().viewerSqlPatternMaxChips,
+    }));
     this.panel.onDidDispose(() => {
       this.stopBatchTimer();
       this.broadcaster.removeTarget(this);

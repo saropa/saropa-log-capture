@@ -7,6 +7,7 @@ suite('Filters panel clarity (streams vs code location)', () => {
     test('HTML uses Log Streams, Code Location Scope, and scope narrowing wrapper ids', () => {
         const html = getFiltersPanelHtml();
         assert.ok(html.includes('Log Streams'));
+        assert.ok(html.includes('Top SQL Patterns'));
         assert.ok(html.includes('Code Location Scope'));
         assert.ok(html.includes('id="scope-narrowing-block"'));
         assert.ok(html.includes('id="scope-no-context-hint"'));
@@ -41,8 +42,11 @@ suite('Filters panel clarity (streams vs code location)', () => {
     test('scope script updates contextual hint and hooks recalcHeights', () => {
         const script = getScopeFilterScript();
         assert.ok(script.includes('function updateScopeFilterHint'));
+        assert.ok(script.includes('function scheduleScopeFilterHint'));
+        assert.ok(script.includes('function flushScopeFilterHint'));
         assert.ok(script.includes('scope-filter-hint'));
         assert.ok(script.includes('_origRecalcForScopeHint'));
+        assert.ok(script.includes('scheduleScopeFilterHint'));
         assert.ok(script.includes('scopeHintHiddenRatio = 0.75'));
         assert.ok(script.includes('scopeHintNoPathRatio = 0.25'));
         assert.ok(script.includes('data-scope-reset="all"'));

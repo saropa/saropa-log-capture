@@ -8,6 +8,7 @@ import { getViewerStyles } from '../viewer-styles/viewer-styles';
 import { getGotoLineStyles } from '../viewer/viewer-goto-line';
 import { getErrorHoverStyles } from '../viewer-decorations/viewer-error-hover-styles';
 import { getQualityBadgeStyles } from '../viewer-styles/viewer-styles-quality';
+import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import { getViewerBodyHtml } from './viewer-content-body';
 import { getViewerScriptTags } from './viewer-content-scripts';
 
@@ -32,6 +33,13 @@ export interface ViewerHtmlOptions {
     readonly codiconCssUri?: string;
     /** Max lines retained in the viewer (default MAX_VIEWER_LINES when omitted). */
     readonly viewerMaxLines?: number;
+    /** Repeat-collapse thresholds baked into the viewer script at HTML build time. */
+    readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
+    /** Master toggle for DB insight detectors + rollup (default true). */
+    readonly viewerDbInsightsEnabled?: boolean;
+    /** SQL fingerprint filter chips (plan DB_05); defaults 2 and 20. */
+    readonly viewerSqlPatternChipMinCount?: number;
+    readonly viewerSqlPatternMaxChips?: number;
 }
 
 /**
@@ -58,6 +66,10 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         nonce,
         extensionUri,
         viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
+        viewerRepeatThresholds: opts.viewerRepeatThresholds,
+        viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
+        viewerSqlPatternChipMinCount: opts.viewerSqlPatternChipMinCount,
+        viewerSqlPatternMaxChips: opts.viewerSqlPatternMaxChips,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

@@ -39,7 +39,18 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   const codiconCssUri = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(codiconsUri, 'codicon.css')).toString();
   const cfg = getConfig();
   const viewerMaxLines = getEffectiveViewerLines(cfg.maxLines, cfg.viewerMaxLines ?? 0);
-  webviewView.webview.html = buildViewerHtml({ nonce: getNonce(), extensionUri: audioWebviewUri, version: target.getVersion(), cspSource: webviewView.webview.cspSource, codiconCssUri, viewerMaxLines });
+  webviewView.webview.html = buildViewerHtml({
+    nonce: getNonce(),
+    extensionUri: audioWebviewUri,
+    version: target.getVersion(),
+    cspSource: webviewView.webview.cspSource,
+    codiconCssUri,
+    viewerMaxLines,
+    viewerRepeatThresholds: cfg.viewerRepeatThresholds,
+    viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+    viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
+    viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
+  });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
   queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
@@ -47,6 +58,19 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
+  queueMicrotask(() => target.postMessage({
+    type: 'setViewerRepeatThresholds',
+    thresholds: getConfig().viewerRepeatThresholds,
+  }));
+  queueMicrotask(() => target.postMessage({
+    type: 'setViewerDbInsightsEnabled',
+    enabled: getConfig().viewerDbInsightsEnabled,
+  }));
+  queueMicrotask(() => target.postMessage({
+    type: 'setViewerSqlPatternChipSettings',
+    chipMinCount: getConfig().viewerSqlPatternChipMinCount,
+    chipMaxChips: getConfig().viewerSqlPatternMaxChips,
+  }));
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }

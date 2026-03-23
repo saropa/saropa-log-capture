@@ -4,6 +4,7 @@
  * and project-index sub-shapes are defined here and merged in config.ts.
  */
 
+import type { ViewerRepeatThresholds } from "../db/drift-db-repeat-thresholds";
 import type { HighlightRule } from "../storage/highlight-rules";
 import type { SplitRules } from "../misc/file-splitter";
 import type { AutoTagRule } from "../misc/auto-tagger";
@@ -76,6 +77,20 @@ export interface SaropaLogCaptureConfig {
   readonly showScrollbar: boolean;
   /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */
   readonly viewerAlwaysShowSearchMatchOptions: boolean;
+  /**
+   * Real-time repeat-collapse thresholds for Drift `database`-tagged SQL (occurrence count before
+   * collapsing into repeat rows). Non-SQL lines use `globalMinCount` only.
+   */
+  readonly viewerRepeatThresholds: ViewerRepeatThresholds;
+  /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbInsight rollup in the viewer. */
+  readonly viewerDbInsightsEnabled: boolean;
+  /**
+   * Minimum occurrences of a normalized SQL fingerprint before it gets its own filter chip (below → "Other SQL").
+   * Plan DB_05; baked into viewer script and updated via `setViewerSqlPatternChipSettings`.
+   */
+  readonly viewerSqlPatternChipMinCount: number;
+  /** Max fingerprint chips before "Show all" in the SQL Patterns section (plan DB_05). */
+  readonly viewerSqlPatternMaxChips: number;
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   readonly smartBookmarks: SmartBookmarksConfig;
