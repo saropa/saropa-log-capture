@@ -177,6 +177,7 @@ export class LogViewerProvider
   }
   setScopeContext(ctx: ScopeContext): void { state.setScopeContextImpl(this, ctx); }
   setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
+  setMinimapShowSqlDensity(show: boolean): void { state.setMinimapShowSqlDensityImpl(this, show); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }

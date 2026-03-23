@@ -6,16 +6,17 @@
  * system for pixel-accurate positioning.
  *
  * Features:
- * - Level markers: error, warning, performance, todo, debug, notice, info
+ * - Level markers: error, warning, performance, to-do, debug, notice, info
  * - Search match and current match markers
  * - Draggable viewport indicator (DOM overlay on canvas)
  * - Click-to-navigate, drag-to-scroll, wheel forwarding
  * - HiDPI canvas rendering
  */
+import { getScrollbarMinimapSqlScript } from './viewer-scrollbar-minimap-sql';
 
 /** Returns the JavaScript code for the scrollbar minimap in the webview. */
 export function getScrollbarMinimapScript(): string {
-    return /* javascript */ `
+    return getScrollbarMinimapSqlScript() + /* javascript */ `
 var minimapEl = null;
 var mmCanvas = null;
 var mmCtx = null;
@@ -24,6 +25,7 @@ var mmDragging = false;
 var minimapDebounceTimer = 0;
 var mmColors = {};
 var mmShowInfo = false;
+var mmShowSqlDensity = true;
 
 /** Handle minimapShowInfo setting message from extension. */
 function handleMinimapShowInfo(msg) {
@@ -44,6 +46,13 @@ function handleMinimapWidth(msg) {
     if (typeof syncJumpButtonInset === 'function') syncJumpButtonInset();
 }
 
+/** Handle minimapShowSqlDensity setting message from extension/options UI. */
+function handleMinimapShowSqlDensity(msg) {
+    var prev = mmShowSqlDensity;
+    mmShowSqlDensity = msg.show !== false;
+    if (prev !== mmShowSqlDensity) scheduleMinimap();
+}
+
 /** Read VS Code theme colors with fallbacks. */
 function initMmColors() {
     var cs = getComputedStyle(document.documentElement);
@@ -56,10 +65,13 @@ function initMmColors() {
         debug: 'rgba(121,85,72,0.65)',
         notice: 'rgba(33,150,243,0.65)',
         info: 'rgba(78,201,176,0.65)',
+        sqlDensity: 'rgba(90, 180, 255, 1)',
+        sqlSlowDensity: 'rgba(255, 189, 89, 1)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)'
     };
 }
+
 
 /** Clean up any active minimap drag state. */
 function mmCleanupDrag() {
@@ -158,17 +170,37 @@ function paintMinimap() {
     if (total === 0) return;
 
     var step = allLines.length > MM_SAMPLE_THRESHOLD ? Math.max(1, Math.floor(allLines.length / MM_SAMPLE_THRESHOLD)) : 1;
+    var densityBucketCount = Math.max(48, Math.min(180, Math.floor(mmH / 2)));
+    var sqlBuckets = null;
+    var slowSqlBuckets = null;
+    if (mmShowSqlDensity) {
+        sqlBuckets = new Uint16Array(densityBucketCount);
+        slowSqlBuckets = new Uint16Array(densityBucketCount);
+    }
     // Collect markers grouped by color to minimize fillStyle switches
     var groups = {};
     for (var i = 0; i < allLines.length; i += step) {
         var it = allLines[i];
         if (it.height === 0 || it.type === 'stack-frame' || it.type === 'marker') continue;
+        var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
+        /* SQL density must not depend on minimap severity visibility (e.g. hidden info dots). */
+        if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
+            var plainSql = stripTags(it.html || '');
+            if (isLikelySqlLine(it, plainSql)) {
+                var bi = Math.min(densityBucketCount - 1, Math.max(0, Math.floor((py / Math.max(1, mmH)) * densityBucketCount)));
+                sqlBuckets[bi]++;
+                if (isLikelySlowSqlLine(it, plainSql)) slowSqlBuckets[bi]++;
+            }
+        }
         var lv = it.level;
         if (!lv || !mmColors[lv]) continue;
         if (lv === 'info' && !mmShowInfo) continue;
-        var py = Math.round((mmLineOffset(i, hasPfx, cumH) / total) * mmH);
         if (!groups[lv]) groups[lv] = [];
         groups[lv].push(py);
+    }
+
+    if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
+        paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH);
     }
 
     // Paint severity markers
@@ -185,7 +217,13 @@ function paintMinimap() {
     // Debug tooltip
     var mc = 0;
     for (var k in groups) mc += groups[k].length;
-    minimapEl.title = mc + ' markers, ' + mmH + 'px panel, ' + Math.round(total) + 'px content';
+    var title = mc + ' markers, ' + mmH + 'px panel, ' + Math.round(total) + 'px content';
+    if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
+        var sqlTotal = 0, slowTotal = 0;
+        for (var si = 0; si < sqlBuckets.length; si++) { sqlTotal += sqlBuckets[si]; slowTotal += slowSqlBuckets[si]; }
+        title += ' · SQL density (blue=' + sqlTotal + ', slow=' + slowTotal + ')';
+    }
+    minimapEl.title = title;
 }
 
 /** Paint search-match and current-match markers onto the canvas. */

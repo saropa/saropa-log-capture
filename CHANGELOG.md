@@ -22,6 +22,8 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 ### Added
 
+• **Log viewer — minimap SQL density** — Optional right-edge **blue** (SQL activity) and **amber** (slow-SQL signal) density bands on the scrollbar minimap, composed under severity and search markers. Toggle **`saropaLogCapture.minimapShowSqlDensity`** (default on) from **Options → Layout** or settings. The minimap `title` tooltip includes SQL/slow hit counts for quick legend-style context. Shared heuristics live in `viewer-scrollbar-minimap-sql-heuristics.ts` (embedded into the webview script) with unit tests in `viewer-scrollbar-minimap-sql-heuristics.test.ts`.
+
 • **Log viewer — N+1 query hint (Drift SQL)** — Bursts of the same normalized `Drift: Sent …` statement with **different** `with args` payloads inside a short window can insert a synthetic insight line with confidence (low/medium/high), plus **Focus DB** (database source tag) and **Find fingerprint** (in-log search). Detection is wrapped so it **cannot throw** and block line ingest. See `src/modules/db/drift-n-plus-one-detector.ts` and `examples/drift-n-plus-one-sample-lines.txt` for QA samples.
 
 ## [3.12.1]

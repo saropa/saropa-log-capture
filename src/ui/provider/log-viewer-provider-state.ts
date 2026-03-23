@@ -93,6 +93,9 @@ export function setScopeContextImpl(target: ProviderStateTarget, ctx: ScopeConte
 export function setMinimapShowInfoImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "minimapShowInfo", show });
 }
+export function setMinimapShowSqlDensityImpl(target: ProviderStateTarget, show: boolean): void {
+  target.postMessage({ type: "minimapShowSqlDensity", show });
+}
 export function setMinimapWidthImpl(target: ProviderStateTarget, width: "small" | "medium" | "large"): void {
   target.postMessage({ type: "minimapWidth", width });
 }

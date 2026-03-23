@@ -46,9 +46,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.sendIntegrationsAdapters(getConfig().integrationsAdapters));
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
+  queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   const pending = target.getPendingLoadUri();
-  if (pending) { queueMicrotask(() => { void target.loadFromFile(pending!); }); }
+  if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }
   webviewView.onDidChangeVisibility(() => {
     if (webviewView.visible) {
       target.setVisibleView(webviewView);
