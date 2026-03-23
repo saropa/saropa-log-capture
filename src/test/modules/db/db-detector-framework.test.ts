@@ -1,6 +1,8 @@
 import * as assert from "node:assert";
 import test from "node:test";
 import {
+  applyDbAnnotateLineResultToLineItems,
+  applyDbAnnotateLineResultsToLineItems,
   createDbDetectorSessionState,
   mergeDbDetectorResultsByStableKey,
   runDbDetectorsCompare,
@@ -197,6 +199,76 @@ test("createBaselineVolumeCompareDetector: no marker when increase is trivial", 
   const state = createDbDetectorSessionState();
   const out = runDbDetectorsCompare([createBaselineVolumeCompareDetector()], { baseline, target }, state);
   assert.strictEqual(out.length, 0);
+});
+
+test("applyDbAnnotateLineResultToLineItems: shallow merge by seq", () => {
+  const lines = [{ seq: 1, height: 20, level: "info" as const }];
+  const ok = applyDbAnnotateLineResultToLineItems(lines, {
+    kind: "annotate-line",
+    detectorId: "t",
+    stableKey: "t",
+    priority: 1,
+    payload: { targetSeq: 1, patch: { level: "error", tagged: true } },
+  });
+  assert.strictEqual(ok, true);
+  assert.strictEqual(lines[0].level, "error");
+  assert.strictEqual((lines[0] as { tagged?: boolean }).tagged, true);
+});
+
+test("applyDbAnnotateLineResultToLineItems: missing seq is false and leaves rows unchanged", () => {
+  const lines = [{ seq: 1, height: 20 }];
+  const snap = JSON.stringify(lines);
+  const ok = applyDbAnnotateLineResultToLineItems(lines, {
+    kind: "annotate-line",
+    detectorId: "t",
+    stableKey: "t",
+    priority: 1,
+    payload: { targetSeq: 999, patch: { x: 1 } },
+  });
+  assert.strictEqual(ok, false);
+  assert.strictEqual(JSON.stringify(lines), snap);
+});
+
+test("applyDbAnnotateLineResultToLineItems: height delta invokes callback", () => {
+  const lines = [{ seq: 2, height: 20 }];
+  let d = 0;
+  applyDbAnnotateLineResultToLineItems(
+    lines,
+    {
+      kind: "annotate-line",
+      detectorId: "t",
+      stableKey: "t",
+      priority: 1,
+      payload: { targetSeq: 2, patch: { height: 5 } },
+    },
+    (delta) => {
+      d += delta;
+    },
+  );
+  assert.strictEqual(lines[0].height, 5);
+  assert.strictEqual(d, -15);
+});
+
+test("applyDbAnnotateLineResultsToLineItems: skips non-annotate kinds", () => {
+  const lines = [{ seq: 1, height: 10 }];
+  const n = applyDbAnnotateLineResultsToLineItems(lines, [
+    {
+      kind: "marker",
+      detectorId: "m",
+      stableKey: "m",
+      priority: 0,
+      payload: {},
+    },
+    {
+      kind: "annotate-line",
+      detectorId: "a",
+      stableKey: "a",
+      priority: 1,
+      payload: { targetSeq: 1, patch: { height: 0 } },
+    },
+  ]);
+  assert.strictEqual(n, 1);
+  assert.strictEqual(lines[0].height, 0);
 });
 
 test("runDbDetectorsIngest: insightsEnabled false returns empty", () => {
