@@ -11,8 +11,8 @@ import { getQualityBadgeStyles } from '../viewer-styles/viewer-styles-quality';
 import { getViewerBodyHtml } from './viewer-content-body';
 import { getViewerScriptTags } from './viewer-content-scripts';
 
-/** Maximum lines retained in the viewer data array when viewerMaxLines is 0 (file on disk can be larger, up to maxLines). */
-export const MAX_VIEWER_LINES = 50000;
+/** Fallback viewer cap when buildViewerHtml is called without explicit viewerMaxLines. */
+export const DEFAULT_VIEWER_LINES = 100000;
 
 /** Generate a random nonce for Content Security Policy. */
 export function getNonce(): string {
@@ -38,11 +38,11 @@ export interface ViewerHtmlOptions {
  * Effective viewer line cap from config.
  * Used when building viewer HTML (getViewerScript) and when slicing file content in the provider.
  * @param maxLines - Max lines per log file (config).
- * @param viewerMaxLines - Max lines to show in viewer (0 = use MAX_VIEWER_LINES).
+ * @param viewerMaxLines - Max lines to show in viewer (0 = use maxLines).
  * @returns Cap to use; never exceeds maxLines.
  */
 export function getEffectiveViewerLines(maxLines: number, viewerMaxLines: number): number {
-    return (viewerMaxLines > 0 ? Math.min(viewerMaxLines, maxLines) : MAX_VIEWER_LINES);
+    return (viewerMaxLines > 0 ? Math.min(viewerMaxLines, maxLines) : maxLines);
 }
 
 /** Build the complete HTML document for the log viewer webview. */
@@ -57,7 +57,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
     const scriptTags = getViewerScriptTags({
         nonce,
         extensionUri,
-        viewerMaxLines: opts.viewerMaxLines ?? MAX_VIEWER_LINES,
+        viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
