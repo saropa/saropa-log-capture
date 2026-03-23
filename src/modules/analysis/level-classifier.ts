@@ -8,6 +8,9 @@
 export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice';
 
 const logcatLevelPattern = /^([VDIWEFA])\//;
+// Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
+// Treat them as query/debug output so they don't get misclassified as runtime errors.
+const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
 const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|\bfail(?:ed|ure)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
 const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
 const warnPattern = /\b(warn(ing)?|caution)\b/i;
@@ -43,6 +46,7 @@ export function isActionableLevel(level: SeverityLevel): boolean {
 function classifyLogcat(prefix: string, plainText: string, strict: boolean): SeverityLevel {
     if (prefix === 'E' || prefix === 'F' || prefix === 'A') { return 'error'; }
     if (prefix === 'W') { return 'warning'; }
+    if (driftStatementPattern.test(plainText)) { return prefix === 'D' || prefix === 'V' ? 'debug' : 'info'; }
     const ep = strict ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) { return 'error'; }
     if (perfPattern.test(plainText)) { return 'performance'; }

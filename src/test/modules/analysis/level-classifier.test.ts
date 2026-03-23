@@ -54,6 +54,17 @@ suite('LevelClassifier', () => {
         test('should classify I/ plain text as info', () => {
             assert.strictEqual(classifyLevel('I/App: started', 'stdout', true), 'info');
         });
+
+        test('should classify I/flutter Drift SQL statements as info even with "ApplicationLogError" in args', () => {
+            assert.strictEqual(
+                classifyLevel(
+                    'I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]',
+                    'stdout',
+                    true,
+                ),
+                'info',
+            );
+        });
     });
 
     suite('classifyLevel — strict mode', () => {
