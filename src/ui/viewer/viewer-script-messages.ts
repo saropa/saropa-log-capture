@@ -66,6 +66,7 @@ window.addEventListener('message', function(event) {
             }
             if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
             if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') setDbBaselineFingerprintSummaryFromHost(null);
+            if (typeof resetRootCauseHypothesesSession === 'function') resetRootCauseHypothesesSession();
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
@@ -107,6 +108,20 @@ window.addEventListener('message', function(event) {
             if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') {
                 setDbBaselineFingerprintSummaryFromHost(msg.fingerprints || null);
             }
+            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
+            break;
+        case 'setRootCauseHintHostFields':
+            if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
+                rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;
+            }
+            if (Object.prototype.hasOwnProperty.call(msg, 'sessionDiffSummary')) {
+                rchHostSessionDiffSummary = (msg.sessionDiffSummary && msg.sessionDiffSummary.regressionFingerprints && msg.sessionDiffSummary.regressionFingerprints.length) ? { regressionFingerprints: msg.sessionDiffSummary.regressionFingerprints } : null;
+            }
+            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
+            break;
+        case 'setRootCauseHintL10n':
+            if (typeof window !== 'undefined') window.rchL10n = (msg.strings && typeof msg.strings === 'object') ? msg.strings : {};
+            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';
@@ -242,6 +257,12 @@ window.addEventListener('message', function(event) {
         case 'setViewerDbInsightsEnabled':
             viewerDbInsightsEnabled = msg.enabled !== false;
             break;
+        case 'setViewerDbDetectorToggles':
+            viewerDbDetectorNPlusOneEnabled = msg.nPlusOneEnabled !== false;
+            viewerDbDetectorSlowBurstEnabled = msg.slowBurstEnabled !== false;
+            viewerDbDetectorBaselineHintsEnabled = msg.baselineHintsEnabled !== false;
+            if (typeof baselineVolumeHintEmitted !== 'undefined') baselineVolumeHintEmitted = Object.create(null);
+            break;
         case 'setViewerSqlPatternChipSettings':
             if (typeof applyViewerSqlPatternChipSettings === 'function') {
                 applyViewerSqlPatternChipSettings(msg.chipMinCount, msg.chipMaxChips);
@@ -257,6 +278,11 @@ window.addEventListener('message', function(event) {
         case 'captureEnabled':
             window.captureEnabled = msg.enabled !== false;
             if (typeof syncCaptureEnabledUi === 'function') syncCaptureEnabledUi();
+            break;
+        case 'setLearningOptions':
+            learningEnabled = msg.enabled !== false;
+            learningMaxLineLen = typeof msg.maxLineLength === 'number' && msg.maxLineLength >= 80 ? msg.maxLineLength : 2000;
+            learningTrackScroll = msg.trackScroll === true;
             break;
         case 'integrationsAdapters':
             window.integrationAdapters = Array.isArray(msg.adapterIds) ? msg.adapterIds : [];

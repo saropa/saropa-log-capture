@@ -14,7 +14,12 @@ import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 import type { HighlightRule } from "../storage/highlight-rules";
 import type { AutoTagRule } from "../misc/auto-tagger";
-import { defaultHighlightRules, type SaropaLogCaptureConfig, type WatchPatternSetting } from "./config-types";
+import {
+  defaultHighlightRules,
+  type SaropaLogCaptureConfig,
+  type ViewerDbDetectorToggles,
+  type WatchPatternSetting,
+} from "./config-types";
 import {
   clamp,
   ensureBoolean,
@@ -27,6 +32,7 @@ export type {
   WatchPatternSetting,
   AiActivityConfig,
   SaropaLogCaptureConfig,
+  ViewerDbDetectorToggles,
   ReplayConfig,
   IntegrationBuildCiConfig,
   IntegrationGitConfig,
@@ -214,6 +220,9 @@ export function getConfig(): SaropaLogCaptureConfig {
       dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
     }),
     viewerDbInsightsEnabled: ensureBoolean(cfg.get("viewerDbInsightsEnabled"), true),
+    viewerDbDetectorNPlusOneEnabled: ensureBoolean(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
+    viewerDbDetectorSlowBurstEnabled: ensureBoolean(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
+    viewerDbDetectorBaselineHintsEnabled: ensureBoolean(cfg.get("viewerDbDetectorBaselineHintsEnabled"), true),
     viewerSlowBurstThresholds: normalizeViewerSlowBurstThresholds({
       slowQueryMs: cfg.get("viewerSlowBurstSlowQueryMs"),
       burstMinCount: cfg.get("viewerSlowBurstMinCount"),
@@ -294,6 +303,15 @@ export function getSaropaCacheCrashlyticsUri(workspaceFolder: vscode.WorkspaceFo
 /** URI for project index directory (.saropa/index/). */
 export function getSaropaIndexDirUri(workspaceFolder: vscode.WorkspaceFolder | undefined | null): vscode.Uri {
   return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'index');
+}
+
+/** Per-detector flags for the log viewer DB pipeline (when master DB insights is on). */
+export function viewerDbDetectorTogglesFromConfig(cfg: SaropaLogCaptureConfig): ViewerDbDetectorToggles {
+  return {
+    nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
+    slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
+    baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+  };
 }
 
 export { isTrackedFile, readTrackedFiles, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';

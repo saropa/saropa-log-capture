@@ -10,6 +10,7 @@ import { dispatchPanelMessage } from './viewer-message-handler-panels';
 import { dispatchInvestigationMessage } from './viewer-message-handler-investigation';
 import { dispatchViewerActionMessage } from './viewer-message-handler-actions';
 import type { ViewerMessageContext } from './viewer-message-types';
+import { handleTrackInteractionRecord } from '../../modules/learning/learning-viewer-message';
 
 export type { ViewerMessageContext };
 
@@ -25,6 +26,10 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
     return;
   }
   if (dispatchInvestigationMessage(msg, ctx)) { return; }
+  if (msg.type === 'trackInteraction') {
+    handleTrackInteractionRecord(msg);
+    return;
+  }
   if (dispatchViewerActionMessage(msg, ctx)) { return; }
   dispatchPanelMessage(msg, ctx);
 }

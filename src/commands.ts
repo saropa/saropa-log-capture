@@ -20,6 +20,7 @@ import { exportCommands } from './commands-export';
 import { toolCommands } from './commands-tools';
 import { registerInvestigationCommands } from './commands-investigation';
 import { externalLogsCommands } from './commands-external-logs';
+import { learningCommands } from './commands-learning';
 
 export type { CommandDeps } from './commands-deps';
 
@@ -42,6 +43,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
         ...externalLogsCommands(deps),
+        ...learningCommands(deps),
         walkthroughCommand(),
     );
 }

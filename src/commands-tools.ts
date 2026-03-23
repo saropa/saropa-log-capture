@@ -17,8 +17,11 @@ const extensionId = 'saropa.saropa-log-capture';
 const settingsSection = 'saropaLogCapture';
 
 export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { viewerProvider, inlineDecorations, popOutPanel, sessionManager } = deps;
+    const { viewerProvider, inlineDecorations, popOutPanel, sessionManager, broadcaster } = deps;
     return [
+        vscode.commands.registerCommand('saropaLogCapture.explainRootCauseHypotheses', () => {
+            broadcaster.postToWebview({ type: 'triggerExplainRootCauseHypotheses' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {

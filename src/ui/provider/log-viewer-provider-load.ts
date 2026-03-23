@@ -85,6 +85,13 @@ export async function executeLoadContent(
   if (target.setCodeQualityPayload && perfResult.codeQualityPayload) {
     target.setCodeQualityPayload(perfResult.codeQualityPayload);
   }
+  if (checkGen()) {
+    target.postMessage({
+      type: "setRootCauseHintHostFields",
+      driftAdvisorSummary: perfResult.rootCauseDriftAdvisorSummary ?? null,
+      sessionDiffSummary: null,
+    });
+  }
 
   const contentLines: string[] = [];
   for (const part of sessionParts) {

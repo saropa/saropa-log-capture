@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { SessionDisplayOptions } from "../session/session-display";
@@ -112,6 +113,14 @@ export function setViewerRepeatThresholdsImpl(target: ProviderStateTarget, thres
 }
 export function setViewerDbInsightsEnabledImpl(target: ProviderStateTarget, enabled: boolean): void {
   target.postMessage({ type: "setViewerDbInsightsEnabled", enabled });
+}
+export function setViewerDbDetectorTogglesImpl(target: ProviderStateTarget, toggles: ViewerDbDetectorToggles): void {
+  target.postMessage({
+    type: "setViewerDbDetectorToggles",
+    nPlusOneEnabled: toggles.nPlusOneEnabled,
+    slowBurstEnabled: toggles.slowBurstEnabled,
+    baselineHintsEnabled: toggles.baselineHintsEnabled,
+  });
 }
 export function setDbBaselineFingerprintSummaryImpl(
   target: ProviderStateTarget,

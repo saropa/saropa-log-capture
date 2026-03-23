@@ -22,6 +22,9 @@ import { explainError } from '../../modules/ai/ai-explain';
 import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLabel } from '../viewer/viewer-keybindings';
 import type { ViewerMessageContext } from './viewer-message-types';
+import { getInteractionTracker } from '../../modules/learning/learning-runtime';
+import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
+import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
 
 function isAllowedExternalUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -134,7 +137,12 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
     case "copySourcePath":
       helpers.copySourcePath(msgStr(msg, "path"), msgStr(msg, "mode", "relative"));
       return true;
-    case "exclusionAdded": case "addToExclusion": ctx.onExclusionAdded?.(msgStr(msg, "pattern") || msgStr(msg, "text")); return true;
+    case "exclusionAdded":
+    case "addToExclusion": {
+      const pat = msgStr(msg, "pattern") || msgStr(msg, "text");
+      ctx.onExclusionAdded?.(pat);
+      return true;
+    }
     case "exclusionRemoved": ctx.onExclusionRemoved?.(msgStr(msg, "pattern")); return true;
     case "addAutoHidePattern": applyAddAutoHidePattern(msg); return true;
     case "removeAutoHidePattern": applyRemoveAutoHidePattern(msg); return true;
@@ -176,6 +184,13 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       return true;
     case "createReportFile": runCreateReportFile(msg, ctx); return true;
     case "explainWithAi": runExplainWithAi(msg, ctx); return true;
+    case "explainRootCauseHypotheses": runExplainRootCauseHypotheses(msg, ctx); return true;
+    case "explainRootCauseHypothesesEmpty":
+      vscode.window.showInformationMessage(t("msg.explainRootCauseHypothesesEmpty")).then(undefined, () => {});
+      return true;
+    case "findStaticSourcesForSqlFingerprint":
+      void runFindStaticSourcesForSqlFingerprint(msgStr(msg, "fingerprint"));
+      return true;
     default:
       return false;
   }
@@ -202,7 +217,14 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
     case "promptAnnotation":
       ctx.onAnnotationPrompt?.(safeLineIndex(msg.lineIndex, 0), msgStr(msg, "current"));
       return true;
-    case "addBookmark": ctx.onAddBookmark?.(safeLineIndex(msg.lineIndex, 0), msgStr(msg, "text"), ctx.currentFileUri); return true;
+    case "addBookmark": {
+      const bm = msgStr(msg, "text").trim();
+      if (bm) {
+        getInteractionTracker()?.track({ type: "explicit-keep", lineText: bm, lineLevel: "" });
+      }
+      ctx.onAddBookmark?.(safeLineIndex(msg.lineIndex, 0), msgStr(msg, "text"), ctx.currentFileUri);
+      return true;
+    }
     case "linkClicked":
       ctx.onLinkClick?.(msgStr(msg, "path"), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
       return true;

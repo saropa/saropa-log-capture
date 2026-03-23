@@ -6,6 +6,7 @@ import {
   runDbDetectorsCompare,
   runDbDetectorsIngest,
 } from "../../../modules/db/db-detector-framework";
+import { createBaselineVolumeCompareDetector } from "../../../modules/db/drift-db-baseline-volume-compare-detector";
 import type { DbDetectorContext, DbDetectorDefinition, DbDetectorResult } from "../../../modules/db/db-detector-types";
 
 const baseCtx: DbDetectorContext = {
@@ -179,6 +180,23 @@ test("runDbDetectorsCompare: throwing compare disables detector", () => {
   const state = createDbDetectorSessionState();
   runDbDetectorsCompare([bad], { baseline: new Map(), target: new Map() }, state);
   assert.ok(state.disabledDetectorIds.has("bad-compare"));
+});
+
+test("createBaselineVolumeCompareDetector: marker when target exceeds baseline enough", () => {
+  const baseline = new Map([["fp1", { count: 10 }]]);
+  const target = new Map([["fp1", { count: 20 }]]);
+  const state = createDbDetectorSessionState();
+  const out = runDbDetectorsCompare([createBaselineVolumeCompareDetector()], { baseline, target }, state);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].kind, "marker");
+});
+
+test("createBaselineVolumeCompareDetector: no marker when increase is trivial", () => {
+  const baseline = new Map([["fp1", { count: 2 }]]);
+  const target = new Map([["fp1", { count: 3 }]]);
+  const state = createDbDetectorSessionState();
+  const out = runDbDetectorsCompare([createBaselineVolumeCompareDetector()], { baseline, target }, state);
+  assert.strictEqual(out.length, 0);
 });
 
 test("runDbDetectorsIngest: insightsEnabled false returns empty", () => {

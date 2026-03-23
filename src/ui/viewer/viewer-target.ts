@@ -14,6 +14,7 @@ import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-th
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Contract for a webview that renders captured debug output. */
 export interface ViewerTarget {
@@ -49,6 +50,7 @@ export interface ViewerTarget {
   setMinimapShowSqlDensity(show: boolean): void;
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
   setViewerDbInsightsEnabled(enabled: boolean): void;
+  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void;
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void;
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void;
   setMinimapWidth(width: "small" | "medium" | "large"): void;
@@ -63,4 +65,6 @@ export interface ViewerTarget {
   setDbBaselineFingerprintSummary(
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void;
+  /** Push an arbitrary message to the webview (e.g. learning options). */
+  postToWebview(message: unknown): void;
 }
