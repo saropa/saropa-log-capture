@@ -106,8 +106,8 @@ function renderItem(item, idx, prevVis) {
         var aiPrefix = '<span class="ai-prefix">' + escapeHtml(stripTags(html).split(']')[0] + ']') + '</span>';
         var aiBody = html.indexOf('] ') >= 0 ? html.substring(html.indexOf('] ') + 2) : html;
         var aiCompress = '';
-        if (typeof compressLinesMode !== 'undefined' && compressLinesMode && item.compressDupCount > 1) {
-            aiCompress = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' consecutive identical lines">(×' + item.compressDupCount + ')</span> ';
+        if (item.compressDupCount > 1) {
+            aiCompress = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
         }
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
@@ -123,8 +123,8 @@ function renderItem(item, idx, prevVis) {
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     var compressDupBadge = '';
-    if (typeof compressLinesMode !== 'undefined' && compressLinesMode && item.compressDupCount > 1) {
-        compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' consecutive identical lines">(×' + item.compressDupCount + ')</span> ';
+    if (item.compressDupCount > 1) {
+        compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
     }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';

@@ -49,13 +49,15 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-spacing"'));
             assert.ok(html.includes('data-action="toggle-line-height"'));
             assert.ok(html.includes('data-action="toggle-compress-lines"'));
+            assert.ok(html.includes('data-action="toggle-compress-lines-global"'));
             assert.ok(html.includes('Word wrap'));
             assert.ok(html.includes('Line decorations (dot, number, time)'));
             assert.ok(html.includes('Timestamp'));
             assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
             assert.ok(html.includes('Comfortable line height'));
-            assert.ok(html.includes('Compress lines'));
+            assert.ok(html.includes('Compress lines (consecutive dupes)'));
+            assert.ok(html.includes('Compress lines (non-consecutive dupes)'));
         });
 
         test('should keep hide-only controls out of Options submenu', () => {
