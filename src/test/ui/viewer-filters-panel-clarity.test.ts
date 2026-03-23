@@ -43,5 +43,9 @@ suite('Filters panel clarity (streams vs code location)', () => {
         assert.ok(script.includes('function updateScopeFilterHint'));
         assert.ok(script.includes('scope-filter-hint'));
         assert.ok(script.includes('_origRecalcForScopeHint'));
+        assert.ok(script.includes('scopeHintHiddenRatio = 0.75'));
+        assert.ok(script.includes('scopeHintNoPathRatio = 0.25'));
+        assert.ok(script.includes('data-scope-reset="all"'));
+        assert.ok(script.includes('Reset to All logs'));
     });
 });
