@@ -191,22 +191,30 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
                 payload: { fingerprint: sqlMeta.fingerprint, elapsedMs: hasDur ? elapsedMs : undefined }
             }]);
         }
-        if (lineItemForDbInsight && typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sqlMeta && sqlMeta.fingerprint) {
-            var rollupDb = (typeof peekDbInsightRollup === 'function') ? peekDbInsightRollup(sqlMeta.fingerprint) : null;
-            var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : null;
-            if (!snipDb) {
-                var pln = plain || '';
-                var di = pln.indexOf('Drift:');
-                var rawSnip = di >= 0 ? pln.substring(di).trim() : pln.trim();
-                snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
+        if (lineItemForDbInsight && typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sourceTag === 'database') {
+            var pln0 = plain || '';
+            var di0 = pln0.indexOf('Drift:');
+            var rawSnip0 = di0 >= 0 ? pln0.substring(di0).trim() : pln0.trim();
+            var snipDb0 = rawSnip0.length > 500 ? rawSnip0.substring(0, 497) + '...' : rawSnip0;
+            if (sqlMeta && sqlMeta.fingerprint) {
+                var rollupDb = (typeof peekDbInsightRollup === 'function') ? peekDbInsightRollup(sqlMeta.fingerprint) : null;
+                var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : snipDb0;
+                lineItemForDbInsight.dbInsight = {
+                    fingerprint: sqlMeta.fingerprint,
+                    sqlSnippet: snipDb,
+                    seenCount: rollupDb ? rollupDb.seenCount : 1,
+                    avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
+                    maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
+                };
+            } else {
+                lineItemForDbInsight.dbInsight = {
+                    fingerprint: null,
+                    sqlSnippet: snipDb0,
+                    seenCount: 1,
+                    avgDurationMs: undefined,
+                    maxDurationMs: undefined
+                };
             }
-            lineItemForDbInsight.dbInsight = {
-                fingerprint: sqlMeta.fingerprint,
-                sqlSnippet: snipDb,
-                seenCount: rollupDb ? rollupDb.seenCount : 1,
-                avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
-                maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
-            };
         }
         var baselineForCtx = (typeof dbBaselineFingerprintSummaryMap !== 'undefined' && dbBaselineFingerprintSummaryMap)
             ? dbBaselineFingerprintSummaryMap
