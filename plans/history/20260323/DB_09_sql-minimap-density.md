@@ -1,6 +1,6 @@
 # DB_09 SQL Minimap Density
 
-**Status: Implemented.** Archived from `plans/DB_09_sql-minimap-density.md` after ship (same convention as `DB_07` in this folder).
+**Status: Implemented.** Moved here from `plans/DB_09_sql-minimap-density.md` after ship (same convention as `DB_07` in this folder).
 
 ## Goal
 Visualize database activity density on the minimap/timeline to make SQL bursts obvious at a glance.
