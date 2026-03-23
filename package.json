@@ -572,6 +572,12 @@
           "type": "boolean",
           "title": "%config.minimapShowInfoMarkers.title%"
         },
+        "saropaLogCapture.minimapShowSqlDensity": {
+          "default": true,
+          "markdownDescription": "%config.minimapShowSqlDensity.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.minimapShowSqlDensity.title%"
+        },
         "saropaLogCapture.minimapWidth": {
           "default": "medium",
           "description": "%config.minimapWidth.description%",

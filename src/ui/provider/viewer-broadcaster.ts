@@ -110,6 +110,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setMinimapShowInfo(show: boolean): void {
     for (const t of this.targets) { t.setMinimapShowInfo(show); }
   }
+  setMinimapShowSqlDensity(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapShowSqlDensity(show); }
+  }
   setMinimapWidth(width: "small" | "medium" | "large"): void {
     for (const t of this.targets) { t.setMinimapWidth(width); }
   }

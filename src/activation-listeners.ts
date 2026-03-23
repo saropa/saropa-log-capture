@@ -75,6 +75,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.minimapShowInfoMarkers')) {
             broadcaster.setMinimapShowInfo(cfg.minimapShowInfoMarkers);
         }
+        if (e.affectsConfiguration('saropaLogCapture.minimapShowSqlDensity')) {
+            broadcaster.setMinimapShowSqlDensity(cfg.minimapShowSqlDensity);
+        }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
         }

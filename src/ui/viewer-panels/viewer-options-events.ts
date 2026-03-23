@@ -79,6 +79,14 @@ if (optLineColor) optLineColor.addEventListener('change', function(e) {
 
 // Layout options
 var optVisualSpacing = document.getElementById('opt-visual-spacing');
+var optMinimapSqlDensity = document.getElementById('opt-minimap-sql-density');
+if (optMinimapSqlDensity) optMinimapSqlDensity.addEventListener('change', function(e) {
+    minimapShowSqlDensity = !!e.target.checked;
+    if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity({ show: minimapShowSqlDensity });
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setMinimapSqlDensity', value: minimapShowSqlDensity });
+    }
+});
 if (optVisualSpacing) optVisualSpacing.addEventListener('change', function(e) {
     if (typeof toggleVisualSpacing === 'function') toggleVisualSpacing();
     syncOptionsPanelUi();

@@ -166,6 +166,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
   setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
+  setMinimapShowSqlDensity(show: boolean): void { this.post({ type: "minimapShowSqlDensity", show }); }
   setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
@@ -204,6 +205,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
     queueMicrotask(() => this.post({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
+    queueMicrotask(() => this.post({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
     this.panel.onDidDispose(() => {
       this.stopBatchTimer();
       this.broadcaster.removeTarget(this);
