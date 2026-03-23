@@ -1,0 +1,28 @@
+Noise learning (Plan 025) — manual QA
+======================================
+
+Prerequisites
+-------------
+- Workspace setting `saropaLogCapture.learning.enabled` = true (default).
+- Open the Saropa log viewer with a session that contains stack frames.
+
+Signals to generate
+-------------------
+1. **Dismiss (stack collapse)** — Click a stack header until the group is fully collapsed (▶). Extension should record `dismiss` for frames in that group (batched flush).
+2. **Add exclusion** — Context menu “Add to Exclusions” on a line → one `add-exclusion` event when the pattern is new in workspace exclusions.
+3. **Explicit keep** — Add a bookmark on a line → `explicit-keep` for that text (must not later suggest a pattern that would hide the same line if it is the only sample).
+4. **Skip scroll (optional)** — Enable `saropaLogCapture.learning.trackScrollBehavior`, scroll the log very fast; bounded `skip-scroll` messages (weak signal).
+
+Verify “before / after”
+-----------------------
+- **Before** enough data: command “Review Filter Suggestions” may show “no suggestions” — should not add exclusions.
+- **After** many identical dismiss lines or a strong prefix: suggestions may appear; rejecting must not re-offer the same pattern (rejected persisted).
+- **Cooldown**: `learning.suggestionFrequency` weekly/daily gates the automatic notification; `never` disables prompts.
+
+Commands
+--------
+- Saropa Log Capture: Review Filter Suggestions
+- Saropa Log Capture: Clear Noise-Learning Data
+- Saropa Log Capture: Check Filter Suggestions
+
+See also: `src/modules/learning/README.md`

@@ -7,6 +7,7 @@ import { getErrorHandlerScript } from '../viewer-decorations/viewer-error-handle
 import { getLayoutScript } from './viewer-layout';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
+import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getViewerDataScript } from '../viewer/viewer-data';
 import { getViewerRootCauseHintsScript } from '../viewer/viewer-root-cause-hints-script';
 import { getViewerScript } from '../viewer/viewer-script';
@@ -86,6 +87,8 @@ export interface ViewerScriptsOptions {
     readonly viewerDbInsightsEnabled?: boolean;
     /** Slow query burst marker thresholds (plan DB_08). */
     readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
+    /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
+    readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** Fingerprint chip thresholds (plan DB_05). */
     readonly viewerSqlPatternChipMinCount?: number;
     readonly viewerSqlPatternMaxChips?: number;
@@ -100,6 +103,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
         viewerSlowBurstThresholds,
+        viewerDbDetectorToggles,
         viewerSqlPatternChipMinCount,
         viewerSqlPatternMaxChips,
     } = opts;
@@ -112,6 +116,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 viewerRepeatThresholds,
                 viewerDbInsightsEnabled !== false,
                 viewerSlowBurstThresholds,
+                viewerDbDetectorToggles,
             ),
             getViewerScript(maxLines),
             getViewerRootCauseHintsScript(),

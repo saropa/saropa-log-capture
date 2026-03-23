@@ -8,7 +8,7 @@ Provide a **single pipeline** for DB-related detectors that need durations, roll
 - Out of scope: specific UI for each detector (those stay in DB_07/DB_08/etc.); implementing every detector inside one file.
 
 ## Integration (codebase anchors)
-Today, duration-aware DB heuristics run **inside the webview script** on each `addToData` call: repeat collapse, `updateDbInsightRollup`, and `detectNPlusOneInsight` in `src/ui/viewer/viewer-data-add.ts`, with detector state and `parseSqlFingerprint` embedded from `src/ui/viewer/viewer-data-n-plus-one-script.ts`. Normalization and thresholds are shared with the extension host via **DB_02** (`src/modules/db/drift-sql-fingerprint-normalize.ts`) and repeat thresholds (`src/modules/db/drift-db-repeat-thresholds.ts` → config). The TypeScript N+1 feed API in `src/modules/db/drift-n-plus-one-detector.ts` exists for unit tests and documentation of behavior.
+On each `addToData` call, the webview runs **repeat collapse** and **`updateDbInsightRollup` / `dbInsight`** inline in `src/ui/viewer/viewer-data-add.ts`, while **DB_15–registered** detectors (slow burst, N+1, future hooks) run through **`emitDbLineDetectors`** and `runDbDetectors` in `viewer-data-add-db-detectors.ts` / `viewer-db-detector-framework-script.ts`, with `parseSqlFingerprint` embedded from `viewer-data-n-plus-one-script.ts`. Normalization and thresholds are shared with the extension host via **DB_02** (`drift-sql-fingerprint-normalize.ts`) and repeat thresholds (`drift-db-repeat-thresholds.ts` → config). The TypeScript N+1 feed in `drift-n-plus-one-detector.ts` mirrors embed behavior for unit tests.
 
 **Target placement for this framework**
 - **Types and pure logic**: `src/modules/db/` (new small modules + registration), same family as `drift-n-plus-one-detector.ts`.
@@ -51,7 +51,9 @@ Consumers (embed adapter) apply results in **priority order** and **dedupe by `s
 Use a **batch comparison model**, not two interleaved live streams:
 - **Ingest path** stays single-session.
 - For **compare mode**, build or load **fingerprint summaries** for baseline vs target (as in DB_10: count, avg/max duration, slow count). Detectors that need diff consume `baselineFingerprintSummary` + current session summary on a **second pass** or dedicated **compare** entry point, emitting `DbDetectorResult` items the same as streaming mode.
+- **Shipped:** the host can push a baseline fingerprint map into the viewer (**`setDbBaselineFingerprintSummary`**); **`emitDbLineDetectors`** maps it onto **`DbDetectorContext.baselineFingerprintSummary`** for streaming detectors. The **log comparison panel** diff table uses **`compareLogSessionsWithDbFingerprints`** / **`db-session-fingerprint-diff.ts`**, not the embed.
 - Shared **diff math** (deltas, sorting) lives in one module; individual detectors only interpret their slice of the comparison output.
+- **`runDbDetectorsCompare`** (optional per-detector **`compare()`** hooks) remains an **extension-host** API for batch work and tests; the embed does not invoke it.
 
 ## UX rules
 - Detectors **never throw**; failures **log once** (detector id + error) and **disable that detector for the remainder of the viewer session** (in-memory flag; reload clears).
@@ -72,12 +74,16 @@ Use a **batch comparison model**, not two interleaved live streams:
 - A new duration- or diff-aware DB insight can be added as a **small detector module** plus registration, without copying window/prune logic and without repeatedly editing unrelated viewer loops.
 - Contracts (`DbDetectorContext`, `DbDetectorResult`, `stableKey`, trim behavior) are documented in this plan and reflected in TypeScript types in `src/modules/db/`.
 
-## Status (phase 1 + host compare API)
-- **Types / host tests:** `src/modules/db/db-detector-types.ts`, `src/modules/db/db-detector-framework.ts`, `src/modules/db/db-fingerprint-summary.ts`, `src/test/modules/db/db-detector-framework.test.ts`, `src/test/modules/db/db-fingerprint-summary.test.ts`.
-- **Batch compare (extension host):** `buildDbFingerprintSummaryFromDetectorContexts`, `mergeDbFingerprintSummaryMaps`, `buildDbFingerprintSummaryDiff`, and **`runDbDetectorsCompare(registry, { baseline, target }, state)`** — detectors may implement optional **`compare(DbDetectorCompareInput)`**; shared **`diff`** is computed once per call. Webview does not invoke compare yet (**DB_10** wires UI + optional `baselineFingerprintSummary` on ingest).
-- **Webview:** `src/ui/viewer/viewer-db-detector-framework-script.ts` (registry, `runDbDetectors`, merge, trim prune, clear reset), `viewer-data-add-db-detectors.ts` + `viewer-data-add.ts` (`emitDbLineDetectors`), `viewer-data.ts` (`trimData` → `pruneDbDetectorStateAfterTrim`).
-- **Built-in detector:** `db.n-plus-one` (synthetic `n-plus-one-insight` rows). Session rollup (`updateDbInsightRollup` / `dbInsight` on lines) remains **inline** in `addToData`, gated by **`saropaLogCapture.viewerDbInsightsEnabled`**.
-- **Follow-ups:** DB_10 viewer compare UI + `baselineFingerprintSummary` on streaming ctx; additional detectors (**DB_08**, etc.); optional `session-rollup-patch` migration for rollup.
+## Status (phase 1 — **complete**)
+Phase 1 meets the **done criteria** above: contracts in `src/modules/db/`, embed mirror, ingest + trim hooks, N+1 and slow-burst markers through the registry, host **`runDbDetectorsCompare`**, and streaming **`baselineFingerprintSummary`** when the host sets a SQL baseline.
+
+- **Types / host tests:** `db-detector-types.ts`, `db-detector-framework.ts`, `db-fingerprint-summary.ts`, `db-detector-framework.test.ts`, `db-fingerprint-summary.test.ts`.
+- **Batch compare (extension host only):** `buildDbFingerprintSummaryFromDetectorContexts`, `mergeDbFingerprintSummaryMaps`, `buildDbFingerprintSummaryDiff`, **`runDbDetectorsCompare(registry, { baseline, target }, state)`** — optional per-detector **`compare(DbDetectorCompareInput)`**; shared **`diff`** once per call. Used from tests / host; **not** called from the comparison webview (that path uses **`diff-engine.ts`** + **`db-session-fingerprint-diff.ts`**).
+- **Webview:** `viewer-db-detector-framework-script.ts` (registry, `runDbDetectors`, merge, trim prune, clear), `viewer-data-add-db-detectors.ts` + `viewer-data-add.ts` (`emitDbLineDetectors`), `viewer-data.ts` (`trimData` → `pruneDbDetectorStateAfterTrim`).
+- **Built-in detectors:** **`db.n-plus-one`** (synthetic insight rows); **slow query burst** (**DB_08**) via **`marker`** results and **`applyDbMarkerResults`** in `viewer-data-add-db-detectors.ts`.
+- **Still inline (by design):** `updateDbInsightRollup` / per-line **`dbInsight`** in `addToData`, gated by **`saropaLogCapture.viewerDbInsightsEnabled`** — primary rollup stays here; detectors may emit **`session-rollup-patch`** for extra increments (applied in **`emitDbLineDetectors`** via **`applyDbSessionRollupPatches`**).
+- **Shipped follow-ups:** per-detector settings **`viewerDbDetectorNPlusOneEnabled`**, **`viewerDbDetectorSlowBurstEnabled`**, **`viewerDbDetectorBaselineHintsEnabled`**; streaming baseline volume marker **`db.baseline-volume-hint`**; host **`createBaselineVolumeCompareDetector`** (`compare()` markers for batch use); **`slowQueryCount`** on fingerprint summaries (scan uses **`viewerSlowBurstSlowQueryMs`**); log comparison table shows slow columns when stats exist.
+- **Remaining optional work:** move primary rollup into **`session-rollup-patch`** only if a future detector must drive **`dbInsight`** without touching `addToData`; TS/codegen to reduce embed drift.
 
 ## Related plans
 - **DB_02**: SQL fingerprint normalization; embed must stay in sync with `drift-sql-fingerprint-normalize.ts`.

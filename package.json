@@ -167,6 +167,11 @@
         "title": "%command.createReportFile.title%"
       },
       {
+        "command": "saropaLogCapture.explainRootCauseHypotheses",
+        "icon": "$(sparkle)",
+        "title": "%command.explainRootCauseHypotheses.title%"
+      },
+      {
         "command": "saropaLogCapture.showCodeQualityForFrame",
         "enablement": "extension:saropa.saropa-lints",
         "icon": "$(symbol-misc)",
@@ -378,6 +383,21 @@
         "command": "saropaLogCapture.newInvestigationFromSessions",
         "icon": "$(folder-opened)",
         "title": "%command.newInvestigationFromSessions.title%"
+      },
+      {
+        "command": "saropaLogCapture.showFilterSuggestions",
+        "icon": "$(filter)",
+        "title": "%command.showFilterSuggestions.title%"
+      },
+      {
+        "command": "saropaLogCapture.clearLearningData",
+        "icon": "$(trash)",
+        "title": "%command.clearLearningData.title%"
+      },
+      {
+        "command": "saropaLogCapture.checkFilterSuggestions",
+        "icon": "$(bell)",
+        "title": "%command.checkFilterSuggestions.title%"
       }
     ],
     "configuration": {
@@ -466,6 +486,45 @@
           "description": "%config.smartBookmarks.suggestFirstWarning.description%",
           "type": "boolean",
           "title": "%config.smartBookmarks.suggestFirstWarning.title%"
+        },
+        "saropaLogCapture.learning.enabled": {
+          "default": true,
+          "description": "%config.learning.enabled.description%",
+          "type": "boolean",
+          "title": "%config.learning.enabled.title%"
+        },
+        "saropaLogCapture.learning.trackScrollBehavior": {
+          "default": false,
+          "description": "%config.learning.trackScrollBehavior.description%",
+          "type": "boolean",
+          "title": "%config.learning.trackScrollBehavior.title%"
+        },
+        "saropaLogCapture.learning.suggestionFrequency": {
+          "default": "weekly",
+          "description": "%config.learning.suggestionFrequency.description%",
+          "enum": [
+            "never",
+            "weekly",
+            "daily"
+          ],
+          "type": "string",
+          "title": "%config.learning.suggestionFrequency.title%"
+        },
+        "saropaLogCapture.learning.minConfidence": {
+          "default": 0.8,
+          "description": "%config.learning.minConfidence.description%",
+          "maximum": 1,
+          "minimum": 0.5,
+          "type": "number",
+          "title": "%config.learning.minConfidence.title%"
+        },
+        "saropaLogCapture.learning.maxStoredLineLength": {
+          "default": 2000,
+          "description": "%config.learning.maxStoredLineLength.description%",
+          "maximum": 10000,
+          "minimum": 80,
+          "type": "number",
+          "title": "%config.learning.maxStoredLineLength.title%"
         },
         "saropaLogCapture.viewerKeybindings": {
           "default": {},
@@ -1309,6 +1368,24 @@
           "description": "%config.viewerDbInsightsEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbInsightsEnabled.title%"
+        },
+        "saropaLogCapture.viewerDbDetectorNPlusOneEnabled": {
+          "default": true,
+          "description": "%config.viewerDbDetectorNPlusOneEnabled.description%",
+          "type": "boolean",
+          "title": "%config.viewerDbDetectorNPlusOneEnabled.title%"
+        },
+        "saropaLogCapture.viewerDbDetectorSlowBurstEnabled": {
+          "default": true,
+          "description": "%config.viewerDbDetectorSlowBurstEnabled.description%",
+          "type": "boolean",
+          "title": "%config.viewerDbDetectorSlowBurstEnabled.title%"
+        },
+        "saropaLogCapture.viewerDbDetectorBaselineHintsEnabled": {
+          "default": true,
+          "description": "%config.viewerDbDetectorBaselineHintsEnabled.description%",
+          "type": "boolean",
+          "title": "%config.viewerDbDetectorBaselineHintsEnabled.title%"
         },
         "saropaLogCapture.viewerSlowBurstSlowQueryMs": {
           "default": 50,

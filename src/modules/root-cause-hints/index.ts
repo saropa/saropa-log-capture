@@ -17,3 +17,5 @@ export type {
   RootCauseSqlBurst,
 } from './root-cause-hint-types';
 export { ROOT_CAUSE_HINT_BUNDLE_VERSION } from './root-cause-hint-types';
+export { rootCauseDriftSummaryFromSessionIntegrations } from './root-cause-hint-drift-meta';
+export { getRootCauseHintViewerStrings } from './root-cause-hint-l10n-host';

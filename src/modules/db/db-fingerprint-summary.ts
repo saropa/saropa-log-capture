@@ -14,24 +14,35 @@ type SummaryAcc = {
   sumMs: number;
   durationSamples: number;
   maxMs: number;
+  slowQueryCount: number;
 };
 
 function finalizeAcc(acc: SummaryAcc): DbFingerprintSummaryEntry {
-  if (acc.durationSamples <= 0) {
-    return { count: acc.count };
+  const base: DbFingerprintSummaryEntry =
+    acc.durationSamples <= 0
+      ? { count: acc.count }
+      : {
+          count: acc.count,
+          avgDurationMs: acc.sumMs / acc.durationSamples,
+          maxDurationMs: acc.maxMs,
+          durationSampleCount: acc.durationSamples,
+        };
+  if (acc.slowQueryCount > 0) {
+    return { ...base, slowQueryCount: acc.slowQueryCount };
   }
-  return {
-    count: acc.count,
-    avgDurationMs: acc.sumMs / acc.durationSamples,
-    maxDurationMs: acc.maxMs,
-    durationSampleCount: acc.durationSamples,
-  };
+  return base;
+}
+
+export interface AccumulateFingerprintSummaryOptions {
+  /** Count toward `slowQueryCount` when `durationMs` is defined and >= this value. */
+  readonly slowQueryMsThreshold?: number;
 }
 
 /** Fold one ingest context into a mutable accumulator (Drift SQL rows only). */
 export function accumulateDbDetectorContextForFingerprintSummary(
   acc: Map<string, SummaryAcc>,
   ctx: DbDetectorContext,
+  opts?: AccumulateFingerprintSummaryOptions,
 ): void {
   const fp = ctx.sql?.fingerprint;
   if (!fp) {
@@ -39,16 +50,20 @@ export function accumulateDbDetectorContextForFingerprintSummary(
   }
   let e = acc.get(fp);
   if (!e) {
-    e = { count: 0, sumMs: 0, durationSamples: 0, maxMs: 0 };
+    e = { count: 0, sumMs: 0, durationSamples: 0, maxMs: 0, slowQueryCount: 0 };
     acc.set(fp, e);
   }
   e.count++;
   const ms = ctx.durationMs;
+  const slowTh = opts?.slowQueryMsThreshold;
   if (typeof ms === "number" && ms >= 0 && Number.isFinite(ms)) {
     e.sumMs += ms;
     e.durationSamples++;
     if (ms > e.maxMs) {
       e.maxMs = ms;
+    }
+    if (typeof slowTh === "number" && slowTh > 0 && ms >= slowTh) {
+      e.slowQueryCount++;
     }
   }
 }
@@ -66,10 +81,11 @@ export function finalizeDbFingerprintSummaryMap(
 /** Build a summary map from a batch of detector contexts (e.g. one session tail). */
 export function buildDbFingerprintSummaryFromDetectorContexts(
   contexts: readonly DbDetectorContext[],
+  opts?: AccumulateFingerprintSummaryOptions,
 ): Map<string, DbFingerprintSummaryEntry> {
   const acc = new Map<string, SummaryAcc>();
   for (const ctx of contexts) {
-    accumulateDbDetectorContextForFingerprintSummary(acc, ctx);
+    accumulateDbDetectorContextForFingerprintSummary(acc, ctx, opts);
   }
   return finalizeDbFingerprintSummaryMap(acc);
 }
@@ -100,15 +116,21 @@ export function mergeDbFingerprintSummaryEntries(
     hasMax = true;
   }
 
+  const s1 = a.slowQueryCount ?? 0;
+  const s2 = b.slowQueryCount ?? 0;
+  const slowSum = s1 + s2;
+
   if (n <= 0) {
-    return hasMax ? { count, maxDurationMs: maxMs } : { count };
+    const base = hasMax ? { count, maxDurationMs: maxMs } : { count };
+    return slowSum > 0 ? { ...base, slowQueryCount: slowSum } : base;
   }
-  return {
+  const merged: DbFingerprintSummaryEntry = {
     count,
     avgDurationMs: (sum1 + sum2) / n,
     maxDurationMs: hasMax ? maxMs : undefined,
     durationSampleCount: n,
   };
+  return slowSum > 0 ? { ...merged, slowQueryCount: slowSum } : merged;
 }
 
 export function mergeDbFingerprintSummaryMaps(

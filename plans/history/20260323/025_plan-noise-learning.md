@@ -1,5 +1,9 @@
 # Plan: Noise Learning
 
+**Status: IMPLEMENTED (2026-03-23).** MVP shipped: `src/modules/learning/` (store, tracker, pattern extract, suggestion engine), webview `trackInteraction` + `setLearningOptions`, commands and `saropaLogCapture.learning.*` settings, QuickPick review, deferred notification with frequency cooldown. Follow-up: Insights panel section, richer filter-out tracking, optional global aggregates (Phase 4). Developer overview: `src/modules/learning/README.md`. QA: `examples/noise-learning-sample-interactions.txt`.
+
+---
+
 **Feature:** Learn from user interactions (dismissals, filters) to suggest exclusion rules and reduce log noise over time.
 
 **Context (Insights):** Investigations, Recurring errors, and cross-session data are unified in the **Insights panel** (lightbulb icon): Active Cases, Recurring errors, Frequently modified files, Environment, Performance. Suggestion UI (e.g. "Review filter suggestions") can live in the Insights panel (e.g. a collapsible "Filter suggestions" section or a prompt that opens the suggestions panel) or as a notification that opens the dedicated suggestions panel. Export summary and recurring triage already run from Insights.
@@ -14,7 +18,9 @@
 - Filter presets: saved filter combinations
 - "Add to Exclusions" context menu item
 - App-only mode and category filters
-- Framework line detection (fw flag)
+- Framework line detection (`fw` on stack lines, plus optional visual deemphasis via framework levels — separate from **text** exclusions)
+- Exclusion engine: `src/modules/features/exclusion-matcher.ts` — plain string (case-insensitive substring) or `/regex/flags`; patterns must parse with `parseExclusionPattern`
+- Webview already posts `addToExclusion` with `text` (see `viewer-context-menu-actions.ts`); extension handles it in `viewer-message-handler-actions.ts`
 
 ## What's missing
 
@@ -38,6 +44,7 @@ Create `src/modules/learning/interaction-types.ts`:
 interface UserInteraction {
     timestamp: number;
     type: InteractionType;
+    /** Raw log line text (local-only persistence). Truncate at ingest if `maxStoredLineLength` is set. */
     lineText: string;
     lineLevel: string;
     context?: {
@@ -47,13 +54,24 @@ interface UserInteraction {
     };
 }
 
+/** Webview postMessage ↔ extension handler contract (export from this module). */
+export type TrackInteractionMessage = {
+    type: 'trackInteraction';
+    interactionType: InteractionType;
+    lineText: string;
+    lineLevel: string;
+    context?: UserInteraction['context'];
+};
+
 type InteractionType =
     | 'dismiss'           // User collapsed/hid a line or group
     | 'filter-out'        // Used level filter to hide this type
-    | 'add-exclusion'     // Explicitly added to exclusions
-    | 'skip-scroll'       // Scrolled past quickly without stopping
-    | 'never-click'       // Line visible but never interacted with
-    | 'explicit-keep';    // User pinned or bookmarked (opposite signal)
+    | 'add-exclusion'     // Explicitly added to exclusions (correlate with addToExclusion / settings)
+    | 'skip-scroll'       // Opt-in: fast scroll treated as low-confidence negative signal
+    | 'explicit-keep';    // User pinned / bookmarked a line (opposite signal; wire when pin events exist)
+
+/** Deferred / research only — not in v1: inferring noise from absence of clicks is too noisy. */
+type _FutureInteractionType = 'never-click';
 
 interface InteractionBatch {
     interactions: UserInteraction[];
@@ -67,6 +85,8 @@ interface InteractionBatch {
 Create `src/modules/learning/interaction-tracker.ts`:
 
 ```typescript
+import type { InteractionBatch, TrackInteractionMessage, UserInteraction } from './interaction-types';
+
 class InteractionTracker {
     private buffer: UserInteraction[] = [];
     private readonly maxBuffer = 1000;
@@ -97,9 +117,12 @@ class InteractionTracker {
         this.buffer = [];
     }
     
-    /** Track from viewer script via message. */
-    handleViewerMessage(msg: { type: 'trackInteraction'; data: unknown }): void {
-        // Parse and validate, then track
+    /** Track from webview: validate against TrackInteractionMessage (interaction-types.ts). */
+    handleViewerMessage(msg: TrackInteractionMessage): void {
+        if (msg.type !== 'trackInteraction') return;
+        const { interactionType, lineText, lineLevel, context } = msg;
+        // Validate interactionType, non-empty lineText, optional max length (Privacy)
+        this.track({ type: interactionType, lineText, lineLevel, context });
     }
 }
 ```
@@ -119,10 +142,11 @@ function onStackCollapse(groupId) {
             lineText: line.text,
             lineLevel: line.level
         });
+        // Shape must match TrackInteractionMessage (see interaction-types.ts)
     });
 }
 
-// Track scroll behavior (simplified)
+// Track scroll behavior (simplified) — only when saropaLogCapture.learning.trackScrollBehavior is true
 let lastScrollTime = 0;
 let lastScrollPosition = 0;
 viewport.addEventListener('scroll', debounce(() => {
@@ -130,7 +154,8 @@ viewport.addEventListener('scroll', debounce(() => {
     const scrollSpeed = Math.abs(viewport.scrollTop - lastScrollPosition) / (now - lastScrollTime);
     
     if (scrollSpeed > FAST_SCROLL_THRESHOLD) {
-        // User scrolling fast = skipping content
+        // User scrolling fast = weak "skip" signal — must not flood the buffer:
+        // dedupe by line index per scroll burst, cap messages per second, cooldown between bursts.
         const visibleLines = getVisibleLines();
         visibleLines.forEach(line => {
             vscodeApi.postMessage({
@@ -155,7 +180,8 @@ Create `src/modules/learning/pattern-extractor.ts`:
 
 ```typescript
 interface ExtractedPattern {
-    pattern: string;           // Regex or glob pattern
+    /** Must be a valid `saropaLogCapture.exclusions` entry: plain substring or `/regex/flags` per `parseExclusionPattern`. */
+    pattern: string;
     confidence: number;        // 0-1
     matchCount: number;        // How many dismissed lines it matches
     sampleLines: string[];     // Example lines (for user review)
@@ -166,6 +192,8 @@ async function extractPatterns(
     interactions: UserInteraction[],
     minConfidence: number = 0.7
 ): Promise<ExtractedPattern[]> {
+    // import { parseExclusionPattern } from '../features/exclusion-matcher';
+
     // 1. Group dismissed lines
     const dismissed = interactions.filter(i => 
         i.type === 'dismiss' || i.type === 'filter-out' || i.type === 'add-exclusion'
@@ -186,8 +214,11 @@ async function extractPatterns(
     // 6. Combine and deduplicate
     const allPatterns = [...prefixPatterns, ...substringPatterns, ...repetitivePatterns, ...levelPatterns];
     
-    // 7. Filter by confidence
-    return allPatterns.filter(p => p.confidence >= minConfidence);
+    // 7. Drop patterns that do not parse as exclusion rules
+    const valid = allPatterns.filter(p => parseExclusionPattern(p.pattern));
+
+    // 8. Filter by confidence
+    return valid.filter(p => p.confidence >= minConfidence);
 }
 
 function extractCommonPrefixes(lines: string[]): ExtractedPattern[] {
@@ -257,8 +288,9 @@ class SuggestionEngine {
     }
     
     private calculateImpact(p: ExtractedPattern): { linesAffected: number; percentageReduction: number } {
-        // Estimate how many lines would be hidden
-        // This requires scanning a sample of recent logs
+        // Bounded scan of lines already held for the active viewer session in the extension host
+        // (same logical buffer used when applying exclusions — no arbitrary disk reads).
+        // Cap work: e.g. last N lines (tune N) or current session only; run async/off the UI thread if needed.
     }
 }
 ```
@@ -289,6 +321,8 @@ async function checkAndShowSuggestions(): Promise<void> {
 }
 ```
 
+**Persistence note:** `generateSuggestions()` always returns `status: 'pending'` in the sketch above. For real UX, persist suggestion rows (id, pattern, status, confidence) in `LearningData` so accept/reject survives reloads and the notification path does not re-prompt for the same pattern every time.
+
 **Suggestions panel:** (Can be a section within the Insights panel or a dedicated panel opened from Insights/notification.)
 
 Create `src/ui/panels/suggestions-panel.ts` (or implement as an Insights panel section):
@@ -300,13 +334,13 @@ Create `src/ui/panels/suggestions-panel.ts` (or implement as an Insights panel s
 │ Based on your usage, we suggest these filters:                  │
 │                                                                 │
 │ ☐ Hide Flutter framework messages                              │
-│   Pattern: ^\[flutter\]                                        │
+│   Pattern: /^\[flutter\]/                                      │
 │   Would hide ~120 lines (15% reduction)                        │
 │   Sample: "[flutter] Another exception was thrown..."          │
 │   [Accept] [Reject] [Preview]                                   │
 │                                                                 │
 │ ☐ Hide repetitive recompile messages                           │
-│   Pattern: Recompiling because.*has changed                    │
+│   Pattern: /Recompiling because.*has changed/                  │
 │   Would hide ~45 lines (5% reduction)                          │
 │   Sample: "Recompiling because main.dart has changed"          │
 │   [Accept] [Reject] [Preview]                                   │
@@ -352,8 +386,9 @@ class LearningStore {
     }
     
     private async loadAll(): Promise<LearningData> {
-        // Use globalState for persistence across workspaces
-        // Or .saropa/learning.json for workspace-specific
+        // Default: VS Code workspaceState (key `saropaLogCapture.learning`) — learning stays with the repo / sensitive logs.
+        // Phase 4 (optional): merge or promote only high-confidence, non-sensitive pattern aggregates via globalState
+        // for cross-workspace framework-style noise (explicit user opt-in).
     }
 }
 ```
@@ -386,6 +421,13 @@ class LearningStore {
         "minimum": 0.5,
         "maximum": 1.0,
         "description": "Minimum confidence for suggestions"
+    },
+    "saropaLogCapture.learning.maxStoredLineLength": {
+        "type": "number",
+        "default": 2000,
+        "minimum": 80,
+        "maximum": 10000,
+        "description": "Max characters of each log line stored for learning (local only)"
     }
 }
 ```
@@ -400,8 +442,9 @@ class LearningStore {
 | `src/modules/learning/suggestion-engine.ts` | New: generate suggestions |
 | `src/modules/learning/learning-store.ts` | New: persist learning data |
 | `src/ui/panels/suggestions-panel.ts` | New: suggestions UI |
-| `src/ui/viewer/viewer-script.ts` | Track scroll/dismiss interactions |
-| `src/ui/provider/viewer-message-handler.ts` | Handle tracking messages |
+| `src/ui/viewer/viewer-script.ts` (and other embedded viewer scripts as needed) | Track scroll/dismiss; post `trackInteraction` |
+| `src/ui/provider/viewer-message-handler-actions.ts` (+ `viewer-handler-wiring.ts` if new case) | Dispatch `trackInteraction` to `InteractionTracker` |
+| `src/ui/viewer-context-menu/viewer-context-menu-actions.ts` (or exclusion handler) | On `addToExclusion`, also record `add-exclusion` learning event in extension host |
 | `package.json` | Add settings |
 | `l10n.ts` + bundles | Add localization strings |
 
@@ -410,8 +453,8 @@ class LearningStore {
 ## Phases
 
 ### Phase 1: Interaction tracking
-- Track explicit actions (add exclusion, filter level)
-- Store in learning store
+- Track explicit actions: level/filter changes, stack/group dismiss, and **`addToExclusion` in the extension** (same path as `viewer-message-handler-actions.ts`, not only webview messages)
+- Store batches in `workspaceState` via learning store
 - Basic analytics (count by type)
 
 ### Phase 2: Pattern extraction
@@ -425,20 +468,27 @@ class LearningStore {
 - Accept/reject feedback
 
 ### Phase 4: Advanced learning
-- Scroll behavior tracking (opt-in)
-- Confidence adjustment from feedback
-- Project-specific vs. global patterns
+- Scroll behavior tracking (opt-in), with dedupe/caps as specified above
+- Confidence adjustment from accept/reject feedback
+- Optional global aggregates (opt-in) vs. default workspace-scoped storage
 
 ---
 
 ## Considerations
 
-- **Privacy**: Only store pattern summaries, not full line content. Make tracking opt-out.
-- **Storage**: Learning data can grow. Implement retention (90 days) and compression.
-- **False positives**: Start conservative. High confidence threshold (0.8) initially.
-- **User control**: Easy to disable, clear data, and review what's tracked.
-- **Cross-project**: Some patterns are universal (framework noise), some are project-specific.
-- **Performance**: Pattern extraction is CPU-intensive. Run in background, throttle.
+- **Privacy**: Learning is **local-only** (VS Code storage); nothing is uploaded by this feature. Persisted batches contain **line text** (truncated by `maxStoredLineLength`) because pattern extraction needs samples — do not claim “summaries only.” Mitigations: users can turn off `saropaLogCapture.learning.enabled`, run **clear learning data**, and read Settings copy that states what is stored. Suggestion UI may show shorter previews than stored length.
+- **Storage**: Batches can get large (especially before scroll deduping). Retention: 90 days; cap batch size or interaction count per flush; optional compression of cold batches if needed.
+- **False positives**: Start conservative; default `minConfidence` 0.8; weight `skip-scroll` lower than explicit dismiss / add-exclusion.
+- **User control**: Disable learning, clear data, review pending suggestions before any exclusion is applied.
+- **Cross-project**: Default **workspace-scoped** storage. Optional Phase 4: opt-in global aggregates for generic framework noise only.
+- **Performance**: Pattern extraction is CPU-heavy — run when idle, on a schedule aligned with `suggestionFrequency`, or after flush; never block the UI thread.
+- **Overlap with `fw` / framework UI**: Stack `fw` tagging and framework level deemphasis stay as-is; learning proposes **exclusion patterns on line text**, not replacements for stack classification.
+
+## Testing and observability
+
+- Unit tests: prefix/substring/repetition extractors, `parseExclusionPattern` rejection of bad suggestions, confidence thresholds.
+- Integration: accept suggestion → `saropaLogCapture.exclusions` updated and lines hidden in viewer.
+- Optional internal counters: suggestions shown / accepted / rejected (local only) to validate the 60%+ acceptance target.
 
 ---
 

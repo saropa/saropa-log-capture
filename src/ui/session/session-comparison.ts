@@ -24,6 +24,7 @@ import * as vscode from 'vscode';
 import { compareLogSessionsWithDbFingerprints, DiffResult } from '../../modules/misc/diff-engine';
 import {
     findFirstPhysicalLineForDriftFingerprintInLog,
+    regressionFingerprintsForRootCauseHints,
     type SessionDbFingerprintCompareResult,
 } from '../../modules/db/db-session-fingerprint-diff';
 import type { DbFingerprintSummaryEntry } from '../../modules/db/db-detector-types';
@@ -65,6 +66,7 @@ export class SessionComparisonPanel implements vscode.Disposable {
         this.uriB = uriB;
         this.summaryMapA = new Map(summaryMapA);
         this.summaryMapB = new Map(summaryMapB);
+        this.pushRootCauseHintsSessionDiffToViewers();
 
         if (this.panel) {
             this.panel.reveal();
@@ -99,6 +101,18 @@ export class SessionComparisonPanel implements vscode.Disposable {
         for (const d of this.disposables) {
             d.dispose();
         }
+    }
+
+    /** DB_14: push compare-derived regression fingerprints; partial message preserves Drift Advisor slice in the viewer. */
+    private pushRootCauseHintsSessionDiffToViewers(): void {
+        if (!this.broadcaster) {
+            return;
+        }
+        const fps = regressionFingerprintsForRootCauseHints(this.summaryMapA, this.summaryMapB);
+        this.broadcaster.postToWebview({
+            type: "setRootCauseHintHostFields",
+            sessionDiffSummary: fps.length > 0 ? { regressionFingerprints: fps } : null,
+        });
     }
 
     private handleMessage(msg: { type: string; [key: string]: unknown }): void {

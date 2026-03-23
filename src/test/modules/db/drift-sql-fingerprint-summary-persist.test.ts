@@ -125,6 +125,16 @@ suite('drift-sql-fingerprint-summary-persist', () => {
         assert.strictEqual(fl.get('k0'), undefined);
     });
 
+    test('summaryMapToPersistedV1 round-trips slowQueryCount', () => {
+        const map = new Map<string, DbFingerprintSummaryEntry>([
+            ['s', { count: 2, slowQueryCount: 1 }],
+        ]);
+        const p = summaryMapToPersistedV1(map);
+        assert.strictEqual(p.fingerprints.s?.slowQueryCount, 1);
+        const back = persistedSummaryToMap(p);
+        assert.strictEqual(back.get('s')?.slowQueryCount, 1);
+    });
+
     test('trimSummaryForPersistence does not retain mid-tier keys when over cap (before/after)', () => {
         const summary = new Map<string, DbFingerprintSummaryEntry>([
             ['low', { count: 1 }],

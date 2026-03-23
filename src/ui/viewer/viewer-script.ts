@@ -95,6 +95,9 @@ if (window._scriptErrors && window._scriptErrors.length) {
 document.addEventListener('focus', function() { vscodeApi.postMessage({ type: 'viewerFocused' }); }, true);
 var MAX_LINES = ${maxLines};
 var MAX_LINES_DEFAULT = MAX_LINES;
+/* Noise learning (set by host via setLearningOptions). */
+var learningEnabled = false, learningMaxLineLen = 2000, learningTrackScroll = false;
+var learningScrollLastT = 0, learningScrollLastTop = 0, learningScrollBurstSent = 0, learningScrollBurstReset = 0;
 var ROW_HEIGHT = 20;
 var MARKER_HEIGHT = 28;
 var OVERSCAN = 30;
@@ -134,6 +137,49 @@ function handleScroll() {
     var isTall = logEl.scrollHeight > logEl.clientHeight * SCROLL_BTN_THRESHOLD;
     if (jumpBtn) jumpBtn.style.display = (distBottom > AT_BOTTOM_ON_PX && isTall) ? 'block' : 'none';
     if (jumpTopBtn) jumpTopBtn.style.display = (logEl.scrollTop > logEl.clientHeight * 0.5 && isTall) ? 'block' : 'none';
+    /* Optional fast-scroll learning: bounded bursts so we do not flood the extension. */
+    if (learningEnabled && learningTrackScroll && allLines.length > 0) {
+        var now = Date.now();
+        if (now - learningScrollBurstReset > 1200) { learningScrollBurstSent = 0; learningScrollBurstReset = now; }
+        if (learningScrollBurstSent < 24) {
+            var dt = now - learningScrollLastT;
+            if (dt >= 8) {
+                var speed = Math.abs(logEl.scrollTop - learningScrollLastTop) / Math.max(1, dt);
+                learningScrollLastT = now;
+                learningScrollLastTop = logEl.scrollTop;
+                if (speed > 2.5) {
+                    var mid = logEl.scrollTop + logEl.clientHeight / 2;
+                    var centerIdx = 0;
+                    if (typeof findIndexAtOffset === 'function' && prefixSums) {
+                        centerIdx = findIndexAtOffset(mid).index;
+                    } else {
+                        var acc = 0;
+                        for (var cj = 0; cj < allLines.length; cj++) {
+                            acc += allLines[cj].height;
+                            if (acc >= mid) { centerIdx = cj; break; }
+                        }
+                    }
+                    var seenIdx = {};
+                    for (var di = -12; di <= 12 && learningScrollBurstSent < 24; di++) {
+                        var idx = centerIdx + di;
+                        if (idx < 0 || idx >= allLines.length || seenIdx[idx]) continue;
+                        seenIdx[idx] = 1;
+                        var lit = allLines[idx];
+                        if (!lit || (lit.type !== 'line' && lit.type !== 'stack-frame')) continue;
+                        var pl = stripTags(lit.html || '');
+                        if (!pl) continue;
+                        vscodeApi.postMessage({
+                            type: 'trackInteraction',
+                            interactionType: 'skip-scroll',
+                            lineText: pl.substring(0, 100),
+                            lineLevel: lit.level || ''
+                        });
+                        learningScrollBurstSent++;
+                    }
+                }
+            }
+        }
+    }
 }
 
 logEl.addEventListener('scroll', function() {

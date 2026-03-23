@@ -13,7 +13,7 @@ import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
 import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
-import { getConfig } from "../../modules/config/config";
+import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
 import type { LineData } from "../../modules/session/session-manager";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
@@ -24,11 +24,12 @@ import {
 } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
-import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
+import { queuePopOutViewerConfigMicrotask } from "./pop-out-panel-viewer-config-post";
 
 const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
@@ -184,6 +185,14 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     this.post({ type: "setViewerDbInsightsEnabled", enabled });
   }
+  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
+    this.post({
+      type: "setViewerDbDetectorToggles",
+      nPlusOneEnabled: toggles.nPlusOneEnabled,
+      slowBurstEnabled: toggles.slowBurstEnabled,
+      baselineHintsEnabled: toggles.baselineHintsEnabled,
+    });
+  }
   setDbBaselineFingerprintSummary(
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void {
@@ -245,6 +254,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerMaxLines,
       viewerRepeatThresholds: cfg.viewerRepeatThresholds,
       viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+      viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
       viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
       viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
@@ -252,16 +262,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
-    queueMicrotask(() => this.post({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
-    queueMicrotask(() => this.post({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
-    queueMicrotask(() => this.post({ type: 'setViewerRepeatThresholds', thresholds: getConfig().viewerRepeatThresholds }));
-    queueMicrotask(() => this.post({ type: 'setViewerDbInsightsEnabled', enabled: getConfig().viewerDbInsightsEnabled }));
-    queueMicrotask(() => this.post({ type: 'setViewerSlowBurstThresholds', thresholds: getConfig().viewerSlowBurstThresholds }));
-    queueMicrotask(() => this.post({
-      type: 'setViewerSqlPatternChipSettings',
-      chipMinCount: getConfig().viewerSqlPatternChipMinCount,
-      chipMaxChips: getConfig().viewerSqlPatternMaxChips,
-    }));
+    queuePopOutViewerConfigMicrotask((m) => this.post(m), cfg);
     this.panel.onDidDispose(() => {
       this.stopBatchTimer();
       this.broadcaster.removeTarget(this);
@@ -325,4 +326,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       (lines) => helpers.sendNewCategories(lines, this.seenCategories, (m) => this.post(m)));
   }
   private post(message: unknown): void { this.panel?.webview.postMessage(message); }
+
+  postToWebview(message: unknown): void {
+    this.post(message);
+  }
 }

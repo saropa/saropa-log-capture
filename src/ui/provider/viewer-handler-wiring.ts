@@ -8,6 +8,7 @@
 
 import * as vscode from "vscode";
 import { t } from "../../l10n";
+import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
@@ -89,6 +90,8 @@ function wireExclusionHandlers(target: HandlerTarget, broadcaster: ViewerBroadca
     const cur = cfg.get<string[]>('exclusions', []);
     if (!cur.includes(pattern)) {
       await cfg.update('exclusions', [...cur, pattern], vscode.ConfigurationTarget.Workspace);
+      // Learning: one event per newly added exclusion (avoids duplicate signals on replay).
+      getInteractionTracker()?.track({ type: 'add-exclusion', lineText: pattern, lineLevel: '' });
     }
   });
   target.setExclusionRemovedHandler(async (pattern) => {

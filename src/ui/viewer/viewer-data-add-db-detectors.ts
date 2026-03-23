@@ -1,6 +1,9 @@
 /**
  * Embedded helpers for DB_15 detector pipeline output (synthetic insight rows + burst markers).
  * Split from `viewer-data-add.ts` to stay under the file line budget.
+ *
+ * Baseline-aware detectors use `dbBaselineFingerprintSummaryMap` from `viewer-db-detector-framework-script.ts`
+ * (built once when the host posts `setDbBaselineFingerprintSummary`, not per ingest line).
  */
 
 export function getViewerDataAddDbDetectorsScript(): string {
@@ -111,15 +114,9 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
     var hasDur = typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs);
     if (!hasSql && !hasDur) return;
     try {
-        var baselineForCtx = null;
-        if (typeof dbBaselineFingerprintSummary !== 'undefined' && dbBaselineFingerprintSummary && typeof dbBaselineFingerprintSummary === 'object') {
-            baselineForCtx = new Map();
-            for (var bKey in dbBaselineFingerprintSummary) {
-                if (Object.prototype.hasOwnProperty.call(dbBaselineFingerprintSummary, bKey)) {
-                    baselineForCtx.set(bKey, dbBaselineFingerprintSummary[bKey]);
-                }
-            }
-        }
+        var baselineForCtx = (typeof dbBaselineFingerprintSummaryMap !== 'undefined' && dbBaselineFingerprintSummaryMap)
+            ? dbBaselineFingerprintSummaryMap
+            : null;
         var ctx = {
             timestampMs: nowTs,
             sessionId: null,
@@ -132,6 +129,9 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
             anchorSeq: (typeof anchorSeq === 'number' && isFinite(anchorSeq)) ? anchorSeq : undefined
         };
         var merged = runDbDetectors(ctx);
+        if (typeof applyDbSessionRollupPatches === 'function') {
+            applyDbSessionRollupPatches(merged);
+        }
         applyDbSyntheticLineResults(merged, scopeFilt, ts, sp, lineSource);
         applyDbMarkerResults(merged, ts, sp, lineSource);
     } catch (_dbDetErr) { /* swallow — framework must not break ingest */ }

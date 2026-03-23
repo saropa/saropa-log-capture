@@ -15,6 +15,7 @@ import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Dispatches every ViewerTarget method to all registered targets. */
 export class ViewerBroadcaster implements ViewerTarget {
@@ -122,6 +123,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     for (const t of this.targets) { t.setViewerDbInsightsEnabled(enabled); }
   }
+  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
+    for (const t of this.targets) { t.setViewerDbDetectorToggles(toggles); }
+  }
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
     for (const t of this.targets) { t.setViewerSlowBurstThresholds(thresholds); }
   }
@@ -147,5 +151,8 @@ export class ViewerBroadcaster implements ViewerTarget {
     entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
   ): void {
     for (const t of this.targets) { t.setDbBaselineFingerprintSummary(entries); }
+  }
+  postToWebview(message: unknown): void {
+    for (const t of this.targets) { t.postToWebview(message); }
   }
 }

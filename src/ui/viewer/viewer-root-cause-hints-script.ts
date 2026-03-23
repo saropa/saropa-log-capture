@@ -8,6 +8,43 @@ export function getViewerRootCauseHintsScript(): string {
   return (
     getViewerRootCauseHintsEmbedAlgorithmChunk() +
     /* javascript */ `
+function rchStr(key, fallback) {
+    var L = (typeof window !== 'undefined' && window.rchL10n) ? window.rchL10n : {};
+    var v = L[key];
+    return (typeof v === 'string' && v.length) ? v : fallback;
+}
+
+function rchCollapseStorageKey() {
+    return 'saropa-rch-collapsed::' + String(rootCauseHintSessionEpoch || 0) + '|' + (typeof currentFilename !== 'undefined' ? currentFilename : '');
+}
+
+function isRchStripCollapsed() {
+    try {
+        return sessionStorage.getItem(rchCollapseStorageKey()) === '1';
+    } catch (_e) {
+        return false;
+    }
+}
+
+function setRchStripCollapsed(v) {
+    try {
+        if (v) sessionStorage.setItem(rchCollapseStorageKey(), '1');
+        else sessionStorage.removeItem(rchCollapseStorageKey());
+    } catch (_e) { /* storage unavailable */ }
+}
+
+function buildRootCauseHypothesesExplainText(bundle, hy) {
+    var lines = [];
+    lines.push('Log viewer root-cause hypotheses (deterministic heuristics, not verified facts):');
+    var hi;
+    for (hi = 0; hi < hy.length; hi++) {
+        lines.push('- ' + String(hy[hi].text || ''));
+    }
+    lines.push('');
+    lines.push('Session id: ' + String(bundle && bundle.sessionId ? bundle.sessionId : ''));
+    return lines.join('\\n');
+}
+
 function scrollViewerToLineIndex0(idx) {
     if (typeof allLines === 'undefined' || !logEl) return;
     if (idx < 0 || idx >= allLines.length) return;
@@ -40,20 +77,25 @@ function renderRootCauseHypothesesIfNeeded() {
         host.innerHTML = '';
         return;
     }
+    var collapsed = isRchStripCollapsed();
     var parts = [];
     parts.push('<div class="root-cause-hypotheses-header">');
-    parts.push('<span class="root-cause-hypotheses-title">Hypotheses</span>');
-    parts.push('<button type="button" class="root-cause-hypotheses-dismiss" aria-label="Dismiss hypotheses" title="Dismiss for this log">\\u00d7</button>');
+    parts.push('<button type="button" class="root-cause-hyp-toggle" data-rch-toggle="1" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + escapeHtml(collapsed ? rchStr('expandAria', 'Expand hypotheses') : rchStr('collapseAria', 'Collapse hypotheses')) + '" title="' + escapeHtml(collapsed ? rchStr('expandTitle', 'Expand') : rchStr('collapseTitle', 'Collapse')) + '">' + (collapsed ? '\\u25b6' : '\\u25bc') + '</button>');
+    parts.push('<span class="root-cause-hypotheses-title">' + escapeHtml(rchStr('title', 'Hypotheses')) + '</span>');
+    parts.push('<button type="button" class="root-cause-hyp-explain-ai" data-rch-explain="1" aria-label="' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '">' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '</button>');
+    parts.push('<button type="button" class="root-cause-hypotheses-dismiss" aria-label="' + escapeHtml(rchStr('dismissAria', 'Dismiss hypotheses')) + '" title="' + escapeHtml(rchStr('dismissTitle', 'Dismiss for this log')) + '">\\u00d7</button>');
     parts.push('</div>');
-    parts.push('<p class="root-cause-hypotheses-disclaimer">Hypothesis, not fact.</p>');
+    parts.push('<div class="root-cause-hypotheses-body' + (collapsed ? ' u-hidden' : '') + '">');
+    parts.push('<p class="root-cause-hypotheses-disclaimer">' + escapeHtml(rchStr('disclaimer', 'Hypothesis, not fact.')) + '</p>');
     parts.push('<ul class="root-cause-hypotheses-list">');
-    var hi, item, li, ev, ei, idx, validIdx;
+    var hi, item, li, ev, ei, idx, validIdx, confPfx;
+    confPfx = rchStr('confPrefix', '');
     for (hi = 0; hi < hy.length; hi++) {
         item = hy[hi];
         li = '<li>';
         li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
         if (item.confidence) {
-            li += '<span class="root-cause-hyp-conf">' + escapeHtml(String(item.confidence)) + '</span>';
+            li += '<span class="root-cause-hyp-conf">' + escapeHtml(confPfx + String(item.confidence)) + '</span>';
         }
         ev = item.evidenceLineIds || [];
         for (ei = 0; ei < ev.length; ei++) {
@@ -67,6 +109,7 @@ function renderRootCauseHypothesesIfNeeded() {
         parts.push(li);
     }
     parts.push('</ul>');
+    parts.push('</div>');
     host.innerHTML = parts.join('');
     host.classList.remove('u-hidden');
 }
@@ -80,6 +123,7 @@ function scheduleRootCauseHypothesesRefresh() {
 }
 
 function resetRootCauseHypothesesSession() {
+    if (typeof clearRootCauseHintHostFields === 'function') clearRootCauseHintHostFields();
     rootCauseHintSessionEpoch = (rootCauseHintSessionEpoch || 0) + 1;
     rootCauseHypothesesDismissed = false;
     var host = document.getElementById('root-cause-hypotheses');
@@ -95,6 +139,23 @@ function initRootCauseHypothesesUi() {
     host.dataset.rchInit = '1';
     host.addEventListener('click', function(ev) {
         var t = ev.target;
+        if (t && t.dataset && t.dataset.rchToggle === '1') {
+            ev.preventDefault();
+            setRchStripCollapsed(!isRchStripCollapsed());
+            renderRootCauseHypothesesIfNeeded();
+            return;
+        }
+        if (t && t.dataset && t.dataset.rchExplain === '1') {
+            ev.preventDefault();
+            if (typeof vscodeApi === 'undefined' || !vscodeApi) return;
+            var b = collectRootCauseHintBundleEmbedded();
+            var hList = buildHypothesesEmbedded(b);
+            var narr = buildRootCauseHypothesesExplainText(b, hList);
+            var explainLine = 0;
+            if (b.errors && b.errors.length) explainLine = b.errors[0].lineIndex;
+            vscodeApi.postMessage({ type: 'explainRootCauseHypotheses', text: narr, lineIndex: explainLine });
+            return;
+        }
         if (t && t.classList && t.classList.contains('root-cause-hypotheses-dismiss')) {
             ev.preventDefault();
             rootCauseHypothesesDismissed = true;

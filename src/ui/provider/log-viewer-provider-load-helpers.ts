@@ -9,6 +9,7 @@ import { getRunSummaries } from "../../modules/session/run-summaries";
 import { getEffectiveViewerLines } from "./viewer-content";
 import { findFirstErrorLines, type FirstErrorResult } from "../../modules/bookmarks/first-error";
 import * as helpers from "./viewer-provider-helpers";
+import { rootCauseDriftSummaryFromSessionIntegrations } from "../../modules/root-cause-hints/root-cause-hint-drift-meta";
 
 interface LoadTarget {
   postMessage(msg: unknown): void;
@@ -75,15 +76,18 @@ export async function loadUnifiedSessionJsonlContent(
 }
 
 export async function loadPerfAndCodeQualityPayload(
-  target: LoadTarget,
+  _target: LoadTarget,
   uri: vscode.Uri,
   checkGen: () => boolean,
-): Promise<{ cancelled: boolean; hasPerf: boolean; codeQualityPayload?: Record<string, unknown> }> {
-  if (!target.setHasPerformanceData && !target.setCodeQualityPayload) {
-    return { cancelled: false, hasPerf: false, codeQualityPayload: undefined };
-  }
+): Promise<{
+  cancelled: boolean;
+  hasPerf: boolean;
+  codeQualityPayload?: Record<string, unknown>;
+  rootCauseDriftAdvisorSummary?: { issueCount: number; topRuleId?: string };
+}> {
   let hasPerf = false;
   let codeQualityPayload: Record<string, unknown> | undefined = undefined;
+  let rootCauseDriftAdvisorSummary: { issueCount: number; topRuleId?: string } | undefined;
   try {
     if (!checkGen()) { return { cancelled: true, hasPerf: false, codeQualityPayload: undefined }; }
     const meta = await new SessionMetadataStore().loadMetadata(uri);
@@ -91,10 +95,14 @@ export async function loadPerfAndCodeQualityPayload(
     hasPerf = hasMeaningfulPerformanceData(meta.integrations?.performance);
     const cq = meta.integrations?.codeQuality;
     if (cq && typeof cq === "object" && cq !== null && "files" in cq) { codeQualityPayload = cq as Record<string, unknown>; }
+    const drift = rootCauseDriftSummaryFromSessionIntegrations(meta.integrations as Record<string, unknown> | undefined);
+    if (drift) {
+      rootCauseDriftAdvisorSummary = drift;
+    }
   } catch {
     // ignore
   }
-  return { cancelled: false, hasPerf, codeQualityPayload };
+  return { cancelled: false, hasPerf, codeQualityPayload, rootCauseDriftAdvisorSummary };
 }
 
 export function truncateMainContentLines(rawLines: readonly string[]): { headerEnd: number; contentLines: string[]; didTruncate: boolean; truncatedShown: number } {

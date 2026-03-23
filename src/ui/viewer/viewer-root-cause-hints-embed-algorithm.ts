@@ -20,6 +20,7 @@ import {
   ROOT_CAUSE_SQL_BURST_MIN_COUNT,
 } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
 import { ROOT_CAUSE_HINT_BUNDLE_VERSION } from '../../modules/root-cause-hints/root-cause-hint-types';
+import { getViewerRootCauseHintsEmbedCollectChunk } from './viewer-root-cause-hints-embed-collect';
 
 export function getViewerRootCauseHintsEmbedAlgorithmChunk(): string {
   const BV = ROOT_CAUSE_HINT_BUNDLE_VERSION;
@@ -30,7 +31,8 @@ export function getViewerRootCauseHintsEmbedAlgorithmChunk(): string {
   const MIN_BURST = ROOT_CAUSE_SQL_BURST_MIN_COUNT;
   const MIN_ERR = ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN;
 
-  return /* javascript */ `
+  return (
+    /* javascript */ `
 var rootCauseHintSessionEpoch = 0;
 var rootCauseHypothesesDismissed = false;
 var rootCauseHypothesesRaf = null;
@@ -264,67 +266,7 @@ function buildHypothesesEmbedded(bundle) {
     }
     return out;
 }
-
-function collectRootCauseHintBundleEmbedded() {
-    var sid = String(rootCauseHintSessionEpoch || 0) + '|' + (typeof currentFilename !== 'undefined' ? currentFilename : '');
-    var errors = [];
-    var nPlusOneHints = [];
-    var leaders = [];
-    var i, row, plain, excerpt, im, keys, eEnt, j, line, fp, sampleIdx;
-
-    if (typeof allLines !== 'undefined' && allLines.length) {
-        for (i = allLines.length - 1; i >= 0 && errors.length < 2; i--) {
-            row = allLines[i];
-            if (!row || row.type !== 'line') continue;
-            if (row.level !== 'error' || row.errorSuppressed) continue;
-            plain = stripTags(row.html || '');
-            excerpt = plain.replace(/\\s+/g, ' ').trim();
-            if (excerpt.length < ${MIN_ERR}) continue;
-            if (excerpt.length > 400) excerpt = excerpt.substring(0, 397) + '...';
-            errors.push({ lineIndex: i, excerpt: excerpt });
-        }
-
-        for (i = 0; i < allLines.length; i++) {
-            row = allLines[i];
-            if (!row || row.type !== 'n-plus-one-insight' || !row.insightMeta) continue;
-            im = row.insightMeta;
-            nPlusOneHints.push({
-                lineIndex: i,
-                fingerprint: im.fingerprint,
-                repeats: im.repeats,
-                distinctArgs: im.distinctArgs,
-                windowSpanMs: im.windowSpanMs,
-                confidence: im.confidence || 'low'
-            });
-        }
-    }
-
-    if (typeof dbInsightSessionRollup !== 'undefined' && dbInsightSessionRollup && typeof allLines !== 'undefined') {
-        keys = Object.keys(dbInsightSessionRollup);
-        for (i = 0; i < keys.length; i++) {
-            fp = keys[i];
-            eEnt = dbInsightSessionRollup[fp];
-            if (!eEnt || eEnt.count < ${MIN_FP}) continue;
-            sampleIdx = -1;
-            for (j = allLines.length - 1; j >= 0; j--) {
-                line = allLines[j];
-                if (!line || line.type !== 'line' || !line.dbInsight || line.dbInsight.fingerprint !== fp) continue;
-                sampleIdx = j;
-                break;
-            }
-            leaders.push({ fingerprint: fp, count: eEnt.count, sampleLineIndex: sampleIdx });
-        }
-        leaders.sort(function(a, b) { return b.count - a.count; });
-        if (leaders.length > 8) leaders = leaders.slice(0, 8);
-    }
-
-    return {
-        bundleVersion: ${BV},
-        sessionId: sid,
-        errors: errors,
-        nPlusOneHints: nPlusOneHints,
-        fingerprintLeaders: leaders
-    };
-}
-`;
+` +
+    getViewerRootCauseHintsEmbedCollectChunk(BV, MIN_ERR, MIN_FP, MIN_BURST)
+  );
 }

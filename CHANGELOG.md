@@ -24,6 +24,12 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+• **Log viewer — DB detector sub-toggles & baseline hints (DB_15 optional)** — Settings **`viewerDbDetectorNPlusOneEnabled`**, **`viewerDbDetectorSlowBurstEnabled`**, **`viewerDbDetectorBaselineHintsEnabled`** (when master **database insights** is on). SQL baseline from log comparison can trigger a one-time **SQL count above baseline** marker; host **`createBaselineVolumeCompareDetector`** supports **`runDbDetectorsCompare`**. **`session-rollup-patch`** results merge into the session rollup map after each detector pass.
+
+• **Fingerprint summaries — slow query counts (DB_10)** — **`slowQueryCount`** per fingerprint (threshold = **`viewerSlowBurstSlowQueryMs`**) in scans, persist v1, merges, and the session comparison table (**Slow A / B / Δ slow** when logs include **`[+Nms]`** metadata).
+
+• **Noise learning (Plan 025)** — Workspace-local learning from log viewer actions: stack-group **dismiss**, new **exclusions**, **bookmarks** (explicit keep), optional **fast-scroll** signal; persisted batches + suggested `saropaLogCapture.exclusions` patterns; QuickPick review; commands **Review / Clear / Check Filter Suggestions**; settings `saropaLogCapture.learning.*`. Implementation: `src/modules/learning/` (see `README.md` there), viewer `trackInteraction`, `setLearningOptions`. QA: `examples/noise-learning-sample-interactions.txt`.
+
 • **Tests — Drift SQL fingerprint summary persist (DB_10)** — `drift-sql-fingerprint-summary-persist.test.ts` covers v1 validation (including rejecting **`fingerprints` arrays** as malformed), round-trip maps, baseline record shapes, **`trimSummaryForPersistence`** caps, and explicit **before/after** exclusion of low-count keys when trimming.
 
 • **Examples — session comparison QA** — `examples/session-comparison-drift-sql-qa.txt` notes how to validate the **Database (Drift SQL)** comparison section, jump actions, and optional SQL baseline buttons.
