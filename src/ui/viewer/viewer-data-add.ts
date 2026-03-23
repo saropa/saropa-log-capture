@@ -1,12 +1,18 @@
 /**
  * Script chunk for data insertion and stack-group toggling.
  *
- * **N+1 insight rows:** After a normal log line is appended, optional Drift SQL burst
- * detection may append a synthetic `n-plus-one-insight` row. That path is wrapped in
- * try/catch so malformed log text cannot break streaming ingest.
+ * **Drift SQL:** `parseSqlFingerprint(plain)` runs **once** per normal log line; the result
+ * drives repeat keys (for `database`-tagged lines), optional `dbInsight` rollup, and
+ * `emitDbLineDetectors` (DB_15 / N+1 and future detectors). Repeat-collapse and full-line
+ * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
+ * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`
+ * (`applyDbSyntheticLineResults`).
  */
+import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
+
 export function getViewerDataAddScript(): string {
-    return /* javascript */ `
+    return getViewerDataAddDbDetectorsScript() + /* javascript */ `
+
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
     var lineSource = source || 'debug';
@@ -85,13 +91,15 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
 
-    // Real-time repeat detection (Drift DB lines: fingerprint hash + verb-specific collapse threshold).
-    var sqlMetaRepeat = (sTag === 'database' && typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
+    // One parse per line: repeat tracker, dbInsight, and DB detectors share this object.
+    var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
+
+    // Real-time repeat detection (fingerprint key only for database-tagged Drift SQL).
     // Level in the key avoids merging repeats across severity changes for the same fingerprint.
-    var currentHash = (sqlMetaRepeat && sqlMetaRepeat.fingerprint)
-        ? (lvl + '::dbfp::' + sqlMetaRepeat.fingerprint)
+    var currentHash = (sTag === 'database' && sqlMeta && sqlMeta.fingerprint)
+        ? (lvl + '::sqlfp::' + sqlMeta.fingerprint)
         : generateRepeatHash(lvl, plain);
-    var lineThresholdN = (typeof getDriftRepeatMinN === 'function') ? getDriftRepeatMinN(sqlMetaRepeat, sTag) : 2;
+    var lineThresholdN = (typeof getDriftRepeatMinN === 'function') ? getDriftRepeatMinN(sqlMeta, sTag) : 2;
     var now = ts || Date.now();
     var inRepeatWindow = currentHash !== null && repeatTracker.lastHash === currentHash &&
         (now - repeatTracker.lastTimestamp) < repeatWindowMs;
@@ -106,6 +114,14 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         repeatTracker.count = 1;
         repeatTracker.lastTimestamp = now;
         repeatTracker.streakMinN = lineThresholdN;
+        if (sTag === 'database' && sqlMeta && sqlMeta.fingerprint) {
+            repeatTracker.streakSqlFp = true;
+            var sn0 = sqlMeta.sqlSnippet || '';
+            repeatTracker.sqlRepeatPreview = sn0.length > repeatPreviewLength ? sn0.substring(0, repeatPreviewLength) + '...' : sn0;
+        } else {
+            repeatTracker.streakSqlFp = false;
+            repeatTracker.sqlRepeatPreview = null;
+        }
     }
 
     var minN = repeatTracker.streakMinN;
@@ -123,12 +139,20 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             }
         }
 
-        var preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
-        if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
-            preview += '...';
+        var preview;
+        if (repeatTracker.streakSqlFp && repeatTracker.sqlRepeatPreview) {
+            preview = repeatTracker.sqlRepeatPreview;
+        } else {
+            preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
+            if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
+                preview += '...';
+            }
         }
-        var repeatHtml = '<span class="repeat-notification">' +
-            'Repeated #' + repeatTracker.count +
+        var repeatLabel = repeatTracker.streakSqlFp
+            ? ('SQL repeated #' + repeatTracker.count)
+            : ('Repeated #' + repeatTracker.count);
+        var repeatHtml = '<span class="repeat-notification' + (repeatTracker.streakSqlFp ? ' repeat-sql-fp' : '') + '">' +
+            repeatLabel +
             ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
         var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
         var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
@@ -161,6 +185,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(repeatItem); }
         totalHeight += repeatH;
+
+        // Collapsed repeats skip the normal-line branch; still feed session rollup and N+1 detector (per-line args).
+        var scopeFiltCol = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
+        if (viewerDbInsightsEnabled && sTag === 'database' && sqlMeta && typeof updateDbInsightRollup === 'function') {
+            updateDbInsightRollup(sqlMeta.fingerprint, elapsedMs);
+        }
+        emitDbLineDetectors(now, sqlMeta, scopeFiltCol, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '');
     } else {
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
@@ -192,78 +223,28 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         totalHeight += finalH;
         updateCompressDupStreakAfterLine(plain);
 
-        // One parse per line: shared by dbInsight rollup and N+1 detector (Drift SQL only).
-        var sqlMetaLine = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
-
         if (sTag === 'database') {
-            var rollupDb = (sqlMetaLine && typeof updateDbInsightRollup === 'function')
-                ? updateDbInsightRollup(sqlMetaLine.fingerprint, lineItem.elapsedMs)
-                : null;
-            var snipDb = sqlMetaLine && sqlMetaLine.sqlSnippet ? sqlMetaLine.sqlSnippet : null;
-            if (!snipDb) {
-                var di = plain.indexOf('Drift:');
-                var rawSnip = di >= 0 ? plain.substring(di).trim() : plain.trim();
-                snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
+            if (viewerDbInsightsEnabled) {
+                var rollupDb = (sqlMeta && typeof updateDbInsightRollup === 'function')
+                    ? updateDbInsightRollup(sqlMeta.fingerprint, lineItem.elapsedMs)
+                    : null;
+                var snipDb = sqlMeta && sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : null;
+                if (!snipDb) {
+                    var di = plain.indexOf('Drift:');
+                    var rawSnip = di >= 0 ? plain.substring(di).trim() : plain.trim();
+                    snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
+                }
+                lineItem.dbInsight = {
+                    fingerprint: sqlMeta ? sqlMeta.fingerprint : null,
+                    sqlSnippet: snipDb,
+                    seenCount: rollupDb ? rollupDb.seenCount : 1,
+                    avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
+                    maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
+                };
             }
-            lineItem.dbInsight = {
-                fingerprint: sqlMetaLine ? sqlMetaLine.fingerprint : null,
-                sqlSnippet: snipDb,
-                seenCount: rollupDb ? rollupDb.seenCount : 1,
-                avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
-                maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
-            };
         }
 
-        // N+1 detector: bursts of the same Drift SQL fingerprint with varying args (must not throw).
-        try {
-            if (sqlMetaLine && typeof detectNPlusOneInsight === 'function') {
-                var insight = detectNPlusOneInsight(now, sqlMetaLine.fingerprint, sqlMetaLine.argsKey);
-                if (insight) {
-                    var windowSec = (insight.windowSpanMs / 1000).toFixed(2);
-                    var confLabel = insight.confidence.toUpperCase();
-                    var previewFingerprint = sqlMetaLine.fingerprint.length > 96
-                        ? sqlMetaLine.fingerprint.substring(0, 96) + '...'
-                        : sqlMetaLine.fingerprint;
-                    var n1Html = '<span class="repeat-notification n1-insight">'
-                        + '\\u26a0 Potential N+1 query '
-                        + '<span class="n1-conf n1-conf-' + insight.confidence + '">[' + confLabel + ']</span> '
-                        + ' - ' + insight.repeats + ' repeats / ' + insight.distinctArgs + ' arg variants in ' + windowSec + 's'
-                        + ' <span class="n1-fp">(' + escapeHtml(previewFingerprint) + ')</span>'
-                        + ' <span class="n1-actions">'
-                        + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
-                        + ' · '
-                        + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMetaLine.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
-                        + '</span>'
-                        + '</span>';
-                    var n1Item = {
-                        html: n1Html,
-                        type: 'n-plus-one-insight',
-                        height: ROW_HEIGHT,
-                        category: 'db-insight',
-                        groupId: -1,
-                        timestamp: ts,
-                        level: 'performance',
-                        seq: nextSeq++,
-                        sourceTag: 'database',
-                        logcatTag: null,
-                        sourceFiltered: false,
-                        sqlPatternFiltered: false,
-                        classFiltered: false,
-                        classTags: [],
-                        isSeparator: false,
-                        sourcePath: sp || null,
-                        scopeFiltered: scopeFilt,
-                        autoHidden: false,
-                        source: lineSource
-                    };
-                    allLines.push(n1Item);
-                    if (typeof registerSourceTag === 'function') { registerSourceTag(n1Item); }
-                    if (typeof registerSqlPattern === 'function') { registerSqlPattern(n1Item); }
-                    totalHeight += ROW_HEIGHT;
-                    resetCompressDupStreak();
-                }
-            }
-        } catch (_n1Err) { /* swallow — never block ingest on heuristic */ }
+        emitDbLineDetectors(now, sqlMeta, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain);
 
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
     }

@@ -82,6 +82,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Find in Files, filters, bookmarks, trash, Options, and Pop Out. In-log search lives in the **session bar** (not a slide-out): **Ctrl+F** focuses the field; **case / whole word / regex** show while the field is focused or has text (or always if **`saropaLogCapture.viewerAlwaysShowSearchMatchOptions`** is on). **Compress lines** (hide blanks + collapse consecutive duplicates) is a toggle on the **log pane** (top-left), also available under Options → Layout. Clicking an icon toggles its slide-out panel where applicable. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
 - **Session log navigation:** **Log *n* of *N*** in the session bar uses **chevron-only** prev/next buttons (full wording in tooltips for screen readers).
 - **Drift SQL N+1 hint:** Bursts of the same normalized `Drift: Sent …` query with different `with args` payloads may insert a synthetic insight row (confidence label + **Focus DB** / **Find fingerprint**). Sample lines: `examples/drift-n-plus-one-sample-lines.txt`.
+- **Drift SQL repeat collapse:** For **`database`**-tagged lines, duplicate suppression keys normalized SQL fingerprints (same shape, different args = one streak) and uses **verb-specific** minimum repeat counts before collapsing (reads vs transactions vs DML). Settings: `saropaLogCapture.repeatCollapse*`. QA notes: `examples/drift-repeat-collapse-thresholds.txt`.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. Both the sidebar and pop-out receive live data simultaneously. You can also open the Saropa Log Capture tab in a new window (e.g. right‑click tab → Open in New Window); clicking a session there shows the log in that window.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
@@ -439,6 +440,8 @@ The extension ships localized UI strings for 11 locales: Chinese (Simplified & T
 ---
 
 ## Documentation
+
+Four top-level docs (plus `CHANGELOG_ARCHIVE.md` for older releases):
 
 | Document                                                 | Description                                             |
 | -------------------------------------------------------- | ------------------------------------------------------- |

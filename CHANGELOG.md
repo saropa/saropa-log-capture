@@ -36,6 +36,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — Drift SQL ingest** — `addToData` calls `parseSqlFingerprint(plain)` **once** per normal log line; repeat hashing, optional `dbInsight` rollup, and **`emitDbLineDetectors`** (N+1 / DB_15) all reuse the same `sqlMeta`. Embed regressions live in `viewer-data-add-embed.test.ts`.
+
 • **Footer — Actions menu** — **Replay**, **Export**, and **Open quality report** (when the **codeQuality** integration has data) sit under one **Actions** control in the footer bar instead of a standalone Replay control. **Options → Actions** no longer lists **Export current view**; use **Actions → Export** or the log context menu. **Open quality report** stays disabled until the session exposes quality data.
 
 • **Filters panel (slide-out sidebar)** — **Sources** is renamed **Log Streams** with short intro copy so it is obvious this is debug / terminal / external file inputs. **Code Location Scope** is a separate section (debugger file paths), with hints when narrowing hides most lines or many lines lack paths. External sidecar sources are grouped under **External sidecars (N)** with readable labels. Workspace / package / directory / file radios stay hidden until an active editor file exists; when the editor closes, scope resets to **All logs**.
