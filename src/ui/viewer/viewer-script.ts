@@ -240,6 +240,11 @@ viewportEl.addEventListener('click', function(e) {
                 if (typeof openSearch === 'function') openSearch();
                 if (typeof updateSearch === 'function') updateSearch();
             }
+        } else if (action === 'find-static-sources') {
+            var fpSrc = n1Action.dataset.fingerprint || '';
+            if (fpSrc && typeof vscodeApi !== 'undefined' && vscodeApi) {
+                vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpSrc });
+            }
         }
         return;
     }

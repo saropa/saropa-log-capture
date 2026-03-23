@@ -1,5 +1,10 @@
 # DB_12 Static ORM / Code-Level Analysis
 
+## Progress (incremental)
+
+- **Shipped:** Fingerprint → **search tokens** (`drift-sql-fingerprint-code-tokens.ts`) and **Static sources** on N+1 insight rows → host QuickPick over indexed workspace files (`viewer-message-handler-static-sql.ts`). Labeled suggestive in UX copy; not proof of execution site.
+- **Not yet:** Broader ORM API mapping table, symbol-level “open at query”, dedicated setting to disable static search.
+
 ## Goal
 Connect observed SQL patterns (fingerprints, N+1 hints from **`DB_15`** / `db.n-plus-one` and history **`DB_07`**) to **likely source locations** in the workspace using static analysis and/or project indexing—not only log text.
 

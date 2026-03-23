@@ -1,5 +1,10 @@
 # DB_13 DB Performance Dashboard and Full Timeline Analytics
 
+## Progress (incremental)
+
+- **Shipped:** **Database** tab inside the existing Performance slide-out (`viewer-performance-panel.ts`, `viewer-performance-db-tab.ts`, CSS in `viewer-styles-performance.ts`): totals, top fingerprints by volume, optional timeline from DB-tagged line timestamps, empty states when rollup/timestamps missing.
+- **Not yet:** Scroll-synced time brush, Drift Advisor metric row in this tab, shared bucketing refactor with minimap heuristics.
+
 ## Goal
 Go beyond minimap density (`DB_09`) and burst markers (`DB_08`) with a dedicated **analytics surface**: time-aligned DB load, slow-query concentration, and summary KPIs for the session.
 

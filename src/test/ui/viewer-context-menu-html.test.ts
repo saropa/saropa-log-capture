@@ -103,6 +103,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="pin"'));
             assert.ok(html.includes('data-action="add-watch"'));
             assert.ok(html.includes('data-action="add-exclusion"'));
+            assert.ok(html.includes('data-action="explain-root-cause-hypotheses"'));
         });
 
         test('should mark line-specific items with data-line-action', () => {
