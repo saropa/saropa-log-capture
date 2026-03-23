@@ -197,6 +197,19 @@ export function getOptionsStyles(): string {
     padding-left: 8px;
     border-left: 2px solid var(--vscode-editorWarning-foreground);
 }
+.scope-hint-reset-btn {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 3px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    font-size: 10px;
+    cursor: pointer;
+}
+.scope-hint-reset-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
 
 /* Integrations button in options (opens Integrations screen) */
 .options-integrations-btn {
