@@ -10,6 +10,7 @@
  */
 import { getContentStyles } from './viewer-styles-content';
 import { getNPlusOneInsightStyles } from './viewer-styles-n-plus-one-insight';
+import { getSqlRepeatDrilldownStyles } from './viewer-styles-sql-repeat-drilldown';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
 import { getTagStyles } from './viewer-styles-tags';
@@ -29,6 +30,7 @@ import { getAiStyles } from './viewer-styles-ai';
 import { getRunSeparatorStyles } from './viewer-styles-run-separator';
 import { getContextPopoverStyles } from './viewer-styles-ui';
 import { getReplayStyles } from './viewer-styles-replay';
+import { getRootCauseHypothesesStyles } from './viewer-styles-root-cause-hints';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -271,5 +273,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getNPlusOneInsightStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles();
+` + getContentStyles() + getNPlusOneInsightStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles();
 }
