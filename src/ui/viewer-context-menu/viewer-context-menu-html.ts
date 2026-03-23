@@ -180,7 +180,11 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Compress lines (blanks + consecutive dupes)</span>
+                <span>Compress lines (consecutive dupes)</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global">
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Compress lines (non-consecutive dupes)</span>
             </div>
         </div>
     </div>

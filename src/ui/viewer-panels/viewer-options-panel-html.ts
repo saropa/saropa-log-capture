@@ -126,9 +126,13 @@ export function getOptionsPanelHtml(): string {
                 <input type="checkbox" id="opt-hide-blank-lines" />
                 <span>Hide blank lines</span>
             </label>
-            <label class="options-row" title="Hide blank lines and collapse consecutive identical log lines into one row with a repeat count (markers and stack traces break runs)">
+            <label class="options-row" title="Collapse consecutive identical log lines into one row with a repeat count (markers and stack traces break runs)">
                 <input type="checkbox" id="opt-compress-lines" />
-                <span>Compress lines (hide blanks + dedupe consecutive)</span>
+                <span>Compress lines (consecutive dupes)</span>
+            </label>
+            <label class="options-row" title="Collapse identical log lines even when they are not adjacent, showing one row with a repeat count">
+                <input type="checkbox" id="opt-compress-lines-global" />
+                <span>Compress lines (non-consecutive dupes)</span>
             </label>
         </div>
 

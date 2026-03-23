@@ -8,8 +8,8 @@
  * Responsibilities:
  * - **Typography:** `logFontSize`, `logLineHeight`, CSS variables `--log-font-size` / `--log-line-height`,
  *   and `measureRowHeight()` (hidden probe) so `ROW_HEIGHT` / `MARKER_HEIGHT` match themed CSS.
- * - **Line presentation:** `visualSpacingEnabled`, `hideBlankLines`, and **`compressLinesMode`**
- *   (hide blank lines + collapse consecutive duplicate normal lines with an (×N) badge on the last row).
+ * - **Line presentation:** `visualSpacingEnabled`, `hideBlankLines`, and two compression modes:
+ *   `compressLinesMode` (consecutive dupes) and `compressNonConsecutiveMode` (global dupes).
  * - **Compress UI sync:** `toggleCompressLines()` flips `compressLinesMode` and re-renders via
  *   `recalcAndRender` / `recalcHeights` + `renderViewport` so Options panel checkbox and context menu
  *   stay aligned.
@@ -18,7 +18,7 @@
  * - **Input:** Ctrl/Meta + wheel on `#log-content` adjusts font size.
  *
  * **Ordering / safety:** Do not call into data-layer functions before they exist; helpers use
- * `typeof fn === 'function'` guards. `compressLinesMode` is plain boolean state — no async or recursion.
+ * `typeof fn === 'function'` guards. Compression modes are plain booleans — no async or recursion.
  */
 
 /**
@@ -38,8 +38,11 @@ var visualSpacingEnabled = true;
 /** Hide lines that are empty or only whitespace. */
 var hideBlankLines = false;
 
-/** Collapse consecutive duplicate log lines to one row with a count badge; also hides blank lines while on. */
+/** Collapse consecutive duplicate log lines to one row with a count badge. */
 var compressLinesMode = false;
+
+/** Collapse non-consecutive duplicate log lines globally with a count badge on the first instance. */
+var compressNonConsecutiveMode = false;
 
 /**
  * Measure actual line height from the DOM and update ROW_HEIGHT / MARKER_HEIGHT.
@@ -139,7 +142,8 @@ function hideCompressSuggestionBanner() {
 
 /** Shown when streaming detects many consecutive duplicate lines (see viewer-data streak). */
 function showCompressSuggestionBanner() {
-    if (typeof compressLinesMode !== 'undefined' && compressLinesMode) return;
+    if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
+        || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) return;
     var b = document.getElementById('compress-suggest-banner');
     var w = document.getElementById('session-nav-wrapper');
     if (b) b.classList.remove('u-hidden');
@@ -147,12 +151,30 @@ function showCompressSuggestionBanner() {
 }
 
 /**
- * Toggle compress lines: hide blanks, collapse runs of identical consecutive log lines
+ * Toggle compress lines: collapse runs of identical consecutive log lines
  * to the last line with a repeat count badge.
  */
 function toggleCompressLines() {
     compressLinesMode = !compressLinesMode;
+    if (compressLinesMode && typeof compressNonConsecutiveMode !== 'undefined') compressNonConsecutiveMode = false;
+    if (!compressLinesMode && typeof compressNonConsecutiveMode !== 'undefined' && !compressNonConsecutiveMode) hideCompressSuggestionBanner();
     if (compressLinesMode) hideCompressSuggestionBanner();
+    if (typeof recalcAndRender === 'function') recalcAndRender();
+    else {
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof renderViewport === 'function') renderViewport(true);
+    }
+}
+
+/**
+ * Toggle global dedupe: collapse identical non-consecutive log lines to the first
+ * line with a repeat count badge.
+ */
+function toggleCompressNonConsecutiveLines() {
+    compressNonConsecutiveMode = !compressNonConsecutiveMode;
+    if (compressNonConsecutiveMode && typeof compressLinesMode !== 'undefined') compressLinesMode = false;
+    if (!compressNonConsecutiveMode && typeof compressLinesMode !== 'undefined' && !compressLinesMode) hideCompressSuggestionBanner();
+    if (compressNonConsecutiveMode) hideCompressSuggestionBanner();
     if (typeof recalcAndRender === 'function') recalcAndRender();
     else {
         if (typeof recalcHeights === 'function') recalcHeights();

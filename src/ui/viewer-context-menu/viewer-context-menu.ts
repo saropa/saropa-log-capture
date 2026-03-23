@@ -61,6 +61,7 @@ function syncContextMenuToggles() {
         else if (action === 'toggle-line-height') on = (typeof logLineHeight !== 'undefined') && logLineHeight >= 1.5; /* comfortable when >= 1.5 (presets: 1.2 / 2.0) */
         else if (action === 'toggle-hide-blank-lines') on = (typeof hideBlankLines !== 'undefined') && hideBlankLines;
         else if (action === 'toggle-compress-lines') on = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
+        else if (action === 'toggle-compress-lines-global') on = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
         t.classList.toggle('checked', on);
     }
 }

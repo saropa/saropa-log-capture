@@ -7,7 +7,7 @@
  * separately by `applyCompressConsecutiveDedup` in `viewer-data.ts` when the user enables
  * compress — this module only **suggests**; it does not mutate line heights.
  *
- * **Guards:** `updateCompressDupStreakAfterLine` no-ops when `compressLinesMode` is on or
+ * **Guards:** `updateCompressDupStreakAfterLine` no-ops when any compression mode is on or
  * after dismiss; `resetCompressDupStreak` runs on markers, stack frames, repeat-notification
  * lines, and on `clear` (see viewer-script-messages) so streaks do not span unrelated
  * regions.
@@ -33,7 +33,8 @@ function resetCompressDupStreak() {
 }
 
 function updateCompressDupStreakAfterLine(plain) {
-    if (typeof compressLinesMode !== 'undefined' && compressLinesMode) return;
+    if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
+        || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) return;
     if (compressSuggestBannerDismissed) return;
     var t = (plain || '').replace(/\\s+/g, ' ').trim();
     var k = t.length === 0 ? '__EMPTY__' : t;
@@ -54,7 +55,9 @@ function initCompressSuggestListeners() {
     var dis = document.getElementById('compress-suggest-dismiss');
     if (en) {
         en.addEventListener('click', function() {
-            if (typeof compressLinesMode !== 'undefined' && compressLinesMode) {
+            var anyCompress = (typeof compressLinesMode !== 'undefined' && compressLinesMode)
+                || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode);
+            if (anyCompress) {
                 if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
             } else if (typeof toggleCompressLines === 'function') {
                 toggleCompressLines();

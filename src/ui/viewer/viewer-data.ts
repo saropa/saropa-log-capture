@@ -6,200 +6,12 @@
  * (renderItem, renderViewport).
  */
 import { getCompressStreakScript } from './viewer-data-compress-streak';
+import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
 
 export function getViewerDataScript(): string {
-    return getViewerDataHelpers() + getCompressStreakScript() + /* javascript */ `
-
-function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
-    /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
-    var lineSource = source || 'debug';
-    if (ts && !sessionStartTs) sessionStartTs = ts;
-    if (isMarker) {
-        resetCompressDupStreak();
-        if (activeGroupHeader) {
-            if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
-            if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
-            activeGroupHeader = null;
-        }
-        cleanupTrailingRepeats();
-        var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
-        if (elapsedMs !== undefined && elapsedMs >= 0) markerItem.elapsedMs = elapsedMs;
-        allLines.push(markerItem);
-        totalHeight += MARKER_HEIGHT;
-        return;
-    }
-    if (isStackFrameText(html)) {
-        resetCompressDupStreak();
-        var plainFrame = stripTags(html);
-        var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
-
-        if (activeGroupHeader) {
-            if (!activeGroupHeader._appFrameCount) activeGroupHeader._appFrameCount = 0;
-            var appIdx = fw ? -1 : activeGroupHeader._appFrameCount;
-            if (!fw) activeGroupHeader._appFrameCount++;
-            var cTagsF = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
-            if (cTagsF.length > 0 && activeGroupHeader.classTags) {
-                for (var ci = 0; ci < cTagsF.length; ci++) {
-                    if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
-                }
-            }
-            var sfItem = { html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
-            if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
-            allLines.push(sfItem);
-            activeGroupHeader.frameCount++;
-            return;
-        }
-        var gid = nextGroupId++;
-        var sTagH = (typeof parseSourceTag === 'function') ? parseSourceTag(plainFrame) : null;
-        var lTagH = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plainFrame) : null;
-        if (lTagH && lTagH === sTagH) lTagH = null;
-        var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
-        var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
-        var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
-        if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
-        if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
-        allLines.push(hdr);
-        if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
-        groupHeaderMap[gid] = hdr;
-        activeGroupHeader = hdr;
-        totalHeight += hdrH;
-        return;
-    }
-    if (activeGroupHeader) {
-        if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
-        if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
-        activeGroupHeader = null;
-    }
-    var plain = stripTags(html);
-    var isSep = isSeparatorLine(plain);
-    var isAi = category && category.indexOf('ai-') === 0;
-    var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
-    if (lvl === 'info' && !isSep && allLines.length > 0) {
-        var prevItem = allLines[allLines.length - 1];
-        if (prevItem && prevItem.type !== 'marker' && prevItem.type !== 'run-separator'
-            && prevItem.level && prevItem.level !== 'info'
-            && ts && prevItem.timestamp && Math.abs(ts - prevItem.timestamp) <= 2000) {
-            lvl = prevItem.level;
-        }
-    }
-    var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
-    var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
-    if (lTag && lTag === sTag) lTag = null;
-    var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
-
-    // Real-time repeat detection
-    var currentHash = generateRepeatHash(lvl, plain);
-    var now = ts || Date.now();
-    var isRepeat = false;
-
-    if (currentHash !== null && repeatTracker.lastHash === currentHash &&
-        (now - repeatTracker.lastTimestamp) < repeatWindowMs) {
-        // This is a repeat within the time window
-        isRepeat = true;
-        repeatTracker.count++;
-        repeatTracker.lastTimestamp = now;
-
-        // On first repeat, hide the original line to avoid a visual gap
-        if (repeatTracker.count === 2 && repeatTracker.lastLineIndex >= 0 &&
-            repeatTracker.lastLineIndex < allLines.length) {
-            var origItem = allLines[repeatTracker.lastLineIndex];
-            if (origItem && origItem.height > 0) {
-                totalHeight -= origItem.height;
-                origItem.height = 0;
-                origItem.repeatHidden = true;
-            }
-        }
-
-        // Create repeat notification line
-        var preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
-        if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
-            preview += '...';
-        }
-        var repeatHtml = '<span class="repeat-notification">' +
-            'Repeated #' + repeatTracker.count +
-            ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
-        var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
-        var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
-        if (repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var repeatItem = {
-            html: repeatHtml,
-            type: 'repeat-notification',
-            height: repeatH,
-            category: category,
-            groupId: -1,
-            timestamp: ts,
-            level: lvl,
-            seq: nextSeq++,
-            sourceTag: sTag,
-            logcatTag: lTag,
-            sourceFiltered: false,
-            classFiltered: false,
-            classTags: cTags,
-            isSeparator: false,
-            sourcePath: sp || null,
-            scopeFiltered: false,
-            isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
-            autoHidden: repeatAutoHide,
-            source: lineSource
-        };
-        allLines.push(repeatItem);
-        resetCompressDupStreak();
-        if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
-        if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
-        totalHeight += repeatH;
-    } else {
-        // New unique message - reset tracker
-        repeatTracker.lastHash = currentHash;
-        repeatTracker.lastPlainText = plain;
-        repeatTracker.lastLevel = lvl;
-        repeatTracker.count = 1;
-        repeatTracker.lastTimestamp = now;
-
-        // Add the original line normally
-        var errorClass = (typeof classifyError === 'function' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
-        var errorSuppressed = (typeof suppressTransientErrors !== 'undefined' && suppressTransientErrors && errorClass === 'transient');
-
-        // Check for critical errors
-        if (typeof checkCriticalError === 'function') {
-            checkCriticalError(plain);
-        }
-
-        var appHidden = (typeof appOnlyMode !== 'undefined' && appOnlyMode && fw);
-        var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
-        var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
-        var lineH = (errorSuppressed || appHidden || classHidden) ? 0 : ROW_HEIGHT;
-        var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
-        if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource };
-        if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
-        allLines.push(lineItem);
-        repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
-        if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
-        if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
-        totalHeight += finalH;
-        updateCompressDupStreakAfterLine(plain);
-    }
-}
-
-function toggleStackGroup(groupId) {
-    var header = groupHeaderMap[groupId];
-    if (!header) return;
-    // Cycle: preview → expanded → collapsed → preview
-    if (header.collapsed === 'preview') {
-        header.collapsed = false; // Expand all
-    } else if (header.collapsed === false) {
-        header.collapsed = true; // Collapse all
-    } else {
-        header.collapsed = 'preview'; // Show preview
-    }
-    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
-    else { recalcHeights(); renderViewport(true); }
-}
+    return getViewerDataHelpers() + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
 
 function trimData() {
     if (allLines.length <= MAX_LINES) return;
@@ -232,9 +44,14 @@ function trimData() {
 }
 
 /**
- * When compressLinesMode is on: collapse consecutive identical type==='line' rows (normalized
- * plain text). Earlier rows in each run get compressDupHidden; the last gets compressDupCount.
- * Markers, stack traces, repeat-notification rows, etc. break runs.
+ * Compression modes:
+ * - compressLinesMode: collapse consecutive identical type==='line' rows (normalized plain text).
+ *   Earlier rows in each run get compressDupHidden; the last gets compressDupCount.
+ * - compressNonConsecutiveMode: collapse identical type==='line' rows globally.
+ *   The first seen row keeps compressDupCount; later duplicates get compressDupHidden.
+ *
+ * Blank lines are intentionally excluded from both modes (blank handling is controlled only by
+ * hideBlankLines).
  *
  * Always clears compressDupHidden / compressDupCount on every call first, then returns early if
  * compress is off — so toggling compress off cannot leave stale flags on line objects.
@@ -243,56 +60,82 @@ function trimData() {
  * recalcHeights (see viewer-script-messages) because a new tail line can change which prior
  * line is hidden in a duplicate run.
  */
-function applyCompressConsecutiveDedup() {
+function applyCompressDedupModes() {
     var i;
     for (i = 0; i < allLines.length; i++) {
         var cleared = allLines[i];
         if (cleared.compressDupHidden) cleared.compressDupHidden = false;
         if (cleared.compressDupCount != null) delete cleared.compressDupCount;
     }
-    if (typeof compressLinesMode === 'undefined' || !compressLinesMode) return;
+    var useConsecutive = (typeof compressLinesMode !== 'undefined') && compressLinesMode;
+    var useGlobal = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
+    if (!useConsecutive && !useGlobal) return;
 
-    var emptyLineKey = '__SAROPA_COMPRESS_EMPTY__';
     function lineDedupeKey(row) {
         if (!row || row.type !== 'line') return null;
         var t = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
-        return t.length === 0 ? emptyLineKey : t;
+        if (t.length === 0) return null;
+        return t;
     }
 
-    var runStart = -1;
-    var runKey = null;
+    if (useConsecutive) {
+        var runStart = -1;
+        var runKey = null;
 
-    function flushRun(endInclusive) {
-        if (runStart < 0) return;
-        var runLen = endInclusive - runStart + 1;
-        if (runLen > 1) {
-            var j;
-            for (j = runStart; j < endInclusive; j++) {
-                allLines[j].compressDupHidden = true;
+        function flushRun(endInclusive) {
+            if (runStart < 0) return;
+            var runLen = endInclusive - runStart + 1;
+            if (runLen > 1) {
+                var j;
+                for (j = runStart; j < endInclusive; j++) {
+                    allLines[j].compressDupHidden = true;
+                }
+                allLines[endInclusive].compressDupCount = runLen;
             }
-            allLines[endInclusive].compressDupCount = runLen;
+            runStart = -1;
+            runKey = null;
         }
-        runStart = -1;
-        runKey = null;
+
+        for (i = 0; i < allLines.length; i++) {
+            var item = allLines[i];
+            var k = lineDedupeKey(item);
+            if (k === null) {
+                flushRun(i - 1);
+                continue;
+            }
+            if (runKey === null) {
+                runStart = i;
+                runKey = k;
+            } else if (k !== runKey) {
+                flushRun(i - 1);
+                runStart = i;
+                runKey = k;
+            }
+        }
+        flushRun(allLines.length - 1);
+        return;
     }
 
+    var firstIdxByKey = Object.create(null);
+    var countByKey = Object.create(null);
     for (i = 0; i < allLines.length; i++) {
-        var item = allLines[i];
-        var k = lineDedupeKey(item);
-        if (k === null) {
-            flushRun(i - 1);
-            continue;
-        }
-        if (runKey === null) {
-            runStart = i;
-            runKey = k;
-        } else if (k !== runKey) {
-            flushRun(i - 1);
-            runStart = i;
-            runKey = k;
+        var globalItem = allLines[i];
+        var globalKey = lineDedupeKey(globalItem);
+        if (globalKey === null) continue;
+        if (firstIdxByKey[globalKey] == null) {
+            firstIdxByKey[globalKey] = i;
+            countByKey[globalKey] = 1;
+        } else {
+            globalItem.compressDupHidden = true;
+            countByKey[globalKey]++;
         }
     }
-    flushRun(allLines.length - 1);
+    for (var key in countByKey) {
+        var count = countByKey[key];
+        if (count > 1) {
+            allLines[firstIdxByKey[key]].compressDupCount = count;
+        }
+    }
 }
 
 /**
@@ -302,7 +145,7 @@ function applyCompressConsecutiveDedup() {
  * source of truth for height — individual filters never manipulate heights directly.
  */
 function recalcHeights() {
-    applyCompressConsecutiveDedup();
+    applyCompressDedupModes();
     totalHeight = 0;
     for (var i = 0; i < allLines.length; i++) {
         allLines[i].height = calcItemHeight(allLines[i]);
