@@ -118,6 +118,10 @@ export function getOptionsPanelHtml(): string {
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
+            <label class="options-row" title="Show a subtle SQL/slow-query density overlay in the scrollbar minimap. Helps spot database-heavy intervals quickly.">
+                <input type="checkbox" id="opt-minimap-sql-density" />
+                <span>Minimap SQL density overlay</span>
+            </label>
             <label class="options-row" title="Add extra vertical padding between log lines for easier reading">
                 <input type="checkbox" id="opt-visual-spacing" checked />
                 <span>Visual spacing (breathing room)</span>

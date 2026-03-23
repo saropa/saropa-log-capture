@@ -6,6 +6,7 @@ import { getOptionsPanelViewsScript } from './viewer-options-panel-views';
 export function getOptionsPanelScript(): string {
     return /* javascript */ `
 var optionsPanelOpen = false;
+var minimapShowSqlDensity = true;
 
 /** Test if a row (and its indent sibling) matches the filter; toggle visibility. */
 function matchRowAndIndent(row, q) {
@@ -167,6 +168,8 @@ function syncOptionsPanelUi() {
     syncDisplayUi();
     syncDecoUi();
     var vsCheck = document.getElementById('opt-visual-spacing');
+    var minimapSqlDensityCheck = document.getElementById('opt-minimap-sql-density');
+    if (minimapSqlDensityCheck && typeof minimapShowSqlDensity !== 'undefined') minimapSqlDensityCheck.checked = minimapShowSqlDensity;
     if (vsCheck && typeof visualSpacingEnabled !== 'undefined') vsCheck.checked = visualSpacingEnabled;
     var hideBlankCheck = document.getElementById('opt-hide-blank-lines');
     if (hideBlankCheck && typeof hideBlankLines !== 'undefined') hideBlankCheck.checked = hideBlankLines;
@@ -193,6 +196,11 @@ function resetOptionsToDefault() {
     if (typeof lineColorsEnabled !== 'undefined') lineColorsEnabled = true;
     if (typeof updateDecoButton === 'function') updateDecoButton();
     if (typeof visualSpacingEnabled !== 'undefined') visualSpacingEnabled = true;
+    minimapShowSqlDensity = true;
+    if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity({ show: true });
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setMinimapSqlDensity', value: true });
+    }
     if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
     if (typeof compressLinesMode !== 'undefined') compressLinesMode = false;
     if (typeof compressNonConsecutiveMode !== 'undefined') compressNonConsecutiveMode = false;

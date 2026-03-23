@@ -69,6 +69,8 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   readonly breakOnCritical: boolean;
   readonly minimapShowInfoMarkers: boolean;
+  /** Show subtle SQL and slow-SQL density overlays on the scrollbar minimap. */
+  readonly minimapShowSqlDensity: boolean;
   readonly minimapWidth: "small" | "medium" | "large";
   /** When true, show the native vertical scrollbar in the log viewer (default: false). */
   readonly showScrollbar: boolean;
