@@ -12,7 +12,11 @@ window.addEventListener('message', function(event) {
                 addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source);
             }
             trimData();
-            if (msg.lineCount !== undefined) lineCount = msg.lineCount;
+            if (msg.lineCount !== undefined) {
+                lineCount = msg.lineCount;
+                // Decoration width only changes when line-count digit width crosses a threshold.
+                if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
+            }
             /* Any compression mode can mutate prior line heights/visibility; must full recalc, not appendPrefixSums only. */
             if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
                 || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) {
@@ -39,11 +43,13 @@ window.addEventListener('message', function(event) {
         case 'clear':
             loadTruncatedInfo = null;
             correlationByLineIndex = {};
+            MAX_LINES = MAX_LINES_DEFAULT;
             if (typeof window !== 'undefined') { window.enabledSources = null; window.availableSources = []; }
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0;
+            if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
@@ -163,6 +169,11 @@ window.addEventListener('message', function(event) {
         case 'loadTruncated':
             loadTruncatedInfo = { shown: msg.shown || 0, total: msg.total || 0 };
             updateFooterText();
+            break;
+        case 'setMaxLines':
+            if (typeof msg.maxLines === 'number' && Number.isFinite(msg.maxLines) && msg.maxLines > 0) {
+                MAX_LINES = Math.max(MAX_LINES, Math.floor(msg.maxLines));
+            }
             break;
         case 'loadComplete':
             if (currentFilename && scrollMemory[currentFilename] !== undefined && !window.isContextMenuOpen) {

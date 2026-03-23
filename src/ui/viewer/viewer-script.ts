@@ -102,6 +102,7 @@ if (window._scriptErrors && window._scriptErrors.length) {
 /* Clear panel badge when user focuses webview (onDidChangeVisibility only fires on hide/show toggle). */
 document.addEventListener('focus', function() { vscodeApi.postMessage({ type: 'viewerFocused' }); }, true);
 var MAX_LINES = ${maxLines};
+var MAX_LINES_DEFAULT = MAX_LINES;
 var ROW_HEIGHT = 20;
 var MARKER_HEIGHT = 28;
 var OVERSCAN = 30;

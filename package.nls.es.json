@@ -125,9 +125,9 @@
   "config.lintReportImpactLevel.enum.essential": "Critical and high only (least noise).",
   "config.lintReportImpactLevel.enum.recommended": "Critical, high, and medium (default).",
   "config.lintReportImpactLevel.enum.full": "All impact levels including low and opinionated.",
-  "config.maxLines.description": "Número máximo de líneas por archivo de registro. Las líneas más antiguas se eliminan cuando se supera el límite.",
+  "config.maxLines.description": "Número máximo de líneas por parte del archivo de registro. Cuando se supera, la captura continúa en la siguiente parte para conservar las líneas más recientes.",
   "config.viewerKeybindings.description": "Override viewer panel power shortcuts (e.g. openSearch, togglePause). Keys are action IDs; values are key descriptors (e.g. \"ctrl+f\", \"space\"). Change from Options → Keyboard shortcuts by double-clicking a power shortcut row.",
-  "config.viewerMaxLines.description": "Líneas máximas mostradas en el visor (0 = predeterminado 50.000). No debe superar maxLines.",
+  "config.viewerMaxLines.description": "Líneas máximas mostradas en el visor (0 = usar maxLines). No debe superar maxLines.",
   "config.maxLogFiles.description": "Número máximo de archivos de registro a conservar (incluyendo subdirectorios cuando está habilitado). 0 = ilimitado. Los más antiguos se eliminan cuando se supera el límite.",
   "config.organizeFolders.description": "Mover automáticamente archivos de registro con prefijo de fecha a subcarpetas basadas en fecha (p. ej. reports/20260218/).",
   "config.redactEnvVars.description": "Patrones de nombres de variables de entorno a ocultar en los encabezados de contexto. Admite comodines * (p. ej. API_KEY, SECRET_*).",
@@ -338,6 +338,6 @@
   "config.treeRefreshInterval.title": "Tree view refresh interval in seconds during active recording.",
   "config.verboseDap.title": "Log all raw DAP protocol messages (requests, responses, events) to th…",
   "config.viewerKeybindings.title": "Viewer Keybindings",
-  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = default 50,000).",
+  "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = use maxLines).",
   "config.watchPatterns.title": "Keywords to watch for in log output."
 }
