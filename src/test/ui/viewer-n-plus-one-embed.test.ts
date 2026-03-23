@@ -12,6 +12,8 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('function parseSqlFingerprint'));
         assert.ok(chunk.includes('function detectNPlusOneInsight'));
         assert.ok(chunk.includes('function pruneNPlusOneFingerprints'));
+        assert.ok(chunk.includes('sqlSnippet'));
+        assert.ok(chunk.includes('function updateDbInsightRollup'));
     });
 
     test('embed interpolates thresholds from N_PLUS_ONE_EMBED_CONFIG', () => {
@@ -24,5 +26,6 @@ suite('Viewer N+1 detector embed', () => {
         const data = getViewerDataScript();
         assert.ok(data.includes("'n-plus-one-insight'"));
         assert.ok(data.includes('parseSqlFingerprint'));
+        assert.ok(data.includes('dbInsight'));
     });
 });

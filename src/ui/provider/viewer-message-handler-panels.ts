@@ -86,8 +86,11 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         panelHandlers.handleIntegrationContextRequest(
           ctx.currentFileUri,
           safeLineIndex(msg.lineIndex, 0),
-          msg.timestamp as number | undefined,
           ctx.post,
+          {
+            timestamp: msg.timestamp as number | undefined,
+            hasDatabaseLine: msg.hasDatabaseLine === true,
+          },
         ).catch(() => {});
         return true;
       case "openFullIntegrationContext":
