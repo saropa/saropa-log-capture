@@ -235,6 +235,14 @@ export function getOverlayStyles(): string {
     background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
     color: var(--vscode-menu-selectionForeground, inherit);
 }
+.context-menu-item.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.context-menu-item.is-disabled:hover {
+    background: transparent;
+    color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+}
 .context-menu-item .codicon {
     font-size: 14px;
     opacity: 0.8;

@@ -73,6 +73,15 @@ suite('Session nav overlay CSS (search strip not forced to nav-button chrome)', 
             'nav chrome must be scoped to session-nav-controls only',
         );
     });
+
+    test('context menu disabled rows use is-disabled (muted + no hover highlight)', () => {
+        assert.ok(overlay.includes('.context-menu-item.is-disabled'));
+        assert.ok(overlay.includes('.context-menu-item.is-disabled:hover'));
+        assert.ok(
+            overlay.includes('background: transparent'),
+            'disabled row hover should not use menu selection background',
+        );
+    });
 });
 
 suite('Search strip and options (compress UI wiring)', () => {

@@ -1,6 +1,21 @@
 /**
  * Right-click context menu for the log viewer: copy, select-all, and quick actions on log lines.
- * Exposes HTML and inline script; click handlers and toggle state live in the script.
+ *
+ * ## Architecture
+ * - **HTML** lives in `viewer-context-menu-html.ts` (`getContextMenuHtml`).
+ * - **This module** concatenates globals, source-ref helpers, UI (show/hide/position), and
+ *   `viewer-context-menu-actions.ts` handlers into one script string injected into the webview.
+ *
+ * ## Integration-gated items
+ * Some actions only make sense when the extension host has enabled the matching session adapter.
+ * The host pushes `window.integrationAdapters` via `integrationsAdapters` postMessage
+ * (`sendIntegrationsAdaptersImpl` / user changes in Options). Until that first message, the array
+ * may be missing: we treat that as **no adapters** and keep code-quality rows **disabled**
+ * (conservative — avoids `openQualityReport` / empty popover dead-ends). After sync, items enable
+ * only when `'codeQuality'` is present.
+ *
+ * Disabled rows use class `is-disabled` + optional `title` tooltip; the root click handler ignores
+ * them so we never call `onContextMenuAction` for blocked commands.
  */
 export { getContextMenuHtml } from './viewer-context-menu-html';
 import { getContextMenuSourcesScript } from './viewer-context-menu-sources';
@@ -41,8 +56,19 @@ function initContextMenu() {
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') hideContextMenu(); });
     contextMenuEl.addEventListener('click', function(e) {
         var item = e.target.closest('.context-menu-item');
+        if (item && item.classList && item.classList.contains('is-disabled')) return;
         if (item && item.dataset.action) onContextMenuAction(item.dataset.action);
     });
+}
+
+/** Disable/enable a single context menu item by action id. */
+function setContextMenuItemDisabled(action, disabled, disabledTitle) {
+    if (!contextMenuEl) return;
+    var item = contextMenuEl.querySelector('[data-action="' + action + '"]');
+    if (!item) return;
+    item.classList.toggle('is-disabled', !!disabled);
+    if (disabled && disabledTitle) item.setAttribute('title', disabledTitle);
+    else item.removeAttribute('title');
 }
 
 /** Sync toggle checkmarks in Options submenu from current state. */
@@ -87,6 +113,21 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
     var hasSourceLink = lineData && lineData.html && lineData.html.indexOf('source-link') !== -1;
     var openSourceItem = contextMenuEl.querySelector('[data-action="open-source"]');
     if (openSourceItem) openSourceItem.style.display = hasSourceLink ? '' : 'none';
+
+    // Code-quality actions depend on the codeQuality session adapter.
+    var integrationAdapters = (typeof window !== 'undefined' && Array.isArray(window.integrationAdapters))
+        ? window.integrationAdapters
+        : [];
+    var hasCodeQualityIntegration = integrationAdapters.indexOf('codeQuality') >= 0;
+    var cqDisabled = !hasCodeQualityIntegration;
+    var cqRows = [
+        { action: 'show-code-quality', title: 'Enable the codeQuality integration to show per-file code quality.' },
+        { action: 'open-quality-report', title: 'Enable the codeQuality integration to generate quality reports.' },
+    ];
+    for (var cqi = 0; cqi < cqRows.length; cqi++) {
+        var cq = cqRows[cqi];
+        setContextMenuItemDisabled(cq.action, cqDisabled, cq.title);
+    }
 
     // Show source-link items only when right-clicking directly on a source link
     var hasSource = !!sourceLink;
