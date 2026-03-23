@@ -4,10 +4,12 @@
 
 import * as vscode from "vscode";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
-import { getConfig } from "../../modules/config/config";
+import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
 import { DRIFT_ADVISOR_EXTENSION_ID } from "./drift-advisor-integration";
 import * as helpers from "./viewer-provider-helpers";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
+import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
+import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
 
 export interface LogViewerSetupTarget {
   getExtensionUri(): vscode.Uri;
@@ -48,6 +50,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     viewerMaxLines,
     viewerRepeatThresholds: cfg.viewerRepeatThresholds,
     viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+    viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
     viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
     viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
@@ -72,11 +75,17 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     thresholds: getConfig().viewerSlowBurstThresholds,
   }));
   queueMicrotask(() => target.postMessage({
+    type: 'setViewerDbDetectorToggles',
+    ...viewerDbDetectorTogglesFromConfig(getConfig()),
+  }));
+  queueMicrotask(() => target.postMessage({
     type: 'setViewerSqlPatternChipSettings',
     chipMinCount: getConfig().viewerSqlPatternChipMinCount,
     chipMaxChips: getConfig().viewerSqlPatternMaxChips,
   }));
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
+  queueMicrotask(() => target.postMessage(getLearningWebviewOptions()));
+  queueMicrotask(() => target.postMessage({ type: 'setRootCauseHintL10n', strings: getRootCauseHintViewerStrings() }));
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }
   webviewView.onDidChangeVisibility(() => {

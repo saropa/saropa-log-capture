@@ -3,6 +3,7 @@
  */
 
 import * as vscode from "vscode";
+import { getConfig } from "../config/config";
 import { scanSaropaLogDatabaseFingerprints } from "../db/db-session-fingerprint-diff";
 import {
   summaryMapToPersistedV1,
@@ -19,7 +20,9 @@ export async function scanAndPersistDriftSqlFingerprintSummary(
   try {
     const raw = await vscode.workspace.fs.readFile(logUri);
     const text = Buffer.from(raw).toString("utf-8");
-    const { summary, firstLineByFingerprint } = scanSaropaLogDatabaseFingerprints(text);
+    const slowMs = getConfig().viewerSlowBurstThresholds.slowQueryMs;
+    const scanOpts = typeof slowMs === "number" && slowMs > 0 ? { slowQueryMs: slowMs } : undefined;
+    const { summary, firstLineByFingerprint } = scanSaropaLogDatabaseFingerprints(text, scanOpts);
     if (summary.size === 0) {
       return;
     }

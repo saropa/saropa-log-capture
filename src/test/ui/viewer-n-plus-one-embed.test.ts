@@ -67,6 +67,11 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('scheduleRootCauseHypothesesRefresh'));
         assert.ok(chunk.includes('resetRootCauseHypothesesSession'));
         assert.ok(chunk.includes('buildHypothesesEmbedded'));
+        assert.ok(chunk.includes('clearRootCauseHintHostFields'));
+        assert.ok(chunk.includes('slowBurstBySession'));
+        assert.ok(chunk.includes('collectSessionDiffRegressionFpsEmbedded'));
+        assert.ok(chunk.includes('rchCollapseStorageKey'));
+        assert.ok(chunk.includes('explainRootCauseHypotheses'));
     });
 
     test('DB detector framework embed bakes slow burst thresholds and DB_08 detector id', () => {

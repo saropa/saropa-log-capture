@@ -1,6 +1,6 @@
 # DB_14 Phase 1 — Automatic root-cause hints (shipped)
 
-**Status:** Complete as of 2026-03-23. Remaining DB_14 work lives in **`plans/DB_14_automatic-root-cause-hints.md`** (phase 2+).
+**Status:** Complete as of 2026-03-23. **Phase 2 is also shipped** (see current **`plans/DB_14_automatic-root-cause-hints.md`** for contract, implementation map, and optional phase 3).
 
 ## What shipped
 

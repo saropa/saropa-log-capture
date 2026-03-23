@@ -284,9 +284,29 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     }
 }
 
+function trackLearningDismissForStackGroup(groupId) {
+    if (typeof learningEnabled === 'undefined' || !learningEnabled) return;
+    var maxL = typeof learningMaxLineLen === 'number' ? learningMaxLineLen : 2000;
+    for (var i = 0; i < allLines.length; i++) {
+        var it = allLines[i];
+        if (!it || it.groupId !== groupId) continue;
+        if (it.type !== 'stack-frame' && it.type !== 'stack-header') continue;
+        var plain = stripTags(it.html || '');
+        if (!plain) continue;
+        if (plain.length > maxL) plain = plain.substring(0, maxL);
+        vscodeApi.postMessage({
+            type: 'trackInteraction',
+            interactionType: 'dismiss',
+            lineText: plain,
+            lineLevel: it.level || ''
+        });
+    }
+}
+
 function toggleStackGroup(groupId) {
     var header = groupHeaderMap[groupId];
     if (!header) return;
+    var beforeCollapsed = header.collapsed;
     // Cycle: preview -> expanded -> collapsed -> preview
     if (header.collapsed === 'preview') {
         header.collapsed = false; // Expand all
@@ -294,6 +314,9 @@ function toggleStackGroup(groupId) {
         header.collapsed = true; // Collapse all
     } else {
         header.collapsed = 'preview'; // Show preview
+    }
+    if (header.collapsed === true && beforeCollapsed !== true) {
+        trackLearningDismissForStackGroup(groupId);
     }
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
     else { recalcHeights(); renderViewport(true); }

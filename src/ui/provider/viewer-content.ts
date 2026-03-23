@@ -10,6 +10,7 @@ import { getErrorHoverStyles } from '../viewer-decorations/viewer-error-hover-st
 import { getQualityBadgeStyles } from '../viewer-styles/viewer-styles-quality';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
+import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getViewerBodyHtml } from './viewer-content-body';
 import { getViewerScriptTags } from './viewer-content-scripts';
 
@@ -40,6 +41,8 @@ export interface ViewerHtmlOptions {
     readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     /** Master toggle for DB insight detectors + rollup (default true). */
     readonly viewerDbInsightsEnabled?: boolean;
+    /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
+    readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** SQL fingerprint filter chips (plan DB_05); defaults 2 and 20. */
     readonly viewerSqlPatternChipMinCount?: number;
     readonly viewerSqlPatternMaxChips?: number;
@@ -72,6 +75,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
+        viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
         viewerSqlPatternChipMinCount: opts.viewerSqlPatternChipMinCount,
         viewerSqlPatternMaxChips: opts.viewerSqlPatternMaxChips,
     });

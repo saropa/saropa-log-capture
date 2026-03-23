@@ -168,6 +168,12 @@ function renderDatabaseFingerprintSection(
         db.rows.length > SESSION_DB_FP_COMPARE_MAX_ROWS
             ? `<p class="db-fp-hint">Showing first ${SESSION_DB_FP_COMPARE_MAX_ROWS} of ${db.rows.length} fingerprint changes (sorted by impact).</p>`
             : '';
+    const slowHead = db.hasSlowQueryStats
+        ? `<th>Slow A</th>
+<th>Slow B</th>
+<th>Δ slow</th>
+`
+        : '';
     const head = /* html */ `<tr>
 <th>Change</th>
 <th>Fingerprint</th>
@@ -177,9 +183,9 @@ function renderDatabaseFingerprintSection(
 <th>Avg ms A</th>
 <th>Avg ms B</th>
 <th>Δ avg</th>
-<th>Jump</th>
+${slowHead}<th>Jump</th>
 </tr>`;
-    const body = rows.map((r) => renderDbFingerprintRow(r)).join('\n');
+    const body = rows.map((r) => renderDbFingerprintRow(r, db.hasSlowQueryStats)).join('\n');
     return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
 <div class="db-fp-table-wrap">
@@ -192,7 +198,7 @@ ${more}
 </details>`;
 }
 
-function renderDbFingerprintRow(r: SessionDbFingerprintDiffRow): string {
+function renderDbFingerprintRow(r: SessionDbFingerprintDiffRow, showSlowColumns: boolean): string {
     const kindLabel = DB_FP_KIND_LABELS[r.kind];
     const kindClass = `db-kind db-kind-${r.kind}`;
     const fpFull = escapeHtml(r.fingerprint);
@@ -223,6 +229,12 @@ function renderDbFingerprintRow(r: SessionDbFingerprintDiffRow): string {
         const gap = jumpA && jumpB ? ' ' : '';
         jumpCell = `<td class="db-jump-cell">${jumpA}${gap}${jumpB}</td>`;
     }
+    const slowCells = showSlowColumns
+        ? `<td>${r.slowA === undefined ? '—' : r.slowA}</td>
+<td>${r.slowB === undefined ? '—' : r.slowB}</td>
+<td>${r.slowDelta === undefined ? '—' : formatSignedInt(r.slowDelta)}</td>
+`
+        : '';
     return /* html */ `<tr>
 <td><span class="${kindClass}">${escapeHtml(kindLabel)}</span></td>
 <td class="db-fp-fp" title="${fpFull}">${fpShort}</td>
@@ -232,8 +244,15 @@ function renderDbFingerprintRow(r: SessionDbFingerprintDiffRow): string {
 <td>${avgA}</td>
 <td>${avgB}</td>
 <td>${dAvg}</td>
-${jumpCell}
+${slowCells}${jumpCell}
 </tr>`;
+}
+
+function formatSignedInt(n: number): string {
+    if (n > 0) {
+        return `+${n}`;
+    }
+    return String(n);
 }
 
 function formatFixed(n: number, digits: number): string {

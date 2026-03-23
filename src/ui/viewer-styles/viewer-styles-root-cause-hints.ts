@@ -17,9 +17,23 @@ export function getRootCauseHypothesesStyles(): string {
 .root-cause-hypotheses-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
     margin-bottom: 4px;
+}
+.root-cause-hyp-toggle {
+    border: none;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.root-cause-hyp-toggle:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 .root-cause-hypotheses-title {
     font-weight: 600;
@@ -27,6 +41,21 @@ export function getRootCauseHypothesesStyles(): string {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--vscode-descriptionForeground);
+    flex: 1;
+    min-width: 0;
+}
+.root-cause-hyp-explain-ai {
+    border: none;
+    background: transparent;
+    color: var(--vscode-textLink-foreground, #3794ff);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.root-cause-hyp-explain-ai:hover {
+    text-decoration: underline;
 }
 .root-cause-hypotheses-dismiss {
     border: none;
