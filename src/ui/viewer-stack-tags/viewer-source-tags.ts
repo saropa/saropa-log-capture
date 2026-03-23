@@ -133,6 +133,7 @@ function toggleSourceTag(tag) {
     } else {
         hiddenSourceTags[tag] = true;
     }
+    hiddenSourceTags = ensureAtLeastOneTagVisible(hiddenSourceTags, sourceTagCounts);
     applySourceTagFilter();
     rebuildTagChips();
     if (typeof markPresetDirty === 'function') { markPresetDirty(); }
