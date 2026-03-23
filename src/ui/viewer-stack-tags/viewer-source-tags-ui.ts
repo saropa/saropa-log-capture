@@ -8,9 +8,11 @@ function escapeTagHtml(text) {
 function rebuildTagChips() {
     var container = document.getElementById('source-tag-chips');
     if (!container) { return; }
-    var keys = Object.keys(sourceTagCounts);
-    keys.sort(function(a, b) { return sourceTagCounts[b] - sourceTagCounts[a]; });
-    var limit = sourceTagShowAll ? keys.length : Math.min(keys.length, sourceTagMaxChips);
+    var chipKeys = (typeof getSourceTagChipKeys === 'function')
+        ? getSourceTagChipKeys()
+        : Object.keys(sourceTagCounts);
+    chipKeys.sort(function(a, b) { return sourceTagCounts[b] - sourceTagCounts[a]; });
+    var limit = sourceTagShowAll ? chipKeys.length : Math.min(chipKeys.length, sourceTagMaxChips);
     var parts = [
         '<span class="source-tag-actions">'
         + '<button class="tag-action-btn" data-action="all">All</button>'
@@ -18,8 +20,8 @@ function rebuildTagChips() {
         + '</span>'
     ];
     for (var i = 0; i < limit; i++) {
-        var key = keys[i];
-        var label = key === otherKey ? '(Other)' : escapeTagHtml(key);
+        var key = chipKeys[i];
+        var label = escapeTagHtml(key);
         var active = !hiddenSourceTags[key];
         var cls = 'source-tag-chip' + (active ? ' active' : '');
         parts.push(
@@ -28,8 +30,8 @@ function rebuildTagChips() {
             + '<span class="tag-count">' + sourceTagCounts[key] + '</span></button>'
         );
     }
-    if (keys.length > sourceTagMaxChips) {
-        var showLabel = sourceTagShowAll ? 'Show less' : 'Show all (' + keys.length + ')';
+    if (chipKeys.length > sourceTagMaxChips) {
+        var showLabel = sourceTagShowAll ? 'Show less' : 'Show all (' + chipKeys.length + ')';
         parts.push('<button class="tag-show-all-btn" data-action="toggle-all">' + showLabel + '</button>');
     }
     container.innerHTML = parts.join('');

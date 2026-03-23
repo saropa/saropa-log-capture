@@ -37,7 +37,8 @@ Identify likely N+1 query patterns from repeated SQL fingerprints with varying a
 
 - Canonical thresholds and testable logic: `src/modules/db/drift-n-plus-one-detector.ts` (`NPlusOneDetector`, `parseDriftSqlFingerprint`, `N_PLUS_ONE_EMBED_CONFIG`).
 - Embedded runtime: `src/ui/viewer/viewer-data-n-plus-one-script.ts` (must stay aligned with the module).
-- Ingest: `viewer-data-add.ts` appends `n-plus-one-insight` rows; wrapped in **try/catch** so malformed lines never break streaming.
+- **DB_15 orchestration:** detector id **`db.n-plus-one`** registered in `viewer-db-detector-framework-script.ts`; ingest calls **`emitDbLineDetectors`** from `viewer-data-add-db-detectors.ts` / `viewer-data-add.ts` (normal + repeat-collapse paths). Trim/clear: **`pruneDbDetectorStateAfterTrim`**, **`resetDbInsightDetectorSession`**.
+- Master toggle: **`saropaLogCapture.viewerDbInsightsEnabled`** (disables N+1 + `dbInsight` rollup when off).
 - UI: `viewer-script.ts` — **Focus DB** (solo `database` source tag), **Find fingerprint** (populate in-log search).
 - Styles: `viewer-styles-n-plus-one-insight.ts`.
 - Tests: `src/test/modules/db/drift-n-plus-one-detector.test.ts`, `src/test/ui/viewer-n-plus-one-embed.test.ts`.

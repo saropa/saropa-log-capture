@@ -5,6 +5,7 @@
  */
 
 import type { ViewerRepeatThresholds } from "../db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../db/drift-db-slow-burst-thresholds";
 import type { HighlightRule } from "../storage/highlight-rules";
 import type { SplitRules } from "../misc/file-splitter";
 import type { AutoTagRule } from "../misc/auto-tagger";
@@ -84,6 +85,8 @@ export interface SaropaLogCaptureConfig {
   readonly viewerRepeatThresholds: ViewerRepeatThresholds;
   /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbInsight rollup in the viewer. */
   readonly viewerDbInsightsEnabled: boolean;
+  /** Slow query burst marker thresholds in the log viewer (plan DB_08). */
+  readonly viewerSlowBurstThresholds: ViewerSlowBurstThresholds;
   /**
    * Minimum occurrences of a normalized SQL fingerprint before it gets its own filter chip (below → "Other SQL").
    * Plan DB_05; baked into viewer script and updated via `setViewerSqlPatternChipSettings`.

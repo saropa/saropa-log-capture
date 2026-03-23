@@ -125,6 +125,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
     broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
     broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
+    broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
     broadcaster.setViewerSqlPatternChipSettings(
         initCfg.viewerSqlPatternChipMinCount,
         initCfg.viewerSqlPatternMaxChips,
@@ -230,7 +231,16 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     });
 
     registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
-    registerCommands({ context, sessionManager, viewerProvider, historyProvider, inlineDecorations, popOutPanel, investigationStore });
+    registerCommands({
+        context,
+        sessionManager,
+        viewerProvider,
+        historyProvider,
+        inlineDecorations,
+        popOutPanel,
+        investigationStore,
+        broadcaster,
+    });
 
     registerNoRestoreSerializers(context);
 
