@@ -90,6 +90,23 @@ function sourceFilterLabel(id) {
     return id;
 }
 
+/** Collect checkboxes under the log-streams list (core rows + external group). */
+function getSourceFilterCheckboxes(list) {
+    return list.querySelectorAll('input[type="checkbox"][data-source]');
+}
+
+/** Rebuild enabledSources from checkbox state; null means all streams on. */
+function commitSourceFilterFromCheckboxes(list) {
+    var boxes = getSourceFilterCheckboxes(list);
+    var checked = [];
+    for (var j = 0; j < boxes.length; j++) {
+        if (boxes[j].checked) checked.push(boxes[j].dataset.source);
+    }
+    window.enabledSources = checked.length === boxes.length ? null : checked;
+    if (typeof recalcHeights === 'function') recalcHeights();
+    if (typeof renderViewport === 'function') renderViewport(true);
+}
+
 /** Sync source filter checkboxes from window.availableSources / window.enabledSources. Called after setSources. */
 function syncSourceFilterUi() {
     var section = document.getElementById('source-filter-section');
@@ -104,27 +121,37 @@ function syncSourceFilterUi() {
     var enabled = (typeof window !== 'undefined' && window.enabledSources) ? window.enabledSources : null;
     var allEnabled = !enabled || enabled.length === available.length;
     while (list.firstChild) list.removeChild(list.firstChild);
-    for (var i = 0; i < available.length; i++) {
-        var sid = available[i];
-        var label = document.createElement('label');
-        label.className = 'options-row';
+
+    function addStreamRow(sid) {
+        var row = document.createElement('label');
+        row.className = 'options-row';
         var cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.dataset.source = sid;
         cb.checked = allEnabled || (enabled && enabled.indexOf(sid) >= 0);
-        cb.addEventListener('change', function() {
-            var boxes = list.querySelectorAll('input[type="checkbox"]');
-            var checked = [];
-            for (var j = 0; j < boxes.length; j++) {
-                if (boxes[j].checked) checked.push(boxes[j].dataset.source);
-            }
-            window.enabledSources = checked.length === boxes.length ? null : checked;
-            if (typeof recalcHeights === 'function') recalcHeights();
-            if (typeof renderViewport === 'function') renderViewport(true);
-        });
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(' ' + sourceFilterLabel(sid)));
-        list.appendChild(label);
+        cb.addEventListener('change', function() { commitSourceFilterFromCheckboxes(list); });
+        row.appendChild(cb);
+        row.appendChild(document.createTextNode(' ' + sourceFilterLabel(sid)));
+        list.appendChild(row);
+    }
+
+    var externals = [];
+    for (var i = 0; i < available.length; i++) {
+        var sid = available[i];
+        if (typeof sid === 'string' && sid.indexOf('external:') === 0) {
+            externals.push(sid);
+        } else {
+            addStreamRow(sid);
+        }
+    }
+    if (externals.length > 0) {
+        var groupTitle = document.createElement('div');
+        groupTitle.className = 'options-hint source-external-group-title';
+        groupTitle.textContent = 'External sidecars (' + externals.length + ')';
+        list.appendChild(groupTitle);
+        for (var e = 0; e < externals.length; e++) {
+            addStreamRow(externals[e]);
+        }
     }
 }
 
