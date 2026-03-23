@@ -1,0 +1,124 @@
+/**
+ * Embedded webview script: Drift SQL N+1 burst detector.
+ *
+ * Emits `parseSqlFingerprint` / `detectNPlusOneInsight` into the same scope as
+ * `addToData` (see `viewer-data-helpers.ts` load order). Thresholds are interpolated
+ * from `N_PLUS_ONE_EMBED_CONFIG` in `modules/db/drift-n-plus-one-detector.ts` so the
+ * extension and unit tests agree on numbers; **function bodies must stay aligned**
+ * with that module’s documented behavior.
+ */
+import { N_PLUS_ONE_EMBED_CONFIG as N1 } from '../../modules/db/drift-n-plus-one-detector';
+
+export function getNPlusOneDetectorScript(): string {
+    return /* javascript */ `
+var driftSqlPattern = /\\bDrift:\\s+Sent\\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+var nPlusOneDetector = {
+    windowMs: ${N1.windowMs},
+    minRepeats: ${N1.minRepeats},
+    minDistinctArgs: ${N1.minDistinctArgs},
+    minDistinctRatio: ${N1.minDistinctRatio},
+    cooldownMs: ${N1.cooldownMs},
+    maxFingerprintsTracked: ${N1.maxFingerprintsTracked},
+    pruneIdleMs: ${N1.pruneIdleMs},
+    byFingerprint: Object.create(null)
+};
+function parseSqlFingerprint(plainText) {
+    if (!plainText || !driftSqlPattern.test(plainText)) return null;
+    var sentIdx = plainText.indexOf('Drift: Sent ');
+    if (sentIdx < 0) return null;
+    var body = plainText.substring(sentIdx + 12).trim();
+    if (!body) return null;
+    var argsIdx = body.lastIndexOf(' with args ');
+    var sqlPart = argsIdx >= 0 ? body.substring(0, argsIdx) : body;
+    var argsPart = argsIdx >= 0 ? body.substring(argsIdx + 11).trim() : '';
+    var sql = sqlPart.trim();
+    if (!sql) return null;
+    var fp = sql
+        .replace(/'[^']*'/g, '?')
+        .replace(/\\"[^\\"]*\\"/g, '?')
+        .replace(/\\b\\d+\\b/g, '?')
+        .replace(/\\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+    if (!fp) return null;
+    return { fingerprint: fp, argsKey: argsPart || '[]' };
+}
+function pruneNPlusOneFingerprints(now) {
+    var keys = Object.keys(nPlusOneDetector.byFingerprint);
+    if (keys.length <= nPlusOneDetector.maxFingerprintsTracked) return;
+    var idle = nPlusOneDetector.pruneIdleMs;
+    var i, k, ent, lastTs;
+    for (i = 0; i < keys.length; i++) {
+        k = keys[i];
+        ent = nPlusOneDetector.byFingerprint[k];
+        if (!ent || !ent.hits.length) {
+            delete nPlusOneDetector.byFingerprint[k];
+            continue;
+        }
+        lastTs = ent.hits[ent.hits.length - 1].ts;
+        if (now - lastTs > idle) delete nPlusOneDetector.byFingerprint[k];
+    }
+    keys = Object.keys(nPlusOneDetector.byFingerprint);
+    while (keys.length > nPlusOneDetector.maxFingerprintsTracked) {
+        var worstK = null;
+        var worstTs = Infinity;
+        for (i = 0; i < keys.length; i++) {
+            k = keys[i];
+            ent = nPlusOneDetector.byFingerprint[k];
+            if (!ent || !ent.hits.length) continue;
+            lastTs = ent.hits[ent.hits.length - 1].ts;
+            if (lastTs < worstTs) {
+                worstTs = lastTs;
+                worstK = k;
+            }
+        }
+        if (worstK == null) break;
+        delete nPlusOneDetector.byFingerprint[worstK];
+        keys = Object.keys(nPlusOneDetector.byFingerprint);
+    }
+}
+function detectNPlusOneInsight(ts, fingerprint, argsKey) {
+    if (!fingerprint) return null;
+    var now = ts || Date.now();
+    var entry = nPlusOneDetector.byFingerprint[fingerprint];
+    if (!entry) {
+        entry = { hits: [], lastInsightTs: 0 };
+        nPlusOneDetector.byFingerprint[fingerprint] = entry;
+    }
+    entry.hits.push({ ts: now, argsKey: argsKey || '[]' });
+    var cutoff = now - nPlusOneDetector.windowMs;
+    while (entry.hits.length > 0 && entry.hits[0].ts < cutoff) {
+        entry.hits.shift();
+    }
+    var repeats = entry.hits.length;
+    if (repeats < nPlusOneDetector.minRepeats) {
+        pruneNPlusOneFingerprints(now);
+        return null;
+    }
+    var distinctArgsMap = Object.create(null);
+    for (var j = 0; j < entry.hits.length; j++) distinctArgsMap[entry.hits[j].argsKey] = true;
+    var distinctArgs = Object.keys(distinctArgsMap).length;
+    var distinctRatio = repeats > 0 ? (distinctArgs / repeats) : 0;
+    if (distinctArgs < nPlusOneDetector.minDistinctArgs || distinctRatio < nPlusOneDetector.minDistinctRatio) {
+        pruneNPlusOneFingerprints(now);
+        return null;
+    }
+    if (entry.lastInsightTs > 0 && (now - entry.lastInsightTs) < nPlusOneDetector.cooldownMs) {
+        pruneNPlusOneFingerprints(now);
+        return null;
+    }
+    entry.lastInsightTs = now;
+    var windowSpanMs = entry.hits[entry.hits.length - 1].ts - entry.hits[0].ts;
+    var confidence = 'low';
+    if (distinctRatio >= 0.7 && repeats >= 12) confidence = 'high';
+    else if (distinctRatio >= 0.6 && repeats >= 10) confidence = 'medium';
+    pruneNPlusOneFingerprints(now);
+    return {
+        repeats: repeats,
+        distinctArgs: distinctArgs,
+        windowSpanMs: windowSpanMs,
+        confidence: confidence
+    };
+}
+`;
+}
