@@ -8,6 +8,7 @@
  */
 
 import * as vscode from "vscode";
+import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { SessionDisplayOptions } from "../session/session-display";
@@ -95,6 +96,27 @@ export function setMinimapShowInfoImpl(target: ProviderStateTarget, show: boolea
 }
 export function setMinimapShowSqlDensityImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "minimapShowSqlDensity", show });
+}
+export function setViewerRepeatThresholdsImpl(target: ProviderStateTarget, thresholds: ViewerRepeatThresholds): void {
+  target.postMessage({
+    type: "setViewerRepeatThresholds",
+    thresholds: {
+      globalMinCount: thresholds.globalMinCount,
+      readMinCount: thresholds.readMinCount,
+      transactionMinCount: thresholds.transactionMinCount,
+      dmlMinCount: thresholds.dmlMinCount,
+    },
+  });
+}
+export function setViewerDbInsightsEnabledImpl(target: ProviderStateTarget, enabled: boolean): void {
+  target.postMessage({ type: "setViewerDbInsightsEnabled", enabled });
+}
+export function setViewerSqlPatternChipSettingsImpl(
+  target: ProviderStateTarget,
+  chipMinCount: number,
+  chipMaxChips: number,
+): void {
+  target.postMessage({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
 }
 export function setMinimapWidthImpl(target: ProviderStateTarget, width: "small" | "medium" | "large"): void {
   target.postMessage({ type: "minimapWidth", width });

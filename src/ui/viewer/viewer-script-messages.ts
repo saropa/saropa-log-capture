@@ -57,7 +57,8 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; }
+            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false; repeatTracker.sqlRepeatPreview = null; }
+            if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
@@ -209,6 +210,14 @@ window.addEventListener('message', function(event) {
                 dbRepeatThresholds.read = clampRepeatN(th.readMinCount);
                 dbRepeatThresholds.transaction = clampRepeatN(th.transactionMinCount);
                 dbRepeatThresholds.dml = clampRepeatN(th.dmlMinCount);
+            }
+            break;
+        case 'setViewerDbInsightsEnabled':
+            viewerDbInsightsEnabled = msg.enabled !== false;
+            break;
+        case 'setViewerSqlPatternChipSettings':
+            if (typeof applyViewerSqlPatternChipSettings === 'function') {
+                applyViewerSqlPatternChipSettings(msg.chipMinCount, msg.chipMaxChips);
             }
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;

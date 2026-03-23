@@ -90,6 +90,23 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.autoHidePatterns')) {
             broadcaster.setAutoHidePatterns(cfg.autoHidePatterns);
         }
+        if (
+            e.affectsConfiguration('saropaLogCapture.repeatCollapseGlobalMinCount')
+            || e.affectsConfiguration('saropaLogCapture.repeatCollapseReadMinCount')
+            || e.affectsConfiguration('saropaLogCapture.repeatCollapseTransactionMinCount')
+            || e.affectsConfiguration('saropaLogCapture.repeatCollapseDmlMinCount')
+        ) {
+            broadcaster.setViewerRepeatThresholds(cfg.viewerRepeatThresholds);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.viewerDbInsightsEnabled')) {
+            broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
+        }
+        if (
+            e.affectsConfiguration('saropaLogCapture.viewerSqlPatternChipMinCount')
+            || e.affectsConfiguration('saropaLogCapture.viewerSqlPatternMaxChips')
+        ) {
+            broadcaster.setViewerSqlPatternChipSettings(cfg.viewerSqlPatternChipMinCount, cfg.viewerSqlPatternMaxChips);
+        }
     }));
 }
 

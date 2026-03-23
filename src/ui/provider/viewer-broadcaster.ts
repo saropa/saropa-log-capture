@@ -6,6 +6,7 @@
  */
 
 import type * as vscode from "vscode";
+import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { LineData } from "../../modules/session/session-manager";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
@@ -112,6 +113,15 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   setMinimapShowSqlDensity(show: boolean): void {
     for (const t of this.targets) { t.setMinimapShowSqlDensity(show); }
+  }
+  setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
+    for (const t of this.targets) { t.setViewerRepeatThresholds(thresholds); }
+  }
+  setViewerDbInsightsEnabled(enabled: boolean): void {
+    for (const t of this.targets) { t.setViewerDbInsightsEnabled(enabled); }
+  }
+  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
+    for (const t of this.targets) { t.setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips); }
   }
   setMinimapWidth(width: "small" | "medium" | "large"): void {
     for (const t of this.targets) { t.setMinimapWidth(width); }
