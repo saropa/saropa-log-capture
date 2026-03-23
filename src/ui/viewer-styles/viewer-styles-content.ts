@@ -146,11 +146,50 @@ export function getContentStyles(): string {
 .footer-selection { white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
 .footer-selection:empty { display: none; }
 
-/* Footer replay button — hidden by default, shown when file is loaded */
-.footer-replay-btn { display: none; }
-.footer-replay-btn.footer-replay-visible { display: inline-flex; align-items: center; gap: 3px; }
+/* Footer actions menu — hidden by default, shown when file is loaded */
+.footer-actions-menu { display: none; position: relative; }
+.footer-actions-menu.footer-actions-visible { display: inline-flex; align-items: center; }
+.footer-actions-btn { display: inline-flex; align-items: center; gap: 3px; }
+.footer-actions-popover {
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 6px);
+    min-width: 140px;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    z-index: 30;
+}
+.footer-actions-menu.footer-actions-open .footer-actions-popover { display: block; }
+.footer-actions-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--vscode-foreground);
+    font-size: 11px;
+    text-align: left;
+    padding: 4px 6px;
+    cursor: pointer;
+}
+.footer-actions-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.footer-actions-item.is-disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.footer-actions-item.is-disabled:hover {
+    background: transparent;
+}
 .footer-dot { display: none; color: var(--vscode-descriptionForeground); }
-.footer-replay-btn.footer-replay-visible + .footer-dot { display: inline; }
+.footer-actions-menu.footer-actions-visible + .footer-dot { display: inline; }
 
 /* Version link at far right — opens About panel */
 .footer-version-link {

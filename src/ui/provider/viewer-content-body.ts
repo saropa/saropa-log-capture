@@ -108,7 +108,22 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <span id="footer-selection" class="footer-selection"></span>
         <span id="filter-badge" class="filter-badge" role="button" title="Active filters — click to open filters" aria-label="Active filters — click to open options"></span>
         <span class="footer-spacer"></span>
-        <button id="footer-replay-btn" class="footer-btn footer-replay-btn" title="Replay log" aria-label="Replay log"><span class="codicon codicon-debug-start"></span> Replay</button>
+        <div id="footer-actions-menu" class="footer-actions-menu">
+            <button id="footer-actions-btn" class="footer-btn footer-actions-btn" title="Actions" aria-label="Actions menu" aria-haspopup="true" aria-expanded="false">
+                <span class="codicon codicon-tools"></span> Actions
+            </button>
+            <div id="footer-actions-popover" class="footer-actions-popover" role="menu" aria-label="Actions">
+                <button type="button" class="footer-actions-item" data-action="replay" role="menuitem">
+                    <span class="codicon codicon-debug-start" aria-hidden="true"></span> Replay
+                </button>
+                <button type="button" class="footer-actions-item" data-action="open-quality-report" role="menuitem">
+                    <span class="codicon codicon-file-code" aria-hidden="true"></span> Open quality report
+                </button>
+                <button type="button" class="footer-actions-item" data-action="export" role="menuitem">
+                    <span class="codicon codicon-export" aria-hidden="true"></span> Export
+                </button>
+            </div>
+        </div>
         <span class="footer-dot">&middot;</span>
         <a id="footer-version-link" href="#" class="footer-version-link" title="About Saropa" aria-label="About Saropa Log Capture">${version ? `v${version}` : ''}</a>
     </div>

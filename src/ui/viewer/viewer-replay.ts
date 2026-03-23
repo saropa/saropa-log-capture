@@ -10,9 +10,19 @@
  * Speed options: 0.1x, 0.25x, 0.5x, 0.75x, 1x, 2x, 5x, 10x. The speed dropdown is
  * set via closest-option matching to avoid float display issues (e.g. 0.5x).
  *
- * Visibility: The replay panel (horizontal layout) is anchored to the bottom-right
- * of the log area. It is hidden by default; the footer **Replay** button toggles it.
- * During active recording, the panel hides.
+ * ## Footer Actions menu (this script)
+ * The popover in `viewer-content-body.ts` holds **Replay**, **Open quality report**, and **Export**.
+ * Replay toggles the replay bar; export opens the export modal; quality report posts
+ * `openQualityReport` to the extension (same as the former context-menu path).
+ *
+ * **Quality report gating:** `applyFooterQualityReportState()` reads `window.integrationAdapters`
+ * (set by `integrationsAdapters` in `viewer-script-messages.ts`). If `'codeQuality'` is missing,
+ * the button gets `.is-disabled`, `aria-disabled`, and a tooltip; clicks no-op. Called on script
+ * init, whenever `setReplayEnabled` shows the footer, and after each `integrationsAdapters` message
+ * — no timers, no recursion (host message is one-way).
+ *
+ * Visibility: Footer actions hide during an active capture session or when no file/lines are loaded
+ * (same rules as before for replay/export).
  */
 
 import { getReplayControlsScript } from './viewer-replay-controls';
@@ -63,7 +73,29 @@ export function getReplayScript(): string {
     var speedSelect = document.getElementById('replay-speed');
     var scrubber = document.getElementById('replay-scrubber');
     var statusEl = document.getElementById('replay-status');
-    var footerReplayBtn = document.getElementById('footer-replay-btn');
+    var footerActionsMenu = document.getElementById('footer-actions-menu');
+    var footerActionsBtn = document.getElementById('footer-actions-btn');
+    var footerActionsPopover = document.getElementById('footer-actions-popover');
+    var replayActionBtn = footerActionsPopover ? footerActionsPopover.querySelector('[data-action="replay"]') : null;
+    var qualityReportBtn = footerActionsPopover ? footerActionsPopover.querySelector('[data-action="open-quality-report"]') : null;
+    var exportActionBtn = footerActionsPopover ? footerActionsPopover.querySelector('[data-action="export"]') : null;
+
+    var qualityReportDisabledTitle = 'Enable the codeQuality integration to generate quality reports.';
+    var qualityReportEnabledTitle = 'Open session quality report (.quality.json sidecar)';
+
+    function applyFooterQualityReportState() {
+        if (!qualityReportBtn) return;
+        var ids = (typeof window !== 'undefined' && Array.isArray(window.integrationAdapters)) ? window.integrationAdapters : [];
+        var on = ids.indexOf('codeQuality') >= 0;
+        qualityReportBtn.classList.toggle('is-disabled', !on);
+        qualityReportBtn.setAttribute('title', on ? qualityReportEnabledTitle : qualityReportDisabledTitle);
+        if (!on) {
+            qualityReportBtn.setAttribute('aria-disabled', 'true');
+        } else {
+            qualityReportBtn.removeAttribute('aria-disabled');
+        }
+    }
+    window.applyFooterQualityReportState = applyFooterQualityReportState;
 
     var replaySessionActive = false;
     var replayFileLoaded = false;
@@ -76,30 +108,39 @@ export function getReplayScript(): string {
         if (typeof syncJumpButtonInset === 'function') syncJumpButtonInset();
     }
 
-    function setFooterReplayVisible(visible) {
-        if (!footerReplayBtn) return;
-        footerReplayBtn.classList.toggle('footer-replay-visible', !!visible);
+    function setFooterActionsVisible(visible) {
+        if (!footerActionsMenu) return;
+        footerActionsMenu.classList.toggle('footer-actions-visible', !!visible);
+        if (!visible) footerActionsMenu.classList.remove('footer-actions-open');
+    }
+
+    function setFooterActionsOpen(open) {
+        if (!footerActionsMenu || !footerActionsBtn) return;
+        if (!footerActionsMenu.classList.contains('footer-actions-visible')) return;
+        footerActionsMenu.classList.toggle('footer-actions-open', !!open);
+        footerActionsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     window.setReplayEnabled = function(fileLoaded, sessionActive) {
         replayFileLoaded = fileLoaded;
         replaySessionActive = sessionActive;
         if (sessionActive || !fileLoaded || !hasLines()) {
-            setFooterReplayVisible(false);
+            setFooterActionsVisible(false);
             setReplayBarVisible(false);
             if (window.replayMode) window.exitReplayMode();
         } else if (fileLoaded && hasLines()) {
-            setFooterReplayVisible(true);
+            setFooterActionsVisible(true);
+            applyFooterQualityReportState();
         }
     };
 
-    function updateReplayIcon(playing) {
-        if (!footerReplayBtn) return;
-        var ic = footerReplayBtn.querySelector('.codicon');
+    function updateReplayAction(playing) {
+        if (!replayActionBtn) return;
+        var ic = replayActionBtn.querySelector('.codicon');
         var cls = playing ? 'codicon codicon-debug-pause' : 'codicon codicon-debug-start';
         if (ic) ic.className = cls;
-        footerReplayBtn.title = playing ? 'Replay playing — click to show or hide controls' : 'Replay log — click to show or hide controls';
-        footerReplayBtn.setAttribute('aria-label', playing ? 'Replay playing' : 'Replay log');
+        replayActionBtn.title = playing ? 'Replay playing' : 'Replay log';
+        replayActionBtn.setAttribute('aria-label', playing ? 'Replay playing' : 'Replay log');
     }
 
     window.toggleReplayBar = function() {
@@ -113,6 +154,44 @@ export function getReplayScript(): string {
         var visible = bar.classList.contains('replay-bar-visible');
         setReplayBarVisible(!visible);
     };
+
+    if (footerActionsBtn) {
+        footerActionsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setFooterActionsOpen(!footerActionsMenu.classList.contains('footer-actions-open'));
+        });
+    }
+    if (replayActionBtn) {
+        replayActionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setFooterActionsOpen(false);
+            if (typeof window.toggleReplayBar === 'function') window.toggleReplayBar();
+        });
+    }
+    if (exportActionBtn) {
+        exportActionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setFooterActionsOpen(false);
+            if (typeof window.openExportModal === 'function') window.openExportModal();
+        });
+    }
+    if (qualityReportBtn) {
+        qualityReportBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (qualityReportBtn.classList.contains('is-disabled')) return;
+            setFooterActionsOpen(false);
+            vscodeApi.postMessage({ type: 'openQualityReport' });
+        });
+    }
+    applyFooterQualityReportState();
+    document.addEventListener('click', function(e) {
+        if (!footerActionsMenu) return;
+        if (!footerActionsMenu.contains(e.target)) setFooterActionsOpen(false);
+    });
 
     ${getReplayTimingScript()}
     ${getReplayControlsScript()}
