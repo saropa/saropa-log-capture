@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri } from './modules/config/config';
+import { getConfig, getLogDirectoryUri, viewerDbDetectorTogglesFromConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
@@ -37,6 +37,8 @@ import { disposeInvestigationPanel } from './ui/investigation/investigation-pane
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
 import { setupLineListeners, setupConfigListener, setupScopeContextListener } from './activation-listeners';
 import { maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
+import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -54,6 +56,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     context.subscriptions.push(statusBar, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
+    initLearningRuntime(context, sessionManager);
+    context.subscriptions.push({ dispose: () => { void flushLearningBuffer(); } });
     const apiHandle = createApi(sessionManager);
 
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -125,6 +129,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
     broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
     broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
+    broadcaster.setViewerDbDetectorToggles(viewerDbDetectorTogglesFromConfig(initCfg));
     broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
     broadcaster.setViewerSqlPatternChipSettings(
         initCfg.viewerSqlPatternChipMinCount,
@@ -241,6 +246,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         investigationStore,
         broadcaster,
     });
+
+    scheduleLearningSuggestionCheck(context, broadcaster);
 
     registerNoRestoreSerializers(context);
 

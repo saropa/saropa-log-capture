@@ -11,6 +11,7 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from '../capture/ansi';
+import { getConfig } from '../config/config';
 import {
     compareScannedSaropaDbFingerprints,
     scanSaropaLogDatabaseFingerprints,
@@ -151,8 +152,10 @@ export async function compareLogSessionsWithDbFingerprints(
         readLogFileUtf8(uriA),
         readLogFileUtf8(uriB),
     ]);
-    const scanA = scanSaropaLogDatabaseFingerprints(textA);
-    const scanB = scanSaropaLogDatabaseFingerprints(textB);
+    const slowMs = getConfig().viewerSlowBurstThresholds.slowQueryMs;
+    const scanOpts = typeof slowMs === 'number' && slowMs > 0 ? { slowQueryMs: slowMs } : undefined;
+    const scanA = scanSaropaLogDatabaseFingerprints(textA, scanOpts);
+    const scanB = scanSaropaLogDatabaseFingerprints(textB, scanOpts);
     return {
         diff: diffParsedLogLines(
             parseLogLinesFromContent(textA),
