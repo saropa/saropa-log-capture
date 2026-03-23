@@ -216,6 +216,10 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
       vscode.workspace.getConfiguration("saropaLogCapture")
         .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
       return true;
+    case "setMinimapSqlDensity":
+      vscode.workspace.getConfiguration("saropaLogCapture")
+        .update("minimapShowSqlDensity", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+      return true;
     case "editLine":
       helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
         lineIndex: safeLineIndex(msg.lineIndex, 0), newText: msgStr(msg, "newText"),
