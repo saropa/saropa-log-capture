@@ -1,17 +1,18 @@
-# DB_03 SQL Repeat Compression (completed)
+# DB_03 SQL Repeat Compression — implemented
 
-**Archived:** 2026-03-23. Active plans live under `plans/`; this file is historical context only.
+**Status:** Implemented in-tree (2026-03). Automated behavioral coverage added in `src/test/ui/viewer-sql-repeat-compression.test.ts` (VM-backed `addToData` + production embed chunks). Original spec retained below.
 
-## Completion summary
+## Implementation summary
 
-- Fingerprint-keyed real-time repeat collapse for **`database`**-tagged Drift `Sent` SQL (`level + '::sqlfp::' + fingerprint`), with **SQL repeated #N** copy and snippet preview (`viewer-data-add.ts`, `viewer-data-helpers-core.ts`).
-- **`emitDbLineDetectors`** runs on both full-line and repeat-collapse paths so N+1 / DB_15 detectors still see every physical line (`viewer-data-add-db-detectors.ts`).
-- **Single parse per line:** `parseSqlFingerprint(plain)` runs once per ingest; repeat key, `dbInsight`, and detectors share **`sqlMeta`** (2026-03-23 follow-up).
-- **Tests:** `src/test/ui/viewer-data-add-embed.test.ts` (single-parse + database-tag gate for sqlfp); string-level embed checks in `viewer-n-plus-one-embed.test.ts`.
+- **Identity:** `database`-tagged Drift `Sent` lines with a parseable `sqlMeta.fingerprint` use repeat key `level + '::sqlfp::' + fingerprint`; otherwise `generateRepeatHash(level, plain)` (`viewer-data-add.ts`).
+- **UX:** Repeat rows use **SQL repeated #N** + `repeat-sql-fp` when in SQL fingerprint mode; preview prefers `sqlSnippet`.
+- **N+1 / DB_15:** `emitDbLineDetectors` runs on both normal and repeat-collapse paths so arg-variant bursts still feed detectors.
+- **Tests:** VM sandbox mirrors script load order (`viewer-data-n-plus-one-script` → `viewer-db-detector-framework-script` → `viewer-data-helpers-core` → `viewer-data-add`). Covers merge/split streaks, null-fingerprint fallback (mocked), `repeatWindowMs` reset, non-tag false positives, marker cleanup.
+- **Follow-up:** Expanded inspection of collapsed streaks remains **DB_06** (drilldown).
 
 ---
 
-# DB_03 SQL Repeat Compression
+# DB_03 SQL Repeat Compression (original plan)
 
 ## Goal
 Extend **real-time repeat suppression** (the `repeatTracker` path that emits `Repeated #N` rows) so repeated Drift SQL lines group by **normalized SQL fingerprint**, not by raw line text (first 200 chars). Same statement shape with different literals/args should count as one streak.
@@ -33,12 +34,9 @@ Extend **real-time repeat suppression** (the `repeatTracker` path that emits `Re
 - For Drift SQL with a parseable fingerprint, the repeat key is **`level + '::sqlfp::' + fingerprint`** (see `viewer-data-add.ts`); non-SQL lines still use `generateRepeatHash(level, plainText)`.
 - **N+1:** the same SQL path calls **`emitDbLineDetectors`** on both normal and repeat-collapse branches so arg-variant bursts still feed **`db.n-plus-one`** (**DB_15**).
 
-## Status
-Core fingerprint-keyed repeat collapse and SQL-specific repeat row copy are **implemented**. Remaining gap vs this plan is mostly **DB_06** (drilldown) if product wants expanded inspection of collapsed streaks.
-
 ## Implementation Plan
 
-1. For lines where repeat grouping should use SQL shape: `sourceTag === 'database'` **and** `parseSqlFingerprint(plain)` returns a non-null `fingerprint`, compute repeat key as **`level + '::sqlfp:' + fingerprint`** (or equivalent single stable string). Otherwise keep **`generateRepeatHash(level, plain)`** unchanged.
+1. For lines where repeat grouping should use SQL shape: `sourceTag === 'database'` **and** `parseSqlFingerprint(plain)` returns a non-null `fingerprint`, compute repeat key as **`level + '::sqlfp::' + fingerprint`**. Otherwise keep **`generateRepeatHash(level, plain)`** unchanged.
 2. Keep **preview text** for the repeat row useful: e.g. prefer `sqlSnippet` / truncated fingerprint from parse result when in SQL-repeat mode; keep existing plain-text preview for non-SQL.
 3. Adjust **visible label** on the repeat row (still same row type/CSS family) so it reads as SQL repeat compression, not a generic duplicate.
 4. **N+1 detector** (**DB_15** `db.n-plus-one`): **implemented** on both branches—repeat-collapse rows still call **`emitDbLineDetectors`** so hits are not silently dropped when lines fold into `repeat-notification`.
