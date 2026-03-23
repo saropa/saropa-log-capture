@@ -47,10 +47,6 @@ function handleGlobalAction(action) {
         if (typeof window.openExportModal === 'function') window.openExportModal();
         return true;
     }
-    if (action === 'open-quality-report') {
-        vscodeApi.postMessage({ type: 'openQualityReport' });
-        return true;
-    }
     if (action === 'open-drift-advisor') {
         vscodeApi.postMessage({ type: 'openDriftAdvisor' });
         return true;

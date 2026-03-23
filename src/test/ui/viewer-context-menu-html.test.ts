@@ -60,6 +60,26 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Compress lines (non-consecutive dupes)'));
         });
 
+        test('should include leading codicons on Options toggles and hide-blank toggle', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('data-action="toggle-wrap"') && html.includes('codicon-word-wrap'));
+            assert.ok(html.includes('codicon-symbol-event') && html.includes('toggle-decorations'));
+            assert.ok(html.includes('codicon-clock') && html.includes('toggle-timestamp'));
+            assert.ok(html.includes('codicon-watch') && html.includes('toggle-session-elapsed'));
+            assert.ok(html.includes('codicon-layout-panel') && html.includes('toggle-spacing'));
+            assert.ok(html.includes('codicon-unfold') && html.includes('toggle-line-height'));
+            assert.ok(html.includes('<span class="codicon codicon-fold" aria-hidden="true"></span>'));
+            assert.ok(html.includes('<span class="codicon codicon-fold-down" aria-hidden="true"></span>'));
+            assert.ok(html.includes('codicon-blank') && html.includes('toggle-hide-blank-lines'));
+        });
+
+        test('should not put open-quality-report in context menu (footer Actions only)', () => {
+            const html = getContextMenuHtml();
+            assert.ok(!html.includes('data-action="open-quality-report"'));
+            /* False positive guard: substring must not appear in comments or alternate attributes */
+            assert.ok(!html.includes('open-quality-report'));
+        });
+
         test('should keep hide-only controls out of Options submenu', () => {
             const html = getContextMenuHtml();
             const optionsStart = html.indexOf('> Options');
