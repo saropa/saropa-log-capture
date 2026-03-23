@@ -5,8 +5,8 @@
  */
 
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { SaropaLogCaptureConfig } from '../config/config';
 import { Deduplicator } from './deduplication';
 import { FileSplitter, SplitReason } from '../misc/file-splitter';
@@ -20,7 +20,7 @@ import {
     computeElapsed as computeElapsedMs,
 } from './log-session-helpers';
 import { getPartFileName, performFileSplit } from './log-session-split';
-export { SessionContext };
+export type { SessionContext } from './log-session-helpers';
 
 export type SessionState = 'recording' | 'paused' | 'stopped';
 
@@ -34,9 +34,17 @@ export class LogSession {
     private _lineCount = 0;
     private _fileUri: vscode.Uri | undefined;
     private writeStream: fs.WriteStream | undefined;
-    private maxLinesReached = false;
     /** Guard flag — prevents writes to a stream being closed during split. */
     private splitting = false;
+    /** Guard flag — prevents concurrent queue processors. */
+    private processingQueue = false;
+    /** Buffered appends while split is in progress; ensures newest lines are never dropped. */
+    private readonly pendingLines: Array<{
+        readonly text: string;
+        readonly category: string;
+        readonly timestamp: Date;
+        readonly sourceLocation?: SourceLocation;
+    }> = [];
     private readonly deduplicator: Deduplicator;
     private readonly splitter: FileSplitter;
 
@@ -105,40 +113,90 @@ export class LogSession {
         timestamp: Date,
         sourceLocation?: SourceLocation,
     ): void {
-        if (this._state !== 'recording' || this.maxLinesReached || !this.writeStream || this.splitting) {
+        if (this._state !== 'recording' || !this.writeStream) {
             return;
         }
+        this.pendingLines.push({ text, category, timestamp, sourceLocation });
+        this.processPendingLines().catch((e) => { console.error('Log append queue failed:', e); });
+    }
 
-        // Check split conditions before writing
+    /** Process append queue in strict order and split before writes when needed. */
+    private async processPendingLines(): Promise<void> {
+        if (this.processingQueue) {
+            return;
+        }
+        this.processingQueue = true;
+        try {
+            while (this.pendingLines.length > 0) {
+                if (this._state !== 'recording' || !this.writeStream) {
+                    return;
+                }
+                const next = this.pendingLines[0];
+                await this.splitBeforeNextLineIfNeeded(next.text);
+
+                const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, next.timestamp);
+                const formatted = formatLine(next.text, next.category, {
+                    timestamp: next.timestamp,
+                    includeTimestamp: this.config.includeTimestamp,
+                    sourceLocation: next.sourceLocation,
+                    includeSourceLocation: this.config.includeSourceLocation,
+                    elapsedMs,
+                    includeElapsedTime: this.config.includeElapsedTime,
+                });
+                this._previousTimestamp = next.timestamp;
+                const lines = this.deduplicator.process(formatted);
+                await this.writeProcessedLines(lines);
+                this.pendingLines.shift();
+
+                this._lastLineTime = Date.now();
+                this._lastWriteTime = this._lastLineTime;
+                this.onLineCountChanged(this._lineCount);
+            }
+        } finally {
+            this.processingQueue = false;
+        }
+    }
+
+    /** Wait until buffered appendLine calls are flushed to disk. */
+    private async drainPendingLines(): Promise<void> {
+        while (this.pendingLines.length > 0 || this.processingQueue) {
+            if (!this.processingQueue && this.pendingLines.length > 0) {
+                await this.processPendingLines();
+                continue;
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+    }
+
+    /** Rotate part when max line threshold or explicit split rules are reached. */
+    private async splitBeforeNextLineIfNeeded(nextText: string): Promise<void> {
+        if (!this.writeStream) {
+            return;
+        }
+        if (this.config.maxLines > 0 && this._lineCount >= this.config.maxLines) {
+            await this.performSplit({ type: 'lines', count: this._lineCount });
+        }
         const splitResult = this.splitter.evaluate({
             lineCount: this._lineCount,
             bytesWritten: this._bytesWritten,
             startTime: this._partStartTime,
             lastLineTime: this._lastLineTime,
-        }, text);
-
+        }, nextText);
         if (splitResult.shouldSplit && splitResult.reason) {
-            this.performSplit(splitResult.reason).catch((e) => { console.error('Log split failed:', e); });
-            return; // This line is not written; the split marker in the new file documents the boundary.
+            await this.performSplit(splitResult.reason);
         }
+    }
 
-        const elapsedMs = computeElapsedMs(this.config.includeElapsedTime, this._previousTimestamp, timestamp);
-        const formatted = formatLine(text, category, {
-            timestamp,
-            includeTimestamp: this.config.includeTimestamp,
-            sourceLocation,
-            includeSourceLocation: this.config.includeSourceLocation,
-            elapsedMs,
-            includeElapsedTime: this.config.includeElapsedTime,
-        });
-        this._previousTimestamp = timestamp;
-        const lines = this.deduplicator.process(formatted);
-
+    /** Write deduplicated lines and rotate mid-batch instead of dropping newest output. */
+    private async writeProcessedLines(lines: readonly string[]): Promise<void> {
         for (const line of lines) {
-            if (this._lineCount >= this.config.maxLines) {
-                this.maxLinesReached = true;
-                // Cap enforced; further appendLine calls no-op until clear/stop.
-                this.writeStream.write(`\n--- MAX LINES REACHED (${this.config.maxLines}) ---\n`);
+            if (!this.writeStream) {
+                return;
+            }
+            if (this.config.maxLines > 0 && this._lineCount >= this.config.maxLines) {
+                await this.performSplit({ type: 'lines', count: this._lineCount });
+            }
+            if (!this.writeStream) {
                 return;
             }
             const lineData = line + '\n';
@@ -146,10 +204,6 @@ export class LogSession {
             this._bytesWritten += Buffer.byteLength(lineData, 'utf-8');
             this._lineCount++;
         }
-
-        this._lastLineTime = Date.now();
-        this._lastWriteTime = this._lastLineTime;
-        this.onLineCountChanged(this._lineCount);
     }
 
     /**
@@ -254,6 +308,9 @@ export class LogSession {
         if (this._state === 'stopped') {
             return;
         }
+
+        // Preserve newest output by flushing any queued appendLine calls before closing.
+        await this.drainPendingLines();
         this._state = 'stopped';
 
         // Flush deduplication buffer.
@@ -278,8 +335,8 @@ export class LogSession {
 
     clear(): void {
         this._lineCount = 0;
-        this.maxLinesReached = false;
         this._previousTimestamp = undefined;
+        this.pendingLines.length = 0;
         this.deduplicator.reset();
         this.onLineCountChanged(0);
     }

@@ -22,7 +22,6 @@ import {
   loadUnifiedSessionJsonlContent,
   postCorrelationByLineIndex,
   postRunBoundariesIfAny,
-  truncateMainContentLines,
   type LoadContentResultLike,
 } from "./log-viewer-provider-load-helpers";
 
@@ -72,8 +71,8 @@ export async function executeLoadContent(
     return await loadUnifiedSessionJsonlContent(target, uri, text, checkGen);
   }
 
-  const rawLines = text.split(/\r?\n/);
-  const fields = parseHeaderFields(rawLines);
+  const sessionParts = await readSessionLogParts(uri, text);
+  const fields = parseHeaderFields(sessionParts[0].lines);
 
   if (Object.keys(fields).length > 0) { target.setSessionInfo(fields); }
 
@@ -87,12 +86,15 @@ export async function executeLoadContent(
     target.setCodeQualityPayload(perfResult.codeQualityPayload);
   }
 
-  const { headerEnd, contentLines, didTruncate, truncatedShown } = truncateMainContentLines(rawLines);
-  const cfg = getConfig();
-
-  if (didTruncate) {
-    target.postMessage({ type: "loadTruncated", shown: truncatedShown, total: rawLines.length - headerEnd });
+  const contentLines: string[] = [];
+  for (const part of sessionParts) {
+    const headerEndForPart = findHeaderEnd(part.lines);
+    contentLines.push(...part.lines.slice(headerEndForPart));
   }
+  const cfg = getConfig();
+  // Status-bar level filters operate on in-memory allLines, so keep MAX_LINES high enough
+  // for the full loaded session (including split parts) instead of trimming to viewer default.
+  target.postMessage({ type: "setMaxLines", maxLines: Math.max(contentLines.length + 1000, cfg.maxLines) });
 
   const post = (msg: unknown): void => { if (checkGen()) { target.postMessage(msg); } };
   const ctx = buildMainCtx(fields, SOURCE_DEBUG);
@@ -140,7 +142,7 @@ export async function executeLoadContent(
   postCorrelationByLineIndex({
     uri,
     byLoc: byLoc as Iterable<[string, { id: string; description: string }]>,
-    headerEnd,
+    headerEnd: findHeaderEnd(sessionParts[0].lines),
     contentLinesLength: contentLines.length,
     post,
   });
@@ -154,6 +156,69 @@ export async function executeLoadContent(
     ...(smart.firstError && { firstError: smart.firstError }),
     ...(smart.firstWarning && { firstWarning: smart.firstWarning }),
   };
+}
+
+interface SessionLogPart {
+  readonly uri: vscode.Uri;
+  readonly lines: string[];
+}
+
+function parsePartNumberForBase(name: string, base: string): number | undefined {
+  if (!name.toLowerCase().endsWith(".log")) { return undefined; }
+  if (name.toLowerCase() === `${base}.log`.toLowerCase()) { return 1; }
+  const lower = name.toLowerCase();
+  const prefix = `${base}_`.toLowerCase();
+  if (!lower.startsWith(prefix)) { return undefined; }
+  const tail = lower.slice(prefix.length, -4);
+  if (!/^\d{3}$/.test(tail)) { return undefined; }
+  const parsed = Number.parseInt(tail, 10);
+  return Number.isFinite(parsed) && parsed >= 2 ? parsed : undefined;
+}
+
+async function readLogPartLines(partUri: vscode.Uri): Promise<string[] | undefined> {
+  try {
+    const raw = await vscode.workspace.fs.readFile(partUri);
+    return Buffer.from(raw).toString("utf-8").split(/\r?\n/);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Read all split log parts for the same session (base.log + base_XXX.log), sorted by part number. */
+async function readSessionLogParts(uri: vscode.Uri, fallbackText: string): Promise<SessionLogPart[]> {
+  const fileName = (uri.fsPath.split(/[/\\]/).pop() ?? "");
+  const m = /^(.+?)(?:_(\d{3}))?\.log$/i.exec(fileName);
+  if (!m) {
+    return [{ uri, lines: fallbackText.split(/\r?\n/) }];
+  }
+  const base = m[1];
+  const dir = vscode.Uri.joinPath(uri, "..");
+  let entries: [string, vscode.FileType][];
+  try {
+    entries = await vscode.workspace.fs.readDirectory(dir);
+  } catch {
+    return [{ uri, lines: fallbackText.split(/\r?\n/) }];
+  }
+
+  const partEntries: Array<{ uri: vscode.Uri; part: number }> = [];
+  for (const [name, type] of entries) {
+    if (type !== vscode.FileType.File) { continue; }
+    const partNum = parsePartNumberForBase(name, base);
+    if (!partNum) { continue; }
+    partEntries.push({ uri: vscode.Uri.joinPath(dir, name), part: partNum });
+  }
+
+  if (partEntries.length === 0) {
+    return [{ uri, lines: fallbackText.split(/\r?\n/) }];
+  }
+  partEntries.sort((a, b) => a.part - b.part);
+
+  const parts: SessionLogPart[] = [];
+  for (const p of partEntries) {
+    const lines = await readLogPartLines(p.uri);
+    if (lines) { parts.push({ uri: p.uri, lines }); }
+  }
+  return parts.length > 0 ? parts : [{ uri, lines: fallbackText.split(/\r?\n/) }];
 }
 
 /** Create a file watcher that appends new lines to the viewer. Caller must dispose when done. */
