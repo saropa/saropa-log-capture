@@ -219,6 +219,9 @@ function onContextMenuAction(action) {
             }
             break;
         }
+        case 'explain-root-cause-hypotheses':
+            if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
+            break;
         case 'add-watch': vscodeApi.postMessage({ type: 'addToWatch', text: plainText }); break;
         case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
         case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); break;

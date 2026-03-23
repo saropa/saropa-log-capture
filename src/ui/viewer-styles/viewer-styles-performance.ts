@@ -200,6 +200,77 @@ export function getPerformancePanelStyles(): string {
     white-space: pre-line;
 }
 
+/* --- Database tab (Drift rollup + timeline) --- */
+.pp-db-view { padding: 8px 12px; font-size: 11px; }
+.pp-db-empty, .pp-db-note {
+    color: var(--vscode-descriptionForeground);
+    margin: 8px 0;
+    line-height: 1.45;
+}
+.pp-db-summary {
+    margin-bottom: 12px;
+    line-height: 1.45;
+    color: var(--vscode-foreground);
+}
+.pp-db-timeline { margin-bottom: 14px; }
+.pp-db-timeline-label {
+    font-size: 10px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    opacity: 0.85;
+}
+.pp-db-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 56px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+.pp-db-bar-wrap {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.pp-db-bar {
+    width: 100%;
+    max-width: 10px;
+    margin: 0 auto;
+    min-height: 2px;
+    background: var(--vscode-debugConsole-infoForeground, #b695f8);
+    border-radius: 2px 2px 0 0;
+    opacity: 0.85;
+}
+.pp-db-table-title {
+    font-size: 10px;
+    font-weight: 600;
+    margin: 10px 0 6px 0;
+    opacity: 0.85;
+}
+.pp-db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    font-family: var(--vscode-editor-font-family, monospace);
+}
+.pp-db-table th {
+    text-align: left;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    font-weight: 600;
+    opacity: 0.75;
+}
+.pp-db-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--vscode-panel-border, transparent);
+    vertical-align: top;
+    word-break: break-all;
+}
+.pp-db-fp { color: var(--vscode-descriptionForeground); }
+
 /* --- Empty / loading --- */
 .pp-empty {
     padding: 16px 12px;

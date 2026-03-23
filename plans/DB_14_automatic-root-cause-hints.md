@@ -22,16 +22,15 @@ Generate **short, reviewable explanations** that tie together signals (errors, S
 
 **Tests:** `root-cause-hint-drift-meta.test.ts`; embed checks in `viewer-n-plus-one-embed.test.ts`; existing `build-hypotheses.test.ts` for TS bundle logic.
 
-## What to build next (DB_14 optional — phase 3)
+## Phase 3 (shipped — polish)
 
-Small polish; **not required** to call DB_14 “complete” for product use.
-
-| Item | Notes |
+| Item | What landed |
 | --- | --- |
-| **Command / context menu** | Plan originally mentioned a dedicated **“Explain hypotheses…”** entry; today only the **in-strip** button exists. Add `package.json` command + context contribution mirroring `explainWithAi` if discoverability matters. |
-| **Session compare → host `sessionDiffSummary`** | When the user is in **log session comparison** with a computed DB fingerprint diff, post `setRootCauseHintHostFields` with `sessionDiffSummary` so the strip matches the compare panel (avoids relying only on webview baseline rollup). Ties to **`plans/history/20260323/DB_10_session-comparison-db-diff.md`**. |
-| **i18n depth** | Strings flow through `t()` → webview map; optional: ensure `package.nls.json` covers new keys if you rely on community translation bundles for those IDs. |
-| **Evidence chrome** | “line N” / “Scroll to evidence” titles are still mostly fixed English in the embed; localize if parity with the rest of the strip matters. |
+| **Command + webview** | `saropaLogCapture.explainRootCauseHypotheses` → `triggerExplainRootCauseHypotheses` → `runTriggerExplainRootCauseHypothesesFromHost` (same payload as strip **Explain with AI**; empty → `explainRootCauseHypothesesEmpty`). |
+| **Context menu** | Log line menu: **Explain root-cause hypotheses** (`viewer-context-menu-html.ts` / `viewer-context-menu-actions.ts`). |
+| **Session compare → host `sessionDiffSummary`** | Implemented separately: compare flow posts `setRootCauseHintHostFields` with regression fingerprints when applicable (see session comparison + `db-session-fingerprint-diff.ts`). |
+
+**Still optional (not blocking):** deeper **i18n** for evidence button titles; **`package.nls.json`** coverage for any new command title keys you add for translation bundles.
 
 **Do not** bump **`bundleVersion`** unless optional field semantics or required keys change.
 
@@ -41,8 +40,8 @@ After DB_14, the open **DB** specs that add new surfaces (not strip polish) are:
 
 | Plan | One-line direction |
 | --- | --- |
-| **DB_12** (`plans/DB_12_static-orm-code-analysis.md`) | Static / indexer path from SQL fingerprints to **likely source** in the repo. |
-| **DB_13** (`plans/DB_13_db-performance-dashboard-and-timeline.md`) | **Analytics panel**: time-bucketed DB KPIs, top fingerprints, optional sync with scroll. |
+| **DB_12** (`plans/DB_12_static-orm-code-analysis.md`) | **Partial:** indexer QuickPick from N+1 row; see plan **Progress**. Further: ORM mapping, symbols. |
+| **DB_13** (`plans/DB_13_db-performance-dashboard-and-timeline.md`) | **Partial:** Performance **Database** tab; see plan **Progress**. Further: brush/sync, Drift Advisor row. |
 | **DB_15** (`plans/DB_15_db-detector-framework.md`) | More detectors on the shared framework; keep bundle/embed thresholds in sync when adding signal types. |
 
 ## Out of scope (unchanged)

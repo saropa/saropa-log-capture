@@ -36,11 +36,11 @@ Keep detectors free of markup; a thin adapter builds viewer rows:
 - `priority`: number — **ascending run order** (lower numeric value first). On duplicate **`stableKey`**, the **later** result wins, so **higher numeric `priority` wins conflicts** when detectors disagree.
 - Payload by kind:
   - **synthetic-line**: `{ type: string; category?: string; performanceFields... }` aligned with existing `allLines` item shapes.
-  - **annotate-line**: `{ targetSeq?: number; patch: Partial<LineItem> }` when attaching to an existing row is required.
+  - **annotate-line**: `{ targetSeq: number; patch: Record<string, unknown> }` — embed shallow-merges `patch` onto `allLines` item with matching `seq`; adjusts `totalHeight` if `height` changes.
   - **marker**: `{ category: string; label: string }` (maps to marker injection rules already used by the viewer).
-  - **session-rollup-patch**: optional hook for `dbInsight`-style rollups without duplicating rollup maps.
+  - **session-rollup-patch**: hook for `dbInsight`-style rollups (primary ingest uses `db.ingest-rollup` before `runDbDetectors`).
 
-Consumers (embed adapter) apply results in **priority order** and **dedupe by `stableKey`**.
+Consumers (embed adapter) apply results in **phases** after **`mergeDbDetectorResultsByStableKey`**: all **`session-rollup-patch`**, then **`annotate-line`**, then **`synthetic-line`**, then **`marker`** — **ascending `priority` within each phase** (preserves N+1-before-burst ordering).
 
 ## Lifecycle
 1. **Ingest**: for each qualifying line event, invoke registered detectors in stable order; merge results into the same code path that today calls `detectNPlusOneInsight` / rollup updates.
@@ -81,9 +81,9 @@ Phase 1 meets the **done criteria** above: contracts in `src/modules/db/`, embed
 - **Batch compare (extension host only):** `buildDbFingerprintSummaryFromDetectorContexts`, `mergeDbFingerprintSummaryMaps`, `buildDbFingerprintSummaryDiff`, **`runDbDetectorsCompare(registry, { baseline, target }, state)`** — optional per-detector **`compare(DbDetectorCompareInput)`**; shared **`diff`** once per call. Used from tests / host; **not** called from the comparison webview (that path uses **`diff-engine.ts`** + **`db-session-fingerprint-diff.ts`**).
 - **Webview:** `viewer-db-detector-framework-script.ts` (registry, `runDbDetectors`, merge, trim prune, clear), `viewer-data-add-db-detectors.ts` + `viewer-data-add.ts` (`emitDbLineDetectors`), `viewer-data.ts` (`trimData` → `pruneDbDetectorStateAfterTrim`).
 - **Built-in detectors:** **`db.n-plus-one`** (synthetic insight rows); **slow query burst** (**DB_08**) via **`marker`** results and **`applyDbMarkerResults`** in `viewer-data-add-db-detectors.ts`.
-- **Still inline (by design):** `updateDbInsightRollup` / per-line **`dbInsight`** in `addToData`, gated by **`saropaLogCapture.viewerDbInsightsEnabled`** — primary rollup stays here; detectors may emit **`session-rollup-patch`** for extra increments (applied in **`emitDbLineDetectors`** via **`applyDbSessionRollupPatches`**).
-- **Shipped follow-ups:** per-detector settings **`viewerDbDetectorNPlusOneEnabled`**, **`viewerDbDetectorSlowBurstEnabled`**, **`viewerDbDetectorBaselineHintsEnabled`**; streaming baseline volume marker **`db.baseline-volume-hint`**; host **`createBaselineVolumeCompareDetector`** (`compare()` markers for batch use); **`slowQueryCount`** on fingerprint summaries (scan uses **`viewerSlowBurstSlowQueryMs`**); log comparison table shows slow columns when stats exist.
-- **Remaining optional work:** move primary rollup into **`session-rollup-patch`** only if a future detector must drive **`dbInsight`** without touching `addToData`; TS/codegen to reduce embed drift.
+- **Primary rollup (ingest):** `emitDbLineDetectors` applies a synthetic **`session-rollup-patch`** (`db.ingest-rollup`) before **`runDbDetectors`**, then sets **`lineItem.dbInsight`** from **`peekDbInsightRollup`** when applicable — `addToData` no longer calls **`updateDbInsightRollup`** directly. Additional patches from detectors apply in **priority order** with **`annotate-line`**, synthetic rows, and markers.
+- **Shipped follow-ups:** per-detector settings **`viewerDbDetectorNPlusOneEnabled`**, **`viewerDbDetectorSlowBurstEnabled`**, **`viewerDbDetectorBaselineHintsEnabled`**; streaming baseline volume marker **`db.baseline-volume-hint`**; host **`createBaselineVolumeCompareDetector`** (`compare()` markers for batch use); **`slowQueryCount`** on fingerprint summaries (scan uses **`viewerSlowBurstSlowQueryMs`**); log comparison table shows slow columns when stats exist; embed applies **`annotate-line`** (shallow patch by **`targetSeq`**).
+- **Remaining optional work:** TS/codegen to reduce embed drift; host-side application of **`annotate-line`** if batch detectors need it.
 
 ## Related plans
 - **DB_02**: SQL fingerprint normalization; embed must stay in sync with `drift-sql-fingerprint-normalize.ts`.

@@ -63,6 +63,15 @@ export const stringsA: Record<string, string> = {
     'msg.aiExplainError': 'Explain with AI: {0}',
     'msg.aiExplainProgress': 'Explaining with AI…',
     'msg.aiExplainHypothesesProgress': 'Explaining hypotheses with AI…',
+    'msg.explainRootCauseHypothesesEmpty': 'No root-cause hypotheses for this log (or the strip is empty). Load a log with matching signals or clear filters.',
+
+    'msg.staticSqlSourcesNoIndexer': 'Project index is not available. Open a workspace folder to search static sources.',
+    'msg.staticSqlSourcesNoTokens': 'Could not derive search tokens from this fingerprint.',
+    'msg.staticSqlSourcesNoMatches': 'No indexed files matched tokens: {0}',
+    'msg.staticSqlSourcesPickDescription': 'Score · path (heuristic match, not proof)',
+    'msg.staticSqlSourcesPickTitle': 'Open possible static source ({0})',
+    'msg.staticSqlSourcesPickPlaceholder': 'Pick a file to open',
+    'msg.staticSqlSourcesOpenFailed': 'Could not open the selected file.',
 
     'viewer.rchTitle': 'Hypotheses',
     'viewer.rchDisclaimer': 'Hypothesis, not fact.',
