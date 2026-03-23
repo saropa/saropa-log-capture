@@ -24,6 +24,7 @@ import { getDecoSettingsScript } from '../viewer-decorations/viewer-deco-setting
 import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
 import { getStackDedupScript } from '../viewer-stack-tags/viewer-stack-dedup';
 import { getStackFilterScript } from '../viewer-stack-tags/viewer-stack-filter';
+import { getTagSelectionGuardScript } from '../viewer-stack-tags/viewer-tag-selection-guard';
 import { getSplitNavScript } from '../viewer-nav/viewer-split-nav';
 import { getSessionNavScript } from '../viewer-nav/viewer-session-nav';
 import { getJsonScript } from '../viewer/viewer-json';
@@ -108,6 +109,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getSearchHistoryScript()) +
         scriptTag(nonce, getSearchSetupFromFindInFilesScript()) +
         scriptTag(nonce, getLevelFilterScript()) +
+        scriptTag(nonce, getTagSelectionGuardScript()) +
         scriptTag(nonce, getSourceTagsScript()) +
         scriptTag(nonce, getClassTagsScript()) +
         scriptTag(nonce, getHighlightScript()) +
