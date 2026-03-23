@@ -34,6 +34,17 @@ suite('Viewer HTML', () => {
             const html = buildViewerHtml({ nonce: getNonce(), version: '0.0.0' });
             assert.ok(html.includes('var MAX_LINES = 100000'), 'viewer script should default to 100000');
         });
+
+        test('injects SQL pattern chip thresholds when provided (DB_05)', () => {
+            const html = buildViewerHtml({
+                nonce: getNonce(),
+                version: '0.0.0',
+                viewerSqlPatternChipMinCount: 3,
+                viewerSqlPatternMaxChips: 7,
+            });
+            assert.ok(html.includes('var sqlChipMinCount = 3'));
+            assert.ok(html.includes('var sqlPatternMaxChips = 7'));
+        });
     });
 
     suite('accessibility (a11y)', () => {
