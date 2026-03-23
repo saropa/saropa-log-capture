@@ -1,8 +1,12 @@
-# DB_14 Phase 1 — Automatic root-cause hints (shipped)
+# ARCHIVE — DB_14 phase 1 only (historical)
 
-**Status:** Complete as of 2026-03-23. **Phase 2 is also shipped** (see current **`plans/DB_14_automatic-root-cause-hints.md`** for contract, implementation map, and optional phase 3).
+**Not the DB_14 plan.** This file is a **frozen note** from 2026-03-23 describing **only** what shipped in phase 1.
 
-## What shipped
+**The real DB_14 document (implemented work + contract):** `plans/DB_14_automatic-root-cause-hints.md`
+
+**Status (frozen):** Phase 1 was complete on that date. Phases 2–3 are also **implemented**; see the file above.
+
+## What shipped (phase 1 only)
 
 - **Shared module:** `src/modules/root-cause-hints/` — `RootCauseHintBundle` / `buildHypotheses` / `isRootCauseHintsEligible`, `bundleVersion: 1`, caps (5 bullets, 240 chars, 8 evidence ids), tier order and dedup.
 - **Webview:** `viewer-root-cause-hints-embed-algorithm.ts`, `viewer-root-cause-hints-script.ts`, `viewer-styles-root-cause-hints.ts`, `#root-cause-hypotheses` in `viewer-content-body.ts`, script injection in `viewer-content-scripts.ts`, refresh on `addLines` / `loadComplete`, `resetRootCauseHypothesesSession` on `clear` in `viewer-script-messages.ts`.
