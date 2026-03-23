@@ -6,12 +6,52 @@
  * from `N_PLUS_ONE_EMBED_CONFIG` in `modules/db/drift-n-plus-one-detector.ts` so the
  * extension and unit tests agree on numbers; **function bodies must stay aligned**
  * with that module’s documented behavior.
+ *
+ * Fingerprint normalization must match `normalizeDriftSqlFingerprintSql` in
+ * `modules/db/drift-sql-fingerprint-normalize.ts` (uses `DRIFT_SQL_KEYWORD_ALT`).
  */
 import { N_PLUS_ONE_EMBED_CONFIG as N1 } from '../../modules/db/drift-n-plus-one-detector';
+import {
+    normalizeViewerRepeatThresholds,
+    type ViewerRepeatThresholds,
+} from '../../modules/db/drift-db-repeat-thresholds';
+import { DRIFT_SQL_KEYWORD_ALT } from '../../modules/db/drift-sql-fingerprint-normalize';
 
-export function getNPlusOneDetectorScript(): string {
+/** @param embedThresholds - Initial viewer thresholds (usually from workspace config at HTML build). */
+export function getNPlusOneDetectorScript(embedThresholds?: Partial<ViewerRepeatThresholds>): string {
+    const rt = normalizeViewerRepeatThresholds(embedThresholds);
     return /* javascript */ `
 var driftSqlPattern = /\\bDrift:\\s+Sent\\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+var driftSqlKwRe = new RegExp('\\\\b(?:${DRIFT_SQL_KEYWORD_ALT})\\\\b', 'gi');
+function normalizeDriftSqlFingerprintSql(sql) {
+    if (!sql) return '';
+    var s = sql;
+    s = s.replace(/\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b/gi, '?');
+    s = s.replace(/x'[0-9a-f]*'/gi, '?');
+    s = s.replace(/'(?:[^']|'')*'/g, '?');
+    s = s.replace(/\\"[^\\"]*\\"/g, '?');
+    s = s.replace(/\\b\\d+\\b/g, '?');
+    s = s.replace(/\\s+/g, ' ').trim();
+    if (!s) return '';
+    s = s.toLowerCase();
+    s = s.replace(driftSqlKwRe, function(m) { return m.toUpperCase(); });
+    return s;
+}
+var dbRepeatThresholds = {
+    global: ${rt.globalMinCount},
+    read: ${rt.readMinCount},
+    transaction: ${rt.transactionMinCount},
+    dml: ${rt.dmlMinCount}
+};
+// Mirror driftSqlRepeatMinN in modules/db/drift-db-repeat-thresholds.ts — keep branches in sync.
+function getDriftRepeatMinN(sqlMeta, sourceTag) {
+    if (sourceTag !== 'database' || !sqlMeta || !sqlMeta.verb) return dbRepeatThresholds.global;
+    var v = sqlMeta.verb;
+    if (v === 'SELECT' || v === 'WITH' || v === 'PRAGMA') return dbRepeatThresholds.read;
+    if (v === 'BEGIN' || v === 'COMMIT' || v === 'ROLLBACK') return dbRepeatThresholds.transaction;
+    if (v === 'INSERT' || v === 'UPDATE' || v === 'DELETE') return dbRepeatThresholds.dml;
+    return dbRepeatThresholds.global;
+}
 var nPlusOneDetector = {
     windowMs: ${N1.windowMs},
     minRepeats: ${N1.minRepeats},
@@ -23,7 +63,9 @@ var nPlusOneDetector = {
     byFingerprint: Object.create(null)
 };
 function parseSqlFingerprint(plainText) {
-    if (!plainText || !driftSqlPattern.test(plainText)) return null;
+    if (!plainText) return null;
+    var verbMatch = driftSqlPattern.exec(plainText);
+    if (!verbMatch) return null;
     var sentIdx = plainText.indexOf('Drift: Sent ');
     if (sentIdx < 0) return null;
     var body = plainText.substring(sentIdx + 12).trim();
@@ -33,15 +75,9 @@ function parseSqlFingerprint(plainText) {
     var argsPart = argsIdx >= 0 ? body.substring(argsIdx + 11).trim() : '';
     var sql = sqlPart.trim();
     if (!sql) return null;
-    var fp = sql
-        .replace(/'[^']*'/g, '?')
-        .replace(/\\"[^\\"]*\\"/g, '?')
-        .replace(/\\b\\d+\\b/g, '?')
-        .replace(/\\s+/g, ' ')
-        .trim()
-        .toLowerCase();
+    var fp = normalizeDriftSqlFingerprintSql(sql);
     if (!fp) return null;
-    return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart };
+    return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart, verb: verbMatch[1].toUpperCase() };
 }
 var dbInsightSessionRollup = Object.create(null);
 /** Per normalized SQL fingerprint: session-wide seen count and duration stats (elapsedMs when present on lines). */

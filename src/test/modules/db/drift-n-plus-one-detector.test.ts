@@ -21,6 +21,7 @@ suite('DriftNPlusOneDetector', () => {
         assert.strictEqual(a.fingerprint, b.fingerprint);
         assert.notStrictEqual(a.argsKey, b.argsKey);
         assert.ok(a.sqlSnippet.includes('SELECT'));
+        assert.ok(a.fingerprint.includes('SELECT'), 'fingerprint uses uppercase SQL keyword shape');
         assert.strictEqual(a.sqlSnippet, b.sqlSnippet);
     });
 

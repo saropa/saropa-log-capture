@@ -5,13 +5,14 @@
  * (recalcHeights, calcItemHeight), and the virtual scrolling renderer
  * (renderItem, renderViewport).
  */
+import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
 
-export function getViewerDataScript(): string {
-    return getViewerDataHelpers() + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
+export function getViewerDataScript(repeatThresholds?: Partial<ViewerRepeatThresholds>): string {
+    return getViewerDataHelpers(repeatThresholds) + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
 
 function trimData() {
     if (allLines.length <= MAX_LINES) return;
@@ -20,6 +21,7 @@ function trimData() {
     for (var i = 0; i < excess; i++) {
         if (typeof unregisterSourceTag === 'function') unregisterSourceTag(allLines[i]);
         if (typeof unregisterClassTags === 'function') unregisterClassTags(allLines[i]);
+        if (typeof unregisterSqlPattern === 'function') unregisterSqlPattern(allLines[i]);
         if (allLines[i].type === 'stack-header') delete groupHeaderMap[allLines[i].groupId];
         if (allLines[i].autoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount--;
         removedHeight += allLines[i].height;
@@ -40,7 +42,8 @@ function trimData() {
         logEl.scrollTop = Math.max(0, logEl.scrollTop - removedHeight);
         suppressScroll = false;
     }
-    if (typeof buildPrefixSums === 'function') buildPrefixSums();
+    if (typeof finalizeSqlPatternState === 'function') finalizeSqlPatternState();
+    else if (typeof buildPrefixSums === 'function') buildPrefixSums();
 }
 
 /**
@@ -52,6 +55,11 @@ function trimData() {
  *
  * Blank lines are intentionally excluded from both modes (blank handling is controlled only by
  * hideBlankLines).
+ *
+ * Duplicate grouping runs after level/source/search filters set flags on each row. Only rows
+ * that would still be eligible for layout (same rules as calcItemHeight except compressDup*)
+ * participate, so e.g. "Errors only" does not show one error line with a ×N badge inflated by
+ * hidden info duplicates.
  *
  * Always clears compressDupHidden / compressDupCount on every call first, then returns early if
  * compress is off — so toggling compress off cannot leave stale flags on line objects.
@@ -78,6 +86,22 @@ function applyCompressDedupModes() {
         return t;
     }
 
+    /**
+     * True if this line may occupy vertical space when compressDup* flags are cleared.
+     * Mirrors calcItemHeight filter gates so duplicate collapse matches what the user can see
+     * under current level/source/search/app-only/blank-collapse options.
+     */
+    function isLineEligibleForDupCompress(row) {
+        if (!row || row.type !== 'line') return false;
+        if (typeof window !== 'undefined' && window.enabledSources && row.source && window.enabledSources.indexOf(row.source) < 0) return false;
+        if (row.filteredOut || row.excluded || row.levelFiltered || row.sourceFiltered || row.classFiltered || row.sqlPatternFiltered || row.searchFiltered || row.errorSuppressed || row.scopeFiltered || row.repeatHidden) return false;
+        var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
+        if (!peeking && (row.userHidden || row.autoHidden)) return false;
+        if ((typeof hideBlankLines !== 'undefined' && hideBlankLines) && isLineContentBlank(row)) return false;
+        if ((typeof appOnlyMode !== 'undefined' && appOnlyMode) && row.fw) return false;
+        return true;
+    }
+
     if (useConsecutive) {
         var runStart = -1;
         var runKey = null;
@@ -99,7 +123,7 @@ function applyCompressDedupModes() {
         for (i = 0; i < allLines.length; i++) {
             var item = allLines[i];
             var k = lineDedupeKey(item);
-            if (k === null) {
+            if (k === null || !isLineEligibleForDupCompress(item)) {
                 flushRun(i - 1);
                 continue;
             }
@@ -121,7 +145,7 @@ function applyCompressDedupModes() {
     for (i = 0; i < allLines.length; i++) {
         var globalItem = allLines[i];
         var globalKey = lineDedupeKey(globalItem);
-        if (globalKey === null) continue;
+        if (globalKey === null || !isLineEligibleForDupCompress(globalItem)) continue;
         if (firstIdxByKey[globalKey] == null) {
             firstIdxByKey[globalKey] = i;
             countByKey[globalKey] = 1;

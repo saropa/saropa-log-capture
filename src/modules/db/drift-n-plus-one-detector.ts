@@ -4,7 +4,7 @@
  * **Purpose:** Unit-test the same rules the log viewer webview applies when it scans
  * `Drift: Sent … with args …` lines. The viewer still runs an embedded JavaScript copy
  * (see `viewer-data-n-plus-one-script.ts`); **keep algorithms in sync** when changing
- * thresholds or fingerprint normalization.
+ * thresholds or fingerprint normalization (see `drift-sql-fingerprint-normalize.ts`).
  *
  * **Heuristic (v1):** Within a short sliding time window, many executions of the same
  * normalized SQL shape with *different* bound-arg payloads suggest a possible N+1 (or
@@ -13,6 +13,8 @@
  *
  * **Not:** Static ORM analysis or guaranteed N+1 proof — logs are best-effort signals.
  */
+
+import { normalizeDriftSqlFingerprintSql } from './drift-sql-fingerprint-normalize';
 
 /** Tunables injected into the webview script and used by `NPlusOneDetector` in tests. */
 export interface NPlusOneDetectorConfig {
@@ -90,13 +92,7 @@ export function parseDriftSqlFingerprint(plainText: string): DriftSqlFingerprint
     if (!sql) {
         return null;
     }
-    const fp = sql
-        .replace(/'[^']*'/g, '?')
-        .replace(/"[^"]*"/g, '?')
-        .replace(/\b\d+\b/g, '?')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toLowerCase();
+    const fp = normalizeDriftSqlFingerprintSql(sql);
     if (!fp) {
         return null;
     }
