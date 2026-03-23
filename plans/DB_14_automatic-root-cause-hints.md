@@ -1,8 +1,12 @@
-# DB_14 Automatic root-cause hints
+# DB_14 — Automatic root-cause hints
 
-**Status:** **Phase 1 and phase 2 are shipped.** Phase 1 is archived at **`plans/history/20260323/DB_14_automatic-root-cause-hints-phase1.md`**.
+## Is it implemented?
 
-This document keeps the **bundle contract**, a **phase 2 implementation map**, **optional follow-ups** (phase 3), and **what to build next** in the DB roadmap.
+**Yes.** Phases 1–3 are **in the product** (strip + hypotheses bundle, host fields / i18n / bursts / diff / strip AI explain, then command + context menu + compare-driven `sessionDiffSummary`). This file is the **only** DB_14 plan you should follow for behavior and the bundle contract.
+
+**Optional later (not required for “done”):** localize evidence-button titles; extend `package.nls.json` for command strings if you use translation bundles.
+
+**Historical note (not a second plan):** `plans/history/20260323/ARCHIVE_DB14_phase1_only_20260323.md` — old **phase-1-only** write-up from 2026-03-23. Ignore it unless you care what we called “phase 1” on that date.
 
 ## Goal
 
@@ -91,4 +95,4 @@ Invalid line ids after trim → omit jump control (text only) — phase 1.
 ## Related plans
 
 - **DB_08** (slow bursts), **DB_10** (session comparison / fingerprints), **DB_13**, **DB_01**, **DB_15**, history **DB_07**.
-- Phase 1 archive: **`plans/history/20260323/DB_14_automatic-root-cause-hints-phase1.md`**.
+- Phase 1 historical snapshot: **`plans/history/20260323/ARCHIVE_DB14_phase1_only_20260323.md`**.
