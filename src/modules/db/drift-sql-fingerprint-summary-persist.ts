@@ -13,6 +13,8 @@ export interface PersistedDriftSqlFingerprintEntryV1 {
   readonly avgDurationMs?: number;
   readonly maxDurationMs?: number;
   readonly durationSampleCount?: number;
+  /** Lines at or above slow threshold when scan used `viewerSlowBurstSlowQueryMs`. */
+  readonly slowQueryCount?: number;
 }
 
 export interface PersistedDriftSqlFingerprintSummaryV1 {
@@ -49,6 +51,7 @@ export function summaryMapToPersistedV1(
       ...(e.avgDurationMs !== undefined ? { avgDurationMs: e.avgDurationMs } : {}),
       ...(e.maxDurationMs !== undefined ? { maxDurationMs: e.maxDurationMs } : {}),
       ...(e.durationSampleCount !== undefined ? { durationSampleCount: e.durationSampleCount } : {}),
+      ...(e.slowQueryCount !== undefined && e.slowQueryCount > 0 ? { slowQueryCount: e.slowQueryCount } : {}),
     };
   }
   const firstOccurrenceLineByFingerprint =
@@ -73,6 +76,7 @@ export function persistedSummaryToMap(
       ...(e.avgDurationMs !== undefined ? { avgDurationMs: e.avgDurationMs } : {}),
       ...(e.maxDurationMs !== undefined ? { maxDurationMs: e.maxDurationMs } : {}),
       ...(e.durationSampleCount !== undefined ? { durationSampleCount: e.durationSampleCount } : {}),
+      ...(e.slowQueryCount !== undefined && e.slowQueryCount > 0 ? { slowQueryCount: e.slowQueryCount } : {}),
     });
   }
   return out;

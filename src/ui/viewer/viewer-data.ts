@@ -7,6 +7,7 @@
  */
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
+import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
 import { getCompressStreakScript } from './viewer-data-compress-streak';
 import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
@@ -16,8 +17,9 @@ export function getViewerDataScript(
     repeatThresholds?: Partial<ViewerRepeatThresholds>,
     viewerDbInsightsEnabled = true,
     slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
+    dbDetectorToggles?: Partial<ViewerDbDetectorToggles>,
 ): string {
-    return getViewerDataHelpers(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds) + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
+    return getViewerDataHelpers(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript() + /* javascript */ `
 
 function scrollToAnchorSeq(seq) {
     if (seq == null || !isFinite(seq) || allLines.length === 0 || window.isContextMenuOpen) return;

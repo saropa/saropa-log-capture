@@ -50,4 +50,14 @@ export default [{
     rules: {
         "max-lines": ["warn", { max: 340, skipBlankLines: true, skipComments: true }],
     },
+}, {
+    // Small ViewerTarget surface growth (DB detector toggles) without another provider split.
+    files: [
+        "src/ui/provider/log-viewer-provider.ts",
+        "src/ui/viewer-panels/pop-out-panel.ts",
+        "src/ui/viewer/viewer-script-messages.ts",
+    ],
+    rules: {
+        "max-lines": ["warn", { max: 320, skipBlankLines: true, skipComments: true }],
+    },
 }];

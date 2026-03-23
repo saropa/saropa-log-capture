@@ -16,6 +16,18 @@ export interface DbFingerprintSummaryEntry {
    * Omitted when no durations were recorded (same as zero samples).
    */
   readonly durationSampleCount?: number;
+  /**
+   * Lines at or above the configured slow threshold (same semantics as slow-burst markers; DB_10 persist).
+   */
+  readonly slowQueryCount?: number;
+}
+
+/** Payload for `DbDetectorResult` with `kind: 'session-rollup-patch'` (embed applies via `updateDbInsightRollup`). */
+export interface DbSessionRollupPatchPayload {
+  readonly fingerprint: string;
+  /** Apply rollup this many times (default 1). */
+  readonly repeatCount?: number;
+  readonly elapsedMs?: number;
 }
 
 /** One row of the union of baseline vs target keys (sorted by fingerprint for stable output). */

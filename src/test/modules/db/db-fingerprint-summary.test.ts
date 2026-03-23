@@ -54,6 +54,27 @@ test("mergeDbFingerprintSummaryMaps: combines keys", () => {
   assert.strictEqual(m.get("y")!.count, 2);
 });
 
+test("buildDbFingerprintSummaryFromDetectorContexts: slowQueryCount when threshold set", () => {
+  const fp = "select ?";
+  const map = buildDbFingerprintSummaryFromDetectorContexts(
+    [
+      ctx({ sql: { fingerprint: fp, argsKey: "[]" }, durationMs: 10 }),
+      ctx({ sql: { fingerprint: fp, argsKey: "[]" }, durationMs: 99 }),
+    ],
+    { slowQueryMsThreshold: 50 },
+  );
+  const e = map.get(fp);
+  assert.ok(e);
+  assert.strictEqual(e!.count, 2);
+  assert.strictEqual(e!.slowQueryCount, 1);
+});
+
+test("mergeDbFingerprintSummaryEntries: sums slowQueryCount", () => {
+  const m = mergeDbFingerprintSummaryEntries({ count: 1, slowQueryCount: 2 }, { count: 1, slowQueryCount: 3 });
+  assert.strictEqual(m.count, 2);
+  assert.strictEqual(m.slowQueryCount, 5);
+});
+
 test("buildDbFingerprintSummaryDiff: sorted union", () => {
   const baseline = new Map([
     ["b", { count: 1 }],

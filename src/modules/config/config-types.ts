@@ -85,6 +85,11 @@ export interface SaropaLogCaptureConfig {
   readonly viewerRepeatThresholds: ViewerRepeatThresholds;
   /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbInsight rollup in the viewer. */
   readonly viewerDbInsightsEnabled: boolean;
+  /** Per-detector gates when `viewerDbInsightsEnabled` is true (plan DB_15 follow-ups). */
+  readonly viewerDbDetectorNPlusOneEnabled: boolean;
+  readonly viewerDbDetectorSlowBurstEnabled: boolean;
+  /** Markers when live session SQL volume exceeds the comparison baseline for a fingerprint. */
+  readonly viewerDbDetectorBaselineHintsEnabled: boolean;
   /** Slow query burst marker thresholds in the log viewer (plan DB_08). */
   readonly viewerSlowBurstThresholds: ViewerSlowBurstThresholds;
   /**
@@ -132,6 +137,13 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
+}
+
+/** Sub-toggles when `viewerDbInsightsEnabled` is true (baked into webview + postMessage updates). */
+export interface ViewerDbDetectorToggles {
+  readonly nPlusOneEnabled: boolean;
+  readonly slowBurstEnabled: boolean;
+  readonly baselineHintsEnabled: boolean;
 }
 
 /** Session replay defaults (loaded log playback with optional timing). */

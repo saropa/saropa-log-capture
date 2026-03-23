@@ -3,9 +3,11 @@ import test from "node:test";
 import {
   buildDbFingerprintSummaryFromSaropaLogFileContent,
   compareSaropaLogDatabaseFingerprints,
+  compareScannedSaropaDbFingerprints,
   elapsedMsFromSaropaRawLine,
   rankSessionDbFingerprintChanges,
   saropaLogBodyLineStartIndex,
+  scanSaropaLogDatabaseFingerprints,
 } from "../../../modules/db/db-session-fingerprint-diff";
 
 test("elapsedMsFromSaropaRawLine: parses [time] [+Nms] [category] body", () => {
@@ -57,6 +59,52 @@ test("compareSaropaLogDatabaseFingerprints: new and removed fingerprints", () =>
   const kinds = new Set(r.rows.map((x) => x.kind));
   assert.ok(kinds.has("new"));
   assert.ok(kinds.has("removed"));
+});
+
+test("scanSaropaLogDatabaseFingerprints: slowQueryCount uses elapsed bracket and threshold", () => {
+  const log = [
+    "==========",
+    "",
+    "[12:00:00] [+30ms] [database] Drift: Sent SELECT 1 with args []",
+    "[12:00:01] [+80ms] [database] Drift: Sent SELECT 1 with args [1]",
+  ].join("\n");
+  const scan = scanSaropaLogDatabaseFingerprints(log, { slowQueryMs: 50 });
+  const e = [...scan.summary.values()][0];
+  assert.ok(e);
+  assert.strictEqual(e.slowQueryCount, 1);
+});
+
+test("compareScannedSaropaDbFingerprints: exposes hasSlowQueryStats and row slow deltas", () => {
+  const hdr = "==========\n\n";
+  const slowLog = `${hdr}[12:00:00.000] [+100ms] [database] Drift: Sent SELECT 1 with args []\n`;
+  const plainLog = `${hdr}[12:00:00.000] [database] Drift: Sent SELECT 1 with args []\n`;
+  const a = scanSaropaLogDatabaseFingerprints(slowLog, { slowQueryMs: 50 });
+  const b = scanSaropaLogDatabaseFingerprints(plainLog, { slowQueryMs: 50 });
+  const r = compareScannedSaropaDbFingerprints(a, b);
+  assert.strictEqual(r.hasSlowQueryStats, true);
+  const row = r.rows.find((x) => x.slowA !== undefined || x.slowB !== undefined);
+  assert.ok(row);
+  assert.strictEqual(row!.slowA, 1);
+  assert.strictEqual(row!.slowB, undefined);
+});
+
+test("compareScannedSaropaDbFingerprints: hasSlowQueryStats false when no line exceeds slow threshold (no false positives)", () => {
+  const hdr = "==========\n\n";
+  const underThreshold = `${hdr}[12:00:00.000] [+30ms] [database] Drift: Sent SELECT 1 with args []\n`;
+  const a = scanSaropaLogDatabaseFingerprints(underThreshold, { slowQueryMs: 50 });
+  const b = scanSaropaLogDatabaseFingerprints(underThreshold, { slowQueryMs: 50 });
+  const r = compareScannedSaropaDbFingerprints(a, b);
+  assert.strictEqual(r.hasSlowQueryStats, false);
+  assert.ok(!r.rows.some((x) => x.slowA !== undefined || x.slowB !== undefined));
+});
+
+test("compareScannedSaropaDbFingerprints: hasSlowQueryStats false without slowQueryMs option even if log has +Nms", () => {
+  const hdr = "==========\n\n";
+  const log = `${hdr}[12:00:00.000] [+500ms] [database] Drift: Sent SELECT 1 with args []\n`;
+  const a = scanSaropaLogDatabaseFingerprints(log);
+  const b = scanSaropaLogDatabaseFingerprints(log);
+  const r = compareScannedSaropaDbFingerprints(a, b);
+  assert.strictEqual(r.hasSlowQueryStats, false);
 });
 
 test("rankSessionDbFingerprintChanges: sorts new high-count before trivial same", () => {

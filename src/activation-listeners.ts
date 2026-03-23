@@ -13,6 +13,7 @@ import type { SessionHistoryProvider } from './ui/session/session-history-provid
 import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext } from './modules/storage/scope-context';
+import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 
 export interface ListenerDeps {
     context: vscode.ExtensionContext;
@@ -87,6 +88,9 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.viewerAlwaysShowSearchMatchOptions')) {
             broadcaster.setSearchMatchOptionsAlwaysVisible(cfg.viewerAlwaysShowSearchMatchOptions);
         }
+        if (e.affectsConfiguration('saropaLogCapture.learning')) {
+            broadcaster.postToWebview(getLearningWebviewOptions());
+        }
         if (e.affectsConfiguration('saropaLogCapture.autoHidePatterns')) {
             broadcaster.setAutoHidePatterns(cfg.autoHidePatterns);
         }
@@ -100,6 +104,17 @@ export function setupConfigListener(
         }
         if (e.affectsConfiguration('saropaLogCapture.viewerDbInsightsEnabled')) {
             broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
+        }
+        if (
+            e.affectsConfiguration('saropaLogCapture.viewerDbDetectorNPlusOneEnabled')
+            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorSlowBurstEnabled')
+            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorBaselineHintsEnabled')
+        ) {
+            broadcaster.setViewerDbDetectorToggles({
+                nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
+                slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
+                baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+            });
         }
         if (
             e.affectsConfiguration('saropaLogCapture.viewerSlowBurstSlowQueryMs')
