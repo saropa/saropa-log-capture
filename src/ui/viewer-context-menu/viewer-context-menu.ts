@@ -10,9 +10,9 @@
  * Some actions only make sense when the extension host has enabled the matching session adapter.
  * The host pushes `window.integrationAdapters` via `integrationsAdapters` postMessage
  * (`sendIntegrationsAdaptersImpl` / user changes in Options). Until that first message, the array
- * may be missing: we treat that as **no adapters** and keep code-quality rows **disabled**
- * (conservative — avoids `openQualityReport` / empty popover dead-ends). After sync, items enable
- * only when `'codeQuality'` is present.
+ * may be missing: we treat that as **no adapters** and keep **Show code quality** **disabled**
+ * (conservative — avoids an empty code-quality popover). After sync, it enables only when
+ * `'codeQuality'` is present. **Open quality report** is in the footer Actions menu, not here.
  *
  * Disabled rows use class `is-disabled` + optional `title` tooltip; the root click handler ignores
  * them so we never call `onContextMenuAction` for blocked commands.
@@ -119,15 +119,11 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         ? window.integrationAdapters
         : [];
     var hasCodeQualityIntegration = integrationAdapters.indexOf('codeQuality') >= 0;
-    var cqDisabled = !hasCodeQualityIntegration;
-    var cqRows = [
-        { action: 'show-code-quality', title: 'Enable the codeQuality integration to show per-file code quality.' },
-        { action: 'open-quality-report', title: 'Enable the codeQuality integration to generate quality reports.' },
-    ];
-    for (var cqi = 0; cqi < cqRows.length; cqi++) {
-        var cq = cqRows[cqi];
-        setContextMenuItemDisabled(cq.action, cqDisabled, cq.title);
-    }
+    setContextMenuItemDisabled(
+        'show-code-quality',
+        !hasCodeQualityIntegration,
+        'Enable the codeQuality integration to show per-file code quality.',
+    );
 
     // Show source-link items only when right-clicking directly on a source link
     var hasSource = !!sourceLink;

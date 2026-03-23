@@ -15,6 +15,7 @@ import { getSearchStyles } from '../../ui/viewer-styles/viewer-styles-search';
 import { getOptionsPanelHtml } from '../../ui/viewer-panels/viewer-options-panel-html';
 import { getLayoutScript } from '../../ui/provider/viewer-layout';
 import { getViewerBodyHtml } from '../../ui/provider/viewer-content-body';
+import { getReplayScript } from '../../ui/viewer/viewer-replay';
 
 suite('Viewer compress lines (embedded script)', () => {
     const dataScript = getViewerDataScript();
@@ -43,6 +44,25 @@ suite('Viewer compress lines (embedded script)', () => {
         );
     });
 
+    test('duplicate compress groups only filter-visible lines (level/source/blank collapse)', () => {
+        assert.ok(
+            dataScript.includes('function isLineEligibleForDupCompress'),
+            'compress must gate grouping on the same visibility as layout (not raw file order)',
+        );
+        assert.ok(
+            dataScript.includes('!isLineEligibleForDupCompress(item)'),
+            'consecutive mode must break runs when a line is hidden by filters',
+        );
+        assert.ok(
+            dataScript.includes('!isLineEligibleForDupCompress(globalItem)'),
+            'global mode must ignore hidden lines for first-occurrence / count',
+        );
+        assert.ok(
+            dataScript.includes('row.levelFiltered'),
+            'level filter must affect duplicate grouping',
+        );
+    });
+
     test('addLines uses full recalc when compressLinesMode is on (not append-only prefix sums)', () => {
         assert.ok(
             messageHandler.includes('compressLinesMode') && messageHandler.includes('recalcHeights'),
@@ -57,6 +77,10 @@ suite('Viewer compress lines (embedded script)', () => {
             messageHandler.includes('appendPrefixSums'),
             'non-compress path should still support incremental prefix sums',
         );
+    });
+
+    test('integrationsAdapters message updates footer quality report enabled state', () => {
+        assert.ok(messageHandler.includes('applyFooterQualityReportState'));
     });
 });
 
@@ -116,6 +140,20 @@ suite('Search strip and options (compress UI wiring)', () => {
     test('viewer body does not include log-pane compress toggle button', () => {
         const html = getViewerBodyHtml({ version: '0' });
         assert.ok(!html.includes('id="log-compress-toggle"'));
+    });
+
+    test('footer Actions menu includes Open quality report with icon (session-wide)', () => {
+        const html = getViewerBodyHtml({ version: '0' });
+        assert.ok(html.includes('data-action="open-quality-report"'));
+        assert.ok(html.includes('codicon-file-code'));
+        assert.ok(html.includes('Open quality report'));
+    });
+
+    test('replay script wires footer quality report and integration sync', () => {
+        const script = getReplayScript();
+        assert.ok(script.includes('applyFooterQualityReportState'));
+        assert.ok(script.includes("type: 'openQualityReport'"));
+        assert.ok(script.includes('is-disabled'));
     });
 
     test('content styles no longer include removed compress button rules', () => {

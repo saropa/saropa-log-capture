@@ -38,7 +38,11 @@ For older versions (pre-3.0.0), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.m
 
 • **Drift SQL false-positive severity in log viewer** — `I/flutter ... Drift: Sent ...` lines are no longer promoted to **error** just because SQL args contain tokens such as `ApplicationLogError`. Drift statement logs now keep their logcat-driven level (`info` for `I/`, `debug` for `D/`/`V/`), so informational DB traffic does not render as red errors.
 
-• **Context menu — code quality** — **Show code quality** and **Open quality report** are **disabled** (with tooltip) when the **codeQuality** session integration is not enabled, instead of running commands that only show “no report” messages.
+• **Context menu — code quality** — **Show code quality** is **disabled** (with tooltip) when the **codeQuality** session integration is not enabled, instead of opening an empty popover. **Open quality report** moved to the **footer Actions** menu (next to Replay / Export); it stays **disabled** until **codeQuality** is enabled and posts `openQualityReport` like before.
+
+• **Log viewer footer** — **Replay** and **Export** (and **Open quality report** when applicable) live under a single **Actions** menu in the status/footer bar instead of a standalone Replay control. **Options → Actions** no longer includes **Export current view** (same export flow as before, via **Actions → Export** or the context menu).
+
+• **Context menu — Options / Hide** — Toggle rows now show a **leading codicon** (e.g. word wrap, clock, fold) in addition to the checkmark, so every option row has a clear visual icon.
 
 ---
 
