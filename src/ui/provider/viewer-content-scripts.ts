@@ -6,7 +6,9 @@
 import { getErrorHandlerScript } from '../viewer-decorations/viewer-error-handler';
 import { getLayoutScript } from './viewer-layout';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
+import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
 import { getViewerDataScript } from '../viewer/viewer-data';
+import { getViewerRootCauseHintsScript } from '../viewer/viewer-root-cause-hints-script';
 import { getViewerScript } from '../viewer/viewer-script';
 import { getViewerVisibilityScript } from '../viewer/viewer-visibility';
 import { getScrollAnchorScript } from '../viewer/viewer-scroll-anchor';
@@ -82,6 +84,8 @@ export interface ViewerScriptsOptions {
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
     readonly viewerDbInsightsEnabled?: boolean;
+    /** Slow query burst marker thresholds (plan DB_08). */
+    readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     /** Fingerprint chip thresholds (plan DB_05). */
     readonly viewerSqlPatternChipMinCount?: number;
     readonly viewerSqlPatternMaxChips?: number;
@@ -95,6 +99,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerMaxLines: maxLines,
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
+        viewerSlowBurstThresholds,
         viewerSqlPatternChipMinCount,
         viewerSqlPatternMaxChips,
     } = opts;
@@ -103,8 +108,13 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(
             nonce,
             getLayoutScript(),
-            getViewerDataScript(viewerRepeatThresholds, viewerDbInsightsEnabled !== false),
+            getViewerDataScript(
+                viewerRepeatThresholds,
+                viewerDbInsightsEnabled !== false,
+                viewerSlowBurstThresholds,
+            ),
             getViewerScript(maxLines),
+            getViewerRootCauseHintsScript(),
             getViewerVisibilityScript(),
         ) +
         scriptTag(nonce, getScrollAnchorScript()) +

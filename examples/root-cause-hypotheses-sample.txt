@@ -1,0 +1,28 @@
+# DB_14 — Hypotheses strip (manual QA)
+
+This extension has **no** Dart `analysis_options.yaml`; use this file as a **paste-in log** to exercise the viewer.
+
+## What to expect
+
+1. **Hypotheses** panel appears **above** the log (not inside the scroller) when signals are strong enough.
+2. Copy says **Hypothesis, not fact.** Evidence buttons scroll to **line N** (1-based label, 0-based index); invalid indices after trim are omitted.
+3. **Dismiss (×)** hides the strip for the **current log** until you **Clear** the viewer or open another session (session epoch resets).
+
+## Minimal error-only signal
+
+Paste a few normal lines, then one line the viewer classifies as **error** (plain text containing e.g. `Error:` / `Exception` per level classifier). You should see at least one **Recent error** bullet if the excerpt is long enough (≥ 4 non-whitespace chars).
+
+## N+1 + fingerprint (Drift SQL)
+
+Use `drift-n-plus-one-sample-lines.txt` with **DB insights enabled** in settings. After the burst, you should see:
+- Synthetic **N+1** insight rows in the log, and
+- A **Possible N+1** hypothesis pointing at the synthetic line.
+
+## Weak session (should NOT show strip)
+
+- Only a couple of short `e=` / `ab` style messages with no error level and no DB rollup — **no** Hypotheses strip.
+- Fingerprint hit count below the leader threshold (see `ROOT_CAUSE_FP_LEADER_MIN_COUNT` in `root-cause-hint-eligibility.ts`) without errors or N+1 — **no** strip.
+
+## Automated coverage
+
+Unit tests: `src/test/modules/root-cause-hints/build-hypotheses.test.ts`. Embed wiring: `src/test/ui/viewer-n-plus-one-embed.test.ts`.
