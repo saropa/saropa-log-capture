@@ -3,6 +3,7 @@ export function getLevelClassifyScript(): string {
     return /* javascript */ `
 var looseErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|\\b(?:fail(?:ed|ure)?|fatal|panic|critical)\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var strictErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|\\b(?:fatal|panic|critical)\\b|\\bfail(?:ed|ure)\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
+var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 var strictLevelDetection = true;
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
 var perfPattern = /\\b(perf(?:ormance)?|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+(?:pause|freed|concurrent)|anr|application\\s+not\\s+responding)\\b/i;
@@ -24,6 +25,7 @@ function classifyLevel(plainText, category) {
         var L = lcm[1];
         if (L === 'E' || L === 'F' || L === 'A') return 'error';
         if (L === 'W') return 'warning';
+        if (driftStatementPattern.test(plainText)) return (L === 'D' || L === 'V') ? 'debug' : 'info';
         if (ep.test(plainText)) return 'error';
         if (perfPattern.test(plainText)) return 'performance';
         if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) return 'performance';
