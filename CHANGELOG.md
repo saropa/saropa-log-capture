@@ -24,6 +24,16 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+• **Log viewer — DB_15 ingest / detector ordering** — Primary SQL session rollup uses **`session-rollup-patch`** (`db.ingest-rollup`) before **`runDbDetectors`**; **`lineItem.dbInsight`** is filled via **`peekDbInsightRollup`** in the embed. Detector outputs apply in **phases** (rollup → **`annotate-line`** → synthetic → marker) with per-phase **`priority`** ordering. Types: **`DbAnnotateLinePayload`** in **`db-detector-types.ts`**; embed: **`viewer-data-add-db-detectors.ts`**, **`viewer-data-n-plus-one-script.ts`**.
+
+• **Log viewer — static sources from N+1 row (DB_12)** — N+1 synthetic insight rows add **Static sources** (project index token search + QuickPick; heuristic only). Host: `viewer-message-handler-static-sql.ts`; tokens: `drift-sql-fingerprint-code-tokens.ts`. Strings: `msg.staticSqlSources*`.
+
+• **Performance panel — Database tab (DB_13)** — Insight **Performance** slide-out adds a **Database** tab: session Drift rollup summary, simple time-bucket timeline, top fingerprints table (`viewer-performance-db-tab.ts`, styles in `viewer-styles-performance.ts`). **Refresh** rebuilds the DB view when that tab is active.
+
+• **Root-cause hypotheses — discoverability (DB_14 phase 3)** — Command **`saropaLogCapture.explainRootCauseHypotheses`**, webview handler `triggerExplainRootCauseHypotheses`, log context menu **Explain root-cause hypotheses**, and `explainRootCauseHypothesesEmpty` when there is nothing to explain. Shared embed path: `runTriggerExplainRootCauseHypothesesFromHost` in `viewer-root-cause-hints-script.ts`.
+
+• **Tests** — `drift-sql-fingerprint-code-tokens.test.ts` (token extraction + false-positive guards); `viewer-script-messages-root-cause.test.ts`; embed assertions for static-sources wiring in `viewer-n-plus-one-embed.test.ts`.
+
 • **Log viewer — DB detector sub-toggles & baseline hints (DB_15 optional)** — Settings **`viewerDbDetectorNPlusOneEnabled`**, **`viewerDbDetectorSlowBurstEnabled`**, **`viewerDbDetectorBaselineHintsEnabled`** (when master **database insights** is on). SQL baseline from log comparison can trigger a one-time **SQL count above baseline** marker; host **`createBaselineVolumeCompareDetector`** supports **`runDbDetectorsCompare`**. **`session-rollup-patch`** results merge into the session rollup map after each detector pass.
 
 • **Fingerprint summaries — slow query counts (DB_10)** — **`slowQueryCount`** per fingerprint (threshold = **`viewerSlowBurstSlowQueryMs`**) in scans, persist v1, merges, and the session comparison table (**Slow A / B / Δ slow** when logs include **`[+Nms]`** metadata).

@@ -3,6 +3,7 @@
  */
 import * as assert from 'node:assert';
 import { getViewerDataScript } from '../../ui/viewer/viewer-data';
+import { getViewerScript } from '../../ui/viewer/viewer-script';
 import { getViewerRootCauseHintsScript } from '../../ui/viewer/viewer-root-cause-hints-script';
 import { getViewerDbDetectorFrameworkScript } from '../../ui/viewer/viewer-db-detector-framework-script';
 import { getNPlusOneDetectorScript } from '../../ui/viewer/viewer-data-n-plus-one-script';
@@ -20,6 +21,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('function pruneNPlusOneFingerprints'));
         assert.ok(chunk.includes('sqlSnippet'));
         assert.ok(chunk.includes('function updateDbInsightRollup'));
+        assert.ok(chunk.includes('function peekDbInsightRollup'));
         assert.ok(chunk.includes('function getDriftRepeatMinN'));
         assert.ok(chunk.includes('dbRepeatThresholds'));
     });
@@ -55,10 +57,19 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(data.includes('streakMinN'));
         assert.ok(data.includes('function runDbDetectors'));
         assert.ok(data.includes('function emitDbLineDetectors'));
+        assert.ok(data.includes('applyDbAnnotateLineResult'));
+        assert.ok(data.includes('db.ingest-rollup'));
         assert.ok(data.includes('registerBuiltinDbDetectors'));
         assert.ok(data.includes('pruneDbDetectorStateAfterTrim'));
         assert.ok(data.includes('applyDbMarkerResults'));
         assert.ok(data.includes('slow-query-burst-marker'));
+        assert.ok(data.includes('find-static-sources'));
+    });
+
+    test('viewer main script wires N+1 static-sources action to host message', () => {
+        const vs = getViewerScript(100_000);
+        assert.ok(vs.includes('find-static-sources'));
+        assert.ok(vs.includes('findStaticSourcesForSqlFingerprint'));
     });
 
     test('root-cause hypotheses embed defines strip refresh and bundle builder', () => {
@@ -72,6 +83,8 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('collectSessionDiffRegressionFpsEmbedded'));
         assert.ok(chunk.includes('rchCollapseStorageKey'));
         assert.ok(chunk.includes('explainRootCauseHypotheses'));
+        assert.ok(chunk.includes('runTriggerExplainRootCauseHypothesesFromHost'));
+        assert.ok(chunk.includes('explainRootCauseHypothesesEmpty'));
     });
 
     test('DB detector framework embed bakes slow burst thresholds and DB_08 detector id', () => {
