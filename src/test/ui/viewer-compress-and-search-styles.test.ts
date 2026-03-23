@@ -149,6 +149,16 @@ suite('Search strip and options (compress UI wiring)', () => {
         assert.ok(html.includes('Open quality report'));
     });
 
+    test('footer Actions menu order is Replay -> Open quality report -> Export', () => {
+        const html = getViewerBodyHtml({ version: '0' });
+        const replayIdx = html.indexOf('data-action="replay"');
+        const qualityIdx = html.indexOf('data-action="open-quality-report"');
+        const exportIdx = html.indexOf('data-action="export"');
+        assert.ok(replayIdx >= 0, 'Replay action should exist');
+        assert.ok(qualityIdx > replayIdx, 'Open quality report should be after Replay');
+        assert.ok(exportIdx > qualityIdx, 'Export should be after Open quality report');
+    });
+
     test('replay script wires footer quality report and integration sync', () => {
         const script = getReplayScript();
         assert.ok(script.includes('applyFooterQualityReportState'));
