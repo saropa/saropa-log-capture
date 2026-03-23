@@ -5,6 +5,7 @@
 
 import { buildDbFingerprintSummaryDiff } from "./db-fingerprint-summary";
 import type {
+  DbAnnotateLinePayload,
   DbDetectorContext,
   DbDetectorDefinition,
   DbDetectorResult,
@@ -120,4 +121,63 @@ export function createDbDetectorSessionState(): DbDetectorSessionState {
     disabledDetectorIds: new Set(),
     loggedDetectorErrors: new Set(),
   };
+}
+
+function isAnnotateLinePayload(p: unknown): p is DbAnnotateLinePayload {
+  if (p === null || typeof p !== "object") {
+    return false;
+  }
+  const o = p as DbAnnotateLinePayload;
+  return (
+    typeof o.targetSeq === "number" &&
+    Number.isFinite(o.targetSeq) &&
+    o.patch !== null &&
+    typeof o.patch === "object"
+  );
+}
+
+/**
+ * Apply one **`annotate-line`** result to in-memory line rows (extension host, tests, or batch previews).
+ * Matches embed **`applyDbAnnotateLineResult`** semantics: shallow merge, optional **`totalHeight`** delta via callback.
+ *
+ * @returns whether a row was found and patched
+ */
+export function applyDbAnnotateLineResultToLineItems<T extends { seq?: number; height?: number }>(
+  lines: T[],
+  result: DbDetectorResult,
+  onHeightDelta?: (delta: number) => void,
+): boolean {
+  if (result.kind !== "annotate-line" || !isAnnotateLinePayload(result.payload)) {
+    return false;
+  }
+  const { targetSeq, patch } = result.payload;
+  const line = lines.find((x) => x.seq === targetSeq);
+  if (!line) {
+    return false;
+  }
+  const oldH = typeof line.height === "number" ? line.height : 0;
+  const rec = line as Record<string, unknown>;
+  for (const [key, val] of Object.entries(patch)) {
+    rec[key] = val;
+  }
+  const newH = patch.height;
+  if (typeof newH === "number" && Number.isFinite(newH) && newH !== oldH) {
+    onHeightDelta?.(newH - oldH);
+  }
+  return true;
+}
+
+/** Apply every **`annotate-line`** in **`results`** (ignores other kinds). @returns count of successful patches */
+export function applyDbAnnotateLineResultsToLineItems<T extends { seq?: number; height?: number }>(
+  lines: T[],
+  results: readonly DbDetectorResult[],
+  onHeightDelta?: (delta: number) => void,
+): number {
+  let n = 0;
+  for (const r of results) {
+    if (applyDbAnnotateLineResultToLineItems(lines, r, onHeightDelta)) {
+      n++;
+    }
+  }
+  return n;
 }
