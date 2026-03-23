@@ -169,23 +169,6 @@ if (resetSettingsBtn) {
     });
 }
 
-// Integrations: collect checked adapter ids and send to host on change.
-var integrationsSection = document.getElementById('integrations-section');
-if (integrationsSection) {
-    integrationsSection.addEventListener('change', function(e) {
-        if (!e.target || !e.target.matches || !e.target.matches('input[data-adapter-id]')) return;
-        var inputs = integrationsSection.querySelectorAll('input[data-adapter-id]:checked');
-        var adapterIds = [];
-        for (var i = 0; i < inputs.length; i++) {
-            var id = inputs[i].getAttribute('data-adapter-id');
-            if (id) adapterIds.push(id);
-        }
-        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
-            vscodeApi.postMessage({ type: 'setIntegrationsAdapters', adapterIds: adapterIds });
-        }
-    });
-}
-
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');

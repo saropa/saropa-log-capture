@@ -11,16 +11,63 @@ import { escapeHtml } from '../../modules/capture/ansi';
 import type { IntegrationAdapterMeta } from '../../modules/integrations/integrations-ui';
 import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
 
+/** Shared preview length for collapsed integration descriptions. */
+const INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH = 50;
+const PERFORMANCE_WARNING_EMOJI = '⚠️';
+
+function truncateWithEllipsis(value: string, maxLength: number): string {
+    if (value.length <= maxLength) {
+        return value;
+    }
+    return `${value.slice(0, maxLength)}…`;
+}
+
+function splitPerformanceWarning(performanceNote?: string): { warningEmoji: string; text: string } {
+    if (!performanceNote) {
+        return { warningEmoji: '', text: '' };
+    }
+    const trimmed = performanceNote.trim();
+    if (!trimmed.startsWith(PERFORMANCE_WARNING_EMOJI)) {
+        return { warningEmoji: '', text: trimmed };
+    }
+    const text = trimmed.slice(PERFORMANCE_WARNING_EMOJI.length).trim().replace(/^[-\u2014:]\s*/, '');
+    return { warningEmoji: PERFORMANCE_WARNING_EMOJI, text };
+}
+
 /** Build one integration row: checkbox, label, long description, and optional perf/when-to-disable lines. */
 function renderIntegrationRow(a: IntegrationAdapterMeta): string {
     const longDesc = a.descriptionLong ?? a.description;
-    const perf = a.performanceNote ? `<p class="integrations-note integrations-perf">Performance: ${escapeHtml(a.performanceNote)}</p>` : '';
+    const previewDesc = truncateWithEllipsis(longDesc, INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH);
+    const perfNote = splitPerformanceWarning(a.performanceNote);
+    let perf = '';
+    if (a.performanceNote) {
+        const warning = perfNote.warningEmoji
+            ? `<span class="integrations-perf-warning" aria-label="Performance warning">${escapeHtml(perfNote.warningEmoji)}</span>`
+            : '';
+        perf = `<p class="integrations-note integrations-perf">
+            <span class="integrations-note-label">Performance:</span>
+            ${warning}
+            <span>${escapeHtml(perfNote.text)}</span>
+        </p>`;
+    }
     const when = a.whenToDisable ? `<p class="integrations-note integrations-when">When to disable: ${escapeHtml(a.whenToDisable)}</p>` : '';
+    const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
+    const escapedPreviewDesc = escapeHtml(previewDesc);
+    const escapedLongDesc = escapeHtml(longDesc);
+    const descToggle = longDesc.length > INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH
+        ? `<button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">Show more</button>`
+        : '';
     return `
-        <label class="integrations-row" title="${escapeHtml(longDesc)}">
+        <label class="integrations-row" title="${escapeHtml(longDesc)}" data-search-text="${escapeHtml(searchText)}">
             <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
             <span class="integrations-label">${escapeHtml(a.label)}</span>
-            <p class="integrations-desc">${escapeHtml(longDesc)}</p>
+            <p class="integrations-desc">
+                <span class="integrations-desc-text">
+                    <span class="integrations-desc-preview">${escapedPreviewDesc}</span>
+                    <span class="integrations-desc-full options-filtered-hidden">${escapedLongDesc}</span>
+                </span>
+                ${descToggle}
+            </p>
             ${perf}
             ${when}
         </label>`;
@@ -28,7 +75,10 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
 
 /** Returns the HTML for the Integrations view (header + back + list). Shown inside the options panel when user clicks Integrations. */
 export function getIntegrationsPanelHtml(): string {
-    const rows = INTEGRATION_ADAPTERS.map(renderIntegrationRow).join('\n');
+    const rows = [...INTEGRATION_ADAPTERS]
+        .sort((a, b) => a.label.localeCompare(b.label))
+        .map(renderIntegrationRow)
+        .join('\n');
     return `
     <div id="integrations-view" class="integrations-view integrations-view-hidden" role="region" aria-label="Integrations" aria-hidden="true">
         <div class="integrations-header">
@@ -37,6 +87,9 @@ export function getIntegrationsPanelHtml(): string {
         </div>
         <div class="integrations-content">
             <p class="integrations-intro">Choose what to attach to each debug session. Session adapters add context to the log header or sidecar files; Crashlytics adds the production-issues sidebar. Each integration below includes a short note on performance and when you might leave it off.</p>
+            <div class="integrations-search-wrapper">
+                <input id="integrations-search" type="text" placeholder="Search integrations…" aria-label="Search integrations" />
+            </div>
             <div class="options-section" id="integrations-section">
                 ${rows}
             </div>
