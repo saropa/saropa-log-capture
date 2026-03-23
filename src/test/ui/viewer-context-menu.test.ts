@@ -138,6 +138,18 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('--submenu-content-top'));
             assert.ok(script.includes('rect.top <'));
         });
+
+        test('should disable code-quality menu rows when codeQuality adapter is off', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function setContextMenuItemDisabled'));
+            assert.ok(script.includes('is-disabled'));
+            assert.ok(script.includes("classList.contains('is-disabled')"));
+            assert.ok(script.includes('window.integrationAdapters'));
+            assert.ok(script.includes("indexOf('codeQuality')"));
+            assert.ok(script.includes("'show-code-quality'"));
+            assert.ok(script.includes("'open-quality-report'"));
+            assert.ok(script.includes('cqRows'));
+        });
     });
 
 });
