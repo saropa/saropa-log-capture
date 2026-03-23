@@ -123,6 +123,9 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.rchL10n = (msg.strings && typeof msg.strings === 'object') ? msg.strings : {};
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
+        case 'triggerExplainRootCauseHypotheses':
+            if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
+            break;
         case 'setFilename':
             currentFilename = msg.filename || '';
             updateFooterText();

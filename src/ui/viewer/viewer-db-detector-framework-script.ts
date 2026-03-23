@@ -11,9 +11,10 @@
  * baseline (min baseline count 3), N+1 synthetic rows (DB_07). Each can be gated via
  * `viewerDbDetector*` toggles baked from extension config.
  *
- * **Session rollup patches:** Detectors may return `kind: 'session-rollup-patch'`; `emitDbLineDetectors`
- * applies them via `applyDbSessionRollupPatches`, which calls `updateDbInsightRollup` up to 1000 repeats
- * per payload to avoid runaway work.
+ * **Session rollup patches:** Each qualifying Drift ingest applies a primary `db.ingest-rollup` patch first
+ * (in `emitDbLineDetectors`), then registered detectors; `applyDbSessionRollupPatches` calls
+ * `updateDbInsightRollup` up to 1000 repeats per payload. Detector results apply in **phases** (rollup patches,
+ * then `annotate-line`, synthetic, marker), sorted by `priority` within each phase.
  *
  * **State:** `resetDbInsightDetectorSession` clears disabled flags, N+1/slow-burst accumulators, rollup
  * map, and baseline hint dedupe; it does not clear the host-provided baseline object/map (host sends null

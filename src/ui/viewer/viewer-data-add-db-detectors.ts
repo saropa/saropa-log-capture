@@ -1,6 +1,9 @@
 /**
- * Embedded helpers for DB_15 detector pipeline output (synthetic insight rows + burst markers).
+ * Embedded helpers for DB_15 detector pipeline output (rollup patches, annotate-line, synthetic rows, markers).
  * Split from `viewer-data-add.ts` to stay under the file line budget.
+ *
+ * **Primary SQL rollup:** Ingest applies one `session-rollup-patch` per Drift line here (not in `addToData`)
+ * so rollup and optional `dbInsight` on the line stay aligned with `applyDbSessionRollupPatches`.
  *
  * Baseline-aware detectors use `dbBaselineFingerprintSummaryMap` from `viewer-db-detector-framework-script.ts`
  * (built once when the host posts `setDbBaselineFingerprintSummary`, not per ingest line).
@@ -37,6 +40,8 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
                 + ' · '
                 + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
+                + ' · '
+                + '<span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search workspace for code that might contain this SQL">Static sources</span>'
                 + '</span>'
                 + '</span>';
             n1Item = {
@@ -103,17 +108,106 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
         } catch (_mkErr) { /* swallow — never block ingest */ }
     }
 }
+/** Merge \`annotate-line\` payload onto an existing row (by \`seq\`); adjusts \`totalHeight\` if \`height\` changes. */
+function applyDbAnnotateLineResult(r) {
+    if (!r || r.kind !== 'annotate-line' || !r.payload) return;
+    var pl = r.payload;
+    var seq = pl.targetSeq;
+    var patch = pl.patch;
+    if (typeof seq !== 'number' || !isFinite(seq) || !patch || typeof patch !== 'object') return;
+    var i, it, k, oldH;
+    for (i = 0; i < allLines.length; i++) {
+        it = allLines[i];
+        if (it && it.seq === seq) {
+            oldH = typeof it.height === 'number' ? it.height : 0;
+            for (k in patch) {
+                if (Object.prototype.hasOwnProperty.call(patch, k)) {
+                    it[k] = patch[k];
+                }
+            }
+            if (typeof patch.height === 'number' && isFinite(patch.height) && patch.height !== oldH) {
+                totalHeight += patch.height - oldH;
+            }
+            return;
+        }
+    }
+}
 /**
- * Drift SQL database lines: run registered DB detectors (slow burst, N+1, future diff hooks).
- * Runs when sourceTag is 'database' and the line has parsed SQL and/or a replay duration.
+ * Apply merged detector results in fixed phases (rollup → annotate → synthetic → marker) so N+1 rows stay before
+ * burst markers; within each phase sort by ascending \`priority\`.
  */
-function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineSource, lvl, elapsedMs, plain, anchorSeq) {
+function applyDbDetectorResultsInPriorityOrder(merged, scopeFilt, ts, sp, lineSource) {
+    if (!merged || !merged.length) return;
+    var roll = [];
+    var ann = [];
+    var syn = [];
+    var mk = [];
+    var i, r;
+    for (i = 0; i < merged.length; i++) {
+        r = merged[i];
+        if (!r || !r.kind) continue;
+        if (r.kind === 'session-rollup-patch') roll.push(r);
+        else if (r.kind === 'annotate-line') ann.push(r);
+        else if (r.kind === 'synthetic-line') syn.push(r);
+        else if (r.kind === 'marker') mk.push(r);
+    }
+    var byPri = function(a, b) { return (a.priority || 0) - (b.priority || 0); };
+    roll.sort(byPri);
+    ann.sort(byPri);
+    syn.sort(byPri);
+    mk.sort(byPri);
+    if (roll.length && typeof applyDbSessionRollupPatches === 'function') {
+        applyDbSessionRollupPatches(roll);
+    }
+    for (i = 0; i < ann.length; i++) {
+        applyDbAnnotateLineResult(ann[i]);
+    }
+    if (syn.length) {
+        applyDbSyntheticLineResults(syn, scopeFilt, ts, sp, lineSource);
+    }
+    if (mk.length) {
+        applyDbMarkerResults(mk, ts, sp, lineSource);
+    }
+}
+/**
+ * Drift SQL database lines: primary rollup patch, then registered DB detectors (slow burst, N+1, etc.).
+ * Runs when sourceTag is 'database' and the line has parsed SQL and/or a replay duration.
+ * @param lineItemForDbInsight - When set, attaches \`dbInsight\` after primary rollup (normal line row only).
+ */
+function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineSource, lvl, elapsedMs, plain, anchorSeq, lineItemForDbInsight) {
     if (typeof runDbDetectors !== 'function') return;
     if (sourceTag !== 'database') return;
     var hasSql = !!sqlMeta;
     var hasDur = typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs);
     if (!hasSql && !hasDur) return;
     try {
+        if (typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sqlMeta && sqlMeta.fingerprint
+            && typeof applyDbSessionRollupPatches === 'function') {
+            applyDbSessionRollupPatches([{
+                kind: 'session-rollup-patch',
+                detectorId: 'db.ingest-rollup',
+                stableKey: 'db.ingest-rollup',
+                priority: -1000,
+                payload: { fingerprint: sqlMeta.fingerprint, elapsedMs: hasDur ? elapsedMs : undefined }
+            }]);
+        }
+        if (lineItemForDbInsight && typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sqlMeta && sqlMeta.fingerprint) {
+            var rollupDb = (typeof peekDbInsightRollup === 'function') ? peekDbInsightRollup(sqlMeta.fingerprint) : null;
+            var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : null;
+            if (!snipDb) {
+                var pln = plain || '';
+                var di = pln.indexOf('Drift:');
+                var rawSnip = di >= 0 ? pln.substring(di).trim() : pln.trim();
+                snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
+            }
+            lineItemForDbInsight.dbInsight = {
+                fingerprint: sqlMeta.fingerprint,
+                sqlSnippet: snipDb,
+                seenCount: rollupDb ? rollupDb.seenCount : 1,
+                avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
+                maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
+            };
+        }
         var baselineForCtx = (typeof dbBaselineFingerprintSummaryMap !== 'undefined' && dbBaselineFingerprintSummaryMap)
             ? dbBaselineFingerprintSummaryMap
             : null;
@@ -129,11 +223,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
             anchorSeq: (typeof anchorSeq === 'number' && isFinite(anchorSeq)) ? anchorSeq : undefined
         };
         var merged = runDbDetectors(ctx);
-        if (typeof applyDbSessionRollupPatches === 'function') {
-            applyDbSessionRollupPatches(merged);
-        }
-        applyDbSyntheticLineResults(merged, scopeFilt, ts, sp, lineSource);
-        applyDbMarkerResults(merged, ts, sp, lineSource);
+        applyDbDetectorResultsInPriorityOrder(merged, scopeFilt, ts, sp, lineSource);
     } catch (_dbDetErr) { /* swallow — framework must not break ingest */ }
 }
 `;

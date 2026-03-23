@@ -94,6 +94,17 @@ function updateDbInsightRollup(fingerprint, elapsedMs) {
         maxDurationMs: e.countWithMs > 0 ? e.maxMs : undefined
     };
 }
+/** Read rollup stats without mutating (after updateDbInsightRollup / session-rollup-patch). */
+function peekDbInsightRollup(fingerprint) {
+    if (!fingerprint) return null;
+    var e = dbInsightSessionRollup[fingerprint];
+    if (!e) return null;
+    return {
+        seenCount: e.count,
+        avgDurationMs: e.countWithMs > 0 ? e.sumMs / e.countWithMs : undefined,
+        maxDurationMs: e.countWithMs > 0 ? e.maxMs : undefined
+    };
+}
 function pruneNPlusOneFingerprints(now) {
     var keys = Object.keys(nPlusOneDetector.byFingerprint);
     if (keys.length <= nPlusOneDetector.maxFingerprintsTracked) return;

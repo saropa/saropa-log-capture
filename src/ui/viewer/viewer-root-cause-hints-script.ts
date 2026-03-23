@@ -1,6 +1,12 @@
 /**
- * DB_14: root-cause hypotheses strip UI + scroll wiring. Algorithm chunk:
- * `viewer-root-cause-hints-embed-algorithm.ts`.
+ * DB_14 — Root-cause hypotheses strip (webview embed).
+ *
+ * Bundles the deterministic hypothesis algorithm (`viewer-root-cause-hints-embed-algorithm.ts`) with UI:
+ * collapse state, dismiss, evidence scroll targets, and **Explain with AI** / **Explain root-cause hypotheses**
+ * (command + context menu post `triggerExplainRootCauseHypotheses` from the host; webview calls
+ * `runTriggerExplainRootCauseHypothesesFromHost`, which mirrors the strip button and posts
+ * `explainRootCauseHypotheses` or `explainRootCauseHypothesesEmpty`). No host round-trip for the explain
+ * path beyond that single postMessage — avoids duplicate LLM entry points in script.
  */
 import { getViewerRootCauseHintsEmbedAlgorithmChunk } from './viewer-root-cause-hints-embed-algorithm';
 
@@ -43,6 +49,21 @@ function buildRootCauseHypothesesExplainText(bundle, hy) {
     lines.push('');
     lines.push('Session id: ' + String(bundle && bundle.sessionId ? bundle.sessionId : ''));
     return lines.join('\\n');
+}
+
+/** Command + context menu: same flow as the strip “Explain with AI” button; empty hypotheses → host info message. */
+function runTriggerExplainRootCauseHypothesesFromHost() {
+    if (typeof vscodeApi === 'undefined' || !vscodeApi) return;
+    var b = collectRootCauseHintBundleEmbedded();
+    var hList = buildHypothesesEmbedded(b);
+    if (!hList.length) {
+        vscodeApi.postMessage({ type: 'explainRootCauseHypothesesEmpty' });
+        return;
+    }
+    var narr = buildRootCauseHypothesesExplainText(b, hList);
+    var explainLine = 0;
+    if (b.errors && b.errors.length) explainLine = b.errors[0].lineIndex;
+    vscodeApi.postMessage({ type: 'explainRootCauseHypotheses', text: narr, lineIndex: explainLine });
 }
 
 function scrollViewerToLineIndex0(idx) {
@@ -147,13 +168,7 @@ function initRootCauseHypothesesUi() {
         }
         if (t && t.dataset && t.dataset.rchExplain === '1') {
             ev.preventDefault();
-            if (typeof vscodeApi === 'undefined' || !vscodeApi) return;
-            var b = collectRootCauseHintBundleEmbedded();
-            var hList = buildHypothesesEmbedded(b);
-            var narr = buildRootCauseHypothesesExplainText(b, hList);
-            var explainLine = 0;
-            if (b.errors && b.errors.length) explainLine = b.errors[0].lineIndex;
-            vscodeApi.postMessage({ type: 'explainRootCauseHypotheses', text: narr, lineIndex: explainLine });
+            runTriggerExplainRootCauseHypothesesFromHost();
             return;
         }
         if (t && t.classList && t.classList.contains('root-cause-hypotheses-dismiss')) {

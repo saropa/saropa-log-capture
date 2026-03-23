@@ -30,6 +30,16 @@ export interface DbSessionRollupPatchPayload {
   readonly elapsedMs?: number;
 }
 
+/**
+ * Patch fields onto an existing `allLines` row by `seq` (webview embed only).
+ * Keep patches shallow and safe — unknown keys still copy; prefer documented line fields.
+ */
+export interface DbAnnotateLinePayload {
+  readonly targetSeq: number;
+  /** Shallow-merged onto the line item (e.g. `html`, `level`, `dbInsight`). */
+  readonly patch: Readonly<Record<string, unknown>>;
+}
+
 /** One row of the union of baseline vs target keys (sorted by fingerprint for stable output). */
 export interface DbFingerprintSummaryDiffRow {
   readonly fingerprint: string;
@@ -95,7 +105,11 @@ export interface DbDetectorResult {
   readonly stableKey: string;
   /** Lower numbers run first; on duplicate `stableKey`, higher priority wins (last write). */
   readonly priority: number;
-  readonly payload: DbDetectorSyntheticPayload | Record<string, unknown>;
+  readonly payload:
+    | DbDetectorSyntheticPayload
+    | DbSessionRollupPatchPayload
+    | DbAnnotateLinePayload
+    | Record<string, unknown>;
 }
 
 export interface DbDetectorDefinition {

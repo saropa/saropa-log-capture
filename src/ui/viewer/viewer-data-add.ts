@@ -2,11 +2,11 @@
  * Script chunk for data insertion and stack-group toggling.
  *
  * **Drift SQL:** `parseSqlFingerprint(plain)` runs **once** per normal log line; the result
- * drives repeat keys (for `database`-tagged lines), optional `dbInsight` rollup, and
- * `emitDbLineDetectors` (DB_15: slow-burst markers + N+1). Repeat-collapse and full-line
+ * drives repeat keys (for `database`-tagged lines), `emitDbLineDetectors` (DB_15: primary
+ * `session-rollup-patch`, slow-burst markers, N+1, `annotate-line`). Session rollup and
+ * `lineItem.dbInsight` are applied inside `emitDbLineDetectors`. Repeat-collapse and full-line
  * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
- * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`
- * (`applyDbSyntheticLineResults`).
+ * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`.
  */
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
 
@@ -222,10 +222,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
 
         // Collapsed repeats skip the normal-line branch; still feed session rollup and N+1 detector (per-line args).
         var scopeFiltCol = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        if (viewerDbInsightsEnabled && sTag === 'database' && sqlMeta && typeof updateDbInsightRollup === 'function') {
-            updateDbInsightRollup(sqlMeta.fingerprint, elapsedMs);
-        }
-        emitDbLineDetectors(now, sqlMeta, 'database', scopeFiltCol, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '', repeatItem.seq);
+        emitDbLineDetectors(now, sqlMeta, 'database', scopeFiltCol, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '', repeatItem.seq, null);
     } else {
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
@@ -257,28 +254,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         totalHeight += finalH;
         updateCompressDupStreakAfterLine(plain);
 
-        if (sTag === 'database') {
-            if (viewerDbInsightsEnabled) {
-                var rollupDb = (sqlMeta && typeof updateDbInsightRollup === 'function')
-                    ? updateDbInsightRollup(sqlMeta.fingerprint, lineItem.elapsedMs)
-                    : null;
-                var snipDb = sqlMeta && sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : null;
-                if (!snipDb) {
-                    var di = plain.indexOf('Drift:');
-                    var rawSnip = di >= 0 ? plain.substring(di).trim() : plain.trim();
-                    snipDb = rawSnip.length > 500 ? rawSnip.substring(0, 497) + '...' : rawSnip;
-                }
-                lineItem.dbInsight = {
-                    fingerprint: sqlMeta ? sqlMeta.fingerprint : null,
-                    sqlSnippet: snipDb,
-                    seenCount: rollupDb ? rollupDb.seenCount : 1,
-                    avgDurationMs: rollupDb ? rollupDb.avgDurationMs : undefined,
-                    maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
-                };
-            }
-        }
-
-        emitDbLineDetectors(now, sqlMeta, sTag, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain, lineItem.seq);
+        emitDbLineDetectors(now, sqlMeta, sTag, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain, lineItem.seq, lineItem);
 
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
     }
