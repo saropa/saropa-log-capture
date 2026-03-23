@@ -2,8 +2,15 @@
  * Embedded helpers for DB_15 detector pipeline output (rollup patches, annotate-line, synthetic rows, markers).
  * Split from `viewer-data-add.ts` to stay under the file line budget.
  *
- * **Primary SQL rollup:** Ingest applies one `session-rollup-patch` per Drift line here (not in `addToData`)
- * so rollup and optional `dbInsight` on the line stay aligned with `applyDbSessionRollupPatches`.
+ * **Primary SQL rollup:** Ingest applies one `session-rollup-patch` (`db.ingest-rollup`) per parsed Drift fingerprint
+ * before `runDbDetectors`, so `dbInsightSessionRollup` matches what baseline-volume and other detectors read. Normal
+ * `lineItem.dbInsight` is attached afterward via `peekDbInsightRollup` (and a fallback object when the line is
+ * `database`-tagged but not parsed as Drift SQL).
+ *
+ * **Result ordering:** After `mergeDbDetectorResultsByStableKey`, `applyDbDetectorResultsInPriorityOrder` runs
+ * phases in this order — rollup patches → `annotate-line` → `synthetic-line` → `marker` — with ascending `priority`
+ * within each phase. That preserves the prior UX where N+1 synthetic rows precede burst markers when priorities
+ * differ. `annotate-line` with an unknown `targetSeq` is a silent no-op (never throws).
  *
  * Baseline-aware detectors use `dbBaselineFingerprintSummaryMap` from `viewer-db-detector-framework-script.ts`
  * (built once when the host posts `setDbBaselineFingerprintSummary`, not per ingest line).
@@ -11,10 +18,7 @@
 
 export function getViewerDataAddDbDetectorsScript(): string {
     return /* javascript */ `
-/**
- * Apply merged DB detector results (currently n-plus-one synthetic lines).
- * Kept separate so future kinds stay in one adapter.
- */
+/** Apply only synthetic-line / n-plus-one insight payloads (batch; caller splits merged detector output). */
 function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
     if (!results || !results.length) return;
     var i, r, pl, insight, sqlMeta, windowSec, confLabel, previewFingerprint, n1Html, n1Item;
