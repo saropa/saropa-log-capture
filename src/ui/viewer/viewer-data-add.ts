@@ -85,20 +85,35 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
 
-    // Real-time repeat detection
-    var currentHash = generateRepeatHash(lvl, plain);
+    // Real-time repeat detection (Drift DB lines: fingerprint hash + verb-specific collapse threshold).
+    var sqlMetaRepeat = (sTag === 'database' && typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
+    // Level in the key avoids merging repeats across severity changes for the same fingerprint.
+    var currentHash = (sqlMetaRepeat && sqlMetaRepeat.fingerprint)
+        ? (lvl + '::dbfp::' + sqlMetaRepeat.fingerprint)
+        : generateRepeatHash(lvl, plain);
+    var lineThresholdN = (typeof getDriftRepeatMinN === 'function') ? getDriftRepeatMinN(sqlMetaRepeat, sTag) : 2;
     var now = ts || Date.now();
-    var isRepeat = false;
+    var inRepeatWindow = currentHash !== null && repeatTracker.lastHash === currentHash &&
+        (now - repeatTracker.lastTimestamp) < repeatWindowMs;
 
-    if (currentHash !== null && repeatTracker.lastHash === currentHash &&
-        (now - repeatTracker.lastTimestamp) < repeatWindowMs) {
-        // This is a repeat within the time window
-        isRepeat = true;
+    if (inRepeatWindow) {
         repeatTracker.count++;
         repeatTracker.lastTimestamp = now;
+    } else {
+        repeatTracker.lastHash = currentHash;
+        repeatTracker.lastPlainText = plain;
+        repeatTracker.lastLevel = lvl;
+        repeatTracker.count = 1;
+        repeatTracker.lastTimestamp = now;
+        repeatTracker.streakMinN = lineThresholdN;
+    }
 
-        // On first repeat, hide the original line to avoid a visual gap
-        if (repeatTracker.count === 2 && repeatTracker.lastLineIndex >= 0 &&
+    var minN = repeatTracker.streakMinN;
+    var shouldShowNormalLine = repeatTracker.count < minN;
+
+    if (!shouldShowNormalLine) {
+        // First line that enters repeat-collapse: hide the anchor row; further repeats only add notification rows.
+        if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
             repeatTracker.lastLineIndex < allLines.length) {
             var origItem = allLines[repeatTracker.lastLineIndex];
             if (origItem && origItem.height > 0) {
@@ -108,7 +123,6 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             }
         }
 
-        // Create repeat notification line
         var preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
         if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
             preview += '...';
@@ -131,6 +145,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             sourceTag: sTag,
             logcatTag: lTag,
             sourceFiltered: false,
+            sqlPatternFiltered: false,
             classFiltered: false,
             classTags: cTags,
             isSeparator: false,
@@ -144,16 +159,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         resetCompressDupStreak();
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
+        if (typeof registerSqlPattern === 'function') { registerSqlPattern(repeatItem); }
         totalHeight += repeatH;
     } else {
-        // New unique message - reset tracker
-        repeatTracker.lastHash = currentHash;
-        repeatTracker.lastPlainText = plain;
-        repeatTracker.lastLevel = lvl;
-        repeatTracker.count = 1;
-        repeatTracker.lastTimestamp = now;
 
-        // Add the original line normally
+        // Add the original line normally (includes first line of a streak and lines before threshold N).
         var errorClass = (typeof classifyError === 'function' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
         var errorSuppressed = (typeof suppressTransientErrors !== 'undefined' && suppressTransientErrors && errorClass === 'transient');
 
@@ -170,10 +180,13 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
-        repeatTracker.lastLineIndex = allLines.length - 1; // track for repeat-hide
+        // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
+        if (repeatTracker.count === 1) {
+            repeatTracker.lastLineIndex = allLines.length - 1;
+        }
         if (typeof registerSourceTag === 'function') { registerSourceTag(lineItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(lineItem); }
         totalHeight += finalH;
@@ -234,6 +247,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                         sourceTag: 'database',
                         logcatTag: null,
                         sourceFiltered: false,
+                        sqlPatternFiltered: false,
                         classFiltered: false,
                         classTags: [],
                         isSeparator: false,
@@ -244,11 +258,14 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                     };
                     allLines.push(n1Item);
                     if (typeof registerSourceTag === 'function') { registerSourceTag(n1Item); }
+                    if (typeof registerSqlPattern === 'function') { registerSqlPattern(n1Item); }
                     totalHeight += ROW_HEIGHT;
                     resetCompressDupStreak();
                 }
             }
         } catch (_n1Err) { /* swallow — never block ingest on heuristic */ }
+
+        if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
     }
 }
 

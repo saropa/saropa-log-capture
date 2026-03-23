@@ -55,9 +55,9 @@ window.addEventListener('message', function(event) {
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
             if (typeof closeContextModal === 'function') closeContextModal();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; }
+            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; }
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
@@ -196,6 +196,20 @@ window.addEventListener('message', function(event) {
             if (typeof minimapShowSqlDensity !== 'undefined') minimapShowSqlDensity = msg.show !== false;
             if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity(msg);
             if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+            break;
+        case 'setViewerRepeatThresholds':
+            if (typeof dbRepeatThresholds !== 'undefined' && msg.thresholds && typeof msg.thresholds === 'object') {
+                var th = msg.thresholds;
+                var clampRepeatN = function(n) {
+                    var x = typeof n === 'number' ? n : parseInt(n, 10);
+                    if (!isFinite(x)) return 2;
+                    return Math.max(2, Math.min(50, Math.floor(x)));
+                };
+                dbRepeatThresholds.global = clampRepeatN(th.globalMinCount);
+                dbRepeatThresholds.read = clampRepeatN(th.readMinCount);
+                dbRepeatThresholds.transaction = clampRepeatN(th.transactionMinCount);
+                dbRepeatThresholds.dml = clampRepeatN(th.dmlMinCount);
+            }
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;

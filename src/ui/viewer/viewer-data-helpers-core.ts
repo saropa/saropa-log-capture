@@ -20,7 +20,9 @@ var repeatTracker = {
     lastLevel: null,
     count: 0,
     lastTimestamp: 0,
-    lastLineIndex: -1
+    lastLineIndex: -1,
+    /** Minimum occurrences before repeat-collapse for the current streak (Drift verb–specific or global). */
+    streakMinN: 2
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
 var repeatWindowMs = 3000;
@@ -51,6 +53,7 @@ function cleanupTrailingRepeats() {
     repeatTracker.count = 0;
     repeatTracker.lastTimestamp = 0;
     repeatTracker.lastLineIndex = -1;
+    repeatTracker.streakMinN = 2;
 }
 function isSeparatorLine(plainText) {
     var trimmed = plainText.trim();
@@ -82,7 +85,7 @@ function isLineContentBlank(item) {
 function calcItemHeight(item) {
     // Multi-source filter: hide line if its source is not in the enabled set (e.g. "Just debug").
     if (typeof window !== 'undefined' && window.enabledSources && item.source && window.enabledSources.indexOf(item.source) < 0) return 0;
-    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden) return 0;
+    if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden) return 0;
     var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
     if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
     var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);
