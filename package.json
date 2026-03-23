@@ -1310,6 +1310,38 @@
           "type": "boolean",
           "title": "%config.viewerDbInsightsEnabled.title%"
         },
+        "saropaLogCapture.viewerSlowBurstSlowQueryMs": {
+          "default": 50,
+          "minimum": 1,
+          "maximum": 120000,
+          "description": "%config.viewerSlowBurstSlowQueryMs.description%",
+          "type": "number",
+          "title": "%config.viewerSlowBurstSlowQueryMs.title%"
+        },
+        "saropaLogCapture.viewerSlowBurstMinCount": {
+          "default": 5,
+          "minimum": 2,
+          "maximum": 100,
+          "description": "%config.viewerSlowBurstMinCount.description%",
+          "type": "number",
+          "title": "%config.viewerSlowBurstMinCount.title%"
+        },
+        "saropaLogCapture.viewerSlowBurstWindowMs": {
+          "default": 2000,
+          "minimum": 100,
+          "maximum": 120000,
+          "description": "%config.viewerSlowBurstWindowMs.description%",
+          "type": "number",
+          "title": "%config.viewerSlowBurstWindowMs.title%"
+        },
+        "saropaLogCapture.viewerSlowBurstCooldownMs": {
+          "default": 10000,
+          "minimum": 0,
+          "maximum": 300000,
+          "description": "%config.viewerSlowBurstCooldownMs.description%",
+          "type": "number",
+          "title": "%config.viewerSlowBurstCooldownMs.title%"
+        },
         "saropaLogCapture.maxLogFiles": {
           "default": 0,
           "description": "%config.maxLogFiles.description%",

@@ -3,7 +3,7 @@
  *
  * **Drift SQL:** `parseSqlFingerprint(plain)` runs **once** per normal log line; the result
  * drives repeat keys (for `database`-tagged lines), optional `dbInsight` rollup, and
- * `emitDbLineDetectors` (DB_15 / N+1 and future detectors). Repeat-collapse and full-line
+ * `emitDbLineDetectors` (DB_15: slow-burst markers + N+1). Repeat-collapse and full-line
  * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
  * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`
  * (`applyDbSyntheticLineResults`).
@@ -107,6 +107,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (inRepeatWindow) {
         repeatTracker.count++;
         repeatTracker.lastTimestamp = now;
+        if (repeatTracker.streakSqlFp) {
+            repeatTracker.sqlStreakLastTs = now;
+            if (sqlMeta) bumpSqlStreakVariant(sqlMeta.argsKey);
+        }
     } else {
         repeatTracker.lastHash = currentHash;
         repeatTracker.lastPlainText = plain;
@@ -118,9 +122,21 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             repeatTracker.streakSqlFp = true;
             var sn0 = sqlMeta.sqlSnippet || '';
             repeatTracker.sqlRepeatPreview = sn0.length > repeatPreviewLength ? sn0.substring(0, repeatPreviewLength) + '...' : sn0;
+            repeatTracker.sqlStreakFingerprint = sqlMeta.fingerprint;
+            repeatTracker.sqlStreakSqlSnippet = (typeof capSqlSnippetForDrilldown === 'function') ? capSqlSnippetForDrilldown(sn0) : sn0;
+            repeatTracker.sqlStreakFirstTs = now;
+            repeatTracker.sqlStreakLastTs = now;
+            if (typeof resetSqlStreakVariantAccumulators === 'function') resetSqlStreakVariantAccumulators();
+            if (typeof bumpSqlStreakVariant === 'function') bumpSqlStreakVariant(sqlMeta.argsKey);
         } else {
             repeatTracker.streakSqlFp = false;
             repeatTracker.sqlRepeatPreview = null;
+            repeatTracker.sqlStreakFingerprint = null;
+            repeatTracker.sqlStreakSqlSnippet = '';
+            repeatTracker.sqlStreakFirstTs = 0;
+            repeatTracker.sqlStreakLastTs = 0;
+            repeatTracker.sqlStreakVariantOrder = [];
+            repeatTracker.sqlStreakVariantCounts = null;
         }
     }
 
@@ -148,12 +164,25 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                 preview += '...';
             }
         }
-        var repeatLabel = repeatTracker.streakSqlFp
-            ? ('SQL repeated #' + repeatTracker.count)
-            : ('Repeated #' + repeatTracker.count);
-        var repeatHtml = '<span class="repeat-notification' + (repeatTracker.streakSqlFp ? ' repeat-sql-fp' : '') + '">' +
-            repeatLabel +
-            ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
+        var repeatSeq = nextSeq++;
+        var repeatHtml;
+        var sqlDrill = null;
+        if (repeatTracker.streakSqlFp && typeof snapshotSqlRepeatDrilldown === 'function' && typeof buildSqlRepeatNotificationRowHtml === 'function') {
+            sqlDrill = snapshotSqlRepeatDrilldown(ts);
+            repeatHtml = buildSqlRepeatNotificationRowHtml({
+                sqlRepeatDrilldown: sqlDrill,
+                sqlRepeatDrilldownOpen: false,
+                repeatPreviewText: preview || '\\u2026',
+                seq: repeatSeq
+            });
+        } else {
+            var repeatLabelPlain = repeatTracker.streakSqlFp
+                ? ('SQL repeated #' + repeatTracker.count)
+                : ('Repeated #' + repeatTracker.count);
+            repeatHtml = '<span class="repeat-notification' + (repeatTracker.streakSqlFp ? ' repeat-sql-fp' : '') + '">' +
+                repeatLabelPlain +
+                ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
+        }
         var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
         var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
         if (repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
@@ -165,7 +194,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             groupId: -1,
             timestamp: ts,
             level: lvl,
-            seq: nextSeq++,
+            seq: repeatSeq,
             sourceTag: sTag,
             logcatTag: lTag,
             sourceFiltered: false,
@@ -179,6 +208,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             autoHidden: repeatAutoHide,
             source: lineSource
         };
+        if (sqlDrill) {
+            repeatItem.sqlRepeatDrilldown = sqlDrill;
+            repeatItem.sqlRepeatDrilldownOpen = false;
+            repeatItem.repeatPreviewText = preview || '\\u2026';
+        }
         allLines.push(repeatItem);
         resetCompressDupStreak();
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
@@ -191,7 +225,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (viewerDbInsightsEnabled && sTag === 'database' && sqlMeta && typeof updateDbInsightRollup === 'function') {
             updateDbInsightRollup(sqlMeta.fingerprint, elapsedMs);
         }
-        emitDbLineDetectors(now, sqlMeta, scopeFiltCol, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '');
+        emitDbLineDetectors(now, sqlMeta, 'database', scopeFiltCol, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '', repeatItem.seq);
     } else {
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
@@ -244,7 +278,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             }
         }
 
-        emitDbLineDetectors(now, sqlMeta, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain);
+        emitDbLineDetectors(now, sqlMeta, sTag, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain, lineItem.seq);
 
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
     }

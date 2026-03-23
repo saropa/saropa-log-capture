@@ -7,12 +7,14 @@
 
 import type * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { LineData } from "../../modules/session/session-manager";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
+import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 
 /** Dispatches every ViewerTarget method to all registered targets. */
 export class ViewerBroadcaster implements ViewerTarget {
@@ -120,6 +122,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     for (const t of this.targets) { t.setViewerDbInsightsEnabled(enabled); }
   }
+  setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
+    for (const t of this.targets) { t.setViewerSlowBurstThresholds(thresholds); }
+  }
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
     for (const t of this.targets) { t.setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips); }
   }
@@ -137,5 +142,10 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   setAutoHidePatterns(patterns: readonly string[]): void {
     for (const t of this.targets) { t.setAutoHidePatterns(patterns); }
+  }
+  setDbBaselineFingerprintSummary(
+    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
+  ): void {
+    for (const t of this.targets) { t.setDbBaselineFingerprintSummary(entries); }
   }
 }

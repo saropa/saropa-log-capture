@@ -170,6 +170,14 @@ viewportEl.addEventListener('click', function(e) {
         vscodeApi.postMessage({ type: 'openUrl', url: urlLink.dataset.url || '' });
         return;
     }
+    var burstMk = e.target.closest('.slow-query-burst-marker[data-anchor-seq]');
+    if (burstMk) {
+        e.preventDefault();
+        e.stopPropagation();
+        var asq = parseInt(burstMk.getAttribute('data-anchor-seq') || '', 10);
+        if (!isNaN(asq) && typeof scrollToAnchorSeq === 'function') scrollToAnchorSeq(asq);
+        return;
+    }
     /* N+1 insight row actions (see viewer-data-add.ts + drift-n-plus-one-detector.ts). */
     var n1Action = e.target.closest('.n1-action');
     if (n1Action) {
@@ -189,6 +197,14 @@ viewportEl.addEventListener('click', function(e) {
         }
         return;
     }
+    var sqlRepToggle = e.target.closest('.sql-repeat-drilldown-toggle');
+    if (sqlRepToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        var repSeq = parseInt(sqlRepToggle.dataset.seq || '', 10);
+        if (!isNaN(repSeq) && typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(repSeq);
+        return;
+    }
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();
@@ -205,6 +221,18 @@ viewportEl.addEventListener('click', function(e) {
     if (header && header.dataset.gid !== undefined) {
         toggleStackGroup(parseInt(header.dataset.gid));
     }
+});
+
+viewportEl.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    var lineEl = e.target.closest('[data-idx]');
+    if (!lineEl) return;
+    var idx = parseInt(lineEl.dataset.idx, 10);
+    if (isNaN(idx) || idx < 0 || idx >= allLines.length) return;
+    var rItem = allLines[idx];
+    if (!rItem || !rItem.sqlRepeatDrilldown || !rItem.sqlRepeatDrilldownOpen) return;
+    e.preventDefault();
+    if (typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(rItem.seq);
 });
 
 function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
