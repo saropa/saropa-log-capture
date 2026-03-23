@@ -110,6 +110,7 @@ function toggleClassTag(tag) {
     } else {
         hiddenClassTags[tag] = true;
     }
+    hiddenClassTags = ensureAtLeastOneTagVisible(hiddenClassTags, classTagCounts);
     applyClassTagFilter();
     rebuildClassTagChips();
     if (typeof markPresetDirty === 'function') { markPresetDirty(); }
