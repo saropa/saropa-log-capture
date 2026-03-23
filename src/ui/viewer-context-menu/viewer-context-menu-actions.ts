@@ -6,7 +6,7 @@
 
 /** Get the context menu action handler script. */
 export function getContextMenuActionsScript(): string {
-    return /* javascript */ `
+    return /* javascript */ String.raw`
 function handleGlobalAction(action) {
     if (action === 'copy-selection') {
         var sel = window.getSelection();
@@ -102,6 +102,7 @@ function handleToggleAction(action) {
         'toggle-line-height': typeof toggleLineHeightMode === 'function' ? toggleLineHeightMode : null,
         'toggle-hide-blank-lines': typeof toggleHideBlankLines === 'function' ? toggleHideBlankLines : null,
         'toggle-compress-lines': typeof toggleCompressLines === 'function' ? toggleCompressLines : null,
+        'toggle-compress-lines-global': typeof toggleCompressNonConsecutiveLines === 'function' ? toggleCompressNonConsecutiveLines : null,
     };
     var fn = toggleFns[action];
     if (!fn) return false;

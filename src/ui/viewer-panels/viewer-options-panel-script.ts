@@ -170,6 +170,8 @@ function syncOptionsPanelUi() {
     if (hideBlankCheck && typeof hideBlankLines !== 'undefined') hideBlankCheck.checked = hideBlankLines;
     var compressCheck = document.getElementById('opt-compress-lines');
     if (compressCheck && typeof compressLinesMode !== 'undefined') compressCheck.checked = compressLinesMode;
+    var compressGlobalCheck = document.getElementById('opt-compress-lines-global');
+    if (compressGlobalCheck && typeof compressNonConsecutiveMode !== 'undefined') compressGlobalCheck.checked = compressNonConsecutiveMode;
     syncIntegrationsUi();
     syncAudioUi();
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
@@ -191,6 +193,7 @@ function resetOptionsToDefault() {
     if (typeof visualSpacingEnabled !== 'undefined') visualSpacingEnabled = true;
     if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
     if (typeof compressLinesMode !== 'undefined') compressLinesMode = false;
+    if (typeof compressNonConsecutiveMode !== 'undefined') compressNonConsecutiveMode = false;
     if (typeof audioEnabled !== 'undefined') audioEnabled = false;
     if (typeof audioRateLimit !== 'undefined') audioRateLimit = 2000;
     if (typeof setAudioVolume === 'function') setAudioVolume(30);

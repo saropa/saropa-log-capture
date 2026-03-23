@@ -93,6 +93,11 @@ if (optCompressLines) optCompressLines.addEventListener('change', function(e) {
     if (typeof toggleCompressLines === 'function') toggleCompressLines();
     syncOptionsPanelUi();
 });
+var optCompressLinesGlobal = document.getElementById('opt-compress-lines-global');
+if (optCompressLinesGlobal) optCompressLinesGlobal.addEventListener('change', function(e) {
+    if (typeof toggleCompressNonConsecutiveLines === 'function') toggleCompressNonConsecutiveLines();
+    syncOptionsPanelUi();
+});
 
 // Audio
 var optAudio = document.getElementById('opt-audio');
