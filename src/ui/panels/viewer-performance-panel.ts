@@ -1,10 +1,11 @@
 /**
- * Performance panel HTML and script for the webview.
+ * Performance panel HTML and script for the webview (standalone + Insight-embedded via `prefix`).
  *
- * Two-tab panel: "Current" scans allLines for perf events (client-side),
- * "Trends" requests cross-session aggregated data from the extension.
- * Log tab: when the log has no performance data, an intro message is shown;
- * right-click on that message opens a context menu to copy the full text to the clipboard.
+ * Tabs: **Current** (scan `allLines` for perf events), **Trends** (host `requestPerformanceData`),
+ * **Log** (session snapshot / intro when no perf payload), **Database** (`buildDbStatsView` in
+ * `viewer-performance-db-tab.ts`: Drift rollup `dbInsightSessionRollup`, client-side timeline buckets).
+ * Opening the panel replays the active tab’s refresh path so **Log** reloads snapshot data after dismiss.
+ * Log intro: right-click copies full text via the small context menu.
  */
 import { getPerformanceCurrentScript } from './viewer-performance-current';
 import { getPerformanceTrendsScript } from './viewer-performance-trends';
@@ -98,6 +99,8 @@ export function getPerformancePanelScript(prefix?: string): string {
     var ppTabCurrent = ${pid('tab-current')};
     var ppTabTrends = ${pid('tab-trends')};
     var ppTabSession = ${pid('tab-session')};
+    var ppTabDb = ${pid('tab-db')};
+    var ppDbView = ${pid('db-view')};
     var ppSessionView = ${pid('session-view')};
     var ppSessionIntro = ${pid('session-intro')};
     var ppCopyMessageMenu = ${pid('copy-message-menu')};
@@ -113,6 +116,10 @@ export function getPerformancePanelScript(prefix?: string): string {
         if (ppActiveTab === 'current') { buildCurrentView(); }
         else if (ppActiveTab === 'trends') { requestTrends(); }
         else if (ppActiveTab === 'db') { buildDbStatsView(); }
+        else if (ppActiveTab === 'session') {
+            setSessionTabLoading(true);
+            vscodeApi.postMessage({ type: 'requestPerformanceData' });
+        }
     };
 
     window.closePerformancePanel = function() {
