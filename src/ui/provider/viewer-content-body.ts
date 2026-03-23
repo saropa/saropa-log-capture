@@ -74,6 +74,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getAboutPanelHtml()}
     </div>
     <div id="log-area-with-footer">
+    <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap" role="log" aria-label="Log content">
         <div id="spacer-top"></div>

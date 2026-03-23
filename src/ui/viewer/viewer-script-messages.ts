@@ -34,6 +34,7 @@ window.addEventListener('message', function(event) {
                 if (autoScroll && !window.isContextMenuOpen) { if (window.setProgrammaticScroll) window.setProgrammaticScroll(); suppressScroll = true; logEl.scrollTop = logEl.scrollHeight; suppressScroll = false; }
                 updateFooterText();
             }
+            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
         }
         case 'setCorrelationByLineIndex':
@@ -57,7 +58,12 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof repeatTracker !== 'undefined') { repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0; repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false; repeatTracker.sqlRepeatPreview = null; }
+            if (typeof repeatTracker !== 'undefined') {
+                repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
+                repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;
+                repeatTracker.sqlRepeatPreview = null; repeatTracker.sqlStreakFingerprint = null; repeatTracker.sqlStreakSqlSnippet = '';
+                repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
+            }
             if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
@@ -188,6 +194,7 @@ window.addEventListener('message', function(event) {
                 // Defer again so replay bar visibility is applied after loadComplete layout has settled.
                 setTimeout(function() { if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(isViewingFile, isSessionActive); }, 0);
             }
+            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
@@ -210,6 +217,20 @@ window.addEventListener('message', function(event) {
                 dbRepeatThresholds.read = clampRepeatN(th.readMinCount);
                 dbRepeatThresholds.transaction = clampRepeatN(th.transactionMinCount);
                 dbRepeatThresholds.dml = clampRepeatN(th.dmlMinCount);
+            }
+            break;
+        case 'setViewerSlowBurstThresholds':
+            if (typeof viewerSlowBurstThresholds !== 'undefined' && msg.thresholds && typeof msg.thresholds === 'object') {
+                var sb = msg.thresholds;
+                var clampSb = function(n, lo, hi, fb) {
+                    var x = typeof n === 'number' ? n : parseInt(n, 10);
+                    if (!isFinite(x)) return fb;
+                    return Math.max(lo, Math.min(hi, Math.floor(x)));
+                };
+                viewerSlowBurstThresholds.slowQueryMs = clampSb(sb.slowQueryMs, 1, 120000, viewerSlowBurstThresholds.slowQueryMs);
+                viewerSlowBurstThresholds.burstMinCount = clampSb(sb.burstMinCount, 2, 100, viewerSlowBurstThresholds.burstMinCount);
+                viewerSlowBurstThresholds.burstWindowMs = clampSb(sb.burstWindowMs, 100, 120000, viewerSlowBurstThresholds.burstWindowMs);
+                viewerSlowBurstThresholds.cooldownMs = clampSb(sb.cooldownMs, 0, 300000, viewerSlowBurstThresholds.cooldownMs);
             }
             break;
         case 'setViewerDbInsightsEnabled':
