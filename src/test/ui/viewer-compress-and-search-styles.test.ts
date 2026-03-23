@@ -20,10 +20,10 @@ suite('Viewer compress lines (embedded script)', () => {
     const dataScript = getViewerDataScript();
     const messageHandler = getViewerScriptMessageHandler();
 
-    test('defines applyCompressConsecutiveDedup and runs it at start of recalcHeights', () => {
-        assert.ok(dataScript.includes('function applyCompressConsecutiveDedup'));
+    test('defines applyCompressDedupModes and runs it at start of recalcHeights', () => {
+        assert.ok(dataScript.includes('function applyCompressDedupModes'));
         const recalcIdx = dataScript.indexOf('function recalcHeights');
-        const applyIdx = dataScript.indexOf('applyCompressConsecutiveDedup()');
+        const applyIdx = dataScript.indexOf('applyCompressDedupModes()');
         assert.ok(recalcIdx > 0 && applyIdx > 0, 'expected both functions');
         assert.ok(applyIdx < recalcIdx, 'compress pass must run before height loop');
     });
@@ -34,8 +34,12 @@ suite('Viewer compress lines (embedded script)', () => {
             'must reset compressDupHidden so toggling mode off restores rows',
         );
         assert.ok(
-            dataScript.includes("if (typeof compressLinesMode === 'undefined' || !compressLinesMode) return"),
-            'must bail after clear when compress is disabled',
+            dataScript.includes('if (!useConsecutive && !useGlobal) return'),
+            'must bail after clear when both compression modes are disabled',
+        );
+        assert.ok(
+            dataScript.includes('typeof compressNonConsecutiveMode'),
+            'dedupe logic should include non-consecutive mode',
         );
     });
 
@@ -81,12 +85,15 @@ suite('Search strip and options (compress UI wiring)', () => {
     test('options panel includes compress checkbox id for sync', () => {
         const html = getOptionsPanelHtml();
         assert.ok(html.includes('id="opt-compress-lines"'), 'compress toggle must exist for syncOptionsPanelUi');
+        assert.ok(html.includes('id="opt-compress-lines-global"'), 'global compress toggle must exist for syncOptionsPanelUi');
     });
 
     test('layout script exposes toggleCompressLines', () => {
         const layout = getLayoutScript();
         assert.ok(layout.includes('function toggleCompressLines'));
+        assert.ok(layout.includes('function toggleCompressNonConsecutiveLines'));
         assert.ok(layout.includes('compressLinesMode'));
+        assert.ok(layout.includes('compressNonConsecutiveMode'));
     });
 
     test('layout exposes compress toggle and suggestion banner helpers', () => {
@@ -148,6 +155,18 @@ suite('Viewer compress streak (embedded script)', () => {
         assert.ok(
             dataScript.slice(i, i + 420).includes('compressLinesMode') && dataScript.slice(i, i + 420).includes('return'),
             'must early-return when compressLinesMode so we never suggest while already compressing',
+        );
+        assert.ok(
+            dataScript.slice(i, i + 520).includes('compressNonConsecutiveMode'),
+            'must also early-return when non-consecutive compression is enabled',
+        );
+    });
+
+    test('blank-line hiding remains independent from compression modes', () => {
+        const dataHelpers = getViewerDataScript();
+        assert.ok(
+            dataHelpers.includes("var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);"),
+            'compression toggles must not implicitly hide blanks',
         );
     });
 
