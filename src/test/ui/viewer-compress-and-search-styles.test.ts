@@ -89,34 +89,32 @@ suite('Search strip and options (compress UI wiring)', () => {
         assert.ok(layout.includes('compressLinesMode'));
     });
 
-    test('layout syncs compress toggle and suggestion banner helpers', () => {
+    test('layout exposes compress toggle and suggestion banner helpers', () => {
         const layout = getLayoutScript();
-        assert.ok(layout.includes('function syncCompressIconButton'));
-        assert.ok(layout.includes("getElementById('log-compress-toggle')"));
+        assert.ok(!layout.includes('function syncCompressIconButton'));
+        assert.ok(!layout.includes("getElementById('log-compress-toggle')"));
         assert.ok(layout.includes('function showCompressSuggestionBanner'));
         assert.ok(layout.includes('function hideCompressSuggestionBanner'));
     });
 
-    test('viewer body includes log-pane compress toggle', () => {
+    test('viewer body does not include log-pane compress toggle button', () => {
         const html = getViewerBodyHtml({ version: '0' });
-        assert.ok(html.includes('id="log-compress-toggle"'));
-        assert.ok(html.includes('codicon-collapse-all'));
+        assert.ok(!html.includes('id="log-compress-toggle"'));
     });
 
-    test('content styles include log compress toggle rules', () => {
+    test('content styles no longer include removed compress button rules', () => {
         const css = getViewerStyles();
-        assert.ok(css.includes('#log-compress-toggle'));
-        assert.ok(css.includes('log-compress-toggle--on'));
+        assert.ok(!css.includes('#log-compress-toggle'));
+        assert.ok(!css.includes('log-compress-toggle--on'));
     });
 });
 
-suite('Viewer main script (compress toggle placement, false-positive guards)', () => {
+suite('Viewer main script (compress toggle wiring removed, false-positive guards)', () => {
     const mainScript = getViewerScript(5000);
 
-    test('wires log-pane compress toggle to toggleCompressLines', () => {
-        assert.ok(mainScript.includes('log-compress-toggle'));
-        assert.ok(mainScript.includes('logCompressToggle.addEventListener'));
-        assert.ok(mainScript.includes('toggleCompressLines'));
+    test('does not wire removed log-pane compress toggle button', () => {
+        assert.ok(!mainScript.includes('log-compress-toggle'));
+        assert.ok(!mainScript.includes('logCompressToggle.addEventListener'));
     });
 
     test('does not reference removed activity bar ib-compress control', () => {
@@ -126,12 +124,11 @@ suite('Viewer main script (compress toggle placement, false-positive guards)', (
     test('syncJumpButtonInset guards on logEl only, styles jumpBtn when present', () => {
         const fn = mainScript.indexOf('function syncJumpButtonInset');
         assert.ok(fn >= 0);
-        const block = mainScript.slice(fn, fn + 1200);
-        assert.ok(block.includes('if (!logEl) return'));
-        assert.ok(block.includes('if (jumpBtn)'));
+        assert.ok(mainScript.slice(fn, fn + 1200).includes('if (!logEl) return'));
+        assert.ok(mainScript.slice(fn, fn + 1200).includes('if (jumpBtn)'));
         assert.ok(
-            !block.includes('if (!logEl || !jumpBtn) return'),
-            'must not bail out before positioning log-compress-toggle when jumpBtn missing',
+            !mainScript.slice(fn, fn + 1200).includes('if (!logEl || !jumpBtn) return'),
+            'must not bail out before positioning jump buttons when jumpBtn missing',
         );
     });
 });
@@ -148,9 +145,8 @@ suite('Viewer compress streak (embedded script)', () => {
     test('streak updater does not run when compress mode is on (false positive guard)', () => {
         const i = dataScript.indexOf('function updateCompressDupStreakAfterLine');
         assert.ok(i >= 0);
-        const block = dataScript.slice(i, i + 420);
         assert.ok(
-            block.includes('compressLinesMode') && block.includes('return'),
+            dataScript.slice(i, i + 420).includes('compressLinesMode') && dataScript.slice(i, i + 420).includes('return'),
             'must early-return when compressLinesMode so we never suggest while already compressing',
         );
     });
