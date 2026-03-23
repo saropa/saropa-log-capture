@@ -13,8 +13,9 @@ window.addEventListener('message', function(event) {
             }
             trimData();
             if (msg.lineCount !== undefined) lineCount = msg.lineCount;
-            /* Compress mode mutates heights of prior lines when a new line extends a dup run; must full recalc, not appendPrefixSums only. */
-            if (typeof compressLinesMode !== 'undefined' && compressLinesMode) {
+            /* Any compression mode can mutate prior line heights/visibility; must full recalc, not appendPrefixSums only. */
+            if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
+                || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) {
                 if (typeof recalcHeights === 'function') recalcHeights();
                 if (typeof buildPrefixSums === 'function') buildPrefixSums();
             } else if (typeof buildPrefixSums === 'function' && typeof appendPrefixSums === 'function') {
