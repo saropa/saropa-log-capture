@@ -12,6 +12,15 @@ suite('Filters panel clarity (streams vs code location)', () => {
         assert.ok(html.includes('id="scope-no-context-hint"'));
         assert.ok(html.includes('Hide lines without file path'));
         assert.ok(html.includes('id="source-streams-intro"'));
+        assert.ok(html.includes('id="scope-filter-hint"'));
+    });
+
+    test('filters panel script groups external streams with a titled subsection', () => {
+        const script = getFiltersPanelScript();
+        assert.ok(script.includes('External sidecars ('));
+        assert.ok(script.includes('source-external-group-title'));
+        assert.ok(script.includes('commitSourceFilterFromCheckboxes'));
+        assert.ok(script.includes('getSourceFilterCheckboxes'));
     });
 
     test('filters panel script maps external: stream ids to readable labels', () => {
@@ -27,5 +36,12 @@ suite('Filters panel clarity (streams vs code location)', () => {
         assert.ok(script.includes('scope-narrowing-block'));
         assert.ok(script.includes('scope-no-context-hint'));
         assert.ok(script.includes('!scopeContext.activeFilePath && scopeLevel'));
+    });
+
+    test('scope script updates contextual hint and hooks recalcHeights', () => {
+        const script = getScopeFilterScript();
+        assert.ok(script.includes('function updateScopeFilterHint'));
+        assert.ok(script.includes('scope-filter-hint'));
+        assert.ok(script.includes('_origRecalcForScopeHint'));
     });
 });

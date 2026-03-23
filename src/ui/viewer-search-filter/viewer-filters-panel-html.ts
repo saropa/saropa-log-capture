@@ -4,8 +4,8 @@
  * Slide-out panel from the right side with organized sections for all
  * viewer filter controls:
  *   - Quick Filters (presets + reset)
- *   - Log Streams (debug / terminal / external sidecars when merged)
- *   - Code Location Scope (narrow by active editor path metadata)
+ *   - Log Streams (debug / terminal; external sidecars grouped with count)
+ *   - Code Location Scope (narrow by active editor path; contextual hint when too few lines match)
  *   - Output Channels (DAP category checkboxes)
  *   - Log Tags (source tag chips)
  *   - Code Tags (class/method tag chips)
@@ -45,7 +45,7 @@ export function getFiltersPanelHtml(): string {
         <div class="options-section" id="source-filter-section" style="display:none">
             <h3 class="options-section-title">Log Streams</h3>
             <div id="source-streams-intro" class="options-hint">Choose which inputs to show (debug console, terminal capture, or merged external log files).</div>
-            <div id="source-filter-list" class="options-row-list"></div>
+            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
         </div>
 
         <!-- Code location scope: DAP source path relative to active editor (separate from Log Streams above) -->
@@ -64,6 +64,7 @@ export function getFiltersPanelHtml(): string {
                     <input type="checkbox" id="scope-hide-unattrib" />
                     <span>Hide lines without file path</span>
                 </label>
+                <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
             </div>
         </div>
 
