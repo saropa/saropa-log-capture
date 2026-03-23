@@ -17,7 +17,7 @@ window.addEventListener('message', function(event) {
                 // Decoration width only changes when line-count digit width crosses a threshold.
                 if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             }
-            /* Any compression mode can mutate prior line heights/visibility; must full recalc, not appendPrefixSums only. */
+            /* Compress mode mutates heights: any compression mode can mutate prior line heights/visibility; must full recalc, not appendPrefixSums only. */
             if ((typeof compressLinesMode !== 'undefined' && compressLinesMode)
                 || (typeof compressNonConsecutiveMode !== 'undefined' && compressNonConsecutiveMode)) {
                 if (typeof recalcHeights === 'function') recalcHeights();

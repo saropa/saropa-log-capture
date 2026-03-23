@@ -20,7 +20,6 @@ var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
-var logCompressToggle = document.getElementById('log-compress-toggle');
 /* Pin jump buttons to the log pane top-right / bottom-right using viewport coordinates.
    position:fixed plus #log-content getBoundingClientRect avoids bad containing blocks (some webviews
    mis-resolve absolute + right so controls appear on the text left edge). */
@@ -47,13 +46,6 @@ function syncJumpButtonInset() {
         jumpTopBtn.style.setProperty('left', 'auto', 'important');
         jumpTopBtn.style.setProperty('top', Math.round(lr.top + 8) + 'px', 'important');
         jumpTopBtn.style.setProperty('bottom', 'auto', 'important');
-    }
-    if (logCompressToggle) {
-        logCompressToggle.style.setProperty('position', 'fixed', 'important');
-        logCompressToggle.style.setProperty('left', Math.round(lr.left + 8) + 'px', 'important');
-        logCompressToggle.style.setProperty('right', 'auto', 'important');
-        logCompressToggle.style.setProperty('top', Math.round(lr.top + 8) + 'px', 'important');
-        logCompressToggle.style.setProperty('bottom', 'auto', 'important');
     }
 }
 syncJumpButtonInset();
@@ -204,10 +196,6 @@ if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true; logEl.scrollTop = 0; suppressScroll = false;
     autoScroll = false; jumpTopBtn.style.display = 'none';
-});
-if (logCompressToggle) logCompressToggle.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (typeof toggleCompressLines === 'function') toggleCompressLines();
 });
 function getCenterIdx() {
     var mid = logEl.scrollTop + logEl.clientHeight / 2;
