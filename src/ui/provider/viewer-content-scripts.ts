@@ -40,8 +40,12 @@ import { getLevelFilterScript } from '../viewer-search-filter/viewer-level-filte
 import { getSourceTagsScript } from '../viewer-stack-tags/viewer-source-tags';
 import { getClassTagsScript } from '../viewer-stack-tags/viewer-class-tags';
 import { getSqlPatternTagsScript } from '../viewer-stack-tags/viewer-sql-pattern-tags';
+import { getSqlQueryHistoryCoreScript } from '../viewer-stack-tags/viewer-sql-query-history-core';
+import { getSqlQueryHistoryPanelScript } from '../viewer-panels/viewer-sql-query-history-panel';
 import { getHighlightScript } from '../viewer-decorations/viewer-highlight';
 import { getScopeFilterScript } from '../viewer-search-filter/viewer-scope-filter';
+import { getSessionTimeBucketsScript } from '../../modules/viewer/session-time-buckets';
+import { getViewerTimeRangeFilterScript } from '../viewer/viewer-time-range-filter';
 import { getPresetsScript } from '../viewer-search-filter/viewer-presets';
 import { getFilterBadgeScript } from '../viewer-search-filter/viewer-filter-badge';
 import { getContextModalScript } from '../viewer-context-menu/viewer-context-modal';
@@ -83,10 +87,12 @@ export interface ViewerScriptsOptions {
     /** Max lines for getViewerScript (caller should pass from getEffectiveViewerLines or MAX_VIEWER_LINES). */
     readonly viewerMaxLines: number;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
-    /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
-    readonly viewerDbInsightsEnabled?: boolean;
-    /** Slow query burst marker thresholds (plan DB_08). */
-    readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
+  /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
+  readonly viewerDbInsightsEnabled?: boolean;
+  /** DB_12: static SQL source search affordance in N+1 rows (default true). */
+  readonly staticSqlFromFingerprintEnabled?: boolean;
+  /** Slow query burst marker thresholds (plan DB_08). */
+  readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
     readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** Fingerprint chip thresholds (plan DB_05). */
@@ -102,6 +108,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerMaxLines: maxLines,
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
+        staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds,
         viewerDbDetectorToggles,
         viewerSqlPatternChipMinCount,
@@ -115,6 +122,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
             getViewerDataScript(
                 viewerRepeatThresholds,
                 viewerDbInsightsEnabled !== false,
+                staticSqlFromFingerprintEnabled !== false,
                 viewerSlowBurstThresholds,
                 viewerDbDetectorToggles,
             ),
@@ -155,9 +163,13 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 viewerSqlPatternChipMinCount ?? 2,
                 viewerSqlPatternMaxChips ?? 20,
             ),
+            getSqlQueryHistoryCoreScript(),
+            getSqlQueryHistoryPanelScript(),
         ) +
         scriptTag(nonce, getHighlightScript()) +
         scriptTag(nonce, getScopeFilterScript()) +
+        scriptTag(nonce, getSessionTimeBucketsScript()) +
+        scriptTag(nonce, getViewerTimeRangeFilterScript()) +
         scriptTag(nonce, getPresetsScript()) +
         scriptTag(nonce, getFilterBadgeScript()) +
         scriptTag(nonce, getContextModalScript()) +

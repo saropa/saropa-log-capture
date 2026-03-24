@@ -77,10 +77,10 @@ function parseProjectIndexSources(
   docsDirs: readonly string[],
 ): ProjectIndexSourceConfig[] {
   if (!Array.isArray(rawSources)) {
-    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
+    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.dart', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
   }
   if (rawSources.length === 0) {
-    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
+    return docsDirs.map((dir) => ({ path: dir, fileTypes: ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.dart', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'], enabled: true }));
   }
 
   const sources: ProjectIndexSourceConfig[] = [];
@@ -95,7 +95,7 @@ function parseProjectIndexSources(
     }
     if (!pathVal) { continue; }
 
-    let fileTypes = ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'];
+    let fileTypes = ['.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.dart', '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile', '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest', 'makefile', 'requirements', 'pipfile'];
     if (Array.isArray(o.fileTypes)) {
       fileTypes = (o.fileTypes as unknown[]).filter((x): x is string => typeof x === 'string');
     }

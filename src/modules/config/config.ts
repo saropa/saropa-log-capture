@@ -220,6 +220,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
     }),
     viewerDbInsightsEnabled: ensureBoolean(cfg.get("viewerDbInsightsEnabled"), true),
+    staticSqlFromFingerprintEnabled: ensureBoolean(cfg.get("staticSqlFromFingerprint.enabled"), true),
     viewerDbDetectorNPlusOneEnabled: ensureBoolean(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
     viewerDbDetectorSlowBurstEnabled: ensureBoolean(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
     viewerDbDetectorBaselineHintsEnabled: ensureBoolean(cfg.get("viewerDbDetectorBaselineHintsEnabled"), true),

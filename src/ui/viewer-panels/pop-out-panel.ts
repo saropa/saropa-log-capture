@@ -185,6 +185,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     this.post({ type: "setViewerDbInsightsEnabled", enabled });
   }
+  setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
+    this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled });
+  }
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
     this.post({
       type: "setViewerDbDetectorToggles",
@@ -254,6 +257,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerMaxLines,
       viewerRepeatThresholds: cfg.viewerRepeatThresholds,
       viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+      staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
       viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
       viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,

@@ -114,6 +114,9 @@ export function setViewerRepeatThresholdsImpl(target: ProviderStateTarget, thres
 export function setViewerDbInsightsEnabledImpl(target: ProviderStateTarget, enabled: boolean): void {
   target.postMessage({ type: "setViewerDbInsightsEnabled", enabled });
 }
+export function setStaticSqlFromFingerprintEnabledImpl(target: ProviderStateTarget, enabled: boolean): void {
+  target.postMessage({ type: "setStaticSqlFromFingerprintEnabled", enabled });
+}
 export function setViewerDbDetectorTogglesImpl(target: ProviderStateTarget, toggles: ViewerDbDetectorToggles): void {
   target.postMessage({
     type: "setViewerDbDetectorToggles",

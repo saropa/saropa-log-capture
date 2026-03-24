@@ -129,6 +129,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
     broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
     broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
+    broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
     broadcaster.setViewerDbDetectorToggles(viewerDbDetectorTogglesFromConfig(initCfg));
     broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
     broadcaster.setViewerSqlPatternChipSettings(
