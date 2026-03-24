@@ -144,7 +144,8 @@ function estimateSqlRepeatDrilldownExtraHeight(d) {
     sqlLines = Math.max(1, Math.min(sqlLines, 6));
     var v = d.variants ? d.variants.length : 0;
     var more = d.moreVariantCount > 0 ? 1 : 0;
-    return 44 + sqlLines * 16 + v * 18 + more * 16;
+    var staticRow = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) ? 28 : 0;
+    return 44 + sqlLines * 16 + v * 18 + more * 16 + staticRow;
 }
 /** Build repeat-notification inner HTML for SQL fingerprint rows (collapsed or expanded). */
 function buildSqlRepeatNotificationRowHtml(item) {
@@ -178,6 +179,9 @@ function buildSqlRepeatNotificationRowHtml(item) {
     }
     if (d.moreVariantCount > 0) {
         detail += '<div class="sql-repeat-drilldown-more">' + escapeHtml('+' + d.moreVariantCount + ' more distinct arg variant(s)') + '</div>';
+    }
+    if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) {
+        detail += '<div class="sql-repeat-drilldown-actions"><button type="button" class="sql-repeat-static-sources" data-fingerprint="' + escapeHtml(d.fingerprint) + '">Possible Dart sources (static index, not stack)</button></div>';
     }
     detail += '</div>';
     return '<span class="repeat-notification repeat-sql-fp repeat-sql-fp-expanded">' +

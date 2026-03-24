@@ -1,7 +1,19 @@
 /**
- * Session time bucketing shared between the SQL minimap density bands and the Performance → Database tab timeline.
- * Bucket **count** matches `viewer-scrollbar-minimap.ts` (`densityBucketCount` from pixel height).
- * Timeline buckets by **wall-clock** `timestamp`; minimap SQL density buckets by **scroll Y** but uses the same N.
+ * Bucket-count formula and **time-axis** index math for the Performance → Database tab timeline.
+ *
+ * **What is shared with the SQL minimap** (`viewer-scrollbar-minimap.ts`): only the **clamped count function**
+ * `sessionTimeBucketCountForHeightPx` — same as minimap `densityBucketCount = max(48, min(180, floor(h/2)))`.
+ * The **height `h` passed in is not the same UI surface**: the minimap uses **live `mmH`** (often yielding N well
+ * above 48); the DB tab currently uses a **fixed nominal bar-track height** (56px), which clamps to **N = 48**.
+ * So “shared formula” ≠ “same N at runtime” unless callers deliberately pass comparable heights.
+ *
+ * **What is not shared (orthogonal axes):**
+ * - Minimap SQL density: bucket index from **layout / scroll space** — line → offset in `totalHeight` → fraction of
+ *   minimap pixel height `py/mmH` → `floor(fraction * N)`. Non-uniform in **time** when line density, filters,
+ *   compression, or variable row heights distort the time↔scroll mapping.
+ * - Database tab timeline: bucket index from **wall-clock** `timestamp` in `[tMin, tMax]` → uniform time slices
+ *   via `sessionTimeBucketIndex`. Comparable to minimap bands only when the log is roughly **chronological and**
+ * **time ≈ proportional to scroll position** — do not assume that for all sessions.
  */
 
 /** Same formula as minimap `densityBucketCount = max(48, min(180, floor(h/2)))`. */

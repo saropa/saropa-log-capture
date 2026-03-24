@@ -2,8 +2,8 @@
 
 ## Progress (incremental)
 
-- **Shipped:** Fingerprint → **search tokens** (`drift-sql-fingerprint-code-tokens.ts`) plus **ORM shape mapping** (`drift-sql-static-orm-patterns.ts`) → merged indexer tokens. **Line-aware ranking** (`drift-static-sql-candidates.ts`) re-orders indexer hits using best-line table/class hints and token density; QuickPick opens at that line (`viewer-message-handler-static-sql.ts`). **Setting** `saropaLogCapture.staticSqlFromFingerprint.enabled` (default on) hides N+1 “Static sources” and skips host search when off. **`.dart`** in default project-index file types (incl. `lib/` when indexed). UX remains suggestive; not proof of execution site.
-- **Not yet:** **symbol-level “open at query”** (LSP / single best symbol); TS/Kotlin mapping rows.
+- **Shipped:** Fingerprint → **search tokens** plus **ORM mapping** with **optional path globs** (`**/*.dart` per row, union + default) → filter indexer hits before line scan (`drift-sql-static-orm-patterns.ts`, `drift-static-sql-candidates.ts`). **Line-aware ranking** + QuickPick at best line. **Entry points:** N+1 row, **context menu** (DB line with fingerprint), **integration popover** (Database insight), **SQL repeat drilldown**, **Performance → DB** table “Sources” column. **Fixture acceptance:** `src/test/fixtures/drift-static-sql-mini` + `drift-static-sql-fixture-acceptance.test.ts` (top-3 goal). **Setting** `staticSqlFromFingerprint.enabled`. **`.dart`** in default project-index types. Copy distinguishes **static index vs stack trace** where relevant.
+- **Not yet:** **symbol-level “open at query”** (LSP); TS/Kotlin mapping rows.
 
 ## Goal
 
