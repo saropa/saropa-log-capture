@@ -6,6 +6,10 @@
   "type": "object",
   "additionalProperties": true,
   "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "description": "Contract version for this snapshot JSON; consumers may branch. Log Capture built-in sets 1 when the snapshot omits it (see DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION)."
+    },
     "baseUrl": { "type": "string" },
     "generatedAt": { "type": "string", "description": "ISO-8601 timestamp when snapshot was written" },
     "performance": { "type": ["object", "null"] },
