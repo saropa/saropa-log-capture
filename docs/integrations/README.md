@@ -9,3 +9,4 @@ Optional **Saropa Log Capture** integration adapters add session headers, metada
 - **Drift setting:** `driftViewer.integrations.includeInLogCaptureSession` — `none` | `header` | `full` (controls how much Drift contributes; Log Capture’s built-in meta/sidecar path only runs when this is **full**, defaulting to full if unset).
 - **Full design and contracts:** [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](../../plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md)
 - **JSON schema (sidecar / snapshot shape):** [plans/integrations/drift-advisor-session.schema.json](../../plans/integrations/drift-advisor-session.schema.json)
+- **Privacy:** Sidecars and session files can include SQL text, file paths, and diagnostic messages. Treat shared logs like any sensitive workspace output. Optional **`schemaVersion`** on meta and JSON helps tools detect shape changes.

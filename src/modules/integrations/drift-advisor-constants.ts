@@ -17,3 +17,9 @@ export const DRIFT_ADVISOR_META_KEY = 'saropa-drift-advisor';
 
 /** Bounded wait for extension `getSessionSnapshot()` during session end. */
 export const DRIFT_ADVISOR_SNAPSHOT_TIMEOUT_MS = 5000;
+
+/**
+ * Optional `schemaVersion` on meta and sidecar JSON when the snapshot omits it.
+ * Increment when Log Capture’s emitted shape changes; Drift bridge may set its own version.
+ */
+export const DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION = 1;
