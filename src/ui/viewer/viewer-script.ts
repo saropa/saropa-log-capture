@@ -249,6 +249,17 @@ viewportEl.addEventListener('click', function(e) {
         }
         return;
     }
+    var sqlStaticBtn = e.target.closest('.sql-repeat-static-sources');
+    if (sqlStaticBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && !staticSqlFromFingerprintEnabled) return;
+        var fpStatic = sqlStaticBtn.getAttribute('data-fingerprint') || '';
+        if (fpStatic && typeof vscodeApi !== 'undefined' && vscodeApi) {
+            vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpStatic });
+        }
+        return;
+    }
     var sqlRepToggle = e.target.closest('.sql-repeat-drilldown-toggle');
     if (sqlRepToggle) {
         e.preventDefault();
