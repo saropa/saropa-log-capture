@@ -24,6 +24,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **DB_15 — embed merge codegen** — `mergeDbDetectorResultsByStableKey` is implemented once in **`db-detector-merge-stable-key.ts`**; **`npm run generate:db-detector-embed-merge`** emits **`src/ui/viewer/generated/db-detector-embed-merge.generated.ts`** for the webview embed. **`npm run compile`** runs codegen first.
+
 • **Docs — Saropa Drift Advisor integration** — Added [docs/integrations/README.md](docs/integrations/README.md) (user index: adapter, setting, links to [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) and [plans/integrations/drift-advisor-session.schema.json](plans/integrations/drift-advisor-session.schema.json)). Published-history Drift bullet now uses those paths (replacing broken `docs/integrations/*.schema.json` / design links). Integration plan §12 and §2–§5.4 updated for current `saropa_drift_advisor` behavior.
 
 ### Added
