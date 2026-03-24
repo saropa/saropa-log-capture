@@ -2312,7 +2312,8 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "verify-nls": "node scripts/modules/verify-nls.js",
-    "compile": "npm run check-types && npm run lint && npm run verify-nls && node esbuild.js",
+    "generate:db-detector-embed-merge": "node scripts/generate-db-detector-embed-merge.mjs",
+    "compile": "npm run generate:db-detector-embed-merge && npm run check-types && npm run lint && npm run verify-nls && node esbuild.js",
     "compile-tests": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p . --outDir out",
     "lint": "eslint src",
     "package": "npm run check-types && npm run lint && node esbuild.js --production",
