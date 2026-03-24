@@ -50,6 +50,7 @@ export interface ViewerTarget {
   setMinimapShowSqlDensity(show: boolean): void;
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
   setViewerDbInsightsEnabled(enabled: boolean): void;
+  setStaticSqlFromFingerprintEnabled(enabled: boolean): void;
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void;
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void;
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void;

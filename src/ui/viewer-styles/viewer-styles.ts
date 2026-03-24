@@ -20,6 +20,7 @@ import { getIconBarStyles } from './viewer-styles-icon-bar';
 import { getSessionPanelStyles } from './viewer-styles-session';
 import { getFindPanelStyles } from './viewer-styles-find';
 import { getBookmarkPanelStyles } from './viewer-styles-bookmarks';
+import { getSqlQueryHistoryPanelStyles } from './viewer-styles-sql-query-history';
 import { getTrashPanelStyles } from './viewer-styles-trash';
 import { getAboutPanelStyles } from './viewer-styles-about';
 import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
@@ -273,5 +274,5 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     white-space: pre;
     word-break: normal;
 }
-` + getContentStyles() + getNPlusOneInsightStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles();
+` + getContentStyles() + getNPlusOneInsightStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles();
 }

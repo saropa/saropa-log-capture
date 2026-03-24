@@ -170,7 +170,10 @@ function paintMinimap() {
     if (total === 0) return;
 
     var step = allLines.length > MM_SAMPLE_THRESHOLD ? Math.max(1, Math.floor(allLines.length / MM_SAMPLE_THRESHOLD)) : 1;
-    var densityBucketCount = Math.max(48, Math.min(180, Math.floor(mmH / 2)));
+    /* Bucket count formula shared with DB timeline (sessionTimeBucketCountForHeightPx in session-time-buckets.ts). */
+    var densityBucketCount = (typeof sessionTimeBucketCountForHeightPx === 'function')
+        ? sessionTimeBucketCountForHeightPx(mmH)
+        : Math.max(48, Math.min(180, Math.floor(mmH / 2)));
     var sqlBuckets = null;
     var slowSqlBuckets = null;
     if (mmShowSqlDensity) {

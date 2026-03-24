@@ -241,6 +241,7 @@ viewportEl.addEventListener('click', function(e) {
                 if (typeof updateSearch === 'function') updateSearch();
             }
         } else if (action === 'find-static-sources') {
+            if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && !staticSqlFromFingerprintEnabled) return;
             var fpSrc = n1Action.dataset.fingerprint || '';
             if (fpSrc && typeof vscodeApi !== 'undefined' && vscodeApi) {
                 vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpSrc });
