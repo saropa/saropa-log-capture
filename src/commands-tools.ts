@@ -22,6 +22,9 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.explainRootCauseHypotheses', () => {
             broadcaster.postToWebview({ type: 'triggerExplainRootCauseHypotheses' });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', () => {
+            broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {

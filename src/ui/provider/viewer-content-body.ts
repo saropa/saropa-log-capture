@@ -9,6 +9,7 @@ import { getSessionPanelHtml } from '../viewer-panels/viewer-session-panel';
 import { getSessionContextMenuHtml } from '../viewer-context-menu/viewer-session-context-menu';
 import { getFindPanelHtml } from '../viewer-panels/viewer-find-panel';
 import { getBookmarkPanelHtml } from '../viewer-panels/viewer-bookmark-panel';
+import { getSqlQueryHistoryPanelHtml } from '../viewer-panels/viewer-sql-query-history-panel';
 import { getTrashPanelHtml } from '../viewer-panels/viewer-trash-panel';
 import { getFiltersPanelHtml } from '../viewer-search-filter/viewer-filters-panel';
 import { getOptionsPanelHtml } from '../viewer-panels/viewer-options-panel';
@@ -66,6 +67,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getSessionContextMenuHtml()}
     ${getFindPanelHtml()}
     ${getBookmarkPanelHtml()}
+    ${getSqlQueryHistoryPanelHtml()}
     ${getTrashPanelHtml()}
     ${getFiltersPanelHtml()}
     ${getOptionsPanelHtml()}

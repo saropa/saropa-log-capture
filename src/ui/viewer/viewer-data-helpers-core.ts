@@ -229,6 +229,7 @@ function calcItemHeight(item) {
     // Multi-source filter: hide line if its source is not in the enabled set (e.g. "Just debug").
     if (typeof window !== 'undefined' && window.enabledSources && item.source && window.enabledSources.indexOf(item.source) < 0) return 0;
     if (item.filteredOut || item.excluded || item.levelFiltered || item.sourceFiltered || item.classFiltered || item.sqlPatternFiltered || item.searchFiltered || item.errorSuppressed || item.scopeFiltered || item.repeatHidden || item.compressDupHidden) return 0;
+    if (item.type === 'line' && item.timeRangeFiltered) return 0;
     var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
     if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
     var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);

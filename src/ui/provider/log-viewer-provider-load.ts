@@ -91,6 +91,10 @@ export async function executeLoadContent(
       driftAdvisorSummary: perfResult.rootCauseDriftAdvisorSummary ?? null,
       sessionDiffSummary: null,
     });
+    target.postMessage({
+      type: "setDriftAdvisorDbPanelMeta",
+      payload: perfResult.driftAdvisorDbPanelPayload ?? null,
+    });
   }
 
   const contentLines: string[] = [];
