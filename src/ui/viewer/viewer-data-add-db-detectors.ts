@@ -16,8 +16,10 @@
  * (built once when the host posts `setDbBaselineFingerprintSummary`, not per ingest line).
  */
 
-export function getViewerDataAddDbDetectorsScript(): string {
+export function getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled = true): string {
+    const staticSqlJs = staticSqlFromFingerprintEnabled ? "true" : "false";
     return /* javascript */ `
+var staticSqlFromFingerprintEnabled = ${staticSqlJs};
 /** Apply only synthetic-line / n-plus-one insight payloads (batch; caller splits merged detector output). */
 function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
     if (!results || !results.length) return;
@@ -44,8 +46,9 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
                 + ' · '
                 + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
-                + ' · '
-                + '<span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search workspace for code that might contain this SQL">Static sources</span>'
+                + ((typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled)
+                    ? (' · <span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Possible Dart/Drift sources (static search; not proof)">Static sources</span>')
+                    : '')
                 + '</span>'
                 + '</span>';
             n1Item = {
@@ -68,6 +71,7 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 scopeFiltered: scopeFilt,
                 autoHidden: false,
                 source: lineSource,
+                timeRangeFiltered: false,
                 insightMeta: {
                     fingerprint: sqlMeta.fingerprint,
                     repeats: insight.repeats,
@@ -76,9 +80,14 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                     confidence: insight.confidence
                 }
             };
+            /* DB_11: same fingerprint source as chips / insight row for session query history. */
+            n1Item.sqlHistoryFp = sqlMeta.fingerprint;
+            var n1Snip = (sqlMeta.sqlSnippet || sqlMeta.fingerprint || '').trim();
+            n1Item.sqlHistoryPreview = n1Snip.length > 120 ? n1Snip.substring(0, 117) + '...' : n1Snip;
             allLines.push(n1Item);
             if (typeof registerSourceTag === 'function') { registerSourceTag(n1Item); }
             if (typeof registerSqlPattern === 'function') { registerSqlPattern(n1Item); }
+            if (typeof recordSqlQueryHistoryForAppendedItem === 'function') { recordSqlQueryHistoryForAppendedItem(n1Item); }
             totalHeight += ROW_HEIGHT;
             resetCompressDupStreak();
         } catch (_n1EmitErr) { /* swallow — never block ingest on heuristic */ }

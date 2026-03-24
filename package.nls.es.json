@@ -351,6 +351,8 @@
   "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = use maxLines).",
   "config.viewerDbInsightsEnabled.description": "When enabled, the log viewer runs DB insight detectors (e.g. N+1 query hints) and enriches database-tagged lines with SQL fingerprint rollup stats.",
   "config.viewerDbInsightsEnabled.title": "Enable database insights in the log viewer",
+  "config.staticSqlFromFingerprint.enabled.description": "When enabled, the log viewer can offer “Static sources” from SQL fingerprints (project index search; suggestive only). When disabled, that affordance is hidden and the host skips static search.",
+  "config.staticSqlFromFingerprint.enabled.title": "Suggest static Dart/Drift sources from SQL fingerprints",
   "config.viewerDbDetectorNPlusOneEnabled.description": "When database insights are on, run the N+1-style Drift SQL burst detector (synthetic insight rows).",
   "config.viewerDbDetectorNPlusOneEnabled.title": "Log viewer: N+1 query detector",
   "config.viewerDbDetectorSlowBurstEnabled.description": "When database insights are on, emit slow-query burst marker rows using the slow-burst thresholds.",

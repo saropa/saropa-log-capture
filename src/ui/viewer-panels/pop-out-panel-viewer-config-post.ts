@@ -18,6 +18,7 @@ export function queuePopOutViewerConfigMicrotask(
     post({ type: "minimapShowSqlDensity", show: cfg.minimapShowSqlDensity });
     post({ type: "setViewerRepeatThresholds", thresholds: cfg.viewerRepeatThresholds });
     post({ type: "setViewerDbInsightsEnabled", enabled: cfg.viewerDbInsightsEnabled });
+    post({ type: "setStaticSqlFromFingerprintEnabled", enabled: cfg.staticSqlFromFingerprintEnabled });
     post({ type: "setViewerSlowBurstThresholds", thresholds: cfg.viewerSlowBurstThresholds });
     post({ type: "setViewerDbDetectorToggles", ...viewerDbDetectorTogglesFromConfig(cfg) });
     post({

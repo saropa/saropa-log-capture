@@ -91,6 +91,9 @@ export function getFiltersPanelHtml(): string {
                 <span id="sql-pattern-summary" class="source-tag-summary"></span>
             </div>
             <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
+            <div class="options-row">
+                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open scrollable list of SQL fingerprints for this session">SQL query history\u2026</button>
+            </div>
         </div>
 
         <!-- Code Tags Section (populated dynamically) -->

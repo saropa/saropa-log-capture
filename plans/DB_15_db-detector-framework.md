@@ -1,5 +1,9 @@
 # DB_15 DB Detector Framework (Duration and Session-Diff)
 
+## How to read this doc
+- **Implementing or extending detectors:** follow **Goal** through **Done criteria** for contracts, lifecycle, and tests; use **Status** only as a file index when you need exact symbols and paths.
+- **Checking what shipped (phase 1):** jump to **Status (phase 1 — complete)** and **Related plans**.
+
 ## Goal
 Provide a **single pipeline** for DB-related detectors that need durations, rolling windows, or cross-session baselines—so **DB_02** stays focused on normalization/noise and individual features do not duplicate state machines.
 
@@ -8,7 +12,7 @@ Provide a **single pipeline** for DB-related detectors that need durations, roll
 - Out of scope: specific UI for each detector (those stay in DB_07/DB_08/etc.); implementing every detector inside one file.
 
 ## Integration (codebase anchors)
-On each `addToData` call, the webview runs **repeat collapse** and **`updateDbInsightRollup` / `dbInsight`** inline in `src/ui/viewer/viewer-data-add.ts`, while **DB_15–registered** detectors (slow burst, N+1, future hooks) run through **`emitDbLineDetectors`** and `runDbDetectors` in `viewer-data-add-db-detectors.ts` / `viewer-db-detector-framework-script.ts`, with `parseSqlFingerprint` embedded from `viewer-data-n-plus-one-script.ts`. Normalization and thresholds are shared with the extension host via **DB_02** (`drift-sql-fingerprint-normalize.ts`) and repeat thresholds (`drift-db-repeat-thresholds.ts` → config). The TypeScript N+1 feed in `drift-n-plus-one-detector.ts` mirrors embed behavior for unit tests.
+On each `addToData` path, the webview runs **repeat collapse** (where applicable) and **`emitDbLineDetectors`** from `src/ui/viewer/viewer-data-add.ts`: Drift SQL **`parseSqlFingerprint`** runs once per line; **`emitDbLineDetectors`** (in `viewer-data-add-db-detectors.ts`) applies the primary **`session-rollup-patch`**, then **`runDbDetectors`** from `viewer-db-detector-framework-script.ts`, which covers slow burst, N+1, **`annotate-line`**, and further rollup patches. **`lineItem.dbInsight`** is set inside that pipeline—not via a separate inline **`updateDbInsightRollup`** call in `addToData`. Normalization and thresholds are shared with the extension host via **DB_02** (`drift-sql-fingerprint-normalize.ts`) and repeat thresholds (`drift-db-repeat-thresholds.ts` → config). The TypeScript N+1 feed in `drift-n-plus-one-detector.ts` mirrors embed behavior for unit tests.
 
 **Target placement for this framework**
 - **Types and pure logic**: `src/modules/db/` (new small modules + registration), same family as `drift-n-plus-one-detector.ts`.
@@ -33,7 +37,7 @@ Keep detectors free of markup; a thin adapter builds viewer rows:
 - `kind`: `'synthetic-line' | 'annotate-line' | 'marker' | 'session-rollup-patch'`.
 - `detectorId`: string (stable identifier for toggles and logging).
 - `stableKey`: string — **idempotency**: same logical insight after trim/recalc must reuse the same key so the pipeline can dedupe (e.g. `` `${detectorId}::${fingerprint}::${windowId}` ``).
-- `priority`: number — **ascending run order** (lower numeric value first). On duplicate **`stableKey`**, the **later** result wins, so **higher numeric `priority` wins conflicts** when detectors disagree.
+- `priority`: number — **ascending run order** (lower numeric value first). **Duplicate `stableKey`:** detector outputs are concatenated in **ascending `priority`** (low first, high last); `mergeDbDetectorResultsByStableKey` scans that list and **keeps the last occurrence per key**, so **higher `priority` wins** when detectors disagree. If two detectors share the same numeric `priority` and the same `stableKey`, **whichever appears later in the merged input list wins** (see `mergeDbDetectorResultsByStableKey` in `db-detector-framework.ts`).
 - Payload by kind:
   - **synthetic-line**: `{ type: string; category?: string; performanceFields... }` aligned with existing `allLines` item shapes.
   - **annotate-line**: `{ targetSeq: number; patch: Record<string, unknown> }` — embed shallow-merges `patch` onto `allLines` item with matching `seq`; adjusts `totalHeight` if `height` changes.
@@ -44,7 +48,7 @@ Consumers (embed adapter) apply results in **phases** after **`mergeDbDetectorRe
 
 ## Lifecycle
 1. **Ingest**: for each qualifying line event, invoke registered detectors in stable order; merge results into the same code path that today calls `detectNPlusOneInsight` / rollup updates.
-2. **Trim / recalc**: when the viewer drops old lines, **incremental prune** runs: `trimData` calls **`pruneDbDetectorStateAfterTrim(oldestKeptTimestamp)`**, which drops N+1 sliding-window hits older than the oldest retained line (no full replay of the tail in phase 1). Synthetic insight rows already pushed are not removed by trim.
+2. **Trim / recalc**: when the viewer drops old lines, **incremental prune** runs: `trimData` calls **`pruneDbDetectorStateAfterTrim(oldestKeptTimestamp)`**, which drops N+1 sliding-window hits older than the oldest retained line (no full replay of the tail in phase 1). **Synthetic insight rows already in `allLines` are not removed by trim**—they can refer to log lines that are no longer present until the user clears/reloads the viewer; detectors should use **`stableKey`** so re-ingest after trim does not multiply duplicates.
 3. **Complexity**: per event, target **O(1)** amortized with **explicit caps** (e.g. max open fingerprints, max hits per window, max registered detectors)—mirror the existing `maxFingerprintsTracked` / prune idle pattern in the N+1 embed. Document worst-case when a cap evicts state.
 
 ## Session-diff (DB_10 alignment)
@@ -57,14 +61,16 @@ Use a **batch comparison model**, not two interleaved live streams:
 
 ## UX rules
 - Detectors **never throw**; failures **log once** (detector id + error) and **disable that detector for the remainder of the viewer session** (in-memory flag; reload clears).
-- **Settings**: master toggle **DB insights** via `package.json` configuration + `src/modules/config/config-types.ts` (and nls), persisted in user/workspace settings like other Saropa keys. Per-detector toggles are optional follow-ups using the same pattern.
+- **Settings**: master toggle **DB insights** via `package.json` configuration + `src/modules/config/config-types.ts` (and nls), persisted in user/workspace settings like other Saropa keys. **Per-detector keys** shipped in phase 1 are listed under **Shipped follow-ups** in **Status** (e.g. `viewerDbDetectorNPlusOneEnabled`, `viewerDbDetectorSlowBurstEnabled`, `viewerDbDetectorBaselineHintsEnabled`).
 - Session-disable vs settings-off: if the user disables in settings, detectors do not run; if a detector self-disables after error, respect until webview reload.
 
 ## Test plan
-- **Unit**: framework invokes two mock detectors in **stable priority order**; lower priority cannot preempt higher for the same `stableKey` (define rule explicitly).
+Minimum expectations below; **phase 1** also added the VM and module tests listed in **Status** (`viewer-db-detector-annotate-line.test.ts`, fingerprint summary tests, etc.)—treat **Status** as the full inventory when auditing coverage.
+
+- **Unit**: framework invokes two mock detectors in **stable priority order**; for the same `stableKey`, **higher `priority` wins** (lower priority cannot preempt higher).
 - **Unit**: after **trim**, pruned window state matches spec; **no duplicate** synthetic lines for the same `stableKey`.
 - **Regression**: zero detectors registered → behavior matches today (no extra allocations on hot path if implemented as no-op registration array).
-- **Integration (lightweight)**: one real detector wired through the adapter (e.g. N+1 migrated or a stub) proves embed + TS contract stay aligned—can extend `src/test/ui/viewer-n-plus-one-embed.test.ts` or add a sibling.
+- **Integration (lightweight)**: one real detector wired through the adapter (e.g. N+1 migrated or a stub) proves embed + TS contract stay aligned—extend `src/test/ui/viewer-n-plus-one-embed.test.ts` or add a sibling (see **Status** for what is already wired).
 
 ## Risks
 - **Over-centralization**: keep each detector in its own small file; framework only orchestrates and types.

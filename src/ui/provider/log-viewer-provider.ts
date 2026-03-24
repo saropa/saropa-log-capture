@@ -188,6 +188,9 @@ export class LogViewerProvider
   setViewerDbInsightsEnabled(enabled: boolean): void {
     state.setViewerDbInsightsEnabledImpl(this, enabled);
   }
+  setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
+    state.setStaticSqlFromFingerprintEnabledImpl(this, enabled);
+  }
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
     state.setViewerDbDetectorTogglesImpl(this, toggles);
   }

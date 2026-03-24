@@ -165,6 +165,12 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = (hasLine && driftLineCat && driftAvailable) ? '' : 'none';
     });
 
+    var hasSqlFingerprint = !!(lineData && lineData.dbInsight && lineData.dbInsight.fingerprint);
+    var staticSqlOn = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
+    contextMenuEl.querySelectorAll('[data-static-sql-line-action]').forEach(function(el) {
+        el.style.display = (hasLine && hasSqlFingerprint && staticSqlOn) ? '' : 'none';
+    });
+
     // Unhide line (only if this line is hidden)
     var unhideLineItem = contextMenuEl.querySelector('[data-action="unhide-line"]');
     if (unhideLineItem) unhideLineItem.style.display = lineIsHidden ? '' : 'none';
