@@ -92,7 +92,7 @@ Phase 1 meets the **done criteria** above: contracts in `src/modules/db/`, embed
 - **Host helpers:** **`applyDbAnnotateLineResultToLineItems`** / **`applyDbAnnotateLineResultsToLineItems`** in **`db-detector-framework.ts`** apply **`annotate-line`** to mutable line arrays when passed as **`annotateTargetLines`** on **`runDbDetectorsCompare`** / **`runDefaultSessionDbCompareDetectors`**. **`compareLogSessionsWithDbFingerprints`** runs **`runDefaultSessionDbCompareDetectors`** and passes results to the session comparison webview (**Detector highlights** list for batch markers).
 - **VM tests:** **`src/test/ui/viewer-db-detector-annotate-line.test.ts`** exercises detector-driven **`annotate-line`**, unknown-seq no-op, and height **`totalHeight`** adjustment.
 - **Snippet helper:** **`driftSqlSnippetFromPlain`** in **`viewer-data-n-plus-one-script.ts`** centralizes Drift fallback snippet text for **`dbInsight`**.
-- **Remaining optional work:** TS/codegen to reduce embed drift.
+- **Embed merge codegen:** `mergeDbDetectorResultsByStableKey` lives in **`db-detector-merge-stable-key.ts`**; **`npm run generate:db-detector-embed-merge`** (esbuild) writes **`src/ui/viewer/generated/db-detector-embed-merge.generated.ts`**, which **`viewer-db-detector-framework-script.ts`** splices into the embed. **`npm run compile`** runs codegen first. VM parity test in **`db-detector-framework.test.ts`** still validates embed vs host.
 
 ## Related plans
 - **DB_02**: SQL fingerprint normalization; embed must stay in sync with `drift-sql-fingerprint-normalize.ts`.

@@ -5,6 +5,7 @@
 
 import { buildDbFingerprintSummaryDiff } from "./db-fingerprint-summary";
 import { createBaselineVolumeCompareDetector } from "./drift-db-baseline-volume-compare-detector";
+import { mergeDbDetectorResultsByStableKey } from "./db-detector-merge-stable-key";
 import type {
   DbAnnotateLinePayload,
   DbDetectorContext,
@@ -13,6 +14,8 @@ import type {
   DbDetectorSessionState,
   DbFingerprintSummaryEntry,
 } from "./db-detector-types";
+
+export { mergeDbDetectorResultsByStableKey };
 
 /** Maps for `runDbDetectorsCompare` (keeps arity within lint max-params). */
 export interface DbDetectorsCompareMaps {
@@ -42,25 +45,6 @@ export function runDefaultSessionDbCompareDetectors(
   options?: RunDbDetectorsCompareOptions,
 ): DbDetectorResult[] {
   return runDbDetectorsCompare(DEFAULT_SESSION_DB_COMPARE_REGISTRY, maps, state, options);
-}
-
-/**
- * Merge detector output: same `stableKey` keeps the **last** result in iteration order.
- * Callers must concatenate results in ascending detector priority so higher priority wins.
- */
-export function mergeDbDetectorResultsByStableKey(results: readonly DbDetectorResult[]): DbDetectorResult[] {
-  const order: string[] = [];
-  const byKey: Record<string, DbDetectorResult> = Object.create(null);
-  for (const r of results) {
-    if (!r?.stableKey) {
-      continue;
-    }
-    if (byKey[r.stableKey] === undefined) {
-      order.push(r.stableKey);
-    }
-    byKey[r.stableKey] = r;
-  }
-  return order.map((k) => byKey[k]);
 }
 
 function sortDetectors(defs: readonly DbDetectorDefinition[]): DbDetectorDefinition[] {
