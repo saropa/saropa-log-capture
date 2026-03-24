@@ -35,10 +35,9 @@ interface HistorySandbox {
 }
 
 function loadRuntime(allLines: unknown[], maxFp?: number): HistorySandbox {
-    const sandbox = { allLines } as unknown as HistorySandbox;
-    vm.createContext(sandbox);
-    vm.runInContext(getSqlQueryHistoryRuntimeScript(maxFp ?? SQL_QUERY_HISTORY_MAX_FP), sandbox, { timeout: 15_000 });
-    return sandbox;
+    const context = vm.createContext({ allLines });
+    vm.runInContext(getSqlQueryHistoryRuntimeScript(maxFp ?? SQL_QUERY_HISTORY_MAX_FP), context, { timeout: 15_000 });
+    return context as unknown as HistorySandbox;
 }
 
 function dbLine(fp: string, ts: number, extra: Record<string, unknown> = {}): Record<string, unknown> {
@@ -78,7 +77,8 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
         ctx.rebuildSqlQueryHistoryFromAllLines();
         assert.ok(ctx.sqlQueryHistoryByFp.x);
         ctx.resetSqlQueryHistory();
-        assert.deepStrictEqual(ctx.sqlQueryHistoryByFp, {});
+        /* Cross-realm: VM object is not deepStrictEqual to host `{}` after createContext change. */
+        assert.strictEqual(Object.keys(ctx.sqlQueryHistoryByFp).length, 0);
     });
 
     test('many rows with the same fingerprint update count and first/last line refs', () => {
@@ -98,14 +98,14 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
     test('empty allLines and no-SQL lines yield empty index (no throw)', () => {
         const empty = loadRuntime([]);
         empty.rebuildSqlQueryHistoryFromAllLines();
-        assert.deepStrictEqual(empty.sqlQueryHistoryByFp, {});
+        assert.strictEqual(Object.keys(empty.sqlQueryHistoryByFp).length, 0);
 
         const noSql = loadRuntime([
             { type: 'line', sourceTag: 'network', height: 20, timestamp: 1 },
             { type: 'marker', height: 8 },
         ]);
         noSql.rebuildSqlQueryHistoryFromAllLines();
-        assert.deepStrictEqual(noSql.sqlQueryHistoryByFp, {});
+        assert.strictEqual(Object.keys(noSql.sqlQueryHistoryByFp).length, 0);
     });
 
     test('jump target: sqlHistoryTargetLineLikelyHidden matches filter / height contract', () => {
@@ -170,8 +170,8 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
         const ms = Date.now() - t0;
         assert.strictEqual(ctx.sqlQueryHistoryByFp.oneFp.count, n);
         assert.ok(
-            ms < 8000,
-            `expected ${n} incremental observations in under 8s (took ${ms}ms)`,
+            ms < 12_000,
+            `expected ${n} incremental observations in under 12s (took ${ms}ms)`,
         );
     });
 

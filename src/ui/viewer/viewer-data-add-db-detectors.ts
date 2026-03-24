@@ -47,7 +47,7 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 + ' · '
                 + '<span class="n1-action" data-action="focus-fingerprint" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Search this SQL fingerprint">Find fingerprint</span>'
                 + ((typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled)
-                    ? (' · <span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Possible Dart/Drift sources (static search; not proof)">Static sources</span>')
+                    ? (' · <span class="n1-action" data-action="find-static-sources" data-fingerprint="' + escapeHtml(sqlMeta.fingerprint) + '" title="Possible Dart sources (project index; not stack trace)">Static sources</span>')
                     : '')
                 + '</span>'
                 + '</span>';

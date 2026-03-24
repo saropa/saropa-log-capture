@@ -219,5 +219,14 @@ export function getContextPopoverStyles(): string {
     cursor: text;
     color: var(--vscode-editor-foreground);
 }
+.popover-db-static-note {
+    font-size: 11px;
+    opacity: 0.88;
+    margin-top: 6px;
+    color: var(--vscode-descriptionForeground);
+}
+.popover-static-sql-open {
+    margin-top: 4px;
+}
 `;
 }
