@@ -17,6 +17,13 @@ import {
     DRIFT_ADVISOR_SNAPSHOT_TIMEOUT_MS,
 } from '../drift-advisor-constants';
 import {
+    DRIFT_ADVISOR_CONFIG_SECTION,
+    DRIFT_ADVISOR_INCLUDE_IN_SESSION_KEY,
+    driftBuiltinContributesMetaSidecar,
+    normalizeDriftIncludeInLogCaptureSession,
+    type DriftAdvisorIncludeInLogCaptureSession,
+} from '../drift-advisor-include-level';
+import {
     snapshotToMetaPayload,
     snapshotToSidecarObject,
     type DriftAdvisorSnapshotLike,
@@ -24,6 +31,13 @@ import {
 
 function adapterOn(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('driftAdvisor');
+}
+
+function readDriftIncludeInLogCaptureSession(folder: vscode.WorkspaceFolder): DriftAdvisorIncludeInLogCaptureSession {
+    const raw = vscode.workspace
+        .getConfiguration(DRIFT_ADVISOR_CONFIG_SECTION, folder.uri)
+        .get<unknown>(DRIFT_ADVISOR_INCLUDE_IN_SESSION_KEY);
+    return normalizeDriftIncludeInLogCaptureSession(raw);
 }
 
 function sessionFileUri(folder: vscode.WorkspaceFolder): vscode.Uri {
@@ -115,6 +129,11 @@ export const driftAdvisorBuiltinProvider: IntegrationProvider = {
         if (!adapterOn(context)) {
             return false;
         }
+        // Match Drift bridge: only run built-in meta/sidecar path when Drift setting is `full`.
+        const includeLevel = readDriftIncludeInLogCaptureSession(context.workspaceFolder);
+        if (!driftBuiltinContributesMetaSidecar(includeLevel)) {
+            return false;
+        }
         const ext = vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID);
         if (ext) {
             return true;
@@ -126,11 +145,13 @@ export const driftAdvisorBuiltinProvider: IntegrationProvider = {
         if (!adapterOn(context)) {
             return undefined;
         }
+        const includeLevel = readDriftIncludeInLogCaptureSession(context.workspaceFolder);
+        if (!driftBuiltinContributesMetaSidecar(includeLevel)) {
+            return undefined;
+        }
 
         let snap = await trySnapshotFromExtension(context.outputChannel);
-        if (!snap) {
-            snap = await trySnapshotFromFile(context.workspaceFolder, context.outputChannel);
-        }
+        snap ??= await trySnapshotFromFile(context.workspaceFolder, context.outputChannel);
         if (!snap) {
             return undefined;
         }

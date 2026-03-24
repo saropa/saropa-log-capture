@@ -1,6 +1,8 @@
 /**
  * Shared constants for optional Drift Advisor integration (viewer + built-in provider).
  * Command ID must match Drift Advisor's package.json contributes.commands when defined.
+ *
+ * Include-level helpers (normalize, config keys) live in `drift-advisor-include-level.ts` for testability.
  */
 
 export const DRIFT_ADVISOR_EXTENSION_ID = 'saropa.drift-viewer';
