@@ -17,6 +17,7 @@
     "BRDA",
     "checkmarks",
     "clippy",
+    "codegen",
     "colorama",
     "Cooldown",
     "cpuprofile",
