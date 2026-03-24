@@ -237,6 +237,12 @@ SessionMetadataStore: when saving, persist `integrations` as-is. When loading, i
 
 ---
 
+## Drift Advisor built-in (`driftAdvisorBuiltin`)
+
+The built-in provider `src/modules/integrations/providers/drift-advisor-builtin.ts` writes meta key `saropa-drift-advisor` and `{baseFileName}.drift-advisor.json` when the Log Capture adapter `driftAdvisor` is enabled **and** the Drift Advisor workspace setting `driftViewer.integrations.includeInLogCaptureSession` is `full` (missing/invalid values are treated as `full` for backward compatibility). Values `none` and `header` disable this provider so session end does not call Drift’s API or read `.saropa/drift-advisor-session.json` for meta/sidecar. Normalization lives in `drift-advisor-include-level.ts`. Drift’s LogCaptureBridge should use the same setting and the Log Capture adapter flag (see `plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md` §5.3).
+
+---
+
 ## Summary
 
 - **One provider interface** with `id`, `isEnabled`, optional `onSessionStartSync`, `onSessionStartAsync`, `onSessionEnd`.

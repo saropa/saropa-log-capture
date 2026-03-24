@@ -1,6 +1,6 @@
 # Drift Advisor ↔ Log Capture Integration
 
-**Document version:** 1.1 · **Status:** Draft · **Last updated:** 2026-03-23  
+**Document version:** 1.2 · **Status:** Active · **Last updated:** 2026-03-23  
 **Repositories:** `saropa-log-capture` (this repo), `saropa_drift_advisor` (Drift Advisor sources)  
 **Drift Advisor VS Code extension id:** `saropa.drift-viewer` (package/repo names may differ).
 
@@ -35,29 +35,36 @@ This is the single design and implementation plan for optional, tighter integrat
 
 - **Integration API:** `src/modules/integrations/` — types (`IntegrationContext`, `IntegrationEndContext`, `Contribution`, `IntegrationProvider`), registry, `createIntegrationContext` / `createIntegrationEndContext`. Session finalize calls `runOnSessionEnd(endContext, metadataStore)`; meta is merged into `SessionMeta.integrations[key]`, sidecars written under `logDirUri`.
 - **Config:** `config.integrationsAdapters`; adapters listed in `INTEGRATION_ADAPTERS` in `integrations-ui.ts`. **`driftAdvisor`** is listed; users enable it in Configure integrations.
-- **Built-in provider:** `driftAdvisorBuiltin` (`providers/drift-advisor-builtin.ts`) calls Drift’s `getSessionSnapshot()` when the extension API exists, else reads `.saropa/drift-advisor-session.json`; registered from `activation-integrations.ts`. See Appendix C.
+- **Built-in provider:** `driftAdvisorBuiltin` (`providers/drift-advisor-builtin.ts`) calls Drift’s `getSessionSnapshot()` when the extension API exists, else reads `.saropa/drift-advisor-session.json`, only when `driftViewer.integrations.includeInLogCaptureSession` is `full` (default if unset); registered from `activation-integrations.ts`. See Appendix C and §5.4.
 - **Viewer:** Context menu “Open in Drift Advisor” for `drift-perf` / `drift-query` when `saropa.drift-viewer` is installed; command `saropa.drift-viewer.openWatchPanel`. Context popover / insights surface `meta.integrations['saropa-drift-advisor']`.
 - **Public API:** `registerIntegrationProvider(provider)` for other extensions (Drift Advisor bridge registers here).
 
 ### 2.2 Saropa Drift Advisor
 
-- **LogCaptureBridge** (`extension/src/debug/log-capture-bridge.ts`): Gets Log Capture via `getExtension('saropa.saropa-log-capture')`, registers provider id `saropa-drift-advisor` with **minimal** contract — `isEnabled(): true`, `onSessionStartSync()` (header lines), `onSessionEnd()` **no parameters**, returns **header lines only** (performance summary). No meta/sidecar; does not receive `IntegrationEndContext`. Uses `writeLine` with `drift-perf`, `drift-query`, `drift-link`, `drift-edit`.
-- **DriftApiClient:** `performance()`, `anomalies()`, `schemaMetadata()`, `health()`, `indexSuggestions()`, `sizeAnalytics()`, `compareReport()`, etc.
-- **DiagnosticManager:** Collects issues into a VS Code diagnostic collection; does **not** expose last collected issues to the bridge.
-- **Extension API:** Not exposed (`contributes.api` / `context.exports`).
-- **Config:** `driftViewer.performance.logToCapture` (`off` | `slow-only` | `all`). No setting yet for “how much to include in Log Capture session”.
+*Aligned with `saropa_drift_advisor` extension sources (e.g. v2.8.x).*
+
+- **LogCaptureBridge** (`extension/src/debug/log-capture-bridge.ts`): Resolves `saropa.saropa-log-capture`, registers provider id `saropa-drift-advisor` with `onSessionStartSync` (headers) and **`onSessionEnd(endContext)`** returning contributions: headers, **`meta`** key `saropa-drift-advisor`, and **`sidecar`** `{baseFileName}.drift-advisor.json` when `driftViewer.integrations.includeInLogCaptureSession` is `full`; `header` returns header fetch only; `none` returns an empty array from `onSessionEnd`. Full mode uses **parallel** `performance()`, `anomalies()`, `schemaMetadata()`, `health()`, `indexSuggestions()` with shared timeouts. Still uses `writeLine` for `drift-perf`, `drift-query`, `drift-link`, `drift-edit` per `logToCapture`.
+- **Issues (Phase 2):** Bridge accepts optional `getLastCollectedIssues`; **`DiagnosticManager.getLastCollectedIssues()`** is wired from `extension.ts` so meta/sidecar can include issues.
+- **Session file:** `writeSessionFile` in `log-capture-session-serialization.ts` writes **`.saropa/drift-advisor-session.json`** (best-effort) after building the sidecar for tools and Log Capture’s file fallback.
+- **DriftApiClient:** `performance()`, `anomalies()`, `schemaMetadata()`, `health()`, `indexSuggestions()`, etc.
+- **Extension API:** `createDriftAdvisorApi` / **`getSessionSnapshot()`** in `log-capture-api.ts`, assigned on **`context.exports`** in `extension.ts` (Log Capture built-in calls it when enabled). No `contributes.api` entry in `package.json`; optional future addition for discoverability only.
+- **Config:** `driftViewer.performance.logToCapture` (`off` | `slow-only` | `all`); **`driftViewer.integrations.includeInLogCaptureSession`** (`none` | `header` | `full`) in Drift **`extension/package.json`**.
+
+**`isEnabled` nuance:** The bridge’s `isEnabled` checks that Log Capture’s adapters include `driftAdvisor`. It does **not** also require `includeInLogCaptureSession !== 'none'`; when mode is `none`, **`onSessionEnd` returns `[]`** (session-start headers may still be contributed). Tightening registration to match §5.3 literally is optional product work.
 
 ### 2.3 Gaps
 
-**Remaining (Drift Advisor repo)**
+**Core integration (both repos): implemented** — end context, meta + sidecar, issues, session file, `getSessionSnapshot`, and Log Capture built-in + viewer (Appendix C).
 
-| Gap | Owner | Description |
-|-----|--------|-------------|
-| Bridge uses minimal provider contract | Drift Advisor | `onSessionEnd()` has no context, returns only header; no meta/sidecar. |
-| No issues in session | Drift Advisor | DiagnosticManager does not expose last issues to the bridge. |
-| Extension API + session file writer | Drift Advisor | `getSessionSnapshot()` on `context.exports` and/or writing `.saropa/drift-advisor-session.json` for the built-in provider (Phase 5–6 on Drift side). |
+**Remaining polish (Drift Advisor repo — documentation / visibility)**
 
-**Addressed in saropa-log-capture** (details: Appendix C): `driftAdvisor` in Integrations UI; viewer “Open in Drift Advisor”; built-in provider + snapshot mapping; context popover; JSON schema artifact at `plans/integrations/drift-advisor-session.schema.json`.
+| Item | Notes |
+|------|--------|
+| **Changelog depth** | Root `CHANGELOG.md` / `extension/CHANGELOG.md` **[2.7.1]** mentions Log Capture session-end improvements (parallel fetch, shared helpers) but does **not** spell out meta/sidecar, **`includeInLogCaptureSession`**, issues in export, **`getSessionSnapshot`**, or **`.saropa/drift-advisor-session.json`** for end users. Implementation is in source; release notes could catch up. |
+| **README** | High-level “Log Capture bridge” bullet may still read like headers/summaries only; worth aligning with meta/sidecar and settings. |
+| **`contributes.api`** | Optional manifest entry; exports already work via `context.exports`. |
+
+**saropa-log-capture:** `driftAdvisor` in Integrations UI; viewer actions and popover; built-in provider; JSON schema at `plans/integrations/drift-advisor-session.schema.json`; user index at `docs/integrations/README.md`.
 
 ---
 
@@ -239,6 +246,21 @@ The Drift Advisor bridge should contribute **only if all** of the following hold
 
 There is no override between (1) and (2): both must pass. If either fails, the bridge should not write headers/meta/sidecar (and may skip registering the provider when permanently `none`).
 
+**Log Capture built-in (`driftAdvisorBuiltin`):** Uses the same Drift key via `getConfiguration('driftViewer', workspaceFolder.uri)`. It contributes meta/sidecar **only** when `includeInLogCaptureSession === 'full'`. For `none` or `header`, `isEnabled` is false so session end does not activate Drift or read `.saropa/drift-advisor-session.json` for this provider. Unknown/missing values normalize to `full` (see `drift-advisor-include-level.ts`).
+
+---
+
+## 5.4 Quick wins — status
+
+| Win | Repo | Status |
+|-----|------|--------|
+| Honor `includeInLogCaptureSession` in built-in provider (dual gate with `driftAdvisor` adapter) | saropa-log-capture | **Done** — `drift-advisor-builtin.ts`, `drift-advisor-include-level.ts`, tests `drift-advisor-include-setting.test.ts`, integrations picker copy, `plans/history/20260228/INTEGRATION_API.md`. |
+| Declare `driftViewer.integrations.includeInLogCaptureSession` in Drift `package.json`; bridge honors `none` / `header` / `full` in `onSessionEnd` | saropa_drift_advisor | **Done** — `extension/package.json`, `log-capture-utils.ts`, `log-capture-bridge.ts`. |
+| `getSessionSnapshot()` for Log Capture built-in | saropa_drift_advisor | **Done** — `log-capture-api.ts`, wired in `extension.ts` (`context.exports`). |
+| Write `.saropa/drift-advisor-session.json` (file fallback) | saropa_drift_advisor | **Done** — `writeSessionFile` in `log-capture-session-serialization.ts`. |
+| Rich meta + sidecar + issues at session end | saropa_drift_advisor | **Done** — bridge `_onSessionEnd`, `getLastCollectedIssues` from DiagnosticManager. |
+| User-facing changelog / README depth for the above | saropa_drift_advisor | **Todo** (see §2.3 and §12) |
+
 ---
 
 ## 6. Exposing “issues” (diagnostics)
@@ -294,7 +316,7 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 ### Phase 5 (Optional): Drift Advisor API + Log Capture built-in provider
 
 - **Drift Advisor:** `contributes.api`, `context.exports` with `getSessionSnapshot()`. *(Still required in saropa_drift_advisor for API path.)*
-- **Log Capture (done):** Provider `driftAdvisorBuiltin` in `providers/drift-advisor-builtin.ts`; `isEnabled` when **driftAdvisor** adapter is on and (Drift Advisor extension installed **or** session file exists); `onSessionEnd` tries API then file, builds meta + sidecar; registered in `activation-integrations.ts`. Constants in `drift-advisor-constants.ts`; mapping in `drift-advisor-snapshot-map.ts`.
+- **Log Capture (done):** Provider `driftAdvisorBuiltin` in `providers/drift-advisor-builtin.ts`; `isEnabled` when **driftAdvisor** adapter is on, **`includeInLogCaptureSession` is `full`**, and (Drift Advisor extension installed **or** session file exists); `onSessionEnd` tries API then file, builds meta + sidecar; registered in `activation-integrations.ts`. Constants in `drift-advisor-constants.ts` / include-level in `drift-advisor-include-level.ts`; mapping in `drift-advisor-snapshot-map.ts`.
 - **Effort:** 1 day (both).
 
 ### Phase 6 (Optional): File contract and shared types
@@ -348,9 +370,25 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 
 ## 12. Documentation and rollout
 
-- Log Capture: document “Drift Advisor” adapter and “Open in Drift Advisor” action; reference this doc.
-- Drift Advisor: document `includeInLogCaptureSession` and optional API; snapshot shape.
-- Rollout: additive; changelog per phase.
+### Saropa Log Capture (this repo)
+
+| Artifact | Purpose |
+|----------|---------|
+| **`docs/integrations/README.md`** | Short user index: Drift adapter id, what you get, link to Drift setting, links to this plan + JSON schema. |
+| **`plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md`** | Canonical design, contracts, and implementation status (this file). |
+| **`plans/integrations/drift-advisor-session.schema.json`** | Sidecar / snapshot shape reference. |
+| **`CHANGELOG.md`** | User-facing shipped notes; fixed schema link to `plans/integrations/…`; Drift integration bullets reference this plan and `docs/integrations/README.md`. |
+| **`integrations-ui.ts`** | Configure integrations copy for `driftAdvisor` (label **Drift Advisor**, description / `descriptionLong`). |
+
+### Saropa Drift Advisor (separate repo)
+
+- **Settings UI:** `driftViewer.integrations.includeInLogCaptureSession` is declared in `extension/package.json`.
+- **Changelog check (2026-03-23):** `CHANGELOG.md` and `extension/CHANGELOG.md` **[2.7.1]** include **“Log Capture integration (extension)”** (parallel fetch, shared timeout helpers, tests note) but **do not** yet document meta/sidecar, the **`includeInLogCaptureSession`** knob, diagnostic issues in export, **`getSessionSnapshot`**, or **`.saropa/drift-advisor-session.json`** by name. **Implementation is ahead of those release notes** — treat changelog/README polish as optional follow-up there, not “missing code.”
+- **README:** Bridge bullet can be expanded to mention structured session meta + sidecar and the setting above.
+
+### Rollout
+
+- Additive releases; avoid breaking `saropa-drift-advisor` meta key or sidecar filename without migration notes.
 
 ---
 
@@ -371,8 +409,8 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 
 | Area | Action |
 |------|--------|
-| **Drift Advisor** | 1) Full provider contract (end context, meta + sidecar). 2) onSessionEnd: parallel fetch performance, anomalies, schema, health, index suggestions; contribute meta + sidecar. 3) DiagnosticManager.getLastCollectedIssues(); include issues in meta/sidecar. 4) Config includeInLogCaptureSession; `isEnabled` requires Log Capture `driftAdvisor` adapter **and** Drift setting ≠ `none` (§5.3). 5) Optional: extension API getSessionSnapshot(); optional file writer. |
-| **Log Capture** | 1) driftAdvisor in INTEGRATION_ADAPTERS. 2) Viewer “Open in Drift Advisor” for drift-perf/drift-query. 3) Context popover section for Drift meta. 4) Optional: built-in provider calling Drift API or file. |
+| **Drift Advisor** | **Done (code):** full provider contract; `onSessionEnd` parallel fetch; meta + sidecar; issues; `includeInLogCaptureSession`; `getSessionSnapshot` on exports; `.saropa/drift-advisor-session.json`. **Optional polish:** deeper changelog/README; manifest `contributes.api`. See §2.3, §5.4, §12. |
+| **Log Capture** | **Done:** `driftAdvisor` in INTEGRATION_ADAPTERS; viewer “Open in Drift Advisor”; context popover; built-in provider (API + file); `docs/integrations/README.md`; changelog + schema links. |
 | **Both** | Shared snapshot type/JSON schema; config knobs; optional shared npm package. |
 
 ---
@@ -381,8 +419,8 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 
 ### A. References
 
-- Log Capture: `docs/history/INTEGRATION_API.md`, `src/modules/integrations/types.ts`, `context.ts`, `session-lifecycle-finalize.ts`
-- Drift Advisor: `extension/src/debug/log-capture-bridge.ts`, `api-client.ts`, `api-types.ts`, `diagnostics/diagnostic-manager.ts`, `diagnostic-types.ts`
+- Log Capture: `plans/history/20260228/INTEGRATION_API.md`, `src/modules/integrations/types.ts`, `context.ts`, `session-lifecycle-finalize.ts`
+- Drift Advisor: `extension/src/debug/log-capture-bridge.ts`, `log-capture-api.ts`, `log-capture-session-serialization.ts`, `log-capture-utils.ts`, `api-client.ts`, `api-types.ts`, `diagnostics/diagnostic-manager.ts`, `diagnostic-types.ts`
 
 ### B. Glossary
 
@@ -393,8 +431,10 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 - **Sidecar:** File next to the log (e.g. `*.drift-advisor.json`).
 - **Snapshot:** Structured export (performance, anomalies, schema, health, issues) for meta, sidecar, and optional API.
 
-### C. Implementation status (saropa-log-capture)
+### C. Implementation status
 
 *As of 2026-03-23.*
 
-**Phases 3, 4, 5, and 6 (Log Capture portions)** are implemented. **Phase 3–4:** `INTEGRATION_ADAPTERS` includes `driftAdvisor`; webview `setDriftAdvisorAvailable`; context menu “Open in Drift Advisor” for `drift-perf` / `drift-query`; message handler runs `DRIFT_ADVISOR_OPEN_COMMAND` (`saropa.drift-viewer.openWatchPanel`) from `drift-advisor-constants.ts` (re-exported via `src/ui/provider/drift-advisor-integration.ts`); context popover `integrationsMeta` + Drift block. **Phase 5–6:** Built-in provider `driftAdvisorBuiltin` registers in `activation-integrations.ts`; at session end calls Drift `getSessionSnapshot()` (5s timeout) or reads `.saropa/drift-advisor-session.json`; writes meta key `saropa-drift-advisor` and `{baseFileName}.drift-advisor.json`. JSON schema: `plans/integrations/drift-advisor-session.schema.json`. **Drift Advisor repo** still implements Phase 1–2 and `getSessionSnapshot()` / file writer for full end-to-end behavior.
+**Saropa Log Capture — Phases 3–6 (this repo)** are implemented. **Phase 3–4:** `INTEGRATION_ADAPTERS` includes `driftAdvisor`; webview `setDriftAdvisorAvailable`; context menu “Open in Drift Advisor” for `drift-perf` / `drift-query`; message handler runs `DRIFT_ADVISOR_OPEN_COMMAND` (`saropa.drift-viewer.openWatchPanel`) from `drift-advisor-constants.ts` (re-exported via `src/ui/provider/drift-advisor-integration.ts`); context popover `integrationsMeta` + Drift block. **Phase 5–6:** Built-in provider `driftAdvisorBuiltin` registers in `activation-integrations.ts`; at session end calls Drift `getSessionSnapshot()` (5s timeout) or reads `.saropa/drift-advisor-session.json`; writes meta key `saropa-drift-advisor` and `{baseFileName}.drift-advisor.json` when `driftViewer.integrations.includeInLogCaptureSession` is `full` (default if unset). JSON schema: `plans/integrations/drift-advisor-session.schema.json`. User index: `docs/integrations/README.md`.
+
+**Saropa Drift Advisor — Phases 1–2, session file, and API (separate repo)** are implemented in source (`log-capture-bridge.ts`, `log-capture-api.ts`, `log-capture-session-serialization.ts`, `package.json` setting, DiagnosticManager issues). **Quick wins table:** §5.4. **Remaining:** changelog/README polish on the Drift side (§2.3, §12).
