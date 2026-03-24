@@ -3,9 +3,11 @@
  */
 
 import * as assert from 'node:assert';
+import { DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION } from '../../../modules/integrations/drift-advisor-constants';
 import {
     countAnomaliesBySeverity,
     snapshotToMetaPayload,
+    snapshotToSidecarObject,
 } from '../../../modules/integrations/providers/drift-advisor-snapshot-map';
 
 suite('DriftAdvisorSnapshotMap', () => {
@@ -53,5 +55,36 @@ suite('DriftAdvisorSnapshotMap', () => {
         assert.strictEqual(meta.schema.tableNames?.length, 2);
         assert.strictEqual(meta.health.ok, true);
         assert.strictEqual(meta.indexSuggestionsCount, 1);
+        assert.strictEqual(meta.schemaVersion, DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION);
+    });
+
+    test('snapshotToMetaPayload preserves snapshot schemaVersion when set', () => {
+        const meta = snapshotToMetaPayload({
+            baseUrl: 'http://x',
+            schemaVersion: 99,
+            performance: { totalQueries: 0, totalDurationMs: 0, avgDurationMs: 0, slowCount: 0, topSlow: [] },
+            anomalies: [],
+            schemaSummary: { tableCount: 0 },
+            health: { ok: true },
+        });
+        assert.strictEqual(meta.schemaVersion, 99);
+    });
+
+    test('snapshotToSidecarObject sets generatedAt and schemaVersion', () => {
+        const side = snapshotToSidecarObject({
+            baseUrl: 'http://x',
+            performance: null,
+        });
+        assert.strictEqual(typeof side.generatedAt, 'string');
+        assert.strictEqual(side.schemaVersion, DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION);
+    });
+
+    test('snapshotToSidecarObject preserves snapshot schemaVersion when set', () => {
+        const side = snapshotToSidecarObject({
+            baseUrl: 'http://x',
+            schemaVersion: 7,
+            performance: null,
+        });
+        assert.strictEqual(side.schemaVersion, 7);
     });
 });

@@ -20,9 +20,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [3.13.0]
 
 ### Changed
+
+• **Drift Advisor — contract `schemaVersion`** — Log Capture’s built-in snapshot mapping sets optional **`schemaVersion`** on **`meta.integrations['saropa-drift-advisor']`** and on **`{logBase}.drift-advisor.json`** (default **`1`** via **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`** when the Drift snapshot omits it; preserves Drift-supplied values). JSON schema and [docs/integrations/README.md](docs/integrations/README.md) updated. See [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) §4.3–4.4.
 
 • **DB_15 — embed merge codegen** — `mergeDbDetectorResultsByStableKey` is implemented once in **`db-detector-merge-stable-key.ts`**; **`npm run generate:db-detector-embed-merge`** emits **`src/ui/viewer/generated/db-detector-embed-merge.generated.ts`** for the webview embed. **`npm run compile`** runs codegen first.
 

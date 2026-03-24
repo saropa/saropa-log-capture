@@ -4,8 +4,12 @@
  * contract in plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md §4.3–4.5.
  */
 
+import { DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION } from '../drift-advisor-constants';
+
 /** Loose snapshot shape from Drift Advisor `getSessionSnapshot()` or session file. */
 export interface DriftAdvisorSnapshotLike {
+    /** When set, copied through to meta/sidecar; otherwise Log Capture fills `DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`. */
+    readonly schemaVersion?: number;
     readonly baseUrl?: string;
     readonly performance?: Record<string, unknown> | null;
     readonly anomalies?: readonly unknown[] | null;
@@ -38,6 +42,8 @@ export interface DriftAdvisorMetaPayloadOut {
         byCode: Record<string, number>;
         bySeverity: Record<string, number>;
     };
+    /** Contract version for this payload; see DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION. */
+    schemaVersion?: number;
 }
 
 const MAX_TOP_SLOW = 10;
@@ -120,6 +126,11 @@ function buildTopSlow(perf: Record<string, unknown>): Array<{ sql: string; durat
     return topSlow;
 }
 
+function resolvedSchemaVersion(snap: DriftAdvisorSnapshotLike): number {
+    const sv = snap.schemaVersion;
+    return typeof sv === 'number' && Number.isFinite(sv) ? sv : DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION;
+}
+
 /** Build meta.integrations['saropa-drift-advisor'] payload (without capturedAt/sessionWindow — registry adds those). */
 export function snapshotToMetaPayload(snap: DriftAdvisorSnapshotLike): DriftAdvisorMetaPayloadOut {
     const perf = snap.performance && typeof snap.performance === 'object' ? snap.performance : {};
@@ -167,10 +178,12 @@ export function snapshotToMetaPayload(snap: DriftAdvisorSnapshotLike): DriftAdvi
         }
     }
 
+    out.schemaVersion = resolvedSchemaVersion(snap);
+
     return out;
 }
 
-/** Full sidecar object: snapshot spread + normalized generatedAt. */
+/** Full sidecar object: snapshot spread + normalized generatedAt and schemaVersion. */
 export function snapshotToSidecarObject(snap: DriftAdvisorSnapshotLike): Record<string, unknown> {
     const generatedAt = snap.generatedAt && typeof snap.generatedAt === 'string'
         ? snap.generatedAt
@@ -178,5 +191,6 @@ export function snapshotToSidecarObject(snap: DriftAdvisorSnapshotLike): Record<
     return {
         ...snap,
         generatedAt,
+        schemaVersion: resolvedSchemaVersion(snap),
     };
 }
