@@ -68,7 +68,6 @@ After DB_14, the open **DB** specs that add new surfaces (not strip polish) are:
 | Plan | One-line direction |
 | --- | --- |
 | **DB_12** (`plans/DB_12_static-orm-code-analysis.md`) | **Partial:** indexer QuickPick from N+1 row; see plan **Progress**. Further: ORM mapping, symbols. |
-| **DB_13** (`plans/DB_13_db-performance-dashboard-and-timeline.md`) | **Partial:** Performance **Database** tab; see plan **Progress**. Further: brush/sync, Drift Advisor row. |
 | **DB_15** (`plans/DB_15_db-detector-framework.md`) | More detectors on the shared framework; keep bundle/embed thresholds in sync when adding signal types. |
 
 ## Out of scope (unchanged)
@@ -114,5 +113,5 @@ Extend with optional fields only; **do not rename or remove core keys** without 
 
 ## Related plans
 
-- **DB_08** (slow bursts), **DB_10** (session comparison / fingerprints), **DB_13**, **DB_01**, **DB_15**, history **DB_07**.
+- **DB_08** (slow bursts), **DB_10** (session comparison / fingerprints), history **DB_13** (performance Database tab), **DB_01**, **DB_15**, history **DB_07**.
 - Phase 1 historical snapshot: **`plans/history/20260323/ARCHIVE_DB14_phase1_only_20260323.md`**.

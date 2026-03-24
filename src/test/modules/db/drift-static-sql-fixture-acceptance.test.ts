@@ -2,17 +2,17 @@ import * as assert from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { buildDriftStaticSqlSearchPlan } from "../../../modules/db/drift-sql-static-orm-patterns";
-import { buildEnrichedStaticSqlPickListSync } from "../../../modules/db/drift-static-sql-candidates";
+import { buildEnrichedStaticSqlPickListSync, filterRankedDocsByStaticSqlPathGlobs } from "../../../modules/db/drift-static-sql-candidates";
 import { extractDocTokensByType } from "../../../modules/project-indexer/project-indexer-file-types";
 import type { DocIndexEntry } from "../../../modules/project-indexer/project-indexer-types";
-import { rankDocEntriesByQueriesWithScores } from "../../../modules/project-indexer/project-indexer-ranking";
+import { rankDocEntriesByQueriesWithScores, type RankedDocEntry } from "../../../modules/project-indexer/project-indexer-ranking";
 
 const FIXTURE_FP = "select * from orders where id = ?";
 
+/** Compiled tests live under `out/test/...`; fixtures stay in `src/test/fixtures`. */
 function resolveFixtureRoot(): string {
-  const fromOut = path.join(__dirname, "../../../src/test/fixtures/drift-static-sql-mini");
-  const fromSrc = path.join(__dirname, "../../fixtures/drift-static-sql-mini");
-  return fs.existsSync(fromOut) ? fromOut : fromSrc;
+  const repoRoot = path.join(__dirname, "../../../..");
+  return path.join(repoRoot, "src/test/fixtures/drift-static-sql-mini");
 }
 
 function readFixture(rel: string): string {
@@ -56,5 +56,22 @@ suite("DB_12 fixture acceptance (indexed + line ranking)", () => {
       top3.some((p) => p.includes("intentional_orders_query")),
       `expected intentional_orders_query in top 3, got: ${top3.join(", ")}`,
     );
+  });
+
+  test("path glob filter drops non-matching paths before enrichment", () => {
+    const plan = buildDriftStaticSqlSearchPlan(FIXTURE_FP);
+    const noise = docFromFixture("lib/noise_utils.dart", "x");
+    const readme: DocIndexEntry = {
+      ...noise,
+      relativePath: "README.md",
+      uri: "file:///fixture/README.md",
+    };
+    const ranked: RankedDocEntry[] = [
+      { doc: readme, score: 999 },
+      { doc: noise, score: 1 },
+    ];
+    const filtered = filterRankedDocsByStaticSqlPathGlobs(ranked, plan.pathGlobPatterns);
+    assert.ok(filtered.every((r) => r.doc.relativePath.endsWith(".dart")));
+    assert.strictEqual(filtered.length, 1);
   });
 });

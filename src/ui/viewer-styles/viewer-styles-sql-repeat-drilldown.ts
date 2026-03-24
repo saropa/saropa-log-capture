@@ -74,5 +74,20 @@ export function getSqlRepeatDrilldownStyles(): string {
     margin-top: 4px;
     color: var(--vscode-descriptionForeground);
 }
+.sql-repeat-drilldown-actions {
+    margin-top: 8px;
+}
+.sql-repeat-static-sources {
+    font-size: 11px;
+    padding: 2px 8px;
+    cursor: pointer;
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+.sql-repeat-static-sources:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
 `;
 }
