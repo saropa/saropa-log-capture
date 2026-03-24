@@ -64,7 +64,7 @@ This is the single design and implementation plan for optional, tighter integrat
 | **README** | High-level “Log Capture bridge” bullet may still read like headers/summaries only; worth aligning with meta/sidecar and settings. |
 | **`contributes.api`** | Optional manifest entry; exports already work via `context.exports`. |
 
-**saropa-log-capture:** `driftAdvisor` in Integrations UI; viewer actions and popover; built-in provider; JSON schema at `plans/integrations/drift-advisor-session.schema.json`; user index at `docs/integrations/README.md`.
+**saropa-log-capture:** `driftAdvisor` in Integrations UI; viewer actions and popover; built-in provider; JSON schema at `plans/integrations/drift-advisor-session.schema.json`; user index at `docs/integrations/README.md`; optional **`schemaVersion`** on meta and sidecar from **`drift-advisor-snapshot-map.ts`** / **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`**.
 
 ---
 
@@ -151,6 +151,8 @@ Log Capture adds `capturedAt` and `sessionWindow`. Provider payload shape:
 
 ```ts
 interface DriftAdvisorMetaPayload {
+  /** Optional; Log Capture built-in sets `1` when the snapshot omits it. */
+  schemaVersion?: number;
   baseUrl: string;
   performance: {
     totalQueries: number;
@@ -178,6 +180,8 @@ interface DriftAdvisorMetaPayload {
 
 ```ts
 interface DriftAdvisorSidecar {
+  /** Optional; Log Capture built-in sets `1` when the snapshot omits it. */
+  schemaVersion?: number;
   generatedAt: string;
   baseUrl: string;
   performance: PerformanceData;
@@ -199,12 +203,13 @@ interface DriftAdvisorSidecar {
 
 Use existing types from Drift Advisor `api-types.ts` where applicable.
 
-**Privacy / size:** Sidecars may contain SQL, file paths, and diagnostic messages. Document this for users; consider truncation or redaction in Drift Advisor if payloads grow large. When evolving shapes, add an optional `schemaVersion` field to meta and/or sidecar so consumers can branch safely.
+**Privacy / size:** Sidecars may contain SQL, file paths, and diagnostic messages. **User index:** `docs/integrations/README.md`. Consider truncation or redaction in Drift Advisor if payloads grow large. **`schemaVersion`** on meta and sidecar: Log Capture’s built-in mapping emits **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION` (currently `1`)** when the upstream snapshot omits it; Drift’s bridge may set its own.
 
 ### 4.5 Optional: Drift Advisor extension API
 
 ```ts
 interface DriftAdvisorSnapshot {
+  schemaVersion?: number;
   performance: PerformanceData | null;
   anomalies: Anomaly[] | null;
   schemaSummary: { tableCount: number; tableNames: string[] } | null;
@@ -374,7 +379,7 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 
 | Artifact | Purpose |
 |----------|---------|
-| **`docs/integrations/README.md`** | Short user index: Drift adapter id, what you get, link to Drift setting, links to this plan + JSON schema. |
+| **`docs/integrations/README.md`** | Short user index: Drift adapter id, what you get, link to Drift setting, links to this plan + JSON schema, privacy note, **`schemaVersion`** pointer. |
 | **`plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md`** | Canonical design, contracts, and implementation status (this file). |
 | **`plans/integrations/drift-advisor-session.schema.json`** | Sidecar / snapshot shape reference. |
 | **`CHANGELOG.md`** | User-facing shipped notes; fixed schema link to `plans/integrations/…`; Drift integration bullets reference this plan and `docs/integrations/README.md`. |
@@ -435,6 +440,6 @@ Diagnostics live in `DiagnosticManager` and are applied to the VS Code collectio
 
 *As of 2026-03-23.*
 
-**Saropa Log Capture — Phases 3–6 (this repo)** are implemented. **Phase 3–4:** `INTEGRATION_ADAPTERS` includes `driftAdvisor`; webview `setDriftAdvisorAvailable`; context menu “Open in Drift Advisor” for `drift-perf` / `drift-query`; message handler runs `DRIFT_ADVISOR_OPEN_COMMAND` (`saropa.drift-viewer.openWatchPanel`) from `drift-advisor-constants.ts` (re-exported via `src/ui/provider/drift-advisor-integration.ts`); context popover `integrationsMeta` + Drift block. **Phase 5–6:** Built-in provider `driftAdvisorBuiltin` registers in `activation-integrations.ts`; at session end calls Drift `getSessionSnapshot()` (5s timeout) or reads `.saropa/drift-advisor-session.json`; writes meta key `saropa-drift-advisor` and `{baseFileName}.drift-advisor.json` when `driftViewer.integrations.includeInLogCaptureSession` is `full` (default if unset). JSON schema: `plans/integrations/drift-advisor-session.schema.json`. User index: `docs/integrations/README.md`.
+**Saropa Log Capture — Phases 3–6 (this repo)** are implemented. **Phase 3–4:** `INTEGRATION_ADAPTERS` includes `driftAdvisor`; webview `setDriftAdvisorAvailable`; context menu “Open in Drift Advisor” for `drift-perf` / `drift-query`; message handler runs `DRIFT_ADVISOR_OPEN_COMMAND` (`saropa.drift-viewer.openWatchPanel`) from `drift-advisor-constants.ts` (re-exported via `src/ui/provider/drift-advisor-integration.ts`); context popover `integrationsMeta` + Drift block. **Phase 5–6:** Built-in provider `driftAdvisorBuiltin` registers in `activation-integrations.ts`; at session end calls Drift `getSessionSnapshot()` (5s timeout) or reads `.saropa/drift-advisor-session.json`; writes meta key `saropa-drift-advisor` and `{baseFileName}.drift-advisor.json` when `driftViewer.integrations.includeInLogCaptureSession` is `full` (default if unset). Meta and sidecar include optional **`schemaVersion`** (default from **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`** in `drift-advisor-snapshot-map.ts` when upstream omits it). JSON schema: `plans/integrations/drift-advisor-session.schema.json`. User index: `docs/integrations/README.md`.
 
 **Saropa Drift Advisor — Phases 1–2, session file, and API (separate repo)** are implemented in source (`log-capture-bridge.ts`, `log-capture-api.ts`, `log-capture-session-serialization.ts`, `package.json` setting, DiagnosticManager issues). **Quick wins table:** §5.4. **Remaining:** changelog/README polish on the Drift side (§2.3, §12).
