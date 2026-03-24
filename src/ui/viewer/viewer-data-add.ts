@@ -10,8 +10,8 @@
  */
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
 
-export function getViewerDataAddScript(): string {
-    return getViewerDataAddDbDetectorsScript() + /* javascript */ `
+export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
+    return getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
@@ -206,18 +206,26 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             scopeFiltered: false,
             isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
             autoHidden: repeatAutoHide,
-            source: lineSource
+            source: lineSource,
+            timeRangeFiltered: false
         };
         if (sqlDrill) {
             repeatItem.sqlRepeatDrilldown = sqlDrill;
             repeatItem.sqlRepeatDrilldownOpen = false;
             repeatItem.repeatPreviewText = preview || '\\u2026';
         }
+        /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbInsight on these rows). */
+        if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
+            repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
+            var histPvw = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
+            repeatItem.sqlHistoryPreview = histPvw.length > 120 ? histPvw.substring(0, 117) + '...' : histPvw;
+        }
         allLines.push(repeatItem);
         resetCompressDupStreak();
         if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
         if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(repeatItem); }
+        if (typeof recordSqlQueryHistoryForAppendedItem === 'function') { recordSqlQueryHistoryForAppendedItem(repeatItem); }
         totalHeight += repeatH;
 
         // Collapsed repeats skip the normal-line branch; still feed session rollup and N+1 detector (per-line args).
@@ -242,7 +250,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
@@ -257,6 +265,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         emitDbLineDetectors(now, sqlMeta, sTag, scopeFilt, ts, sp, lineSource, lvl, lineItem.elapsedMs, plain, lineItem.seq, lineItem);
 
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
+        if (typeof recordSqlQueryHistoryForAppendedItem === 'function') { recordSqlQueryHistoryForAppendedItem(lineItem); }
     }
 }
 

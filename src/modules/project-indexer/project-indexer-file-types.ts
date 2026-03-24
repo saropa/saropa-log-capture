@@ -23,7 +23,7 @@ import {
 } from './token-extractor';
 
 export const DEFAULT_DOC_FILE_TYPES = [
-    '.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts',
+    '.md', '.txt', '.json', '.yaml', '.yml', '.toml', '.xml', '.arb', '.rules', '.rst', '.adoc', '.gradle', '.kts', '.dart',
     '.ini', '.cfg', '.conf', '.properties', '.env', '.sql', '.proto', 'dockerfile',
     '.hcl', '.tf', '.tfvars', '.csproj', '.sln', '.props', '.targets', '.mod', '.mk', '.sh', '.ps1', '.http', '.rest',
     'makefile', 'requirements', 'pipfile',

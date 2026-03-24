@@ -56,7 +56,7 @@ window.addEventListener('message', function(event) {
             isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
             if (typeof closeContextModal === 'function') closeContextModal();
-            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
+            if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
@@ -102,8 +102,9 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.codeQualityPayload = msg.payload || null;
             break;
         case 'setDriftAdvisorAvailable':
-            if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available;
-            break;
+            if (typeof window !== 'undefined') window.driftAdvisorAvailable = !!msg.available; break;
+        case 'setDriftAdvisorDbPanelMeta':
+            if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'setDbBaselineFingerprintSummary':
             if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') {
                 setDbBaselineFingerprintSummaryFromHost(msg.fingerprints || null);
@@ -125,6 +126,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
+            break;
+        case 'openSqlQueryHistoryPanel':
+            if (typeof setActivePanel === 'function') setActivePanel('sqlHistory');
             break;
         case 'setFilename':
             currentFilename = msg.filename || '';
@@ -259,6 +263,9 @@ window.addEventListener('message', function(event) {
             break;
         case 'setViewerDbInsightsEnabled':
             viewerDbInsightsEnabled = msg.enabled !== false;
+            break;
+        case 'setStaticSqlFromFingerprintEnabled':
+            staticSqlFromFingerprintEnabled = msg.enabled !== false;
             break;
         case 'setViewerDbDetectorToggles':
             viewerDbDetectorNPlusOneEnabled = msg.nPlusOneEnabled !== false;

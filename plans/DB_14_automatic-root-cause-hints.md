@@ -12,6 +12,23 @@
 
 Generate **short, reviewable explanations** that tie together signals (errors, SQL bursts, N+1 hints, fingerprint leaders, Drift Advisor issues, baseline regression) into a few bullet hypotheses—without claiming certainty.
 
+## Read this first
+
+- **Users see** a collapsible **root-cause hypotheses** strip in the log viewer when eligibility rules fire; evidence buttons jump to log lines where indices are still valid; **Explain with AI** (and the command / context menu) reuse the same hypothesis payload and require an explicit gesture.
+- **Change hypothesis wording, ordering, caps, or `buildHypotheses` rules** in `src/modules/root-cause-hints/` and the webview embed algorithm — do not fork template strings in the viewer.
+- **Add or change bundle inputs** using the [Input bundle](#input-bundle-contract--authoritative) contract: new session-level fields are **optional**; bump **`bundleVersion`** only when semantics of existing keys break.
+
+## Phase 1 (shipped) — summary
+
+| Area | What landed |
+| --- | --- |
+| **Shared module** | `src/modules/root-cause-hints/` — `RootCauseHintBundle`, `buildHypotheses`, `isRootCauseHintsEligible`, `bundleVersion: 1`, caps (e.g. 5 bullets, 240 chars, 8 evidence ids), tier order, dedup. |
+| **Webview strip** | `viewer-root-cause-hints-embed-algorithm.ts`, `viewer-root-cause-hints-script.ts`, `viewer-styles-root-cause-hints.ts`, `#root-cause-hypotheses` in `viewer-content-body.ts`, script injection in `viewer-content-scripts.ts`; refresh on `addLines` / `loadComplete`; `resetRootCauseHypothesesSession` on `clear` in `viewer-script-messages.ts`. |
+| **N+1 wiring** | `insightMeta` on synthetic N+1 rows in `viewer-data-add-db-detectors.ts` for bundle assembly. |
+| **Live bundle (v1)** | Errors (recent, error level), `nPlusOneHints`, `fingerprintLeaders` from `dbInsightSessionRollup` + sample line; template-only copy; **Hypothesis, not fact** disclaimer; confidence labels; dismiss hides strip until clear; no focus steal. |
+
+Phases 2–3 extend this with host-fed fields, bursts, diff, l10n, AI explain, command/menu, and compare-driven `sessionDiffSummary` (tables below).
+
 ## Phase 2 (shipped) — summary
 
 | Area | What landed |
@@ -24,8 +41,6 @@ Generate **short, reviewable explanations** that tie together signals (errors, S
 | **Explain hypotheses (AI)** | Strip button → `explainRootCauseHypotheses` → `viewer-message-handler-root-cause-ai.ts` (same LM path as line explain; user gesture only). |
 | **Refresh hooks** | `scheduleRootCauseHypothesesRefresh` after baseline set, host-field patch, l10n, `addLines`, `loadComplete`; `resetRootCauseHypothesesSession` + host clear on viewer `clear` (`viewer-script-messages.ts`). |
 
-**Tests:** `root-cause-hint-drift-meta.test.ts`; embed checks in `viewer-n-plus-one-embed.test.ts`; existing `build-hypotheses.test.ts` for TS bundle logic.
-
 ## Phase 3 (shipped — polish)
 
 | Item | What landed |
@@ -37,6 +52,14 @@ Generate **short, reviewable explanations** that tie together signals (errors, S
 **Still optional (not blocking):** deeper **i18n** for evidence button titles; **`package.nls.json`** coverage for any new command title keys you add for translation bundles.
 
 **Do not** bump **`bundleVersion`** unless optional field semantics or required keys change.
+
+### Tests (all phases)
+
+- **Unit (Node):** `src/test/modules/root-cause-hints/build-hypotheses.test.ts` (bundle logic); `root-cause-hint-drift-meta.test.ts` (Drift metadata slice).
+- **Viewer embed harness:** `src/test/ui/viewer-n-plus-one-embed.test.ts` (includes root-cause embed wiring).
+- **Manual / fixture:** `examples/root-cause-hypotheses-sample.txt`.
+
+There is no separate browser/UI automation suite dedicated to this feature; behavior is covered by the above plus manual QA.
 
 ## What to build next (other DB plans — higher leverage)
 
@@ -77,20 +100,17 @@ Extend with optional fields only; **do not rename or remove core keys** without 
 ### Per-hypothesis (`buildHypotheses` output)
 
 - `templateId`, `text`, `evidenceLineIds`, optional `confidence`, `hypothesisKey` (dedup).
+- **Evidence UI:** if a line id is invalid after trim/reload, **omit the jump control** and show text only (phase 1); stale anchors are also mitigated by index checks on evidence buttons (see **Risks**).
 
 ## Where the bundle is built
 
 - **Webview:** `viewer-root-cause-hints-embed-algorithm.ts` (eligibility + `buildHypothesesEmbedded`) + **`viewer-root-cause-hints-embed-collect.ts`** (`collectRootCauseHintBundleEmbedded`, host globals, bursts, diff).
 - **Host:** Drift slice in **`root-cause-hint-drift-meta.ts`**; postMessage types handled in **`viewer-script-messages.ts`**.
 
-## Evidence links
-
-Invalid line ids after trim → omit jump control (text only) — phase 1.
-
 ## Risks
 
 - LLM hallucination — template-first default; citations only to real lines.
-- Stale anchors — mitigated by index checks on evidence buttons.
+- Stale anchors — mitigated by index checks on evidence buttons; invalid ids after trim → no jump (see **Per-hypothesis** above).
 
 ## Related plans
 

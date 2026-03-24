@@ -172,6 +172,11 @@
         "title": "%command.explainRootCauseHypotheses.title%"
       },
       {
+        "command": "saropaLogCapture.openSqlQueryHistory",
+        "icon": "$(database)",
+        "title": "%command.openSqlQueryHistory.title%"
+      },
+      {
         "command": "saropaLogCapture.showCodeQualityForFrame",
         "enablement": "extension:saropa.saropa-lints",
         "icon": "$(symbol-misc)",
@@ -1368,6 +1373,12 @@
           "description": "%config.viewerDbInsightsEnabled.description%",
           "type": "boolean",
           "title": "%config.viewerDbInsightsEnabled.title%"
+        },
+        "saropaLogCapture.staticSqlFromFingerprint.enabled": {
+          "default": true,
+          "description": "%config.staticSqlFromFingerprint.enabled.description%",
+          "type": "boolean",
+          "title": "%config.staticSqlFromFingerprint.enabled.title%"
         },
         "saropaLogCapture.viewerDbDetectorNPlusOneEnabled": {
           "default": true,

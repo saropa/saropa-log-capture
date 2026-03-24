@@ -68,9 +68,10 @@ export const stringsA: Record<string, string> = {
     'msg.staticSqlSourcesNoIndexer': 'Project index is not available. Open a workspace folder to search static sources.',
     'msg.staticSqlSourcesNoTokens': 'Could not derive search tokens from this fingerprint.',
     'msg.staticSqlSourcesNoMatches': 'No indexed files matched tokens: {0}',
-    'msg.staticSqlSourcesPickDescription': 'Score · path (heuristic match, not proof)',
-    'msg.staticSqlSourcesPickTitle': 'Open possible static source ({0})',
-    'msg.staticSqlSourcesPickPlaceholder': 'Pick a file to open',
+    'msg.staticSqlSourcesPickDescription': 'Possible sources (static); not proof of call site',
+    'msg.staticSqlSourcesPickDetail': 'Table/class on line: {0} · token hits on line: {1} · tokens: {2}',
+    'msg.staticSqlSourcesPickTitle': 'Possible sources (static) — {0}',
+    'msg.staticSqlSourcesPickPlaceholder': 'Pick a file to open (opens at best-guess line)',
     'msg.staticSqlSourcesOpenFailed': 'Could not open the selected file.',
 
     'viewer.rchTitle': 'Hypotheses',

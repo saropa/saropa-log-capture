@@ -39,10 +39,12 @@ export interface ViewerHtmlOptions {
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** Slow-query burst detector thresholds (DB_08) baked into the viewer script. */
     readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
-    /** Master toggle for DB insight detectors + rollup (default true). */
-    readonly viewerDbInsightsEnabled?: boolean;
-    /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
-    readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
+  /** Master toggle for DB insight detectors + rollup (default true). */
+  readonly viewerDbInsightsEnabled?: boolean;
+  /** DB_12: “Static sources” from SQL fingerprints (default true). */
+  readonly staticSqlFromFingerprintEnabled?: boolean;
+  /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
+  readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** SQL fingerprint filter chips (plan DB_05); defaults 2 and 20. */
     readonly viewerSqlPatternChipMinCount?: number;
     readonly viewerSqlPatternMaxChips?: number;
@@ -74,6 +76,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
+        staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
         viewerSqlPatternChipMinCount: opts.viewerSqlPatternChipMinCount,

@@ -52,6 +52,9 @@ function updateFilterBadge() {
     // Source scope filter
     if (typeof scopeLevel !== 'undefined' && scopeLevel !== 'all') count++;
 
+    // DB Performance tab time brush (DB_13)
+    if (typeof dbTimeFilterActive !== 'undefined' && dbTimeFilterActive) count++;
+
     if (count > 0) {
         badge.textContent = count + (count === 1 ? ' filter' : ' filters');
         badge.style.display = 'inline-block';
@@ -99,6 +102,7 @@ if (filterBadgeEl) {
         if (typeof searchFilterMode !== 'undefined' && searchFilterMode
             && typeof searchRegex !== 'undefined' && searchRegex) other++;
         if (typeof scopeLevel !== 'undefined' && scopeLevel !== 'all') other++;
+        if (typeof dbTimeFilterActive !== 'undefined' && dbTimeFilterActive) other++;
         if (hasLevel && other === 0 && typeof toggleLevelMenu === 'function') {
             toggleLevelMenu();
         } else if (typeof setActivePanel === 'function') {

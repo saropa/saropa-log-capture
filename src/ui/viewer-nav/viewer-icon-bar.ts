@@ -24,6 +24,9 @@ export function getIconBarHtml(): string {
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
     </button>
+    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL query history (session)" aria-label="SQL query history">
+        <span class="codicon codicon-database"></span><span class="ib-label">SQL history</span>
+    </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
     </button>
@@ -123,6 +126,7 @@ export function getIconBarScript(): string {
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
         filters: document.getElementById('ib-filters'),
+        sqlHistory: document.getElementById('ib-sql-query-history'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
@@ -135,6 +139,7 @@ export function getIconBarScript(): string {
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
         if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
+        if (typeof closeSqlQueryHistoryPanel === 'function') closeSqlQueryHistoryPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
@@ -172,6 +177,8 @@ export function getIconBarScript(): string {
             openBookmarkPanel();
         } else if (name === 'filters' && typeof openFiltersPanel === 'function') {
             openFiltersPanel();
+        } else if (name === 'sqlHistory' && typeof openSqlQueryHistoryPanel === 'function') {
+            openSqlQueryHistoryPanel();
         } else if (name === 'trash' && typeof openTrashPanel === 'function') {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
@@ -205,6 +212,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.filters) {
         iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
+    }
+    if (iconButtons.sqlHistory) {
+        iconButtons.sqlHistory.addEventListener('click', function() { setActivePanel('sqlHistory'); });
     }
     if (iconButtons.trash) {
         iconButtons.trash.addEventListener('click', function() { setActivePanel('trash'); });

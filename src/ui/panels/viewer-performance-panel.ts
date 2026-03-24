@@ -262,6 +262,11 @@ export function getPerformancePanelScript(prefix?: string): string {
             }
         }
     });
+
+    /** DB_13: let global time-filter helpers refresh the Database tab chrome (filter bar, timeline bands). */
+    window._refreshDbPerfTabAfterTimeFilter = function() {
+        if (ppOpen && ppActiveTab === 'db' && typeof buildDbStatsView === 'function') buildDbStatsView();
+    };
 })();
 `;
 }

@@ -203,6 +203,14 @@ if (resetBtn) resetBtn.addEventListener('click', function() {
     if (typeof resetAllFilters === 'function') resetAllFilters();
 });
 
+var sqlQueryHistFiltersBtn = document.getElementById('open-sql-query-history-from-filters');
+if (sqlQueryHistFiltersBtn) {
+    sqlQueryHistFiltersBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof setActivePanel === 'function') setActivePanel('sqlHistory');
+    });
+}
+
 // Outside click to close
 document.addEventListener('click', function(e) {
     if (!filtersPanelOpen) return;

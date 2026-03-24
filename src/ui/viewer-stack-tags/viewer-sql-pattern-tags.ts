@@ -36,7 +36,8 @@
  *
  * Integration: `viewer-data-add.ts` → `registerSqlPattern`; `viewer-data.ts` `trimData` → `unregisterSqlPattern` +
  * `finalizeSqlPatternState`; `viewer-data-helpers-core.ts` → `sqlPatternFiltered` in `calcItemHeight`; clear →
- * `resetSqlPatternTags`.
+ * `resetSqlPatternTags`. Session SQL query history (DB_11) wraps `finalizeSqlPatternState` / `resetSqlPatternTags`
+ * in `viewer-sql-query-history-core.ts` and records per-line via `recordSqlQueryHistoryForAppendedItem` in add/db paths.
  */
 
 /** @param chipMinCount - Clamped 1–50; default 2. @param chipMaxChips - Clamped 1–100; default 20. */

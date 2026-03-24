@@ -215,6 +215,7 @@ function resetAllFilters() {
     if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
+    if (typeof clearDbTimeRangeFilter === 'function') clearDbTimeRangeFilter();
     clearSearchFilter();
     if (typeof window !== 'undefined') window.enabledSources = null;
     activePresetName = null;

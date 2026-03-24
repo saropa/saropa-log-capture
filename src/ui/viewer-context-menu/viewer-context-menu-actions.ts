@@ -236,6 +236,13 @@ function onContextMenuAction(action) {
             break;
         case 'edit': if (typeof openEditModal === 'function') openEditModal(lineIdx); break;
         case 'show-context': if (typeof openContextModal === 'function') openContextModal(lineIdx); break;
+        case 'find-static-sources-line': {
+            var fpLine = lineData.dbInsight && lineData.dbInsight.fingerprint;
+            if (fpLine && typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled) {
+                vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpLine });
+            }
+            break;
+        }
         case 'show-integration-context': {
             var ts = lineData.ts || lineData.timestamp;
             var hasDbLine = !!(lineData && lineData.sourceTag === 'database');
