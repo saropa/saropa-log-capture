@@ -4,7 +4,7 @@
  * **Load order:** This script is concatenated after `getNPlusOneDetectorScript` so globals such as
  * `detectNPlusOneInsight`, `parseSqlFingerprint`, and `updateDbInsightRollup` already exist. Detector
  * registration order is by `priority`; results are merged by `stableKey` like the TypeScript
- * `runDbDetectors` / `mergeDbDetectorResultsByStableKey` helpers in `db-detector-framework.ts`.
+ * `runDbDetectors` / `mergeDbDetectorResultsByStableKey` (merge is **codegen** from `db-detector-merge-stable-key.ts`).
  *
  * **Built-in detectors:** Slow-query burst (DB_08), optional baseline volume hint when the host sets
  * `dbBaselineFingerprintSummary` / `dbBaselineFingerprintSummaryMap` and live rollup count exceeds
@@ -20,10 +20,11 @@
  * map, and baseline hint dedupe; it does not clear the host-provided baseline object/map (host sends null
  * to clear).
  */
-import { normalizeViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
-import { SLOW_QUERY_BURST_DETECTOR_ID } from "../../modules/db/drift-db-slow-burst-detector";
-import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import { SLOW_QUERY_BURST_DETECTOR_ID } from "../../modules/db/drift-db-slow-burst-detector";
+import { normalizeViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import { EMBED_MERGE_DB_DETECTOR_RESULTS_JS } from "./generated/db-detector-embed-merge.generated";
 
 const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
 
@@ -79,21 +80,7 @@ function registerDbDetector(detector) {
     if (!detector || !detector.id || typeof detector.feed !== 'function') return;
     dbDetectorRegistry.push(detector);
 }
-function mergeDbDetectorResultsByStableKey(results) {
-    var order = [];
-    var map = Object.create(null);
-    var i, r, k;
-    for (i = 0; i < results.length; i++) {
-        r = results[i];
-        if (!r || !r.stableKey) continue;
-        k = r.stableKey;
-        if (map[k] === undefined) order.push(k);
-        map[k] = r;
-    }
-    var out = [];
-    for (i = 0; i < order.length; i++) out.push(map[order[i]]);
-    return out;
-}
+${EMBED_MERGE_DB_DETECTOR_RESULTS_JS}
 /** Apply session-rollup-patch results into dbInsightSessionRollup (same math as live Drift lines). */
 function applyDbSessionRollupPatches(results) {
     if (!results || !results.length) return;
