@@ -123,6 +123,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setViewerDbInsightsEnabled(enabled: boolean): void {
     for (const t of this.targets) { t.setViewerDbInsightsEnabled(enabled); }
   }
+  setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
+    for (const t of this.targets) { t.setStaticSqlFromFingerprintEnabled(enabled); }
+  }
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
     for (const t of this.targets) { t.setViewerDbDetectorToggles(toggles); }
   }

@@ -10,6 +10,7 @@ import { getEffectiveViewerLines } from "./viewer-content";
 import { findFirstErrorLines, type FirstErrorResult } from "../../modules/bookmarks/first-error";
 import * as helpers from "./viewer-provider-helpers";
 import { rootCauseDriftSummaryFromSessionIntegrations } from "../../modules/root-cause-hints/root-cause-hint-drift-meta";
+import { loadDriftAdvisorDbPanelPayload } from "../../modules/integrations/drift-advisor-db-panel-load";
 
 interface LoadTarget {
   postMessage(msg: unknown): void;
@@ -71,7 +72,8 @@ export async function loadUnifiedSessionJsonlContent(
   const smart = getSmartBookmarksFirstErrorAndWarning(cfgUnified, unifiedRawLinesForView);
   if (target.setHasPerformanceData) { target.setHasPerformanceData(false); }
   if (target.setCodeQualityPayload) { target.setCodeQualityPayload(null); }
-  target.postMessage({ type: "loadComplete" });
+  postUnified({ type: "setDriftAdvisorDbPanelMeta", payload: null });
+  postUnified({ type: "loadComplete" });
   return { sessionMidnightMs, contentLength: unifiedLines.length, ...smart };
 }
 
@@ -84,14 +86,20 @@ export async function loadPerfAndCodeQualityPayload(
   hasPerf: boolean;
   codeQualityPayload?: Record<string, unknown>;
   rootCauseDriftAdvisorSummary?: { issueCount: number; topRuleId?: string };
+  driftAdvisorDbPanelPayload?: unknown | null;
 }> {
   let hasPerf = false;
   let codeQualityPayload: Record<string, unknown> | undefined = undefined;
   let rootCauseDriftAdvisorSummary: { issueCount: number; topRuleId?: string } | undefined;
+  let driftAdvisorDbPanelPayload: unknown | null = null;
   try {
-    if (!checkGen()) { return { cancelled: true, hasPerf: false, codeQualityPayload: undefined }; }
+    if (!checkGen()) {
+      return { cancelled: true, hasPerf: false, codeQualityPayload: undefined, driftAdvisorDbPanelPayload: null };
+    }
     const meta = await new SessionMetadataStore().loadMetadata(uri);
-    if (!checkGen()) { return { cancelled: true, hasPerf: false, codeQualityPayload: undefined }; }
+    if (!checkGen()) {
+      return { cancelled: true, hasPerf: false, codeQualityPayload: undefined, driftAdvisorDbPanelPayload: null };
+    }
     hasPerf = hasMeaningfulPerformanceData(meta.integrations?.performance);
     const cq = meta.integrations?.codeQuality;
     if (cq && typeof cq === "object" && cq !== null && "files" in cq) { codeQualityPayload = cq as Record<string, unknown>; }
@@ -99,10 +107,14 @@ export async function loadPerfAndCodeQualityPayload(
     if (drift) {
       rootCauseDriftAdvisorSummary = drift;
     }
+    driftAdvisorDbPanelPayload = await loadDriftAdvisorDbPanelPayload(
+      uri,
+      meta.integrations as Record<string, unknown> | undefined,
+    );
   } catch {
     // ignore
   }
-  return { cancelled: false, hasPerf, codeQualityPayload, rootCauseDriftAdvisorSummary };
+  return { cancelled: false, hasPerf, codeQualityPayload, rootCauseDriftAdvisorSummary, driftAdvisorDbPanelPayload };
 }
 
 export function truncateMainContentLines(rawLines: readonly string[]): { headerEnd: number; contentLines: string[]; didTruncate: boolean; truncatedShown: number } {

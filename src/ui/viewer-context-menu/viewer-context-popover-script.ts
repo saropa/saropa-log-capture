@@ -99,6 +99,19 @@ function showContextPopover(lineIdx, anchorX, anchorY, data) {
         });
     }
 
+    var staticSqlBtns = popover.querySelectorAll('.popover-static-sql-open');
+    for (var ssi = 0; ssi < staticSqlBtns.length; ssi++) {
+        staticSqlBtns[ssi].addEventListener('click', function(e) {
+            e.stopPropagation();
+            var btn = e.currentTarget;
+            var fp = btn && btn.getAttribute('data-fingerprint') ? btn.getAttribute('data-fingerprint') : '';
+            if (fp && typeof vscodeApi !== 'undefined' && vscodeApi) {
+                vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fp });
+            }
+            closeContextPopover();
+        });
+    }
+
     // Close on click outside
     setTimeout(function() {
         document.addEventListener('click', onPopoverOutsideClick);
@@ -159,6 +172,11 @@ function buildDatabaseInsightPopoverSection(lineIdx) {
         var shortSql = fullSql.length > 120 ? fullSql.substring(0, 117) + '...' : fullSql;
         html += '<div class="popover-item popover-sql-wrap"><span class="popover-meta-label">SQL</span> ';
         html += '<span class="popover-sql-snippet" title="' + popoverEscapeAttr(fullSql) + '">' + escapeHtmlBasic(shortSql) + '</span></div>';
+    }
+    var staticSqlPop = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
+    if (staticSqlPop && ins.fingerprint) {
+        html += '<div class="popover-item popover-db-static-note">Possible sources use the project index (static), not your stack trace.</div>';
+        html += '<button class="popover-btn popover-static-sql-open" type="button" data-fingerprint="' + popoverEscapeAttr(ins.fingerprint) + '">Find possible Dart sources…</button>';
     }
     if (driftAvail) {
         html += '<button class="popover-btn popover-drift-open" type="button">Open in Drift Advisor</button>';

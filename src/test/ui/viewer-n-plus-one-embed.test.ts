@@ -45,6 +45,11 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(data.includes('var viewerDbInsightsEnabled = false'));
     });
 
+    test('viewer data script can bake static SQL affordance off (staticSqlFromFingerprintEnabled false)', () => {
+        const data = getViewerDataScript(undefined, true, false);
+        assert.ok(data.includes('var staticSqlFromFingerprintEnabled = false'));
+    });
+
     test('full viewer data script includes N+1 insight row type, insightMeta, and DB_15 detector pipeline', () => {
         const data = getViewerDataScript();
         assert.ok(data.includes("'n-plus-one-insight'"));
