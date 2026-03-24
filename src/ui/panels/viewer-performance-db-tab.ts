@@ -200,6 +200,16 @@ export function getPerformanceDbTabScript(): string {
                 vscodeApi.postMessage({ type: 'openDriftAdvisor' });
                 return;
             }
+            var st = t && t.closest && t.closest('.pp-db-static-src');
+            if (st) {
+                e.preventDefault();
+                var enc = st.getAttribute('data-pp-db-fp') || '';
+                var fpDec = enc ? decodeURIComponent(enc) : '';
+                if (fpDec && typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled) {
+                    vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpDec });
+                }
+                return;
+            }
             if (t && t.closest && t.closest('[data-pp-db-clear-time]')) {
                 e.preventDefault();
                 if (typeof clearDbTimeRangeFilter === 'function') clearDbTimeRangeFilter();
@@ -292,6 +302,7 @@ export function getPerformanceDbTabScript(): string {
                 if (ts > tMax) tMax = ts;
             }
         }
+        /* Nominal bar-track height (see .pp-db-bars in viewer-styles-performance). floor(56/2)=28 clamps to N=48 via sessionTimeBucketCountForHeightPx — unlike minimap mmH, so timeline N often < minimap N. */
         var barsH = 56;
         var bucketCount = (typeof sessionTimeBucketCountForHeightPx === 'function')
             ? sessionTimeBucketCountForHeightPx(barsH)
@@ -337,13 +348,20 @@ export function getPerformanceDbTabScript(): string {
                 + ' \\u00b7 50\\u2013200ms ' + fmtNum(h2)
                 + ' \\u00b7 \\u2265200ms ' + fmtNum(h3) + '</div>';
         }
-        html += '<div class="pp-db-table-title">Top fingerprints by volume</div><table class="pp-db-table"><thead><tr><th>#</th><th>Fingerprint (truncated)</th><th>Count</th><th>Avg ms</th></tr></thead><tbody>';
+        var staticSqlTab = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
+        html += '<div class="pp-db-table-title">Top fingerprints by volume</div><table class="pp-db-table"><thead><tr><th>#</th><th>Fingerprint (truncated)</th><th>Count</th><th>Avg ms</th>';
+        if (staticSqlTab) html += '<th>Static sources</th>';
+        html += '</tr></thead><tbody>';
         var maxRows = 15;
         for (bi = 0; bi < entries.length && bi < maxRows; bi++) {
             var e = entries[bi];
             var avg = e.countWithMs > 0 ? Math.round(e.sumMs / e.countWithMs) : '\\u2014';
             var fshow = e.fp.length > 72 ? e.fp.substring(0, 69) + '...' : e.fp;
-            html += '<tr><td>' + (bi + 1) + '</td><td class="pp-db-fp" title="' + esc(e.fp) + '">' + esc(fshow) + '</td><td>' + fmtNum(e.count) + '</td><td>' + avg + '</td></tr>';
+            html += '<tr><td>' + (bi + 1) + '</td><td class="pp-db-fp" title="' + esc(e.fp) + '">' + esc(fshow) + '</td><td>' + fmtNum(e.count) + '</td><td>' + avg + '</td>';
+            if (staticSqlTab) {
+                html += '<td><button type="button" class="pp-db-static-src" data-pp-db-fp="' + encodeURIComponent(e.fp) + '" title="Possible Dart sources (project index; not stack trace)">Sources</button></td>';
+            }
+            html += '</tr>';
         }
         html += '</tbody></table>';
         ppDbView.innerHTML = html;

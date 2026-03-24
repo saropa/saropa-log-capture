@@ -4,6 +4,7 @@ import {
   buildDriftStaticSqlSearchPlan,
   DRIFT_STATIC_ORM_PATTERN_ROWS,
   fingerprintHasWord,
+  pathMatchesStaticSqlGlob,
   tableTokenToDartClassHints,
 } from "../../../modules/db/drift-sql-static-orm-patterns";
 
@@ -14,6 +15,7 @@ describe("buildDriftStaticSqlSearchPlan", () => {
     assert.ok(plan.indexerTokens.includes("watch") || plan.indexerTokens.includes("getsingle"));
     assert.strictEqual(plan.primaryTableToken, "orders");
     assert.deepStrictEqual(plan.dartClassHints, ["Orders"]);
+    assert.ok(plan.pathGlobPatterns.includes("**/*.dart"));
   });
 
   it("insert adds companion and into", () => {
@@ -54,5 +56,17 @@ describe("DRIFT_STATIC_ORM_PATTERN_ROWS", () => {
 describe("tableTokenToDartClassHints", () => {
   it("underscore segments become PascalCase", () => {
     assert.deepStrictEqual(tableTokenToDartClassHints("foo_bar"), ["FooBar"]);
+  });
+});
+
+describe("pathMatchesStaticSqlGlob", () => {
+  it("matches **/*.dart suffix", () => {
+    assert.ok(pathMatchesStaticSqlGlob("lib/foo.dart", "**/*.dart"));
+    assert.ok(pathMatchesStaticSqlGlob("pkg\\src\\x.DART", "**/*.dart"));
+    assert.ok(!pathMatchesStaticSqlGlob("lib/foo.ts", "**/*.dart"));
+  });
+  it("matches lib/** prefix", () => {
+    assert.ok(pathMatchesStaticSqlGlob("lib/a.dart", "lib/**"));
+    assert.ok(!pathMatchesStaticSqlGlob("test/lib/a.dart", "lib/**"));
   });
 });

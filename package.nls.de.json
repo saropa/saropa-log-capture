@@ -32,6 +32,7 @@
   "command.createReportFile.title": "Saropa Log Capture: Create Bug Report File",
   "command.showCodeQualityForFrame.title": "Saropa Log Capture: Code-Qualität für Frame anzeigen",
   "command.openQualityReport.title": "Saropa Log Capture: Qualitätsbericht öffnen",
+  "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
   "command.showTimeline.title": "Saropa Log Capture: Protokoll-Zeitlinie anzeigen",
   "command.compareSessions.title": "Saropa Log Capture: Protokolle vergleichen",
   "command.markForComparison.title": "Zum Vergleich markieren",
