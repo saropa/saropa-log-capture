@@ -148,15 +148,51 @@ export function getSqlQueryHistoryPanelStyles(): string {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
+    user-select: text;
+    cursor: text;
 }
 
-.sql-query-history-fp {
+.sql-query-history-sql {
+    margin: 4px 0 8px;
+    padding: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--vscode-foreground);
+    user-select: text;
+    cursor: text;
+}
+
+.sql-query-history-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.sql-query-history-jump {
+    background: none;
+    border: none;
+    color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0;
+}
+
+.sql-query-history-jump:hover { text-decoration: underline; }
+
+.sql-qh-action-btn {
+    background: none;
+    border: none;
     color: var(--vscode-descriptionForeground);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    opacity: 0.85;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.sql-qh-action-btn:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
 .sql-query-history-empty {
