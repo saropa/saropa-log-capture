@@ -9,7 +9,7 @@ export function getSqlQueryHistoryPanelHtml(): string {
     return /* html */ `
 <div id="sql-query-history-panel" class="sql-query-history-panel">
     <div class="sql-query-history-header">
-        <span>SQL query history</span>
+        <span>SQL Query History</span>
         <div class="sql-query-history-actions">
             <button type="button" id="sql-query-history-copy" class="sql-query-history-action" title="Copy visible rows as JSON">
                 <span class="codicon codicon-copy"></span>
@@ -46,6 +46,7 @@ export function getSqlQueryHistoryPanelScript(): string {
     var searchEl = document.getElementById('sql-query-history-search');
     var hintEl = document.getElementById('sql-query-history-hint');
     var sqlQueryHistoryPanelOpen = false;
+    var sqlHistoryHintTimer = 0;
 
     function setSqlHistoryHint(text, show) {
         if (!hintEl) return;
@@ -86,6 +87,26 @@ export function getSqlQueryHistoryPanelScript(): string {
         return out;
     }
 
+    function formatSqlForExpand(sql) {
+        if (!sql) return '';
+        var s = sql.replace(/\\s+/g, ' ').trim();
+        s = s.replace(/ (FROM|WHERE|SET|VALUES|ORDER BY|GROUP BY|HAVING|LIMIT|RETURNING)\\b/gi, '\\n  $1');
+        s = s.replace(/ ((?:LEFT|RIGHT|INNER|OUTER|CROSS|FULL) (?:OUTER )?JOIN|JOIN|ON)\\b/gi, '\\n  $1');
+        s = s.replace(/ (AND|OR)\\b/gi, '\\n    $1');
+        return s;
+    }
+
+    function toggleSqlHistoryRow(rowEl) {
+        if (!rowEl) return;
+        var isOpen = rowEl.getAttribute('aria-expanded') === 'true';
+        var previewEl = rowEl.querySelector('.sql-query-history-preview');
+        var expandedEl = rowEl.querySelector('.sql-query-history-expanded');
+        if (!previewEl || !expandedEl) return;
+        previewEl.classList.toggle('u-hidden', !isOpen);
+        expandedEl.classList.toggle('u-hidden', isOpen);
+        rowEl.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    }
+
     function renderSqlQueryHistoryPanel() {
         if (!listEl || !emptyEl) return;
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
@@ -117,14 +138,21 @@ export function getSqlQueryHistoryPanelScript(): string {
         for (i = 0; i < filtered.length; i++) {
             r = filtered[i];
             var durTxt = r.maxDur !== undefined ? String(r.maxDur) + ' ms' : '\u2014';
-            parts.push('<div class="sql-query-history-row" role="button" tabindex="0" data-first-idx="' + r.firstIdx
-                + '" data-fingerprint="' + escAttr(r.fp) + '">'
+            parts.push('<div class="sql-query-history-row" tabindex="0" aria-expanded="false"'
+                + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escAttr(r.fp) + '">'
                 + '<div class="sql-query-history-row-main">'
                 + '<span class="sql-query-history-count">' + r.count + '</span>'
                 + '<span class="sql-query-history-dur">' + esc(durTxt) + '</span>'
                 + '</div>'
                 + '<div class="sql-query-history-preview">' + esc(r.preview || r.fp) + '</div>'
-                + '<div class="sql-query-history-fp" title="' + escAttr(r.fp) + '">' + esc(r.fp) + '</div>'
+                + '<div class="sql-query-history-expanded u-hidden">'
+                + '<pre class="sql-query-history-sql">' + esc(formatSqlForExpand(r.fp)) + '</pre>'
+                + '<div class="sql-query-history-row-actions">'
+                + '<button type="button" class="sql-query-history-jump" title="Jump to first occurrence">'
+                + 'Line ' + (r.firstIdx + 1) + ' \\u2197</button>'
+                + '<button class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
+                + '<span class="codicon codicon-copy"></span></button>'
+                + '</div></div>'
                 + '</div>');
         }
         listEl.innerHTML = parts.join('');
@@ -189,17 +217,46 @@ export function getSqlQueryHistoryPanelScript(): string {
         if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
         }
+        setSqlHistoryHint('Copied ' + payload.length + (payload.length === 1 ? ' row' : ' rows') + ' to clipboard.', true);
+        clearTimeout(sqlHistoryHintTimer);
+        sqlHistoryHintTimer = setTimeout(function() { setSqlHistoryHint('', false); }, 2000);
+    }
+
+    function copySingleFingerprint(rowEl) {
+        if (!rowEl) return;
+        var fp = rowEl.getAttribute('data-fingerprint') || '';
+        if (!fp) return;
+        if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: fp });
+        }
+        setSqlHistoryHint('Copied fingerprint.', true);
+        clearTimeout(sqlHistoryHintTimer);
+        sqlHistoryHintTimer = setTimeout(function() { setSqlHistoryHint('', false); }, 2000);
     }
 
     if (listEl) {
         listEl.addEventListener('click', function(e) {
+            var jumpBtn = e.target.closest('.sql-query-history-jump');
+            if (jumpBtn) {
+                e.stopPropagation();
+                jumpSqlHistoryRow(jumpBtn.closest('.sql-query-history-row'));
+                return;
+            }
+            var copyBtn = e.target.closest('[data-copy-fp]');
+            if (copyBtn) {
+                e.stopPropagation();
+                copySingleFingerprint(copyBtn.closest('.sql-query-history-row'));
+                return;
+            }
+            var sel = window.getSelection();
+            if (sel && sel.toString().length > 0) return;
             var row = e.target.closest('.sql-query-history-row');
-            if (row) jumpSqlHistoryRow(row);
+            if (row) toggleSqlHistoryRow(row);
         });
         listEl.addEventListener('keydown', function(e) {
             if (e.key !== 'Enter' && e.key !== ' ') return;
             var row = e.target.closest('.sql-query-history-row');
-            if (row) { e.preventDefault(); jumpSqlHistoryRow(row); }
+            if (row) { e.preventDefault(); toggleSqlHistoryRow(row); }
         });
     }
 
