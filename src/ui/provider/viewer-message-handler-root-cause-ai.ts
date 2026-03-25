@@ -1,5 +1,5 @@
 /**
- * Viewer "Explain hypotheses with AI" (DB_14). Split from viewer-message-handler-actions for max-lines.
+ * Viewer "Explain signals with AI" (DB_14). Split from viewer-message-handler-actions for max-lines.
  */
 
 import * as vscode from "vscode";
@@ -23,7 +23,13 @@ export function runExplainRootCauseHypotheses(msg: Record<string, unknown>, ctx:
   if (!uri || !text) { return; }
   const aiCfg = vscode.workspace.getConfiguration("saropaLogCapture.ai");
   if (!aiCfg.get<boolean>("enabled", false)) {
-    vscode.window.showInformationMessage(t("msg.aiExplainDisabled")).then(undefined, () => {});
+    const enableLabel = t("action.enable");
+    vscode.window.showInformationMessage(t("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
+      if (choice === enableLabel) {
+        await aiCfg.update("enabled", true, vscode.ConfigurationTarget.Global);
+        runExplainRootCauseHypotheses(msg, ctx);
+      }
+    }, () => {});
     return;
   }
   vscode.window.withProgress(
