@@ -24,8 +24,8 @@ export function getIconBarHtml(): string {
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
     </button>
-    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL query history (session)" aria-label="SQL query history">
-        <span class="codicon codicon-database"></span><span class="ib-label">SQL history</span>
+    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL Query History (session)" aria-label="SQL Query History">
+        <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
     </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
         <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>

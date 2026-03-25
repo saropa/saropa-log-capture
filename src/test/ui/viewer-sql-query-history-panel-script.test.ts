@@ -1,7 +1,9 @@
 /**
- * DB_11: panel script wires jump-to-line (documented filter hint) and Escape to close.
+ * DB_11: panel script wires jump-to-line (documented filter hint), Escape to close,
+ * and expand/collapse with formatted SQL.
  */
 import * as assert from 'node:assert';
+import * as vm from 'node:vm';
 import { getSqlQueryHistoryPanelScript } from '../../ui/viewer-panels/viewer-sql-query-history-panel';
 
 suite('viewer-sql-query-history panel script', () => {
@@ -17,5 +19,94 @@ suite('viewer-sql-query-history panel script', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes("e.key === 'Escape'"));
         assert.ok(s.includes('closeSqlQueryHistoryPanel'));
+    });
+
+    test('expand/collapse wiring: toggle, aria-expanded, hidden class', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('toggleSqlHistoryRow'));
+        assert.ok(s.includes('aria-expanded'));
+        assert.ok(s.includes('sql-query-history-expanded'));
+        assert.ok(s.includes('sql-query-history-jump'));
+    });
+
+    test('rows render with preview and hidden expanded section', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('sql-query-history-preview'));
+        assert.ok(s.includes('sql-query-history-expanded u-hidden'));
+        assert.ok(s.includes('sql-query-history-sql'));
+    });
+
+    test('header copy shows row count feedback in hint bar', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('copyVisibleSqlHistoryJson'));
+        assert.ok(s.includes('Copied '));
+        assert.ok(s.includes('to clipboard.'));
+        assert.ok(s.includes('clearTimeout(sqlHistoryHintTimer)'));
+    });
+
+    test('per-row copy button wiring: data-copy-fp and copySingleFingerprint', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('data-copy-fp'));
+        assert.ok(s.includes('copySingleFingerprint'));
+        assert.ok(s.includes('Copied fingerprint.'));
+    });
+
+    test('text selection suppresses row toggle on click', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('window.getSelection'));
+        assert.ok(s.includes('.toString().length > 0'));
+    });
+});
+
+suite('formatSqlForExpand (VM)', () => {
+    /** Extract and run formatSqlForExpand in a VM sandbox. */
+    function loadFormatter(): (sql: string) => string {
+        const src = getSqlQueryHistoryPanelScript();
+        const match = src.match(/function formatSqlForExpand\(sql\) \{[\s\S]*?\n    \}/);
+        assert.ok(match, 'formatSqlForExpand not found in script');
+        const ctx = vm.createContext({});
+        vm.runInContext(match[0], ctx, { timeout: 5_000 });
+        return (ctx as unknown as { formatSqlForExpand: (s: string) => string }).formatSqlForExpand;
+    }
+
+    test('should break before FROM, WHERE, SET clauses', () => {
+        const fmt = loadFormatter();
+        const result = fmt('SELECT * FROM users WHERE id = ?');
+        assert.ok(result.includes('\n  FROM'));
+        assert.ok(result.includes('\n  WHERE'));
+        assert.ok(result.startsWith('SELECT'));
+    });
+
+    test('should indent AND/OR under WHERE', () => {
+        const fmt = loadFormatter();
+        const result = fmt('SELECT * FROM t WHERE a = 1 AND b = 2 OR c = 3');
+        assert.ok(result.includes('\n    AND'));
+        assert.ok(result.includes('\n    OR'));
+    });
+
+    test('should break before JOIN variants', () => {
+        const fmt = loadFormatter();
+        const result = fmt('SELECT * FROM a LEFT JOIN b ON a.id = b.id');
+        assert.ok(result.includes('\n  LEFT JOIN'));
+        assert.ok(result.includes('\n  ON'));
+    });
+
+    test('should keep INSERT INTO on one line', () => {
+        const fmt = loadFormatter();
+        const result = fmt('INSERT INTO users VALUES (1, 2)');
+        assert.ok(result.startsWith('INSERT INTO'));
+    });
+
+    test('should return empty string for empty input', () => {
+        const fmt = loadFormatter();
+        assert.strictEqual(fmt(''), '');
+        assert.strictEqual(fmt(undefined as unknown as string), '');
+    });
+
+    test('should normalize internal whitespace', () => {
+        const fmt = loadFormatter();
+        const result = fmt('SELECT  *   FROM    t');
+        assert.ok(!result.includes('  *'));
+        assert.ok(result.includes('\n  FROM'));
     });
 });

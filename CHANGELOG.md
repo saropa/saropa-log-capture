@@ -22,7 +22,17 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Fixed
+
+• **SQL history — deduplicated rows** — Each query was rendered twice (preview + fingerprint). Now shows a single collapsed line; click to expand with formatted SQL (indented keywords), a "Jump to line" link, and copy button.
+
+• **SQL history — copy UX** — Header copy button now shows "Copied N rows to clipboard" feedback in the hint bar. Per-row copy button copies a single fingerprint. SQL preview and expanded text are selectable for native Ctrl+C copy.
+
+• **SQL history & repeat previews — HTML entities rendered** — `&quot;`, `&lt;`, `&gt;`, `&#39;`, and `&amp;` now display as their actual characters in the SQL query history panel and repeat notification previews instead of showing as raw entity text.
+
 ### Changed
+
+• **SQL Query History — Title Case** — Panel title, icon bar label, tooltip, aria-label, and filter button now use consistent "SQL Query History" capitalization.
 
 • **Actions menu — separators and title case** — Added visual separators between Replay, Open Quality Report, and Export items; fixed "Open quality report" to Title Case.
 
