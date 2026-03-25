@@ -24,6 +24,10 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Actions menu — separators and title case** — Added visual separators between Replay, Open Quality Report, and Export items; fixed "Open quality report" to Title Case.
+
+• **Search bar — constrained width** — The toolbar search input no longer stretches to fill the entire title bar; capped at 350 px so it stays compact.
+
 • **Options panel — primary button style** — "Integrations…" and "Keyboard shortcuts…" buttons now use the standard VS Code primary (blue) button style instead of the secondary (grey) style.
 
 • **Signals strip — renamed from "Hypotheses"** — The root-cause hints panel title, context menu, command palette entry, and all aria labels now read "Signals" instead of "Hypotheses". The "Hypothesis, not fact" disclaimer has been removed.
