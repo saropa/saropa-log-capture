@@ -20,6 +20,30 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+• **Options panel — primary button style** — "Integrations…" and "Keyboard shortcuts…" buttons now use the standard VS Code primary (blue) button style instead of the secondary (grey) style.
+
+• **Signals strip — renamed from "Hypotheses"** — The root-cause hints panel title, context menu, command palette entry, and all aria labels now read "Signals" instead of "Hypotheses". The "Hypothesis, not fact" disclaimer has been removed.
+
+• **Explain with AI — "Enable" button on disabled prompt** — When AI is not enabled, the notification now offers an "Enable" button that turns on the `saropaLogCapture.ai.enabled` setting directly instead of requiring a manual trip to Settings.
+
+• **Integrations panel — collapse notes into Show more** — Performance and "when to disable" notes are now hidden by default and revealed by the "Show more" toggle, reducing visual clutter.
+
+• **Integrations panel — warning emoji on title** — Integrations with a performance warning now show the ⚠️ emoji as a suffix on the title for at-a-glance visibility.
+
+• **Integrations panel — Title Case headings** — All integration labels now use consistent Title Case (e.g. "Code Coverage", "Terminal Output").
+
+### Added
+
+• **Copy signal** — Each signal bullet now has a copy button (appears on hover) that copies the signal text to the clipboard.
+
+### Fixed
+
+• **Smart bookmarks — skip prompt for inactive logs** — The "add bookmark at first error" suggestion now only appears for the active (recording) session, not when browsing historical logs.
+
 ## [3.13.0]
 
 ### Changed
