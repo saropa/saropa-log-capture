@@ -216,8 +216,8 @@ export function getOptionsStyles(): string {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
     border: 1px solid var(--vscode-button-border, transparent);
     font-size: 12px;
     padding: 6px 12px;
@@ -227,7 +227,7 @@ export function getOptionsStyles(): string {
     text-align: left;
 }
 .options-integrations-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--vscode-button-hoverBackground);
 }
 .options-integrations-btn .codicon { font-size: 14px; }
 
