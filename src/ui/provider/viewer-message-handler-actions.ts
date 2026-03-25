@@ -81,7 +81,13 @@ function runExplainWithAi(msg: Record<string, unknown>, ctx: ViewerMessageContex
   if (!uri || !text) { return; }
   const aiCfg = vscode.workspace.getConfiguration("saropaLogCapture.ai");
   if (!aiCfg.get<boolean>("enabled", false)) {
-    vscode.window.showInformationMessage(t("msg.aiExplainDisabled")).then(undefined, () => {});
+    const enableLabel = t("action.enable");
+    vscode.window.showInformationMessage(t("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
+      if (choice === enableLabel) {
+        await aiCfg.update("enabled", true, vscode.ConfigurationTarget.Global);
+        runExplainWithAi(msg, ctx);
+      }
+    }, () => {});
     return;
   }
   vscode.window.withProgress(
