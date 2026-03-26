@@ -184,6 +184,7 @@
   "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
   "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
+  "command.showRelatedQueries.title": "Saropa Log Capture: Show Related Queries",
   "config.reportFolder.description": "Folder for auto-created bug report files (relative to workspace root, or absolute path).",
   "config.lintReportImpactLevel.description": "Which lint impact levels to include in the bug report 'Known Lint Issues' section. Essential = critical and high only; recommended = plus medium; full = all (including low and opinionated).",
   "config.lintReportImpactLevel.enum.essential": "Critical and high only (least noise).",

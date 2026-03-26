@@ -1,0 +1,174 @@
+"use strict";
+/**
+ * Stack frame classification — distinguishes app code from framework/library frames.
+ * Works across Dart, Node, Python, Go, and other common runtimes.
+ * Used by viewer stack UI and analysis panel for frame filtering and grouping.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isFrameworkFrame = isFrameworkFrame;
+exports.isAppFrame = isAppFrame;
+exports.isFrameworkLogLine = isFrameworkLogLine;
+exports.isStackFrameLine = isStackFrameLine;
+exports.parseThreadHeader = parseThreadHeader;
+exports.extractDateFromFilename = extractDateFromFilename;
+/** Patterns that identify framework / library stack frames. */
+const frameworkPatterns = [
+    // Dart / Flutter
+    /package:flutter\//,
+    /\bdart:[a-z]/i, // dart:async, dart:core — not file.dart:42
+    // Node.js
+    /\bnode_modules\//,
+    /\bnode:internal\//,
+    /\bnode:/,
+    /<anonymous>/,
+    // Python
+    /\/lib\/python\d/,
+    /\bsite-packages\//,
+    // Go
+    /\/usr\/local\/go\//,
+    /\bruntime\//,
+    /\bruntime\/internal\//,
+    // Java / Kotlin
+    /\bjava\./,
+    /\bjavax\./,
+    /\bsun\./,
+    /\bcom\.sun\./,
+    /\borg\.gradle\./,
+    /\bkotlin\./,
+    /\bkotlinx\./,
+    // .NET / C#
+    /\bSystem\./,
+    /\bMicrosoft\./,
+];
+/**
+ * Returns true if the frame line appears to come from a framework or library,
+ * rather than the user's own application code.
+ *
+ * Absolute paths under the workspace take priority over framework patterns
+ * to avoid false positives (e.g., a user's `src/runtime/` directory matching
+ * the Go runtime pattern). Relative paths fall through to pattern matching.
+ */
+function isFrameworkFrame(frameLine, workspacePath) {
+    const text = frameLine.trim();
+    if (!text) {
+        return false;
+    }
+    // Absolute paths containing the workspace root are always app code,
+    // even if they match a framework pattern like /runtime/.
+    if (workspacePath && containsWorkspacePath(text, workspacePath)) {
+        return false;
+    }
+    for (const pat of frameworkPatterns) {
+        if (pat.test(text)) {
+            return true;
+        }
+    }
+    if (workspacePath) {
+        return !isUnderWorkspace(text, workspacePath);
+    }
+    return false;
+}
+/** Returns true if the frame text contains the workspace path (slash-normalised). */
+function containsWorkspacePath(text, workspacePath) {
+    return text.toLowerCase().replace(/\\/g, '/').includes(workspacePath.toLowerCase().replace(/\\/g, '/'));
+}
+/** Returns true if the frame appears to reference a path within the workspace. */
+function isUnderWorkspace(frameLine, _workspacePath) {
+    // containsWorkspacePath is already checked by the caller;
+    // here we only handle relative paths (assumed to be app code).
+    if (!hasAbsolutePath(frameLine)) {
+        return true;
+    }
+    return false;
+}
+/** Detects whether the line contains an absolute path. */
+function hasAbsolutePath(text) {
+    return /[a-zA-Z]:[\\/]/.test(text) || /(?:^|\s|[(])\/\w/.test(text);
+}
+/** Returns true if the frame appears to be user (app) code. */
+function isAppFrame(frameLine, workspacePath) {
+    return !isFrameworkFrame(frameLine, workspacePath);
+}
+/** Android logcat pattern: LEVEL/TAG( PID): or LEVEL/TAG: */
+const logcatWithPid = /^[VDIWEF]\/(\S+?)\s*\(\s*\d+\):/;
+const logcatNoPid = /^[VDIWEF]\/(\S+?):\s/;
+/** Dart/Flutter launch and connection boilerplate. */
+const launchPatterns = [
+    /^Connecting to VM Service at\s/,
+    /^Connected to the VM Service/,
+    /^Launching\s.+\sin (?:debug|profile|release) mode/,
+    /^[√✓] Built\s/,
+];
+/**
+ * Classify a regular (non-stack-frame) log line as framework or app.
+ * Returns true for framework/system output, false for app output,
+ * or undefined if the line format is unrecognised.
+ */
+function isFrameworkLogLine(text) {
+    const m = logcatWithPid.exec(text) ?? logcatNoPid.exec(text);
+    if (m) {
+        return m[1] !== 'flutter';
+    }
+    for (const pat of launchPatterns) {
+        if (pat.test(text)) {
+            return true;
+        }
+    }
+    return undefined;
+}
+/** Detect whether a line is a continuation of a stack trace. Multi-language. */
+function isStackFrameLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+        return false;
+    }
+    if (/^\s+at\s/.test(line)) {
+        return true;
+    }
+    if (/^#\d+\s/.test(trimmed)) {
+        return true;
+    }
+    if (/^\s+File "/.test(line)) {
+        return true;
+    }
+    if (/^\s*\u2502\s/.test(line)) {
+        return true;
+    }
+    if (/^package:/.test(trimmed)) {
+        return true;
+    }
+    return /^\s+\S+\.\S+:\d+/.test(line);
+}
+/** Thread header patterns for Java/Android/Dart thread dumps. */
+const threadHeaderPatterns = [
+    // "main" tid=1 Runnable  |  "AsyncTask #1" prio=5 tid=12 Waiting
+    {
+        pattern: /^"(.+?)"\s+(?:.*?tid=(\d+))?\s*([\w]+)?\s*$/,
+        groups: (m) => ({ name: m[1], tid: m[2] ? parseInt(m[2], 10) : undefined, state: m[3] }),
+    },
+    // --- main ---
+    {
+        pattern: /^---\s+(\S+)\s+---$/,
+        groups: (m) => ({ name: m[1] }),
+    },
+];
+/** Parse a thread header line. Returns undefined if not a thread header. */
+function parseThreadHeader(line) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.length > 200) {
+        return undefined;
+    }
+    for (const { pattern, groups } of threadHeaderPatterns) {
+        const m = pattern.exec(trimmed);
+        if (m) {
+            return groups(m);
+        }
+    }
+    return undefined;
+}
+/** Extract YYYY-MM-DD date from a session filename like `20250207_143000_name.log`. */
+function extractDateFromFilename(filename) {
+    const m = /^(\d{4})(\d{2})(\d{2})_/.exec(filename);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : undefined;
+}
+//# sourceMappingURL=stack-parser.js.map
