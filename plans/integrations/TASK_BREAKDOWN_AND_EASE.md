@@ -86,9 +86,9 @@ Performance, Terminal, and WSL/Linux logs are implemented — see providers in `
 **Why harder:** Mode A (file) = tail one file, same as other tailers; easy. Mode B (CDP) = WebSocket client, CDP protocol handling, connect/disconnect lifecycle, browser-specific — significantly more work.
 
 ### Task list (Mode A — file only, minimal “easiest” slice)
-- [ ] Add config: `integrations.browser.*` (enabled, mode, browserLogPath, browserLogFormat, maxEvents) in integration-config and types.
-- [ ] At session end (or tail during session): read/tail `browserLogPath`; parse JSONL or JSON; validate schema; cap at maxEvents; write `basename.browser.json` and meta.
-- [ ] Viewer: “Browser” tab when sidecar exists; render list (time, level, text); reuse virtual scroll.
+- [x] Add config: `integrations.browser.*` (enabled, mode, browserLogPath, browserLogFormat, maxEvents) in integration-config and types.
+- [x] At session end (or tail during session): read/tail `browserLogPath`; parse JSONL or JSON; validate schema; cap at maxEvents; write `basename.browser.json` and meta.
+- [x] Viewer: “Browser” tab when sidecar exists; render list (time, level, text); reuse virtual scroll. *(Implemented in unified timeline panel with source filtering, virtual scroll, and level icons.)*
 
 ### Task list (Mode B — CDP, adds most effort)
 - [ ] CDP client: connect to `cdpUrl` (WebSocket); send Console.enable, Runtime.enable; subscribe to Console.messageAdded; map to same schema as file; optional Network.enable and request/response events.
