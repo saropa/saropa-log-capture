@@ -24,7 +24,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — error tinting and Drift SQL** — Drift `Drift: Sent …` trace lines are classified as query/debug output only (never as runtime errors), including session lines where logcat is not at column 0 and when SQL args contain names such as `ApplicationLogError`. Plain `info` lines within two seconds after a primary error or stack line can still be tinted as error for continuity, but interleaved Drift SQL is skipped when finding that anchor so the band does not break. Such “recent error context” rows are visually distinct (dashed accent, softer color, tooltip) from primary fault lines, and the Level Filters fly-up summarizes the difference.
+
 • **Signals strip — strength indicator** — Hypothesis strength is shown as a compact emoji with a hover tooltip (and screen-reader text) instead of a “confidence:” label.
+
+• **SQL Query History — table + header sorting** — SQL Query History is now presented as a table, and sorting is controlled by clicking the column headers (toggle asc/desc) instead of a dropdown.
 
 ## [4.0.0]
 

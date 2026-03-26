@@ -142,6 +142,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getAutoHideModalHtml()}
     <div id="level-flyup">
         <div class="level-flyup-title">Level Filters</div>
+        <div class="level-flyup-help">Solid error color: primary fault or stack line. Dashed accent: recent-error context (within 2s after a fault above; hover the line). Drift SQL trace lines stay normal.</div>
         <div class="level-flyup-header">
             <button type="button" id="level-select-all" class="active">All</button>
             <button type="button" id="level-select-none">None</button>
