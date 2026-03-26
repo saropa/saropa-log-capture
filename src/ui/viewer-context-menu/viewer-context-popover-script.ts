@@ -19,6 +19,7 @@
  * `querySelectorAll` so each fires `openDriftAdvisor`.
  */
 
+import { getContextPopoverBrowserScript } from './viewer-context-popover-browser';
 import { getContextPopoverDbInsightScript } from './viewer-context-popover-db-insight';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
@@ -27,7 +28,7 @@ import { getQualityPopoverScript } from './viewer-quality-popover-script';
  * Returns the JavaScript code for the context popover in the webview.
  */
 export function getContextPopoverScript(): string {
-    return getContextPopoverDbInsightScript() + (
+    return getContextPopoverBrowserScript() + getContextPopoverDbInsightScript() + (
         /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
@@ -256,6 +257,12 @@ function buildPopoverContent(lineIdx, data) {
             html += '<div class="popover-item">[' + evt.source + '] ' + escapeHtmlBasic(evt.message) + '</div>';
         }
         html += '</div></div>';
+    }
+
+    var browserHtml = buildBrowserPopoverSection(data);
+    if (browserHtml) {
+        hasContent = true;
+        html += browserHtml;
     }
 
     var dbInsightHtml = buildDatabaseInsightPopoverSection(lineIdx);

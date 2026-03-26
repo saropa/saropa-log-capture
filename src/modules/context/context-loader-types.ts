@@ -45,6 +45,14 @@ export interface DockerContextEntry {
     health?: string;
 }
 
+/** Browser console event from .browser.json sidecar. */
+export interface BrowserContextEntry {
+    timestamp: number;
+    level: string;
+    message: string;
+    url?: string;
+}
+
 /** Generic event entry for other integration sources. */
 export interface EventContextEntry {
     timestamp: number;
@@ -60,6 +68,7 @@ export interface ContextData {
     terminal?: TerminalContextEntry[];
     docker?: DockerContextEntry[];
     events?: EventContextEntry[];
+    browser?: BrowserContextEntry[];
     /** The time window used for filtering. */
     window: ContextWindow;
     /** Whether any data was found. */

@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextWindow, ContextData, SidecarType } from './context-loader-types';
-import { loadPerfContext, loadHttpContext, loadTerminalContext } from './context-sidecar-parsers';
+import { loadPerfContext, loadHttpContext, loadTerminalContext, loadBrowserContext } from './context-sidecar-parsers';
 
 export type {
     ContextWindow,
@@ -17,12 +17,14 @@ export type {
     TerminalContextEntry,
     DockerContextEntry,
     EventContextEntry,
+    BrowserContextEntry,
 } from './context-loader-types';
 
 const SIDECAR_TYPES: SidecarType[] = [
     { suffix: '.perf.json', loader: loadPerfContext },
     { suffix: '.requests.json', loader: loadHttpContext },
     { suffix: '.terminal.log', loader: loadTerminalContext },
+    { suffix: '.browser.json', loader: loadBrowserContext },
 ];
 
 /**
@@ -118,7 +120,8 @@ export async function loadContextData(
         (result.http && result.http.length > 0) ||
         (result.terminal && result.terminal.length > 0) ||
         (result.docker && result.docker.length > 0) ||
-        (result.events && result.events.length > 0)
+        (result.events && result.events.length > 0) ||
+        (result.browser && result.browser.length > 0)
     );
 
     return result;
