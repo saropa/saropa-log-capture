@@ -65,19 +65,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
     padding: 8px 12px;
     border-bottom: 1px solid var(--vscode-panel-border);
 }
-
-.sql-query-history-sort-label {
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-}
-
-#sql-query-history-sort {
-    background: var(--vscode-dropdown-background);
-    color: var(--vscode-dropdown-foreground);
-    border: 1px solid var(--vscode-dropdown-border, var(--vscode-panel-border));
-    border-radius: 3px;
-    font-size: 11px;
-    padding: 2px 6px;
+.sql-query-history-toolbar > * {
+    margin: 0;
 }
 
 #sql-query-history-search {
@@ -111,24 +100,103 @@ export function getSqlQueryHistoryPanelStyles(): string {
     font-size: 11px;
 }
 
-.sql-query-history-row {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--vscode-panel-border);
-    cursor: pointer;
+.sql-query-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
-.sql-query-history-row:hover,
-.sql-query-history-row:focus {
-    outline: none;
+.sql-query-history-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--vscode-editor-background);
+}
+
+.sql-qh-header {
+    text-align: left;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    cursor: pointer;
+    user-select: none;
+}
+
+.sql-qh-header:focus-visible {
+    outline: 1px solid var(--vscode-focusBorder, #007acc);
+    outline-offset: -2px;
+}
+
+/* Shrink-wrap numeric columns so Count stays compact; Preview takes the rest. */
+.sql-qh-header-count,
+.sql-qh-cell-count {
+    width: 1%;
+    max-width: 3.25rem;
+    padding-left: 8px;
+    padding-right: 4px;
+    white-space: nowrap;
+    text-align: right;
+    vertical-align: top;
+}
+
+.sql-qh-header-dur,
+.sql-qh-cell-dur {
+    width: 1%;
+    max-width: 5.5rem;
+    padding-left: 4px;
+    padding-right: 8px;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.sql-qh-cell-preview {
+    vertical-align: top;
+}
+
+.sql-qh-header-count {
+    /* Header label + sort glyph; keep column from growing past content. */
+    max-width: 4.25rem;
+}
+
+.sql-qh-header-dur {
+    max-width: 6.5rem;
+}
+
+.sql-qh-header-preview {
+    width: auto;
+}
+
+.sql-qh-header::after {
+    content: '';
+    margin-left: 4px;
+    opacity: 0.6;
+}
+
+.sql-qh-header-sorted-asc::after {
+    content: '\\25B2';
+}
+
+.sql-qh-header-sorted-desc::after {
+    content: '\\25BC';
+}
+
+#sql-query-history-tbody tr {
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+#sql-query-history-tbody tr:hover {
     background: var(--vscode-list-hoverBackground);
 }
 
-.sql-query-history-row-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 4px;
+.sql-query-history-row {
+    padding: 8px 12px 8px 0;
+    cursor: pointer;
+}
+
+.sql-query-history-row:focus {
+    outline: none;
 }
 
 .sql-query-history-count {
