@@ -181,7 +181,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const smartBookmarkSuggestedForUri = new Set<string>();
     viewerProvider.setFileLoadedHandler((uri, loadResult) => {
         void updateSessionNav();
-        void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
+        const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
+        if (isActive) {
+            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
+        }
     });
     viewerProvider.setSessionNavigateHandler(async (direction) => {
         const uri = viewerProvider.getCurrentFileUri();
