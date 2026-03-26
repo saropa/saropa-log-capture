@@ -118,10 +118,13 @@ function getRootCauseHypothesesStyles() {
     font-size: 11px;
 }
 .root-cause-hyp-conf {
-    font-size: 10px;
+    display: inline-block;
+    font-size: 12px;
+    line-height: 1;
     margin-left: 6px;
-    opacity: 0.85;
-    text-transform: uppercase;
+    vertical-align: middle;
+    opacity: 0.92;
+    cursor: help;
 }
 `;
 }
