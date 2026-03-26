@@ -299,6 +299,11 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
         vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => {}, () => {});
       }
       return true;
+    case "openSidecarFile":
+      if (msgStr(msg, "filename") && ctx.currentFileUri) {
+        vscode.window.showTextDocument(vscode.Uri.joinPath(ctx.currentFileUri, '..', msgStr(msg, "filename")), { preview: true, viewColumn: vscode.ViewColumn.Beside }).then(undefined, () => {});
+      }
+      return true;
     case "setSessionDisplayOptions": ctx.onDisplayOptionsChange?.((msg.options as SessionDisplayOptions)); return true;
     case "promptGoToLine":
       vscode.window.showInputBox({
