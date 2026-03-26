@@ -22,9 +22,27 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Fixed
+
+• **SQL history — jump-to-line now detects all hidden-line states** — The "target line is hidden" hint now delegates to `calcItemHeight`, catching compress-dup, time-range filter, multi-source filter, blank-line suppression, and app-only mode that were previously missed.
+
+• **SQL history — HTML escaping for fingerprints** — Replaced incomplete `escAttr` (only `&` and `"`) with the global `escapeHtml`, preventing potential HTML injection from fingerprints containing `<` or `>`.
+
+• **SQL history — copy button missing `type="button"`** — Added explicit `type="button"` to the per-row copy button to prevent accidental form submission.
+
 ### Changed
 
 • **Modularized oversized files** — Split 6 files that exceeded the 300-line code limit into smaller, focused modules: extracted DB tab styles, footer styles, context-menu styles, DB tab timeline/brush script, popover DB-insight section, and merge-parity tests into dedicated files.
+
+• **SQL history — redundant eviction removed** — Eliminated a wasteful O(n) `Object.keys()` scan that ran on every new-fingerprint observation after the LRU pre-check had already ensured the cap.
+
+• **SQL history — expanded rows survive re-render** — Expanded query rows now stay open when the panel re-renders due to sort change, search input, or data refresh.
+
+• **SQL history — accessibility** — Added `role="button"` to expandable rows so screen readers announce expand/collapse behavior.
+
+• **SQL history — skip rebuild on open** — Removed the O(allLines) full rescan that ran every time the panel opened; the data is already maintained incrementally.
+
+• **SQL history — empty state uses `u-hidden`** — Replaced inline `style.display` with the project's `u-hidden` CSS class for consistency.
 
 ---
 
