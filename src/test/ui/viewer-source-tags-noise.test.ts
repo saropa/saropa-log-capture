@@ -9,7 +9,7 @@ function createSourceTagRuntime() {
         var window = {};
         var allLines = [];
         var vscodeApi = { postMessage: function() {} };
-        function stripTags(s) { return String(s || '').replace(/<[^>]*>/g, ''); }
+        function stripTags(s) { var t = String(s || '').replace(/<[^>]*>/g, ''); return t.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
         ${script}
         return { parseSourceTag, isNoisySourceTag, getSourceTagChipKeys, sourceTagCounts, otherKey };
     `) as () => {
