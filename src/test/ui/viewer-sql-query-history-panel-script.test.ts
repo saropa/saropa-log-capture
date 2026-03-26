@@ -6,6 +6,17 @@ import * as assert from 'node:assert';
 import * as vm from 'node:vm';
 import { getSqlQueryHistoryPanelScript } from '../../ui/viewer-panels/viewer-sql-query-history-panel';
 
+/** Extract and run formatSqlForExpand in a VM sandbox. */
+function loadFormatter(): (sql: string) => string {
+    const src = getSqlQueryHistoryPanelScript();
+    const re = /function formatSqlForExpand\(sql\) \{[\s\S]*?\n {4}\}/;
+    const match = re.exec(src);
+    assert.ok(match, 'formatSqlForExpand not found in script');
+    const ctx = vm.createContext({});
+    vm.runInContext(match[0], ctx, { timeout: 5_000 });
+    return (ctx as unknown as { formatSqlForExpand: (s: string) => string }).formatSqlForExpand;
+}
+
 suite('viewer-sql-query-history panel script', () => {
     test('row jump uses scrollToLineNumber and hidden-line hint text', () => {
         const s = getSqlQueryHistoryPanelScript();
@@ -34,6 +45,9 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('sql-query-history-preview'));
         assert.ok(s.includes('sql-query-history-expanded u-hidden'));
         assert.ok(s.includes('sql-query-history-sql'));
+        assert.ok(s.includes('sql-qh-cell-count'), 'rows should include count cell');
+        assert.ok(s.includes('sql-qh-cell-dur'), 'rows should include duration cell');
+        assert.ok(s.includes('sql-qh-cell-preview'), 'rows should include preview cell');
     });
 
     test('header copy shows row count feedback in hint bar', () => {
@@ -55,6 +69,19 @@ suite('viewer-sql-query-history panel script', () => {
         const s = getSqlQueryHistoryPanelScript();
         assert.ok(s.includes('window.getSelection'));
         assert.ok(s.includes('.toString().length > 0'));
+    });
+
+    test('supports header-click sorting without a dropdown', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes("querySelectorAll('[data-sql-qh-sort]')"));
+        assert.ok(s.includes('updateSqlHistorySortHeaders'));
+        assert.ok(!s.includes('sql-query-history-sort'), 'should not reference removed sort select');
+    });
+
+    test('clicking count/duration cells still toggles the row', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes("e.target.closest('#sql-query-history-tbody tr')"));
+        assert.ok(s.includes("tr.querySelector('.sql-query-history-row')"));
     });
 
     test('rows have role="button" for screen reader expand/collapse', () => {
@@ -89,16 +116,6 @@ suite('viewer-sql-query-history panel script', () => {
 });
 
 suite('formatSqlForExpand (VM)', () => {
-    /** Extract and run formatSqlForExpand in a VM sandbox. */
-    function loadFormatter(): (sql: string) => string {
-        const src = getSqlQueryHistoryPanelScript();
-        const match = src.match(/function formatSqlForExpand\(sql\) \{[\s\S]*?\n    \}/);
-        assert.ok(match, 'formatSqlForExpand not found in script');
-        const ctx = vm.createContext({});
-        vm.runInContext(match[0], ctx, { timeout: 5_000 });
-        return (ctx as unknown as { formatSqlForExpand: (s: string) => string }).formatSqlForExpand;
-    }
-
     test('should break before FROM, WHERE, SET clauses', () => {
         const fmt = loadFormatter();
         const result = fmt('SELECT * FROM users WHERE id = ?');
