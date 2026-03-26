@@ -142,21 +142,25 @@ suite('Search strip and options (compress UI wiring)', () => {
         assert.ok(!html.includes('id="log-compress-toggle"'));
     });
 
-    test('footer Actions menu includes Open quality report with icon (session-wide)', () => {
+    test('footer Actions menu includes Open Quality Report with icon (session-wide)', () => {
         const html = getViewerBodyHtml({ version: '0' });
         assert.ok(html.includes('data-action="open-quality-report"'));
         assert.ok(html.includes('codicon-file-code'));
-        assert.ok(html.includes('Open quality report'));
+        assert.ok(html.includes('Open Quality Report'));
     });
 
-    test('footer Actions menu order is Replay -> Open quality report -> Export', () => {
+    test('footer Actions menu order is Replay -> Open Quality Report -> Export with separators', () => {
         const html = getViewerBodyHtml({ version: '0' });
         const replayIdx = html.indexOf('data-action="replay"');
+        const sep1Idx = html.indexOf('footer-actions-separator');
         const qualityIdx = html.indexOf('data-action="open-quality-report"');
+        const sep2Idx = html.indexOf('footer-actions-separator', sep1Idx + 1);
         const exportIdx = html.indexOf('data-action="export"');
         assert.ok(replayIdx >= 0, 'Replay action should exist');
-        assert.ok(qualityIdx > replayIdx, 'Open quality report should be after Replay');
-        assert.ok(exportIdx > qualityIdx, 'Export should be after Open quality report');
+        assert.ok(sep1Idx > replayIdx, 'First separator should be after Replay');
+        assert.ok(qualityIdx > sep1Idx, 'Open Quality Report should be after first separator');
+        assert.ok(sep2Idx > qualityIdx, 'Second separator should be after Open Quality Report');
+        assert.ok(exportIdx > sep2Idx, 'Export should be after second separator');
     });
 
     test('replay script wires footer quality report and integration sync', () => {

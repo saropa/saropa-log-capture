@@ -1,6 +1,6 @@
 /**
  * Command registration for code quality: Show code quality for frame (palette hint),
- * Open quality report (opens the .quality.json sidecar for the current log).
+ * Open Quality Report (opens the .quality.json sidecar for the current log).
  */
 
 import * as vscode from 'vscode';

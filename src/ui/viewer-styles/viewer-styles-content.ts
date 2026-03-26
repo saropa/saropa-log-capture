@@ -197,6 +197,11 @@ export function getContentStyles(): string {
 .footer-actions-item.is-disabled:hover {
     background: transparent;
 }
+.footer-actions-separator {
+    border: none;
+    border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    margin: 3px 4px;
+}
 .footer-dot { display: none; color: var(--vscode-descriptionForeground); }
 .footer-actions-menu.footer-actions-visible + .footer-dot { display: inline; }
 
