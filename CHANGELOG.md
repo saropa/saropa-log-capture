@@ -20,7 +20,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [3.14.0]
 
 ### Fixed
 
@@ -593,7 +593,6 @@ Auto-hide patterns let you permanently suppress matching log lines with a right-
 ## [3.4.2]
 
 Tames the overflowing context menu by grouping copy and export actions into a submenu, and splits six files that exceeded the 300-line limit into focused modules. [log](https://github.com/saropa/saropa-log-capture/blob/v3.4.2/CHANGELOG.md)
-
 
 • **Viewer context menu: Copy & Export submenu.** The right-click menu was too long and could overflow the screen. Copy, Copy Line, Copy All, Copy All Decorated, Copy as snippet, Copy with source, Select All, and Export current view are now under a **Copy & Export** submenu; **Copy to Search** is in the same submenu after a separator. Behavior and visibility rules are unchanged; existing tests pass.
 
