@@ -15,7 +15,7 @@ import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Dispatches every ViewerTarget method to all registered targets. */
 export class ViewerBroadcaster implements ViewerTarget {
@@ -146,6 +146,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   setIconBarPosition(position: "left" | "right"): void {
     for (const t of this.targets) { t.setIconBarPosition(position); }
+  }
+  setErrorRateConfig(config: ErrorRateConfig): void {
+    for (const t of this.targets) { t.setErrorRateConfig(config); }
   }
   setAutoHidePatterns(patterns: readonly string[]): void {
     for (const t of this.targets) { t.setAutoHidePatterns(patterns); }

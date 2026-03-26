@@ -24,7 +24,7 @@ import {
 } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
-import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
@@ -219,6 +219,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
+  setErrorRateConfig(config: ErrorRateConfig): void {
+    this.post({ type: "setErrorRateConfig", bucketSize: config.bucketSize, showWarnings: config.showWarnings, detectSpikes: config.detectSpikes });
+  }
   setAutoHidePatterns(patterns: readonly string[]): void { this.post({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {

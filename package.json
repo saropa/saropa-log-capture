@@ -2143,6 +2143,31 @@
           },
           "type": "array",
           "title": "%config.watchPatterns.title%"
+        },
+        "saropaLogCapture.errorRateBucketSize": {
+          "default": "auto",
+          "description": "%config.errorRateBucketSize.description%",
+          "enum": [
+            "auto",
+            "10s",
+            "30s",
+            "1m",
+            "5m"
+          ],
+          "type": "string",
+          "title": "%config.errorRateBucketSize.title%"
+        },
+        "saropaLogCapture.errorRateShowWarnings": {
+          "default": true,
+          "description": "%config.errorRateShowWarnings.description%",
+          "type": "boolean",
+          "title": "%config.errorRateShowWarnings.title%"
+        },
+        "saropaLogCapture.errorRateDetectSpikes": {
+          "default": true,
+          "description": "%config.errorRateDetectSpikes.description%",
+          "type": "boolean",
+          "title": "%config.errorRateDetectSpikes.title%"
         }
       },
       "title": "%config.title%"
