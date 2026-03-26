@@ -101,13 +101,12 @@ function renderRootCauseHypothesesIfNeeded() {
     var collapsed = isRchStripCollapsed();
     var parts = [];
     parts.push('<div class="root-cause-hypotheses-header">');
-    parts.push('<button type="button" class="root-cause-hyp-toggle" data-rch-toggle="1" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + escapeHtml(collapsed ? rchStr('expandAria', 'Expand hypotheses') : rchStr('collapseAria', 'Collapse hypotheses')) + '" title="' + escapeHtml(collapsed ? rchStr('expandTitle', 'Expand') : rchStr('collapseTitle', 'Collapse')) + '">' + (collapsed ? '\\u25b6' : '\\u25bc') + '</button>');
-    parts.push('<span class="root-cause-hypotheses-title">' + escapeHtml(rchStr('title', 'Hypotheses')) + '</span>');
+    parts.push('<button type="button" class="root-cause-hyp-toggle" data-rch-toggle="1" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + escapeHtml(collapsed ? rchStr('expandAria', 'Expand signals') : rchStr('collapseAria', 'Collapse signals')) + '" title="' + escapeHtml(collapsed ? rchStr('expandTitle', 'Expand') : rchStr('collapseTitle', 'Collapse')) + '">' + (collapsed ? '\\u25b6' : '\\u25bc') + '</button>');
+    parts.push('<span class="root-cause-hypotheses-title">' + escapeHtml(rchStr('title', 'Signals')) + '</span>');
     parts.push('<button type="button" class="root-cause-hyp-explain-ai" data-rch-explain="1" aria-label="' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '">' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '</button>');
-    parts.push('<button type="button" class="root-cause-hypotheses-dismiss" aria-label="' + escapeHtml(rchStr('dismissAria', 'Dismiss hypotheses')) + '" title="' + escapeHtml(rchStr('dismissTitle', 'Dismiss for this log')) + '">\\u00d7</button>');
+    parts.push('<button type="button" class="root-cause-hypotheses-dismiss" aria-label="' + escapeHtml(rchStr('dismissAria', 'Dismiss signals')) + '" title="' + escapeHtml(rchStr('dismissTitle', 'Dismiss for this log')) + '">\\u00d7</button>');
     parts.push('</div>');
     parts.push('<div class="root-cause-hypotheses-body' + (collapsed ? ' u-hidden' : '') + '">');
-    parts.push('<p class="root-cause-hypotheses-disclaimer">' + escapeHtml(rchStr('disclaimer', 'Hypothesis, not fact.')) + '</p>');
     parts.push('<ul class="root-cause-hypotheses-list">');
     var hi, item, li, ev, ei, idx, validIdx, confPfx;
     confPfx = rchStr('confPrefix', '');
@@ -115,6 +114,7 @@ function renderRootCauseHypothesesIfNeeded() {
         item = hy[hi];
         li = '<li>';
         li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
+        li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
         if (item.confidence) {
             li += '<span class="root-cause-hyp-conf">' + escapeHtml(confPfx + String(item.confidence)) + '</span>';
         }
@@ -176,6 +176,18 @@ function initRootCauseHypothesesUi() {
             rootCauseHypothesesDismissed = true;
             host.classList.add('u-hidden');
             host.innerHTML = '';
+            return;
+        }
+        var copyBtn = t && t.closest ? t.closest('.rch-copy-btn') : null;
+        if (copyBtn && copyBtn.dataset && copyBtn.dataset.rchCopy !== undefined) {
+            ev.preventDefault();
+            if (!copyBtn._rchOrigHtml) copyBtn._rchOrigHtml = copyBtn.innerHTML;
+            navigator.clipboard.writeText(copyBtn.dataset.rchCopy).then(function() {
+                copyBtn.textContent = rchStr('copied', 'Copied');
+                copyBtn.classList.add('rch-copy-btn-done');
+                clearTimeout(copyBtn._rchTimer);
+                copyBtn._rchTimer = setTimeout(function() { copyBtn.innerHTML = copyBtn._rchOrigHtml; copyBtn.classList.remove('rch-copy-btn-done'); }, 1200);
+            }).catch(function() {});
             return;
         }
         var btn = t && t.closest ? t.closest('.root-cause-hyp-evidence') : null;
