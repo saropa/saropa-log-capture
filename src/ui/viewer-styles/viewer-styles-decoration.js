@@ -1,0 +1,250 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getDecorationStyles = getDecorationStyles;
+/**
+ * CSS styles for log line decorations and settings panel.
+ *
+ * Covers decoration prefix (severity dot, counter, timestamp),
+ * decoration settings panel, severity bars, and whole-line tinting.
+ */
+function getDecorationStyles() {
+    return /* css */ `
+
+/* ===================================================================
+   Decoration Prefix & Settings
+   Line decoration prefix (severity dot, counter, timestamp) and
+   the settings popover panel for toggling individual parts.
+   =================================================================== */
+/* Decoration prefix (severity dot, counter, timestamp) — scale with zoom via em */
+.line-decoration {
+    font-size: 0.85em;
+    opacity: 0.85;
+    white-space: nowrap;
+    user-select: none;
+}
+.deco-counter {
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+}
+
+/* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
+/* When time/number are shown, reserve 1.25em left for severity bar (dot at 0.69em + 0.54em) so the bar does not cover the numbers. */
+.line:has(.line-decoration) {
+    padding-left: var(--deco-prefix-width-em, 14.25em); /* 1.25em bar clearance + dynamic decoration width */
+    text-indent: calc(-1 * var(--deco-content-indent-em, 13em));
+}
+.line:has(.line-decoration) .line-decoration {
+    /* Pulled right of severity bar by padding; indent pulls decoration start to 1.25em */
+    margin-right: 0;
+}
+/* Emoji toggle buttons (decorations, audio, minimap) */
+.emoji-toggle {
+    background: none;
+    border: 1px solid transparent;
+    font-size: 14px;
+    padding: 1px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: opacity 0.15s;
+}
+.emoji-toggle.toggle-inactive {
+    opacity: 0.35;
+}
+.emoji-toggle:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+#deco-toggle {
+    /* inherits .emoji-toggle */
+}
+#deco-settings-btn {
+    background: none;
+    border: 1px solid var(--vscode-descriptionForeground);
+    color: var(--vscode-descriptionForeground);
+    font-size: 10px;
+    padding: 1px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+/* Decoration settings popover panel */
+.deco-settings-panel {
+    display: none;
+    position: fixed;
+    z-index: 180;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    min-width: 180px;
+    padding: 4px 0;
+    font-size: 12px;
+}
+.deco-settings-panel.visible { display: block; }
+.deco-settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--vscode-foreground);
+    border-bottom: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+}
+.deco-settings-close {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+.deco-settings-close:hover { color: var(--vscode-errorForeground, #f44); }
+.deco-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    color: var(--vscode-menu-foreground, var(--vscode-editor-foreground));
+    cursor: default;
+}
+.deco-settings-row:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+}
+.deco-settings-row.deco-indent {
+    padding-left: 24px;
+    font-size: 11px;
+}
+.deco-settings-row input[type="checkbox"] {
+    accent-color: var(--vscode-button-background);
+}
+.deco-settings-row select {
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+.deco-settings-separator {
+    height: 1px;
+    background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+    margin: 4px 8px;
+}
+/* Whole-line severity tinting (background colors by log level) */
+.line.line-tint-error {
+    background-color: rgba(255, 60, 60, 0.12);
+}
+.line.line-tint-error:hover {
+    background-color: rgba(255, 60, 60, 0.20);
+}
+.line.line-tint-warning {
+    background-color: rgba(255, 204, 0, 0.10);
+}
+.line.line-tint-warning:hover {
+    background-color: rgba(255, 204, 0, 0.18);
+}
+.line.line-tint-performance {
+    background-color: rgba(180, 140, 255, 0.10);
+}
+.line.line-tint-performance:hover {
+    background-color: rgba(180, 140, 255, 0.18);
+}
+.line.line-tint-todo {
+    background-color: rgba(200, 200, 200, 0.08);
+}
+.line.line-tint-todo:hover {
+    background-color: rgba(200, 200, 200, 0.16);
+}
+.line.line-tint-debug {
+    background-color: rgba(220, 220, 170, 0.08);
+}
+.line.line-tint-debug:hover {
+    background-color: rgba(220, 220, 170, 0.16);
+}
+.line.line-tint-notice {
+    background-color: rgba(33, 150, 243, 0.08);
+}
+.line.line-tint-notice:hover {
+    background-color: rgba(33, 150, 243, 0.16);
+}
+.line.line-tint-info {
+    background-color: rgba(255, 204, 0, 0.08);
+}
+.line.line-tint-info:hover {
+    background-color: rgba(255, 204, 0, 0.14);
+}
+
+/* Blank/empty lines: set --blank-line-bg to any color to join before/after; when unset, previous line tint shows. */
+.line.line-blank {
+    background-color: var(--blank-line-bg);
+}
+
+/* Positioning context for severity dots and connector bars */
+#viewport { position: relative; }
+
+/* Severity dot mode (colored circle on timeline) — scale with zoom via em */
+[class*="level-bar-"] { z-index: 1; }
+[class*="level-bar-"]::before {
+    content: ''; position: absolute; left: 0.69em;
+    top: 0; bottom: 0; margin: auto 0;
+    width: 0.54em; height: 0.54em; border-radius: 50%;
+    pointer-events: none; z-index: 2;
+}
+.level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
+.level-bar-warning { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+.level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
+.level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
+.level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+.level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
+.level-bar-info { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+[class*="level-bar-"]::before { background: var(--bar-color); }
+.bar-bridge::before { display: none; }
+/* Blank lines: no dot, keep vertical bar (connector) */
+.line-blank[class*="level-bar-"]::before { display: none; }
+
+/* Connector bars join consecutive dots — scale with zoom via em */
+.bar-down::after, .bar-up::after {
+    content: ''; position: absolute; left: 0.85em; width: 0.23em;
+    background: var(--bar-color); opacity: 0.45; pointer-events: none; z-index: 1;
+}
+.bar-down:not(.bar-up)::after { top: 50%; bottom: 0; }
+.bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
+.bar-up.bar-down::after { top: 0; bottom: 0; }
+
+/* Error classification badges */
+.error-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+}
+
+.error-badge-critical {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: var(--vscode-errorForeground, #f48771);
+    border: 1px solid var(--vscode-errorForeground, #f48771);
+}
+
+.error-badge-transient {
+    background-color: rgba(255, 165, 0, 0.15);
+    color: var(--vscode-debugConsole-warningForeground, #cca700);
+    border: 1px solid var(--vscode-debugConsole-warningForeground, #cca700);
+}
+
+.error-badge-bug {
+    background-color: rgba(255, 105, 180, 0.15);
+    color: var(--vscode-debugConsole-errorForeground, #f48771);
+    border: 1px solid var(--vscode-debugConsole-errorForeground, #f48771);
+}
+
+.error-badge-anr {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: var(--vscode-debugConsole-warningForeground, #ff9800);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+`;
+}
+//# sourceMappingURL=viewer-styles-decoration.js.map

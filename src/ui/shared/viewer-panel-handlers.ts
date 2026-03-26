@@ -30,6 +30,7 @@ export {
     handlePerformanceRequest,
     handleIntegrationContextRequest,
     handleIntegrationContextDocument,
+    handleRelatedQueriesRequest,
 } from './handlers/context-handlers';
 
 export { serializeContext, buildDiagnosticHtml } from './handlers/crashlytics-serializers';

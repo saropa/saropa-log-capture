@@ -1,0 +1,217 @@
+"use strict";
+/**
+ * Derives exclusion pattern candidates from stored interactions (local heuristics).
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.extractPatterns = extractPatterns;
+const exclusion_matcher_1 = require("../features/exclusion-matcher");
+const DISMISS_TYPES = new Set([
+    "dismiss",
+    "filter-out",
+    "add-exclusion",
+]);
+function weightForType(t) {
+    if (t === "skip-scroll") {
+        return 0.45;
+    }
+    return 1;
+}
+function normalizeLine(s) {
+    return s.replace(/\s+/g, " ").trim();
+}
+/** Longest common prefix length for a set of strings (all non-empty). */
+function commonPrefixLen(lines) {
+    if (lines.length === 0) {
+        return 0;
+    }
+    let low = lines[0].length;
+    for (let i = 1; i < lines.length; i++) {
+        const a = lines[0];
+        const b = lines[i];
+        let j = 0;
+        const m = Math.min(a.length, b.length);
+        while (j < m && a[j] === b[j]) {
+            j++;
+        }
+        low = Math.min(low, j);
+        if (low === 0) {
+            return 0;
+        }
+    }
+    return low;
+}
+/**
+ * True when the first differing position after a shared prefix is usually a digit — typical of
+ * unrelated lines that only share a short static preamble (false positive for prefix rules).
+ */
+function sharedPrefixMostlyFollowedByDigit(texts, prefixLen) {
+    if (prefixLen < 1) {
+        return false;
+    }
+    let after = 0;
+    let digit = 0;
+    for (const t of texts) {
+        if (t.length <= prefixLen) {
+            continue;
+        }
+        after++;
+        const c = t.charAt(prefixLen);
+        if (c >= "0" && c <= "9") {
+            digit++;
+        }
+    }
+    return after > 0 && digit / after >= 0.55;
+}
+function escapeRegexLiteral(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+/**
+ * Extract prefix-based patterns: shared prefix across a fraction of weighted dismiss signals.
+ */
+function extractPrefixPatterns(weightedLines) {
+    if (weightedLines.length < 4) {
+        return [];
+    }
+    const texts = weightedLines.map((x) => x.text).filter((t) => t.length >= 12);
+    if (texts.length < 4) {
+        return [];
+    }
+    const totalW = weightedLines.reduce((s, x) => s + x.w, 0);
+    const len = commonPrefixLen(texts);
+    if (len < 12) {
+        return [];
+    }
+    const prefix = texts[0].slice(0, len);
+    if (sharedPrefixMostlyFollowedByDigit(texts, len)) {
+        return [];
+    }
+    let matchW = 0;
+    const samples = [];
+    for (const x of weightedLines) {
+        if (x.text.startsWith(prefix)) {
+            matchW += x.w;
+            if (samples.length < 3) {
+                samples.push(x.text.slice(0, 120));
+            }
+        }
+    }
+    const ratio = matchW / Math.max(1e-6, totalW);
+    if (ratio < 0.35) {
+        return [];
+    }
+    const body = escapeRegexLiteral(prefix);
+    const pattern = `/${body}/`;
+    const rule = (0, exclusion_matcher_1.parseExclusionPattern)(pattern);
+    if (!rule) {
+        return [];
+    }
+    const cat = /flutter|dart|android|ios|framework/i.test(prefix) ? "framework" : "noise";
+    return [
+        {
+            pattern,
+            confidence: Math.min(0.95, 0.55 + ratio * 0.4),
+            matchCount: Math.round(matchW),
+            sampleLines: samples,
+            category: cat,
+        },
+    ];
+}
+/**
+ * Repeated normalized lines → substring exclusion (plain text when safe).
+ */
+function extractRepetitivePatterns(weightedLines) {
+    const map = new Map();
+    for (const { text, w } of weightedLines) {
+        const key = normalizeLine(text);
+        if (key.length < 12) {
+            continue;
+        }
+        map.set(key, (map.get(key) ?? 0) + w);
+    }
+    const out = [];
+    const totalW = weightedLines.reduce((s, x) => s + x.w, 0);
+    for (const [line, w] of map) {
+        if (w < 3) {
+            continue;
+        }
+        const ratio = w / Math.max(1e-6, totalW);
+        if (ratio < 0.08 && w < 8) {
+            continue;
+        }
+        let pattern;
+        if (line.length <= 200 && !/[\\/]/.test(line)) {
+            pattern = line.length > 120 ? line.slice(0, 120) : line;
+        }
+        else {
+            const slice = line.slice(0, 80);
+            pattern = `/${escapeRegexLiteral(slice)}/`;
+        }
+        const rule = (0, exclusion_matcher_1.parseExclusionPattern)(pattern);
+        if (!rule) {
+            continue;
+        }
+        out.push({
+            pattern,
+            confidence: Math.min(0.95, 0.5 + Math.min(0.45, w / 20)),
+            matchCount: Math.round(w),
+            sampleLines: [line.slice(0, 200)],
+            category: "repetitive",
+        });
+    }
+    return out;
+}
+function dedupePatterns(patterns) {
+    const byKey = new Map();
+    for (const p of patterns) {
+        const prev = byKey.get(p.pattern);
+        if (!prev || p.confidence > prev.confidence) {
+            byKey.set(p.pattern, p);
+        }
+    }
+    return [...byKey.values()];
+}
+/**
+ * Build pattern candidates from interactions. Drops patterns that do not parse or fall below minConfidence.
+ * Optional `existingExclusions` skips patterns already configured.
+ */
+function extractPatterns(interactions, minConfidence, _existingExclusions = []) {
+    const weightedLines = [];
+    for (const i of interactions) {
+        if (!DISMISS_TYPES.has(i.type) && i.type !== "skip-scroll") {
+            continue;
+        }
+        const t = normalizeLine(i.lineText);
+        if (t.length < 8) {
+            continue;
+        }
+        weightedLines.push({ text: i.lineText, w: weightForType(i.type) });
+    }
+    if (weightedLines.length < 6) {
+        return [];
+    }
+    const raw = [
+        ...extractPrefixPatterns(weightedLines),
+        ...extractRepetitivePatterns(weightedLines),
+    ];
+    const deduped = dedupePatterns(raw);
+    return deduped.filter((p) => {
+        if (p.confidence < minConfidence) {
+            return false;
+        }
+        const rule = (0, exclusion_matcher_1.parseExclusionPattern)(p.pattern);
+        if (!rule) {
+            return false;
+        }
+        // Do not suggest if it would hide an explicit-keep sample (user pinned similar text).
+        const keepSamples = interactions
+            .filter((x) => x.type === "explicit-keep")
+            .map((x) => x.lineText);
+        for (const k of keepSamples) {
+            if ((0, exclusion_matcher_1.testExclusion)(k, [rule])) {
+                return false;
+            }
+        }
+        return true;
+    });
+}
+//# sourceMappingURL=pattern-extractor.js.map
