@@ -57,6 +57,9 @@ function toolCommands(deps) {
         vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', () => {
             broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel' });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.showRelatedQueries', () => {
+            broadcaster.postToWebview({ type: 'triggerShowRelatedQueries' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
             const indexer = (0, project_indexer_1.getGlobalProjectIndexer)();
             if (!indexer) {
