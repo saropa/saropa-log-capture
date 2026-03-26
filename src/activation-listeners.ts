@@ -140,7 +140,30 @@ export function setupConfigListener(
         ) {
             broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
         }
+        if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
+            showSecurityAdapterNotice(context, cfg).catch(() => {});
+        }
     }));
+}
+
+const securityNoticeKey = 'securityAdapterNoticeShown';
+
+/** Show a one-time info message when the security adapter is first enabled. */
+async function showSecurityAdapterNotice(
+    context: vscode.ExtensionContext,
+    cfg: ReturnType<typeof getConfig>,
+): Promise<void> {
+    if (!cfg.integrationsAdapters.includes('security')) { return; }
+    if (context.workspaceState.get<boolean>(securityNoticeKey)) { return; }
+    await context.workspaceState.update(securityNoticeKey, true);
+    const openSettings = 'Open Settings';
+    const choice = await vscode.window.showInformationMessage(
+        'Security adapter enabled. Events may contain sensitive data — redaction is on by default. Configure paths in Settings.',
+        openSettings,
+    );
+    if (choice === openSettings) {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.integrations.security').then(undefined, () => {});
+    }
 }
 
 /**
