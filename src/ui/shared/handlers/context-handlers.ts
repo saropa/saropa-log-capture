@@ -252,7 +252,7 @@ export async function handleIntegrationContextRequest(
 
 /**
  * Extract a request ID from a log line using configured requestIdPattern settings.
- * Tries database and HTTP patterns; returns first match or undefined.
+ * Tries database, HTTP, and browser patterns; returns first match or undefined.
  */
 function extractRequestIdFromLine(
     lineText: string | undefined,
@@ -262,6 +262,7 @@ function extractRequestIdFromLine(
     const patterns = [
         cfg.get<string>('integrations.database.requestIdPattern', ''),
         cfg.get<string>('integrations.http.requestIdPattern', ''),
+        cfg.get<string>('integrations.browser.requestIdPattern', ''),
     ];
     for (const raw of patterns) {
         if (!raw) { continue; }
