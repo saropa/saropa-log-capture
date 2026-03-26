@@ -34,14 +34,15 @@ Performance, Terminal, and WSL/Linux logs are implemented — see providers in `
 **Why medium:** Reuse Windows Event Log provider pattern; add “Security” channel and redaction. Optional app audit file = tail one file (reuse tailer from application-file-logs if done first).
 
 ### Task list
-- [ ] Add config: `integrations.security.*` (enabled, windowsSecurityLog, auditLogPath, redactSecurityEvents, includeSummaryInHeader, includeInBugReport) in integration-config and types.
-- [ ] **Option A:** Extend `windowsEvents` provider: when `security.enabled` and `security.windowsSecurityLog`, also query “Security” log (same PowerShell path); filter event IDs (e.g. 4624, 4625, 4634, 4647); apply redaction (replace user names, IPs) before writing; write to `basename.security-events.json` and meta.
-- [ ] **Option B:** New provider `security-audit` that only runs on Windows, calls same PowerShell pattern for Security channel only, redacts, writes sidecar.
-- [ ] Redaction helper: given event message/fields, return copy with TargetUserName, IpAddress, etc. replaced by placeholder.
-- [ ] App audit file: if `auditLogPath` set, tail or read at session end (reuse tailer or one-off read); write `basename.audit.log`. No parsing; optional line count in meta.
+- [x] Add config: `integrations.security.*` (enabled, windowsSecurityLog, auditLogPath, redactSecurityEvents, includeSummaryInHeader, includeInBugReport) in integration-config and types.
+- [x] **Option B:** New provider `security-audit` that only runs on Windows, calls same PowerShell pattern for Security channel only, redacts, writes sidecar.
+- [x] Redaction helper: given event message/fields, return copy with TargetUserName, IpAddress, etc. replaced by placeholder.
+- [x] App audit file: if `auditLogPath` set, tail or read at session end (reuse tailer or one-off read); write `basename.audit.log`. No parsing; optional line count in meta.
+- [x] Event summary in meta (categorized by event ID) and optional header contribution.
+- [x] Configurable lead/lag from shared windowsEvents config.
+- [x] Register provider (or extend windowsEvents); add `security` to UI and adapter list.
 - [ ] Viewer: “Security / audit” section with warning + “Open file”; do not send raw events to webview.
 - [ ] First-time enable: show info message about sensitive data.
-- [ ] Register provider (or extend windowsEvents); add `security` to UI and adapter list.
 
 **Rough size:** ~100–150 LOC (provider or extension + redaction). Less if tailer already exists for audit file.
 
@@ -52,13 +53,14 @@ Performance, Terminal, and WSL/Linux logs are implemented — see providers in `
 **Why medium:** Two modes. Mode B (parse from same log) = no tailer: parser over captured lines, build index, store in sidecar; viewer “Related queries” panel. Mode A = tail query log file (reuse tailer), then same correlation/panel.
 
 ### Task list
-- [ ] Add config: `integrations.database.*` (enabled, mode, queryLogPath, queryLogFormat, requestIdPattern, queryBlockPattern, timeWindowSeconds, maxQueriesPerLookup, includeInBugReport) in integration-config and types.
-- [ ] **Mode B (parse):** Parser over log lines (from session or from loaded log): detect query blocks (regex from queryBlockPattern), extract requestId (requestIdPattern); build structures { lineStart, lineEnd, requestId?, queryText, duration? }; index by line and requestId. Run at session end (or when opening log) on stored lines; write `basename.queries.json` and meta.
-- [ ] **Mode A (file):** Tail or read `queryLogPath` at session end; parse JSON lines or text; build requestId → queries map; same sidecar format.
+- [x] Add config: `integrations.database.*` (enabled, mode, queryLogPath, queryLogFormat, requestIdPattern, queryBlockPattern, timeWindowSeconds, maxQueriesPerLookup, includeInBugReport) in integration-config and types.
+- [x] **Mode B (parse):** Parser over log lines (from session or from loaded log): detect query blocks (regex from queryBlockPattern), extract requestId (requestIdPattern); build structures { lineStart, lineEnd, requestId?, queryText, duration? }; index by line and requestId. Run at session end (or when opening log) on stored lines; write `basename.queries.json` and meta.
+- [x] **Mode A (file):** Tail or read `queryLogPath` at session end; parse JSON lines or text; build requestId → queries map; same sidecar format.
+- [x] Context popover: `.queries.json` loaded by context data loader; queries shown in integration context popover filtered by time window.
+- [x] Register provider; add `database` to UI and adapter list.
 - [ ] Correlation: given (line index, line text), extract requestId or use time window; look up queries; return list for viewer.
 - [ ] Viewer: “Related queries” panel (new panel or section); context menu “Show related queries” on line; message type `relatedQueries: { queries: [...] }` from extension to webview.
 - [ ] Commands: “Show related queries”, “Copy query.”
-- [ ] Register provider; add `database` to UI and adapter list.
 
 **Rough size:** Parser + index (~150 LOC), tail/read path (~80 if tailer exists), viewer panel + messaging (~100). Total medium.
 
