@@ -110,8 +110,11 @@ var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
 var correlationByLineIndex = {};
 
-/** Strip HTML tags; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
-function stripTags(html) { return (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); }
+/** Strip HTML tags and decode entities; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
+function stripTags(html) {
+    var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, '');
+    return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+}
 /** Detect stack frame lines across multiple formats (JS, Dart, Python, etc). Mirrors isStackFrameLine in stack-parser.ts. */
 function isStackFrameText(html) {
     var plain = stripTags(html);
