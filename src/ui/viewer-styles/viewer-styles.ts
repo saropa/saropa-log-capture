@@ -238,6 +238,15 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-error {
     color: var(--vscode-debugConsole-errorForeground, #f48771);
 }
+/* Softer than primary fault lines; dashed edge matches severity bar “recent context” tone. */
+.line.recent-error-context {
+    border-left: 2px dashed color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 50%, var(--vscode-panel-border, #555));
+    padding-left: 5px;
+    box-sizing: border-box;
+}
+.line.level-error.recent-error-context {
+    color: color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 72%, var(--vscode-editor-foreground, #d4d4d4));
+}
 .line.level-warning {
     color: var(--vscode-debugConsole-warningForeground, #cca700);
 }

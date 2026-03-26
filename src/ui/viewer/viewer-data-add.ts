@@ -9,9 +9,26 @@
  * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`.
  */
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
+import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data-add-stack-group-learning-and-toggle';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
     return getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
+
+/** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
+function proximityInheritAnchor() {
+    var j = allLines.length - 1;
+    while (j >= 0) {
+        var it = allLines[j];
+        if (it.type === 'marker' || it.type === 'run-separator') { return null; }
+        var p = stripTags(it.html);
+        if (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(p)) {
+            j--;
+            continue;
+        }
+        return it;
+    }
+    return null;
+}
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
@@ -78,12 +95,18 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
-    if (lvl === 'info' && !isSep && allLines.length > 0) {
-        var prevItem = allLines[allLines.length - 1];
-        if (prevItem && prevItem.type !== 'marker' && prevItem.type !== 'run-separator'
-            && prevItem.level && prevItem.level !== 'info'
-            && ts && prevItem.timestamp && Math.abs(ts - prevItem.timestamp) <= 2000) {
-            lvl = prevItem.level;
+    // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
+    // above (see Level Filters fly-up), it is tinted like an error so the incident reads as one band.
+    // Those rows are flagged recentErrorContext and styled distinctly from the faulting line. Drift SQL
+    // never gets this tint and is skipped when locating the prior error so it does not break the band.
+    var skipProximityInherit = (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(plain));
+    var recentErrorContext = false;
+    if (lvl === 'info' && !isSep && !skipProximityInherit && typeof proximityInheritAnchor === 'function') {
+        var anchor = proximityInheritAnchor();
+        if (anchor && anchor.level === 'error' && ts && anchor.timestamp
+            && Math.abs(ts - anchor.timestamp) <= 2000) {
+            lvl = 'error';
+            recentErrorContext = true;
         }
     }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
@@ -250,7 +273,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
@@ -269,42 +292,6 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     }
 }
 
-function trackLearningDismissForStackGroup(groupId) {
-    if (typeof learningEnabled === 'undefined' || !learningEnabled) return;
-    var maxL = typeof learningMaxLineLen === 'number' ? learningMaxLineLen : 2000;
-    for (var i = 0; i < allLines.length; i++) {
-        var it = allLines[i];
-        if (!it || it.groupId !== groupId) continue;
-        if (it.type !== 'stack-frame' && it.type !== 'stack-header') continue;
-        var plain = stripTags(it.html || '');
-        if (!plain) continue;
-        if (plain.length > maxL) plain = plain.substring(0, maxL);
-        vscodeApi.postMessage({
-            type: 'trackInteraction',
-            interactionType: 'dismiss',
-            lineText: plain,
-            lineLevel: it.level || ''
-        });
-    }
-}
-
-function toggleStackGroup(groupId) {
-    var header = groupHeaderMap[groupId];
-    if (!header) return;
-    var beforeCollapsed = header.collapsed;
-    // Cycle: preview -> expanded -> collapsed -> preview
-    if (header.collapsed === 'preview') {
-        header.collapsed = false; // Expand all
-    } else if (header.collapsed === false) {
-        header.collapsed = true; // Collapse all
-    } else {
-        header.collapsed = 'preview'; // Show preview
-    }
-    if (header.collapsed === true && beforeCollapsed !== true) {
-        trackLearningDismissForStackGroup(groupId);
-    }
-    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
-    else { recalcHeights(); renderViewport(true); }
-}
+${getViewerDataAddStackGroupLearningAndToggleScript()}
 `;
 }
