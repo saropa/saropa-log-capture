@@ -28,6 +28,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Browser integration — event normalization** — The browser DevTools provider now validates and normalizes raw events to the `BrowserEvent` schema before writing the sidecar file. Entries with no usable text are dropped and the count is logged to the output channel.
 
+• **Browser integration — context popover** — Browser console events from `.browser.json` sidecars now appear in the integration context popover when right-clicking a log line. Events are filtered by the ±contextWindowSeconds time window, showing level, message, and optional URL.
+
 ### Changed
 
 • **Accessibility — landmarks and labels for all panels** — Every slide-out panel (Find, Bookmarks, Trash, Filters, Crashlytics, About, Keyboard Shortcuts) now has `role="region"` and `aria-label`; icon-only buttons and search inputs have `aria-label`. All standalone panels (Session Comparison, Timeline, Investigation, Bug Report, AI Explain, Vitals, Analysis) now have a `role="main"` landmark. Focus moves into each panel on open and returns to the icon bar button on close. Analysis progress bar uses `role="progressbar"` with `aria-valuenow`/`aria-valuemin`/`aria-valuemax`.

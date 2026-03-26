@@ -53,10 +53,11 @@ File mode provider and viewer are implemented:
 - **Viewer:** Browser events display in the unified timeline panel with red source color, level icons, virtual scroll, and source filtering. "Browser" label and count shown in filter bar.
 - **Config:** `integrationsBrowser` settings defined in config types and read via `integration-config.ts`.
 - **Registration:** Provider registered in `activation-integrations.ts`; adapter metadata in `integrations-ui.ts`.
+- **Context popover (time-window correlation):** Browser events from `.browser.json` sidecar appear in the integration context popover when a log line is right-clicked. Uses the global `contextWindowSeconds` setting for time-window filtering. Types in `context-loader-types.ts`; parser in `context-sidecar-parsers.ts`; renderer in `viewer-context-popover-browser.ts`.
 
 ## Deferred
 
-- **Correlation:** `requestIdPattern` extraction and `timeWindowSeconds` fallback — "Related browser events" panel when a main-log line is selected.
+- **Request ID correlation:** `requestIdPattern` extraction for targeted matching (not yet implemented for any adapter — all use time-window only).
 - **CDP mode:** WebSocket client, `Console.enable` / `Network.enable` subscriptions, buffer + flush lifecycle, disconnect handling.
 - **Companion extension (Mode C):** A browser extension (Chrome/Edge) captures console and posts to a local server or file that VS Code watches. Functionally same as file mode once events land on disk.
 - **Interleaved timeline:** Merge browser and backend events into a single time-sorted view in the main viewer (beyond the unified timeline panel).
