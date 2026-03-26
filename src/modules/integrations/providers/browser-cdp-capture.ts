@@ -95,8 +95,8 @@ export function mapNetworkEvent(params: Record<string, unknown>): BrowserEvent |
 }
 
 /** Handle a raw CDP WebSocket message: parse, map, and buffer. */
-function handleCdpMessage(data: string): void {
-    if (!capture) { return; }
+function handleCdpMessage(ws: WebSocket, data: string): void {
+    if (!capture || capture.ws !== ws) { return; }
     if (capture.events.length >= capture.maxEvents) { return; }
     try {
         const msg = JSON.parse(data) as { method?: string; params?: Record<string, unknown> };
@@ -129,7 +129,7 @@ export async function startCdpCapture(
     const ws = new WebSocket(wsUrl);
     capture = { ws, events: [], maxEvents, nextId: 1, includeNetwork, log };
     return new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => { ws.close(); reject(new Error('CDP connection timed out')); }, 10_000);
+        const timeout = setTimeout(() => { capture = undefined; ws.close(); reject(new Error('CDP connection timed out')); }, 10_000);
         ws.on('open', () => {
             clearTimeout(timeout);
             cdpSend('Runtime.enable');
@@ -137,7 +137,7 @@ export async function startCdpCapture(
             log('[browser] CDP connected');
             resolve();
         });
-        ws.on('message', (raw) => handleCdpMessage(String(raw)));
+        ws.on('message', (raw) => handleCdpMessage(ws, String(raw)));
         ws.on('error', (err) => { log(`[browser] CDP error: ${err.message}`); clearTimeout(timeout); reject(err); });
         ws.on('close', () => log('[browser] CDP disconnected'));
     });
