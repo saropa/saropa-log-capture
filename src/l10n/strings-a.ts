@@ -100,6 +100,7 @@ export const stringsA: Record<string, string> = {
     'msg.smartBookmarkFirstWarning': 'First warning at line {0}. Add bookmark?',
     'action.addBookmark': 'Add bookmark',
     'action.dismiss': 'Dismiss',
+    'action.enable': 'Enable',
 
     'msg.noLogFileLoaded': 'No log file is currently loaded for editing.',
     'msg.debugSessionActiveEdit': 'A debug session is active. Editing the log file now may cause data loss or corruption.',
