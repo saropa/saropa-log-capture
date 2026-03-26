@@ -32,11 +32,13 @@ export function shouldPostNoIntegrationDataError(params: {
     hasContextWindowData: boolean;
     hasDriftAdvisorIntegrationMeta: boolean;
     hasDatabaseLine: boolean;
+    hasSecurityMeta?: boolean;
 }): boolean {
     return (
         !params.hasContextWindowData &&
         !params.hasDriftAdvisorIntegrationMeta &&
-        !params.hasDatabaseLine
+        !params.hasDatabaseLine &&
+        !params.hasSecurityMeta
     );
 }
 
@@ -219,21 +221,23 @@ export async function handleIntegrationContextRequest(
             contextData = { ...contextData, ...metaContext, hasData: Object.keys(metaContext).length > 0 };
         }
 
+        const driftAdvisorMeta = meta.integrations?.['saropa-drift-advisor'];
+        const securityMeta = meta.integrations?.security as Record<string, unknown> | undefined;
+
         if (
             shouldPostNoIntegrationDataError({
                 hasContextWindowData: contextData.hasData,
-                hasDriftAdvisorIntegrationMeta: !!meta.integrations?.['saropa-drift-advisor'],
+                hasDriftAdvisorIntegrationMeta: !!driftAdvisorMeta,
                 hasDatabaseLine,
+                hasSecurityMeta: !!securityMeta,
             })
         ) {
             post({ type: 'contextPopoverData', error: t('msg.noIntegrationData') });
             return;
         }
-
-        const driftAdvisorMeta = meta.integrations?.['saropa-drift-advisor'];
-        const integrationsMeta = driftAdvisorMeta
-            ? { 'saropa-drift-advisor': driftAdvisorMeta }
-            : undefined;
+        const integrationsMeta: Record<string, unknown> = {};
+        if (driftAdvisorMeta) { integrationsMeta['saropa-drift-advisor'] = driftAdvisorMeta; }
+        if (securityMeta) { integrationsMeta.security = securityMeta; }
         post({
             type: 'contextPopoverData',
             lineIndex,

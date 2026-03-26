@@ -28,7 +28,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Database integration — parse mode** — The database query logs provider now supports `mode: "parse"` (the default) which scans the captured session log at session end for inline SQL blocks (SELECT, INSERT, UPDATE, DELETE, etc.). Detected queries are indexed by line number and optional request ID, then written to a `.queries.json` sidecar. A custom `queryBlockPattern` regex can override the built-in SQL detection. All six database settings are now declared in `package.json`.
 
-• **Database queries in context popover** — The `.queries.json` sidecar is now loaded by the context data loader and included in the integration context popover when right-clicking a log line. Queries are filtered by the time window and show query text, line range, optional request ID, and duration.
+• **Database queries in context popover** — The `.queries.json` sidecar is now loaded by the context data loader and included in the integration context popover when right-clicking a log line. Queries are filtered by the time window and show query text, line range, optional request ID, and duration. Each query has a copy-to-clipboard button.
+
+• **Security / audit section in context popover** — When the security adapter has captured events, the context popover shows a "Security / Audit" section with the categorized event summary and "Open file" buttons for the security-events and audit sidecar files. Raw events are never shown inline.
+
+• **Security adapter first-time notice** — When `security` is first added to the adapters list, a one-time info message explains that events may contain sensitive data and links to the security settings. Shown once per workspace.
 
 • **Error rate over time chart** — New "Errors" tab in the Performance panel shows a time-bucketed SVG bar chart of errors (red) and warnings (amber) across a session. Click any bar to jump to that time range in the viewer. Spikes are automatically detected via moving-average comparison and flagged with a marker. Three new settings control bucket size (`errorRateBucketSize`), warning inclusion (`errorRateShowWarnings`), and spike detection (`errorRateDetectSpikes`).
 
