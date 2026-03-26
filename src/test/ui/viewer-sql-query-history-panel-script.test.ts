@@ -56,6 +56,36 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('window.getSelection'));
         assert.ok(s.includes('.toString().length > 0'));
     });
+
+    test('rows have role="button" for screen reader expand/collapse', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('role="button"'));
+    });
+
+    test('expanded state preserved across re-renders', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('expandedFps'), 'should track expanded fingerprints before re-render');
+        assert.ok(s.includes('aria-expanded="true"'), 'should query open rows');
+        assert.ok(s.includes('toggleSqlHistoryRow(newRows'), 'should re-expand matching rows');
+    });
+
+    test('uses escapeHtml instead of local escAttr for data attributes', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('escapeHtml(r.fp)'), 'data-fingerprint should use escapeHtml');
+        assert.ok(!s.includes('escAttr'), 'local escAttr should be removed');
+    });
+
+    test('copy button has type="button" attribute', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes('type="button" class="sql-qh-action-btn"'));
+    });
+
+    test('empty state uses u-hidden class instead of inline display', () => {
+        const s = getSqlQueryHistoryPanelScript();
+        assert.ok(s.includes("emptyEl.classList.add('u-hidden')"));
+        assert.ok(s.includes("emptyEl.classList.remove('u-hidden')"));
+        assert.ok(!s.includes("emptyEl.style.display"), 'should not use inline display');
+    });
 });
 
 suite('formatSqlForExpand (VM)', () => {

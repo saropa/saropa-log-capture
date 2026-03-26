@@ -108,29 +108,37 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
         assert.strictEqual(Object.keys(noSql.sqlQueryHistoryByFp).length, 0);
     });
 
-    test('jump target: sqlHistoryTargetLineLikelyHidden matches filter / height contract', () => {
-        const ctx = loadRuntime([
+    test('jump target: sqlHistoryTargetLineLikelyHidden delegates to calcItemHeight', () => {
+        /* Inject a stub calcItemHeight into the sandbox to verify delegation. */
+        const lines: unknown[] = [
             { type: 'line', sourceTag: 'database', height: 20, timestamp: 1, dbInsight: { fingerprint: 'f' } },
+        ];
+        const context = vm.createContext({
+            allLines: lines,
+            calcItemHeight: (it: Record<string, unknown>) => it.height as number,
+        });
+        vm.runInContext(getSqlQueryHistoryRuntimeScript(), context, { timeout: 15_000 });
+        const ctx = context as unknown as HistorySandbox;
+
+        /* Visible line: calcItemHeight returns 20. */
+        assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(0), false);
+
+        /* Hidden line: calcItemHeight returns 0. */
+        lines[0] = { type: 'line', sourceTag: 'database', height: 0, timestamp: 1 };
+        assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(0), true);
+
+        /* Out-of-range index: always hidden. */
+        assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(99), true);
+    });
+
+    test('jump target: falls back to height check when calcItemHeight unavailable', () => {
+        /* No calcItemHeight injected — fallback path. */
+        const ctx = loadRuntime([
+            { type: 'line', sourceTag: 'database', height: 20, timestamp: 1 },
         ]);
         assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(0), false);
 
-        ctx.allLines[0] = {
-            type: 'line',
-            sourceTag: 'database',
-            height: 20,
-            timestamp: 1,
-            dbInsight: { fingerprint: 'f' },
-            sqlPatternFiltered: true,
-        };
-        assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(0), true);
-
-        ctx.allLines[0] = {
-            type: 'line',
-            sourceTag: 'database',
-            height: 0,
-            timestamp: 1,
-            dbInsight: { fingerprint: 'f' },
-        };
+        ctx.allLines[0] = { type: 'line', sourceTag: 'database', height: 0, timestamp: 1 };
         assert.strictEqual(ctx.sqlHistoryTargetLineLikelyHidden(0), true);
     });
 
