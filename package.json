@@ -1765,6 +1765,81 @@
           "type": "number",
           "title": "%config.integrations.windowsEvents.maxEvents.title%"
         },
+        "saropaLogCapture.integrations.security.windowsSecurityLog": {
+          "default": false,
+          "description": "Query the Windows Security event log during sessions (Windows only, opt-in).",
+          "type": "boolean",
+          "title": "%config.integrations.security.windowsSecurityLog.title%"
+        },
+        "saropaLogCapture.integrations.security.auditLogPath": {
+          "default": "",
+          "description": "Path to an application audit log file (relative to workspace or absolute).",
+          "type": "string",
+          "title": "%config.integrations.security.auditLogPath.title%"
+        },
+        "saropaLogCapture.integrations.security.redactSecurityEvents": {
+          "default": true,
+          "description": "Redact sensitive fields (user names, IP addresses) before writing sidecar.",
+          "type": "boolean",
+          "title": "%config.integrations.security.redactSecurityEvents.title%"
+        },
+        "saropaLogCapture.integrations.security.includeSummaryInHeader": {
+          "default": false,
+          "description": "Add a security event summary line to the session header.",
+          "type": "boolean",
+          "title": "%config.integrations.security.includeSummaryInHeader.title%"
+        },
+        "saropaLogCapture.integrations.security.includeInBugReport": {
+          "default": false,
+          "description": "Include security sidecar reference in bug reports.",
+          "type": "boolean",
+          "title": "%config.integrations.security.includeInBugReport.title%"
+        },
+        "saropaLogCapture.integrations.database.mode": {
+          "default": "parse",
+          "description": "How to collect database queries: 'parse' scans captured output, 'file' reads an external query log.",
+          "enum": [
+            "parse",
+            "file",
+            "api"
+          ],
+          "type": "string",
+          "title": "%config.integrations.database.mode.title%"
+        },
+        "saropaLogCapture.integrations.database.queryLogPath": {
+          "default": "",
+          "description": "Path to external query log file (file mode only).",
+          "type": "string",
+          "title": "%config.integrations.database.queryLogPath.title%"
+        },
+        "saropaLogCapture.integrations.database.requestIdPattern": {
+          "default": "",
+          "description": "Regex to extract a request ID from a log line (e.g. 'requestId=(\\S+)').",
+          "type": "string",
+          "title": "%config.integrations.database.requestIdPattern.title%"
+        },
+        "saropaLogCapture.integrations.database.queryBlockPattern": {
+          "default": "",
+          "description": "Regex to detect query blocks in captured output (parse mode). Leave empty for built-in SQL detection.",
+          "type": "string",
+          "title": "%config.integrations.database.queryBlockPattern.title%"
+        },
+        "saropaLogCapture.integrations.database.timeWindowSeconds": {
+          "default": 5,
+          "description": "Correlation time window (seconds) when no request ID matches.",
+          "minimum": 1,
+          "maximum": 120,
+          "type": "number",
+          "title": "%config.integrations.database.timeWindowSeconds.title%"
+        },
+        "saropaLogCapture.integrations.database.maxQueriesPerLookup": {
+          "default": 20,
+          "description": "Max query results returned per lookup.",
+          "minimum": 1,
+          "maximum": 200,
+          "type": "number",
+          "title": "%config.integrations.database.maxQueriesPerLookup.title%"
+        },
         "saropaLogCapture.integrations.docker.runtime": {
           "default": "docker",
           "description": "Container runtime CLI: docker or podman.",
