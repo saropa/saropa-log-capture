@@ -1840,6 +1840,58 @@
           "type": "number",
           "title": "%config.integrations.database.maxQueriesPerLookup.title%"
         },
+        "saropaLogCapture.integrations.browser.mode": {
+          "default": "file",
+          "description": "How to capture browser console events: read an exported file or connect via Chrome DevTools Protocol.",
+          "enum": [
+            "file",
+            "cdp"
+          ],
+          "type": "string",
+          "title": "%config.integrations.browser.mode.title%"
+        },
+        "saropaLogCapture.integrations.browser.browserLogPath": {
+          "default": "",
+          "description": "Path to browser console log file (file mode only). Supports JSONL or JSON format.",
+          "type": "string",
+          "title": "%config.integrations.browser.browserLogPath.title%"
+        },
+        "saropaLogCapture.integrations.browser.browserLogFormat": {
+          "default": "jsonl",
+          "description": "Format of the browser log file: JSON Lines (one object per line) or a single JSON array.",
+          "enum": [
+            "jsonl",
+            "json"
+          ],
+          "type": "string",
+          "title": "%config.integrations.browser.browserLogFormat.title%"
+        },
+        "saropaLogCapture.integrations.browser.maxEvents": {
+          "default": 10000,
+          "description": "Maximum browser events to capture per session.",
+          "minimum": 100,
+          "maximum": 100000,
+          "type": "number",
+          "title": "%config.integrations.browser.maxEvents.title%"
+        },
+        "saropaLogCapture.integrations.browser.cdpUrl": {
+          "default": "",
+          "description": "Chrome DevTools Protocol WebSocket URL (cdp mode only, e.g. ws://localhost:9222). Localhost only for security.",
+          "type": "string",
+          "title": "%config.integrations.browser.cdpUrl.title%"
+        },
+        "saropaLogCapture.integrations.browser.includeNetwork": {
+          "default": false,
+          "description": "Capture network response events in addition to console events (cdp mode).",
+          "type": "boolean",
+          "title": "%config.integrations.browser.includeNetwork.title%"
+        },
+        "saropaLogCapture.integrations.browser.requestIdPattern": {
+          "default": "",
+          "description": "Regex to extract a request ID from browser console messages for correlation (e.g. 'requestId=(\\S+)').",
+          "type": "string",
+          "title": "%config.integrations.browser.requestIdPattern.title%"
+        },
         "saropaLogCapture.integrations.docker.runtime": {
           "default": "docker",
           "description": "Container runtime CLI: docker or podman.",
@@ -2352,7 +2404,8 @@
   "description": "%description%",
   "dependencies": {
     "google-auth-library": "^9.15.0",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "ws": "^8.20.0"
   },
   "overrides": {
     "serialize-javascript": "^7.0.3",
@@ -2362,6 +2415,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
     "@types/vscode": "^1.105.0",
+    "@types/ws": "^8.18.1",
     "@vscode/codicons": "^0.0.44",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
