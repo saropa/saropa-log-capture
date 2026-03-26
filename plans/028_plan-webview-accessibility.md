@@ -12,7 +12,7 @@
 
 - **Viewer:** Primary content has `role="main"` (`viewer-content-body.ts`). Log region has `role="log"` and `aria-label`; `#line-count` has `aria-live="polite"` and `aria-atomic="true"` so filter/load updates are announced. Icon bar has `role="toolbar"`; replay bar has `role="region"` and labeled controls. Level flyup "All"/"None" are `<button>` (keyboard-usable). Session/split nav, footer controls, and level toggles have labels.
 - **Panels:** All embedded panels (Options, Session, Integrations, Insight, Keyboard Shortcuts, Find, Bookmarks, Trash, Filters, Crashlytics, About) have `role="region"` and `aria-label` on containers; icon-only buttons and search inputs have `aria-label`. All standalone panels (Session Comparison, Timeline, Investigation, Bug Report, AI Explain, Vitals, Analysis) have `role="main"` landmarks.
-- **Focus:** All slide-out panels move focus into the panel on open and return focus to the icon bar button on close. Focus trap (Tab confined to panel until close) not yet implemented.
+- **Focus:** All slide-out panels move focus into the panel on open and return focus to the icon bar button on close. Focus trap (Tab/Shift+Tab confined to panel until close) implemented via a single `keydown` listener in the icon bar script. Escape closes the active panel.
 - **Docs:** README has an "Accessibility" paragraph under Keyboard shortcuts; audit doc exists. axe in CI not yet added.
 
 ## Goal
@@ -41,9 +41,9 @@ Define and implement explicit accessibility for all webview UI: consistent seman
 - For dynamic content (e.g. session list, integration list), use `aria-live` where updates should be announced.
 - Ensure selects, buttons, and links are focusable and operable by keyboard (Enter/Space, no click-only).
 
-### 4. Focus and keyboard — in progress
+### 4. Focus and keyboard ✅
 
-- When opening a panel or overlay, move focus into it and trap focus until closed (or provide a clear “Close” that returns focus to opener). **(Focus-in and return-to-opener done for all slide-out panels; trap not yet implemented.)**
+- When opening a panel or overlay, move focus into it and trap focus until closed (or provide a clear “Close” that returns focus to opener). **(Done: focus-in, return-to-opener, and Tab/Shift+Tab focus trap for all slide-out panels.)**
 - When closing, return focus to the trigger element. **(Done for all slide-out panels.)**
 - Document shortcut coverage (e.g. Ctrl+F for search) in the viewer **Options** → **Keyboard shortcuts…** panel and ensure no conflicting or unreachable actions.
 
