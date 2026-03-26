@@ -28,9 +28,9 @@ export function parseSessionDate(filename: string): number {
 }
 
 /** Filter metadata entries by time range. */
-export function filterByTime(metas: readonly LoadedMeta[], range: TimeRange): readonly LoadedMeta[] {
+export function filterByTime(metas: readonly LoadedMeta[], range: TimeRange, nowMs: number = Date.now()): readonly LoadedMeta[] {
     if (range === 'all') { return metas; }
-    const cutoff = Date.now() - (timeRangeMs[range] ?? 0);
+    const cutoff = nowMs - (timeRangeMs[range] ?? 0);
     return metas.filter(m => parseSessionDate(m.filename) >= cutoff);
 }
 
