@@ -73,6 +73,29 @@ suite('Request ID correlation — loadDatabaseContext', () => {
         const result = loadDatabaseContext(content, WINDOW_WITH_ID);
         assert.deepStrictEqual(result, {});
     });
+
+    test('should behave as time-window-only when no requestId on window', () => {
+        const content = JSON.stringify({
+            queries: [
+                { timestamp: T - 90000, queryText: 'SELECT far', requestId: 'req-abc123' },
+                { timestamp: T, queryText: 'SELECT near' },
+            ],
+        });
+        const result = loadDatabaseContext(content, WINDOW);
+        assert.strictEqual(result.database?.length, 1);
+        assert.strictEqual(result.database?.[0].queryText, 'SELECT near');
+    });
+
+    test('should include query with no timestamp (timestamp zero treated as in-window)', () => {
+        const content = JSON.stringify({
+            queries: [
+                { queryText: 'SELECT 1', lineStart: 10, lineEnd: 10 },
+            ],
+        });
+        const result = loadDatabaseContext(content, WINDOW);
+        assert.strictEqual(result.database?.length, 1);
+        assert.strictEqual(result.database?.[0].timestamp, T);
+    });
 });
 
 suite('Request ID correlation — loadBrowserContext', () => {
