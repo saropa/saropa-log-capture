@@ -25,10 +25,10 @@ export function getSearchStyles(): string {
 .session-nav-search-outer {
     position: relative;
     margin-left: auto;
-    /* Shrink on one row; when the nav wraps, this row can use the full panel width. */
+    /* Shrink on one row; grows up to max-width when wrapping to its own line. */
     flex: 1 1 200px;
     min-width: min(120px, 100%);
-    max-width: 100%;
+    max-width: 350px;
     align-self: center;
 }
 .session-search-compact {
