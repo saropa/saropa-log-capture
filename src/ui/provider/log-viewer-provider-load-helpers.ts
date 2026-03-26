@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { getConfig } from "../../modules/config/config";
 import { hasMeaningfulPerformanceData, SessionMetadataStore } from "../../modules/session/session-metadata";
 import { UNIFIED_SESSION_LOG_SUFFIX } from "../../modules/session/unified-session-log-writer";
-import { findHeaderEnd, parseHeaderFields, computeSessionMidnight, parseTimeToMs, sendPendingLinesBatched, parseUnifiedJsonlToPending, SOURCE_DEBUG, SOURCE_TERMINAL, externalSidecarLabelFromFileName, parseTerminalSidecarToPending, parseExternalSidecarToPending } from "../viewer/viewer-file-loader";
+import { findHeaderEnd, parseHeaderFields, computeSessionMidnight, parseTimeToMs, sendPendingLinesBatched, parseUnifiedJsonlToPending, SOURCE_DEBUG, SOURCE_TERMINAL, SOURCE_BROWSER, externalSidecarLabelFromFileName, parseTerminalSidecarToPending, parseExternalSidecarToPending, parseBrowserSidecarToPending } from "../viewer/viewer-file-loader";
 import { detectRunBoundaries, getRunStartIndices } from "../../modules/session/run-boundaries";
 import { countSeverities } from "../session/session-severity-counts";
 import { getRunSummaries } from "../../modules/session/run-summaries";
@@ -135,9 +135,15 @@ export function getMainBaseFromFsPath(fsPath: string): string {
   return (fsPath.split(/[/\\]/).pop() ?? "").replace(/\.[^.]+$/, "") || "log";
 }
 
-export function collectViewerSourcesForSidecars(mainBase: string, terminalSidecar: vscode.Uri | undefined, externalSidecars: readonly vscode.Uri[]): string[] {
+export function collectViewerSourcesForSidecars(
+  mainBase: string,
+  terminalSidecar: vscode.Uri | undefined,
+  externalSidecars: readonly vscode.Uri[],
+  browserSidecar?: vscode.Uri,
+): string[] {
   const sources: string[] = [SOURCE_DEBUG];
   if (terminalSidecar) { sources.push(SOURCE_TERMINAL); }
+  if (browserSidecar) { sources.push(SOURCE_BROWSER); }
   for (const sidecarUri of externalSidecars) {
     const label = externalSidecarLabelFromFileName(mainBase, sidecarUri.fsPath.split(/[/\\]/).pop() ?? "");
     const sourceId = "external:" + label;
@@ -198,6 +204,32 @@ export async function appendExternalSidecarLines(opts: {
     }
   }
   return { cancelled: !checkGen(), totalLineCount: currentCount };
+}
+
+/** Append browser console events from .browser.json sidecar to the viewer. */
+export async function appendBrowserSidecarLines(opts: {
+  browserSidecar: vscode.Uri | undefined;
+  totalLineCount: number;
+  checkGen: () => boolean;
+  post: (msg: unknown) => void;
+  target: LoadTarget;
+}): Promise<{ cancelled: boolean; totalLineCount: number }> {
+  const { browserSidecar, totalLineCount, checkGen, post, target } = opts;
+  if (!browserSidecar) { return { cancelled: false, totalLineCount }; }
+  try {
+    const raw = await vscode.workspace.fs.readFile(browserSidecar);
+    if (!checkGen()) { return { cancelled: true, totalLineCount }; }
+    const lines = parseBrowserSidecarToPending(Buffer.from(raw).toString("utf-8"));
+    if (lines.length > 0 && checkGen()) {
+      const nextCount = totalLineCount + lines.length;
+      post({ type: "addLines", lines, lineCount: nextCount });
+      helpers.sendNewCategories(lines, target.getSeenCategories(), (m) => post(m));
+      return { cancelled: false, totalLineCount: nextCount };
+    }
+  } catch {
+    // ignore sidecar read failure
+  }
+  return { cancelled: false, totalLineCount };
 }
 
 export function postRunBoundariesIfAny(contentLines: readonly string[], ctx: { sessionMidnightMs: number }, post: (msg: unknown) => void): void {
