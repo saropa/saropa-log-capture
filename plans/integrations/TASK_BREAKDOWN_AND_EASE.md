@@ -41,8 +41,8 @@ Performance, Terminal, and WSL/Linux logs are implemented — see providers in `
 - [x] Event summary in meta (categorized by event ID) and optional header contribution.
 - [x] Configurable lead/lag from shared windowsEvents config.
 - [x] Register provider (or extend windowsEvents); add `security` to UI and adapter list.
-- [ ] Viewer: “Security / audit” section with warning + “Open file”; do not send raw events to webview.
-- [ ] First-time enable: show info message about sensitive data.
+- [x] Viewer: “Security / audit” section with warning + “Open file”; do not send raw events to webview.
+- [x] First-time enable: show info message about sensitive data.
 
 **Rough size:** ~100–150 LOC (provider or extension + redaction). Less if tailer already exists for audit file.
 

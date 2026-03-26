@@ -21,6 +21,7 @@
 
 import { getContextPopoverBrowserScript } from './viewer-context-popover-browser';
 import { getContextPopoverDbInsightScript } from './viewer-context-popover-db-insight';
+import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript } from './viewer-context-popover-integration-sections';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
 
@@ -28,7 +29,7 @@ import { getQualityPopoverScript } from './viewer-quality-popover-script';
  * Returns the JavaScript code for the context popover in the webview.
  */
 export function getContextPopoverScript(): string {
-    return getContextPopoverBrowserScript() + getContextPopoverDbInsightScript() + (
+    return getContextPopoverBrowserScript() + getContextPopoverDbInsightScript() + getContextPopoverDatabaseQueriesScript() + getContextPopoverSecurityScript() + (
         /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
@@ -113,6 +114,14 @@ function showContextPopover(lineIdx, anchorX, anchorY, data) {
             closeContextPopover();
         });
     }
+
+    attachPopoverDataBtnHandlers(popover, '.popover-copy-query', 'data-query', function(val) {
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: val });
+    });
+    attachPopoverDataBtnHandlers(popover, '.popover-open-sidecar', 'data-file', function(val) {
+        vscodeApi.postMessage({ type: 'openSidecarFile', filename: val });
+        closeContextPopover();
+    });
 
     // Close on click outside
     setTimeout(function() {
@@ -259,10 +268,22 @@ function buildPopoverContent(lineIdx, data) {
         html += '</div></div>';
     }
 
+    var dbQueriesHtml = buildDatabaseQueriesPopoverSection(data);
+    if (dbQueriesHtml) {
+        hasContent = true;
+        html += dbQueriesHtml;
+    }
+
     var browserHtml = buildBrowserPopoverSection(data);
     if (browserHtml) {
         hasContent = true;
         html += browserHtml;
+    }
+
+    var securityHtml = buildSecurityPopoverSection(data);
+    if (securityHtml) {
+        hasContent = true;
+        html += securityHtml;
     }
 
     var dbInsightHtml = buildDatabaseInsightPopoverSection(lineIdx);
