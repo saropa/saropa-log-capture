@@ -403,5 +403,12 @@
   "config.learning.minConfidence.description": "Minimum confidence (0–1) required before a pattern is offered as a suggestion.",
   "config.learning.minConfidence.title": "Minimum suggestion confidence",
   "config.learning.maxStoredLineLength.description": "Maximum characters of each log line stored locally for pattern extraction.",
-  "config.learning.maxStoredLineLength.title": "Max stored line length for learning"
+  "config.learning.maxStoredLineLength.title": "Max stored line length for learning",
+  "config.integrations.browser.mode.title": "How to capture browser console events.",
+  "config.integrations.browser.browserLogPath.title": "Path to browser console log file (file mode).",
+  "config.integrations.browser.browserLogFormat.title": "Format of the browser log file.",
+  "config.integrations.browser.maxEvents.title": "Max browser events per session.",
+  "config.integrations.browser.cdpUrl.title": "Chrome DevTools Protocol WebSocket URL (cdp mode).",
+  "config.integrations.browser.includeNetwork.title": "Capture network events (cdp mode).",
+  "config.integrations.browser.requestIdPattern.title": "Regex to extract request ID from console messages."
 }

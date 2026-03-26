@@ -42,7 +42,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Browser integration — interleaved viewer** — Browser console events from `.browser.json` sidecars now appear as lines in the main log viewer. Each event shows as `[level] message (url)`. A "Browser console" checkbox in the source filter panel toggles their visibility.
 
-• **Request ID correlation for context popover** — All three sidecar loaders (HTTP, database, browser) now match entries by request ID in addition to the time window. When a `requestIdPattern` regex is configured (database or HTTP settings), the handler extracts a correlation ID from the clicked log line and includes matching sidecar entries even if they fall outside the ±window. Browser entries also match when the request ID appears as a substring of the console message.
+• **Request ID correlation for context popover** — All three sidecar loaders (HTTP, database, browser) now match entries by request ID in addition to the time window. When a `requestIdPattern` regex is configured (database, HTTP, or browser settings), the handler extracts a correlation ID from the clicked log line and includes matching sidecar entries even if they fall outside the ±window. Browser entries also match when the request ID appears as a substring of the console message.
+
+• **Browser integration — CDP mode** — The browser integration now supports live capture from a running Chrome/Edge instance via Chrome DevTools Protocol. Set `mode` to `cdp` and provide a `cdpUrl` (e.g. `ws://localhost:9222`). Console events are captured in real time during the debug session and written to the `.browser.json` sidecar at session end. Optional network response capture via `includeNetwork`. Localhost only for security.
+
+• **Browser integration — Settings UI** — All seven browser integration settings are now declared in `package.json` and visible in the VS Code Settings UI: `mode`, `browserLogPath`, `browserLogFormat`, `maxEvents`, `cdpUrl`, `includeNetwork`, and `requestIdPattern`.
 
 ### Changed
 

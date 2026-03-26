@@ -228,6 +228,9 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       browserLogPath: readTrimmedStringOrDefault(cfg, 'integrations.browser.browserLogPath', ''),
       browserLogFormat: ensureEnum(cfg.get('integrations.browser.browserLogFormat'), ['jsonl', 'json'], 'jsonl'),
       maxEvents: clamp(cfg.get('integrations.browser.maxEvents'), 100, 100000, 10000),
+      cdpUrl: readTrimmedStringOrDefault(cfg, 'integrations.browser.cdpUrl', ''),
+      includeNetwork: ensureBoolean(cfg.get('integrations.browser.includeNetwork'), false),
+      requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.browser.requestIdPattern', ''),
     },
     integrationsUnifiedLog: {
       writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
