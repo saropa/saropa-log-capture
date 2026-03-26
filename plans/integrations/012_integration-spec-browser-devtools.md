@@ -55,9 +55,10 @@ File mode provider and viewer are implemented:
 - **Registration:** Provider registered in `activation-integrations.ts`; adapter metadata in `integrations-ui.ts`.
 - **Context popover (time-window correlation):** Browser events from `.browser.json` sidecar appear in the integration context popover when a log line is right-clicked. Uses the global `contextWindowSeconds` setting for time-window filtering. Types in `context-loader-types.ts`; parser in `context-sidecar-parsers.ts`; renderer in `viewer-context-popover-browser.ts`.
 - **Interleaved viewer:** Browser events from `.browser.json` appear as lines in the main log viewer with `source: 'browser'`. Parsed by `parseBrowserSidecarToPending()` in `viewer-file-loader-sources.ts`; appended via `appendBrowserSidecarLines()` in load helpers. "Browser console" checkbox in the source filter panel toggles visibility.
+- **Request ID correlation:** All three context-popover sidecar loaders (HTTP, database, browser) now match entries by request ID in addition to the time window. The handler extracts a request ID from the clicked log line using configured `requestIdPattern` regexes (database + HTTP settings), passes it on `ContextWindow.requestId`, and each loader includes matching entries even if outside the time window. Browser loader also checks `message.includes(requestId)` for IDs embedded in console text. Implemented in `context-sidecar-parsers.ts` and `context-handlers.ts`; 11 tests in `request-id-correlation.test.ts`.
 
 ## Deferred
 
-- **Request ID correlation:** `requestIdPattern` extraction for targeted matching (not yet implemented for any adapter — all use time-window only).
 - **CDP mode:** WebSocket client, `Console.enable` / `Network.enable` subscriptions, buffer + flush lifecycle, disconnect handling.
 - **Companion extension (Mode C):** A browser extension (Chrome/Edge) captures console and posts to a local server or file that VS Code watches. Functionally same as file mode once events land on disk.
+- **Browser-specific `requestIdPattern`:** The `integrations.browser.requestIdPattern` config key is declared in this spec but not yet in `package.json`; currently extraction uses the database and HTTP patterns only.
