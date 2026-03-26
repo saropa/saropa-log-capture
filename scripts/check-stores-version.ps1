@@ -3,14 +3,16 @@
 # Report once (no polling):
 #   .\check-stores-version.ps1 -ReportOnly [-ExpectedVersion "3.12.0"]
 #
-# Poll until deadline (propagation / smoke):
-#   .\check-stores-version.ps1 -ExpectedVersion "3.12.0" [-IntervalSeconds 30] [-TotalMinutes 10]
+# Poll until success or deadline (propagation after publish):
+#   .\check-stores-version.ps1 -ExpectedVersion "3.12.0" [-IntervalSeconds 30] [-TotalMinutes 10] [-Stores Both|Marketplace|OpenVsx]
 #
 param(
     [string]$ExpectedVersion = "",
     [switch]$ReportOnly,
     [int]$IntervalSeconds = 30,
-    [int]$TotalMinutes = 10
+    [int]$TotalMinutes = 10,
+    [ValidateSet("Both", "Marketplace", "OpenVsx")]
+    [string]$Stores = "Both"
 )
 
 $ErrorActionPreference = "Continue"
@@ -85,7 +87,16 @@ if (-not (Test-Path $reportsDir)) { New-Item -ItemType Directory -Path $reportsD
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logPath = Join-Path $reportsDir "store_version_check_$stamp.log"
 
-"store_version_check start Expected=$ExpectedVersion Interval=${IntervalSeconds}s TotalMinutes=$TotalMinutes Iterations=$iterations" | Tee-Object -FilePath $logPath -Append
+function Test-PropagationOk {
+    param([string]$Ov, [string]$Mp)
+    switch ($Stores) {
+        "Marketplace" { return ($Mp -eq $ExpectedVersion) }
+        "OpenVsx" { return ($Ov -eq $ExpectedVersion) }
+        default { return (($Ov -eq $ExpectedVersion) -and ($Mp -eq $ExpectedVersion)) }
+    }
+}
+
+"store_version_check start Expected=$ExpectedVersion Stores=$Stores Interval=${IntervalSeconds}s TotalMinutes=$TotalMinutes Iterations=$iterations" | Tee-Object -FilePath $logPath -Append
 "" | Tee-Object -FilePath $logPath -Append
 
 for ($i = 1; $i -le $iterations; $i++) {
@@ -96,11 +107,19 @@ for ($i = 1; $i -le $iterations; $i++) {
     $okMp = ($mp -eq $ExpectedVersion)
     $line = "$ts  #$i/$iterations  OpenVSX=$ov $(if($okOv){'OK'}else{'MISMATCH'})  Marketplace=$mp $(if($okMp){'OK'}else{'MISMATCH'})"
     $line | Tee-Object -FilePath $logPath -Append
+    if (Test-PropagationOk -Ov $ov -Mp $mp) {
+        $msg = "store_version_check SUCCESS Expected=$ExpectedVersion visible on selected store(s) after attempt $i/$iterations"
+        Add-Content -LiteralPath $logPath -Value $msg -Encoding utf8
+        Write-Host $msg
+        Write-Host "Log: $logPath"
+        exit 0
+    }
     if ($i -lt $iterations) {
         Start-Sleep -Seconds $IntervalSeconds
     }
 }
 
-"" | Tee-Object -FilePath $logPath -Append
-"store_version_check done log=$logPath" | Tee-Object -FilePath $logPath -Append
-Write-Host "Log: $logPath"
+$fail = "store_version_check TIMEOUT Expected=$ExpectedVersion not visible on selected store(s) after ${TotalMinutes}m (interval ${IntervalSeconds}s). Log=$logPath"
+$fail | Tee-Object -FilePath $logPath -Append
+Write-Host "ERROR: $fail"
+exit 1
