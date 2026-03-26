@@ -65,6 +65,24 @@ suite('CDP capture — mapConsoleEvent', () => {
         const result = mapConsoleEvent({ args: [{ value: 'test' }], timestamp: 1700000000.0 });
         assert.strictEqual(result?.level, 'log');
     });
+
+    test('should preserve falsy-but-defined value like 0', () => {
+        const result = mapConsoleEvent({
+            type: 'log',
+            args: [{ value: 0 }, { value: 'items' }],
+            timestamp: 1700000000.0,
+        });
+        assert.strictEqual(result?.message, '0 items');
+    });
+
+    test('should skip arg with empty string value', () => {
+        const result = mapConsoleEvent({
+            type: 'log',
+            args: [{ value: '' }, { value: 'ok' }],
+            timestamp: 1700000000.0,
+        });
+        assert.strictEqual(result?.message, 'ok');
+    });
 });
 
 suite('CDP capture — mapNetworkEvent', () => {
@@ -100,6 +118,15 @@ suite('CDP capture — mapNetworkEvent', () => {
 
     test('should return undefined when response is missing', () => {
         assert.strictEqual(mapNetworkEvent({ timestamp: 1700000000.0 }), undefined);
+    });
+
+    test('should default status to 0 when missing', () => {
+        const result = mapNetworkEvent({
+            response: { url: 'http://localhost/api' },
+            timestamp: 1700000000.0,
+        });
+        assert.strictEqual(result?.message, 'HTTP 0 http://localhost/api');
+        assert.strictEqual(result?.level, 'info');
     });
 });
 
