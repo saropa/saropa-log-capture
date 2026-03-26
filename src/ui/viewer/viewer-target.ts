@@ -14,7 +14,7 @@ import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-th
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Contract for a webview that renders captured debug output. */
 export interface ViewerTarget {
@@ -58,6 +58,7 @@ export interface ViewerTarget {
   setScrollbarVisible(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;
   setIconBarPosition(position: "left" | "right"): void;
+  setErrorRateConfig(config: ErrorRateConfig): void;
   setAutoHidePatterns(patterns: readonly string[]): void;
   /**
    * Optional DB_10 / DB_15: normalized fingerprint → summary entry for compare-aware detectors in the viewer.
