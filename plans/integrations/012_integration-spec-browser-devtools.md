@@ -61,4 +61,4 @@ File mode provider and viewer are implemented:
 
 ## Deferred
 
-- **Companion extension (Mode C):** A browser extension (Chrome/Edge) captures console and posts to a local server or file that VS Code watches. Functionally same as file mode once events land on disk.
+None — all items shipped or moved to dedicated specs. See [014_integration-spec-browser-companion-extension.md](014_integration-spec-browser-companion-extension.md) for the companion browser extension plan.

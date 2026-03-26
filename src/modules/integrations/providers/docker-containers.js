@@ -1,0 +1,121 @@
+"use strict";
+/**
+ * Docker/container integration: at session end, optionally capture container
+ * id from config or docker ps, then run docker inspect and docker logs
+ * for the session time range and write sidecar.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.dockerContainersProvider = void 0;
+const child_process_1 = require("child_process");
+function isEnabled(context) {
+    return (context.config.integrationsAdapters ?? []).includes('docker');
+}
+function runCli(runtime, args, timeoutMs) {
+    try {
+        const out = (0, child_process_1.execSync)(`${runtime} ${args.join(' ')}`, {
+            encoding: 'utf-8',
+            timeout: timeoutMs,
+            maxBuffer: 4 * 1024 * 1024,
+        });
+        return { stdout: out.trim(), ok: true };
+    }
+    catch {
+        return { stdout: '', ok: false };
+    }
+}
+function resolveContainerId(context, runtime) {
+    const cfg = context.config.integrationsDocker;
+    if (cfg.containerId) {
+        return cfg.containerId;
+    }
+    if (!cfg.containerNamePattern) {
+        return undefined;
+    }
+    const { stdout } = runCli(runtime, ['ps', '--format', '{{.Names}}\t{{.ID}}'], 5000);
+    if (!stdout) {
+        return undefined;
+    }
+    const re = new RegExp(cfg.containerNamePattern, 'i');
+    for (const line of stdout.split('\n')) {
+        const [name, id] = line.split('\t');
+        if (name && id && re.test(name)) {
+            return id;
+        }
+    }
+    return undefined;
+}
+exports.dockerContainersProvider = {
+    id: 'docker',
+    isEnabled(context) {
+        return isEnabled(context);
+    },
+    async onSessionEnd(context) {
+        if (!isEnabled(context)) {
+            return undefined;
+        }
+        const { baseFileName, sessionStartTime, sessionEndTime } = context;
+        const cfg = context.config.integrationsDocker;
+        const runtime = cfg.runtime;
+        const containerId = resolveContainerId(context, runtime);
+        if (!containerId) {
+            return undefined;
+        }
+        const inspectResult = runCli(runtime, ['inspect', containerId], 10000);
+        let image = '';
+        let imageId = '';
+        if (inspectResult.ok && inspectResult.stdout) {
+            try {
+                const arr = JSON.parse(inspectResult.stdout);
+                const c = arr[0];
+                const config = c?.Config;
+                image = config?.Image ?? c?.Config?.Image ?? '';
+                imageId = c?.Image ?? '';
+            }
+            catch {
+                // ignore
+            }
+        }
+        let logContent = '';
+        if (cfg.captureLogs) {
+            const since = Math.floor((sessionStartTime - 60) / 1000);
+            const until = Math.ceil((sessionEndTime + 60_000) / 1000); // 60s lag to avoid clipping late logs
+            const { stdout } = runCli(runtime, [
+                'logs', '--since', `${since}s`, '--until', `${until}s`, '--tail', String(cfg.maxLogLines), containerId,
+            ], 15000);
+            logContent = stdout || '';
+        }
+        const addInspectSidecar = cfg.includeInspect && inspectResult.ok && inspectResult.stdout;
+        const inspectSidecarName = `${baseFileName}.container-inspect.json`;
+        const payload = {
+            containerId,
+            image,
+            imageId,
+            runtime,
+            sidecar: `${baseFileName}.container.log`,
+        };
+        if (addInspectSidecar) {
+            payload.inspectSidecar = inspectSidecarName;
+        }
+        const result = [
+            { kind: 'meta', key: 'docker', payload },
+        ];
+        if (logContent) {
+            result.push({
+                kind: 'sidecar',
+                filename: `${baseFileName}.container.log`,
+                content: logContent,
+                contentType: 'utf8',
+            });
+        }
+        if (addInspectSidecar) {
+            result.push({
+                kind: 'sidecar',
+                filename: inspectSidecarName,
+                content: inspectResult.stdout,
+                contentType: 'utf8',
+            });
+        }
+        return result;
+    },
+};
+//# sourceMappingURL=docker-containers.js.map

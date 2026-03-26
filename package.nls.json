@@ -30,6 +30,7 @@
   "command.generateReport.title": "Saropa Log Capture: Generate Bug Report",
   "command.explainRootCauseHypotheses.title": "Saropa Log Capture: Explain Signals with AI",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
+  "command.showRelatedQueries.title": "Saropa Log Capture: Show Related Queries",
   "command.importSlc.title": "Import .slc Bundle",
   "command.insertMarker.title": "Saropa Log Capture: Insert Marker",
   "command.markForComparison.title": "Mark for Comparison",
