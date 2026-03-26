@@ -6,7 +6,7 @@
  */
 
 import { parseJSONOrDefault } from '../misc/safe-json';
-import type { ContextWindow, ContextData, PerfContextEntry, HttpContextEntry, TerminalContextEntry } from './context-loader-types';
+import type { ContextWindow, ContextData, PerfContextEntry, HttpContextEntry, TerminalContextEntry, BrowserContextEntry } from './context-loader-types';
 
 /**
  * Load and filter performance samples from .perf.json sidecar.
@@ -105,6 +105,39 @@ export function loadTerminalContext(content: string, window: ContextWindow): Par
     if (filtered.length === 0) { return {}; }
 
     return { terminal: filtered.slice(0, 30) };
+}
+
+/**
+ * Load and filter browser console events from .browser.json sidecar.
+ */
+export function loadBrowserContext(content: string, window: ContextWindow): Partial<ContextData> {
+    const parsed = parseJSONOrDefault<unknown>(content, null);
+    if (!parsed) { return {}; }
+    const items: Record<string, unknown>[] = Array.isArray(parsed)
+        ? parsed
+        : (Array.isArray((parsed as Record<string, unknown>).events) ? (parsed as Record<string, unknown>).events as Record<string, unknown>[] : []);
+    if (items.length === 0) { return {}; }
+
+    const minTime = window.centerTime - window.windowMs;
+    const maxTime = window.centerTime + window.windowMs;
+
+    const filtered: BrowserContextEntry[] = [];
+    for (const item of items) {
+        const timestamp = extractTimestamp(item);
+        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) { continue; }
+        const message = String(item.message || item.text || '');
+        if (!message) { continue; }
+        filtered.push({
+            timestamp,
+            level: String(item.level || item.type || 'log'),
+            message,
+            url: item.url ? String(item.url) : undefined,
+        });
+    }
+
+    if (filtered.length === 0) { return {}; }
+    filtered.sort((a, b) => a.timestamp - b.timestamp);
+    return { browser: filtered.slice(0, 30) };
 }
 
 /**
