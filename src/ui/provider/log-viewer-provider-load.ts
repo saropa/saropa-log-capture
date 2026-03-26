@@ -12,6 +12,7 @@ import { getCorrelationByLocation } from "../../modules/correlation/correlation-
 import type { FirstErrorResult } from "../../modules/bookmarks/first-error";
 import { findSidecarUris } from "../../modules/context/context-loader";
 import {
+  appendBrowserSidecarLines,
   appendExternalSidecarLines,
   appendTerminalSidecarLines,
   buildMainCtx,
@@ -118,10 +119,11 @@ export async function executeLoadContent(
 
   const sidecarUris = await findSidecarUris(uri);
   const terminalSidecar = sidecarUris.find((u) => u.fsPath.endsWith(".terminal.log"));
+  const browserSidecar = sidecarUris.find((u) => u.fsPath.endsWith(".browser.json"));
   const externalSidecars = sidecarUris.filter((u) => u.fsPath.endsWith(".log") && !u.fsPath.endsWith(".terminal.log"));
   const mainBase = getMainBaseFromFsPath(uri.fsPath);
 
-  const sources = collectViewerSourcesForSidecars(mainBase, terminalSidecar, externalSidecars);
+  const sources = collectViewerSourcesForSidecars(mainBase, terminalSidecar, externalSidecars, browserSidecar);
   if (sources.length > 1) {
     post({ type: "setSources", sources: [...sources], enabledSources: [...sources] });
   }
@@ -145,6 +147,15 @@ export async function executeLoadContent(
     target,
   });
   if (externalRes.cancelled) { return { sessionMidnightMs: 0, contentLength: 0 }; }
+
+  const browserRes = await appendBrowserSidecarLines({
+    browserSidecar,
+    totalLineCount: externalRes.totalLineCount,
+    checkGen,
+    post,
+    target,
+  });
+  if (browserRes.cancelled) { return { sessionMidnightMs: 0, contentLength: 0 }; }
 
   postRunBoundariesIfAny(contentLines, ctx, post);
 
