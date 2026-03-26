@@ -48,6 +48,12 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Browser integration — Settings UI** — All seven browser integration settings are now declared in `package.json` and visible in the VS Code Settings UI: `mode`, `browserLogPath`, `browserLogFormat`, `maxEvents`, `cdpUrl`, `includeNetwork`, and `requestIdPattern`.
 
+### Fixed
+
+• **CDP capture — stale WebSocket race condition** — The CDP message handler now verifies the WebSocket identity before buffering events, preventing stale messages from a closing connection from leaking into a new capture session's buffer.
+
+• **CDP capture — zombie state on timeout** — When the CDP connection times out, the module-level capture state is now cleared immediately, so `isCdpCaptureActive()` correctly returns `false` for a dead connection.
+
 ### Changed
 
 • **Accessibility — landmarks and labels for all panels** — Every slide-out panel (Find, Bookmarks, Trash, Filters, Crashlytics, About, Keyboard Shortcuts) now has `role="region"` and `aria-label`; icon-only buttons and search inputs have `aria-label`. All standalone panels (Session Comparison, Timeline, Investigation, Bug Report, AI Explain, Vitals, Analysis) now have a `role="main"` landmark. Focus moves into each panel on open and returns to the icon bar button on close. Analysis progress bar uses `role="progressbar"` with `aria-valuenow`/`aria-valuemin`/`aria-valuemax`.
