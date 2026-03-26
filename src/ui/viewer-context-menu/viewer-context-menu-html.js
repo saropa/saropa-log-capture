@@ -94,6 +94,9 @@ function getContextMenuHtml() {
             <div class="context-menu-item" data-action="show-integration-context">
                 <span class="codicon codicon-layers"></span> Show Integration Context
             </div>
+            <div class="context-menu-item" data-action="show-related-queries" data-line-action>
+                <span class="codicon codicon-database"></span> Show Related Queries
+            </div>
             <div class="context-menu-item" data-action="show-code-quality" data-line-action>
                 <span class="codicon codicon-symbol-misc"></span> Show code quality
             </div>

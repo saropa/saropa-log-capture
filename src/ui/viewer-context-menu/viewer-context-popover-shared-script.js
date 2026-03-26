@@ -26,6 +26,18 @@ function showPopoverToast(message) {
     }, 2500);
 }
 
+/** Attach click handlers to all buttons matching selector, reading a data attribute value. */
+function attachPopoverDataBtnHandlers(container, selector, attr, callback) {
+    var btns = container.querySelectorAll(selector);
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function(e) {
+            e.stopPropagation();
+            var val = e.currentTarget && e.currentTarget.getAttribute(attr);
+            if (val) { callback(val); }
+        });
+    }
+}
+
 function handleContextPopoverData(msg) {
     if (msg.error) {
         showPopoverToast(msg.error);

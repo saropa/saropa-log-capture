@@ -41,6 +41,7 @@ exports.getMainBaseFromFsPath = getMainBaseFromFsPath;
 exports.collectViewerSourcesForSidecars = collectViewerSourcesForSidecars;
 exports.appendTerminalSidecarLines = appendTerminalSidecarLines;
 exports.appendExternalSidecarLines = appendExternalSidecarLines;
+exports.appendBrowserSidecarLines = appendBrowserSidecarLines;
 exports.postRunBoundariesIfAny = postRunBoundariesIfAny;
 exports.postCorrelationByLineIndex = postCorrelationByLineIndex;
 exports.getSmartBookmarksFirstErrorAndWarning = getSmartBookmarksFirstErrorAndWarning;
@@ -161,10 +162,13 @@ function buildMainCtx(fields, source) {
 function getMainBaseFromFsPath(fsPath) {
     return (fsPath.split(/[/\\]/).pop() ?? "").replace(/\.[^.]+$/, "") || "log";
 }
-function collectViewerSourcesForSidecars(mainBase, terminalSidecar, externalSidecars) {
+function collectViewerSourcesForSidecars(mainBase, terminalSidecar, externalSidecars, browserSidecar) {
     const sources = [viewer_file_loader_1.SOURCE_DEBUG];
     if (terminalSidecar) {
         sources.push(viewer_file_loader_1.SOURCE_TERMINAL);
+    }
+    if (browserSidecar) {
+        sources.push(viewer_file_loader_1.SOURCE_BROWSER);
     }
     for (const sidecarUri of externalSidecars) {
         const label = (0, viewer_file_loader_1.externalSidecarLabelFromFileName)(mainBase, sidecarUri.fsPath.split(/[/\\]/).pop() ?? "");
@@ -221,6 +225,30 @@ async function appendExternalSidecarLines(opts) {
         }
     }
     return { cancelled: !checkGen(), totalLineCount: currentCount };
+}
+/** Append browser console events from .browser.json sidecar to the viewer. */
+async function appendBrowserSidecarLines(opts) {
+    const { browserSidecar, totalLineCount, checkGen, post, target } = opts;
+    if (!browserSidecar) {
+        return { cancelled: false, totalLineCount };
+    }
+    try {
+        const raw = await vscode.workspace.fs.readFile(browserSidecar);
+        if (!checkGen()) {
+            return { cancelled: true, totalLineCount };
+        }
+        const lines = (0, viewer_file_loader_1.parseBrowserSidecarToPending)(Buffer.from(raw).toString("utf-8"));
+        if (lines.length > 0 && checkGen()) {
+            const nextCount = totalLineCount + lines.length;
+            post({ type: "addLines", lines, lineCount: nextCount });
+            helpers.sendNewCategories(lines, target.getSeenCategories(), (m) => post(m));
+            return { cancelled: false, totalLineCount: nextCount };
+        }
+    }
+    catch {
+        // ignore sidecar read failure
+    }
+    return { cancelled: false, totalLineCount };
 }
 function postRunBoundariesIfAny(contentLines, ctx, post) {
     const boundaries = (0, run_boundaries_1.detectRunBoundaries)(contentLines);
