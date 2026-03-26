@@ -12,7 +12,7 @@
  * (`sendIntegrationsAdaptersImpl` / user changes in Options). Until that first message, the array
  * may be missing: we treat that as **no adapters** and keep **Show code quality** **disabled**
  * (conservative — avoids an empty code-quality popover). After sync, it enables only when
- * `'codeQuality'` is present. **Open quality report** is in the footer Actions menu, not here.
+ * `'codeQuality'` is present. **Open Quality Report** is in the footer Actions menu, not here.
  *
  * Disabled rows use class `is-disabled` + optional `title` tooltip; the root click handler ignores
  * them so we never call `onContextMenuAction` for blocked commands.
