@@ -21,7 +21,6 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | Wow | Effort | Feature | Description | Plan |
 |-----|--------|---------|-------------|------|
 | High | Low | Voice / TTS | Read selected lines or errors aloud | [036](bugs/036_plan-voice-tts.md) |
-| High | Low | Error rate over time | Chart: errors/minute over session | [030](bugs/030_plan-error-rate-over-time.md) |
 | High | Medium | Live collaboration | Share session; others see same log and scroll position | [033](bugs/033_plan-live-collaboration.md) |
 | Medium | Low | Docker polish | `includeInspect` sidecar; `--until` on logs | [007](bugs/007_plan-docker-inspect-and-until.md) |
 | Medium | Low | Bidirectional sync | Reload/merge when log file is modified externally | [039](bugs/039_plan-bidirectional-sync.md) |
