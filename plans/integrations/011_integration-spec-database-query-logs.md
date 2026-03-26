@@ -1,7 +1,7 @@
 # Spec: Database Query Logs Integration
 
 **Adapter id:** `database`
-**Status:** Shipped (file mode + parse mode; context popover integration)
+**Status:** Shipped (file mode + parse mode; context popover; related queries popover + command)
 **Full design:** Implemented in `src/modules/integrations/providers/database-query-logs.ts`
 
 ## Goal
