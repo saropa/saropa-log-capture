@@ -10,6 +10,8 @@ export interface ContextWindow {
     centerTime: number;
     /** Window size in milliseconds (applied ±). Default: 5000ms. */
     windowMs: number;
+    /** Request ID extracted from the clicked log line (for targeted correlation). */
+    requestId?: string;
 }
 
 /** Performance sample entry from .perf.json sidecar. */
@@ -51,6 +53,17 @@ export interface BrowserContextEntry {
     level: string;
     message: string;
     url?: string;
+    requestId?: string;
+}
+
+/** Database query entry from .queries.json sidecar. */
+export interface DatabaseContextEntry {
+    timestamp: number;
+    queryText: string;
+    lineStart: number;
+    lineEnd: number;
+    requestId?: string;
+    durationMs?: number;
 }
 
 /** Generic event entry for other integration sources. */
@@ -67,6 +80,7 @@ export interface ContextData {
     http?: HttpContextEntry[];
     terminal?: TerminalContextEntry[];
     docker?: DockerContextEntry[];
+    database?: DatabaseContextEntry[];
     events?: EventContextEntry[];
     browser?: BrowserContextEntry[];
     /** The time window used for filtering. */

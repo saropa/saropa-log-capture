@@ -246,7 +246,7 @@ function onContextMenuAction(action) {
         case 'show-integration-context': {
             var ts = lineData.ts || lineData.timestamp;
             var hasDbLine = !!(lineData && lineData.sourceTag === 'database');
-            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts, hasDatabaseLine: hasDbLine });
+            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts, hasDatabaseLine: hasDbLine, lineText: plainText });
             break;
         }
         case 'show-code-quality': {

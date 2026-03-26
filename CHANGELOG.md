@@ -24,6 +24,12 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+• **Security/audit integration — event summary and configurable settings** — The security provider now produces a categorized event summary in session metadata (e.g. "3 logon, 2 failed logon") instead of bare sidecar filenames. Lead/lag time windows now read from the shared Windows Events config instead of hardcoded values. Two new settings: `includeSummaryInHeader` adds a summary line to the session header, and `includeInBugReport` flags the sidecar for bug reports. All five security settings are now declared in `package.json` for Settings UI discoverability.
+
+• **Database integration — parse mode** — The database query logs provider now supports `mode: "parse"` (the default) which scans the captured session log at session end for inline SQL blocks (SELECT, INSERT, UPDATE, DELETE, etc.). Detected queries are indexed by line number and optional request ID, then written to a `.queries.json` sidecar. A custom `queryBlockPattern` regex can override the built-in SQL detection. All six database settings are now declared in `package.json`.
+
+• **Database queries in context popover** — The `.queries.json` sidecar is now loaded by the context data loader and included in the integration context popover when right-clicking a log line. Queries are filtered by the time window and show query text, line range, optional request ID, and duration.
+
 • **Error rate over time chart** — New "Errors" tab in the Performance panel shows a time-bucketed SVG bar chart of errors (red) and warnings (amber) across a session. Click any bar to jump to that time range in the viewer. Spikes are automatically detected via moving-average comparison and flagged with a marker. Three new settings control bucket size (`errorRateBucketSize`), warning inclusion (`errorRateShowWarnings`), and spike detection (`errorRateDetectSpikes`).
 
 • **Browser integration — event normalization** — The browser DevTools provider now validates and normalizes raw events to the `BrowserEvent` schema before writing the sidecar file. Entries with no usable text are dropped and the count is logged to the output channel.
@@ -31,6 +37,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 • **Browser integration — context popover** — Browser console events from `.browser.json` sidecars now appear in the integration context popover when right-clicking a log line. Events are filtered by the ±contextWindowSeconds time window, showing level, message, and optional URL.
 
 • **Browser integration — interleaved viewer** — Browser console events from `.browser.json` sidecars now appear as lines in the main log viewer. Each event shows as `[level] message (url)`. A "Browser console" checkbox in the source filter panel toggles their visibility.
+
+• **Request ID correlation for context popover** — All three sidecar loaders (HTTP, database, browser) now match entries by request ID in addition to the time window. When a `requestIdPattern` regex is configured (database or HTTP settings), the handler extracts a correlation ID from the clicked log line and includes matching sidecar entries even if they fall outside the ±window. Browser entries also match when the request ID appears as a substring of the console message.
 
 ### Changed
 
