@@ -88,6 +88,26 @@ suite('Viewer HTML', () => {
             assert.ok(html.includes('html == null'), 'stripTags should guard against null/undefined');
         });
 
+        test('should decode HTML entities in stripTags', () => {
+            const stripTags = new Function(`
+                function stripTags(html) {
+                    var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, '');
+                    return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+                }
+                return stripTags;
+            `)() as (input: unknown) => string;
+
+            assert.strictEqual(stripTags('&quot;hello&quot;'), '"hello"', 'should decode &quot;');
+            assert.strictEqual(stripTags('a &amp; b'), 'a & b', 'should decode &amp;');
+            assert.strictEqual(stripTags('&lt;div&gt;'), '<div>', 'should decode &lt; and &gt;');
+            assert.strictEqual(stripTags('it&#39;s'), "it's", 'should decode &#39;');
+            assert.strictEqual(stripTags('<b>&quot;bold&quot;</b>'), '"bold"', 'should strip tags then decode');
+            assert.strictEqual(stripTags(null), '', 'should handle null');
+            assert.strictEqual(stripTags(undefined), '', 'should handle undefined');
+            assert.strictEqual(stripTags('&amp;quot;'), '&quot;', 'should not double-decode');
+            assert.strictEqual(stripTags('plain text'), 'plain text', 'should pass through plain text');
+        });
+
         test('should produce HTML with no script syntax errors', () => {
             const html = buildViewerHtml({ nonce: getNonce(), extensionUri: 'https://example.com', version: '0.0.0' });
             const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/g;
