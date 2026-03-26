@@ -34,6 +34,10 @@ function initIntegrationsOptionsHandlers() {
             var nextExpanded = !expanded;
             previewEl.classList.toggle('options-filtered-hidden', nextExpanded);
             fullEl.classList.toggle('options-filtered-hidden', !nextExpanded);
+            var expandables = row.querySelectorAll('.integrations-expandable');
+            for (var j = 0; j < expandables.length; j++) {
+                expandables[j].classList.toggle('options-filtered-hidden', !nextExpanded);
+            }
             toggleBtn.setAttribute('data-expanded', nextExpanded ? 'true' : 'false');
             toggleBtn.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
             toggleBtn.textContent = nextExpanded ? 'Show less' : 'Show more';
