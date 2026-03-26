@@ -35,12 +35,14 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const context_sidecar_parsers_1 = require("../../../modules/context/context-sidecar-parsers");
-const WINDOW = { centerTime: 10000, windowMs: 5000 };
+/** Use realistic epoch-ms timestamps so extractTimestamp() doesn't convert. */
+const T = 1700000000000;
+const WINDOW = { centerTime: T, windowMs: 5000 };
 suite('loadBrowserContext', () => {
     test('should return events within time window', () => {
         const content = JSON.stringify([
-            { timestamp: 8000, level: 'error', message: 'fail' },
-            { timestamp: 12000, level: 'log', message: 'ok' },
+            { timestamp: T - 2000, level: 'error', message: 'fail' },
+            { timestamp: T + 2000, level: 'log', message: 'ok' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.length, 2);
@@ -49,9 +51,9 @@ suite('loadBrowserContext', () => {
     });
     test('should filter out events outside time window', () => {
         const content = JSON.stringify([
-            { timestamp: 1000, level: 'log', message: 'too early' },
-            { timestamp: 10000, level: 'log', message: 'in window' },
-            { timestamp: 99000, level: 'log', message: 'too late' },
+            { timestamp: T - 90000, level: 'log', message: 'too early' },
+            { timestamp: T, level: 'log', message: 'in window' },
+            { timestamp: T + 90000, level: 'log', message: 'too late' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.length, 1);
@@ -59,7 +61,7 @@ suite('loadBrowserContext', () => {
     });
     test('should accept { events: [...] } format', () => {
         const content = JSON.stringify({
-            events: [{ timestamp: 10000, level: 'warn', message: 'wrapped' }],
+            events: [{ timestamp: T, level: 'warn', message: 'wrapped' }],
         });
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.length, 1);
@@ -67,29 +69,29 @@ suite('loadBrowserContext', () => {
     });
     test('should use text field as fallback for message', () => {
         const content = JSON.stringify([
-            { timestamp: 10000, text: 'from text' },
+            { timestamp: T, text: 'from text' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.[0].message, 'from text');
     });
     test('should use type field as fallback for level', () => {
         const content = JSON.stringify([
-            { timestamp: 10000, message: 'x', type: 'warning' },
+            { timestamp: T, message: 'x', type: 'warning' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.[0].level, 'warning');
     });
     test('should include url when present', () => {
         const content = JSON.stringify([
-            { timestamp: 10000, message: 'x', url: 'http://test.com' },
+            { timestamp: T, message: 'x', url: 'http://test.com' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.[0].url, 'http://test.com');
     });
     test('should skip events with no message or text', () => {
         const content = JSON.stringify([
-            { timestamp: 10000, level: 'info' },
-            { timestamp: 10000, message: 'has text' },
+            { timestamp: T, level: 'info' },
+            { timestamp: T, message: 'has text' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.length, 1);
@@ -97,7 +99,7 @@ suite('loadBrowserContext', () => {
     test('should skip events with no timestamp', () => {
         const content = JSON.stringify([
             { message: 'no time' },
-            { timestamp: 10000, message: 'has time' },
+            { timestamp: T, message: 'has time' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.length, 1);
@@ -112,7 +114,7 @@ suite('loadBrowserContext', () => {
     });
     test('should cap at 30 events', () => {
         const events = Array.from({ length: 50 }, (_, i) => ({
-            timestamp: 10000,
+            timestamp: T + i,
             message: `event ${i}`,
         }));
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(JSON.stringify(events), WINDOW);
@@ -120,8 +122,8 @@ suite('loadBrowserContext', () => {
     });
     test('should sort events by timestamp', () => {
         const content = JSON.stringify([
-            { timestamp: 14000, message: 'later' },
-            { timestamp: 8000, message: 'earlier' },
+            { timestamp: T + 4000, message: 'later' },
+            { timestamp: T - 2000, message: 'earlier' },
         ]);
         const result = (0, context_sidecar_parsers_1.loadBrowserContext)(content, WINDOW);
         assert.strictEqual(result.browser?.[0].message, 'earlier');
