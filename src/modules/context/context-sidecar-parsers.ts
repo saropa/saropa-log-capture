@@ -6,7 +6,7 @@
  */
 
 import { parseJSONOrDefault } from '../misc/safe-json';
-import type { ContextWindow, ContextData, PerfContextEntry, HttpContextEntry, TerminalContextEntry, BrowserContextEntry } from './context-loader-types';
+import type { ContextWindow, ContextData, PerfContextEntry, HttpContextEntry, TerminalContextEntry, BrowserContextEntry, DatabaseContextEntry } from './context-loader-types';
 
 /**
  * Load and filter performance samples from .perf.json sidecar.
@@ -43,6 +43,7 @@ export function loadPerfContext(content: string, window: ContextWindow): Partial
 
 /**
  * Load and filter HTTP requests from .requests.json sidecar.
+ * Includes entries within the time window OR matching the request ID.
  */
 export function loadHttpContext(content: string, window: ContextWindow): Partial<ContextData> {
     const data = parseJSONOrDefault<{ requests?: Record<string, unknown>[] }>(content, {});
@@ -52,13 +53,15 @@ export function loadHttpContext(content: string, window: ContextWindow): Partial
 
     const minTime = window.centerTime - window.windowMs;
     const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
 
     const filtered: HttpContextEntry[] = [];
     for (const req of data.requests) {
         const timestamp = extractTimestamp(req);
-        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) {
-            continue;
-        }
+        const reqId = req.requestId ? String(req.requestId) : undefined;
+        const inWindow = timestamp > 0 && timestamp >= minTime && timestamp <= maxTime;
+        const idMatch = targetId && reqId === targetId;
+        if (!inWindow && !idMatch) { continue; }
 
         filtered.push({
             timestamp,
@@ -66,7 +69,7 @@ export function loadHttpContext(content: string, window: ContextWindow): Partial
             url: String(req.url || req.path || ''),
             status: Number(req.status || req.statusCode || 0),
             durationMs: Number(req.duration || req.durationMs || req.responseTime || 0),
-            requestId: req.requestId ? String(req.requestId) : undefined,
+            requestId: reqId,
         });
     }
 
@@ -109,6 +112,8 @@ export function loadTerminalContext(content: string, window: ContextWindow): Par
 
 /**
  * Load and filter browser console events from .browser.json sidecar.
+ * Includes entries within the time window OR matching the request ID
+ * (by field or substring in message text).
  */
 export function loadBrowserContext(content: string, window: ContextWindow): Partial<ContextData> {
     const parsed = parseJSONOrDefault<unknown>(content, null);
@@ -120,24 +125,65 @@ export function loadBrowserContext(content: string, window: ContextWindow): Part
 
     const minTime = window.centerTime - window.windowMs;
     const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
 
     const filtered: BrowserContextEntry[] = [];
     for (const item of items) {
         const timestamp = extractTimestamp(item);
-        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) { continue; }
         const message = String(item.message || item.text || '');
         if (!message) { continue; }
+        const reqId = item.requestId ? String(item.requestId) : undefined;
+        const inWindow = timestamp > 0 && timestamp >= minTime && timestamp <= maxTime;
+        const idMatch = targetId && (reqId === targetId || message.includes(targetId));
+        if (!inWindow && !idMatch) { continue; }
         filtered.push({
             timestamp,
             level: String(item.level || item.type || 'log'),
             message,
             url: item.url ? String(item.url) : undefined,
+            requestId: reqId,
         });
     }
 
     if (filtered.length === 0) { return {}; }
     filtered.sort((a, b) => a.timestamp - b.timestamp);
     return { browser: filtered.slice(0, 30) };
+}
+
+/**
+ * Load and filter database queries from .queries.json sidecar.
+ * Includes entries within the time window OR matching the request ID.
+ */
+export function loadDatabaseContext(content: string, window: ContextWindow): Partial<ContextData> {
+    const data = parseJSONOrDefault<{ queries?: Record<string, unknown>[] }>(content, {});
+    if (!data.queries || !Array.isArray(data.queries)) { return {}; }
+
+    const minTime = window.centerTime - window.windowMs;
+    const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
+
+    const filtered: DatabaseContextEntry[] = [];
+    for (const q of data.queries) {
+        const timestamp = extractTimestamp(q);
+        const queryText = String(q.queryText || q.query || '');
+        if (!queryText) { continue; }
+        const reqId = q.requestId ? String(q.requestId) : undefined;
+        const inWindow = timestamp === 0 || (timestamp >= minTime && timestamp <= maxTime);
+        const idMatch = targetId && reqId === targetId;
+        if (!inWindow && !idMatch) { continue; }
+
+        filtered.push({
+            timestamp: timestamp || window.centerTime,
+            queryText,
+            lineStart: Number(q.lineStart) || 0,
+            lineEnd: Number(q.lineEnd) || 0,
+            requestId: reqId,
+            durationMs: typeof q.durationMs === 'number' ? q.durationMs : undefined,
+        });
+    }
+
+    if (filtered.length === 0) { return {}; }
+    return { database: filtered.slice(0, 50) };
 }
 
 /**

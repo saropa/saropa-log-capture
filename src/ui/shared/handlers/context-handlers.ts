@@ -175,13 +175,14 @@ export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri
 
 /**
  * Show integration context data for a log line as a popover.
- * Filters integration data to ±windowMs of the line timestamp.
+ * Filters integration data to ±windowMs of the line timestamp,
+ * and by request ID when a requestIdPattern is configured.
  */
 export async function handleIntegrationContextRequest(
     logUri: vscode.Uri | undefined,
     lineIndex: number,
     post: PostFn,
-    options?: { timestamp?: number; hasDatabaseLine?: boolean },
+    options?: { timestamp?: number; hasDatabaseLine?: boolean; lineText?: string },
 ): Promise<void> {
     if (!logUri) {
         post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
@@ -191,9 +192,8 @@ export async function handleIntegrationContextRequest(
         const store = new SessionMetadataStore();
         const meta = await store.loadMetadata(logUri);
 
-        const windowMs = vscode.workspace
-            .getConfiguration('saropaLogCapture')
-            .get<number>('contextWindowSeconds', 5) * 1000;
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const windowMs = cfg.get<number>('contextWindowSeconds', 5) * 1000;
 
         const timestamp = options?.timestamp;
         const hasDatabaseLine = options?.hasDatabaseLine === true;
@@ -210,7 +210,8 @@ export async function handleIntegrationContextRequest(
             return;
         }
 
-        const window: ContextWindow = { centerTime, windowMs };
+        const requestId = extractRequestIdFromLine(options?.lineText, cfg);
+        const window: ContextWindow = { centerTime, windowMs, ...(requestId ? { requestId } : {}) };
         let contextData = await loadContextData(logUri, window);
 
         if (!contextData.hasData && meta.integrations) {
@@ -243,6 +244,31 @@ export async function handleIntegrationContextRequest(
     } catch {
         post({ type: 'contextPopoverData', error: t('msg.noIntegrationContext') });
     }
+}
+
+/**
+ * Extract a request ID from a log line using configured requestIdPattern settings.
+ * Tries database and HTTP patterns; returns first match or undefined.
+ */
+function extractRequestIdFromLine(
+    lineText: string | undefined,
+    cfg: vscode.WorkspaceConfiguration,
+): string | undefined {
+    if (!lineText) { return undefined; }
+    const patterns = [
+        cfg.get<string>('integrations.database.requestIdPattern', ''),
+        cfg.get<string>('integrations.http.requestIdPattern', ''),
+    ];
+    for (const raw of patterns) {
+        if (!raw) { continue; }
+        try {
+            const m = new RegExp(raw).exec(lineText);
+            if (m) { return m[1] ?? m[0]; }
+        } catch {
+            // invalid regex — skip
+        }
+    }
+    return undefined;
 }
 
 /**
