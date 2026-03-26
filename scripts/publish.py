@@ -137,6 +137,12 @@ def parse_args() -> argparse.Namespace:
     )
     for flag, help_text in _CLI_FLAGS:
         parser.add_argument(flag, action="store_true", help=help_text)
+    parser.add_argument(
+        "--on-test-fail",
+        choices=["ask", "retry", "skip", "stop"],
+        default="ask",
+        help="Behavior when tests fail: ask (interactive), retry, skip, or stop (default: ask).",
+    )
     return parser.parse_args()
 
 

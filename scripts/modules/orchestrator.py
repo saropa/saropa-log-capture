@@ -53,6 +53,39 @@ from modules.report import print_success_banner, print_timing, save_report
 from modules.install import print_install_instructions, prompt_install
 
 
+def _prompt_on_test_failure() -> str:
+    """Ask user how to proceed after a test failure.
+
+    Returns one of: 'retry', 'skip', 'stop'.
+    """
+    print(f"\n  {C.YELLOW}Tests failed. Choose next action:{C.RESET}")
+    print("    [R]etry tests")
+    print("    [S]kip tests and continue")
+    print("    S[t]op pipeline")
+    try:
+        raw = input(f"  Choice [t]: {C.RESET}").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return "stop"
+
+    if raw in ("r", "retry"):
+        return "retry"
+    if raw in ("s", "skip"):
+        return "skip"
+    return "stop"
+
+
+def _resolve_test_failure_action(args: argparse.Namespace) -> str:
+    """Resolve configured action for a failed test run.
+
+    Returns one of: 'ask', 'retry', 'skip', 'stop'.
+    """
+    action = getattr(args, "on_test_fail", "ask")
+    if action in ("ask", "retry", "skip", "stop"):
+        return action
+    return "ask"
+
+
 def run_prerequisites(
     args: argparse.Namespace,
     results: list[tuple[str, bool, float]],
@@ -129,7 +162,19 @@ def run_build_and_validate(
         heading("Step 8 · Tests (skipped)")
     else:
         heading("Step 8 · Tests")
-        if not run_step("Tests", step_test, results):
+        on_test_fail = _resolve_test_failure_action(args)
+        while True:
+            if run_step("Tests", step_test, results):
+                break
+
+            # Non-interactive mode can force deterministic behavior in CI.
+            action = _prompt_on_test_failure() if on_test_fail == "ask" else on_test_fail
+            if action == "retry":
+                warn("Retrying tests...")
+                continue
+            if action == "skip":
+                warn("Skipping tests by user choice; continuing pipeline.")
+                break
             return "", False
 
     heading("Step 9 · Quality Checks")
