@@ -20,7 +20,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [4.0.0]
 
 Focused on richer cross-source debugging: new database, browser, and security context flows with stronger request-id correlation, plus accessibility and SQL-history reliability polish across the viewer.
 
