@@ -95,7 +95,6 @@ function recordSqlQueryHistoryObservation(fp, lineIdx, ts, preview, dur) {
         evictOneSqlQueryHistoryLru();
     }
     recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur);
-    evictSqlQueryHistoryToCap();
 }
 
 function recordSqlQueryHistoryForAppendedItem(item) {
@@ -131,13 +130,7 @@ function resetSqlQueryHistory() {
 function sqlHistoryTargetLineLikelyHidden(idx) {
     var it = allLines[idx];
     if (!it) return true;
-    if (it.height <= 0) return true;
-    if (it.filteredOut || it.excluded || it.levelFiltered || it.sourceFiltered || it.classFiltered
-        || it.sqlPatternFiltered || it.searchFiltered || it.errorSuppressed || it.scopeFiltered
-        || it.repeatHidden) return true;
-    var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
-    if (!peeking && (it.userHidden || it.autoHidden)) return true;
-    return false;
+    return (typeof calcItemHeight === 'function') ? calcItemHeight(it) <= 0 : (it.height <= 0);
 }
 `;
 }

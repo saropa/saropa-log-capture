@@ -38,7 +38,6 @@ export function getSqlQueryHistoryPanelHtml(): string {
 export function getSqlQueryHistoryPanelScript(): string {
     return /* javascript */ `
 (function() {
-    function escAttr(str) { return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
     var panelEl = document.getElementById('sql-query-history-panel');
     var listEl = document.getElementById('sql-query-history-list');
     var emptyEl = document.getElementById('sql-query-history-empty');
@@ -124,38 +123,46 @@ export function getSqlQueryHistoryPanelScript(): string {
         }
         if (filtered.length === 0) {
             listEl.innerHTML = '';
-            emptyEl.style.display = '';
+            emptyEl.classList.remove('u-hidden');
             emptyEl.textContent = rows.length === 0
                 ? 'No parsed SQL fingerprints in this session yet.'
                 : 'No rows match your filter.';
             return;
         }
-        emptyEl.style.display = 'none';
-        var esc = (typeof escapeHtml === 'function') ? escapeHtml : function(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        };
+        emptyEl.classList.add('u-hidden');
+        var expandedFps = {};
+        var openRows = listEl.querySelectorAll('.sql-query-history-row[aria-expanded="true"]');
+        for (var j = 0; j < openRows.length; j++) {
+            var efp = openRows[j].getAttribute('data-fingerprint');
+            if (efp) expandedFps[efp] = true;
+        }
         var parts = [];
         for (i = 0; i < filtered.length; i++) {
             r = filtered[i];
             var durTxt = r.maxDur !== undefined ? String(r.maxDur) + ' ms' : '\u2014';
-            parts.push('<div class="sql-query-history-row" tabindex="0" aria-expanded="false"'
-                + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escAttr(r.fp) + '">'
+            parts.push('<div class="sql-query-history-row" role="button" tabindex="0" aria-expanded="false"'
+                + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escapeHtml(r.fp) + '">'
                 + '<div class="sql-query-history-row-main">'
                 + '<span class="sql-query-history-count">' + r.count + '</span>'
-                + '<span class="sql-query-history-dur">' + esc(durTxt) + '</span>'
+                + '<span class="sql-query-history-dur">' + escapeHtml(durTxt) + '</span>'
                 + '</div>'
-                + '<div class="sql-query-history-preview">' + esc(r.preview || r.fp) + '</div>'
+                + '<div class="sql-query-history-preview">' + escapeHtml(r.preview || r.fp) + '</div>'
                 + '<div class="sql-query-history-expanded u-hidden">'
-                + '<pre class="sql-query-history-sql">' + esc(formatSqlForExpand(r.fp)) + '</pre>'
+                + '<pre class="sql-query-history-sql">' + escapeHtml(formatSqlForExpand(r.fp)) + '</pre>'
                 + '<div class="sql-query-history-row-actions">'
                 + '<button type="button" class="sql-query-history-jump" title="Jump to first occurrence">'
                 + 'Line ' + (r.firstIdx + 1) + ' \\u2197</button>'
-                + '<button class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
+                + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
                 + '<span class="codicon codicon-copy"></span></button>'
                 + '</div></div>'
                 + '</div>');
         }
         listEl.innerHTML = parts.join('');
+        var newRows = listEl.querySelectorAll('.sql-query-history-row');
+        for (var j = 0; j < newRows.length; j++) {
+            var nfp = newRows[j].getAttribute('data-fingerprint');
+            if (nfp && expandedFps[nfp]) toggleSqlHistoryRow(newRows[j]);
+        }
     }
 
     window.refreshSqlQueryHistoryPanelIfOpen = function() {
@@ -164,7 +171,6 @@ export function getSqlQueryHistoryPanelScript(): string {
 
     window.openSqlQueryHistoryPanel = function() {
         if (!panelEl) return;
-        if (typeof rebuildSqlQueryHistoryFromAllLines === 'function') rebuildSqlQueryHistoryFromAllLines();
         sqlQueryHistoryPanelOpen = true;
         panelEl.classList.add('visible');
         setSqlHistoryHint('', false);
