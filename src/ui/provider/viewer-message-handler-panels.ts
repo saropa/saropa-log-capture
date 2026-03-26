@@ -90,6 +90,7 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
           {
             timestamp: msg.timestamp as number | undefined,
             hasDatabaseLine: msg.hasDatabaseLine === true,
+            lineText: typeof msg.lineText === 'string' ? msg.lineText : undefined,
           },
         ).catch(() => {});
         return true;
