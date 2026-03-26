@@ -16,6 +16,7 @@ import type { HighlightRule } from "../storage/highlight-rules";
 import type { AutoTagRule } from "../misc/auto-tagger";
 import {
   defaultHighlightRules,
+  type ErrorRateConfig,
   type SaropaLogCaptureConfig,
   type ViewerDbDetectorToggles,
   type WatchPatternSetting,
@@ -240,6 +241,9 @@ export function getConfig(): SaropaLogCaptureConfig {
     },
     verboseDap: ensureBoolean(cfg.get("verboseDap"), false),
     diagnosticCapture: ensureBoolean(cfg.get("diagnosticCapture"), false),
+    errorRateBucketSize: ensureEnum(cfg.get("errorRateBucketSize"), ["auto", "10s", "30s", "1m", "5m"], "auto"),
+    errorRateShowWarnings: ensureBoolean(cfg.get("errorRateShowWarnings"), true),
+    errorRateDetectSpikes: ensureBoolean(cfg.get("errorRateDetectSpikes"), true),
     fileTypes: ensureStringArray(cfg.get("fileTypes"), DEFAULT_FILE_TYPES),
     tailPatterns: ensureStringArray(cfg.get("tailPatterns"), ["**/*.log"]),
     docsScanDirs: ensureStringArray(cfg.get("docsScanDirs"), ["bugs", "docs"]),
@@ -312,6 +316,15 @@ export function viewerDbDetectorTogglesFromConfig(cfg: SaropaLogCaptureConfig): 
     nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
     slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
     baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+  };
+}
+
+/** Error rate chart config for the viewer (bucketSize, showWarnings, detectSpikes). */
+export function errorRateConfigFromConfig(cfg: SaropaLogCaptureConfig): ErrorRateConfig {
+  return {
+    bucketSize: cfg.errorRateBucketSize,
+    showWarnings: cfg.errorRateShowWarnings,
+    detectSpikes: cfg.errorRateDetectSpikes,
   };
 }
 
