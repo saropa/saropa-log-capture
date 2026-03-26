@@ -11,7 +11,9 @@ import { linkifyHtml, linkifyUrls } from '../../modules/source/source-linker';
 export {
     SOURCE_TERMINAL,
     SOURCE_EXTERNAL_PREFIX,
+    SOURCE_BROWSER,
     parseTerminalSidecarToPending,
+    parseBrowserSidecarToPending,
     externalSidecarLabelFromFileName,
     parseExternalSidecarToPending,
     parseUnifiedJsonlToPending,
