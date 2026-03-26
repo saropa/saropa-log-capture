@@ -57,11 +57,11 @@ function parseSessionDate(filename) {
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]).getTime();
 }
 /** Filter metadata entries by time range. */
-function filterByTime(metas, range) {
+function filterByTime(metas, range, nowMs = Date.now()) {
     if (range === 'all') {
         return metas;
     }
-    const cutoff = Date.now() - (timeRangeMs[range] ?? 0);
+    const cutoff = nowMs - (timeRangeMs[range] ?? 0);
     return metas.filter(m => parseSessionDate(m.filename) >= cutoff);
 }
 /** List log file relative paths under the configured log directory (used for metadata lookup). */
