@@ -177,6 +177,11 @@
         "title": "%command.openSqlQueryHistory.title%"
       },
       {
+        "command": "saropaLogCapture.showRelatedQueries",
+        "icon": "$(database)",
+        "title": "%command.showRelatedQueries.title%"
+      },
+      {
         "command": "saropaLogCapture.showCodeQualityForFrame",
         "enablement": "extension:saropa.saropa-lints",
         "icon": "$(symbol-misc)",

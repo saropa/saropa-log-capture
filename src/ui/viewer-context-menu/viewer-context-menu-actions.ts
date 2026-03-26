@@ -249,6 +249,11 @@ function onContextMenuAction(action) {
             vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts, hasDatabaseLine: hasDbLine, lineText: plainText });
             break;
         }
+        case 'show-related-queries': {
+            var rqTs = lineData.ts || lineData.timestamp;
+            vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: lineIdx, timestamp: rqTs, lineText: plainText });
+            break;
+        }
         case 'show-code-quality': {
             if (typeof showPopoverToast === 'function') showPopoverToast('Loading code quality…');
             vscodeApi.postMessage({ type: 'showCodeQualityForFrame', lineIndex: lineIdx, lineText: plainText });
