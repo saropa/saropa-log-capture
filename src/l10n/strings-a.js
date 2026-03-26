@@ -79,7 +79,10 @@ exports.stringsA = {
     'viewer.rchExpandTitle': 'Expand',
     'viewer.rchCopyAria': 'Copy signal',
     'viewer.rchCopied': 'Copied',
-    'viewer.rchConfPrefix': 'confidence: ',
+    'viewer.rchConfTooltipMedium':
+        'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.',
+    'viewer.rchConfTooltipLow':
+        'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.',
     'panel.aiExplainTitle': 'AI Explanation',
     'panel.aiExplainCopyBtn': 'Copy explanation',
     'panel.aiExplainCached': ' (cached)',
