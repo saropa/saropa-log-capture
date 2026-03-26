@@ -49,6 +49,7 @@ const SIDECAR_TYPES = [
     { suffix: '.requests.json', loader: context_sidecar_parsers_1.loadHttpContext },
     { suffix: '.terminal.log', loader: context_sidecar_parsers_1.loadTerminalContext },
     { suffix: '.browser.json', loader: context_sidecar_parsers_1.loadBrowserContext },
+    { suffix: '.queries.json', loader: context_sidecar_parsers_1.loadDatabaseContext },
 ];
 /**
  * Find sidecar files for a given log file.
@@ -136,6 +137,7 @@ async function loadContextData(logUri, window) {
         (result.http && result.http.length > 0) ||
         (result.terminal && result.terminal.length > 0) ||
         (result.docker && result.docker.length > 0) ||
+        (result.database && result.database.length > 0) ||
         (result.events && result.events.length > 0) ||
         (result.browser && result.browser.length > 0));
     return result;
