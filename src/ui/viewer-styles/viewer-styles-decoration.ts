@@ -186,6 +186,8 @@ export function getDecorationStyles(): string {
     pointer-events: none; z-index: 2;
 }
 .level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
+/* Recent-error context (same 2s window as a fault above; not the primary error line). */
+.level-bar-error-recent-context { --bar-color: color-mix(in srgb, var(--vscode-charts-red, #f44336) 38%, var(--vscode-panel-border, #555) 62%); }
 .level-bar-warning { --bar-color: var(--vscode-charts-yellow, #ffc107); }
 .level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
 .level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }

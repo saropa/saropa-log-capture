@@ -89,6 +89,13 @@ export function getLevelStyles(): string {
     color: var(--vscode-foreground);
     padding: 2px 4px;
 }
+.level-flyup-help {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.35;
+    padding: 0 4px 6px;
+    max-width: 260px;
+}
 .level-flyup-header {
     display: flex;
     gap: 8px;

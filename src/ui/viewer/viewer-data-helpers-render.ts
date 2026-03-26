@@ -67,13 +67,22 @@ function renderItem(item, idx, prevVis) {
         var level = item.level;
         // Blank lines: inherit severity bar from previous line for visual continuity (no decoration prefix).
         if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
-            level = allLines[idx - 1].level;
-            var prevFw = allLines[idx - 1].fw;
+            var prevLn = allLines[idx - 1];
+            level = prevLn.level;
+            var prevFw = prevLn.fw;
             var hasSeverity = level === 'error' || level === 'warning' || level === 'performance';
-            barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+            if (prevLn.recentErrorContext && level === 'error') {
+                barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-error-recent-context';
+            } else {
+                barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+            }
         } else if (!isBlank && level) {
-            var hasSeverity = level === 'error' || level === 'warning' || level === 'performance';
-            barCls = (item.fw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+            var hasSeverity2 = level === 'error' || level === 'warning' || level === 'performance';
+            if (item.recentErrorContext && level === 'error') {
+                barCls = (item.fw && !hasSeverity2) ? ' level-bar-framework' : ' level-bar-error-recent-context';
+            } else {
+                barCls = (item.fw && !hasSeverity2) ? ' level-bar-framework' : ' level-bar-' + level;
+            }
         }
     }
     if (item.type === 'stack-header') {
@@ -115,6 +124,9 @@ function renderItem(item, idx, prevVis) {
     var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
     var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
+    if (item.recentErrorContext && item.level === 'error' && !item.isContext) {
+        levelCls += ' recent-error-context';
+    }
     var sepCls = item.isSeparator ? ' separator-line' : '';
     var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
     var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
@@ -142,12 +154,26 @@ function renderItem(item, idx, prevVis) {
         if (item.logcatTag) html = wrapTagLink(html, item.logcatTag);
         if (item.sourceTag) html = wrapTagLink(html, item.sourceTag);
     }
+    if (item.recentErrorContext && item.level === 'error') {
+        var recTip = 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.';
+        if (titleAttr && titleAttr.indexOf('title=\"') >= 0) {
+            titleAttr = titleAttr.replace(/title=\"([^\"]*)\"/, function (_, inner) {
+                return 'title=\"' + inner + ' — ' + recTip.replace(/\"/g, '&quot;') + '\"';
+            });
+        } else {
+            titleAttr = ' title=\"' + recTip.replace(/\"/g, '&quot;') + '\"';
+        }
+    }
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';
     if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
         tintCls = ' line-tint-' + allLines[idx - 1].level;
     }
     var blankCls = isBlank ? ' line-blank' : '';
+    if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1]
+        && allLines[idx - 1].recentErrorContext && allLines[idx - 1].level === 'error') {
+        blankCls += ' recent-error-context';
+    }
     return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + '</div>' + annHtml;
 }
 `;
