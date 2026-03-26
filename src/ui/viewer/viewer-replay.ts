@@ -11,7 +11,7 @@
  * set via closest-option matching to avoid float display issues (e.g. 0.5x).
  *
  * ## Footer Actions menu (this script)
- * The popover in `viewer-content-body.ts` holds **Replay**, **Open quality report**, and **Export**.
+ * The popover in `viewer-content-body.ts` holds **Replay**, **Open Quality Report**, and **Export**.
  * Replay toggles the replay bar; export opens the export modal; quality report posts
  * `openQualityReport` to the extension (same as the former context-menu path).
  *

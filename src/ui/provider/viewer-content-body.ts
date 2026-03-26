@@ -119,9 +119,11 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
                 <button type="button" class="footer-actions-item" data-action="replay" role="menuitem">
                     <span class="codicon codicon-debug-start" aria-hidden="true"></span> Replay
                 </button>
+                <hr class="footer-actions-separator" role="separator">
                 <button type="button" class="footer-actions-item" data-action="open-quality-report" role="menuitem">
-                    <span class="codicon codicon-file-code" aria-hidden="true"></span> Open quality report
+                    <span class="codicon codicon-file-code" aria-hidden="true"></span> Open Quality Report
                 </button>
+                <hr class="footer-actions-separator" role="separator">
                 <button type="button" class="footer-actions-item" data-action="export" role="menuitem">
                     <span class="codicon codicon-export" aria-hidden="true"></span> Export
                 </button>
