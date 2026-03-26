@@ -246,6 +246,45 @@ export function getIconBarScript(): string {
         });
     }
 
+    /* ---- Focus trap + Escape ---- */
+    var FOCUSABLE = 'button:not([disabled]):not([style*="display:none"]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    document.addEventListener('keydown', function(e) {
+        if (!activePanel || !panelSlot) return;
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setActivePanel(activePanel);
+            return;
+        }
+
+        if (e.key !== 'Tab') return;
+
+        var children = panelSlot.children;
+        var panel = null;
+        for (var i = 0; i < children.length; i++) {
+            if (children[i].classList.contains('visible')) { panel = children[i]; break; }
+        }
+        if (!panel) return;
+
+        var focusable = Array.prototype.filter.call(
+            panel.querySelectorAll(FOCUSABLE),
+            function(el) { return el.offsetParent !== null; }
+        );
+        if (focusable.length === 0) return;
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    });
+
     setActivePanel('sessions');
 })();
 `;
