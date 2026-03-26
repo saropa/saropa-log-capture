@@ -71,12 +71,6 @@ export function getRootCauseHypothesesStyles(): string {
     color: var(--vscode-foreground);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
-.root-cause-hypotheses-disclaimer {
-    margin: 0 0 6px 0;
-    font-size: 11px;
-    color: var(--vscode-descriptionForeground);
-    font-style: italic;
-}
 .root-cause-hypotheses-list {
     margin: 0;
     padding-left: 1.15em;
@@ -94,6 +88,31 @@ export function getRootCauseHypothesesStyles(): string {
 }
 .root-cause-hyp-evidence:hover {
     opacity: 0.85;
+}
+.rch-copy-btn {
+    border: none;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    border-radius: 2px;
+    vertical-align: middle;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.root-cause-hypotheses-list li:hover .rch-copy-btn {
+    opacity: 1;
+}
+.rch-copy-btn:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.rch-copy-btn-done {
+    opacity: 1;
+    color: var(--vscode-charts-green, #89d185);
+    font-size: 11px;
 }
 .root-cause-hyp-conf {
     font-size: 10px;
