@@ -149,12 +149,14 @@ function buildTimelineHtml(result: TimelineLoadResult, filename: string, session
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
 <style nonce="${nonce}">${getUnifiedTimelineStyles()}</style>
 </head><body>
+<div role="main" aria-label="Timeline">
 ${renderHeader(filename)}
 ${renderToolbar(sourcesFound, stats)}
 ${correlationsSection}
 ${renderTimeScrubber(sessionStart, sessionEnd)}
 ${renderMinimap(minimapData)}
 <div class="timeline-container" id="timeline-container"></div>
+</div>
 <script nonce="${nonce}">${getAdvancedScript(eventsJson, sessionStart, sessionEnd)}</script>
 ${correlationScript}
 </body></html>`;

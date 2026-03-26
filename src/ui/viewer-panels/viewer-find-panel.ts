@@ -9,25 +9,25 @@
 /** Generate the Find in Files panel HTML. */
 export function getFindPanelHtml(): string {
     return /* html */ `
-<div id="find-panel" class="find-panel">
+<div id="find-panel" class="find-panel" role="region" aria-label="Find in Files">
     <div class="find-panel-header">
         <span>Find in Files</span>
         <div class="find-panel-header-actions">
-            <button id="find-sort-toggle" class="find-header-btn" title="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
-            <button id="find-panel-close" class="find-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
+            <button id="find-sort-toggle" class="find-header-btn" title="Sort by match count" aria-label="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
+            <button id="find-panel-close" class="find-panel-close" title="Close" aria-label="Close Find in Files"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="find-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="find-input-wrapper">
-            <input id="find-input" type="text" placeholder="Search all session files..." />
+            <input id="find-input" type="text" placeholder="Search all session files..." aria-label="Search all session files" />
             <div class="find-input-actions">
-                <button id="find-case-toggle" class="search-input-btn" title="Match Case">
+                <button id="find-case-toggle" class="search-input-btn" title="Match Case" aria-label="Match Case">
                     <span class="codicon codicon-case-sensitive"></span>
                 </button>
-                <button id="find-word-toggle" class="search-input-btn" title="Match Whole Word">
+                <button id="find-word-toggle" class="search-input-btn" title="Match Whole Word" aria-label="Match Whole Word">
                     <span class="codicon codicon-whole-word"></span>
                 </button>
-                <button id="find-regex-toggle" class="search-input-btn" title="Use Regular Expression">
+                <button id="find-regex-toggle" class="search-input-btn" title="Use Regular Expression" aria-label="Use Regular Expression">
                     <span class="codicon codicon-regex"></span>
                 </button>
             </div>
@@ -74,6 +74,8 @@ export function getFindPanelScript(): string {
         findPanelEl.classList.remove('visible');
         findPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('find');
+        var ibBtn = document.getElementById('ib-find');
+        if (ibBtn) ibBtn.focus();
     };
 
     function triggerSearch() {

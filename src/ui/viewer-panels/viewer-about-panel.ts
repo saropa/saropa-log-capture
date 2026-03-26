@@ -10,10 +10,10 @@ import { buildItemUrl } from "../../modules/marketplace-url";
 /** Generate the about panel HTML with static content. */
 export function getAboutPanelHtml(): string {
     return /* html */ `
-<div id="about-panel" class="about-panel">
+<div id="about-panel" class="about-panel" role="region" aria-label="About Saropa">
     <div class="about-panel-header">
         <span>About Saropa</span>
-        <button id="about-panel-close" class="about-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
+        <button id="about-panel-close" class="about-panel-close" title="Close" aria-label="Close About"><span class="codicon codicon-close"></span></button>
     </div>
     <div class="about-panel-content">
         <div class="ab-version-row">
@@ -46,6 +46,10 @@ export function getAboutPanelScript(): string {
         aboutPanelEl.classList.add('visible');
         injectVersion();
         if (typeof vscodeApi !== 'undefined') vscodeApi.postMessage({ type: 'requestAboutContent' });
+        requestAnimationFrame(function() {
+            var first = aboutPanelEl.querySelector('button');
+            if (first) first.focus();
+        });
     };
 
     window.closeAboutPanel = function() {
@@ -55,6 +59,8 @@ export function getAboutPanelScript(): string {
         var cl = document.getElementById('about-changelog');
         if (cl) cl.innerHTML = '<span class="ab-changelog-loading">Loading\\u2026</span>';
         if (typeof clearActivePanel === 'function') clearActivePanel('about');
+        var ibBtn = document.getElementById('ib-about');
+        if (ibBtn) ibBtn.focus();
     };
 
     function injectVersion() {
