@@ -1,0 +1,267 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+const assert = __importStar(require("assert"));
+const vscode = __importStar(require("vscode"));
+const bug_report_formatter_1 = require("../../../modules/bug-report/bug-report-formatter");
+function minimalData(overrides) {
+    return {
+        errorLine: 'NullPointerException: null',
+        fingerprint: 'abc12345',
+        stackTrace: [],
+        logContext: [],
+        environment: {},
+        devEnvironment: {},
+        gitHistory: [],
+        lineRangeHistory: [],
+        fileAnalyses: [],
+        logFilename: 'session.log',
+        lineNumber: 42,
+        ...overrides,
+    };
+}
+suite('BugReportFormatter', () => {
+    suite('formatBugReport — structure', () => {
+        test('should include Bug Report header', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('# Bug Report'));
+        });
+        test('should include error section with fingerprint', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('## Error'));
+            assert.ok(md.includes('abc12345'));
+        });
+        test('should include error line in code block', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('NullPointerException: null'));
+        });
+        test('should include Sources section with log filename', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('## Sources'));
+            assert.ok(md.includes('session.log'));
+        });
+        test('should include footer with line number', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('line 42'));
+        });
+        test('should include Saropa Lints promotion', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('Saropa Lints'));
+        });
+    });
+    suite('formatBugReport — stack trace', () => {
+        test('should show no stack trace message when empty', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('No stack trace detected'));
+        });
+        test('should format app frames with >>> prefix', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                stackTrace: [{ text: 'handler.dart:42', isApp: true }],
+            }));
+            assert.ok(md.includes('>>> handler.dart:42'));
+        });
+        test('should format framework frames with indent', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                stackTrace: [{ text: 'package:flutter/src/widgets.dart:100', isApp: false }],
+            }));
+            assert.ok(md.includes('    package:flutter'));
+        });
+        test('should show frame count summary', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                stackTrace: [
+                    { text: 'app.dart:1', isApp: true },
+                    { text: 'fw.dart:2', isApp: false },
+                ],
+            }));
+            assert.ok(md.includes('2 frames (1 app, 1 framework)'));
+        });
+    });
+    suite('formatBugReport — log context', () => {
+        test('should show no context message when empty', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('No preceding log lines'));
+        });
+        test('should include context lines', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                logContext: ['Starting app...', 'Connecting to API...'],
+            }));
+            assert.ok(md.includes('2 lines before error'));
+            assert.ok(md.includes('Starting app...'));
+        });
+    });
+    suite('formatBugReport — environment', () => {
+        test('should format environment as table', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                environment: { 'Dart SDK': '3.2.1', 'Flutter': '3.16.0' },
+            }));
+            assert.ok(md.includes('## Environment'));
+            assert.ok(md.includes('Dart SDK'));
+            assert.ok(md.includes('3.2.1'));
+        });
+        test('should show empty message when no environment', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(md.includes('No environment data available'));
+        });
+    });
+    suite('formatBugReport — optional sections', () => {
+        test('should include blame section when present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                blame: { hash: 'abc1234', author: 'alice', date: '2024-01-15', message: 'fix timeout' },
+            }));
+            assert.ok(md.includes('## Git Blame'));
+            assert.ok(md.includes('alice'));
+            assert.ok(md.includes('fix timeout'));
+        });
+        test('should include git history when present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                gitHistory: [{ hash: 'abc1234', date: '2024-01-15', message: 'initial commit' }],
+            }));
+            assert.ok(md.includes('## Recent Git History'));
+            assert.ok(md.includes('abc1234'));
+        });
+        test('should include investigation context when present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                logFilename: '',
+                lineNumber: 1,
+                investigationContext: {
+                    name: 'My Investigation',
+                    createdAt: 1700000000000,
+                    sources: [{ label: 'session.log', type: 'session', pinnedAt: 1700000001000 }],
+                    lastSearchQuery: 'TimeoutException',
+                    lastSearchMatchCount: 5,
+                    notes: 'Repro steps noted.',
+                },
+            }));
+            assert.ok(md.includes('## Investigation Context'));
+            assert.ok(md.includes('My Investigation'));
+            assert.ok(md.includes('session.log'));
+            assert.ok(md.includes('TimeoutException'));
+            assert.ok(md.includes('Matches: 5'));
+            assert.ok(md.includes('Repro steps noted.'));
+            assert.ok(md.includes('Report generated from investigation context'));
+        });
+        test('should include cross-session data when present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                crossSessionMatch: {
+                    sessionCount: 3,
+                    totalOccurrences: 10,
+                    firstSeen: '2024-01-10',
+                    lastSeen: '2024-01-15',
+                },
+            }));
+            assert.ok(md.includes('## Cross-Session History'));
+            assert.ok(md.includes('3 sessions'));
+            assert.ok(md.includes('10 occurrences'));
+        });
+        test('should include affected files when present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                fileAnalyses: [{
+                        filePath: '/src/handler.dart',
+                        uri: vscode.Uri.file('/src/handler.dart'),
+                        recentCommits: [],
+                        frameLines: [42, 58],
+                    }],
+            }));
+            assert.ok(md.includes('## Affected Files'));
+            assert.ok(md.includes('handler.dart'));
+            assert.ok(md.includes('L42, L58'));
+        });
+        test('should include primary source path in Sources', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                primarySourcePath: '/src/handler.dart',
+            }));
+            assert.ok(md.includes('handler.dart'));
+        });
+        test('should include repository URL when available', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                devEnvironment: { 'Git Remote': 'https://github.com/test/repo' },
+            }));
+            assert.ok(md.includes('https://github.com/test/repo'));
+        });
+    });
+    suite('formatBugReport — health score', () => {
+        test('should include health score in header when lintMatches present', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                lintMatches: {
+                    matches: [],
+                    totalInExport: 42,
+                    tier: 'comprehensive',
+                    version: '4.14.0',
+                    timestamp: new Date().toISOString(),
+                    isStale: false,
+                    hasExtension: false,
+                    filesAnalyzed: 100,
+                    byImpact: { critical: 1, medium: 5 },
+                },
+            }));
+            assert.ok(md.includes('Project health:'));
+            assert.ok(md.includes('/100'));
+            assert.ok(md.includes('comprehensive tier'));
+            assert.ok(md.includes('42 violations'));
+        });
+        test('should not include health score when no lintMatches', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData());
+            assert.ok(!md.includes('Project health:'));
+        });
+        test('should not include health score when filesAnalyzed is 0', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                lintMatches: {
+                    matches: [],
+                    totalInExport: 0,
+                    tier: 'unknown',
+                    timestamp: new Date().toISOString(),
+                    isStale: false,
+                    hasExtension: false,
+                    filesAnalyzed: 0,
+                    byImpact: {},
+                },
+            }));
+            assert.ok(!md.includes('Project health:'));
+        });
+    });
+    suite('formatBugReport — singular/plural', () => {
+        test('should use singular for 1 session', () => {
+            const md = (0, bug_report_formatter_1.formatBugReport)(minimalData({
+                crossSessionMatch: {
+                    sessionCount: 1, totalOccurrences: 1,
+                    firstSeen: '2024-01-10', lastSeen: '2024-01-10',
+                },
+            }));
+            assert.ok(md.includes('1 session'));
+            assert.ok(md.includes('1 occurrence'));
+        });
+    });
+});
+//# sourceMappingURL=bug-report-formatter.test.js.map

@@ -22,11 +22,15 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+Focused on richer cross-source debugging: new database, browser, and security context flows with stronger request-id correlation, plus accessibility and SQL-history reliability polish across the viewer.
+
 ### Added
 
 • **Security/audit integration — event summary and configurable settings** — The security provider now produces a categorized event summary in session metadata (e.g. "3 logon, 2 failed logon") instead of bare sidecar filenames. Lead/lag time windows now read from the shared Windows Events config instead of hardcoded values. Two new settings: `includeSummaryInHeader` adds a summary line to the session header, and `includeInBugReport` flags the sidecar for bug reports. All five security settings are now declared in `package.json` for Settings UI discoverability.
 
 • **Database integration — parse mode** — The database query logs provider now supports `mode: "parse"` (the default) which scans the captured session log at session end for inline SQL blocks (SELECT, INSERT, UPDATE, DELETE, etc.). Detected queries are indexed by line number and optional request ID, then written to a `.queries.json` sidecar. A custom `queryBlockPattern` regex can override the built-in SQL detection. All six database settings are now declared in `package.json`.
+
+• **Related Queries popover** — Right-click a log line → Actions → "Show Related Queries" opens a focused, queries-only popover showing all database queries correlated by request ID or time window. Each query has a per-query copy button and the footer has "Copy All". Also available via command palette ("Show Related Queries") which targets the currently focused line.
 
 • **Database queries in context popover** — The `.queries.json` sidecar is now loaded by the context data loader and included in the integration context popover when right-clicking a log line. Queries are filtered by the time window and show query text, line range, optional request ID, and duration. Each query has a copy-to-clipboard button.
 
@@ -48,27 +52,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Browser integration — Settings UI** — All seven browser integration settings are now declared in `package.json` and visible in the VS Code Settings UI: `mode`, `browserLogPath`, `browserLogFormat`, `maxEvents`, `cdpUrl`, `includeNetwork`, and `requestIdPattern`.
 
-### Fixed
-
-• **CDP capture — stale WebSocket race condition** — The CDP message handler now verifies the WebSocket identity before buffering events, preventing stale messages from a closing connection from leaking into a new capture session's buffer.
-
-• **CDP capture — zombie state on timeout** — When the CDP connection times out, the module-level capture state is now cleared immediately, so `isCdpCaptureActive()` correctly returns `false` for a dead connection.
-
 ### Changed
 
 • **Accessibility — landmarks and labels for all panels** — Every slide-out panel (Find, Bookmarks, Trash, Filters, Crashlytics, About, Keyboard Shortcuts) now has `role="region"` and `aria-label`; icon-only buttons and search inputs have `aria-label`. All standalone panels (Session Comparison, Timeline, Investigation, Bug Report, AI Explain, Vitals, Analysis) now have a `role="main"` landmark. Focus moves into each panel on open and returns to the icon bar button on close. Analysis progress bar uses `role="progressbar"` with `aria-valuenow`/`aria-valuemin`/`aria-valuemax`.
 
 • **Accessibility — focus trap for slide-out panels** — Tab and Shift+Tab now cycle through focusable elements within the active panel only, preventing focus from escaping to the background viewer. Escape closes the active panel.
-
-### Fixed
-
-• **SQL history — jump-to-line now detects all hidden-line states** — The "target line is hidden" hint now delegates to `calcItemHeight`, catching compress-dup, time-range filter, multi-source filter, blank-line suppression, and app-only mode that were previously missed.
-
-• **SQL history — HTML escaping for fingerprints** — Replaced incomplete `escAttr` (only `&` and `"`) with the global `escapeHtml`, preventing potential HTML injection from fingerprints containing `<` or `>`.
-
-• **SQL history — copy button missing `type="button"`** — Added explicit `type="button"` to the per-row copy button to prevent accidental form submission.
-
-### Changed
 
 • **Modularized oversized files** — Split 6 files that exceeded the 300-line code limit into smaller, focused modules: extracted DB tab styles, footer styles, context-menu styles, DB tab timeline/brush script, popover DB-insight section, and merge-parity tests into dedicated files.
 
@@ -82,19 +70,27 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **SQL history — empty state uses `u-hidden`** — Replaced inline `style.display` with the project's `u-hidden` CSS class for consistency.
 
+### Fixed
+
+• **CDP capture — stale WebSocket race condition** — The CDP message handler now verifies the WebSocket identity before buffering events, preventing stale messages from a closing connection from leaking into a new capture session's buffer.
+
+• **CDP capture — zombie state on timeout** — When the CDP connection times out, the module-level capture state is now cleared immediately, so `isCdpCaptureActive()` correctly returns `false` for a dead connection.
+
+• **SQL history — jump-to-line now detects all hidden-line states** — The "target line is hidden" hint now delegates to `calcItemHeight`, catching compress-dup, time-range filter, multi-source filter, blank-line suppression, and app-only mode that were previously missed.
+
+• **SQL history — HTML escaping for fingerprints** — Replaced incomplete `escAttr` (only `&` and `"`) with the global `escapeHtml`, preventing potential HTML injection from fingerprints containing `<` or `>`.
+
+• **SQL history — copy button missing `type="button"`** — Added explicit `type="button"` to the per-row copy button to prevent accidental form submission.
+
 ---
 
 ## [3.14.0]
 
 Cleans up SQL history (deduplicated rows, HTML entities, copy UX), renames Hypotheses to Signals, and polishes the options panel, search bar, and actions menu. [log](https://github.com/saropa/saropa-log-capture/blob/v3.14.0/CHANGELOG.md)
 
-### Fixed
+### Added
 
-• **SQL history — deduplicated rows** — Each query was rendered twice (preview + fingerprint). Now shows a single collapsed line; click to expand with formatted SQL (indented keywords), a "Jump to line" link, and copy button.
-
-• **SQL history — copy UX** — Header copy button now shows "Copied N rows to clipboard" feedback in the hint bar. Per-row copy button copies a single fingerprint. SQL preview and expanded text are selectable for native Ctrl+C copy.
-
-• **SQL history & repeat previews — HTML entities rendered** — `&quot;`, `&lt;`, `&gt;`, `&#39;`, and `&amp;` now display as their actual characters in the SQL query history panel and repeat notification previews instead of showing as raw entity text.
+• **Copy signal** — Each signal bullet now has a copy button (appears on hover) that copies the signal text to the clipboard.
 
 ### Changed
 
@@ -116,25 +112,19 @@ Cleans up SQL history (deduplicated rows, HTML entities, copy UX), renames Hypot
 
 • **Integrations panel — Title Case headings** — All integration labels now use consistent Title Case (e.g. "Code Coverage", "Terminal Output").
 
-### Added
-
-• **Copy signal** — Each signal bullet now has a copy button (appears on hover) that copies the signal text to the clipboard.
-
 ### Fixed
+
+• **SQL history — deduplicated rows** — Each query was rendered twice (preview + fingerprint). Now shows a single collapsed line; click to expand with formatted SQL (indented keywords), a "Jump to line" link, and copy button.
+
+• **SQL history — copy UX** — Header copy button now shows "Copied N rows to clipboard" feedback in the hint bar. Per-row copy button copies a single fingerprint. SQL preview and expanded text are selectable for native Ctrl+C copy.
+
+• **SQL history & repeat previews — HTML entities rendered** — `&quot;`, `&lt;`, `&gt;`, `&#39;`, and `&amp;` now display as their actual characters in the SQL query history panel and repeat notification previews instead of showing as raw entity text.
 
 • **Smart bookmarks — skip prompt for inactive logs** — The "add bookmark at first error" suggestion now only appears for the active (recording) session, not when browsing historical logs.
 
 ## [3.13.0]
 
 Major database tooling release: SQL pattern chips, N+1 detection, slow query burst markers, repeat drilldown, minimap SQL density, root-cause hypotheses, session comparison diffs, and noise learning. [log](https://github.com/saropa/saropa-log-capture/blob/v3.13.0/CHANGELOG.md)
-
-### Changed
-
-• **Drift Advisor — contract `schemaVersion`** — Log Capture’s built-in snapshot mapping sets optional **`schemaVersion`** on **`meta.integrations['saropa-drift-advisor']`** and on **`{logBase}.drift-advisor.json`** (default **`1`** via **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`** when the Drift snapshot omits it; preserves Drift-supplied values). JSON schema and [docs/integrations/README.md](docs/integrations/README.md) updated. See [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) §4.3–4.4.
-
-• **DB_15 — embed merge codegen** — `mergeDbDetectorResultsByStableKey` is implemented once in **`db-detector-merge-stable-key.ts`**; **`npm run generate:db-detector-embed-merge`** emits **`src/ui/viewer/generated/db-detector-embed-merge.generated.ts`** for the webview embed. **`npm run compile`** runs codegen first.
-
-• **Docs — Saropa Drift Advisor integration** — Added [docs/integrations/README.md](docs/integrations/README.md) (user index: adapter, setting, links to [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) and [plans/integrations/drift-advisor-session.schema.json](plans/integrations/drift-advisor-session.schema.json)). Published-history Drift bullet now uses those paths (replacing broken `docs/integrations/*.schema.json` / design links). Integration plan §12 and §2–§5.4 updated for current `saropa_drift_advisor` behavior.
 
 ### Added
 
@@ -186,11 +176,13 @@ Major database tooling release: SQL pattern chips, N+1 detection, slow query bur
 
 • **Log viewer — adaptive repeat collapse for Drift SQL** — Real-time duplicate collapse keys **`database`** Drift lines by **normalized SQL fingerprint** (same shape, different args still count as one streak). **SELECT / WITH / PRAGMA** use a lower default minimum count than **BEGIN / COMMIT / ROLLBACK**, and **INSERT / UPDATE / DELETE** use a higher default so writes stay visible longer. Tune with **`saropaLogCapture.repeatCollapseGlobalMinCount`**, **`repeatCollapseReadMinCount`**, **`repeatCollapseTransactionMinCount`**, and **`repeatCollapseDmlMinCount`** (each ≥ 2, capped at 50). Non-SQL lines use the global setting only. Sparse repeats may not reach a high threshold inside the existing repeat time window.
 
-### Fixed
-
-• **Log viewer — `dbInsight` on unparsed database lines** — **`database`**-tagged lines that do not yield a parsed SQL fingerprint still get a **`dbInsight`** object with a truncated **Drift:** snippet so the integration popover can show context (`viewer-data-add-db-detectors.ts`).
-
 ### Changed
+
+• **Drift Advisor — contract `schemaVersion`** — Log Capture’s built-in snapshot mapping sets optional **`schemaVersion`** on **`meta.integrations['saropa-drift-advisor']`** and on **`{logBase}.drift-advisor.json`** (default **`1`** via **`DRIFT_ADVISOR_CONTRACT_SCHEMA_VERSION`** when the Drift snapshot omits it; preserves Drift-supplied values). JSON schema and [docs/integrations/README.md](docs/integrations/README.md) updated. See [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) §4.3–4.4.
+
+• **DB_15 — embed merge codegen** — `mergeDbDetectorResultsByStableKey` is implemented once in **`db-detector-merge-stable-key.ts`**; **`npm run generate:db-detector-embed-merge`** emits **`src/ui/viewer/generated/db-detector-embed-merge.generated.ts`** for the webview embed. **`npm run compile`** runs codegen first.
+
+• **Docs — Saropa Drift Advisor integration** — Added [docs/integrations/README.md](docs/integrations/README.md) (user index: adapter, setting, links to [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md) and [plans/integrations/drift-advisor-session.schema.json](plans/integrations/drift-advisor-session.schema.json)). Published-history Drift bullet now uses those paths (replacing broken `docs/integrations/*.schema.json` / design links). Integration plan §12 and §2–§5.4 updated for current `saropa_drift_advisor` behavior.
 
 • **Compare logs — webview implementation** — Session comparison HTML and embedded script live in **`session-comparison-html.ts`** and **`session-comparison-webview-script.ts`** (ESLint `max-lines` / `max-params`); the webview sets **`localResourceRoots`** to the extension URI for consistency with other panels. Embedded scroll/sync handlers guard missing DOM nodes; **`isPersistedDriftSqlFingerprintSummaryV1`** rejects array **`fingerprints`** values (JS **`typeof [] === 'object'`** false positive).
 
@@ -212,13 +204,13 @@ Major database tooling release: SQL pattern chips, N+1 detection, slow query bur
 
 • **Filters — Code Location Scope hint** — Contextual “empty log” guidance under location narrowing is **debounced** from virtual-scroll `recalcHeights` (avoids an O(n) line scan on every layout pass) while **flushing immediately** after user-driven scope changes (`applyScopeFilter` / `syncScopeUi` / context messages). See `viewer-scope-filter.ts` and `viewer-scope-filter-hint.test.ts`.
 
-### Fixed
-
 • **Drift SQL false-positive severity in log viewer** — `I/flutter ... Drift: Sent ...` lines are no longer promoted to **error** just because SQL args contain tokens such as `ApplicationLogError`. Drift statement logs now keep their logcat-driven level (`info` for `I/`, `debug` for `D/`/`V/`), so informational DB traffic does not render as red errors.
 
 • **Context menu — code quality** — **Show code quality** is **disabled** (with tooltip) when the **codeQuality** session integration is not enabled, instead of opening an empty popover.
 
 • **Compress lines (×N)** — Consecutive and non-consecutive duplicate collapse only counts lines that would still be visible under the active level, source, search, scope, app-only, and blank-line rules, so filtered-out duplicates no longer inflate **(×N)** on a surviving row.
+
+• **Log viewer — `dbInsight` on unparsed database lines** — **`database`**-tagged lines that do not yield a parsed SQL fingerprint still get a **`dbInsight`** object with a truncated **Drift:** snippet so the integration popover can show context (`viewer-data-add-db-detectors.ts`).
 
 ## [3.12.1]
 
@@ -578,15 +570,13 @@ Replay controls redesigned for a cleaner, less intrusive UX. [log](https://githu
 
 • **Publish script spawns unwanted windows on Windows.** Extension listing now reads the filesystem (`~/.vscode/extensions/`, `~/.cursor/extensions/`) instead of calling `code --list-extensions` / `cursor --list-extensions`, which spawned persistent editor windows. Added `CREATE_NO_WINDOW` flag to all subprocess calls to suppress cmd.exe console flashes. Marketplace browser open after publish is now prompted instead of automatic.
 
+• **Stray .meta.json files polluting user projects.** A fallback code path wrote `.meta.json` sidecar files next to arbitrary files across workspace folders instead of using the central metadata store. Removed the sidecar write path entirely — all metadata now goes through `.session-metadata.json` only. On activation the extension scans for and deletes orphan `.meta.json` sidecars that match its format, cleaning up affected projects automatically.
+
 ### Added
 
 • **Getting Started walkthrough command.** Added `Saropa Log Capture: Getting Started` command to open the VS Code walkthrough directly, plus an "About Saropa" step with ecosystem and company info. The walkthrough auto-opens on first install.
 
 • **OWASP Security Context in bug reports.** Bug reports now include a "Security Context" section when crash-related files have OWASP-mapped lint violations, showing categories (M1–M10, A01–A10) with affected rules. OWASP findings also appear in Key Findings.
-
-### Fixed
-
-• **Stray .meta.json files polluting user projects.** A fallback code path wrote `.meta.json` sidecar files next to arbitrary files across workspace folders instead of using the central metadata store. Removed the sidecar write path entirely — all metadata now goes through `.session-metadata.json` only. On activation the extension scans for and deletes orphan `.meta.json` sidecars that match its format, cleaning up affected projects automatically.
 
 ## [3.5.1]
 

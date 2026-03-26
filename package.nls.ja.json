@@ -33,6 +33,7 @@
   "command.showCodeQualityForFrame.title": "Saropa Log Capture: Show code quality for frame",
   "command.openQualityReport.title": "Saropa Log Capture: Open quality report",
   "command.openSqlQueryHistory.title": "Saropa Log Capture: Open SQL Query History",
+  "command.showRelatedQueries.title": "Saropa Log Capture: Show Related Queries",
   "command.showTimeline.title": "Saropa Log Capture: ログタイムラインを表示",
   "command.compareSessions.title": "Saropa Log Capture: ログを比較",
   "command.markForComparison.title": "比較のためにマーク",

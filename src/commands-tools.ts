@@ -25,6 +25,9 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.openSqlQueryHistory', () => {
             broadcaster.postToWebview({ type: 'openSqlQueryHistoryPanel' });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.showRelatedQueries', () => {
+            broadcaster.postToWebview({ type: 'triggerShowRelatedQueries' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.rebuildProjectIndex', async () => {
             const indexer = getGlobalProjectIndexer();
             if (!indexer) {

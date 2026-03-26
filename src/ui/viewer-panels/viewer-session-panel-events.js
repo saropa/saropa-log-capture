@@ -1,0 +1,173 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSessionPanelEventsScript = getSessionPanelEventsScript;
+/**
+ * Session panel: toggle buttons, resize, session list events, close/refresh/pagination/tags,
+ * outside click, header path, and message listener. Inlined into the same IIFE as viewer-session-panel.
+ */
+function getSessionPanelEventsScript() {
+    return `
+    function syncToggleButtons() {
+        var ids = {
+            'session-toggle-strip': !sessionDisplayOptions.stripDatetime,
+            'session-toggle-normalize': sessionDisplayOptions.normalizeNames,
+            'session-toggle-headings': sessionDisplayOptions.showDayHeadings,
+            'session-toggle-reverse': sessionDisplayOptions.reverseSort,
+            'session-toggle-latest': sessionDisplayOptions.showLatestOnly,
+        };
+        for (var id in ids) {
+            var el = document.getElementById(id);
+            if (el) el.classList.toggle('active', ids[id]);
+        }
+        var sortBtn = document.getElementById('session-toggle-reverse');
+        if (sortBtn) {
+            var icon = sortBtn.querySelector('.codicon');
+            if (icon) icon.style.transform = sessionDisplayOptions.reverseSort ? 'scaleY(-1)' : '';
+        }
+        var dateRangeEl = document.getElementById('session-date-range');
+        if (dateRangeEl && dateRangeEl.value !== (sessionDisplayOptions.dateRange || 'all')) dateRangeEl.value = sessionDisplayOptions.dateRange || 'all';
+    }
+
+    function toggleOption(key) {
+        var copy = {};
+        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+        copy[key] = !copy[key];
+        sessionDisplayOptions = copy;
+        sessionListPage = 0;
+        syncToggleButtons();
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    }
+
+    function bindToggle(id, key) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function(e) { e.stopPropagation(); toggleOption(key); });
+    }
+
+    bindToggle('session-toggle-strip', 'stripDatetime');
+    bindToggle('session-toggle-normalize', 'normalizeNames');
+    bindToggle('session-toggle-headings', 'showDayHeadings');
+    bindToggle('session-toggle-reverse', 'reverseSort');
+    bindToggle('session-toggle-latest', 'showLatestOnly');
+
+    var dateRangeSelect = document.getElementById('session-date-range');
+    if (dateRangeSelect) dateRangeSelect.addEventListener('change', function() {
+        var copy = {};
+        for (var k in sessionDisplayOptions) copy[k] = sessionDisplayOptions[k];
+        copy.dateRange = dateRangeSelect.value;
+        sessionDisplayOptions = copy;
+        sessionListPage = 0;
+        vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        if (cachedSessions) renderSessionList(cachedSessions);
+    });
+
+    initSessionPanelResize(sessionPanelEl, function(w) {
+        if (w > 0) {
+            sessionDisplayOptions.panelWidth = w;
+            window.__sharedPanelWidth = w;
+            vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
+        }
+    });
+
+    if (sessionListEl) {
+        sessionListEl.addEventListener('click', function(e) {
+            var item = e.target.closest('.session-item');
+            if (!item) return;
+            var uri = item.getAttribute('data-uri') || '';
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                selectedSessionUris[uri] = !selectedSessionUris[uri];
+                if (cachedSessions) renderSessionList(cachedSessions);
+                return;
+            }
+            selectedSessionUris = Object.create(null);
+            if (cachedSessions) renderSessionList(cachedSessions);
+            vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+        });
+        sessionListEl.addEventListener('contextmenu', function(e) {
+            var item = e.target.closest('.session-item');
+            if (!item) return;
+            e.preventDefault();
+            if (typeof showSessionContextMenu !== 'function') return;
+            var selected = sessionListEl.querySelectorAll('.session-item-selected');
+            var useMulti = selected.length > 0 && Array.prototype.indexOf.call(selected, item) >= 0;
+            var uris = useMulti
+                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-uri') || ''; })
+                : [item.getAttribute('data-uri') || ''];
+            var filenames = useMulti
+                ? Array.prototype.map.call(selected, function(el) { return el.getAttribute('data-filename') || ''; })
+                : [item.getAttribute('data-filename') || ''];
+            showSessionContextMenu(e.clientX, e.clientY, uris, filenames, false);
+        });
+    }
+
+    var closeBtn = document.getElementById('session-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeSessionPanel);
+    var refreshBtn = document.getElementById('session-refresh');
+    if (refreshBtn) refreshBtn.addEventListener('click', requestSessionList);
+    if (sessionListPaginationEl) {
+        sessionListPaginationEl.addEventListener('click', function(e) {
+            var btn = e.target.closest('button');
+            if (!btn || !cachedSessions) return;
+            if (btn.id === 'session-pagination-prev') { sessionListPage--; renderSessionList(cachedSessions); }
+            if (btn.id === 'session-pagination-next') { sessionListPage++; renderSessionList(cachedSessions); }
+        });
+    }
+    var tagsBtn = document.getElementById('session-filter-tags');
+    if (tagsBtn) tagsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (typeof toggleSessionTagsSection === 'function') toggleSessionTagsSection();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!sessionPanelOpen) return;
+        if (sessionPanelEl && sessionPanelEl.contains(e.target)) return;
+        var ibBtn = document.getElementById('ib-sessions');
+        if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
+        var ctxMenu = document.getElementById('session-context-menu');
+        if (ctxMenu && ctxMenu.contains(e.target)) return;
+        closeSessionPanel();
+    });
+
+    function updateHeaderPath(rootLabel, isDefault) {
+        var headerPathEl = document.getElementById('session-header-path');
+        var pathText = document.getElementById('session-path-text');
+        var resetBtn = document.getElementById('session-reset-root');
+        if (headerPathEl) headerPathEl.style.display = isDefault ? 'none' : '';
+        if (pathText) pathText.textContent = isDefault ? '' : (rootLabel || 'No workspace');
+        if (resetBtn) resetBtn.style.display = isDefault ? 'none' : '';
+    }
+
+    var headerClickableEl = document.getElementById('session-header-clickable');
+    if (headerClickableEl) headerClickableEl.addEventListener('click', function() { vscodeApi.postMessage({ type: 'browseSessionRoot' }); });
+    var resetRootBtn = document.getElementById('session-reset-root');
+    if (resetRootBtn) resetRootBtn.addEventListener('click', function(e) { e.stopPropagation(); vscodeApi.postMessage({ type: 'clearSessionRoot' }); });
+
+    window.addEventListener('message', function(e) {
+        if (!e.data) return;
+        if (e.data.type === 'sessionListLoading') {
+            var labelEl = document.getElementById('session-loading-label');
+            if (labelEl) labelEl.textContent = (e.data.folderPath ? 'Loading ' + e.data.folderPath + '…' : 'Loading…');
+        }
+        if (e.data.type === 'sessionList') {
+            cachedSessions = e.data.sessions;
+            sessionListPage = 0;
+            renderSessionList(e.data.sessions);
+            if (typeof e.data.isDefault !== 'undefined') { updateHeaderPath(e.data.label, e.data.isDefault); }
+        }
+        if (e.data.type === 'sessionDisplayOptions') {
+            var opts = e.data.options || sessionDisplayOptions;
+            sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
+            sessionListPage = 0;
+            window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
+            var slot = document.getElementById('panel-slot');
+            if (slot && parseInt(slot.style.width, 10) > 0) {
+                slot.style.width = window.__sharedPanelWidth + 'px';
+            }
+            syncToggleButtons();
+            if (cachedSessions) renderSessionList(cachedSessions);
+        }
+    });
+`;
+}
+//# sourceMappingURL=viewer-session-panel-events.js.map
