@@ -37,27 +37,28 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
 <style nonce="${nonce}">${getInvestigationPanelStyles()}</style>
 </head><body>
+<div role="main" aria-label="Investigation">
 <div class="header">
     <div class="header-left">
-        <div class="title"><span class="title-icon">🔍</span>${escapeHtml(inv.name)}</div>
+        <div class="title"><span class="title-icon" aria-hidden="true">🔍</span>${escapeHtml(inv.name)}</div>
         <div class="subtitle">${t('msg.investigationSources', String(inv.sources.length))}</div>
     </div>
     <div class="header-right">
-        <button class="close-btn" title="${t('action.closeInvestigation')}">✕</button>
+        <button class="close-btn" title="${t('action.closeInvestigation')}" aria-label="${t('action.closeInvestigation')}">✕</button>
     </div>
 </div>
 <div class="content">
     <div class="section">
-        <div class="section-title">📌 ${t('label.pinnedSources')} <button class="btn btn-secondary add-source-btn">+ ${t('action.add')}</button></div>
+        <div class="section-title"><span aria-hidden="true">📌</span> ${t('label.pinnedSources')} <button class="btn btn-secondary add-source-btn">+ ${t('action.add')}</button></div>
         <div class="sources-list">${sourcesHtml}</div>
     </div>
     <div class="search-section">
         <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" placeholder="${t('placeholder.searchSources')}" value="${escapeHtml(inv.lastSearchQuery ?? '')}">
-            <button class="search-history-btn" title="${t('action.searchHistory')}">▾</button>
-            <button class="search-options-btn" title="${t('action.searchOptions')}">⚙</button>
-            <button class="search-clear" title="${t('action.clear')}">✕</button>
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input type="text" class="search-input" placeholder="${t('placeholder.searchSources')}" aria-label="${t('placeholder.searchSources')}" value="${escapeHtml(inv.lastSearchQuery ?? '')}">
+            <button class="search-history-btn" title="${t('action.searchHistory')}" aria-label="${t('action.searchHistory')}">▾</button>
+            <button class="search-options-btn" title="${t('action.searchOptions')}" aria-label="${t('action.searchOptions')}">⚙</button>
+            <button class="search-clear" title="${t('action.clear')}" aria-label="${t('action.clear')}">✕</button>
         </div>
         <div class="search-history-dropdown hidden"></div>
         <div class="search-options hidden">
@@ -92,6 +93,7 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
     <button class="btn share-btn">📤 ${t('action.shareInvestigation')}</button>
     <button class="btn export-btn">📦 ${t('action.exportSlc')}</button>
     <button class="btn report-btn">📋 ${t('action.generateBugReport')}</button>
+</div>
 </div>
 <script nonce="${nonce}">${getInvestigationPanelScript()}</script>
 </body></html>`;

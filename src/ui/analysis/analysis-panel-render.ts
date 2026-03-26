@@ -62,10 +62,10 @@ export function buildProgressiveShell(opts: ShellOptions): string {
     // 6 = trend + docs + symbols + tokens + github + firebase
     const sectionCount = errorSlots + (hasSource ? 3 : 0) + (hasTag ? 2 : 0) + 6;
     const actionBar = isError && errorHash ? renderActionBar(errorHash, true) : '';
-    return wrapHtml(nonce, `<div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
-        <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn">Stop</button></div>
-        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" data-total="${sectionCount}" style="width:0%"></div></div></div>
-        <div id="executive-summary"></div><div class="content">${slots}</div>${actionBar}`);
+    return wrapHtml(nonce, `<div role="main" aria-label="Line Analysis"><div class="header"><div class="analyzed-line">${escapeHtml(lineText)}</div>
+        <div class="summary"><span id="progress-text">Analyzing... 0/${sectionCount} complete</span> <button class="cancel-btn" id="cancel-btn" aria-label="Cancel analysis">Stop</button></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="${sectionCount}" data-total="${sectionCount}" style="width:0%"></div></div></div>
+        <div id="executive-summary"></div><div class="content">${slots}</div>${actionBar}</div>`);
 }
 
 function loadingSlot(id: string, message: string): string {
