@@ -30,6 +30,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [3.14.0]
 
+Cleans up SQL history (deduplicated rows, HTML entities, copy UX), renames Hypotheses to Signals, and polishes the options panel, search bar, and actions menu. [log](https://github.com/saropa/saropa-log-capture/blob/v3.14.0/CHANGELOG.md)
+
 ### Fixed
 
 • **SQL history — deduplicated rows** — Each query was rendered twice (preview + fingerprint). Now shows a single collapsed line; click to expand with formatted SQL (indented keywords), a "Jump to line" link, and copy button.
@@ -67,6 +69,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 • **Smart bookmarks — skip prompt for inactive logs** — The "add bookmark at first error" suggestion now only appears for the active (recording) session, not when browsing historical logs.
 
 ## [3.13.0]
+
+Major database tooling release: SQL pattern chips, N+1 detection, slow query burst markers, repeat drilldown, minimap SQL density, root-cause hypotheses, session comparison diffs, and noise learning. [log](https://github.com/saropa/saropa-log-capture/blob/v3.13.0/CHANGELOG.md)
 
 ### Changed
 
@@ -162,7 +166,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [3.12.1]
 
-[log](https://github.com/saropa/saropa-log-capture/blob/v3.12.1/CHANGELOG.md)
+Adds an always-show search toggles setting, switches session-nav buttons to icon-only, and repositions the compress-lines control. [log](https://github.com/saropa/saropa-log-capture/blob/v3.12.1/CHANGELOG.md)
 
 ### Added
 
@@ -182,7 +186,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [3.12.0]
 
-[log](https://github.com/saropa/saropa-log-capture/blob/v3.12.0/CHANGELOG.md)
+Introduces compress lines (consecutive duplicate collapse with xN badges), moves in-log search to a compact title-bar field, and fixes jump-button placement and search-history cleanup. [log](https://github.com/saropa/saropa-log-capture/blob/v3.12.0/CHANGELOG.md)
 
 ### Added
 
@@ -212,7 +216,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [3.11.0]
 
-[log](https://github.com/saropa/saropa-log-capture/blob/v3.11.0/CHANGELOG.md)
+Adds clear Settings UI titles for every extension option; fixes the Performance chip, virtual-scroll flicker, jump-button placement, and context-menu submenu clipping. [log](https://github.com/saropa/saropa-log-capture/blob/v3.11.0/CHANGELOG.md)
 
 ### Changed
 
