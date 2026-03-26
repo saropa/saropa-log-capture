@@ -11,6 +11,7 @@ import { getPerformanceCurrentScript } from './viewer-performance-current';
 import { getPerformanceTrendsScript } from './viewer-performance-trends';
 import { getPerformanceSessionTabScript } from './viewer-performance-session-tab';
 import { getPerformanceDbTabScript } from './viewer-performance-db-tab';
+import { getErrorRateTabScript } from './viewer-error-rate-tab';
 
 /**
  * When prefix is 'insight-', IDs become insight-pp-panel, insight-pp-current-view, etc.
@@ -35,6 +36,7 @@ export function getPerformancePanelHtml(prefix?: string): string {
         <button id="${pid('tab-trends')}" class="pp-tab">Trends</button>
         <button id="${pid('tab-session')}" class="pp-tab">Log</button>
         <button id="${pid('tab-db')}" class="pp-tab">Database</button>
+        <button id="${pid('tab-error-rate')}" class="pp-tab">Errors</button>
     </div>
     <div class="performance-panel-content">
         <div id="${pid('current-view')}"></div>
@@ -68,6 +70,7 @@ export function getPerformancePanelHtml(prefix?: string): string {
                 <div id="${pid('profiler')}" class="pp-session-value">None.</div>
             </div>
         </div>
+        <div id="${pid('error-rate-view')}" style="display:none"></div>
         <div id="${pid('empty')}" class="pp-empty">No performance events found</div>
         <div id="${pid('loading')}" class="pp-loading" style="display:none">Loading\u2026</div>
     </div>
@@ -101,6 +104,8 @@ export function getPerformancePanelScript(prefix?: string): string {
     var ppTabSession = ${pid('tab-session')};
     var ppTabDb = ${pid('tab-db')};
     var ppDbView = ${pid('db-view')};
+    var ppErrorRateView = ${pid('error-rate-view')};
+    var ppTabErrorRate = ${pid('tab-error-rate')};
     var ppSessionView = ${pid('session-view')};
     var ppSessionIntro = ${pid('session-intro')};
     var ppCopyMessageMenu = ${pid('copy-message-menu')};
@@ -116,6 +121,7 @@ export function getPerformancePanelScript(prefix?: string): string {
         if (ppActiveTab === 'current') { buildCurrentView(); }
         else if (ppActiveTab === 'trends') { requestTrends(); }
         else if (ppActiveTab === 'db') { buildDbStatsView(); }
+        else if (ppActiveTab === 'errorRate') { buildErrorRateView(); }
         else if (ppActiveTab === 'session') {
             setSessionTabLoading(true);
             vscodeApi.postMessage({ type: 'requestPerformanceData' });
@@ -139,6 +145,7 @@ export function getPerformancePanelScript(prefix?: string): string {
     ${getPerformanceSessionTabScript()}
     ${getPerformanceTrendsScript()}
     ${getPerformanceDbTabScript()}
+    ${getErrorRateTabScript()}
 
     function switchTab(tab) {
         ppActiveTab = tab;
@@ -146,10 +153,12 @@ export function getPerformancePanelScript(prefix?: string): string {
         ppTabTrends.classList.toggle('active', tab === 'trends');
         if (ppTabSession) ppTabSession.classList.toggle('active', tab === 'session');
         if (ppTabDb) ppTabDb.classList.toggle('active', tab === 'db');
+        if (ppTabErrorRate) ppTabErrorRate.classList.toggle('active', tab === 'errorRate');
         if (ppCurrentView) ppCurrentView.style.display = tab === 'current' ? '' : 'none';
         if (ppTrendsView) ppTrendsView.style.display = tab === 'trends' ? '' : 'none';
         if (ppSessionView) ppSessionView.style.display = tab === 'session' ? '' : 'none';
         if (ppDbView) ppDbView.style.display = tab === 'db' ? '' : 'none';
+        if (ppErrorRateView) ppErrorRateView.style.display = tab === 'errorRate' ? '' : 'none';
         if (ppEmpty) ppEmpty.style.display = 'none';
         if (tab === 'current') { buildCurrentView(); }
         else if (tab === 'trends') { requestTrends(); }
@@ -158,12 +167,14 @@ export function getPerformancePanelScript(prefix?: string): string {
             vscodeApi.postMessage({ type: 'requestPerformanceData' });
         }
         else if (tab === 'db') { buildDbStatsView(); }
+        else if (tab === 'errorRate') { buildErrorRateView(); }
     }
 
     if (ppTabCurrent) ppTabCurrent.addEventListener('click', function() { switchTab('current'); });
     if (ppTabTrends) ppTabTrends.addEventListener('click', function() { switchTab('trends'); });
     if (ppTabSession) ppTabSession.addEventListener('click', function() { switchTab('session'); });
     if (ppTabDb) ppTabDb.addEventListener('click', function() { switchTab('db'); });
+    if (ppTabErrorRate) ppTabErrorRate.addEventListener('click', function() { switchTab('errorRate'); });
 
     ${getPerformanceCurrentScript()}
 
@@ -229,6 +240,7 @@ export function getPerformancePanelScript(prefix?: string): string {
         if (ppActiveTab === 'current') buildCurrentView();
         else if (ppActiveTab === 'trends') requestTrends();
         else if (ppActiveTab === 'db') buildDbStatsView();
+        else if (ppActiveTab === 'errorRate') buildErrorRateView();
     });
 
     var ppCloseBtn = document.getElementById(ppIdPrefix + 'pp-panel-close');

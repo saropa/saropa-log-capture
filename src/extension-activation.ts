@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, viewerDbDetectorTogglesFromConfig } from './modules/config/config';
+import { getConfig, getLogDirectoryUri, viewerDbDetectorTogglesFromConfig, errorRateConfigFromConfig } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
@@ -139,6 +139,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
     broadcaster.setScrollbarVisible(initCfg.showScrollbar);
     broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);
+    broadcaster.setErrorRateConfig(errorRateConfigFromConfig(initCfg));
 
     setupConfigListener(context, sessionManager, broadcaster);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });

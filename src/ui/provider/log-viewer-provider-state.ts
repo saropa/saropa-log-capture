@@ -11,7 +11,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { SessionDisplayOptions } from "../session/session-display";
@@ -160,6 +160,14 @@ export function setSearchMatchOptionsAlwaysVisibleImpl(target: ProviderStateTarg
 }
 export function setIconBarPositionImpl(target: ProviderStateTarget, position: "left" | "right"): void {
   target.postMessage({ type: "iconBarPosition", position });
+}
+export function setErrorRateConfigImpl(target: ProviderStateTarget, config: ErrorRateConfig): void {
+  target.postMessage({
+    type: "setErrorRateConfig",
+    bucketSize: config.bucketSize,
+    showWarnings: config.showWarnings,
+    detectSpikes: config.detectSpikes,
+  });
 }
 export function setAutoHidePatternsImpl(target: ProviderStateTarget, patterns: readonly string[]): void {
   target.postMessage({ type: "setAutoHidePatterns", patterns: [...patterns] });

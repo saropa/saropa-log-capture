@@ -107,6 +107,12 @@ export interface SaropaLogCaptureConfig {
   readonly verboseDap: boolean;
   /** When true, log capture pipeline events to Output (session/buffer/write) for debugging empty logs. */
   readonly diagnosticCapture: boolean;
+  /** Error rate chart bucket size: 'auto' adapts to session length; fixed values override. */
+  readonly errorRateBucketSize: 'auto' | '10s' | '30s' | '1m' | '5m';
+  /** Include warnings alongside errors in the error-rate chart. */
+  readonly errorRateShowWarnings: boolean;
+  /** Highlight anomalous error spikes via moving-average detection. */
+  readonly errorRateDetectSpikes: boolean;
   readonly fileTypes: readonly string[];
   readonly tailPatterns: readonly string[];
   readonly docsScanDirs: readonly string[];
@@ -139,6 +145,13 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
+}
+
+/** Error rate chart config pushed to the webview via `setErrorRateConfig`. */
+export interface ErrorRateConfig {
+  readonly bucketSize: 'auto' | '10s' | '30s' | '1m' | '5m';
+  readonly showWarnings: boolean;
+  readonly detectSpikes: boolean;
 }
 
 /** Sub-toggles when `viewerDbInsightsEnabled` is true (baked into webview + postMessage updates). */

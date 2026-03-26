@@ -2,7 +2,7 @@
  * Initial webview config posts for the pop-out viewer. Extracted to keep `pop-out-panel.ts` under max-lines.
  */
 
-import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
+import { getConfig, viewerDbDetectorTogglesFromConfig, errorRateConfigFromConfig } from "../../modules/config/config";
 import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
 import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
@@ -26,6 +26,8 @@ export function queuePopOutViewerConfigMicrotask(
       chipMinCount: cfg.viewerSqlPatternChipMinCount,
       chipMaxChips: cfg.viewerSqlPatternMaxChips,
     });
+    const erCfg = errorRateConfigFromConfig(cfg);
+    post({ type: "setErrorRateConfig", bucketSize: erCfg.bucketSize, showWarnings: erCfg.showWarnings, detectSpikes: erCfg.detectSpikes });
     post(getLearningWebviewOptions());
   });
 }

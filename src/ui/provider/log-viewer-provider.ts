@@ -17,7 +17,7 @@ import { type PendingLine } from "../viewer/viewer-file-loader";
 import { SerializedHighlightRule, serializeHighlightRules } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ScopeContext } from "../../modules/storage/scope-context";
-import type { ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-thread-grouping";
@@ -209,6 +209,7 @@ export class LogViewerProvider
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }
   setIconBarPosition(position: "left" | "right"): void { state.setIconBarPositionImpl(this, position); }
+  setErrorRateConfig(config: ErrorRateConfig): void { state.setErrorRateConfigImpl(this, config); }
   setAutoHidePatterns(patterns: readonly string[]): void { state.setAutoHidePatternsImpl(this, patterns); }
   setSessionInfo(info: Record<string, string> | null): void { state.setSessionInfoImpl(this, info); }
   setHasPerformanceData(has: boolean): void { state.setHasPerformanceDataImpl(this, has); }

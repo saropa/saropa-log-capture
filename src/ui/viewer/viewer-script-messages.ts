@@ -309,6 +309,10 @@ window.addEventListener('message', function(event) {
         case 'setViewerKeybindings':
             if (msg.keyToAction && typeof msg.keyToAction === 'object') window.viewerKeyMap = msg.keyToAction;
             break;
+        case 'setErrorRateConfig':
+            if (typeof msg.bucketSize === 'string') erBucketSizeSetting = msg.bucketSize;
+            if (typeof msg.showWarnings === 'boolean') erShowWarnings = msg.showWarnings;
+            if (typeof msg.detectSpikes === 'boolean') erDetectSpikes = msg.detectSpikes; break;
         case 'viewerKeybindingRecordMode':
             window.viewerKeybindingRecordingFor = msg.active ? (msg.actionId || null) : null;
             break;
