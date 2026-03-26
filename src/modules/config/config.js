@@ -55,121 +55,9 @@ const drift_db_repeat_thresholds_1 = require("../db/drift-db-repeat-thresholds")
 const drift_db_slow_burst_thresholds_1 = require("../db/drift-db-slow-burst-thresholds");
 const file_splitter_1 = require("../misc/file-splitter");
 const integration_config_1 = require("./integration-config");
-const config_types_1 = require("./config-types");
+const config_normalizers_1 = require("./config-normalizers");
 const config_validation_1 = require("./config-validation");
 const SECTION = "saropaLogCapture";
-const DEFAULT_CATEGORIES = ["console", "stdout", "stderr"];
-const DEFAULT_FILE_TYPES = [".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html"];
-const DEFAULT_WATCH_PATTERNS = [
-    { keyword: "error", alert: "flash" },
-    { keyword: "exception", alert: "badge" },
-    { keyword: "warning", alert: "badge" },
-];
-function normalizeWatchPatterns(raw) {
-    if (!Array.isArray(raw)) {
-        return DEFAULT_WATCH_PATTERNS;
-    }
-    const alertValues = ["flash", "badge", "none"];
-    const out = [];
-    for (const item of raw) {
-        if (!item || typeof item !== "object") {
-            continue;
-        }
-        const o = item;
-        const keyword = typeof o.keyword === "string" ? o.keyword.trim() : "";
-        if (!keyword) {
-            continue;
-        }
-        const alert = typeof o.alert === "string" && alertValues.includes(o.alert)
-            ? o.alert
-            : "badge";
-        out.push({ keyword, alert });
-    }
-    return out.length > 0 ? out : DEFAULT_WATCH_PATTERNS;
-}
-function asObjectRecord(value) {
-    if (!value || typeof value !== "object") {
-        return undefined;
-    }
-    return value;
-}
-function readOptionalString(o, key) {
-    const v = o[key];
-    return typeof v === "string" ? v : undefined;
-}
-function readOptionalScope(o) {
-    const v = o.scope;
-    if (v === "line") {
-        return "line";
-    }
-    if (v === "keyword") {
-        return "keyword";
-    }
-    return undefined;
-}
-function readPattern(o) {
-    const v = o.pattern;
-    if (typeof v !== "string") {
-        return undefined;
-    }
-    const t = v.trim();
-    return t.length > 0 ? t : undefined;
-}
-function readBooleanOrFalse(o, key) {
-    const v = o[key];
-    return typeof v === "boolean" ? v : false;
-}
-function normalizeHighlightRuleItem(item) {
-    const o = asObjectRecord(item);
-    if (!o) {
-        return undefined;
-    }
-    const pattern = readPattern(o);
-    if (!pattern) {
-        return undefined;
-    }
-    return {
-        pattern,
-        color: readOptionalString(o, "color"),
-        label: readOptionalString(o, "label"),
-        bold: readBooleanOrFalse(o, "bold"),
-        italic: readBooleanOrFalse(o, "italic"),
-        scope: readOptionalScope(o),
-        backgroundColor: readOptionalString(o, "backgroundColor"),
-    };
-}
-function normalizeHighlightRules(raw) {
-    if (!Array.isArray(raw)) {
-        return (0, config_types_1.defaultHighlightRules)();
-    }
-    const out = [];
-    for (const item of raw) {
-        const rule = normalizeHighlightRuleItem(item);
-        if (rule) {
-            out.push(rule);
-        }
-    }
-    return out.length > 0 ? out : (0, config_types_1.defaultHighlightRules)();
-}
-function normalizeAutoTagRules(raw) {
-    if (!Array.isArray(raw)) {
-        return [];
-    }
-    return raw
-        .map((item) => {
-        if (!item || typeof item !== "object") {
-            return null;
-        }
-        const o = item;
-        const pattern = typeof o.pattern === "string" ? o.pattern.trim() : "";
-        const tag = typeof o.tag === "string" ? o.tag.trim() : "";
-        if (!pattern || !tag) {
-            return null;
-        }
-        return { pattern, tag };
-    })
-        .filter((r) => r !== null);
-}
 function getConfig() {
     const cfg = vscode.workspace.getConfiguration(SECTION);
     const maxLines = (0, config_validation_1.clamp)(cfg.get("maxLines"), 1000, 10_000_000, 100000);
@@ -187,7 +75,7 @@ function getConfig() {
             showReadOperations: (0, config_validation_1.ensureBoolean)(cfg.get("aiActivity.showReadOperations"), false),
             showSystemWarnings: (0, config_validation_1.ensureBoolean)(cfg.get("aiActivity.showSystemWarnings"), true),
         },
-        categories: (0, config_validation_1.ensureStringArray)(cfg.get("categories"), DEFAULT_CATEGORIES),
+        categories: (0, config_validation_1.ensureStringArray)(cfg.get("categories"), config_normalizers_1.DEFAULT_CATEGORIES),
         maxLines,
         viewerMaxLines,
         includeTimestamp: (0, config_validation_1.ensureBoolean)(cfg.get("includeTimestamp"), true),
@@ -212,10 +100,10 @@ function getConfig() {
         includeElapsedTime: (0, config_validation_1.ensureBoolean)(cfg.get("includeElapsedTime"), false),
         showDecorations: (0, config_validation_1.ensureBoolean)(cfg.get("showDecorations"), true),
         slowGapThreshold: (0, config_validation_1.clamp)(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),
-        watchPatterns: normalizeWatchPatterns(cfg.get("watchPatterns")),
+        watchPatterns: (0, config_normalizers_1.normalizeWatchPatterns)(cfg.get("watchPatterns")),
         splitRules: (0, file_splitter_1.parseSplitRules)(cfg.get("splitRules") ?? {}),
-        autoTagRules: normalizeAutoTagRules(cfg.get("autoTagRules")),
-        highlightRules: normalizeHighlightRules(cfg.get("highlightRules")),
+        autoTagRules: (0, config_normalizers_1.normalizeAutoTagRules)(cfg.get("autoTagRules")),
+        highlightRules: (0, config_normalizers_1.normalizeHighlightRules)(cfg.get("highlightRules")),
         captureAll: (0, config_validation_1.ensureBoolean)(cfg.get("captureAll"), true),
         filterContextLines: (0, config_validation_1.clamp)(cfg.get("filterContextLines"), 0, 100, 3),
         contextViewLines: (0, config_validation_1.clamp)(cfg.get("contextViewLines"), 0, 100, 10),
@@ -257,7 +145,7 @@ function getConfig() {
         errorRateBucketSize: (0, config_validation_1.ensureEnum)(cfg.get("errorRateBucketSize"), ["auto", "10s", "30s", "1m", "5m"], "auto"),
         errorRateShowWarnings: (0, config_validation_1.ensureBoolean)(cfg.get("errorRateShowWarnings"), true),
         errorRateDetectSpikes: (0, config_validation_1.ensureBoolean)(cfg.get("errorRateDetectSpikes"), true),
-        fileTypes: (0, config_validation_1.ensureStringArray)(cfg.get("fileTypes"), DEFAULT_FILE_TYPES),
+        fileTypes: (0, config_validation_1.ensureStringArray)(cfg.get("fileTypes"), config_normalizers_1.DEFAULT_FILE_TYPES),
         tailPatterns: (0, config_validation_1.ensureStringArray)(cfg.get("tailPatterns"), ["**/*.log"]),
         docsScanDirs: (0, config_validation_1.ensureStringArray)(cfg.get("docsScanDirs"), ["bugs", "docs"]),
         includeSubfolders: (0, config_validation_1.ensureBoolean)(cfg.get("includeSubfolders"), true),
