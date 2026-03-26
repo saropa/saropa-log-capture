@@ -8,7 +8,6 @@ import { t } from "../../l10n";
 export function getRootCauseHintViewerStrings(): Record<string, string> {
   return {
     title: t("viewer.rchTitle"),
-    disclaimer: t("viewer.rchDisclaimer"),
     dismissAria: t("viewer.rchDismissAria"),
     dismissTitle: t("viewer.rchDismissTitle"),
     explainAi: t("viewer.rchExplainAi"),
@@ -16,6 +15,8 @@ export function getRootCauseHintViewerStrings(): Record<string, string> {
     collapseTitle: t("viewer.rchCollapseTitle"),
     expandAria: t("viewer.rchExpandAria"),
     expandTitle: t("viewer.rchExpandTitle"),
+    copyAria: t("viewer.rchCopyAria"),
+    copied: t("viewer.rchCopied"),
     confPrefix: t("viewer.rchConfPrefix"),
   };
 }
