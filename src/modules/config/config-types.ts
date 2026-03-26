@@ -322,6 +322,12 @@ export interface IntegrationBrowserConfig {
   readonly browserLogPath: string;
   readonly browserLogFormat: 'jsonl' | 'json';
   readonly maxEvents: number;
+  /** Chrome DevTools Protocol WebSocket URL (cdp mode only, e.g. ws://localhost:9222). */
+  readonly cdpUrl: string;
+  /** Capture network events in addition to console events (cdp mode). */
+  readonly includeNetwork: boolean;
+  /** Regex to extract a request ID from console messages for correlation. */
+  readonly requestIdPattern: string;
 }
 
 /** Write `basename.unified.jsonl` merging main log + terminal + external sidecars (Phase 4). */

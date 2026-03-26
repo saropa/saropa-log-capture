@@ -1,13 +1,15 @@
 /**
- * Browser / DevTools integration (file mode): at session end, read configured
- * browser console log file (JSONL or JSON), normalize to BrowserEvent shape,
- * and write to sidecar.
+ * Browser / DevTools integration: captures browser console events and writes
+ * them to a sidecar file. Supports two modes:
+ * - **file**: reads an exported browser log at session end
+ * - **cdp**: connects to Chrome DevTools Protocol via WebSocket during the session
  */
 
 import * as fs from 'fs';
 import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
 import type { BrowserEvent } from '../../timeline/event-types';
 import { resolveWorkspaceFileUri } from '../workspace-path';
+import { startCdpCapture, stopCdpCapture, isCdpCaptureActive } from './browser-cdp-capture';
 
 function isEnabled(context: IntegrationContext): boolean {
     return (context.config.integrationsAdapters ?? []).includes('browser');
@@ -54,6 +56,27 @@ function asNumber(v: unknown): number | undefined {
     return typeof v === 'number' && isFinite(v) ? v : undefined;
 }
 
+/** Finalize CDP capture: stop, normalize events, write sidecar. */
+async function endCdpCapture(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
+    if (!isCdpCaptureActive()) { return undefined; }
+    const raw = stopCdpCapture();
+    const events: BrowserEvent[] = [];
+    let dropped = 0;
+    for (const item of raw) {
+        const event = toBrowserEvent(item);
+        if (event) { events.push(event); } else { dropped++; }
+    }
+    if (dropped > 0) {
+        context.outputChannel.appendLine(`[browser] CDP: dropped ${dropped} event(s) with no usable text`);
+    }
+    if (events.length === 0) { return undefined; }
+    const filename = `${context.baseFileName}.browser.json`;
+    return [
+        { kind: 'meta', key: 'browser', payload: { source: 'cdp', sidecar: filename, count: events.length, dropped } },
+        { kind: 'sidecar', filename, content: JSON.stringify(events, null, 2), contentType: 'json' },
+    ];
+}
+
 export const browserDevtoolsProvider: IntegrationProvider = {
     id: 'browser',
 
@@ -61,9 +84,24 @@ export const browserDevtoolsProvider: IntegrationProvider = {
         return isEnabled(context);
     },
 
+    async onSessionStartAsync(context: IntegrationContext): Promise<Contribution[] | undefined> {
+        if (!isEnabled(context)) { return undefined; }
+        const cfg = context.config.integrationsBrowser;
+        if (cfg.mode !== 'cdp' || !cfg.cdpUrl) { return undefined; }
+        try {
+            await startCdpCapture(cfg.cdpUrl, cfg.maxEvents, cfg.includeNetwork,
+                msg => context.outputChannel.appendLine(msg));
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            context.outputChannel.appendLine(`[browser] CDP connect failed: ${msg}`);
+        }
+        return undefined;
+    },
+
     async onSessionEnd(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
         if (!isEnabled(context)) { return undefined; }
         const cfg = context.config.integrationsBrowser;
+        if (cfg.mode === 'cdp') { return endCdpCapture(context); }
         if (cfg.mode !== 'file' || !cfg.browserLogPath) { return undefined; }
         try {
             const uri = resolveWorkspaceFileUri(context.workspaceFolder, cfg.browserLogPath);
