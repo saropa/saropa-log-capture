@@ -2,7 +2,19 @@
  * DB_11: empty-state copy and list mount points exist for the panel shell.
  */
 import * as assert from 'node:assert';
-import { getSqlQueryHistoryPanelHtml } from '../../ui/viewer-panels/viewer-sql-query-history-panel';
+import {
+    getSqlQueryHistoryPanelHtml,
+    getSqlQueryHistoryPanelScript,
+} from '../../ui/viewer-panels/viewer-sql-query-history-panel';
+import { getSqlQueryHistoryPanelHtml as getHtmlDirect } from '../../ui/viewer-panels/viewer-sql-query-history-panel-html';
+import { getSqlQueryHistoryPanelScript as getScriptDirect } from '../../ui/viewer-panels/viewer-sql-query-history-panel-script';
+
+suite('viewer-sql-query-history panel module split', () => {
+    test('barrel re-exports match direct implementations (refactor guard)', () => {
+        assert.strictEqual(getSqlQueryHistoryPanelHtml(), getHtmlDirect());
+        assert.strictEqual(getSqlQueryHistoryPanelScript(), getScriptDirect());
+    });
+});
 
 suite('viewer-sql-query-history panel HTML', () => {
     test('exposes empty state and list containers for no-SQL session', () => {
