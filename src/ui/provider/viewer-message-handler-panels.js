@@ -149,6 +149,7 @@ function dispatchPanelMessage(msg, ctx) {
             panelHandlers.handleIntegrationContextRequest(ctx.currentFileUri, safeLineIndex(msg.lineIndex, 0), ctx.post, {
                 timestamp: msg.timestamp,
                 hasDatabaseLine: msg.hasDatabaseLine === true,
+                lineText: typeof msg.lineText === 'string' ? msg.lineText : undefined,
             }).catch(() => { });
             return true;
         case "openFullIntegrationContext":
@@ -168,6 +169,12 @@ function dispatchPanelMessage(msg, ctx) {
             return true;
         case "openDriftAdvisor":
             void vscode.commands.executeCommand(drift_advisor_integration_1.DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => { });
+            return true;
+        case "showRelatedQueries":
+            panelHandlers.handleRelatedQueriesRequest(ctx.currentFileUri, safeLineIndex(msg.lineIndex, 0), ctx.post, {
+                timestamp: msg.timestamp,
+                lineText: typeof msg.lineText === 'string' ? msg.lineText : undefined,
+            }).catch(() => { });
             return true;
         default:
             return false;

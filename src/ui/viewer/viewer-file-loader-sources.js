@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SOURCE_EXTERNAL_PREFIX = exports.SOURCE_TERMINAL = void 0;
+exports.SOURCE_BROWSER = exports.SOURCE_EXTERNAL_PREFIX = exports.SOURCE_TERMINAL = void 0;
 exports.parseTerminalSidecarToPending = parseTerminalSidecarToPending;
 exports.externalSidecarLabelFromFileName = externalSidecarLabelFromFileName;
 exports.parseExternalSidecarToPending = parseExternalSidecarToPending;
 exports.parseUnifiedJsonlToPending = parseUnifiedJsonlToPending;
+exports.parseBrowserSidecarToPending = parseBrowserSidecarToPending;
 exports.sendPendingLinesBatched = sendPendingLinesBatched;
 const ansi_1 = require("../../modules/capture/ansi");
 const source_linker_1 = require("../../modules/source/source-linker");
@@ -13,6 +14,8 @@ const viewer_file_loader_1 = require("./viewer-file-loader");
 exports.SOURCE_TERMINAL = 'terminal';
 /** Source id prefix for external log sidecars. */
 exports.SOURCE_EXTERNAL_PREFIX = 'external:';
+/** Source id for browser console sidecar lines. */
+exports.SOURCE_BROWSER = 'browser';
 function parseTerminalSidecarToPending(content) {
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => ({
@@ -81,6 +84,56 @@ function parseUnifiedJsonlToPending(content, baseCtx) {
         }
     }
     return { lines: out.filter((x) => x !== undefined), sources: sourcesOrder.length > 0 ? sourcesOrder : [viewer_file_loader_1.SOURCE_DEBUG] };
+}
+/**
+ * Parse a .browser.json sidecar into PendingLine[] for the main viewer.
+ * Accepts a JSON array of browser events or `{ events: [...] }` wrapper.
+ * Each event becomes a line formatted as `[level] message (url:line)`.
+ */
+function parseBrowserSidecarToPending(content) {
+    let items;
+    try {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) {
+            items = parsed;
+        }
+        else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.events)) {
+            items = parsed.events;
+        }
+        else {
+            return [];
+        }
+    }
+    catch {
+        return [];
+    }
+    const result = [];
+    for (const raw of items) {
+        if (typeof raw !== 'object' || raw === null) {
+            continue;
+        }
+        const obj = raw;
+        const message = typeof obj.message === 'string' ? obj.message : (typeof obj.text === 'string' ? obj.text : '');
+        if (!message) {
+            continue;
+        }
+        const level = typeof obj.level === 'string' ? obj.level : (typeof obj.type === 'string' ? obj.type : 'log');
+        const ts = typeof obj.timestamp === 'number' && Number.isFinite(obj.timestamp) ? obj.timestamp : 0;
+        let formatted = `[${level}] ${message}`;
+        if (typeof obj.url === 'string' && obj.url) {
+            const suffix = typeof obj.lineNumber === 'number' ? `:${obj.lineNumber}` : '';
+            formatted += ` (${obj.url}${suffix})`;
+        }
+        result.push({
+            text: (0, ansi_1.escapeHtml)(formatted),
+            isMarker: false,
+            lineCount: 0,
+            category: 'console',
+            timestamp: ts,
+            source: exports.SOURCE_BROWSER,
+        });
+    }
+    return result;
 }
 async function sendPendingLinesBatched(pending, postMessage, seenCategories) {
     const batchSize = 500;

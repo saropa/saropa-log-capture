@@ -230,6 +230,39 @@ function getContextPopoverStyles() {
 .popover-static-sql-open {
     margin-top: 4px;
 }
+
+/* Database queries (from .queries.json sidecar) */
+.db-query-item {
+    font-family: var(--vscode-editor-font-family, monospace);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.db-query-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+.popover-copy-query {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 2px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+.popover-copy-query:hover {
+    opacity: 1;
+}
+
+/* Security / audit section */
+.popover-security-note {
+    font-style: italic;
+    opacity: 0.8;
+}
 `;
 }
 //# sourceMappingURL=viewer-context-popover-styles.js.map

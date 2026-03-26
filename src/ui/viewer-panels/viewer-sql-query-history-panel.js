@@ -23,16 +23,27 @@ function getSqlQueryHistoryPanelHtml() {
         </div>
     </div>
     <div class="sql-query-history-toolbar">
-        <label class="sql-query-history-sort-label" for="sql-query-history-sort">Sort</label>
-        <select id="sql-query-history-sort" title="Sort order">
-            <option value="count">Count</option>
-            <option value="recency">Recency</option>
-            <option value="maxDur">Slowest (max ms)</option>
-        </select>
         <input id="sql-query-history-search" type="search" placeholder="Filter by fingerprint or preview\u2026" />
     </div>
     <div id="sql-query-history-hint" class="sql-query-history-hint u-hidden" role="status" aria-live="polite"></div>
-    <div id="sql-query-history-list" class="sql-query-history-list"></div>
+    <div id="sql-query-history-list" class="sql-query-history-list">
+        <table class="sql-query-history-table">
+            <thead>
+                <tr>
+                    <th scope="col" class="sql-qh-header sql-qh-header-count" data-sql-qh-sort="count" tabindex="0">
+                        Count
+                    </th>
+                    <th scope="col" class="sql-qh-header sql-qh-header-dur" data-sql-qh-sort="maxDur" tabindex="0">
+                        Slowest (ms)
+                    </th>
+                    <th scope="col" class="sql-qh-header sql-qh-header-preview" data-sql-qh-sort="preview" tabindex="0">
+                        Preview
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="sql-query-history-tbody"></tbody>
+        </table>
+    </div>
     <div id="sql-query-history-empty" class="sql-query-history-empty">No parsed SQL fingerprints in this session yet.</div>
 </div>`;
 }
@@ -42,12 +53,15 @@ function getSqlQueryHistoryPanelScript() {
 (function() {
     var panelEl = document.getElementById('sql-query-history-panel');
     var listEl = document.getElementById('sql-query-history-list');
+    var tbodyEl = document.getElementById('sql-query-history-tbody');
     var emptyEl = document.getElementById('sql-query-history-empty');
-    var sortEl = document.getElementById('sql-query-history-sort');
     var searchEl = document.getElementById('sql-query-history-search');
     var hintEl = document.getElementById('sql-query-history-hint');
+    var sortHeaderEls = document.querySelectorAll('[data-sql-qh-sort]');
     var sqlQueryHistoryPanelOpen = false;
     var sqlHistoryHintTimer = 0;
+    var sortKey = 'count';
+    var sortDir = 'desc';
 
     function setSqlHistoryHint(text, show) {
         if (!hintEl) return;
@@ -71,21 +85,43 @@ function getSqlQueryHistoryPanelScript() {
         return rows;
     }
 
-    function sortSqlHistoryRows(rows, mode) {
+    function sortSqlHistoryRows(rows) {
         var out = rows.slice();
-        if (mode === 'recency') {
-            out.sort(function(a, b) { return (b.lastSeen || 0) - (a.lastSeen || 0); });
-        } else if (mode === 'maxDur') {
+        var dir = sortDir === 'asc' ? 1 : -1;
+        if (sortKey === 'maxDur') {
             out.sort(function(a, b) {
                 var ad = a.maxDur !== undefined ? a.maxDur : -1;
                 var bd = b.maxDur !== undefined ? b.maxDur : -1;
-                if (bd !== ad) return bd - ad;
-                return b.count - a.count;
+                if (ad !== bd) return (ad - bd) * dir;
+                return (a.count - b.count) * dir;
+            });
+        } else if (sortKey === 'preview') {
+            out.sort(function(a, b) {
+                var ap = (a.preview || a.fp || '').toLowerCase();
+                var bp = (b.preview || b.fp || '').toLowerCase();
+                if (ap < bp) return -1 * dir;
+                if (ap > bp) return 1 * dir;
+                return (a.count - b.count) * dir;
             });
         } else {
-            out.sort(function(a, b) { return b.count - a.count; });
+            out.sort(function(a, b) {
+                if (a.count !== b.count) return (a.count - b.count) * dir;
+                return (a.lastSeen - b.lastSeen) * dir;
+            });
         }
         return out;
+    }
+
+    function updateSqlHistorySortHeaders() {
+        if (!sortHeaderEls) return;
+        for (var i = 0; i < sortHeaderEls.length; i++) {
+            var el = sortHeaderEls[i];
+            var key = el.getAttribute('data-sql-qh-sort');
+            el.classList.remove('sql-qh-header-sorted-asc', 'sql-qh-header-sorted-desc');
+            if (key === sortKey) {
+                el.classList.add(sortDir === 'asc' ? 'sql-qh-header-sorted-asc' : 'sql-qh-header-sorted-desc');
+            }
+        }
     }
 
     function formatSqlForExpand(sql) {
@@ -109,11 +145,10 @@ function getSqlQueryHistoryPanelScript() {
     }
 
     function renderSqlQueryHistoryPanel() {
-        if (!listEl || !emptyEl) return;
+        if (!listEl || !tbodyEl || !emptyEl) return;
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
-        var mode = sortEl && sortEl.value ? sortEl.value : 'count';
         var rows = getSqlQueryHistoryRowsForRender();
-        rows = sortSqlHistoryRows(rows, mode);
+        rows = sortSqlHistoryRows(rows);
         var filtered = [];
         var i, r;
         for (i = 0; i < rows.length; i++) {
@@ -124,7 +159,7 @@ function getSqlQueryHistoryPanelScript() {
             }
         }
         if (filtered.length === 0) {
-            listEl.innerHTML = '';
+            tbodyEl.innerHTML = '';
             emptyEl.classList.remove('u-hidden');
             emptyEl.textContent = rows.length === 0
                 ? 'No parsed SQL fingerprints in this session yet.'
@@ -133,7 +168,7 @@ function getSqlQueryHistoryPanelScript() {
         }
         emptyEl.classList.add('u-hidden');
         var expandedFps = {};
-        var openRows = listEl.querySelectorAll('.sql-query-history-row[aria-expanded="true"]');
+        var openRows = tbodyEl.querySelectorAll('.sql-query-history-row[aria-expanded="true"]');
         for (var j = 0; j < openRows.length; j++) {
             var efp = openRows[j].getAttribute('data-fingerprint');
             if (efp) expandedFps[efp] = true;
@@ -142,12 +177,11 @@ function getSqlQueryHistoryPanelScript() {
         for (i = 0; i < filtered.length; i++) {
             r = filtered[i];
             var durTxt = r.maxDur !== undefined ? String(r.maxDur) + ' ms' : '\u2014';
-            parts.push('<div class="sql-query-history-row" role="button" tabindex="0" aria-expanded="false"'
+            parts.push('<tr>'
+                + '<td class="sql-qh-cell-count"><span class="sql-query-history-count">' + r.count + '</span></td>'
+                + '<td class="sql-qh-cell-dur"><span class="sql-query-history-dur">' + escapeHtml(durTxt) + '</span></td>'
+                + '<td class="sql-qh-cell-preview"><div class="sql-query-history-row" role="button" tabindex="0" aria-expanded="false"'
                 + ' data-first-idx="' + r.firstIdx + '" data-fingerprint="' + escapeHtml(r.fp) + '">'
-                + '<div class="sql-query-history-row-main">'
-                + '<span class="sql-query-history-count">' + r.count + '</span>'
-                + '<span class="sql-query-history-dur">' + escapeHtml(durTxt) + '</span>'
-                + '</div>'
                 + '<div class="sql-query-history-preview">' + escapeHtml(r.preview || r.fp) + '</div>'
                 + '<div class="sql-query-history-expanded u-hidden">'
                 + '<pre class="sql-query-history-sql">' + escapeHtml(formatSqlForExpand(r.fp)) + '</pre>'
@@ -157,14 +191,15 @@ function getSqlQueryHistoryPanelScript() {
                 + '<button type="button" class="sql-qh-action-btn" data-copy-fp title="Copy fingerprint">'
                 + '<span class="codicon codicon-copy"></span></button>'
                 + '</div></div>'
-                + '</div>');
+                + '</div></td></tr>');
         }
-        listEl.innerHTML = parts.join('');
-        var newRows = listEl.querySelectorAll('.sql-query-history-row');
+        tbodyEl.innerHTML = parts.join('');
+        var newRows = tbodyEl.querySelectorAll('.sql-query-history-row');
         for (var j = 0; j < newRows.length; j++) {
             var nfp = newRows[j].getAttribute('data-fingerprint');
             if (nfp && expandedFps[nfp]) toggleSqlHistoryRow(newRows[j]);
         }
+        updateSqlHistorySortHeaders();
     }
 
     window.refreshSqlQueryHistoryPanelIfOpen = function() {
@@ -204,8 +239,7 @@ function getSqlQueryHistoryPanelScript() {
 
     function copyVisibleSqlHistoryJson() {
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
-        var mode = sortEl && sortEl.value ? sortEl.value : 'count';
-        var rows = sortSqlHistoryRows(getSqlQueryHistoryRowsForRender(), mode);
+        var rows = sortSqlHistoryRows(getSqlQueryHistoryRowsForRender());
         var payload = [];
         var i, r;
         for (i = 0; i < rows.length; i++) {
@@ -259,6 +293,10 @@ function getSqlQueryHistoryPanelScript() {
             var sel = window.getSelection();
             if (sel && sel.toString().length > 0) return;
             var row = e.target.closest('.sql-query-history-row');
+            if (!row) {
+                var tr = e.target.closest('#sql-query-history-tbody tr');
+                if (tr) row = tr.querySelector('.sql-query-history-row');
+            }
             if (row) toggleSqlHistoryRow(row);
         });
         listEl.addEventListener('keydown', function(e) {
@@ -268,7 +306,28 @@ function getSqlQueryHistoryPanelScript() {
         });
     }
 
-    if (sortEl) sortEl.addEventListener('change', function() { renderSqlQueryHistoryPanel(); });
+    if (sortHeaderEls && sortHeaderEls.length) {
+        for (var i = 0; i < sortHeaderEls.length; i++) {
+            (function(el) {
+                function handleSortActivate(e) {
+                    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    var key = el.getAttribute('data-sql-qh-sort');
+                    if (!key) return;
+                    if (sortKey === key) {
+                        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortKey = key;
+                        sortDir = 'asc';
+                    }
+                    renderSqlQueryHistoryPanel();
+                }
+                el.addEventListener('click', handleSortActivate);
+                el.addEventListener('keydown', handleSortActivate);
+            })(sortHeaderEls[i]);
+        }
+        updateSqlHistorySortHeaders();
+    }
     if (searchEl) {
         searchEl.addEventListener('input', function() { renderSqlQueryHistoryPanel(); });
         searchEl.addEventListener('keydown', function(e) {
