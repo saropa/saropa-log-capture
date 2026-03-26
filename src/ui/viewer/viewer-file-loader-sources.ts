@@ -7,6 +7,8 @@ import { parseRawLinesToPending, SOURCE_DEBUG } from './viewer-file-loader';
 export const SOURCE_TERMINAL = 'terminal';
 /** Source id prefix for external log sidecars. */
 export const SOURCE_EXTERNAL_PREFIX = 'external:';
+/** Source id for browser console sidecar lines. */
+export const SOURCE_BROWSER = 'browser';
 
 export function parseTerminalSidecarToPending(content: string): PendingLine[] {
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
@@ -77,6 +79,50 @@ export function parseUnifiedJsonlToPending(
         }
     }
     return { lines: out.filter((x): x is PendingLine => x !== undefined), sources: sourcesOrder.length > 0 ? sourcesOrder : [SOURCE_DEBUG] };
+}
+
+/**
+ * Parse a .browser.json sidecar into PendingLine[] for the main viewer.
+ * Accepts a JSON array of browser events or `{ events: [...] }` wrapper.
+ * Each event becomes a line formatted as `[level] message (url:line)`.
+ */
+export function parseBrowserSidecarToPending(content: string): PendingLine[] {
+    let items: unknown[];
+    try {
+        const parsed: unknown = JSON.parse(content);
+        if (Array.isArray(parsed)) {
+            items = parsed;
+        } else if (parsed && typeof parsed === 'object' && Array.isArray((parsed as Record<string, unknown>).events)) {
+            items = (parsed as Record<string, unknown>).events as unknown[];
+        } else {
+            return [];
+        }
+    } catch {
+        return [];
+    }
+    const result: PendingLine[] = [];
+    for (const raw of items) {
+        if (typeof raw !== 'object' || raw === null) { continue; }
+        const obj = raw as Record<string, unknown>;
+        const message = typeof obj.message === 'string' ? obj.message : (typeof obj.text === 'string' ? obj.text : '');
+        if (!message) { continue; }
+        const level = typeof obj.level === 'string' ? obj.level : (typeof obj.type === 'string' ? obj.type : 'log');
+        const ts = typeof obj.timestamp === 'number' && Number.isFinite(obj.timestamp) ? obj.timestamp : 0;
+        let formatted = `[${level}] ${message}`;
+        if (typeof obj.url === 'string' && obj.url) {
+            const suffix = typeof obj.lineNumber === 'number' ? `:${obj.lineNumber}` : '';
+            formatted += ` (${obj.url}${suffix})`;
+        }
+        result.push({
+            text: escapeHtml(formatted),
+            isMarker: false,
+            lineCount: 0,
+            category: 'console',
+            timestamp: ts,
+            source: SOURCE_BROWSER,
+        });
+    }
+    return result;
 }
 
 export async function sendPendingLinesBatched(

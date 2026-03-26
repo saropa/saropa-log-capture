@@ -87,6 +87,7 @@ function closeFiltersPanel() {
 function sourceFilterLabel(id) {
     if (id === 'debug') return 'Debug output';
     if (id === 'terminal') return 'Terminal';
+    if (id === 'browser') return 'Browser console';
     if (typeof id === 'string' && id.indexOf('external:') === 0) {
         var rest = id.slice(9);
         if (!rest || rest === 'external') return 'External (sidecar log)';
