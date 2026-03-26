@@ -104,7 +104,7 @@ export function getContextMenuHtml(): string {
                 <span class="codicon codicon-sparkle"></span> Explain with AI
             </div>
             <div class="context-menu-item" data-action="explain-root-cause-hypotheses" data-line-action>
-                <span class="codicon codicon-lightbulb"></span> Explain root-cause hypotheses
+                <span class="codicon codicon-lightbulb"></span> Explain signals
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="add-watch">
