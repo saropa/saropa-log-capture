@@ -109,9 +109,10 @@ async function executeLoadContent(target, uri, checkGen) {
     }
     const sidecarUris = await (0, context_loader_1.findSidecarUris)(uri);
     const terminalSidecar = sidecarUris.find((u) => u.fsPath.endsWith(".terminal.log"));
+    const browserSidecar = sidecarUris.find((u) => u.fsPath.endsWith(".browser.json"));
     const externalSidecars = sidecarUris.filter((u) => u.fsPath.endsWith(".log") && !u.fsPath.endsWith(".terminal.log"));
     const mainBase = (0, log_viewer_provider_load_helpers_1.getMainBaseFromFsPath)(uri.fsPath);
-    const sources = (0, log_viewer_provider_load_helpers_1.collectViewerSourcesForSidecars)(mainBase, terminalSidecar, externalSidecars);
+    const sources = (0, log_viewer_provider_load_helpers_1.collectViewerSourcesForSidecars)(mainBase, terminalSidecar, externalSidecars, browserSidecar);
     if (sources.length > 1) {
         post({ type: "setSources", sources: [...sources], enabledSources: [...sources] });
     }
@@ -135,6 +136,16 @@ async function executeLoadContent(target, uri, checkGen) {
         target,
     });
     if (externalRes.cancelled) {
+        return { sessionMidnightMs: 0, contentLength: 0 };
+    }
+    const browserRes = await (0, log_viewer_provider_load_helpers_1.appendBrowserSidecarLines)({
+        browserSidecar,
+        totalLineCount: externalRes.totalLineCount,
+        checkGen,
+        post,
+        target,
+    });
+    if (browserRes.cancelled) {
         return { sessionMidnightMs: 0, contentLength: 0 };
     }
     (0, log_viewer_provider_load_helpers_1.postRunBoundariesIfAny)(contentLines, ctx, post);

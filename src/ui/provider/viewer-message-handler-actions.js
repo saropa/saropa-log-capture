@@ -397,6 +397,13 @@ function handleSessionAndUiActions(type, msg, ctx) {
                 vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => { }, () => { });
             }
             return true;
+        case "openSidecarFile": {
+            const sidecar = msgStr(msg, "filename");
+            if (sidecar && ctx.currentFileUri && !sidecar.includes('/') && !sidecar.includes('\\')) {
+                vscode.window.showTextDocument(vscode.Uri.joinPath(ctx.currentFileUri, '..', sidecar), { preview: true, viewColumn: vscode.ViewColumn.Beside }).then(undefined, () => { });
+            }
+            return true;
+        }
         case "setSessionDisplayOptions":
             ctx.onDisplayOptionsChange?.(msg.options);
             return true;
