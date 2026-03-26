@@ -7,6 +7,9 @@
  * `runTriggerExplainRootCauseHypothesesFromHost`, which mirrors the strip button and posts
  * `explainRootCauseHypotheses` or `explainRootCauseHypothesesEmpty`). No host round-trip for the explain
  * path beyond that single postMessage — avoids duplicate LLM entry points in script.
+ *
+ * **Signal strength:** Each hypothesis may show a compact emoji (stronger vs weaker heuristic); copy lives in
+ * `viewer.rchConfTooltip*` and is applied via `title` / `aria-label` — not a statistical confidence score.
  */
 import { getViewerRootCauseHintsEmbedAlgorithmChunk } from './viewer-root-cause-hints-embed-algorithm';
 
@@ -108,15 +111,22 @@ function renderRootCauseHypothesesIfNeeded() {
     parts.push('</div>');
     parts.push('<div class="root-cause-hypotheses-body' + (collapsed ? ' u-hidden' : '') + '">');
     parts.push('<ul class="root-cause-hypotheses-list">');
-    var hi, item, li, ev, ei, idx, validIdx, confPfx;
-    confPfx = rchStr('confPrefix', '');
+    var hi, item, li, ev, ei, idx, validIdx, confNorm, confTip, confEmoji;
     for (hi = 0; hi < hy.length; hi++) {
         item = hy[hi];
         li = '<li>';
         li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
         li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
         if (item.confidence) {
-            li += '<span class="root-cause-hyp-conf">' + escapeHtml(confPfx + String(item.confidence)) + '</span>';
+            confNorm = String(item.confidence).toLowerCase();
+            if (confNorm === 'medium') {
+                confEmoji = '\uD83D\uDFE1';
+                confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
+            } else {
+                confEmoji = '\u26AA';
+                confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
+            }
+            li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
         }
         ev = item.evidenceLineIds || [];
         for (ei = 0; ei < ev.length; ei++) {
