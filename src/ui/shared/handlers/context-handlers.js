@@ -49,6 +49,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.shouldPostNoIntegrationDataError = shouldPostNoIntegrationDataError;
 exports.handlePerformanceRequest = handlePerformanceRequest;
 exports.handleIntegrationContextRequest = handleIntegrationContextRequest;
+exports.handleRelatedQueriesRequest = handleRelatedQueriesRequest;
 exports.handleIntegrationContextDocument = handleIntegrationContextDocument;
 const path = __importStar(require("node:path"));
 const vscode = __importStar(require("vscode"));
@@ -66,7 +67,8 @@ const MAX_SPARKLINE_POINTS = 48;
 function shouldPostNoIntegrationDataError(params) {
     return (!params.hasContextWindowData &&
         !params.hasDriftAdvisorIntegrationMeta &&
-        !params.hasDatabaseLine);
+        !params.hasDatabaseLine &&
+        !params.hasSecurityMeta);
 }
 /** Load and downsample .perf.json for hero sparkline. Returns undefined if no samples. */
 async function loadHeroSparklineData(logUri, sessionData) {
@@ -215,7 +217,8 @@ async function handlePerformanceRequest(post, logUri) {
 }
 /**
  * Show integration context data for a log line as a popover.
- * Filters integration data to ±windowMs of the line timestamp.
+ * Filters integration data to ±windowMs of the line timestamp,
+ * and by request ID when a requestIdPattern is configured.
  */
 async function handleIntegrationContextRequest(logUri, lineIndex, post, options) {
     if (!logUri) {
@@ -225,9 +228,8 @@ async function handleIntegrationContextRequest(logUri, lineIndex, post, options)
     try {
         const store = new session_metadata_1.SessionMetadataStore();
         const meta = await store.loadMetadata(logUri);
-        const windowMs = vscode.workspace
-            .getConfiguration('saropaLogCapture')
-            .get('contextWindowSeconds', 5) * 1000;
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const windowMs = cfg.get('contextWindowSeconds', 5) * 1000;
         const timestamp = options?.timestamp;
         const hasDatabaseLine = options?.hasDatabaseLine === true;
         let centerTime = timestamp && timestamp > 0
@@ -241,24 +243,31 @@ async function handleIntegrationContextRequest(logUri, lineIndex, post, options)
             post({ type: 'contextPopoverData', error: (0, l10n_1.t)('msg.noIntegrationContext') });
             return;
         }
-        const window = { centerTime, windowMs };
+        const requestId = extractRequestIdFromLine(options?.lineText, cfg);
+        const window = { centerTime, windowMs, ...(requestId ? { requestId } : {}) };
         let contextData = await (0, context_loader_1.loadContextData)(logUri, window);
         if (!contextData.hasData && meta.integrations) {
             const metaContext = await (0, context_loader_1.loadContextFromMeta)(meta.integrations, window);
             contextData = { ...contextData, ...metaContext, hasData: Object.keys(metaContext).length > 0 };
         }
+        const driftAdvisorMeta = meta.integrations?.['saropa-drift-advisor'];
+        const securityMeta = meta.integrations?.security;
         if (shouldPostNoIntegrationDataError({
             hasContextWindowData: contextData.hasData,
-            hasDriftAdvisorIntegrationMeta: !!meta.integrations?.['saropa-drift-advisor'],
+            hasDriftAdvisorIntegrationMeta: !!driftAdvisorMeta,
             hasDatabaseLine,
+            hasSecurityMeta: !!securityMeta,
         })) {
             post({ type: 'contextPopoverData', error: (0, l10n_1.t)('msg.noIntegrationData') });
             return;
         }
-        const driftAdvisorMeta = meta.integrations?.['saropa-drift-advisor'];
-        const integrationsMeta = driftAdvisorMeta
-            ? { 'saropa-drift-advisor': driftAdvisorMeta }
-            : undefined;
+        const integrationsMeta = {};
+        if (driftAdvisorMeta) {
+            integrationsMeta['saropa-drift-advisor'] = driftAdvisorMeta;
+        }
+        if (securityMeta) {
+            integrationsMeta.security = securityMeta;
+        }
         post({
             type: 'contextPopoverData',
             lineIndex,
@@ -270,6 +279,66 @@ async function handleIntegrationContextRequest(logUri, lineIndex, post, options)
     catch {
         post({ type: 'contextPopoverData', error: (0, l10n_1.t)('msg.noIntegrationContext') });
     }
+}
+/**
+ * Load database queries related to a specific log line and post them to the webview.
+ * Uses time-window and optional request-ID correlation (same logic as the integration
+ * context popover, but returns only database entries with no cap).
+ */
+async function handleRelatedQueriesRequest(logUri, lineIndex, post, options) {
+    if (!logUri) {
+        post({ type: 'relatedQueriesData', error: (0, l10n_1.t)('msg.noIntegrationContext') });
+        return;
+    }
+    try {
+        const store = new session_metadata_1.SessionMetadataStore();
+        const meta = await store.loadMetadata(logUri);
+        const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+        const windowMs = cfg.get('contextWindowSeconds', 5) * 1000;
+        const centerTime = (options?.timestamp && options.timestamp > 0)
+            ? options.timestamp
+            : getSessionCenterTime(meta.integrations);
+        if (centerTime === 0) {
+            post({ type: 'relatedQueriesData', lineIndex, queries: [] });
+            return;
+        }
+        const requestId = extractRequestIdFromLine(options?.lineText, cfg);
+        const window = { centerTime, windowMs, ...(requestId ? { requestId } : {}) };
+        const contextData = await (0, context_loader_1.loadContextData)(logUri, window);
+        post({ type: 'relatedQueriesData', lineIndex, queries: contextData.database ?? [] });
+    }
+    catch {
+        post({ type: 'relatedQueriesData', error: (0, l10n_1.t)('msg.noIntegrationContext') });
+    }
+}
+/**
+ * Extract a request ID from a log line using configured requestIdPattern settings.
+ * Tries database, HTTP, and browser patterns; returns first match or undefined.
+ */
+function extractRequestIdFromLine(lineText, cfg) {
+    if (!lineText) {
+        return undefined;
+    }
+    const patterns = [
+        cfg.get('integrations.database.requestIdPattern', ''),
+        cfg.get('integrations.http.requestIdPattern', ''),
+        cfg.get('integrations.browser.requestIdPattern', ''),
+    ];
+    for (const raw of patterns) {
+        if (!raw) {
+            continue;
+        }
+        try {
+            const m = new RegExp(raw).exec(lineText);
+            if (m) {
+                return m[1] ?? m[0];
+            }
+        }
+        catch {
+            // invalid regex — skip
+        }
+    }
+    return undefined;
 }
 /**
  * Show integration context in a separate document (legacy behavior).

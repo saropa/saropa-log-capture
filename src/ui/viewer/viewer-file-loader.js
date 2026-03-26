@@ -7,7 +7,7 @@
  * marker detection, timestamp parsing, and async batch sending.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SOURCE_DEBUG = exports.sendPendingLinesBatched = exports.parseUnifiedJsonlToPending = exports.parseExternalSidecarToPending = exports.externalSidecarLabelFromFileName = exports.parseTerminalSidecarToPending = exports.SOURCE_EXTERNAL_PREFIX = exports.SOURCE_TERMINAL = void 0;
+exports.SOURCE_DEBUG = exports.sendPendingLinesBatched = exports.parseUnifiedJsonlToPending = exports.parseExternalSidecarToPending = exports.externalSidecarLabelFromFileName = exports.parseBrowserSidecarToPending = exports.parseTerminalSidecarToPending = exports.SOURCE_BROWSER = exports.SOURCE_EXTERNAL_PREFIX = exports.SOURCE_TERMINAL = void 0;
 exports.findHeaderEnd = findHeaderEnd;
 exports.parseHeaderFields = parseHeaderFields;
 exports.computeSessionMidnight = computeSessionMidnight;
@@ -20,7 +20,9 @@ const source_linker_1 = require("../../modules/source/source-linker");
 var viewer_file_loader_sources_1 = require("./viewer-file-loader-sources");
 Object.defineProperty(exports, "SOURCE_TERMINAL", { enumerable: true, get: function () { return viewer_file_loader_sources_1.SOURCE_TERMINAL; } });
 Object.defineProperty(exports, "SOURCE_EXTERNAL_PREFIX", { enumerable: true, get: function () { return viewer_file_loader_sources_1.SOURCE_EXTERNAL_PREFIX; } });
+Object.defineProperty(exports, "SOURCE_BROWSER", { enumerable: true, get: function () { return viewer_file_loader_sources_1.SOURCE_BROWSER; } });
 Object.defineProperty(exports, "parseTerminalSidecarToPending", { enumerable: true, get: function () { return viewer_file_loader_sources_1.parseTerminalSidecarToPending; } });
+Object.defineProperty(exports, "parseBrowserSidecarToPending", { enumerable: true, get: function () { return viewer_file_loader_sources_1.parseBrowserSidecarToPending; } });
 Object.defineProperty(exports, "externalSidecarLabelFromFileName", { enumerable: true, get: function () { return viewer_file_loader_sources_1.externalSidecarLabelFromFileName; } });
 Object.defineProperty(exports, "parseExternalSidecarToPending", { enumerable: true, get: function () { return viewer_file_loader_sources_1.parseExternalSidecarToPending; } });
 Object.defineProperty(exports, "parseUnifiedJsonlToPending", { enumerable: true, get: function () { return viewer_file_loader_sources_1.parseUnifiedJsonlToPending; } });

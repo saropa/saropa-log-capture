@@ -59,6 +59,7 @@ function buildQualityPopoverContent(data) {
 function showQualityPopover(lineIdx, data) {
     closeQualityPopover();
     closeContextPopover();
+    closeRelatedQueriesPopover();
     var popover = document.createElement('div');
     popover.id = 'quality-popover';
     popover.className = 'context-popover quality-popover';

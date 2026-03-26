@@ -23,19 +23,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getContextPopoverScript = getContextPopoverScript;
 const viewer_context_popover_browser_1 = require("./viewer-context-popover-browser");
 const viewer_context_popover_db_insight_1 = require("./viewer-context-popover-db-insight");
+const viewer_context_popover_integration_sections_1 = require("./viewer-context-popover-integration-sections");
 const viewer_context_popover_shared_script_1 = require("./viewer-context-popover-shared-script");
 const viewer_quality_popover_script_1 = require("./viewer-quality-popover-script");
 /**
  * Returns the JavaScript code for the context popover in the webview.
  */
 function getContextPopoverScript() {
-    return (0, viewer_context_popover_browser_1.getContextPopoverBrowserScript)() + (0, viewer_context_popover_db_insight_1.getContextPopoverDbInsightScript)() + (
+    return (0, viewer_context_popover_browser_1.getContextPopoverBrowserScript)() + (0, viewer_context_popover_db_insight_1.getContextPopoverDbInsightScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverDatabaseQueriesScript)() + (0, viewer_context_popover_integration_sections_1.getContextPopoverSecurityScript)() + (0, viewer_context_popover_integration_sections_1.getRelatedQueriesPopoverScript)() + (
     /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
 
 function showContextPopover(lineIdx, anchorX, anchorY, data) {
     closeContextPopover();
+    closeRelatedQueriesPopover();
     contextPopoverLineIdx = lineIdx;
 
     var popover = document.createElement('div');
@@ -114,6 +116,14 @@ function showContextPopover(lineIdx, anchorX, anchorY, data) {
             closeContextPopover();
         });
     }
+
+    attachPopoverDataBtnHandlers(popover, '.popover-copy-query', 'data-query', function(val) {
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: val });
+    });
+    attachPopoverDataBtnHandlers(popover, '.popover-open-sidecar', 'data-file', function(val) {
+        vscodeApi.postMessage({ type: 'openSidecarFile', filename: val });
+        closeContextPopover();
+    });
 
     // Close on click outside
     setTimeout(function() {
@@ -260,10 +270,22 @@ function buildPopoverContent(lineIdx, data) {
         html += '</div></div>';
     }
 
+    var dbQueriesHtml = buildDatabaseQueriesPopoverSection(data);
+    if (dbQueriesHtml) {
+        hasContent = true;
+        html += dbQueriesHtml;
+    }
+
     var browserHtml = buildBrowserPopoverSection(data);
     if (browserHtml) {
         hasContent = true;
         html += browserHtml;
+    }
+
+    var securityHtml = buildSecurityPopoverSection(data);
+    if (securityHtml) {
+        hasContent = true;
+        html += securityHtml;
     }
 
     var dbInsightHtml = buildDatabaseInsightPopoverSection(lineIdx);
