@@ -10,6 +10,7 @@ exports.loadPerfContext = loadPerfContext;
 exports.loadHttpContext = loadHttpContext;
 exports.loadTerminalContext = loadTerminalContext;
 exports.loadBrowserContext = loadBrowserContext;
+exports.loadDatabaseContext = loadDatabaseContext;
 exports.extractTimestamp = extractTimestamp;
 const safe_json_1 = require("../misc/safe-json");
 /**
@@ -43,6 +44,7 @@ function loadPerfContext(content, window) {
 }
 /**
  * Load and filter HTTP requests from .requests.json sidecar.
+ * Includes entries within the time window OR matching the request ID.
  */
 function loadHttpContext(content, window) {
     const data = (0, safe_json_1.parseJSONOrDefault)(content, {});
@@ -51,10 +53,14 @@ function loadHttpContext(content, window) {
     }
     const minTime = window.centerTime - window.windowMs;
     const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
     const filtered = [];
     for (const req of data.requests) {
         const timestamp = extractTimestamp(req);
-        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) {
+        const reqId = req.requestId ? String(req.requestId) : undefined;
+        const inWindow = timestamp > 0 && timestamp >= minTime && timestamp <= maxTime;
+        const idMatch = targetId && reqId === targetId;
+        if (!inWindow && !idMatch) {
             continue;
         }
         filtered.push({
@@ -63,7 +69,7 @@ function loadHttpContext(content, window) {
             url: String(req.url || req.path || ''),
             status: Number(req.status || req.statusCode || 0),
             durationMs: Number(req.duration || req.durationMs || req.responseTime || 0),
-            requestId: req.requestId ? String(req.requestId) : undefined,
+            requestId: reqId,
         });
     }
     if (filtered.length === 0) {
@@ -104,6 +110,8 @@ function loadTerminalContext(content, window) {
 }
 /**
  * Load and filter browser console events from .browser.json sidecar.
+ * Includes entries within the time window OR matching the request ID
+ * (by field or substring in message text).
  */
 function loadBrowserContext(content, window) {
     const parsed = (0, safe_json_1.parseJSONOrDefault)(content, null);
@@ -118,14 +126,18 @@ function loadBrowserContext(content, window) {
     }
     const minTime = window.centerTime - window.windowMs;
     const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
     const filtered = [];
     for (const item of items) {
         const timestamp = extractTimestamp(item);
-        if (timestamp === 0 || timestamp < minTime || timestamp > maxTime) {
-            continue;
-        }
         const message = String(item.message || item.text || '');
         if (!message) {
+            continue;
+        }
+        const reqId = item.requestId ? String(item.requestId) : undefined;
+        const inWindow = timestamp > 0 && timestamp >= minTime && timestamp <= maxTime;
+        const idMatch = targetId && (reqId === targetId || message.includes(targetId));
+        if (!inWindow && !idMatch) {
             continue;
         }
         filtered.push({
@@ -133,6 +145,7 @@ function loadBrowserContext(content, window) {
             level: String(item.level || item.type || 'log'),
             message,
             url: item.url ? String(item.url) : undefined,
+            requestId: reqId,
         });
     }
     if (filtered.length === 0) {
@@ -140,6 +153,45 @@ function loadBrowserContext(content, window) {
     }
     filtered.sort((a, b) => a.timestamp - b.timestamp);
     return { browser: filtered.slice(0, 30) };
+}
+/**
+ * Load and filter database queries from .queries.json sidecar.
+ * Includes entries within the time window OR matching the request ID.
+ */
+function loadDatabaseContext(content, window) {
+    const data = (0, safe_json_1.parseJSONOrDefault)(content, {});
+    if (!data.queries || !Array.isArray(data.queries)) {
+        return {};
+    }
+    const minTime = window.centerTime - window.windowMs;
+    const maxTime = window.centerTime + window.windowMs;
+    const targetId = window.requestId;
+    const filtered = [];
+    for (const q of data.queries) {
+        const timestamp = extractTimestamp(q);
+        const queryText = String(q.queryText || q.query || '');
+        if (!queryText) {
+            continue;
+        }
+        const reqId = q.requestId ? String(q.requestId) : undefined;
+        const inWindow = timestamp === 0 || (timestamp >= minTime && timestamp <= maxTime);
+        const idMatch = targetId && reqId === targetId;
+        if (!inWindow && !idMatch) {
+            continue;
+        }
+        filtered.push({
+            timestamp: timestamp || window.centerTime,
+            queryText,
+            lineStart: Number(q.lineStart) || 0,
+            lineEnd: Number(q.lineEnd) || 0,
+            requestId: reqId,
+            durationMs: typeof q.durationMs === 'number' ? q.durationMs : undefined,
+        });
+    }
+    if (filtered.length === 0) {
+        return {};
+    }
+    return { database: filtered.slice(0, 50) };
 }
 /**
  * Extract timestamp from a request object.
