@@ -4,7 +4,7 @@
 
 import * as vscode from "vscode";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "./viewer-content";
-import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
+import { getConfig, viewerDbDetectorTogglesFromConfig, errorRateConfigFromConfig } from "../../modules/config/config";
 import { DRIFT_ADVISOR_EXTENSION_ID } from "./drift-advisor-integration";
 import * as helpers from "./viewer-provider-helpers";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
@@ -88,6 +88,10 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     chipMinCount: getConfig().viewerSqlPatternChipMinCount,
     chipMaxChips: getConfig().viewerSqlPatternMaxChips,
   }));
+  queueMicrotask(() => {
+    const erCfg = errorRateConfigFromConfig(getConfig());
+    target.postMessage({ type: 'setErrorRateConfig', bucketSize: erCfg.bucketSize, showWarnings: erCfg.showWarnings, detectSpikes: erCfg.detectSpikes });
+  });
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   queueMicrotask(() => target.postMessage(getLearningWebviewOptions()));
   queueMicrotask(() => target.postMessage({ type: 'setRootCauseHintL10n', strings: getRootCauseHintViewerStrings() }));

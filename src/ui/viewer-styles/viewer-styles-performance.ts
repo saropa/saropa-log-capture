@@ -3,10 +3,11 @@
  * Follows the same fixed-position pattern as other icon-bar panels.
  */
 import { getPerformanceDbTabStyles } from './viewer-styles-performance-db';
+import { getErrorRateTabStyles } from './viewer-styles-error-rate';
 
 /** Return CSS for the performance panel, groups, chart, and table. */
 export function getPerformancePanelStyles(): string {
-    return getPerformanceDbTabStyles() + /* css */ `
+    return getPerformanceDbTabStyles() + getErrorRateTabStyles() + /* css */ `
 
 /* ===================================================================
    Performance Panel — slide-out

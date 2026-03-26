@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig } from './modules/config/config';
+import { getConfig, errorRateConfigFromConfig } from './modules/config/config';
 import type { SessionManagerImpl } from './modules/session/session-manager';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
@@ -132,6 +132,13 @@ export function setupConfigListener(
             || e.affectsConfiguration('saropaLogCapture.viewerSqlPatternMaxChips')
         ) {
             broadcaster.setViewerSqlPatternChipSettings(cfg.viewerSqlPatternChipMinCount, cfg.viewerSqlPatternMaxChips);
+        }
+        if (
+            e.affectsConfiguration('saropaLogCapture.errorRateBucketSize')
+            || e.affectsConfiguration('saropaLogCapture.errorRateShowWarnings')
+            || e.affectsConfiguration('saropaLogCapture.errorRateDetectSpikes')
+        ) {
+            broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
         }
     }));
 }
