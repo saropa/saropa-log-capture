@@ -30,17 +30,17 @@ Rendered inside `#panel-slot` via `getXxxPanelHtml()`.
 
 | Panel | File(s) | Current | Gaps |
 |-------|---------|--------|------|
-| Options | `viewer-options-panel-html.ts` | Headings (h3); no container role/label; close has `title` only | Add `role="region"` `aria-label="Options"` to container; `aria-label="Close"` on close button; ensure form controls have labels |
-| Session list | `viewer-session-panel-html.ts`, `viewer-session-panel-rendering.ts` | TBD | Landmark, headings, `aria-live` for list updates |
-| Integrations | `viewer-integrations-panel-html.ts` | TBD | Landmark, headings |
-| Keyboard shortcuts | `viewer-keyboard-shortcuts-html.ts` | TBD | Landmark, headings |
-| Find | `viewer-find-panel.ts` | TBD | Landmark, labels |
-| Bookmarks | `viewer-bookmark-panel.ts` | TBD | Landmark |
-| Trash | `viewer-trash-panel.ts` | TBD | Landmark |
-| Filters | `viewer-filters-panel.ts` / `viewer-filters-panel-html.ts` | TBD | Landmark |
-| Crashlytics | `viewer-crashlytics-panel.ts` | TBD | Landmark |
-| Insight | `viewer-insight-panel.ts` | TBD | Landmark |
-| About | `viewer-about-panel.ts` | TBD | Landmark |
+| Options | `viewer-options-panel-html.ts` | `role="region"` `aria-label="Options"`; close has `aria-label`; search has `aria-label` | Done |
+| Session list | `viewer-session-panel-html.ts` | `role="region"` `aria-label="Project Logs"`; buttons have `aria-label`; focus in/out | Done |
+| Integrations | `viewer-integrations-panel-html.ts` | `role="region"` `aria-label="Integrations"`; `aria-expanded` on toggles | Done |
+| Keyboard shortcuts | `viewer-keyboard-shortcuts-html.ts` | `role="region"` `aria-label="Keyboard shortcuts"`; back button has `aria-label` | Done |
+| Find | `viewer-find-panel.ts` | `role="region"` `aria-label="Find in Files"`; buttons/input have `aria-label`; focus returns to icon bar | Done |
+| Bookmarks | `viewer-bookmark-panel.ts` | `role="region"` `aria-label="Bookmarks"`; buttons/input have `aria-label`; focus returns to icon bar | Done |
+| Trash | `viewer-trash-panel.ts` | `role="region"` `aria-label="Trash"`; buttons have `aria-label`; focus in/out | Done |
+| Filters | `viewer-filters-panel-html.ts` | `role="region"` `aria-label="Filters"`; close/search have `aria-label`; focus in/out | Done |
+| Crashlytics | `viewer-crashlytics-panel.ts` | `role="region"` `aria-label="Crashlytics"`; buttons have `aria-label`; focus in/out | Done |
+| Insight | `viewer-insight-panel.ts` | `role="region"` `aria-label="Insights"`; `aria-expanded`/`aria-controls` on sections; `aria-live` on hero | Done (pre-existing) |
+| About | `viewer-about-panel.ts` | `role="region"` `aria-label="About Saropa"`; close has `aria-label`; focus in/out | Done |
 
 ---
 
@@ -50,14 +50,14 @@ These set `panel.webview.html` (or equivalent) to their own HTML.
 
 | View | File | Current | Gaps |
 |------|------|--------|------|
-| Session comparison | `session-comparison.ts` | `buildHtml()` | Landmarks, headings, labels |
-| Timeline | `timeline-panel.ts` | `buildTimelineHtml`, `buildLoadingHtml`, `buildErrorHtml` | Landmarks, headings |
-| Investigation | `investigation-panel.ts` | Renders `investigation` HTML | Landmarks, headings |
-| Insights (standalone) | `insights-panel.ts` | TBD | Landmarks |
-| Bug report | `bug-report-panel.ts` | `buildPreviewHtml`, `buildLoadingHtml` | Landmarks, labels |
-| AI explain | `ai-explain-panel.ts` | `buildExplanationHtml` | Landmarks, labels |
-| Vitals | `vitals-panel.ts` | `buildPanelHtml`, `buildLoadingHtml` | Landmarks |
-| Analysis | `analysis-panel.ts` | `buildProgressiveShell` | Landmarks |
+| Session comparison | `session-comparison-html.ts` | `role="main"` `aria-label="Session Comparison"`; sync button has `aria-label` | Done |
+| Timeline | `timeline-panel.ts` | `role="main"` `aria-label="Timeline"` | Done |
+| Investigation | `investigation-panel-html.ts` | `role="main"` `aria-label="Investigation"`; search input, buttons have `aria-label`; emoji `aria-hidden` | Done |
+| Insights (standalone) | `insights-panel.ts` | Retired (unified into viewer Insight panel) | N/A |
+| Bug report | `bug-report-panel.ts` | `role="main"` `aria-label="Bug Report"`; toolbar has `role="toolbar"` | Done |
+| AI explain | `ai-explain-panel.ts` | `role="main"` `aria-label="AI Explanation"` | Done |
+| Vitals | `vitals-panel.ts` | `role="main"` `aria-label="Vitals"`; refresh button has `aria-label` | Done |
+| Analysis | `analysis-panel-render.ts` | `role="main"` `aria-label="Line Analysis"`; `role="progressbar"` with `aria-valuenow`/`min`/`max`; cancel button has `aria-label` | Done |
 | Pop-out | `pop-out-panel.ts` | Uses `buildViewerHtml` | Same as main viewer |
 
 ---

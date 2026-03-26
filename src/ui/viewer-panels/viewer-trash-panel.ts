@@ -8,14 +8,14 @@
 /** Generate the trash panel HTML. */
 export function getTrashPanelHtml(): string {
     return /* html */ `
-<div id="trash-panel" class="trash-panel">
+<div id="trash-panel" class="trash-panel" role="region" aria-label="Trash">
     <div class="trash-panel-header">
         <span>Trash</span>
         <div class="trash-panel-actions">
-            <button id="trash-empty-all" class="trash-panel-action" title="Empty Trash">
+            <button id="trash-empty-all" class="trash-panel-action" title="Empty Trash" aria-label="Empty Trash">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="trash-panel-close" class="trash-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
+            <button id="trash-panel-close" class="trash-panel-close" title="Close" aria-label="Close Trash"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="trash-panel-content">
@@ -39,6 +39,10 @@ export function getTrashPanelScript(): string {
         trashPanelOpen = true;
         trashPanelEl.classList.add('visible');
         vscodeApi.postMessage({ type: 'requestSessionList' });
+        requestAnimationFrame(function() {
+            var first = trashPanelEl.querySelector('button');
+            if (first) first.focus();
+        });
     };
 
     window.closeTrashPanel = function() {
@@ -46,6 +50,8 @@ export function getTrashPanelScript(): string {
         trashPanelEl.classList.remove('visible');
         trashPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('trash');
+        var ibBtn = document.getElementById('ib-trash');
+        if (ibBtn) ibBtn.focus();
     };
 
     /* ---- Rendering ---- */

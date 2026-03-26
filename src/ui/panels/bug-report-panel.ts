@@ -125,11 +125,13 @@ function buildPreviewHtml(markdown: string): string {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
 <style nonce="${nonce}">${getBugReportStyles()}</style>
 </head><body>
-<div class="toolbar">
+<div role="main" aria-label="Bug Report">
+<div class="toolbar" role="toolbar" aria-label="Bug report actions">
 <button id="copy-btn">Copy Markdown</button>
 <button id="save-btn">Save to File</button>
 </div>
 ${html}
+</div>
 <script nonce="${nonce}">${getScript()}</script>
 </body></html>`;
 }

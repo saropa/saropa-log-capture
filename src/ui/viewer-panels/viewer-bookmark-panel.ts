@@ -8,19 +8,19 @@
 /** Generate the bookmark panel HTML. */
 export function getBookmarkPanelHtml(): string {
     return /* html */ `
-<div id="bookmark-panel" class="bookmark-panel">
+<div id="bookmark-panel" class="bookmark-panel" role="region" aria-label="Bookmarks">
     <div class="bookmark-panel-header">
         <span>Bookmarks</span>
         <div class="bookmark-panel-actions">
-            <button id="bookmark-delete-all" class="bookmark-panel-action" title="Delete All Bookmarks">
+            <button id="bookmark-delete-all" class="bookmark-panel-action" title="Delete All Bookmarks" aria-label="Delete All Bookmarks">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close"><span class="codicon codicon-close"></span></button>
+            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close" aria-label="Close Bookmarks"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="bookmark-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="bookmark-input-wrapper">
-            <input id="bookmark-filter-input" type="text" placeholder="Filter bookmarks..." />
+            <input id="bookmark-filter-input" type="text" placeholder="Filter bookmarks..." aria-label="Filter bookmarks" />
         </div>
         <div id="bookmark-list" class="bookmark-list"></div>
         <div id="bookmark-empty" class="bookmark-empty">No bookmarks yet.\nRight-click a line to bookmark it.</div>
@@ -52,6 +52,8 @@ export function getBookmarkPanelScript(): string {
         bookmarkPanelEl.classList.remove('visible');
         bookmarkPanelOpen = false;
         if (typeof clearActivePanel === 'function') clearActivePanel('bookmarks');
+        var ibBtn = document.getElementById('ib-bookmarks');
+        if (ibBtn) ibBtn.focus();
     };
 
     function renderBookmarks(data) {
