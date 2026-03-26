@@ -11,8 +11,8 @@
 ## Current state (updated)
 
 - **Viewer:** Primary content has `role="main"` (`viewer-content-body.ts`). Log region has `role="log"` and `aria-label`; `#line-count` has `aria-live="polite"` and `aria-atomic="true"` so filter/load updates are announced. Icon bar has `role="toolbar"`; replay bar has `role="region"` and labeled controls. Level flyup "All"/"None" are `<button>` (keyboard-usable). Session/split nav, footer controls, and level toggles have labels.
-- **Panels (done so far):** Options, Session list (Project Logs), and Integrations have `role="region"` and `aria-label` on containers; key buttons/inputs have `aria-label`. Other panels (shortcuts, timeline, investigation, insights, bug-report, ai-explain, find, filters, bookmark, trash, crashlytics, insight, about) still need landmarks and labels per audit.
-- **Focus:** Options and Session panels move focus into the panel on open and return focus to the icon bar button on close (Escape or Close button). Focus trap (Tab confined to panel until close) not yet implemented.
+- **Panels:** All embedded panels (Options, Session, Integrations, Insight, Keyboard Shortcuts, Find, Bookmarks, Trash, Filters, Crashlytics, About) have `role="region"` and `aria-label` on containers; icon-only buttons and search inputs have `aria-label`. All standalone panels (Session Comparison, Timeline, Investigation, Bug Report, AI Explain, Vitals, Analysis) have `role="main"` landmarks.
+- **Focus:** All slide-out panels move focus into the panel on open and return focus to the icon bar button on close. Focus trap (Tab confined to panel until close) not yet implemented.
 - **Docs:** README has an "Accessibility" paragraph under Keyboard shortcuts; audit doc exists. axe in CI not yet added.
 
 ## Goal
@@ -34,17 +34,17 @@ Define and implement explicit accessibility for all webview UI: consistent seman
 - Level toggles, filter badge, session/split nav: ensure all interactive elements are focusable and have clear labels; avoid `tabindex="-1"` unless for programmatic focus only.
 - Replay bar: ensure play/pause/stop, speed, and scrubber are keyboard-usable and labeled.
 
-### 3. Panels (options, session list, integrations, shortcuts, timeline, etc.) — in progress
+### 3. Panels (options, session list, integrations, shortcuts, timeline, etc.) ✅
 
-- Add `role` and `aria-label` to panel containers and key controls. **(Done: Options, Session, Integrations.)**
+- Add `role` and `aria-label` to panel containers and key controls. **(Done: all panels.)**
 - Ensure headings hierarchy (e.g. one `h1` per view, then `h2`/`h3`) where applicable.
 - For dynamic content (e.g. session list, integration list), use `aria-live` where updates should be announced.
 - Ensure selects, buttons, and links are focusable and operable by keyboard (Enter/Space, no click-only).
 
 ### 4. Focus and keyboard — in progress
 
-- When opening a panel or overlay, move focus into it and trap focus until closed (or provide a clear “Close” that returns focus to opener). **(Focus-in and return-to-opener done for Options and Session; trap not yet implemented.)**
-- When closing, return focus to the trigger element.
+- When opening a panel or overlay, move focus into it and trap focus until closed (or provide a clear “Close” that returns focus to opener). **(Focus-in and return-to-opener done for all slide-out panels; trap not yet implemented.)**
+- When closing, return focus to the trigger element. **(Done for all slide-out panels.)**
 - Document shortcut coverage (e.g. Ctrl+F for search) in the viewer **Options** → **Keyboard shortcuts…** panel and ensure no conflicting or unreachable actions.
 
 ### 5. Testing and docs — in progress

@@ -17,15 +17,15 @@
 
 /** Returns the HTML for the filters panel element. */
 export function getFiltersPanelHtml(): string {
-    return `<div id="filters-panel" class="options-panel">
+    return `<div id="filters-panel" class="options-panel" role="region" aria-label="Filters">
     <div class="options-header">
         <span>Filters</span>
-        <button class="filters-close options-close" title="Close">&times;</button>
+        <button class="filters-close options-close" title="Close" aria-label="Close Filters">&times;</button>
     </div>
 
     <div class="options-search-wrapper">
-        <input id="filters-search" type="text" placeholder="Search tags\u2026" />
-        <button id="filters-search-clear" class="options-search-clear" title="Clear">&times;</button>
+        <input id="filters-search" type="text" placeholder="Search tags\u2026" aria-label="Search tags" />
+        <button id="filters-search-clear" class="options-search-clear" title="Clear" aria-label="Clear search">&times;</button>
     </div>
 
     <div class="options-content">

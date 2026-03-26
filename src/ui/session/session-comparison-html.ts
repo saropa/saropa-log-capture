@@ -93,13 +93,14 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
     </style>
 </head>
 <body>
+    <div role="main" aria-label="Session Comparison">
     <div class="header">
         <div class="stats">
             <span class="stat"><span class="unique-a-dot"></span> ${sessionA.uniqueCount} unique to A</span>
             <span class="stat"><span class="unique-b-dot"></span> ${sessionB.uniqueCount} unique to B</span>
             <span class="stat">${commonCount} common</span>
         </div>
-        <button id="sync-btn" class="sync-btn ${syncScrolling ? 'active' : ''}">
+        <button id="sync-btn" class="sync-btn ${syncScrolling ? 'active' : ''}" aria-label="Toggle sync scrolling">
             Sync Scroll: ${syncScrolling ? 'ON' : 'OFF'}
         </button>
     </div>
@@ -118,6 +119,7 @@ export function buildSessionComparisonHtml(args: SessionComparisonHtmlArgs): str
                 ${renderLines(sessionB.lines, 'b')}
             </div>
         </div>
+    </div>
     </div>
     <script nonce="${nonce}">
         ${getSessionComparisonWebviewScript(syncScrolling, driftInstalled)}

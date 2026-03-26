@@ -10,11 +10,11 @@ var progressText = document.getElementById('progress-text');
 var totalSections = progressFill ? parseInt(progressFill.dataset.total || '0') : 0;
 function updateProgressBar() {
     var done = totalSections - pendingCount;
-    if (progressFill) { progressFill.style.width = (totalSections > 0 ? Math.round((done / totalSections) * 100) : 0) + '%'; }
+    if (progressFill) { progressFill.style.width = (totalSections > 0 ? Math.round((done / totalSections) * 100) : 0) + '%'; progressFill.setAttribute('aria-valuenow', String(done)); }
     if (progressText) { progressText.textContent = 'Analyzing... ' + done + '/' + totalSections + ' complete'; }
 }
 function completeProgress() {
-    if (progressFill) { progressFill.style.width = '100%'; progressFill.classList.add('complete'); }
+    if (progressFill) { progressFill.style.width = '100%'; progressFill.classList.add('complete'); progressFill.setAttribute('aria-valuenow', progressFill.getAttribute('aria-valuemax') || '0'); }
     if (progressText) { progressText.textContent = '\u2713 Analysis complete'; }
     var track = document.querySelector('.progress-bar-track');
     if (track) { track.classList.add('complete'); }

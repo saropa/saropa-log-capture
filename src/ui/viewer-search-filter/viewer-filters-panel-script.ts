@@ -68,6 +68,9 @@ function openFiltersPanel() {
     if (panel) {
         syncFiltersPanelUi();
         panel.classList.add('visible');
+        requestAnimationFrame(function() {
+            if (searchInput) searchInput.focus();
+        });
     }
 }
 
@@ -76,6 +79,8 @@ function closeFiltersPanel() {
     if (panel) panel.classList.remove('visible');
     filtersPanelOpen = false;
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
+    var ibBtn = document.getElementById('ib-filters');
+    if (ibBtn) ibBtn.focus();
 }
 
 /** Human-readable label for a stream source id (debug, terminal, or external sidecar prefix). */

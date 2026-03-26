@@ -10,14 +10,14 @@ import { getCrashlyticsSetupScript } from './viewer-crashlytics-setup';
 /** Generate the crashlytics panel HTML shell. */
 export function getCrashlyticsPanelHtml(): string {
     return /* html */ `
-<div id="crashlytics-panel" class="crashlytics-panel">
+<div id="crashlytics-panel" class="crashlytics-panel" role="region" aria-label="Crashlytics">
     <div class="crashlytics-panel-header">
         <span id="cp-header-text">Crashlytics</span>
         <div class="crashlytics-panel-actions">
-            <button id="cp-refresh" class="crashlytics-panel-action" title="Refresh">
+            <button id="cp-refresh" class="crashlytics-panel-action" title="Refresh" aria-label="Refresh Crashlytics">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="cp-panel-close" class="crashlytics-panel-close" title="Close">&times;</button>
+            <button id="cp-panel-close" class="crashlytics-panel-close" title="Close" aria-label="Close Crashlytics">&times;</button>
         </div>
     </div>
     <div class="crashlytics-panel-content">
@@ -53,6 +53,10 @@ export function getCrashlyticsPanelScript(): string {
         showLoading();
         vscodeApi.postMessage({ type: 'requestCrashlyticsData' });
         vscodeApi.postMessage({ type: 'crashlyticsPanelOpened' });
+        requestAnimationFrame(function() {
+            var first = cpPanelEl.querySelector('button');
+            if (first) first.focus();
+        });
     };
 
     window.closeCrashlyticsPanel = function() {
@@ -61,6 +65,8 @@ export function getCrashlyticsPanelScript(): string {
         cpPanelOpen = false;
         vscodeApi.postMessage({ type: 'crashlyticsPanelClosed' });
         if (typeof clearActivePanel === 'function') clearActivePanel('crashlytics');
+        var ibBtn = document.getElementById('ib-crashlytics');
+        if (ibBtn) ibBtn.focus();
     };
 
     function showLoading() {

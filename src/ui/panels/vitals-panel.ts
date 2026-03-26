@@ -63,11 +63,13 @@ function buildPanelHtml(snapshot: VitalsSnapshot | undefined): string {
     }
     const refreshNote = `(${formatElapsedLabel(snapshot.queriedAt)})`;
     return `<!DOCTYPE html><html><head><style nonce="${nonce}">${getStyles()}</style></head><body>
-<div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')">Refresh</button></div>
+<div role="main" aria-label="Vitals">
+<div class="vt-toolbar"><span class="vt-title">Vitals ${refreshNote}</span><button class="vt-refresh" onclick="postMsg('refresh')" aria-label="Refresh Vitals data">Refresh</button></div>
 <div class="vt-pkg">${escapeHtml(snapshot.packageName)}</div>
 ${renderMetric('Crash Rate', snapshot.crashRate, thresholds.crashRate)}
 ${renderMetric('ANR Rate', snapshot.anrRate, thresholds.anrRate)}
 <div class="vt-footer" onclick="postMsg('openPlayConsole')">Open Play Console</div>
+</div>
 <script nonce="${nonce}">const v=acquireVsCodeApi();function postMsg(t){v.postMessage({type:t})}</script>
 </body></html>`;
 }
