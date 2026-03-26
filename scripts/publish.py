@@ -31,7 +31,7 @@
 #     Step 13: Publish to VS Code Marketplace
 #     Step 14: Publish to Open VSX (Cursor / VSCodium)
 #     Step 15: Create GitHub release (attach .vsix)
-#     Step 16: Verify registries (Open VSX + VS Marketplace APIs vs package.json)
+#     Step 16: Verify registries (poll APIs until version visible; 30s interval, 10 min max)
 #
 # .USAGE
 #   python scripts/publish.py                   # full analyze + publish pipeline
@@ -124,7 +124,7 @@ _CLI_FLAGS = [
     ("--no-logo", "Suppress the Saropa ASCII art logo."),
     (
         "--store-versions",
-        "Report Open VSX + VS Marketplace versions vs package.json (scripts/check-stores-version.ps1).",
+        "Report Open VSX + VS Marketplace vs package.json (check-stores-version.ps1 -ReportOnly).",
     ),
 ]
 
@@ -170,6 +170,7 @@ _STEP_EXIT_CODES = {
     "Marketplace publish": ExitCode.PUBLISH_FAILED,
     "Open VSX publish": ExitCode.OPENVSX_FAILED,
     "GitHub release": ExitCode.RELEASE_FAILED,
+    "Store propagation": ExitCode.STORE_VERSION_MISMATCH,
 }
 
 
@@ -184,19 +185,28 @@ def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
 # ── Main ─────────────────────────────────────────────────────
 
 
-def run_store_versions_report(expected_version: str) -> int:
-    """Run scripts/check-stores-version.ps1 -ReportOnly; store HTTP logic lives only in PowerShell."""
+def _check_stores_ps_and_script() -> tuple[str, str] | None:
+    """Return (powershell_exe, script_path) for check-stores-version.ps1, or None if unusable."""
     ps = shutil.which("pwsh") or shutil.which("powershell") or shutil.which("powershell.exe")
     if not ps:
         print(
             "ERROR: PowerShell not found (install PowerShell Core 'pwsh', or use Windows PowerShell).",
             file=sys.stderr,
         )
-        return ExitCode.PREREQUISITE_FAILED
+        return None
     script = os.path.join(PROJECT_ROOT, "scripts", "check-stores-version.ps1")
     if not os.path.isfile(script):
         print(f"ERROR: Missing {script}", file=sys.stderr)
+        return None
+    return (ps, script)
+
+
+def run_store_versions_report(expected_version: str) -> int:
+    """Run scripts/check-stores-version.ps1 -ReportOnly; store HTTP logic lives only in PowerShell."""
+    pair = _check_stores_ps_and_script()
+    if pair is None:
         return ExitCode.PREREQUISITE_FAILED
+    ps, script = pair
     cmd = [
         ps,
         "-NoProfile",
@@ -207,6 +217,43 @@ def run_store_versions_report(expected_version: str) -> int:
         "-ReportOnly",
         "-ExpectedVersion",
         expected_version,
+    ]
+    proc = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    if proc.returncode != 0:
+        return ExitCode.STORE_VERSION_MISMATCH
+    return ExitCode.SUCCESS
+
+
+def run_store_propagation_wait(expected_version: str, stores: str) -> int:
+    """Poll store APIs until the published version is visible (30s between attempts, 10 min max).
+
+    stores: same values as publish flow — vscode_only, openvsx_only, or both.
+    """
+    pair = _check_stores_ps_and_script()
+    if pair is None:
+        return ExitCode.PREREQUISITE_FAILED
+    ps, script = pair
+    stores_map = {
+        "vscode_only": "Marketplace",
+        "openvsx_only": "OpenVsx",
+        "both": "Both",
+    }
+    stores_arg = stores_map.get(stores, "Both")
+    cmd = [
+        ps,
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        script,
+        "-ExpectedVersion",
+        expected_version,
+        "-IntervalSeconds",
+        "30",
+        "-TotalMinutes",
+        "10",
+        "-Stores",
+        stores_arg,
     ]
     proc = subprocess.run(cmd, cwd=PROJECT_ROOT)
     if proc.returncode != 0:
@@ -231,7 +278,7 @@ def main() -> int:
     1. Run analysis phase (Steps 1-10) — all must pass
     2. Package .vsix and offer local install (always)
     3. If --analyze-only: stop here
-    4. Otherwise: confirm → credentials → publish (Steps 11-15) → store API check (Step 16)
+    4. Otherwise: confirm → credentials → publish (Steps 11-15) → store propagation poll (Step 16)
     """
     args = parse_args()
     version = read_package_version()
@@ -278,8 +325,9 @@ def main() -> int:
     if not run_publish(version, vsix_path, results, stores):
         return _exit_code_from_results(results)
 
-    heading("Store versions (registries vs package.json)")
-    store_rc = run_store_versions_report(version)
+    heading("Step 16 · Verify store propagation")
+    info("Polling registry APIs until the new version is visible (30s interval, 10 min max).")
+    store_rc = run_store_propagation_wait(version, stores)
     if store_rc != ExitCode.SUCCESS:
         return store_rc
     return ExitCode.SUCCESS
