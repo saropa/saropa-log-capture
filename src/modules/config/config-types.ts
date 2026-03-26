@@ -297,12 +297,15 @@ export interface IntegrationSecurityConfig {
   readonly windowsSecurityLog: boolean;
   readonly auditLogPath: string;
   readonly redactSecurityEvents: boolean;
+  readonly includeSummaryInHeader: boolean;
+  readonly includeInBugReport: boolean;
 }
 
 export interface IntegrationDatabaseConfig {
   readonly mode: 'parse' | 'file' | 'api';
   readonly queryLogPath: string;
   readonly requestIdPattern: string;
+  readonly queryBlockPattern: string;
   readonly timeWindowSeconds: number;
   readonly maxQueriesPerLookup: number;
 }
