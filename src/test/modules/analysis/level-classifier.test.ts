@@ -65,6 +65,24 @@ suite('LevelClassifier', () => {
                 'info',
             );
         });
+
+        test('should classify capture-prefixed Drift SQL as info when logcat is not at line start', () => {
+            assert.strictEqual(
+                classifyLevel(
+                    '[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]',
+                    'stdout',
+                    true,
+                ),
+                'info',
+            );
+        });
+
+        test('should classify E/flutter Drift SQL as warning, not runtime error', () => {
+            assert.strictEqual(
+                classifyLevel('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true),
+                'warning',
+            );
+        });
     });
 
     suite('classifyLevel — strict mode', () => {

@@ -16,16 +16,34 @@ var noticePattern = /\\b(notice|note|important)\\b/i;
 
 /** Logcat prefix (E/, W/, I/, D/, V/, F/, A/) is an authoritative level signal. */
 var logcatLevelPattern = /^([VDIWEFA])\\//;
+/** Same as level-classifier.ts — capture prefixes may appear before I/flutter. */
+var logcatLetterAnywhere = /\\b([VDIWEFA])\\//;
+
+function classifyDriftSqlLine(plainText) {
+    var lcm = logcatLevelPattern.exec(plainText);
+    var m = lcm || logcatLetterAnywhere.exec(plainText);
+    if (!m) return 'info';
+    var L = m[1];
+    if (L === 'D' || L === 'V') return 'debug';
+    if (L === 'W') return 'warning';
+    if (L === 'E' || L === 'F' || L === 'A') return 'warning';
+    return 'info';
+}
+
+/** Used by viewer-data-add to skip severity proximity inheritance for Drift SQL bursts. */
+function isDriftSqlStatementLine(plainText) {
+    return driftStatementPattern.test(plainText);
+}
 
 function classifyLevel(plainText, category) {
     if (category === 'stderr') return 'error';
+    if (driftStatementPattern.test(plainText)) return classifyDriftSqlLine(plainText);
     var ep = strictLevelDetection ? strictErrorPattern : looseErrorPattern;
     var lcm = logcatLevelPattern.exec(plainText);
     if (lcm) {
         var L = lcm[1];
         if (L === 'E' || L === 'F' || L === 'A') return 'error';
         if (L === 'W') return 'warning';
-        if (driftStatementPattern.test(plainText)) return (L === 'D' || L === 'V') ? 'debug' : 'info';
         if (ep.test(plainText)) return 'error';
         if (perfPattern.test(plainText)) return 'performance';
         if (flutterDartContextRe.test(plainText) && memoryPhraseRe.test(plainText)) return 'performance';
