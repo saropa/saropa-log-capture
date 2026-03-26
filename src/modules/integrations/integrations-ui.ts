@@ -27,7 +27,7 @@ export interface IntegrationAdapterMeta {
 export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     {
         id: 'packages',
-        label: 'Package / lockfile',
+        label: 'Package / Lockfile',
         description: 'Lockfile hash and package manager in session header',
         descriptionLong: 'Adds lockfile hash and package manager (npm, yarn, pnpm) to the session header so you can tell exactly which dependency set a run used.',
         performanceNote: 'Minimal — reads lockfile(s) once at session start.',
@@ -51,7 +51,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'environment',
-        label: 'Environment snapshot',
+        label: 'Environment Snapshot',
         description: 'Env checksum and config file hashes in header',
         descriptionLong: 'Captures an environment checksum (from launch config) and hashes of configured config files so you can detect env or config drift between runs.',
         performanceNote: 'Minimal — reads env and a small set of files at session start.',
@@ -59,7 +59,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'testResults',
-        label: 'Test results',
+        label: 'Test Results',
         description: 'Last test run from file or JUnit XML in header',
         descriptionLong: 'Reads the last test run from a JSON file or JUnit XML and adds pass/fail and optionally failed test names to the session header.',
         performanceNote: '\u26A0\uFE0F Low to moderate — needs a JUnit/JSON file configured; parsing large XML can be slow.',
@@ -67,7 +67,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'coverage',
-        label: 'Code coverage',
+        label: 'Code Coverage',
         description: 'Coverage % from lcov/Cobertura in header',
         descriptionLong: 'Parses lcov.info, cobertura.xml, or similar and adds coverage percentage to the session header. Also shows per-file coverage badges on stack frame lines and writes a quality.json sidecar at session end.',
         performanceNote: '\u26A0\uFE0F Low to moderate — needs a report path configured; parsing large coverage reports can be slow.',
@@ -75,7 +75,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'crashDumps',
-        label: 'Crash dumps',
+        label: 'Crash Dumps',
         description: 'Scan for .dmp/.core in session time range at session end',
         descriptionLong: 'At session end, scans configured directories for .dmp or .core files in the session time range and attaches references or summaries so you can correlate crashes with the log.',
         performanceNote: '\u26A0\uFE0F Can be slow if scan directories are large or on slow disks.',
@@ -91,7 +91,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'docker',
-        label: 'Docker / containers',
+        label: 'Docker / Containers',
         description: 'Container inspect and logs at session end',
         descriptionLong: 'At session end, captures container ID (from config or docker ps), runs docker inspect and docker logs for the session time range, and writes a sidecar so you can correlate container state with the log.',
         performanceNote: '\u26A0\uFE0F Can be slow — docker inspect and logs can take time for large outputs. Only relevant if running containers.',
@@ -115,7 +115,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'terminal',
-        label: 'Terminal output',
+        label: 'Terminal Output',
         description: 'Capture Integrated Terminal output to sidecar during session',
         descriptionLong: 'Captures Integrated Terminal output while the session is active and writes it to a .terminal.log sidecar at session end so you can correlate terminal commands and output with the debug log.',
         performanceNote: 'Low — in-memory buffer during session; one write at end.',
@@ -123,7 +123,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'linuxLogs',
-        label: 'WSL / Linux logs',
+        label: 'WSL / Linux Logs',
         description: 'dmesg and journalctl for WSL or remote Linux sessions',
         descriptionLong: 'For WSL or remote Linux: captures dmesg and journalctl output in the session time range so you can correlate kernel and system logs with the app log.',
         performanceNote: '\u26A0\uFE0F Can be slow — journalctl over a wide range or on a busy system may take time. WSL/Linux only.',
@@ -131,7 +131,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'externalLogs',
-        label: 'Application / file logs',
+        label: 'Application / File Logs',
         description: 'Tail external log files (app.log, nginx) during session',
         descriptionLong: 'Tails configured external log files (e.g. app.log, nginx access log) during the session and attaches them as sidecars so you have one bundle with both debug and app logs.',
         performanceNote: '\u26A0\uFE0F Continuous I/O — reads configured files throughout the session; more files or high churn adds load. Needs explicit file paths configured.',
@@ -139,7 +139,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'security',
-        label: 'Security / audit logs',
+        label: 'Security / Audit Logs',
         description: 'Windows Security and app audit log (opt-in)',
         descriptionLong: 'On Windows: can include Security event log and application audit log in the session context. Opt-in and configurable; may redact sensitive event details.',
         performanceNote: '\u26A0\uFE0F Similar to Windows Event Log — query can take time; Security log may be large and contain sensitive data. Windows only.',
@@ -147,7 +147,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'database',
-        label: 'Database query logs',
+        label: 'Database Query Logs',
         description: 'Correlate query logs with debug output by request ID',
         descriptionLong: 'Correlates database query logs with debug output (e.g. by request ID or trace ID) so you can see which queries ran around a given log line.',
         performanceNote: '\u26A0\uFE0F Needs external configuration — file reads or API calls; generally low if sources are local and small.',
@@ -155,7 +155,7 @@ export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
     },
     {
         id: 'http',
-        label: 'HTTP / network',
+        label: 'HTTP / Network',
         description: 'Correlate request log or HAR with debug output',
         descriptionLong: 'Correlates HTTP/network request data (from request logs or HAR) with debug output so you can see which requests occurred around a given log line.',
         performanceNote: '\u26A0\uFE0F Needs configuration — requires request logs or HAR files to be set up; generally low for local files.',

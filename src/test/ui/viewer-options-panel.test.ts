@@ -68,6 +68,36 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(!html.includes('data-preview="'));
             assert.ok(!html.includes('data-full="'));
         });
+
+        test('should render perf and when-to-disable notes as hidden expandables', () => {
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('integrations-expandable options-filtered-hidden'));
+            assert.ok(html.includes('integrations-perf integrations-expandable'));
+            assert.ok(html.includes('integrations-when integrations-expandable'));
+        });
+
+        test('should show warning emoji in label for integrations with performance warnings', () => {
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('integrations-perf-warning'));
+            // Warning emoji appears in the label span, not in the perf note
+            const labelMatch = html.match(/integrations-label[^<]*<\/span>/);
+            assert.ok(labelMatch === null || !labelMatch[0].includes('Performance:'),
+                'Warning emoji should be on the label, not duplicated in perf note');
+        });
+
+        test('should use Title Case for all integration labels', () => {
+            const html = getIntegrationsPanelHtml();
+            // Verify key labels are Title Cased
+            assert.ok(html.includes('Code Coverage'));
+            assert.ok(html.includes('Test Results'));
+            assert.ok(html.includes('Terminal Output'));
+            assert.ok(html.includes('Application / File Logs'));
+            assert.ok(html.includes('Database Query Logs'));
+            // Verify old lowercase forms are gone
+            assert.ok(!html.includes('>Code coverage<'));
+            assert.ok(!html.includes('>Test results<'));
+            assert.ok(!html.includes('>Terminal output<'));
+        });
     });
 
     suite('getKeyboardShortcutsViewHtml (Keyboard shortcuts screen)', () => {
