@@ -20,6 +20,12 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+• **Signals strip — strength indicator** — Hypothesis strength is shown as a compact emoji with a hover tooltip (and screen-reader text) instead of a “confidence:” label.
+
 ## [4.0.0]
 
 Focused on richer cross-source debugging: new database, browser, and security context flows with stronger request-id correlation, plus accessibility and SQL-history reliability polish across the viewer.

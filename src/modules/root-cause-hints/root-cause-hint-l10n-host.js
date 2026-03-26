@@ -18,7 +18,8 @@ function getRootCauseHintViewerStrings() {
         expandTitle: (0, l10n_1.t)("viewer.rchExpandTitle"),
         copyAria: (0, l10n_1.t)("viewer.rchCopyAria"),
         copied: (0, l10n_1.t)("viewer.rchCopied"),
-        confPrefix: (0, l10n_1.t)("viewer.rchConfPrefix"),
+        confTooltipMedium: (0, l10n_1.t)("viewer.rchConfTooltipMedium"),
+        confTooltipLow: (0, l10n_1.t)("viewer.rchConfTooltipLow"),
     };
 }
 //# sourceMappingURL=root-cause-hint-l10n-host.js.map

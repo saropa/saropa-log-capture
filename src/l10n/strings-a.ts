@@ -84,7 +84,12 @@ export const stringsA: Record<string, string> = {
     'viewer.rchExpandTitle': 'Expand',
     'viewer.rchCopyAria': 'Copy signal',
     'viewer.rchCopied': 'Copied',
-    'viewer.rchConfPrefix': 'confidence: ',
+    /** Tooltip for the stronger-signal emoji on a hypothesis (replaces “confidence: medium”). */
+    'viewer.rchConfTooltipMedium':
+      'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.',
+    /** Tooltip for the weaker-signal emoji on a hypothesis (replaces “confidence: low”). */
+    'viewer.rchConfTooltipLow':
+      'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.',
 
     'panel.aiExplainTitle': 'AI Explanation',
     'panel.aiExplainCopyBtn': 'Copy explanation',

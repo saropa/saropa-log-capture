@@ -17,6 +17,7 @@ export function getRootCauseHintViewerStrings(): Record<string, string> {
     expandTitle: t("viewer.rchExpandTitle"),
     copyAria: t("viewer.rchCopyAria"),
     copied: t("viewer.rchCopied"),
-    confPrefix: t("viewer.rchConfPrefix"),
+    confTooltipMedium: t("viewer.rchConfTooltipMedium"),
+    confTooltipLow: t("viewer.rchConfTooltipLow"),
   };
 }
