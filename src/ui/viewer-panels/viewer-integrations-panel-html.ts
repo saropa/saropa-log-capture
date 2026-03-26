@@ -39,28 +39,30 @@ function renderIntegrationRow(a: IntegrationAdapterMeta): string {
     const longDesc = a.descriptionLong ?? a.description;
     const previewDesc = truncateWithEllipsis(longDesc, INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH);
     const perfNote = splitPerformanceWarning(a.performanceNote);
+    const labelWarning = perfNote.warningEmoji
+        ? ` <span class="integrations-perf-warning" aria-label="Performance warning">${escapeHtml(perfNote.warningEmoji)}</span>`
+        : '';
     let perf = '';
     if (a.performanceNote) {
-        const warning = perfNote.warningEmoji
-            ? `<span class="integrations-perf-warning" aria-label="Performance warning">${escapeHtml(perfNote.warningEmoji)}</span>`
-            : '';
-        perf = `<p class="integrations-note integrations-perf">
+        perf = `<p class="integrations-note integrations-perf integrations-expandable options-filtered-hidden">
             <span class="integrations-note-label">Performance:</span>
-            ${warning}
             <span>${escapeHtml(perfNote.text)}</span>
         </p>`;
     }
-    const when = a.whenToDisable ? `<p class="integrations-note integrations-when">When to disable: ${escapeHtml(a.whenToDisable)}</p>` : '';
+    const when = a.whenToDisable
+        ? `<p class="integrations-note integrations-when integrations-expandable options-filtered-hidden">When to disable: ${escapeHtml(a.whenToDisable)}</p>`
+        : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
     const escapedPreviewDesc = escapeHtml(previewDesc);
     const escapedLongDesc = escapeHtml(longDesc);
-    const descToggle = longDesc.length > INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH
+    const hasExpandable = longDesc.length > INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH || !!a.performanceNote || !!a.whenToDisable;
+    const descToggle = hasExpandable
         ? `<button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">Show more</button>`
         : '';
     return `
         <label class="integrations-row" title="${escapeHtml(longDesc)}" data-search-text="${escapeHtml(searchText)}">
             <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
-            <span class="integrations-label">${escapeHtml(a.label)}</span>
+            <span class="integrations-label">${escapeHtml(a.label)}${labelWarning}</span>
             <p class="integrations-desc">
                 <span class="integrations-desc-text">
                     <span class="integrations-desc-preview">${escapedPreviewDesc}</span>
