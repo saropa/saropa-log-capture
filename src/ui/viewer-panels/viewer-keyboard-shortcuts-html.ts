@@ -7,9 +7,9 @@
 /** Returns the HTML for the Keyboard Shortcuts view (header + back + content). */
 export function getKeyboardShortcutsViewHtml(): string {
     return `
-    <div id="shortcuts-view" class="integrations-view shortcuts-view-hidden" aria-hidden="true">
+    <div id="shortcuts-view" class="integrations-view shortcuts-view-hidden" role="region" aria-label="Keyboard shortcuts" aria-hidden="true">
         <div class="integrations-header">
-            <button type="button" id="shortcuts-back" class="integrations-back" title="Back to Options"><span class="codicon codicon-arrow-left"></span></button>
+            <button type="button" id="shortcuts-back" class="integrations-back" title="Back to Options" aria-label="Back to Options"><span class="codicon codicon-arrow-left"></span></button>
             <span class="integrations-title">Keyboard shortcuts</span>
         </div>
         <div class="integrations-content shortcuts-content">

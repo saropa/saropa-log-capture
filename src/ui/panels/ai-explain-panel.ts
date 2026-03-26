@@ -91,7 +91,9 @@ function buildExplanationHtml(context: AIContext, result: ExplainResult, nonce: 
     </style>
 </head>
 <body>
+    <div role="main" aria-label="AI Explanation">
     ${parts.join('\n')}
+    </div>
     <script nonce="${nonce}">(function(){var v=acquireVsCodeApi();var b=document.getElementById('copy-btn');if(b)b.onclick=function(){v.postMessage({type:'copy'});};})();</script>
 </body>
 </html>`;
