@@ -33,11 +33,16 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const assert = __importStar(require("assert"));
+const assert = __importStar(require("node:assert"));
 const metadata_loader_1 = require("../../../modules/session/metadata-loader");
 /** Build a minimal LoadedMeta for testing filterByTime. */
 function makeMeta(filename) {
     return { filename, meta: { lineCount: 0 } };
+}
+/** Format a Date into the `YYYYMMDD_HHMMSS` log filename prefix. */
+function formatLogDatePrefix(date) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}_${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 suite('MetadataLoader', () => {
     suite('parseSessionDate', () => {
@@ -77,7 +82,9 @@ suite('MetadataLoader', () => {
         });
     });
     suite('filterByTime', () => {
-        const recent = makeMeta('20260224_120000_app.log');
+        const dayMs = 24 * 60 * 60 * 1000;
+        const fixedNow = new Date(2026, 2, 26, 12, 0, 0).getTime();
+        const recent = makeMeta(`${formatLogDatePrefix(new Date(fixedNow - (5 * dayMs)))}_app.log`);
         test('should return all metas for "all" range', () => {
             const metas = [makeMeta('20200101_000000_old.log'), recent];
             const result = (0, metadata_loader_1.filterByTime)(metas, 'all');
@@ -85,14 +92,18 @@ suite('MetadataLoader', () => {
         });
         test('should filter out old sessions for 24h range', () => {
             const old = makeMeta('20200101_000000_ancient.log');
-            const result = (0, metadata_loader_1.filterByTime)([old, recent], '24h');
-            assert.ok(result.length <= 2, 'Should filter or keep based on current time');
+            const within24h = makeMeta(`${formatLogDatePrefix(new Date(fixedNow - (2 * 60 * 60 * 1000)))}_within.log`);
+            const result = (0, metadata_loader_1.filterByTime)([old, recent, within24h], '24h', fixedNow);
             // The old one from 2020 should definitely be filtered out
             assert.ok(!result.some(m => m.filename === '20200101_000000_ancient.log'));
+            // A session from 2 hours ago should stay in the 24h window.
+            assert.ok(result.some(m => m.filename === within24h.filename));
+            // A session from 5 days ago should not remain in the 24h window.
+            assert.ok(!result.some(m => m.filename === recent.filename));
         });
         test('should keep recent sessions for 30d range', () => {
-            const result = (0, metadata_loader_1.filterByTime)([recent], '30d');
-            // A session from today should pass the 30d filter
+            const result = (0, metadata_loader_1.filterByTime)([recent], '30d', fixedNow);
+            // A session from 5 days ago should pass the 30d filter.
             assert.strictEqual(result.length, 1);
         });
         test('should return empty for empty input', () => {
@@ -101,7 +112,7 @@ suite('MetadataLoader', () => {
         });
         test('should filter out unparseable filenames', () => {
             const bad = makeMeta('not-a-date.log');
-            const result = (0, metadata_loader_1.filterByTime)([bad], '24h');
+            const result = (0, metadata_loader_1.filterByTime)([bad], '24h', fixedNow);
             // parseSessionDate returns 0 which is 1970 — always filtered out
             assert.strictEqual(result.length, 0);
         });

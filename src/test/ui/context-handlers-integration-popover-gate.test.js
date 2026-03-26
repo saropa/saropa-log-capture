@@ -67,6 +67,14 @@ suite('context-handlers integration popover gate', () => {
             hasDatabaseLine: false,
         }), false);
     });
+    test('does not post error when security meta exists', () => {
+        assert.strictEqual((0, context_handlers_1.shouldPostNoIntegrationDataError)({
+            hasContextWindowData: false,
+            hasDriftAdvisorIntegrationMeta: false,
+            hasDatabaseLine: false,
+            hasSecurityMeta: true,
+        }), false);
+    });
     test('does not post error when all three signals are present (after: non-empty popover)', () => {
         assert.strictEqual((0, context_handlers_1.shouldPostNoIntegrationDataError)({
             hasContextWindowData: true,
