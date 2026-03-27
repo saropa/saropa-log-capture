@@ -13,7 +13,7 @@ suite('FirstError', () => {
         '[12:00:01] [stderr] Something failed',
         '[12:00:02] [stdout] Another error: null',
       ];
-      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false });
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
       assert.ok(result.firstError);
       assert.strictEqual(result.firstError!.lineIndex, 1);
       assert.strictEqual(result.firstError!.level, 'error');
@@ -25,7 +25,7 @@ suite('FirstError', () => {
         '[12:00:00.123] [console] Normal output',
         '[12:00:01.456] [stdout] Error: connection refused',
       ];
-      const result = findFirstErrorLines(lines, { strict: true, includeWarning: false });
+      const result = findFirstErrorLines(lines, { strict: true, includeWarning: false, stderrTreatAsError: false });
       assert.ok(result.firstError);
       assert.strictEqual(result.firstError!.lineIndex, 1);
       assert.strictEqual(result.firstError!.level, 'error');
@@ -36,7 +36,7 @@ suite('FirstError', () => {
         '[12:00:00] [stdout] Info',
         '[12:00:01] [stdout] Warning: deprecated API',
       ];
-      const result = findFirstErrorLines(lines, { strict: false, includeWarning: true });
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: true, stderrTreatAsError: false });
       assert.ok(!result.firstError);
       assert.ok(result.firstWarning);
       assert.strictEqual(result.firstWarning!.lineIndex, 1);
@@ -48,7 +48,7 @@ suite('FirstError', () => {
         '[12:00:00] [stdout] Just info',
         '[12:00:01] [console] Debug trace',
       ];
-      const result = findFirstErrorLines(lines, { strict: true, includeWarning: true });
+      const result = findFirstErrorLines(lines, { strict: true, includeWarning: true, stderrTreatAsError: false });
       assert.ok(!result.firstError);
       assert.ok(!result.firstWarning);
     });
@@ -58,7 +58,7 @@ suite('FirstError', () => {
         '--- MARKER: test ---',
         '[12:00:00] [stdout] Error: real error',
       ];
-      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false });
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
       assert.ok(result.firstError);
       assert.strictEqual(result.firstError!.lineIndex, 1);
     });

@@ -69,8 +69,16 @@ export class ViewerBroadcaster implements ViewerTarget {
   setShowDecorations(show: boolean): void {
     for (const t of this.targets) { t.setShowDecorations(show); }
   }
-  setErrorClassificationSettings(suppress: boolean, breakOn: boolean, detection: string, deemphasizeFw: boolean): void {
-    for (const t of this.targets) { t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw); }
+  setErrorClassificationSettings(
+    suppress: boolean,
+    breakOn: boolean,
+    detection: string,
+    deemphasizeFw: boolean,
+    stderrTreatAsError: boolean,
+  ): void {
+    for (const t of this.targets) {
+      t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError);
+    }
   }
   applyPreset(name: string): void {
     for (const t of this.targets) { t.applyPreset(name); }

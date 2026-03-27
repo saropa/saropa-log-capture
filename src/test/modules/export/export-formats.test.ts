@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { classifyLevel } from '../../../modules/analysis/level-classifier';
 import { escapeCsvField } from '../../../modules/export/export-formats';
 
 // Test the parsing and formatting logic
@@ -29,48 +30,34 @@ suite('ExportFormats', () => {
         });
     });
 
-    suite('Level inference', () => {
-        // Inline implementation for testing (mirrors export-formats.ts)
-        function inferLevel(message: string, category: string): string {
-            const lower = message.toLowerCase();
-            if (category === 'stderr') {
-                return 'error';
-            }
-            if (/\b(error|exception|fatal|crash|panic)\b/i.test(lower)) {
-                return 'error';
-            }
-            if (/\b(warn(ing)?|caution)\b/i.test(lower)) {
-                return 'warning';
-            }
-            if (/\b(debug|trace|verbose)\b/i.test(lower)) {
-                return 'debug';
-            }
-            return 'info';
-        }
+    suite('Level inference (classifyLevel aligned with export)', () => {
+        test('stderr is info when stderrTreatAsError is false', () => {
+            assert.strictEqual(classifyLevel('normal message', 'stderr', true, false), 'info');
+        });
 
-        test('should detect error level from stderr category', () => {
-            assert.strictEqual(inferLevel('normal message', 'stderr'), 'error');
+        test('stderr is error when stderrTreatAsError is true', () => {
+            assert.strictEqual(classifyLevel('normal message', 'stderr', true, true), 'error');
         });
 
         test('should detect error from message content', () => {
-            assert.strictEqual(inferLevel('Error: something failed', 'stdout'), 'error');
-            assert.strictEqual(inferLevel('Unhandled exception: null pointer', 'stdout'), 'error');
-            assert.strictEqual(inferLevel('FATAL error occurred', 'stdout'), 'error');
+            assert.strictEqual(classifyLevel('Error: something failed', 'stdout', false, false), 'error');
+            assert.strictEqual(classifyLevel('Unhandled exception: null pointer', 'stdout', false, false), 'error');
+            assert.strictEqual(classifyLevel('FATAL error occurred', 'stdout', false, false), 'error');
         });
 
         test('should detect warning from message content', () => {
-            assert.strictEqual(inferLevel('Warning: deprecated', 'stdout'), 'warning');
-            assert.strictEqual(inferLevel('WARN: low memory', 'stdout'), 'warning');
+            assert.strictEqual(classifyLevel('Warning: deprecated', 'stdout', false, false), 'warning');
+            assert.strictEqual(classifyLevel('WARN: low memory', 'stdout', false, false), 'warning');
         });
 
         test('should detect debug from message content', () => {
-            assert.strictEqual(inferLevel('DEBUG: entering function', 'stdout'), 'debug');
-            assert.strictEqual(inferLevel('trace: method called', 'stdout'), 'debug');
+            assert.strictEqual(classifyLevel('DEBUG: entering function', 'stdout', false, false), 'debug');
+            assert.strictEqual(classifyLevel('trace: method called', 'stdout', false, false), 'debug');
         });
 
         test('should default to info for normal messages', () => {
-            assert.strictEqual(inferLevel('Application started', 'stdout'), 'info');
-            assert.strictEqual(inferLevel('Processing request', 'console'), 'info');
+            assert.strictEqual(classifyLevel('Application started', 'stdout', false, false), 'info');
+            assert.strictEqual(classifyLevel('Processing request', 'console', false, false), 'info');
         });
     });
 

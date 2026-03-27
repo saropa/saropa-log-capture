@@ -5,12 +5,19 @@ suite('LevelClassifier', () => {
 
     suite('classifyLevel — stderr', () => {
 
-        test('should classify stderr category as error', () => {
-            assert.strictEqual(classifyLevel('anything', 'stderr', true), 'error');
+        test('should classify stderr as error when stderrTreatAsError is true', () => {
+            assert.strictEqual(classifyLevel('anything', 'stderr', true, true), 'error');
         });
 
-        test('should classify stderr even for benign text', () => {
-            assert.strictEqual(classifyLevel('all good', 'stderr', true), 'error');
+        test('should classify benign stderr by text when stderrTreatAsError is false', () => {
+            assert.strictEqual(classifyLevel('all good', 'stderr', true, false), 'info');
+        });
+
+        test('should honor Drift SQL on stderr when stderrTreatAsError is false', () => {
+            assert.strictEqual(
+                classifyLevel('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false),
+                'info',
+            );
         });
     });
 
