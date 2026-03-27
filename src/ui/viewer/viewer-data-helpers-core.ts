@@ -202,10 +202,19 @@ function toggleSqlRepeatDrilldown(seq) {
         }
     }
 }
+/**
+ * Separator / banner detection for `.separator-line` CSS. Must match
+ * `isLogViewerSeparatorLine` in `modules/analysis/log-viewer-separator-line.ts` (unit-tested there).
+ */
+function isAsciiBoxDrawingDecorLine(plain) {
+    return /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain);
+}
 function isSeparatorLine(plainText) {
+    if (isAsciiBoxDrawingDecorLine(plainText)) return true;
     var trimmed = plainText.trim();
     if (trimmed.length < 3) return false;
-    var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬\\\\-]/;
+    /* Light arcs / corners used in Drift and other Unicode box art (not only ┌┐). */
+    var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬╭╮╯╰\\\\-]/;
     var artCount = 0;
     for (var i = 0; i < trimmed.length; i++) {
         if (artChars.test(trimmed[i]) || trimmed[i] === ' ') artCount++;
