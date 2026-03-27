@@ -38,6 +38,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const assert = __importStar(require("node:assert"));
 const viewer_sql_query_history_panel_1 = require("../../ui/viewer-panels/viewer-sql-query-history-panel");
+const viewer_sql_query_history_panel_html_1 = require("../../ui/viewer-panels/viewer-sql-query-history-panel-html");
+const viewer_sql_query_history_panel_script_1 = require("../../ui/viewer-panels/viewer-sql-query-history-panel-script");
+suite('viewer-sql-query-history panel module split', () => {
+    test('barrel re-exports match direct implementations (refactor guard)', () => {
+        assert.strictEqual((0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelHtml)(), (0, viewer_sql_query_history_panel_html_1.getSqlQueryHistoryPanelHtml)());
+        assert.strictEqual((0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)(), (0, viewer_sql_query_history_panel_script_1.getSqlQueryHistoryPanelScript)());
+    });
+});
 suite('viewer-sql-query-history panel HTML', () => {
     test('exposes empty state and list containers for no-SQL session', () => {
         const html = (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelHtml)();
@@ -53,7 +61,13 @@ suite('viewer-sql-query-history panel HTML', () => {
         assert.ok(html.includes('data-sql-qh-sort="count"'));
         assert.ok(html.includes('data-sql-qh-sort="maxDur"'));
         assert.ok(html.includes('data-sql-qh-sort="preview"'));
+        assert.ok(html.includes('>SQL</th>'), 'SQL column label');
         assert.ok(!html.includes('id="sql-query-history-sort"'), 'sort dropdown should be removed');
+    });
+    test('exposes drift viewer status strip and open-browser control', () => {
+        const html = (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelHtml)();
+        assert.ok(html.includes('id="sql-query-history-drift-status"'));
+        assert.ok(html.includes('id="sql-query-history-open-viewer"'));
     });
 });
 //# sourceMappingURL=viewer-sql-query-history-panel-html.test.js.map

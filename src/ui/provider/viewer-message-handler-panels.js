@@ -40,12 +40,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.safeLineIndex = safeLineIndex;
 exports.dispatchPanelMessage = dispatchPanelMessage;
 const vscode = __importStar(require("vscode"));
+const integration_adapter_constants_1 = require("../../modules/integrations/integration-adapter-constants");
 const drift_advisor_integration_1 = require("./drift-advisor-integration");
 const panelHandlers = __importStar(require("../shared/viewer-panel-handlers"));
 const about_content_loader_1 = require("../viewer-panels/about-content-loader");
 const error_hover_handler_1 = require("../shared/handlers/error-hover-handler");
 const analysis_panel_1 = require("../analysis/analysis-panel");
 const code_quality_handlers_1 = require("../shared/handlers/code-quality-handlers");
+const drift_viewer_health_1 = require("../../modules/integrations/drift-viewer-health");
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
 function safeLineIndex(v, fallback) {
@@ -136,12 +138,18 @@ function dispatchPanelMessage(msg, ctx) {
             const adapterIds = Array.isArray(raw)
                 ? raw.filter((x) => typeof x === 'string')
                 : [];
+            const aiEnabled = adapterIds.includes(integration_adapter_constants_1.EXPLAIN_WITH_AI_ADAPTER_ID);
+            const sessionOnly = (0, integration_adapter_constants_1.stripUiOnlyIntegrationAdapterIds)(adapterIds);
             const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-            void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
-                .then(() => {
-                ctx.post({ type: 'integrationsAdapters', adapterIds });
+            const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+            void Promise.all([
+                cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),
+                aiCfg.update('enabled', aiEnabled, vscode.ConfigurationTarget.Workspace),
+            ]).then(() => {
+                const merged = (0, integration_adapter_constants_1.mergeIntegrationAdaptersForWebview)(sessionOnly, aiEnabled);
+                ctx.post({ type: 'integrationsAdapters', adapterIds: merged });
                 ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(drift_advisor_integration_1.DRIFT_ADVISOR_EXTENSION_ID) });
-                void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(adapterIds));
+                void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(sessionOnly));
             });
             return true;
         }
@@ -170,6 +178,22 @@ function dispatchPanelMessage(msg, ctx) {
         case "openDriftAdvisor":
             void vscode.commands.executeCommand(drift_advisor_integration_1.DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => { });
             return true;
+        case "checkDriftViewerHealth": {
+            const baseUrl = String(msg.baseUrl ?? "").trim();
+            if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+                return true;
+            }
+            void (0, drift_viewer_health_1.fetchDriftViewerHealth)(baseUrl).then((r) => {
+                ctx.post({
+                    type: "driftViewerHealth",
+                    baseUrl,
+                    ok: r.ok,
+                    version: r.version,
+                    error: r.error,
+                });
+            });
+            return true;
+        }
         case "showRelatedQueries":
             panelHandlers.handleRelatedQueriesRequest(ctx.currentFileUri, safeLineIndex(msg.lineIndex, 0), ctx.post, {
                 timestamp: msg.timestamp,
