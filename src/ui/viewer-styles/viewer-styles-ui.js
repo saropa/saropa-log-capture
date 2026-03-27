@@ -148,8 +148,13 @@ function getUiStyles() {
 
 /* --- Scrollbar Minimap: interactive panel replacing native scrollbar --- */
 .scrollbar-minimap {
-    width: 60px; flex-shrink: 0; position: relative;
-    align-self: stretch; overflow: hidden; cursor: pointer;
+    flex: 0 0 auto;
+    width: 60px;
+    flex-shrink: 0;
+    position: relative;
+    align-self: stretch;
+    overflow: hidden;
+    cursor: pointer;
     border-left: 1px solid var(--vscode-editorOverviewRuler-border, rgba(127, 127, 127, 0.3));
 }
 .minimap-viewport {
