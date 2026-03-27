@@ -29,4 +29,20 @@ suite('viewer-data-helpers-render fwMuted (framework deemphasize)', () => {
             'must not end fwMuted immediately after item.fw (performance would stay muted)',
         );
     });
+
+    /**
+     * Before: `barCls` picked `level-bar-framework` (charts blue) when `item.fw && !hasSeverity`,
+     * while `levelCls` still applied `level-debug` / `level-info` — blue bar + yellow text on Android D/ lines.
+     * After: bar is always `level-bar-` + `item.level` (except recent-error-context), matching gutter CSS to line text.
+     */
+    test('severity bar uses level-bar-{level} for framework lines (matches level-* text)', () => {
+        assert.ok(
+            !renderChunk.includes("' level-bar-framework'"),
+            'gutter must not use level-bar-framework when item.fw; bar color should match level-debug/info/etc.',
+        );
+        assert.ok(
+            renderChunk.includes("' level-bar-' + level"),
+            'bar class must derive from item.level',
+        );
+    });
 });
