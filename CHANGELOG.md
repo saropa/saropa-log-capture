@@ -30,7 +30,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Log viewer — Options panel** — The Integrations and Keyboard shortcuts entry buttons no longer stretch to the full panel width; they size to their labels like normal primary buttons. Reset actions stay full width.
 
-• **Options — Integrations list** — Collapsed descriptions use multi-line clamping to the panel width (replacing a short fixed character preview). Expand control labels are **more** / **less**; extended copy and performance notes sit in the expanded block. Intro copy clarifies session capture, third-party tools (Crashlytics, Drift, etc.), and in-editor features.
+• **Options — Integrations list** — Collapsed descriptions use multi-line clamping to the panel width (replacing a short fixed character preview). Expand control labels are **more** / **less**; **less** sits after the full description, performance line, and “when to disable” line. Performance and “when to disable” match the main blurb’s size and weight (no italic/smaller note style). Intro copy clarifies session capture, third-party tools (Crashlytics, Drift, etc.), and in-editor features.
 
 • **Stack trace preview — ASCII box banners** — Decorative lines with paired vertical box-drawing bars (`│ … │`), e.g. Drift debug banners, are not treated as stack frames so collapsed stack preview does not inject `[+N more]` through banners. New setting `saropaLogCapture.viewerPreserveAsciiBoxArt` (default on) controls the behavior.
 
