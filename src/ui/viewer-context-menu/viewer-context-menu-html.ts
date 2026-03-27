@@ -151,7 +151,7 @@ export function getContextMenuHtml(): string {
             </div>
             <div class="context-menu-separator"></div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
-                <span class="codicon codicon-blank" aria-hidden="true"></span>
+                <span class="codicon codicon-eye-closed" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Hide blank lines</span>
             </div>
