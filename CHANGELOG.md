@@ -30,6 +30,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Log viewer — severity bar on framework lines** — Lines tagged as framework noise (`item.fw`) at **debug** / **info** / **notice** / **todo** no longer draw a blue “framework” gutter while the line text uses the real level color (e.g. yellow **debug**). The dot and vertical connector now use `level-bar-{level}` to match `level-{level}` text.
 
+• **Log viewer — ASCII / Unicode banners** — Box-drawing and decorative lines (e.g. Drift debug server frames) are no longer shredded by `word-break: break-all`; separator rows use single-line layout, stack headers and frames use monospace `pre` with normal word breaks, and `#log-content` scrolls horizontally when a line is wider than the pane. Separator detection aligns with the Drift-style `│ … │` pattern and `╭╮╯╰` corners (see `log-viewer-separator-line` tests).
+
 ---
 
 ## [4.2.0]
