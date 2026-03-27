@@ -63,7 +63,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
         var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: 'preview', previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }

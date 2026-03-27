@@ -34,6 +34,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 • **Stack trace preview — ASCII box banners** — Decorative lines with paired vertical box-drawing bars (`│ … │`), e.g. Drift debug banners, are not treated as stack frames so collapsed stack preview does not inject `[+N more]` through banners. New setting `saropaLogCapture.viewerPreserveAsciiBoxArt` (default on) controls the behavior.
 
+• **Log viewer — stack traces** — New stack groups open fully expanded (every frame visible). Click the stack header to cycle: expanded → fully collapsed → preview (`[+N more]`) → expanded.
+
 ## [4.0.1]
 
 ### Changed
