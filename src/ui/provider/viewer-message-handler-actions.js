@@ -8,6 +8,9 @@
  * cognitive complexity and case count within Sonar limits. Message string fields
  * are read via msgStr() to avoid object stringification ([object Object]). Async
  * side effects use .then(undefined, () => {}) instead of void for Sonar compliance.
+ *
+ * Clipboard: `copyToClipboard` uses clipTextFromMsg() so non-string webview payloads do not
+ * become silent empty writes; empty text surfaces a warning; success/error use status bar / dialog.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -70,6 +73,20 @@ function msgStr(m, key, fallback = "") {
     const v = m[key];
     return typeof v === "string" ? v : fallback;
 }
+/** Clipboard payload from webview: accept only primitives as text (structured clone edge cases). */
+function clipTextFromMsg(m) {
+    const v = m.text;
+    if (typeof v === "string") {
+        return v;
+    }
+    if (v == null) {
+        return "";
+    }
+    if (typeof v === "number" || typeof v === "boolean") {
+        return String(v);
+    }
+    return "";
+}
 function applyAddAutoHidePattern(msg) {
     const pattern = msgStr(msg, "pattern").trim();
     if (!pattern) {
@@ -95,7 +112,7 @@ function applyRemoveAutoHidePattern(msg) {
     }
 }
 function runCopyWithSource(msg) {
-    const text = msgStr(msg, "text").trim();
+    const text = clipTextFromMsg(msg).trim();
     const rawRefs = msg.sourceRefs;
     const sourceRefs = Array.isArray(rawRefs)
         ? rawRefs.map((r) => {
@@ -176,9 +193,20 @@ function handleCopyAndSettingsActions(type, msg, ctx) {
         case "togglePause":
             ctx.onTogglePause?.();
             return true;
-        case "copyToClipboard":
-            vscode.env.clipboard.writeText(msgStr(msg, "text"));
+        case "copyToClipboard": {
+            const text = clipTextFromMsg(msg);
+            if (text.length === 0) {
+                vscode.window.showWarningMessage((0, l10n_1.t)("msg.logCopyEmpty")).then(undefined, () => { });
+                return true;
+            }
+            void vscode.env.clipboard.writeText(text).then(() => {
+                vscode.window.setStatusBarMessage((0, l10n_1.t)("msg.logCopyStatus", text.length), 2500);
+            }, (err) => {
+                const detail = err instanceof Error ? err.message : String(err);
+                vscode.window.showErrorMessage((0, l10n_1.t)("msg.logCopyFailed", detail)).then(undefined, () => { });
+            });
             return true;
+        }
         case "copyWithSource":
             runCopyWithSource(msg);
             return true;

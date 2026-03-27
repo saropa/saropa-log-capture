@@ -17,6 +17,11 @@ export const stringsA: Record<string, string> = {
     'msg.exportedTo': 'Exported to {0}',
     'msg.foundCorrelationTags': 'Found {0} correlation tag{1}.',
     'msg.filePathCopied': 'File path copied to clipboard',
+    /** Shown when Copy / context copy sends empty payload (no selection and no line context). */
+    'msg.logCopyEmpty': 'Nothing to copy. Select text in the log, or use Copy Line after right-clicking a line.',
+    /** Status bar after a successful viewer copy-to-clipboard. */
+    'msg.logCopyStatus': 'Copied {0} characters to clipboard.',
+    'msg.logCopyFailed': 'Could not copy to clipboard: {0}',
     'msg.inlineDecorationsEnabled': 'Inline log decorations enabled',
     'msg.inlineDecorationsDisabled': 'Inline log decorations disabled',
     'msg.templateApplied': 'Template "{0}" applied.',

@@ -24,7 +24,11 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+• **Log viewer — Copy & Export context menu** — **Copy** now falls back to the right-clicked line (and Shift+click multi-line range) when there is no native text selection, matching **Copy Line** behavior for highlight-only selection. **Copy with source (filename + source code)** no longer swallows the action when the browser selection is empty: it falls through to the line-based path that expands context. **Copy to clipboard** from the host now rejects empty payloads with a clear warning, coerces safe primitive `text` values, shows a short status-bar confirmation on success, and surfaces clipboard errors instead of failing silently.
+
 • **Pop-out viewer** — The floating viewer now loads the current log file when opened so it shows the full capture from the start of the session, matching the sidebar, instead of only lines written after the pop-out window was created.
+
+• **Log viewer — Hide submenu** — **Hide blank lines** uses the same closed-eye icon as other Hide actions so the row aligns with the rest of the submenu (the previous invisible placeholder codicon looked empty and threw off layout).
 
 ---
 
