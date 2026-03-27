@@ -77,7 +77,13 @@ export function getReplayConfig(): { defaultMode: string; defaultSpeed: number; 
 }
 export function setErrorClassificationSettingsImpl(
   target: ProviderStateTarget,
-  opts: { suppressTransientErrors: boolean; breakOnCritical: boolean; levelDetection: string; deemphasizeFrameworkLevels: boolean },
+  opts: {
+    suppressTransientErrors: boolean;
+    breakOnCritical: boolean;
+    levelDetection: string;
+    deemphasizeFrameworkLevels: boolean;
+    stderrTreatAsError: boolean;
+  },
 ): void {
   target.postMessage({ type: "errorClassificationSettings", ...opts });
 }

@@ -327,6 +327,8 @@
   "config.integrations.database.timeWindowSeconds.title": "Correlation time window when no request ID matches.",
   "config.integrations.database.maxQueriesPerLookup.title": "Max query results per lookup.",
   "config.levelDetection.title": "How aggressively to classify lines as errors.",
+  "config.stderrTreatAsError.markdownDescription": "When enabled, every line with DAP output category **stderr** is treated as an error (red styling). When disabled (default), stderr lines use the same text-based rules as stdout (logcat prefix, Drift SQL traces, keywords). Many Flutter/Dart tools send informational output on stderr; leave this off unless you rely on stream-as-error semantics.",
+  "config.stderrTreatAsError.title": "Treat stderr DAP category as error",
   "config.lintReportImpactLevel.title": "Which lint impact levels to include in the bug report 'Known Lint Iss…",
   "config.logDirectory.title": "Directory for log files, relative to workspace root.",
   "config.loki.enabled.title": "Enable Export to Loki.",

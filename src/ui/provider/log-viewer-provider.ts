@@ -164,7 +164,17 @@ export class LogViewerProvider
   setShowDecorations(show: boolean): void { state.setShowDecorationsImpl(this, show); }
   startReplay(): void { state.postStartReplayImpl(this); }
   private getReplayConfig() { return state.getReplayConfig(); }
-  setErrorClassificationSettings(suppressTransientErrors: boolean, breakOnCritical: boolean, levelDetection: string, deemphasizeFrameworkLevels: boolean): void { state.setErrorClassificationSettingsImpl(this, { suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
+  setErrorClassificationSettings(
+    suppressTransientErrors: boolean,
+    breakOnCritical: boolean,
+    levelDetection: string,
+    deemphasizeFrameworkLevels: boolean,
+    stderrTreatAsError: boolean,
+  ): void {
+    state.setErrorClassificationSettingsImpl(this, {
+      suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError,
+    });
+  }
   applyPreset(name: string): void { state.applyPresetImpl(this, name); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);

@@ -48,9 +48,22 @@ export function isDriftSqlStatementLine(plainText: string): boolean {
     return driftStatementPattern.test(plainText);
 }
 
-/** Classify a plain-text log line into a severity level. */
-export function classifyLevel(plainText: string, category: string, strict: boolean): SeverityLevel {
-    if (category === 'stderr') { return 'error'; }
+/**
+ * Classify a plain-text log line into a severity level.
+ *
+ * @param stderrTreatAsError When `true`, forces `error` for DAP category `stderr` before inspecting text.
+ *   Omit or pass `true` to preserve legacy behavior for callers that do not read workspace config.
+ *   Workspace default is `false` (classify stderr by content).
+ */
+export function classifyLevel(
+    plainText: string,
+    category: string,
+    strict: boolean,
+    stderrTreatAsError = true,
+): SeverityLevel {
+    if (stderrTreatAsError && category === 'stderr') {
+        return 'error';
+    }
     if (driftStatementPattern.test(plainText)) { return classifyDriftSqlLine(plainText); }
     const lcm = logcatLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }

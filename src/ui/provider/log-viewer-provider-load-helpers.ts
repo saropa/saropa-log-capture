@@ -280,6 +280,7 @@ export function getSmartBookmarksFirstErrorAndWarning(
   const found = findFirstErrorLines(contentLines, {
     strict: cfg.levelDetection === "strict",
     includeWarning: cfg.smartBookmarks.suggestFirstWarning,
+    stderrTreatAsError: cfg.stderrTreatAsError,
   });
   return { firstError: found.firstError, firstWarning: found.firstWarning };
 }

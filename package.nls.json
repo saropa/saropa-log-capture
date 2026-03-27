@@ -273,6 +273,8 @@
   "config.integrations.browser.requestIdPattern.title": "Regex to extract request ID from console messages.",
   "config.levelDetection.markdownDescription": "How aggressively to classify lines as errors. `strict` requires keywords in label positions (e.g. `Error:`, `[ERROR]`). `loose` matches keywords anywhere in the text.",
   "config.levelDetection.title": "How aggressively to classify lines as errors.",
+  "config.stderrTreatAsError.markdownDescription": "When enabled, every line with DAP output category **stderr** is treated as an error (red styling). When disabled (default), stderr lines use the same text-based rules as stdout (logcat prefix, Drift SQL traces, keywords). Many Flutter/Dart tools send informational output on stderr; leave this off unless you rely on stream-as-error semantics.",
+  "config.stderrTreatAsError.title": "Treat stderr DAP category as error",
   "config.lintReportImpactLevel.description": "Which lint impact levels to include in the bug report 'Known Lint Issues' section. Essential = critical and high only; recommended = plus medium; full = all (including low and opinionated).",
   "config.lintReportImpactLevel.enum.essential": "Critical and high only (least noise).",
   "config.lintReportImpactLevel.enum.full": "All impact levels including low and opinionated.",
