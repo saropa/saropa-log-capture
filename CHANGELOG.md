@@ -28,6 +28,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+• **Log viewer — framework performance coloring** — With **Suppress error/warning text coloring on framework log lines** enabled, framework lines at **performance** level (e.g. `I/Choreographer` skipped frames) again use purple line styling. The setting applies only to error/warning text on framework lines; performance signals were incorrectly muted.
+
 • **Signals strip — line links** — “line N” jump controls next to each signal use theme link styling instead of the browser’s default button face (which looked like bright blue-on-white in dark themes).
 
 • **Log viewer — Copy & Export context menu** — **Copy** now falls back to the right-clicked line (and Shift+click multi-line range) when there is no native text selection, matching **Copy Line** behavior for highlight-only selection. **Copy with source (filename + source code)** no longer swallows the action when the browser selection is empty: it falls through to the line-based path that expands context. **Copy to clipboard** from the host now rejects empty payloads with a clear warning, coerces safe primitive `text` values, shows a short status-bar confirmation on success, and surfaces clipboard errors instead of failing silently.
