@@ -37,6 +37,17 @@ const assert = __importStar(require("node:assert"));
 const viewer_integrations_panel_html_1 = require("../../ui/viewer-panels/viewer-integrations-panel-html");
 const viewer_keyboard_shortcuts_html_1 = require("../../ui/viewer-panels/viewer-keyboard-shortcuts-html");
 const viewer_options_panel_1 = require("../../ui/viewer-panels/viewer-options-panel");
+const viewer_styles_options_1 = require("../../ui/viewer-styles/viewer-styles-options");
+/** First braced block after a selector (no nested `{` in options CSS rules targeted here). */
+function cssRuleBody(css, selectorPrefix) {
+    const needle = selectorPrefix + ' {';
+    const i = css.indexOf(needle);
+    assert.ok(i >= 0, `expected ${selectorPrefix} in stylesheet`);
+    const start = i + needle.length;
+    const end = css.indexOf('}', start);
+    assert.ok(end > start, `expected closing brace for ${selectorPrefix}`);
+    return css.slice(start, end);
+}
 suite('ViewerOptionsPanel', () => {
     suite('getOptionsPanelHtml', () => {
         test('should return HTML for options panel', () => {
@@ -67,6 +78,18 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('id="shortcuts-back"'));
         });
     });
+    suite('getOptionsStyles', () => {
+        test('options Integrations / Keyboard shortcuts CTA buttons are not full panel width', () => {
+            const css = (0, viewer_styles_options_1.getOptionsStyles)();
+            const integrationsBtn = cssRuleBody(css, '.options-integrations-btn');
+            assert.ok(!integrationsBtn.includes('width: 100%'), 'CTA buttons should size to content, not stretch like action rows');
+        });
+        test('options action buttons remain full width for reset controls', () => {
+            const css = (0, viewer_styles_options_1.getOptionsStyles)();
+            const action = cssRuleBody(css, '.options-action-btn');
+            assert.ok(action.includes('width: 100%'), 'reset row should stay full width');
+        });
+    });
     suite('getIntegrationsPanelHtml (Integrations screen)', () => {
         test('should return Integrations view with back button, intro, and section', () => {
             const html = (0, viewer_integrations_panel_html_1.getIntegrationsPanelHtml)();
@@ -75,7 +98,7 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('integrations-title'));
             assert.ok(html.includes('id="integrations-section"'));
             assert.ok(html.includes('integrations-intro'));
-            assert.ok(html.includes('Choose what to attach to each debug session'));
+            assert.ok(html.includes('Choose session capture adapters'));
         });
         test('should include integrations search input', () => {
             const html = (0, viewer_integrations_panel_html_1.getIntegrationsPanelHtml)();
@@ -84,6 +107,7 @@ suite('ViewerOptionsPanel', () => {
         });
         test('should include integration rows with data-adapter-id for sync', () => {
             const html = (0, viewer_integrations_panel_html_1.getIntegrationsPanelHtml)();
+            assert.ok(html.includes('data-adapter-id="explainWithAi"'));
             assert.ok(html.includes('data-adapter-id="packages"'));
             assert.ok(html.includes('data-adapter-id="git"'));
         });
@@ -188,4 +212,4 @@ suite('ViewerOptionsPanel', () => {
         });
     });
 });
-//# sourceMappingURL=viewer-options-panel.test.js.map
+
