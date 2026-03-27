@@ -77,7 +77,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const { viewerProvider, inlineDecorations } = setupWebviewProviders(context, version);
 
     const broadcaster = new ViewerBroadcaster();
-    const popOutPanel = new PopOutPanel(context.extensionUri, version, context, broadcaster);
+    const popOutPanel = new PopOutPanel(
+      context.extensionUri,
+      version,
+      context,
+      broadcaster,
+      () => viewerProvider.getCurrentFileUri(),
+    );
     broadcaster.addTarget(viewerProvider);
     broadcaster.addTarget(popOutPanel);
     context.subscriptions.push(popOutPanel);
