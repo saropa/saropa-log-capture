@@ -243,8 +243,11 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-warning {
     color: var(--vscode-debugConsole-warningForeground, #cca700);
 }
-/* Perf + info: same token as Debug Console info tint and in-log "Info" highlights (config highlight rules). */
-.line.level-performance,
+/* Performance: purple bar + text (--vscode-charts-purple) matches level-bar-performance. */
+.line.level-performance {
+    color: var(--vscode-charts-purple, #a855f7);
+}
+/* Info: same token as Debug Console info tint, gutter dot, and in-log "Info" highlights. */
 .line.level-info {
     color: var(--vscode-debugConsole-infoForeground, #b695f8);
 }
