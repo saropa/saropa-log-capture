@@ -22,6 +22,10 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Changed
+
+• **Log viewer — severity bar vs line color** — The left gutter (dot and vertical connector) now uses the same VS Code theme tokens as the line text for **error**, **warning**, **info**, and **performance** levels, so the bar and body no longer disagree (e.g. yellow bar with blue “info” text). **Performance** lines use chart purple for both bar and text (previously performance text matched generic info coloring). Whole-line level tints follow the same tokens. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
 ### Fixed
 
 • **Signals strip — line links** — “line N” jump controls next to each signal use theme link styling instead of the browser’s default button face (which looked like bright blue-on-white in dark themes).
