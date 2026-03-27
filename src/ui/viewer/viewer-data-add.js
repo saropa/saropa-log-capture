@@ -13,8 +13,25 @@ exports.getViewerDataAddScript = getViewerDataAddScript;
  */
 const viewer_data_add_db_detectors_1 = require("./viewer-data-add-db-detectors");
 const viewer_data_add_stack_group_learning_and_toggle_1 = require("./viewer-data-add-stack-group-learning-and-toggle");
+const viewer_drift_debug_server_from_log_script_1 = require("./viewer-drift-debug-server-from-log-script");
 function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true) {
-    return (0, viewer_data_add_db_detectors_1.getViewerDataAddDbDetectorsScript)(staticSqlFromFingerprintEnabled) + /* javascript */ `
+    return (0, viewer_drift_debug_server_from_log_script_1.getDriftDebugServerFromLogScript)() + (0, viewer_data_add_db_detectors_1.getViewerDataAddDbDetectorsScript)(staticSqlFromFingerprintEnabled) + /* javascript */ `
+
+/** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
+function proximityInheritAnchor() {
+    var j = allLines.length - 1;
+    while (j >= 0) {
+        var it = allLines[j];
+        if (it.type === 'marker' || it.type === 'run-separator') { return null; }
+        var p = stripTags(it.html);
+        if (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(p)) {
+            j--;
+            continue;
+        }
+        return it;
+    }
+    return null;
+}
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
@@ -63,6 +80,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
         var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
+        // Expanded by default so every frame is visible; users can click the header to collapse or use preview.
         var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
@@ -78,15 +96,22 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         activeGroupHeader = null;
     }
     var plain = stripTags(html);
+    if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
-    if (lvl === 'info' && !isSep && allLines.length > 0) {
-        var prevItem = allLines[allLines.length - 1];
-        if (prevItem && prevItem.type !== 'marker' && prevItem.type !== 'run-separator'
-            && prevItem.level && prevItem.level !== 'info'
-            && ts && prevItem.timestamp && Math.abs(ts - prevItem.timestamp) <= 2000) {
-            lvl = prevItem.level;
+    // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
+    // above (see Level Filters fly-up), it is tinted like an error so the incident reads as one band.
+    // Those rows are flagged recentErrorContext and styled distinctly from the faulting line. Drift SQL
+    // never gets this tint and is skipped when locating the prior error so it does not break the band.
+    var skipProximityInherit = (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(plain));
+    var recentErrorContext = false;
+    if (lvl === 'info' && !isSep && !skipProximityInherit && typeof proximityInheritAnchor === 'function') {
+        var anchor = proximityInheritAnchor();
+        if (anchor && anchor.level === 'error' && ts && anchor.timestamp
+            && Math.abs(ts - anchor.timestamp) <= 2000) {
+            lvl = 'error';
+            recentErrorContext = true;
         }
     }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
@@ -253,7 +278,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
