@@ -7,6 +7,8 @@
  * (matching the product copy for the option). **Performance** lines (e.g. Android Choreographer
  * “skipped frames”) keep `level-performance` / purple text even when `item.fw` is true, so jank
  * signals stay visible alongside neutral framework info noise.
+ * The severity gutter always uses `level-bar-{item.level}` (never `level-bar-framework` for fw lines)
+ * so dot/connector color matches `level-{item.level}` text.
  */
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
@@ -75,19 +77,16 @@ function renderItem(item, idx, prevVis) {
         if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
             var prevLn = allLines[idx - 1];
             level = prevLn.level;
-            var prevFw = prevLn.fw;
-            var hasSeverity = level === 'error' || level === 'warning' || level === 'performance';
             if (prevLn.recentErrorContext && level === 'error') {
-                barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-error-recent-context';
+                barCls = ' level-bar-error-recent-context';
             } else {
-                barCls = (prevFw && !hasSeverity) ? ' level-bar-framework' : ' level-bar-' + level;
+                barCls = ' level-bar-' + level;
             }
         } else if (!isBlank && level) {
-            var hasSeverity2 = level === 'error' || level === 'warning' || level === 'performance';
             if (item.recentErrorContext && level === 'error') {
-                barCls = (item.fw && !hasSeverity2) ? ' level-bar-framework' : ' level-bar-error-recent-context';
+                barCls = ' level-bar-error-recent-context';
             } else {
-                barCls = (item.fw && !hasSeverity2) ? ' level-bar-framework' : ' level-bar-' + level;
+                barCls = ' level-bar-' + level;
             }
         }
     }
