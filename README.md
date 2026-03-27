@@ -290,6 +290,7 @@ All settings are prefixed with `saropaLogCapture.`
 | `suppressTransientErrors`       | `false`                                                                     | Hide expected transient errors (timeout, socket, etc.)                                                                                                                                |
 | `breakOnCritical`               | `false`                                                                     | Show notification when critical errors appear                                                                                                                                         |
 | `levelDetection`                | `"strict"`                                                                  | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere)                                                                                                       |
+| `stderrTreatAsError`            | `false`                                                                     | When true, force all DAP `stderr` lines to error/red; when false, classify stderr by content like other categories                                                                   |
 | `verboseDap`                    | `false`                                                                     | Log all raw DAP protocol messages to the log file                                                                                                                                     |
 | `diagnosticCapture`            | `false`                                                                     | Log capture pipeline events (session/buffer/write) to the Saropa Log Capture output channel; use when log files are empty to debug                                                                 |
 | `highlightRules`                | *(3 built-in rules)*                                                        | Pattern-based line coloring rules                                                                                                                                                     |
@@ -322,7 +323,8 @@ const api = ext.isActive ? ext.exports : await ext.activate();
 // Subscribe to live log lines
 context.subscriptions.push(
     api.onDidWriteLine((line) => {
-        if (line.category === 'stderr') {
+        // `stderr` can carry non-error info; classify by text/category policy instead.
+        if (/\b(error|exception|fatal|failed)\b/i.test(line.text)) {
             console.log(`Error: ${line.text}`);
         }
     }),

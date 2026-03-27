@@ -101,6 +101,17 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: getViewerKeybindingsFromConfig() }));
   queueMicrotask(() => target.postMessage(getLearningWebviewOptions()));
   queueMicrotask(() => target.postMessage({ type: 'setRootCauseHintL10n', strings: getRootCauseHintViewerStrings() }));
+  queueMicrotask(() => {
+    const c = getConfig();
+    target.postMessage({
+      type: 'errorClassificationSettings',
+      suppressTransientErrors: c.suppressTransientErrors,
+      breakOnCritical: c.breakOnCritical,
+      levelDetection: c.levelDetection,
+      deemphasizeFrameworkLevels: c.deemphasizeFrameworkLevels,
+      stderrTreatAsError: c.stderrTreatAsError,
+    });
+  });
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }
   webviewView.onDidChangeVisibility(() => {
