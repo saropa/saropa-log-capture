@@ -86,6 +86,8 @@ export interface ViewerScriptsOptions {
     readonly extensionUri?: string;
     /** Max lines for getViewerScript (caller should pass from getEffectiveViewerLines or MAX_VIEWER_LINES). */
     readonly viewerMaxLines: number;
+    /** Baked into isStackFrameText — default true when omitted. */
+    readonly viewerPreserveAsciiBoxArt?: boolean;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
   /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
   readonly viewerDbInsightsEnabled?: boolean;
@@ -106,6 +108,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         nonce,
         extensionUri,
         viewerMaxLines: maxLines,
+        viewerPreserveAsciiBoxArt,
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled,
@@ -126,7 +129,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 viewerSlowBurstThresholds,
                 viewerDbDetectorToggles,
             ),
-            getViewerScript(maxLines),
+            getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false),
             getViewerRootCauseHintsScript(),
             getViewerVisibilityScript(),
         ) +

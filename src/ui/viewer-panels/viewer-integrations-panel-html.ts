@@ -11,16 +11,12 @@ import { escapeHtml } from '../../modules/capture/ansi';
 import type { IntegrationAdapterMeta } from '../../modules/integrations/integrations-ui';
 import { INTEGRATION_ADAPTERS } from '../../modules/integrations/integrations-ui';
 
-/** Shared preview length for collapsed integration descriptions. */
-const INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH = 50;
+/**
+ * When the description has no extra notes, still offer expand/collapse if the text is long
+ * enough that a multi-line clamp (see CSS) likely truncates. Mirrors ~3–4 wrapped lines.
+ */
+const INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS = 130;
 const PERFORMANCE_WARNING_EMOJI = '⚠️';
-
-function truncateWithEllipsis(value: string, maxLength: number): string {
-    if (value.length <= maxLength) {
-        return value;
-    }
-    return `${value.slice(0, maxLength)}…`;
-}
 
 function splitPerformanceWarning(performanceNote?: string): { warningEmoji: string; text: string } {
     if (!performanceNote) {
@@ -37,41 +33,47 @@ function splitPerformanceWarning(performanceNote?: string): { warningEmoji: stri
 /** Build one integration row: checkbox, label, long description, and optional perf/when-to-disable lines. */
 function renderIntegrationRow(a: IntegrationAdapterMeta): string {
     const longDesc = a.descriptionLong ?? a.description;
-    const previewDesc = truncateWithEllipsis(longDesc, INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH);
     const perfNote = splitPerformanceWarning(a.performanceNote);
     const labelWarning = perfNote.warningEmoji
         ? ` <span class="integrations-perf-warning" aria-label="Performance warning">${escapeHtml(perfNote.warningEmoji)}</span>`
         : '';
     let perf = '';
     if (a.performanceNote) {
-        perf = `<p class="integrations-note integrations-perf integrations-expandable options-filtered-hidden">
+        perf = `<p class="integrations-note integrations-perf">
             <span class="integrations-note-label">Performance:</span>
             <span>${escapeHtml(perfNote.text)}</span>
         </p>`;
     }
     const when = a.whenToDisable
-        ? `<p class="integrations-note integrations-when integrations-expandable options-filtered-hidden">When to disable: ${escapeHtml(a.whenToDisable)}</p>`
+        ? `<p class="integrations-note integrations-when">When to disable: ${escapeHtml(a.whenToDisable)}</p>`
         : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
-    const escapedPreviewDesc = escapeHtml(previewDesc);
     const escapedLongDesc = escapeHtml(longDesc);
-    const hasExpandable = longDesc.length > INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH || !!a.performanceNote || !!a.whenToDisable;
-    const descToggle = hasExpandable
-        ? `<button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">Show more</button>`
-        : '';
+    const hasExpandable =
+        longDesc.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS ||
+        !!a.performanceNote ||
+        !!a.whenToDisable;
+
+    // Collapsed: line-clamped preview (CSS). Expanded: full text, notes, then "less" toggle at end.
+    const descBlock = hasExpandable
+        ? `<p class="integrations-desc integrations-desc-collapsible">
+                <span class="integrations-desc-preview">${escapedLongDesc}</span>
+                <span class="integrations-expanded-block options-filtered-hidden">
+                    <span class="integrations-desc-full">${escapedLongDesc}</span>
+                    ${perf}
+                    ${when}
+                </span>
+                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">more</button>
+            </p>`
+        : `<p class="integrations-desc">
+                <span class="integrations-desc-only">${escapedLongDesc}</span>
+            </p>`;
+
     return `
         <label class="integrations-row" title="${escapeHtml(longDesc)}" data-search-text="${escapeHtml(searchText)}">
             <input type="checkbox" id="int-${escapeHtml(a.id)}" data-adapter-id="${escapeHtml(a.id)}" />
             <span class="integrations-label">${escapeHtml(a.label)}${labelWarning}</span>
-            <p class="integrations-desc">
-                <span class="integrations-desc-text">
-                    <span class="integrations-desc-preview">${escapedPreviewDesc}</span>
-                    <span class="integrations-desc-full options-filtered-hidden">${escapedLongDesc}</span>
-                </span>
-                ${descToggle}
-            </p>
-            ${perf}
-            ${when}
+            ${descBlock}
         </label>`;
 }
 
@@ -88,7 +90,7 @@ export function getIntegrationsPanelHtml(): string {
             <span class="integrations-title">Integrations</span>
         </div>
         <div class="integrations-content">
-            <p class="integrations-intro">Choose what to attach to each debug session. Session adapters add context to the log header or sidecar files; Crashlytics adds the production-issues sidebar. Each integration below includes a short note on performance and when you might leave it off.</p>
+            <p class="integrations-intro">Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.</p>
             <div class="integrations-search-wrapper">
                 <input id="integrations-search" type="text" placeholder="Search integrations…" aria-label="Search integrations" />
             </div>

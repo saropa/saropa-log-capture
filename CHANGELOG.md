@@ -20,6 +20,20 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Added
+
+• **Integrations — Explain with AI** — Options → **Integrations…** and the Configure integrations quick pick include **Explain with AI**, which toggles `saropaLogCapture.ai.enabled` alongside session adapters (the id is not stored in `integrations.adapters`). If no Language Model API chat model is available (common in some Cursor setups), the error dialog offers **Copy prompt for external chat** and **Open AI settings**. On first start, AI stays off by default unless the user has never set `ai.enabled` and the editor already exposes at least one LM chat model (e.g. Copilot Chat).
+
+### Changed
+
+• **Log viewer — Options panel** — The Integrations and Keyboard shortcuts entry buttons no longer stretch to the full panel width; they size to their labels like normal primary buttons. Reset actions stay full width.
+
+• **Options — Integrations list** — Collapsed descriptions use multi-line clamping to the panel width (replacing a short fixed character preview). Expand control labels are **more** / **less**; extended copy and performance notes sit in the expanded block. Intro copy clarifies session capture, third-party tools (Crashlytics, Drift, etc.), and in-editor features.
+
+• **Stack trace preview — ASCII box banners** — Decorative lines with paired vertical box-drawing bars (`│ … │`), e.g. Drift debug banners, are not treated as stack frames so collapsed stack preview does not inject `[+N more]` through banners. New setting `saropaLogCapture.viewerPreserveAsciiBoxArt` (default on) controls the behavior.
+
 ## [4.0.1]
 
 ### Changed

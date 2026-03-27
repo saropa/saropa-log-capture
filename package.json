@@ -1373,6 +1373,12 @@
           "type": "number",
           "title": "%config.viewerMaxLines.title%"
         },
+        "saropaLogCapture.viewerPreserveAsciiBoxArt": {
+          "default": true,
+          "description": "%config.viewerPreserveAsciiBoxArt.description%",
+          "type": "boolean",
+          "title": "%config.viewerPreserveAsciiBoxArt.title%"
+        },
         "saropaLogCapture.viewerDbInsightsEnabled": {
           "default": true,
           "description": "%config.viewerDbInsightsEnabled.description%",
