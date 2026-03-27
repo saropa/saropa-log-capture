@@ -1,7 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRootCauseHypothesesStyles = getRootCauseHypothesesStyles;
-/** DB_14: collapsible hypotheses strip above the log scroller. */
+/**
+ * DB_14: CSS for the Signals (root-cause hypotheses) strip in the log viewer webview.
+ *
+ * Evidence line targets are rendered as `<button class="root-cause-hyp-evidence">`; user-agent
+ * styling in embedded webviews can show a light filled button unless those controls are reset to
+ * look like theme links (transparent background, no border, `appearance: none`).
+ */
 function getRootCauseHypothesesStyles() {
     return /* css */ `
 .root-cause-hypotheses {
@@ -81,16 +87,23 @@ function getRootCauseHypothesesStyles() {
 .root-cause-hypotheses-list li {
     margin: 4px 0;
 }
+/* Native <button> defaults add light background/border in webviews; reset to a theme link. */
 .root-cause-hyp-evidence {
-    margin-left: 6px;
+    margin: 0 0 0 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
     font-size: 11px;
     color: var(--vscode-textLink-foreground, #3794ff);
     cursor: pointer;
     text-decoration: underline;
     white-space: nowrap;
+    appearance: none;
 }
 .root-cause-hyp-evidence:hover {
-    opacity: 0.85;
+    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground, #3794ff));
+    opacity: 0.9;
 }
 .rch-copy-btn {
     border: none;
