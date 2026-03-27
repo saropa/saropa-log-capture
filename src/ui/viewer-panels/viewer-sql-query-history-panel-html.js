@@ -1,10 +1,12 @@
+"use strict";
 /**
  * Slide-out SQL query history panel markup (plan DB_11).
  * Behavior script lives in `viewer-sql-query-history-panel-script.ts`.
  */
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSqlQueryHistoryPanelHtml = getSqlQueryHistoryPanelHtml;
 /** Panel HTML in `#panel-slot` (same slide-out pattern as bookmarks). */
-export function getSqlQueryHistoryPanelHtml(): string {
+function getSqlQueryHistoryPanelHtml() {
     return /* html */ `
 <div id="sql-query-history-panel" class="sql-query-history-panel">
     <div class="sql-query-history-header">
@@ -47,3 +49,4 @@ export function getSqlQueryHistoryPanelHtml(): string {
     <div id="sql-query-history-empty" class="sql-query-history-empty">No parsed SQL fingerprints in this session yet.</div>
 </div>`;
 }
+//# sourceMappingURL=viewer-sql-query-history-panel-html.js.map

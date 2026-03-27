@@ -15,6 +15,7 @@ import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
 import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler';
 import { showAnalysis } from '../analysis/analysis-panel';
 import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
+import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
@@ -131,6 +132,22 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "openDriftAdvisor":
         void vscode.commands.executeCommand(DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => {});
         return true;
+      case "checkDriftViewerHealth": {
+        const baseUrl = String((msg as { baseUrl?: unknown }).baseUrl ?? "").trim();
+        if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+          return true;
+        }
+        void fetchDriftViewerHealth(baseUrl).then((r) => {
+          ctx.post({
+            type: "driftViewerHealth",
+            baseUrl,
+            ok: r.ok,
+            version: r.version,
+            error: r.error,
+          });
+        });
+        return true;
+      }
       case "showRelatedQueries":
         panelHandlers.handleRelatedQueriesRequest(
           ctx.currentFileUri,

@@ -10,9 +10,10 @@
  */
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
 import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data-add-stack-group-learning-and-toggle';
+import { getDriftDebugServerFromLogScript } from './viewer-drift-debug-server-from-log-script';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
 /** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
 function proximityInheritAnchor() {
@@ -93,6 +94,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         activeGroupHeader = null;
     }
     var plain = stripTags(html);
+    if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');

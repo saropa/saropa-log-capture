@@ -1,8 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSqlQueryHistoryPanelScript = getSqlQueryHistoryPanelScript;
 /**
  * Injected SQL query history panel script (DB_11): sort, search, jump; uses globals from viewer-sql-query-history-core.
  * Behavior: open/close, render, filter, copy, Esc.
  */
-export function getSqlQueryHistoryPanelScript(): string {
+function getSqlQueryHistoryPanelScript() {
     return /* javascript */ `
 (function() {
     var panelEl = document.getElementById('sql-query-history-panel');
@@ -366,3 +369,4 @@ export function getSqlQueryHistoryPanelScript(): string {
 })();
 `;
 }
+//# sourceMappingURL=viewer-sql-query-history-panel-script.js.map
