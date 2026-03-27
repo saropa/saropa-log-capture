@@ -78,6 +78,7 @@ function getConfig() {
         categories: (0, config_validation_1.ensureStringArray)(cfg.get("categories"), config_normalizers_1.DEFAULT_CATEGORIES),
         maxLines,
         viewerMaxLines,
+        viewerPreserveAsciiBoxArt: (0, config_validation_1.ensureBoolean)(cfg.get("viewerPreserveAsciiBoxArt"), true),
         includeTimestamp: (0, config_validation_1.ensureBoolean)(cfg.get("includeTimestamp"), true),
         format: (0, config_validation_1.ensureEnum)(cfg.get("format"), ["plaintext", "html"], "plaintext"),
         logDirectory: (() => {

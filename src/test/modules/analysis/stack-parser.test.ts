@@ -1,7 +1,19 @@
 import * as assert from 'assert';
-import { isFrameworkFrame, isAppFrame } from '../../../modules/analysis/stack-parser';
+import { isAsciiBoxDrawingDecorLine, isFrameworkFrame, isAppFrame } from '../../../modules/analysis/stack-parser';
 
 suite('StackParser', () => {
+
+    suite('isAsciiBoxDrawingDecorLine', () => {
+        test('detects paired vertical-bar banner rows', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('│      Open in browser to view your database:      │'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('      │              http://127.0.0.1:8642               │'), true);
+        });
+
+        test('does not match single gutter lines', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('│  at Object.run (main.js:1:1)'), false);
+        });
+    });
 
     // --- Dart / Flutter ---
 

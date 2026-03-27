@@ -36,6 +36,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const stack_parser_1 = require("../../../modules/analysis/stack-parser");
 suite('StackParser', () => {
+    suite('isAsciiBoxDrawingDecorLine', () => {
+        test('detects paired vertical-bar banner rows', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│      Open in browser to view your database:      │'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('      │              http://127.0.0.1:8642               │'), true);
+        });
+        test('does not match single gutter lines', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│  at Object.run (main.js:1:1)'), false);
+        });
+    });
     // --- Dart / Flutter ---
     test('should detect Flutter package frame as framework', () => {
         assert.strictEqual((0, stack_parser_1.isFrameworkFrame)('  at package:flutter/src/widgets/framework.dart:4567'), true);

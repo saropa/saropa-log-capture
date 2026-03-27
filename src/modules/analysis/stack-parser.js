@@ -8,6 +8,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isFrameworkFrame = isFrameworkFrame;
 exports.isAppFrame = isAppFrame;
 exports.isFrameworkLogLine = isFrameworkLogLine;
+exports.isAsciiBoxDrawingDecorLine = isAsciiBoxDrawingDecorLine;
 exports.isStackFrameLine = isStackFrameLine;
 exports.parseThreadHeader = parseThreadHeader;
 exports.extractDateFromFilename = extractDateFromFilename;
@@ -115,6 +116,12 @@ function isFrameworkLogLine(text) {
         }
     }
     return undefined;
+}
+/**
+ * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`).
+ */
+function isAsciiBoxDrawingDecorLine(line) {
+    return /^\s*\u2502\s+.+\S\s*\u2502\s*$/.test(line);
 }
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */
 function isStackFrameLine(line) {

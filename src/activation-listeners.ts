@@ -14,6 +14,7 @@ import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-d
 import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
+import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
 
 export interface ListenerDeps {
     context: vscode.ExtensionContext;
@@ -140,6 +141,12 @@ export function setupConfigListener(
         ) {
             broadcaster.setErrorRateConfig(errorRateConfigFromConfig(cfg));
         }
+        if (
+            e.affectsConfiguration('saropaLogCapture.integrations.adapters')
+            || e.affectsConfiguration('saropaLogCapture.ai.enabled')
+        ) {
+            syncIntegrationsAdaptersToWebview(broadcaster);
+        }
         if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => {});
         }
@@ -147,6 +154,16 @@ export function setupConfigListener(
 }
 
 const securityNoticeKey = 'securityAdapterNoticeShown';
+
+/** Push session + Explain-with-AI checkbox state to the log viewer after settings change. */
+function syncIntegrationsAdaptersToWebview(broadcaster: ViewerBroadcaster): void {
+    const cfg = getConfig();
+    const merged = mergeIntegrationAdaptersForWebview(
+        cfg.integrationsAdapters,
+        vscode.workspace.getConfiguration('saropaLogCapture.ai').get<boolean>('enabled', false),
+    );
+    broadcaster.postToWebview({ type: 'integrationsAdapters', adapterIds: merged });
+}
 
 /** Show a one-time info message when the security adapter is first enabled. */
 async function showSecurityAdapterNotice(

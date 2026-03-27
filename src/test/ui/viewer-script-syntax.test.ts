@@ -35,6 +35,23 @@ suite('Viewer HTML', () => {
             assert.ok(html.includes('var MAX_LINES = 100000'), 'viewer script should default to 100000');
         });
 
+        test('defaults viewerPreserveAsciiBoxArt to true in embedded script', () => {
+            const html = buildViewerHtml({ nonce: getNonce(), version: '0.0.0' });
+            assert.ok(
+                html.includes('var viewerPreserveAsciiBoxArt = true'),
+                'banner preservation should default on',
+            );
+        });
+
+        test('injects viewerPreserveAsciiBoxArt false when disabled', () => {
+            const html = buildViewerHtml({
+                nonce: getNonce(),
+                version: '0.0.0',
+                viewerPreserveAsciiBoxArt: false,
+            });
+            assert.ok(html.includes('var viewerPreserveAsciiBoxArt = false'));
+        });
+
         test('injects SQL pattern chip thresholds when provided (DB_05)', () => {
             const html = buildViewerHtml({
                 nonce: getNonce(),

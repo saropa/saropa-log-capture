@@ -39,6 +39,7 @@ import { setupLineListeners, setupConfigListener, setupScopeContextListener } fr
 import { maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
+import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -264,6 +265,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     showWalkthroughOnFirstInstall(context);
+
+    scheduleMaybeAutoEnableAiFromLanguageModels();
 
     outputChannel.appendLine('Saropa Log Capture activated.');
     return {
