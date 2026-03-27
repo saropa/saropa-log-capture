@@ -28,6 +28,10 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+• **Log viewer — scrollbar minimap** — When **Show info markers on minimap** is off (default), mostly-**info** logs no longer produce an empty minimap: a neutral content-presence band is drawn so scroll structure stays visible. Tooltip text points to the setting for full severity colors.
+
+• **Log viewer — layout beside minimap** — `#log-content` and the minimap row use explicit flex sizing (`flex: 1 1 0%` on the scroll area, fixed column on the minimap) so the log pane fills width next to the strip and jump/copy anchoring stays aligned.
+
 • **Log viewer — framework performance coloring** — With **Suppress error/warning text coloring on framework log lines** enabled, framework lines at **performance** level (e.g. `I/Choreographer` skipped frames) again use purple line styling. The setting applies only to error/warning text on framework lines; performance signals were incorrectly muted.
 
 • **Signals strip — line links** — “line N” jump controls next to each signal use theme link styling instead of the browser’s default button face (which looked like bright blue-on-white in dark themes).
