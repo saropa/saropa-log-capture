@@ -37,4 +37,17 @@ suite('viewer-data-add embed', () => {
             'legacy sqlMetaRepeat name should stay removed to avoid two-parse regression',
         );
     });
+
+    test('new stack-header row defaults to fully expanded (not stack preview)', () => {
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        assert.ok(block.length > 0, 'expected addToData block');
+        assert.ok(
+            block.includes("type: 'stack-header'") && block.includes('frameCount: 1, collapsed: false'),
+            'new traces should default to expanded so frames are not hidden behind [+N more]',
+        );
+        assert.ok(
+            !block.includes("frameCount: 1, collapsed: 'preview'"),
+            'regression: preview default would hide frames until user expands',
+        );
+    });
 });
