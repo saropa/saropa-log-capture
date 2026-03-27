@@ -79,6 +79,24 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('window.openExportModal'));
         });
 
+        test('handleGlobalAction should take savedLineIdx and pass lineIdx from onContextMenuAction (copy after shift-click)', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function handleGlobalAction(action, savedLineIdx)'));
+            assert.ok(script.includes('handleGlobalAction(action, lineIdx)'));
+            assert.ok(script.includes('Native selection is empty'));
+        });
+
+        test('copy-with-source global handler should return false when selection empty so line-scoped handler runs', () => {
+            const script = getContextMenuScript();
+            const start = script.indexOf("if (action === 'copy-with-source')");
+            assert.ok(start >= 0, 'copy-with-source branch missing');
+            const branch = script.slice(start, start + 600);
+            assert.ok(
+                /return false/.test(branch),
+                'expected return false when no selection/refs so fallthrough to line case',
+            );
+        });
+
         test('should handle source-link actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function handleSourceAction'));

@@ -2,24 +2,56 @@
  * Context menu action handlers and event dispatcher.
  * Processes copy, search, toggle, and line-specific actions
  * triggered from the right-click context menu.
+ *
+ * Copy/clipboard notes for reviewers:
+ * - `copy-selection`: If the browser selection is empty, falls back to the line index from the
+ *   right-click (`savedLineIdx`) so Shift+click line highlights (not native selection) still copy.
+ * - `copy-with-source`: When the global path has nothing from the selection, returns false so
+ *   `onContextMenuAction` can run the line-scoped branch (expanded context + source refs).
  */
 
 /** Get the context menu action handler script. */
 export function getContextMenuActionsScript(): string {
     return /* javascript */ String.raw`
-function handleGlobalAction(action) {
+function handleGlobalAction(action, savedLineIdx) {
     if (action === 'copy-selection') {
         var sel = window.getSelection();
         var text = sel ? sel.toString() : '';
-        if (text.length > 0) vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+        if (text.length > 0) {
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
+            return true;
+        }
+        /* Native selection is empty: shift+click range uses .selected only — copy like "Copy Line" from saved row. */
+        if (typeof savedLineIdx === 'number' && savedLineIdx >= 0 && savedLineIdx < allLines.length) {
+            var lineDataCs = allLines[savedLineIdx];
+            var plainCs = stripTags(lineDataCs.html || '');
+            var scStart = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var scEnd = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var scLo = Math.min(scStart, scEnd);
+            var scHi = Math.max(scStart, scEnd);
+            var scMulti = scStart >= 0 && scHi > scLo && savedLineIdx >= scLo && savedLineIdx <= scHi;
+            var outCs;
+            if (scMulti && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+                var linesCs = getSelectedLines();
+                outCs = linesCs.length > 0 ? linesToPlainText(linesCs) : plainCs;
+            } else {
+                outCs = plainCs;
+            }
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: outCs });
+            return true;
+        }
+        vscodeApi.postMessage({ type: 'copyToClipboard', text: '' });
         return true;
     }
     if (action === 'copy-with-source') {
-        var sel = window.getSelection();
-        var text = sel ? sel.toString() : '';
-        var refs = collectSourceRefsInSelection();
-        if (text.length > 0 || refs.length > 0) vscodeApi.postMessage({ type: 'copyWithSource', text: text, sourceRefs: refs });
-        return true;
+        var selWs = window.getSelection();
+        var tws = selWs ? selWs.toString() : '';
+        var refsWs = collectSourceRefsInSelection();
+        if (tws.length > 0 || refsWs.length > 0) {
+            vscodeApi.postMessage({ type: 'copyWithSource', text: tws, sourceRefs: refsWs });
+            return true;
+        }
+        return false;
     }
     if (action === 'copy-all') {
         if (typeof copyAllToClipboard === 'function') copyAllToClipboard();
@@ -115,7 +147,7 @@ function onContextMenuAction(action) {
     var lineIdx = contextMenuLineIdx;
     hideContextMenu();
 
-    if (handleGlobalAction(action)) return;
+    if (handleGlobalAction(action, lineIdx)) return;
     if (handleSourceAction(action)) return;
     if (lineIdx < 0 || lineIdx >= allLines.length) return;
 
