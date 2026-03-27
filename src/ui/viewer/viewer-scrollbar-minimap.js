@@ -217,13 +217,26 @@ function paintMinimap() {
         for (var j = 0; j < arr.length; j++) mmCtx.fillRect(0, arr[j], mmW, barH);
     }
 
+    var mc = 0;
+    for (var k in groups) mc += groups[k].length;
+    /* When "show info on minimap" is off, typical Saropa logs are mostly info — severity groups are empty and the canvas stays blank. Draw a neutral presence band so opened files and dense info streams still show scroll structure. */
+    if (mc === 0 && total > 0) {
+        mmCtx.fillStyle = 'rgba(140, 140, 140, 0.24)';
+        var barN = 2;
+        for (var ni = 0; ni < allLines.length; ni += step) {
+            var nit = allLines[ni];
+            if (nit.height === 0 || nit.type === 'stack-frame' || nit.type === 'marker') continue;
+            var npy = Math.round((mmLineOffset(ni, hasPfx, cumH) / total) * mmH);
+            mmCtx.fillRect(0, npy, mmW, barN);
+        }
+    }
+
     // Paint search markers on top (higher visual priority)
     paintSearchMarkers(hasPfx, cumH, total, mmW, mmH, barH);
 
-    // Debug tooltip
-    var mc = 0;
-    for (var k in groups) mc += groups[k].length;
-    var title = mc + ' markers, ' + mmH + 'px panel, ' + Math.round(total) + 'px content';
+    // Tooltip: distinguish severity markers vs neutral fill when info dots are hidden
+    var title = (mc > 0 ? mc + ' markers' : (total > 0 ? 'content presence (enable info markers for colors)' : '0 markers'))
+        + ', ' + mmH + 'px panel, ' + Math.round(total) + 'px content';
     if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
         var sqlTotal = 0, slowTotal = 0;
         for (var si = 0; si < sqlBuckets.length; si++) { sqlTotal += sqlBuckets[si]; slowTotal += slowSqlBuckets[si]; }
