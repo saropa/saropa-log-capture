@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { getConfig } from '../config/config';
+import { EXPLAIN_WITH_AI_ADAPTER_ID } from './integration-adapter-constants';
 
 const SECTION = 'saropaLogCapture';
 const ADAPTERS_KEY = 'integrations.adapters';
@@ -25,6 +26,15 @@ export interface IntegrationAdapterMeta {
 
 /** Known adapters: id, label, description, and optional long description / performance / when-to-disable for the Integrations screen. */
 export const INTEGRATION_ADAPTERS: ReadonlyArray<IntegrationAdapterMeta> = [
+    {
+        id: EXPLAIN_WITH_AI_ADAPTER_ID,
+        label: 'Explain with AI',
+        description: 'Explain log lines and signals using the VS Code Language Model API',
+        descriptionLong:
+            'Turns on in-editor AI explanations (right-click, signals strip, analysis). Uses the Language Model API: an extension such as GitHub Copilot Chat must register a chat model. Editors that do not expose that API (some Cursor setups) cannot run the request in-process — use "Copy prompt" in the error dialog and paste into Cursor, Claude, or another chat tool.',
+        performanceNote: 'Runs only when you invoke Explain with AI; uses your AI provider and quota when a model is available.',
+        whenToDisable: 'You do not want AI explanations, or you only use external chat and will copy prompts manually.',
+    },
     {
         id: 'packages',
         label: 'Package / Lockfile',
@@ -188,17 +198,22 @@ interface AdapterQuickPickItem extends vscode.QuickPickItem {
 export async function showIntegrationsPicker(): Promise<void> {
     const config = getConfig();
     const current = new Set(config.integrationsAdapters ?? []);
+    const aiCfg = vscode.workspace.getConfiguration(`${SECTION}.ai`);
+    const aiEnabled = aiCfg.get<boolean>('enabled', false);
 
-    const items: AdapterQuickPickItem[] = INTEGRATION_ADAPTERS.map((a) => ({
-        label: (current.has(a.id) ? '$(check) ' : '$(circle-outline) ') + a.label,
-        description: a.description,
-        picked: current.has(a.id),
-        adapterId: a.id,
-    }));
+    const items: AdapterQuickPickItem[] = INTEGRATION_ADAPTERS.map((a) => {
+        const on = a.id === EXPLAIN_WITH_AI_ADAPTER_ID ? aiEnabled : current.has(a.id);
+        return {
+            label: (on ? '$(check) ' : '$(circle-outline) ') + a.label,
+            description: a.description,
+            picked: on,
+            adapterId: a.id,
+        };
+    });
 
     const selected = await vscode.window.showQuickPick(items, {
-        title: 'Session integrations',
-        placeHolder: 'Select which integrations run for each debug session',
+        title: 'Integrations',
+        placeHolder: 'Session capture, sidecars, third-party tools, and Explain with AI',
         canPickMany: true,
         matchOnDescription: true,
     });
@@ -206,14 +221,17 @@ export async function showIntegrationsPicker(): Promise<void> {
     if (selected === undefined) { return; }
 
     const selectedIds = selected.map((s) => s.adapterId);
+    const nextAi = selectedIds.includes(EXPLAIN_WITH_AI_ADAPTER_ID);
+    const sessionIds = selectedIds.filter((id) => id !== EXPLAIN_WITH_AI_ADAPTER_ID);
 
     const cfg = vscode.workspace.getConfiguration(SECTION);
-    await cfg.update(ADAPTERS_KEY, selectedIds, vscode.ConfigurationTarget.Workspace);
+    await cfg.update(ADAPTERS_KEY, sessionIds, vscode.ConfigurationTarget.Workspace);
+    await aiCfg.update('enabled', nextAi, vscode.ConfigurationTarget.Workspace);
 
-    const count = selectedIds.length;
+    const count = sessionIds.length + (nextAi ? 1 : 0);
     vscode.window.showInformationMessage(
         count === 0 ? 'All integrations disabled.' : `${count} integration(s) enabled.`,
     );
     const { runIntegrationPrepCheck } = await import('./integration-prep.js');
-    void runIntegrationPrepCheck(selectedIds);
+    void runIntegrationPrepCheck(sessionIds);
 }

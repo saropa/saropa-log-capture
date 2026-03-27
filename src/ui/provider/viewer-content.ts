@@ -35,6 +35,8 @@ export interface ViewerHtmlOptions {
     readonly codiconCssUri?: string;
     /** Max lines retained in the viewer (default MAX_VIEWER_LINES when omitted). */
     readonly viewerMaxLines?: number;
+    /** When true, paired `│ … │` lines are normal log lines, not stack frames (default true). */
+    readonly viewerPreserveAsciiBoxArt?: boolean;
     /** Repeat-collapse thresholds baked into the viewer script at HTML build time. */
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** Slow-query burst detector thresholds (DB_08) baked into the viewer script. */
@@ -74,6 +76,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         nonce,
         extensionUri,
         viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
+        viewerPreserveAsciiBoxArt: opts.viewerPreserveAsciiBoxArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,

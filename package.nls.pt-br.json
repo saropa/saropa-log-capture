@@ -368,6 +368,8 @@
   "config.verboseDap.title": "Log all raw DAP protocol messages (requests, responses, events) to th…",
   "config.viewerKeybindings.title": "Viewer Keybindings",
   "config.viewerMaxLines.title": "Maximum lines shown in the viewer (0 = default 50,000).",
+  "config.viewerPreserveAsciiBoxArt.description": "When enabled, log lines that look like Unicode box banners (text between paired vertical bars \"│ … │\" on the same line) are shown as normal lines, not stack frames, so stack preview does not collapse them with \"[+N more]\". Reload the log viewer after changing.",
+  "config.viewerPreserveAsciiBoxArt.title": "Preserve ASCII/Unicode box-art lines in the log viewer",
   "config.viewerDbInsightsEnabled.description": "When enabled, the log viewer runs DB insight detectors (e.g. N+1 query hints) and enriches database-tagged lines with SQL fingerprint rollup stats.",
   "config.viewerDbInsightsEnabled.title": "Enable database insights in the log viewer",
   "config.staticSqlFromFingerprint.enabled.description": "When enabled, the log viewer can offer “Static sources” from SQL fingerprints (project index search; suggestive only). When disabled, that affordance is hidden and the host skips static search.",

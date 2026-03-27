@@ -12,6 +12,7 @@ import { normalizeViewerRepeatThresholds } from "../db/drift-db-repeat-threshold
 import { normalizeViewerSlowBurstThresholds } from "../db/drift-db-slow-burst-thresholds";
 import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
+import { stripUiOnlyIntegrationAdapterIds } from "../integrations/integration-adapter-constants";
 import type { HighlightRule } from "../storage/highlight-rules";
 import type { AutoTagRule } from "../misc/auto-tagger";
 import {
@@ -89,6 +90,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     categories: ensureStringArray(cfg.get("categories"), DEFAULT_CATEGORIES),
     maxLines,
     viewerMaxLines,
+    viewerPreserveAsciiBoxArt: ensureBoolean(cfg.get("viewerPreserveAsciiBoxArt"), true),
     includeTimestamp: ensureBoolean(cfg.get("includeTimestamp"), true),
     format: ensureEnum(cfg.get("format"), ["plaintext", "html"], "plaintext"),
     logDirectory: (() => {
@@ -164,7 +166,9 @@ export function getConfig(): SaropaLogCaptureConfig {
     sessionListPageSize: clamp(cfg.get("sessionListPageSize"), 10, 500, 100),
     iconBarPosition: ensureEnum(cfg.get("iconBarPosition"), ["left", "right"], "left"),
     organizeFolders: ensureBoolean(cfg.get("organizeFolders"), true),
-    integrationsAdapters: ensureStringArray(cfg.get("integrations.adapters"), ["packages", "performance"]),
+    integrationsAdapters: stripUiOnlyIntegrationAdapterIds(
+      ensureStringArray(cfg.get("integrations.adapters"), ["packages", "performance"]),
+    ),
     ...getIntegrationConfig(cfg),
     projectIndex: getProjectIndexConfig(cfg),
     replay: {

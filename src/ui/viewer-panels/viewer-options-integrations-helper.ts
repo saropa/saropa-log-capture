@@ -28,19 +28,15 @@ function initIntegrationsOptionsHandlers() {
             var row = toggleBtn.closest('.integrations-row');
             if (!row) return;
             var previewEl = row.querySelector('.integrations-desc-preview');
-            var fullEl = row.querySelector('.integrations-desc-full');
-            if (!previewEl || !fullEl) return;
+            var expandedBlock = row.querySelector('.integrations-expanded-block');
+            if (!previewEl || !expandedBlock) return;
             var expanded = toggleBtn.getAttribute('data-expanded') === 'true';
             var nextExpanded = !expanded;
             previewEl.classList.toggle('options-filtered-hidden', nextExpanded);
-            fullEl.classList.toggle('options-filtered-hidden', !nextExpanded);
-            var expandables = row.querySelectorAll('.integrations-expandable');
-            for (var j = 0; j < expandables.length; j++) {
-                expandables[j].classList.toggle('options-filtered-hidden', !nextExpanded);
-            }
+            expandedBlock.classList.toggle('options-filtered-hidden', !nextExpanded);
             toggleBtn.setAttribute('data-expanded', nextExpanded ? 'true' : 'false');
             toggleBtn.setAttribute('aria-expanded', nextExpanded ? 'true' : 'false');
-            toggleBtn.textContent = nextExpanded ? 'Show less' : 'Show more';
+            toggleBtn.textContent = nextExpanded ? 'less' : 'more';
         });
         integrationsSection.addEventListener('change', function(e) {
             if (!e.target || !e.target.matches || !e.target.matches('input[data-adapter-id]')) return;

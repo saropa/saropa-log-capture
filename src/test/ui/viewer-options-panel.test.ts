@@ -2,6 +2,18 @@ import * as assert from 'node:assert';
 import { getIntegrationsPanelHtml } from '../../ui/viewer-panels/viewer-integrations-panel-html';
 import { getKeyboardShortcutsViewHtml } from '../../ui/viewer-panels/viewer-keyboard-shortcuts-html';
 import { getOptionsPanelHtml, getOptionsPanelScript } from '../../ui/viewer-panels/viewer-options-panel';
+import { getOptionsStyles } from '../../ui/viewer-styles/viewer-styles-options';
+
+/** First braced block after a selector (no nested `{` in options CSS rules targeted here). */
+function cssRuleBody(css: string, selectorPrefix: string): string {
+    const needle = selectorPrefix + ' {';
+    const i = css.indexOf(needle);
+    assert.ok(i >= 0, `expected ${selectorPrefix} in stylesheet`);
+    const start = i + needle.length;
+    const end = css.indexOf('}', start);
+    assert.ok(end > start, `expected closing brace for ${selectorPrefix}`);
+    return css.slice(start, end);
+}
 
 suite('ViewerOptionsPanel', () => {
 
@@ -38,6 +50,23 @@ suite('ViewerOptionsPanel', () => {
         });
     });
 
+    suite('getOptionsStyles', () => {
+        test('options Integrations / Keyboard shortcuts CTA buttons are not full panel width', () => {
+            const css = getOptionsStyles();
+            const integrationsBtn = cssRuleBody(css, '.options-integrations-btn');
+            assert.ok(
+                !integrationsBtn.includes('width: 100%'),
+                'CTA buttons should size to content, not stretch like action rows',
+            );
+        });
+
+        test('options action buttons remain full width for reset controls', () => {
+            const css = getOptionsStyles();
+            const action = cssRuleBody(css, '.options-action-btn');
+            assert.ok(action.includes('width: 100%'), 'reset row should stay full width');
+        });
+    });
+
     suite('getIntegrationsPanelHtml (Integrations screen)', () => {
         test('should return Integrations view with back button, intro, and section', () => {
             const html = getIntegrationsPanelHtml();
@@ -46,7 +75,7 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('integrations-title'));
             assert.ok(html.includes('id="integrations-section"'));
             assert.ok(html.includes('integrations-intro'));
-            assert.ok(html.includes('Choose what to attach to each debug session'));
+            assert.ok(html.includes('Choose session capture adapters'));
         });
 
         test('should include integrations search input', () => {
@@ -57,23 +86,34 @@ suite('ViewerOptionsPanel', () => {
 
         test('should include integration rows with data-adapter-id for sync', () => {
             const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('data-adapter-id="explainWithAi"'));
             assert.ok(html.includes('data-adapter-id="packages"'));
             assert.ok(html.includes('data-adapter-id="git"'));
         });
 
-        test('should render split preview/full description spans for safe toggle text updates', () => {
+        test('should render preview, hidden expanded block, and full description for toggle', () => {
             const html = getIntegrationsPanelHtml();
             assert.ok(html.includes('class="integrations-desc-preview"'));
-            assert.ok(html.includes('class="integrations-desc-full options-filtered-hidden"'));
+            assert.ok(html.includes('integrations-expanded-block options-filtered-hidden'));
+            assert.ok(html.includes('class="integrations-desc-full"'));
             assert.ok(!html.includes('data-preview="'));
             assert.ok(!html.includes('data-full="'));
         });
 
-        test('should render perf and when-to-disable notes as hidden expandables', () => {
+        test('should nest perf and when-to-disable inside hidden expanded block', () => {
             const html = getIntegrationsPanelHtml();
-            assert.ok(html.includes('integrations-expandable options-filtered-hidden'));
-            assert.ok(html.includes('integrations-perf integrations-expandable'));
-            assert.ok(html.includes('integrations-when integrations-expandable'));
+            assert.ok(html.includes('integrations-expanded-block options-filtered-hidden'));
+            assert.ok(html.includes('class="integrations-note integrations-perf"'));
+            assert.ok(html.includes('class="integrations-note integrations-when"'));
+            assert.ok(!html.includes('integrations-expandable'));
+        });
+
+        test('should use more label, line-clamp row class, and no legacy Show more/less copy on Integrations HTML', () => {
+            const html = getIntegrationsPanelHtml();
+            assert.ok(html.includes('integrations-desc-collapsible'));
+            assert.match(html, /class="integrations-desc-toggle"[^>]*>\s*more\s*</);
+            assert.ok(!html.includes('Show more'), 'Integrations view copy uses "more", not "Show more"');
+            assert.ok(!html.includes('Show less'));
         });
 
         test('should show warning emoji in label for integrations with performance warnings', () => {
@@ -149,6 +189,18 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('function filterIntegrations(query)'));
             assert.ok(script.includes('function initIntegrationsOptionsHandlers()'));
             assert.ok(script.includes('initIntegrationsOptionsHandlers()'));
+        });
+
+        test('should toggle Integrations description with more/less labels in embedded helper', () => {
+            const script = getOptionsPanelScript();
+            assert.ok(
+                script.includes("nextExpanded ? 'less' : 'more'"),
+                'Expand/collapse uses short more/less labels',
+            );
+            assert.ok(
+                script.includes('.integrations-expanded-block'),
+                'Toggles expanded block that holds full text and notes',
+            );
         });
 
         test('should define Keyboard shortcuts view switch (open/back)', () => {
