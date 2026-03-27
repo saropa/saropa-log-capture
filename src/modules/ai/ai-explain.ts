@@ -39,7 +39,10 @@ export async function explainError(
     const model = fallbackModels[0];
 
     if (!model) {
-        throw new Error('No AI model available. Install GitHub Copilot or another LM extension that provides a chat model.');
+        throw new Error(
+            'No AI model available. This editor must expose at least one Language Model API chat model (e.g. GitHub Copilot Chat). '
+                + 'Some Cursor setups do not; use "Copy prompt for external chat" when offered.',
+        );
     }
 
     const prompt = buildExplainErrorPrompt(context);

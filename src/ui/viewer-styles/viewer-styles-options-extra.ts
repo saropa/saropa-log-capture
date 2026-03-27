@@ -102,23 +102,35 @@ export function getOptionsExtraStyles(): string {
     line-height: 1.35;
     margin: 4px 0 0 24px;
 }
+/* Multi-line ellipsis follows panel width; avoids a fixed character cut-off. */
+.integrations-desc-collapsible .integrations-desc-preview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+}
+.integrations-expanded-block .integrations-desc-full {
+    display: block;
+}
 .integrations-desc-toggle {
-    margin-left: 6px;
+    display: block;
+    margin: 4px 0 0 0;
     border: none;
     background: none;
     color: var(--vscode-textLink-foreground, var(--vscode-focusBorder));
     cursor: pointer;
-    font-size: 11px;
+    font-size: inherit;
     padding: 0;
+    text-align: left;
 }
 .integrations-note {
-    flex: 1 1 100%;
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    opacity: 0.85;
-    line-height: 1.3;
-    margin: 2px 0 0 24px;
-    font-style: italic;
+    margin: 8px 0 0 0;
+    font-size: inherit;
+    font-weight: inherit;
+    font-style: normal;
+    color: inherit;
+    line-height: inherit;
 }
 .integrations-perf { }
 .integrations-perf-warning {

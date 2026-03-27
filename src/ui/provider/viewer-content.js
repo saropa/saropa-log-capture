@@ -49,6 +49,7 @@ function buildViewerHtml(opts) {
         nonce,
         extensionUri,
         viewerMaxLines: opts.viewerMaxLines ?? exports.DEFAULT_VIEWER_LINES,
+        viewerPreserveAsciiBoxArt: opts.viewerPreserveAsciiBoxArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
