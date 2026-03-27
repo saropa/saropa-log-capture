@@ -20,7 +20,9 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [4.1.0]
+
+Adds Explain with AI alongside session adapters in Integrations (with fallbacks when no chat model is available), classifies captured stderr like other channels by default with an opt-in error override, and polishes the options panel plus stack trace handling (ASCII box banners, expand/collapse cycle). [log](https://github.com/saropa/saropa-log-capture/blob/v4.1.0/CHANGELOG.md)
 
 ### Added
 
@@ -39,6 +41,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 • **Log viewer — stack traces** — New stack groups open fully expanded (every frame visible). Click the stack header to cycle: expanded → fully collapsed → preview (`[+N more]`) → expanded.
 
 ## [4.0.1]
+
+Refines error tinting so Drift SQL traces stay query/debug output, replaces the signals strip strength label with a compact emoji plus tooltip, and presents SQL Query History as a table with header-driven sorting. [log](https://github.com/saropa/saropa-log-capture/blob/v4.0.1/CHANGELOG.md)
 
 ### Changed
 
