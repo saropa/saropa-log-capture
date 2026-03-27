@@ -6,6 +6,11 @@ exports.getDecorationStyles = getDecorationStyles;
  *
  * Covers decoration prefix (severity dot, counter, timestamp),
  * decoration settings panel, severity bars, and whole-line tinting.
+ *
+ * **Severity bar colors** (`.level-bar-*`, `--bar-color`) intentionally use the same
+ * `--vscode-*` tokens as `.line.level-*` in `viewer-styles.ts` so the left gutter dot,
+ * connector, and line text read as one level. Whole-line tints (`.line-tint-*`) follow
+ * the same tokens via `color-mix` so hover/background bands stay hue-consistent.
  */
 function getDecorationStyles() {
     return /* css */ `
@@ -128,24 +133,24 @@ function getDecorationStyles() {
     background: var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
     margin: 4px 8px;
 }
-/* Whole-line severity tinting (background colors by log level) */
+/* Whole-line severity tinting — hues follow the same tokens as bar/text for each level. */
 .line.line-tint-error {
-    background-color: rgba(255, 60, 60, 0.12);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 14%, transparent);
 }
 .line.line-tint-error:hover {
-    background-color: rgba(255, 60, 60, 0.20);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 22%, transparent);
 }
 .line.line-tint-warning {
-    background-color: rgba(255, 204, 0, 0.10);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 12%, transparent);
 }
 .line.line-tint-warning:hover {
-    background-color: rgba(255, 204, 0, 0.18);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-warningForeground, #cca700) 20%, transparent);
 }
 .line.line-tint-performance {
-    background-color: rgba(180, 140, 255, 0.10);
+    background-color: color-mix(in srgb, var(--vscode-charts-purple, #a855f7) 12%, transparent);
 }
 .line.line-tint-performance:hover {
-    background-color: rgba(180, 140, 255, 0.18);
+    background-color: color-mix(in srgb, var(--vscode-charts-purple, #a855f7) 20%, transparent);
 }
 .line.line-tint-todo {
     background-color: rgba(200, 200, 200, 0.08);
@@ -165,11 +170,12 @@ function getDecorationStyles() {
 .line.line-tint-notice:hover {
     background-color: rgba(33, 150, 243, 0.16);
 }
+/* Matches .line.level-info / .level-bar-info (debug console info token). */
 .line.line-tint-info {
-    background-color: rgba(255, 204, 0, 0.08);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-infoForeground, #b695f8) 10%, transparent);
 }
 .line.line-tint-info:hover {
-    background-color: rgba(255, 204, 0, 0.14);
+    background-color: color-mix(in srgb, var(--vscode-debugConsole-infoForeground, #b695f8) 18%, transparent);
 }
 
 /* Blank/empty lines: set --blank-line-bg to any color to join before/after; when unset, previous line tint shows. */
@@ -188,14 +194,17 @@ function getDecorationStyles() {
     width: 0.54em; height: 0.54em; border-radius: 50%;
     pointer-events: none; z-index: 2;
 }
-.level-bar-error { --bar-color: var(--vscode-charts-red, #f44336); }
-.level-bar-warning { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+/* Gutter dots/connectors use the same --vscode-* tokens as .line.level-* in viewer-styles.ts so bar and text stay aligned. */
+.level-bar-error { --bar-color: var(--vscode-debugConsole-errorForeground, #f48771); }
+/* Recent-error context (same 2s window as a fault above; not the primary error line). */
+.level-bar-error-recent-context { --bar-color: color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 38%, var(--vscode-panel-border, #555) 62%); }
+.level-bar-warning { --bar-color: var(--vscode-debugConsole-warningForeground, #cca700); }
 .level-bar-performance { --bar-color: var(--vscode-charts-purple, #a855f7); }
 .level-bar-todo { --bar-color: var(--vscode-terminal-ansiWhite, #e5e5e5); }
 .level-bar-debug { --bar-color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
 .level-bar-notice { --bar-color: var(--vscode-charts-blue, #2196f3); }
 .level-bar-framework { --bar-color: var(--vscode-charts-blue, #2196f3); }
-.level-bar-info { --bar-color: var(--vscode-charts-yellow, #ffc107); }
+.level-bar-info { --bar-color: var(--vscode-debugConsole-infoForeground, #b695f8); }
 [class*="level-bar-"]::before { background: var(--bar-color); }
 .bar-bridge::before { display: none; }
 /* Blank lines: no dot, keep vertical bar (connector) */
