@@ -54,6 +54,11 @@ export interface SaropaLogCaptureConfig {
   readonly maxLines: number;
   /** Max lines shown in the viewer (0 = use default 50k). Must be ≤ maxLines. */
   readonly viewerMaxLines: number;
+  /**
+   * When true (default), paired `│ … │` banner lines are not treated as stack frames in the viewer,
+   * so stack preview does not collapse them with `[+N more]`.
+   */
+  readonly viewerPreserveAsciiBoxArt: boolean;
   readonly includeTimestamp: boolean;
   readonly format: "plaintext" | "html";
   readonly logDirectory: string;

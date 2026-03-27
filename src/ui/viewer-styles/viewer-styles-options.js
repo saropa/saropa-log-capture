@@ -225,7 +225,6 @@ function getOptionsStyles() {
     padding: 6px 12px;
     cursor: pointer;
     border-radius: 3px;
-    width: 100%;
     text-align: left;
 }
 .options-integrations-btn:hover {

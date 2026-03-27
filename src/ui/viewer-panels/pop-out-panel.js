@@ -280,6 +280,7 @@ class PopOutPanel {
             cspSource: wv.cspSource,
             codiconCssUri,
             viewerMaxLines,
+            viewerPreserveAsciiBoxArt: cfg.viewerPreserveAsciiBoxArt,
             viewerRepeatThresholds: cfg.viewerRepeatThresholds,
             viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
             staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,

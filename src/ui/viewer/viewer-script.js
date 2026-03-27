@@ -13,7 +13,7 @@ exports.getViewerScript = getViewerScript;
 const viewer_script_keyboard_1 = require("./viewer-script-keyboard");
 const viewer_script_footer_1 = require("./viewer-script-footer");
 const viewer_script_messages_1 = require("./viewer-script-messages");
-function getViewerScript(maxLines) {
+function getViewerScript(maxLines, viewerPreserveAsciiBoxArt = true) {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
 var logWrapEl = document.getElementById('log-content-wrapper');
@@ -111,6 +111,8 @@ var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
 var correlationByLineIndex = {};
+/* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
+var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
 
 /** Strip HTML tags and decode entities; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
 function stripTags(html) {
@@ -125,7 +127,11 @@ function isStackFrameText(html) {
     if (/^\\s+at\\s/.test(plain)) return true;           // JS/Node: "    at Function.foo ..."
     if (/^#\\d+\\s/.test(trimmed)) return true;          // Dart: "#0  ClassName.method ..."
     if (/^\\s+File "/.test(plain)) return true;          // Python: '  File "foo.py"'
-    if (/^\\s*\\u2502\\s/.test(plain)) return true;      // Box-drawing in some trace formats
+    // LIGHT VERTICAL (│): real traces often use a single gutter bar; paired bars on one line are log banners.
+    if (/^\\s*\\u2502\\s/.test(plain)) {
+        if (viewerPreserveAsciiBoxArt && /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain)) return false;
+        return true;
+    }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
     return /^\\s+\\S+\\.\\S+:\\d+/.test(plain);          // Generic: "  pkg.Func:123"
 }

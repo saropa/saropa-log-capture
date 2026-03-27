@@ -10,6 +10,7 @@ import * as helpers from "./viewer-provider-helpers";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import { getLearningWebviewOptions } from "../../modules/learning/learning-webview-options";
 import { getRootCauseHintViewerStrings } from "../../modules/root-cause-hints/root-cause-hint-l10n-host";
+import { mergeIntegrationAdaptersForWebview } from "../../modules/integrations/integration-adapter-constants";
 
 export interface LogViewerSetupTarget {
   getExtensionUri(): vscode.Uri;
@@ -48,6 +49,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     cspSource: webviewView.webview.cspSource,
     codiconCssUri,
     viewerMaxLines,
+    viewerPreserveAsciiBoxArt: cfg.viewerPreserveAsciiBoxArt,
     viewerRepeatThresholds: cfg.viewerRepeatThresholds,
     viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
     staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
@@ -59,7 +61,11 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
   queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get<string>("saropaLogCapture.lastUsedPresetName")));
-  queueMicrotask(() => target.sendIntegrationsAdapters(getConfig().integrationsAdapters));
+  queueMicrotask(() => {
+    const c = getConfig();
+    const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get<boolean>("enabled", false);
+    target.sendIntegrationsAdapters(mergeIntegrationAdaptersForWebview(c.integrationsAdapters, aiOn));
+  });
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
