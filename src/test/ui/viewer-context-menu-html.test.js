@@ -99,7 +99,8 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('codicon-unfold') && html.includes('toggle-line-height'));
             assert.ok(html.includes('<span class="codicon codicon-fold" aria-hidden="true"></span>'));
             assert.ok(html.includes('<span class="codicon codicon-fold-down" aria-hidden="true"></span>'));
-            assert.ok(html.includes('codicon-blank') && html.includes('toggle-hide-blank-lines'));
+            assert.ok(/\bdata-action="toggle-hide-blank-lines"[\s\S]{0,120}codicon-eye-closed\b/.test(html), 'hide blank lines toggle should use the same eye-closed icon as other Hide items');
+            assert.ok(!html.includes('codicon-blank'), 'context menu HTML must not use codicon-blank (invisible); it broke Hide blank lines alignment');
         });
         test('should not put open-quality-report in context menu (footer Actions only)', () => {
             const html = (0, viewer_context_menu_1.getContextMenuHtml)();
