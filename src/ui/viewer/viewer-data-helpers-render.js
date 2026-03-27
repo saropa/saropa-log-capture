@@ -4,6 +4,12 @@ exports.getViewerDataHelpersRender = getViewerDataHelpersRender;
 /**
  * renderItem() for the log viewer — item-to-HTML rendering.
  * Extracted to keep viewer-data-helpers.ts under the line limit.
+ *
+ * **Framework line colors vs `deemphasizeFrameworkLevels`:**
+ * That setting only suppresses severity *text* classes for framework lines at **error** and **warning**
+ * (matching the product copy for the option). **Performance** lines (e.g. Android Choreographer
+ * “skipped frames”) keep `level-performance` / purple text even when `item.fw` is true, so jank
+ * signals stay visible alongside neutral framework info noise.
  */
 function getViewerDataHelpersRender() {
     return /* javascript */ `
@@ -115,7 +121,9 @@ function renderItem(item, idx, prevVis) {
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = item.category === 'stderr' ? ' cat-stderr' : '';
-    var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
+    // Setting is "suppress error/warning coloring on framework lines" — keep performance (e.g. Choreographer jank) purple.
+    var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw
+        && (item.level === 'error' || item.level === 'warning'));
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
     var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
     var sepCls = item.isSeparator ? ' separator-line' : '';
