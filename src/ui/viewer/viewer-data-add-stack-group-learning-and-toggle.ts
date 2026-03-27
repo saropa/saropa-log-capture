@@ -23,13 +23,13 @@ function toggleStackGroup(groupId) {
     var header = groupHeaderMap[groupId];
     if (!header) return;
     var beforeCollapsed = header.collapsed;
-    // Cycle: preview -> expanded -> collapsed -> preview
+    // Cycle: expanded -> collapsed -> preview -> expanded
     if (header.collapsed === 'preview') {
         header.collapsed = false; // Expand all
     } else if (header.collapsed === false) {
         header.collapsed = true; // Collapse all
     } else {
-        header.collapsed = 'preview'; // Show preview
+        header.collapsed = 'preview'; // Show preview ([+N more] for extra frames)
     }
     if (header.collapsed === true && beforeCollapsed !== true) {
         trackLearningDismissForStackGroup(groupId);
