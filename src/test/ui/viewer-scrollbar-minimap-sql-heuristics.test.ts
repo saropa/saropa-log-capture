@@ -73,4 +73,21 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             );
         });
     });
+
+    suite('neutral presence fallback (severity hidden / info-only)', () => {
+        test('before: without neutral branch, info-only logs could paint nothing when info markers are off', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(script.includes("lv === 'info' && !mmShowInfo"), 'info still skipped from severity groups when setting off');
+        });
+
+        test('after: paintMinimap fills neutral strokes when mc === 0 && total > 0', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(script.includes('mc === 0 && total > 0'), 'neutral branch guard');
+            assert.ok(script.includes('rgba(140, 140, 140, 0.24)'), 'neutral stroke fill');
+            assert.ok(
+                script.includes('content presence (enable info markers for colors)'),
+                'tooltip directs users to saropaLogCapture.minimapShowInfoMarkers for colors'
+            );
+        });
+    });
 });
