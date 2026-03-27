@@ -5,6 +5,8 @@ var looseErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|repo
 var strictErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|\\b(?:fatal|panic|critical)\\b|\\bfail(?:ed|ure)\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 var strictLevelDetection = true;
+/* When false (default pushed from settings), stderr lines use text-based levels like stdout. */
+var stderrTreatAsError = false;
 var warnPattern = /\\b(warn(ing)?|caution)\\b/i;
 var perfPattern = /\\b(perf(?:ormance)?|dropped\\s+frame|fps|framerate|jank|stutter|skipped\\s+\\d+\\s+frames?|choreographer|doing\\s+too\\s+much\\s+work|gc\\s+(?:pause|freed|concurrent)|anr|application\\s+not\\s+responding)\\b/i;
 // Flutter/Dart memory: same context + phrase rules as level-classifier.ts (keep in sync).
@@ -36,7 +38,7 @@ function isDriftSqlStatementLine(plainText) {
 }
 
 function classifyLevel(plainText, category) {
-    if (category === 'stderr') return 'error';
+    if (stderrTreatAsError && category === 'stderr') return 'error';
     if (driftStatementPattern.test(plainText)) return classifyDriftSqlLine(plainText);
     var ep = strictLevelDetection ? strictErrorPattern : looseErrorPattern;
     var lcm = logcatLevelPattern.exec(plainText);

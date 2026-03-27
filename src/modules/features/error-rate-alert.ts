@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getConfig } from '../config/config';
 import { t } from '../../l10n';
 
 /** Configuration for error rate alerting. */
@@ -147,11 +148,12 @@ export class ErrorRateAlert {
 /**
  * Check if a log line indicates an error based on category or content.
  */
+/** Loose classification: keep legacy substring semantics; only gate stderr with config. */
 export function isErrorLine(text: string, category: string): boolean {
-    if (category === 'stderr') {
+    const cfg = getConfig();
+    if (category === 'stderr' && cfg.stderrTreatAsError) {
         return true;
     }
-
     const lowerText = text.toLowerCase();
     return (
         lowerText.includes('error') ||
