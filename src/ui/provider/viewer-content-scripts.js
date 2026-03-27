@@ -80,9 +80,9 @@ function scriptTag(nonce, ...parts) {
 }
 /** Build all script tags in the order required by the viewer. */
 function getViewerScriptTags(opts) {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, viewerSqlPatternChipMinCount, viewerSqlPatternMaxChips, } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, viewerSqlPatternChipMinCount, viewerSqlPatternMaxChips, } = opts;
     return (scriptTag(nonce, (0, viewer_error_handler_1.getErrorHandlerScript)()) +
-        scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)(viewerRepeatThresholds, viewerDbInsightsEnabled !== false, staticSqlFromFingerprintEnabled !== false, viewerSlowBurstThresholds, viewerDbDetectorToggles), (0, viewer_script_1.getViewerScript)(maxLines), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
+        scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)(viewerRepeatThresholds, viewerDbInsightsEnabled !== false, staticSqlFromFingerprintEnabled !== false, viewerSlowBurstThresholds, viewerDbDetectorToggles), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
         scriptTag(nonce, (0, viewer_scroll_anchor_1.getScrollAnchorScript)()) +
         scriptTag(nonce, (0, viewer_filter_1.getFilterScript)()) +
         scriptTag(nonce, (0, viewer_watch_1.getWatchScript)()) +

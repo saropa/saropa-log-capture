@@ -4,6 +4,11 @@
  */
 
 import * as vscode from "vscode";
+import {
+  EXPLAIN_WITH_AI_ADAPTER_ID,
+  mergeIntegrationAdaptersForWebview,
+  stripUiOnlyIntegrationAdapterIds,
+} from "../../modules/integrations/integration-adapter-constants";
 import { DRIFT_ADVISOR_EXTENSION_ID, DRIFT_ADVISOR_OPEN_COMMAND } from "./drift-advisor-integration";
 import * as panelHandlers from '../shared/viewer-panel-handlers';
 import { loadAndPostAboutContent } from "../viewer-panels/about-content-loader";
@@ -73,13 +78,19 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
         const adapterIds = Array.isArray(raw)
           ? (raw as unknown[]).filter((x): x is string => typeof x === 'string')
           : [];
+        const aiEnabled = adapterIds.includes(EXPLAIN_WITH_AI_ADAPTER_ID);
+        const sessionOnly = stripUiOnlyIntegrationAdapterIds(adapterIds);
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
-        void cfg.update('integrations.adapters', adapterIds, vscode.ConfigurationTarget.Workspace)
-          .then(() => {
-            ctx.post({ type: 'integrationsAdapters', adapterIds });
-            ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) });
-            void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(adapterIds));
-          });
+        const aiCfg = vscode.workspace.getConfiguration('saropaLogCapture.ai');
+        void Promise.all([
+          cfg.update('integrations.adapters', sessionOnly, vscode.ConfigurationTarget.Workspace),
+          aiCfg.update('enabled', aiEnabled, vscode.ConfigurationTarget.Workspace),
+        ]).then(() => {
+          const merged = mergeIntegrationAdaptersForWebview(sessionOnly, aiEnabled);
+          ctx.post({ type: 'integrationsAdapters', adapterIds: merged });
+          ctx.post({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) });
+          void import('../../modules/integrations/integration-prep.js').then((m) => m.runIntegrationPrepCheck(sessionOnly));
+        });
         return true;
       }
       case "showIntegrationContext":

@@ -25,6 +25,8 @@ import type { ViewerMessageContext } from './viewer-message-types';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
 import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
+import { getAiEnabledConfigurationTarget } from '../../modules/ai/ai-enable-scope';
+import { showAiExplainRunFailure } from '../../modules/ai/ai-explain-ui';
 
 function isAllowedExternalUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -84,7 +86,7 @@ function runExplainWithAi(msg: Record<string, unknown>, ctx: ViewerMessageContex
     const enableLabel = t("action.enable");
     vscode.window.showInformationMessage(t("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
       if (choice === enableLabel) {
-        await aiCfg.update("enabled", true, vscode.ConfigurationTarget.Global);
+        await aiCfg.update("enabled", true, getAiEnabledConfigurationTarget());
         runExplainWithAi(msg, ctx);
       }
     }, () => {});
@@ -93,23 +95,28 @@ function runExplainWithAi(msg: Record<string, unknown>, ctx: ViewerMessageContex
   vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: t("msg.aiExplainProgress"), cancellable: false },
     async () => {
+      let builtContext: Awaited<ReturnType<typeof buildAIContext>> | undefined;
       try {
         const contextLines = Math.max(0, Math.min(50, aiCfg.get<number>("contextLines", 10)));
         const lineTimestampMs = typeof msg.timestamp === "number" ? msg.timestamp : undefined;
         const includeIntegrationData = aiCfg.get<boolean>("includeIntegrationData", true);
         const cacheExplanations = aiCfg.get<boolean>("cacheExplanations", true);
         const lineEndIndex = typeof msg.lineEndIndex === "number" && msg.lineEndIndex >= lineIdx ? msg.lineEndIndex : undefined;
-        const context = await buildAIContext(uri, lineIdx, text, { contextLines, lineTimestampMs, includeIntegrationData, lineEndIndex });
-        const result = await explainError(context, { useCache: cacheExplanations });
+        builtContext = await buildAIContext(uri, lineIdx, text, { contextLines, lineTimestampMs, includeIntegrationData, lineEndIndex });
+        const result = await explainError(builtContext, { useCache: cacheExplanations });
         const explanation = result.explanation;
         const suffix = result.cached ? t("panel.aiExplainCached") : "";
         const toShow = (explanation.length > 500 ? explanation.slice(0, 497) + "…" : explanation) + suffix;
         const choice = await vscode.window.showInformationMessage(toShow, "Copy", "Show details");
         if (choice === "Copy") { vscode.env.clipboard.writeText(explanation).then(undefined, () => {}); }
-        if (choice === "Show details") { showAIExplanationPanel(context, result); }
+        if (choice === "Show details") { showAIExplanationPanel(builtContext, result); }
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        vscode.window.showErrorMessage(t("msg.aiExplainError", message)).then(undefined, () => {});
+        if (builtContext) {
+          await showAiExplainRunFailure(builtContext, err);
+        } else {
+          const message = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(t("msg.aiExplainError", message)).then(undefined, () => {});
+        }
       }
     },
   );

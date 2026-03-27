@@ -59,8 +59,11 @@ export const stringsA: Record<string, string> = {
     'msg.deepLinksCopied': '{0} deep links copied to clipboard',
     'msg.filePathsCopied': '{0} file paths copied to clipboard',
 
-    'msg.aiExplainDisabled': 'Enable "Saropa Log Capture > AI: Enabled" in Settings to use Explain with AI.',
+    'msg.aiExplainDisabled': 'Turn on Explain with AI: Options → Integrations in the log viewer, or enable "Saropa Log Capture › AI: Enabled" in Settings.',
     'msg.aiExplainError': 'Explain with AI: {0}',
+    'msg.aiExplainNoModel':
+        'No Language Model API chat model is registered in this editor. Install an extension that provides one (e.g. GitHub Copilot Chat), or copy the prompt and use Cursor, Claude, or another chat tool.',
+    'msg.aiExplainPromptCopied': 'Prompt copied. Paste it into your chat tool.',
     'msg.aiExplainProgress': 'Explaining with AI…',
     'msg.aiExplainHypothesesProgress': 'Explaining signals with AI…',
     'msg.explainRootCauseHypothesesEmpty': 'No signals for this log (or the strip is empty). Load a log with matching signals or clear filters.',
@@ -106,6 +109,8 @@ export const stringsA: Record<string, string> = {
     'action.addBookmark': 'Add bookmark',
     'action.dismiss': 'Dismiss',
     'action.enable': 'Enable',
+    'action.copyAiPrompt': 'Copy prompt for external chat',
+    'action.openAiSettings': 'Open AI settings',
 
     'msg.noLogFileLoaded': 'No log file is currently loaded for editing.',
     'msg.debugSessionActiveEdit': 'A debug session is active. Editing the log file now may cause data loss or corruption.',

@@ -12,15 +12,12 @@ exports.getIntegrationsPanelHtml = getIntegrationsPanelHtml;
  */
 const ansi_1 = require("../../modules/capture/ansi");
 const integrations_ui_1 = require("../../modules/integrations/integrations-ui");
-/** Shared preview length for collapsed integration descriptions. */
-const INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH = 50;
+/**
+ * When the description has no extra notes, still offer expand/collapse if the text is long
+ * enough that a multi-line clamp (see CSS) likely truncates. Mirrors ~3–4 wrapped lines.
+ */
+const INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS = 130;
 const PERFORMANCE_WARNING_EMOJI = '⚠️';
-function truncateWithEllipsis(value, maxLength) {
-    if (value.length <= maxLength) {
-        return value;
-    }
-    return `${value.slice(0, maxLength)}…`;
-}
 function splitPerformanceWarning(performanceNote) {
     if (!performanceNote) {
         return { warningEmoji: '', text: '' };
@@ -35,41 +32,43 @@ function splitPerformanceWarning(performanceNote) {
 /** Build one integration row: checkbox, label, long description, and optional perf/when-to-disable lines. */
 function renderIntegrationRow(a) {
     const longDesc = a.descriptionLong ?? a.description;
-    const previewDesc = truncateWithEllipsis(longDesc, INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH);
     const perfNote = splitPerformanceWarning(a.performanceNote);
     const labelWarning = perfNote.warningEmoji
         ? ` <span class="integrations-perf-warning" aria-label="Performance warning">${(0, ansi_1.escapeHtml)(perfNote.warningEmoji)}</span>`
         : '';
     let perf = '';
     if (a.performanceNote) {
-        perf = `<p class="integrations-note integrations-perf integrations-expandable options-filtered-hidden">
+        perf = `<p class="integrations-note integrations-perf">
             <span class="integrations-note-label">Performance:</span>
             <span>${(0, ansi_1.escapeHtml)(perfNote.text)}</span>
         </p>`;
     }
     const when = a.whenToDisable
-        ? `<p class="integrations-note integrations-when integrations-expandable options-filtered-hidden">When to disable: ${(0, ansi_1.escapeHtml)(a.whenToDisable)}</p>`
+        ? `<p class="integrations-note integrations-when">When to disable: ${(0, ansi_1.escapeHtml)(a.whenToDisable)}</p>`
         : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
-    const escapedPreviewDesc = (0, ansi_1.escapeHtml)(previewDesc);
     const escapedLongDesc = (0, ansi_1.escapeHtml)(longDesc);
-    const hasExpandable = longDesc.length > INTEGRATIONS_DESCRIPTION_PREVIEW_LENGTH || !!a.performanceNote || !!a.whenToDisable;
-    const descToggle = hasExpandable
-        ? `<button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">Show more</button>`
-        : '';
+    const hasExpandable = longDesc.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS ||
+        !!a.performanceNote ||
+        !!a.whenToDisable;
+    const descBlock = hasExpandable
+        ? `<p class="integrations-desc integrations-desc-collapsible">
+                <span class="integrations-desc-preview">${escapedLongDesc}</span>
+                <span class="integrations-expanded-block options-filtered-hidden">
+                    <span class="integrations-desc-full">${escapedLongDesc}</span>
+                    ${perf}
+                    ${when}
+                </span>
+                <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">more</button>
+            </p>`
+        : `<p class="integrations-desc">
+                <span class="integrations-desc-only">${escapedLongDesc}</span>
+            </p>`;
     return `
         <label class="integrations-row" title="${(0, ansi_1.escapeHtml)(longDesc)}" data-search-text="${(0, ansi_1.escapeHtml)(searchText)}">
             <input type="checkbox" id="int-${(0, ansi_1.escapeHtml)(a.id)}" data-adapter-id="${(0, ansi_1.escapeHtml)(a.id)}" />
             <span class="integrations-label">${(0, ansi_1.escapeHtml)(a.label)}${labelWarning}</span>
-            <p class="integrations-desc">
-                <span class="integrations-desc-text">
-                    <span class="integrations-desc-preview">${escapedPreviewDesc}</span>
-                    <span class="integrations-desc-full options-filtered-hidden">${escapedLongDesc}</span>
-                </span>
-                ${descToggle}
-            </p>
-            ${perf}
-            ${when}
+            ${descBlock}
         </label>`;
 }
 /** Returns the HTML for the Integrations view (header + back + list). Shown inside the options panel when user clicks Integrations. */
