@@ -125,11 +125,15 @@ body[data-icon-bar="right"] #panel-content-row {
 #log-content-wrapper {
     --mm-w: 60px; /* minimap width — updated by JS when size changes */
     --scrollbar-w: 0; /* native vertical scrollbar width when showScrollbar is on */
-    min-width: 80px;
     position: relative;
     flex: 1;
     min-height: 0;
+    /* Flex row child: allow horizontal shrink so #log-content + minimap share width predictably */
+    min-width: 0;
+    width: 100%;
     display: flex;
+    flex-direction: row;
+    align-items: stretch;
 }
 body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
 
@@ -140,7 +144,7 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
    Horizontal scrollbar is styled to match the VS Code theme.
    =================================================================== */
 #log-content {
-    flex: 1;
+    flex: 1 1 0%;
     min-width: 0;
     height: 100%;
     overflow-y: auto;
