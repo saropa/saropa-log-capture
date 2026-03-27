@@ -45,6 +45,15 @@ function extractSqlHistoryPreview(it, fp) {
     return truncateSqlHistoryPreviewString(raw);
 }
 
+function extractSqlHistorySampleSql(it) {
+    if (!it) return '';
+    if (it.dbInsight && it.dbInsight.sqlSnippet) return String(it.dbInsight.sqlSnippet).trim();
+    if (it.sqlRepeatDrilldown && it.sqlRepeatDrilldown.sqlSnippet) {
+        return String(it.sqlRepeatDrilldown.sqlSnippet).trim();
+    }
+    return '';
+}
+
 function evictOneSqlQueryHistoryLru() {
     var keys = Object.keys(sqlQueryHistoryByFp);
     if (keys.length === 0) return;
@@ -65,9 +74,10 @@ function evictSqlQueryHistoryToCap() {
     }
 }
 
-function recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur) {
+function recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur, sampleSql) {
     var prev = sqlQueryHistoryByFp[fp];
     var previewT = truncateSqlHistoryPreviewString(preview);
+    var sampleT = (sampleSql && String(sampleSql).trim()) || '';
     if (!prev) {
         sqlQueryHistoryByFp[fp] = {
             count: 1,
@@ -75,7 +85,8 @@ function recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur) {
             lastIdx: lineIdx,
             lastSeen: ts,
             preview: previewT,
-            maxDur: dur
+            maxDur: dur,
+            sampleSql: sampleT || undefined
         };
         return;
     }
@@ -84,17 +95,18 @@ function recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur) {
     if (lineIdx > prev.lastIdx) prev.lastIdx = lineIdx;
     if (ts > prev.lastSeen) prev.lastSeen = ts;
     if (!prev.preview && previewT) prev.preview = previewT;
+    if (!prev.sampleSql && sampleT) prev.sampleSql = sampleT;
     if (typeof dur === 'number' && isFinite(dur) && dur >= 0) {
         if (prev.maxDur === undefined || dur > prev.maxDur) prev.maxDur = dur;
     }
 }
 
-function recordSqlQueryHistoryObservation(fp, lineIdx, ts, preview, dur) {
+function recordSqlQueryHistoryObservation(fp, lineIdx, ts, preview, dur, sampleSql) {
     if (!fp || typeof fp !== 'string') return;
     if (!sqlQueryHistoryByFp[fp] && Object.keys(sqlQueryHistoryByFp).length >= SQL_QUERY_HISTORY_MAX_FP) {
         evictOneSqlQueryHistoryLru();
     }
-    recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur);
+    recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur, sampleSql);
 }
 
 function recordSqlQueryHistoryForAppendedItem(item) {
@@ -103,9 +115,10 @@ function recordSqlQueryHistoryForAppendedItem(item) {
     var fp = extractSqlHistoryFingerprint(item);
     if (!fp) return;
     var preview = extractSqlHistoryPreview(item, fp);
+    var sampleSql = extractSqlHistorySampleSql(item);
     var dur = (typeof item.elapsedMs === 'number' && isFinite(item.elapsedMs) && item.elapsedMs >= 0) ? item.elapsedMs : undefined;
     var ts = (typeof item.timestamp === 'number' && isFinite(item.timestamp)) ? item.timestamp : Date.now();
-    recordSqlQueryHistoryObservation(fp, idx, ts, preview, dur);
+    recordSqlQueryHistoryObservation(fp, idx, ts, preview, dur, sampleSql);
 }
 
 function rebuildSqlQueryHistoryFromAllLines() {
@@ -118,7 +131,7 @@ function rebuildSqlQueryHistoryFromAllLines() {
         preview = extractSqlHistoryPreview(it, fp);
         dur = (typeof it.elapsedMs === 'number' && isFinite(it.elapsedMs) && it.elapsedMs >= 0) ? it.elapsedMs : undefined;
         ts = (typeof it.timestamp === 'number' && isFinite(it.timestamp)) ? it.timestamp : 0;
-        recordSqlQueryHistoryObservationMerge(fp, i, ts, preview, dur);
+        recordSqlQueryHistoryObservationMerge(fp, i, ts, preview, dur, extractSqlHistorySampleSql(it));
     }
     evictSqlQueryHistoryToCap();
 }

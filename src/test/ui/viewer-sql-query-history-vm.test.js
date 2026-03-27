@@ -82,6 +82,15 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
         /* Cross-realm: VM object is not deepStrictEqual to host `{}` after createContext change. */
         assert.strictEqual(Object.keys(ctx.sqlQueryHistoryByFp).length, 0);
     });
+    test('sampleSql keeps raw sqlSnippet (quoted table names) for display', () => {
+        const ctx = loadRuntime([
+            dbLine("fp1", 10, {
+                dbInsight: { fingerprint: "fp1", sqlSnippet: 'SELECT * FROM "contacts" WHERE id = 1' },
+            }),
+        ]);
+        ctx.rebuildSqlQueryHistoryFromAllLines();
+        assert.strictEqual(ctx.sqlQueryHistoryByFp.fp1.sampleSql, 'SELECT * FROM "contacts" WHERE id = 1');
+    });
     test('many rows with the same fingerprint update count and first/last line refs', () => {
         const ctx = loadRuntime([
             dbLine('fpA', 10),
