@@ -150,6 +150,21 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => {});
         }
+        if (
+            e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
+            || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
+            || e.affectsConfiguration('saropaLogCapture.levelDetection')
+            || e.affectsConfiguration('saropaLogCapture.deemphasizeFrameworkLevels')
+            || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')
+        ) {
+            broadcaster.setErrorClassificationSettings(
+                cfg.suppressTransientErrors,
+                cfg.breakOnCritical,
+                cfg.levelDetection,
+                cfg.deemphasizeFrameworkLevels,
+                cfg.stderrTreatAsError,
+            );
+        }
     }));
 }
 

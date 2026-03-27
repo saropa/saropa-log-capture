@@ -120,7 +120,7 @@ function renderItem(item, idx, prevVis) {
         }
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
-    var cat = item.category === 'stderr' ? ' cat-stderr' : '';
+    var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
     var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw);
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
     var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';

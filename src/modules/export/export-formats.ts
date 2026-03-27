@@ -5,6 +5,8 @@
 
 import * as vscode from 'vscode';
 import { stripAnsi } from '../capture/ansi';
+import { classifyLevel } from '../analysis/level-classifier';
+import { getConfig } from '../config/config';
 
 /** A parsed log entry. */
 export interface LogEntry {
@@ -71,6 +73,9 @@ async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
     const raw = await vscode.workspace.fs.readFile(logUri);
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
+    const cfg = getConfig();
+    const strict = cfg.levelDetection === 'strict';
+    const stderrTreatAsError = cfg.stderrTreatAsError;
 
     const { headerLines, bodyLines, bodyStartIndex } = splitHeader(lines);
     const sessionStart = extractSessionStart(headerLines);
@@ -85,7 +90,7 @@ async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
         if (line.startsWith('---') || line.startsWith('===')) {
             continue;
         }
-        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart);
+        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart, strict, stderrTreatAsError);
         if (entry) {
             entries.push(entry);
         }
@@ -131,7 +136,13 @@ function extractSessionStart(headerLines: string[]): string | null {
  * Format: [HH:MM:SS.mmm] [category] message
  * Or:     [category] message (no timestamp)
  */
-function parseLine(line: string, lineNumber: number, sessionStart: string | null): LogEntry | null {
+function parseLine(
+    line: string,
+    lineNumber: number,
+    sessionStart: string | null,
+    strict: boolean,
+    stderrTreatAsError: boolean,
+): LogEntry | null {
     const clean = stripAnsi(line);
 
     // Try format with timestamp: [HH:MM:SS.mmm] [category] message
@@ -144,7 +155,7 @@ function parseLine(line: string, lineNumber: number, sessionStart: string | null
             lineNumber,
             timestamp,
             category,
-            level: inferLevel(message, category),
+            level: classifyLevel(message ?? '', category, strict, stderrTreatAsError),
             message,
         };
     }
@@ -158,7 +169,7 @@ function parseLine(line: string, lineNumber: number, sessionStart: string | null
             lineNumber,
             timestamp: null,
             category,
-            level: inferLevel(message, category),
+            level: classifyLevel(message ?? '', category, strict, stderrTreatAsError),
             message,
         };
     }
@@ -168,7 +179,7 @@ function parseLine(line: string, lineNumber: number, sessionStart: string | null
         lineNumber,
         timestamp: null,
         category: 'unknown',
-        level: inferLevel(clean, 'unknown'),
+        level: classifyLevel(clean, 'unknown', strict, stderrTreatAsError),
         message: clean,
     };
 }
@@ -187,31 +198,6 @@ function buildFullTimestamp(timeStr: string, sessionStart: string | null): strin
         return `${dateMatch[1]}T${timeStr}Z`;
     }
     return timeStr;
-}
-
-/**
- * Infer log level from message content and category.
- */
-function inferLevel(message: string, category: string): string {
-    const lower = message.toLowerCase();
-
-    // Check category first
-    if (category === 'stderr') {
-        return 'error';
-    }
-
-    // Check message patterns
-    if (/\b(error|exception|fatal|crash|panic)\b/i.test(lower)) {
-        return 'error';
-    }
-    if (/\b(warn(ing)?|caution)\b/i.test(lower)) {
-        return 'warning';
-    }
-    if (/\b(debug|trace|verbose)\b/i.test(lower)) {
-        return 'debug';
-    }
-
-    return 'info';
 }
 
 /**
