@@ -4,6 +4,11 @@
  * Opens the same viewer HTML as an editor-tab WebviewPanel so the user
  * can drag it to a second monitor. Implements ViewerTarget for broadcast
  * compatibility with the sidebar LogViewerProvider.
+ *
+ * On first open, the panel hydrates from the same log file URI as the main viewer
+ * (`executeLoadContent`) so the pop-out shows full session history, not only lines emitted
+ * after the window was created. Live `addLine` events during that async load are deferred
+ * and replayed (see `filterDeferredLinesAfterSnapshot`) to avoid gaps and duplicates.
  */
 
 import * as vscode from "vscode";
@@ -29,7 +34,9 @@ import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
 import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
+import { executeLoadContent, type LogViewerLoadTarget } from "../provider/log-viewer-provider-load";
 import { queuePopOutViewerConfigMicrotask } from "./pop-out-panel-viewer-config-post";
+import { filterDeferredLinesAfterSnapshot } from "./pop-out-panel-deferred-replay";
 
 const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
@@ -69,26 +76,49 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
 
+  /** Snapshot URI from the main viewer so the pop-out can load full on-disk history when opened. */
+  private readonly getHydrationUri?: () => vscode.Uri | undefined;
+
+  private hydratingFromFile = false;
+  private deferredLinesDuringHydrate: LineData[] = [];
+  private hydrateGen = 0;
+
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly version: string,
     private readonly context: vscode.ExtensionContext,
     private readonly broadcaster: ViewerBroadcaster,
-  ) {}
+    getHydrationUri?: () => vscode.Uri | undefined,
+  ) {
+    this.getHydrationUri = getHydrationUri;
+  }
 
   /** Open or reveal the pop-out panel, then move to a new window. */
   async open(): Promise<void> {
     if (this.panel) { this.panel.reveal(); return; }
+    // Buffer live lines while we load from disk so the webview shows full history, not only post-open lines.
+    this.hydratingFromFile = true;
+    this.deferredLinesDuringHydrate = [];
     const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
     const codiconsUri = vscode.Uri.joinPath(this.extensionUri, 'media', 'codicons');
-    this.panel = vscode.window.createWebviewPanel(
-      'saropaLogCapture.popOutViewer',
-      'Saropa Log Capture',
-      vscode.ViewColumn.Active,
-      { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [audioUri, codiconsUri] },
-    );
-    this.broadcaster.addTarget(this);
-    this.setupWebview(audioUri, codiconsUri);
+    try {
+      this.panel = vscode.window.createWebviewPanel(
+        'saropaLogCapture.popOutViewer',
+        'Saropa Log Capture',
+        vscode.ViewColumn.Active,
+        { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [audioUri, codiconsUri] },
+      );
+      this.broadcaster.addTarget(this);
+      this.setupWebview(audioUri, codiconsUri);
+    } catch (e) {
+      this.hydratingFromFile = false;
+      if (this.panel) {
+        this.broadcaster.removeTarget(this);
+        this.panel.dispose();
+        this.panel = undefined;
+      }
+      throw e;
+    }
     this.panel.reveal();
     await vscode.commands.executeCommand('workbench.action.moveEditorToNewWindow');
   }
@@ -119,8 +149,18 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setClearSessionRootHandler(h: () => Promise<void>): void { this.onClearSessionRoot = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
+    // During hydrate, capture all lines (even if panel not visible yet) so we don't drop or duplicate vs file load.
+    if (this.hydratingFromFile) {
+      this.deferredLinesDuringHydrate.push(data);
+      return;
+    }
     /* Skip when panel not visible to avoid CPU spike (same as sidebar viewer). */
     if (!this.panel?.visible) { return; }
+    this.enqueueLineForBatch(data);
+  }
+
+  /** Build a pending line and queue it for the batch timer (same pipeline as sidebar). */
+  private enqueueLineForBatch(data: LineData): void {
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const fw = helpers.classifyFrame(data.text);
@@ -280,6 +320,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     this.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
     queuePopOutViewerConfigMicrotask((m) => this.post(m), cfg);
+    void this.runHydrationFromDisk();
     this.panel.onDidDispose(() => {
       this.stopBatchTimer();
       this.broadcaster.removeTarget(this);
@@ -346,5 +387,52 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
 
   postToWebview(message: unknown): void {
     this.post(message);
+  }
+
+  /**
+   * Load the same log file as the sidebar so the pop-out shows the full capture, not only lines after open.
+   * Live lines received during load are deferred and replayed after the snapshot so nothing is dropped.
+   */
+  private async runHydrationFromDisk(): Promise<void> {
+    const gen = ++this.hydrateGen;
+    try {
+      const uri = this.getHydrationUri?.();
+      if (!uri) {
+        this.replayDeferredLinesAfterSnapshot(undefined);
+        return;
+      }
+      this.currentFileUri = uri;
+      flushThreadDump(this.threadDumpState, this.pendingLines);
+      this.pendingLines = [];
+      this.seenCategories.clear();
+      this.post({ type: "clear" });
+
+      const loadTarget: LogViewerLoadTarget = {
+        postMessage: (m) => this.post(m),
+        setFilename: (name) => this.setFilename(name),
+        setSessionInfo: (info) => this.setSessionInfo(info),
+        setHasPerformanceData: (has) => this.setHasPerformanceData(has),
+        setCodeQualityPayload: (payload) => { this.post({ type: "setCodeQualityPayload", payload }); },
+        getSeenCategories: () => this.seenCategories,
+      };
+      const result = await executeLoadContent(loadTarget, uri, () => gen === this.hydrateGen && !!this.panel);
+      if (gen !== this.hydrateGen || !this.panel) { return; }
+      // Live capture uses addLine only; mirror the sidebar (not viewing a static file) after loading the snapshot.
+      if (this.isSessionActive) {
+        this.post({ type: "setViewingMode", viewing: false });
+      }
+      this.replayDeferredLinesAfterSnapshot(result.contentLength);
+    } finally {
+      this.hydratingFromFile = false;
+    }
+  }
+
+  /** Replay lines that arrived while hydrating; skip ones already present in the file snapshot. */
+  private replayDeferredLinesAfterSnapshot(loadedContentLength: number | undefined): void {
+    const toReplay = filterDeferredLinesAfterSnapshot(this.deferredLinesDuringHydrate, loadedContentLength);
+    this.deferredLinesDuringHydrate = [];
+    for (const d of toReplay) {
+      this.enqueueLineForBatch(d);
+    }
   }
 }

@@ -50,7 +50,9 @@ const viewer_highlight_serializer_1 = require("../viewer-decorations/viewer-high
 const helpers = __importStar(require("../provider/viewer-provider-helpers"));
 const viewer_thread_grouping_1 = require("../viewer/viewer-thread-grouping");
 const viewer_message_handler_1 = require("../provider/viewer-message-handler");
+const log_viewer_provider_load_1 = require("../provider/log-viewer-provider-load");
 const pop_out_panel_viewer_config_post_1 = require("./pop-out-panel-viewer-config-post");
+const pop_out_panel_deferred_replay_1 = require("./pop-out-panel-deferred-replay");
 const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
 const BATCH_BACKLOG_THRESHOLD = 1000;
@@ -90,11 +92,16 @@ class PopOutPanel {
     onSessionAction;
     onBrowseSessionRoot;
     onClearSessionRoot;
-    constructor(extensionUri, version, context, broadcaster) {
+    getHydrationUri;
+    hydratingFromFile = false;
+    deferredLinesDuringHydrate = [];
+    hydrateGen = 0;
+    constructor(extensionUri, version, context, broadcaster, getHydrationUri) {
         this.extensionUri = extensionUri;
         this.version = version;
         this.context = context;
         this.broadcaster = broadcaster;
+        this.getHydrationUri = getHydrationUri;
     }
     /** Open or reveal the pop-out panel, then move to a new window. */
     async open() {
@@ -102,11 +109,24 @@ class PopOutPanel {
             this.panel.reveal();
             return;
         }
+        this.hydratingFromFile = true;
+        this.deferredLinesDuringHydrate = [];
         const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
         const codiconsUri = vscode.Uri.joinPath(this.extensionUri, 'media', 'codicons');
-        this.panel = vscode.window.createWebviewPanel('saropaLogCapture.popOutViewer', 'Saropa Log Capture', vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [audioUri, codiconsUri] });
-        this.broadcaster.addTarget(this);
-        this.setupWebview(audioUri, codiconsUri);
+        try {
+            this.panel = vscode.window.createWebviewPanel('saropaLogCapture.popOutViewer', 'Saropa Log Capture', vscode.ViewColumn.Active, { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [audioUri, codiconsUri] });
+            this.broadcaster.addTarget(this);
+            this.setupWebview(audioUri, codiconsUri);
+        }
+        catch (e) {
+            this.hydratingFromFile = false;
+            if (this.panel) {
+                this.broadcaster.removeTarget(this);
+                this.panel.dispose();
+                this.panel = undefined;
+            }
+            throw e;
+        }
         this.panel.reveal();
         await vscode.commands.executeCommand('workbench.action.moveEditorToNewWindow');
     }
@@ -135,10 +155,17 @@ class PopOutPanel {
     setClearSessionRootHandler(h) { this.onClearSessionRoot = h; }
     // -- ViewerTarget state methods --
     addLine(data) {
+        if (this.hydratingFromFile) {
+            this.deferredLinesDuringHydrate.push(data);
+            return;
+        }
         /* Skip when panel not visible to avoid CPU spike (same as sidebar viewer). */
         if (!this.panel?.visible) {
             return;
         }
+        this.enqueueLineForBatch(data);
+    }
+    enqueueLineForBatch(data) {
         let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(data.text)));
         if (!data.isMarker) {
             html = helpers.tryFormatThreadHeader(data.text, html);
@@ -180,7 +207,16 @@ class PopOutPanel {
     setCopyContextLines(count) { this.post({ type: "setCopyContextLines", count }); }
     setShowElapsed(show) { this.post({ type: "setShowElapsed", show }); }
     setShowDecorations(show) { this.post({ type: "setShowDecorations", show }); }
-    setErrorClassificationSettings(s, b, d, fw) { this.post({ type: "errorClassificationSettings", suppressTransientErrors: s, breakOnCritical: b, levelDetection: d, deemphasizeFrameworkLevels: fw }); }
+    setErrorClassificationSettings(s, b, d, fw, stderrAsErr) {
+        this.post({
+            type: "errorClassificationSettings",
+            suppressTransientErrors: s,
+            breakOnCritical: b,
+            levelDetection: d,
+            deemphasizeFrameworkLevels: fw,
+            stderrTreatAsError: stderrAsErr,
+        });
+    }
     applyPreset(name) { this.post({ type: "applyPreset", name }); }
     setHighlightRules(rules) {
         this.cachedHighlightRules = (0, viewer_highlight_serializer_1.serializeHighlightRules)(rules);
@@ -293,6 +329,7 @@ class PopOutPanel {
         this.startBatchTimer();
         queueMicrotask(() => helpers.sendCachedConfig(this.cachedPresets, this.cachedHighlightRules, (m) => this.post(m)));
         (0, pop_out_panel_viewer_config_post_1.queuePopOutViewerConfigMicrotask)((m) => this.post(m), cfg);
+        void this.runHydrationFromDisk();
         this.panel.onDidDispose(() => {
             this.stopBatchTimer();
             this.broadcaster.removeTarget(this);
@@ -357,6 +394,47 @@ class PopOutPanel {
     post(message) { this.panel?.webview.postMessage(message); }
     postToWebview(message) {
         this.post(message);
+    }
+    async runHydrationFromDisk() {
+        const gen = ++this.hydrateGen;
+        try {
+            const uri = this.getHydrationUri?.();
+            if (!uri) {
+                this.replayDeferredLinesAfterSnapshot(undefined);
+                return;
+            }
+            this.currentFileUri = uri;
+            (0, viewer_thread_grouping_1.flushThreadDump)(this.threadDumpState, this.pendingLines);
+            this.pendingLines = [];
+            this.seenCategories.clear();
+            this.post({ type: "clear" });
+            const loadTarget = {
+                postMessage: (m) => this.post(m),
+                setFilename: (name) => this.setFilename(name),
+                setSessionInfo: (info) => this.setSessionInfo(info),
+                setHasPerformanceData: (has) => this.setHasPerformanceData(has),
+                setCodeQualityPayload: (payload) => { this.post({ type: "setCodeQualityPayload", payload }); },
+                getSeenCategories: () => this.seenCategories,
+            };
+            const result = await (0, log_viewer_provider_load_1.executeLoadContent)(loadTarget, uri, () => gen === this.hydrateGen && !!this.panel);
+            if (gen !== this.hydrateGen || !this.panel) {
+                return;
+            }
+            if (this.isSessionActive) {
+                this.post({ type: "setViewingMode", viewing: false });
+            }
+            this.replayDeferredLinesAfterSnapshot(result.contentLength);
+        }
+        finally {
+            this.hydratingFromFile = false;
+        }
+    }
+    replayDeferredLinesAfterSnapshot(loadedContentLength) {
+        const toReplay = (0, pop_out_panel_deferred_replay_1.filterDeferredLinesAfterSnapshot)(this.deferredLinesDuringHydrate, loadedContentLength);
+        this.deferredLinesDuringHydrate = [];
+        for (const d of toReplay) {
+            this.enqueueLineForBatch(d);
+        }
     }
 }
 exports.PopOutPanel = PopOutPanel;
