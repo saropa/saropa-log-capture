@@ -156,7 +156,16 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setCopyContextLines(count: number): void { this.post({ type: "setCopyContextLines", count }); }
   setShowElapsed(show: boolean): void { this.post({ type: "setShowElapsed", show }); }
   setShowDecorations(show: boolean): void { this.post({ type: "setShowDecorations", show }); }
-  setErrorClassificationSettings(s: boolean, b: boolean, d: string, fw: boolean): void { this.post({ type: "errorClassificationSettings", suppressTransientErrors: s, breakOnCritical: b, levelDetection: d, deemphasizeFrameworkLevels: fw }); }
+  setErrorClassificationSettings(s: boolean, b: boolean, d: string, fw: boolean, stderrAsErr: boolean): void {
+    this.post({
+      type: "errorClassificationSettings",
+      suppressTransientErrors: s,
+      breakOnCritical: b,
+      levelDetection: d,
+      deemphasizeFrameworkLevels: fw,
+      stderrTreatAsError: stderrAsErr,
+    });
+  }
   applyPreset(name: string): void { this.post({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
     this.cachedHighlightRules = serializeHighlightRules(rules);

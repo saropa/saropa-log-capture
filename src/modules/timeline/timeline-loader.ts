@@ -4,6 +4,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getConfig } from '../config/config';
 import { type TimelineEvent, type TimelineSource, parseLogLineToEvent } from './timeline-event';
 import { parseTimestamp } from './timestamp-parser';
 import { findHeaderEnd, parseHeaderFields, computeSessionMidnight, parseTimeToMs } from '../../ui/viewer/viewer-file-loader';
@@ -145,6 +146,11 @@ async function loadMainLog(fileUri: vscode.Uri): Promise<{ events: TimelineEvent
     const fields = parseHeaderFields(allLines);
     const midnightMs = computeSessionMidnight(fields['Date'] ?? '');
     const fileUriStr = fileUri.toString();
+    const cfg = getConfig();
+    const classifyOpts = {
+        strict: cfg.levelDetection === 'strict',
+        stderrTreatAsError: cfg.stderrTreatAsError,
+    };
     const events: TimelineEvent[] = [];
     let firstTs = 0, lastTs = 0;
 
@@ -156,7 +162,7 @@ async function loadMainLog(fileUri: vscode.Uri): Promise<{ events: TimelineEvent
         if (ts === 0) { continue; }
         if (firstTs === 0) { firstTs = ts; }
         lastTs = ts;
-        const event = parseLogLineToEvent(line, i, fileUriStr, midnightMs);
+        const event = parseLogLineToEvent(line, i, fileUriStr, midnightMs, classifyOpts);
         if (event) { events.push(event); }
     }
 

@@ -54,6 +54,8 @@ export interface FirstErrorOptions {
   readonly strict: boolean;
   /** If true, also find first warning and return it when no error. */
   readonly includeWarning: boolean;
+  /** When true, DAP `stderr` category maps to error before text (legacy). Same as `saropaLogCapture.stderrTreatAsError`. */
+  readonly stderrTreatAsError: boolean;
 }
 
 /**
@@ -71,7 +73,7 @@ export function findFirstErrorLines(
   for (let i = 0; i < contentLines.length; i++) {
     const raw = contentLines[i];
     const { category, plainText } = extractCategoryAndPlain(raw);
-    const level: SeverityLevel = classifyLevel(plainText, category, strict);
+    const level: SeverityLevel = classifyLevel(plainText, category, strict, options.stderrTreatAsError);
     const trimmed = stripAnsi(plainText);
     const displaySnippet = trimmed.length > MAX_SNIPPET_LEN ? trimmed.slice(0, MAX_SNIPPET_LEN) + '…' : trimmed;
 

@@ -122,6 +122,11 @@ export interface SaropaLogCaptureConfig {
   readonly viewerSqlPatternMaxChips: number;
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
+  /**
+   * When true, lines captured with DAP category `stderr` are forced to error level and stderr styling.
+   * When false (default), stderr is classified from message text (logcat, Drift SQL, keywords) like other channels.
+   */
+  readonly stderrTreatAsError: boolean;
   readonly smartBookmarks: SmartBookmarksConfig;
   readonly verboseDap: boolean;
   /** When true, log capture pipeline events to Output (session/buffer/write) for debugging empty logs. */

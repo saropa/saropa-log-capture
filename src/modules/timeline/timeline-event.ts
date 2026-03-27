@@ -44,14 +44,26 @@ function mapToTimelineLevel(level: SeverityLevel): TimelineLevel {
 
 const logLinePattern = /^\[([\d:.]+)\]\s*\[(\w+)\]\s?(.*)/;
 
-export function parseLogLineToEvent(line: string, lineIndex: number, fileUri: string, sessionStartMs: number): TimelineEvent | undefined {
+/** Classification options for debug log lines (must match workspace defaults when omitted). */
+export interface DebugLogClassifyOptions {
+    readonly strict: boolean;
+    readonly stderrTreatAsError: boolean;
+}
+
+export function parseLogLineToEvent(
+    line: string,
+    lineIndex: number,
+    fileUri: string,
+    sessionStartMs: number,
+    classifyOpts: DebugLogClassifyOptions = { strict: true, stderrTreatAsError: false },
+): TimelineEvent | undefined {
     const match = logLinePattern.exec(line);
     if (!match) { return undefined; }
     const [, timeStr, category, rest] = match;
     const timestamp = parseTimestamp(timeStr, sessionStartMs);
     if (timestamp === undefined) { return undefined; }
     const plainText = stripAnsi(rest);
-    const severity = classifyLevel(plainText, category, true);
+    const severity = classifyLevel(plainText, category, classifyOpts.strict, classifyOpts.stderrTreatAsError);
     return { timestamp, source: 'debug', level: mapToTimelineLevel(severity), summary: plainText.slice(0, 120), detail: plainText, location: { file: fileUri, line: lineIndex + 1 } };
 }
 

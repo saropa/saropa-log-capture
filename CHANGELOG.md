@@ -28,6 +28,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Severity — stderr (default)** — Lines captured with DAP category `stderr` are no longer forced to error level or red “stderr” styling by default; they use the same text-based classification as other channels (logcat letter, Drift SQL traces, keywords). Set `saropaLogCapture.stderrTreatAsError` to **true** to restore the previous “every stderr line is an error” behavior. Applies to the log viewer, CSV/JSON export levels, smart bookmarks’ first-error scan, unified timeline events from the main log, error-breakpoint batch detection, and configuration-change refresh of the viewer.
+
 • **Log viewer — Options panel** — The Integrations and Keyboard shortcuts entry buttons no longer stretch to the full panel width; they size to their labels like normal primary buttons. Reset actions stay full width.
 
 • **Options — Integrations list** — Collapsed descriptions use multi-line clamping to the panel width (replacing a short fixed character preview). Expand control labels are **more** / **less**; **less** sits after the full description, performance line, and “when to disable” line. Performance and “when to disable” match the main blurb’s size and weight (no italic/smaller note style). Intro copy clarifies session capture, third-party tools (Crashlytics, Drift, etc.), and in-editor features.

@@ -1331,6 +1331,12 @@
           "type": "string",
           "title": "%config.levelDetection.title%"
         },
+        "saropaLogCapture.stderrTreatAsError": {
+          "default": false,
+          "markdownDescription": "%config.stderrTreatAsError.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.stderrTreatAsError.title%"
+        },
         "saropaLogCapture.logDirectory": {
           "default": "reports",
           "description": "%config.logDirectory.description%",

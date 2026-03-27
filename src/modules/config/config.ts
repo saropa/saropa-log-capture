@@ -149,6 +149,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     viewerSqlPatternMaxChips: clamp(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
+    stderrTreatAsError: ensureBoolean(cfg.get("stderrTreatAsError"), false),
     smartBookmarks: {
       suggestFirstError: ensureBoolean(cfg.get("smartBookmarks.suggestFirstError"), true),
       suggestFirstWarning: ensureBoolean(cfg.get("smartBookmarks.suggestFirstWarning"), false),

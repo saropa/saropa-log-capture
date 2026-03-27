@@ -60,7 +60,8 @@ function applySessionStartedState(
         cfg.suppressTransientErrors ?? false,
         cfg.breakOnCritical ?? false,
         cfg.levelDetection ?? "strict",
-        cfg.deemphasizeFrameworkLevels ?? false
+        cfg.deemphasizeFrameworkLevels ?? false,
+        cfg.stderrTreatAsError,
     );
     if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }
     broadcaster.setContextLines(cfg.filterContextLines);

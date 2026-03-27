@@ -32,7 +32,13 @@ export interface ViewerTarget {
   setCopyContextLines(count: number): void;
   setShowElapsed(show: boolean): void;
   setShowDecorations(show: boolean): void;
-  setErrorClassificationSettings(suppress: boolean, breakOn: boolean, detection: string, deemphasizeFw: boolean): void;
+  setErrorClassificationSettings(
+    suppress: boolean,
+    breakOn: boolean,
+    detection: string,
+    deemphasizeFw: boolean,
+    stderrTreatAsError: boolean,
+  ): void;
   applyPreset(name: string): void;
   setHighlightRules(rules: readonly HighlightRule[]): void;
   setPresets(presets: readonly FilterPreset[]): void;
