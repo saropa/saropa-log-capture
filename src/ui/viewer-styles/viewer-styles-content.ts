@@ -31,8 +31,9 @@ export function getContentStyles(): string {
     cursor: pointer;
     color: var(--vscode-debugConsole-errorForeground, #f48771);
     line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-all;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
     user-select: none;
 }
 .stack-header:hover { background: var(--vscode-list-hoverBackground); }
@@ -42,6 +43,9 @@ export function getContentStyles(): string {
 .stack-frames .line {
     padding-left: 28px;
     color: var(--vscode-descriptionForeground);
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
 }
 /* Thread header lines from Android/Java thread dumps */
 .thread-header {

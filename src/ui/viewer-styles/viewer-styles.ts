@@ -146,7 +146,8 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
     min-width: 0;
     height: 100%;
     overflow-y: auto;
-    overflow-x: hidden;
+    /* Horizontal scroll when lines use white-space: pre (banners, stacks) — same idea as the Debug Console wide line. */
+    overflow-x: auto;
     overflow-anchor: none;
     padding: 4px 0 40px;
     position: relative;
@@ -170,7 +171,9 @@ body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10
 /* --- Individual log lines --- */
 .line {
     white-space: pre-wrap;
-    word-break: break-all;
+    /* break-all shredded monospace decorations; Debug Console–style wrapping first, break long tokens only if needed. */
+    word-break: normal;
+    overflow-wrap: anywhere;
     padding: 0 8px 0 1.85em;
     line-height: var(--log-line-height, 1.5);
     height: calc(1em * var(--log-line-height, 1.5));
@@ -274,10 +277,14 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
     color: var(--vscode-charts-blue, #2196f3);
 }
 
-/* --- ASCII separator lines (===, ---, +---, etc.) --- */
+/* --- ASCII separator lines (===, ---, +---, Drift/Unicode box banners, etc.) --- */
 .line.separator-line {
     color: var(--vscode-terminal-ansiYellow, #dcdcaa);
     opacity: 0.8;
+    word-break: normal;
+    overflow-wrap: normal;
+    /* One row per captured log line; scroll #log-content horizontally if the banner is wider than the pane. */
+    white-space: pre;
 }
 
 /* --- No-wrap mode: horizontal scroll instead of wrapping --- */
