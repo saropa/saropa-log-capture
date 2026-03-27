@@ -57,6 +57,16 @@ export function getSqlQueryHistoryPanelStyles(): string {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
+.sql-query-history-drift-status {
+    padding: 6px 12px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--vscode-descriptionForeground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-textBlockQuote-background, rgba(127, 127, 127, 0.08));
+    word-break: break-all;
+}
+
 .sql-query-history-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -129,7 +139,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
     outline-offset: -2px;
 }
 
-/* Shrink-wrap numeric columns so Count stays compact; Preview takes the rest. */
+/* Order: Count | SQL | Slowest — shrink-wrap numeric columns; SQL column takes remaining width. */
 .sql-qh-header-count,
 .sql-qh-cell-count {
     width: 1%;
@@ -153,6 +163,8 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-cell-preview {
     vertical-align: top;
+    min-width: 0;
+    width: auto;
 }
 
 .sql-qh-header-count {
@@ -166,6 +178,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-header-preview {
     width: auto;
+    min-width: 0;
 }
 
 .sql-qh-header::after {
