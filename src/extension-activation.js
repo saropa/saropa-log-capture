@@ -93,7 +93,7 @@ function runActivation(context, outputChannel) {
     const version = String(context.extension.packageJSON.version ?? '');
     const { viewerProvider, inlineDecorations } = (0, activation_providers_1.setupWebviewProviders)(context, version);
     const broadcaster = new viewer_broadcaster_1.ViewerBroadcaster();
-    const popOutPanel = new pop_out_panel_1.PopOutPanel(context.extensionUri, version, context, broadcaster);
+    const popOutPanel = new pop_out_panel_1.PopOutPanel(context.extensionUri, version, context, broadcaster, () => viewerProvider.getCurrentFileUri());
     broadcaster.addTarget(viewerProvider);
     broadcaster.addTarget(popOutPanel);
     context.subscriptions.push(popOutPanel);

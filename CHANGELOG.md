@@ -20,6 +20,14 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+• **Pop-out viewer** — The floating viewer now loads the current log file when opened so it shows the full capture from the start of the session, matching the sidebar, instead of only lines written after the pop-out window was created.
+
+---
+
 ## [4.1.0]
 
 Adds Explain with AI alongside session adapters in Integrations (with fallbacks when no chat model is available), classifies captured stderr like other channels by default with an opt-in error override, and polishes the options panel plus stack trace handling (ASCII box banners, expand/collapse cycle). [log](https://github.com/saropa/saropa-log-capture/blob/v4.1.0/CHANGELOG.md)
