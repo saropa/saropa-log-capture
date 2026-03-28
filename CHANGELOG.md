@@ -24,6 +24,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — scroll map (SQL activity)** — SQL / slow-SQL density is drawn as a **full-width** vertical wash on the strip beside the log (severity and search ticks still draw on top). The previous **right-rail-only** SQL layer looked like a broken half-width render when few severity ticks were present. The embedded script adds a clearer hover tooltip and `aria-label` for the strip. (This is the **log viewer** scroll map in the Saropa webview, not the VS Code **editor** minimap.)
+
 • **Performance — live log capture** — With both the **sidebar** log viewer and the **pop-out** open, each line’s HTML (ANSI, links, styling) is now built **once** in the extension host and copied to each webview instead of processing every line twice. Live `addLines` posts to the viewer are limited to **800** lines per message (was 2000) to reduce webview stalls during heavy output.
 
 ### Added
