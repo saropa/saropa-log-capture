@@ -42,7 +42,7 @@ suite('Viewer toolbar', () => {
 
     test('toolbar HTML has data-version attribute', () => {
         const html = getToolbarHtml({ version: '4.2.0' });
-        assert.ok(html.includes('data-version="4.2.0"'), 'data-version should be set');
+        assert.ok(html.includes('data-version="v4.2.0"'), 'data-version should be set');
     });
 
     test('toolbar fixed elements are in toolbar-left, filename in toolbar-right', () => {
