@@ -64,8 +64,8 @@ export function getAboutPanelScript(): string {
     };
 
     function injectVersion() {
-        var footer = document.getElementById('footer-text');
-        var ver = footer ? footer.getAttribute('data-version') : '';
+        var toolbar = document.getElementById('viewer-toolbar');
+        var ver = toolbar ? toolbar.getAttribute('data-version') : '';
         var badge = document.getElementById('ab-version-badge');
         if (badge && ver) badge.textContent = ver;
     }

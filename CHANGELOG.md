@@ -24,6 +24,18 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — toolbar replaces header + footer** — The old session-nav header and footer bar are consolidated into a **single persistent toolbar** at the top. Fixed-width controls (nav arrows, search/filter/actions icons, level dots, line count, filter badge) are grouped on the **left**; the variable-width filename sits on the **right** with ellipsis overflow. The footer is removed entirely.
+
+• **Log viewer — filter drawer** — All filter controls (level toggles, context slider, app-only, tag chips, exclusions, scope, output channels, presets) are consolidated into a **single filter drawer** that drops below the toolbar. Accordion sections keep the drawer compact. The drawer and the Signals hypotheses bar are **mutually exclusive** — opening the drawer auto-collapses Signals, and closing it restores them.
+
+• **Log viewer — search flyout** — In-log search (Ctrl+F) now opens a **flyout below the toolbar** instead of living inside the session-nav header. Search history and options popovers are inline children — no more `position: fixed` floating panels or IntersectionObserver workarounds.
+
+• **Log viewer — icon bar cleanup** — The **Filters** and **SQL Filter** buttons are removed from the vertical icon bar. Filters now live in the toolbar filter drawer.
+
+### Added
+
+• **Log viewer — actions dropdown** — Replay, Open Quality Report, and Export are accessible from an **actions icon button** in the toolbar that opens a dropdown menu.
+
 • **Log viewer — context menu** — The right-click submenu for word wrap, decorations, timestamps, spacing, and line compression is labeled **Layout** (replacing **Options**) so it is distinct from the footer **Options** panel.
 
 • **Log viewer — duplicate line repeats** — Consecutive duplicate lines (same real-time repeat streak) collapse into **one** summary row whose label updates (**N × Repeated:** or **N × SQL repeated:** with preview), instead of stacking separate **Repeated #2**, **#3**, … rows for every extra occurrence.
