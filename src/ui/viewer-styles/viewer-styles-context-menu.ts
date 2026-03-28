@@ -102,6 +102,9 @@ export function getContextMenuStyles(): string {
 /* --- Toggle items (checkmark + label) --- */
 .context-menu-toggle .context-menu-check { font-size: 14px; opacity: 0; }
 .context-menu-toggle.checked .context-menu-check { opacity: 0.8; }
+/* Explicit flex item so the text label is never collapsed by the flex layout.
+   font-family inherits from .context-menu-item; override only if needed. */
+.context-menu-label { flex: 1 1 auto; }
 
 `;
 }
