@@ -83,4 +83,12 @@ suite('ViewerJumpScrollPlacement', () => {
         assert.ok(script.includes('requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); })'));
     });
 });
+suite('ViewerLogContentMinimapLayout', () => {
+    test('log-content uses flex 1 1 0% so the scroll area fills width beside the minimap', () => {
+        const full = (0, viewer_styles_1.getViewerStyles)();
+        assert.ok(full.includes('flex: 1 1 0%'), '#log-content should consume remaining row space (not leave a dead gutter)');
+        assert.ok(full.includes('align-items: stretch'), '#log-content-wrapper row stretches minimap height');
+        assert.ok(full.includes('flex: 0 0 auto') && full.includes('.scrollbar-minimap'), 'minimap stays fixed-width column');
+    });
+});
 //# sourceMappingURL=viewer-jump-anchor-styles.test.js.map

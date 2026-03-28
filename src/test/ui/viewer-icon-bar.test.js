@@ -82,6 +82,14 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('ib-icon'));
             assert.ok(script.includes('applyLabelsVisible'));
         });
+        test('should define ensureInsightSlideoutOpen that skips toggle when insight already active', () => {
+            const script = (0, viewer_icon_bar_1.getIconBarScript)();
+            assert.ok(script.includes('ensureInsightSlideoutOpen'));
+            // When insight is already active, it must NOT call setActivePanel (which toggles off)
+            // Instead it calls openInsightPanel directly — verify both branches exist
+            assert.ok(script.includes("activePanel === 'insight'"), 'must check whether insight is already the active panel');
+            assert.ok(script.includes("setActivePanel('insight')"), 'must delegate to setActivePanel when insight is not active');
+        });
     });
 });
 //# sourceMappingURL=viewer-icon-bar.test.js.map
