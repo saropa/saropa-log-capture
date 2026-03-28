@@ -26,6 +26,44 @@ function getContentStyles() {
     color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
 }
 
+/* Drift SQL: collapse " with args [...]" behind ellipsis (drift-log-line-args-fold.ts) */
+.drift-args-fold {
+    display: inline;
+    white-space: inherit;
+}
+.drift-args-fold-btn {
+    display: inline;
+    margin: 0 0 0 1px;
+    padding: 0 2px;
+    border: none;
+    background: transparent;
+    color: var(--vscode-textLink-foreground);
+    font: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    vertical-align: baseline;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+}
+.drift-args-fold-btn:hover {
+    color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+}
+.drift-args-fold .dcf-lbl-expanded {
+    display: none;
+}
+.drift-args-fold.drift-args-fold-open .dcf-lbl-collapsed {
+    display: none;
+}
+.drift-args-fold.drift-args-fold-open .dcf-lbl-expanded {
+    display: inline;
+}
+.drift-args-fold .drift-args-suffix {
+    display: none;
+}
+.drift-args-fold.drift-args-fold-open .drift-args-suffix {
+    display: inline;
+}
+
 /* --- Stack Trace Groups --- */
 .stack-group { margin: 0; }
 .stack-header {

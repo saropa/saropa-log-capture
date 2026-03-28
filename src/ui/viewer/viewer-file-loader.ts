@@ -6,8 +6,8 @@
  * marker detection, timestamp parsing, and async batch sending.
  */
 
-import { ansiToHtml, escapeHtml } from '../../modules/capture/ansi';
-import { linkifyHtml, linkifyUrls } from '../../modules/source/source-linker';
+import { escapeHtml } from '../../modules/capture/ansi';
+import { buildLogLineHtmlWithOptionalDriftArgsFold } from '../../modules/db/drift-log-line-args-fold';
 export {
     SOURCE_TERMINAL,
     SOURCE_EXTERNAL_PREFIX,
@@ -232,7 +232,7 @@ interface FileLineOptions {
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
 function buildFileLine(opts: FileLineOptions): PendingLine {
     return {
-        text: linkifyUrls(linkifyHtml(ansiToHtml(opts.text))),
+        text: buildLogLineHtmlWithOptionalDriftArgsFold(opts.text),
         isMarker: false,
         lineCount: 0,
         category: opts.category,
