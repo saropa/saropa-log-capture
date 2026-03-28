@@ -62,6 +62,7 @@ function resetSourceTags() {
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
+    if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
 }
 
 /** Solo a tag: show only lines with this tag. Click again to clear. */
