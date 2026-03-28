@@ -92,21 +92,19 @@ function syncLevelDots() {
 }`;
 }
 
-/** Fly-up menu open/close/toggle. */
+/** Level menu open/close/toggle — delegates to toolbar filter drawer. */
 function getFlyupFns(): string {
     return /* javascript */ `
 function toggleLevelMenu() {
-    levelMenuOpen ? closeLevelMenu() : openLevelMenu();
+    if (typeof toggleFilterDrawer === 'function') toggleFilterDrawer();
 }
 function openLevelMenu() {
-    var flyup = document.getElementById('level-flyup');
-    if (flyup) flyup.classList.add('visible');
+    if (typeof openFilterDrawer === 'function') openFilterDrawer();
     levelMenuOpen = true;
     syncContextSlider();
 }
 function closeLevelMenu() {
-    var flyup = document.getElementById('level-flyup');
-    if (flyup) flyup.classList.remove('visible');
+    if (typeof closeFilterDrawer === 'function') closeFilterDrawer();
     levelMenuOpen = false;
 }`;
 }

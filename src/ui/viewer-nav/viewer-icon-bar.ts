@@ -21,14 +21,6 @@ export function getIconBarHtml(): string {
     <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks" aria-label="Bookmarks">
         <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks</span>
     </button>
-    <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
-        <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
-    </button>
-    <button id="ib-sql-filter" class="ib-icon ib-sql-filter-btn" type="button" tabindex="0" disabled title="No database (SQL) lines in this log yet" aria-label="SQL lines" aria-pressed="false">
-        <span class="codicon codicon-list-tree"></span>
-        <span id="ib-sql-filter-count-short" class="ib-sql-count-short" aria-hidden="true">0</span>
-        <span class="ib-label ib-sql-filter-label">SQL (0)</span>
-    </button>
     <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL Query History (session)" aria-label="SQL Query History">
         <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
     </button>
@@ -130,7 +122,6 @@ export function getIconBarScript(): string {
         sessions: document.getElementById('ib-sessions'),
         find: document.getElementById('ib-find'),
         bookmarks: document.getElementById('ib-bookmarks'),
-        filters: document.getElementById('ib-filters'),
         sqlHistory: document.getElementById('ib-sql-query-history'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
@@ -180,8 +171,6 @@ export function getIconBarScript(): string {
             openFindPanel();
         } else if (name === 'bookmarks' && typeof openBookmarkPanel === 'function') {
             openBookmarkPanel();
-        } else if (name === 'filters' && typeof openFiltersPanel === 'function') {
-            openFiltersPanel();
         } else if (name === 'sqlHistory' && typeof openSqlQueryHistoryPanel === 'function') {
             openSqlQueryHistoryPanel();
         } else if (name === 'trash' && typeof openTrashPanel === 'function') {
@@ -227,16 +216,6 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.bookmarks) {
         iconButtons.bookmarks.addEventListener('click', function() { setActivePanel('bookmarks'); });
-    }
-    if (iconButtons.filters) {
-        iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
-    }
-    var sqlFilterBtn = document.getElementById('ib-sql-filter');
-    if (sqlFilterBtn) {
-        sqlFilterBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (typeof toggleDatabaseSqlFromToolbar === 'function') toggleDatabaseSqlFromToolbar();
-        });
     }
     if (iconButtons.sqlHistory) {
         iconButtons.sqlHistory.addEventListener('click', function() { setActivePanel('sqlHistory'); });
