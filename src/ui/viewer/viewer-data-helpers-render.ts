@@ -12,6 +12,8 @@
  */
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
+/** Per line index: Drift \` with args [...]\` fold is expanded (see drift-log-line-args-fold.ts). */
+var driftArgsFoldOpenByIdx = Object.create(null);
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
@@ -160,6 +162,10 @@ function renderItem(item, idx, prevVis) {
     if (typeof wrapTagLink === 'function') {
         if (item.logcatTag) html = wrapTagLink(html, item.logcatTag);
         if (item.sourceTag) html = wrapTagLink(html, item.sourceTag);
+    }
+    if (html.indexOf('drift-args-fold') >= 0 && driftArgsFoldOpenByIdx[idx]) {
+        html = html.replace('<span class="drift-args-fold">', '<span class="drift-args-fold drift-args-fold-open">');
+        html = html.replace('class="drift-args-fold-btn" aria-expanded="false"', 'class="drift-args-fold-btn" aria-expanded="true"');
     }
     if (item.recentErrorContext && item.level === 'error') {
         var recTip = 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.';

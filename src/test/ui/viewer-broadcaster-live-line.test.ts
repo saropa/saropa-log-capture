@@ -34,6 +34,15 @@ suite('buildPendingLineFromLineData', () => {
         assert.strictEqual(a.text, b.text);
         assert.strictEqual(a.lineCount, b.lineCount);
     });
+
+    test('Drift Sent line with with args gets fold markup in PendingLine text', () => {
+        const drift =
+            'I/flutter (28183): Drift: Sent PRAGMA table_info("x") with args []';
+        const pl = buildPendingLineFromLineData(sampleLineData({ text: drift, lineCount: 1 }));
+        assert.ok(pl.text.includes('drift-args-fold'), 'expected fold wrapper');
+        assert.ok(pl.text.includes('drift-args-fold-btn'), 'expected ellipsis button');
+        assert.ok(pl.text.includes(' with args []'), 'suffix should remain in HTML for expand/copy');
+    });
 });
 
 suite('ViewerBroadcaster.addLine — single build, fan-out', () => {
