@@ -41,6 +41,7 @@ exports.ErrorRateAlert = void 0;
 exports.isErrorLine = isErrorLine;
 exports.isWarningLine = isWarningLine;
 const vscode = __importStar(require("vscode"));
+const config_1 = require("../config/config");
 const l10n_1 = require("../../l10n");
 /** Default configuration values. */
 const DEFAULT_CONFIG = {
@@ -149,8 +150,10 @@ exports.ErrorRateAlert = ErrorRateAlert;
 /**
  * Check if a log line indicates an error based on category or content.
  */
+/** Loose classification: keep legacy substring semantics; only gate stderr with config. */
 function isErrorLine(text, category) {
-    if (category === 'stderr') {
+    const cfg = (0, config_1.getConfig)();
+    if (category === 'stderr' && cfg.stderrTreatAsError) {
         return true;
     }
     const lowerText = text.toLowerCase();
