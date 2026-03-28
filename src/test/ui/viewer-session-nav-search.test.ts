@@ -1,16 +1,16 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getSessionNavSearchHtml } from '../../ui/viewer-search-filter/viewer-search-html';
+import { getSearchFlyoutHtml } from '../../ui/viewer-toolbar/viewer-toolbar-search-html';
 
 /**
- * Regression tests for moving in-log search from #panel-slot into #session-nav.
+ * Regression tests for in-log search (now in toolbar search flyout).
  *
- * Imports only `viewer-search-html` (no extension dependencies). Script and wiring
- * checks read `.ts` sources via `fs` so this suite runs under Node/mocha without
- * the VS Code test host (`vscode` module).
+ * Imports only `viewer-toolbar-search-html` (no extension dependencies).
+ * Script and wiring checks read `.ts` sources via `fs` so this suite runs
+ * under Node/mocha without the VS Code test host.
  */
-suite('Viewer session nav search', () => {
+suite('Viewer toolbar search', () => {
 
     /** Resolve `src/` from `out/test/ui/*.js` (vscode-test) or `src/test/ui/*.ts` runners. */
     function readSrc(relFromSrc: string): string {
@@ -20,33 +20,12 @@ suite('Viewer session nav search', () => {
         return fs.readFileSync(p, 'utf8');
     }
 
-    test('viewer-content-body wires session-nav search and does not use slide-out search panel', () => {
+    test('viewer-content-body wires toolbar search flyout and does not use slide-out search panel', () => {
         const src = readSrc('ui/provider/viewer-content-body.ts');
-        assert.ok(src.includes('getSessionNavSearchHtml()'), 'body should inject compact search');
+        assert.ok(src.includes('getSearchFlyoutHtml()'), 'body should inject search flyout');
         assert.ok(
             !src.includes('getSearchPanelHtml'),
-            'must not reference removed getSearchPanelHtml (false positive if reintroduced)',
-        );
-        const iNav = src.indexOf('id="session-nav"');
-        const iSearchCall = src.indexOf('${getSessionNavSearchHtml()}');
-        assert.ok(iNav >= 0 && iSearchCall > iNav, 'search injection should follow session-nav open');
-    });
-
-    test('composed markup orders session nav search before panel-slot and excludes duplicate in slot', () => {
-        const panelSlotInner = '<div id="session-panel"></div>';
-        const fakeBody =
-            `<div id="session-nav"><span class="session-nav-controls"></span>${getSessionNavSearchHtml()}</div>`
-            + `<div id="panel-slot">${panelSlotInner}</div><div id="log-area-with-footer">`;
-
-        const iNav = fakeBody.indexOf('id="session-nav"');
-        const iSearch = fakeBody.indexOf('id="session-nav-search-outer"');
-        const iSlot = fakeBody.indexOf('id="panel-slot"');
-        assert.ok(iNav < iSearch && iSearch < iSlot, 'search outer should sit between nav open and panel-slot');
-
-        const slotSlice = fakeBody.slice(iSlot, fakeBody.indexOf('id="log-area-with-footer"'));
-        assert.ok(
-            !slotSlice.includes('id="session-nav-search-outer"'),
-            'panel-slot slice must not contain compact search (duplication false positive)',
+            'must not reference removed getSearchPanelHtml',
         );
     });
 
@@ -68,35 +47,27 @@ suite('Viewer session nav search', () => {
         );
     });
 
-    test('session nav search HTML exposes stable ids for toggles and history', () => {
-        const fragment = getSessionNavSearchHtml();
+    test('search flyout HTML exposes stable ids for toggles and history', () => {
+        const fragment = getSearchFlyoutHtml();
         const required = [
+            'id="search-flyout"',
             'id="search-input"',
-            'session-search-toggles-inline',
             'id="search-funnel-btn"',
             'id="search-options-popover"',
-            'id="search-case-toggle"',
-            'id="search-word-toggle"',
-            'id="search-regex-toggle"',
-            'id="search-mode-toggle"',
             'id="search-history"',
         ];
         for (const id of required) {
             assert.ok(fragment.includes(id), `expected ${id} in fragment`);
         }
-        assert.ok(fragment.includes('hidden'), 'options popover should start hidden');
+        assert.ok(fragment.includes('u-hidden'), 'flyout should start hidden');
     });
 
-    test('search history script gates Recent list on searchOpen (fixed panel dismissible)', () => {
+    test('search history script gates Recent list on searchOpen', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-search-history.ts');
         assert.ok(src.includes('!searchOpen'), 'renderSearchHistory should require active find session');
-        assert.ok(
-            src.includes('Only show while the find session is open'),
-            'expected rationale comment for searchOpen gate',
-        );
     });
 
-    test('closeSearch clears fixed history via blur and renderSearchHistory', () => {
+    test('closeSearch clears history via blur and renderSearchHistory', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-search.ts');
         const closeIdx = src.indexOf('function closeSearch()');
         assert.ok(closeIdx >= 0, 'expected closeSearch');
@@ -108,21 +79,31 @@ suite('Viewer session nav search', () => {
         );
     });
 
-    test('search popovers use IntersectionObserver for fixed history when shell off-screen', () => {
+    test('search popovers are no-op stubs (inline in flyout now)', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-search-popovers.ts');
-        assert.ok(src.includes('IntersectionObserver'), 'expected IO for history visibility');
-        assert.ok(src.includes('setupSearchShellIntersection'), 'expected named setup IIFE');
         assert.ok(
-            src.includes('hist.style.visibility') && src.includes('pointerEvents'),
-            'expected visibility/pointer-events when hiding fixed history',
+            src.includes('function positionSearchFloatingPanels()'),
+            'expected positionSearchFloatingPanels stub',
+        );
+        assert.ok(
+            !src.includes('IntersectionObserver'),
+            'IntersectionObserver removed — popovers are inline',
         );
     });
 
-    test('smart sticky header syncs positionSearchFloatingPanels after header class toggle', () => {
+    test('toolbar script hooks closeSearch to also close flyout', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(
+            src.includes('_origCloseSearch') && src.includes('closeSearchFlyout'),
+            'toolbar script should hook closeSearch to close flyout',
+        );
+    });
+
+    test('session header has no smart-sticky logic', () => {
         const src = readSrc('ui/viewer-nav/viewer-session-header.ts');
         assert.ok(
-            src.includes('positionSearchFloatingPanels') && src.includes('smart-header-hidden'),
-            'expected scroll handler to sync floating search UI after smart header toggle',
+            !src.includes('setupSmartStickyHeader'),
+            'smart-sticky header removed — toolbar is always visible',
         );
     });
 });

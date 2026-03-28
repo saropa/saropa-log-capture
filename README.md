@@ -103,14 +103,14 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Explain with AI:** Right-click a log line (or selection) → **Explain with AI** to get an explanation from the VS Code Language Model when an extension registers a chat model (e.g. GitHub Copilot Chat). Turn it on via **Options → Integrations…** (**Explain with AI**) or **Saropa Log Capture › AI: Enabled** in Settings (off by default; may auto-enable on first run only if you have never set it and a model is already available). Context includes surrounding lines, stack trace, and optional integration data; responses are cached and a progress notification is shown while the request runs. If your editor does not expose the Language Model API (some Cursor setups), use **Copy prompt for external chat** from the error dialog and paste into your chat tool.
 
 ### Search & Filter
-- **In-log search:** Compact field on the **session bar** (with prev/next log and context). Match case, whole word, regex, match navigation, and highlight vs filter mode; recent terms when the field is focused and empty. Optional **`viewerAlwaysShowSearchMatchOptions`** keeps the three match toggles always visible.
+- **In-log search:** Click the search icon in the **toolbar** (or Ctrl+F) to open the search flyout. Match case, whole word, regex, match navigation, and highlight vs filter mode; recent terms when the field is focused and empty. Optional **`viewerAlwaysShowSearchMatchOptions`** keeps the three match toggles always visible.
 - **Category filter:** Filter by DAP category (stdout, stderr, console).
-- **Level filter:** Colored dots in footer open a fly-up menu with toggle buttons for all 7 severity levels, plus Select All / Select None. Per-file level state is persisted.
+- **Level filter:** Colored dots in the toolbar; click the filter icon to open the **filter drawer** with toggle buttons for all 7 severity levels, plus Select All / Select None. Per-file level state is persisted.
 - **Source tag filter:** Auto-discovers logcat tags (e.g. `D/FlutterJNI`) and bracket prefixes (e.g. `[log]`, `[API]`). Click chips to toggle visibility.
 - **Exclusion filter:** Patterns shown as removable chips in the Options panel. Chip count badge on the toggle label.
-- **Keyword watch:** Track patterns with live counters, flash alerts, and badges. Watch chips in the footer are clickable—opens search pre-filled with the keyword.
+- **Keyword watch:** Track patterns with live counters, flash alerts, and badges. Watch chips in the toolbar are clickable—opens search pre-filled with the keyword.
 - **Filter presets:** Save and apply filter combinations; built-in presets included (e.g. Errors Only, Just debug output, Complete (all sources)).
-- **Source filter:** When a log has multiple streams (e.g. Debug Console + Terminal sidecar), the Filters panel shows a **Sources** section to show only Debug output, only Terminal, or both.
+- **Source filter:** When a log has multiple streams (e.g. Debug Console + Terminal sidecar), the filter drawer shows a **Sources** section to show only Debug output, only Terminal, or both.
 - **Cross-session search:** Search all log files via Quick Pick.
 
 ### Error Intelligence
@@ -134,7 +134,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 ### Session Management
 - **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Ctrl/Cmd-click to select multiple sessions; context menu applies to the selection (copy links/paths, export, tag, open, replay). Active sessions highlighted with a recording icon. **Orange dot** = log has new lines since you last viewed it; **red dot** = log updated in the last minute. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
 - **Insight: Cases, Recurring, Hot files, Performance:** One **Insight** panel, one scroll (no tabs). Accordion sections: **Cases** = named investigations—pin sessions and files, search and export. **Recurring** = aggregated error patterns. **Frequently modified files** = hot files across sessions. **Performance** = perf data when a log is open (moves to top; includes **Errors** tab with time-bucketed error/warning chart and spike detection). Command **Open Insight** opens the panel; Add to Investigation and create/open investigation focus the Cases section.
-- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the **Replay** button in the footer bar or the icon bar to show the horizontal replay panel (play/pause, scrubber, speed).
+- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the **Replay** action in the toolbar actions dropdown to show the horizontal replay panel (play/pause, scrubber, speed).
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
@@ -153,7 +153,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ### Status Bar & Audio
 - **Status bar:** Two separate items—a pause/resume icon that toggles capture, and a text display (line count + watch counts) that focuses the viewer panel.
-- **Live statistics:** Real-time counters for errors, warnings, performance issues, and other levels in the footer.
+- **Live statistics:** Real-time counters for errors, warnings, performance issues, and other levels in the toolbar.
 - **Audio alerts:** Configurable alert sounds for errors and warnings with volume slider, rate limiting, and preview buttons.
 - **Real-time repeat notifications:** Immediate notification when duplicate lines are detected, with message preview and repeat counter.
 
@@ -369,7 +369,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 ## Known Limitations
 
 - **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header or one line, use **Prev/Next** in the viewer (output may be in the other log from the same run) and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](bugs/010_runbook-missing-or-empty-logs.md).
-- **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The footer shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
+- **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The toolbar shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a `.terminal.log` sidecar at session end.
 
 ### Keyboard shortcuts and accessibility

@@ -54,7 +54,7 @@ var SCROLL_BTN_THRESHOLD = 1.5;
 /** Schmitt-trigger band for tail-follow: avoids autoScroll flipping when distance-to-bottom jitters (layout/subpixel). */
 var AT_BOTTOM_ON_PX = 36;
 var AT_BOTTOM_OFF_PX = 56;
-var footerEl = document.getElementById('footer');
+var footerEl = document.getElementById('viewer-toolbar');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
 /* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
@@ -280,6 +280,20 @@ viewportEl.addEventListener('click', function(e) {
         e.stopPropagation();
         var repSeq = parseInt(sqlRepToggle.dataset.seq || '', 10);
         if (!isNaN(repSeq) && typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(repSeq);
+        return;
+    }
+    var driftFoldBtn = e.target.closest('.drift-args-fold-btn');
+    if (driftFoldBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        var driftLine = driftFoldBtn.closest('[data-idx]');
+        if (driftLine && driftLine.dataset.idx !== undefined) {
+            var dIdx = parseInt(driftLine.dataset.idx, 10);
+            if (!isNaN(dIdx) && typeof driftArgsFoldOpenByIdx !== 'undefined') {
+                driftArgsFoldOpenByIdx[dIdx] = !driftArgsFoldOpenByIdx[dIdx];
+                if (typeof renderViewport === 'function') renderViewport(true);
+            }
+        }
         return;
     }
     var link = e.target.closest('.source-link');

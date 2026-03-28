@@ -1,0 +1,173 @@
+import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
+import { getToolbarHtml } from '../../ui/viewer-toolbar/viewer-toolbar-html';
+import { getSearchFlyoutHtml } from '../../ui/viewer-toolbar/viewer-toolbar-search-html';
+import { getFilterDrawerHtml } from '../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html';
+import { getActionsDropdownHtml } from '../../ui/viewer-toolbar/viewer-toolbar-actions-html';
+
+/**
+ * Tests for the toolbar, search flyout, filter drawer, and actions dropdown.
+ *
+ * Verifies that all required DOM element IDs are preserved so existing
+ * webview scripts continue to bind correctly.
+ */
+suite('Viewer toolbar', () => {
+
+    function readSrc(relFromSrc: string): string {
+        const fromOut = path.join(__dirname, '../../../src', relFromSrc);
+        const fromSrcTree = path.join(__dirname, '../../', relFromSrc);
+        const p = fs.existsSync(fromOut) ? fromOut : fromSrcTree;
+        return fs.readFileSync(p, 'utf8');
+    }
+
+    test('toolbar HTML preserves required element IDs', () => {
+        const html = getToolbarHtml({ version: '1.0.0' });
+        const required = [
+            'id="viewer-toolbar"',
+            'id="toolbar-search-btn"',
+            'id="toolbar-filter-btn"',
+            'id="toolbar-actions-btn"',
+            'id="level-menu-btn"',
+            'id="line-count"',
+            'id="hidden-lines-counter"',
+            'id="footer-selection"',
+            'id="filter-badge"',
+            'id="footer-text"',
+        ];
+        for (const id of required) {
+            assert.ok(html.includes(id), `toolbar must contain ${id}`);
+        }
+    });
+
+    test('toolbar HTML has data-version attribute', () => {
+        const html = getToolbarHtml({ version: '4.2.0' });
+        assert.ok(html.includes('data-version="4.2.0"'), 'data-version should be set');
+    });
+
+    test('toolbar fixed elements are in toolbar-left, filename in toolbar-right', () => {
+        const html = getToolbarHtml({ version: '1.0.0' });
+        const leftIdx = html.indexOf('toolbar-left');
+        const rightIdx = html.indexOf('toolbar-right');
+        const filenameIdx = html.indexOf('toolbar-filename');
+        assert.ok(leftIdx < rightIdx, 'toolbar-left should precede toolbar-right');
+        assert.ok(filenameIdx > rightIdx, 'filename should be in toolbar-right');
+    });
+
+    test('filter drawer HTML preserves required element IDs', () => {
+        const html = getFilterDrawerHtml();
+        const required = [
+            'id="filter-drawer"',
+            'id="level-select-all"',
+            'id="level-select-none"',
+            'id="context-lines-slider"',
+            'id="context-lines-label"',
+            'id="opt-app-only"',
+            'id="preset-select"',
+            'id="reset-all-filters"',
+        ];
+        for (const id of required) {
+            assert.ok(html.includes(id), `filter drawer must contain ${id}`);
+        }
+    });
+
+    test('filter drawer has accordion sections', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('filter-accordion'),
+            'filter drawer should have accordion sections',
+        );
+        assert.ok(
+            html.includes('filter-accordion-header'),
+            'accordion sections need clickable headers',
+        );
+    });
+
+    test('actions dropdown preserves replay script IDs', () => {
+        const html = getActionsDropdownHtml();
+        assert.ok(html.includes('id="footer-actions-menu"'), 'replay compat: menu ID');
+        assert.ok(html.includes('id="footer-actions-popover"'), 'replay compat: popover ID');
+        assert.ok(html.includes('data-action="replay"'), 'replay action button');
+        assert.ok(html.includes('data-action="export"'), 'export action button');
+    });
+
+    test('content body wires toolbar, flyout, drawer, and actions', () => {
+        const src = readSrc('ui/provider/viewer-content-body.ts');
+        assert.ok(src.includes('getToolbarHtml'), 'body should import toolbar');
+        assert.ok(src.includes('getSearchFlyoutHtml'), 'body should import search flyout');
+        assert.ok(src.includes('getFilterDrawerHtml'), 'body should import filter drawer');
+        assert.ok(src.includes('getActionsDropdownHtml'), 'body should import actions');
+    });
+
+    test('content body does not include old footer or filters panel', () => {
+        const src = readSrc('ui/provider/viewer-content-body.ts');
+        assert.ok(!src.includes('id="footer"'), 'old footer removed');
+        assert.ok(!src.includes('getFiltersPanelHtml'), 'filters panel removed from body');
+    });
+
+    test('icon bar has no Filters or SQL Filter buttons', () => {
+        const src = readSrc('ui/viewer-nav/viewer-icon-bar.ts');
+        assert.ok(!src.includes('id="ib-filters"'), 'Filters button removed');
+        assert.ok(!src.includes('id="ib-sql-filter"'), 'SQL Filter button removed');
+    });
+
+    test('toolbar script provides backward compat aliases', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(src.includes('window.openFiltersPanel'), 'openFiltersPanel alias');
+        assert.ok(src.includes('window.closeFiltersPanel'), 'closeFiltersPanel alias');
+        assert.ok(src.includes('window.openFilterDrawer'), 'openFilterDrawer export');
+        assert.ok(src.includes('window.closeFilterDrawer'), 'closeFilterDrawer export');
+        assert.ok(src.includes('window.toggleSearchFlyout'), 'toggleSearchFlyout export');
+        assert.ok(src.includes('window.setFooterActionsOpen'), 'setFooterActionsOpen compat');
+    });
+
+    test('toolbar script has Signals mutual exclusion', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(src.includes('signalsWasVisible'), 'should track signals visibility');
+        assert.ok(src.includes('root-cause-hypotheses'), 'should reference signals host');
+    });
+
+    test('about panel reads version from toolbar, not footer', () => {
+        const src = readSrc('ui/viewer-panels/viewer-about-panel.ts');
+        assert.ok(
+            src.includes("getElementById('viewer-toolbar')"),
+            'about panel should read version from toolbar',
+        );
+        assert.ok(
+            !src.includes("getElementById('footer-text')"),
+            'about panel should not reference old footer-text for version',
+        );
+    });
+
+    test('viewer-script uses toolbar element for paused state', () => {
+        const src = readSrc('ui/viewer/viewer-script.ts');
+        assert.ok(
+            src.includes("getElementById('viewer-toolbar')"),
+            'viewer-script should use toolbar for paused class toggle',
+        );
+    });
+
+    test('filter badge click opens filter drawer', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-filter-badge.ts');
+        assert.ok(
+            src.includes('openFilterDrawer'),
+            'badge click should open filter drawer',
+        );
+        assert.ok(
+            !src.includes("setActivePanel('filters')"),
+            'badge should not open old filters panel',
+        );
+    });
+
+    test('level filter delegates to filter drawer', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
+        assert.ok(
+            src.includes('toggleFilterDrawer'),
+            'toggleLevelMenu should delegate to toggleFilterDrawer',
+        );
+        assert.ok(
+            !src.includes("getElementById('level-flyup')"),
+            'should not reference removed #level-flyup element',
+        );
+    });
+});

@@ -60,6 +60,7 @@ import { getTrashPanelScript } from '../viewer-panels/viewer-trash-panel';
 import { getFindPanelScript } from '../viewer-panels/viewer-find-panel';
 import { getBookmarkPanelScript } from '../viewer-panels/viewer-bookmark-panel';
 import { getFiltersPanelScript } from '../viewer-search-filter/viewer-filters-panel';
+import { getToolbarScript } from '../viewer-toolbar/viewer-toolbar-script';
 import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
 import { getInsightPanelScript } from '../panels/viewer-insight-panel';
@@ -194,6 +195,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getPerformancePanelScript('insight-')) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +
+        scriptTag(nonce, getToolbarScript()) +
         scriptTag(nonce, getErrorBreakpointScript()) +
         scriptTag(nonce, getStatsScript()) +
         scriptTag(nonce, getEditModalScript()) +
