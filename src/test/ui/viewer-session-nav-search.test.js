@@ -99,5 +99,28 @@ suite('Viewer session nav search', () => {
         }
         assert.ok(fragment.includes('hidden'), 'options popover should start hidden');
     });
+    test('search history script gates Recent list on searchOpen (fixed panel dismissible)', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-search-history.ts');
+        assert.ok(src.includes('!searchOpen'), 'renderSearchHistory should require active find session');
+        assert.ok(src.includes('Only show while the find session is open'), 'expected rationale comment for searchOpen gate');
+    });
+    test('closeSearch clears fixed history via blur and renderSearchHistory', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-search.ts');
+        const closeIdx = src.indexOf('function closeSearch()');
+        assert.ok(closeIdx >= 0, 'expected closeSearch');
+        const closeBlock = src.slice(closeIdx, closeIdx + 550);
+        assert.ok(closeBlock.includes('searchInputEl.blur()'), 'closeSearch should blur input');
+        assert.ok(closeBlock.includes('renderSearchHistory()'), 'closeSearch should refresh history DOM so Recent list clears');
+    });
+    test('search popovers use IntersectionObserver for fixed history when shell off-screen', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-search-popovers.ts');
+        assert.ok(src.includes('IntersectionObserver'), 'expected IO for history visibility');
+        assert.ok(src.includes('setupSearchShellIntersection'), 'expected named setup IIFE');
+        assert.ok(src.includes('hist.style.visibility') && src.includes('pointerEvents'), 'expected visibility/pointer-events when hiding fixed history');
+    });
+    test('smart sticky header syncs positionSearchFloatingPanels after header class toggle', () => {
+        const src = readSrc('ui/viewer-nav/viewer-session-header.ts');
+        assert.ok(src.includes('positionSearchFloatingPanels') && src.includes('smart-header-hidden'), 'expected scroll handler to sync floating search UI after smart header toggle');
+    });
 });
 //# sourceMappingURL=viewer-session-nav-search.test.js.map

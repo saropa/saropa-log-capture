@@ -135,6 +135,10 @@ window.updateSessionNavWrapperVisibility = function() {
         }
         lastScrollTop = st;
         ticking = false;
+        /* After toggling smart header, sync fixed search history / options (listener order vs search popovers can leave one frame stale). */
+        if (typeof positionSearchFloatingPanels === 'function') {
+            positionSearchFloatingPanels();
+        }
     }
     logEl.addEventListener('scroll', function() {
         if (ticking) return;
