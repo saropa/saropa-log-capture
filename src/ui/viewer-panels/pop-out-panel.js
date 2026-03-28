@@ -239,6 +239,7 @@ class PopOutPanel {
     setScopeContext(ctx) { this.post({ type: "setScopeContext", ...ctx }); }
     setMinimapShowInfo(show) { this.post({ type: "minimapShowInfo", show }); }
     setMinimapShowSqlDensity(show) { this.post({ type: "minimapShowSqlDensity", show }); }
+    setMinimapProportionalLines(show) { this.post({ type: "minimapProportionalLines", show }); }
     setMinimapViewportRedOutline(show) { this.post({ type: "minimapViewportRedOutline", show }); }
     setMinimapViewportOutsideArrow(show) { this.post({ type: "minimapViewportOutsideArrow", show }); }
     setViewerRepeatThresholds(thresholds) {

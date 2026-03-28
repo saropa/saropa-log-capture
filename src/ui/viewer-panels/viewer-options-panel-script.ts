@@ -7,6 +7,8 @@ export function getOptionsPanelScript(): string {
     return /* javascript */ `
 var optionsPanelOpen = false;
 var minimapShowSqlDensity = true;
+// Keeps Options › Layout scroll map width in sync with workspace saropaLogCapture.minimapWidth.
+var minimapWidthSetting = 'medium';
 
 /** Test if a row (and its indent sibling) matches the filter; toggle visibility. */
 function matchRowAndIndent(row, q) {
@@ -200,6 +202,11 @@ function resetOptionsToDefault() {
     if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity({ show: true });
     if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
         vscodeApi.postMessage({ type: 'setMinimapSqlDensity', value: true });
+    }
+    minimapWidthSetting = 'medium';
+    if (typeof handleMinimapWidth === 'function') handleMinimapWidth({ width: 'medium' });
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setMinimapWidth', value: 'medium' });
     }
     if (typeof hideBlankLines !== 'undefined') hideBlankLines = false;
     if (typeof compressLinesMode !== 'undefined') compressLinesMode = false;

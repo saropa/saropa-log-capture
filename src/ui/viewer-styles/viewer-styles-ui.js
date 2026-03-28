@@ -147,6 +147,35 @@ function getUiStyles() {
 .peek-context { opacity: 0.7; }
 
 /* --- Scrollbar Minimap: interactive panel replacing native scrollbar --- */
+.scrollbar-minimap-column {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+.minimap-outside-arrow {
+    flex: 0 0 12px;
+    width: 12px;
+    position: relative;
+    align-self: stretch;
+    pointer-events: none;
+    overflow: visible;
+}
+.minimap-outside-arrow.u-hidden { display: none; }
+/* Yellow triangle points at the vertical middle of the visible range (positioned by JS). */
+.minimap-outside-arrow-glyph {
+    position: absolute;
+    left: 1px;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 9px solid #ffeb3b;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+    transition: top 0.08s linear;
+}
 .scrollbar-minimap {
     flex: 0 0 auto;
     width: 60px;
@@ -159,11 +188,23 @@ function getUiStyles() {
 }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
-    background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.4));
+    /* Slightly more transparent than default theme slider so the log map shows through */
+    background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.34));
     transition: top 0.08s linear;
 }
-.scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.7)); }
-.scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.4)); }
+.minimap-viewport.minimap-viewport--red-outline {
+    box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.95);
+    background: rgba(121, 121, 121, 0.30);
+}
+.scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.58)); }
+.scrollbar-minimap:hover .minimap-viewport.minimap-viewport--red-outline {
+    background: rgba(100, 100, 100, 0.38);
+    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+}
+.scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.32)); }
+.scrollbar-minimap.mm-dragging .minimap-viewport.minimap-viewport--red-outline {
+    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+}
 
 /* ===================================================================
    Auto-Hide Modal

@@ -63,6 +63,9 @@ exports.setPresetsImpl = setPresetsImpl;
 exports.setScopeContextImpl = setScopeContextImpl;
 exports.setMinimapShowInfoImpl = setMinimapShowInfoImpl;
 exports.setMinimapShowSqlDensityImpl = setMinimapShowSqlDensityImpl;
+exports.setMinimapProportionalLinesImpl = setMinimapProportionalLinesImpl;
+exports.setMinimapViewportRedOutlineImpl = setMinimapViewportRedOutlineImpl;
+exports.setMinimapViewportOutsideArrowImpl = setMinimapViewportOutsideArrowImpl;
 exports.setViewerRepeatThresholdsImpl = setViewerRepeatThresholdsImpl;
 exports.setViewerDbInsightsEnabledImpl = setViewerDbInsightsEnabledImpl;
 exports.setStaticSqlFromFingerprintEnabledImpl = setStaticSqlFromFingerprintEnabledImpl;
@@ -162,6 +165,15 @@ function setMinimapShowInfoImpl(target, show) {
 }
 function setMinimapShowSqlDensityImpl(target, show) {
     target.postMessage({ type: "minimapShowSqlDensity", show });
+}
+function setMinimapProportionalLinesImpl(target, show) {
+    target.postMessage({ type: "minimapProportionalLines", show });
+}
+function setMinimapViewportRedOutlineImpl(target, show) {
+    target.postMessage({ type: "minimapViewportRedOutline", show });
+}
+function setMinimapViewportOutsideArrowImpl(target, show) {
+    target.postMessage({ type: "minimapViewportOutsideArrow", show });
 }
 function setViewerRepeatThresholdsImpl(target, thresholds) {
     target.postMessage({

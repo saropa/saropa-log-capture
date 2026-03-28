@@ -125,7 +125,10 @@ export function getConfig(): SaropaLogCaptureConfig {
     breakOnCritical: ensureBoolean(cfg.get("breakOnCritical"), false),
     minimapShowInfoMarkers: ensureBoolean(cfg.get("minimapShowInfoMarkers"), false),
     minimapShowSqlDensity: ensureBoolean(cfg.get("minimapShowSqlDensity"), true),
-    minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
+    minimapProportionalLines: ensureBoolean(cfg.get("minimapProportionalLines"), true),
+    minimapViewportRedOutline: ensureBoolean(cfg.get("minimapViewportRedOutline"), false),
+    minimapViewportOutsideArrow: ensureBoolean(cfg.get("minimapViewportOutsideArrow"), false),
+    minimapWidth: ensureEnum(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
     showScrollbar: ensureBoolean(cfg.get("showScrollbar"), false),
     viewerAlwaysShowSearchMatchOptions: ensureBoolean(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
     viewerRepeatThresholds: normalizeViewerRepeatThresholds({
