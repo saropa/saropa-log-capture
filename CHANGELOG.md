@@ -27,6 +27,12 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix webview "Cannot read properties of null (reading 'classList')" crash by adding null guards to `footerEl`, `footerTextEl`, `jumpBtn`, `logEl`, `ppTabCurrent`, and `ppTabTrends` accesses in viewer scripts
+- Improve webview error banner to show line and column numbers for easier debugging
+- Fix context menu toggle labels not rendering: add explicit `context-menu-label` class with font and flex rules so text is always visible beside each icon
+
 ---
 
 ## [5.0.0]

@@ -224,6 +224,28 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('context-menu-check'));
             assert.ok(html.includes('codicon-check'));
         });
+
+        test('should use context-menu-label class on all toggle text spans', () => {
+            const html = getContextMenuHtml();
+            const toggleActions = [
+                'toggle-wrap', 'toggle-decorations', 'toggle-timestamp',
+                'toggle-session-elapsed', 'toggle-spacing', 'toggle-line-height',
+                'toggle-compress-lines', 'toggle-compress-lines-global',
+                'toggle-hide-blank-lines',
+                'toggle-minimap-proportional', 'toggle-show-scrollbar',
+                'toggle-minimap-info-markers', 'toggle-minimap-sql-density',
+                'toggle-minimap-viewport-red-outline', 'toggle-minimap-outside-arrow',
+            ];
+            for (const action of toggleActions) {
+                const pattern = new RegExp(
+                    `data-action="${action}"[\\s\\S]{0,300}class="context-menu-label"`,
+                );
+                assert.ok(
+                    pattern.test(html),
+                    `toggle ${action} should have context-menu-label on its text span`,
+                );
+            }
+        });
     });
 
     suite('getScrollChromeContextMenuHtml', () => {
@@ -232,6 +254,16 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('id="scroll-chrome-context-menu"'));
             assert.ok(html.includes('data-action="toggle-minimap-proportional"'));
             assert.ok(html.includes('data-action="toggle-show-scrollbar"'));
+        });
+
+        test('should include title attributes on scroll-chrome toggle items', () => {
+            const html = getScrollChromeContextMenuHtml();
+            assert.ok(html.includes('title="Proportional line width (minimap)"'));
+            assert.ok(html.includes('title="Show native scrollbar"'));
+            assert.ok(html.includes('title="Info markers on minimap"'));
+            assert.ok(html.includes('title="SQL density on minimap"'));
+            assert.ok(html.includes('title="Red outline on viewport"'));
+            assert.ok(html.includes('title="Yellow arrow outside minimap"'));
         });
     });
 });
