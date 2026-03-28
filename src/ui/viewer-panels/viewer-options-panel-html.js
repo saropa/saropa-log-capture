@@ -120,9 +120,19 @@ function getOptionsPanelHtml() {
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
-            <label class="options-row" title="Show a subtle SQL/slow-query density overlay in the scrollbar minimap. Helps spot database-heavy intervals quickly.">
+            <label class="options-row" title="Adds blue and orange background shading on the right-hand scroll map (not a second scrollbar). Blue = SQL lines in that part of the log; orange = slow SQL. Severity and search stay as short ticks on top.">
                 <input type="checkbox" id="opt-minimap-sql-density" />
-                <span>Minimap SQL density overlay</span>
+                <span>SQL activity on scroll map (blue / orange shading)</span>
+            </label>
+            <label class="options-row options-row--minimap-width" title="Width of the right-hand scroll map (same as Settings › Saropa Log Capture › minimap width).">
+                <span>Scroll map width</span>
+                <select id="opt-minimap-width" aria-label="Scroll map width">
+                    <option value="xsmall">Extra narrow (28px)</option>
+                    <option value="small">Narrow (40px)</option>
+                    <option value="medium">Medium (60px)</option>
+                    <option value="large">Wide (90px)</option>
+                    <option value="xlarge">Extra wide (120px)</option>
+                </select>
             </label>
             <label class="options-row" title="Add extra vertical padding between log lines for easier reading">
                 <input type="checkbox" id="opt-visual-spacing" checked />

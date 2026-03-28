@@ -274,7 +274,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
     this.post({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
   }
-  setMinimapWidth(width: "small" | "medium" | "large"): void { this.post({ type: "minimapWidth", width }); }
+  setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }

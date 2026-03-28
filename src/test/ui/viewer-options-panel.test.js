@@ -77,6 +77,12 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(html.includes('id="shortcuts-view"'));
             assert.ok(html.includes('id="shortcuts-back"'));
         });
+        test('Layout includes scroll map width select (workspace minimapWidth)', () => {
+            const html = (0, viewer_options_panel_1.getOptionsPanelHtml)();
+            assert.ok(html.includes('id="opt-minimap-width"'));
+            assert.ok(html.includes('value="xsmall"') && html.includes('value="xlarge"'));
+            assert.ok(html.includes('value="medium"'));
+        });
     });
     suite('getOptionsStyles', () => {
         test('options Integrations / Keyboard shortcuts CTA buttons are not full panel width', () => {
@@ -212,4 +218,4 @@ suite('ViewerOptionsPanel', () => {
         });
     });
 });
-
+//# sourceMappingURL=viewer-options-panel.test.js.map
