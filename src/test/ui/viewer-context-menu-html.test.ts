@@ -39,9 +39,17 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(!html.includes('Add to Exclusions'));
         });
 
-        test('should include Options submenu with toggle items', () => {
+        test('should include Layout submenu with toggle items', () => {
             const html = getContextMenuHtml();
-            assert.ok(html.includes('> Options\n'));
+            assert.ok(html.includes('> Layout\n'));
+            assert.ok(
+                html.includes('codicon-settings-gear"></span> Layout'),
+                'gear row is the layout/toggles submenu (was labeled Options)',
+            );
+            assert.ok(
+                !html.includes('codicon-settings-gear"></span> Options'),
+                'layout submenu must not use the old Options label',
+            );
             assert.ok(html.includes('data-action="toggle-wrap"'));
             assert.ok(html.includes('data-action="toggle-decorations"'));
             assert.ok(html.includes('data-action="toggle-timestamp"'));
@@ -60,7 +68,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('Compress lines (non-consecutive dupes)'));
         });
 
-        test('should include leading codicons on Options toggles and hide-blank toggle', () => {
+        test('should include leading codicons on Layout toggles and hide-blank toggle', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="toggle-wrap"') && html.includes('codicon-word-wrap'));
             assert.ok(html.includes('codicon-symbol-event') && html.includes('toggle-decorations'));
@@ -87,9 +95,9 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(!html.includes('open-quality-report'));
         });
 
-        test('should keep hide-only controls out of Options submenu', () => {
+        test('should keep hide-only controls out of Layout submenu', () => {
             const html = getContextMenuHtml();
-            const optionsStart = html.indexOf('> Options');
+            const optionsStart = html.indexOf('> Layout');
             assert.ok(optionsStart >= 0);
             const scrollChromeSub = html.indexOf('id="scroll-chrome-submenu"', optionsStart);
             const optionsEnd = scrollChromeSub > optionsStart ? scrollChromeSub : html.indexOf('</div>\n    </div>\n</div>', optionsStart);
@@ -135,7 +143,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('class="context-menu-submenu" data-line-action'));
         });
 
-        test('should not mark Options submenu as line-specific', () => {
+        test('should not mark Layout submenu as line-specific', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes(
                 'class="context-menu-submenu">\n' +
@@ -210,7 +218,7 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('codicon-chevron-right'));
         });
 
-        test('should include toggle structure for Options items', () => {
+        test('should include toggle structure for Layout items', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('context-menu-toggle'));
             assert.ok(html.includes('context-menu-check'));
