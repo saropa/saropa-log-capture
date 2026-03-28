@@ -25,7 +25,7 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 
 ---
 
-## [Unreleased]
+## [5.0.1]
 
 ### Fixed
 
