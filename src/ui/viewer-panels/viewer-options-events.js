@@ -90,6 +90,17 @@ if (optMinimapSqlDensity) optMinimapSqlDensity.addEventListener('change', functi
         vscodeApi.postMessage({ type: 'setMinimapSqlDensity', value: minimapShowSqlDensity });
     }
 });
+var optMinimapWidth = document.getElementById('opt-minimap-width');
+if (optMinimapWidth) optMinimapWidth.addEventListener('change', function(e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'SELECT') return;
+    var w = t.value;
+    minimapWidthSetting = w;
+    if (typeof handleMinimapWidth === 'function') handleMinimapWidth({ width: w });
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'setMinimapWidth', value: w });
+    }
+});
 if (optVisualSpacing) optVisualSpacing.addEventListener('change', function(e) {
     if (typeof toggleVisualSpacing === 'function') toggleVisualSpacing();
     syncOptionsPanelUi();

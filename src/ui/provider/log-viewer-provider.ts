@@ -227,7 +227,7 @@ export class LogViewerProvider
   setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
     state.setViewerSqlPatternChipSettingsImpl(this, chipMinCount, chipMaxChips);
   }
-  setMinimapWidth(width: "small" | "medium" | "large"): void { state.setMinimapWidthImpl(this, width); }
+  setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void { state.setMinimapWidthImpl(this, width); }
   setScrollbarVisible(show: boolean): void { state.setScrollbarVisibleImpl(this, show); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { state.setSearchMatchOptionsAlwaysVisibleImpl(this, always); }
   setIconBarPosition(position: "left" | "right"): void { state.setIconBarPositionImpl(this, position); }

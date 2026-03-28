@@ -90,9 +90,19 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   readonly breakOnCritical: boolean;
   readonly minimapShowInfoMarkers: boolean;
-  /** Show subtle SQL and slow-SQL density overlays on the scrollbar minimap. */
+  /** Full-width blue/orange SQL activity shading on the log scroll map (ticks stay on top). */
   readonly minimapShowSqlDensity: boolean;
-  readonly minimapWidth: "small" | "medium" | "large";
+  /**
+   * When true (default), scrollbar minimap markers use a VS Code–like width: text length vs log pane
+   * width (capped at full width). When false, each marker spans the full minimap strip.
+   */
+  readonly minimapProportionalLines: boolean;
+  /** Strong red outline on the minimap viewport slider (easier to see scroll position). */
+  readonly minimapViewportRedOutline: boolean;
+  /** Slim strip left of the minimap with a yellow arrow at the viewport center (optional). */
+  readonly minimapViewportOutsideArrow: boolean;
+  /** Scrollbar minimap width preset (pixel widths mapped in the webview). */
+  readonly minimapWidth: "xsmall" | "small" | "medium" | "large" | "xlarge";
   /** When true, show the native vertical scrollbar in the log viewer (default: false). */
   readonly showScrollbar: boolean;
   /** When true, always show match case / whole word / regex toggles in the log search strip (default: false). */

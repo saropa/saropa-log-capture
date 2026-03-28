@@ -106,6 +106,15 @@ export function setMinimapShowInfoImpl(target: ProviderStateTarget, show: boolea
 export function setMinimapShowSqlDensityImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "minimapShowSqlDensity", show });
 }
+export function setMinimapProportionalLinesImpl(target: ProviderStateTarget, show: boolean): void {
+  target.postMessage({ type: "minimapProportionalLines", show });
+}
+export function setMinimapViewportRedOutlineImpl(target: ProviderStateTarget, show: boolean): void {
+  target.postMessage({ type: "minimapViewportRedOutline", show });
+}
+export function setMinimapViewportOutsideArrowImpl(target: ProviderStateTarget, show: boolean): void {
+  target.postMessage({ type: "minimapViewportOutsideArrow", show });
+}
 export function setViewerRepeatThresholdsImpl(target: ProviderStateTarget, thresholds: ViewerRepeatThresholds): void {
   target.postMessage({
     type: "setViewerRepeatThresholds",
@@ -155,7 +164,7 @@ export function setViewerSqlPatternChipSettingsImpl(
 ): void {
   target.postMessage({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
 }
-export function setMinimapWidthImpl(target: ProviderStateTarget, width: "small" | "medium" | "large"): void {
+export function setMinimapWidthImpl(target: ProviderStateTarget, width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void {
   target.postMessage({ type: "minimapWidth", width });
 }
 export function setScrollbarVisibleImpl(target: ProviderStateTarget, show: boolean): void {

@@ -55,6 +55,7 @@ const drift_db_repeat_thresholds_1 = require("../db/drift-db-repeat-thresholds")
 const drift_db_slow_burst_thresholds_1 = require("../db/drift-db-slow-burst-thresholds");
 const file_splitter_1 = require("../misc/file-splitter");
 const integration_config_1 = require("./integration-config");
+const integration_adapter_constants_1 = require("../integrations/integration-adapter-constants");
 const config_normalizers_1 = require("./config-normalizers");
 const config_validation_1 = require("./config-validation");
 const SECTION = "saropaLogCapture";
@@ -113,7 +114,10 @@ function getConfig() {
         breakOnCritical: (0, config_validation_1.ensureBoolean)(cfg.get("breakOnCritical"), false),
         minimapShowInfoMarkers: (0, config_validation_1.ensureBoolean)(cfg.get("minimapShowInfoMarkers"), false),
         minimapShowSqlDensity: (0, config_validation_1.ensureBoolean)(cfg.get("minimapShowSqlDensity"), true),
-        minimapWidth: (0, config_validation_1.ensureEnum)(cfg.get("minimapWidth"), ["small", "medium", "large"], "medium"),
+        minimapProportionalLines: (0, config_validation_1.ensureBoolean)(cfg.get("minimapProportionalLines"), true),
+        minimapViewportRedOutline: (0, config_validation_1.ensureBoolean)(cfg.get("minimapViewportRedOutline"), false),
+        minimapViewportOutsideArrow: (0, config_validation_1.ensureBoolean)(cfg.get("minimapViewportOutsideArrow"), false),
+        minimapWidth: (0, config_validation_1.ensureEnum)(cfg.get("minimapWidth"), ["xsmall", "small", "medium", "large", "xlarge"], "medium"),
         showScrollbar: (0, config_validation_1.ensureBoolean)(cfg.get("showScrollbar"), false),
         viewerAlwaysShowSearchMatchOptions: (0, config_validation_1.ensureBoolean)(cfg.get("viewerAlwaysShowSearchMatchOptions"), false),
         viewerRepeatThresholds: (0, drift_db_repeat_thresholds_1.normalizeViewerRepeatThresholds)({
@@ -137,6 +141,7 @@ function getConfig() {
         viewerSqlPatternMaxChips: (0, config_validation_1.clamp)(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
         deemphasizeFrameworkLevels: (0, config_validation_1.ensureBoolean)(cfg.get("deemphasizeFrameworkLevels"), false),
         levelDetection: (0, config_validation_1.ensureEnum)(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
+        stderrTreatAsError: (0, config_validation_1.ensureBoolean)(cfg.get("stderrTreatAsError"), false),
         smartBookmarks: {
             suggestFirstError: (0, config_validation_1.ensureBoolean)(cfg.get("smartBookmarks.suggestFirstError"), true),
             suggestFirstWarning: (0, config_validation_1.ensureBoolean)(cfg.get("smartBookmarks.suggestFirstWarning"), false),
@@ -154,7 +159,7 @@ function getConfig() {
         sessionListPageSize: (0, config_validation_1.clamp)(cfg.get("sessionListPageSize"), 10, 500, 100),
         iconBarPosition: (0, config_validation_1.ensureEnum)(cfg.get("iconBarPosition"), ["left", "right"], "left"),
         organizeFolders: (0, config_validation_1.ensureBoolean)(cfg.get("organizeFolders"), true),
-        integrationsAdapters: (0, config_validation_1.ensureStringArray)(cfg.get("integrations.adapters"), ["packages", "performance"]),
+        integrationsAdapters: (0, integration_adapter_constants_1.stripUiOnlyIntegrationAdapterIds)((0, config_validation_1.ensureStringArray)(cfg.get("integrations.adapters"), ["packages", "performance"])),
         ...(0, integration_config_1.getIntegrationConfig)(cfg),
         projectIndex: (0, integration_config_1.getProjectIndexConfig)(cfg),
         replay: {
