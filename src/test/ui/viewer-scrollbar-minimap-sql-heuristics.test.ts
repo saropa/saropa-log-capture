@@ -78,6 +78,15 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             assert.ok(script.includes('mmBarWidthFrac'), 'mmBarWidthFrac for VS Code–like bar width');
             assert.ok(script.includes('handleMinimapProportionalLines'), 'setting handler for minimapProportionalLines');
         });
+
+        test('handleMinimapWidth maps all presets including xsmall and xlarge (px)', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(script.includes('xsmall: 28') && script.includes('xlarge: 120'), 'narrow/wide presets');
+            assert.ok(
+                script.includes('small: 40') && script.includes('medium: 60') && script.includes('large: 90'),
+                'legacy three presets unchanged',
+            );
+        });
     });
 
     suite('SQL density painting (scroll map vs editor minimap)', () => {

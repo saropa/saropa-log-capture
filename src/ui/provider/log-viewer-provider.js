@@ -219,6 +219,7 @@ class LogViewerProvider {
     setScopeContext(ctx) { state.setScopeContextImpl(this, ctx); }
     setMinimapShowInfo(show) { state.setMinimapShowInfoImpl(this, show); }
     setMinimapShowSqlDensity(show) { state.setMinimapShowSqlDensityImpl(this, show); }
+    setMinimapProportionalLines(show) { state.setMinimapProportionalLinesImpl(this, show); }
     setMinimapViewportRedOutline(show) { state.setMinimapViewportRedOutlineImpl(this, show); }
     setMinimapViewportOutsideArrow(show) { state.setMinimapViewportOutsideArrowImpl(this, show); }
     setViewerRepeatThresholds(thresholds) {
