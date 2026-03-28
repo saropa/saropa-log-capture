@@ -134,6 +134,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
+    broadcaster.setMinimapProportionalLines(initCfg.minimapProportionalLines);
     broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
     broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
     broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
@@ -143,6 +144,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         initCfg.viewerSqlPatternChipMinCount,
         initCfg.viewerSqlPatternMaxChips,
     );
+    broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
+    broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
     broadcaster.setScrollbarVisible(initCfg.showScrollbar);
     broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);

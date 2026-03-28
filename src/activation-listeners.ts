@@ -80,6 +80,15 @@ export function setupConfigListener(
         if (e.affectsConfiguration('saropaLogCapture.minimapShowSqlDensity')) {
             broadcaster.setMinimapShowSqlDensity(cfg.minimapShowSqlDensity);
         }
+        if (e.affectsConfiguration('saropaLogCapture.minimapProportionalLines')) {
+            broadcaster.setMinimapProportionalLines(cfg.minimapProportionalLines);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapViewportRedOutline')) {
+            broadcaster.setMinimapViewportRedOutline(cfg.minimapViewportRedOutline);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapViewportOutsideArrow')) {
+            broadcaster.setMinimapViewportOutsideArrow(cfg.minimapViewportOutsideArrow);
+        }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
         }

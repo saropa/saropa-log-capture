@@ -60,7 +60,7 @@ window.addEventListener('message', function(event) {
             if (typeof clearRunNav === 'function') clearRunNav();
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
-                repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;
+                repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.lastRepeatNotificationIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;
                 repeatTracker.sqlRepeatPreview = null; repeatTracker.sqlStreakFingerprint = null; repeatTracker.sqlStreakSqlSnippet = '';
                 repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
             }
@@ -229,11 +229,18 @@ window.addEventListener('message', function(event) {
         case 'setScopeContext':
             if (typeof handleScopeContextMessage === 'function') handleScopeContextMessage(msg);
             break;
-        case 'minimapShowInfo': if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg); break;
+        case 'minimapShowInfo':
+            minimapShowInfoMarkers = !!msg.show;
+            if (typeof handleMinimapShowInfo === 'function') handleMinimapShowInfo(msg);
+            break;
         case 'minimapShowSqlDensity':
             if (typeof minimapShowSqlDensity !== 'undefined') minimapShowSqlDensity = msg.show !== false;
             if (typeof handleMinimapShowSqlDensity === 'function') handleMinimapShowSqlDensity(msg);
             if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+            break;
+        case 'minimapProportionalLines':
+            minimapProportionalLines = msg.show !== false;
+            if (typeof handleMinimapProportionalLines === 'function') handleMinimapProportionalLines(msg);
             break;
         case 'setViewerRepeatThresholds':
             if (typeof dbRepeatThresholds !== 'undefined' && msg.thresholds && typeof msg.thresholds === 'object') {
@@ -279,6 +286,14 @@ window.addEventListener('message', function(event) {
             if (typeof applyViewerSqlPatternChipSettings === 'function') {
                 applyViewerSqlPatternChipSettings(msg.chipMinCount, msg.chipMaxChips);
             }
+            break;
+        case 'minimapViewportRedOutline':
+            minimapViewportRedOutline = msg.show === true;
+            if (typeof handleMinimapViewportRedOutline === 'function') handleMinimapViewportRedOutline(msg);
+            break;
+        case 'minimapViewportOutsideArrow':
+            minimapViewportOutsideArrow = msg.show === true;
+            if (typeof handleMinimapViewportOutsideArrow === 'function') handleMinimapViewportOutsideArrow(msg);
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
         case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;

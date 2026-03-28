@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import { getContextMenuHtml } from '../../ui/viewer-context-menu/viewer-context-menu';
+import { getContextMenuHtml, getScrollChromeContextMenuHtml } from '../../ui/viewer-context-menu/viewer-context-menu';
 
 suite('ViewerContextMenuHtml', () => {
     suite('getContextMenuHtml', () => {
@@ -91,11 +91,21 @@ suite('ViewerContextMenuHtml', () => {
             const html = getContextMenuHtml();
             const optionsStart = html.indexOf('> Options');
             assert.ok(optionsStart >= 0);
-            const optionsEnd = html.indexOf('</div>\n    </div>\n</div>', optionsStart);
+            const scrollChromeSub = html.indexOf('id="scroll-chrome-submenu"', optionsStart);
+            const optionsEnd = scrollChromeSub > optionsStart ? scrollChromeSub : html.indexOf('</div>\n    </div>\n</div>', optionsStart);
             const optionsBlock = optionsEnd > optionsStart ? html.slice(optionsStart, optionsEnd) : html.slice(optionsStart);
             assert.ok(!optionsBlock.includes('toggle-hide-blank-lines'));
             assert.ok(!optionsBlock.includes('Hide blank lines'));
             assert.ok(!optionsBlock.includes('Hide This Text (Always)'));
+        });
+
+        test('should include Scroll map & scrollbar submenu with minimap and scrollbar toggles', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('id="scroll-chrome-submenu"'));
+            assert.ok(html.includes('Scroll map & scrollbar'));
+            assert.ok(html.includes('data-action="toggle-minimap-proportional"'));
+            assert.ok(html.includes('data-action="toggle-show-scrollbar"'));
+            assert.ok(html.includes('data-action="toggle-minimap-sql-density"'));
         });
 
         test('should include data-action attributes', () => {
@@ -205,6 +215,15 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('context-menu-toggle'));
             assert.ok(html.includes('context-menu-check'));
             assert.ok(html.includes('codicon-check'));
+        });
+    });
+
+    suite('getScrollChromeContextMenuHtml', () => {
+        test('should expose the same toggles as the Scroll map submenu (minimap / scrollbar right-click)', () => {
+            const html = getScrollChromeContextMenuHtml();
+            assert.ok(html.includes('id="scroll-chrome-context-menu"'));
+            assert.ok(html.includes('data-action="toggle-minimap-proportional"'));
+            assert.ok(html.includes('data-action="toggle-show-scrollbar"'));
         });
     });
 });
