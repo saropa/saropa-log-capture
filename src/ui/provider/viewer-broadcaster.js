@@ -7,6 +7,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ViewerBroadcaster = void 0;
+const log_viewer_provider_batch_1 = require("./log-viewer-provider-batch");
 /** Dispatches every ViewerTarget method to all registered targets. */
 class ViewerBroadcaster {
     targets = new Set();
@@ -15,8 +16,19 @@ class ViewerBroadcaster {
     /** Unregister a target. */
     removeTarget(target) { this.targets.delete(target); }
     addLine(data) {
+        const line = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(data);
         for (const t of this.targets) {
-            t.addLine(data);
+            // Pop-out defers raw LineData while loading disk snapshot; it cannot use pre-built HTML yet.
+            if (t.isLiveCaptureHydrating?.()) {
+                t.addLine(data);
+                continue;
+            }
+            t.appendLiveLineFromBroadcast({ ...line }, data.text);
+        }
+    }
+    appendLiveLineFromBroadcast(line, rawText) {
+        for (const t of this.targets) {
+            t.appendLiveLineFromBroadcast({ ...line }, rawText);
         }
     }
     clear() {
@@ -84,9 +96,9 @@ class ViewerBroadcaster {
             t.setShowDecorations(show);
         }
     }
-    setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw) {
+    setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError) {
         for (const t of this.targets) {
-            t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw);
+            t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError);
         }
     }
     applyPreset(name) {
@@ -162,6 +174,16 @@ class ViewerBroadcaster {
     setMinimapShowSqlDensity(show) {
         for (const t of this.targets) {
             t.setMinimapShowSqlDensity(show);
+        }
+    }
+    setMinimapViewportRedOutline(show) {
+        for (const t of this.targets) {
+            t.setMinimapViewportRedOutline(show);
+        }
+    }
+    setMinimapViewportOutsideArrow(show) {
+        for (const t of this.targets) {
+            t.setMinimapViewportOutsideArrow(show);
         }
     }
     setViewerRepeatThresholds(thresholds) {

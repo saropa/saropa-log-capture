@@ -7,6 +7,7 @@
 
 import type * as vscode from "vscode";
 import type { LineData } from "../../modules/session/session-manager";
+import type { PendingLine } from "../viewer/viewer-file-loader";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { ScopeContext } from "../../modules/storage/scope-context";
@@ -19,6 +20,13 @@ import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/con
 /** Contract for a webview that renders captured debug output. */
 export interface ViewerTarget {
   addLine(data: LineData): void;
+  /**
+   * Live line with HTML already built; raw text is only for thread-dump grouping.
+   * Used by ViewerBroadcaster to avoid duplicate ANSI/linkify work across targets.
+   */
+  appendLiveLineFromBroadcast(line: PendingLine, rawText: string): void;
+  /** Pop-out: true while hydrating from disk so addLine can buffer raw LineData. */
+  isLiveCaptureHydrating?(): boolean;
   clear(): void;
   setPaused(paused: boolean): void;
   setFilename(filename: string): void;
@@ -54,6 +62,9 @@ export interface ViewerTarget {
   setScopeContext(context: ScopeContext): void;
   setMinimapShowInfo(show: boolean): void;
   setMinimapShowSqlDensity(show: boolean): void;
+  setMinimapProportionalLines(show: boolean): void;
+  setMinimapViewportRedOutline(show: boolean): void;
+  setMinimapViewportOutsideArrow(show: boolean): void;
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
   setViewerDbInsightsEnabled(enabled: boolean): void;
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void;

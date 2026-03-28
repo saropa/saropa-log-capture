@@ -15,8 +15,6 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
-import { linkifyHtml, linkifyUrls } from "../../modules/source/source-linker";
 import { getNonce, buildViewerHtml, getEffectiveViewerLines } from "../provider/viewer-content";
 import { getConfig, viewerDbDetectorTogglesFromConfig } from "../../modules/config/config";
 import type { LineData } from "../../modules/session/session-manager";
@@ -32,7 +30,8 @@ import type { ViewerTarget } from "../viewer/viewer-target";
 import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
-import { type ThreadDumpState, createThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
+import { addLineToBatch, appendLiveLineToBatch } from "../provider/log-viewer-provider-batch";
+import { type ThreadDumpState, createThreadDumpState, flushThreadDump } from "../viewer/viewer-thread-grouping";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
 import { executeLoadContent, type LogViewerLoadTarget } from "../provider/log-viewer-provider-load";
 import { queuePopOutViewerConfigMicrotask } from "./pop-out-panel-viewer-config-post";
@@ -45,9 +44,10 @@ const BATCH_BACKLOG_THRESHOLD = 1000;
 /** Pop-out viewer as an editor tab (movable to a floating window). */
 export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private panel: vscode.WebviewPanel | undefined;
-  private pendingLines: PendingLine[] = [];
-  private batchTimer: ReturnType<typeof setTimeout> | undefined;
-  private readonly threadDumpState: ThreadDumpState = createThreadDumpState();
+  /** Public for BatchTarget (same as LogViewerProvider). */
+  pendingLines: PendingLine[] = [];
+  batchTimer: ReturnType<typeof setTimeout> | undefined;
+  readonly threadDumpState: ThreadDumpState = createThreadDumpState();
   private readonly seenCategories = new Set<string>();
   private cachedPresets: readonly FilterPreset[] = [];
   private cachedHighlightRules: SerializedHighlightRule[] = [];
@@ -154,24 +154,31 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       this.deferredLinesDuringHydrate.push(data);
       return;
     }
-    /* Skip when panel not visible to avoid CPU spike (same as sidebar viewer). */
-    if (!this.panel?.visible) { return; }
-    this.enqueueLineForBatch(data);
+    addLineToBatch(this, data);
   }
 
-  /** Build a pending line and queue it for the batch timer (same pipeline as sidebar). */
-  private enqueueLineForBatch(data: LineData): void {
-    let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
-    if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
-    const fw = helpers.classifyFrame(data.text);
-    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
-    const line: PendingLine = {
-      text: html, isMarker: data.isMarker, lineCount: data.lineCount,
-      category: data.category, timestamp: data.timestamp.getTime(),
-      fw, sourcePath: data.sourcePath,
-      ...(qualityPercent === undefined ? {} : { qualityPercent }),
-    };
-    processLineForThreadDump(this.threadDumpState, line, data.text, this.pendingLines);
+  /** Pre-built line from ViewerBroadcaster (avoids duplicate ANSI/linkify when sidebar + pop-out are both open). */
+  appendLiveLineFromBroadcast(line: PendingLine, rawText: string): void {
+    appendLiveLineToBatch(this, line, rawText);
+  }
+
+  /** Pop-out buffers raw lines while loading snapshot from disk (see ViewerBroadcaster.addLine). */
+  isLiveCaptureHydrating(): boolean {
+    return this.hydratingFromFile;
+  }
+
+  /** Visibility for live batch pipeline (matches sidebar LogViewerProvider.getView). */
+  getView(): { readonly visible: boolean } | undefined {
+    return this.panel ? { visible: this.panel.visible } : undefined;
+  }
+
+  /** BatchTarget / LogViewerLoadTarget compatibility (sidebar uses postMessage naming). */
+  getSeenCategories(): Set<string> {
+    return this.seenCategories;
+  }
+
+  postMessage(message: unknown): void {
+    this.post(message);
   }
 
   clear(): void {
@@ -220,6 +227,9 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setMinimapShowSqlDensity(show: boolean): void { this.post({ type: "minimapShowSqlDensity", show }); }
+  setMinimapProportionalLines(show: boolean): void { this.post({ type: "minimapProportionalLines", show }); }
+  setMinimapViewportRedOutline(show: boolean): void { this.post({ type: "minimapViewportRedOutline", show }); }
+  setMinimapViewportOutsideArrow(show: boolean): void { this.post({ type: "minimapViewportOutsideArrow", show }); }
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
     this.post({
       type: "setViewerRepeatThresholds",
@@ -432,7 +442,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     const toReplay = filterDeferredLinesAfterSnapshot(this.deferredLinesDuringHydrate, loadedContentLength);
     this.deferredLinesDuringHydrate = [];
     for (const d of toReplay) {
-      this.enqueueLineForBatch(d);
+      addLineToBatch(this, d);
     }
   }
 }
