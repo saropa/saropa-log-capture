@@ -23,6 +23,7 @@ function handleGlobalAction(action, savedLineIdx) {
             vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
             return true;
         }
+        /* Native selection is empty: shift+click range uses .selected only — copy like "Copy Line" from saved row. */
         if (typeof savedLineIdx === 'number' && savedLineIdx >= 0 && savedLineIdx < allLines.length) {
             var lineDataCs = allLines[savedLineIdx];
             var plainCs = stripTags(lineDataCs.html || '');
@@ -120,6 +121,51 @@ function handleSourceAction(action) {
     return false;
 }
 
+/** Workspace-backed toggles (scroll map, scrollbar) — keep menu open; host echoes config. */
+function handleWorkspaceToggleAction(action) {
+    function postBool(type, value) {
+        vscodeApi.postMessage({ type: type, value: value });
+        syncContextMenuToggles();
+        if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
+    }
+    if (action === 'toggle-minimap-proportional') {
+        var nextProp = !((typeof minimapProportionalLines !== 'undefined') && minimapProportionalLines);
+        minimapProportionalLines = nextProp;
+        postBool('setMinimapProportionalLines', nextProp);
+        return true;
+    }
+    if (action === 'toggle-show-scrollbar') {
+        var nextSb = !document.body.classList.contains('scrollbar-visible');
+        postBool('setShowScrollbar', nextSb);
+        return true;
+    }
+    if (action === 'toggle-minimap-info-markers') {
+        var nextInfo = !((typeof minimapShowInfoMarkers !== 'undefined') && minimapShowInfoMarkers);
+        minimapShowInfoMarkers = nextInfo;
+        postBool('setMinimapShowInfoMarkers', nextInfo);
+        return true;
+    }
+    if (action === 'toggle-minimap-sql-density') {
+        var nextSql = !((typeof minimapShowSqlDensity !== 'undefined') && minimapShowSqlDensity);
+        if (typeof minimapShowSqlDensity !== 'undefined') minimapShowSqlDensity = nextSql;
+        postBool('setMinimapSqlDensity', nextSql);
+        return true;
+    }
+    if (action === 'toggle-minimap-viewport-red-outline') {
+        var nextRo = !((typeof minimapViewportRedOutline !== 'undefined') && minimapViewportRedOutline);
+        minimapViewportRedOutline = nextRo;
+        postBool('setMinimapViewportRedOutline', nextRo);
+        return true;
+    }
+    if (action === 'toggle-minimap-outside-arrow') {
+        var nextAr = !((typeof minimapViewportOutsideArrow !== 'undefined') && minimapViewportOutsideArrow);
+        minimapViewportOutsideArrow = nextAr;
+        postBool('setMinimapViewportOutsideArrow', nextAr);
+        return true;
+    }
+    return false;
+}
+
 /** Handle toggle actions (Options submenu) — keep menu open. */
 function handleToggleAction(action) {
     var toggleFns = {
@@ -143,6 +189,7 @@ function handleToggleAction(action) {
 
 function onContextMenuAction(action) {
     // Toggle actions keep menu open — handle before hideContextMenu
+    if (handleWorkspaceToggleAction(action)) return;
     if (handleToggleAction(action)) return;
 
     var lineIdx = contextMenuLineIdx;
@@ -314,6 +361,16 @@ function onContextMenuAction(action) {
 }
 
 function onLogContextMenu(e) {
+    var lc = e.currentTarget;
+    if (lc && lc.id === 'log-content' && document.body.classList.contains('scrollbar-visible')) {
+        var sbW = 14;
+        if (e.offsetX > lc.clientWidth - sbW) {
+            e.preventDefault();
+            e.stopPropagation();
+            showScrollChromeContextMenu(e.clientX, e.clientY);
+            return;
+        }
+    }
     e.preventDefault();
     var sourceLink = e.target.closest('.source-link');
     var target = e.target;
@@ -329,6 +386,16 @@ function onLogContextMenu(e) {
 
 var _logEl = document.getElementById('log-content');
 if (_logEl) _logEl.addEventListener('contextmenu', onLogContextMenu);
+
+function onScrollChromeStripContextMenu(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    showScrollChromeContextMenu(e.clientX, e.clientY);
+}
+var _mmCol = document.getElementById('scrollbar-minimap-column');
+if (_mmCol) _mmCol.addEventListener('contextmenu', onScrollChromeStripContextMenu);
+var _mmStrip = document.getElementById('scrollbar-minimap');
+if (_mmStrip) _mmStrip.addEventListener('contextmenu', onScrollChromeStripContextMenu);
 
 window.addEventListener('message', function(event) {
     var msg = event.data;

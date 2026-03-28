@@ -132,6 +132,7 @@ function getViewerBodyHtml(opts) {
     </div>
     </div>
     ${(0, viewer_context_menu_1.getContextMenuHtml)()}
+    ${(0, viewer_context_menu_1.getScrollChromeContextMenuHtml)()}
     ${(0, viewer_context_modal_1.getContextModalHtml)()}
     ${(0, viewer_deco_settings_1.getDecoSettingsHtml)()}
     ${(0, viewer_export_1.getExportModalHtml)()}
@@ -139,6 +140,7 @@ function getViewerBodyHtml(opts) {
     ${(0, viewer_auto_hide_modal_1.getAutoHideModalHtml)()}
     <div id="level-flyup">
         <div class="level-flyup-title">Level Filters</div>
+        <div class="level-flyup-help">Solid error color: primary fault or stack line. Dashed accent: recent-error context (within 2s after a fault above; hover the line). Drift SQL trace lines stay normal.</div>
         <div class="level-flyup-header">
             <button type="button" id="level-select-all" class="active">All</button>
             <button type="button" id="level-select-none">None</button>

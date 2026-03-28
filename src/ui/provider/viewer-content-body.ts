@@ -20,7 +20,7 @@ import { getScrollbarMinimapHtml } from '../viewer/viewer-scrollbar-minimap';
 import { getGotoLineHtml } from '../viewer/viewer-goto-line';
 import { getReplayBarHtml } from '../viewer/viewer-replay';
 import { getErrorBreakpointHtml } from '../viewer-decorations/viewer-error-breakpoint';
-import { getContextMenuHtml } from '../viewer-context-menu/viewer-context-menu';
+import { getContextMenuHtml, getScrollChromeContextMenuHtml } from '../viewer-context-menu/viewer-context-menu';
 import { getContextModalHtml } from '../viewer-context-menu/viewer-context-modal';
 import { getDecoSettingsHtml } from '../viewer-decorations/viewer-deco-settings';
 import { getExportModalHtml } from '../viewer-panels/viewer-export';
@@ -135,6 +135,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     </div>
     </div>
     ${getContextMenuHtml()}
+    ${getScrollChromeContextMenuHtml()}
     ${getContextModalHtml()}
     ${getDecoSettingsHtml()}
     ${getExportModalHtml()}
