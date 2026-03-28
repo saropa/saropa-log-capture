@@ -293,6 +293,7 @@ function getSmartBookmarksFirstErrorAndWarning(cfg, contentLines) {
     const found = (0, first_error_1.findFirstErrorLines)(contentLines, {
         strict: cfg.levelDetection === "strict",
         includeWarning: cfg.smartBookmarks.suggestFirstWarning,
+        stderrTreatAsError: cfg.stderrTreatAsError,
     });
     return { firstError: found.firstError, firstWarning: found.firstWarning };
 }
