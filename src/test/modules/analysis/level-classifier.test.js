@@ -37,11 +37,14 @@ const assert = __importStar(require("assert"));
 const level_classifier_1 = require("../../../modules/analysis/level-classifier");
 suite('LevelClassifier', () => {
     suite('classifyLevel — stderr', () => {
-        test('should classify stderr category as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('anything', 'stderr', true), 'error');
+        test('should classify stderr as error when stderrTreatAsError is true', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('anything', 'stderr', true, true), 'error');
         });
-        test('should classify stderr even for benign text', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('all good', 'stderr', true), 'error');
+        test('should classify benign stderr by text when stderrTreatAsError is false', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('all good', 'stderr', true, false), 'info');
+        });
+        test('should honor Drift SQL on stderr when stderrTreatAsError is false', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false), 'info');
         });
     });
     suite('classifyLevel — logcat prefixes', () => {
@@ -74,6 +77,12 @@ suite('LevelClassifier', () => {
         });
         test('should classify I/flutter Drift SQL statements as info even with "ApplicationLogError" in args', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]', 'stdout', true), 'info');
+        });
+        test('should classify capture-prefixed Drift SQL as info when logcat is not at line start', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]', 'stdout', true), 'info');
+        });
+        test('should classify E/flutter Drift SQL as warning, not runtime error', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true), 'warning');
         });
     });
     suite('classifyLevel — strict mode', () => {

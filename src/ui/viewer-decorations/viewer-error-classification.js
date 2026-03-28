@@ -140,6 +140,9 @@ function handleErrorClassificationSettings(msg) {
     if (msg.levelDetection !== undefined) {
         strictLevelDetection = msg.levelDetection === 'strict';
     }
+    if (msg.stderrTreatAsError !== undefined) {
+        stderrTreatAsError = !!msg.stderrTreatAsError;
+    }
     if (msg.deemphasizeFrameworkLevels !== undefined) {
         var prev = deemphasizeFrameworkLevels;
         deemphasizeFrameworkLevels = !!msg.deemphasizeFrameworkLevels;
@@ -147,6 +150,12 @@ function handleErrorClassificationSettings(msg) {
             if (typeof recalcAndRender === 'function') { recalcAndRender(); }
             else { recalcHeights(); renderViewport(true); }
         }
+    }
+
+    // Re-render when stderr policy or strict mode changes (levels and stderr CSS class).
+    if (msg.stderrTreatAsError !== undefined || msg.levelDetection !== undefined) {
+        if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+        else { recalcHeights(); renderViewport(true); }
     }
 
     // Refilter when suppression changes

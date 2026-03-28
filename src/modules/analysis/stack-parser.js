@@ -118,9 +118,12 @@ function isFrameworkLogLine(text) {
     return undefined;
 }
 /**
- * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`).
+ * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`),
+ * e.g. Drift debug server output. These are not trace gutters; the viewer avoids grouping them
+ * as stack frames so preview mode does not insert `[+N more]` mid-banner.
  */
 function isAsciiBoxDrawingDecorLine(line) {
+    // Require non-whitespace between bars so single gutter lines stay stack frames.
     return /^\s*\u2502\s+.+\S\s*\u2502\s*$/.test(line);
 }
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */

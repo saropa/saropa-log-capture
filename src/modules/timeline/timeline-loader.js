@@ -41,6 +41,7 @@ exports.loadTimelineEvents = loadTimelineEvents;
 exports.getSourceLabel = getSourceLabel;
 exports.getSourceColor = getSourceColor;
 const vscode = __importStar(require("vscode"));
+const config_1 = require("../config/config");
 const timeline_event_1 = require("./timeline-event");
 const timestamp_parser_1 = require("./timestamp-parser");
 const viewer_file_loader_1 = require("../../ui/viewer/viewer-file-loader");
@@ -135,6 +136,11 @@ async function loadMainLog(fileUri) {
     const fields = (0, viewer_file_loader_1.parseHeaderFields)(allLines);
     const midnightMs = (0, viewer_file_loader_1.computeSessionMidnight)(fields['Date'] ?? '');
     const fileUriStr = fileUri.toString();
+    const cfg = (0, config_1.getConfig)();
+    const classifyOpts = {
+        strict: cfg.levelDetection === 'strict',
+        stderrTreatAsError: cfg.stderrTreatAsError,
+    };
     const events = [];
     let firstTs = 0, lastTs = 0;
     for (let i = headerEnd; i < allLines.length; i++) {
@@ -151,7 +157,7 @@ async function loadMainLog(fileUri) {
             firstTs = ts;
         }
         lastTs = ts;
-        const event = (0, timeline_event_1.parseLogLineToEvent)(line, i, fileUriStr, midnightMs);
+        const event = (0, timeline_event_1.parseLogLineToEvent)(line, i, fileUriStr, midnightMs, classifyOpts);
         if (event) {
             events.push(event);
         }

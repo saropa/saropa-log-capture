@@ -1,14 +1,17 @@
 "use strict";
 /**
  * Extension-side severity level classification.
- * Mirrors the regex patterns in viewer-level-filter.ts (webview-side).
- * Used by viewer level filter, analysis panel, and error classification; keep in sync with viewer-level-filter.ts.
+ * Mirrors `viewer-level-classify.ts` (embedded webview script). Keep patterns in sync.
+ * Used by viewer level filter, analysis panel, and error classification.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isDriftSqlStatementLine = isDriftSqlStatementLine;
 exports.classifyLevel = classifyLevel;
 exports.isAnrLine = isAnrLine;
 exports.isActionableLevel = isActionableLevel;
 const logcatLevelPattern = /^([VDIWEFA])\//;
+/** Logcat severity (I/, E/, …) may appear after capture prefixes like `[12:00:00] [stdout]`. */
+const logcatLetterAnywhere = /\b([VDIWEFA])\//;
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
 // Treat them as query/debug output so they don't get misclassified as runtime errors.
 const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
@@ -25,10 +28,46 @@ const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:
 const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
 const noticePattern = /\b(notice|note|important)\b/i;
-/** Classify a plain-text log line into a severity level. */
-function classifyLevel(plainText, category, strict) {
-    if (category === 'stderr') {
+/**
+ * Drift `Sent SELECT|INSERT|…` lines are framework SQL tracing, not runtime failures.
+ * Never classify them as `error` (avoids false positives from enum names like ApplicationLogError in args).
+ * Must run before `^I/` logcat handling so capture-prefixed lines still match.
+ */
+function classifyDriftSqlLine(plainText) {
+    const lcm = logcatLevelPattern.exec(plainText);
+    const m = lcm ?? logcatLetterAnywhere.exec(plainText);
+    if (!m) {
+        return 'info';
+    }
+    const prefix = m[1];
+    if (prefix === 'D' || prefix === 'V') {
+        return 'debug';
+    }
+    if (prefix === 'W') {
+        return 'warning';
+    }
+    if (prefix === 'E' || prefix === 'F' || prefix === 'A') {
+        return 'warning';
+    }
+    return 'info';
+}
+/** True when the line is a Drift SQL trace (`Drift: Sent …`). Used by the viewer to skip severity proximity inheritance. */
+function isDriftSqlStatementLine(plainText) {
+    return driftStatementPattern.test(plainText);
+}
+/**
+ * Classify a plain-text log line into a severity level.
+ *
+ * @param stderrTreatAsError When `true`, forces `error` for DAP category `stderr` before inspecting text.
+ *   Omit or pass `true` to preserve legacy behavior for callers that do not read workspace config.
+ *   Workspace default is `false` (classify stderr by content).
+ */
+function classifyLevel(plainText, category, strict, stderrTreatAsError = true) {
+    if (stderrTreatAsError && category === 'stderr') {
         return 'error';
+    }
+    if (driftStatementPattern.test(plainText)) {
+        return classifyDriftSqlLine(plainText);
     }
     const lcm = logcatLevelPattern.exec(plainText);
     if (lcm) {
@@ -52,9 +91,6 @@ function classifyLogcat(prefix, plainText, strict) {
     }
     if (prefix === 'W') {
         return 'warning';
-    }
-    if (driftStatementPattern.test(plainText)) {
-        return prefix === 'D' || prefix === 'V' ? 'debug' : 'info';
     }
     const ep = strict ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) {

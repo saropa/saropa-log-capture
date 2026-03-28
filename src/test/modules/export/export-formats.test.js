@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
+const level_classifier_1 = require("../../../modules/analysis/level-classifier");
 const export_formats_1 = require("../../../modules/export/export-formats");
 // Test the parsing and formatting logic
 // Note: Full export tests require VS Code API mocking
@@ -56,43 +57,29 @@ suite('ExportFormats', () => {
             assert.strictEqual((0, export_formats_1.escapeCsvField)('a, "b", c'), '"a, ""b"", c"');
         });
     });
-    suite('Level inference', () => {
-        // Inline implementation for testing (mirrors export-formats.ts)
-        function inferLevel(message, category) {
-            const lower = message.toLowerCase();
-            if (category === 'stderr') {
-                return 'error';
-            }
-            if (/\b(error|exception|fatal|crash|panic)\b/i.test(lower)) {
-                return 'error';
-            }
-            if (/\b(warn(ing)?|caution)\b/i.test(lower)) {
-                return 'warning';
-            }
-            if (/\b(debug|trace|verbose)\b/i.test(lower)) {
-                return 'debug';
-            }
-            return 'info';
-        }
-        test('should detect error level from stderr category', () => {
-            assert.strictEqual(inferLevel('normal message', 'stderr'), 'error');
+    suite('Level inference (classifyLevel aligned with export)', () => {
+        test('stderr is info when stderrTreatAsError is false', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('normal message', 'stderr', true, false), 'info');
+        });
+        test('stderr is error when stderrTreatAsError is true', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('normal message', 'stderr', true, true), 'error');
         });
         test('should detect error from message content', () => {
-            assert.strictEqual(inferLevel('Error: something failed', 'stdout'), 'error');
-            assert.strictEqual(inferLevel('Unhandled exception: null pointer', 'stdout'), 'error');
-            assert.strictEqual(inferLevel('FATAL error occurred', 'stdout'), 'error');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Error: something failed', 'stdout', false, false), 'error');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Unhandled exception: null pointer', 'stdout', false, false), 'error');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('FATAL error occurred', 'stdout', false, false), 'error');
         });
         test('should detect warning from message content', () => {
-            assert.strictEqual(inferLevel('Warning: deprecated', 'stdout'), 'warning');
-            assert.strictEqual(inferLevel('WARN: low memory', 'stdout'), 'warning');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Warning: deprecated', 'stdout', false, false), 'warning');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('WARN: low memory', 'stdout', false, false), 'warning');
         });
         test('should detect debug from message content', () => {
-            assert.strictEqual(inferLevel('DEBUG: entering function', 'stdout'), 'debug');
-            assert.strictEqual(inferLevel('trace: method called', 'stdout'), 'debug');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('DEBUG: entering function', 'stdout', false, false), 'debug');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('trace: method called', 'stdout', false, false), 'debug');
         });
         test('should default to info for normal messages', () => {
-            assert.strictEqual(inferLevel('Application started', 'stdout'), 'info');
-            assert.strictEqual(inferLevel('Processing request', 'console'), 'info');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Application started', 'stdout', false, false), 'info');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Processing request', 'console', false, false), 'info');
         });
     });
     suite('Line parsing patterns', () => {
