@@ -250,8 +250,9 @@ function getPerformancePanelScript(prefix) {
 
     var sessionPerfChip = document.getElementById('session-perf-chip');
     if (sessionPerfChip) sessionPerfChip.addEventListener('click', function() {
-        if (typeof window.setActivePanel === 'function') window.setActivePanel('insight');
-        if (typeof openInsightPanel === 'function') openInsightPanel();
+        if (typeof window.ensureInsightSlideoutOpen === 'function') window.ensureInsightSlideoutOpen();
+        else if (typeof window.setActivePanel === 'function') window.setActivePanel('insight');
+        else if (typeof openInsightPanel === 'function') openInsightPanel();
         if (typeof window.setInsightTab === 'function') window.setInsightTab('performance');
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
