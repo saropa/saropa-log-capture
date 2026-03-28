@@ -166,7 +166,7 @@ function handleWorkspaceToggleAction(action) {
     return false;
 }
 
-/** Handle toggle actions (Options submenu) — keep menu open. */
+/** Handle toggle actions (Layout submenu) — keep menu open. */
 function handleToggleAction(action) {
     var toggleFns = {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
