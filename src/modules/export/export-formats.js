@@ -43,6 +43,8 @@ exports.exportToJsonl = exportToJsonl;
 exports.escapeCsvField = escapeCsvField;
 const vscode = __importStar(require("vscode"));
 const ansi_1 = require("../capture/ansi");
+const level_classifier_1 = require("../analysis/level-classifier");
+const config_1 = require("../config/config");
 /**
  * Export a log file to CSV format.
  */
@@ -86,6 +88,9 @@ async function parseLogFile(logUri) {
     const raw = await vscode.workspace.fs.readFile(logUri);
     const text = Buffer.from(raw).toString('utf-8');
     const lines = text.split('\n');
+    const cfg = (0, config_1.getConfig)();
+    const strict = cfg.levelDetection === 'strict';
+    const stderrTreatAsError = cfg.stderrTreatAsError;
     const { headerLines, bodyLines, bodyStartIndex } = splitHeader(lines);
     const sessionStart = extractSessionStart(headerLines);
     const entries = [];
@@ -98,7 +103,7 @@ async function parseLogFile(logUri) {
         if (line.startsWith('---') || line.startsWith('===')) {
             continue;
         }
-        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart);
+        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart, strict, stderrTreatAsError);
         if (entry) {
             entries.push(entry);
         }
@@ -136,7 +141,7 @@ function extractSessionStart(headerLines) {
  * Format: [HH:MM:SS.mmm] [category] message
  * Or:     [category] message (no timestamp)
  */
-function parseLine(line, lineNumber, sessionStart) {
+function parseLine(line, lineNumber, sessionStart, strict, stderrTreatAsError) {
     const clean = (0, ansi_1.stripAnsi)(line);
     // Try format with timestamp: [HH:MM:SS.mmm] [category] message
     const withTs = clean.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})\]\s+\[(\w+)\]\s+(.*)$/);
@@ -148,7 +153,7 @@ function parseLine(line, lineNumber, sessionStart) {
             lineNumber,
             timestamp,
             category,
-            level: inferLevel(message, category),
+            level: (0, level_classifier_1.classifyLevel)(message ?? '', category, strict, stderrTreatAsError),
             message,
         };
     }
@@ -161,7 +166,7 @@ function parseLine(line, lineNumber, sessionStart) {
             lineNumber,
             timestamp: null,
             category,
-            level: inferLevel(message, category),
+            level: (0, level_classifier_1.classifyLevel)(message ?? '', category, strict, stderrTreatAsError),
             message,
         };
     }
@@ -170,7 +175,7 @@ function parseLine(line, lineNumber, sessionStart) {
         lineNumber,
         timestamp: null,
         category: 'unknown',
-        level: inferLevel(clean, 'unknown'),
+        level: (0, level_classifier_1.classifyLevel)(clean, 'unknown', strict, stderrTreatAsError),
         message: clean,
     };
 }
@@ -188,27 +193,6 @@ function buildFullTimestamp(timeStr, sessionStart) {
         return `${dateMatch[1]}T${timeStr}Z`;
     }
     return timeStr;
-}
-/**
- * Infer log level from message content and category.
- */
-function inferLevel(message, category) {
-    const lower = message.toLowerCase();
-    // Check category first
-    if (category === 'stderr') {
-        return 'error';
-    }
-    // Check message patterns
-    if (/\b(error|exception|fatal|crash|panic)\b/i.test(lower)) {
-        return 'error';
-    }
-    if (/\b(warn(ing)?|caution)\b/i.test(lower)) {
-        return 'warning';
-    }
-    if (/\b(debug|trace|verbose)\b/i.test(lower)) {
-        return 'debug';
-    }
-    return 'info';
 }
 /**
  * Format a LogEntry as a CSV row.

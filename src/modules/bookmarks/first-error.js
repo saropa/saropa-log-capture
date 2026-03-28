@@ -49,7 +49,7 @@ function findFirstErrorLines(contentLines, options) {
     for (let i = 0; i < contentLines.length; i++) {
         const raw = contentLines[i];
         const { category, plainText } = extractCategoryAndPlain(raw);
-        const level = (0, level_classifier_1.classifyLevel)(plainText, category, strict);
+        const level = (0, level_classifier_1.classifyLevel)(plainText, category, strict, options.stderrTreatAsError);
         const trimmed = stripAnsi(plainText);
         const displaySnippet = trimmed.length > MAX_SNIPPET_LEN ? trimmed.slice(0, MAX_SNIPPET_LEN) + '…' : trimmed;
         if (level === 'error' && !firstError) {
