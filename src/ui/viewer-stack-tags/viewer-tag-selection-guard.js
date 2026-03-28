@@ -10,6 +10,24 @@ exports.getTagSelectionGuardScript = getTagSelectionGuardScript;
  */
 function getTagSelectionGuardScript() {
     return /* javascript */ `
+// Compact counts for toolbar badges; keep in sync with log-count-short-format.ts (unit tests).
+function formatScaledCountForToolbar(value, unit) {
+    var s;
+    if (value >= 100) s = Math.floor(value).toString();
+    else if (value >= 10) s = value.toFixed(1);
+    else if (Math.abs(value - Math.round(value)) < 1e-9) s = value.toFixed(0);
+    else s = value.toFixed(1);
+    return s.replace(/\\.0$/, '') + unit;
+}
+function formatLogCountShort(n) {
+    var x = Math.floor(Number(n));
+    if (!isFinite(x) || x < 0) return '0';
+    if (x < 1000) return String(x);
+    if (x < 1000000) return formatScaledCountForToolbar(x / 1000, 'k');
+    if (x < 1000000000) return formatScaledCountForToolbar(x / 1000000, 'M');
+    return formatScaledCountForToolbar(x / 1000000000, 'B');
+}
+
 /** Ensure at least one known tag remains visible; fallback to all-visible. */
 function ensureAtLeastOneTagVisible(hiddenTags, tagCounts) {
     var keys = Object.keys(tagCounts || {});
