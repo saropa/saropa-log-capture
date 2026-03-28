@@ -149,8 +149,8 @@ export function getPerformancePanelScript(prefix?: string): string {
 
     function switchTab(tab) {
         ppActiveTab = tab;
-        ppTabCurrent.classList.toggle('active', tab === 'current');
-        ppTabTrends.classList.toggle('active', tab === 'trends');
+        if (ppTabCurrent) ppTabCurrent.classList.toggle('active', tab === 'current');
+        if (ppTabTrends) ppTabTrends.classList.toggle('active', tab === 'trends');
         if (ppTabSession) ppTabSession.classList.toggle('active', tab === 'session');
         if (ppTabDb) ppTabDb.classList.toggle('active', tab === 'db');
         if (ppTabErrorRate) ppTabErrorRate.classList.toggle('active', tab === 'errorRate');

@@ -20,7 +20,7 @@ window.onerror = function(msg, source, line, col) {
         banner.style.cssText = 'background:#d32f2f;color:#fff;padding:4px 8px;font:12px monospace;white-space:pre-wrap;z-index:9999;';
         document.body.prepend(banner);
     }
-    banner.textContent = 'Script error: ' + msg;
+    banner.textContent = 'Script error (line ' + line + ', col ' + col + '): ' + msg;
     banner.style.display = 'block';
     if (window._vscodeApi) {
         window._vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
