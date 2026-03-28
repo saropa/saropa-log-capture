@@ -24,6 +24,11 @@ export function getIconBarHtml(): string {
     <button id="ib-filters" class="ib-icon" tabindex="0" title="Filters" aria-label="Filters">
         <span class="codicon codicon-filter"></span><span class="ib-label">Filters</span>
     </button>
+    <button id="ib-sql-filter" class="ib-icon ib-sql-filter-btn" type="button" tabindex="0" disabled title="No database (SQL) lines in this log yet" aria-label="SQL lines" aria-pressed="false">
+        <span class="codicon codicon-list-tree"></span>
+        <span id="ib-sql-filter-count-short" class="ib-sql-count-short" aria-hidden="true">0</span>
+        <span class="ib-label ib-sql-filter-label">SQL (0)</span>
+    </button>
     <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL Query History (session)" aria-label="SQL Query History">
         <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
     </button>
@@ -192,6 +197,19 @@ export function getIconBarScript(): string {
         }
     };
 
+    /**
+     * Open the Insights slide-out without treating a second request as "close".
+     * The header Performance chip uses this: setActivePanel('insight') alone toggles off when
+     * Insights is already active, leaving panel-slot width 0 so nothing appears.
+     */
+    window.ensureInsightSlideoutOpen = function() {
+        if (activePanel === 'insight') {
+            if (typeof openInsightPanel === 'function') openInsightPanel();
+            return;
+        }
+        setActivePanel('insight');
+    };
+
     /** Allow panels to clear their icon state when closed externally. */
     window.clearActivePanel = function(name) {
         if (activePanel === name) {
@@ -212,6 +230,13 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.filters) {
         iconButtons.filters.addEventListener('click', function() { setActivePanel('filters'); });
+    }
+    var sqlFilterBtn = document.getElementById('ib-sql-filter');
+    if (sqlFilterBtn) {
+        sqlFilterBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (typeof toggleDatabaseSqlFromToolbar === 'function') toggleDatabaseSqlFromToolbar();
+        });
     }
     if (iconButtons.sqlHistory) {
         iconButtons.sqlHistory.addEventListener('click', function() { setActivePanel('sqlHistory'); });

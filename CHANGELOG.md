@@ -46,6 +46,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+• **Log viewer — SQL toolbar count** — Compact count formatter (`999k`, `1.2M`, …) no longer rounds `999,999` up to `"1000k"` at unit boundaries; `Math.floor` replaces `toFixed(0)` for the ≥100 tier so the label stays within its unit (same fix applied to the embedded webview copy).
+
 • **Log viewer — Drift SQL args fold** — The collapsible ` with args [...]` suffix on Drift SQL lines was rendered twice: once inside the fold wrapper (correctly hidden by CSS) and once as plain text after it (always visible). The suffix now appears only inside the fold, so clicking the `…` ellipsis actually toggles visibility.
 
 • **Log viewer — search history (Recent)** — The Recent list only appears while the in-log find session is active; closing search (Escape or click outside) clears it and blurs the field. When the session nav is hidden by scroll (smart header) or the search field leaves the viewport, the fixed dropdown is hidden so it no longer floats over the log. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
