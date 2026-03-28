@@ -24,6 +24,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — context menu** — The right-click submenu for word wrap, decorations, timestamps, spacing, and line compression is labeled **Layout** (replacing **Options**) so it is distinct from the footer **Options** panel.
+
 • **Log viewer — duplicate line repeats** — Consecutive duplicate lines (same real-time repeat streak) collapse into **one** summary row whose label updates (**N × Repeated:** or **N × SQL repeated:** with preview), instead of stacking separate **Repeated #2**, **#3**, … rows for every extra occurrence.
 
 • **Log viewer — scroll map width** — `saropaLogCapture.minimapWidth` adds **extra narrow** (28px) and **extra wide** (120px) presets alongside narrow / medium / wide. **Options → Layout → Scroll map width** drives the same workspace setting. The viewport slider (grey overlay) is **slightly more transparent** so severity/search marks show through a bit more clearly.
