@@ -111,7 +111,7 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('contextMenuSourcePath'));
         });
 
-        test('should handle toggle actions for Options submenu', () => {
+        test('should handle toggle actions for Layout submenu', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function handleToggleAction'));
             assert.ok(script.includes("'toggle-wrap'"));

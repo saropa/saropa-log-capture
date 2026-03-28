@@ -46,7 +46,11 @@ function getScrollChromeContextMenuHtml() {
 ${getScrollChromeMenuTogglesHtml()}
 </div>`;
 }
-/** Returns the HTML for the context menu element. */
+/**
+ * Returns the HTML for the log content context menu.
+ * Layout toggles (wrap, decorations, timestamps, compression) use the top-level **Layout** submenu;
+ * the footer gear panel remains **Options** in the UI.
+ */
 function getContextMenuHtml() {
     const scrollToggles = getScrollChromeMenuTogglesHtml();
     return `<div id="context-menu" class="context-menu">
@@ -207,7 +211,7 @@ function getContextMenuHtml() {
         </div>
     </div>
     <div class="context-menu-submenu">
-        <span class="codicon codicon-settings-gear"></span> Options
+        <span class="codicon codicon-settings-gear"></span> Layout
         <span class="context-menu-arrow codicon codicon-chevron-right"></span>
         <div class="context-menu-submenu-content">
             <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap">
