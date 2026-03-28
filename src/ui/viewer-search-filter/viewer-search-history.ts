@@ -3,6 +3,9 @@
  * Tracks recent search terms, persists in webview state, and provides
  * clickable history items plus Up/Down arrow navigation. Also registers
  * the debounced input handler so typing stays responsive on large logs.
+ *
+ * **Visibility:** The Recent list is rendered only when `searchOpen` is true (find session from `viewer-search.ts`).
+ * That keeps the fixed dropdown dismissible (Escape / click-out clears DOM via `closeSearch` → `renderSearchHistory`).
  */
 
 /** Returns CSS styles for search history items. */
@@ -55,7 +58,8 @@ function addToSearchHistory(term) {
 
 function renderSearchHistory() {
     if (!searchHistoryEl) return;
-    if (!searchHistory.length || searchInputEl.value) {
+    /* Only show while the find session is open; otherwise the fixed panel cannot be dismissed and looks orphaned. */
+    if (!searchHistory.length || searchInputEl.value || typeof searchOpen === 'undefined' || !searchOpen) {
         searchHistoryEl.innerHTML = '';
         /* Clear fixed positioning left from a previous open list (see positionSearchFloatingPanels). */
         if (typeof window.positionSearchFloatingPanels === 'function') window.positionSearchFloatingPanels();
