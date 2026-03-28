@@ -27,6 +27,8 @@ function getSourceTagsScript() {
 var sourceTagCounts = {};
 var hiddenSourceTags = {};
 var otherKey = '__other__';
+/** Log-tag key for Drift/database SQL lines (see parseSourceTag). */
+var DATABASE_TAG_KEY = 'database';
 var sourceTagShowAll = false;
 var sourceTagMaxChips = 20;
 var sourceTagMinChip = 2;
@@ -145,6 +147,9 @@ function registerSourceTag(item) {
     var parentHidden = lk ? !!hiddenSourceTags[lk] : true;
     if (primaryHidden && (!lk || parentHidden)) { item.sourceFiltered = true; }
     updateTagSummary();
+    if (key === DATABASE_TAG_KEY || lk === DATABASE_TAG_KEY) {
+        if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
+    }
 }
 
 /** Decrement the count for a line item's source tag and logcat parent (used by trimData). */
@@ -177,6 +182,31 @@ function applySourceTagFilter() {
     }
     if (typeof recalcAndRender === 'function') { recalcAndRender(); }
     else { recalcHeights(); renderViewport(true); }
+    if (typeof updateSqlToolbarButton === 'function') updateSqlToolbarButton();
+}
+
+/** Icon bar SQL control: count + toggle; stays in sync with Filters Log tags database chip. */
+function updateSqlToolbarButton() {
+    var btn = document.getElementById('ib-sql-filter');
+    if (!btn) return;
+    var shortEl = document.getElementById('ib-sql-filter-count-short');
+    var labelEl = btn.querySelector('.ib-sql-filter-label');
+    var n = (sourceTagCounts && sourceTagCounts[DATABASE_TAG_KEY]) ? sourceTagCounts[DATABASE_TAG_KEY] : 0;
+    var fmt = (typeof formatLogCountShort === 'function') ? formatLogCountShort(n) : String(n);
+    if (shortEl) shortEl.textContent = fmt;
+    if (labelEl) labelEl.textContent = 'SQL (' + fmt + ')';
+    var hidden = n > 0 && !!(hiddenSourceTags && hiddenSourceTags[DATABASE_TAG_KEY]);
+    btn.classList.toggle('ib-sql-filter-hidden', hidden);
+    btn.disabled = n <= 0;
+    btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    btn.title = n <= 0 ? 'No database (SQL) lines in this log yet'
+        : (hidden ? 'Show database (SQL) lines (' + fmt + ' in log)' : 'Hide database (SQL) lines (' + fmt + ' in log)');
+}
+
+function toggleDatabaseSqlFromToolbar() {
+    var n = (sourceTagCounts && sourceTagCounts[DATABASE_TAG_KEY]) ? sourceTagCounts[DATABASE_TAG_KEY] : 0;
+    if (n <= 0) return;
+    toggleSourceTag(DATABASE_TAG_KEY);
 }
 
 /** Toggle a single source tag on/off and re-apply the filter. */
@@ -212,22 +242,23 @@ function deselectAllTags() {
 /** Update the summary text in the log tags section. */
 function updateTagSummary() {
     var el = document.getElementById('source-tag-summary');
-    if (!el) { return; }
-    var chipKeys = getSourceTagChipKeys();
-    var chipKeySet = {};
-    for (var ci = 0; ci < chipKeys.length; ci++) chipKeySet[chipKeys[ci]] = true;
-    var total = chipKeys.length;
-    var hiddenKeys = Object.keys(hiddenSourceTags);
-    var hidden = 0;
-    for (var hi = 0; hi < hiddenKeys.length; hi++) {
-        if (chipKeySet[hiddenKeys[hi]]) {
-            hidden++;
+    if (el) {
+        var chipKeys = getSourceTagChipKeys();
+        var chipKeySet = {};
+        for (var ci = 0; ci < chipKeys.length; ci++) chipKeySet[chipKeys[ci]] = true;
+        var total = chipKeys.length;
+        var hiddenKeys = Object.keys(hiddenSourceTags);
+        var hidden = 0;
+        for (var hi = 0; hi < hiddenKeys.length; hi++) {
+            if (chipKeySet[hiddenKeys[hi]]) {
+                hidden++;
+            }
         }
+        el.textContent = total + ' tag' + (total !== 1 ? 's' : '')
+            + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+        var section = document.getElementById('log-tags-section');
+        if (section) { section.style.display = total > 0 ? '' : 'none'; }
     }
-    el.textContent = total + ' tag' + (total !== 1 ? 's' : '')
-        + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
-    var section = document.getElementById('log-tags-section');
-    if (section) { section.style.display = total > 0 ? '' : 'none'; }
 }
 
 ${(0, viewer_source_tags_ui_1.getSourceTagUiScript)()}
