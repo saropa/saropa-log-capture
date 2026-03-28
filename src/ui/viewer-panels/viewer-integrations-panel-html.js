@@ -51,6 +51,7 @@ function renderIntegrationRow(a) {
     const hasExpandable = longDesc.length > INTEGRATIONS_DESCRIPTION_COLLAPSE_THRESHOLD_CHARS ||
         !!a.performanceNote ||
         !!a.whenToDisable;
+    // Collapsed: line-clamped preview (CSS). Expanded: full text, notes, then "less" toggle at end.
     const descBlock = hasExpandable
         ? `<p class="integrations-desc integrations-desc-collapsible">
                 <span class="integrations-desc-preview">${escapedLongDesc}</span>
@@ -84,7 +85,7 @@ function getIntegrationsPanelHtml() {
             <span class="integrations-title">Integrations</span>
         </div>
         <div class="integrations-content">
-            <p class="integrations-intro">Choose what to attach to each debug session. Session adapters add context to the log header or sidecar files; Crashlytics adds the production-issues sidebar. Each integration below includes a short note on performance and when you might leave it off.</p>
+            <p class="integrations-intro">Choose session capture adapters (header lines and sidecars), third-party tools (Crashlytics, Drift, etc.), and in-editor features like Explain with AI. Each row notes performance impact and when you might turn it off.</p>
             <div class="integrations-search-wrapper">
                 <input id="integrations-search" type="text" placeholder="Search integrations…" aria-label="Search integrations" />
             </div>
