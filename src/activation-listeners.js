@@ -47,6 +47,7 @@ const config_1 = require("./modules/config/config");
 const source_linker_1 = require("./modules/source/source-linker");
 const scope_context_1 = require("./modules/storage/scope-context");
 const learning_webview_options_1 = require("./modules/learning/learning-webview-options");
+const integration_adapter_constants_1 = require("./modules/integrations/integration-adapter-constants");
 /**
  * Setup line and split listeners for DAP output routing.
  */
@@ -92,6 +93,15 @@ function setupConfigListener(context, sessionManager, broadcaster) {
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapShowSqlDensity')) {
             broadcaster.setMinimapShowSqlDensity(cfg.minimapShowSqlDensity);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapProportionalLines')) {
+            broadcaster.setMinimapProportionalLines(cfg.minimapProportionalLines);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapViewportRedOutline')) {
+            broadcaster.setMinimapViewportRedOutline(cfg.minimapViewportRedOutline);
+        }
+        if (e.affectsConfiguration('saropaLogCapture.minimapViewportOutsideArrow')) {
+            broadcaster.setMinimapViewportOutsideArrow(cfg.minimapViewportOutsideArrow);
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
@@ -144,12 +154,29 @@ function setupConfigListener(context, sessionManager, broadcaster) {
             || e.affectsConfiguration('saropaLogCapture.errorRateDetectSpikes')) {
             broadcaster.setErrorRateConfig((0, config_1.errorRateConfigFromConfig)(cfg));
         }
+        if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')
+            || e.affectsConfiguration('saropaLogCapture.ai.enabled')) {
+            syncIntegrationsAdaptersToWebview(broadcaster);
+        }
         if (e.affectsConfiguration('saropaLogCapture.integrations.adapters')) {
             showSecurityAdapterNotice(context, cfg).catch(() => { });
+        }
+        if (e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
+            || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
+            || e.affectsConfiguration('saropaLogCapture.levelDetection')
+            || e.affectsConfiguration('saropaLogCapture.deemphasizeFrameworkLevels')
+            || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')) {
+            broadcaster.setErrorClassificationSettings(cfg.suppressTransientErrors, cfg.breakOnCritical, cfg.levelDetection, cfg.deemphasizeFrameworkLevels, cfg.stderrTreatAsError);
         }
     }));
 }
 const securityNoticeKey = 'securityAdapterNoticeShown';
+/** Push session + Explain-with-AI checkbox state to the log viewer after settings change. */
+function syncIntegrationsAdaptersToWebview(broadcaster) {
+    const cfg = (0, config_1.getConfig)();
+    const merged = (0, integration_adapter_constants_1.mergeIntegrationAdaptersForWebview)(cfg.integrationsAdapters, vscode.workspace.getConfiguration('saropaLogCapture.ai').get('enabled', false));
+    broadcaster.postToWebview({ type: 'integrationsAdapters', adapterIds: merged });
+}
 /** Show a one-time info message when the security adapter is first enabled. */
 async function showSecurityAdapterNotice(context, cfg) {
     if (!cfg.integrationsAdapters.includes('security')) {

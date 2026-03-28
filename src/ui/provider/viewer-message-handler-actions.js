@@ -63,6 +63,9 @@ const viewer_message_handler_root_cause_ai_1 = require("./viewer-message-handler
 const viewer_message_handler_static_sql_1 = require("./viewer-message-handler-static-sql");
 const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
 const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
+const viewer_workspace_bool_message_map_1 = require("./viewer-workspace-bool-message-map");
+const SAROPA_BOOL_SETTING_BY_MSG_TYPE = viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE;
+exports.SAROPA_BOOL_SETTING_BY_MSG_TYPE = SAROPA_BOOL_SETTING_BY_MSG_TYPE;
 function isAllowedExternalUrl(url) {
     const trimmed = url.trim();
     if (trimmed.length === 0 || trimmed.length > 2048) {
@@ -314,15 +317,6 @@ function runOpenUrl(msg) {
         (0, extension_logger_1.logExtensionWarn)('viewerMessage', 'openUrl rejected: invalid or disallowed scheme');
     }
 }
-/** Webview → workspace boolean updates for `saropaLogCapture.*` (context menu / options panel). */
-const SAROPA_BOOL_SETTING_BY_MSG_TYPE = {
-    setMinimapSqlDensity: "minimapShowSqlDensity",
-    setMinimapProportionalLines: "minimapProportionalLines",
-    setShowScrollbar: "showScrollbar",
-    setMinimapShowInfoMarkers: "minimapShowInfoMarkers",
-    setMinimapViewportRedOutline: "minimapViewportRedOutline",
-    setMinimapViewportOutsideArrow: "minimapViewportOutsideArrow",
-};
 function runSessionAction(msg, ctx) {
     const uriStrings = Array.isArray(msg.uriStrings) ? msg.uriStrings : [msgStr(msg, "uriString")];
     const filenames = Array.isArray(msg.filenames) ? msg.filenames : [msgStr(msg, "filename")];

@@ -111,6 +111,11 @@ var loadTruncatedInfo = null;
 var correlationByLineIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
+/* Minimap / scrollbar settings: mirrored from host postMessage for context-menu checkmarks (see viewer-script-messages). */
+var minimapProportionalLines = true;
+var minimapShowInfoMarkers = false;
+var minimapViewportRedOutline = false;
+var minimapViewportOutsideArrow = false;
 
 /** Strip HTML tags and decode entities; null/undefined-safe so Copy All and copy-float never throw on missing line.html. */
 function stripTags(html) {

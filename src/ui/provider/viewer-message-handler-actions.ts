@@ -30,6 +30,9 @@ import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cau
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
 import { getAiEnabledConfigurationTarget } from '../../modules/ai/ai-enable-scope';
 import { showAiExplainRunFailure } from '../../modules/ai/ai-explain-ui';
+import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
+
+export { SAROPA_BOOL_SETTING_BY_MSG_TYPE };
 
 function isAllowedExternalUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -243,16 +246,6 @@ function runOpenUrl(msg: Record<string, unknown>): void {
     logExtensionWarn('viewerMessage', 'openUrl rejected: invalid or disallowed scheme');
   }
 }
-
-/** Webview → workspace boolean updates for `saropaLogCapture.*` (context menu / options panel). */
-const SAROPA_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> = {
-  setMinimapSqlDensity: "minimapShowSqlDensity",
-  setMinimapProportionalLines: "minimapProportionalLines",
-  setShowScrollbar: "showScrollbar",
-  setMinimapShowInfoMarkers: "minimapShowInfoMarkers",
-  setMinimapViewportRedOutline: "minimapViewportRedOutline",
-  setMinimapViewportOutsideArrow: "minimapViewportOutsideArrow",
-};
 
 function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
   const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [msgStr(msg, "uriString")];
