@@ -64,7 +64,9 @@ suite("drift-log-line-args-fold", () => {
     test("should render suffix exactly once, inside fold wrapper only", () => {
         const raw = 'Drift: Sent PRAGMA table_info("x") with args []';
         const html = (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsFold)(raw);
+        // The suffix must appear inside .drift-args-suffix (hidden until expanded)
         assert.ok(html.includes('<span class="drift-args-suffix"> with args []</span>'));
+        // After the closing </span></span> of the fold wrapper, no second copy should exist
         const foldEnd = html.indexOf('</span></span>');
         assert.ok(foldEnd >= 0, "expected fold wrapper close tags");
         const afterFold = html.substring(foldEnd + '</span></span>'.length);
