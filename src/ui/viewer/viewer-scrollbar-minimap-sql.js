@@ -6,6 +6,10 @@ exports.getScrollbarMinimapSqlScript = getScrollbarMinimapSqlScript;
  *
  * Embeds `RegExp` literals from `viewer-scrollbar-minimap-sql-heuristics.ts` so runtime
  * behavior and Node unit tests cannot drift.
+ *
+ * **Rendering model (log viewer webview only — not the VS Code editor minimap):**
+ * SQL/slow-SQL activity is painted as **full-width** vertical bands in scroll space, then severity and
+ * search ticks draw on top. Older builds used a right-rail-only strip, which read as “half missing.”
  */
 const viewer_scrollbar_minimap_sql_heuristics_1 = require("./viewer-scrollbar-minimap-sql-heuristics");
 function getScrollbarMinimapSqlScript() {
@@ -24,7 +28,7 @@ function isLikelySlowSqlLine(it, plain) {
     return mmSlowSqlTextPattern.test(plain || '');
 }
 
-/** Render subtle right-side SQL density bands by vertical bucket. */
+/** Full-width vertical bands: SQL activity (blue) and slow SQL (orange). Severity/search draw on top. */
 function paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH) {
     var i;
     var maxSql = 0;
@@ -35,21 +39,20 @@ function paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH) {
     }
     if (maxSql <= 0 && maxSlow <= 0) return;
     var bucketH = Math.max(1, Math.ceil(mmH / sqlBuckets.length));
-    var x = Math.max(0, mmW - Math.max(6, Math.floor(mmW * 0.42)));
-    var w = mmW - x;
     for (i = 0; i < sqlBuckets.length; i++) {
         var y = Math.floor((i / sqlBuckets.length) * mmH);
         var sqlAlpha = maxSql > 0 ? (sqlBuckets[i] / maxSql) : 0;
         if (sqlAlpha > 0) {
             mmCtx.fillStyle = mmColors.sqlDensity;
-            mmCtx.globalAlpha = 0.07 + (0.18 * sqlAlpha);
-            mmCtx.fillRect(x, y, w, bucketH);
+            /* Slightly softer than the old right-rail-only strip — same strip is now full width. */
+            mmCtx.globalAlpha = 0.05 + (0.12 * sqlAlpha);
+            mmCtx.fillRect(0, y, mmW, bucketH);
         }
         var slowAlpha = maxSlow > 0 ? (slowSqlBuckets[i] / maxSlow) : 0;
         if (slowAlpha > 0) {
             mmCtx.fillStyle = mmColors.sqlSlowDensity;
-            mmCtx.globalAlpha = 0.08 + (0.26 * slowAlpha);
-            mmCtx.fillRect(x, y, w, bucketH);
+            mmCtx.globalAlpha = 0.06 + (0.18 * slowAlpha);
+            mmCtx.fillRect(0, y, mmW, bucketH);
         }
     }
     mmCtx.globalAlpha = 1;

@@ -72,6 +72,26 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
                 'injected script should embed MINIMAP_SQL_KEYWORD_RE via .toString()'
             );
         });
+
+        test('minimap script includes proportional line width helpers', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(script.includes('mmBarWidthFrac'), 'mmBarWidthFrac for VS Code–like bar width');
+            assert.ok(script.includes('handleMinimapProportionalLines'), 'setting handler for minimapProportionalLines');
+        });
+    });
+
+    suite('SQL density painting (scroll map vs editor minimap)', () => {
+        test('after: paintSqlDensityBuckets uses full strip width (regression: no right-rail-only 0.42 fraction)', () => {
+            const script = getScrollbarMinimapScript();
+            const fn = script.split('function paintSqlDensityBuckets')[1];
+            assert.ok(fn, 'paintSqlDensityBuckets present');
+            const body = fn.split(/\nfunction |\nvar /)[0] ?? fn;
+            assert.ok(
+                body.includes('fillRect(0, y, mmW, bucketH)'),
+                'SQL and slow-SQL bands must span full minimap width'
+            );
+            assert.ok(!body.includes('0.42'), 'old horizontal split fraction must not remain in this function');
+        });
     });
 
     suite('neutral presence fallback (severity hidden / info-only)', () => {
@@ -84,10 +104,12 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
             const script = getScrollbarMinimapScript();
             assert.ok(script.includes('mc === 0 && total > 0'), 'neutral branch guard');
             assert.ok(script.includes('rgba(140, 140, 140, 0.24)'), 'neutral stroke fill');
-            assert.ok(
-                script.includes('content presence (enable info markers for colors)'),
-                'tooltip directs users to saropaLogCapture.minimapShowInfoMarkers for colors'
-            );
+        });
+
+        test('hover title explains scroll map in plain language', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
+            assert.ok(script.includes('Enable info markers in settings'), 'points to settings for info colors');
         });
     });
 });
