@@ -1,7 +1,14 @@
 /**
- * Live-line batching for LogViewerProvider.
- * Handles addLine processing, batch timer, and periodic flush.
- * Extracted to keep log-viewer-provider.ts under the line limit.
+ * Live-line batching for LogViewerProvider and PopOutPanel.
+ *
+ * **Central contract:** `buildPendingLineFromLineData` turns one `LineData` into HTML (`PendingLine`)
+ * (ANSI, links, thread-header styling, framework/coverage). `ViewerBroadcaster.addLine` calls this
+ * **once per line** and fans out copies to each `ViewerTarget` via `appendLiveLineFromBroadcast`, so
+ * sidebar + pop-out do not duplicate that work. Thread-dump grouping (`processLineForThreadDump`) still
+ * runs per target because each webview has its own `threadDumpState` and `pendingLines` queue.
+ *
+ * **Timers:** `startBatchTimer` / `scheduleNextBatch` flush pending lines to the webview on an interval;
+ * `flushPendingBatch` also flushes buffered thread-dump groups before posting.
  */
 
 import { ansiToHtml, escapeHtml } from "../../modules/capture/ansi";
@@ -25,20 +32,32 @@ export interface BatchTarget {
     postMessage(message: unknown): void;
 }
 
-/** Queue a live line for the next batch flush. */
-export function addLineToBatch(target: BatchTarget, data: LineData): void {
-    if (!target.getView()?.visible) { return; }
+/**
+ * Build one viewer line from raw capture (ANSI, links, thread header styling, framework/coverage).
+ * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
+ */
+export function buildPendingLineFromLineData(data: LineData): PendingLine {
     let html = data.isMarker ? escapeHtml(data.text) : linkifyUrls(linkifyHtml(ansiToHtml(data.text)));
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const fw = helpers.classifyFrame(data.text);
     const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
-    const line: PendingLine = {
+    return {
         text: html, isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
     };
-    processLineForThreadDump(target.threadDumpState, line, data.text, target.pendingLines);
+}
+
+/** Append a pre-built line to the pending queue (per-viewer thread-dump state). */
+export function appendLiveLineToBatch(target: BatchTarget, line: PendingLine, rawText: string): void {
+    if (!target.getView()?.visible) { return; }
+    processLineForThreadDump(target.threadDumpState, line, rawText, target.pendingLines);
+}
+
+/** Queue a live line for the next batch flush (build + append). */
+export function addLineToBatch(target: BatchTarget, data: LineData): void {
+    appendLiveLineToBatch(target, buildPendingLineFromLineData(data), data.text);
 }
 
 /** Start the periodic batch flush timer. */

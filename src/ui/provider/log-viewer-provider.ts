@@ -23,7 +23,13 @@ import * as helpers from "./viewer-provider-helpers";
 import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-thread-grouping";
 import * as panelHandlers from "../shared/viewer-panel-handlers";
 import { dispatchViewerMessage, type ViewerMessageContext } from "./viewer-message-handler";
-import { addLineToBatch, startBatchTimer, stopBatchTimer, flushPendingBatch } from "./log-viewer-provider-batch";
+import {
+  addLineToBatch,
+  appendLiveLineToBatch,
+  startBatchTimer,
+  stopBatchTimer,
+  flushPendingBatch,
+} from "./log-viewer-provider-batch";
 import { getViewerKeybindingsFromConfig } from "../viewer/viewer-keybindings";
 import * as state from "./log-viewer-provider-state";
 
@@ -185,6 +191,9 @@ export class LogViewerProvider
     state.setPresetsImpl(this, presets);
   }
   addLine(data: LineData): void { addLineToBatch(this, data); }
+  appendLiveLineFromBroadcast(line: PendingLine, rawText: string): void {
+    appendLiveLineToBatch(this, line, rawText);
+  }
   setCurrentFile(uri: vscode.Uri | undefined): void {
     this.currentFileUri = uri;
     this.postMessage({ type: 'currentLogChanged', currentFileUri: uri?.toString() });
@@ -192,6 +201,9 @@ export class LogViewerProvider
   setScopeContext(ctx: ScopeContext): void { state.setScopeContextImpl(this, ctx); }
   setMinimapShowInfo(show: boolean): void { state.setMinimapShowInfoImpl(this, show); }
   setMinimapShowSqlDensity(show: boolean): void { state.setMinimapShowSqlDensityImpl(this, show); }
+  setMinimapProportionalLines(show: boolean): void { state.setMinimapProportionalLinesImpl(this, show); }
+  setMinimapViewportRedOutline(show: boolean): void { state.setMinimapViewportRedOutlineImpl(this, show); }
+  setMinimapViewportOutsideArrow(show: boolean): void { state.setMinimapViewportOutsideArrowImpl(this, show); }
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
     state.setViewerRepeatThresholdsImpl(this, thresholds);
   }
