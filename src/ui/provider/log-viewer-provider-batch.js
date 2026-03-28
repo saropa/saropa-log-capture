@@ -52,7 +52,7 @@ exports.startBatchTimer = startBatchTimer;
 exports.stopBatchTimer = stopBatchTimer;
 exports.flushPendingBatch = flushPendingBatch;
 const ansi_1 = require("../../modules/capture/ansi");
-const source_linker_1 = require("../../modules/source/source-linker");
+const drift_log_line_args_fold_1 = require("../../modules/db/drift-log-line-args-fold");
 const viewer_thread_grouping_1 = require("../viewer/viewer-thread-grouping");
 const helpers = __importStar(require("./viewer-provider-helpers"));
 const BATCH_INTERVAL_MS = 200;
@@ -63,7 +63,7 @@ const BATCH_BACKLOG_THRESHOLD = 1000;
  * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
  */
 function buildPendingLineFromLineData(data) {
-    let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(data.text)));
+    let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsFold)(data.text);
     if (!data.isMarker) {
         html = helpers.tryFormatThreadHeader(data.text, html);
     }
