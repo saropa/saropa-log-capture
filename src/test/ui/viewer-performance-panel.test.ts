@@ -49,5 +49,32 @@ suite('ViewerPerformancePanel', () => {
             assert.ok(script.includes("'insight-'"));
             assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("insight-pp-panel"));
         });
+
+        test('session perf chip should open Insight without setActivePanel toggle-off', () => {
+            const script = getPerformancePanelScript('insight-');
+            assert.ok(script.includes('ensureInsightSlideoutOpen'));
+            assert.ok(script.includes('session-perf-chip'));
+        });
+
+        test('session perf chip should try ensureInsightSlideoutOpen before setActivePanel fallback', () => {
+            const script = getPerformancePanelScript();
+            const ensureIdx = script.indexOf('ensureInsightSlideoutOpen');
+            const fallbackIdx = script.indexOf("window.setActivePanel === 'function') window.setActivePanel('insight')");
+            assert.ok(ensureIdx > 0, 'ensureInsightSlideoutOpen must appear in chip handler');
+            assert.ok(fallbackIdx > ensureIdx, 'setActivePanel fallback must come after ensureInsightSlideoutOpen');
+        });
+
+        test('session perf chip fallback should use else-if chain, not unconditional calls', () => {
+            const script = getPerformancePanelScript();
+            // Extract the chip handler block
+            const chipStart = script.indexOf("getElementById('session-perf-chip')");
+            assert.ok(chipStart > 0);
+            const handlerBlock = script.slice(chipStart, chipStart + 500);
+            // The setActivePanel('insight') call must be in an else-if, not a standalone if
+            assert.ok(
+                handlerBlock.includes('else if (typeof window.setActivePanel'),
+                'setActivePanel(insight) must be else-if (only fires when ensureInsightSlideoutOpen is absent)',
+            );
+        });
     });
 });
