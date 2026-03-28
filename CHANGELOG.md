@@ -46,6 +46,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+• **Log viewer — Performance chip** — Clicking the header **Performance** chip when the Insights slide-out was already open did nothing (no navigation, no error, no feedback). The chip called `setActivePanel('insight')` which toggled Insights **off**, then tried to open the panel inside a zero-width slot. The chip now uses `ensureInsightSlideoutOpen()` which skips the toggle when Insights is already open.
+
 • **Log viewer — SQL toolbar count** — Compact count formatter (`999k`, `1.2M`, …) no longer rounds `999,999` up to `"1000k"` at unit boundaries; `Math.floor` replaces `toFixed(0)` for the ≥100 tier so the label stays within its unit (same fix applied to the embedded webview copy).
 
 • **Log viewer — Drift SQL args fold** — The collapsible ` with args [...]` suffix on Drift SQL lines was rendered twice: once inside the fold wrapper (correctly hidden by CSS) and once as plain text after it (always visible). The suffix now appears only inside the fold, so clicking the `…` ellipsis actually toggles visibility.
