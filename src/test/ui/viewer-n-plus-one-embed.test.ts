@@ -57,7 +57,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(data.includes('parseSqlFingerprint'));
         assert.ok(data.includes('dbInsight'));
         assert.ok(data.includes('::sqlfp::'));
-        assert.ok(data.includes('SQL repeated #'));
+        assert.ok(data.includes('SQL repeated:'));
         assert.ok(data.includes('repeat-sql-fp'));
         assert.ok(data.includes('sql-repeat-drilldown-toggle'));
         assert.ok(data.includes('streakMinN'));

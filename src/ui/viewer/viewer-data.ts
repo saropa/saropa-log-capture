@@ -62,6 +62,10 @@ function trimData() {
         repeatTracker.lastLineIndex -= excess;
         if (repeatTracker.lastLineIndex < 0) repeatTracker.lastLineIndex = -1;
     }
+    if (repeatTracker.lastRepeatNotificationIndex >= 0) {
+        repeatTracker.lastRepeatNotificationIndex -= excess;
+        if (repeatTracker.lastRepeatNotificationIndex < 0) repeatTracker.lastRepeatNotificationIndex = -1;
+    }
     // Adjust hidden line indices after splice
     if (typeof adjustHiddenIndicesAfterTrim === 'function') adjustHiddenIndicesAfterTrim(excess);
     if (removedHeight > 0 && !autoScroll && !window.isContextMenuOpen) {

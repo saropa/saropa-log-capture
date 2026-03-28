@@ -7,6 +7,10 @@
  * `lineItem.dbInsight` are applied inside `emitDbLineDetectors`. Repeat-collapse and full-line
  * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
  * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`.
+ *
+ * **Repeat UI:** After the collapse threshold, the streak uses **one** `repeat-notification` row
+ * (`repeatTracker.lastRepeatNotificationIndex`) updated in place with **N × Repeated:** / **N × SQL repeated:**
+ * so long runs do not spam one line per duplicate.
  */
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
 import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data-add-stack-group-learning-and-toggle';
@@ -143,6 +147,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         repeatTracker.lastLevel = lvl;
         repeatTracker.count = 1;
         repeatTracker.lastTimestamp = now;
+        repeatTracker.lastRepeatNotificationIndex = -1;
         repeatTracker.streakMinN = lineThresholdN;
         if (sTag === 'database' && sqlMeta && sqlMeta.fingerprint) {
             repeatTracker.streakSqlFp = true;
@@ -170,7 +175,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var shouldShowNormalLine = repeatTracker.count < minN;
 
     if (!shouldShowNormalLine) {
-        // First line that enters repeat-collapse: hide the anchor row; further repeats only add notification rows.
+        // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
         if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
             repeatTracker.lastLineIndex < allLines.length) {
             var origItem = allLines[repeatTracker.lastLineIndex];
@@ -190,67 +195,102 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                 preview += '...';
             }
         }
-        var repeatSeq = nextSeq++;
+        var isUpdate = repeatTracker.count > minN && repeatTracker.lastRepeatNotificationIndex >= 0
+            && repeatTracker.lastRepeatNotificationIndex < allLines.length;
+        var repeatItem = isUpdate ? allLines[repeatTracker.lastRepeatNotificationIndex] : null;
+        if (isUpdate && (!repeatItem || repeatItem.type !== 'repeat-notification')) {
+            isUpdate = false;
+            repeatTracker.lastRepeatNotificationIndex = -1;
+            repeatItem = null;
+        }
+        var repeatSeq = isUpdate && repeatItem ? repeatItem.seq : nextSeq++;
         var repeatHtml;
         var sqlDrill = null;
         if (repeatTracker.streakSqlFp && typeof snapshotSqlRepeatDrilldown === 'function' && typeof buildSqlRepeatNotificationRowHtml === 'function') {
             sqlDrill = snapshotSqlRepeatDrilldown(ts);
             repeatHtml = buildSqlRepeatNotificationRowHtml({
                 sqlRepeatDrilldown: sqlDrill,
-                sqlRepeatDrilldownOpen: false,
+                sqlRepeatDrilldownOpen: isUpdate && repeatItem ? !!repeatItem.sqlRepeatDrilldownOpen : false,
                 repeatPreviewText: preview || '\\u2026',
                 seq: repeatSeq
             });
         } else {
-            var repeatLabelPlain = repeatTracker.streakSqlFp
-                ? ('SQL repeated #' + repeatTracker.count)
-                : ('Repeated #' + repeatTracker.count);
-            repeatHtml = '<span class="repeat-notification' + (repeatTracker.streakSqlFp ? ' repeat-sql-fp' : '') + '">' +
-                repeatLabelPlain +
-                ' <span class="repeat-preview">(' + escapeHtml(preview || '\\u2026') + ')</span></span>';
+            var countLabel = repeatTracker.count + ' \\u00d7 Repeated:';
+            repeatHtml = '<span class="repeat-notification">' +
+                countLabel +
+                ' <span class="repeat-preview">' + escapeHtml(preview || '\\u2026') + '</span></span>';
         }
         var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
+        if (isUpdate && repeatItem) {
+            var oldH = repeatItem.height;
+            totalHeight -= oldH;
+        }
         var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
-        if (repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        var repeatItem = {
-            html: repeatHtml,
-            type: 'repeat-notification',
-            height: repeatH,
-            category: category,
-            groupId: -1,
-            timestamp: ts,
-            level: lvl,
-            seq: repeatSeq,
-            sourceTag: sTag,
-            logcatTag: lTag,
-            sourceFiltered: false,
-            sqlPatternFiltered: false,
-            classFiltered: false,
-            classTags: cTags,
-            isSeparator: false,
-            sourcePath: sp || null,
-            scopeFiltered: false,
-            isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
-            autoHidden: repeatAutoHide,
-            source: lineSource,
-            timeRangeFiltered: false
-        };
-        if (sqlDrill) {
-            repeatItem.sqlRepeatDrilldown = sqlDrill;
-            repeatItem.sqlRepeatDrilldownOpen = false;
-            repeatItem.repeatPreviewText = preview || '\\u2026';
+        if (!isUpdate && repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
+        if (!isUpdate) {
+            repeatItem = {
+                html: repeatHtml,
+                type: 'repeat-notification',
+                height: repeatH,
+                category: category,
+                groupId: -1,
+                timestamp: ts,
+                level: lvl,
+                seq: repeatSeq,
+                sourceTag: sTag,
+                logcatTag: lTag,
+                sourceFiltered: false,
+                sqlPatternFiltered: false,
+                classFiltered: false,
+                classTags: cTags,
+                isSeparator: false,
+                sourcePath: sp || null,
+                scopeFiltered: false,
+                isAnr: (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText)),
+                autoHidden: repeatAutoHide,
+                source: lineSource,
+                timeRangeFiltered: false
+            };
+            if (sqlDrill) {
+                repeatItem.sqlRepeatDrilldown = sqlDrill;
+                repeatItem.sqlRepeatDrilldownOpen = false;
+                repeatItem.repeatPreviewText = preview || '\\u2026';
+            }
+            /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbInsight on these rows). */
+            if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
+                repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
+                var histPvwNew = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
+                repeatItem.sqlHistoryPreview = histPvwNew.length > 120 ? histPvwNew.substring(0, 117) + '...' : histPvwNew;
+            }
+            allLines.push(repeatItem);
+            repeatTracker.lastRepeatNotificationIndex = allLines.length - 1;
+        } else if (repeatItem) {
+            repeatItem.html = repeatHtml;
+            repeatItem.timestamp = ts;
+            repeatItem.level = lvl;
+            repeatItem.sourceTag = sTag;
+            repeatItem.logcatTag = lTag;
+            repeatItem.classTags = cTags;
+            repeatItem.isAnr = (lvl === 'performance' && anrPattern.test(repeatTracker.lastPlainText));
+            repeatItem.source = lineSource;
+            if (sqlDrill) {
+                repeatItem.sqlRepeatDrilldown = sqlDrill;
+                repeatItem.repeatPreviewText = preview || '\\u2026';
+            }
+            if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
+                repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
+                var histPvwUp = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
+                repeatItem.sqlHistoryPreview = histPvwUp.length > 120 ? histPvwUp.substring(0, 117) + '...' : histPvwUp;
+            }
+            repeatH = (typeof calcItemHeight === 'function') ? calcItemHeight(repeatItem) : (repeatAutoHide ? 0 : ROW_HEIGHT);
+            repeatItem.height = repeatH;
         }
-        /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbInsight on these rows). */
-        if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
-            repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
-            var histPvw = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
-            repeatItem.sqlHistoryPreview = histPvw.length > 120 ? histPvw.substring(0, 117) + '...' : histPvw;
-        }
-        allLines.push(repeatItem);
         resetCompressDupStreak();
-        if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
-        if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
-        if (typeof registerSqlPattern === 'function') { registerSqlPattern(repeatItem); }
+        if (!isUpdate) {
+            if (typeof registerSourceTag === 'function') { registerSourceTag(repeatItem); }
+            if (typeof registerClassTags === 'function') { registerClassTags(repeatItem); }
+            if (typeof registerSqlPattern === 'function') { registerSqlPattern(repeatItem); }
+        }
         if (typeof recordSqlQueryHistoryForAppendedItem === 'function') { recordSqlQueryHistoryForAppendedItem(repeatItem); }
         totalHeight += repeatH;
 
