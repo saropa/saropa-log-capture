@@ -32,6 +32,10 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+• **Log viewer — scroll map & scrollbar from context menu** — Right-click the **scroll map** strip beside the log or the **native vertical scrollbar** (when **Show native scrollbar** is on) opens a compact menu with the same workspace toggles as **Scroll map & scrollbar** on the main log context menu: proportional line width, native scrollbar, info markers, SQL density, red viewport outline, and outside arrow. Settings still update workspace configuration the same way as **Options → Layout**.
+
+• **Log viewer — scroll map proportional line width** — New setting `saropaLogCapture.minimapProportionalLines` (default **on**) draws minimap ticks with horizontal extent from plain-text length vs log pane width (capped at full strip), similar to an editor minimap silhouette; respects word wrap and pane resize.
+
 • **SQL Query History — Drift debug viewer from log** — When the capture includes Saropa Drift Advisor’s **DRIFT DEBUG SERVER** banner and viewer URL (e.g. `http://127.0.0.1:8642`), the extension records that base URL, shows a short status line in the SQL Query History panel, and checks **`/api/health`** from the extension host so the strip can show reachable vs unreachable. Open-in-browser actions prefer this URL over the default. Clearing the log resets the detected server state.
 
 ### Fixed

@@ -16,6 +16,9 @@ export function queuePopOutViewerConfigMicrotask(
     post({ type: "setViewerKeybindings", keyToAction: getViewerKeybindingsFromConfig() });
     post({ type: "setRootCauseHintL10n", strings: getRootCauseHintViewerStrings() });
     post({ type: "minimapShowSqlDensity", show: cfg.minimapShowSqlDensity });
+    post({ type: "minimapProportionalLines", show: cfg.minimapProportionalLines });
+    post({ type: "minimapViewportRedOutline", show: cfg.minimapViewportRedOutline });
+    post({ type: "minimapViewportOutsideArrow", show: cfg.minimapViewportOutsideArrow });
     post({ type: "setViewerRepeatThresholds", thresholds: cfg.viewerRepeatThresholds });
     post({ type: "setViewerDbInsightsEnabled", enabled: cfg.viewerDbInsightsEnabled });
     post({ type: "setStaticSqlFromFingerprintEnabled", enabled: cfg.staticSqlFromFingerprintEnabled });

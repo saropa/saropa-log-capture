@@ -45,6 +45,7 @@ const helpers = __importStar(require("./viewer-provider-helpers"));
 const viewer_keybindings_1 = require("../viewer/viewer-keybindings");
 const learning_webview_options_1 = require("../../modules/learning/learning-webview-options");
 const root_cause_hint_l10n_host_1 = require("../../modules/root-cause-hints/root-cause-hint-l10n-host");
+const integration_adapter_constants_1 = require("../../modules/integrations/integration-adapter-constants");
 function setupLogViewerWebview(target, webviewView) {
     const extUri = target.getExtensionUri();
     const audioUri = vscode.Uri.joinPath(extUri, 'audio');
@@ -73,10 +74,17 @@ function setupLogViewerWebview(target, webviewView) {
     webviewView.webview.onDidReceiveMessage((msg) => target.handleMessage(msg));
     target.startBatchTimer();
     queueMicrotask(() => helpers.sendCachedConfig(target.getCachedPresets(), target.getCachedHighlightRules(), (msg) => target.postMessage(msg), target.getContext().workspaceState.get("saropaLogCapture.lastUsedPresetName")));
-    queueMicrotask(() => target.sendIntegrationsAdapters((0, config_1.getConfig)().integrationsAdapters));
+    queueMicrotask(() => {
+        const c = (0, config_1.getConfig)();
+        const aiOn = vscode.workspace.getConfiguration("saropaLogCapture.ai").get("enabled", false);
+        target.sendIntegrationsAdapters((0, integration_adapter_constants_1.mergeIntegrationAdaptersForWebview)(c.integrationsAdapters, aiOn));
+    });
     queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(drift_advisor_integration_1.DRIFT_ADVISOR_EXTENSION_ID) }));
     queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: (0, config_1.getConfig)().enabled }));
     queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: (0, config_1.getConfig)().minimapShowSqlDensity }));
+    queueMicrotask(() => target.postMessage({ type: 'minimapProportionalLines', show: (0, config_1.getConfig)().minimapProportionalLines }));
+    queueMicrotask(() => target.postMessage({ type: 'minimapViewportRedOutline', show: (0, config_1.getConfig)().minimapViewportRedOutline }));
+    queueMicrotask(() => target.postMessage({ type: 'minimapViewportOutsideArrow', show: (0, config_1.getConfig)().minimapViewportOutsideArrow }));
     queueMicrotask(() => target.postMessage({
         type: 'setViewerRepeatThresholds',
         thresholds: (0, config_1.getConfig)().viewerRepeatThresholds,
@@ -109,6 +117,17 @@ function setupLogViewerWebview(target, webviewView) {
     queueMicrotask(() => target.postMessage({ type: 'setViewerKeybindings', keyToAction: (0, viewer_keybindings_1.getViewerKeybindingsFromConfig)() }));
     queueMicrotask(() => target.postMessage((0, learning_webview_options_1.getLearningWebviewOptions)()));
     queueMicrotask(() => target.postMessage({ type: 'setRootCauseHintL10n', strings: (0, root_cause_hint_l10n_host_1.getRootCauseHintViewerStrings)() }));
+    queueMicrotask(() => {
+        const c = (0, config_1.getConfig)();
+        target.postMessage({
+            type: 'errorClassificationSettings',
+            suppressTransientErrors: c.suppressTransientErrors,
+            breakOnCritical: c.breakOnCritical,
+            levelDetection: c.levelDetection,
+            deemphasizeFrameworkLevels: c.deemphasizeFrameworkLevels,
+            stderrTreatAsError: c.stderrTreatAsError,
+        });
+    });
     const pending = target.getPendingLoadUri();
     if (pending) {
         queueMicrotask(() => { void target.loadFromFile(pending); });

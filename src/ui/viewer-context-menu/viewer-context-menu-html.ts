@@ -1,5 +1,51 @@
+/**
+ * Toggle rows for scroll map + scrollbar settings — embedded in the main menu and in
+ * `#scroll-chrome-context-menu` (right-click on minimap / native scrollbar).
+ */
+export function getScrollChromeMenuTogglesHtml(): string {
+    return `
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional">
+                <span class="codicon codicon-graph" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Proportional line width (minimap)</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar">
+                <span class="codicon codicon-layout" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Show native scrollbar</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers">
+                <span class="codicon codicon-info" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Info markers on minimap</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density">
+                <span class="codicon codicon-database" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>SQL density on minimap</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline">
+                <span class="codicon codicon-circle-outline" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Red outline on viewport</span>
+            </div>
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow">
+                <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
+                <span class="context-menu-check codicon codicon-check"></span>
+                <span>Yellow arrow outside minimap</span>
+            </div>`;
+}
+
+/** Compact menu: same toggles as the Scroll map & scrollbar submenu (minimap / scrollbar right-click). */
+export function getScrollChromeContextMenuHtml(): string {
+    return `<div id="scroll-chrome-context-menu" class="context-menu" role="menu" aria-label="Scroll map and scrollbar">
+${getScrollChromeMenuTogglesHtml()}
+</div>`;
+}
+
 /** Returns the HTML for the context menu element. */
 export function getContextMenuHtml(): string {
+    const scrollToggles = getScrollChromeMenuTogglesHtml();
     return `<div id="context-menu" class="context-menu">
     <div class="context-menu-item" data-action="open-source-link" data-source-action>
         <span class="codicon codicon-go-to-file"></span> Open File
@@ -201,6 +247,13 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span>Compress lines (non-consecutive dupes)</span>
             </div>
+        </div>
+    </div>
+    <div class="context-menu-submenu" id="scroll-chrome-submenu">
+        <span class="codicon codicon-layout-sidebar-right"></span> Scroll map & scrollbar
+        <span class="context-menu-arrow codicon codicon-chevron-right"></span>
+        <div class="context-menu-submenu-content">
+${scrollToggles}
         </div>
     </div>
 </div>`;
