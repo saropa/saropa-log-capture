@@ -69,6 +69,9 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   queueMicrotask(() => target.postMessage({ type: 'setDriftAdvisorAvailable', available: !!vscode.extensions.getExtension(DRIFT_ADVISOR_EXTENSION_ID) }));
   queueMicrotask(() => target.postMessage({ type: 'captureEnabled', enabled: getConfig().enabled }));
   queueMicrotask(() => target.postMessage({ type: 'minimapShowSqlDensity', show: getConfig().minimapShowSqlDensity }));
+  queueMicrotask(() => target.postMessage({ type: 'minimapProportionalLines', show: getConfig().minimapProportionalLines }));
+  queueMicrotask(() => target.postMessage({ type: 'minimapViewportRedOutline', show: getConfig().minimapViewportRedOutline }));
+  queueMicrotask(() => target.postMessage({ type: 'minimapViewportOutsideArrow', show: getConfig().minimapViewportOutsideArrow }));
   queueMicrotask(() => target.postMessage({
     type: 'setViewerRepeatThresholds',
     thresholds: getConfig().viewerRepeatThresholds,
