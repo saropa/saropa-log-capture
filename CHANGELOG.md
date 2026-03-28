@@ -10,17 +10,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 **GitHub Source Code** - [github.com / saropa / saropa-log-capture](https://github.com/saropa/saropa-log-capture)
 
-**Published version**: See field "version": "x.y.z" in [package.json](./package.json)
+For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+
+<!--
+
+Each version (and [Unreleased]) should open with a short human summary when it helps; only discuss user-facing features.
+
 
 **Tagged changelog** — Published versions use git tag **`vx.y.z`**; each section below ends its summary line with **[log](url)** to that snapshot (or a standalone **[log](url)** when there is no summary). Compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
 
-Each version (and [Unreleased]) should open with a short human summary when it helps; only discuss user-facing features; vary the phrasing.
+**Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
-For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+-->
+
+---
+
+## [Unreleased]
 
 ---
 
 ## [5.0.0]
+
+Consolidates the header, footer, and scattered filter controls into a single persistent toolbar with a collapsible filter drawer and search flyout, adds scroll map enhancements (proportional line width, SQL density, context menus), duplicate line collapsing, and Drift debug server detection in SQL Query History. [log](https://github.com/saropa/saropa-log-capture/blob/v5.0.0/CHANGELOG.md)
 
 ### Changed
 
@@ -73,6 +84,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [4.2.0]
+
+Unifies severity bar and line text coloring to use matching VS Code theme tokens, fixes the pop-out viewer to load the full capture on open, and addresses minimap, copy/export, and layout edge cases. [log](https://github.com/saropa/saropa-log-capture/blob/v4.2.0/CHANGELOG.md)
 
 ### Changed
 
