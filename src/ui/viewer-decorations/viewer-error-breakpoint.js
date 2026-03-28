@@ -142,7 +142,7 @@ window.addEventListener('message', function(event) {
         for (var i = 0; i < msg.lines.length; i++) {
             var ln = msg.lines[i];
             // Check if line contains error keywords or has error category
-            if (ln.category === 'stderr' ||
+            if ((stderrTreatAsError && ln.category === 'stderr') ||
                 /\\b(error|exception|fail(ed|ure)?|fatal|panic|critical)\\b/i.test(ln.text)) {
                 onErrorDetected();
                 break; // Only trigger once per batch

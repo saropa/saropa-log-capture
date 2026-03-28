@@ -40,7 +40,7 @@ function mapToTimelineLevel(level) {
     }
 }
 const logLinePattern = /^\[([\d:.]+)\]\s*\[(\w+)\]\s?(.*)/;
-function parseLogLineToEvent(line, lineIndex, fileUri, sessionStartMs) {
+function parseLogLineToEvent(line, lineIndex, fileUri, sessionStartMs, classifyOpts = { strict: true, stderrTreatAsError: false }) {
     const match = logLinePattern.exec(line);
     if (!match) {
         return undefined;
@@ -51,7 +51,7 @@ function parseLogLineToEvent(line, lineIndex, fileUri, sessionStartMs) {
         return undefined;
     }
     const plainText = (0, ansi_1.stripAnsi)(rest);
-    const severity = (0, level_classifier_1.classifyLevel)(plainText, category, true);
+    const severity = (0, level_classifier_1.classifyLevel)(plainText, category, classifyOpts.strict, classifyOpts.stderrTreatAsError);
     return { timestamp, source: 'debug', level: mapToTimelineLevel(severity), summary: plainText.slice(0, 120), detail: plainText, location: { file: fileUri, line: lineIndex + 1 } };
 }
 function parsePerfSampleToEvent(sample, sidecarUri, index, prevSample) {

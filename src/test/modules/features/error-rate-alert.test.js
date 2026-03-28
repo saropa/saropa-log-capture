@@ -114,8 +114,11 @@ suite('ErrorRateAlert', () => {
     });
 });
 suite('isErrorLine', () => {
-    test('should detect stderr category as error', () => {
-        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('some text', 'stderr'), true);
+    test('should treat benign stderr as non-error when stderrTreatAsError is off', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('some text', 'stderr'), false);
+    });
+    test('should treat stderr with error keywords as error when stderrTreatAsError is off', () => {
+        assert.strictEqual((0, error_rate_alert_1.isErrorLine)('Error: oops', 'stderr'), true);
     });
     test('should detect error keyword', () => {
         assert.strictEqual((0, error_rate_alert_1.isErrorLine)('An error occurred', 'stdout'), true);
