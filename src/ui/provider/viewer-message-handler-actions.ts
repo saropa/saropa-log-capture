@@ -244,6 +244,16 @@ function runOpenUrl(msg: Record<string, unknown>): void {
   }
 }
 
+/** Webview → workspace boolean updates for `saropaLogCapture.*` (context menu / options panel). */
+const SAROPA_BOOL_SETTING_BY_MSG_TYPE: Readonly<Record<string, string>> = {
+  setMinimapSqlDensity: "minimapShowSqlDensity",
+  setMinimapProportionalLines: "minimapProportionalLines",
+  setShowScrollbar: "showScrollbar",
+  setMinimapShowInfoMarkers: "minimapShowInfoMarkers",
+  setMinimapViewportRedOutline: "minimapViewportRedOutline",
+  setMinimapViewportOutsideArrow: "minimapViewportOutsideArrow",
+};
+
 function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContext): void {
   const uriStrings = Array.isArray(msg.uriStrings) ? (msg.uriStrings as string[]) : [msgStr(msg, "uriString")];
   const filenames = Array.isArray(msg.filenames) ? (msg.filenames as string[]) : [msgStr(msg, "filename")];
@@ -251,6 +261,12 @@ function runSessionAction(msg: Record<string, unknown>, ctx: ViewerMessageContex
 }
 
 function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, ctx: ViewerMessageContext): boolean {
+  const boolKey = SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
+  if (boolKey) {
+    vscode.workspace.getConfiguration("saropaLogCapture")
+      .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+    return true;
+  }
   switch (type) {
     case "addToWatch": ctx.onAddToWatch?.(msgStr(msg, "text")); return true;
     case "promptAnnotation":
@@ -277,10 +293,14 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
       vscode.workspace.getConfiguration("saropaLogCapture")
         .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
       return true;
-    case "setMinimapSqlDensity":
+    case "setMinimapWidth": {
+      const w = msgStr(msg, "value");
+      const allowed = new Set(["xsmall", "small", "medium", "large", "xlarge"]);
+      if (!allowed.has(w)) return true;
       vscode.workspace.getConfiguration("saropaLogCapture")
-        .update("minimapShowSqlDensity", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+        .update("minimapWidth", w, vscode.ConfigurationTarget.Workspace);
       return true;
+    }
     case "editLine":
       helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
         lineIndex: safeLineIndex(msg.lineIndex, 0), newText: msgStr(msg, "newText"),
