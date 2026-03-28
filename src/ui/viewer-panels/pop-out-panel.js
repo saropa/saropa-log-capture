@@ -5,6 +5,11 @@
  * Opens the same viewer HTML as an editor-tab WebviewPanel so the user
  * can drag it to a second monitor. Implements ViewerTarget for broadcast
  * compatibility with the sidebar LogViewerProvider.
+ *
+ * On first open, the panel hydrates from the same log file URI as the main viewer
+ * (`executeLoadContent`) so the pop-out shows full session history, not only lines emitted
+ * after the window was created. Live `addLine` events during that async load are deferred
+ * and replayed (see `filterDeferredLinesAfterSnapshot`) to avoid gaps and duplicates.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -42,12 +47,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PopOutPanel = void 0;
 const vscode = __importStar(require("vscode"));
-const ansi_1 = require("../../modules/capture/ansi");
-const source_linker_1 = require("../../modules/source/source-linker");
 const viewer_content_1 = require("../provider/viewer-content");
 const config_1 = require("../../modules/config/config");
 const viewer_highlight_serializer_1 = require("../viewer-decorations/viewer-highlight-serializer");
 const helpers = __importStar(require("../provider/viewer-provider-helpers"));
+const log_viewer_provider_batch_1 = require("../provider/log-viewer-provider-batch");
 const viewer_thread_grouping_1 = require("../viewer/viewer-thread-grouping");
 const viewer_message_handler_1 = require("../provider/viewer-message-handler");
 const log_viewer_provider_load_1 = require("../provider/log-viewer-provider-load");
@@ -63,6 +67,7 @@ class PopOutPanel {
     context;
     broadcaster;
     panel;
+    /** Public for BatchTarget (same as LogViewerProvider). */
     pendingLines = [];
     batchTimer;
     threadDumpState = (0, viewer_thread_grouping_1.createThreadDumpState)();
@@ -92,6 +97,7 @@ class PopOutPanel {
     onSessionAction;
     onBrowseSessionRoot;
     onClearSessionRoot;
+    /** Snapshot URI from the main viewer so the pop-out can load full on-disk history when opened. */
     getHydrationUri;
     hydratingFromFile = false;
     deferredLinesDuringHydrate = [];
@@ -109,6 +115,7 @@ class PopOutPanel {
             this.panel.reveal();
             return;
         }
+        // Buffer live lines while we load from disk so the webview shows full history, not only post-open lines.
         this.hydratingFromFile = true;
         this.deferredLinesDuringHydrate = [];
         const audioUri = vscode.Uri.joinPath(this.extensionUri, 'audio');
@@ -155,30 +162,31 @@ class PopOutPanel {
     setClearSessionRootHandler(h) { this.onClearSessionRoot = h; }
     // -- ViewerTarget state methods --
     addLine(data) {
+        // During hydrate, capture all lines (even if panel not visible yet) so we don't drop or duplicate vs file load.
         if (this.hydratingFromFile) {
             this.deferredLinesDuringHydrate.push(data);
             return;
         }
-        /* Skip when panel not visible to avoid CPU spike (same as sidebar viewer). */
-        if (!this.panel?.visible) {
-            return;
-        }
-        this.enqueueLineForBatch(data);
+        (0, log_viewer_provider_batch_1.addLineToBatch)(this, data);
     }
-    enqueueLineForBatch(data) {
-        let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(data.text)));
-        if (!data.isMarker) {
-            html = helpers.tryFormatThreadHeader(data.text, html);
-        }
-        const fw = helpers.classifyFrame(data.text);
-        const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
-        const line = {
-            text: html, isMarker: data.isMarker, lineCount: data.lineCount,
-            category: data.category, timestamp: data.timestamp.getTime(),
-            fw, sourcePath: data.sourcePath,
-            ...(qualityPercent === undefined ? {} : { qualityPercent }),
-        };
-        (0, viewer_thread_grouping_1.processLineForThreadDump)(this.threadDumpState, line, data.text, this.pendingLines);
+    /** Pre-built line from ViewerBroadcaster (avoids duplicate ANSI/linkify when sidebar + pop-out are both open). */
+    appendLiveLineFromBroadcast(line, rawText) {
+        (0, log_viewer_provider_batch_1.appendLiveLineToBatch)(this, line, rawText);
+    }
+    /** Pop-out buffers raw lines while loading snapshot from disk (see ViewerBroadcaster.addLine). */
+    isLiveCaptureHydrating() {
+        return this.hydratingFromFile;
+    }
+    /** Visibility for live batch pipeline (matches sidebar LogViewerProvider.getView). */
+    getView() {
+        return this.panel ? { visible: this.panel.visible } : undefined;
+    }
+    /** BatchTarget / LogViewerLoadTarget compatibility (sidebar uses postMessage naming). */
+    getSeenCategories() {
+        return this.seenCategories;
+    }
+    postMessage(message) {
+        this.post(message);
     }
     clear() {
         (0, viewer_thread_grouping_1.flushThreadDump)(this.threadDumpState, this.pendingLines);
@@ -231,6 +239,8 @@ class PopOutPanel {
     setScopeContext(ctx) { this.post({ type: "setScopeContext", ...ctx }); }
     setMinimapShowInfo(show) { this.post({ type: "minimapShowInfo", show }); }
     setMinimapShowSqlDensity(show) { this.post({ type: "minimapShowSqlDensity", show }); }
+    setMinimapViewportRedOutline(show) { this.post({ type: "minimapViewportRedOutline", show }); }
+    setMinimapViewportOutsideArrow(show) { this.post({ type: "minimapViewportOutsideArrow", show }); }
     setViewerRepeatThresholds(thresholds) {
         this.post({
             type: "setViewerRepeatThresholds",
@@ -395,6 +405,10 @@ class PopOutPanel {
     postToWebview(message) {
         this.post(message);
     }
+    /**
+     * Load the same log file as the sidebar so the pop-out shows the full capture, not only lines after open.
+     * Live lines received during load are deferred and replayed after the snapshot so nothing is dropped.
+     */
     async runHydrationFromDisk() {
         const gen = ++this.hydrateGen;
         try {
@@ -420,6 +434,7 @@ class PopOutPanel {
             if (gen !== this.hydrateGen || !this.panel) {
                 return;
             }
+            // Live capture uses addLine only; mirror the sidebar (not viewing a static file) after loading the snapshot.
             if (this.isSessionActive) {
                 this.post({ type: "setViewingMode", viewing: false });
             }
@@ -429,11 +444,12 @@ class PopOutPanel {
             this.hydratingFromFile = false;
         }
     }
+    /** Replay lines that arrived while hydrating; skip ones already present in the file snapshot. */
     replayDeferredLinesAfterSnapshot(loadedContentLength) {
         const toReplay = (0, pop_out_panel_deferred_replay_1.filterDeferredLinesAfterSnapshot)(this.deferredLinesDuringHydrate, loadedContentLength);
         this.deferredLinesDuringHydrate = [];
         for (const d of toReplay) {
-            this.enqueueLineForBatch(d);
+            (0, log_viewer_provider_batch_1.addLineToBatch)(this, d);
         }
     }
 }

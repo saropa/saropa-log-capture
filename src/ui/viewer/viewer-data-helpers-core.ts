@@ -203,8 +203,8 @@ function toggleSqlRepeatDrilldown(seq) {
     }
 }
 /**
- * Separator / banner detection for `.separator-line` CSS. Must match
- * `isLogViewerSeparatorLine` in `modules/analysis/log-viewer-separator-line.ts` (unit-tested there).
+ * Separator / banner detection for .separator-line CSS. Must match
+ * isLogViewerSeparatorLine in modules/analysis/log-viewer-separator-line.ts (unit-tested there).
  */
 function isAsciiBoxDrawingDecorLine(plain) {
     return /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain);

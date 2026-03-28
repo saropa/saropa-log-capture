@@ -1,8 +1,15 @@
 "use strict";
 /**
- * Live-line batching for LogViewerProvider.
- * Handles addLine processing, batch timer, and periodic flush.
- * Extracted to keep log-viewer-provider.ts under the line limit.
+ * Live-line batching for LogViewerProvider and PopOutPanel.
+ *
+ * **Central contract:** `buildPendingLineFromLineData` turns one `LineData` into HTML (`PendingLine`)
+ * (ANSI, links, thread-header styling, framework/coverage). `ViewerBroadcaster.addLine` calls this
+ * **once per line** and fans out copies to each `ViewerTarget` via `appendLiveLineFromBroadcast`, so
+ * sidebar + pop-out do not duplicate that work. Thread-dump grouping (`processLineForThreadDump`) still
+ * runs per target because each webview has its own `threadDumpState` and `pendingLines` queue.
+ *
+ * **Timers:** `startBatchTimer` / `scheduleNextBatch` flush pending lines to the webview on an interval;
+ * `flushPendingBatch` also flushes buffered thread-dump groups before posting.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -38,6 +45,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildPendingLineFromLineData = buildPendingLineFromLineData;
+exports.appendLiveLineToBatch = appendLiveLineToBatch;
 exports.addLineToBatch = addLineToBatch;
 exports.startBatchTimer = startBatchTimer;
 exports.stopBatchTimer = stopBatchTimer;
@@ -49,24 +58,34 @@ const helpers = __importStar(require("./viewer-provider-helpers"));
 const BATCH_INTERVAL_MS = 200;
 const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
 const BATCH_BACKLOG_THRESHOLD = 1000;
-/** Queue a live line for the next batch flush. */
-function addLineToBatch(target, data) {
-    if (!target.getView()?.visible) {
-        return;
-    }
+/**
+ * Build one viewer line from raw capture (ANSI, links, thread header styling, framework/coverage).
+ * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
+ */
+function buildPendingLineFromLineData(data) {
     let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(data.text)));
     if (!data.isMarker) {
         html = helpers.tryFormatThreadHeader(data.text, html);
     }
     const fw = helpers.classifyFrame(data.text);
     const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
-    const line = {
+    return {
         text: html, isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
     };
-    (0, viewer_thread_grouping_1.processLineForThreadDump)(target.threadDumpState, line, data.text, target.pendingLines);
+}
+/** Append a pre-built line to the pending queue (per-viewer thread-dump state). */
+function appendLiveLineToBatch(target, line, rawText) {
+    if (!target.getView()?.visible) {
+        return;
+    }
+    (0, viewer_thread_grouping_1.processLineForThreadDump)(target.threadDumpState, line, rawText, target.pendingLines);
+}
+/** Queue a live line for the next batch flush (build + append). */
+function addLineToBatch(target, data) {
+    appendLiveLineToBatch(target, buildPendingLineFromLineData(data), data.text);
 }
 /** Start the periodic batch flush timer. */
 function startBatchTimer(target) {
