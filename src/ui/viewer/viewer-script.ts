@@ -326,7 +326,7 @@ viewportEl.addEventListener('keydown', function(e) {
     if (typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(rItem.seq);
 });
 
-function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
+function toggleWrap() { wordWrap = !wordWrap; if (logEl) logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 if (jumpBtn) jumpBtn.addEventListener('click', jumpToBottom);
 if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {
