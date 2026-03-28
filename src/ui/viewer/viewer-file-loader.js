@@ -16,7 +16,7 @@ exports.parseElapsedToMs = parseElapsedToMs;
 exports.sendFileLines = sendFileLines;
 exports.parseRawLinesToPending = parseRawLinesToPending;
 const ansi_1 = require("../../modules/capture/ansi");
-const source_linker_1 = require("../../modules/source/source-linker");
+const drift_log_line_args_fold_1 = require("../../modules/db/drift-log-line-args-fold");
 var viewer_file_loader_sources_1 = require("./viewer-file-loader-sources");
 Object.defineProperty(exports, "SOURCE_TERMINAL", { enumerable: true, get: function () { return viewer_file_loader_sources_1.SOURCE_TERMINAL; } });
 Object.defineProperty(exports, "SOURCE_EXTERNAL_PREFIX", { enumerable: true, get: function () { return viewer_file_loader_sources_1.SOURCE_EXTERNAL_PREFIX; } });
@@ -209,7 +209,7 @@ function buildMarkerLine(text, source) {
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
 function buildFileLine(opts) {
     return {
-        text: (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(opts.text))),
+        text: (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsFold)(opts.text),
         isMarker: false,
         lineCount: 0,
         category: opts.category,

@@ -33,18 +33,19 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const assert = __importStar(require("assert"));
+const assert = __importStar(require("node:assert"));
 const log_viewer_provider_batch_1 = require("../../ui/provider/log-viewer-provider-batch");
 const viewer_provider_helpers_1 = require("../../ui/provider/viewer-provider-helpers");
 const viewer_broadcaster_1 = require("../../ui/provider/viewer-broadcaster");
 function sampleLineData(overrides) {
+    const { text, isMarker, lineCount, category, timestamp, ...rest } = overrides;
     return {
-        text: overrides.text,
-        isMarker: overrides.isMarker ?? false,
-        lineCount: overrides.lineCount ?? 1,
-        category: overrides.category ?? 'stdout',
-        timestamp: overrides.timestamp ?? new Date(0),
-        ...overrides,
+        text,
+        isMarker: isMarker ?? false,
+        lineCount: lineCount ?? 1,
+        category: category ?? 'stdout',
+        timestamp: timestamp ?? new Date(0),
+        ...rest,
     };
 }
 suite('buildPendingLineFromLineData', () => {
@@ -59,6 +60,13 @@ suite('buildPendingLineFromLineData', () => {
         const b = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(data);
         assert.strictEqual(a.text, b.text);
         assert.strictEqual(a.lineCount, b.lineCount);
+    });
+    test('Drift Sent line with with args gets fold markup in PendingLine text', () => {
+        const drift = 'I/flutter (28183): Drift: Sent PRAGMA table_info("x") with args []';
+        const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: drift, lineCount: 1 }));
+        assert.ok(pl.text.includes('drift-args-fold'), 'expected fold wrapper');
+        assert.ok(pl.text.includes('drift-args-fold-btn'), 'expected ellipsis button');
+        assert.ok(pl.text.includes(' with args []'), 'suffix should remain in HTML for expand/copy');
     });
 });
 suite('ViewerBroadcaster.addLine — single build, fan-out', () => {
