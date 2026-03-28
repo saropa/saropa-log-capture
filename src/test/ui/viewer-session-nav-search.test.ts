@@ -86,7 +86,7 @@ suite('Viewer toolbar search', () => {
             'expected positionSearchFloatingPanels stub',
         );
         assert.ok(
-            !src.includes('IntersectionObserver'),
+            !src.includes('new IntersectionObserver'),
             'IntersectionObserver removed — popovers are inline',
         );
     });

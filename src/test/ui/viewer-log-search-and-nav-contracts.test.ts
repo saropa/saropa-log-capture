@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getSearchStyles } from '../../ui/viewer-styles/viewer-styles-search';
+import { getToolbarHtml } from '../../ui/viewer-toolbar/viewer-toolbar-html';
 
 /** Resolve `src/` from `out/test/ui/*.js` or `src/test/ui/*.ts` (same pattern as other viewer UI tests). */
 function readViewerSrc(relFromSrc: string): string {
@@ -45,18 +46,18 @@ suite('Viewer log search and nav contracts', () => {
     });
 
     test('session log prev/next are icon-only (chevrons), not “Prev/Next” label buttons', () => {
-        const body = readViewerSrc('ui/provider/viewer-content-body.ts');
-        const prevIdx = body.indexOf('id="session-prev"');
-        const nextIdx = body.indexOf('id="session-next"');
+        const html = getToolbarHtml({ version: '0' });
+        const prevIdx = html.indexOf('session-prev');
+        const nextIdx = html.indexOf('session-next');
         assert.ok(prevIdx >= 0 && nextIdx > prevIdx, 'expected session-prev before session-next');
-        const betweenPrevAndNext = body.slice(prevIdx, nextIdx);
+        const betweenPrevAndNext = html.slice(prevIdx, nextIdx);
         assert.ok(
-            betweenPrevAndNext.includes('session-nav-icon-btn') && betweenPrevAndNext.includes('codicon-chevron-left'),
+            betweenPrevAndNext.includes('toolbar-icon-btn') && betweenPrevAndNext.includes('codicon-chevron-left'),
             'session-prev should be an icon button with chevron-left',
         );
         assert.ok(
             !betweenPrevAndNext.includes('Prev</button>') && !betweenPrevAndNext.includes('&#x25C0; Prev'),
-            'session-prev must not use Prev text label (false positive if run-nav text is mistaken for session nav)',
+            'session-prev must not use Prev text label',
         );
     });
 

@@ -4,11 +4,11 @@ import { fetchDriftViewerHealth } from '../../../modules/integrations/drift-view
 suite('drift-viewer-health', () => {
   let origFetch: typeof globalThis.fetch;
 
-  beforeEach(() => {
+  setup(() => {
     origFetch = globalThis.fetch;
   });
 
-  afterEach(() => {
+  teardown(() => {
     globalThis.fetch = origFetch;
   });
 
