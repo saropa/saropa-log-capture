@@ -18,6 +18,9 @@ const viewer_search_popovers_1 = require("./viewer-search-popovers");
  * **Integration:** Cross-file find wiring is in `viewer-search-setup-from-find.ts`
  * (injected after this script). `window.positionSearchFloatingPanels` is called from search history rendering when
  * the list is cleared as well as when it is shown (see `viewer-search-history.ts`).
+ *
+ * **Search history:** `renderSearchHistory()` is gated on `searchOpen`. `closeSearch()` blurs the input and
+ * calls `renderSearchHistory()` so the fixed Recent list does not outlive the find session.
  */
 /** Returns the JavaScript for search (highlight, filter, F3 navigation). */
 function getSearchScript() {
@@ -65,6 +68,8 @@ function closeSearch() {
     closeSearchOptionsPopover();
     if (typeof addToSearchHistory === 'function' && searchInputEl.value.trim()) addToSearchHistory(searchInputEl.value.trim());
     searchOpen = false;
+    searchInputEl.blur();
+    if (typeof renderSearchHistory === 'function') renderSearchHistory();
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
     clearSearchFilter();

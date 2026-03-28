@@ -22,11 +22,17 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [4.3.0]
 
+### Changed
+
+• **Performance — live log capture** — With both the **sidebar** log viewer and the **pop-out** open, each line’s HTML (ANSI, links, styling) is now built **once** in the extension host and copied to each webview instead of processing every line twice. Live `addLines` posts to the viewer are limited to **800** lines per message (was 2000) to reduce webview stalls during heavy output.
+
 ### Added
 
 • **SQL Query History — Drift debug viewer from log** — When the capture includes Saropa Drift Advisor’s **DRIFT DEBUG SERVER** banner and viewer URL (e.g. `http://127.0.0.1:8642`), the extension records that base URL, shows a short status line in the SQL Query History panel, and checks **`/api/health`** from the extension host so the strip can show reachable vs unreachable. Open-in-browser actions prefer this URL over the default. Clearing the log resets the detected server state.
 
 ### Fixed
+
+• **Log viewer — search history (Recent)** — The Recent list only appears while the in-log find session is active; closing search (Escape or click outside) clears it and blurs the field. When the session nav is hidden by scroll (smart header) or the search field leaves the viewport, the fixed dropdown is hidden so it no longer floats over the log. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 • **Log viewer — severity bar on framework lines** — Lines tagged as framework noise (`item.fw`) at **debug** / **info** / **notice** / **todo** no longer draw a blue “framework” gutter while the line text uses the real level color (e.g. yellow **debug**). The dot and vertical connector now use `level-bar-{level}` to match `level-{level}` text.
 
