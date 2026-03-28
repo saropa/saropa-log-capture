@@ -138,7 +138,7 @@ async function handleExportLogs(text, options) {
     }
 }
 /** Max lines sent per addLines message to avoid webview CPU spike under heavy load. */
-exports.MAX_LINES_PER_BATCH = 2000;
+exports.MAX_LINES_PER_BATCH = 800;
 /**
  * Flush batched lines to the webview. Sends at most MAX_LINES_PER_BATCH per call.
  */
