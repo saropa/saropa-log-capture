@@ -695,13 +695,33 @@
           "type": "boolean",
           "title": "%config.minimapShowSqlDensity.title%"
         },
+        "saropaLogCapture.minimapProportionalLines": {
+          "default": true,
+          "markdownDescription": "%config.minimapProportionalLines.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.minimapProportionalLines.title%"
+        },
+        "saropaLogCapture.minimapViewportOutsideArrow": {
+          "default": false,
+          "markdownDescription": "%config.minimapViewportOutsideArrow.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.minimapViewportOutsideArrow.title%"
+        },
+        "saropaLogCapture.minimapViewportRedOutline": {
+          "default": false,
+          "markdownDescription": "%config.minimapViewportRedOutline.markdownDescription%",
+          "type": "boolean",
+          "title": "%config.minimapViewportRedOutline.title%"
+        },
         "saropaLogCapture.minimapWidth": {
           "default": "medium",
           "description": "%config.minimapWidth.description%",
           "enum": [
+            "xsmall",
             "small",
             "medium",
-            "large"
+            "large",
+            "xlarge"
           ],
           "type": "string",
           "title": "%config.minimapWidth.title%"

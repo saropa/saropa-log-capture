@@ -61,6 +61,8 @@ const viewer_keybindings_1 = require("../viewer/viewer-keybindings");
 const learning_runtime_1 = require("../../modules/learning/learning-runtime");
 const viewer_message_handler_root_cause_ai_1 = require("./viewer-message-handler-root-cause-ai");
 const viewer_message_handler_static_sql_1 = require("./viewer-message-handler-static-sql");
+const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
+const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
 function isAllowedExternalUrl(url) {
     const trimmed = url.trim();
     if (trimmed.length === 0 || trimmed.length > 2048) {
@@ -136,21 +138,22 @@ function runExplainWithAi(msg, ctx) {
         const enableLabel = (0, l10n_1.t)("action.enable");
         vscode.window.showInformationMessage((0, l10n_1.t)("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
             if (choice === enableLabel) {
-                await aiCfg.update("enabled", true, vscode.ConfigurationTarget.Global);
+                await aiCfg.update("enabled", true, (0, ai_enable_scope_1.getAiEnabledConfigurationTarget)());
                 runExplainWithAi(msg, ctx);
             }
         }, () => { });
         return;
     }
     vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: (0, l10n_1.t)("msg.aiExplainProgress"), cancellable: false }, async () => {
+        let builtContext;
         try {
             const contextLines = Math.max(0, Math.min(50, aiCfg.get("contextLines", 10)));
             const lineTimestampMs = typeof msg.timestamp === "number" ? msg.timestamp : undefined;
             const includeIntegrationData = aiCfg.get("includeIntegrationData", true);
             const cacheExplanations = aiCfg.get("cacheExplanations", true);
             const lineEndIndex = typeof msg.lineEndIndex === "number" && msg.lineEndIndex >= lineIdx ? msg.lineEndIndex : undefined;
-            const context = await (0, ai_context_builder_1.buildAIContext)(uri, lineIdx, text, { contextLines, lineTimestampMs, includeIntegrationData, lineEndIndex });
-            const result = await (0, ai_explain_1.explainError)(context, { useCache: cacheExplanations });
+            builtContext = await (0, ai_context_builder_1.buildAIContext)(uri, lineIdx, text, { contextLines, lineTimestampMs, includeIntegrationData, lineEndIndex });
+            const result = await (0, ai_explain_1.explainError)(builtContext, { useCache: cacheExplanations });
             const explanation = result.explanation;
             const suffix = result.cached ? (0, l10n_1.t)("panel.aiExplainCached") : "";
             const toShow = (explanation.length > 500 ? explanation.slice(0, 497) + "…" : explanation) + suffix;
@@ -159,12 +162,17 @@ function runExplainWithAi(msg, ctx) {
                 vscode.env.clipboard.writeText(explanation).then(undefined, () => { });
             }
             if (choice === "Show details") {
-                (0, ai_explain_panel_1.showAIExplanationPanel)(context, result);
+                (0, ai_explain_panel_1.showAIExplanationPanel)(builtContext, result);
             }
         }
         catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage((0, l10n_1.t)("msg.aiExplainError", message)).then(undefined, () => { });
+            if (builtContext) {
+                await (0, ai_explain_ui_1.showAiExplainRunFailure)(builtContext, err);
+            }
+            else {
+                const message = err instanceof Error ? err.message : String(err);
+                vscode.window.showErrorMessage((0, l10n_1.t)("msg.aiExplainError", message)).then(undefined, () => { });
+            }
         }
     });
 }
@@ -199,9 +207,7 @@ function handleCopyAndSettingsActions(type, msg, ctx) {
                 vscode.window.showWarningMessage((0, l10n_1.t)("msg.logCopyEmpty")).then(undefined, () => { });
                 return true;
             }
-            void vscode.env.clipboard.writeText(text).then(() => {
-                vscode.window.setStatusBarMessage((0, l10n_1.t)("msg.logCopyStatus", text.length), 2500);
-            }, (err) => {
+            void vscode.env.clipboard.writeText(text).then(() => { vscode.window.setStatusBarMessage((0, l10n_1.t)("msg.logCopyStatus", text.length), 2500); }, (err) => {
                 const detail = err instanceof Error ? err.message : String(err);
                 vscode.window.showErrorMessage((0, l10n_1.t)("msg.logCopyFailed", detail)).then(undefined, () => { });
             });
@@ -308,12 +314,27 @@ function runOpenUrl(msg) {
         (0, extension_logger_1.logExtensionWarn)('viewerMessage', 'openUrl rejected: invalid or disallowed scheme');
     }
 }
+/** Webview → workspace boolean updates for `saropaLogCapture.*` (context menu / options panel). */
+const SAROPA_BOOL_SETTING_BY_MSG_TYPE = {
+    setMinimapSqlDensity: "minimapShowSqlDensity",
+    setMinimapProportionalLines: "minimapProportionalLines",
+    setShowScrollbar: "showScrollbar",
+    setMinimapShowInfoMarkers: "minimapShowInfoMarkers",
+    setMinimapViewportRedOutline: "minimapViewportRedOutline",
+    setMinimapViewportOutsideArrow: "minimapViewportOutsideArrow",
+};
 function runSessionAction(msg, ctx) {
     const uriStrings = Array.isArray(msg.uriStrings) ? msg.uriStrings : [msgStr(msg, "uriString")];
     const filenames = Array.isArray(msg.filenames) ? msg.filenames : [msgStr(msg, "filename")];
     ctx.onSessionAction?.(msgStr(msg, "action"), uriStrings, filenames);
 }
 function handleSessionAndUiActions(type, msg, ctx) {
+    const boolKey = SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
+    if (boolKey) {
+        vscode.workspace.getConfiguration("saropaLogCapture")
+            .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+        return true;
+    }
     switch (type) {
         case "addToWatch":
             ctx.onAddToWatch?.(msgStr(msg, "text"));
@@ -350,10 +371,15 @@ function handleSessionAndUiActions(type, msg, ctx) {
             vscode.workspace.getConfiguration("saropaLogCapture")
                 .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
             return true;
-        case "setMinimapSqlDensity":
+        case "setMinimapWidth": {
+            const w = msgStr(msg, "value");
+            const allowed = new Set(["xsmall", "small", "medium", "large", "xlarge"]);
+            if (!allowed.has(w))
+                return true;
             vscode.workspace.getConfiguration("saropaLogCapture")
-                .update("minimapShowSqlDensity", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
+                .update("minimapWidth", w, vscode.ConfigurationTarget.Workspace);
             return true;
+        }
         case "editLine":
             helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
                 lineIndex: (0, viewer_message_handler_panels_1.safeLineIndex)(msg.lineIndex, 0), newText: msgStr(msg, "newText"),

@@ -176,6 +176,11 @@ class ViewerBroadcaster {
             t.setMinimapShowSqlDensity(show);
         }
     }
+    setMinimapProportionalLines(show) {
+        for (const t of this.targets) {
+            t.setMinimapProportionalLines(show);
+        }
+    }
     setMinimapViewportRedOutline(show) {
         for (const t of this.targets) {
             t.setMinimapViewportRedOutline(show);
