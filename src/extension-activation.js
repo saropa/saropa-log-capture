@@ -73,6 +73,7 @@ const activation_listeners_1 = require("./activation-listeners");
 const extension_activation_helpers_1 = require("./extension-activation-helpers");
 const learning_runtime_1 = require("./modules/learning/learning-runtime");
 const learning_notifications_1 = require("./modules/learning/learning-notifications");
+const ai_auto_enable_1 = require("./modules/ai/ai-auto-enable");
 function runActivation(context, outputChannel) {
     const statusBar = new status_bar_1.StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
@@ -140,12 +141,15 @@ function runActivation(context, outputChannel) {
     broadcaster.setIconBarPosition(initCfg.iconBarPosition);
     broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
     broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
+    broadcaster.setMinimapProportionalLines(initCfg.minimapProportionalLines);
     broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
     broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
     broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
     broadcaster.setViewerDbDetectorToggles((0, config_1.viewerDbDetectorTogglesFromConfig)(initCfg));
     broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
     broadcaster.setViewerSqlPatternChipSettings(initCfg.viewerSqlPatternChipMinCount, initCfg.viewerSqlPatternMaxChips);
+    broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
+    broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
     broadcaster.setScrollbarVisible(initCfg.showScrollbar);
     broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);
@@ -271,6 +275,7 @@ function runActivation(context, outputChannel) {
         (0, session_metadata_1.migrateSidecarsInDirectory)(folder.uri, folder).catch(() => { });
     }
     (0, extension_activation_helpers_1.showWalkthroughOnFirstInstall)(context);
+    (0, ai_auto_enable_1.scheduleMaybeAutoEnableAiFromLanguageModels)();
     outputChannel.appendLine('Saropa Log Capture activated.');
     return {
         api: apiHandle.api,
