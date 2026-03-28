@@ -46,6 +46,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SAROPA_BOOL_SETTING_BY_MSG_TYPE = void 0;
 exports.dispatchViewerActionMessage = dispatchViewerActionMessage;
 const vscode = __importStar(require("vscode"));
 const l10n_1 = require("../../l10n");
@@ -64,8 +65,7 @@ const viewer_message_handler_static_sql_1 = require("./viewer-message-handler-st
 const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
 const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
 const viewer_workspace_bool_message_map_1 = require("./viewer-workspace-bool-message-map");
-const SAROPA_BOOL_SETTING_BY_MSG_TYPE = viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE;
-exports.SAROPA_BOOL_SETTING_BY_MSG_TYPE = SAROPA_BOOL_SETTING_BY_MSG_TYPE;
+Object.defineProperty(exports, "SAROPA_BOOL_SETTING_BY_MSG_TYPE", { enumerable: true, get: function () { return viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE; } });
 function isAllowedExternalUrl(url) {
     const trimmed = url.trim();
     if (trimmed.length === 0 || trimmed.length > 2048) {
@@ -323,7 +323,7 @@ function runSessionAction(msg, ctx) {
     ctx.onSessionAction?.(msgStr(msg, "action"), uriStrings, filenames);
 }
 function handleSessionAndUiActions(type, msg, ctx) {
-    const boolKey = SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
+    const boolKey = viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
     if (boolKey) {
         vscode.workspace.getConfiguration("saropaLogCapture")
             .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);

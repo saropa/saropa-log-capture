@@ -104,6 +104,7 @@ function getOptionsExtraStyles() {
     line-height: 1.35;
     margin: 4px 0 0 24px;
 }
+/* Multi-line ellipsis follows panel width; avoids a fixed character cut-off. */
 .integrations-desc-collapsible .integrations-desc-preview {
     display: -webkit-box;
     -webkit-box-orient: vertical;

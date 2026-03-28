@@ -123,8 +123,7 @@ function renderRootCauseHypothesesIfNeeded() {
             if (confNorm === 'medium') {
                 confEmoji = '\uD83D\uDFE1';
                 confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
-            }
-            else {
+            } else {
                 confEmoji = '\u26AA';
                 confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
             }
