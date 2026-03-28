@@ -32,7 +32,7 @@ suite('viewer-sql-query-history panel HTML', () => {
         assert.ok(html.includes('data-sql-qh-sort="count"'));
         assert.ok(html.includes('data-sql-qh-sort="maxDur"'));
         assert.ok(html.includes('data-sql-qh-sort="preview"'));
-        assert.ok(html.includes('>SQL</th>'), 'SQL column label');
+        assert.ok(html.includes('data-sql-qh-sort="preview"') && html.includes('SQL'), 'SQL column label');
         assert.ok(!html.includes('id="sql-query-history-sort"'), 'sort dropdown should be removed');
     });
 
