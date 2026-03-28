@@ -10,13 +10,13 @@
  * unrelated subsystems (stack frames, filters, compress suggestion).
  *
  * ### What is validated
- * - Fingerprint-keyed streaks merge arg variants; labels use **SQL repeated #N**.
+ * - Fingerprint-keyed streaks merge arg variants; labels use **N × SQL repeated:** on one row.
  * - Distinct normalized fingerprints start **separate** streaks (see comment on quoted
  *   identifiers vs column names — DB_02 normalization can collapse `"a"` / `"b"` table names).
- * - Null `parseSqlFingerprint` on an otherwise Drift-shaped line falls back to **Repeated #**
+ * - Null `parseSqlFingerprint` on an otherwise Drift-shaped line falls back to **N × Repeated:**
  *   (simulated via a scoped wrapper — host `parseDriftSqlFingerprint` cannot return null for
  *   valid `Sent` lines, but the embed branch must stay defensive).
- * - Non–`database`-tagged duplicates keep legacy **Repeated #** wording.
+ * - Non–`database`-tagged duplicates use **N × Repeated:** on one row.
  * - `cleanupTrailingRepeats` + marker ingest: tracker reset, anchor row height restored,
  *   no visible `repeat-notification` rows after the marker.
  * - **False positives:** gaps beyond `repeatWindowMs` reset the streak; Drift text without
@@ -101,6 +101,8 @@ var autoHiddenCount = 0;
 var strictLevelDetection = false;
 var suppressTransientErrors = false;
 var appOnlyMode = false;
+/* getDriftDebugServerFromLogScript assigns to window; Node vm has no browser global. */
+var window = globalThis;
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
 function isStackFrameText() { return false; }
@@ -168,7 +170,23 @@ function driftSelectWhereColumn(col: string): string {
 }
 
 suite('Viewer SQL repeat compression (DB_03)', () => {
-    test('same SQL shape with different args stays one fingerprint-keyed streak (SQL repeated #N)', () => {
+    test('many identical plain lines yield one repeat row (not one row per duplicate after threshold)', () => {
+        const s = loadViewerRepeatSandbox();
+        const t0 = 11_000_000;
+        const msg = 'flutter accessibility_bridge duplicate line';
+        for (let i = 0; i < 10; i++) {
+            s.addToData(msg, false, 'stdout', t0 + i * 50, false, null, undefined, undefined, 'debug');
+        }
+        const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
+        assert.strictEqual(
+            repeats.length,
+            1,
+            'legacy behavior appended a new repeat-notification per duplicate; expect a single row updated in place',
+        );
+        assert.ok(repeats[0].html?.includes('10 × Repeated:'), repeats[0].html);
+    });
+
+    test('same SQL shape with different args stays one fingerprint-keyed streak (N × SQL repeated:)', () => {
         const s = loadViewerRepeatSandbox();
         const t0 = 1_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
@@ -176,9 +194,8 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(driftSelectWithArgs(3), false, 'stdout', t0 + 200, false, null, undefined, undefined, 'debug');
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 2);
-        assert.ok(repeats.every((r) => r.html?.includes('SQL repeated #')));
-        assert.ok(repeats[1].html?.includes('SQL repeated #3'));
+        assert.strictEqual(repeats.length, 1);
+        assert.ok(repeats[0].html?.includes('3 × SQL repeated:'));
         const lines = s.allLines.filter((l) => l.type === 'line');
         assert.strictEqual(lines.length, 1);
         assert.strictEqual(lines[0].repeatHidden, true);
@@ -194,14 +211,14 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
         assert.strictEqual(repeats.length, 2);
-        assert.ok(repeats[0].html?.includes('SQL repeated #2'));
-        assert.ok(repeats[1].html?.includes('SQL repeated #2'));
+        assert.ok(repeats[0].html?.includes('2 × SQL repeated:'));
+        assert.ok(repeats[1].html?.includes('2 × SQL repeated:'));
         const lines = s.allLines.filter((l) => l.type === 'line');
         assert.strictEqual(lines.length, 2);
         assert.ok(lines.every((l) => l.repeatHidden === true));
     });
 
-    test('database line with forced null fingerprint falls back to plain repeat hash (Repeated #, not SQL repeated)', () => {
+    test('database line with forced null fingerprint falls back to plain repeat hash (× Repeated:, not SQL repeated)', () => {
         const s = loadViewerRepeatSandbox();
         const realParse = s.parseSqlFingerprint;
         assert.ok(typeof realParse === 'function');
@@ -218,9 +235,9 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(line, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 2);
-        assert.ok(repeats.every((r) => r.html?.includes('Repeated #')));
-        assert.ok(repeats.every((r) => !r.html?.includes('SQL repeated')));
+        assert.strictEqual(repeats.length, 1);
+        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
+        assert.ok(!repeats[0].html?.includes('SQL repeated'));
     });
 
     test('gap beyond repeatWindowMs starts a new streak (does not extend SQL repeated count)', () => {
@@ -233,7 +250,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
         assert.strictEqual(repeats.length, 1);
-        assert.ok(repeats[0].html?.includes('SQL repeated #2'));
+        assert.ok(repeats[0].html?.includes('2 × SQL repeated:'));
         const lines = s.allLines.filter((l) => l.type === 'line');
         const visibleTail = lines.filter((l) => !l.repeatHidden);
         assert.strictEqual(visibleTail.length, 1);
@@ -249,9 +266,9 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(bare, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 2);
-        assert.ok(repeats.every((r) => r.html?.includes('Repeated #')));
-        assert.ok(repeats.every((r) => !r.html?.includes('SQL repeated')));
+        assert.strictEqual(repeats.length, 1);
+        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
+        assert.ok(!repeats[0].html?.includes('SQL repeated'));
     });
 
     test('non-database identical lines use legacy repeat suppression wording', () => {
@@ -263,10 +280,10 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(msg, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 2);
-        assert.ok(repeats.every((r) => r.html?.includes('Repeated #')));
-        assert.ok(repeats.every((r) => !r.html?.includes('SQL repeated')));
-        assert.ok(repeats.every((r) => !r.html?.includes('sql-repeat-drilldown-toggle')));
+        assert.strictEqual(repeats.length, 1);
+        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
+        assert.ok(!repeats[0].html?.includes('SQL repeated'));
+        assert.ok(!repeats[0].html?.includes('sql-repeat-drilldown-toggle'));
     });
 
     test('DB_06: SQL repeat rows carry drilldown snapshot and toggle; expand increases height', () => {
@@ -277,8 +294,8 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(driftSelectWithArgs(3), false, 'stdout', t0 + 200, false, null, undefined, undefined, 'debug');
 
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 2);
-        const tail = repeats[1];
+        assert.strictEqual(repeats.length, 1);
+        const tail = repeats[0];
         assert.ok(tail.html?.includes('sql-repeat-drilldown-toggle'));
         assert.ok(tail.sqlRepeatDrilldown);
         assert.strictEqual(tail.sqlRepeatDrilldown.repeatCount, 3);

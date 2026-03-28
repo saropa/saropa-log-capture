@@ -24,6 +24,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+• **Log viewer — duplicate line repeats** — Consecutive duplicate lines (same real-time repeat streak) collapse into **one** summary row whose label updates (**N × Repeated:** or **N × SQL repeated:** with preview), instead of stacking separate **Repeated #2**, **#3**, … rows for every extra occurrence.
+
 • **Log viewer — scroll map width** — `saropaLogCapture.minimapWidth` adds **extra narrow** (28px) and **extra wide** (120px) presets alongside narrow / medium / wide. **Options → Layout → Scroll map width** drives the same workspace setting. The viewport slider (grey overlay) is **slightly more transparent** so severity/search marks show through a bit more clearly.
 
 • **Log viewer — scroll map (SQL activity)** — SQL / slow-SQL density is drawn as a **full-width** vertical wash on the strip beside the log (severity and search ticks still draw on top). The previous **right-rail-only** SQL layer looked like a broken half-width render when few severity ticks were present. The embedded script adds a clearer hover tooltip and `aria-label` for the strip. (This is the **log viewer** scroll map in the Saropa webview, not the VS Code **editor** minimap.)

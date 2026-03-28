@@ -9,6 +9,8 @@
  *   `repeat-notification` (see `viewer-data-add.ts`).
  * - `buildSqlRepeatNotificationRowHtml` / `toggleSqlRepeatDrilldown` — collapsible UI; heights use
  *   `estimateSqlRepeatDrilldownExtraHeight` (heuristic, not DOM-measured) plus `recalcHeights` after toggle.
+ * - **Single repeat row per streak:** `repeatTracker.lastRepeatNotificationIndex` points at the one
+ *   `repeat-notification` line updated as `count` grows; `trimData` / clear / `cleanupTrailingRepeats` reset it.
  * - **Security:** all user-derived strings in the detail panel go through `escapeHtml`; `data-seq` is numeric.
  *
  * Drift N+1 burst detection lives in `viewer-data-n-plus-one-script.ts` (loaded before this chunk).
@@ -47,7 +49,9 @@ var repeatTracker = {
     sqlStreakLastTs: 0,
     /** Distinct argsKey values in first-seen order (parallel counts in sqlStreakVariantCounts). */
     sqlStreakVariantOrder: [],
-    sqlStreakVariantCounts: null
+    sqlStreakVariantCounts: null,
+    // Index in allLines of the single repeat-notification row for the active streak (updated in place).
+    lastRepeatNotificationIndex: -1
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
 var repeatWindowMs = 3000;
@@ -87,6 +91,7 @@ function cleanupTrailingRepeats() {
     repeatTracker.sqlStreakLastTs = 0;
     repeatTracker.sqlStreakVariantOrder = [];
     repeatTracker.sqlStreakVariantCounts = null;
+    repeatTracker.lastRepeatNotificationIndex = -1;
 }
 function resetSqlStreakVariantAccumulators() {
     repeatTracker.sqlStreakVariantOrder = [];
@@ -153,13 +158,13 @@ function buildSqlRepeatNotificationRowHtml(item) {
     var expanded = !!item.sqlRepeatDrilldownOpen;
     var preview = escapeHtml(item.repeatPreviewText || '\\u2026');
     var cnt = d ? d.repeatCount : 0;
-    var label = 'SQL repeated #' + cnt;
+    var label = cnt + ' × SQL repeated:';
     var seq = item.seq;
     var ariaExp = expanded ? 'true' : 'false';
     var head = '<span class="repeat-notification repeat-sql-fp">' +
         '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="' + ariaExp + '" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
         escapeHtml(label) + '</button>' +
-        ' <span class="repeat-preview">(' + preview + ')</span>';
+        ' <span class="repeat-preview">' + preview + '</span>';
     if (!expanded || !d) {
         return head + '</span>';
     }
@@ -187,7 +192,7 @@ function buildSqlRepeatNotificationRowHtml(item) {
     return '<span class="repeat-notification repeat-sql-fp repeat-sql-fp-expanded">' +
         '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="true" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
         escapeHtml(label) + '</button>' +
-        ' <span class="repeat-preview">(' + preview + ')</span></span>' + detail;
+        ' <span class="repeat-preview">' + preview + '</span></span>' + detail;
 }
 function toggleSqlRepeatDrilldown(seq) {
     var idx;
