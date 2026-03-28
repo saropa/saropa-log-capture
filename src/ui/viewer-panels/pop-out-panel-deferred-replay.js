@@ -5,7 +5,7 @@
  * Session `lineCount` aligns with main log content line count for the cutoff.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterDeferredLinesAfterSnapshot = void 0;
+exports.filterDeferredLinesAfterSnapshot = filterDeferredLinesAfterSnapshot;
 /** Pick deferred live lines to append after a disk snapshot (see PopOutPanel.runHydrationFromDisk). */
 function filterDeferredLinesAfterSnapshot(deferred, loadedContentLength) {
     if (loadedContentLength === undefined) {
@@ -13,5 +13,4 @@ function filterDeferredLinesAfterSnapshot(deferred, loadedContentLength) {
     }
     return deferred.filter((d) => d.lineCount > loadedContentLength);
 }
-exports.filterDeferredLinesAfterSnapshot = filterDeferredLinesAfterSnapshot;
 //# sourceMappingURL=pop-out-panel-deferred-replay.js.map
