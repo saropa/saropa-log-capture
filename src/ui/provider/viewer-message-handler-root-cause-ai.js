@@ -43,6 +43,8 @@ const ai_context_builder_1 = require("../../modules/ai/ai-context-builder");
 const ai_explain_1 = require("../../modules/ai/ai-explain");
 const ai_explain_panel_1 = require("../panels/ai-explain-panel");
 const viewer_message_handler_panels_1 = require("./viewer-message-handler-panels");
+const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
+const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
 function msgStr(m, key, fallback = "") {
     const v = m[key];
     return typeof v === "string" ? v : fallback;
@@ -60,19 +62,20 @@ function runExplainRootCauseHypotheses(msg, ctx) {
         const enableLabel = (0, l10n_1.t)("action.enable");
         vscode.window.showInformationMessage((0, l10n_1.t)("msg.aiExplainDisabled"), enableLabel).then(async (choice) => {
             if (choice === enableLabel) {
-                await aiCfg.update("enabled", true, vscode.ConfigurationTarget.Global);
+                await aiCfg.update("enabled", true, (0, ai_enable_scope_1.getAiEnabledConfigurationTarget)());
                 runExplainRootCauseHypotheses(msg, ctx);
             }
         }, () => { });
         return;
     }
     vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: (0, l10n_1.t)("msg.aiExplainHypothesesProgress"), cancellable: false }, async () => {
+        let builtContext;
         try {
             const contextLines = Math.max(0, Math.min(50, aiCfg.get("contextLines", 10)));
             const includeIntegrationData = aiCfg.get("includeIntegrationData", true);
             const cacheExplanations = aiCfg.get("cacheExplanations", true);
-            const context = await (0, ai_context_builder_1.buildAIContext)(uri, lineIdx, text, { contextLines, includeIntegrationData });
-            const result = await (0, ai_explain_1.explainError)(context, { useCache: cacheExplanations });
+            builtContext = await (0, ai_context_builder_1.buildAIContext)(uri, lineIdx, text, { contextLines, includeIntegrationData });
+            const result = await (0, ai_explain_1.explainError)(builtContext, { useCache: cacheExplanations });
             const explanation = result.explanation;
             const suffix = result.cached ? (0, l10n_1.t)("panel.aiExplainCached") : "";
             const toShow = (explanation.length > 500 ? explanation.slice(0, 497) + "…" : explanation) + suffix;
@@ -81,12 +84,17 @@ function runExplainRootCauseHypotheses(msg, ctx) {
                 vscode.env.clipboard.writeText(explanation).then(undefined, () => { });
             }
             if (choice === "Show details") {
-                (0, ai_explain_panel_1.showAIExplanationPanel)(context, result);
+                (0, ai_explain_panel_1.showAIExplanationPanel)(builtContext, result);
             }
         }
         catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage((0, l10n_1.t)("msg.aiExplainError", message)).then(undefined, () => { });
+            if (builtContext) {
+                await (0, ai_explain_ui_1.showAiExplainRunFailure)(builtContext, err);
+            }
+            else {
+                const message = err instanceof Error ? err.message : String(err);
+                vscode.window.showErrorMessage((0, l10n_1.t)("msg.aiExplainError", message)).then(undefined, () => { });
+            }
         }
     });
 }
