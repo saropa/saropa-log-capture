@@ -9,6 +9,8 @@ import type * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { LineData } from "../../modules/session/session-manager";
+import { buildPendingLineFromLineData } from "./log-viewer-provider-batch";
+import type { PendingLine } from "../viewer/viewer-file-loader";
 import type { HighlightRule } from "../../modules/storage/highlight-rules";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { ScopeContext } from "../../modules/storage/scope-context";
@@ -28,7 +30,18 @@ export class ViewerBroadcaster implements ViewerTarget {
   removeTarget(target: ViewerTarget): void { this.targets.delete(target); }
 
   addLine(data: LineData): void {
-    for (const t of this.targets) { t.addLine(data); }
+    const line = buildPendingLineFromLineData(data);
+    for (const t of this.targets) {
+      // Pop-out defers raw LineData while loading disk snapshot; it cannot use pre-built HTML yet.
+      if (t.isLiveCaptureHydrating?.()) {
+        t.addLine(data);
+        continue;
+      }
+      t.appendLiveLineFromBroadcast({ ...line }, data.text);
+    }
+  }
+  appendLiveLineFromBroadcast(line: PendingLine, rawText: string): void {
+    for (const t of this.targets) { t.appendLiveLineFromBroadcast({ ...line }, rawText); }
   }
   clear(): void {
     for (const t of this.targets) { t.clear(); }
@@ -124,6 +137,15 @@ export class ViewerBroadcaster implements ViewerTarget {
   }
   setMinimapShowSqlDensity(show: boolean): void {
     for (const t of this.targets) { t.setMinimapShowSqlDensity(show); }
+  }
+  setMinimapProportionalLines(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapProportionalLines(show); }
+  }
+  setMinimapViewportRedOutline(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapViewportRedOutline(show); }
+  }
+  setMinimapViewportOutsideArrow(show: boolean): void {
+    for (const t of this.targets) { t.setMinimapViewportOutsideArrow(show); }
   }
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
     for (const t of this.targets) { t.setViewerRepeatThresholds(thresholds); }

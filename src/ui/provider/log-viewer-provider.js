@@ -194,7 +194,11 @@ class LogViewerProvider {
     setShowDecorations(show) { state.setShowDecorationsImpl(this, show); }
     startReplay() { state.postStartReplayImpl(this); }
     getReplayConfig() { return state.getReplayConfig(); }
-    setErrorClassificationSettings(suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels) { state.setErrorClassificationSettingsImpl(this, { suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels }); }
+    setErrorClassificationSettings(suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError) {
+        state.setErrorClassificationSettingsImpl(this, {
+            suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError,
+        });
+    }
     applyPreset(name) { state.applyPresetImpl(this, name); }
     setHighlightRules(rules) {
         this.cachedHighlightRules = (0, viewer_highlight_serializer_1.serializeHighlightRules)(rules);
@@ -205,6 +209,9 @@ class LogViewerProvider {
         state.setPresetsImpl(this, presets);
     }
     addLine(data) { (0, log_viewer_provider_batch_1.addLineToBatch)(this, data); }
+    appendLiveLineFromBroadcast(line, rawText) {
+        (0, log_viewer_provider_batch_1.appendLiveLineToBatch)(this, line, rawText);
+    }
     setCurrentFile(uri) {
         this.currentFileUri = uri;
         this.postMessage({ type: 'currentLogChanged', currentFileUri: uri?.toString() });
@@ -212,6 +219,8 @@ class LogViewerProvider {
     setScopeContext(ctx) { state.setScopeContextImpl(this, ctx); }
     setMinimapShowInfo(show) { state.setMinimapShowInfoImpl(this, show); }
     setMinimapShowSqlDensity(show) { state.setMinimapShowSqlDensityImpl(this, show); }
+    setMinimapViewportRedOutline(show) { state.setMinimapViewportRedOutlineImpl(this, show); }
+    setMinimapViewportOutsideArrow(show) { state.setMinimapViewportOutsideArrowImpl(this, show); }
     setViewerRepeatThresholds(thresholds) {
         state.setViewerRepeatThresholdsImpl(this, thresholds);
     }
