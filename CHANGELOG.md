@@ -20,7 +20,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [4.3.0]
+## [5.0.0]
 
 ### Changed
 
