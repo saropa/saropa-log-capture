@@ -84,7 +84,11 @@ export function getToolbarStyles(): string {
     position: relative;
     flex-shrink: 0;
 }
-.toolbar-icon-btn:hover {
+.toolbar-icon-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.toolbar-icon-btn:hover:not(:disabled) {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
     color: var(--vscode-foreground);
 }
