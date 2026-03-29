@@ -113,26 +113,26 @@ export function getToolbarScript(): string {
 
     function handleAccordionClick(e) {
         var header = e.currentTarget;
+        var section = header.parentElement;
         var body = header.nextElementSibling;
         if (!body) return;
         var wasOpen = !body.hidden;
         collapseAllAccordions();
         if (!wasOpen) {
             body.hidden = false;
+            if (section) section.classList.add('expanded');
             header.setAttribute('aria-expanded', 'true');
-            var a = header.querySelector('.filter-accordion-arrow');
-            if (a) a.textContent = '\\u25BE';
         }
     }
 
     function collapseAllAccordions() {
-        var all = document.querySelectorAll('.filter-accordion-header');
-        for (var i = 0; i < all.length; i++) {
-            var body = all[i].nextElementSibling;
+        var sections = document.querySelectorAll('.filter-accordion');
+        for (var i = 0; i < sections.length; i++) {
+            sections[i].classList.remove('expanded');
+            var hdr = sections[i].querySelector('.filter-accordion-header');
+            var body = sections[i].querySelector('.filter-accordion-body');
             if (body) body.hidden = true;
-            all[i].setAttribute('aria-expanded', 'false');
-            var arrow = all[i].querySelector('.filter-accordion-arrow');
-            if (arrow) arrow.textContent = '\\u25B8';
+            if (hdr) hdr.setAttribute('aria-expanded', 'false');
         }
     }
 
