@@ -462,14 +462,14 @@ suite('Webview script null guards', () => {
             );
         });
 
-        test('should guard children[ni] in findNextBarSibling', () => {
+        test('should guard children[ni] in findNextDotSibling', () => {
             const block = script.slice(
-                script.indexOf('function findNextBarSibling'),
-                script.indexOf('function findNextBarSibling') + 250,
+                script.indexOf('function findNextDotSibling'),
+                script.indexOf('function findNextDotSibling') + 300,
             );
             assert.ok(
                 block.includes('if (!children[ni]) continue'),
-                'findNextBarSibling should guard children[ni]',
+                'findNextDotSibling should guard children[ni]',
             );
         });
     });
