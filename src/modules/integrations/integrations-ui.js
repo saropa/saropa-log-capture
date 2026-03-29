@@ -199,6 +199,14 @@ exports.INTEGRATION_ADAPTERS = [
         whenToDisable: 'You\'re not debugging a browser target, or you don\'t need console/DevTools data.',
     },
     {
+        id: 'adbLogcat',
+        label: 'adb Logcat',
+        description: 'Live Android system log alongside debug session',
+        descriptionLong: 'Spawns `adb logcat` when a debug session starts and streams Android system log lines into the viewer in real time. Lines are classified by logcat level (V/D/I/W/E/F/A), filtered by the debug target PID once known, and written to a .logcat.log sidecar at session end.',
+        performanceNote: 'Low — one background process; in-memory buffer capped at maxBufferLines. Requires adb on PATH.',
+        whenToDisable: 'You\'re not debugging an Android/Flutter app, or adb is not installed.',
+    },
+    {
         id: 'driftAdvisor',
         label: 'Drift Advisor',
         description: 'Drift query stats, schema, and health in session metadata and sidecar',

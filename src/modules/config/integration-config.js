@@ -182,6 +182,14 @@ function getIntegrationConfig(cfg) {
             includeNetwork: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.browser.includeNetwork'), false),
             requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.browser.requestIdPattern', ''),
         },
+        integrationsAdbLogcat: {
+            device: readTrimmedStringOrDefault(cfg, 'integrations.adbLogcat.device', ''),
+            tagFilters: (0, config_validation_1.ensureStringArray)(cfg.get('integrations.adbLogcat.tagFilters'), []),
+            minLevel: (0, config_validation_1.ensureEnum)(cfg.get('integrations.adbLogcat.minLevel'), ['V', 'D', 'I', 'W', 'E', 'F', 'A'], 'V'),
+            filterByPid: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.adbLogcat.filterByPid'), true),
+            maxBufferLines: (0, config_validation_1.clamp)(cfg.get('integrations.adbLogcat.maxBufferLines'), 1000, 500000, 50000),
+            writeSidecar: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.adbLogcat.writeSidecar'), true),
+        },
         integrationsUnifiedLog: {
             writeAtSessionEnd: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
             maxLinesPerSource: (0, config_validation_1.clamp)(cfg.get('integrations.unifiedLog.maxLinesPerSource'), 1000, 500000, 50000),

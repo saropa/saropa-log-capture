@@ -24,6 +24,7 @@ const database_query_logs_1 = require("./modules/integrations/providers/database
 const http_network_1 = require("./modules/integrations/providers/http-network");
 const browser_devtools_1 = require("./modules/integrations/providers/browser-devtools");
 const code_quality_metrics_1 = require("./modules/integrations/providers/code-quality-metrics");
+const adb_logcat_1 = require("./modules/integrations/providers/adb-logcat");
 const drift_advisor_builtin_1 = require("./modules/integrations/providers/drift-advisor-builtin");
 /** Register all built-in integration providers with the global registry. */
 function registerAllIntegrations() {
@@ -48,6 +49,7 @@ function registerAllIntegrations() {
     registry.register(database_query_logs_1.databaseQueryLogsProvider);
     registry.register(http_network_1.httpNetworkProvider);
     registry.register(browser_devtools_1.browserDevtoolsProvider);
+    registry.register(adb_logcat_1.adbLogcatProvider);
     // Drift Advisor: meta/sidecar from extension API or `.saropa/drift-advisor-session.json`.
     // External bridge registers after built-ins; last writer wins for same meta key.
     registry.register(drift_advisor_builtin_1.driftAdvisorBuiltinProvider);

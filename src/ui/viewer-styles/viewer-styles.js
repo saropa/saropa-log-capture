@@ -47,8 +47,8 @@ function getViewerStyles() {
    Reset & Root Layout
    The webview body is a flex row: icon bar + main content column.
    Default: icon bar on left (row-reverse). data-icon-bar=”right” flips it.
-   The #main-content div stacks children vertically (breadcrumb, content,
-   footer) with log-content taking all remaining space.
+   The #main-content div contains the panel-content row (panels + log area)
+   plus fixed-position overlays (context menus, modals).
    =================================================================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {

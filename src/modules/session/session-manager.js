@@ -44,6 +44,7 @@ const session_manager_routing_1 = require("./session-manager-routing");
 const session_manager_start_1 = require("./session-manager-start");
 const session_manager_stop_1 = require("./session-manager-stop");
 const session_manager_internals_1 = require("./session-manager-internals");
+const adb_logcat_capture_1 = require("../integrations/adb-logcat-capture");
 /**
  * Manages active debug log sessions, bridges DAP output to LogSession,
  * and broadcasts written lines to registered listeners (e.g. sidebar viewer).
@@ -148,6 +149,9 @@ class SessionManagerImpl {
     /** Called by the DAP tracker when a process event with systemProcessId is received. */
     onProcessId(sessionId, processId) {
         this.processIds.set(sessionId, processId);
+        if (this.cachedConfig.integrationsAdapters?.includes('adbLogcat')) {
+            (0, adb_logcat_capture_1.setLogcatPidFilter)(processId);
+        }
     }
     /** Start capturing a debug session. */
     async startSession(session, context) {
