@@ -61,6 +61,7 @@ export type {
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
   IntegrationBrowserConfig,
+  IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
   ProjectIndexSourceConfig,
   ProjectIndexConfig,
