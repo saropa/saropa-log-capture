@@ -177,7 +177,14 @@ function renderItem(item, idx, prevVis) {
         && allLines[idx - 1].recentErrorContext && allLines[idx - 1].level === 'error') {
         blankCls += ' recent-error-context';
     }
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + '</div>' + annHtml;
+    var contBadge = '';
+    if (item.contChildCount > 0 && item.contGroupId >= 0) {
+        var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
+        var contLabel = item.contCollapsed ? '[+' + item.contChildCount + ' lines]' : '[\\u2212' + item.contChildCount + ' lines]';
+        var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse continuation lines';
+        contBadge = ' <span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
+    }
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + contBadge + '</div>' + annHtml;
 }
 `;
 }

@@ -98,9 +98,7 @@ export interface ViewerScriptsOptions {
   readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
     readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-    /** Fingerprint chip thresholds (plan DB_05). */
-    readonly viewerSqlPatternChipMinCount?: number;
-    readonly viewerSqlPatternMaxChips?: number;
+
 }
 
 /** Build all script tags in the order required by the viewer. */
@@ -115,8 +113,6 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds,
         viewerDbDetectorToggles,
-        viewerSqlPatternChipMinCount,
-        viewerSqlPatternMaxChips,
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
@@ -163,10 +159,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getClassTagsScript()) +
         scriptTag(
             nonce,
-            getSqlPatternTagsScript(
-                viewerSqlPatternChipMinCount ?? 2,
-                viewerSqlPatternMaxChips ?? 20,
-            ),
+            getSqlPatternTagsScript(),
             getSqlQueryHistoryCoreScript(),
             getSqlQueryHistoryPanelScript(),
         ) +

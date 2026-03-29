@@ -12,12 +12,13 @@
  * (`repeatTracker.lastRepeatNotificationIndex`) updated in place with **N × Repeated:** / **N × SQL repeated:**
  * so long runs do not spam one line per duplicate.
  */
+import { getContinuationScript } from './viewer-data-add-continuation';
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';
 import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data-add-stack-group-learning-and-toggle';
 import { getDriftDebugServerFromLogScript } from './viewer-drift-debug-server-from-log-script';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + /* javascript */ `
 
 /** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
 function proximityInheritAnchor() {
@@ -41,6 +42,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         resetCompressDupStreak();
+        if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         if (activeGroupHeader) {
             if (typeof finalizeStackGroup === 'function') finalizeStackGroup(activeGroupHeader);
             if (typeof registerClassTags === 'function') registerClassTags(activeGroupHeader);
@@ -55,6 +57,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     }
     if (isStackFrameText(html)) {
         resetCompressDupStreak();
+        if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         var plainFrame = stripTags(html);
         var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
 
@@ -175,6 +178,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var shouldShowNormalLine = repeatTracker.count < minN;
 
     if (!shouldShowNormalLine) {
+        if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
         // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
         if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
             repeatTracker.lastLineIndex < allLines.length) {
@@ -239,6 +243,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                 seq: repeatSeq,
                 sourceTag: sTag,
                 logcatTag: lTag,
+                sqlVerb: sqlMeta ? sqlMeta.verb : null,
                 sourceFiltered: false,
                 sqlPatternFiltered: false,
                 classFiltered: false,
@@ -316,7 +321,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
+        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
@@ -332,6 +337,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
 
         if (typeof registerSqlPattern === 'function') { registerSqlPattern(lineItem); }
         if (typeof recordSqlQueryHistoryForAppendedItem === 'function') { recordSqlQueryHistoryForAppendedItem(lineItem); }
+        if (typeof checkContinuationOnNormalLine === 'function') { checkContinuationOnNormalLine(lineItem); }
     }
 }
 

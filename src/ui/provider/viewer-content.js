@@ -55,8 +55,6 @@ function buildViewerHtml(opts) {
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
-        viewerSqlPatternChipMinCount: opts.viewerSqlPatternChipMinCount,
-        viewerSqlPatternMaxChips: opts.viewerSqlPatternMaxChips,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

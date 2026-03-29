@@ -72,7 +72,7 @@ function getAccordionSections(): string {
             <div class="options-row"><span id="source-tag-summary" class="source-tag-summary"></span></div>
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         `)}
-        ${accordionSection('sql-patterns-section', 'SQL Patterns', `
+        ${accordionSection('sql-patterns-section', 'SQL Commands', `
             <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>
             <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
             <div class="options-row">
@@ -119,6 +119,6 @@ function accordionSection(id: string, title: string, body: string): string {
             <span class="filter-accordion-title">${title}</span>
             <span class="filter-accordion-summary"></span>
         </button>
-        <div class="filter-accordion-body" hidden>${body}</div>
+        <div class="filter-accordion-body">${body}</div>
     </div>`;
 }
