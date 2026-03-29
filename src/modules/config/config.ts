@@ -149,8 +149,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       burstWindowMs: cfg.get("viewerSlowBurstWindowMs"),
       cooldownMs: cfg.get("viewerSlowBurstCooldownMs"),
     }),
-    viewerSqlPatternChipMinCount: clamp(cfg.get("viewerSqlPatternChipMinCount"), 1, 50, 2),
-    viewerSqlPatternMaxChips: clamp(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
+
     deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     stderrTreatAsError: ensureBoolean(cfg.get("stderrTreatAsError"), false),

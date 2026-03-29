@@ -47,9 +47,7 @@ export interface ViewerHtmlOptions {
   readonly staticSqlFromFingerprintEnabled?: boolean;
   /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
   readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-    /** SQL fingerprint filter chips (plan DB_05); defaults 2 and 20. */
-    readonly viewerSqlPatternChipMinCount?: number;
-    readonly viewerSqlPatternMaxChips?: number;
+
 }
 
 /**
@@ -82,8 +80,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
-        viewerSqlPatternChipMinCount: opts.viewerSqlPatternChipMinCount,
-        viewerSqlPatternMaxChips: opts.viewerSqlPatternMaxChips,
+
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

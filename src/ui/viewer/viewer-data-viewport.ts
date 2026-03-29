@@ -26,6 +26,10 @@ function countHiddenNonBlank(fromIdx, toIdx) {
         var item = allLines[i];
         if (!item || item.height > 0) continue;
         if (isLineContentBlank(item)) continue;
+        if (item.contIsChild && item.contGroupId >= 0 && typeof contHeaderMap !== 'undefined') {
+            var _cHdr = contHeaderMap[item.contGroupId];
+            if (_cHdr && _cHdr.contCollapsed) continue;
+        }
         count++;
         if (item.levelFiltered) reasons.level = (reasons.level || 0) + 1;
         if (item.excluded) reasons.excluded = (reasons.excluded || 0) + 1;

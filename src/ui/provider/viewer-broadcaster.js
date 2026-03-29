@@ -216,11 +216,6 @@ class ViewerBroadcaster {
             t.setViewerSlowBurstThresholds(thresholds);
         }
     }
-    setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips) {
-        for (const t of this.targets) {
-            t.setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips);
-        }
-    }
     setMinimapWidth(width) {
         for (const t of this.targets) {
             t.setMinimapWidth(width);

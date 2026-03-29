@@ -81,7 +81,7 @@ function scriptTag(nonce, ...parts) {
 }
 /** Build all script tags in the order required by the viewer. */
 function getViewerScriptTags(opts) {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, viewerSqlPatternChipMinCount, viewerSqlPatternMaxChips, } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, } = opts;
     return (scriptTag(nonce, (0, viewer_error_handler_1.getErrorHandlerScript)()) +
         scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)(viewerRepeatThresholds, viewerDbInsightsEnabled !== false, staticSqlFromFingerprintEnabled !== false, viewerSlowBurstThresholds, viewerDbDetectorToggles), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
         scriptTag(nonce, (0, viewer_scroll_anchor_1.getScrollAnchorScript)()) +
@@ -111,7 +111,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_tag_selection_guard_1.getTagSelectionGuardScript)()) +
         scriptTag(nonce, (0, viewer_source_tags_1.getSourceTagsScript)()) +
         scriptTag(nonce, (0, viewer_class_tags_1.getClassTagsScript)()) +
-        scriptTag(nonce, (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(viewerSqlPatternChipMinCount ?? 2, viewerSqlPatternMaxChips ?? 20), (0, viewer_sql_query_history_core_1.getSqlQueryHistoryCoreScript)(), (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)()) +
+        scriptTag(nonce, (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(), (0, viewer_sql_query_history_core_1.getSqlQueryHistoryCoreScript)(), (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)()) +
         scriptTag(nonce, (0, viewer_highlight_1.getHighlightScript)()) +
         scriptTag(nonce, (0, viewer_scope_filter_1.getScopeFilterScript)()) +
         scriptTag(nonce, (0, session_time_buckets_1.getSessionTimeBucketsScript)()) +

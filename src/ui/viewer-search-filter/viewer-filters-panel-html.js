@@ -86,9 +86,9 @@ function getFiltersPanelHtml() {
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         </div>
 
-        <!-- SQL pattern chips (Drift fingerprints; low-frequency → Other SQL); plan DB_05 -->
+        <!-- SQL command-type chips (verb-based: SELECT, INSERT, etc.); plan 043 -->
         <div class="options-section" id="sql-patterns-section" style="display:none">
-            <h3 class="options-section-title">Top SQL Patterns</h3>
+            <h3 class="options-section-title">SQL Commands</h3>
             <div class="options-row">
                 <span id="sql-pattern-summary" class="source-tag-summary"></span>
             </div>

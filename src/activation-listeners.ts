@@ -137,12 +137,7 @@ export function setupConfigListener(
         ) {
             broadcaster.setViewerSlowBurstThresholds(cfg.viewerSlowBurstThresholds);
         }
-        if (
-            e.affectsConfiguration('saropaLogCapture.viewerSqlPatternChipMinCount')
-            || e.affectsConfiguration('saropaLogCapture.viewerSqlPatternMaxChips')
-        ) {
-            broadcaster.setViewerSqlPatternChipSettings(cfg.viewerSqlPatternChipMinCount, cfg.viewerSqlPatternMaxChips);
-        }
+
         if (
             e.affectsConfiguration('saropaLogCapture.errorRateBucketSize')
             || e.affectsConfiguration('saropaLogCapture.errorRateShowWarnings')

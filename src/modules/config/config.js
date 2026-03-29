@@ -137,8 +137,6 @@ function getConfig() {
             burstWindowMs: cfg.get("viewerSlowBurstWindowMs"),
             cooldownMs: cfg.get("viewerSlowBurstCooldownMs"),
         }),
-        viewerSqlPatternChipMinCount: (0, config_validation_1.clamp)(cfg.get("viewerSqlPatternChipMinCount"), 1, 50, 2),
-        viewerSqlPatternMaxChips: (0, config_validation_1.clamp)(cfg.get("viewerSqlPatternMaxChips"), 1, 100, 20),
         deemphasizeFrameworkLevels: (0, config_validation_1.ensureBoolean)(cfg.get("deemphasizeFrameworkLevels"), false),
         levelDetection: (0, config_validation_1.ensureEnum)(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
         stderrTreatAsError: (0, config_validation_1.ensureBoolean)(cfg.get("stderrTreatAsError"), false),

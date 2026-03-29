@@ -38,9 +38,9 @@ function updateFilterBadge() {
     if (typeof hiddenClassTags !== 'undefined'
         && Object.keys(hiddenClassTags).length > 0) count++;
 
-    // SQL pattern chips hidden
-    if (typeof hiddenSqlPatterns !== 'undefined'
-        && Object.keys(hiddenSqlPatterns).length > 0) count++;
+    // SQL verb chips hidden
+    if (typeof hiddenSqlVerbs !== 'undefined'
+        && Object.keys(hiddenSqlVerbs).length > 0) count++;
 
     // Category filter active
     if (typeof activeFilters !== 'undefined' && activeFilters !== null) count++;

@@ -62,6 +62,7 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 seq: nextSeq++,
                 sourceTag: 'database',
                 logcatTag: null,
+                sqlVerb: sqlMeta ? sqlMeta.verb : null,
                 sourceFiltered: false,
                 sqlPatternFiltered: false,
                 classFiltered: false,

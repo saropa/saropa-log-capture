@@ -281,9 +281,6 @@ class PopOutPanel {
             },
         });
     }
-    setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips) {
-        this.post({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
-    }
     setMinimapWidth(width) { this.post({ type: "minimapWidth", width }); }
     setScrollbarVisible(show) { this.post({ type: "scrollbarVisible", show }); }
     setSearchMatchOptionsAlwaysVisible(always) { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
@@ -333,8 +330,6 @@ class PopOutPanel {
             staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
             viewerDbDetectorToggles: (0, config_1.viewerDbDetectorTogglesFromConfig)(cfg),
             viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
-            viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
-            viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
         });
         wv.onDidReceiveMessage((msg) => this.handleMessage(msg));
         this.startBatchTimer();
