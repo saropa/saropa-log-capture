@@ -105,6 +105,27 @@ suite('Viewer toolbar', () => {
         assert.ok(!src.includes('getFiltersPanelHtml'), 'filters panel removed from body');
     });
 
+    test('toolbar should be inside log-area-with-footer, not above panel-content-row', () => {
+        const { getViewerBodyHtml } = require('../../ui/provider/viewer-content-body');
+        const html: string = getViewerBodyHtml({ version: '1.0.0' });
+        const logAreaIdx = html.indexOf('id="log-area-with-footer"');
+        const toolbarIdx = html.indexOf('id="viewer-toolbar"');
+        const panelSlotIdx = html.indexOf('id="panel-slot"');
+        assert.ok(logAreaIdx > 0, 'log-area-with-footer must exist');
+        assert.ok(toolbarIdx > logAreaIdx, 'toolbar must appear after log-area-with-footer opens');
+        assert.ok(panelSlotIdx < logAreaIdx, 'panel-slot must appear before log-area-with-footer');
+    });
+
+    test('panel-content-row should be direct child of main-content with no toolbar between', () => {
+        const { getViewerBodyHtml } = require('../../ui/provider/viewer-content-body');
+        const html: string = getViewerBodyHtml({ version: '1.0.0' });
+        const mainIdx = html.indexOf('id="main-content"');
+        const panelRowIdx = html.indexOf('id="panel-content-row"');
+        const toolbarIdx = html.indexOf('id="viewer-toolbar"');
+        assert.ok(mainIdx < panelRowIdx, 'panel-content-row must follow main-content');
+        assert.ok(toolbarIdx > panelRowIdx, 'toolbar must not appear between main-content and panel-content-row');
+    });
+
     test('icon bar has no Filters or SQL Filter buttons', () => {
         const src = readSrc('ui/viewer-nav/viewer-icon-bar.ts');
         assert.ok(!src.includes('id="ib-filters"'), 'Filters button removed');
