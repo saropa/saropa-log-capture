@@ -22,6 +22,19 @@ function getRootCauseHypothesesStyles() {
     line-height: 1.35;
     max-height: 42vh;
     overflow: auto;
+    transition: max-height 0.25s ease-out, opacity 0.25s ease-out,
+                padding 0.25s ease-out, margin 0.25s ease-out,
+                border-color 0.25s ease-out;
+}
+/* Collapsed by filter drawer mutual exclusion */
+.root-cause-hypotheses.signals-drawer-hidden {
+    max-height: 0 !important;
+    opacity: 0;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border-color: transparent;
 }
 .root-cause-hypotheses-header {
     display: flex;
@@ -124,6 +137,9 @@ function getRootCauseHypothesesStyles() {
     vertical-align: middle;
     opacity: 0.92;
     cursor: help;
+}
+@media (prefers-reduced-motion: reduce) {
+    .root-cause-hypotheses { transition: none !important; }
 }
 `;
 }

@@ -148,10 +148,22 @@ export function getFilterDrawerStyles(): string {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
 }
+/* Accordion body — hidden by default via max-height, animated on expand */
 .filter-accordion-body {
-    padding: 4px 8px 6px 16px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 8px 0 16px;
+    transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out,
+                padding-top 0.15s ease-in-out, padding-bottom 0.15s ease-in-out;
 }
-.filter-accordion-body[hidden] { display: none; }
+.filter-accordion.expanded .filter-accordion-body {
+    max-height: 300px;
+    opacity: 1;
+    overflow-y: auto;
+    padding-top: 4px;
+    padding-bottom: 6px;
+}
 
 /* ===================================================================
    Filter Drawer Footer Row
@@ -178,7 +190,8 @@ export function getFilterDrawerStyles(): string {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .filter-accordion-arrow { transition: none; }
+    .filter-accordion-arrow,
+    .filter-accordion-body { transition: none !important; }
 }
 
 `;
