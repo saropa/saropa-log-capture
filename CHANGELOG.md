@@ -24,7 +24,9 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [5.1.0]
+
+Adds adb logcat integration for live Android log streaming, continuation line collapsing for split log output, hidden-lines chevron indicators on the severity bar, smooth toolbar animations, and SQL verb-category filter chips. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.0/CHANGELOG.md)
 
 ### Added
 
@@ -52,6 +54,8 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [5.0.3]
+
+Fixes toolbar search and actions menus not responding to clicks, applies standard VS Code themed styling to buttons and dropdowns, and adds an element ID wiring test to catch stale references. [log](https://github.com/saropa/saropa-log-capture/blob/v5.0.3/CHANGELOG.md)
 
 ### Changed
 
