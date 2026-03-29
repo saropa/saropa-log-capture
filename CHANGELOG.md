@@ -24,7 +24,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [5.0.3]
 
 ### Changed
 
