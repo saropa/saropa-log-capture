@@ -10,6 +10,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_test_1 = __importDefault(require("node:test"));
 const strict_1 = __importDefault(require("node:assert/strict"));
 const viewer_styles_root_cause_hints_1 = require("../../ui/viewer-styles/viewer-styles-root-cause-hints");
+(0, node_test_1.default)("should not contain dismiss button styles", () => {
+    const css = (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)();
+    strict_1.default.ok(!css.includes(".root-cause-hypotheses-dismiss"), "dismiss CSS class must not exist after removal");
+});
 (0, node_test_1.default)("Signals evidence buttons reset UA styling to theme link appearance", () => {
     const css = (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)();
     // Order in stylesheet: border + background reset, link color token, then appearance:none (after: no UA button face).

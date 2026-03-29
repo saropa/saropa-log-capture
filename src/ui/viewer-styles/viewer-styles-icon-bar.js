@@ -168,34 +168,7 @@ body[data-icon-bar="right"] .ib-badge {
     display: flex;
 }
 
-/* SQL line count + hide/show (database-tagged lines); compact count when icon labels are off. */
-.ib-sql-count-short {
-    display: none;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 1px;
-    text-align: center;
-    font-size: 7px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    pointer-events: none;
-    color: var(--vscode-activityBar-foreground, var(--vscode-foreground));
-}
-#icon-bar:not(.ib-labels-visible) .ib-sql-filter-btn:not(:disabled) .ib-sql-count-short {
-    display: block;
-}
-#icon-bar.ib-labels-visible .ib-sql-count-short {
-    display: none !important;
-}
-.ib-sql-filter-btn:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-.ib-sql-filter-btn.ib-sql-filter-hidden:not(:disabled) {
-    opacity: 0.5;
-}
+/* SQL filter button removed from icon bar — filters live in the toolbar drawer now. */
 
 body[data-icon-bar="right"] #panel-slot > * {
     border-right: none;

@@ -65,17 +65,7 @@ for (var li = 0; li < levelIds.length; li++) {
     })(levelIds[li]);
 }
 
-document.addEventListener('click', function(e) {
-    if (!levelMenuOpen) return;
-    var flyup = document.getElementById('level-flyup');
-    var trigger = document.getElementById('level-menu-btn');
-    if (flyup && !flyup.contains(e.target) && trigger && !trigger.contains(e.target)) {
-        closeLevelMenu();
-    }
-});
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && levelMenuOpen) closeLevelMenu();
-});
+/* Outside click and Escape dismiss are handled by the toolbar script. */
 `;
 }
 //# sourceMappingURL=viewer-level-events.js.map

@@ -2503,7 +2503,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "verify-nls": "node scripts/modules/verify-nls.js",
-    "generate:db-detector-embed-merge": "node scripts/generate-db-detector-embed-merge.mjs",
+    "generate:db-detector-embed-merge": "node scripts/modules/generate-db-detector-embed-merge.mjs",
     "compile": "npm run generate:db-detector-embed-merge && npm run check-types && npm run lint && npm run verify-nls && node esbuild.js",
     "compile-tests": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p . --outDir out",
     "lint": "eslint src",
@@ -2517,5 +2517,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "5.0.1"
+  "version": "5.0.2"
 }
