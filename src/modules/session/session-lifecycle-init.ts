@@ -128,7 +128,9 @@ export async function initializeSession(
                 outputChannel,
             );
         }
-        if (config.integrationsAdapters?.includes('adbLogcat') && isAdbAvailable()) {
+        const adbExplicit = config.integrationsAdapters?.includes('adbLogcat');
+        const adbAutoDetect = session.type === 'dart';
+        if ((adbExplicit || adbAutoDetect) && isAdbAvailable()) {
             const lc = config.integrationsAdbLogcat;
             startLogcatCapture({
                 ...lc,

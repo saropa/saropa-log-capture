@@ -29,13 +29,21 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ### Added
 
 - Hidden-lines chevron indicator on the severity bar — a small `▸` marker appears between visible lines when non-blank lines are hidden by filters, with a tooltip showing the count and filter reasons
-- adb logcat integration: live-stream Android system logs alongside debug sessions with PID filtering, level filtering, tag filters, and `.logcat.log` sidecar at session end
+- adb logcat integration: live-stream Android system logs alongside debug sessions with PID filtering, level filtering, tag filters, and `.logcat.log` sidecar at session end. Auto-connects for Dart/Flutter sessions when adb is on PATH
+
+### Changed
+
+- Toolbar severity dots increased from 10px to 12px for better visibility and click targets
+- Filter drawer level buttons are more compact — reduced padding and removed minimum count width
+- All tooltips now describe what interactions do — toolbar dots explain click (toggle) and double-click (solo), icon bar buttons say "click to open/close", filename shows click/double-click/long-press actions
+- Filter drawer accordion sections use bordered cards with visible expand arrow instead of plain text bullets
+- Filter drawer sections arranged in 2-column grid, expanding to full width when opened
+- Preset dropdown now has a visible "Preset:" label for context
+- "Reset all" button moved to far right of footer row, away from preset dropdown
 
 ### Fixed
 
 - Fix severity bar connector gaps — dots now only connect when they share the same severity level, bridging correctly across blank and hidden lines instead of joining mismatched levels
-- New settings under `saropaLogCapture.integrations.adbLogcat.*`: device, tagFilters, minLevel, filterByPid, maxBufferLines, writeSidecar
-- Enable via `"adbLogcat"` in `saropaLogCapture.integrations.adapters` array or accept the auto-prompt when debugging Dart/Flutter with adb on PATH
 
 ---
 
