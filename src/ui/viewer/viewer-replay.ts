@@ -159,7 +159,7 @@ export function getReplayScript(): string {
         footerActionsBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            setFooterActionsOpen(!footerActionsMenu.classList.contains('footer-actions-open'));
+            setFooterActionsOpen(!(footerActionsMenu && footerActionsMenu.classList.contains('footer-actions-open')));
         });
     }
     if (replayActionBtn) {

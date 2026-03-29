@@ -15,22 +15,22 @@ function updateSessionNav(hasPrev, hasNext, index, total) {
     var wrapper = document.getElementById('session-nav-wrapper');
     if (wrapper) { wrapper.style.transition = 'none'; }
     /* Always show session count — default to "Session 1 of 1" when no navigation info. */
-    sessionNav.classList.add('visible');
-    sessionNavCurrentEl.textContent = (index > 0 ? index : 1);
-    sessionNavTotalEl.textContent = (total > 0 ? total : 1);
-    sessionPrevBtn.disabled = !hasPrev;
-    sessionNextBtn.disabled = !hasNext;
+    if (sessionNav) sessionNav.classList.add('visible');
+    if (sessionNavCurrentEl) sessionNavCurrentEl.textContent = (index > 0 ? index : 1);
+    if (sessionNavTotalEl) sessionNavTotalEl.textContent = (total > 0 ? total : 1);
+    if (sessionPrevBtn) sessionPrevBtn.disabled = !hasPrev;
+    if (sessionNextBtn) sessionNextBtn.disabled = !hasNext;
     if (typeof updateSessionNavWrapperVisibility === 'function') updateSessionNavWrapperVisibility();
     if (wrapper) requestAnimationFrame(function() { wrapper.style.transition = ''; });
 }
 
-sessionPrevBtn.addEventListener('click', function() {
+if (sessionPrevBtn) sessionPrevBtn.addEventListener('click', function() {
     if (!sessionPrevBtn.disabled) {
         vscodeApi.postMessage({ type: 'navigateSession', direction: -1 });
     }
 });
 
-sessionNextBtn.addEventListener('click', function() {
+if (sessionNextBtn) sessionNextBtn.addEventListener('click', function() {
     if (!sessionNextBtn.disabled) {
         vscodeApi.postMessage({ type: 'navigateSession', direction: 1 });
     }

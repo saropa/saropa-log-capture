@@ -34,7 +34,7 @@ var sessionSearchCompactEl = document.querySelector('.session-search-compact');
 /** Show case/word/regex toggles when the field is focused or there is a non-empty query (keeps the nav bar compact otherwise). */
 function syncSearchMatchOptionsVisibility() {
     if (!sessionSearchCompactEl) return;
-    sessionSearchCompactEl.classList.toggle('has-search-query', !!(searchInputEl.value && searchInputEl.value.trim()));
+    sessionSearchCompactEl.classList.toggle('has-search-query', !!(searchInputEl && searchInputEl.value && searchInputEl.value.trim()));
 }
 
 var searchOpen = false;
@@ -49,6 +49,7 @@ var searchCaseSensitive = false;
 var searchWholeWord = false;
 
 function openSearch() {
+    if (!searchInputEl) return;
     if (searchOpen) { searchInputEl.focus(); return; }
     searchOpen = true;
     if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
@@ -64,9 +65,9 @@ function openSearch() {
 function closeSearch() {
     if (!searchOpen) return;
     closeSearchOptionsPopover();
-    if (typeof addToSearchHistory === 'function' && searchInputEl.value.trim()) addToSearchHistory(searchInputEl.value.trim());
+    if (typeof addToSearchHistory === 'function' && searchInputEl && searchInputEl.value.trim()) addToSearchHistory(searchInputEl.value.trim());
     searchOpen = false;
-    searchInputEl.blur();
+    if (searchInputEl) searchInputEl.blur();
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
@@ -83,7 +84,7 @@ function clearSearchState() {
     searchRegex = null;
     matchIndices = [];
     currentMatchIdx = -1;
-    matchCountEl.textContent = '';
+    if (matchCountEl) matchCountEl.textContent = '';
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');
     if (sp) sp.disabled = true;
@@ -96,7 +97,7 @@ function escapeForRegex(s) {
 
 function updateSearch() {
     try {
-        var query = searchInputEl.value;
+        var query = searchInputEl ? searchInputEl.value : '';
         if (!query) {
             clearSearchState();
             clearSearchFilter();
@@ -112,7 +113,7 @@ function updateSearch() {
             searchRegex = new RegExp(pattern, flags);
         } catch (e) {
             clearSearchState();
-            matchCountEl.textContent = 'Invalid regex';
+            if (matchCountEl) matchCountEl.textContent = 'Invalid regex';
             return;
         }
         matchIndices = [];
@@ -164,9 +165,9 @@ function clearSearchFilter() {
 
 function updateMatchDisplay() {
     if (matchIndices.length === 0) {
-        matchCountEl.textContent = searchInputEl.value ? 'No matches' : '';
+        if (matchCountEl) matchCountEl.textContent = (searchInputEl && searchInputEl.value) ? 'No matches' : '';
     } else {
-        matchCountEl.textContent = (currentMatchIdx + 1) + '/' + matchIndices.length;
+        if (matchCountEl) matchCountEl.textContent = (currentMatchIdx + 1) + '/' + matchIndices.length;
     }
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');
@@ -197,6 +198,7 @@ function scrollToMatch() {
     var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
         ? prefixSums[idx] : 0;
     if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }
+    if (!logEl) return;
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true;
     logEl.scrollTop = cumH - logEl.clientHeight / 2;
@@ -222,11 +224,11 @@ function isCurrentMatch(idx) {
     return currentMatchIdx >= 0 && matchIndices[currentMatchIdx] === idx;
 }
 
-searchInputEl.addEventListener('focus', function() {
+if (searchInputEl) searchInputEl.addEventListener('focus', function() {
     if (!searchOpen) { openSearch(); }
 });
 
-searchInputEl.addEventListener('keydown', function(e) {
+if (searchInputEl) searchInputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.shiftKey ? searchPrev() : searchNext(); e.preventDefault(); }
     if (e.key === 'Escape') {
         if (searchOptionsOpen) { closeSearchOptionsPopover(); }
@@ -234,8 +236,10 @@ searchInputEl.addEventListener('keydown', function(e) {
         e.preventDefault();
     }
 });
-document.getElementById('search-next').addEventListener('click', searchNext);
-document.getElementById('search-prev').addEventListener('click', searchPrev);
+var searchNextBtn = document.getElementById('search-next');
+var searchPrevBtn = document.getElementById('search-prev');
+if (searchNextBtn) searchNextBtn.addEventListener('click', searchNext);
+if (searchPrevBtn) searchPrevBtn.addEventListener('click', searchPrev);
 if (searchFunnelBtn) {
     searchFunnelBtn.addEventListener('click', function(e) {
         e.stopPropagation();
