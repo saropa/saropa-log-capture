@@ -115,9 +115,9 @@ function getOverlayStyles() {
 /* Only prev/next (and run nav inside the same strip)—not the compact find widget or perf chip. */
 #split-breadcrumb button,
 #run-nav button {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, transparent);
     font-size: 10px;
     padding: 1px 6px;
     cursor: pointer;
@@ -125,8 +125,7 @@ function getOverlayStyles() {
 }
 #split-breadcrumb button:hover,
 #run-nav button:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-secondaryHoverBackground);
 }
 #split-breadcrumb button:disabled,
 #run-nav button:disabled {

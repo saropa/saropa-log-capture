@@ -16,21 +16,21 @@ function getFindPanelHtml() {
     <div class="find-panel-header">
         <span>Find in Files</span>
         <div class="find-panel-header-actions">
-            <button id="find-sort-toggle" class="find-header-btn" title="Sort by match count" aria-label="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
-            <button id="find-panel-close" class="find-panel-close" title="Close" aria-label="Close Find in Files"><span class="codicon codicon-close"></span></button>
+            <button id="find-sort-toggle" class="find-header-btn" title="Sort results by match count, highest first" aria-label="Sort by match count"><span class="codicon codicon-sort-precedence"></span></button>
+            <button id="find-panel-close" class="find-panel-close" title="Close the Find in Files panel" aria-label="Close Find in Files"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="find-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="find-input-wrapper">
-            <input id="find-input" type="text" placeholder="Search all session files..." aria-label="Search all session files" />
+            <input id="find-input" type="text" placeholder="Search all session files..." title="Search across all log files in this project" aria-label="Search all session files" />
             <div class="find-input-actions">
-                <button id="find-case-toggle" class="search-input-btn" title="Match Case" aria-label="Match Case">
+                <button id="find-case-toggle" class="search-input-btn" title="Match Case — toggle case-sensitive search" aria-label="Match Case">
                     <span class="codicon codicon-case-sensitive"></span>
                 </button>
-                <button id="find-word-toggle" class="search-input-btn" title="Match Whole Word" aria-label="Match Whole Word">
+                <button id="find-word-toggle" class="search-input-btn" title="Match Whole Word — only match complete words" aria-label="Match Whole Word">
                     <span class="codicon codicon-whole-word"></span>
                 </button>
-                <button id="find-regex-toggle" class="search-input-btn" title="Use Regular Expression" aria-label="Use Regular Expression">
+                <button id="find-regex-toggle" class="search-input-btn" title="Use Regular Expression — interpret search as regex pattern" aria-label="Use Regular Expression">
                     <span class="codicon codicon-regex"></span>
                 </button>
             </div>

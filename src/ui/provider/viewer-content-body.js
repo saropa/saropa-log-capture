@@ -35,6 +35,20 @@ function getViewerBodyHtml(opts) {
     const version = opts.version ?? '';
     return /* html */ `
     <div id="main-content" role="main">
+    <div id="panel-content-row">
+    <div id="panel-slot">
+    ${(0, viewer_session_panel_1.getSessionPanelHtml)()}
+    ${(0, viewer_session_context_menu_1.getSessionContextMenuHtml)()}
+    ${(0, viewer_find_panel_1.getFindPanelHtml)()}
+    ${(0, viewer_bookmark_panel_1.getBookmarkPanelHtml)()}
+    ${(0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelHtml)()}
+    ${(0, viewer_trash_panel_1.getTrashPanelHtml)()}
+    ${(0, viewer_options_panel_1.getOptionsPanelHtml)()}
+    ${(0, viewer_crashlytics_panel_1.getCrashlyticsPanelHtml)()}
+    ${(0, viewer_insight_panel_1.getInsightPanelHtml)()}
+    ${(0, viewer_about_panel_1.getAboutPanelHtml)()}
+    </div>
+    <div id="log-area-with-footer">
     ${(0, viewer_toolbar_html_1.getToolbarHtml)({ version })}
     ${(0, viewer_toolbar_search_html_1.getSearchFlyoutHtml)()}
     ${(0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)()}
@@ -50,20 +64,6 @@ function getViewerBodyHtml(opts) {
         <button id="split-next" title="Next part" aria-label="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
-    <div id="panel-content-row">
-    <div id="panel-slot">
-    ${(0, viewer_session_panel_1.getSessionPanelHtml)()}
-    ${(0, viewer_session_context_menu_1.getSessionContextMenuHtml)()}
-    ${(0, viewer_find_panel_1.getFindPanelHtml)()}
-    ${(0, viewer_bookmark_panel_1.getBookmarkPanelHtml)()}
-    ${(0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelHtml)()}
-    ${(0, viewer_trash_panel_1.getTrashPanelHtml)()}
-    ${(0, viewer_options_panel_1.getOptionsPanelHtml)()}
-    ${(0, viewer_crashlytics_panel_1.getCrashlyticsPanelHtml)()}
-    ${(0, viewer_insight_panel_1.getInsightPanelHtml)()}
-    ${(0, viewer_about_panel_1.getAboutPanelHtml)()}
-    </div>
-    <div id="log-area-with-footer">
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap" role="log" aria-label="Log content">

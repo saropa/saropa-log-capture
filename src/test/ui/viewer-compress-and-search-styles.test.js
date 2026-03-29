@@ -47,6 +47,7 @@ const viewer_script_messages_1 = require("../../ui/viewer/viewer-script-messages
 const viewer_styles_1 = require("../../ui/viewer-styles/viewer-styles");
 const viewer_styles_overlays_1 = require("../../ui/viewer-styles/viewer-styles-overlays");
 const viewer_styles_search_1 = require("../../ui/viewer-styles/viewer-styles-search");
+const viewer_styles_toolbar_1 = require("../../ui/viewer-styles/viewer-styles-toolbar");
 const viewer_options_panel_html_1 = require("../../ui/viewer-panels/viewer-options-panel-html");
 const viewer_layout_1 = require("../../ui/provider/viewer-layout");
 const viewer_content_body_1 = require("../../ui/provider/viewer-content-body");
@@ -202,6 +203,16 @@ suite('Compress suggestion banner markup', () => {
         assert.ok(html.includes('id="compress-suggest-banner"'));
         assert.ok(html.includes('id="compress-suggest-enable"'));
         assert.ok(html.includes('id="compress-suggest-dismiss"'));
+    });
+});
+suite('Toolbar icon button disabled state CSS', () => {
+    const css = (0, viewer_styles_toolbar_1.getToolbarStyles)();
+    test('disabled buttons are visually dimmed', () => {
+        assert.ok(css.includes('.toolbar-icon-btn:disabled'), 'toolbar icon buttons must have a :disabled rule for visual feedback');
+        assert.ok(css.includes('opacity: 0.35'), 'disabled buttons should be dimmed to 0.35 opacity');
+    });
+    test('hover effect is suppressed on disabled buttons', () => {
+        assert.ok(css.includes('.toolbar-icon-btn:hover:not(:disabled)'), 'hover rule must exclude disabled buttons so they do not appear clickable');
     });
 });
 //# sourceMappingURL=viewer-compress-and-search-styles.test.js.map

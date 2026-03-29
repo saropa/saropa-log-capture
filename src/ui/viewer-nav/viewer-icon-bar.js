@@ -15,32 +15,32 @@ exports.getIconBarScript = getIconBarScript;
 function getIconBarHtml() {
     return /* html */ `
 <div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
-    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Project Logs" aria-label="Project Logs">
+    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Project Logs">
         <span class="codicon codicon-files"></span><span class="ib-label">Project Logs</span>
     </button>
-    <button id="ib-find" class="ib-icon" tabindex="0" title="Find in Files (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
+    <button id="ib-find" class="ib-icon" tabindex="0" title="Click to open/close — search across all log files in this project (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
         <span class="codicon codicon-list-filter"></span><span class="ib-label">Find</span>
     </button>
-    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Bookmarks" aria-label="Bookmarks">
+    <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Click to open/close — view and manage bookmarked log lines" aria-label="Bookmarks">
         <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks</span>
     </button>
-    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="SQL Query History (session)" aria-label="SQL Query History">
+    <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="Click to open/close — browse SQL queries captured during this session" aria-label="SQL Query History">
         <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
     </button>
-    <button id="ib-trash" class="ib-icon" tabindex="0" title="Trash" aria-label="Trash">
+    <button id="ib-trash" class="ib-icon" tabindex="0" title="Click to open/close — view and restore deleted log sessions" aria-label="Trash">
         <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
     </button>
-    <button id="ib-options" class="ib-icon" tabindex="0" title="Options" aria-label="Options">
+    <button id="ib-options" class="ib-icon" tabindex="0" title="Click to open/close — display, layout, and audio settings" aria-label="Options">
         <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
     </button>
     <div class="ib-separator"></div>
-    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Crashlytics" aria-label="Crashlytics">
+    <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
-    <button id="ib-insight" class="ib-icon" tabindex="0" title="Insights" aria-label="Insights">
+    <button id="ib-insight" class="ib-icon" tabindex="0" title="Click to open/close — performance insights and analysis for this session" aria-label="Insights">
         <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insights</span>
     </button>
-    <button id="ib-about" class="ib-icon" tabindex="0" title="About Saropa" aria-label="About Saropa">
+    <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>
     </button>
 </div>`;

@@ -52,6 +52,7 @@ const session_severity_counts_1 = require("../../ui/session/session-severity-cou
 const session_summary_1 = require("./session-summary");
 const integrations_1 = require("../integrations");
 const external_log_tailer_1 = require("../integrations/external-log-tailer");
+const adb_logcat_capture_1 = require("../integrations/adb-logcat-capture");
 const unified_session_log_writer_1 = require("./unified-session-log-writer");
 const session_drift_sql_fingerprint_persist_1 = require("./session-drift-sql-fingerprint-persist");
 /** Build session statistics for the summary notification. */
@@ -98,8 +99,9 @@ async function finalizeSession(params, stats) {
         debugProcessId: params.debugProcessId,
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
-    // Always dispose external log watchers (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
+    // Always dispose external log watchers and adb logcat (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
     (0, external_log_tailer_1.stopExternalLogTailers)();
+    (0, adb_logcat_capture_1.stopLogcatCapture)();
     await (0, unified_session_log_writer_1.writeUnifiedSessionLogIfEnabled)(logSession.fileUri, baseFileName, config, outputChannel);
     // Save auto-tags if any watch patterns triggered during the session.
     if (autoTagger?.hasTriggeredTags()) {

@@ -40,6 +40,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runIntegrationPrepCheck = runIntegrationPrepCheck;
 const vscode = __importStar(require("vscode"));
 const firebase_crashlytics_1 = require("../crashlytics/firebase-crashlytics");
+const adb_logcat_capture_1 = require("./adb-logcat-capture");
 /** Check if Crashlytics is ready and return an issue string if not. */
 async function checkCrashlyticsPrep() {
     try {
@@ -67,6 +68,9 @@ async function runIntegrationPrepCheck(adapterIds) {
             if (issue) {
                 issues.push(issue);
             }
+        }
+        if (ids.includes('adbLogcat') && !(0, adb_logcat_capture_1.isAdbAvailable)()) {
+            issues.push('adb Logcat: `adb` not found on PATH. Install Android SDK Platform-Tools.');
         }
         if (issues.length > 0) {
             void vscode.window.showWarningMessage(issues.length === 1 ? issues[0] : `Integration setup:\n${issues.join('\n')}`, { modal: false });

@@ -158,6 +158,26 @@ function getSessionRenderingScript() {
         }
         return result;
     }
+
+    /** Render a lightweight preview list (filenames only, shimmer on metadata). */
+    function renderSessionListPreview(previews) {
+        if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
+        if (!sessionListEl) return;
+        if (!previews || previews.length === 0) return;
+        if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
+        if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
+        var html = previews.map(function(p) {
+            var bn = getSessionBasename(p.filename);
+            var name = applySessionDisplayOptions(bn);
+            return '<div class="session-item" data-uri="' + escapeAttr(p.uriString || '') + '" data-filename="' + escapeAttr(p.filename || '') + '">'
+                + '<span class="session-item-icon" title="Log file"><span class="codicon codicon-output"></span></span>'
+                + '<div class="session-item-info">'
+                + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
+                + '<span class="session-item-meta session-shimmer-meta"></span>'
+                + '</div></div>';
+        }).join('');
+        sessionListEl.innerHTML = html;
+    }
 `;
 }
 //# sourceMappingURL=viewer-session-panel-rendering.js.map

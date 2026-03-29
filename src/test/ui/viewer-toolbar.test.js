@@ -37,6 +37,7 @@ const assert = __importStar(require("assert"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const viewer_toolbar_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-html");
+const viewer_toolbar_search_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-search-html");
 const viewer_toolbar_filter_drawer_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html");
 const viewer_toolbar_actions_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-actions-html");
 /**
@@ -103,6 +104,23 @@ suite('Viewer toolbar', () => {
         assert.ok(html.includes('filter-accordion'), 'filter drawer should have accordion sections');
         assert.ok(html.includes('filter-accordion-header'), 'accordion sections need clickable headers');
     });
+    test('filter drawer has preset label and reset after summary', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('filter-drawer-footer-label'), 'footer should have a preset label');
+        assert.ok(html.includes('>Preset:</span>'), 'preset label should read "Preset:"');
+        const summaryIdx = html.indexOf('id="filter-drawer-summary"');
+        const resetIdx = html.indexOf('id="reset-all-filters"');
+        assert.ok(summaryIdx < resetIdx, 'reset button should appear after summary (far right)');
+    });
+    test('filter drawer sections use grid container', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('class="filter-drawer-sections"'), 'accordion sections should be inside grid container');
+    });
+    test('accordion script manages expanded class', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(src.includes("classList.add('expanded')"), 'handleAccordionClick should add expanded class');
+        assert.ok(src.includes("classList.remove('expanded')"), 'collapseAllAccordions should remove expanded class');
+    });
     test('actions dropdown preserves replay script IDs', () => {
         const html = (0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)();
         assert.ok(html.includes('id="footer-actions-menu"'), 'replay compat: menu ID');
@@ -121,6 +139,25 @@ suite('Viewer toolbar', () => {
         const src = readSrc('ui/provider/viewer-content-body.ts');
         assert.ok(!src.includes('id="footer"'), 'old footer removed');
         assert.ok(!src.includes('getFiltersPanelHtml'), 'filters panel removed from body');
+    });
+    test('toolbar should be inside log-area-with-footer, not above panel-content-row', () => {
+        const { getViewerBodyHtml } = require('../../ui/provider/viewer-content-body');
+        const html = getViewerBodyHtml({ version: '1.0.0' });
+        const logAreaIdx = html.indexOf('id="log-area-with-footer"');
+        const toolbarIdx = html.indexOf('id="viewer-toolbar"');
+        const panelSlotIdx = html.indexOf('id="panel-slot"');
+        assert.ok(logAreaIdx > 0, 'log-area-with-footer must exist');
+        assert.ok(toolbarIdx > logAreaIdx, 'toolbar must appear after log-area-with-footer opens');
+        assert.ok(panelSlotIdx < logAreaIdx, 'panel-slot must appear before log-area-with-footer');
+    });
+    test('panel-content-row should be direct child of main-content with no toolbar between', () => {
+        const { getViewerBodyHtml } = require('../../ui/provider/viewer-content-body');
+        const html = getViewerBodyHtml({ version: '1.0.0' });
+        const mainIdx = html.indexOf('id="main-content"');
+        const panelRowIdx = html.indexOf('id="panel-content-row"');
+        const toolbarIdx = html.indexOf('id="viewer-toolbar"');
+        assert.ok(mainIdx < panelRowIdx, 'panel-content-row must follow main-content');
+        assert.ok(toolbarIdx > panelRowIdx, 'toolbar must not appear between main-content and panel-content-row');
     });
     test('icon bar has no Filters or SQL Filter buttons', () => {
         const src = readSrc('ui/viewer-nav/viewer-icon-bar.ts');
@@ -159,6 +196,51 @@ suite('Viewer toolbar', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
         assert.ok(src.includes('toggleFilterDrawer'), 'toggleLevelMenu should delegate to toggleFilterDrawer');
         assert.ok(!src.includes("getElementById('level-flyup')"), 'should not reference removed #level-flyup element');
+    });
+    test('toolbar elements should have descriptive tooltips', () => {
+        const html = (0, viewer_toolbar_html_1.getToolbarHtml)({ version: '1.0.0' });
+        // Nav buttons
+        assert.ok(html.includes('title="Navigate to the previous'), 'prev button needs descriptive tooltip');
+        assert.ok(html.includes('title="Navigate to the next'), 'next button needs descriptive tooltip');
+        // Icon buttons
+        assert.ok(html.includes('title="Open search to find text'), 'search button needs descriptive tooltip');
+        assert.ok(html.includes('title="Open filter drawer'), 'filter button needs descriptive tooltip');
+        assert.ok(html.includes('title="Open actions menu'), 'actions button needs descriptive tooltip');
+        // Level dots
+        assert.ok(html.includes('title="Info — click to toggle, double-click to show only Info"'), 'level dots need descriptive tooltips');
+        // Status elements
+        assert.ok(html.includes('title="Total number of lines'), 'line count needs tooltip');
+        assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
+        // Interactive elements describe their actions
+        assert.ok(html.includes('double-click to open folder'), 'filename tooltip should describe double-click');
+        assert.ok(html.includes('long-press to copy path'), 'filename tooltip should describe long-press');
+        assert.ok(html.includes('click to open filter drawer'), 'trigger label should describe click action');
+    });
+    test('search flyout elements should have descriptive tooltips', () => {
+        const html = (0, viewer_toolbar_search_html_1.getSearchFlyoutHtml)();
+        assert.ok(html.includes('title="Type to search or filter'), 'search input needs tooltip');
+        assert.ok(html.includes('title="Match Case — toggle'), 'case toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Match Whole Word — only'), 'word toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Number of matches found"'), 'match count needs tooltip');
+        assert.ok(html.includes('title="Switch between highlighting'), 'funnel button needs descriptive tooltip');
+    });
+    test('filter drawer level buttons should have tooltips', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('title="Click to show all log levels"'), 'All button needs tooltip');
+        assert.ok(html.includes('title="Click to hide all log levels"'), 'None button needs tooltip');
+        assert.ok(html.includes('title="Info — click to show/hide informational'), 'Info toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Error — click to show/hide error'), 'Error toggle needs descriptive tooltip');
+    });
+    test('filter drawer accordion headers should have tooltips', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('title="Click to expand or collapse the Log Streams'), 'Log Streams accordion needs tooltip');
+        assert.ok(html.includes('title="Click to expand or collapse the Exclusions'), 'Exclusions accordion needs tooltip');
+    });
+    test('actions dropdown items should have tooltips', () => {
+        const html = (0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)();
+        assert.ok(html.includes('title="Replay the log session'), 'replay needs tooltip');
+        assert.ok(html.includes('title="Generate and open a quality report'), 'quality report needs tooltip');
+        assert.ok(html.includes('title="Export log lines'), 'export needs tooltip');
     });
 });
 //# sourceMappingURL=viewer-toolbar.test.js.map

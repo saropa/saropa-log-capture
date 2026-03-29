@@ -67,7 +67,7 @@ var gotoSavedScroll = -1;
 
 function openGotoLine() {
     if (!gotoOverlay || !gotoInput) return;
-    gotoSavedScroll = logEl.scrollTop;
+    gotoSavedScroll = logEl ? logEl.scrollTop : 0;
     gotoInput.value = '';
     gotoInput.placeholder = '1 \\u2013 ' + allLines.length;
     gotoOverlay.classList.add('visible');
@@ -77,7 +77,7 @@ function openGotoLine() {
 function closeGotoLine(revert) {
     if (!gotoOverlay) return;
     gotoOverlay.classList.remove('visible');
-    if (revert && gotoSavedScroll >= 0 && !window.isContextMenuOpen) {
+    if (revert && gotoSavedScroll >= 0 && !window.isContextMenuOpen && logEl) {
         if (window.setProgrammaticScroll) window.setProgrammaticScroll();
         suppressScroll = true;
         logEl.scrollTop = gotoSavedScroll;
@@ -92,12 +92,13 @@ function scrollToLineNumber(num) {
     var target = Math.min(num, allLines.length) - 1;
     var offset = 0;
     for (var i = 0; i < target; i++) offset += allLines[i].height;
+    if (!logEl) return;
     if (window.setProgrammaticScroll) window.setProgrammaticScroll();
     suppressScroll = true;
     logEl.scrollTop = offset;
     suppressScroll = false;
     autoScroll = false;
-    jumpBtn.style.display = 'block';
+    if (jumpBtn) jumpBtn.style.display = 'block';
     renderViewport(false);
 }
 
