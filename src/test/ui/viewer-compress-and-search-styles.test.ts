@@ -12,6 +12,7 @@ import { getViewerScriptMessageHandler } from '../../ui/viewer/viewer-script-mes
 import { getViewerStyles } from '../../ui/viewer-styles/viewer-styles';
 import { getOverlayStyles } from '../../ui/viewer-styles/viewer-styles-overlays';
 import { getSearchStyles } from '../../ui/viewer-styles/viewer-styles-search';
+import { getToolbarStyles } from '../../ui/viewer-styles/viewer-styles-toolbar';
 import { getOptionsPanelHtml } from '../../ui/viewer-panels/viewer-options-panel-html';
 import { getLayoutScript } from '../../ui/provider/viewer-layout';
 import { getViewerBodyHtml } from '../../ui/provider/viewer-content-body';
@@ -246,5 +247,27 @@ suite('Compress suggestion banner markup', () => {
         assert.ok(html.includes('id="compress-suggest-banner"'));
         assert.ok(html.includes('id="compress-suggest-enable"'));
         assert.ok(html.includes('id="compress-suggest-dismiss"'));
+    });
+});
+
+suite('Toolbar icon button disabled state CSS', () => {
+    const css = getToolbarStyles();
+
+    test('disabled buttons are visually dimmed', () => {
+        assert.ok(
+            css.includes('.toolbar-icon-btn:disabled'),
+            'toolbar icon buttons must have a :disabled rule for visual feedback',
+        );
+        assert.ok(
+            css.includes('opacity: 0.35'),
+            'disabled buttons should be dimmed to 0.35 opacity',
+        );
+    });
+
+    test('hover effect is suppressed on disabled buttons', () => {
+        assert.ok(
+            css.includes('.toolbar-icon-btn:hover:not(:disabled)'),
+            'hover rule must exclude disabled buttons so they do not appear clickable',
+        );
     });
 });
