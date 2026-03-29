@@ -52,15 +52,13 @@ suite('Viewer HTML', () => {
             assert.ok(html.includes('var viewerPreserveAsciiBoxArt = false'));
         });
 
-        test('injects SQL pattern chip thresholds when provided (DB_05)', () => {
+        test('should include verb-based SQL chip variables (plan 043)', () => {
             const html = buildViewerHtml({
                 nonce: getNonce(),
                 version: '0.0.0',
-                viewerSqlPatternChipMinCount: 3,
-                viewerSqlPatternMaxChips: 7,
             });
-            assert.ok(html.includes('var sqlChipMinCount = 3'));
-            assert.ok(html.includes('var sqlPatternMaxChips = 7'));
+            assert.ok(html.includes('var sqlVerbCounts'));
+            assert.ok(html.includes('var sqlVerbOrder'));
         });
     });
 

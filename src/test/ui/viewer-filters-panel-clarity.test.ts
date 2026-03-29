@@ -7,7 +7,7 @@ suite('Filters panel clarity (streams vs code location)', () => {
     test('HTML uses Log Streams, Code Location Scope, and scope narrowing wrapper ids', () => {
         const html = getFiltersPanelHtml();
         assert.ok(html.includes('Log Streams'));
-        assert.ok(html.includes('Top SQL Patterns'));
+        assert.ok(html.includes('SQL Commands'));
         assert.ok(html.includes('Code Location Scope'));
         assert.ok(html.includes('id="scope-narrowing-block"'));
         assert.ok(html.includes('id="scope-no-context-hint"'));

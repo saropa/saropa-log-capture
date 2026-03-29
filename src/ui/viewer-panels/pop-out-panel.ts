@@ -271,9 +271,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       },
     });
   }
-  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
-    this.post({ type: "setViewerSqlPatternChipSettings", chipMinCount, chipMaxChips });
-  }
+
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
@@ -323,8 +321,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
       viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
-      viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
-      viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
+
     });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();

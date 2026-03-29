@@ -235,6 +235,25 @@ export function getDecorationStyles(): string {
     z-index: 3;
 }
 
+/* Continuation line collapse badge — pill on header line, toggles group visibility */
+.cont-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-left: 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--vscode-descriptionForeground, #888);
+    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 50%, transparent);
+    vertical-align: middle;
+    user-select: none;
+}
+.cont-badge:hover {
+    background: var(--vscode-badge-background, #4d4d4d);
+    color: var(--vscode-badge-foreground, #fff);
+}
+
 /* Error classification badges */
 .error-badge {
     display: inline-block;
