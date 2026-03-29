@@ -38,9 +38,9 @@ suite('Viewer toolbar search', () => {
         );
     });
 
-    test('search script targets session nav outer wrapper, not #search-bar', () => {
+    test('search script targets search-flyout wrapper, not #search-bar', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-search.ts');
-        assert.ok(src.includes('session-nav-search-outer'), 'script should reference session nav search DOM');
+        assert.ok(src.includes("getElementById('search-flyout')"), 'script should reference search-flyout DOM');
         assert.ok(
             !src.includes("getElementById('search-bar')"),
             'must not reference removed #search-bar element',
