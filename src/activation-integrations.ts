@@ -22,6 +22,7 @@ import { databaseQueryLogsProvider } from './modules/integrations/providers/data
 import { httpNetworkProvider } from './modules/integrations/providers/http-network';
 import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
 import { codeQualityMetricsProvider } from './modules/integrations/providers/code-quality-metrics';
+import { adbLogcatProvider } from './modules/integrations/providers/adb-logcat';
 import { driftAdvisorBuiltinProvider } from './modules/integrations/providers/drift-advisor-builtin';
 
 /** Register all built-in integration providers with the global registry. */
@@ -47,6 +48,7 @@ export function registerAllIntegrations(): void {
     registry.register(databaseQueryLogsProvider);
     registry.register(httpNetworkProvider);
     registry.register(browserDevtoolsProvider);
+    registry.register(adbLogcatProvider);
     // Drift Advisor: meta/sidecar from extension API or `.saropa/drift-advisor-session.json`.
     // External bridge registers after built-ins; last writer wins for same meta key.
     registry.register(driftAdvisorBuiltinProvider);
