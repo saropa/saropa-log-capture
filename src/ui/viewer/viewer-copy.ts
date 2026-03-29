@@ -110,7 +110,7 @@ function copyAllDecorated() {
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToDecoratedText(lines) });
 }
 
-viewportEl.addEventListener('click', function(e) {
+if (viewportEl) viewportEl.addEventListener('click', function(e) {
     if (!e.shiftKey) return;
     var lineEl = e.target.closest('.line, .stack-header, .marker');
     if (!lineEl) return;
@@ -133,6 +133,7 @@ viewportEl.addEventListener('click', function(e) {
 });
 
 function updateSelectionHighlight() {
+    if (!viewportEl) return;
     var children = viewportEl.children;
     var start = Math.min(selectionStart, selectionEnd);
     var end = Math.max(selectionStart, selectionEnd);
@@ -166,6 +167,7 @@ var copyFloatHideTimer = 0;
 var wrapperEl = document.getElementById('log-content-wrapper');
 
 function showCopyFloat(lineEl) {
+    if (!copyFloat || !wrapperEl || !logEl) return;
     if (lineEl === copyFloatLineEl) return;
     copyFloatLineEl = lineEl;
     var wrapRect = wrapperEl.getBoundingClientRect();
@@ -179,27 +181,28 @@ function showCopyFloat(lineEl) {
 }
 
 function hideCopyFloat() {
+    if (!copyFloat) return;
     copyFloat.style.display = 'none';
     copyFloatLineEl = null;
 }
 
-viewportEl.addEventListener('mouseover', function(e) {
+if (viewportEl) viewportEl.addEventListener('mouseover', function(e) {
     var lineEl = e.target.closest('.line, .stack-header');
     if (!lineEl || lineEl.classList.contains('marker')) { return; }
     clearTimeout(copyFloatHideTimer);
     showCopyFloat(lineEl);
 });
 
-viewportEl.addEventListener('mouseleave', function() {
+if (viewportEl) viewportEl.addEventListener('mouseleave', function() {
     copyFloatHideTimer = setTimeout(hideCopyFloat, 150);
 });
 
-copyFloat.addEventListener('mouseenter', function() {
+if (copyFloat) copyFloat.addEventListener('mouseenter', function() {
     clearTimeout(copyFloatHideTimer);
 });
-copyFloat.addEventListener('mouseleave', hideCopyFloat);
+if (copyFloat) copyFloat.addEventListener('mouseleave', hideCopyFloat);
 
-copyFloat.addEventListener('click', function(e) {
+if (copyFloat) copyFloat.addEventListener('click', function(e) {
     e.preventDefault();
     if (!copyFloatLineEl) return;
     var ci = parseInt(copyFloatLineEl.dataset.idx, 10);
@@ -209,13 +212,14 @@ copyFloat.addEventListener('click', function(e) {
     }
 });
 
-logEl.addEventListener('scroll', function() {
-    if (copyFloat.style.display !== 'none') hideCopyFloat();
+if (logEl) logEl.addEventListener('scroll', function() {
+    if (copyFloat && copyFloat.style.display !== 'none') hideCopyFloat();
 }, { passive: true });
 
 function clearSelection() {
     selectionStart = -1;
     selectionEnd = -1;
+    if (!viewportEl) return;
     var selected = viewportEl.querySelectorAll('.selected');
     for (var i = 0; i < selected.length; i++) {
         selected[i].classList.remove('selected');
