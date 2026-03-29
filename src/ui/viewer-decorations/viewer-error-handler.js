@@ -13,8 +13,13 @@ function getErrorHandlerScript() {
 window._scriptErrors = [];
 window._vscodeApi = null;
 
-window.onerror = function(msg, source, line, col) {
-    var entry = { message: String(msg), source: String(source || ''), line: line || 0, col: col || 0 };
+window.addEventListener('error', function(ev) {
+    var msg = ev.message || 'Unknown error';
+    var source = ev.filename || '';
+    var line = ev.lineno || 0;
+    var col = ev.colno || 0;
+    var stack = (ev.error && ev.error.stack) ? ev.error.stack : '';
+    var entry = { message: String(msg), source: source, line: line, col: col, stack: stack };
     window._scriptErrors.push(entry);
     var banner = document.getElementById('script-error-banner');
     if (!banner) {
@@ -36,14 +41,14 @@ window.onerror = function(msg, source, line, col) {
         document.body.prepend(banner);
     }
     var textSpan = document.getElementById('script-error-text');
-    var errorText = 'Script error (line ' + line + ', col ' + col + '): ' + msg + (source ? '\\nSource: ' + source : '');
+    var errorText = msg + '\\n(line ' + line + ', col ' + col + ')' + (stack ? '\\n' + stack : '');
     if (textSpan) textSpan.textContent = errorText;
     else banner.textContent = errorText;
     banner.style.display = 'flex';
     if (window._vscodeApi) {
         window._vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
     }
-};
+});
 `;
 }
 //# sourceMappingURL=viewer-error-handler.js.map
