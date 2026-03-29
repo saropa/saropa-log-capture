@@ -69,6 +69,19 @@ suite('ViewerIconBar', () => {
             assert.ok(!html.includes('id="ib-replay"'));
             assert.ok(!html.includes('>Replay</span>'));
         });
+        test('should have action-oriented tooltips on all icon buttons', () => {
+            const html = (0, viewer_icon_bar_1.getIconBarHtml)();
+            const ids = [
+                'ib-sessions', 'ib-find', 'ib-bookmarks',
+                'ib-sql-query-history', 'ib-trash', 'ib-options',
+                'ib-crashlytics', 'ib-insight', 'ib-about',
+            ];
+            for (const id of ids) {
+                const match = html.match(new RegExp(`id="${id}"[^>]*title="([^"]*)"`));
+                assert.ok(match, `${id} must have a title attribute`);
+                assert.ok(match[1].startsWith('Click to open/close'), `${id} tooltip should describe click action, got: "${match[1]}"`);
+            }
+        });
     });
     suite('getIconBarScript', () => {
         test('should persist and restore label visibility via webview state', () => {

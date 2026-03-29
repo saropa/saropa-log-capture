@@ -115,6 +115,34 @@ function getSessionTagsLoadingStyles() {
     width: 60%;
 }
 
+/* Per-item shimmer for metadata line during preview loading */
+.session-shimmer-meta {
+    display: block;
+    height: 10px;
+    width: 60%;
+    margin-top: 4px;
+    border-radius: 3px;
+    background: var(--vscode-sideBar-background, #252526);
+    position: relative;
+    overflow: hidden;
+}
+
+.session-shimmer-meta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--vscode-widget-border, rgba(255, 255, 255, 0.08)) 45%,
+        var(--vscode-focusBorder, rgba(255, 255, 255, 0.12)) 50%,
+        var(--vscode-widget-border, rgba(255, 255, 255, 0.08)) 55%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: session-shimmer 1.8s ease-in-out infinite;
+}
+
 @keyframes session-progress-indeterminate {
     0% { transform: translateX(-100%); }
     50% { transform: translateX(150%); }

@@ -21,12 +21,12 @@ function getOptionsPanelHtml() {
     return `<div id="options-panel" class="options-panel" role="region" aria-label="Options">
     <div class="options-header">
         <span>Options</span>
-        <button class="options-close" type="button" title="Close" aria-label="Close options"><span class="codicon codicon-close"></span></button>
+        <button class="options-close" type="button" title="Close the Options panel" aria-label="Close options"><span class="codicon codicon-close"></span></button>
     </div>
 
     <div class="options-search-wrapper">
-        <input id="options-search" type="text" placeholder="Filter options\u2026" aria-label="Filter options" />
-        <button id="options-search-clear" class="options-search-clear" type="button" title="Clear filter" aria-label="Clear filter">&times;</button>
+        <input id="options-search" type="text" placeholder="Filter options\u2026" title="Type to filter the options list by keyword" aria-label="Filter options" />
+        <button id="options-search-clear" class="options-search-clear" type="button" title="Clear the filter and show all options" aria-label="Clear filter">&times;</button>
     </div>
 
     <div class="options-content">
@@ -179,8 +179,8 @@ function getOptionsPanelHtml() {
                 </div>
                 <div class="options-row">
                     <span>Preview sounds:</span>
-                    <button id="preview-error-sound" class="preview-sound-btn">🔴 Error</button>
-                    <button id="preview-warning-sound" class="preview-sound-btn">🟠 Warning</button>
+                    <button id="preview-error-sound" class="preview-sound-btn" title="Play the error alert sound at current volume">🔴 Error</button>
+                    <button id="preview-warning-sound" class="preview-sound-btn" title="Play the warning alert sound at current volume">🟠 Warning</button>
                 </div>
             </div>
         </div>
@@ -189,8 +189,8 @@ function getOptionsPanelHtml() {
         <div class="options-section">
             <h3 class="options-section-title">Actions</h3>
             <div class="options-row">
-                <button id="reset-options-btn" class="options-action-btn" title="Reset display, layout, and audio to default">Reset to default</button>
-                <button id="reset-settings-btn" class="options-action-btn" title="Reset all extension settings to defaults">Reset extension settings</button>
+                <button id="reset-options-btn" class="options-action-btn" title="Reset display, layout, and audio options in this viewer to their default values">Reset to default</button>
+                <button id="reset-settings-btn" class="options-action-btn" title="Reset all Saropa Log Capture extension settings to their original defaults">Reset extension settings</button>
             </div>
         </div>
     </div>
