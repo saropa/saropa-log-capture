@@ -12,9 +12,12 @@ var autoHideModalEl = null;
 function initAutoHideModal() {
     autoHideModalEl = document.getElementById('auto-hide-modal');
     if (!autoHideModalEl) return;
-    autoHideModalEl.querySelector('.auto-hide-modal-backdrop').addEventListener('click', closeAutoHideModal);
-    autoHideModalEl.querySelector('.auto-hide-modal-close').addEventListener('click', closeAutoHideModal);
-    autoHideModalEl.querySelector('.auto-hide-modal-list').addEventListener('click', function(e) {
+    var backdropEl = autoHideModalEl.querySelector('.auto-hide-modal-backdrop');
+    if (backdropEl) backdropEl.addEventListener('click', closeAutoHideModal);
+    var closeEl = autoHideModalEl.querySelector('.auto-hide-modal-close');
+    if (closeEl) closeEl.addEventListener('click', closeAutoHideModal);
+    var listEl = autoHideModalEl.querySelector('.auto-hide-modal-list');
+    if (listEl) listEl.addEventListener('click', function(e) {
         var btn = e.target.closest('.auto-hide-remove');
         if (!btn) return;
         var pattern = btn.dataset.pattern || '';
@@ -47,7 +50,7 @@ function populateAutoHideModal() {
     var empty = autoHideModalEl.querySelector('.auto-hide-modal-empty');
     var patterns = (typeof getAllAutoHidePatterns === 'function') ? getAllAutoHidePatterns() : [];
     if (patterns.length === 0) {
-        list.innerHTML = '';
+        if (list) list.innerHTML = '';
         if (empty) empty.classList.remove('u-hidden');
         return;
     }
@@ -65,7 +68,7 @@ function populateAutoHideModal() {
             + '</div>'
         );
     }
-    list.innerHTML = parts.join('');
+    if (list) list.innerHTML = parts.join('');
 }
 
 if (document.readyState === 'loading') {

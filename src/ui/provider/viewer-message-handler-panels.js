@@ -48,6 +48,7 @@ const error_hover_handler_1 = require("../shared/handlers/error-hover-handler");
 const analysis_panel_1 = require("../analysis/analysis-panel");
 const code_quality_handlers_1 = require("../shared/handlers/code-quality-handlers");
 const drift_viewer_health_1 = require("../../modules/integrations/drift-viewer-health");
+const extension_logger_1 = require("../../modules/misc/extension-logger");
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
 function safeLineIndex(v, fallback) {
@@ -64,7 +65,10 @@ function safeLineIndex(v, fallback) {
 function dispatchPanelMessage(msg, ctx) {
     switch (msg.type) {
         case "scriptError":
-            (msg.errors ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
+            (msg.errors ?? []).forEach(e => {
+                const loc = e.line ? ` (line ${e.line}, col ${e.col ?? 0})` : '';
+                (0, extension_logger_1.logExtensionError)('Webview', `${e.message}${loc}`);
+            });
             return true;
         case "requestCrashlyticsData":
         case "crashlyticsCheckAgain":

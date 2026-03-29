@@ -10,6 +10,7 @@ function getBarLevel(el) {
 /** Find next viewport child with a severity dot, stopping at markers. */
 function findNextBarSibling(children, startIdx) {
     for (var ni = startIdx + 1; ni < children.length; ni++) {
+        if (!children[ni]) continue;
         if (children[ni].classList.contains('marker')) return -1;
         if (getBarLevel(children[ni])) return ni;
     }
@@ -17,7 +18,7 @@ function findNextBarSibling(children, startIdx) {
 }
 
 function renderViewport(force) {
-    if (!logEl.clientHeight) return;
+    if (!logEl || !logEl.clientHeight) return;
     var scrollTop = logEl.scrollTop;
     var viewH = logEl.clientHeight;
     var bufferPx = OVERSCAN * ROW_HEIGHT;
@@ -80,14 +81,15 @@ function renderViewport(force) {
     // Connect consecutive dots, bridging through no-dot lines
     var ch = viewportEl.children;
     for (var ci = 0; ci < ch.length; ci++) {
+        if (!ch[ci]) continue;
         var lvl = getBarLevel(ch[ci]);
         if (!lvl) continue;
         var ni = findNextBarSibling(ch, ci);
-        if (ni < 0) continue;
+        if (ni < 0 || !ch[ni]) continue;
         ch[ci].classList.add('bar-down');
         ch[ni].classList.add('bar-up');
         for (var bi = ci + 1; bi < ni; bi++) {
-            ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
+            if (ch[bi]) ch[bi].classList.add('bar-up', 'bar-down', 'bar-bridge', 'level-bar-' + lvl);
         }
         ci = ni - 1;
     }

@@ -219,7 +219,8 @@ function updateHiddenDisplay() {
         hiddenCounterEl.classList.remove('peeking');
     } else {
         hiddenCounterEl.classList.remove('u-hidden');
-        hiddenCounterEl.querySelector('.hidden-count-text').textContent = String(count);
+        var countTextEl = hiddenCounterEl.querySelector('.hidden-count-text');
+        if (countTextEl) countTextEl.textContent = String(count);
         hiddenCounterEl.classList.toggle('peeking', isPeeking);
         hiddenCounterEl.title = isPeeking
             ? 'Peeking at hidden lines \\u2014 click to re-hide'
