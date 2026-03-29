@@ -77,8 +77,6 @@ exports.stringsA = {
     'msg.staticSqlSourcesPickPlaceholder': 'Pick a file to open (opens at best-guess line)',
     'msg.staticSqlSourcesOpenFailed': 'Could not open the selected file.',
     'viewer.rchTitle': 'Signals',
-    'viewer.rchDismissAria': 'Dismiss signals',
-    'viewer.rchDismissTitle': 'Dismiss for this log',
     'viewer.rchExplainAi': 'Explain with AI',
     'viewer.rchCollapseAria': 'Collapse signals',
     'viewer.rchCollapseTitle': 'Collapse',

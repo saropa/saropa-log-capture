@@ -37,6 +37,7 @@ const assert = __importStar(require("assert"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const viewer_styles_search_1 = require("../../ui/viewer-styles/viewer-styles-search");
+const viewer_toolbar_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-html");
 /** Resolve `src/` from `out/test/ui/*.js` or `src/test/ui/*.ts` (same pattern as other viewer UI tests). */
 function readViewerSrc(relFromSrc) {
     const fromOut = path.join(__dirname, '../../../src', relFromSrc);
@@ -61,13 +62,13 @@ suite('Viewer log search and nav contracts', () => {
         assert.ok(msgSrc.includes("case 'searchMatchOptionsAlwaysVisible'") && msgSrc.includes('msg.always === true'), 'webview must toggle class only when always is strictly true');
     });
     test('session log prev/next are icon-only (chevrons), not “Prev/Next” label buttons', () => {
-        const body = readViewerSrc('ui/provider/viewer-content-body.ts');
-        const prevIdx = body.indexOf('id="session-prev"');
-        const nextIdx = body.indexOf('id="session-next"');
+        const html = (0, viewer_toolbar_html_1.getToolbarHtml)({ version: '0' });
+        const prevIdx = html.indexOf('session-prev');
+        const nextIdx = html.indexOf('session-next');
         assert.ok(prevIdx >= 0 && nextIdx > prevIdx, 'expected session-prev before session-next');
-        const betweenPrevAndNext = body.slice(prevIdx, nextIdx);
-        assert.ok(betweenPrevAndNext.includes('session-nav-icon-btn') && betweenPrevAndNext.includes('codicon-chevron-left'), 'session-prev should be an icon button with chevron-left');
-        assert.ok(!betweenPrevAndNext.includes('Prev</button>') && !betweenPrevAndNext.includes('&#x25C0; Prev'), 'session-prev must not use Prev text label (false positive if run-nav text is mistaken for session nav)');
+        const betweenPrevAndNext = html.slice(prevIdx, nextIdx);
+        assert.ok(betweenPrevAndNext.includes('toolbar-icon-btn') && betweenPrevAndNext.includes('codicon-chevron-left'), 'session-prev should be an icon button with chevron-left');
+        assert.ok(!betweenPrevAndNext.includes('Prev</button>') && !betweenPrevAndNext.includes('&#x25C0; Prev'), 'session-prev must not use Prev text label');
     });
     test('setupFromFindInFiles hook is injected from viewer-search-setup-from-find.ts (not main search script)', () => {
         const mainSearch = readViewerSrc('ui/viewer-search-filter/viewer-search.ts');

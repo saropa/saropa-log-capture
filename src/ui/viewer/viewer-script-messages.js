@@ -55,7 +55,7 @@ window.addEventListener('message', function(event) {
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
-            isPaused = false; isViewingFile = false; footerEl.classList.remove('paused');
+            isPaused = false; isViewingFile = false; if (footerEl) footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
@@ -74,14 +74,14 @@ window.addEventListener('message', function(event) {
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
             if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
-            footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
+            if (footerTextEl) footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
         case 'updateFooter':
-            footerTextEl.textContent = msg.text;
+            if (footerTextEl) footerTextEl.textContent = msg.text;
             break;
         case 'setPaused':
             isPaused = msg.paused;
-            footerEl.classList.toggle('paused', isPaused);
+            if (footerEl) footerEl.classList.toggle('paused', isPaused);
             updateFooterText();
             break;
         case 'setViewingMode':
@@ -219,7 +219,7 @@ window.addEventListener('message', function(event) {
             if (currentFilename && scrollMemory[currentFilename] !== undefined && !window.isContextMenuOpen) {
                 if (window.setProgrammaticScroll) window.setProgrammaticScroll();
                 suppressScroll = true; logEl.scrollTop = scrollMemory[currentFilename]; suppressScroll = false;
-                autoScroll = false; jumpBtn.style.display = 'block'; renderViewport(true);
+                autoScroll = false; if (jumpBtn) jumpBtn.style.display = 'block'; renderViewport(true);
             }
             updateFooterText();
             if (typeof window.setReplayEnabled === 'function') {

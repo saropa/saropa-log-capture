@@ -37,10 +37,10 @@ const assert = __importStar(require("assert"));
 const drift_viewer_health_1 = require("../../../modules/integrations/drift-viewer-health");
 suite('drift-viewer-health', () => {
     let origFetch;
-    beforeEach(() => {
+    setup(() => {
         origFetch = globalThis.fetch;
     });
-    afterEach(() => {
+    teardown(() => {
         globalThis.fetch = origFetch;
     });
     test('fetchDriftViewerHealth returns ok and version on 200 JSON', async () => {

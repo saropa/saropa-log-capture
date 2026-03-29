@@ -9,8 +9,6 @@ const l10n_1 = require("../../l10n");
 function getRootCauseHintViewerStrings() {
     return {
         title: (0, l10n_1.t)("viewer.rchTitle"),
-        dismissAria: (0, l10n_1.t)("viewer.rchDismissAria"),
-        dismissTitle: (0, l10n_1.t)("viewer.rchDismissTitle"),
         explainAi: (0, l10n_1.t)("viewer.rchExplainAi"),
         collapseAria: (0, l10n_1.t)("viewer.rchCollapseAria"),
         collapseTitle: (0, l10n_1.t)("viewer.rchCollapseTitle"),
