@@ -12,18 +12,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
-<!--
+<!-- MAINTENANCE NOTES -- IMPORTANT --
 
-Each version (and [Unreleased]) should open with a short human summary when it helps; only discuss user-facing features.
+    Each version (and [Unreleased]) should open with a short human summary when it helps; only discuss user-facing features.
 
+    **Tagged changelog** — Published versions use git tag **`vx.y.z`**; each section below ends its summary line with **[log](url)** to that snapshot (or a standalone **[log](url)** when there is no summary). Compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
 
-**Tagged changelog** — Published versions use git tag **`vx.y.z`**; each section below ends its summary line with **[log](url)** to that snapshot (or a standalone **[log](url)** when there is no summary). Compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
-
-**Published version**: See field "version": "x.y.z" in [package.json](./package.json)
+    **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 -->
 
 ---
+
+## [Unreleased]
+
+### Changed
+
+- Use standard VS Code themed button styling for level filter All/None buttons, run navigation Prev/Next buttons, and breadcrumb nav buttons instead of custom white/outlined styles
+- Add explicit VS Code themed styling for filter drawer preset dropdown
+- Add or improve tooltips on all interactive UI elements across toolbar, filter drawer, icon bar, search, find-in-files, bookmarks, options, actions menu, edit modal, and run navigation
+
+### Fixed
+
+- Fix toolbar search button not responding to clicks — document-level click handler immediately closed the flyout because `session-nav-search-outer` (old UI element) no longer exists; updated to use `search-flyout`
+- Fix toolbar actions (kebab) menu not responding to clicks — click event bubbled to outside-click handler which closed the dropdown immediately; added `stopPropagation` on both search and actions button handlers
+- Fix prev/next session navigation buttons appearing clickable when at start/end of list — disabled buttons are now visually dimmed with suppressed hover effects
+
+### Added
+
+- Add element ID wiring test that cross-references every `getElementById` call in webview scripts against the generated HTML — catches stale references after refactors
 
 ## [5.0.2]
 
