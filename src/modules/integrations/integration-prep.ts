@@ -5,6 +5,7 @@
 
 import * as vscode from 'vscode';
 import { getFirebaseContext } from '../crashlytics/firebase-crashlytics';
+import { isAdbAvailable } from './adb-logcat-capture';
 
 /** Check if Crashlytics is ready and return an issue string if not. */
 async function checkCrashlyticsPrep(): Promise<string | undefined> {
@@ -29,6 +30,9 @@ export async function runIntegrationPrepCheck(adapterIds: string[]): Promise<voi
         if (ids.includes('crashlytics')) {
             const issue = await checkCrashlyticsPrep();
             if (issue) { issues.push(issue); }
+        }
+        if (ids.includes('adbLogcat') && !isAdbAvailable()) {
+            issues.push('adb Logcat: `adb` not found on PATH. Install Android SDK Platform-Tools.');
         }
         if (issues.length > 0) {
             void vscode.window.showWarningMessage(

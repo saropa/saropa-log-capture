@@ -12,6 +12,7 @@ import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { AiWatcher } from './modules/ai/ai-watcher';
 import { hasClaudeProject } from './modules/ai/ai-session-resolver';
 import type { SaropaSessionEvent } from './api-types';
+import { suggestAdbLogcatIfRelevant } from './modules/integrations/adb-logcat-suggest';
 
 interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
@@ -77,6 +78,7 @@ function applySessionStartedState(
         fileUri: activeSession?.fileUri,
     });
     startAiWatcherIfEnabled(cfg, session, aiWatcher).catch(() => {});
+    void suggestAdbLogcatIfRelevant(context, session);
 }
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
