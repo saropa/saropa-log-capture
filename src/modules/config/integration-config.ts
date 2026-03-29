@@ -22,6 +22,7 @@ import type {
     IntegrationDatabaseConfig,
     IntegrationHttpConfig,
     IntegrationBrowserConfig,
+    IntegrationAdbLogcatConfig,
     IntegrationUnifiedLogConfig,
     ProjectIndexConfig,
     ProjectIndexSourceConfig,
@@ -69,6 +70,7 @@ export type IntegrationConfigBlock = {
   integrationsDatabase: IntegrationDatabaseConfig;
   integrationsHttp: IntegrationHttpConfig;
   integrationsBrowser: IntegrationBrowserConfig;
+  integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   integrationsUnifiedLog: IntegrationUnifiedLogConfig;
 };
 
@@ -231,6 +233,14 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       cdpUrl: readTrimmedStringOrDefault(cfg, 'integrations.browser.cdpUrl', ''),
       includeNetwork: ensureBoolean(cfg.get('integrations.browser.includeNetwork'), false),
       requestIdPattern: readTrimmedStringOrDefault(cfg, 'integrations.browser.requestIdPattern', ''),
+    },
+    integrationsAdbLogcat: {
+      device: readTrimmedStringOrDefault(cfg, 'integrations.adbLogcat.device', ''),
+      tagFilters: ensureStringArray(cfg.get('integrations.adbLogcat.tagFilters'), []),
+      minLevel: ensureEnum(cfg.get('integrations.adbLogcat.minLevel'), ['V', 'D', 'I', 'W', 'E', 'F', 'A'], 'V'),
+      filterByPid: ensureBoolean(cfg.get('integrations.adbLogcat.filterByPid'), true),
+      maxBufferLines: clamp(cfg.get('integrations.adbLogcat.maxBufferLines'), 1000, 500000, 50000),
+      writeSidecar: ensureBoolean(cfg.get('integrations.adbLogcat.writeSidecar'), true),
     },
     integrationsUnifiedLog: {
       writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),

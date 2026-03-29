@@ -24,6 +24,7 @@ import type {
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
   IntegrationBrowserConfig,
+  IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
 } from "./config-types-integrations";
 import type { ProjectIndexConfig, ProjectIndexSourceConfig } from "./config-types-project-index";
@@ -175,6 +176,7 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsDatabase: IntegrationDatabaseConfig;
   readonly integrationsHttp: IntegrationHttpConfig;
   readonly integrationsBrowser: IntegrationBrowserConfig;
+  readonly integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   /** Optional merged session artifact (Phase 4): `basename.unified.jsonl` next to main log. */
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly projectIndex: ProjectIndexConfig;
@@ -223,6 +225,7 @@ export type {
   IntegrationDatabaseConfig,
   IntegrationHttpConfig,
   IntegrationBrowserConfig,
+  IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
 } from "./config-types-integrations";
 
