@@ -16,17 +16,22 @@ exports.getScrollbarMinimapHtml = getScrollbarMinimapHtml;
  * - Click-to-navigate, drag-to-scroll, wheel forwarding
  * - HiDPI canvas rendering
  * - Full-area track tint (theme scrollbar slider); SQL density is full-width bands under severity ticks
- * - Neutral “content presence” strokes when severity groups are empty (e.g. info hidden via
+ * - Neutral "content presence" strokes when severity groups are empty (e.g. info hidden via
  *   `minimapShowInfoMarkers` and logs are mostly info) so the strip is not an empty canvas
  * - Optional high-contrast red outline on the viewport slider (`minimapViewportRedOutline`)
  * - Optional yellow arrow outside the minimap strip pointing at viewport center (`minimapViewportOutsideArrow`)
  * - Optional VS Code–like horizontal extent per line from text length vs log pane width (`minimapProportionalLines`, default on)
  */
-const viewer_scrollbar_minimap_injected_1 = require("./viewer-scrollbar-minimap-injected");
 const viewer_scrollbar_minimap_sql_1 = require("./viewer-scrollbar-minimap-sql");
+const viewer_scrollbar_minimap_state_1 = require("./viewer-scrollbar-minimap-state");
+const viewer_scrollbar_minimap_paint_1 = require("./viewer-scrollbar-minimap-paint");
+const viewer_scrollbar_minimap_injected_1 = require("./viewer-scrollbar-minimap-injected");
 /** Returns the JavaScript code for the scrollbar minimap in the webview. */
 function getScrollbarMinimapScript() {
-    return (0, viewer_scrollbar_minimap_sql_1.getScrollbarMinimapSqlScript)() + (0, viewer_scrollbar_minimap_injected_1.getScrollbarMinimapInjectedScript)();
+    return (0, viewer_scrollbar_minimap_sql_1.getScrollbarMinimapSqlScript)()
+        + (0, viewer_scrollbar_minimap_state_1.getScrollbarMinimapStateScript)()
+        + (0, viewer_scrollbar_minimap_paint_1.getScrollbarMinimapPaintScript)()
+        + (0, viewer_scrollbar_minimap_injected_1.getScrollbarMinimapInjectedScript)();
 }
 /** Returns the HTML for the scrollbar minimap element. */
 function getScrollbarMinimapHtml() {

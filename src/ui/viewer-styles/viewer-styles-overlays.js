@@ -18,23 +18,7 @@ function getOverlayStyles() {
    Shared styles for the split-part breadcrumb and session prev/next
    navigation bar. Both use the same layout and button styling.
    =================================================================== */
-/* Session nav wrapper: collapsed by default; expands when .has-content; scroll-up-reveal hides via .smart-header-hidden */
-.session-nav-wrapper {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.session-nav-wrapper.has-content {
-    /* Two rows when session nav wraps (log controls + full-width search strip). */
-    max-height: 120px;
-}
-/* Suggestion row below session nav when many consecutive duplicate lines are detected */
-.session-nav-wrapper.has-content.compress-suggest-visible {
-    max-height: 162px;
-}
-.session-nav-wrapper.smart-header-hidden.has-content {
-    max-height: 0;
-}
+/* Session nav wrapper removed — toolbar replaces the old smart-sticky header. */
 .compress-suggest-banner {
     display: flex;
     align-items: center;
@@ -102,7 +86,7 @@ function getOverlayStyles() {
 .session-perf-chip:hover {
     text-decoration: underline;
 }
-#split-breadcrumb, #session-nav {
+#split-breadcrumb {
     display: none;
     align-items: center;
     flex-wrap: wrap;
@@ -114,9 +98,6 @@ function getOverlayStyles() {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
 }
-#session-nav-wrapper.has-content #session-nav { display: flex; }
-.session-nav-controls { display: none; align-items: center; gap: 4px; }
-#session-nav.visible .session-nav-controls { display: flex; }
 #split-breadcrumb.visible { display: flex; }
 #run-nav {
     display: none;
@@ -133,7 +114,6 @@ function getOverlayStyles() {
 .nav-bar-label { font-weight: bold; }
 /* Only prev/next (and run nav inside the same strip)—not the compact find widget or perf chip. */
 #split-breadcrumb button,
-#session-nav .session-nav-controls button,
 #run-nav button {
     background: none;
     border: 1px solid var(--vscode-descriptionForeground);
@@ -143,28 +123,12 @@ function getOverlayStyles() {
     cursor: pointer;
     border-radius: 3px;
 }
-/* Icon-only session log prev/next (chevrons); tooltips carry the full phrase. */
-#session-nav .session-nav-controls button.session-nav-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    padding: 0;
-    box-sizing: border-box;
-}
-#session-nav .session-nav-controls button.session-nav-icon-btn .codicon {
-    font-size: 16px;
-}
 #split-breadcrumb button:hover,
-#session-nav .session-nav-controls button:hover,
 #run-nav button:hover {
     background: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-foreground);
 }
 #split-breadcrumb button:disabled,
-#session-nav .session-nav-controls button:disabled,
 #run-nav button:disabled {
     opacity: 0.4;
     cursor: default;

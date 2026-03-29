@@ -85,31 +85,11 @@ if (_origAppOnlyForBadge) {
     };
 }
 
-// Click badge: open level flyup if only level filters, else filters panel
+// Click badge: open filter drawer to show all active filters
 var filterBadgeEl = document.getElementById('filter-badge');
 if (filterBadgeEl) {
     filterBadgeEl.addEventListener('click', function() {
-        var hasLevel = (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7);
-        var other = 0;
-        if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
-            && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) other++;
-        if (typeof appOnlyMode !== 'undefined' && appOnlyMode) other++;
-        if (typeof hiddenSourceTags !== 'undefined'
-            && Object.keys(hiddenSourceTags).length > 0) other++;
-        if (typeof hiddenClassTags !== 'undefined'
-            && Object.keys(hiddenClassTags).length > 0) other++;
-        if (typeof hiddenSqlPatterns !== 'undefined'
-            && Object.keys(hiddenSqlPatterns).length > 0) other++;
-        if (typeof activeFilters !== 'undefined' && activeFilters !== null) other++;
-        if (typeof searchFilterMode !== 'undefined' && searchFilterMode
-            && typeof searchRegex !== 'undefined' && searchRegex) other++;
-        if (typeof scopeLevel !== 'undefined' && scopeLevel !== 'all') other++;
-        if (typeof dbTimeFilterActive !== 'undefined' && dbTimeFilterActive) other++;
-        if (hasLevel && other === 0 && typeof toggleLevelMenu === 'function') {
-            toggleLevelMenu();
-        } else if (typeof setActivePanel === 'function') {
-            setActivePanel('filters');
-        }
+        if (typeof openFilterDrawer === 'function') openFilterDrawer();
     });
 }
 `;

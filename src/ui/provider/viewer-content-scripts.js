@@ -59,6 +59,7 @@ const viewer_trash_panel_1 = require("../viewer-panels/viewer-trash-panel");
 const viewer_find_panel_1 = require("../viewer-panels/viewer-find-panel");
 const viewer_bookmark_panel_1 = require("../viewer-panels/viewer-bookmark-panel");
 const viewer_filters_panel_1 = require("../viewer-search-filter/viewer-filters-panel");
+const viewer_toolbar_script_1 = require("../viewer-toolbar/viewer-toolbar-script");
 const viewer_options_panel_1 = require("../viewer-panels/viewer-options-panel");
 const viewer_crashlytics_panel_1 = require("../panels/viewer-crashlytics-panel");
 const viewer_insight_panel_1 = require("../panels/viewer-insight-panel");
@@ -136,6 +137,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-')) +
         scriptTag(nonce, (0, viewer_about_panel_1.getAboutPanelScript)()) +
         scriptTag(nonce, (0, viewer_icon_bar_1.getIconBarScript)()) +
+        scriptTag(nonce, (0, viewer_toolbar_script_1.getToolbarScript)()) +
         scriptTag(nonce, (0, viewer_error_breakpoint_1.getErrorBreakpointScript)()) +
         scriptTag(nonce, (0, viewer_stats_1.getStatsScript)()) +
         scriptTag(nonce, (0, viewer_edit_modal_1.getEditModalScript)()) +

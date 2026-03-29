@@ -84,9 +84,9 @@ suite('Viewer compress lines (embedded script)', () => {
 });
 suite('Session nav overlay CSS (search strip not forced to nav-button chrome)', () => {
     const overlay = (0, viewer_styles_overlays_1.getOverlayStyles)();
-    test('does not use blanket #session-nav button selector (regression: find widget looked wrong)', () => {
-        assert.ok(!overlay.includes('#session-nav button'), 'bare #session-nav button styled Prev/Next chrome and leaked onto search controls');
-        assert.ok(overlay.includes('#session-nav .session-nav-controls button'), 'nav chrome must be scoped to session-nav-controls only');
+    test('nav button styles are scoped to split-breadcrumb and run-nav only (regression: find widget looked wrong)', () => {
+        assert.ok(!overlay.includes('#session-nav button'), 'old blanket #session-nav button selector must be removed');
+        assert.ok(overlay.includes('#split-breadcrumb button') && overlay.includes('#run-nav button'), 'nav chrome must be scoped to split-breadcrumb and run-nav only');
     });
     test('context menu disabled rows use is-disabled (muted + no hover highlight)', () => {
         assert.ok(overlay.includes('.context-menu-item.is-disabled'));

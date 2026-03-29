@@ -41,13 +41,13 @@ function filterFiltersPanel(query) {
     var clearBtn = document.getElementById('filters-search-clear');
     if (clearBtn) clearBtn.classList.toggle('visible', q.length > 0);
     if (!q) {
-        var allChips = document.querySelectorAll('#filters-panel .source-tag-chip');
+        var allChips = document.querySelectorAll('#filter-drawer .source-tag-chip');
         for (var i = 0; i < allChips.length; i++) allChips[i].style.display = '';
-        var allSections = document.querySelectorAll('#filters-panel .options-section');
+        var allSections = document.querySelectorAll('#filter-drawer .options-section');
         for (var s = 0; s < allSections.length; s++) allSections[s].classList.remove('options-filtered-hidden');
         return;
     }
-    var sections = document.querySelectorAll('#filters-panel .options-section');
+    var sections = document.querySelectorAll('#filter-drawer .options-section');
     for (var si = 0; si < sections.length; si++) {
         var sec = sections[si];
         var title = sec.querySelector('.options-section-title');
@@ -77,12 +77,8 @@ function openFiltersPanel() {
 }
 
 function closeFiltersPanel() {
-    var panel = document.getElementById('filters-panel');
-    if (panel) panel.classList.remove('visible');
     filtersPanelOpen = false;
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
-    var ibBtn = document.getElementById('ib-filters');
-    if (ibBtn) ibBtn.focus();
 }
 
 /** Human-readable label for a stream source id (debug, terminal, or external sidecar prefix). */
@@ -177,22 +173,7 @@ function syncFiltersPanelUi() {
     if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
 }
 
-// Close button
-var filtersCloseBtn = document.querySelector('.filters-close');
-if (filtersCloseBtn) filtersCloseBtn.addEventListener('click', closeFiltersPanel);
-
-// Search input
-var filtersSearchInput = document.getElementById('filters-search');
-var filtersSearchClear = document.getElementById('filters-search-clear');
-if (filtersSearchInput) {
-    filtersSearchInput.addEventListener('input', function(e) { filterFiltersPanel(e.target.value); });
-}
-if (filtersSearchClear) {
-    filtersSearchClear.addEventListener('click', function() {
-        if (filtersSearchInput) { filtersSearchInput.value = ''; filtersSearchInput.focus(); }
-        filterFiltersPanel('');
-    });
-}
+/* Close button and search input bindings removed — filter drawer handles its own UI. */
 
 // Noise reduction controls
 var optExcl = document.getElementById('opt-exclusions');
@@ -219,18 +200,7 @@ if (sqlQueryHistFiltersBtn) {
     });
 }
 
-// Outside click to close
-document.addEventListener('click', function(e) {
-    if (!filtersPanelOpen) return;
-    var panel = document.getElementById('filters-panel');
-    var ibBtn = document.getElementById('ib-filters');
-    var badgeBtn = document.getElementById('filter-badge');
-    if (panel && !panel.contains(e.target)
-        && ibBtn !== e.target && !ibBtn?.contains(e.target)
-        && badgeBtn !== e.target) {
-        closeFiltersPanel();
-    }
-});
+/* Outside click dismiss removed — toolbar script handles filter drawer dismiss. */
 `;
 }
 //# sourceMappingURL=viewer-filters-panel-script.js.map
