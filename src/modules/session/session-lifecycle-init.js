@@ -52,6 +52,7 @@ const session_metadata_1 = require("./session-metadata");
 const integrations_1 = require("../integrations");
 const terminal_capture_1 = require("../integrations/terminal-capture");
 const external_log_tailer_1 = require("../integrations/external-log-tailer");
+const adb_logcat_capture_1 = require("../integrations/adb-logcat-capture");
 const environment_collector_1 = require("../misc/environment-collector");
 /** Get the first workspace folder (fallback when session has none). */
 function getWorkspaceFolder() {
@@ -121,6 +122,16 @@ async function initializeSession(params) {
         }
         if (config.integrationsAdapters?.includes('externalLogs') && config.integrationsExternalLogs.paths.length > 0) {
             (0, external_log_tailer_1.startExternalLogTailers)(workspaceFolder, config.integrationsExternalLogs.paths, config.integrationsExternalLogs, outputChannel);
+        }
+        const adbExplicit = config.integrationsAdapters?.includes('adbLogcat');
+        const adbAutoDetect = session.type === 'dart';
+        if ((adbExplicit || adbAutoDetect) && (0, adb_logcat_capture_1.isAdbAvailable)()) {
+            const lc = config.integrationsAdbLogcat;
+            (0, adb_logcat_capture_1.startLogcatCapture)({
+                ...lc,
+                outputChannel,
+                onLine: (raw) => logSession.appendLine(raw, 'logcat', new Date()),
+            });
         }
         return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     }

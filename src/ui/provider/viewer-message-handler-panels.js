@@ -68,6 +68,9 @@ function dispatchPanelMessage(msg, ctx) {
             (msg.errors ?? []).forEach(e => {
                 const loc = e.line ? ` (line ${e.line}, col ${e.col ?? 0})` : '';
                 (0, extension_logger_1.logExtensionError)('Webview', `${e.message}${loc}`);
+                if (e.stack) {
+                    (0, extension_logger_1.logExtensionError)('Webview', `Stack: ${e.stack}`);
+                }
             });
             return true;
         case "requestCrashlyticsData":

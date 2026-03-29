@@ -143,11 +143,32 @@ function wireContentHandlers(target, sessionManager, broadcaster, historyProvide
         vscode.window.showInformationMessage((0, l10n_1.t)('msg.addedToWatchList', text));
     });
 }
-function getSessionRootPath(context) {
+/** Resolve the log directory URI from override or workspace default. */
+function getLogDir(context) {
+    const overrideStr = context.workspaceState.get(exports.SESSION_PANEL_ROOT_KEY);
+    if (overrideStr) {
+        return vscode.Uri.parse(overrideStr);
+    }
     const folder = vscode.workspace.workspaceFolders?.[0];
-    const overrideUriStr = context.workspaceState.get(exports.SESSION_PANEL_ROOT_KEY);
-    const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
-    return overrideUri ? overrideUri.fsPath : (folder ? (0, config_1.getLogDirectoryUri)(folder).fsPath : "No workspace");
+    return folder ? (0, config_1.getLogDirectoryUri)(folder) : undefined;
+}
+/** Human-readable path for the current log directory (for UI labels). */
+function getSessionRootPath(context) {
+    return getLogDir(context)?.fsPath ?? "No workspace";
+}
+/** Send a lightweight filename-only preview so items appear before full metadata loads. */
+async function sendQuickPreview(broadcaster, context) {
+    const logDir = getLogDir(context);
+    if (!logDir) {
+        return;
+    }
+    const { fileTypes, includeSubfolders } = (0, config_1.getConfig)();
+    const files = await (0, config_1.readTrackedFiles)(logDir, fileTypes, includeSubfolders);
+    const previews = files.map(f => ({
+        filename: f,
+        uriString: vscode.Uri.joinPath(logDir, f).toString(),
+    }));
+    broadcaster.postToWebview({ type: 'sessionListPreview', previews });
 }
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target, deps) {
@@ -173,7 +194,10 @@ function wireSessionListHandlers(target, deps) {
             clearTimeout(ref.timer);
         }
         ref.timer = setTimeout(() => {
-            void refreshSessionList();
+            void (async () => {
+                await sendQuickPreview(broadcaster, deps.context).catch(() => { });
+                await refreshSessionList();
+            })();
             if (ref.interval) {
                 clearInterval(ref.interval);
             }
