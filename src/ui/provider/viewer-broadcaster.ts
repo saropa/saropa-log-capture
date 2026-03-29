@@ -162,9 +162,7 @@ export class ViewerBroadcaster implements ViewerTarget {
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
     for (const t of this.targets) { t.setViewerSlowBurstThresholds(thresholds); }
   }
-  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void {
-    for (const t of this.targets) { t.setViewerSqlPatternChipSettings(chipMinCount, chipMaxChips); }
-  }
+
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void {
     for (const t of this.targets) { t.setMinimapWidth(width); }
   }

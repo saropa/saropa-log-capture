@@ -195,6 +195,7 @@ function searchPrev() {
 function scrollToMatch() {
     if (currentMatchIdx < 0 || window.isContextMenuOpen) return;
     var idx = matchIndices[currentMatchIdx];
+    if (typeof expandContinuationForSearch === 'function') expandContinuationForSearch(idx);
     var cumH = (typeof prefixSums !== 'undefined' && prefixSums && idx < prefixSums.length)
         ? prefixSums[idx] : 0;
     if (!cumH) { for (var i = 0; i < idx; i++) cumH += allLines[i].height; }

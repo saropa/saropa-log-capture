@@ -145,10 +145,6 @@ function setupConfigListener(context, sessionManager, broadcaster) {
             || e.affectsConfiguration('saropaLogCapture.viewerSlowBurstCooldownMs')) {
             broadcaster.setViewerSlowBurstThresholds(cfg.viewerSlowBurstThresholds);
         }
-        if (e.affectsConfiguration('saropaLogCapture.viewerSqlPatternChipMinCount')
-            || e.affectsConfiguration('saropaLogCapture.viewerSqlPatternMaxChips')) {
-            broadcaster.setViewerSqlPatternChipSettings(cfg.viewerSqlPatternChipMinCount, cfg.viewerSqlPatternMaxChips);
-        }
         if (e.affectsConfiguration('saropaLogCapture.errorRateBucketSize')
             || e.affectsConfiguration('saropaLogCapture.errorRateShowWarnings')
             || e.affectsConfiguration('saropaLogCapture.errorRateDetectSpikes')) {

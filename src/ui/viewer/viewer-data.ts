@@ -46,17 +46,20 @@ function trimData() {
     if (allLines.length <= MAX_LINES) return;
     var excess = allLines.length - MAX_LINES;
     var removedHeight = 0;
+    var trimmedForCont = [];
     for (var i = 0; i < excess; i++) {
         if (typeof unregisterSourceTag === 'function') unregisterSourceTag(allLines[i]);
         if (typeof unregisterClassTags === 'function') unregisterClassTags(allLines[i]);
         if (typeof unregisterSqlPattern === 'function') unregisterSqlPattern(allLines[i]);
         if (allLines[i].type === 'stack-header') delete groupHeaderMap[allLines[i].groupId];
+        if (allLines[i].contGroupId != null) trimmedForCont.push(allLines[i]);
         if (allLines[i].autoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount--;
         removedHeight += allLines[i].height;
         totalHeight -= allLines[i].height;
     }
     allLines.splice(0, excess);
     activeGroupHeader = null;
+    if (typeof cleanupContinuationAfterTrim === 'function') cleanupContinuationAfterTrim(excess, trimmedForCont);
     // Adjust repeat tracker index after splice so it still points at the correct line
     if (repeatTracker.lastLineIndex >= 0) {
         repeatTracker.lastLineIndex -= excess;

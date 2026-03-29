@@ -22,11 +22,6 @@ function queuePopOutViewerConfigMicrotask(post, cfg) {
         post({ type: "setStaticSqlFromFingerprintEnabled", enabled: cfg.staticSqlFromFingerprintEnabled });
         post({ type: "setViewerSlowBurstThresholds", thresholds: cfg.viewerSlowBurstThresholds });
         post({ type: "setViewerDbDetectorToggles", ...(0, config_1.viewerDbDetectorTogglesFromConfig)(cfg) });
-        post({
-            type: "setViewerSqlPatternChipSettings",
-            chipMinCount: cfg.viewerSqlPatternChipMinCount,
-            chipMaxChips: cfg.viewerSqlPatternMaxChips,
-        });
         const erCfg = (0, config_1.errorRateConfigFromConfig)(cfg);
         post({ type: "setErrorRateConfig", bucketSize: erCfg.bucketSize, showWarnings: erCfg.showWarnings, detectSpikes: erCfg.detectSpikes });
         post((0, learning_webview_options_1.getLearningWebviewOptions)());
