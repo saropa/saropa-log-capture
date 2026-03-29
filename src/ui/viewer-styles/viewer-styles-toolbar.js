@@ -87,7 +87,11 @@ function getToolbarStyles() {
     position: relative;
     flex-shrink: 0;
 }
-.toolbar-icon-btn:hover {
+.toolbar-icon-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.toolbar-icon-btn:hover:not(:disabled) {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
     color: var(--vscode-foreground);
 }
@@ -141,6 +145,7 @@ function getToolbarStyles() {
     position: absolute;
     top: 100%;
     right: 0;
+    transform-origin: top;
     margin-top: 4px;
     min-width: 200px;
     max-width: min(90vw, 420px);
@@ -188,6 +193,30 @@ function getToolbarStyles() {
 .footer-selection { white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: 6px; }
 .footer-selection:empty { display: none; }
 @keyframes badge-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Flyout / drawer slide-down open & slide-up close */
+@keyframes flyout-open {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes flyout-close {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-8px); }
+}
+.anim-flyout-open  { animation: flyout-open  0.25s ease-out backwards; }
+.anim-flyout-close { animation: flyout-close 0.2s  ease-in  forwards; }
+
+/* Actions dropdown scale-from-top open & close */
+@keyframes dropdown-open {
+    from { opacity: 0; transform: scaleY(0); }
+    to   { opacity: 1; transform: scaleY(1); }
+}
+@keyframes dropdown-close {
+    from { opacity: 1; transform: scaleY(1); }
+    to   { opacity: 0; transform: scaleY(0); }
+}
+.anim-dropdown-open  { animation: dropdown-open  0.15s ease-out backwards; }
+.anim-dropdown-close { animation: dropdown-close 0.15s ease-in  forwards; }
 .filter-badge {
     display: none;
     font-size: 10px;
@@ -225,7 +254,11 @@ function getToolbarStyles() {
     .search-flyout,
     .filter-drawer,
     .toolbar-actions-popover,
-    .filter-badge { animation: none; transition: none; }
+    .filter-badge,
+    .anim-flyout-open,
+    .anim-flyout-close,
+    .anim-dropdown-open,
+    .anim-dropdown-close { animation: none !important; transition: none !important; }
 }
 
 `;
