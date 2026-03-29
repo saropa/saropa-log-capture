@@ -30,9 +30,13 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 - Hidden-lines chevron indicator on the severity bar — a small `▸` marker appears between visible lines when non-blank lines are hidden by filters, with a tooltip showing the count and filter reasons
 - adb logcat integration: live-stream Android system logs alongside debug sessions with PID filtering, level filtering, tag filters, and `.logcat.log` sidecar at session end. Auto-connects for Dart/Flutter sessions when adb is on PATH
+- Continuation line collapsing: consecutive log lines with the same timestamp and logcat tag (e.g. Flutter splitting long SQL across 40+ lines) are grouped behind a clickable `[+N lines]` badge. Groups with more than 5 children auto-collapse; click the badge to expand/collapse. Search matches auto-expand collapsed groups
 
 ### Changed
 
+- Smooth animations for toolbar UI: search flyout and filter drawer slide down/up, actions dropdown scales from top, accordion sections expand/collapse with height+opacity transitions, and Signals strip smoothly collapses when filter drawer opens. All animations respect `prefers-reduced-motion`
+- SQL filter chips replaced: fingerprint-based pattern chips replaced with simple verb-category chips (SELECT, INSERT, UPDATE, DELETE, Transaction, Other SQL) for immediate usability
+- Removed `viewerSqlPatternChipMinCount` and `viewerSqlPatternMaxChips` settings (no longer needed with fixed verb categories)
 - Toolbar severity dots increased from 10px to 12px for better visibility and click targets
 - Filter drawer level buttons are more compact — reduced padding and removed minimum count width
 - All tooltips now describe what interactions do — toolbar dots explain click (toggle) and double-click (solo), icon bar buttons say "click to open/close", filename shows click/double-click/long-press actions

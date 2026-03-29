@@ -70,7 +70,7 @@ export interface ViewerTarget {
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void;
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void;
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void;
-  setViewerSqlPatternChipSettings(chipMinCount: number, chipMaxChips: number): void;
+
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void;
   setScrollbarVisible(show: boolean): void;
   setSearchMatchOptionsAlwaysVisible(always: boolean): void;

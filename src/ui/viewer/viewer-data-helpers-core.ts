@@ -252,6 +252,10 @@ function calcItemHeight(item) {
     if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
     var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);
     if (hideBlanks && item.type === 'line' && isLineContentBlank(item)) return 0;
+    if (item.contIsChild && item.contGroupId >= 0 && typeof contHeaderMap !== 'undefined') {
+        var contHdr = contHeaderMap[item.contGroupId];
+        if (contHdr && contHdr.contCollapsed) return 0;
+    }
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
     var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);

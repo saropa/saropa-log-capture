@@ -54,6 +54,7 @@ window.addEventListener('message', function(event) {
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0;
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
+            if (typeof resetContinuationState === 'function') resetContinuationState();
             cachedVisibleCount = 0; if (typeof window !== 'undefined') window.__visibleCountDirty = false;
             isPaused = false; isViewingFile = false; if (footerEl) footerEl.classList.remove('paused');
             if (typeof window.setReplayEnabled === 'function') window.setReplayEnabled(false, isSessionActive);
@@ -284,11 +285,6 @@ window.addEventListener('message', function(event) {
             viewerDbDetectorSlowBurstEnabled = msg.slowBurstEnabled !== false;
             viewerDbDetectorBaselineHintsEnabled = msg.baselineHintsEnabled !== false;
             if (typeof baselineVolumeHintEmitted !== 'undefined') baselineVolumeHintEmitted = Object.create(null);
-            break;
-        case 'setViewerSqlPatternChipSettings':
-            if (typeof applyViewerSqlPatternChipSettings === 'function') {
-                applyViewerSqlPatternChipSettings(msg.chipMinCount, msg.chipMaxChips);
-            }
             break;
         case 'minimapViewportRedOutline':
             minimapViewportRedOutline = msg.show === true;

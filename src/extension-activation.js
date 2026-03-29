@@ -147,7 +147,6 @@ function runActivation(context, outputChannel) {
     broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
     broadcaster.setViewerDbDetectorToggles((0, config_1.viewerDbDetectorTogglesFromConfig)(initCfg));
     broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
-    broadcaster.setViewerSqlPatternChipSettings(initCfg.viewerSqlPatternChipMinCount, initCfg.viewerSqlPatternMaxChips);
     broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
     broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);

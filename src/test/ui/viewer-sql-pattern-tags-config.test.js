@@ -35,25 +35,38 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const viewer_sql_pattern_tags_1 = require("../../ui/viewer-stack-tags/viewer-sql-pattern-tags");
-suite('SQL pattern tags script (DB_05 config injection)', () => {
-    test('getSqlPatternTagsScript injects clamped min count and max chips', () => {
-        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(5, 12);
-        assert.ok(s.includes('var sqlChipMinCount = 5'));
-        assert.ok(s.includes('var sqlPatternMaxChips = 12'));
-    });
-    test('getSqlPatternTagsScript clamps out-of-range values', () => {
-        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(0, 500);
-        assert.ok(s.includes('var sqlChipMinCount = 1'));
-        assert.ok(s.includes('var sqlPatternMaxChips = 100'));
-    });
-    test('getSqlPatternTagsScript uses defaults when args are non-finite (false positive guard)', () => {
-        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(Number.NaN, Number.NaN);
-        assert.ok(s.includes('var sqlChipMinCount = 2'));
-        assert.ok(s.includes('var sqlPatternMaxChips = 20'));
-    });
-    test('embedded script defines applyViewerSqlPatternChipSettings for host messages', () => {
+suite('SQL verb-based command chips (plan 043)', () => {
+    test('should take no parameters', () => {
         const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)();
-        assert.ok(s.includes('function applyViewerSqlPatternChipSettings'));
+        assert.ok(typeof s === 'string' && s.length > 0);
+    });
+    test('should define verb tracking variables', () => {
+        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)();
+        assert.ok(s.includes('var sqlVerbCounts'));
+        assert.ok(s.includes('var hiddenSqlVerbs'));
+        assert.ok(s.includes('var sqlVerbOrder'));
+    });
+    test('should define sqlVerbCategory mapping function', () => {
+        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)();
+        assert.ok(s.includes('function sqlVerbCategory'));
+    });
+    test('should not contain removed fingerprint-based settings', () => {
+        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)();
+        assert.ok(!s.includes('applyViewerSqlPatternChipSettings'));
+        assert.ok(!s.includes('sqlChipMinCount'));
+        assert.ok(!s.includes('sqlPatternMaxChips'));
+        assert.ok(!s.includes('sqlPatternRawCounts'));
+        assert.ok(!s.includes('promoteSqlFingerprintChip'));
+        assert.ok(!s.includes('demoteSqlFingerprintChip'));
+    });
+    test('should include all six verb categories in order', () => {
+        const s = (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)();
+        assert.ok(s.includes("'SELECT'"));
+        assert.ok(s.includes("'INSERT'"));
+        assert.ok(s.includes("'UPDATE'"));
+        assert.ok(s.includes("'DELETE'"));
+        assert.ok(s.includes("'Transaction'"));
+        assert.ok(s.includes("'Other SQL'"));
     });
 });
 //# sourceMappingURL=viewer-sql-pattern-tags-config.test.js.map

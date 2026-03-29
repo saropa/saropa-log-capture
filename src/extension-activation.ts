@@ -140,10 +140,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
     broadcaster.setViewerDbDetectorToggles(viewerDbDetectorTogglesFromConfig(initCfg));
     broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
-    broadcaster.setViewerSqlPatternChipSettings(
-        initCfg.viewerSqlPatternChipMinCount,
-        initCfg.viewerSqlPatternMaxChips,
-    );
+
     broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
     broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
     broadcaster.setMinimapWidth(initCfg.minimapWidth);
