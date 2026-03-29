@@ -19,16 +19,10 @@ function updateFooterText() {
         footerTextEl.appendChild(document.createTextNode(' \\u00b7 Showing first ' + formatNumber(loadTruncatedInfo.shown) + ' of ' + formatNumber(loadTruncatedInfo.total) + ' lines'));
     }
     updateLineCount();
-    updateFooterVersionLink();
 }
 
-function updateFooterVersionLink() {
-    var link = document.getElementById('footer-version-link');
-    if (link && footerVersion) {
-        link.textContent = footerVersion;
-        link.style.display = '';
-    } else if (link) link.style.display = 'none';
-}
+/** No-op — version link removed (now on About sidebar label). */
+function updateFooterVersionLink() {}
 
 function updateFooterSelection() {
     var el = document.getElementById('footer-selection');
@@ -55,16 +49,6 @@ if (viewportEl) {
     viewportEl.addEventListener('mouseup', function() { setTimeout(updateFooterSelection, 0); });
     viewportEl.addEventListener('keyup', scheduleFooterSelectionUpdate);
 }
-var footerVersionLink = document.getElementById('footer-version-link');
-if (footerVersionLink) {
-    footerVersionLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation(); /* Prevent document outside-click from closing the panel we are opening */
-        if (typeof setActivePanel === 'function') setActivePanel('about');
-    });
-    updateFooterVersionLink();
-}
-
 var cachedVisibleCount = 0, lastVisibleCountTime = 0;
 function updateLineCount() {
     var el = document.getElementById('line-count');

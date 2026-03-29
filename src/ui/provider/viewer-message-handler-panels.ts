@@ -16,6 +16,7 @@ import { handleErrorHoverRequest } from '../shared/handlers/error-hover-handler'
 import { showAnalysis } from '../analysis/analysis-panel';
 import { handleCodeQualityForFrameRequest } from '../shared/handlers/code-quality-handlers';
 import { fetchDriftViewerHealth } from '../../modules/integrations/drift-viewer-health';
+import { logExtensionError } from '../../modules/misc/extension-logger';
 
 /** Clamp numeric param to safe integer range for line/part indices (0 .. 10M). */
 const MAX_SAFE_INDEX = 10_000_000;
@@ -39,7 +40,11 @@ interface PanelMessageContext {
 export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMessageContext): boolean {
     switch (msg.type) {
       case "scriptError":
-        ((msg.errors as { message: string }[]) ?? []).forEach(e => console.warn("[SLC Webview]", e.message));
+        ((msg.errors as { message: string; source?: string; line?: number; col?: number; stack?: string }[]) ?? []).forEach(e => {
+          const loc = e.line ? ` (line ${e.line}, col ${e.col ?? 0})` : '';
+          logExtensionError('Webview', `${e.message}${loc}`);
+          if (e.stack) { logExtensionError('Webview', `Stack: ${e.stack}`); }
+        });
         return true;
       case "requestCrashlyticsData": case "crashlyticsCheckAgain": panelHandlers.handleCrashlyticsRequest(ctx.post).catch(() => {}); return true;
       case "fetchCrashDetail": panelHandlers.handleCrashDetail(String(msg.issueId ?? ''), ctx.post).catch(() => {}); return true;
