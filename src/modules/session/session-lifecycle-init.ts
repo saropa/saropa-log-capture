@@ -20,6 +20,7 @@ import {
 } from '../integrations';
 import { startTerminalCapture } from '../integrations/terminal-capture';
 import { startExternalLogTailers } from '../integrations/external-log-tailer';
+import { isAdbAvailable, startLogcatCapture } from '../integrations/adb-logcat-capture';
 import { collectDevEnvironment } from '../misc/environment-collector';
 
 /** Result of initializing a new log session. */
@@ -126,6 +127,14 @@ export async function initializeSession(
                 config.integrationsExternalLogs,
                 outputChannel,
             );
+        }
+        if (config.integrationsAdapters?.includes('adbLogcat') && isAdbAvailable()) {
+            const lc = config.integrationsAdbLogcat;
+            startLogcatCapture({
+                ...lc,
+                outputChannel,
+                onLine: (raw) => logSession.appendLine(raw, 'logcat', new Date()),
+            });
         }
         return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     } catch (err) {

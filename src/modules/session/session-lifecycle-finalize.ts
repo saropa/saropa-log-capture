@@ -26,6 +26,7 @@ import {
     createIntegrationEndContext,
 } from '../integrations';
 import { stopExternalLogTailers } from '../integrations/external-log-tailer';
+import { stopLogcatCapture } from '../integrations/adb-logcat-capture';
 import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
 import { scanAndPersistDriftSqlFingerprintSummary } from './session-drift-sql-fingerprint-persist';
 
@@ -103,8 +104,9 @@ export async function finalizeSession(
         debugProcessId: params.debugProcessId,
     });
     await integrationRegistry.runOnSessionEnd(endContext, metadataStore);
-    // Always dispose external log watchers (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
+    // Always dispose external log watchers and adb logcat (provider stops when adapter enabled; if disabled mid-session, this still closes handles).
     stopExternalLogTailers();
+    stopLogcatCapture();
     await writeUnifiedSessionLogIfEnabled(logSession.fileUri, baseFileName, config, outputChannel);
 
     // Save auto-tags if any watch patterns triggered during the session.
