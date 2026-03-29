@@ -138,9 +138,9 @@ export function getToolbarScript(): string {
 
     /* ---- Button wiring ---- */
 
-    if (searchBtn) searchBtn.addEventListener('click', toggleSearchFlyout);
+    if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
     if (filterBtn) filterBtn.addEventListener('click', toggleFilterDrawer);
-    if (actionsBtn) actionsBtn.addEventListener('click', toggleActionsDropdown);
+    if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
 
     /* ---- Escape key ---- */
 
