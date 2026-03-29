@@ -16,6 +16,7 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
+$repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $bodyFile = Join-Path $PSScriptRoot "marketplace-gallery-query-body.json"
 if (-not (Test-Path $bodyFile)) {
     Write-Error "Missing $bodyFile (JSON POST body for gallery API)."
@@ -71,7 +72,7 @@ if ($ReportOnly) {
 
 # ── Poll mode: ExpectedVersion from param or package.json ─────────────────────
 if ($ExpectedVersion -eq "") {
-    $pkgPath = Join-Path (Split-Path $PSScriptRoot -Parent) "package.json"
+    $pkgPath = Join-Path $repoRoot "package.json"
     try {
         $ExpectedVersion = (Get-Content -LiteralPath $pkgPath -Raw -Encoding utf8 | ConvertFrom-Json).version
     }
@@ -82,7 +83,7 @@ if ($ExpectedVersion -eq "") {
 }
 
 $iterations = [math]::Floor($TotalMinutes * 60 / $IntervalSeconds) + 1
-$reportsDir = Join-Path (Split-Path $PSScriptRoot -Parent) "reports"
+$reportsDir = Join-Path $repoRoot "reports"
 if (-not (Test-Path $reportsDir)) { New-Item -ItemType Directory -Path $reportsDir | Out-Null }
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logPath = Join-Path $reportsDir "store_version_check_$stamp.log"
