@@ -38,6 +38,20 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     const version = opts.version ?? '';
     return /* html */ `
     <div id="main-content" role="main">
+    <div id="panel-content-row">
+    <div id="panel-slot">
+    ${getSessionPanelHtml()}
+    ${getSessionContextMenuHtml()}
+    ${getFindPanelHtml()}
+    ${getBookmarkPanelHtml()}
+    ${getSqlQueryHistoryPanelHtml()}
+    ${getTrashPanelHtml()}
+    ${getOptionsPanelHtml()}
+    ${getCrashlyticsPanelHtml()}
+    ${getInsightPanelHtml()}
+    ${getAboutPanelHtml()}
+    </div>
+    <div id="log-area-with-footer">
     ${getToolbarHtml({ version })}
     ${getSearchFlyoutHtml()}
     ${getFilterDrawerHtml()}
@@ -53,20 +67,6 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <button id="split-next" title="Next part" aria-label="Next part" disabled>&#x25B6;</button>
     </div>
     <div id="pinned-section"></div>
-    <div id="panel-content-row">
-    <div id="panel-slot">
-    ${getSessionPanelHtml()}
-    ${getSessionContextMenuHtml()}
-    ${getFindPanelHtml()}
-    ${getBookmarkPanelHtml()}
-    ${getSqlQueryHistoryPanelHtml()}
-    ${getTrashPanelHtml()}
-    ${getOptionsPanelHtml()}
-    ${getCrashlyticsPanelHtml()}
-    ${getInsightPanelHtml()}
-    ${getAboutPanelHtml()}
-    </div>
-    <div id="log-area-with-footer">
     <div id="root-cause-hypotheses" class="root-cause-hypotheses u-hidden" role="region" aria-label="Hypotheses"></div>
     <div id="log-content-wrapper">
     <div id="log-content" class="nowrap" role="log" aria-label="Log content">
