@@ -21,13 +21,43 @@ function getToolbarScript() {
     var actionsPopover = document.getElementById('footer-actions-popover');
     var signalsWasVisible = false;
     var actionsOpen = false;
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    /* ---- Animation helpers ---- */
+
+    function animatedShow(el, animClass) {
+        if (!el) return;
+        el.classList.remove('anim-flyout-close', 'anim-dropdown-close');
+        if (reduceMotion.matches) { el.classList.remove('u-hidden'); return; }
+        el.classList.add(animClass);
+        el.classList.remove('u-hidden');
+    }
+
+    function animatedHide(el, animClass) {
+        if (!el || el.classList.contains('u-hidden')) return;
+        if (reduceMotion.matches) { el.classList.add('u-hidden'); return; }
+        el.classList.remove('anim-flyout-open', 'anim-dropdown-open');
+        el.classList.add(animClass);
+    }
+
+    function initAnimEnd(el) {
+        if (!el) return;
+        el.addEventListener('animationend', function() {
+            if (el.classList.contains('anim-flyout-close') ||
+                el.classList.contains('anim-dropdown-close')) {
+                el.classList.add('u-hidden');
+            }
+            el.classList.remove('anim-flyout-open', 'anim-flyout-close',
+                                'anim-dropdown-open', 'anim-dropdown-close');
+        });
+    }
 
     /* ---- Search flyout ---- */
 
     function openSearchFlyout() {
         if (!searchFlyout) return;
         closeActionsDropdown();
-        searchFlyout.classList.remove('u-hidden');
+        animatedShow(searchFlyout, 'anim-flyout-open');
         if (searchBtn) searchBtn.setAttribute('aria-expanded', 'true');
         var input = document.getElementById('search-input');
         if (input) input.focus();
@@ -35,13 +65,14 @@ function getToolbarScript() {
 
     function closeSearchFlyout() {
         if (!searchFlyout) return;
-        searchFlyout.classList.add('u-hidden');
+        animatedHide(searchFlyout, 'anim-flyout-close');
         if (searchBtn) searchBtn.setAttribute('aria-expanded', 'false');
     }
 
     function toggleSearchFlyout() {
         if (!searchFlyout) return;
-        if (searchFlyout.classList.contains('u-hidden')) {
+        var closing = searchFlyout.classList.contains('anim-flyout-close');
+        if (searchFlyout.classList.contains('u-hidden') || closing) {
             openSearchFlyout();
         } else {
             closeSearchFlyout();
@@ -53,28 +84,30 @@ function getToolbarScript() {
     function openFilterDrawer() {
         if (!filterDrawer) return;
         closeActionsDropdown();
-        if (signalsHost && !signalsHost.classList.contains('u-hidden')) {
+        if (signalsHost && !signalsHost.classList.contains('u-hidden') &&
+            !signalsHost.classList.contains('signals-drawer-hidden')) {
             signalsWasVisible = true;
-            signalsHost.classList.add('u-hidden');
+            signalsHost.classList.add('signals-drawer-hidden');
         }
-        filterDrawer.classList.remove('u-hidden');
+        animatedShow(filterDrawer, 'anim-flyout-open');
         if (filterBtn) filterBtn.setAttribute('aria-expanded', 'true');
         if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
     }
 
     function closeFilterDrawer() {
         if (!filterDrawer) return;
-        filterDrawer.classList.add('u-hidden');
+        animatedHide(filterDrawer, 'anim-flyout-close');
         if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
         if (signalsWasVisible && signalsHost) {
-            signalsHost.classList.remove('u-hidden');
+            signalsHost.classList.remove('signals-drawer-hidden');
             signalsWasVisible = false;
         }
     }
 
     function toggleFilterDrawer() {
         if (!filterDrawer) return;
-        if (filterDrawer.classList.contains('u-hidden')) {
+        var closing = filterDrawer.classList.contains('anim-flyout-close');
+        if (filterDrawer.classList.contains('u-hidden') || closing) {
             openFilterDrawer();
         } else {
             closeFilterDrawer();
@@ -87,16 +120,25 @@ function getToolbarScript() {
         if (!actionsPopover) return;
         closeSearchFlyout();
         closeFilterDrawer();
+        actionsPopover.classList.remove('anim-dropdown-close');
         actionsPopover.classList.add('toolbar-actions-open');
+        if (!reduceMotion.matches) actionsPopover.classList.add('anim-dropdown-open');
         if (actionsBtn) actionsBtn.setAttribute('aria-expanded', 'true');
         actionsOpen = true;
     }
 
     function closeActionsDropdown() {
         if (!actionsPopover) return;
-        actionsPopover.classList.remove('toolbar-actions-open');
         if (actionsBtn) actionsBtn.setAttribute('aria-expanded', 'false');
+        var wasOpen = actionsOpen;
         actionsOpen = false;
+        if (!wasOpen) return;
+        if (reduceMotion.matches) {
+            actionsPopover.classList.remove('toolbar-actions-open');
+        } else {
+            actionsPopover.classList.remove('anim-dropdown-open');
+            actionsPopover.classList.add('anim-dropdown-close');
+        }
     }
 
     function toggleActionsDropdown() {
@@ -115,34 +157,30 @@ function getToolbarScript() {
 
     function handleAccordionClick(e) {
         var header = e.currentTarget;
-        var body = header.nextElementSibling;
-        if (!body) return;
-        var wasOpen = !body.hidden;
+        var section = header.parentElement;
+        if (!section) return;
+        var wasOpen = section.classList.contains('expanded');
         collapseAllAccordions();
         if (!wasOpen) {
-            body.hidden = false;
+            section.classList.add('expanded');
             header.setAttribute('aria-expanded', 'true');
-            var a = header.querySelector('.filter-accordion-arrow');
-            if (a) a.textContent = '\\u25BE';
         }
     }
 
     function collapseAllAccordions() {
-        var all = document.querySelectorAll('.filter-accordion-header');
-        for (var i = 0; i < all.length; i++) {
-            var body = all[i].nextElementSibling;
-            if (body) body.hidden = true;
-            all[i].setAttribute('aria-expanded', 'false');
-            var arrow = all[i].querySelector('.filter-accordion-arrow');
-            if (arrow) arrow.textContent = '\\u25B8';
+        var sections = document.querySelectorAll('.filter-accordion');
+        for (var i = 0; i < sections.length; i++) {
+            sections[i].classList.remove('expanded');
+            var hdr = sections[i].querySelector('.filter-accordion-header');
+            if (hdr) hdr.setAttribute('aria-expanded', 'false');
         }
     }
 
     /* ---- Button wiring ---- */
 
-    if (searchBtn) searchBtn.addEventListener('click', toggleSearchFlyout);
+    if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
     if (filterBtn) filterBtn.addEventListener('click', toggleFilterDrawer);
-    if (actionsBtn) actionsBtn.addEventListener('click', toggleActionsDropdown);
+    if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
 
     /* ---- Escape key ---- */
 
@@ -197,6 +235,18 @@ function getToolbarScript() {
     };
 
     initAccordions();
+    initAnimEnd(searchFlyout);
+    initAnimEnd(filterDrawer);
+    /* Actions popover uses toolbar-actions-open (not u-hidden) for its
+       base display:none state, so it needs its own animationend handler. */
+    if (actionsPopover) {
+        actionsPopover.addEventListener('animationend', function() {
+            if (actionsPopover.classList.contains('anim-dropdown-close')) {
+                actionsPopover.classList.remove('toolbar-actions-open', 'anim-dropdown-close');
+            }
+            actionsPopover.classList.remove('anim-dropdown-open');
+        });
+    }
 })();
 `;
 }
