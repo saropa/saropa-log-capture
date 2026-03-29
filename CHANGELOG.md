@@ -27,12 +27,18 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 
 ## [5.0.2]
 
+### Changed
+
+- Two-pass Project Logs loading: filenames appear instantly with shimmer placeholders while metadata (severity, duration, size) loads in the background
+
 ### Fixed
 
+- Fix "Cannot read properties of null (reading 'classList')" crash in `updateSessionNav` — the `#session-nav` element was removed during the toolbar refactor but the script still referenced it
+- Add null guards for `sessionNav`, `sessionPrevBtn`, `sessionNextBtn`, `sessionNavCurrentEl`, `sessionNavTotalEl` in session-nav script
 - Add null guards for `splitBreadcrumb`, `splitPrevBtn`, `splitNextBtn`, `splitCurrentEl`, `splitTotalEl` in split-nav script
 - Add null guards for viewport `children[i]` classList accesses in bar-connection rendering
 - Route webview script errors to the "Saropa Log Capture" output channel (previously only logged to browser console)
-- Include source URL in webview error banner for easier debugging
+- Show full stack trace and copy button in webview error banner for easier debugging
 
 ### Removed
 
