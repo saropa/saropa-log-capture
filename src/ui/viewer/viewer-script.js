@@ -56,7 +56,7 @@ var SCROLL_BTN_THRESHOLD = 1.5;
 /** Schmitt-trigger band for tail-follow: avoids autoScroll flipping when distance-to-bottom jitters (layout/subpixel). */
 var AT_BOTTOM_ON_PX = 36;
 var AT_BOTTOM_OFF_PX = 56;
-var footerEl = document.getElementById('footer');
+var footerEl = document.getElementById('viewer-toolbar');
 var footerTextEl = document.getElementById('footer-text');
 var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') || '') : '';
 /* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
@@ -328,7 +328,7 @@ viewportEl.addEventListener('keydown', function(e) {
     if (typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(rItem.seq);
 });
 
-function toggleWrap() { wordWrap = !wordWrap; logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
+function toggleWrap() { wordWrap = !wordWrap; if (logEl) logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
 if (jumpBtn) jumpBtn.addEventListener('click', jumpToBottom);
 if (jumpTopBtn) jumpTopBtn.addEventListener('click', function() {

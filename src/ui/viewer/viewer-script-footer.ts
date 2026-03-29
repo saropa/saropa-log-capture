@@ -4,6 +4,7 @@ export function getViewerScriptFooterChunk(): string {
 function formatNumber(n) { return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ','); }
 
 function updateFooterText() {
+    if (!footerTextEl) return;
     footerTextEl.textContent = '';
     var prefix = isViewingFile ? '' : (isPaused ? '\\u23F8 ' : '\\u25CF ');
     if (prefix) footerTextEl.appendChild(document.createTextNode(prefix));

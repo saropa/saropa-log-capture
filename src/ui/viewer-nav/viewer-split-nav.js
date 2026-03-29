@@ -20,24 +20,24 @@ function updateSplitInfo(part, total) {
     totalParts = total;
 
     if (total <= 1) {
-        splitBreadcrumb.classList.remove('visible');
+        if (splitBreadcrumb) splitBreadcrumb.classList.remove('visible');
         return;
     }
 
-    splitBreadcrumb.classList.add('visible');
-    splitCurrentEl.textContent = part;
-    splitTotalEl.textContent = total;
-    splitPrevBtn.disabled = part <= 1;
-    splitNextBtn.disabled = part >= total;
+    if (splitBreadcrumb) splitBreadcrumb.classList.add('visible');
+    if (splitCurrentEl) splitCurrentEl.textContent = part;
+    if (splitTotalEl) splitTotalEl.textContent = total;
+    if (splitPrevBtn) splitPrevBtn.disabled = part <= 1;
+    if (splitNextBtn) splitNextBtn.disabled = part >= total;
 }
 
-splitPrevBtn.addEventListener('click', function() {
+if (splitPrevBtn) splitPrevBtn.addEventListener('click', function() {
     if (currentPart > 1) {
         vscodeApi.postMessage({ type: 'navigatePart', part: currentPart - 1 });
     }
 });
 
-splitNextBtn.addEventListener('click', function() {
+if (splitNextBtn) splitNextBtn.addEventListener('click', function() {
     if (currentPart < totalParts) {
         vscodeApi.postMessage({ type: 'navigatePart', part: currentPart + 1 });
     }

@@ -20,11 +20,26 @@ window.onerror = function(msg, source, line, col) {
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'script-error-banner';
-        banner.style.cssText = 'background:#d32f2f;color:#fff;padding:4px 8px;font:12px monospace;white-space:pre-wrap;z-index:9999;';
+        banner.style.cssText = 'background:#d32f2f;color:#fff;padding:4px 8px;font:12px monospace;white-space:pre-wrap;z-index:9999;position:relative;user-select:text;cursor:text;display:flex;align-items:flex-start;gap:8px;';
+        var textEl = document.createElement('span');
+        textEl.id = 'script-error-text';
+        textEl.style.cssText = 'flex:1;user-select:text;';
+        banner.appendChild(textEl);
+        var copyBtn = document.createElement('button');
+        copyBtn.textContent = 'Copy';
+        copyBtn.style.cssText = 'background:#fff;color:#d32f2f;border:none;padding:2px 8px;font:12px monospace;cursor:pointer;border-radius:3px;flex-shrink:0;';
+        copyBtn.addEventListener('click', function() {
+            var t = document.getElementById('script-error-text');
+            if (t) navigator.clipboard.writeText(t.textContent || '').then(function() { copyBtn.textContent = 'Copied!'; setTimeout(function() { copyBtn.textContent = 'Copy'; }, 1500); });
+        });
+        banner.appendChild(copyBtn);
         document.body.prepend(banner);
     }
-    banner.textContent = 'Script error: ' + msg;
-    banner.style.display = 'block';
+    var textSpan = document.getElementById('script-error-text');
+    var errorText = 'Script error (line ' + line + ', col ' + col + '): ' + msg + (source ? '\\nSource: ' + source : '');
+    if (textSpan) textSpan.textContent = errorText;
+    else banner.textContent = errorText;
+    banner.style.display = 'flex';
     if (window._vscodeApi) {
         window._vscodeApi.postMessage({ type: 'scriptError', errors: window._scriptErrors });
     }

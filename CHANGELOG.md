@@ -27,6 +27,8 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 
 ## [5.0.2]
 
+Adds two-pass Project Logs loading with shimmer previews, hardens webview scripts with comprehensive null guards after the toolbar refactor, and routes webview errors to the output channel for easier debugging. [log](https://github.com/saropa/saropa-log-capture/blob/v5.0.2/CHANGELOG.md)
+
 ### Changed
 
 - Two-pass Project Logs loading: filenames appear instantly with shimmer placeholders while metadata (severity, duration, size) loads in the background
@@ -37,6 +39,15 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 - Add null guards for `sessionNav`, `sessionPrevBtn`, `sessionNextBtn`, `sessionNavCurrentEl`, `sessionNavTotalEl` in session-nav script
 - Add null guards for `splitBreadcrumb`, `splitPrevBtn`, `splitNextBtn`, `splitCurrentEl`, `splitTotalEl` in split-nav script
 - Add null guards for viewport `children[i]` classList accesses in bar-connection rendering
+- Add null guards for `logEl`, `viewportEl` scroll/resize/click listeners in viewer-script
+- Add null guard for `footerTextEl` in `updateFooterText()`
+- Add null guards for `logEl`, `jumpBtn` in Go to Line overlay
+- Add null guards for `copyFloat`, `wrapperEl`, `viewportEl`, `logEl` in copy/selection script
+- Add null guards for `searchInputEl`, `matchCountEl`, `search-next`/`search-prev` buttons in search script
+- Add null guard for `.hidden-count-text` querySelector result in hidden-lines counter
+- Add null guards for `.auto-hide-modal-backdrop`/`-close`/`-list` querySelector results in auto-hide modal
+- Add null guard for `logEl` at top of `renderViewport()` in viewport render script
+- Add null guard for `footerActionsMenu` classList access in replay footer-actions click handler
 - Route webview script errors to the "Saropa Log Capture" output channel (previously only logged to browser console)
 - Show full stack trace and copy button in webview error banner for easier debugging
 
@@ -52,6 +63,8 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 ---
 
 ## [5.0.1]
+
+Fixes webview null-reference crashes introduced in 5.0.0 and restores context menu toggle label visibility. [log](https://github.com/saropa/saropa-log-capture/blob/v5.0.1/CHANGELOG.md)
 
 ### Fixed
 
