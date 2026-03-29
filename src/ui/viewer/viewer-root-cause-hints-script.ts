@@ -2,7 +2,7 @@
  * DB_14 — Root-cause hypotheses strip (webview embed).
  *
  * Bundles the deterministic hypothesis algorithm (`viewer-root-cause-hints-embed-algorithm.ts`) with UI:
- * collapse state, dismiss, evidence scroll targets, and **Explain with AI** / **Explain root-cause hypotheses**
+ * collapse state, evidence scroll targets, and **Explain with AI** / **Explain root-cause hypotheses**
  * (command + context menu post `triggerExplainRootCauseHypotheses` from the host; webview calls
  * `runTriggerExplainRootCauseHypothesesFromHost`, which mirrors the strip button and posts
  * `explainRootCauseHypotheses` or `explainRootCauseHypothesesEmpty`). No host round-trip for the explain
@@ -84,11 +84,6 @@ function scrollViewerToLineIndex0(idx) {
 function renderRootCauseHypothesesIfNeeded() {
     var host = document.getElementById('root-cause-hypotheses');
     if (!host) return;
-    if (rootCauseHypothesesDismissed) {
-        host.classList.add('u-hidden');
-        host.innerHTML = '';
-        return;
-    }
     if (typeof allLines === 'undefined' || !allLines.length) {
         host.classList.add('u-hidden');
         host.innerHTML = '';
@@ -107,7 +102,6 @@ function renderRootCauseHypothesesIfNeeded() {
     parts.push('<button type="button" class="root-cause-hyp-toggle" data-rch-toggle="1" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + escapeHtml(collapsed ? rchStr('expandAria', 'Expand signals') : rchStr('collapseAria', 'Collapse signals')) + '" title="' + escapeHtml(collapsed ? rchStr('expandTitle', 'Expand') : rchStr('collapseTitle', 'Collapse')) + '">' + (collapsed ? '\\u25b6' : '\\u25bc') + '</button>');
     parts.push('<span class="root-cause-hypotheses-title">' + escapeHtml(rchStr('title', 'Signals')) + '</span>');
     parts.push('<button type="button" class="root-cause-hyp-explain-ai" data-rch-explain="1" aria-label="' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '">' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '</button>');
-    parts.push('<button type="button" class="root-cause-hypotheses-dismiss" aria-label="' + escapeHtml(rchStr('dismissAria', 'Dismiss signals')) + '" title="' + escapeHtml(rchStr('dismissTitle', 'Dismiss for this log')) + '">\\u00d7</button>');
     parts.push('</div>');
     parts.push('<div class="root-cause-hypotheses-body' + (collapsed ? ' u-hidden' : '') + '">');
     parts.push('<ul class="root-cause-hypotheses-list">');
@@ -156,7 +150,6 @@ function scheduleRootCauseHypothesesRefresh() {
 function resetRootCauseHypothesesSession() {
     if (typeof clearRootCauseHintHostFields === 'function') clearRootCauseHintHostFields();
     rootCauseHintSessionEpoch = (rootCauseHintSessionEpoch || 0) + 1;
-    rootCauseHypothesesDismissed = false;
     var host = document.getElementById('root-cause-hypotheses');
     if (host) {
         host.classList.add('u-hidden');
@@ -179,13 +172,6 @@ function initRootCauseHypothesesUi() {
         if (t && t.dataset && t.dataset.rchExplain === '1') {
             ev.preventDefault();
             runTriggerExplainRootCauseHypothesesFromHost();
-            return;
-        }
-        if (t && t.classList && t.classList.contains('root-cause-hypotheses-dismiss')) {
-            ev.preventDefault();
-            rootCauseHypothesesDismissed = true;
-            host.classList.add('u-hidden');
-            host.innerHTML = '';
             return;
         }
         var copyBtn = t && t.closest ? t.closest('.rch-copy-btn') : null;

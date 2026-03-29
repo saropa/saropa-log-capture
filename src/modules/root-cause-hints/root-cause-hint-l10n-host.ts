@@ -8,8 +8,6 @@ import { t } from "../../l10n";
 export function getRootCauseHintViewerStrings(): Record<string, string> {
   return {
     title: t("viewer.rchTitle"),
-    dismissAria: t("viewer.rchDismissAria"),
-    dismissTitle: t("viewer.rchDismissTitle"),
     explainAi: t("viewer.rchExplainAi"),
     collapseAria: t("viewer.rchCollapseAria"),
     collapseTitle: t("viewer.rchCollapseTitle"),
