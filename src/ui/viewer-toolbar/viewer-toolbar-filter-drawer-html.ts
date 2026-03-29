@@ -22,19 +22,19 @@ export function getFilterDrawerHtml(): string {
     <div class="filter-drawer-levels">
         <div class="filter-drawer-level-row">
             <div class="level-flyup-header">
-                <button type="button" id="level-select-all" class="active">All</button>
-                <button type="button" id="level-select-none">None</button>
+                <button type="button" id="level-select-all" class="active" title="Show all log levels">All</button>
+                <button type="button" id="level-select-none" title="Hide all log levels">None</button>
             </div>
-            <button id="level-info-toggle" class="level-circle active" title="Info" aria-label="Toggle Info level"><span class="level-emoji">\uD83D\uDFE2</span><span class="level-label">Info</span><span class="level-count"></span></button>
-            <button id="level-warning-toggle" class="level-circle active" title="Warning" aria-label="Toggle Warning level"><span class="level-emoji">\uD83D\uDFE0</span><span class="level-label">Warning</span><span class="level-count"></span></button>
-            <button id="level-error-toggle" class="level-circle active" title="Error" aria-label="Toggle Error level"><span class="level-emoji">\uD83D\uDD34</span><span class="level-label">Error</span><span class="level-count"></span></button>
-            <button id="level-performance-toggle" class="level-circle active" title="Performance" aria-label="Toggle Performance level"><span class="level-emoji">\uD83D\uDFE3</span><span class="level-label">Perf</span><span class="level-count"></span></button>
-            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
-            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace" aria-label="Toggle Debug level"><span class="level-emoji">\uD83D\uDFE4</span><span class="level-label">Debug</span><span class="level-count"></span></button>
-            <button id="level-notice-toggle" class="level-circle active" title="Notice" aria-label="Toggle Notice level"><span class="level-emoji">\uD83D\uDFE6</span><span class="level-label">Notice</span><span class="level-count"></span></button>
-            <span class="filter-drawer-context">
+            <button id="level-info-toggle" class="level-circle active" title="Info — toggle visibility of informational messages" aria-label="Toggle Info level"><span class="level-emoji">\uD83D\uDFE2</span><span class="level-label">Info</span><span class="level-count"></span></button>
+            <button id="level-warning-toggle" class="level-circle active" title="Warning — toggle visibility of warning messages" aria-label="Toggle Warning level"><span class="level-emoji">\uD83D\uDFE0</span><span class="level-label">Warning</span><span class="level-count"></span></button>
+            <button id="level-error-toggle" class="level-circle active" title="Error — toggle visibility of error messages" aria-label="Toggle Error level"><span class="level-emoji">\uD83D\uDD34</span><span class="level-label">Error</span><span class="level-count"></span></button>
+            <button id="level-performance-toggle" class="level-circle active" title="Performance — toggle visibility of slow query and timing messages" aria-label="Toggle Performance level"><span class="level-emoji">\uD83D\uDFE3</span><span class="level-label">Perf</span><span class="level-count"></span></button>
+            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME — toggle visibility of TODO and FIXME markers" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace — toggle visibility of debug and trace output" aria-label="Toggle Debug level"><span class="level-emoji">\uD83D\uDFE4</span><span class="level-label">Debug</span><span class="level-count"></span></button>
+            <button id="level-notice-toggle" class="level-circle active" title="Notice — toggle visibility of notice-level messages" aria-label="Toggle Notice level"><span class="level-emoji">\uD83D\uDFE6</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+            <span class="filter-drawer-context" title="Number of surrounding lines to keep visible around filtered matches">
                 <span>Context: <span id="context-lines-label">3 lines</span></span>
-                <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Context lines when filtering" aria-label="Context lines" />
+                <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of surrounding lines to keep visible around filtered matches" aria-label="Context lines" />
             </span>
         </div>
         <label class="filter-drawer-app-only" title="Show only application output, hiding framework and system messages">
@@ -50,12 +50,12 @@ export function getFilterDrawerHtml(): string {
 
     <!-- Row 3: Presets + reset + active count -->
     <div class="filter-drawer-footer">
-        <select id="preset-select" title="Quick Filters">
+        <select id="preset-select" title="Apply a preset filter configuration (e.g. Errors Only, Warnings+)">
             <option value="">Presets</option>
         </select>
-        <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters">Reset all</button>
+        <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and show all log lines">Reset all</button>
         <span class="filter-drawer-spacer"></span>
-        <span id="filter-drawer-summary" class="filter-drawer-summary"></span>
+        <span id="filter-drawer-summary" class="filter-drawer-summary" title="Summary of currently active filters"></span>
     </div>
 </div>`;
 }
@@ -75,7 +75,7 @@ function getAccordionSections(): string {
             <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>
             <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
             <div class="options-row">
-                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open SQL Query History">SQL Query History\u2026</button>
+                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open the SQL Query History panel to browse all queries in this session">SQL Query History\u2026</button>
             </div>
         `)}
         ${accordionSection('class-tags-section', 'Code Tags', `
@@ -101,8 +101,8 @@ function getAccordionSections(): string {
         ${accordionSection('noise-section', 'Exclusions', `
             <label class="options-row"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusions</span></label>
             <div class="exclusion-input-wrapper">
-                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" />
-                <button id="exclusion-add-btn" title="Add exclusion pattern">Add</button>
+                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
+                <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
             </div>
             <div id="exclusion-chips" class="exclusion-chips"></div>
             <div class="options-hint" id="exclusion-count"></div>
@@ -113,7 +113,7 @@ function getAccordionSections(): string {
 function accordionSection(id: string, title: string, body: string): string {
     return /* html */ `
     <div class="filter-accordion" id="${id}" style="display:none">
-        <button type="button" class="filter-accordion-header" aria-expanded="false">
+        <button type="button" class="filter-accordion-header" title="Click to expand or collapse the ${title} filter section" aria-expanded="false">
             <span class="filter-accordion-arrow">\u25B8</span>
             <span class="filter-accordion-title">${title}</span>
             <span class="filter-accordion-summary"></span>

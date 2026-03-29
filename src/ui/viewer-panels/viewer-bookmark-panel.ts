@@ -12,15 +12,15 @@ export function getBookmarkPanelHtml(): string {
     <div class="bookmark-panel-header">
         <span>Bookmarks</span>
         <div class="bookmark-panel-actions">
-            <button id="bookmark-delete-all" class="bookmark-panel-action" title="Delete All Bookmarks" aria-label="Delete All Bookmarks">
+            <button id="bookmark-delete-all" class="bookmark-panel-action" title="Remove all bookmarks across all log files" aria-label="Delete All Bookmarks">
                 <span class="codicon codicon-clear-all"></span>
             </button>
-            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close" aria-label="Close Bookmarks"><span class="codicon codicon-close"></span></button>
+            <button id="bookmark-panel-close" class="bookmark-panel-close" title="Close the Bookmarks panel" aria-label="Close Bookmarks"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="bookmark-panel-content" style="display:flex;flex-direction:column;flex:1;min-height:0;">
         <div class="bookmark-input-wrapper">
-            <input id="bookmark-filter-input" type="text" placeholder="Filter bookmarks..." aria-label="Filter bookmarks" />
+            <input id="bookmark-filter-input" type="text" placeholder="Filter bookmarks..." title="Filter bookmarks by line text or note content" aria-label="Filter bookmarks" />
         </div>
         <div id="bookmark-list" class="bookmark-list"></div>
         <div id="bookmark-empty" class="bookmark-empty">No bookmarks yet.\nRight-click a line to bookmark it.</div>

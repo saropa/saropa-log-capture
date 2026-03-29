@@ -191,4 +191,50 @@ suite('Viewer toolbar', () => {
             'should not reference removed #level-flyup element',
         );
     });
+
+    test('toolbar elements should have descriptive tooltips', () => {
+        const html = getToolbarHtml({ version: '1.0.0' });
+        // Nav buttons
+        assert.ok(html.includes('title="Navigate to the previous'), 'prev button needs descriptive tooltip');
+        assert.ok(html.includes('title="Navigate to the next'), 'next button needs descriptive tooltip');
+        // Icon buttons
+        assert.ok(html.includes('title="Open search to find text'), 'search button needs descriptive tooltip');
+        assert.ok(html.includes('title="Open filter drawer'), 'filter button needs descriptive tooltip');
+        assert.ok(html.includes('title="Open actions menu'), 'actions button needs descriptive tooltip');
+        // Level dots
+        assert.ok(html.includes('title="Info — click to toggle visibility"'), 'level dots need descriptive tooltips');
+        // Status elements
+        assert.ok(html.includes('title="Total number of lines'), 'line count needs tooltip');
+        assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
+    });
+
+    test('search flyout elements should have descriptive tooltips', () => {
+        const html = getSearchFlyoutHtml();
+        assert.ok(html.includes('title="Type to search or filter'), 'search input needs tooltip');
+        assert.ok(html.includes('title="Match Case — toggle'), 'case toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Match Whole Word — only'), 'word toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Number of matches found"'), 'match count needs tooltip');
+        assert.ok(html.includes('title="Switch between highlighting'), 'funnel button needs descriptive tooltip');
+    });
+
+    test('filter drawer level buttons should have tooltips', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('title="Show all log levels"'), 'All button needs tooltip');
+        assert.ok(html.includes('title="Hide all log levels"'), 'None button needs tooltip');
+        assert.ok(html.includes('title="Info — toggle visibility of informational'), 'Info toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Error — toggle visibility of error'), 'Error toggle needs descriptive tooltip');
+    });
+
+    test('filter drawer accordion headers should have tooltips', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('title="Click to expand or collapse the Log Streams'), 'Log Streams accordion needs tooltip');
+        assert.ok(html.includes('title="Click to expand or collapse the Exclusions'), 'Exclusions accordion needs tooltip');
+    });
+
+    test('actions dropdown items should have tooltips', () => {
+        const html = getActionsDropdownHtml();
+        assert.ok(html.includes('title="Replay the log session'), 'replay needs tooltip');
+        assert.ok(html.includes('title="Generate and open a quality report'), 'quality report needs tooltip');
+        assert.ok(html.includes('title="Export log lines'), 'export needs tooltip');
+    });
 });

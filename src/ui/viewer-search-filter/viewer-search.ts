@@ -23,7 +23,7 @@ import { getSearchPopoversScript } from './viewer-search-popovers';
 /** Returns the JavaScript for search (highlight, filter, F3 navigation). */
 export function getSearchScript(): string {
     return getSearchPopoversScript() + /* javascript */ `
-var sessionNavSearchOuter = document.getElementById('session-nav-search-outer');
+var sessionNavSearchOuter = document.getElementById('search-flyout');
 var searchInputEl = document.getElementById('search-input');
 var matchCountEl = document.getElementById('match-count');
 var searchModeToggleEl = document.getElementById('search-mode-toggle');

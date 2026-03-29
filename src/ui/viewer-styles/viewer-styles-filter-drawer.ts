@@ -48,6 +48,33 @@ export function getFilterDrawerStyles(): string {
     margin-bottom: 0;
     padding: 0;
 }
+.level-flyup-header button {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border, transparent);
+    font-size: 10px;
+    padding: 2px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.level-flyup-header button:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+.level-flyup-header button.active {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+.level-flyup-header button.active:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+.filter-drawer-footer select {
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, transparent);
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 2px;
+}
 .filter-drawer-context {
     display: inline-flex;
     align-items: center;
