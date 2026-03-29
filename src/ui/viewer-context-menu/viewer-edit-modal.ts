@@ -47,15 +47,15 @@ function openEditModal(lineIdx) {
         '<div class="edit-modal-content">' +
         '<div class="edit-modal-header">' +
         'Edit Line ' + (lineIdx + 1) +
-        '<button class="edit-modal-close" title="Close">&#x2715;</button>' +
+        '<button class="edit-modal-close" title="Close without saving changes">&#x2715;</button>' +
         '</div>' +
         warning +
         '<textarea id="edit-modal-textarea" rows="5">' +
         plainText.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
         '</textarea>' +
         '<div class="edit-modal-footer">' +
-        '<button id="edit-modal-save" class="edit-modal-btn edit-modal-save">Save</button>' +
-        '<button id="edit-modal-cancel" class="edit-modal-btn edit-modal-cancel">Cancel</button>' +
+        '<button id="edit-modal-save" class="edit-modal-btn edit-modal-save" title="Save changes to the log file">Save</button>' +
+        '<button id="edit-modal-cancel" class="edit-modal-btn edit-modal-cancel" title="Discard changes and close">Cancel</button>' +
         '</div>' +
         '</div>' +
         '</div>';
