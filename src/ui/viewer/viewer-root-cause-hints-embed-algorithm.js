@@ -27,7 +27,6 @@ function getViewerRootCauseHintsEmbedAlgorithmChunk() {
     return (
     /* javascript */ `
 var rootCauseHintSessionEpoch = 0;
-var rootCauseHypothesesDismissed = false;
 var rootCauseHypothesesRaf = null;
 
 function rootCauseHintsEligibilityEmbedded(b) {

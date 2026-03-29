@@ -121,7 +121,7 @@ function loadAnnotateSandbox() {
         (0, viewer_data_helpers_core_1.getViewerDataHelpersCore)() +
         (0, viewer_data_add_1.getViewerDataAddScript)() +
         VM_TEST_ANNOTATE_DETECTOR;
-    const ctx = vm.createContext({ console });
+    const ctx = vm.createContext({ console, window: {} });
     vm.runInContext(code, ctx, { filename: "viewer-db-detector-annotate-line-sandbox.js", timeout: 10_000 });
     return ctx;
 }

@@ -66,20 +66,6 @@ function getRootCauseHypothesesStyles() {
 .root-cause-hyp-explain-ai:hover {
     text-decoration: underline;
 }
-.root-cause-hypotheses-dismiss {
-    border: none;
-    background: transparent;
-    color: var(--vscode-descriptionForeground);
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    padding: 0 4px;
-    border-radius: 2px;
-}
-.root-cause-hypotheses-dismiss:hover {
-    color: var(--vscode-foreground);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
 .root-cause-hypotheses-list {
     margin: 0;
     padding-left: 1.15em;

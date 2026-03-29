@@ -66,67 +66,7 @@ function getLevelStyles() {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
-/* ===================================================================
-   Level Filter — Fly-up Menu
-   Popup positioned above the footer showing full level toggles
-   plus Select All / Select None. Stays open during toggling.
-   =================================================================== */
-#level-flyup {
-    display: none;
-    position: fixed;
-    bottom: 30px;
-    left: 8px;
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background, #1e1e1e));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
-    border-radius: 4px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-    padding: 6px;
-    z-index: 150;
-    min-width: 120px;
-}
-@keyframes flyup-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-#level-flyup.visible { display: flex; flex-direction: column; gap: 2px; animation: flyup-enter 0.15s ease-out; }
-.level-flyup-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--vscode-foreground);
-    padding: 2px 4px;
-}
-.level-flyup-help {
-    font-size: 10px;
-    color: var(--vscode-descriptionForeground);
-    line-height: 1.35;
-    padding: 0 4px 6px;
-    max-width: 260px;
-}
-.level-flyup-header {
-    display: flex;
-    gap: 8px;
-    padding: 2px 4px 4px;
-    border-bottom: 1px solid var(--vscode-panel-border);
-    margin-bottom: 2px;
-    font-size: 11px;
-}
-/* All/None toggles: buttons for keyboard a11y (plan 028). */
-.level-flyup-header button {
-    background: none;
-    border: 1px solid var(--vscode-descriptionForeground);
-    color: var(--vscode-descriptionForeground);
-    font-size: 11px;
-    padding: 1px 8px;
-    cursor: pointer;
-    border-radius: 3px;
-    text-decoration: none;
-}
-.level-flyup-header button.active {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border-color: var(--vscode-button-background);
-}
-.level-flyup-header button:hover {
-    background: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-foreground);
-}
+/* Level fly-up removed — level toggles are now in the toolbar filter drawer. */
 
 /* ===================================================================
    Level Filter Circles (inside fly-up)

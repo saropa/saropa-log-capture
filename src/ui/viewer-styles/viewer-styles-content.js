@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getContentStyles = getContentStyles;
-const viewer_styles_footer_1 = require("./viewer-styles-footer");
-/** CSS for timing markers, stack traces, jump button, footer, annotations. */
+/** CSS for timing markers, stack traces, jump button, annotations. */
 function getContentStyles() {
-    return (0, viewer_styles_footer_1.getFooterStyles)() + /* css */ `
+    return /* css */ `
 /* --- Timing Markers --- */
 .marker {
     border-top: 1px solid var(--vscode-editorGutter-addedBackground, #28a745);
