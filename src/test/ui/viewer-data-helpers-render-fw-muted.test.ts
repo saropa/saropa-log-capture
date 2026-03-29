@@ -41,7 +41,7 @@ suite('viewer-data-helpers-render fwMuted (framework deemphasize)', () => {
             'gutter must not use level-bar-framework when item.fw; bar color should match level-debug/info/etc.',
         );
         assert.ok(
-            renderChunk.includes("' level-bar-' + level"),
+            renderChunk.includes("' level-bar-' + item.level"),
             'bar class must derive from item.level',
         );
     });
