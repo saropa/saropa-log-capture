@@ -7,9 +7,9 @@ export function getRunNavHtml(): string {
     return /* html */ `
 <div id="run-nav">
     <span class="nav-bar-sep" aria-hidden="true">|</span>
-    <button id="run-prev" type="button" title="Previous run (launch/hot restart/reload)" disabled>&#x25C0; Prev</button>
-    <span class="nav-bar-label">Run <span id="run-current">1</span> of <span id="run-total">1</span></span>
-    <button id="run-next" type="button" title="Next run" disabled>Next &#x25B6;</button>
+    <button id="run-prev" type="button" title="Navigate to the previous run (launch, hot restart, or hot reload)" disabled>&#x25C0; Prev</button>
+    <span class="nav-bar-label" title="Current run position within this log session">Run <span id="run-current">1</span> of <span id="run-total">1</span></span>
+    <button id="run-next" type="button" title="Navigate to the next run (launch, hot restart, or hot reload)" disabled>Next &#x25B6;</button>
 </div>`;
 }
 
