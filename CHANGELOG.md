@@ -24,6 +24,21 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Hidden-lines chevron indicator on the severity bar — a small `▸` marker appears between visible lines when non-blank lines are hidden by filters, with a tooltip showing the count and filter reasons
+- adb logcat integration: live-stream Android system logs alongside debug sessions with PID filtering, level filtering, tag filters, and `.logcat.log` sidecar at session end
+
+### Fixed
+
+- Fix severity bar connector gaps — dots now only connect when they share the same severity level, bridging correctly across blank and hidden lines instead of joining mismatched levels
+- New settings under `saropaLogCapture.integrations.adbLogcat.*`: device, tagFilters, minLevel, filterByPid, maxBufferLines, writeSidecar
+- Enable via `"adbLogcat"` in `saropaLogCapture.integrations.adapters` array or accept the auto-prompt when debugging Dart/Flutter with adb on PATH
+
+---
+
 ## [5.0.3]
 
 ### Changed

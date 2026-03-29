@@ -219,6 +219,25 @@ function getDecorationStyles() {
 .bar-up:not(.bar-down)::after { top: 0; bottom: 50%; }
 .bar-up.bar-down::after { top: 0; bottom: 0; }
 
+/* Hidden-lines chevron: zero-height indicator between visible lines when non-blank lines are filtered out.
+   The div is zero-height; the absolute span overflows visually without affecting layout. */
+.hidden-chevron {
+    position: relative;
+    height: 0;
+    overflow: visible;
+}
+.hidden-chevron > span {
+    position: absolute;
+    left: 0.42em;
+    top: -0.5em;
+    font-size: 0.75em;
+    line-height: 1;
+    color: var(--vscode-descriptionForeground, #888);
+    opacity: 0.7;
+    cursor: default;
+    z-index: 3;
+}
+
 /* Error classification badges */
 .error-badge {
     display: inline-block;
