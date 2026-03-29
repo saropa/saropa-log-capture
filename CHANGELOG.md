@@ -25,6 +25,26 @@ Each version (and [Unreleased]) should open with a short human summary when it h
 
 ---
 
+## [5.0.2]
+
+### Fixed
+
+- Add null guards for `splitBreadcrumb`, `splitPrevBtn`, `splitNextBtn`, `splitCurrentEl`, `splitTotalEl` in split-nav script
+- Add null guards for viewport `children[i]` classList accesses in bar-connection rendering
+- Route webview script errors to the "Saropa Log Capture" output channel (previously only logged to browser console)
+- Include source URL in webview error banner for easier debugging
+
+### Removed
+
+- Remove irrecoverable dismiss [x] button from Signals strip — the collapse toggle is the only hide mechanism now
+- Delete stale one-off commit message scripts (`write-commit-msg.ps1`, `write-drift-commit.ps1`)
+
+### Changed
+
+- Move `generate-db-detector-embed-merge.mjs`, `check-stores-version.ps1`, and `marketplace-gallery-query-body.json` from `scripts/` root into `scripts/modules/`
+
+---
+
 ## [5.0.1]
 
 ### Fixed
