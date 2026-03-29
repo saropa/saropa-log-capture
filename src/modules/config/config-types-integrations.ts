@@ -159,6 +159,21 @@ export interface IntegrationBrowserConfig {
   readonly requestIdPattern: string;
 }
 
+export interface IntegrationAdbLogcatConfig {
+  /** Device serial (blank = default device). Maps to `adb -s <serial>`. */
+  readonly device: string;
+  /** Logcat tag filter expressions (e.g. ["flutter:V", "*:S"]). Passed to adb logcat. */
+  readonly tagFilters: readonly string[];
+  /** Minimum logcat level to capture: V, D, I, W, E, F, A. Default "V" (all). */
+  readonly minLevel: string;
+  /** When true, filter logcat output by debug target PID once known from DAP. */
+  readonly filterByPid: boolean;
+  /** Max lines to buffer for sidecar file. */
+  readonly maxBufferLines: number;
+  /** Write buffered logcat as .logcat.log sidecar file at session end. */
+  readonly writeSidecar: boolean;
+}
+
 /** Write `basename.unified.jsonl` merging main log + terminal + external sidecars (Phase 4). */
 export interface IntegrationUnifiedLogConfig {
   readonly writeAtSessionEnd: boolean;

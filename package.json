@@ -2040,6 +2040,48 @@
           "type": "number",
           "title": "%config.integrations.terminal.maxLines.title%"
         },
+        "saropaLogCapture.integrations.adbLogcat.device": {
+          "default": "",
+          "description": "Device serial for adb (blank = default device). Maps to `adb -s <serial>`.",
+          "type": "string",
+          "title": "%config.integrations.adbLogcat.device.title%"
+        },
+        "saropaLogCapture.integrations.adbLogcat.tagFilters": {
+          "default": [],
+          "description": "Logcat tag filter expressions passed to adb logcat (e.g. [\"flutter:V\", \"*:S\"]).",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "%config.integrations.adbLogcat.tagFilters.title%"
+        },
+        "saropaLogCapture.integrations.adbLogcat.minLevel": {
+          "default": "V",
+          "description": "Minimum logcat level to capture.",
+          "enum": ["V", "D", "I", "W", "E", "F", "A"],
+          "type": "string",
+          "title": "%config.integrations.adbLogcat.minLevel.title%"
+        },
+        "saropaLogCapture.integrations.adbLogcat.filterByPid": {
+          "default": true,
+          "description": "Filter logcat output by the debug target PID once known from DAP.",
+          "type": "boolean",
+          "title": "%config.integrations.adbLogcat.filterByPid.title%"
+        },
+        "saropaLogCapture.integrations.adbLogcat.maxBufferLines": {
+          "default": 50000,
+          "description": "Max logcat lines to buffer for sidecar file.",
+          "minimum": 1000,
+          "maximum": 500000,
+          "type": "number",
+          "title": "%config.integrations.adbLogcat.maxBufferLines.title%"
+        },
+        "saropaLogCapture.integrations.adbLogcat.writeSidecar": {
+          "default": true,
+          "description": "Write buffered logcat as a .logcat.log sidecar file at session end.",
+          "type": "boolean",
+          "title": "%config.integrations.adbLogcat.writeSidecar.title%"
+        },
         "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,
           "description": "After session end, write basename.unified.jsonl next to the main log: one JSON line per row { \"source\", \"text\" } merging main log, .terminal.log, and external sidecars (for sharing or opening one file in the viewer with Sources filter).",
