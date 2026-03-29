@@ -124,13 +124,7 @@ export interface SaropaLogCaptureConfig {
   readonly viewerDbDetectorBaselineHintsEnabled: boolean;
   /** Slow query burst marker thresholds in the log viewer (plan DB_08). */
   readonly viewerSlowBurstThresholds: ViewerSlowBurstThresholds;
-  /**
-   * Minimum occurrences of a normalized SQL fingerprint before it gets its own filter chip (below → "Other SQL").
-   * Plan DB_05; baked into viewer script and updated via `setViewerSqlPatternChipSettings`.
-   */
-  readonly viewerSqlPatternChipMinCount: number;
-  /** Max fingerprint chips before "Show all" in the SQL Patterns section (plan DB_05). */
-  readonly viewerSqlPatternMaxChips: number;
+
   readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   /**

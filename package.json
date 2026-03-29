@@ -667,22 +667,6 @@
           "type": "number",
           "title": "%config.repeatCollapseDmlMinCount.title%"
         },
-        "saropaLogCapture.viewerSqlPatternChipMinCount": {
-          "default": 2,
-          "markdownDescription": "%config.viewerSqlPatternChipMinCount.markdownDescription%",
-          "maximum": 50,
-          "minimum": 1,
-          "type": "number",
-          "title": "%config.viewerSqlPatternChipMinCount.title%"
-        },
-        "saropaLogCapture.viewerSqlPatternMaxChips": {
-          "default": 20,
-          "markdownDescription": "%config.viewerSqlPatternMaxChips.markdownDescription%",
-          "maximum": 100,
-          "minimum": 1,
-          "type": "number",
-          "title": "%config.viewerSqlPatternMaxChips.title%"
-        },
         "saropaLogCapture.minimapShowInfoMarkers": {
           "default": false,
           "markdownDescription": "%config.minimapShowInfoMarkers.markdownDescription%",

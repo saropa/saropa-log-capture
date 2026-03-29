@@ -55,8 +55,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
     viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
-    viewerSqlPatternChipMinCount: cfg.viewerSqlPatternChipMinCount,
-    viewerSqlPatternMaxChips: cfg.viewerSqlPatternMaxChips,
+
   });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
@@ -92,11 +91,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     type: 'setViewerDbDetectorToggles',
     ...viewerDbDetectorTogglesFromConfig(getConfig()),
   }));
-  queueMicrotask(() => target.postMessage({
-    type: 'setViewerSqlPatternChipSettings',
-    chipMinCount: getConfig().viewerSqlPatternChipMinCount,
-    chipMaxChips: getConfig().viewerSqlPatternMaxChips,
-  }));
+
   queueMicrotask(() => {
     const erCfg = errorRateConfigFromConfig(getConfig());
     target.postMessage({ type: 'setErrorRateConfig', bucketSize: erCfg.bucketSize, showWarnings: erCfg.showWarnings, detectSpikes: erCfg.detectSpikes });

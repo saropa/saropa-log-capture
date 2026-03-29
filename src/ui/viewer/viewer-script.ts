@@ -312,6 +312,11 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         toggleStackGroup(parseInt(header.dataset.gid));
+        return;
+    }
+    var contBadge = e.target.closest('.cont-badge');
+    if (contBadge && contBadge.dataset.contGid !== undefined && typeof toggleContinuationGroup === 'function') {
+        toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
     }
 });
 
