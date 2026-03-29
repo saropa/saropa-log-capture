@@ -146,6 +146,9 @@ export function getSessionPanelEventsScript(): string {
             var labelEl = document.getElementById('session-loading-label');
             if (labelEl) labelEl.textContent = (e.data.folderPath ? 'Loading ' + e.data.folderPath + '…' : 'Loading…');
         }
+        if (e.data.type === 'sessionListPreview') {
+            renderSessionListPreview(e.data.previews);
+        }
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
             sessionListPage = 0;

@@ -12,7 +12,7 @@ import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
-import { getLogDirectoryUri } from "../../modules/config/config";
+import { getConfig, getLogDirectoryUri, readTrackedFiles } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
@@ -151,11 +151,30 @@ function wireContentHandlers(
   });
 }
 
-function getSessionRootPath(context: vscode.ExtensionContext): string {
+/** Resolve the log directory URI from override or workspace default. */
+function getLogDir(context: vscode.ExtensionContext): vscode.Uri | undefined {
+  const overrideStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+  if (overrideStr) { return vscode.Uri.parse(overrideStr); }
   const folder = vscode.workspace.workspaceFolders?.[0];
-  const overrideUriStr = context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
-  const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
-  return overrideUri ? overrideUri.fsPath : (folder ? getLogDirectoryUri(folder).fsPath : "No workspace");
+  return folder ? getLogDirectoryUri(folder) : undefined;
+}
+
+/** Human-readable path for the current log directory (for UI labels). */
+function getSessionRootPath(context: vscode.ExtensionContext): string {
+  return getLogDir(context)?.fsPath ?? "No workspace";
+}
+
+/** Send a lightweight filename-only preview so items appear before full metadata loads. */
+async function sendQuickPreview(broadcaster: ViewerBroadcaster, context: vscode.ExtensionContext): Promise<void> {
+  const logDir = getLogDir(context);
+  if (!logDir) { return; }
+  const { fileTypes, includeSubfolders } = getConfig();
+  const files = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
+  const previews = files.map(f => ({
+    filename: f,
+    uriString: vscode.Uri.joinPath(logDir, f).toString(),
+  }));
+  broadcaster.postToWebview({ type: 'sessionListPreview', previews });
 }
 
 /** Wire session list, browse root, clear root, and session action handlers. */
@@ -180,7 +199,10 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
     if (ref.timer) { clearTimeout(ref.timer); }
     ref.timer = setTimeout(() => {
-      void refreshSessionList();
+      void (async () => {
+        await sendQuickPreview(broadcaster, deps.context).catch(() => {});
+        await refreshSessionList();
+      })();
       if (ref.interval) { clearInterval(ref.interval); }
       ref.interval = setInterval(() => {
         if (sessionManager.getActiveSession()) { void refreshSessionList(); }
