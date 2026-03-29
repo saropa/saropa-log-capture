@@ -73,23 +73,13 @@ function renderItem(item, idx, prevVis) {
     }
     var isBlank = isLineContentBlank(item);
     var barCls = '';
-    if (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext) {
-        var level = item.level;
-        // Blank lines: inherit severity bar from previous line for visual continuity (no decoration prefix).
-        if (isBlank && idx > 0 && typeof allLines !== 'undefined' && allLines[idx - 1] && allLines[idx - 1].level) {
-            var prevLn = allLines[idx - 1];
-            level = prevLn.level;
-            if (prevLn.recentErrorContext && level === 'error') {
-                barCls = ' level-bar-error-recent-context';
-            } else {
-                barCls = ' level-bar-' + level;
-            }
-        } else if (!isBlank && level) {
-            if (item.recentErrorContext && level === 'error') {
-                barCls = ' level-bar-error-recent-context';
-            } else {
-                barCls = ' level-bar-' + level;
-            }
+    // Blank lines get no bar class here; the connector bridge in renderViewport() adds the
+    // correct level-bar-* when the blank sits between two same-level dots.
+    if (typeof decoShowBar !== 'undefined' && decoShowBar && !item.isContext && !isBlank && item.level) {
+        if (item.recentErrorContext && item.level === 'error') {
+            barCls = ' level-bar-error-recent-context';
+        } else {
+            barCls = ' level-bar-' + item.level;
         }
     }
     if (item.type === 'stack-header') {

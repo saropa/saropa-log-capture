@@ -59,7 +59,7 @@ suite('viewer-data-helpers-render fwMuted (framework deemphasize)', () => {
      */
     test('severity bar uses level-bar-{level} for framework lines (matches level-* text)', () => {
         assert.ok(!renderChunk.includes("' level-bar-framework'"), 'gutter must not use level-bar-framework when item.fw; bar color should match level-debug/info/etc.');
-        assert.ok(renderChunk.includes("' level-bar-' + level"), 'bar class must derive from item.level');
+        assert.ok(renderChunk.includes("' level-bar-' + item.level"), 'bar class must derive from item.level');
     });
 });
 //# sourceMappingURL=viewer-data-helpers-render-fw-muted.test.js.map
