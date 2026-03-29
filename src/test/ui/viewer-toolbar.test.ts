@@ -83,6 +83,44 @@ suite('Viewer toolbar', () => {
         );
     });
 
+    test('filter drawer has preset label and reset after summary', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('filter-drawer-footer-label'),
+            'footer should have a preset label',
+        );
+        assert.ok(
+            html.includes('>Preset:</span>'),
+            'preset label should read "Preset:"',
+        );
+        const summaryIdx = html.indexOf('id="filter-drawer-summary"');
+        const resetIdx = html.indexOf('id="reset-all-filters"');
+        assert.ok(
+            summaryIdx < resetIdx,
+            'reset button should appear after summary (far right)',
+        );
+    });
+
+    test('filter drawer sections use grid container', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('class="filter-drawer-sections"'),
+            'accordion sections should be inside grid container',
+        );
+    });
+
+    test('accordion script manages expanded class', () => {
+        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        assert.ok(
+            src.includes("classList.add('expanded')"),
+            'handleAccordionClick should add expanded class',
+        );
+        assert.ok(
+            src.includes("classList.remove('expanded')"),
+            'collapseAllAccordions should remove expanded class',
+        );
+    });
+
     test('actions dropdown preserves replay script IDs', () => {
         const html = getActionsDropdownHtml();
         assert.ok(html.includes('id="footer-actions-menu"'), 'replay compat: menu ID');
@@ -202,10 +240,14 @@ suite('Viewer toolbar', () => {
         assert.ok(html.includes('title="Open filter drawer'), 'filter button needs descriptive tooltip');
         assert.ok(html.includes('title="Open actions menu'), 'actions button needs descriptive tooltip');
         // Level dots
-        assert.ok(html.includes('title="Info — click to toggle visibility"'), 'level dots need descriptive tooltips');
+        assert.ok(html.includes('title="Info — click to toggle, double-click to show only Info"'), 'level dots need descriptive tooltips');
         // Status elements
         assert.ok(html.includes('title="Total number of lines'), 'line count needs tooltip');
         assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
+        // Interactive elements describe their actions
+        assert.ok(html.includes('double-click to open folder'), 'filename tooltip should describe double-click');
+        assert.ok(html.includes('long-press to copy path'), 'filename tooltip should describe long-press');
+        assert.ok(html.includes('click to open filter drawer'), 'trigger label should describe click action');
     });
 
     test('search flyout elements should have descriptive tooltips', () => {
@@ -219,10 +261,10 @@ suite('Viewer toolbar', () => {
 
     test('filter drawer level buttons should have tooltips', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(html.includes('title="Show all log levels"'), 'All button needs tooltip');
-        assert.ok(html.includes('title="Hide all log levels"'), 'None button needs tooltip');
-        assert.ok(html.includes('title="Info — toggle visibility of informational'), 'Info toggle needs descriptive tooltip');
-        assert.ok(html.includes('title="Error — toggle visibility of error'), 'Error toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Click to show all log levels"'), 'All button needs tooltip');
+        assert.ok(html.includes('title="Click to hide all log levels"'), 'None button needs tooltip');
+        assert.ok(html.includes('title="Info — click to show/hide informational'), 'Info toggle needs descriptive tooltip');
+        assert.ok(html.includes('title="Error — click to show/hide error'), 'Error toggle needs descriptive tooltip');
     });
 
     test('filter drawer accordion headers should have tooltips', () => {

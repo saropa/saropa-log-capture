@@ -39,8 +39,11 @@ export function getFilterDrawerStyles(): string {
 /* Level circles in drawer: horizontal inline instead of vertical list */
 .filter-drawer-level-row .level-circle {
     width: auto;
-    padding: 2px 4px;
-    gap: 3px;
+    padding: 1px 3px;
+    gap: 2px;
+}
+.filter-drawer-level-row .level-count {
+    min-width: 0;
 }
 .filter-drawer-level-row .level-label { display: none; }
 .filter-drawer-level-row .level-flyup-header {
@@ -94,31 +97,49 @@ export function getFilterDrawerStyles(): string {
 }
 
 /* ===================================================================
-   Accordion Sections
+   Accordion Sections — 2-column grid
    =================================================================== */
-.filter-accordion { border-bottom: 1px solid var(--vscode-panel-border); }
-.filter-accordion:last-child { border-bottom: none; }
+.filter-drawer-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+    padding: 4px 0;
+}
+.filter-accordion {
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 3px;
+    margin: 2px 0;
+}
+/* Expanded sections span full width */
+.filter-accordion.expanded {
+    grid-column: 1 / -1;
+}
 .filter-accordion-header {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     width: 100%;
-    padding: 4px 2px;
-    background: none;
+    padding: 5px 8px;
+    background: var(--vscode-sideBar-background, var(--vscode-panel-background));
     border: none;
     color: var(--vscode-foreground);
     font-size: 11px;
     cursor: pointer;
     text-align: left;
+    border-radius: 3px;
 }
 .filter-accordion-header:hover {
     background: var(--vscode-list-hoverBackground);
 }
 .filter-accordion-arrow {
-    font-size: 10px;
-    width: 12px;
+    font-size: 11px;
+    width: 14px;
     text-align: center;
     flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+.filter-accordion.expanded .filter-accordion-arrow {
+    transform: rotate(90deg);
 }
 .filter-accordion-title { font-weight: 600; }
 .filter-accordion-summary {
@@ -128,7 +149,7 @@ export function getFilterDrawerStyles(): string {
     color: var(--vscode-descriptionForeground);
 }
 .filter-accordion-body {
-    padding: 4px 2px 6px 16px;
+    padding: 4px 8px 6px 16px;
 }
 .filter-accordion-body[hidden] { display: none; }
 
@@ -144,11 +165,20 @@ export function getFilterDrawerStyles(): string {
     margin-top: 4px;
     font-size: 11px;
 }
+.filter-drawer-footer-label {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    white-space: nowrap;
+}
 .filter-drawer-spacer { flex: 1; }
 .filter-drawer-summary {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filter-accordion-arrow { transition: none; }
 }
 
 `;
