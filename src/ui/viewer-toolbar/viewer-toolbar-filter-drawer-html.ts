@@ -22,16 +22,16 @@ export function getFilterDrawerHtml(): string {
     <div class="filter-drawer-levels">
         <div class="filter-drawer-level-row">
             <div class="level-flyup-header">
-                <button type="button" id="level-select-all" class="active" title="Show all log levels">All</button>
-                <button type="button" id="level-select-none" title="Hide all log levels">None</button>
+                <button type="button" id="level-select-all" class="active" title="Click to show all log levels">All</button>
+                <button type="button" id="level-select-none" title="Click to hide all log levels">None</button>
             </div>
-            <button id="level-info-toggle" class="level-circle active" title="Info — toggle visibility of informational messages" aria-label="Toggle Info level"><span class="level-emoji">\uD83D\uDFE2</span><span class="level-label">Info</span><span class="level-count"></span></button>
-            <button id="level-warning-toggle" class="level-circle active" title="Warning — toggle visibility of warning messages" aria-label="Toggle Warning level"><span class="level-emoji">\uD83D\uDFE0</span><span class="level-label">Warning</span><span class="level-count"></span></button>
-            <button id="level-error-toggle" class="level-circle active" title="Error — toggle visibility of error messages" aria-label="Toggle Error level"><span class="level-emoji">\uD83D\uDD34</span><span class="level-label">Error</span><span class="level-count"></span></button>
-            <button id="level-performance-toggle" class="level-circle active" title="Performance — toggle visibility of slow query and timing messages" aria-label="Toggle Performance level"><span class="level-emoji">\uD83D\uDFE3</span><span class="level-label">Perf</span><span class="level-count"></span></button>
-            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME — toggle visibility of TODO and FIXME markers" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
-            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace — toggle visibility of debug and trace output" aria-label="Toggle Debug level"><span class="level-emoji">\uD83D\uDFE4</span><span class="level-label">Debug</span><span class="level-count"></span></button>
-            <button id="level-notice-toggle" class="level-circle active" title="Notice — toggle visibility of notice-level messages" aria-label="Toggle Notice level"><span class="level-emoji">\uD83D\uDFE6</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+            <button id="level-info-toggle" class="level-circle active" title="Info — click to show/hide informational messages" aria-label="Toggle Info level"><span class="level-emoji">\uD83D\uDFE2</span><span class="level-label">Info</span><span class="level-count"></span></button>
+            <button id="level-warning-toggle" class="level-circle active" title="Warning — click to show/hide warning messages" aria-label="Toggle Warning level"><span class="level-emoji">\uD83D\uDFE0</span><span class="level-label">Warning</span><span class="level-count"></span></button>
+            <button id="level-error-toggle" class="level-circle active" title="Error — click to show/hide error messages" aria-label="Toggle Error level"><span class="level-emoji">\uD83D\uDD34</span><span class="level-label">Error</span><span class="level-count"></span></button>
+            <button id="level-performance-toggle" class="level-circle active" title="Performance — click to show/hide slow query and timing messages" aria-label="Toggle Performance level"><span class="level-emoji">\uD83D\uDFE3</span><span class="level-label">Perf</span><span class="level-count"></span></button>
+            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME — click to show/hide TODO and FIXME markers" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+            <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace — click to show/hide debug and trace output" aria-label="Toggle Debug level"><span class="level-emoji">\uD83D\uDFE4</span><span class="level-label">Debug</span><span class="level-count"></span></button>
+            <button id="level-notice-toggle" class="level-circle active" title="Notice — click to show/hide notice-level messages" aria-label="Toggle Notice level"><span class="level-emoji">\uD83D\uDFE6</span><span class="level-label">Notice</span><span class="level-count"></span></button>
             <span class="filter-drawer-context" title="Number of surrounding lines to keep visible around filtered matches">
                 <span>Context: <span id="context-lines-label">3 lines</span></span>
                 <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of surrounding lines to keep visible around filtered matches" aria-label="Context lines" />
@@ -48,14 +48,15 @@ export function getFilterDrawerHtml(): string {
         ${getAccordionSections()}
     </div>
 
-    <!-- Row 3: Presets + reset + active count -->
+    <!-- Row 3: Presets + active count + reset -->
     <div class="filter-drawer-footer">
+        <span class="filter-drawer-footer-label">Preset:</span>
         <select id="preset-select" title="Apply a preset filter configuration (e.g. Errors Only, Warnings+)">
-            <option value="">Presets</option>
+            <option value="">None</option>
         </select>
-        <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and show all log lines">Reset all</button>
         <span class="filter-drawer-spacer"></span>
         <span id="filter-drawer-summary" class="filter-drawer-summary" title="Summary of currently active filters"></span>
+        <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and show all log lines">Reset all</button>
     </div>
 </div>`;
 }
