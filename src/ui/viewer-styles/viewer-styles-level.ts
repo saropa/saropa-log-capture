@@ -29,10 +29,10 @@ export function getLevelStyles(): string {
 }
 .level-dot {
     display: inline-block;
-    width: 10px;
-    height: 10px;
-    min-width: 10px;
-    min-height: 10px;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
     border-radius: 50%;
     flex-shrink: 0;
     transition: opacity 0.2s ease;
