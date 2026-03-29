@@ -351,7 +351,7 @@ suite('Webview script null guards', () => {
         test('should guard logEl in scrollToMatch', () => {
             const block = script.slice(
                 script.indexOf('function scrollToMatch'),
-                script.indexOf('function scrollToMatch') + 400,
+                script.indexOf('function scrollToMatch') + 600,
             );
             assert.ok(
                 block.includes('if (!logEl) return'),
