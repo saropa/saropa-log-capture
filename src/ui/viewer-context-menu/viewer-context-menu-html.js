@@ -9,35 +9,35 @@ exports.getContextMenuHtml = getContextMenuHtml;
  */
 function getScrollChromeMenuTogglesHtml() {
     return `
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-proportional" title="Proportional line width (minimap)">
                 <span class="codicon codicon-graph" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Proportional line width (minimap)</span>
+                <span class="context-menu-label">Proportional line width (minimap)</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-show-scrollbar" title="Show native scrollbar">
                 <span class="codicon codicon-layout" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Show native scrollbar</span>
+                <span class="context-menu-label">Show native scrollbar</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info markers on minimap">
                 <span class="codicon codicon-info" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Info markers on minimap</span>
+                <span class="context-menu-label">Info markers on minimap</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="SQL density on minimap">
                 <span class="codicon codicon-database" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>SQL density on minimap</span>
+                <span class="context-menu-label">SQL density on minimap</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-viewport-red-outline" title="Red outline on viewport">
                 <span class="codicon codicon-circle-outline" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Red outline on viewport</span>
+                <span class="context-menu-label">Red outline on viewport</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-outside-arrow" title="Yellow arrow outside minimap">
                 <span class="codicon codicon-arrow-right" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Yellow arrow outside minimap</span>
+                <span class="context-menu-label">Yellow arrow outside minimap</span>
             </div>`;
 }
 /** Compact menu: same toggles as the Scroll map & scrollbar submenu (minimap / scrollbar right-click). */
@@ -206,7 +206,7 @@ function getContextMenuHtml() {
             <div class="context-menu-item context-menu-toggle" data-action="toggle-hide-blank-lines">
                 <span class="codicon codicon-eye-closed" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Hide blank lines</span>
+                <span class="context-menu-label">Hide blank lines</span>
             </div>
         </div>
     </div>
@@ -217,42 +217,42 @@ function getContextMenuHtml() {
             <div class="context-menu-item context-menu-toggle" data-action="toggle-wrap">
                 <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Word wrap</span>
+                <span class="context-menu-label">Word wrap</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-decorations">
                 <span class="codicon codicon-symbol-event" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Line decorations (dot, number, time)</span>
+                <span class="context-menu-label">Line decorations (dot, number, time)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Timestamp</span>
+                <span class="context-menu-label">Timestamp</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-session-elapsed">
                 <span class="codicon codicon-watch" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Session elapsed</span>
+                <span class="context-menu-label">Session elapsed</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-spacing">
                 <span class="codicon codicon-layout-panel" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Visual spacing</span>
+                <span class="context-menu-label">Visual spacing</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-line-height">
                 <span class="codicon codicon-unfold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Comfortable line height</span>
+                <span class="context-menu-label">Comfortable line height</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines">
                 <span class="codicon codicon-fold" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Compress lines (consecutive dupes)</span>
+                <span class="context-menu-label">Compress lines (consecutive dupes)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-compress-lines-global">
                 <span class="codicon codicon-fold-down" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span>Compress lines (non-consecutive dupes)</span>
+                <span class="context-menu-label">Compress lines (non-consecutive dupes)</span>
             </div>
         </div>
     </div>

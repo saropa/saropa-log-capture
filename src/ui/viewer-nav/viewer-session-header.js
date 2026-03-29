@@ -66,17 +66,8 @@ function updateSessionInfoTooltip() {
     label.title = text || '';
 }
 
-/** Wrapper is visible when session nav is visible or session details have text. */
-window.updateSessionNavWrapperVisibility = function() {
-    var wrapper = document.getElementById('session-nav-wrapper');
-    var nav = document.getElementById('session-nav');
-    var details = document.getElementById('session-details-inline');
-    if (!wrapper) return;
-    var hasNav = nav && nav.classList.contains('visible');
-    var hasDetails = details && details.textContent.trim().length > 0;
-    if (hasNav || hasDetails) { wrapper.classList.add('has-content'); }
-    else { wrapper.classList.remove('has-content'); }
-};
+/** No-op — toolbar is always visible; kept for backward compat. */
+window.updateSessionNavWrapperVisibility = function() {};
 
 /** Long-press on session count label copies session info to clipboard. */
 (function setupSessionInfoLongPress() {
@@ -115,37 +106,7 @@ window.updateSessionNavWrapperVisibility = function() {
     label.style.cursor = 'default';
 })();
 
-/** Smart sticky header: hide on scroll down, reveal on scroll up. */
-(function setupSmartStickyHeader() {
-    var logEl = document.getElementById('log-content');
-    var wrapper = document.getElementById('session-nav-wrapper');
-    if (!logEl || !wrapper) return;
-    var lastScrollTop = 0;
-    var thresholdDown = 48;  /* px scrolled before hiding header */
-    var thresholdUp = 16;    /* px scroll-up delta to reveal; at top always show */
-    var ticking = false;
-    function update() {
-        var st = logEl.scrollTop;
-        if (st <= thresholdUp) {
-            wrapper.classList.remove('smart-header-hidden');
-        } else if (st > lastScrollTop && st > thresholdDown) {
-            wrapper.classList.add('smart-header-hidden');
-        } else if (st < lastScrollTop && lastScrollTop - st >= thresholdUp) {
-            wrapper.classList.remove('smart-header-hidden');
-        }
-        lastScrollTop = st;
-        ticking = false;
-        /* After toggling smart header, sync fixed search history / options (listener order vs search popovers can leave one frame stale). */
-        if (typeof positionSearchFloatingPanels === 'function') {
-            positionSearchFloatingPanels();
-        }
-    }
-    logEl.addEventListener('scroll', function() {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(update);
-    }, { passive: true });
-})();
+/* Smart sticky header removed — toolbar is always visible. */
 `;
 }
 //# sourceMappingURL=viewer-session-header.js.map
