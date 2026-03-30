@@ -141,7 +141,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Deep links:** Share `vscode://` URLs to open logs/lines. **Share Investigation** (Gist, export .slc, Copy deep link, LAN, etc.) lets teammates open the investigation in VS Code. **To open a shared .slc file:** Investigation panel → **Open .slc file** (or Command Palette → **Import .slc Bundle**) → select the file. Secret gists don’t expire; delete from GitHub (Your gists → open gist → Delete) when no longer needed.
 
 ### Export
-- **Per-level export:** Right-click in the log content and choose **Export current view…** to open the export modal. Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes.
+- **Per-level export:** Right-click in the log content and choose **Export current view…** to open the export modal. Export filtered logs with preset templates (Errors Only, Warnings + Errors, Production Ready, Full Debug, Performance Analysis) or custom level selection. Options for timestamps, decorations, and ANSI codes. **Quick Save** exports the current view as-is to the `reports/` folder as a markdown file with a metadata header (project name, active filters, level breakdown).
 - **HTML export:** Static or interactive with search, filters, and theme toggle.
 - **CSV / JSON / JSONL export:** Structured export formats for external tools.
 - **.slc session bundle:** Export to `.slc` ZIP; **Import .slc Bundle** (Ctrl+Shift+P → type the name) restores sessions or opens a shared investigation; in the file dialog, pick the .slc file. Investigation panel **Share**: Gist, export .slc, Copy deep link (local file), LAN, etc.
