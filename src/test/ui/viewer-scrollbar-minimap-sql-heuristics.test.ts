@@ -114,7 +114,7 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     suite('neutral presence fallback (severity hidden / info-only)', () => {
         test('before: without neutral branch, info-only logs could paint nothing when info markers are off', () => {
             const script = getScrollbarMinimapScript();
-            assert.ok(script.includes("lv === 'info' && !mmShowInfo"), 'info still skipped from severity groups when setting off');
+            assert.ok(script.includes("(lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo"), 'info/debug/notice skipped from severity groups when setting off');
         });
 
         test('after: paintMinimap fills neutral strokes when mc === 0 && total > 0', () => {
@@ -126,7 +126,7 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
         test('hover title explains scroll map in plain language', () => {
             const script = getScrollbarMinimapScript();
             assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
-            assert.ok(script.includes('Enable info markers in settings'), 'points to settings for info colors');
+            assert.ok(script.includes('Enable info/debug/notice markers in settings'), 'points to settings for info colors');
         });
     });
 });
