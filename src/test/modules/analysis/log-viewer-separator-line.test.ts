@@ -33,6 +33,12 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
                 true,
             );
         });
+        test("paired │ │ empty interior row (whitespace only between bars)", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine("\u2502                                                      \u2502"),
+                true,
+            );
+        });
         test("classic === rule", () => {
             assert.strictEqual(isLogViewerSeparatorLine("==============================="), true);
         });

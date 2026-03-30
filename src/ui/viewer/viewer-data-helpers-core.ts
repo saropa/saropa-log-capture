@@ -212,7 +212,7 @@ function toggleSqlRepeatDrilldown(seq) {
  * isLogViewerSeparatorLine in modules/analysis/log-viewer-separator-line.ts (unit-tested there).
  */
 function isAsciiBoxDrawingDecorLine(plain) {
-    return /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain);
+    return /^\\s*\\u2502\\s+(?:.*\\S\\s*)?\\u2502\\s*$/.test(plain);
 }
 function isSeparatorLine(plainText) {
     if (isAsciiBoxDrawingDecorLine(plainText)) return true;
