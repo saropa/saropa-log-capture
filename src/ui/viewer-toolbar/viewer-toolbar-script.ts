@@ -246,5 +246,13 @@ export function getToolbarScript(): string {
         });
     }
 })();
+
+/** Set the summary text in an accordion section header. */
+function setAccordionSummary(sectionId, text) {
+    var sec = document.getElementById(sectionId);
+    if (!sec) return;
+    var el = sec.querySelector('.filter-accordion-summary');
+    if (el) el.textContent = text || '';
+}
 `;
 }

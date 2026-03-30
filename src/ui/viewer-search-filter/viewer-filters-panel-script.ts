@@ -105,6 +105,9 @@ function commitSourceFilterFromCheckboxes(list) {
         if (boxes[j].checked) checked.push(boxes[j].dataset.source);
     }
     window.enabledSources = checked.length === boxes.length ? null : checked;
+    if (typeof setAccordionSummary === 'function') {
+        setAccordionSummary('source-filter-section', checked.length + '/' + boxes.length);
+    }
     if (typeof recalcHeights === 'function') recalcHeights();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
@@ -117,6 +120,7 @@ function syncSourceFilterUi() {
     var available = (typeof window !== 'undefined' && window.availableSources) ? window.availableSources : [];
     if (available.length < 2) {
         section.style.display = 'none';
+        if (typeof setAccordionSummary === 'function') setAccordionSummary('source-filter-section', '');
         return;
     }
     section.style.display = '';
@@ -127,6 +131,7 @@ function syncSourceFilterUi() {
     function addStreamRow(sid) {
         var row = document.createElement('label');
         row.className = 'options-row';
+        row.title = 'Show or hide ' + sourceFilterLabel(sid) + ' output';
         var cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.dataset.source = sid;
@@ -154,6 +159,11 @@ function syncSourceFilterUi() {
         for (var e = 0; e < externals.length; e++) {
             addStreamRow(externals[e]);
         }
+    }
+    if (typeof setAccordionSummary === 'function') {
+        var totalStreams = available.length;
+        var enabledCount = allEnabled ? totalStreams : (enabled ? enabled.length : totalStreams);
+        setAccordionSummary('source-filter-section', enabledCount + '/' + totalStreams);
     }
 }
 
