@@ -90,6 +90,14 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     });
 
     suite('SQL density painting (scroll map vs editor minimap)', () => {
+        test('sqlDensity color is pink (not blue) so bands read as annotation, not error', () => {
+            const script = getScrollbarMinimapScript();
+            assert.ok(
+                script.includes("sqlDensity: 'rgba(200, 120, 180, 1)'"),
+                'SQL density must use pink rgba(200,120,180) — blue was mistaken for selection highlights'
+            );
+        });
+
         test('after: paintSqlDensityBuckets uses full strip width (regression: no right-rail-only 0.42 fraction)', () => {
             const script = getScrollbarMinimapScript();
             const fn = script.split('function paintSqlDensityBuckets')[1];

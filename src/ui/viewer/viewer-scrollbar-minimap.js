@@ -37,7 +37,7 @@ function getScrollbarMinimapScript() {
 function getScrollbarMinimapHtml() {
     return `<div id="scrollbar-minimap-column" class="scrollbar-minimap-column">
 <div id="minimap-outside-arrow" class="minimap-outside-arrow u-hidden" aria-hidden="true"><span class="minimap-outside-arrow-glyph" aria-hidden="true"></span></div>
-<div id="scrollbar-minimap" class="scrollbar-minimap" role="img" aria-label="Log scroll map. Click or drag to scroll the log. Short ticks show level and search; optional blue and orange shading shows SQL activity along the log."></div>
+<div id="scrollbar-minimap" class="scrollbar-minimap" role="img" aria-label="Log scroll map. Click or drag to scroll the log. Short ticks show level and search; optional pink and orange shading shows SQL activity along the log."></div>
 </div>`;
 }
 //# sourceMappingURL=viewer-scrollbar-minimap.js.map

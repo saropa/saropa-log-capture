@@ -91,7 +91,7 @@ export interface SaropaLogCaptureConfig {
   readonly suppressTransientErrors: boolean;
   readonly breakOnCritical: boolean;
   readonly minimapShowInfoMarkers: boolean;
-  /** Full-width blue/orange SQL activity shading on the log scroll map (ticks stay on top). */
+  /** Full-width pink/orange SQL activity shading on the log scroll map (ticks stay on top). */
   readonly minimapShowSqlDensity: boolean;
   /**
    * When true (default), scrollbar minimap markers use a VS Code–like width: text length vs log pane
