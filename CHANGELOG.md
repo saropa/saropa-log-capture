@@ -28,12 +28,21 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
+- Scroll map no longer floods with a single color — debug and notice bars now respect the "show info markers" toggle (off by default), so only error, warning, performance, and to-do markers appear
 - Search text box no longer clears itself after typing — `clearSearchFilter()` name collision between viewer-search and viewer-presets caused the presets version (which empties the input) to overwrite the search version; renamed to `clearSearchFilteredFlags()` and `presetClearSearchInputValue()`
 - ASCII box art (e.g. Drift debug server banner) no longer corrupted in viewer — empty `│   │` lines were misclassified as stack frames and consecutive box-art lines were collapsed by repeat tracking
 - Export modal now seeds level checkboxes from the viewer's current level filter instead of a hardcoded Error/Warning/Info default
 
+### Added
+
+- Quick Save button in export modal — saves the current view as-is to the `reports/` folder as a markdown file with metadata header (project name, active filters, level breakdown, timestamps)
+
 ### Changed
 
+- Filter drawer UX overhaul: merged "Log Streams" and "Output Channels" into single "Log Inputs" section, merged "App only" into "Noise Reduction" accordion, renamed "Log Tags" → "Message Tags", "Code Tags" → "Code Origins", "Scope" → "File Scope"
+- Toolbar level dots now hide when filter drawer is open to avoid redundant counts
+- Removed "sidecar" jargon from filter labels — external sources now show their name with "(external)" suffix
+- Moved "SQL Commands" to least prominent grid position in filter drawer
 - Drift SQL `with args [...]` suffix is now always visible but dimmed (40% opacity) instead of hidden behind a confusing ellipsis/tooltip fold
 - Filter drawer accordion arrows now use codicon chevrons at 14px for better visibility
 - Accordion section headers now show item counts/summaries when collapsed (tags, streams, channels, exclusions, scope)

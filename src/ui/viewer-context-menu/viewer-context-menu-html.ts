@@ -14,10 +14,10 @@ export function getScrollChromeMenuTogglesHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Show native scrollbar</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info markers on minimap">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info / debug / notice on minimap">
                 <span class="codicon codicon-info" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Info markers on minimap</span>
+                <span class="context-menu-label">Info / debug / notice on minimap</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="SQL density on minimap">
                 <span class="codicon codicon-database" aria-hidden="true"></span>
