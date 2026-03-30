@@ -253,8 +253,10 @@ function updateTagSummary() {
                 hidden++;
             }
         }
-        el.textContent = total + ' tag' + (total !== 1 ? 's' : '')
+        var summary = total + ' tag' + (total !== 1 ? 's' : '')
             + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+        el.textContent = summary;
+        if (typeof setAccordionSummary === 'function') setAccordionSummary('log-tags-section', summary);
         var section = document.getElementById('log-tags-section');
         if (section) { section.style.display = total > 0 ? '' : 'none'; }
     }

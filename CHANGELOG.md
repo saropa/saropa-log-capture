@@ -24,6 +24,20 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- ASCII box art (e.g. Drift debug server banner) no longer corrupted in viewer — empty `│   │` lines were misclassified as stack frames and consecutive box-art lines were collapsed by repeat tracking
+
+### Changed
+
+- Filter drawer accordion arrows now use codicon chevrons at 14px for better visibility
+- Accordion section headers now show item counts/summaries when collapsed (tags, streams, channels, exclusions, scope)
+- All checkboxes and radio buttons inside accordion expanders now have descriptive tooltips
+
+---
+
 ## [5.1.2]
 
 ### Changed

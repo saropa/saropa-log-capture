@@ -273,6 +273,40 @@ suite('Viewer toolbar', () => {
         assert.ok(html.includes('title="Click to expand or collapse the Exclusions'), 'Exclusions accordion needs tooltip');
     });
 
+    test('accordion arrows should use codicon chevron-right', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('codicon codicon-chevron-right'),
+            'accordion arrows should use codicon chevron-right for visibility',
+        );
+        assert.ok(
+            !html.includes('\u25B8'),
+            'should not use small Unicode triangle for arrows',
+        );
+    });
+
+    test('accordion headers should have summary span for item counts', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('filter-accordion-summary'),
+            'accordion headers need a summary span for displaying counts',
+        );
+    });
+
+    test('filter drawer scope options should have tooltips', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('title="Show all log lines regardless of source file"'), 'All logs radio needs tooltip');
+        assert.ok(html.includes('title="Show only logs from the current workspace"'), 'Workspace radio needs tooltip');
+        assert.ok(html.includes('title="Show only logs from the current package"'), 'Package radio needs tooltip');
+        assert.ok(html.includes('title="Show only logs from the active file"'), 'File radio needs tooltip');
+        assert.ok(html.includes('title="Hide log lines that have no associated file path'), 'Unattributed checkbox needs tooltip');
+    });
+
+    test('filter drawer exclusions checkbox should have tooltip', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('title="Enable or disable exclusion pattern filtering"'), 'Exclusions checkbox needs tooltip');
+    });
+
     test('actions dropdown items should have tooltips', () => {
         const html = getActionsDropdownHtml();
         assert.ok(html.includes('title="Replay the log session'), 'replay needs tooltip');

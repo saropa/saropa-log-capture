@@ -165,8 +165,10 @@ function updateClassTagSummary() {
     for (var hi = 0; hi < hiddenKeys.length; hi++) {
         if (classTagCounts[hiddenKeys[hi]]) hidden++;
     }
-    el.textContent = chipCount + ' tag' + (chipCount !== 1 ? 's' : '')
+    var summary = chipCount + ' tag' + (chipCount !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+    el.textContent = summary;
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('class-tags-section', summary);
     var section = document.getElementById('class-tags-section');
     if (section) { section.style.display = chipCount > 0 ? '' : 'none'; }
 }
