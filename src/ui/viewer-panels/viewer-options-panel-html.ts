@@ -118,9 +118,9 @@ export function getOptionsPanelHtml(): string {
         <!-- Layout Section -->
         <div class="options-section">
             <h3 class="options-section-title">Layout</h3>
-            <label class="options-row" title="Adds blue and orange background shading on the right-hand scroll map (not a second scrollbar). Blue = SQL lines in that part of the log; orange = slow SQL. Severity and search stay as short ticks on top.">
+            <label class="options-row" title="Adds pink and orange background shading on the right-hand scroll map (not a second scrollbar). Pink = SQL lines in that part of the log; orange = slow SQL. Severity and search stay as short ticks on top.">
                 <input type="checkbox" id="opt-minimap-sql-density" />
-                <span>SQL activity on scroll map (blue / orange shading)</span>
+                <span>SQL activity on scroll map (pink / orange shading)</span>
             </label>
             <label class="options-row options-row--minimap-width" title="Width of the right-hand scroll map (same as Settings › Saropa Log Capture › minimap width).">
                 <span>Scroll map width</span>
