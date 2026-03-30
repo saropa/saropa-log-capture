@@ -110,7 +110,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Exclusion filter:** Patterns shown as removable chips in the Options panel. Chip count badge on the toggle label.
 - **Keyword watch:** Track patterns with live counters, flash alerts, and badges. Watch chips in the toolbar are clickable—opens search pre-filled with the keyword.
 - **Filter presets:** Save and apply filter combinations; built-in presets included (e.g. Errors Only, Just debug output, Complete (all sources)).
-- **Source filter:** When a log has multiple streams (e.g. Debug Console + Terminal sidecar), the filter drawer shows a **Sources** section to show only Debug output, only Terminal, or both.
+- **Source filter:** When a log has multiple inputs (e.g. Debug Console + Terminal), the filter drawer's **Log Inputs** section lets you show or hide each source independently.
 - **Cross-session search:** Search all log files via Quick Pick.
 
 ### Error Intelligence
@@ -370,7 +370,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 - **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header or one line, use **Prev/Next** in the viewer (output may be in the other log from the same run) and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](bugs/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The toolbar shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
-- **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a `.terminal.log` sidecar at session end.
+- **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a separate `.terminal.log` file at session end.
 
 ### Keyboard shortcuts and accessibility
 

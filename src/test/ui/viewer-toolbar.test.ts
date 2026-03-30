@@ -269,8 +269,8 @@ suite('Viewer toolbar', () => {
 
     test('filter drawer accordion headers should have tooltips', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(html.includes('title="Click to expand or collapse the Log Streams'), 'Log Streams accordion needs tooltip');
-        assert.ok(html.includes('title="Click to expand or collapse the Exclusions'), 'Exclusions accordion needs tooltip');
+        assert.ok(html.includes('title="Click to expand or collapse the Log Inputs'), 'Log Inputs accordion needs tooltip');
+        assert.ok(html.includes('title="Click to expand or collapse the Noise Reduction'), 'Noise Reduction accordion needs tooltip');
     });
 
     test('accordion arrows should use codicon chevron-right', () => {

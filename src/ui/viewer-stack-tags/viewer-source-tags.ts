@@ -3,7 +3,7 @@
  *
  * Parses source tags from Android logcat prefixes (e.g. "D/FlutterJNI( 3861):")
  * and bracket prefixes (e.g. "[log]"). Tags are grouped by name only, ignoring
- * the level prefix. Chips in the filters panel Log Tags section show tag names
+ * the level prefix. Chips in the filters panel Message Tags section show tag names
  * and counts; clicking a chip toggles visibility of that tag's lines.
  *
  * Integration points:

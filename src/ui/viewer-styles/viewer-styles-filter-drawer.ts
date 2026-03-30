@@ -87,13 +87,11 @@ export function getFilterDrawerStyles(): string {
     margin-left: 4px;
 }
 .filter-drawer-context input[type="range"] { width: 60px; }
-.filter-drawer-app-only {
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+
+/* Log Inputs divider between sources and categories */
+.log-inputs-divider {
+    border-top: 1px dashed var(--vscode-panel-border);
+    margin: 4px 0;
 }
 
 /* ===================================================================

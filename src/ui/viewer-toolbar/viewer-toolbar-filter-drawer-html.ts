@@ -5,7 +5,7 @@
  * Filters panel and footer level fly-up into a single compact drawer.
  *
  * Layout:
- *   Row 1: Level toggles + context slider + app-only (always visible when open)
+ *   Row 1: Level toggles + context slider (always visible when open)
  *   Row 2: Accordion sections (each with a summary line, expandable)
  *   Row 3: Presets, reset, active count
  *
@@ -18,7 +18,7 @@ export function getFilterDrawerHtml(): string {
     return /* html */ `
 <div id="filter-drawer" class="filter-drawer u-hidden" role="region" aria-label="Filters">
 
-    <!-- Row 1: Levels + app-only (always visible when drawer is open) -->
+    <!-- Row 1: Levels (always visible when drawer is open) -->
     <div class="filter-drawer-levels">
         <div class="filter-drawer-level-row">
             <div class="level-flyup-header">
@@ -37,10 +37,6 @@ export function getFilterDrawerHtml(): string {
                 <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of surrounding lines to keep visible around filtered matches" aria-label="Context lines" />
             </span>
         </div>
-        <label class="filter-drawer-app-only" title="Show only application output, hiding framework and system messages">
-            <input type="checkbox" id="opt-app-only" />
-            <span>App only</span>
-        </label>
     </div>
 
     <!-- Row 2: Accordion filter sections -->
@@ -64,26 +60,36 @@ export function getFilterDrawerHtml(): string {
 /** Accordion sections — each has a clickable header and collapsible body. */
 function getAccordionSections(): string {
     return /* html */ `
-        ${accordionSection('source-filter-section', 'Log Streams', `
-            <div id="source-streams-intro" class="options-hint">Choose which inputs to show.</div>
+        ${accordionSection('log-inputs-section', 'Log Inputs', `
             <div id="source-filter-list" class="options-row-list source-filter-list"></div>
+            <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
+            <div id="output-channels-list"></div>
         `)}
-        ${accordionSection('log-tags-section', 'Log Tags', `
+        ${accordionSection('noise-section', 'Noise Reduction', `
+            <label class="options-row" title="Show only application output, hiding framework and system messages">
+                <input type="checkbox" id="opt-app-only" />
+                <span>App only (hide framework)</span>
+            </label>
+            <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>
+            <div class="exclusion-input-wrapper">
+                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
+                <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
+            </div>
+            <div id="exclusion-chips" class="exclusion-chips"></div>
+            <div class="options-hint" id="exclusion-count"></div>
+        `)}
+        ${accordionSection('log-tags-section', 'Message Tags', `
+            <div class="options-hint">Tags from your logging framework</div>
             <div class="options-row"><span id="source-tag-summary" class="source-tag-summary"></span></div>
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         `)}
-        ${accordionSection('sql-patterns-section', 'SQL Commands', `
-            <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>
-            <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
-            <div class="options-row">
-                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open the SQL Query History panel to browse all queries in this session">SQL Query History\u2026</button>
-            </div>
-        `)}
-        ${accordionSection('class-tags-section', 'Code Tags', `
+        ${accordionSection('class-tags-section', 'Code Origins', `
+            <div class="options-hint">Class &amp; method where log originated</div>
             <div class="options-row"><span id="class-tag-summary" class="source-tag-summary"></span></div>
             <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
         `)}
-        ${accordionSection('scope-section', 'Scope', `
+        ${accordionSection('scope-section', 'File Scope', `
+            <div class="options-hint">Narrow by file path from the debugger</div>
             <div id="scope-status" class="options-hint">No active editor</div>
             <label class="options-row" title="Show all log lines regardless of source file"><input type="radio" name="scope" value="all" checked /> All logs</label>
             <div id="scope-no-context-hint" class="options-hint">Open a source file to enable scope.</div>
@@ -96,17 +102,12 @@ function getAccordionSections(): string {
                 <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
             </div>
         `)}
-        ${accordionSection('output-channels-section', 'Output Channels', `
-            <div id="output-channels-list"></div>
-        `)}
-        ${accordionSection('noise-section', 'Exclusions', `
-            <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusions</span></label>
-            <div class="exclusion-input-wrapper">
-                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
-                <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
+        ${accordionSection('sql-patterns-section', 'SQL Commands', `
+            <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>
+            <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
+            <div class="options-row">
+                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open the SQL Query History panel to browse all queries in this session">SQL Query History\u2026</button>
             </div>
-            <div id="exclusion-chips" class="exclusion-chips"></div>
-            <div class="options-hint" id="exclusion-count"></div>
         `)}`;
 }
 
