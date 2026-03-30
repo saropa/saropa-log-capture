@@ -124,8 +124,8 @@ export function isFrameworkLogLine(text: string): boolean | undefined {
  * as stack frames so preview mode does not insert `[+N more]` mid-banner.
  */
 export function isAsciiBoxDrawingDecorLine(line: string): boolean {
-    // Require non-whitespace between bars so single gutter lines stay stack frames.
-    return /^\s*\u2502\s+.+\S\s*\u2502\s*$/.test(line);
+    // Paired bars with optional content between them — matches both `│ text │` and `│      │`.
+    return /^\s*\u2502\s+(?:.*\S\s*)?\u2502\s*$/.test(line);
 }
 
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */
@@ -135,7 +135,10 @@ export function isStackFrameLine(line: string): boolean {
     if (/^\s+at\s/.test(line)) { return true; }
     if (/^#\d+\s/.test(trimmed)) { return true; }
     if (/^\s+File "/.test(line)) { return true; }
-    if (/^\s*\u2502\s/.test(line)) { return true; }
+    if (/^\s*\u2502\s/.test(line)) {
+        if (isAsciiBoxDrawingDecorLine(line)) { return false; }
+        return true;
+    }
     if (/^package:/.test(trimmed)) { return true; }
     return /^\s+\S+\.\S+:\d+/.test(line);
 }
