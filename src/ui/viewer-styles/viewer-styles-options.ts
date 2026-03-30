@@ -183,7 +183,7 @@ export function getOptionsStyles(): string {
     padding: 0 0 4px 24px;
 }
 
-/* Log Streams: subheading before external sidecar checkboxes */
+/* Log Inputs: subheading before external source checkboxes */
 .source-external-group-title {
     margin-top: 8px;
     padding-top: 4px;
