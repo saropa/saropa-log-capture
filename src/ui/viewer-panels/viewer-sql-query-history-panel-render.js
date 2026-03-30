@@ -40,7 +40,7 @@ function getSqlQueryHistoryPanelRenderScript() {
         var parts = [];
         for (i = 0; i < filtered.length; i++) {
             r = filtered[i];
-            var durTxt = r.maxDur !== undefined ? String(r.maxDur) + ' ms' : '\u2014';
+            var durTxt = r.maxDur !== undefined ? String(r.maxDur) : '\u2014';
             var expandSrc = (r.sampleSql && r.sampleSql.length) ? r.sampleSql : r.fp;
             parts.push('<tr>'
                 + '<td class="sql-qh-cell-count"><span class="sql-query-history-count">' + r.count + '</span></td>'

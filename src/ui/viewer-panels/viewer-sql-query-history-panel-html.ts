@@ -36,8 +36,8 @@ export function getSqlQueryHistoryPanelHtml(): string {
                     <th scope="col" class="sql-qh-header sql-qh-header-preview" data-sql-qh-sort="preview" tabindex="0">
                         SQL
                     </th>
-                    <th scope="col" class="sql-qh-header sql-qh-header-dur" data-sql-qh-sort="maxDur" tabindex="0">
-                        Slowest (ms)
+                    <th scope="col" class="sql-qh-header sql-qh-header-dur" data-sql-qh-sort="maxDur" tabindex="0" title="Slowest duration in milliseconds">
+                        Slow
                     </th>
                 </tr>
             </thead>
