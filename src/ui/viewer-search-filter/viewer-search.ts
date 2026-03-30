@@ -71,7 +71,7 @@ function closeSearch() {
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
-    clearSearchFilter();
+    clearSearchFilteredFlags();
     renderViewport(true); // clears match highlighting (and covers non-filter case)
     syncSearchMatchOptionsVisibility();
 }
@@ -100,7 +100,7 @@ function updateSearch() {
         var query = searchInputEl ? searchInputEl.value : '';
         if (!query) {
             clearSearchState();
-            clearSearchFilter();
+            clearSearchFilteredFlags();
             renderViewport(true);
             return;
         }
@@ -129,7 +129,7 @@ function updateSearch() {
         if (searchFilterMode) {
             applySearchFilter();
         } else {
-            clearSearchFilter();
+            clearSearchFilteredFlags();
             renderViewport(true);
         }
         if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
@@ -153,7 +153,8 @@ function applySearchFilter() {
     else { recalcHeights(); }
 }
 
-function clearSearchFilter() {
+/** Reset the searchFiltered flag on every line item so all lines become visible again. */
+function clearSearchFilteredFlags() {
     if (!searchFilterDirty) return;
     searchFilterDirty = false;
     for (var i = 0; i < allLines.length; i++) {
