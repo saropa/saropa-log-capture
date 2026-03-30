@@ -17,6 +17,7 @@ export function getToolbarScript(): string {
     var filterBtn = document.getElementById('toolbar-filter-btn');
     var actionsBtn = document.getElementById('toolbar-actions-btn');
     var actionsPopover = document.getElementById('footer-actions-popover');
+    var levelMenuBtn = document.getElementById('level-menu-btn');
     var signalsWasVisible = false;
     var actionsOpen = false;
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -89,6 +90,7 @@ export function getToolbarScript(): string {
         }
         animatedShow(filterDrawer, 'anim-flyout-open');
         if (filterBtn) filterBtn.setAttribute('aria-expanded', 'true');
+        if (levelMenuBtn) levelMenuBtn.classList.add('u-hidden');
         if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
     }
 
@@ -96,6 +98,7 @@ export function getToolbarScript(): string {
         if (!filterDrawer) return;
         animatedHide(filterDrawer, 'anim-flyout-close');
         if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
+        if (levelMenuBtn) levelMenuBtn.classList.remove('u-hidden');
         if (signalsWasVisible && signalsHost) {
             signalsHost.classList.remove('signals-drawer-hidden');
             signalsWasVisible = false;

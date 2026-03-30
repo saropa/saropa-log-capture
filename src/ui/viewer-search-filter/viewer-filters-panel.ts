@@ -3,10 +3,12 @@
  *
  * Provides a slide-out panel with filter controls:
  *   - Quick Filters (presets + reset)
- *   - Output Channels (DAP category checkboxes)
- *   - Log Tags (source tag chips with search)
- *   - Class Tags (class tag chips with search)
- *   - Noise Reduction (exclusions + app-only)
+ *   - Log Inputs (merged sources + DAP category checkboxes)
+ *   - Noise Reduction (app-only + exclusions)
+ *   - Message Tags (source tag chips with search)
+ *   - Code Origins (class/method tag chips with search)
+ *   - File Scope (code location narrowing)
+ *   - SQL Commands (query type chips)
  */
 import { getFiltersPanelHtml } from './viewer-filters-panel-html';
 import { getFiltersPanelScript } from './viewer-filters-panel-script';
