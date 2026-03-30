@@ -105,6 +105,7 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-query-history-list {
     flex: 1;
+    overflow-x: hidden;
     overflow-y: auto;
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 11px;
@@ -125,13 +126,16 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-header {
     text-align: left;
-    padding: 4px 12px;
+    padding: 4px 8px;
     font-size: 11px;
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
     border-bottom: 1px solid var(--vscode-panel-border);
     cursor: pointer;
     user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sql-qh-header:focus-visible {
@@ -139,12 +143,11 @@ export function getSqlQueryHistoryPanelStyles(): string {
     outline-offset: -2px;
 }
 
-/* Order: Count | SQL | Slowest — shrink-wrap numeric columns; SQL column takes remaining width. */
+/* Order: Count | SQL | Slow — fixed-width numeric columns; SQL column takes remaining space. */
 .sql-qh-header-count,
 .sql-qh-cell-count {
-    width: 1%;
-    max-width: 3.25rem;
-    padding-left: 8px;
+    width: 3.5rem;
+    padding-left: 6px;
     padding-right: 4px;
     white-space: nowrap;
     text-align: right;
@@ -153,31 +156,16 @@ export function getSqlQueryHistoryPanelStyles(): string {
 
 .sql-qh-header-dur,
 .sql-qh-cell-dur {
-    width: 1%;
-    max-width: 5.5rem;
+    width: 5rem;
     padding-left: 4px;
-    padding-right: 8px;
+    padding-right: 6px;
     white-space: nowrap;
+    text-align: right;
     vertical-align: top;
 }
 
 .sql-qh-cell-preview {
     vertical-align: top;
-    min-width: 0;
-    width: auto;
-}
-
-.sql-qh-header-count {
-    /* Header label + sort glyph; keep column from growing past content. */
-    max-width: 4.25rem;
-}
-
-.sql-qh-header-dur {
-    max-width: 6.5rem;
-}
-
-.sql-qh-header-preview {
-    width: auto;
     min-width: 0;
 }
 
