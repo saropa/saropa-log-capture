@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Saropa brand fill: pink/magenta top-right → blue bottom-left (matches funnel icon) -->
+    <linearGradient id="fillGrad" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e84393"/>
+      <stop offset="45%" stop-color="#a855c8"/>
+      <stop offset="100%" stop-color="#5a8de6"/>
+    </linearGradient>
+    <!-- Dark purple outline: matches existing Log Capture icon strokes -->
+    <linearGradient id="outlineGrad" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#3d1952"/>
+      <stop offset="100%" stop-color="#3d1952"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: cream to match Saropa family -->
+  <rect width="128" height="128" rx="16" fill="#f5f0e8"/>
+
+  <!-- Document shape — thick dark-purple stroke like existing icons -->
+  <rect x="18" y="12" width="92" height="104" rx="8" fill="#fff" stroke="#3d1952" stroke-width="5"/>
+
+  <!-- Title bar divider -->
+  <line x1="20" y1="40" x2="108" y2="40" stroke="#3d1952" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 4 level dots in the title/header area — actual extension CSS colors -->
+  <circle cx="36" cy="26" r="7" fill="#4caf50"/>   <!-- info: green -->
+  <circle cx="55" cy="26" r="7" fill="#ff9800"/>   <!-- warning: orange -->
+  <circle cx="74" cy="26" r="7" fill="#f44336"/>   <!-- error: red -->
+  <circle cx="93" cy="26" r="7" fill="#9c27b0"/>   <!-- perf: purple -->
+
+  <!-- Log lines — brand gradient fill, varying lengths -->
+  <rect x="30" y="52" width="68" height="6" rx="3" fill="url(#fillGrad)"/>
+  <rect x="30" y="67" width="48" height="6" rx="3" fill="url(#fillGrad)" opacity="0.75"/>
+  <rect x="30" y="82" width="60" height="6" rx="3" fill="url(#fillGrad)" opacity="0.55"/>
+  <rect x="30" y="97" width="36" height="6" rx="3" fill="url(#fillGrad)" opacity="0.35"/>
+</svg>
