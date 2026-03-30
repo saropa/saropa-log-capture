@@ -260,6 +260,57 @@ suite('LevelClassifier', () => {
         });
     });
 
+    suite('classifyLevel — threadtime logcat format', () => {
+
+        const tt = (level: string, tag: string, msg: string) =>
+            `03-30 07:34:58.588  4457  4457 ${level} ${tag}: ${msg}`;
+
+        test('should classify each logcat level prefix correctly', () => {
+            assert.strictEqual(classifyLevel(tt('D', 'Android', 'subscribed'), 'stdout', true), 'debug');
+            assert.strictEqual(classifyLevel(tt('V', 'Verbose', 'trace info'), 'stdout', true), 'debug');
+            assert.strictEqual(classifyLevel(tt('I', 'App', 'started'), 'stdout', true), 'info');
+            assert.strictEqual(classifyLevel(tt('W', 'InputManager', 'slow'), 'stdout', true), 'warning');
+            assert.strictEqual(classifyLevel(tt('E', 'MediaCodec', 'not found'), 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel(tt('F', 'System', 'fatal crash'), 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel(tt('A', 'libc', 'assertion'), 'stdout', true), 'error');
+        });
+
+        test('should promote I with error keyword to error', () => {
+            assert.strictEqual(
+                classifyLevel(tt('I', 'flutter', '_TypeError (Null check operator used on a null value)'), 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should classify D with TODO keyword as todo', () => {
+            assert.strictEqual(
+                classifyLevel(tt('D', 'App', 'TODO fix this later'), 'stdout', true),
+                'todo',
+            );
+        });
+
+        test('should classify I with performance keyword as performance', () => {
+            assert.strictEqual(
+                classifyLevel(tt('I', 'Choreographer', 'Skipped 30 frames'), 'stdout', true),
+                'performance',
+            );
+        });
+
+        test('should handle Drift SQL in threadtime format', () => {
+            assert.strictEqual(
+                classifyLevel(tt('I', 'flutter (5475)', 'Drift: Sent SELECT 1'), 'stdout', true),
+                'info',
+            );
+        });
+
+        test('should handle Drift SQL E/ in threadtime as warning not error', () => {
+            assert.strictEqual(
+                classifyLevel(tt('E', 'flutter', 'Drift: Sent DELETE FROM activities'), 'stdout', true),
+                'warning',
+            );
+        });
+    });
+
     suite('isActionableLevel', () => {
 
         test('should return true for error', () => {

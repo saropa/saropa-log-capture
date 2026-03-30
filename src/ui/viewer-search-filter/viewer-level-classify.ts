@@ -20,10 +20,12 @@ var noticePattern = /\\b(notice|note|important)\\b/i;
 var logcatLevelPattern = /^([VDIWEFA])\\//;
 /** Same as level-classifier.ts — capture prefixes may appear before I/flutter. */
 var logcatLetterAnywhere = /\\b([VDIWEFA])\\//;
+/** Threadtime format: MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message */
+var threadtimeLevelPattern = /^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+([VDIWEFA])\\s/;
 
 function classifyDriftSqlLine(plainText) {
     var lcm = logcatLevelPattern.exec(plainText);
-    var m = lcm || logcatLetterAnywhere.exec(plainText);
+    var m = lcm || logcatLetterAnywhere.exec(plainText) || threadtimeLevelPattern.exec(plainText);
     if (!m) return 'info';
     var L = m[1];
     if (L === 'D' || L === 'V') return 'debug';
@@ -41,7 +43,7 @@ function classifyLevel(plainText, category) {
     if (stderrTreatAsError && category === 'stderr') return 'error';
     if (driftStatementPattern.test(plainText)) return classifyDriftSqlLine(plainText);
     var ep = strictLevelDetection ? strictErrorPattern : looseErrorPattern;
-    var lcm = logcatLevelPattern.exec(plainText);
+    var lcm = logcatLevelPattern.exec(plainText) || threadtimeLevelPattern.exec(plainText);
     if (lcm) {
         var L = lcm[1];
         if (L === 'E' || L === 'F' || L === 'A') return 'error';

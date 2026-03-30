@@ -10,6 +10,8 @@ export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo
 const logcatLevelPattern = /^([VDIWEFA])\//;
 /** Logcat severity (I/, E/, …) may appear after capture prefixes like `[12:00:00] [stdout]`. */
 const logcatLetterAnywhere = /\b([VDIWEFA])\//;
+/** Threadtime format: `MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message` (from `adb logcat -v threadtime`). */
+const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+([VDIWEFA])\s/;
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
 // Treat them as query/debug output so they don't get misclassified as runtime errors.
 const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
@@ -34,7 +36,7 @@ const noticePattern = /\b(notice|note|important)\b/i;
  */
 function classifyDriftSqlLine(plainText: string): SeverityLevel {
     const lcm = logcatLevelPattern.exec(plainText);
-    const m = lcm ?? logcatLetterAnywhere.exec(plainText);
+    const m = lcm ?? logcatLetterAnywhere.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (!m) { return 'info'; }
     const prefix = m[1];
     if (prefix === 'D' || prefix === 'V') { return 'debug'; }
@@ -65,7 +67,7 @@ export function classifyLevel(
         return 'error';
     }
     if (driftStatementPattern.test(plainText)) { return classifyDriftSqlLine(plainText); }
-    const lcm = logcatLevelPattern.exec(plainText);
+    const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }
     const ep = strict ? strictErrorPattern : looseErrorPattern;
     if (ep.test(plainText)) { return 'error'; }
