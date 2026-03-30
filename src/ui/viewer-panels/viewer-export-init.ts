@@ -26,6 +26,12 @@ function initExportModal() {
         exportBtn.addEventListener('click', performExport);
     }
 
+    // Quick Save button
+    var quickSaveBtn = document.getElementById('export-quick-save-btn');
+    if (quickSaveBtn) {
+        quickSaveBtn.addEventListener('click', performQuickExport);
+    }
+
     // Template selector
     var templateSelect = document.getElementById('export-template');
     if (templateSelect) {
@@ -42,6 +48,7 @@ function initExportModal() {
             checkbox.addEventListener('change', function() {
                 updateExportLevels();
                 updateExportPreview();
+                updateExportSummaries();
             });
         }
     }
@@ -54,17 +61,38 @@ function initExportModal() {
         tsCheck.addEventListener('change', function(e) {
             exportOptions.includeTimestamps = e.target.checked;
             updateExportPreview();
+            updateExportSummaries();
         });
     }
     if (decoCheck) {
         decoCheck.addEventListener('change', function(e) {
             exportOptions.includeDecorations = e.target.checked;
             updateExportPreview();
+            updateExportSummaries();
         });
     }
     if (ansiCheck) {
         ansiCheck.addEventListener('change', function(e) {
             exportOptions.stripAnsi = e.target.checked;
+            updateExportSummaries();
+        });
+    }
+
+    // Export accordion toggle
+    var exportAccHeaders = exportModalEl.querySelectorAll('.export-accordion-header');
+    for (var i = 0; i < exportAccHeaders.length; i++) {
+        exportAccHeaders[i].addEventListener('click', function(e) {
+            var header = e.currentTarget;
+            var section = header.parentElement;
+            if (!section) return;
+            var isExpanded = section.classList.contains('expanded');
+            if (isExpanded) {
+                section.classList.remove('expanded');
+                header.setAttribute('aria-expanded', 'false');
+            } else {
+                section.classList.add('expanded');
+                header.setAttribute('aria-expanded', 'true');
+            }
         });
     }
 
