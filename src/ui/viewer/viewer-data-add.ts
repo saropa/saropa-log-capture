@@ -129,9 +129,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
 
     // Real-time repeat detection (fingerprint key only for database-tagged Drift SQL).
     // Level in the key avoids merging repeats across severity changes for the same fingerprint.
-    var currentHash = (sTag === 'database' && sqlMeta && sqlMeta.fingerprint)
-        ? (lvl + '::sqlfp::' + sqlMeta.fingerprint)
-        : generateRepeatHash(lvl, plain);
+    // Separator / box-art lines are visual structure — never collapse them as repeats.
+    var currentHash = isSep ? null
+        : (sTag === 'database' && sqlMeta && sqlMeta.fingerprint)
+            ? (lvl + '::sqlfp::' + sqlMeta.fingerprint)
+            : generateRepeatHash(lvl, plain);
     var lineThresholdN = (typeof getDriftRepeatMinN === 'function') ? getDriftRepeatMinN(sqlMeta, sTag) : 2;
     var now = ts || Date.now();
     var inRepeatWindow = currentHash !== null && repeatTracker.lastHash === currentHash &&
