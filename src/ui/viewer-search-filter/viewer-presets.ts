@@ -195,8 +195,8 @@ function resetLevelFilters() {
     }
 }
 
-/** Clear the search input and re-run to remove any active search filter. */
-function clearSearchFilter() {
+/** Empty the search text box and re-run search so any active search/filter is removed. */
+function presetClearSearchInputValue() {
     var input = document.getElementById('search-input');
     if (input && input.value) {
         input.value = '';
@@ -216,7 +216,7 @@ function resetAllFilters() {
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
     if (typeof clearDbTimeRangeFilter === 'function') clearDbTimeRangeFilter();
-    clearSearchFilter();
+    presetClearSearchInputValue();
     if (typeof window !== 'undefined') window.enabledSources = null;
     activePresetName = null;
     updatePresetDropdown();
