@@ -185,6 +185,67 @@ export function getModalStyles(): string {
     max-height: 60vh;
 }
 
+/* Export accordion — collapsible sections with selection counts */
+.export-accordion {
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+.export-accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--vscode-sideBar-background, var(--vscode-panel-background));
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.export-accordion-header:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.export-accordion-arrow {
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+.export-accordion.expanded .export-accordion-arrow {
+    transform: rotate(90deg);
+}
+.export-accordion-title { font-weight: 600; }
+.export-accordion-summary {
+    flex: 1;
+    text-align: right;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    text-transform: none;
+    letter-spacing: normal;
+}
+.export-accordion-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 8px;
+    transition: max-height 0.2s ease, opacity 0.2s ease,
+                padding-top 0.15s ease, padding-bottom 0.15s ease;
+}
+.export-accordion.expanded .export-accordion-body {
+    max-height: 300px;
+    opacity: 1;
+    padding: 4px 8px 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .export-accordion-arrow,
+    .export-accordion-body { transition: none !important; }
+}
+
 .export-section {
     margin-bottom: 16px;
 }
@@ -239,11 +300,12 @@ export function getModalStyles(): string {
 
 .modal-footer {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
     gap: 8px;
     padding: 12px 16px;
     border-top: 1px solid var(--vscode-panel-border);
 }
+.modal-footer-spacer { flex: 1; }
 
 .modal-btn {
     padding: 6px 14px;
