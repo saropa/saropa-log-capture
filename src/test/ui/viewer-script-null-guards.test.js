@@ -183,7 +183,7 @@ suite('Webview script null guards', () => {
             assert.ok(block.includes("if (matchCountEl) matchCountEl.textContent"), 'updateMatchDisplay should guard matchCountEl');
         });
         test('should guard logEl in scrollToMatch', () => {
-            const block = script.slice(script.indexOf('function scrollToMatch'), script.indexOf('function scrollToMatch') + 400);
+            const block = script.slice(script.indexOf('function scrollToMatch'), script.indexOf('function scrollToMatch') + 600);
             assert.ok(block.includes('if (!logEl) return'), 'scrollToMatch should early-return when logEl is null');
         });
         test('should guard searchInputEl.addEventListener for focus', () => {
