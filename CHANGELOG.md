@@ -41,7 +41,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 - Filter drawer UX overhaul: merged "Log Streams" and "Output Channels" into single "Log Inputs" section, merged "App only" into "Noise Reduction" accordion, renamed "Log Tags" → "Message Tags", "Code Tags" → "Code Origins", "Scope" → "File Scope"
 - Toolbar level dots now hide when filter drawer is open to avoid redundant counts
-- Removed "sidecar" jargon from filter labels — external sources now show their name with "(external)" suffix
+- Removed "sidecar" jargon from filter labels and README — external sources now show their name with "(external)" suffix
 - Moved "SQL Commands" to least prominent grid position in filter drawer
 - Drift SQL `with args [...]` suffix is now always visible but dimmed (40% opacity) instead of hidden behind a confusing ellipsis/tooltip fold
 - Filter drawer accordion arrows now use codicon chevrons at 14px for better visibility

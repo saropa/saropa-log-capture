@@ -2,7 +2,7 @@
  * Client-side JavaScript for the category filter in the log viewer webview.
  *
  * Categories (DAP output channels like stdout, stderr, console) are shown
- * as checkboxes in the Output Channels section of the options panel.
+ * as checkboxes in the Log Inputs section of the filter drawer/panel.
  * Dynamically populated when categories arrive from the extension.
  */
 export function getFilterScript(): string {
@@ -36,19 +36,17 @@ function handleChannelChange() {
         if (boxes[i].checked) selected.push(boxes[i].dataset.category);
     }
     activeFilters = selected.length === total ? null : new Set(selected);
-    if (typeof setAccordionSummary === 'function') {
-        setAccordionSummary('output-channels-section', selected.length + '/' + total);
-    }
+    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
     applyFilter();
 }
 
 /**
  * Handle setCategories message from extension.
- * Creates checkboxes in the Output Channels section of the options panel.
+ * Creates checkboxes in the Log Inputs section.
  */
 function handleSetCategories(msg) {
     var container = document.getElementById('output-channels-list');
-    var section = document.getElementById('output-channels-section');
+    var section = document.getElementById('log-inputs-section');
     if (!container || !msg.categories) return;
 
     for (var ci = 0; ci < msg.categories.length; ci++) {
@@ -57,7 +55,7 @@ function handleSetCategories(msg) {
 
         var label = document.createElement('label');
         label.className = 'options-row';
-        label.title = 'Show or hide ' + cat + ' output channel';
+        label.title = 'Show or hide ' + cat + ' output';
 
         var cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -77,10 +75,15 @@ function handleSetCategories(msg) {
     if (container.children.length > 0 && section) {
         section.style.display = '';
     }
-    if (typeof setAccordionSummary === 'function') {
-        var chCount = container.children.length;
-        setAccordionSummary('output-channels-section', chCount + '/' + chCount);
+
+    // Show divider if sources also exist
+    var divider = document.getElementById('log-inputs-divider');
+    var sourceList = document.getElementById('source-filter-list');
+    if (divider && sourceList && sourceList.children.length > 0 && container.children.length > 0) {
+        divider.style.display = '';
     }
+
+    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
 }
 `;
 }

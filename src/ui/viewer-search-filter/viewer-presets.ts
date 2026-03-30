@@ -167,6 +167,7 @@ function getCurrentFilters() {
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
+    if (typeof appOnlyMode !== 'undefined' && appOnlyMode) { filters.appOnlyMode = true; }
     if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
         filters.sources = window.enabledSources.slice();
     }
