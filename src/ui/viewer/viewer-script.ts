@@ -132,7 +132,7 @@ function isStackFrameText(html) {
     if (/^\\s+File "/.test(plain)) return true;          // Python: '  File "foo.py"'
     // LIGHT VERTICAL (│): real traces often use a single gutter bar; paired bars on one line are log banners.
     if (/^\\s*\\u2502\\s/.test(plain)) {
-        if (viewerPreserveAsciiBoxArt && /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain)) return false;
+        if (viewerPreserveAsciiBoxArt && /^\\s*\\u2502\\s+(?:.*\\S\\s*)?\\u2502\\s*$/.test(plain)) return false;
         return true;
     }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
