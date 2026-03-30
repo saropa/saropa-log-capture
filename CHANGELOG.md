@@ -28,6 +28,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
+- Threadtime logcat lines (e.g. `03-30 07:34:58.588 4457 4457 D Android: …`) now correctly recognize the level prefix — previously the `D`/`I`/`W`/`E` was ignored, causing debug lines to misclassify as info and inherit nearby error coloring
 - Scroll map no longer floods with a single color — debug and notice bars now respect the "show info markers" toggle (off by default), so only error, warning, performance, and to-do markers appear
 - Search text box no longer clears itself after typing — `clearSearchFilter()` name collision between viewer-search and viewer-presets caused the presets version (which empties the input) to overwrite the search version; renamed to `clearSearchFilteredFlags()` and `presetClearSearchInputValue()`
 - ASCII box art (e.g. Drift debug server banner) no longer corrupted in viewer — empty `│   │` lines were misclassified as stack frames and consecutive box-art lines were collapsed by repeat tracking
