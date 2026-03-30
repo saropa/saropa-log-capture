@@ -28,6 +28,7 @@ For older versions (3.4.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+- SQL density minimap bands used bright blue (`rgba(90,180,255)`) which looked like selection highlights or errors — changed to soft pink (`rgba(200,120,180)`) so the overlay reads as a background annotation
 - SQL Query History panel column headers were garbled and required horizontal scrolling — `table-layout: fixed` with `width: 1%` made count and duration columns ~3px wide, causing text to overflow and overlap
 - "Hide blank lines" toggle was indented incorrectly in the Hide context submenu — the invisible checkmark span was taking up space in the flex layout, pushing the label right compared to regular menu items
 

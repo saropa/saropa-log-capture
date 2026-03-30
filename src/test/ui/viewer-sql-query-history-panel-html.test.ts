@@ -36,6 +36,16 @@ suite('viewer-sql-query-history panel HTML', () => {
         assert.ok(!html.includes('id="sql-query-history-sort"'), 'sort dropdown should be removed');
     });
 
+    test('duration header uses abbreviated label with tooltip', () => {
+        const html = getSqlQueryHistoryPanelHtml();
+        assert.ok(html.includes('>Slow<') || html.includes('>\n                        Slow\n'),
+            'header should use abbreviated "Slow" label');
+        assert.ok(html.includes('title="Slowest duration in milliseconds"'),
+            'header should have full description as tooltip');
+        assert.ok(!html.includes('>Slowest (ms)<'),
+            'old verbose header label should be removed');
+    });
+
     test('exposes drift viewer status strip and open-browser control', () => {
         const html = getSqlQueryHistoryPanelHtml();
         assert.ok(html.includes('id="sql-query-history-drift-status"'));
