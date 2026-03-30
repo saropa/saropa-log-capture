@@ -30,6 +30,11 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 - Publish script Step 16 (store propagation check) failed with "Missing check-stores-version.ps1" — path not updated after v5.1.0 move to `scripts/modules/`
 
+### Changed
+
+- Split `viewer-continuation.test.ts` (326 lines) into static checks and behavioral eval files
+- Split `viewer-script-null-guards.test.ts` (602 lines) into three topical files: core viewer, interaction, and panels/nav
+
 ---
 
 ## [5.1.0]
