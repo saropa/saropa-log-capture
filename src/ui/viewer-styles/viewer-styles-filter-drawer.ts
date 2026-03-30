@@ -132,9 +132,7 @@ export function getFilterDrawerStyles(): string {
     background: var(--vscode-list-hoverBackground);
 }
 .filter-accordion-arrow {
-    font-size: 11px;
-    width: 14px;
-    text-align: center;
+    font-size: 14px;
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
