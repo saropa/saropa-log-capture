@@ -36,6 +36,9 @@ function handleChannelChange() {
         if (boxes[i].checked) selected.push(boxes[i].dataset.category);
     }
     activeFilters = selected.length === total ? null : new Set(selected);
+    if (typeof setAccordionSummary === 'function') {
+        setAccordionSummary('output-channels-section', selected.length + '/' + total);
+    }
     applyFilter();
 }
 
@@ -54,6 +57,7 @@ function handleSetCategories(msg) {
 
         var label = document.createElement('label');
         label.className = 'options-row';
+        label.title = 'Show or hide ' + cat + ' output channel';
 
         var cb = document.createElement('input');
         cb.type = 'checkbox';
@@ -72,6 +76,10 @@ function handleSetCategories(msg) {
 
     if (container.children.length > 0 && section) {
         section.style.display = '';
+    }
+    if (typeof setAccordionSummary === 'function') {
+        var chCount = container.children.length;
+        setAccordionSummary('output-channels-section', chCount + '/' + chCount);
     }
 }
 `;
