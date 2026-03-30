@@ -186,7 +186,7 @@ def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
 
 
 def _check_stores_ps_and_script() -> tuple[str, str] | None:
-    """Return (powershell_exe, script_path) for check-stores-version.ps1, or None if unusable."""
+    """Return (powershell_exe, script_path) for modules/check-stores-version.ps1, or None."""
     ps = shutil.which("pwsh") or shutil.which("powershell") or shutil.which("powershell.exe")
     if not ps:
         print(
@@ -194,7 +194,7 @@ def _check_stores_ps_and_script() -> tuple[str, str] | None:
             file=sys.stderr,
         )
         return None
-    script = os.path.join(PROJECT_ROOT, "scripts", "check-stores-version.ps1")
+    script = os.path.join(PROJECT_ROOT, "scripts", "modules", "check-stores-version.ps1")
     if not os.path.isfile(script):
         print(f"ERROR: Missing {script}", file=sys.stderr)
         return None
@@ -202,7 +202,7 @@ def _check_stores_ps_and_script() -> tuple[str, str] | None:
 
 
 def run_store_versions_report(expected_version: str) -> int:
-    """Run scripts/check-stores-version.ps1 -ReportOnly; store HTTP logic lives only in PowerShell."""
+    """Run modules/check-stores-version.ps1 -ReportOnly; store HTTP logic lives only in PowerShell."""
     pair = _check_stores_ps_and_script()
     if pair is None:
         return ExitCode.PREREQUISITE_FAILED
