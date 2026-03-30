@@ -66,6 +66,10 @@ function applyScopeFilter() {
 
 function setScopeLevel(level) {
     scopeLevel = level;
+    if (typeof setAccordionSummary === 'function') {
+        var scopeLabels = { all: '', workspace: 'Workspace', package: 'Package', directory: 'Directory', file: 'File' };
+        setAccordionSummary('scope-section', scopeLabels[level] || '');
+    }
     applyScopeFilter();
     updateScopeRadios();
     if (typeof markPresetDirty === 'function') markPresetDirty();
@@ -78,6 +82,7 @@ function handleScopeContextMessage(msg) {
     scopeContext.activeDirectory = msg.activeDirectory || null;
     if (!scopeContext.activeFilePath && scopeLevel !== 'all') {
         scopeLevel = 'all';
+        if (typeof setAccordionSummary === 'function') setAccordionSummary('scope-section', '');
         applyScopeFilter();
     }
     updateScopeStatus();
@@ -89,6 +94,7 @@ function handleScopeContextMessage(msg) {
 
 function resetScopeFilter() {
     scopeLevel = 'all';
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('scope-section', '');
     scopeHideUnattributed = false;
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = false;
