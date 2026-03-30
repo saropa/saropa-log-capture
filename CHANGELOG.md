@@ -24,6 +24,15 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.1.2]
+
+### Changed
+
+- Redesigned extension icon: new "4 severity dots on a log file" concept replacing the funnel design, matching Saropa open source brand colors
+- Redesigned sidebar icon to match new document-with-dots concept (monochrome `currentColor`)
+
+---
+
 ## [5.1.1]
 
 ### Fixed
