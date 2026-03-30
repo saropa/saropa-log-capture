@@ -25,6 +25,7 @@ import { explainError } from '../../modules/ai/ai-explain';
 import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLabel } from '../viewer/viewer-keybindings';
 import type { ViewerMessageContext } from './viewer-message-types';
+import { handleQuickExportLogs } from './viewer-quick-export';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
 import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
@@ -303,6 +304,12 @@ function handleSessionAndUiActions(type: string, msg: Record<string, unknown>, c
     case "exportLogs":
       helpers.handleExportLogs(msgStr(msg, "text"), (msg.options as Record<string, unknown>) ?? {})
         .catch((err: Error) => { vscode.window.showErrorMessage(t('msg.failedExportLogs', err.message)); });
+      return true;
+    case "quickExportLogs":
+      handleQuickExportLogs(
+        Array.isArray(msg.lines) ? (msg.lines as string[]) : [],
+        (msg.metadata ?? {}) as unknown as Parameters<typeof handleQuickExportLogs>[1],
+      ).catch((err: Error) => { vscode.window.showErrorMessage(t('msg.failedExportLogs', err.message)); });
       return true;
     case "saveLevelFilters":
       helpers.saveLevelFilters(ctx.context, msgStr(msg, "filename"), (msg.levels as string[]) ?? []);
