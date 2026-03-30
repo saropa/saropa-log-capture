@@ -35,12 +35,19 @@ var exportOptions = {
 ${getExportInitScript()}
 
 /**
- * Open the export modal.
+ * Open the export modal, seeded from the viewer's current level filter.
  */
 function openExportModal() {
     if (!exportModalEl) return;
+
+    // Seed from the viewer's active level filter
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size > 0) {
+        exportLevels = new Set(enabledLevels);
+    }
+
     syncExportModalUi();
     updateExportPreview();
+    updateExportSummaries();
     exportModalEl.classList.add('visible');
 }
 window.openExportModal = openExportModal;
@@ -73,6 +80,22 @@ function applyExportTemplate(templateName) {
     }
 
     updateExportPreview();
+    updateExportSummaries();
+}
+
+/**
+ * Resolve the template dropdown to match the current exportLevels, or 'custom'.
+ */
+function resolveTemplateDropdown() {
+    var templateSelect = document.getElementById('export-template');
+    if (!templateSelect) return;
+    for (var key in exportTemplates) {
+        if (setsEqual(exportLevels, exportTemplates[key])) {
+            templateSelect.value = key;
+            return;
+        }
+    }
+    templateSelect.value = 'custom';
 }
 
 /**
@@ -87,22 +110,7 @@ function updateExportLevels() {
             exportLevels.add(levels[i]);
         }
     }
-
-    // Update template selector to "custom" if manual change
-    var templateSelect = document.getElementById('export-template');
-    if (templateSelect) {
-        var matchesTemplate = false;
-        for (var key in exportTemplates) {
-            if (setsEqual(exportLevels, exportTemplates[key])) {
-                templateSelect.value = key;
-                matchesTemplate = true;
-                break;
-            }
-        }
-        if (!matchesTemplate) {
-            templateSelect.value = 'custom';
-        }
-    }
+    resolveTemplateDropdown();
 }
 
 /**
@@ -150,6 +158,8 @@ function syncExportModalUi() {
         }
     }
 
+    resolveTemplateDropdown();
+
     // Sync options
     var tsCheck = document.getElementById('export-include-timestamps');
     var decoCheck = document.getElementById('export-include-decorations');
@@ -157,6 +167,25 @@ function syncExportModalUi() {
     if (tsCheck) tsCheck.checked = exportOptions.includeTimestamps;
     if (decoCheck) decoCheck.checked = exportOptions.includeDecorations;
     if (ansiCheck) ansiCheck.checked = exportOptions.stripAnsi;
+}
+
+/**
+ * Update accordion summary counts for levels and options sections.
+ */
+function updateExportSummaries() {
+    var levelSummary = document.getElementById('export-levels-summary');
+    if (levelSummary) {
+        levelSummary.textContent = exportLevels.size + '/7';
+    }
+
+    var optSummary = document.getElementById('export-options-summary');
+    if (optSummary) {
+        var count = 0;
+        if (exportOptions.includeTimestamps) count++;
+        if (exportOptions.includeDecorations) count++;
+        if (exportOptions.stripAnsi) count++;
+        optSummary.textContent = count + '/3';
+    }
 }
 
 /**
@@ -207,6 +236,57 @@ function performExport() {
             includeTimestamps: exportOptions.includeTimestamps,
             includeDecorations: exportOptions.includeDecorations,
             lineCount: lines.length
+        }
+    });
+
+    closeExportModal();
+}
+
+/**
+ * Quick-save the current view as-is (no extra filtering) to the reports folder.
+ */
+function performQuickExport() {
+    var lines = [];
+    var totalLines = 0;
+    var levelCounts = {};
+
+    for (var i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        if (item.type === 'marker') continue;
+        totalLines++;
+        if (calcItemHeight(item) <= 0) continue;
+
+        var text = stripTags(item.html || '');
+        lines.push(text);
+        var lvl = item.level || 'info';
+        levelCounts[lvl] = (levelCounts[lvl] || 0) + 1;
+    }
+
+    if (lines.length === 0) {
+        vscodeApi.postMessage({
+            type: 'showMessage',
+            level: 'warning',
+            message: 'No visible lines to export.'
+        });
+        return;
+    }
+
+    // Gather active filter metadata
+    var searchEl = document.getElementById('search-input');
+    var searchTerm = searchEl ? searchEl.value.trim() : '';
+
+    vscodeApi.postMessage({
+        type: 'quickExportLogs',
+        lines: lines,
+        metadata: {
+            sourceFile: currentFilename || '(unknown)',
+            totalLines: totalLines,
+            visibleLines: lines.length,
+            enabledLevels: typeof enabledLevels !== 'undefined' ? Array.from(enabledLevels) : [],
+            appOnly: typeof appOnlyMode !== 'undefined' && appOnlyMode,
+            exclusionsActive: typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled,
+            searchTerm: searchTerm,
+            levelCounts: levelCounts
         }
     });
 
