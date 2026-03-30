@@ -29,7 +29,7 @@ function isLikelySlowSqlLine(it, plain) {
     return mmSlowSqlTextPattern.test(plain || '');
 }
 
-/** Full-width vertical bands: SQL activity (blue) and slow SQL (orange). Severity/search draw on top. */
+/** Full-width vertical bands: SQL activity (pink) and slow SQL (orange). Severity/search draw on top. */
 function paintSqlDensityBuckets(sqlBuckets, slowSqlBuckets, mmW, mmH) {
     var i;
     var maxSql = 0;
