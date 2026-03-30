@@ -18,7 +18,7 @@ function initMmColors() {
         debug: 'rgba(121,85,72,0.65)',
         notice: 'rgba(33,150,243,0.65)',
         info: 'rgba(78,201,176,0.65)',
-        sqlDensity: 'rgba(90, 180, 255, 1)',
+        sqlDensity: 'rgba(200, 120, 180, 1)',
         sqlSlowDensity: 'rgba(255, 189, 89, 1)',
         searchMatch: v('--vscode-editorOverviewRuler-findMatchForeground', 'rgba(234,92,0,0.85)'),
         currentMatch: 'rgba(255,150,50,1)',
@@ -140,7 +140,7 @@ function paintMinimap() {
     /* Hover: plain language (tooltip strings are easy to misread as errors when they look like debug dumps). */
     var title = 'Scroll map — click or drag to jump. Ticks: log level and search.';
     if (mmShowSqlDensity) {
-        title += ' Shading: SQL (blue) and slow SQL (orange) by position in the log.';
+        title += ' Shading: SQL (pink) and slow SQL (orange) by position in the log.';
     } else {
         title += ' Turn on "SQL activity on scroll map" in Layout options for SQL shading.';
     }
