@@ -28,13 +28,17 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
+- Search text box no longer clears itself after typing — `clearSearchFilter()` name collision between viewer-search and viewer-presets caused the presets version (which empties the input) to overwrite the search version; renamed to `clearSearchFilteredFlags()` and `presetClearSearchInputValue()`
 - ASCII box art (e.g. Drift debug server banner) no longer corrupted in viewer — empty `│   │` lines were misclassified as stack frames and consecutive box-art lines were collapsed by repeat tracking
+- Export modal now seeds level checkboxes from the viewer's current level filter instead of a hardcoded Error/Warning/Info default
 
 ### Changed
 
+- Drift SQL `with args [...]` suffix is now always visible but dimmed (40% opacity) instead of hidden behind a confusing ellipsis/tooltip fold
 - Filter drawer accordion arrows now use codicon chevrons at 14px for better visibility
 - Accordion section headers now show item counts/summaries when collapsed (tags, streams, channels, exclusions, scope)
 - All checkboxes and radio buttons inside accordion expanders now have descriptive tooltips
+- Export modal "Include Levels" and "Export Options" sections are now collapsible accordions with selection counts (e.g. "5/7", "2/3")
 
 ---
 
