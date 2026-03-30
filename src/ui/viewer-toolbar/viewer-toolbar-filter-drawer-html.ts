@@ -85,14 +85,14 @@ function getAccordionSections(): string {
         `)}
         ${accordionSection('scope-section', 'Scope', `
             <div id="scope-status" class="options-hint">No active editor</div>
-            <label class="options-row"><input type="radio" name="scope" value="all" checked /> All logs</label>
+            <label class="options-row" title="Show all log lines regardless of source file"><input type="radio" name="scope" value="all" checked /> All logs</label>
             <div id="scope-no-context-hint" class="options-hint">Open a source file to enable scope.</div>
             <div id="scope-narrowing-block" style="display:none">
-                <label class="options-row"><input type="radio" name="scope" value="workspace" disabled /> Workspace</label>
-                <label class="options-row"><input type="radio" name="scope" value="package" disabled /> Package</label>
-                <label class="options-row"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
-                <label class="options-row"><input type="radio" name="scope" value="file" disabled /> File</label>
-                <label class="options-row"><input type="checkbox" id="scope-hide-unattrib" /><span>Hide lines without file path</span></label>
+                <label class="options-row" title="Show only logs from the current workspace"><input type="radio" name="scope" value="workspace" disabled /> Workspace</label>
+                <label class="options-row" title="Show only logs from the current package"><input type="radio" name="scope" value="package" disabled /> Package</label>
+                <label class="options-row" title="Show only logs from the active file\u2019s directory"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
+                <label class="options-row" title="Show only logs from the active file"><input type="radio" name="scope" value="file" disabled /> File</label>
+                <label class="options-row" title="Hide log lines that have no associated file path from the debugger"><input type="checkbox" id="scope-hide-unattrib" /><span>Hide lines without file path</span></label>
                 <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
             </div>
         `)}
@@ -100,7 +100,7 @@ function getAccordionSections(): string {
             <div id="output-channels-list"></div>
         `)}
         ${accordionSection('noise-section', 'Exclusions', `
-            <label class="options-row"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusions</span></label>
+            <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusions</span></label>
             <div class="exclusion-input-wrapper">
                 <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
                 <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
@@ -115,7 +115,7 @@ function accordionSection(id: string, title: string, body: string): string {
     return /* html */ `
     <div class="filter-accordion" id="${id}" style="display:none">
         <button type="button" class="filter-accordion-header" title="Click to expand or collapse the ${title} filter section" aria-expanded="false">
-            <span class="filter-accordion-arrow">\u25B8</span>
+            <span class="filter-accordion-arrow codicon codicon-chevron-right"></span>
             <span class="filter-accordion-title">${title}</span>
             <span class="filter-accordion-summary"></span>
         </button>
