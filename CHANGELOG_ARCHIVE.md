@@ -1,6 +1,412 @@
 # Changelog Archive
 
-Versions 3.4.0 and prior. For current changes see [CHANGELOG.md](../CHANGELOG.md).
+Versions 3.11.0 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## [3.11.0]
+
+Adds clear Settings UI titles for every extension option; fixes the Performance chip, virtual-scroll flicker, jump-button placement, and context-menu submenu clipping. [log](https://github.com/saropa/saropa-log-capture/blob/v3.11.0/CHANGELOG.md)
+
+### Changed
+
+• **Settings UI titles for all extension options** — Every `saropaLogCapture.*` configuration key now has a **`title`** in addition to its description, so VS Code Settings shows a clear row label and search matches work better. English titles are derived from each setting's description (non-English `package.nls.*.json` files use the same strings until translated).
+
+### Fixed
+
+• **Performance chip / title bar control** — The nav **Performance** control opens the Performance block inside **Insights › Session details**. The panel script still looked for the old standalone `#performance-panel` node (removed when Performance moved into Insights), so the control did nothing; the script now targets the embedded `insight-pp-*` markup. Visibility is also stricter now: the chip appears only when session metadata has meaningful performance snapshot metrics or a real samples file path, not just a placeholder snapshot object.
+
+• **Log viewer scroll flicker (filters, tail, end of log)** — Virtual-scroll "hysteresis" used line-index slack, which fails when many lines are height 0: every small scroll rebuilt the viewport DOM and caused flashing. Rebuilds are skipped only when the visible line range is unchanged. Tail-follow (`autoScroll`) now uses a Schmitt-trigger band so distance-to-bottom jitter does not flip follow mode every frame.
+
+• **Jump Top / Bottom on wrong horizontal edge** — Some 3.10.0 installs still used older `left: 8px` positioning. Jump buttons are anchored to the log wrapper's **right** (clear of minimap / scrollbar) again, with a final CSS block so placement cannot be overridden.
+
+• **Context menu submenu clipped at top (short webviews)** — If the viewer is short enough that both vertical flip rules applied, a later CSS rule canceled the "safe top" submenu offset; the offset now takes precedence so flyouts stay below panel chrome.
+
+### Removed
+
+• **Icon bar Replay button** — Session replay is opened from the footer **Replay** control and the log-area replay bar only, not from a sidebar/toolbar entry.
+
+---
+
+## [3.10.0]
+
+This release makes Log Capture more useful day to day with broader ecosystem support and smoother cross-source debugging. [log](https://github.com/saropa/saropa-log-capture/blob/v3.10.0/CHANGELOG.md)
+
+### Added
+
+• **Application / file logs (Phase 3)** — When **Application / file logs** is enabled in integrations and paths are set under `integrations.externalLogs.paths`, the extension **tails** each existing file during the debug session (new lines only after session start), then writes **`basename.<label>.log`** sidecars at session end. The log viewer loads those sidecars with source ids **`external:<label>`** alongside Debug and Terminal; use **Filters → Sources** to show or hide them. Commands: **Saropa Log Capture: Add external log path** (appends to workspace `paths`) and **Saropa Log Capture: Open external logs for this session** (opens sidecars for the log currently loaded in the viewer; shows a short progress notification when there are multiple files). If tailers did not run, session end still falls back to reading the last N lines from each path. See [docs/integrations/application-file-logs.md](docs/integrations/application-file-logs.md) and [docs/COMPLETE_DEBUG_PERSPECTIVE_PLAN.md](docs/COMPLETE_DEBUG_PERSPECTIVE_PLAN.md).
+
+• **Unified session log (Phase 4)** — Optional **`saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd`**: after integrations write sidecars, the extension writes **`basename.unified.jsonl`** next to the main log (one JSON line per row: `source` + `text`). Order: full main log, then terminal sidecar, then external sidecars. **`integrations.unifiedLog.maxLinesPerSource`** (default 50k) truncates each stream from the tail if needed. The unified viewer load also computes **run navigation** boundaries and **smart bookmarks** like normal `.log` loads. Open the `.unified.jsonl` file in the log viewer to use the same **Sources** filter as a multi-file session. See [docs/COMPLETE_DEBUG_PERSPECTIVE_PLAN.md](docs/COMPLETE_DEBUG_PERSPECTIVE_PLAN.md).
+
+• **Saropa Lints integration (Phase 3 — Log Capture)** — When generating a bug report, if `violations.json` (or extension API data) is missing or older than 24 hours and the Saropa Lints extension exposes `runAnalysis`, an information message offers **Continue without refresh**, **Run full analysis**, and **Analyze stack-trace files only** (when the stack has app frames). Analysis runs in a progress notification; stack-scoped runs use `runAnalysisForFiles` when present, otherwise `runAnalysis({ files })`. After refresh, lint data is re-read on the same collect pass.
+
+• **Saropa Lints integration (Phase 4 — Log Capture)** — Health score params for bug report headers prefer `reports/.saropa_lints/consumer_contract.json` (`healthScore.impactWeights` + `healthScore.decayRate`) when present; fallback order is consumer contract → Saropa Lints extension API → built-in constants.
+
+• **Saropa Lints integration (Phase 5)** — Bug report lint tables include an **Explain** link per violation that opens Saropa Lints' **Explain rule** panel. Bug report key findings also highlight critical/high OWASP-mapped issues in the crash file. When adding a session to an investigation, the extension can pin `reports/.saropa_lints/violations.json` so exported investigation bundles keep a lint snapshot.
+
+• **Saropa Lints integration (Phases 1–2)** — Optional integration with the Saropa Lints extension: bug report **Known Lint Issues** section can be filtered by impact level (setting `saropaLogCapture.lintReportImpactLevel`: essential = critical+high only; recommended = +medium; full = all). Section heading shows the filter in use (e.g. "Known Lint Issues (critical + high only)"). When the Saropa Lints extension is installed and exposes its API, Log Capture uses it for violations data and health score params instead of reading the file; otherwise it reads `reports/.saropa_lints/violations.json` and uses built-in constants. Commands **Show code quality for frame** and **Open quality report** are only enabled when the Saropa Lints extension is installed. Design: [docs/integrations/SAROPA_LINTS_INTEGRATION.md](docs/integrations/SAROPA_LINTS_INTEGRATION.md).
+
+• **Saropa Drift Advisor integration** — Optional integration with the Drift Advisor extension: **Drift Advisor** appears in Configure integrations (adapter id `driftAdvisor`). When the Drift Advisor extension is installed, right-click a log line with category `drift-perf` or `drift-query` to show **Open in Drift Advisor** (invokes the Drift Advisor command). The **Show Integration Context** popover shows a **Drift Advisor** block (query count, avg duration, slow count, health) and an **Open in Drift Advisor** button when the session has `meta.integrations['saropa-drift-advisor']`. **Built-in provider (Phase 5–6):** With **driftAdvisor** enabled, session end tries Drift's `getSessionSnapshot()` (5s timeout) or reads workspace `.saropa/drift-advisor-session.json`, then writes session meta and `{logBase}.drift-advisor.json` (Drift's bridge overwrites if it runs later). Schema: [plans/integrations/drift-advisor-session.schema.json](plans/integrations/drift-advisor-session.schema.json). Short user index: [docs/integrations/README.md](docs/integrations/README.md). No dependency on Drift Advisor at install time; when only one extension is installed, no errors. Design: [plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md](plans/SAROPA_DRIFT_ADVISOR_INTEGRATION.md).
+
+• **Multi-source view and source filter** — When a log has a `.terminal.log` sidecar (from the Terminal integration), the viewer shows both Debug Console and Terminal output. A **Sources** section in the Filters panel (Filters → Sources) lets you show only Debug output, only Terminal, or both. Quick Filter presets **"Just debug output"** and **"Complete (all sources)"** apply the source filter in one click. Presets can now store a `sources` filter (e.g. `["debug"]`). Reset all filters restores all sources.
+
+### Changed
+
+• **Viewer: blank lines and line numbers** — Blank lines no longer show a severity dot (the vertical severity bar still runs through them for continuity). The line-number counter is hidden on blank lines by default so "double line break" gaps are visually minimal. **Decoration settings** (gear next to the Deco button) now include **Show line number on blank lines** (off by default): when enabled, blank lines show their file line number so references like "see line 53" and Go to Line match the file. The displayed counter uses file line number (idx+1) when available so the sequence never skips.
+
+• **Performance: unified JSONL writer** — When `saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd` is enabled, the unified log writer tails the main log and sidecars from disk instead of reading full files into memory.
+
+• **Performance: external log tailing** — The external log adapter batches `fs.watch` change bursts (debounce) to reduce extension-host stalls under high log churn.
+
+### Fixed
+
+• **Context menu submenu cropped at top (terminal)** — The Copy & Export (and other) submenu could still have its top cut off when the right-click menu was opened near the top of the viewer (e.g. in the terminal panel under the tab bar). The safe top margin is increased (12px → 48px) and the "near top" threshold widened (80px → 100px) so the submenu flyout is pushed down enough to stay below toolbars and panel headers.
+
+---
+
+## [3.9.1]
+
+Fixes footer path gestures: double-click opens the log's containing folder (not its parent), and hold-to-copy path shows a status bar confirmation. [log](https://github.com/saropa/saropa-log-capture/blob/v3.9.1/CHANGELOG.md)
+
+### Fixed
+
+• **Footer: double-click to open folder** — Double-clicking the path in the log viewer footer now opens the folder that contains the current log file (e.g. `reports/20260316`) instead of its parent (`reports`). The extension now reveals the current file in the OS so the file manager opens the correct containing folder.
+
+• **Footer: hold to copy path feedback** — After holding on the footer path to copy it to the clipboard, a status bar message ("File path copied to clipboard") is shown for 2 seconds so users get clear confirmation that the copy succeeded.
+
+---
+
+## [3.9.0]
+
+Improves the log viewer with Insights in a tab, markdown copy, and scrollbar control; fixes text selection while tailing and refines session elapsed display and jump-button placement. [log](https://github.com/saropa/saropa-log-capture/blob/v3.9.0/CHANGELOG.md)
+
+### Fixed
+
+• **Code quality** — Addressed multiple findings: merged duplicate config imports and combined `context.subscriptions.push()` calls in activation; replaced nested ternary in smart bookmarks with explicit if/else; iterated `Set` directly in log viewer (no array copy); refactored viewer action dispatch into two handlers plus small helpers to reduce cognitive complexity and switch case count; introduced `msgStr()` for safe message field string coercion; replaced `void` with `.then(undefined, () => {})` and `parseInt` with `Number.parseInt`. Behavior unchanged.
+
+• **Performance panel script (code quality)** — Replaced negated condition in `getPerformancePanelScript` with a positive check so ID prefix selection satisfies Sonar rule S7735; behavior unchanged.
+
+• **Text selection during tailing** — Selecting text in the log viewer while the log is being written to no longer fails: the viewport uses the existing hysteresis so it skips a full DOM re-render when the visible line range is unchanged, preserving the user's selection. Spacer heights are still updated so scroll height stays correct.
+
+### Changed
+
+• **Session elapsed display format** — Session elapsed time in the log viewer no longer uses clock-style `T+M:SS` (e.g. `T+5:15`). It now uses duration-style text with unit suffixes (e.g. `45s`, `5m 15s`, `1h 5m 15s`, `2d 1h 5m 15s`) so it is unambiguous as elapsed time. Labels in the decoration settings and context menu (Options) were updated from "Session time (T+)" / "Log time (T+)" to "Session elapsed".
+
+• **Jump-to-top / jump-to-bottom buttons** — Buttons are now positioned on the right side of the log area so they do not cover the scrollbar minimap or the native vertical scrollbar when it is enabled. Right offset uses CSS variables `--mm-w` and `--scrollbar-w` so layout stays correct for all minimap sizes and scrollbar settings.
+
+### Added
+
+• **Open Insights in New Tab** — The Insights panel can be opened as a main editor tab for easier reading in a large view. Use the **Open in new tab** (link-external) button in the Insights panel header, or the command **Saropa Log Capture: Open Insights in New Tab**. The tab shows the same content as the sidebar (Cases, Recurring, Hot files, Performance, Environment) and stays in sync with the current log. Close via the tab's × or the panel's Close button.
+
+• **Insights panel: Copy to Markdown** — A copy button in the Insights panel header copies the full case to the clipboard as markdown: current log name, errors/warnings summary, Session details (Performance groups and events from the Current tab), This log (errors and recurring), Your cases, Across your logs (recurring errors and hot files), and Environment. Uses the same `copyToClipboard` message as other viewer copy actions; no loading state (builds synchronously from in-memory state and Performance DOM).
+
+• **Performance panel (Log tab): right-click to copy message** — When the log has no performance data, the explanatory message block in the Log tab is copyable: right-click it and choose **Copy message** to copy the full text to the clipboard. The message wording was clarified (this log file / if Performance is enabled) so it does not imply the user has not enabled the integration.
+
+• **Show scrollbar setting** — New setting `saropaLogCapture.showScrollbar` (default: false) controls whether the native vertical scrollbar is shown in the log viewer. When off, the minimap is the only scroll indicator; when on, the native scrollbar is visible (10px) and the jump buttons keep clear of it.
+
+---
+
+## [3.8.0]
+
+Adds code quality metrics in the viewer, regression hints (blame and first-seen), and smart bookmark suggestions; fixes context menu and selection behavior. [log](https://github.com/saropa/saropa-log-capture/blob/v3.8.0/CHANGELOG.md)
+
+### Fixed
+
+• **Row selection on right-click** — Shift-click row selection in the log viewer no longer disappears when opening the context menu. The viewport re-render after right-click now re-applies the selection highlight so Copy Line, Hide Selection, and other selection-based actions work as expected.
+
+• **Stack trace icons** — Collapsible stack headers in the log viewer now show the correct Unicode triangles (▶ ▼ ▷) instead of the literal escape text `\u25b6` / `\u25bc` / `\u25b7`.
+
+• **Context menu submenu cropped at top** — When the right-click menu was opened near the top of the view (e.g. under a toolbar), the Copy & Export (and other) submenu flyout could have its top cut off. The menu now applies a vertical offset so submenu content stays below a safe viewport margin; when the menu is also near the bottom, the existing "open upward" behavior still wins.
+
+### Added
+
+• **Code quality metrics (Phase 3)** — **Show code quality for frame:** right-click a stack frame in the log viewer → **Show code quality** to open a popover with line coverage %, lint warnings/errors, and doc density for that file. **Open quality report:** open the session's `basename.quality.json` sidecar from the context menu or command palette. **Heatmap:** stack frame lines show a subtle coverage tint (green/yellow/red) when quality badges are enabled. **Bug reports:** new setting `saropaLogCapture.integrations.codeQuality.includeInBugReport` (default false) adds a "Code Quality (referenced files)" section for files with low coverage or lint issues. The viewer receives `meta.integrations.codeQuality` when loading a log. Plan [100](bugs/history/20260318/100_code-quality-metrics.md) implemented.
+
+• **Regression hints** — Correlate errors with Git history for "Introduced in commit X". **Blame-based:** for a source line (e.g. from a stack frame), show "Last changed in commit X" with optional link in the Analysis panel source section and in the error hover. **First-seen:** for recurring errors, show "Introduced in commit X" on Insights recurring cards (and "Recurring in this log") when the first session where the error appeared had Git integration (commit stored in session meta). Commit links respect `saropaLogCapture.integrations.git.commitLinks`. New module: `regression-hint-service` (blame + first-seen session→commit); Git provider now stores `commit` at session start and in session-end meta. Plan [034](bugs/history/20260318/034_plan-regression-hints.md) implemented.
+
+• **Smart bookmarks** — When you open a log file, the extension can suggest adding a bookmark at the first error (or first warning) line if that line is not already bookmarked. One suggestion per file per session; notification shows "First error at line N. Add bookmark?" with **Add bookmark** and **Dismiss**. Settings: `saropaLogCapture.smartBookmarks.suggestFirstError` (default true), `saropaLogCapture.smartBookmarks.suggestFirstWarning` (default false). Plan [038](bugs/history/20260318/038_plan-smart-bookmarks.md) implemented.
+
+---
+
+## [3.7.1]
+
+Stabilizes Project Logs and extension development by fixing a crash, wiring proposed APIs correctly, and aligning Insight → Insights naming. [log](https://github.com/saropa/saropa-log-capture/blob/v3.7.1/CHANGELOG.md)
+
+### Fixed
+
+• **Session panel crash** — Project Logs no longer throws "escapeHtmlText is not defined". Shared helpers `escapeAttr` and `escapeHtmlText` are defined once in the session panel bootstrap; inlined fragments (rendering, events) use them. A runtime test runs the same script combination the webview uses and dispatches a sessionList message to catch missing dependencies.
+
+• **Extension development** — Launch configs include `--enable-proposed-api=saropa.saropa-log-capture` so F5 can use the terminal proposed API when enabled locally. **Publishing:** The extension no longer declares `enabledApiProposals` in `package.json`, so it can be published to the Marketplace. Terminal capture (integrated terminal output) uses the proposed API when available and is skipped gracefully when not (try/catch in `terminal-capture.ts`).
+
+### Changed
+
+• Rename **Insight** menu and panel labels to **Insights** (lightbulb icon in the viewer and command palette entry) for consistency with cross-session Insights terminology.
+
+### Administration
+
+• **Modularized 4 files over 300-line limit.** Split to satisfy the project's 300-line file limit. No behavior or API changes. New/updated modules: `investigation-commands-helpers` (resolve/pick investigation, format insight payload); `session-manager-internals` (applyStartResult, broadcast/watcher helpers); `session-manager-stop` (buildStopSessionDeps); `viewer-insight-panel-script-part-a/b/c` (Insight panel IIFE fragments); `viewer-styles-insight-layout`, `viewer-styles-insight-sections`, `viewer-styles-insight-hero`. Entry points unchanged: `commands-investigation`, `session-manager`, `viewer-insight-panel-script`, `viewer-styles-insight`.
+
+---
+
+## [3.7.0]
+
+Major UX release focused on webview accessibility, a unified Insights panel, smarter Flutter/Dart memory classification, and modularizing large files. [log](https://github.com/saropa/saropa-log-capture/blob/v3.7.0/CHANGELOG.md)
+
+### Added
+
+• **Webview accessibility (a11y)** — Viewer: main landmark on primary content, `aria-live` on line-count so filter/load updates are announced; level flyup "All"/"None" are buttons for keyboard use. Options, Project Logs, and Integrations panels: `role="region"` and `aria-label` on containers; key controls labeled. Focus moves into Options and Project Logs on open and returns to the icon bar on close (Escape or Close). README documents keyboard and screen-reader use; audit at `bugs/028_webview-a11y-audit.md`. Plan [028](bugs/028_plan-webview-accessibility.md) in progress (focus trap and remaining panels pending).
+
+• **Unified Insight panel (single view)** — One scroll, no tabs. The **Insight** panel (icon bar, lightbulb) is a single narrative: **Active Cases** (top 3 + View All), **Recurring errors** (top 5), **Frequently modified files** (collapsed), **Environment** (platforms, SDK, debug adapters; collapsed), and **Performance** (when a log is open). Context-aware: with no log selected you see Cases, Recurring, Hot files, Environment; with a log selected **Performance** (with scope label "Current log: &lt;filename&gt;") and **Recurring in this log** (filtered to errors that appear in the current session) move to the top. **Inline add-to-case:** "+" on each recurring card and hot file opens the Cases section so you can add a session. **requestInsightData** returns errors, statuses, hot files, platforms, sdkVersions, debugAdapters, **recurringInThisLog**, **errorsInThisLog**, and **errorsInThisLogTotal** (when a log is open). **currentLogChanged** triggers refresh of performance and insight data. **14 UX enhancements:** empty states (Cases, Recurring, Hot files); loading states; "This log" single empty message; keyboard nav on section headers (Arrow Up/Down, Enter/Space); scroll into view after add-to-case and create-case; Session details hint; recurring/errors text truncation with full tooltip; "Top 3 of N" for errors-in-log; cases list "N source(s) · Updated X ago"; hero 0/0 and no-data message; sparkline "Session trend" label; export confirmation. Plan 041 (Unified Insight Model) implemented; see `bugs/history/20260317/041_plan-unify-investigation-recurring-performance.md`.
+
+• **Flutter/Dart memory classification** — Memory-related log lines (e.g. memory pressure, heap/VM gen, leak hints) are classified as **Performance** and shown in the Performance panel **Memory** group only when the line has Flutter/Dart context (logcat `I/flutter`/`D/dart` or `package:flutter`/`package:dart`) and a high-confidence phrase (`Memory: N`, memory pressure/usage/leak, old/new gen, retained N, leak detected, potential leak). Reduces false positives from generic "memory"/"heap" in other runtimes. Heuristics are best-effort; see `bugs/001_integration-specs-index.md`.
+
+### Administration
+
+• **Modularized 11 files over 300-line limit.** Split into smaller modules to satisfy ESLint `max-lines` (300, excluding blanks/comments). No behavior or API changes. New modules: `commands-export-insights`, `commands-export-helpers`; `log-session-helpers` (extended); `investigation-search-file`, `investigation-store-io`, `investigation-store-workspace`; `session-manager-routing`, `session-manager-start`, `session-manager-stop`; `viewer-content-body`, `viewer-content-scripts`; `viewer-message-handler-actions`, `viewer-message-handler-investigation`; `log-viewer-provider-state`; `viewer-performance-trends`, `viewer-performance-session-tab`; `viewer-replay-timing`, `viewer-replay-controls`; `viewer-session-panel-investigations`, `viewer-session-panel-events`. Callers still import from the original entry files where applicable.
+
+---
+
+## [3.6.2]
+
+Empty log fixes (late-start fallback for Dart run, 30s recent-child window, runbook and diagnostic message); Project Logs recent-updates indicators and last-viewed tracking; investigation UX improvements. [log](https://github.com/saropa/saropa-log-capture/blob/v3.6.2/CHANGELOG.md)
+
+### Added
+
+• **Late-start fallback** — when output is buffered and no log session exists (e.g. Dart run or Cursor never fired `onDidStartDebugSession`), the extension starts capture using the active debug session so logs are still written.
+
+• **Recent-child alias window** — parent/child fallback now aliases when exactly one owner was created in the last 30s (was 15s) to reduce two-file races for Dart/Flutter.
+
+• **Recent-updates indicators in Project Logs** — Session list shows an **orange** dot for logs that have new lines since you last viewed them, and a **red** dot for logs updated in the last minute. "Last viewed" is updated when you open a session from the list or panel; the list refreshes periodically while a session is recording so the red indicator stays accurate. Active (recording) session continues to use the recording icon only.
+
+• **Investigation UX** — In Project Logs, clicking "+ Create Investigation..." now shows an inline name field in the panel (instead of the VS Code input at the top of the window) so focus stays where the user is looking. Create/Cancel buttons and Enter/Escape keyboard support; loading state ("Creating…") prevents double-submit. Short hint under the Investigations header explains: "Pin sessions and files to search and export together." README clarifies how Investigations differ from Recurring (error-pattern analysis) and Performance (perf analysis).
+
+### Documentation
+
+• Runbook [010](bugs/010_runbook-missing-or-empty-logs.md): clearer steps when a log file is empty or near-empty (enable `diagnosticCapture` to inspect the pipeline; runbook reorganized with first steps up front).
+
+---
+
+## [3.6.1]
+
+Empty log file fixes and capture safeguards: replay all early output, single- and multi-session fallbacks, race guard, buffer timeout warning, and optional diagnosticCapture. [log](https://github.com/saropa/saropa-log-capture/blob/v3.6.1/CHANGELOG.md)
+
+### Added
+
+• **`saropaLogCapture.diagnosticCapture`** (default `false`) — when enabled, logs capture pipeline events (new session, output buffered, output written) to the "Saropa Log Capture" output channel.
+
+• **Single-session fallback** — DAP output for an unknown session id is routed to the single active log session when exactly one exists.
+
+• **Replay all early output for first session** — when creating the first log session, all buffered output (every session id) is replayed into it.
+
+• **Race guard** — if exactly one session was created in the last 5 seconds, a new session is aliased to it instead of creating a second file.
+
+• **Multi-session fallback** — output for an unknown session id with 2+ active sessions is routed to the most recently created session.
+
+• **Buffer timeout warning** — after 30s of buffered output with no log session for that id, a one-time warning is logged to the Saropa Log Capture output channel.
+
+### Fixed
+
+• Empty logs / dropped output regression introduced in 3.1.3 (replay and session routing).
+
+---
+
+## [3.6.0]
+
+Enhanced error analysis with hover popups and inline triage controls. [log](https://github.com/saropa/saropa-log-capture/blob/v3.6.0/CHANGELOG.md)
+
+### Added
+
+• **Error hover popup** — hovering over error badges (CRITICAL/TRANSIENT/BUG) in the log viewer shows a floating popup with classification, crash category, cross-log history, triage status, and fingerprint hash. Includes an "Analyze" button to open the full analysis panel.
+
+• **Error analysis in Analysis Panel** — when analyzing an error/warning line, the panel now includes error-specific sections: classification header with triage controls (open/closed/muted), cross-log timeline sparkline, log occurrence count, and an action bar with Copy Context, Bug Report, Export (.slc/JSON/CSV), and AI Explain buttons.
+
+• **Clickable error badges** — error classification badges in the log viewer are now clickable to open the analysis panel directly for that error line.
+
+• **Per-file coverage badges** — stack frame lines in the viewer now show a coverage percentage badge (green/yellow/red) when a coverage report is configured. Toggleable via Decoration Settings. Badges render on both stack-header and stack-frame lines.
+
+• **Quality sidecar** — session end writes a `quality.json` sidecar with per-file coverage data for referenced code.
+
+• **Coverage parser improvements** — single file read for both aggregate and per-file parsing, Cobertura attribute order flexibility, safe JSON parsing, ambiguous basename guard.
+
+• **Code Quality Metrics integration design doc** — per-file coverage, lint, and doc density overlay for code referenced in log stack traces (`bugs/100_code-quality-metrics.md`).
+
+• **Code Quality Metrics provider** — `codeQuality` integration provider assembles per-file coverage, lint warnings/errors (ESLint JSON), and comment density into an enriched `quality.json` sidecar at session end.
+
+• **Lint report reader** — parses ESLint `--format json` output to extract per-file warning/error counts for log-referenced files.
+
+• **Comment density scanner** — scans referenced source files for comment-to-code ratio and JSDoc/dartdoc coverage on exported symbols.
+
+• **Code quality settings** — `integrations.codeQuality.lintReportPath`, `scanComments`, and `coverageStaleMaxHours` settings for configuring quality data sources.
+
+• **AI module tests** — unit tests for JSONL parser, line formatter, prompt builder, and type helpers (ai-jsonl-parser, ai-jsonl-types, ai-line-formatter, ai-prompt).
+
+• **Bug report tests** — unit tests for keyword extraction and thread-aware stack trace formatting (report-file-keywords, bug-report-thread-format).
+
+• **Crashlytics event parser tests** — unit tests for structured thread parsing, raw trace parsing, device/custom key extraction.
+
+• **Insights export format tests** — unit tests for CSV and JSON export serialization.
+
+### Changed
+
+• **Terminology standardization** — replaced user-facing "session" with "log" across all locales, webview UI, context menus, performance panel, error analysis, error hover, walkthrough docs, and setting descriptions (per CONTRIBUTING.md). Fixed grammatical gender/case/particle agreement in de, ru, es, pt-br, it, ko locale files. Internal identifiers, setting keys, command IDs, and "debug session" (VS Code concept) are unchanged.
+
+• **Updated feature discipline rule** in `.claude/rules/global.md` — replaced stale reference to non-existent `docs/PLAN_SAROPA_LOG_CAPTURE.md` with references to `ROADMAP.md` and `bugs/*.md` plans.
+
+• **Added nyc coverage configuration** with Istanbul instrumentation, text/lcov/HTML reporters, and 50% threshold gates. Uses nyc instead of c8 because c8 cannot collect V8 coverage from VS Code's Extension Host process.
+
+• **CI now runs coverage** instead of plain tests, and uploads the coverage report as an artifact (14-day retention).
+
+• **Added coverage badge** to README linking to CI runs.
+
+## [3.5.4]
+
+Replay controls redesigned for a cleaner, less intrusive UX. [log](https://github.com/saropa/saropa-log-capture/blob/v3.5.4/CHANGELOG.md)
+
+### Changed
+
+• **Replay panel is now horizontal and anchored to the bottom-right** of the log area, replacing the tall vertical strip that obscured content.
+
+• **Top/Bottom jump buttons moved to the left side** so they no longer overlap the scrollbar minimap.
+
+• **Replay button added to the viewer footer** (before the version number) for quick access without the floating toggle.
+
+### Removed
+
+• **Removed the floating replay toggle button** that overlapped the top-right corner. Replay is now triggered from the footer button or the icon bar.
+
+## [3.5.3]
+
+[log](https://github.com/saropa/saropa-log-capture/blob/v3.5.3/CHANGELOG.md)
+
+### Fixed
+
+• **Resolved all 32 eslint warnings across the codebase.** Addressed strict equality (`!==`), unused variables, missing curly braces, excessive nesting (`max-depth`), too many function parameters (`max-params`), and files exceeding the 300-line limit (`max-lines`). Extracted helper functions and split large files to improve maintainability.
+
+• **Replay controls no longer overlap the minimap.** The replay toggle and panel now offset by the minimap width, respecting all size settings (small/medium/large).
+
+### Changed
+
+• **Consolidated three status bar items into one.** Pause icon, line count, and watch counts now appear in a single status bar entry instead of separate items. Pause/resume remains available via command palette.
+
+• **More integrations enabled by default.** New installs now start with `packages`, `git`, `environment`, `performance`, and `terminal` enabled (previously only `packages` and `performance`). All are lightweight, broadly applicable, and no-op when not relevant.
+
+• **Clearer integration performance notes.** Each adapter now shows a warning icon when it has meaningful performance cost, needs external configuration, or is platform-specific. "When to disable" text updated to explain prerequisites (e.g. "you haven't configured a report path").
+
+• **Removed integration adapter names from status bar.** The status bar no longer lists which adapters are active — it was cluttering the bar and confusing users. Integration info is still available in the Options panel.
+
+### Removed
+
+• **Standalone Crashlytics status bar indicator.** The always-visible Crashlytics status bar item has been removed to reduce clutter. Crashlytics setup status is still available in the viewer panel.
+
+### Added
+
+• **Session time (T+) toggle in context menu.** Options submenu now includes a quick toggle for session elapsed time, matching the gear panel checkbox.
+
+---
+
+## [3.5.2]
+
+[log](https://github.com/saropa/saropa-log-capture/blob/v3.5.2/CHANGELOG.md)
+
+### Fixed
+
+• **Publish script spawns unwanted windows on Windows.** Extension listing now reads the filesystem (`~/.vscode/extensions/`, `~/.cursor/extensions/`) instead of calling `code --list-extensions` / `cursor --list-extensions`, which spawned persistent editor windows. Added `CREATE_NO_WINDOW` flag to all subprocess calls to suppress cmd.exe console flashes. Marketplace browser open after publish is now prompted instead of automatic.
+
+• **Stray .meta.json files polluting user projects.** A fallback code path wrote `.meta.json` sidecar files next to arbitrary files across workspace folders instead of using the central metadata store. Removed the sidecar write path entirely — all metadata now goes through `.session-metadata.json` only. On activation the extension scans for and deletes orphan `.meta.json` sidecars that match its format, cleaning up affected projects automatically.
+
+### Added
+
+• **Getting Started walkthrough command.** Added `Saropa Log Capture: Getting Started` command to open the VS Code walkthrough directly, plus an "About Saropa" step with ecosystem and company info. The walkthrough auto-opens on first install.
+
+• **OWASP Security Context in bug reports.** Bug reports now include a "Security Context" section when crash-related files have OWASP-mapped lint violations, showing categories (M1–M10, A01–A10) with affected rules. OWASP findings also appear in Key Findings.
+
+## [3.5.1]
+
+Replay controls now live in a compact floating vertical panel instead of a full-width horizontal bar. [log](https://github.com/saropa/saropa-log-capture/blob/v3.5.1/CHANGELOG.md)
+
+### Added
+
+• **Create Bug Report File.** Right-click selected lines in the log viewer and choose "Create Bug Report File" to auto-create a comprehensive `.md` report. Includes selected text, session info, full decorated output (in a collapsible block), cross-session analysis, environment details, and user-fillable sections. Also available from the Command Palette (without selection).
+
+• **`saropaLogCapture.reportFolder` setting.** Configure where bug report files are created (default: `bugs/`, relative to workspace root).
+
+### Changed
+
+• **Replay bar: collapsible vertical layout.** The replay controls (play/pause/stop, mode, speed, scrubber) are now a floating vertical panel toggled by an icon in the top-right corner of the log area. The bar is hidden by default — no more wasted vertical space when you're not replaying. The vertical scrubber stretches to fill the available height.
+
+## [3.5.0]
+
+Track elapsed session time with T+ decorations in the log viewer, and get instant codebase context from project health scores and lint breakdowns in bug reports. [log](https://github.com/saropa/saropa-log-capture/blob/v3.5.0/CHANGELOG.md)
+
+### Added
+
+• **Session time (T+) decoration.** New "Session time (T+)" checkbox in the decoration settings panel shows elapsed time from the first log line (e.g., `T+0:00`, `T+3:42`, `T+1:23:42`). Hours appear only when elapsed exceeds 1 hour; days appear only past 24 hours. Respects the existing milliseconds toggle. Can be shown independently of or alongside the wall-clock timestamp.
+
+• **Project health score in bug report header.** Shows "Project health: N/100" with tier and total violation count when lint data is available.
+
+• **Per-impact breakdown in Known Lint Issues section.** Lists non-zero violation counts by impact level (critical, high, medium, low, opinionated) above the violations table.
+
+### Changed
+
+• Bug report staleness message now says "Run analysis in Saropa Lints" instead of `dart run custom_lint` when the Saropa Lints VS Code extension is detected in the workspace.
+
+### Removed
+
+• **Cursor IDE warning.** Removed the startup warning for Cursor IDE users — log capture works fine in Cursor.
+
+--
+
+## [3.4.3]
+
+Auto-hide patterns let you permanently suppress matching log lines with a right-click, plus a management modal to review and remove patterns. [log](https://github.com/saropa/saropa-log-capture/blob/v3.4.3/CHANGELOG.md)
+
+### Added
+
+• **Auto-hide patterns.** Select text in the log viewer, right-click > Hide, and choose "Hide Selection (Always)" to permanently suppress matching lines across all sessions. Patterns are stored in `saropaLogCapture.autoHidePatterns` setting. "Hide Selection" and "Hide Selection (This Session)" hide for the current session only.
+
+• **Auto-hide pattern management modal.** Double-click the hidden counter in the footer to view and remove auto-hide patterns (both session and persistent).
+
+### Changed
+
+• Renamed "Hide Lines" context submenu to "Hide".
+
+• Hidden counter in footer now shows icon + count only (no background pill or "hidden" text), matching the style of other filter indicators.
+
+• Peek mode now reveals both manually hidden and auto-hidden lines.
+
+### Fixed
+
+• Auto-hide now applies to stack headers and repeat notifications, not just regular lines.
+
+• Hidden counter no longer double-counts lines that are both manually hidden and auto-hidden.
+
+• Session auto-hide patterns are cleared when the viewer is cleared.
+
+• Removed redundant "Hide Selection" context menu item (kept "This Session" and "Always").
+
+• Single-quote characters in auto-hide patterns are now HTML-escaped in the management modal.
+
+• Auto-hidden count is decremented before splice in trimData, preventing incorrect counts after trim.
+
+---
+
+## [3.4.2]
+
+Tames the overflowing context menu by grouping copy and export actions into a submenu, and splits six files that exceeded the 300-line limit into focused modules. [log](https://github.com/saropa/saropa-log-capture/blob/v3.4.2/CHANGELOG.md)
+
+• **Viewer context menu: Copy & Export submenu.** The right-click menu was too long and could overflow the screen. Copy, Copy Line, Copy All, Copy All Decorated, Copy as snippet, Copy with source, Select All, and Export current view are now under a **Copy & Export** submenu; **Copy to Search** is in the same submenu after a separator. Behavior and visibility rules are unchanged; existing tests pass.
+
+• **Modularized files over 300-line limit.** Split investigation commands (share/export into `investigation-commands-share.ts`, `investigation-commands-export.ts`), l10n strings into `l10n/strings-a.ts` and `l10n/strings-b.ts`, .slc bundle logic into `slc-types.ts`, `slc-session-files.ts`, `slc-session.ts`, and `slc-investigation.ts`, Build/CI API fetchers into `build-ci-api.ts`, and viewer-styles (Crashlytics setup/diagnostic, options integrations/shortcuts) into dedicated style modules. No behavior changes; existing tests and public API unchanged.
+
+---
+
+## [3.4.1]
+
+[log](https://github.com/saropa/saropa-log-capture/blob/v3.4.1/CHANGELOG.md)
+
+### Fixed
+
+• **Extension activation on Cursor IDE** — Cursor wraps VS Code APIs differently from stock VS Code, so `vscode.debug.onDidReceiveDebugSessionCustomEvent` could be `undefined` during activation. The extension now guards the subscription and logs a one-time warning instead of crashing.
 
 ---
 

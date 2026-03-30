@@ -125,7 +125,7 @@ function toggleContinuationGroup(gid) {
 function resetContinuationState() {
     activeContHeader = null;
     nextContGroupId = 0;
-    contHeaderMap = {};
+    for (var k in contHeaderMap) delete contHeaderMap[k];
     lastNormalLineForCont = null;
 }
 
