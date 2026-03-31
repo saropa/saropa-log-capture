@@ -27,6 +27,18 @@ Design patterns and conventions for the log viewer webview UI.
 
 **Rule**: Never use more than 3 font sizes in a single UI region.
 
+## Text Casing
+
+| Context | Casing | Examples |
+|---------|--------|----------|
+| Action button labels | Sentence case | "Reset all", "Reset to default" |
+| Panel / view names | Title Case | "SQL Query History", "Noise Reduction" |
+| Section headings | Title Case | "Quick Filters", "Actions" |
+| Tooltips | Sentence case | "Clear all active filters and show all log lines" |
+| Status text | Sentence case | "Waiting for debug session..." |
+
+**Rule:** Buttons that navigate to a named panel use the panel's Title Case name (e.g. "SQL Query History…"). All other action buttons use sentence case.
+
 ## Button Styles
 
 ### `.footer-btn` — Standard Footer Button
