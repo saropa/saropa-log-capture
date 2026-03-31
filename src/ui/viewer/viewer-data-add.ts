@@ -120,6 +120,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         }
     }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
+    // Source-tag driven: any line tagged 'database' that isn't already error/warning gets the level.
+    if (sTag === 'database' && lvl !== 'error' && lvl !== 'warning' && lvl !== 'database') { lvl = 'database'; }
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];

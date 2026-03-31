@@ -45,6 +45,7 @@ export function getLevelStyles(): string {
 .level-dot-todo { background: #bdbdbd; }
 .level-dot-debug { background: #795548; }
 .level-dot-notice { background: #2196f3; }
+.level-dot-database { background: #00bcd4; }
 .dot-count {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);

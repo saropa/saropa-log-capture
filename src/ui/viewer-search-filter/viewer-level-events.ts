@@ -7,7 +7,7 @@ window.addEventListener('message', function(event) {
     if (msg.type === 'setContextLines') {
         contextLinesBefore = typeof msg.count === 'number' ? msg.count : 3;
         syncContextSlider();
-        if (enabledLevels.size < 7) applyLevelFilter();
+        if (enabledLevels.size < allLevelNames.length) applyLevelFilter();
     } else if (msg.type === 'restoreLevelFilters' && msg.levels) {
         restoreLevelState(msg.levels);
     }
@@ -49,7 +49,7 @@ if (ctxSlider) {
     ctxSlider.addEventListener('input', function(e) {
         contextLinesBefore = parseInt(e.target.value, 10);
         syncContextSlider();
-        if (enabledLevels.size < 7) applyLevelFilter();
+        if (enabledLevels.size < allLevelNames.length) applyLevelFilter();
     });
 }
 

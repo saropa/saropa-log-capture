@@ -322,6 +322,51 @@ suite('LevelClassifier', () => {
         });
     });
 
+    suite('classifyLevel — generic SQL (non-Drift)', () => {
+
+        test('should classify SELECT...FROM as database', () => {
+            assert.strictEqual(classifyLevel('SELECT * FROM users WHERE id = ?', 'stdout', true), 'database');
+        });
+
+        test('should classify INSERT INTO as database', () => {
+            assert.strictEqual(classifyLevel('INSERT INTO users (name) VALUES (?)', 'stdout', true), 'database');
+        });
+
+        test('should classify UPDATE...SET as database', () => {
+            assert.strictEqual(classifyLevel('UPDATE users SET name = ? WHERE id = 1', 'stdout', true), 'database');
+        });
+
+        test('should classify DELETE FROM as database', () => {
+            assert.strictEqual(classifyLevel('DELETE FROM sessions WHERE expired = 1', 'stdout', true), 'database');
+        });
+
+        test('should classify CREATE TABLE as database', () => {
+            assert.strictEqual(classifyLevel('CREATE TABLE users (id INTEGER PRIMARY KEY)', 'stdout', true), 'database');
+        });
+
+        test('should classify PRAGMA as database', () => {
+            assert.strictEqual(classifyLevel('PRAGMA journal_mode', 'stdout', true), 'database');
+        });
+
+        test('should not classify bare SELECT as database', () => {
+            assert.strictEqual(classifyLevel('please select an option', 'stdout', true), 'info');
+        });
+
+        test('should not promote SQL to database when error pattern matches', () => {
+            assert.strictEqual(
+                classifyLevel('Error: SELECT * FROM users failed', 'stdout', true),
+                'error',
+            );
+        });
+
+        test('should classify generic SQL under logcat I/ prefix as database', () => {
+            assert.strictEqual(
+                classifyLevel('I/Room: SELECT id, name FROM users WHERE active = 1', 'stdout', true),
+                'database',
+            );
+        });
+    });
+
     suite('isActionableLevel', () => {
 
         test('should return true for error', () => {
