@@ -89,7 +89,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('clearRootCauseHintHostFields'));
         assert.ok(chunk.includes('slowBurstBySession'));
         assert.ok(chunk.includes('collectSessionDiffRegressionFpsEmbedded'));
-        assert.ok(chunk.includes('rchCollapseStorageKey'));
+        assert.ok(chunk.includes('updateSignalsBadge'));
         assert.ok(chunk.includes('explainRootCauseHypotheses'));
         assert.ok(chunk.includes('runTriggerExplainRootCauseHypothesesFromHost'));
         assert.ok(chunk.includes('explainRootCauseHypothesesEmpty'));
