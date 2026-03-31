@@ -28,6 +28,9 @@ const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:
 const todoPattern = /\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
 const noticePattern = /\b(notice|note|important)\b/i;
+// Generic SQL: requires structural keyword pairs to avoid false positives on bare words.
+// Drift lines are caught earlier by driftStatementPattern; this covers other ORMs and raw SQL.
+const genericSqlPattern = /\bSELECT\b.{1,80}\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\b\s+\S+\s+SET\b|\bDELETE\s+FROM\b|\bCREATE\s+(?:TABLE|INDEX|VIEW)\b|\bALTER\s+(?:TABLE|INDEX)\b|\bDROP\s+(?:TABLE|INDEX|VIEW)\b|\bPRAGMA\s+\w+/i;
 
 /** True when the line is a Drift SQL trace (`Drift: Sent …`). Used by the viewer to skip severity proximity inheritance. */
 export function isDriftSqlStatementLine(plainText: string): boolean {
@@ -76,6 +79,7 @@ function classifyLogcat(prefix: string, plainText: string, strict: boolean): Sev
     if (todoPattern.test(plainText)) { return 'todo'; }
     if (prefix === 'V' || prefix === 'D' || debugPattern.test(plainText)) { return 'debug'; }
     if (noticePattern.test(plainText)) { return 'notice'; }
+    if (genericSqlPattern.test(plainText)) { return 'database'; }
     return 'info';
 }
 
@@ -88,5 +92,6 @@ function classifyNonError(plainText: string): SeverityLevel {
     if (todoPattern.test(plainText)) { return 'todo'; }
     if (debugPattern.test(plainText)) { return 'debug'; }
     if (noticePattern.test(plainText)) { return 'notice'; }
+    if (genericSqlPattern.test(plainText)) { return 'database'; }
     return 'info';
 }
