@@ -12,8 +12,28 @@
  */
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
-/** Per line index: Drift \` with args [...]\` fold is expanded (see drift-log-line-args-fold.ts). */
-var driftArgsFoldOpenByIdx = Object.create(null);
+/** Whether to show output channel badges on log lines (toggled from Decorations panel). */
+var showCategoryBadges = false;
+
+/** Channel badge colors keyed by DAP category. */
+var categoryBadgeColors = {
+    stdout: '#4ec9b0',
+    stderr: '#f48771',
+    'ai-bash': '#ce9178',
+    'ai-edit': '#d7ba7d',
+    logcat: '#9cdcfe',
+    'db-insight': '#c586c0',
+    system: '#b5cea8'
+};
+
+/** Return a small inline badge for the line's output channel, or empty string. */
+function getCategoryBadge(item) {
+    if (!showCategoryBadges || !item.category || item.category === 'console') return '';
+    var label = item.category;
+    var clr = categoryBadgeColors[label] || '#888';
+    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="Output channel: ' + label + '">' + label + '</span> ';
+}
+
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
@@ -153,10 +173,6 @@ function renderItem(item, idx, prevVis) {
         if (item.logcatTag) html = wrapTagLink(html, item.logcatTag);
         if (item.sourceTag) html = wrapTagLink(html, item.sourceTag);
     }
-    if (html.indexOf('drift-args-fold') >= 0 && driftArgsFoldOpenByIdx[idx]) {
-        html = html.replace('<span class="drift-args-fold">', '<span class="drift-args-fold drift-args-fold-open">');
-        html = html.replace('class="drift-args-fold-btn" aria-expanded="false"', 'class="drift-args-fold-btn" aria-expanded="true"');
-    }
     if (item.recentErrorContext && item.level === 'error') {
         var recTip = 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.';
         if (titleAttr && titleAttr.indexOf('title=\"') >= 0) {
@@ -184,7 +200,8 @@ function renderItem(item, idx, prevVis) {
         var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse continuation lines';
         contBadge = ' <span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + contBadge + '</div>' + annHtml;
+    var catBadge = getCategoryBadge(item);
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + catBadge + html + contBadge + '</div>' + annHtml;
 }
 `;
 }

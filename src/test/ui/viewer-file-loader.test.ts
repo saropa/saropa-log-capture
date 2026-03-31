@@ -54,6 +54,18 @@ suite('Viewer file loader', () => {
             assert.strictEqual(pending[0].elapsedMs, 1500);
             assert.strictEqual(pending[1].elapsedMs, 15000);
         });
+
+        test('rawText preserves original line text before HTML conversion', () => {
+            const lines = ['[stdout] hello <world>'];
+            const pending = parseRawLinesToPending(lines, ctx);
+            assert.strictEqual(pending[0].rawText, 'hello <world>');
+        });
+
+        test('rawText on marker preserves marker text', () => {
+            const lines = ['--- MARKER: test ---'];
+            const pending = parseRawLinesToPending(lines, ctx);
+            assert.strictEqual(pending[0].rawText, 'MARKER: test');
+        });
     });
 
     suite('parseElapsedToMs', () => {
@@ -87,6 +99,10 @@ suite('Viewer file loader', () => {
             assert.strictEqual(pending.length, 2);
             assert.strictEqual(pending[0].source, 'external:app');
             assert.strictEqual(pending[1].source, 'external:app');
+        });
+        test('rawText preserves original sidecar line', () => {
+            const pending = parseExternalSidecarToPending('raw <b>text</b>', 'app');
+            assert.strictEqual(pending[0].rawText, 'raw <b>text</b>');
         });
     });
 

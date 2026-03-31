@@ -7,7 +7,7 @@
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
-import { buildLogLineHtmlWithOptionalDriftArgsFold } from '../../modules/db/drift-log-line-args-fold';
+import { buildLogLineHtmlWithOptionalDriftArgsDim } from '../../modules/db/drift-log-line-args-fold';
 export {
     SOURCE_TERMINAL,
     SOURCE_EXTERNAL_PREFIX,
@@ -38,6 +38,8 @@ export interface PendingLine {
     readonly qualityPercent?: number;
     /** Stream source id for filtering (e.g. 'debug', 'terminal'). Omitted = debug. */
     readonly source?: string;
+    /** Original unprocessed text before HTML/ANSI conversion. Used for "copy raw" feature. */
+    readonly rawText?: string;
 }
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */
@@ -212,6 +214,7 @@ function parseFileLine(raw: string, ctx: FileParseContext): PendingLine {
 function buildMarkerLine(text: string, source?: string): PendingLine {
     return {
         text: escapeHtml(text),
+        rawText: text,
         isMarker: true,
         lineCount: 0,
         category: 'console',
@@ -232,7 +235,8 @@ interface FileLineOptions {
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
 function buildFileLine(opts: FileLineOptions): PendingLine {
     return {
-        text: buildLogLineHtmlWithOptionalDriftArgsFold(opts.text),
+        text: buildLogLineHtmlWithOptionalDriftArgsDim(opts.text),
+        rawText: opts.text,
         isMarker: false,
         lineCount: 0,
         category: opts.category,
