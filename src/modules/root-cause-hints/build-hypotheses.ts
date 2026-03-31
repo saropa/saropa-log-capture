@@ -79,7 +79,7 @@ function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
     seen.add(e.lineIndex);
     out.push({
       templateId: 'error-recent',
-      text: truncateText(`Recent error: ${ex}`, MAX_TEXT_LEN),
+      text: truncateText(`Error: ${ex}`, MAX_TEXT_LEN),
       evidenceLineIds: [e.lineIndex],
       confidence: 'medium',
       hypothesisKey: `err::${e.lineIndex}`,
@@ -103,7 +103,7 @@ function nPlusOneHypotheses(hints: readonly RootCauseNPlusOneHint[] | undefined)
     }
     const sec = (h.windowSpanMs / 1000).toFixed(1);
     const text = truncateText(
-      `Possible N+1: ${h.repeats} similar DB calls (${h.distinctArgs} arg variants) in ${sec}s — not certain.`,
+      `${h.repeats} similar DB calls with ${h.distinctArgs} different arguments in ${sec}s (possible N+1 query)`,
       MAX_TEXT_LEN,
     );
     out.push({
@@ -131,7 +131,7 @@ function sqlBurstHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
     const w = typeof b.windowMs === 'number' ? ` in ~${Math.round(b.windowMs)}ms` : '';
     out.push({
       templateId: 'sql-burst',
-      text: truncateText(`SQL burst: ${b.count} similar queries${w} — may be normal traffic or a loop.`, MAX_TEXT_LEN),
+      text: truncateText(`${b.count} identical queries fired${w} (rapid burst)`, MAX_TEXT_LEN),
       evidenceLineIds: [],
       confidence: 'low',
       hypothesisKey: `burst::${b.fingerprint}`,
@@ -159,7 +159,7 @@ function fingerprintLeaderHypotheses(
     out.push({
       templateId: 'fingerprint-leader',
       text: truncateText(
-        `Repeated SQL fingerprint (${L.count} hits this session) — possible hot path or missing batching.`,
+        `Same SQL query executed ${L.count} times this session (consider batching or caching)`,
         MAX_TEXT_LEN,
       ),
       evidenceLineIds: L.sampleLineIndex >= 0 ? [L.sampleLineIndex] : [],
@@ -180,7 +180,7 @@ function diffHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   return [
     {
       templateId: 'session-diff-regression',
-      text: truncateText(`Session compare: increased activity for a SQL fingerprint vs baseline — regression hypothesis.`, MAX_TEXT_LEN),
+      text: truncateText(`SQL query volume increased compared to previous session (performance regression)`, MAX_TEXT_LEN),
       evidenceLineIds: [],
       confidence: 'low',
       hypothesisKey: `diff::${fp}`,
@@ -198,7 +198,7 @@ function driftHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   return [
     {
       templateId: 'drift-advisor',
-      text: truncateText(`Drift Advisor reports ${da.issueCount} issue(s)${rule} in the workspace — may relate to DB noise here.`, MAX_TEXT_LEN),
+      text: truncateText(`Drift static analysis found ${da.issueCount} issue${da.issueCount === 1 ? '' : 's'}${rule} in the workspace`, MAX_TEXT_LEN),
       evidenceLineIds: [],
       confidence: 'low',
       hypothesisKey: 'drift::summary',

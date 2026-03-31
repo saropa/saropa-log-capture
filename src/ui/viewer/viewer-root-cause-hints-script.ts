@@ -2,7 +2,7 @@
  * DB_14 — Root-cause hypotheses strip (webview embed).
  *
  * Bundles the deterministic hypothesis algorithm (`viewer-root-cause-hints-embed-algorithm.ts`) with UI:
- * evidence scroll targets and **Copy signals** clipboard action.
+ * evidence scroll targets, **Copy signals** clipboard action, and per-signal dismiss/restore.
  *
  * Visibility is controlled by the toolbar signals icon (`#toolbar-signals-btn`).
  * The toolbar badge (`#toolbar-signals-count`) shows the number of detected signals.
@@ -24,6 +24,8 @@ function rchStr(key, fallback) {
     var v = L[key];
     return (typeof v === 'string' && v.length) ? v : fallback;
 }
+
+var rchDismissedKeys = Object.create(null);
 
 function buildRootCauseHypothesesExplainText(bundle, hy) {
     var lines = [];
@@ -108,47 +110,60 @@ function renderRootCauseHypothesesIfNeeded() {
     }
     var bundle = collectRootCauseHintBundleEmbedded();
     var hy = buildHypothesesEmbedded(bundle);
-    if (!hy.length) {
+    var visible = [];
+    var dismissedCount = 0;
+    var vi;
+    for (vi = 0; vi < hy.length; vi++) {
+        if (rchDismissedKeys[hy[vi].hypothesisKey]) dismissedCount++;
+        else visible.push(hy[vi]);
+    }
+    if (!visible.length && !dismissedCount) {
         updateSignalsBadge(0);
         host.innerHTML = '';
         if (typeof hideSignalsPanel === 'function') hideSignalsPanel();
         return;
     }
-    updateSignalsBadge(hy.length);
+    updateSignalsBadge(visible.length);
     var parts = [];
-    parts.push('<ul class="root-cause-hypotheses-list">');
-    var hi, item, li, ev, ei, idx, validIdx, confNorm, confTip, confEmoji;
-    for (hi = 0; hi < hy.length; hi++) {
-        item = hy[hi];
-        li = '<li>';
-        li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
-        li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
-        if (item.confidence) {
-            confNorm = String(item.confidence).toLowerCase();
-            if (confNorm === 'medium') {
-                confEmoji = '\\uD83D\\uDFE1';
-                confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
-            } else {
-                confEmoji = '\\u26AA';
-                confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
+    if (visible.length) {
+        parts.push('<ul class="root-cause-hypotheses-list">');
+        var hi, item, li, ev, ei, idx, validIdx, confNorm, confTip, confEmoji;
+        for (hi = 0; hi < visible.length; hi++) {
+            item = visible[hi];
+            li = '<li>';
+            li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
+            li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
+            if (item.confidence) {
+                confNorm = String(item.confidence).toLowerCase();
+                if (confNorm === 'medium') {
+                    confEmoji = '\\uD83D\\uDFE1';
+                    confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
+                } else {
+                    confEmoji = '\\u26AA';
+                    confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
+                }
+                li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
             }
-            li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
-        }
-        ev = item.evidenceLineIds || [];
-        for (ei = 0; ei < ev.length; ei++) {
-            idx = ev[ei];
-            validIdx = typeof idx === 'number' && idx >= 0 && idx < allLines.length;
-            if (validIdx) {
-                li += ' <button type="button" class="root-cause-hyp-evidence" data-line-idx="' + idx + '" title="Scroll to evidence">line ' + (idx + 1) + '</button>';
+            ev = item.evidenceLineIds || [];
+            for (ei = 0; ei < ev.length; ei++) {
+                idx = ev[ei];
+                validIdx = typeof idx === 'number' && idx >= 0 && idx < allLines.length;
+                if (validIdx) {
+                    li += ' <button type="button" class="root-cause-hyp-evidence" data-line-idx="' + idx + '" title="Scroll to evidence">line ' + (idx + 1) + '</button>';
+                }
             }
+            li += ' <button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';
+            li += '</li>';
+            parts.push(li);
         }
-        li += '</li>';
-        parts.push(li);
+        parts.push('</ul>');
+        parts.push('<button type="button" class="rch-copy-all-btn" data-rch-copy-all="1">Copy signals</button>');
     }
-    parts.push('</ul>');
-    parts.push('<button type="button" class="rch-copy-all-btn" data-rch-copy-all="1">Copy signals</button>');
+    if (dismissedCount > 0) {
+        parts.push('<button type="button" class="rch-restore-btn" data-rch-restore="1">' + dismissedCount + ' dismissed \\u2014 restore all</button>');
+    }
     host.innerHTML = parts.join('');
-    if (typeof showSignalsPanel === 'function') showSignalsPanel();
+    if (visible.length && typeof showSignalsPanel === 'function') showSignalsPanel();
 }
 
 function scheduleRootCauseHypothesesRefresh() {
@@ -160,6 +175,7 @@ function scheduleRootCauseHypothesesRefresh() {
 }
 
 function resetRootCauseHypothesesSession() {
+    rchDismissedKeys = Object.create(null);
     if (typeof clearRootCauseHintHostFields === 'function') clearRootCauseHintHostFields();
     rootCauseHintSessionEpoch = (rootCauseHintSessionEpoch || 0) + 1;
     var host = document.getElementById('root-cause-hypotheses');
@@ -181,11 +197,30 @@ function initRootCauseHypothesesUi() {
             ev.preventDefault();
             var b = collectRootCauseHintBundleEmbedded();
             var hList = buildHypothesesEmbedded(b);
-            if (!hList.length) return;
-            var text = buildRootCauseHypothesesExplainText(b, hList);
+            var hVisible = [];
+            for (var ci = 0; ci < hList.length; ci++) {
+                if (!rchDismissedKeys[hList[ci].hypothesisKey]) hVisible.push(hList[ci]);
+            }
+            if (!hVisible.length) return;
+            var text = buildRootCauseHypothesesExplainText(b, hVisible);
             navigator.clipboard.writeText(text).then(function() {
                 showRchToast(host, 'Copied!');
             }).catch(function() {});
+            return;
+        }
+        var dismissBtn = t && t.closest ? t.closest('.rch-dismiss-btn') : null;
+        if (dismissBtn && dismissBtn.dataset && dismissBtn.dataset.rchDismiss) {
+            ev.preventDefault();
+            rchDismissedKeys[dismissBtn.dataset.rchDismiss] = true;
+            renderRootCauseHypothesesIfNeeded();
+            showRchToast(host, 'Signal hidden for this session');
+            return;
+        }
+        var restoreBtn = t && t.closest ? t.closest('.rch-restore-btn') : null;
+        if (restoreBtn) {
+            ev.preventDefault();
+            rchDismissedKeys = Object.create(null);
+            renderRootCauseHypothesesIfNeeded();
             return;
         }
         var copyBtn = t && t.closest ? t.closest('.rch-copy-btn') : null;
