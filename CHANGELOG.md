@@ -14,9 +14,11 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
     The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-    Each version (and [Unreleased]) should open with a short human summary when it helps; only discuss user-facing features.
+    Each release (and [Unreleased]) opens with one plain-language line for humans—user-facing only, casual wording—then end it with:
+    [log](https://github.com/saropa/saropa-log-capture/blob/vX.Y.Z/CHANGELOG.md)
+    substituting X.Y.Z.
 
-    **Tagged changelog** — Published versions use git tag **`vx.y.z`**; each section below ends its summary line with **[log](url)** to that snapshot (or a standalone **[log](url)** when there is no summary). Compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
+    **Tagged changelog** — Published versions use git tag **`vx.y.z`**; compare to [current `main`](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md).
 
     **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
@@ -25,6 +27,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.2.0]
+
+Fixes trailing-CR tofu boxes, logcat level misclassification, and search box clearing; adds channel badge decoration, copy-as-raw-text, and quick-save export. [log](https://github.com/saropa/saropa-log-capture/blob/v5.2.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -57,6 +61,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.1.2]
 
+New extension and sidebar icons — severity dots on a log file, matching Saropa brand colors. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.2/CHANGELOG.md)
+
 ### Changed
 
 - Redesigned extension icon: new "4 severity dots on a log file" concept replacing the funnel design, matching Saropa open source brand colors
@@ -65,6 +71,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.1.1]
+
+Fixes publish script path after v5.1.0 restructure. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.1/CHANGELOG.md)
 
 ### Fixed
 
