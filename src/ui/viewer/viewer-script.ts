@@ -60,26 +60,34 @@ var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') ||
 /* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
 var _fnPressTimer = null;
 var _fnLongFired = false;
+function _fnCancelTimer() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } }
 if (footerTextEl) {
     footerTextEl.addEventListener('mousedown', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        if (e.button !== 0) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
+        e.preventDefault();
         _fnLongFired = false;
         _fnPressTimer = setTimeout(function() {
+            _fnPressTimer = null;
             _fnLongFired = true;
             vscodeApi.postMessage({ type: 'copyCurrentFilePath' });
-            e.target.title = 'Copied!';
-            setTimeout(function() { e.target.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
+            fnEl.title = 'Copied!';
+            setTimeout(function() { fnEl.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
         }, 500);
     });
-    footerTextEl.addEventListener('mouseup', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
-    footerTextEl.addEventListener('mouseleave', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
+    footerTextEl.addEventListener('mouseup', _fnCancelTimer);
+    footerTextEl.addEventListener('mouseleave', _fnCancelTimer);
+    footerTextEl.addEventListener('dragstart', function(e) { e.preventDefault(); _fnCancelTimer(); });
     footerTextEl.addEventListener('click', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
         if (_fnLongFired) { _fnLongFired = false; return; }
         vscodeApi.postMessage({ type: 'revealLogFile' });
     });
     footerTextEl.addEventListener('dblclick', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
         e.preventDefault();
         vscodeApi.postMessage({ type: 'openCurrentFileFolder' });
     });
@@ -368,6 +376,9 @@ function onLogOrWrapResize() {
 }
 if (logEl) new ResizeObserver(onLogOrWrapResize).observe(logEl);
 if (logWrapEl) new ResizeObserver(onLogOrWrapResize).observe(logWrapEl);
+/* Fallback: some VS Code webview resize scenarios (e.g. window border drag) may not
+   trigger ResizeObserver on the log element. window.resize guarantees re-layout. */
+window.addEventListener('resize', onLogOrWrapResize);
 requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); });
 `;
 }
