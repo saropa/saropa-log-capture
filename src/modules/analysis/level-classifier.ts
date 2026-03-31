@@ -5,7 +5,7 @@
  */
 
 /** Valid severity levels. */
-export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice';
+export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice' | 'database';
 
 const logcatLevelPattern = /^([VDIWEFA])\//;
 /** Logcat severity (I/, E/, …) may appear after capture prefixes like `[12:00:00] [stdout]`. */
@@ -25,25 +25,9 @@ const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stut
 // High-confidence phrases only; no bare "heap"/"memory" to avoid false positives in other runtimes.
 const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)[\s:]|package[\/:](?:flutter|dart)\b)/i;
 const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:old|new)\s+gen\s|retained\s+\d+|leak\s+detected|potential\s+leak)\b/i;
-const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
+const todoPattern = /\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
 const noticePattern = /\b(notice|note|important)\b/i;
-
-/**
- * Drift `Sent SELECT|INSERT|…` lines are framework SQL tracing, not runtime failures.
- * Never classify them as `error` (avoids false positives from enum names like ApplicationLogError in args).
- * Must run before `^I/` logcat handling so capture-prefixed lines still match.
- */
-function classifyDriftSqlLine(plainText: string): SeverityLevel {
-    const lcm = logcatLevelPattern.exec(plainText);
-    const m = lcm ?? logcatLetterAnywhere.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
-    if (!m) { return 'info'; }
-    const prefix = m[1];
-    if (prefix === 'D' || prefix === 'V') { return 'debug'; }
-    if (prefix === 'W') { return 'warning'; }
-    if (prefix === 'E' || prefix === 'F' || prefix === 'A') { return 'warning'; }
-    return 'info';
-}
 
 /** True when the line is a Drift SQL trace (`Drift: Sent …`). Used by the viewer to skip severity proximity inheritance. */
 export function isDriftSqlStatementLine(plainText: string): boolean {
@@ -66,7 +50,7 @@ export function classifyLevel(
     if (stderrTreatAsError && category === 'stderr') {
         return 'error';
     }
-    if (driftStatementPattern.test(plainText)) { return classifyDriftSqlLine(plainText); }
+    if (driftStatementPattern.test(plainText)) { return 'database'; }
     const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) { return classifyLogcat(lcm[1], plainText, strict); }
     const ep = strict ? strictErrorPattern : looseErrorPattern;
