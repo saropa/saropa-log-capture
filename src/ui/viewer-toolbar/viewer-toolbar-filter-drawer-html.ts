@@ -29,11 +29,12 @@ export function getFilterDrawerHtml(): string {
             <button id="level-warning-toggle" class="level-circle active" title="Warning — click to show/hide warning messages" aria-label="Toggle Warning level"><span class="level-emoji">\uD83D\uDFE0</span><span class="level-label">Warning</span><span class="level-count"></span></button>
             <button id="level-error-toggle" class="level-circle active" title="Error — click to show/hide error messages" aria-label="Toggle Error level"><span class="level-emoji">\uD83D\uDD34</span><span class="level-label">Error</span><span class="level-count"></span></button>
             <button id="level-performance-toggle" class="level-circle active" title="Performance — click to show/hide slow query and timing messages" aria-label="Toggle Performance level"><span class="level-emoji">\uD83D\uDFE3</span><span class="level-label">Perf</span><span class="level-count"></span></button>
-            <button id="level-todo-toggle" class="level-circle active" title="TODO/FIXME — click to show/hide TODO and FIXME markers" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
+            <button id="level-todo-toggle" class="level-circle active" title="TODO / FIXME / HACK / XXX / BUG / KLUDGE / WORKAROUND — click to show/hide code markers" aria-label="Toggle TODO level"><span class="level-emoji">\u26AA</span><span class="level-label">TODO</span><span class="level-count"></span></button>
             <button id="level-debug-toggle" class="level-circle active" title="Debug/Trace — click to show/hide debug and trace output" aria-label="Toggle Debug level"><span class="level-emoji">\uD83D\uDFE4</span><span class="level-label">Debug</span><span class="level-count"></span></button>
             <button id="level-notice-toggle" class="level-circle active" title="Notice — click to show/hide notice-level messages" aria-label="Toggle Notice level"><span class="level-emoji">\uD83D\uDFE6</span><span class="level-label">Notice</span><span class="level-count"></span></button>
+            <button id="level-database-toggle" class="level-circle active" title="Database — click to show/hide SQL query output" aria-label="Toggle Database level"><span class="level-emoji">\uD83D\uDFE1</span><span class="level-label">DB</span><span class="level-count"></span></button>
             <span class="filter-drawer-context" title="Number of surrounding lines to keep visible around filtered matches">
-                <span>Context: <span id="context-lines-label">3 lines</span></span>
+                <span id="context-lines-label">\u00B13</span>
                 <input type="range" id="context-lines-slider" min="0" max="10" value="3" title="Number of surrounding lines to keep visible around filtered matches" aria-label="Context lines" />
             </span>
         </div>
@@ -50,8 +51,8 @@ export function getFilterDrawerHtml(): string {
         <select id="preset-select" title="Apply a preset filter configuration (e.g. Errors Only, Warnings+)">
             <option value="">None</option>
         </select>
-        <span class="filter-drawer-spacer"></span>
         <span id="filter-drawer-summary" class="filter-drawer-summary" title="Summary of currently active filters"></span>
+        <span class="filter-drawer-spacer"></span>
         <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and show all log lines">Reset all</button>
     </div>
 </div>`;
