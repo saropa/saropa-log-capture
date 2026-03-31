@@ -51,13 +51,17 @@ export function getToolbarStyles(): string {
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-    text-underline-offset: 2px;
     transition: color 0.15s ease;
 }
 .toolbar-filename:hover {
     color: var(--vscode-textLink-foreground, #3794ff);
+}
+.footer-filename {
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+.toolbar-filename:hover .footer-filename {
     text-decoration-style: solid;
 }
 .toolbar-sep {
@@ -214,20 +218,6 @@ export function getToolbarStyles(): string {
 }
 .anim-dropdown-open  { animation: dropdown-open  0.15s ease-out backwards; }
 .anim-dropdown-close { animation: dropdown-close 0.15s ease-in  forwards; }
-.filter-badge {
-    display: none;
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: var(--vscode-badge-background, #007acc);
-    color: var(--vscode-badge-foreground, #fff);
-    cursor: pointer;
-    white-space: nowrap;
-    font-weight: bold;
-    line-height: 1;
-    animation: badge-pop 0.2s ease-out;
-}
-.filter-badge:hover { opacity: 0.85; }
 
 /* Hidden lines counter (migrated from footer) */
 .hidden-lines-counter {
@@ -251,7 +241,6 @@ export function getToolbarStyles(): string {
     .search-flyout,
     .filter-drawer,
     .toolbar-actions-popover,
-    .filter-badge,
     .anim-flyout-open,
     .anim-flyout-close,
     .anim-dropdown-open,
