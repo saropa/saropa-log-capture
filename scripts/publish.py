@@ -67,18 +67,26 @@ import shutil
 import subprocess
 import sys
 
-# Ensure colorama is available so modules.constants can init it on Windows.
+# ── Bootstrap: auto-install optional dependencies ────────────
+# These imports run before any project module because modules.constants
+# calls colorama.init() at import time. If colorama is missing, the
+# import would fail with an unhelpful traceback — so we install it first.
 try:
     import colorama  # noqa: F401
 except ImportError:
     print("Installing colorama for terminal colors…")
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "colorama", "-q"],
+        # check=False: don't crash if pip fails — the script can still
+        # run without colors, just with raw ANSI escapes on some terminals.
         check=False,
         capture_output=True,
     )
 
-# On Windows, ensure readline is available so the version prompt can pre-fill the input.
+# Python's readline module enables input() pre-fill and history editing.
+# On Windows, the stdlib readline doesn't exist — pyreadline3 provides
+# a drop-in replacement so the version-bump prompt can pre-populate the
+# current version for the user to edit in-place.
 if sys.platform == "win32":
     try:
         import readline  # noqa: F401
@@ -92,10 +100,16 @@ if sys.platform == "win32":
                 capture_output=True,
             )
             try:
-                import pyreadline3  # noqa: F401  # use now that we just installed
+                # Re-import after install so readline is available for
+                # this session without requiring a script restart.
+                import pyreadline3  # noqa: F401
             except ImportError:
+                # Non-fatal: the version prompt will still work, it just
+                # won't pre-fill the current version for editing.
                 pass
 
+# ── Project imports ──────────────────────────────────────────
+# Grouped by layer: constants/config → display → data → actions.
 from modules.constants import C, ExitCode, PROJECT_ROOT
 from modules.display import dim, heading, info, show_logo
 from modules.utils import get_installed_extension_versions, read_package_version
@@ -114,6 +128,9 @@ from modules.orchestrator import (
 
 # ── CLI ──────────────────────────────────────────────────────
 
+# Boolean flags are defined as (flag, help) tuples so the parser loop
+# below can add them all uniformly. Non-boolean args (like --on-test-fail)
+# are added separately because they need extra argparse options.
 _CLI_FLAGS = [
     ("--analyze-only", "Run analysis + build + package, offer local install. No publish."),
     ("--yes", "Accept version and stamp CHANGELOG without prompting (non-interactive / CI)."),
@@ -133,10 +150,14 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Saropa Log Capture — Developer Toolkit & Publish Pipeline",
+        # RawDescriptionHelpFormatter preserves whitespace in the epilog/description
+        # so the .USAGE block renders correctly with `--help`.
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     for flag, help_text in _CLI_FLAGS:
         parser.add_argument(flag, action="store_true", help=help_text)
+    # --on-test-fail controls test failure behavior without requiring
+    # interactive input, making it suitable for CI pipelines.
     parser.add_argument(
         "--on-test-fail",
         choices=["ask", "retry", "skip", "stop"],
@@ -148,6 +169,10 @@ def parse_args() -> argparse.Namespace:
 
 # ── Exit Codes ───────────────────────────────────────────────
 
+# Maps human-readable step names (as stored in results tuples) to their
+# corresponding process exit codes. This lets CI scripts distinguish
+# _which_ phase failed without parsing stdout — e.g. exit 5 always
+# means "compile failed" regardless of the error message text.
 _STEP_EXIT_CODES = {
     "Node.js": ExitCode.PREREQUISITE_FAILED,
     "npm": ExitCode.PREREQUISITE_FAILED,
@@ -176,9 +201,15 @@ _STEP_EXIT_CODES = {
 
 def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
     """Derive an exit code from the last failing step name."""
+    # Walk results in reverse so the exit code reflects the most recent
+    # failure — earlier failures may have been superseded by later ones
+    # (e.g. a test failure followed by a compile retry that also failed).
     for name, passed, _ in reversed(results):
         if not passed:
             return _STEP_EXIT_CODES.get(name, 1)
+    # Fallback: if no explicit failure found, return generic error.
+    # This shouldn't happen in practice — callers only invoke this
+    # function when at least one step has failed.
     return 1
 
 
@@ -187,6 +218,8 @@ def _exit_code_from_results(results: list[tuple[str, bool, float]]) -> int:
 
 def _check_stores_ps_and_script() -> tuple[str, str] | None:
     """Return (powershell_exe, script_path) for modules/check-stores-version.ps1, or None."""
+    # Prefer pwsh (PowerShell Core, cross-platform) over the Windows-only
+    # "powershell" / "powershell.exe" which ships with older .NET runtime.
     ps = shutil.which("pwsh") or shutil.which("powershell") or shutil.which("powershell.exe")
     if not ps:
         print(
@@ -194,6 +227,9 @@ def _check_stores_ps_and_script() -> tuple[str, str] | None:
             file=sys.stderr,
         )
         return None
+    # The store-version check lives in a separate PowerShell script because
+    # it handles HTTP polling with retries — logic that's simpler in PS
+    # than shelling out to curl/Invoke-WebRequest from Python.
     script = os.path.join(PROJECT_ROOT, "scripts", "modules", "check-stores-version.ps1")
     if not os.path.isfile(script):
         print(f"ERROR: Missing {script}", file=sys.stderr)
@@ -207,6 +243,10 @@ def run_store_versions_report(expected_version: str) -> int:
     if pair is None:
         return ExitCode.PREREQUISITE_FAILED
     ps, script = pair
+    # -NoProfile: skip user's PS profile to avoid side-effects.
+    # -ExecutionPolicy Bypass: allow unsigned local scripts without
+    #   requiring a system-wide policy change.
+    # -ReportOnly: print current store versions vs expected, don't poll.
     cmd = [
         ps,
         "-NoProfile",
@@ -233,12 +273,18 @@ def run_store_propagation_wait(expected_version: str, stores: str) -> int:
     if pair is None:
         return ExitCode.PREREQUISITE_FAILED
     ps, script = pair
+    # Translate Python-side store identifiers (snake_case, used by the
+    # publish orchestrator) to PowerShell-side parameter values (PascalCase,
+    # expected by check-stores-version.ps1's -Stores param).
     stores_map = {
         "vscode_only": "Marketplace",
         "openvsx_only": "OpenVsx",
         "both": "Both",
     }
     stores_arg = stores_map.get(stores, "Both")
+    # IntervalSeconds/TotalMinutes control the polling cadence. 30s keeps
+    # us under any rate-limit while 10 min is enough for typical CDN
+    # propagation on both Marketplace and Open VSX.
     cmd = [
         ps,
         "-NoProfile",
@@ -264,10 +310,16 @@ def run_store_propagation_wait(expected_version: str, stores: str) -> int:
 def _print_banner(args: argparse.Namespace, version: str) -> None:
     """Print the script banner (logo or compact header)."""
     if not args.no_logo:
+        # Full ASCII art logo — used in interactive sessions for branding.
         show_logo(version)
     else:
+        # Compact one-liner — used in CI or when piping output, where the
+        # multi-line logo would just add noise.
         print(f"\n  {C.BOLD}Saropa Log Capture — Developer Toolkit{C.RESET}"
               f"  {dim(f'v{version}')}")
+    # Always show the project root so the user can verify the script is
+    # operating on the intended directory (guards against running from
+    # a stale checkout or wrong clone).
     print(f"  Project root: {dim(PROJECT_ROOT)}")
 
 
@@ -281,30 +333,44 @@ def main() -> int:
     4. Otherwise: confirm → credentials → publish (Steps 11-15) → store propagation poll (Step 16)
     """
     args = parse_args()
+    # Read current version from package.json — this is the source of truth
+    # for the extension's identity across npm, VS Code, and Open VSX.
     version = read_package_version()
 
+    # --store-versions is a standalone mode: just compare registry versions
+    # against package.json and exit. No analysis, no build, no publish.
     if args.store_versions:
         _print_banner(args, version)
         heading("Store versions (registries vs package.json)")
         return run_store_versions_report(version)
 
+    # Accumulates (step_name, passed, elapsed_seconds) tuples as each step
+    # completes. Used for timing reports and to determine exit codes.
     results: list[tuple[str, bool, float]] = []
 
     _print_banner(args, version)
 
     # ── ANALYSIS PHASE ──
+    # Steps 1-10: prerequisites, clean tree, compile, test, version.
+    # run_analysis may update `version` if the user bumps it during Step 10.
     version, passed = run_analysis(args, results)
     if not passed:
+        # Bail early but still emit timing + report so the developer can
+        # see exactly which step failed and how long each step took.
         print_timing(results)
         save_and_print_report(results, version)
         return _exit_code_from_results(results)
 
     # ── PACKAGE + LOCAL INSTALL ──
+    # Build the .vsix bundle and optionally install it into the local
+    # VS Code instance so the developer can smoke-test before publishing.
     vsix_path = package_and_install(args, results, version)
     if not vsix_path:
         return ExitCode.PACKAGE_FAILED
 
     # ── ANALYZE-ONLY: stop here ──
+    # In this mode the developer just wanted a build artifact + local test.
+    # Save the report and offer to open it, but don't touch git or registries.
     if args.analyze_only:
         report = save_report(results, version, vsix_path)
         print_timing(results)
@@ -314,17 +380,25 @@ def main() -> int:
         return ExitCode.SUCCESS
 
     # ── PUBLISH PHASE ──
+    # Everything below is irreversible (git push, marketplace upload),
+    # so we gate it behind an explicit confirmation prompt.
     heading("Publish Confirmation")
     if not confirm_publish(version):
         info("Publish cancelled by user.")
         return ExitCode.USER_CANCELLED
 
+    # Default to publishing to both stores. If neither vsce nor ovsx CLIs
+    # are detected, ask the user which store(s) they have credentials for.
     stores = "both"
     if not get_installed_extension_versions():
         stores = ask_publish_stores()
+    # Steps 11-15: commit, tag, marketplace publish, Open VSX, GitHub release.
     if not run_publish(version, vsix_path, results, stores):
         return _exit_code_from_results(results)
 
+    # Step 16: poll registry APIs until the new version is live. This
+    # catches CDN propagation delays so we don't close the terminal
+    # thinking the release is done when users still see the old version.
     heading("Step 16 · Verify store propagation")
     info("Polling registry APIs until the new version is visible (30s interval, 10 min max).")
     store_rc = run_store_propagation_wait(version, stores)
