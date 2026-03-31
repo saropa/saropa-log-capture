@@ -26,6 +26,7 @@ export function getSearchScript(): string {
 var sessionNavSearchOuter = document.getElementById('search-flyout');
 var searchInputEl = document.getElementById('search-input');
 var matchCountEl = document.getElementById('match-count');
+var toolbarSearchBadge = document.getElementById('toolbar-search-count');
 var searchModeToggleEl = document.getElementById('search-mode-toggle');
 var searchFunnelBtn = document.getElementById('search-funnel-btn');
 var searchOptionsPopover = document.getElementById('search-options-popover');
@@ -85,6 +86,7 @@ function clearSearchState() {
     matchIndices = [];
     currentMatchIdx = -1;
     if (matchCountEl) matchCountEl.textContent = '';
+    if (toolbarSearchBadge) toolbarSearchBadge.textContent = '';
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');
     if (sp) sp.disabled = true;
@@ -175,6 +177,9 @@ function updateMatchDisplay() {
     var navDisabled = matchIndices.length === 0;
     if (sp) sp.disabled = navDisabled;
     if (sn) sn.disabled = navDisabled;
+    if (toolbarSearchBadge) {
+        toolbarSearchBadge.textContent = matchIndices.length > 0 ? String(matchIndices.length) : '';
+    }
 }
 
 function searchNext() {

@@ -1,6 +1,9 @@
 /**
  * DB_14: CSS for the Signals (root-cause hypotheses) strip in the log viewer webview.
  *
+ * Visibility is controlled by the toolbar signals icon; the panel has no internal
+ * header or toggle — just the hypothesis list and a "Copy signals" button.
+ *
  * Evidence line targets are rendered as `<button class="root-cause-hyp-evidence">`; user-agent
  * styling in embedded webviews can show a light filled button unless those controls are reset to
  * look like theme links (transparent background, no border, `appearance: none`).
@@ -32,49 +35,6 @@ export function getRootCauseHypothesesStyles(): string {
     padding-bottom: 0;
     margin: 0;
     border-color: transparent;
-}
-.root-cause-hypotheses-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-.root-cause-hyp-toggle {
-    border: none;
-    background: transparent;
-    color: var(--vscode-descriptionForeground);
-    cursor: pointer;
-    font-size: 12px;
-    line-height: 1;
-    padding: 2px 4px;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-.root-cause-hyp-toggle:hover {
-    color: var(--vscode-foreground);
-    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
-}
-.root-cause-hypotheses-title {
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--vscode-descriptionForeground);
-    flex: 1;
-    min-width: 0;
-}
-.root-cause-hyp-explain-ai {
-    border: none;
-    background: transparent;
-    color: var(--vscode-textLink-foreground, #3794ff);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-.root-cause-hyp-explain-ai:hover {
-    text-decoration: underline;
 }
 .root-cause-hypotheses-list {
     margin: 0;
@@ -135,8 +95,46 @@ export function getRootCauseHypothesesStyles(): string {
     opacity: 0.92;
     cursor: help;
 }
+/* Copy all signals button */
+.rch-copy-all-btn {
+    display: block;
+    margin: 8px 0 0;
+    padding: 4px 10px;
+    border: 1px solid var(--vscode-button-secondaryBorder, var(--vscode-widget-border, var(--vscode-panel-border)));
+    border-radius: 2px;
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.31));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    font-size: 11px;
+    cursor: pointer;
+    appearance: none;
+}
+.rch-copy-all-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.5));
+}
+/* Brief toast shown after copy */
+.rch-toast {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 11px;
+    color: var(--vscode-charts-green, #89d185);
+    animation: rch-toast-fade 1.5s ease-out forwards;
+}
+@keyframes rch-toast-fade {
+    0%, 60% { opacity: 1; }
+    100% { opacity: 0; }
+}
+/* Flash highlight on evidence scroll target */
+@keyframes rch-evidence-flash {
+    0% { background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33)); }
+    100% { background: transparent; }
+}
+.rch-evidence-flash {
+    animation: rch-evidence-flash 1.5s ease-out;
+}
 @media (prefers-reduced-motion: reduce) {
     .root-cause-hypotheses { transition: none !important; }
+    .rch-toast { animation: none !important; }
+    .rch-evidence-flash { animation: none !important; background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33)); }
 }
 `;
 }
