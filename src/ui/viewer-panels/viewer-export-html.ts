@@ -63,6 +63,10 @@ export function getExportModalHtml(): string {
                         <input type="checkbox" id="export-level-debug" />
                         <span>🟤 Debug/Trace</span>
                     </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-database" />
+                        <span>🟡 Database</span>
+                    </label>
                 </div>
             </div>
 
