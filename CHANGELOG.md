@@ -26,6 +26,41 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Search match count badge** on the toolbar search icon — shows the number of matches when a search query is active
+- **Signals toolbar icon** (`codicon-pulse`) with count badge — shows the number of detected signals and toggles the signals panel on click
+- **Copy signals button** at the bottom of the signals panel — copies all signal texts to clipboard with a brief toast confirmation
+
+### Changed
+
+- Filter count badge now displays on the toolbar filter icon instead of a separate standalone badge
+- Signals panel visibility is now controlled by the toolbar icon — removed the internal header with expand/collapse toggle and "Explain with AI" button
+
+### Fixed
+
+- **Log viewer right-side clipping on window resize** — removed `scrollbar-width: none` that hid the horizontal scrollbar in Chromium 130+ (VS Code 1.97+), and added a `window.resize` fallback listener for edge cases where `ResizeObserver` misses webview dimension changes
+- Toolbar filename dotted underline no longer extends to the `●`/`⏸` status prefix — only the file path is underlined
+- Long-press to copy file path now works reliably — `preventDefault()` blocks Chromium drag initiation that was cancelling the 500 ms hold timer
+- Action buttons (Reset all, SQL Query History, etc.) no longer stretch to the full width of their container — they now size to their content
+- Action buttons use proper VS Code theme fallbacks so they never render as unstyled black rectangles when theme variables are missing
+- "Reset all" button in filter drawer footer is now visually separated from the preset dropdown with a spacer, since it applies globally to all filters
+- Accordion section counts (e.g. "2/2", "10 tags") now display as bracketed suffixes on the title (e.g. "Log Inputs (2/2)") instead of right-aligned
+
+### Changed
+
+- Context lines label in filter drawer shortened from "Context: 3 lines" to compact `±3` notation — saves toolbar space while tooltip still explains the control
+
+### Added
+
+- New **Database** level with cyan filter dot — Drift SQL lines (`Drift: Sent SELECT|INSERT|…`) now classify as `database` instead of inheriting severity from the logcat prefix, giving a single toolbar dot and filter toggle for all SQL traffic
+- TODO marker filter now also catches **BUG**, **KLUDGE**, and **WORKAROUND** keywords (case-insensitive) in addition to TODO, FIXME, HACK, and XXX
+- Text casing conventions added to UI Style Guide — sentence case for action buttons, Title Case for panel/view names and section headings
+
+---
+
 ## [5.2.0]
 
 Fixes trailing-CR tofu boxes, logcat level misclassification, and search box clearing; adds channel badge decoration, copy-as-raw-text, and quick-save export. [log](https://github.com/saropa/saropa-log-capture/blob/v5.2.0/CHANGELOG.md)

@@ -161,7 +161,7 @@ function onPresetSelectChange(e) {
 function getCurrentFilters() {
     var filters = {};
     if (activeFilters) { filters.categories = Array.from(activeFilters); }
-    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7) {
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < allLevelNames.length) {
         filters.levels = Array.from(enabledLevels);
     }
     var searchInput = document.getElementById('search-input');
@@ -187,9 +187,9 @@ function markPresetDirty() {
 /** Re-enable all level filters and update footer circle buttons. */
 function resetLevelFilters() {
     if (typeof enabledLevels !== 'undefined') {
-        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
+        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database']);
     }
-    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice'];
+    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database'];
     for (var li = 0; li < ids.length; li++) {
         var btn = document.getElementById('level-' + ids[li] + '-toggle');
         if (btn) btn.classList.add('active');
