@@ -37,6 +37,17 @@ suite('ViewerKeybindings', () => {
       const actions = new Set(Object.values(map));
       assert.ok(actions.size >= VIEWER_KEYBINDING_ACTION_IDS.length, 'every action has a key');
     });
+    test('copyRaw is bound to ctrl+alt+c by default', () => {
+      const map = getDefaultKeyToAction();
+      assert.strictEqual(map['ctrl+alt+c'], 'copyRaw');
+    });
+  });
+
+  test('VIEWER_KEYBINDING_ACTION_IDS includes copyRaw', () => {
+    assert.ok(
+      (VIEWER_KEYBINDING_ACTION_IDS as readonly string[]).includes('copyRaw'),
+      'copyRaw must be a registered action ID',
+    );
   });
 
   suite('buildKeyToAction', () => {
@@ -64,6 +75,7 @@ suite('ViewerKeybindings', () => {
     test('returns label for known action', () => {
       assert.strictEqual(getViewerActionLabel('togglePause'), 'Toggle pause');
       assert.strictEqual(getViewerActionLabel('openSearch'), 'Focus log search');
+      assert.strictEqual(getViewerActionLabel('copyRaw'), 'Copy as raw text');
     });
     test('returns actionId for unknown', () => {
       assert.strictEqual(getViewerActionLabel('unknown'), 'unknown');

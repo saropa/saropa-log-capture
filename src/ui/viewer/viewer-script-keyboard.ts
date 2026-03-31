@@ -47,6 +47,7 @@ document.addEventListener('keydown', function(e) {
     }
     if (action === 'copyMarkdown') { e.preventDefault(); if (typeof copyAsMarkdown === 'function') copyAsMarkdown(); return; }
     if (action === 'copyAll') { e.preventDefault(); if (typeof copyAllToClipboard === 'function') copyAllToClipboard(); return; }
+    if (action === 'copyRaw') { e.preventDefault(); if (typeof copyAsRawText === 'function') copyAsRawText(); return; }
     if (action === 'openFindPanel') {
         e.preventDefault();
         if (typeof setActivePanel === 'function') setActivePanel('find');

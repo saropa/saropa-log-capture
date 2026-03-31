@@ -72,6 +72,20 @@ function getAllCopyableLines() {
     return lines;
 }
 
+function linesToRawText(lines) {
+    var parts = [];
+    for (var i = 0; i < lines.length; i++) {
+        parts.push(lines[i].rawText != null ? lines[i].rawText : stripTags(lines[i].html));
+    }
+    return parts.join('\\n');
+}
+
+function copyAsRawText() {
+    var lines = selectionStart >= 0 ? getSelectedLines() : getVisibleLines();
+    if (lines.length === 0) return;
+    vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToRawText(lines) });
+}
+
 function copyAllToClipboard() {
     var lines = getAllCopyableLines();
     if (lines.length === 0) return;
