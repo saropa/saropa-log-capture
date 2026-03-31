@@ -160,19 +160,18 @@ export function getOptionsStyles(): string {
     opacity: 0.4;
 }
 
-/* Action buttons in options panel (Reset to default, Reset extension settings) */
+/* Action buttons (Reset to default, Reset all, SQL Query History…) */
 .options-action-btn {
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.5));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     border: 1px solid var(--vscode-button-border, transparent);
     font-size: 11px;
     padding: 4px 12px;
     cursor: pointer;
     border-radius: 3px;
-    width: 100%;
 }
 .options-action-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.7));
 }
 
 /* Hint/status text under a control */
