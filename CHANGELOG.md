@@ -34,11 +34,13 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - **Signals toolbar icon** (`codicon-pulse`) with count badge — shows the number of detected signals and toggles the signals panel on click
 - **Copy signals button** at the bottom of the signals panel — copies all signal texts to clipboard with a brief toast confirmation
 - **Evidence line flash highlight** — clicking a signal's "line N" evidence link now scrolls to the line and briefly flashes it so you can see exactly where you landed
+- **Dismiss individual signals** — hover a signal to reveal an X button; dismissed signals are hidden for the session with a "N dismissed — restore all" link to bring them back
 
 ### Changed
 
 - Filter count badge now displays on the toolbar filter icon instead of a separate standalone badge
 - Signals panel visibility is now controlled by the toolbar icon — removed the internal header with expand/collapse toggle and "Explain with AI" button
+- Signal text templates rewritten as clear diagnostic messages — removed hedging language and internal jargon
 
 ### Fixed
 
