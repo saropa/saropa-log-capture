@@ -2,7 +2,7 @@
  * DB_14: CSS for the Signals (root-cause hypotheses) strip in the log viewer webview.
  *
  * Visibility is controlled by the toolbar signals icon; the panel has no internal
- * header or toggle — just the hypothesis list and a "Copy signals" button.
+ * header or toggle — just the hypothesis list, "Copy signals" button, and per-signal dismiss.
  *
  * Evidence line targets are rendered as `<button class="root-cause-hyp-evidence">`; user-agent
  * styling in embedded webviews can show a light filled button unless those controls are reset to
@@ -86,6 +86,41 @@ export function getRootCauseHypothesesStyles(): string {
     color: var(--vscode-charts-green, #89d185);
     font-size: 11px;
 }
+.rch-dismiss-btn {
+    border: none;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 1px 4px;
+    margin-left: 2px;
+    border-radius: 2px;
+    vertical-align: middle;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.root-cause-hypotheses-list li:hover .rch-dismiss-btn {
+    opacity: 1;
+}
+.rch-dismiss-btn:hover {
+    color: var(--vscode-errorForeground, #f48771);
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.rch-restore-btn {
+    display: block;
+    margin: 6px 0 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--vscode-descriptionForeground);
+    font-size: 11px;
+    cursor: pointer;
+    appearance: none;
+}
+.rch-restore-btn:hover {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: underline;
+}
 .root-cause-hyp-conf {
     display: inline-block;
     font-size: 12px;
@@ -133,6 +168,7 @@ export function getRootCauseHypothesesStyles(): string {
 }
 @media (prefers-reduced-motion: reduce) {
     .root-cause-hypotheses { transition: none !important; }
+    .rch-copy-btn, .rch-dismiss-btn { transition: none !important; }
     .rch-toast { animation: none !important; }
     .rch-evidence-flash { animation: none !important; background: var(--vscode-editor-findMatchHighlightBackground, rgba(234, 92, 0, 0.33)); }
 }

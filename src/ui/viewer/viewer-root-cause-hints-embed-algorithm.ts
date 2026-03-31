@@ -121,7 +121,7 @@ function buildHypothesesEmbedded(bundle) {
             errCount++;
             parts.push({
                 templateId: 'error-recent',
-                text: truncateRchText('Recent error: ' + ex, ${MAX_T}),
+                text: truncateRchText('Error: ' + ex, ${MAX_T}),
                 evidenceLineIds: [e.lineIndex],
                 confidence: 'medium',
                 hypothesisKey: 'err::' + e.lineIndex,
@@ -135,7 +135,7 @@ function buildHypothesesEmbedded(bundle) {
         d0 = d.regressionFingerprints[0];
         parts.push({
             templateId: 'session-diff-regression',
-            text: truncateRchText('Session compare: increased activity for a SQL fingerprint vs baseline — regression hypothesis.', ${MAX_T}),
+            text: truncateRchText('SQL query volume increased compared to previous session (performance regression)', ${MAX_T}),
             evidenceLineIds: [],
             confidence: 'low',
             hypothesisKey: 'diff::' + d0,
@@ -149,7 +149,7 @@ function buildHypothesesEmbedded(bundle) {
             if (!h || !h.fingerprint) continue;
             sec = (h.windowSpanMs / 1000).toFixed(1);
             text = truncateRchText(
-                'Possible N+1: ' + h.repeats + ' similar DB calls (' + h.distinctArgs + ' arg variants) in ' + sec + 's — not certain.',
+                h.repeats + ' similar DB calls with ' + h.distinctArgs + ' different arguments in ' + sec + 's (possible N+1 query)',
                 ${MAX_T}
             );
             parts.push({
@@ -170,7 +170,7 @@ function buildHypothesesEmbedded(bundle) {
             w = typeof b.windowMs === 'number' ? ' in ~' + Math.round(b.windowMs) + 'ms' : '';
             parts.push({
                 templateId: 'sql-burst',
-                text: truncateRchText('SQL burst: ' + b.count + ' similar queries' + w + ' — may be normal traffic or a loop.', ${MAX_T}),
+                text: truncateRchText(b.count + ' identical queries fired' + w + ' (rapid burst)', ${MAX_T}),
                 evidenceLineIds: [],
                 confidence: 'low',
                 hypothesisKey: 'burst::' + b.fingerprint,
@@ -184,7 +184,7 @@ function buildHypothesesEmbedded(bundle) {
         rule = da.topRuleId ? ' (' + da.topRuleId + ')' : '';
         parts.push({
             templateId: 'drift-advisor',
-            text: truncateRchText('Drift Advisor reports ' + da.issueCount + ' issue(s)' + rule + ' in the workspace — may relate to DB noise here.', ${MAX_T}),
+            text: truncateRchText('Drift static analysis found ' + da.issueCount + ' issue' + (da.issueCount === 1 ? '' : 's') + rule + ' in the workspace', ${MAX_T}),
             evidenceLineIds: [],
             confidence: 'low',
             hypothesisKey: 'drift::summary',
@@ -200,7 +200,7 @@ function buildHypothesesEmbedded(bundle) {
             parts.push({
                 templateId: 'fingerprint-leader',
                 text: truncateRchText(
-                    'Repeated SQL fingerprint (' + L.count + ' hits this session) — possible hot path or missing batching.',
+                    'Same SQL query executed ' + L.count + ' times this session (consider batching or caching)',
                     ${MAX_T}
                 ),
                 evidenceLineIds: L.sampleLineIndex >= 0 ? [L.sampleLineIndex] : [],
