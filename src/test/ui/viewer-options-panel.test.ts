@@ -67,10 +67,10 @@ suite('ViewerOptionsPanel', () => {
             );
         });
 
-        test('options action buttons remain full width for reset controls', () => {
+        test('options action buttons size to content (shared across panels)', () => {
             const css = getOptionsStyles();
             const action = cssRuleBody(css, '.options-action-btn');
-            assert.ok(action.includes('width: 100%'), 'reset row should stay full width');
+            assert.ok(!action.includes('width: 100%'), 'action buttons should size to content, not stretch');
         });
     });
 
