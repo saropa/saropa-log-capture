@@ -283,20 +283,6 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         if (!isNaN(repSeq) && typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(repSeq);
         return;
     }
-    var driftFoldBtn = e.target.closest('.drift-args-fold-btn');
-    if (driftFoldBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        var driftLine = driftFoldBtn.closest('[data-idx]');
-        if (driftLine && driftLine.dataset.idx !== undefined) {
-            var dIdx = parseInt(driftLine.dataset.idx, 10);
-            if (!isNaN(dIdx) && typeof driftArgsFoldOpenByIdx !== 'undefined') {
-                driftArgsFoldOpenByIdx[dIdx] = !driftArgsFoldOpenByIdx[dIdx];
-                if (typeof renderViewport === 'function') renderViewport(true);
-            }
-        }
-        return;
-    }
     var link = e.target.closest('.source-link');
     if (link) {
         e.preventDefault();
