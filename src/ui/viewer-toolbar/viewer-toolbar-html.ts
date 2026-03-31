@@ -8,7 +8,7 @@
  * Element IDs preserved from the old footer/header so existing scripts
  * continue to work without changes:
  *   `#level-menu-btn`, `#line-count`, `#hidden-lines-counter`,
- *   `#footer-selection`, `#filter-badge`, `#footer-text`.
+ *   `#footer-selection`, `#footer-text`.
  */
 
 import { getRunNavHtml } from '../viewer-nav/viewer-run-nav';
@@ -34,10 +34,15 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
         <span class="toolbar-sep"></span>
         <button type="button" id="toolbar-search-btn" class="toolbar-icon-btn" title="Open search to find text in the current log (Ctrl+F)" aria-label="Toggle search" aria-expanded="false">
             <span class="codicon codicon-search" aria-hidden="true"></span>
+            <span id="toolbar-search-count" class="toolbar-badge" title="Number of search matches"></span>
         </button>
         <button type="button" id="toolbar-filter-btn" class="toolbar-icon-btn" title="Open filter drawer to show/hide log levels, streams, and exclusions" aria-label="Toggle filter drawer" aria-expanded="false">
             <span class="codicon codicon-filter" aria-hidden="true"></span>
             <span id="toolbar-filter-count" class="toolbar-badge" title="Number of active filters"></span>
+        </button>
+        <button type="button" id="toolbar-signals-btn" class="toolbar-icon-btn" title="Toggle signals panel" aria-label="Toggle signals" aria-expanded="false">
+            <span class="codicon codicon-pulse" aria-hidden="true"></span>
+            <span id="toolbar-signals-count" class="toolbar-badge" title="Number of detected signals"></span>
         </button>
         <button type="button" id="toolbar-actions-btn" class="toolbar-icon-btn toolbar-actions-trigger" title="Open actions menu for replay, quality report, and export" aria-label="Actions menu" aria-haspopup="true" aria-expanded="false">
             <span class="codicon codicon-kebab-vertical" aria-hidden="true"></span>
@@ -51,6 +56,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="level-dot-group" data-level="todo" title="TODO — click to toggle, double-click to show only TODOs" role="img" aria-label="TODO"><span class="level-dot active level-dot-todo"></span><span class="dot-count"></span></span>
             <span class="level-dot-group" data-level="debug" title="Debug — click to toggle, double-click to show only Debug" role="img" aria-label="Debug"><span class="level-dot active level-dot-debug"></span><span class="dot-count"></span></span>
             <span class="level-dot-group" data-level="notice" title="Notice — click to toggle, double-click to show only Notices" role="img" aria-label="Notice"><span class="level-dot active level-dot-notice"></span><span class="dot-count"></span></span>
+            <span class="level-dot-group" data-level="database" title="Database — click to toggle, double-click to show only Database" role="img" aria-label="Database"><span class="level-dot active level-dot-database"></span><span class="dot-count"></span></span>
             <span id="level-trigger-label" class="level-trigger-label" title="Level filter summary — click to open filter drawer">All</span>
         </span>
         <span class="toolbar-sep"></span>
@@ -60,7 +66,6 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="hidden-count-text"></span>
         </span>
         <span id="footer-selection" class="footer-selection" title="Number of currently selected lines"></span>
-        <span id="filter-badge" class="filter-badge" role="button" title="Number of active filters — click to view" aria-label="Active filters"></span>
         <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Performance data available — click to open the Insights panel" aria-label="Performance data available">Performance</button>
     </div>
     <div class="toolbar-right">
