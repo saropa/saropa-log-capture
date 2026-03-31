@@ -9,7 +9,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText);
             }
             trimData();
             if (msg.lineCount !== undefined) {
@@ -59,7 +59,6 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof driftArgsFoldOpenByIdx !== 'undefined') driftArgsFoldOpenByIdx = Object.create(null);
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
                 repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.lastRepeatNotificationIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;

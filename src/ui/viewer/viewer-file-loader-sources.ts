@@ -14,6 +14,7 @@ export function parseTerminalSidecarToPending(content: string): PendingLine[] {
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => ({
         text: linkifyUrls(linkifyHtml(ansiToHtml(raw))),
+        rawText: raw,
         isMarker: false,
         lineCount: 0,
         category: 'console',
@@ -34,6 +35,7 @@ export function parseExternalSidecarToPending(content: string, label: string): P
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => ({
         text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
+        rawText: raw,
         isMarker: false,
         lineCount: 0,
         category: 'console',
@@ -115,6 +117,7 @@ export function parseBrowserSidecarToPending(content: string): PendingLine[] {
         }
         result.push({
             text: escapeHtml(formatted),
+            rawText: formatted,
             isMarker: false,
             lineCount: 0,
             category: 'console',
