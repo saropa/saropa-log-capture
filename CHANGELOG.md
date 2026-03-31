@@ -24,10 +24,11 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
-## [Unreleased]
+## [5.2.0]
 
 ### Fixed
 
+- Trailing carriage return (`\r`) rendered as a small blue tofu box at the end of every log line — DAP adapters that send `\r` without `\n` now have all trailing CR/LF stripped; `escapeHtml()` also strips control characters as defense-in-depth
 - Threadtime logcat lines (e.g. `03-30 07:34:58.588 4457 4457 D Android: …`) now correctly recognize the level prefix — previously the `D`/`I`/`W`/`E` was ignored, causing debug lines to misclassify as info and inherit nearby error coloring
 - Scroll map no longer floods with a single color — debug and notice bars now respect the "show info markers" toggle (off by default), so only error, warning, performance, and to-do markers appear
 - Search text box no longer clears itself after typing — `clearSearchFilter()` name collision between viewer-search and viewer-presets caused the presets version (which empties the input) to overwrite the search version; renamed to `clearSearchFilteredFlags()` and `presetClearSearchInputValue()`
@@ -36,6 +37,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Added
 
+- Channel badge decoration — small inline label (e.g. `stdout`, `logcat`, `ai-bash`) showing the DAP output channel for each log line; toggled from Decoration Settings panel (off by default)
+- Copy as raw text (`Ctrl+Alt+C`) — copies the original unprocessed text before ANSI stripping, HTML conversion, or linkification; falls back to plain text for synthetic items
 - Quick Save button in export modal — saves the current view as-is to the `reports/` folder as a markdown file with metadata header (project name, active filters, level breakdown, timestamps)
 
 ### Changed

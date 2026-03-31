@@ -36,7 +36,7 @@ function proximityInheritAnchor() {
     return null;
 }
 
-function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source) {
+function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
     var lineSource = source || 'debug';
     if (ts && !sessionStartTs) sessionStartTs = ts;
@@ -49,7 +49,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             activeGroupHeader = null;
         }
         cleanupTrailingRepeats();
-        var markerItem = { html: html, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
+        var markerItem = { html: html, rawText: rawText || null, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) markerItem.elapsedMs = elapsedMs;
         allLines.push(markerItem);
         totalHeight += MARKER_HEIGHT;
@@ -71,7 +71,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                     if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
                 }
             }
-            var sfItem = { html: html, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
+            var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
             if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
             allLines.push(sfItem);
             activeGroupHeader.frameCount++;
@@ -86,7 +86,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         // Expanded by default so every frame is visible; users can click the header to collapse or use preview.
-        var hdr = { html: html, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
@@ -236,6 +236,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (!isUpdate) {
             repeatItem = {
                 html: repeatHtml,
+                rawText: null,
                 type: 'repeat-notification',
                 height: repeatH,
                 category: category,
@@ -323,7 +324,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
+        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).

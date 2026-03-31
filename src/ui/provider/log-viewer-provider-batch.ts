@@ -12,7 +12,7 @@
  */
 
 import { escapeHtml } from "../../modules/capture/ansi";
-import { buildLogLineHtmlWithOptionalDriftArgsFold } from "../../modules/db/drift-log-line-args-fold";
+import { buildLogLineHtmlWithOptionalDriftArgsDim } from "../../modules/db/drift-log-line-args-fold";
 import { LineData } from "../../modules/session/session-manager";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { type ThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
@@ -37,12 +37,13 @@ export interface BatchTarget {
  * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
  */
 export function buildPendingLineFromLineData(data: LineData): PendingLine {
-    let html = data.isMarker ? escapeHtml(data.text) : buildLogLineHtmlWithOptionalDriftArgsFold(data.text);
+    let html = data.isMarker ? escapeHtml(data.text) : buildLogLineHtmlWithOptionalDriftArgsDim(data.text);
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const fw = helpers.classifyFrame(data.text);
     const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
     return {
-        text: html, isMarker: data.isMarker, lineCount: data.lineCount,
+        text: html, rawText: data.text,
+        isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
