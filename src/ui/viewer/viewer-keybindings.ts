@@ -29,6 +29,7 @@ export const VIEWER_KEYBINDING_ACTION_IDS = [
   'togglePin',
   'annotate',
   'toggleAppOnly',
+  'copyRaw',
 ] as const;
 
 export type ViewerKeybindingActionId = (typeof VIEWER_KEYBINDING_ACTION_IDS)[number];
@@ -56,6 +57,7 @@ const DEFAULT_ACTION_TO_KEY: Record<ViewerKeybindingActionId, string> = {
   togglePin: 'p',
   annotate: 'n',
   toggleAppOnly: 'a',
+  copyRaw: 'ctrl+alt+c',
 };
 
 /** Short labels for status bar when recording a keybinding. */
@@ -81,6 +83,7 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   togglePin: 'Pin line',
   annotate: 'Annotate line',
   toggleAppOnly: 'App-only stack trace',
+  copyRaw: 'Copy as raw text',
 };
 
 export function getViewerActionLabel(actionId: string): string {

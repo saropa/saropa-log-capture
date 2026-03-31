@@ -147,7 +147,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **.slc session bundle:** Export to `.slc` ZIP; **Import .slc Bundle** (Ctrl+Shift+P → type the name) restores sessions or opens a shared investigation; in the file dialog, pick the .slc file. Investigation panel **Share**: Gist, export .slc, Copy deep link (local file), LAN, etc.
 - **Export to Loki:** Push current or selected session to Grafana Loki. Enable `saropaLogCapture.loki.enabled`, set `saropaLogCapture.loki.pushUrl`, and store your API key with **Saropa Log Capture: Set Loki API Key**. Available from command palette and session context menu.
 - **Hover copy icon:** Hover any log line to reveal a copy button on the right edge. Click to copy the line's plain text to clipboard with a "Copied" toast confirmation.
-- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.
+- **Multi-format copy:** Shift+click to select, Ctrl+C for text, Ctrl+Shift+C for markdown, Ctrl+Alt+C for raw (unprocessed) text, Ctrl+Shift+A for all lines. **Copy as snippet (GitHub/GitLab):** context menu wraps selection in `` ```log `` … `` ``` `` for pasting into issues.
 - **Copy to Search:** Right-click a line to open search pre-filled with its text.
 - **Source link context menu:** Right-click a filename reference to Open File, Copy Relative Path, or Copy Full Path.
 
@@ -218,6 +218,7 @@ Open **Options** → **Keyboard shortcuts…** in the viewer for the full refere
 | Shift+Click   | Select line range                   |
 | Ctrl+C        | Copy selection as plain text        |
 | Ctrl+Shift+C  | Copy selection as markdown          |
+| Ctrl+Alt+C    | Copy selection as raw text          |
 | Ctrl+Shift+A  | Copy all visible lines to clipboard |
 | N             | Annotate center line                |
 | A             | Toggle app-only stack trace mode    |
@@ -386,6 +387,7 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 | **Escape**                           | Close search, options, go-to-line, peek, or session panel           |
 | **Ctrl+C**                           | Copy selection; if no selection, copy current line (when supported) |
 | **Ctrl+Shift+C**                     | Copy selection as Markdown                                          |
+| **Ctrl+Alt+C**                       | Copy selection as raw (unprocessed) text                            |
 | **Ctrl+Shift+A**                     | Copy full log to clipboard                                          |
 | **Ctrl+A**                           | Select all (in viewer)                                              |
 | **Ctrl++** / **Ctrl+-** / **Ctrl+0** | Increase / decrease / reset font size                               |
