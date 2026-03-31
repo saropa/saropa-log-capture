@@ -79,9 +79,6 @@ function trimData() {
     }
     if (typeof finalizeSqlPatternState === 'function') finalizeSqlPatternState();
     else if (typeof buildPrefixSums === 'function') buildPrefixSums();
-    if (typeof driftArgsFoldOpenByIdx !== 'undefined') {
-        driftArgsFoldOpenByIdx = Object.create(null);
-    }
     if (typeof pruneDbDetectorStateAfterTrim === 'function' && allLines.length > 0) {
         var oldestKept = allLines[0].timestamp;
         if (typeof oldestKept === 'number' && isFinite(oldestKept)) {
