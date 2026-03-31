@@ -41,7 +41,7 @@ function initExportModal() {
     }
 
     // Level checkboxes
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug'];
+    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox) {
