@@ -147,6 +147,38 @@ suite('Webview script null guards – core viewer', () => {
             );
         });
 
+        test('filename mousedown should check e.button for left-click only', () => {
+            assert.ok(
+                script.includes('if (e.button !== 0) return'),
+                'mousedown handler should reject non-left clicks',
+            );
+        });
+
+        test('filename mousedown should use closest for target detection', () => {
+            assert.ok(
+                script.includes("e.target.closest('.footer-filename')"),
+                'mousedown handler should use closest instead of classList.contains',
+            );
+        });
+
+        test('filename mousedown should preventDefault to block drag', () => {
+            const mdBlock = script.slice(
+                script.indexOf("addEventListener('mousedown'"),
+                script.indexOf("addEventListener('mouseup'"),
+            );
+            assert.ok(
+                mdBlock.includes('e.preventDefault()'),
+                'mousedown on filename should call preventDefault',
+            );
+        });
+
+        test('should prevent dragstart on footer text element', () => {
+            assert.ok(
+                script.includes("addEventListener('dragstart'"),
+                'footerTextEl should have a dragstart listener',
+            );
+        });
+
         test('should guard logEl in onLogOrWrapResize', () => {
             const block = script.slice(
                 script.indexOf('function onLogOrWrapResize'),
