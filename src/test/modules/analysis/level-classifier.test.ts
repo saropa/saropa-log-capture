@@ -16,7 +16,7 @@ suite('LevelClassifier', () => {
         test('should honor Drift SQL on stderr when stderrTreatAsError is false', () => {
             assert.strictEqual(
                 classifyLevel('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false),
-                'info',
+                'database',
             );
         });
     });
@@ -62,32 +62,32 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('I/App: started', 'stdout', true), 'info');
         });
 
-        test('should classify I/flutter Drift SQL statements as info even with "ApplicationLogError" in args', () => {
+        test('should classify I/flutter Drift SQL statements as database even with "ApplicationLogError" in args', () => {
             assert.strictEqual(
                 classifyLevel(
                     'I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]',
                     'stdout',
                     true,
                 ),
-                'info',
+                'database',
             );
         });
 
-        test('should classify capture-prefixed Drift SQL as info when logcat is not at line start', () => {
+        test('should classify capture-prefixed Drift SQL as database when logcat is not at line start', () => {
             assert.strictEqual(
                 classifyLevel(
                     '[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]',
                     'stdout',
                     true,
                 ),
-                'info',
+                'database',
             );
         });
 
-        test('should classify E/flutter Drift SQL as warning, not runtime error', () => {
+        test('should classify E/flutter Drift SQL as database, not runtime error', () => {
             assert.strictEqual(
                 classifyLevel('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true),
-                'warning',
+                'database',
             );
         });
     });
@@ -175,10 +175,21 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('at package:flutter/src/widgets.dart:123: memory usage high', 'stdout', true), 'performance');
         });
 
-        test('should classify TODO/FIXME/HACK', () => {
+        test('should classify TODO/FIXME/HACK/XXX', () => {
             assert.strictEqual(classifyLevel('TODO: fix this', 'stdout', true), 'todo');
             assert.strictEqual(classifyLevel('FIXME: broken', 'stdout', true), 'todo');
             assert.strictEqual(classifyLevel('HACK: workaround', 'stdout', true), 'todo');
+            assert.strictEqual(classifyLevel('XXX: danger zone', 'stdout', true), 'todo');
+        });
+
+        test('should classify BUG/KLUDGE/WORKAROUND as todo', () => {
+            assert.strictEqual(classifyLevel('BUG: null ref in widget', 'stdout', true), 'todo');
+            assert.strictEqual(classifyLevel('KLUDGE: temporary fix', 'stdout', true), 'todo');
+            assert.strictEqual(classifyLevel('WORKAROUND: upstream issue', 'stdout', true), 'todo');
+        });
+
+        test('should not match BUG inside DEBUG', () => {
+            assert.strictEqual(classifyLevel('DEBUG: variable value', 'stdout', true), 'debug');
         });
 
         test('should classify debug/trace', () => {
@@ -296,17 +307,17 @@ suite('LevelClassifier', () => {
             );
         });
 
-        test('should handle Drift SQL in threadtime format', () => {
+        test('should handle Drift SQL in threadtime format as database', () => {
             assert.strictEqual(
                 classifyLevel(tt('I', 'flutter (5475)', 'Drift: Sent SELECT 1'), 'stdout', true),
-                'info',
+                'database',
             );
         });
 
-        test('should handle Drift SQL E/ in threadtime as warning not error', () => {
+        test('should handle Drift SQL E/ in threadtime as database not error', () => {
             assert.strictEqual(
                 classifyLevel(tt('E', 'flutter', 'Drift: Sent DELETE FROM activities'), 'stdout', true),
-                'warning',
+                'database',
             );
         });
     });
@@ -339,6 +350,10 @@ suite('LevelClassifier', () => {
 
         test('should return false for notice', () => {
             assert.strictEqual(isActionableLevel('notice'), false);
+        });
+
+        test('should return false for database', () => {
+            assert.strictEqual(isActionableLevel('database'), false);
         });
     });
 });
