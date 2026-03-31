@@ -1,3 +1,5 @@
+// cspell:disable
+
 /** Level classification patterns and the classifyLevel() webview function. */
 export function getLevelClassifyScript(): string {
     return /* javascript */ `
@@ -12,9 +14,10 @@ var perfPattern = /\\b(perf(?:ormance)?|dropped\\s+frame|fps|framerate|jank|stut
 // Flutter/Dart memory: same context + phrase rules as level-classifier.ts (keep in sync).
 var flutterDartContextRe = /(?:^[VDIW]\\/(?:flutter|dart)\\s|package\\/(?:flutter|dart)\\b)/i;
 var memoryPhraseRe = /\\b(Memory\\s*:\\s*\\d+|memory\\s+(?:pressure|usage|leak)|(?:old|new)\\s+gen\\s|retained\\s+\\d+|leak\\s+detected|potential\\s+leak)\\b/i;
-var todoPattern = /\\b(TODO|FIXME|HACK|XXX)\\b/i;
+var todoPattern = /\\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\\b/i;
 var debugPattern = /\\b(breadcrumb|trace|debug)\\b/i;
 var noticePattern = /\\b(notice|note|important)\\b/i;
+var genericSqlPattern = /\\bSELECT\\b.{1,80}\\bFROM\\b|\\bINSERT\\s+INTO\\b|\\bUPDATE\\b\\s+\\S+\\s+SET\\b|\\bDELETE\\s+FROM\\b|\\bCREATE\\s+(?:TABLE|INDEX|VIEW)\\b|\\bALTER\\s+(?:TABLE|INDEX)\\b|\\bDROP\\s+(?:TABLE|INDEX|VIEW)\\b|\\bPRAGMA\\s+\\w+/i;
 
 /** Logcat prefix (E/, W/, I/, D/, V/, F/, A/) is an authoritative level signal. */
 var logcatLevelPattern = /^([VDIWEFA])\\//;
@@ -23,17 +26,6 @@ var logcatLetterAnywhere = /\\b([VDIWEFA])\\//;
 /** Threadtime format: MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message */
 var threadtimeLevelPattern = /^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+([VDIWEFA])\\s/;
 
-function classifyDriftSqlLine(plainText) {
-    var lcm = logcatLevelPattern.exec(plainText);
-    var m = lcm || logcatLetterAnywhere.exec(plainText) || threadtimeLevelPattern.exec(plainText);
-    if (!m) return 'info';
-    var L = m[1];
-    if (L === 'D' || L === 'V') return 'debug';
-    if (L === 'W') return 'warning';
-    if (L === 'E' || L === 'F' || L === 'A') return 'warning';
-    return 'info';
-}
-
 /** Used by viewer-data-add to skip severity proximity inheritance for Drift SQL bursts. */
 function isDriftSqlStatementLine(plainText) {
     return driftStatementPattern.test(plainText);
@@ -41,7 +33,7 @@ function isDriftSqlStatementLine(plainText) {
 
 function classifyLevel(plainText, category) {
     if (stderrTreatAsError && category === 'stderr') return 'error';
-    if (driftStatementPattern.test(plainText)) return classifyDriftSqlLine(plainText);
+    if (driftStatementPattern.test(plainText)) return 'database';
     var ep = strictLevelDetection ? strictErrorPattern : looseErrorPattern;
     var lcm = logcatLevelPattern.exec(plainText) || threadtimeLevelPattern.exec(plainText);
     if (lcm) {
@@ -55,6 +47,7 @@ function classifyLevel(plainText, category) {
         if (L === 'V' || L === 'D') return 'debug';
         if (debugPattern.test(plainText)) return 'debug';
         if (noticePattern.test(plainText)) return 'notice';
+        if (genericSqlPattern.test(plainText)) return 'database';
         return 'info';
     }
     if (ep.test(plainText)) return 'error';
@@ -64,6 +57,7 @@ function classifyLevel(plainText, category) {
     if (todoPattern.test(plainText)) return 'todo';
     if (debugPattern.test(plainText)) return 'debug';
     if (noticePattern.test(plainText)) return 'notice';
+    if (genericSqlPattern.test(plainText)) return 'database';
     return 'info';
 }`;
 }

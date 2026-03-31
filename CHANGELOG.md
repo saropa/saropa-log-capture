@@ -33,6 +33,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - **Search match count badge** on the toolbar search icon — shows the number of matches when a search query is active
 - **Signals toolbar icon** (`codicon-pulse`) with count badge — shows the number of detected signals and toggles the signals panel on click
 - **Copy signals button** at the bottom of the signals panel — copies all signal texts to clipboard with a brief toast confirmation
+- **Evidence line flash highlight** — clicking a signal's "line N" evidence link now scrolls to the line and briefly flashes it so you can see exactly where you landed
 
 ### Changed
 
@@ -55,7 +56,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Added
 
-- New **Database** level with cyan filter dot — Drift SQL lines (`Drift: Sent SELECT|INSERT|…`) now classify as `database` instead of inheriting severity from the logcat prefix, giving a single toolbar dot and filter toggle for all SQL traffic
+- New **Database** level with cyan filter dot — Drift SQL lines, generic SQL statements (`SELECT…FROM`, `INSERT INTO`, `UPDATE…SET`, `DELETE FROM`, `CREATE TABLE`, `PRAGMA`), and any line with a `database` source tag now classify as `database`, giving a single toolbar dot and filter toggle for all SQL traffic
 - TODO marker filter now also catches **BUG**, **KLUDGE**, and **WORKAROUND** keywords (case-insensitive) in addition to TODO, FIXME, HACK, and XXX
 - Text casing conventions added to UI Style Guide — sentence case for action buttons, Title Case for panel/view names and section headings
 

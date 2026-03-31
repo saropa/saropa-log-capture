@@ -19,7 +19,8 @@ var statsCounters = {
     info: 0,
     todo: 0,
     debug: 0,
-    notice: 0
+    notice: 0,
+    database: 0
 };
 
 /** Emoji lookup for each level (used when updating button content). */
@@ -30,7 +31,8 @@ var levelEmojis = {
     performance: '\\uD83D\\uDFE3',
     todo: '\\u26AA',
     debug: '\\uD83D\\uDFE4',
-    notice: '\\uD83D\\uDFE6'
+    notice: '\\uD83D\\uDFE6',
+    database: '\\uD83D\\uDFE1'
 };
 
 /** Button ID lookup for each level. */
@@ -41,7 +43,8 @@ var levelButtonIds = {
     performance: 'level-performance-toggle',
     todo: 'level-todo-toggle',
     debug: 'level-debug-toggle',
-    notice: 'level-notice-toggle'
+    notice: 'level-notice-toggle',
+    database: 'level-database-toggle'
 };
 
 /**
