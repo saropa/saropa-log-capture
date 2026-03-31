@@ -154,11 +154,12 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
     overflow-anchor: none;
     padding: 4px 0 40px;
     position: relative;
-    /* Hide native vertical scrollbar when showScrollbar is off (WebKit rules below; this catches overlay/standard behavior). */
-    scrollbar-width: none;
+    /* Vertical scrollbar hidden by ::-webkit-scrollbar width:0 below; horizontal stays 10px.
+       Do NOT add scrollbar-width:none — Chromium 130+ treats it as authoritative and hides
+       the horizontal bar too, making wide nowrap lines invisible on the right side. */
 }
 body.scrollbar-visible #log-content {
-    scrollbar-width: auto;
+    scrollbar-width: auto; /* show both scrollbars when the user opts in */
 }
 #log-content::-webkit-scrollbar { width: 0; height: 10px; }
 body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
