@@ -15,10 +15,12 @@ export function getToolbarScript(): string {
     var signalsHost = document.getElementById('root-cause-hypotheses');
     var searchBtn = document.getElementById('toolbar-search-btn');
     var filterBtn = document.getElementById('toolbar-filter-btn');
+    var signalsBtn = document.getElementById('toolbar-signals-btn');
     var actionsBtn = document.getElementById('toolbar-actions-btn');
     var actionsPopover = document.getElementById('footer-actions-popover');
     var levelMenuBtn = document.getElementById('level-menu-btn');
     var signalsWasVisible = false;
+    var signalsUserVisible = false;
     var actionsOpen = false;
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -83,7 +85,7 @@ export function getToolbarScript(): string {
     function openFilterDrawer() {
         if (!filterDrawer) return;
         closeActionsDropdown();
-        if (signalsHost && !signalsHost.classList.contains('u-hidden') &&
+        if (signalsHost && signalsUserVisible &&
             !signalsHost.classList.contains('signals-drawer-hidden')) {
             signalsWasVisible = true;
             signalsHost.classList.add('signals-drawer-hidden');
@@ -147,6 +149,32 @@ export function getToolbarScript(): string {
         else openActionsDropdown();
     }
 
+    /* ---- Signals panel toggle ---- */
+
+    function showSignalsPanel() {
+        if (!signalsHost) return;
+        signalsUserVisible = true;
+        signalsHost.classList.remove('u-hidden');
+        signalsHost.classList.remove('signals-drawer-hidden');
+        if (signalsBtn) signalsBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function hideSignalsPanel() {
+        if (!signalsHost) return;
+        signalsUserVisible = false;
+        signalsHost.classList.add('u-hidden');
+        if (signalsBtn) signalsBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleSignalsPanel() {
+        if (!signalsHost) return;
+        if (signalsHost.classList.contains('u-hidden')) {
+            showSignalsPanel();
+        } else {
+            hideSignalsPanel();
+        }
+    }
+
     /* ---- Accordion sections ---- */
 
     function initAccordions() {
@@ -181,6 +209,7 @@ export function getToolbarScript(): string {
 
     if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
     if (filterBtn) filterBtn.addEventListener('click', toggleFilterDrawer);
+    if (signalsBtn) signalsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSignalsPanel(); });
     if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
 
     /* ---- Escape key ---- */
@@ -229,6 +258,9 @@ export function getToolbarScript(): string {
     window.openSearchFlyout = openSearchFlyout;
     window.closeSearchFlyout = closeSearchFlyout;
     window.toggleFilterDrawer = toggleFilterDrawer;
+    window.toggleSignalsPanel = toggleSignalsPanel;
+    window.showSignalsPanel = showSignalsPanel;
+    window.hideSignalsPanel = hideSignalsPanel;
     window.closeActionsDropdown = closeActionsDropdown;
     /** Backward compat for replay script's action toggle. */
     window.setFooterActionsOpen = function(open) {
@@ -250,12 +282,12 @@ export function getToolbarScript(): string {
     }
 })();
 
-/** Set the summary text in an accordion section header. */
+/** Set the summary text in an accordion section header (shown as bracketed suffix). */
 function setAccordionSummary(sectionId, text) {
     var sec = document.getElementById(sectionId);
     if (!sec) return;
     var el = sec.querySelector('.filter-accordion-summary');
-    if (el) el.textContent = text || '';
+    if (el) el.textContent = text ? '(' + text + ')' : '';
 }
 `;
 }
