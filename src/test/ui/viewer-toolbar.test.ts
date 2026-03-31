@@ -32,7 +32,7 @@ suite('Viewer toolbar', () => {
             'id="line-count"',
             'id="hidden-lines-counter"',
             'id="footer-selection"',
-            'id="filter-badge"',
+            'id="toolbar-signals-btn"',
             'id="footer-text"',
         ];
         for (const id of required) {
@@ -69,6 +69,22 @@ suite('Viewer toolbar', () => {
         for (const id of required) {
             assert.ok(html.includes(id), `filter drawer must contain ${id}`);
         }
+    });
+
+    test('context label uses compact \u00b1N format', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(
+            html.includes('>\u00B13</span>'),
+            'context label should show \u00b13 (not "Context: 3 lines")',
+        );
+    });
+
+    test('syncContextSlider produces matching \u00b1N format', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
+        assert.ok(
+            src.includes("'\\u00B1' + contextLinesBefore"),
+            'syncContextSlider should set label to \u00b1N',
+        );
     });
 
     test('filter drawer has accordion sections', () => {
@@ -206,15 +222,15 @@ suite('Viewer toolbar', () => {
         );
     });
 
-    test('filter badge click opens filter drawer', () => {
+    test('filter badge updates toolbar icon badge', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-filter-badge.ts');
         assert.ok(
-            src.includes('openFilterDrawer'),
-            'badge click should open filter drawer',
+            src.includes("getElementById('toolbar-filter-count')"),
+            'badge should update the toolbar filter icon badge',
         );
         assert.ok(
-            !src.includes("setActivePanel('filters')"),
-            'badge should not open old filters panel',
+            !src.includes("getElementById('filter-badge')"),
+            'should not reference removed standalone filter-badge',
         );
     });
 
