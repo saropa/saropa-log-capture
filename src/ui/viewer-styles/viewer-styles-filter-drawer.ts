@@ -139,10 +139,9 @@ export function getFilterDrawerStyles(): string {
 }
 .filter-accordion-title { font-weight: 600; }
 .filter-accordion-summary {
-    flex: 1;
-    text-align: right;
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
+    margin-left: 4px;
 }
 /* Accordion body — hidden by default via max-height, animated on expand */
 .filter-accordion-body {
