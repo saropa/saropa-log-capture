@@ -26,6 +26,7 @@ import { getReplayScript } from '../viewer/viewer-replay';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
 import { getDecoSettingsScript } from '../viewer-decorations/viewer-deco-settings';
 import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
+import { getLintBadgeScript } from '../viewer-decorations/viewer-lint-badge';
 import { getStackDedupScript } from '../viewer-stack-tags/viewer-stack-dedup';
 import { getStackFilterScript } from '../viewer-stack-tags/viewer-stack-filter';
 import { getTagSelectionGuardScript } from '../viewer-stack-tags/viewer-tag-selection-guard';
@@ -144,6 +145,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsScript()) +
         scriptTag(nonce, getQualityBadgeScript()) +
+        scriptTag(nonce, getLintBadgeScript()) +
         scriptTag(nonce, getStackDedupScript()) +
         scriptTag(nonce, getStackFilterScript()) +
         scriptTag(nonce, getSplitNavScript()) +

@@ -36,6 +36,10 @@ export interface PendingLine {
     readonly sourcePath?: string;
     /** Per-file line coverage percent (0–100) for stack frames referencing app code. */
     readonly qualityPercent?: number;
+    /** Count of lint diagnostic errors at this line's source reference. */
+    readonly lintErrors?: number;
+    /** Count of lint diagnostic warnings at this line's source reference. */
+    readonly lintWarnings?: number;
     /** Stream source id for filtering (e.g. 'debug', 'terminal'). Omitted = debug. */
     readonly source?: string;
     /** Original unprocessed text before HTML/ANSI conversion. Used for "copy raw" feature. */

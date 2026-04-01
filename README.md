@@ -123,6 +123,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ### Display & Layout
 - **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), session elapsed time (e.g. 5m 15s), and whole-line coloring for all severity levels. Configurable in the Options panel; Timestamp and Session elapsed can be toggled from the right-click context menu (Layout → Timestamp / Session elapsed). Blank lines do not show a severity dot (the vertical bar continues); counter on blank lines is optional via **Decoration settings** → **Show line number on blank lines** (off by default) so Go to Line matches file references.
+- **Lint diagnostic badges:** Log lines referencing source files with active VS Code diagnostics (errors, warnings from any linter) show inline badges with counts. Works with all linters (ESLint, TypeScript, Dart analyzer, saropa_lints, etc.). Badges update live as diagnostics change. Off by default; enable via **Decoration settings** → **Lint badge**.
 - **Severity bar mode:** Colored left borders by log level as an alternative/complement to dot indicators.
 - **Visual spacing:** Heuristic breathing room before/after level changes, markers, and stack traces.
 - **Font size / line height:** Adjustable via sliders in the Options panel.

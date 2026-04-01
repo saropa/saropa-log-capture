@@ -17,11 +17,16 @@ import type { ScopeContext } from "../../modules/storage/scope-context";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
+import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
 import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Dispatches every ViewerTarget method to all registered targets. */
 export class ViewerBroadcaster implements ViewerTarget {
   private readonly targets = new Set<ViewerTarget>();
+  private diagnosticCache: DiagnosticCache | undefined;
+
+  /** Set the diagnostic cache used to attach lint counts to outgoing lines. */
+  setDiagnosticCache(cache: DiagnosticCache): void { this.diagnosticCache = cache; }
 
   /** Register a target to receive broadcasts. */
   addTarget(target: ViewerTarget): void { this.targets.add(target); }
@@ -30,7 +35,7 @@ export class ViewerBroadcaster implements ViewerTarget {
   removeTarget(target: ViewerTarget): void { this.targets.delete(target); }
 
   addLine(data: LineData): void {
-    const line = buildPendingLineFromLineData(data);
+    const line = buildPendingLineFromLineData(data, this.diagnosticCache);
     for (const t of this.targets) {
       // Pop-out defers raw LineData while loading disk snapshot; it cannot use pre-built HTML yet.
       if (t.isLiveCaptureHydrating?.()) {
