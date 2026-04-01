@@ -35,7 +35,8 @@ import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import { disposeInvestigationPanel } from './ui/investigation/investigation-panel';
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
-import { setupLineListeners, setupConfigListener, setupScopeContextListener } from './activation-listeners';
+import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
+import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
@@ -77,6 +78,10 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const { viewerProvider, inlineDecorations } = setupWebviewProviders(context, version);
 
     const broadcaster = new ViewerBroadcaster();
+    const diagnosticCache = new DiagnosticCache();
+    diagnosticCache.activate(context.subscriptions);
+    broadcaster.setDiagnosticCache(diagnosticCache);
+
     const popOutPanel = new PopOutPanel(
       context.extensionUri,
       version,
@@ -151,6 +156,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     setupConfigListener(context, sessionManager, broadcaster);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     setupScopeContextListener(context, broadcaster);
+    setupDiagnosticListener(context, diagnosticCache, broadcaster);
 
     const displayKey = 'slc.sessionDisplayOptions';
     const stored = context.workspaceState.get<Partial<SessionDisplayOptions>>(displayKey, {});
