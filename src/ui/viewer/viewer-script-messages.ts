@@ -10,6 +10,7 @@ window.addEventListener('message', function(event) {
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
                 addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText);
+                if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
             if (msg.lineCount !== undefined) {
@@ -40,6 +41,9 @@ window.addEventListener('message', function(event) {
         case 'setCorrelationByLineIndex':
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
+            break;
+        case 'updateLintData':
+            if (typeof handleUpdateLintData === 'function') handleUpdateLintData(msg);
             break;
         case 'clear':
             loadTruncatedInfo = null;

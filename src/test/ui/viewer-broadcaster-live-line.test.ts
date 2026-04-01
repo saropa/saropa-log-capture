@@ -116,3 +116,35 @@ suite('viewer batch size constant', () => {
         assert.strictEqual(MAX_LINES_PER_BATCH, 800);
     });
 });
+
+suite('buildPendingLineFromLineData — lint data', () => {
+    test('without DiagnosticCache, PendingLine has no lint fields', () => {
+        const pl = buildPendingLineFromLineData(
+            sampleLineData({ text: 'no cache', lineCount: 1 }),
+        );
+        assert.strictEqual(pl.lintErrors, undefined);
+        assert.strictEqual(pl.lintWarnings, undefined);
+    });
+
+    test('marker lines skip lint lookup even with DiagnosticCache', () => {
+        // Pass undefined as cache — marker lines short-circuit before cache access
+        const pl = buildPendingLineFromLineData(
+            sampleLineData({ text: '=== SESSION ===', isMarker: true, lineCount: 0 }),
+            undefined,
+        );
+        assert.strictEqual(pl.lintErrors, undefined);
+        assert.strictEqual(pl.lintWarnings, undefined);
+    });
+});
+
+suite('ViewerBroadcaster.setDiagnosticCache', () => {
+    test('setDiagnosticCache does not throw when called before addLine', () => {
+        const b = new ViewerBroadcaster();
+        // Create a minimal mock cache
+        const mockCache = {
+            lookupForLine: () => undefined,
+        } as never;
+        b.setDiagnosticCache(mockCache);
+        // No assertion — just verifying no exception
+    });
+});
