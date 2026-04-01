@@ -26,6 +26,15 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.4.0]
+
+### Added
+
+- **Lint diagnostic badges** on log lines — lines referencing source files with active VS Code diagnostics (errors, warnings from any linter) show a small coloured badge with the count; toggle via Decoration Settings → "Lint badge"
+- **Live diagnostic updates** — badges update automatically when diagnostics change in the editor (e.g. after saving a file or fixing a lint warning)
+
+---
+
 ## [5.3.0]
 
 ### Added

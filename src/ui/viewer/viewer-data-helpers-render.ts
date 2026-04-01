@@ -160,6 +160,7 @@ function renderItem(item, idx, prevVis) {
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
+    if (typeof getLintBadge === 'function') badge += getLintBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
     if (corr) badge += '<span class="correlation-badge" data-correlation-id="' + (corr.id || '').replace(/"/g, '&quot;') + '" title="' + (corr.description || '').replace(/"/g, '&quot;') + '">\\u27a4</span> ';
     var titleAttr = '';
