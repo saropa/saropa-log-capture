@@ -57,6 +57,8 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **No config:** Install, start debugging (F5); logs are captured automatically. Works with any debug adapter.
 - **Viewer:** Click source links in logs to jump to code (Ctrl+Click for split). Pop-out to a second monitor. Run navigator (Run 1 of N) for Flutter hot restart/reload. Error classification and optional sound/flash on errors. Tail any workspace `.log` file live. Export filtered views or full sessions as `.slc` bundles. Optional adapters add lockfile hash, Git, env, test/coverage/crash data to session headers.
 
+![Log viewer showing Drift SQL queries with syntax highlighting and diagnostic badges](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/screenshots/20260401_log_viewer_sql.png)
+
 ---
 
 ## Features
