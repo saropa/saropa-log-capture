@@ -28,6 +28,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.4.0]
 
+Adds lint diagnostic badges on log lines that reference source files with active VS Code diagnostics — errors and warnings from any linter show up right in the log viewer. [log](https://github.com/saropa/saropa-log-capture/blob/v5.4.0/CHANGELOG.md)
+
 ### Added
 
 - **Lint diagnostic badges** on log lines — lines referencing source files with active VS Code diagnostics (errors, warnings from any linter) show a small coloured badge with the count; toggle via Decoration Settings → "Lint badge"
@@ -36,6 +38,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.3.0]
+
+Signals panel with per-signal dismiss, search and filter count badges, database level classification, and a batch of resize and toolbar fixes. [log](https://github.com/saropa/saropa-log-capture/blob/v5.3.0/CHANGELOG.md)
 
 ### Added
 
