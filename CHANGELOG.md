@@ -26,6 +26,21 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed CI build failure caused by 750 stale compiled `.js` files committed to `src/` — removed from git, added to `.gitignore`
+- Fixed ESLint flat config applying rules to all file types instead of only `.ts` files
+- Fixed Integrations panel more/less toggle not working — nested `<p>` tags broke the DOM, leaving descriptions always expanded and the toggle button disconnected
+
+### Changed
+
+- Updated CI workflow to Node.js 22 and latest GitHub Action versions (checkout v6, setup-node v6, upload-artifact v7) to resolve Node.js 20 deprecation warnings
+- Added log viewer SQL screenshot to README
+
+---
+
 ## [5.4.0]
 
 Adds lint diagnostic badges on log lines that reference source files with active VS Code diagnostics — errors and warnings from any linter show up right in the log viewer. [log](https://github.com/saropa/saropa-log-capture/blob/v5.4.0/CHANGELOG.md)
