@@ -8,8 +8,6 @@
 export type SeverityLevel = 'info' | 'warning' | 'error' | 'performance' | 'todo' | 'debug' | 'notice' | 'database';
 
 const logcatLevelPattern = /^([VDIWEFA])\//;
-/** Logcat severity (I/, E/, …) may appear after capture prefixes like `[12:00:00] [stdout]`. */
-const logcatLetterAnywhere = /\b([VDIWEFA])\//;
 /** Threadtime format: `MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message` (from `adb logcat -v threadtime`). */
 const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+([VDIWEFA])\s/;
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
