@@ -11,6 +11,7 @@ import type { SessionManagerImpl } from './modules/session/session-manager';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
+import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
@@ -217,4 +218,24 @@ export function setupScopeContextListener(
         vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => {}); }),
     );
     updateScopeContext().catch(() => {});
+}
+
+/**
+ * Setup diagnostic change listener for lint badge live updates.
+ * When diagnostics change for files already seen in logs, broadcasts
+ * updated lint counts to the webview.
+ */
+export function setupDiagnosticListener(
+    context: vscode.ExtensionContext,
+    diagnosticCache: DiagnosticCache,
+    broadcaster: ViewerBroadcaster,
+): void {
+    context.subscriptions.push(
+        vscode.languages.onDidChangeDiagnostics((event) => {
+            const updates = diagnosticCache.getUpdatesForChangedUris(event.uris);
+            if (updates) {
+                broadcaster.postToWebview({ type: 'updateLintData', fileUpdates: updates });
+            }
+        }),
+    );
 }
