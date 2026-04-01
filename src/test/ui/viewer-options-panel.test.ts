@@ -115,6 +115,18 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(!html.includes('integrations-expandable'));
         });
 
+        test('should use div (not p) for desc blocks to avoid browser auto-close nesting bugs', () => {
+            const html = getIntegrationsPanelHtml();
+            // <p> inside <p> (even via <span>) causes browsers to auto-close the outer <p>,
+            // ejecting child elements and breaking expand/collapse. Verify divs are used.
+            assert.ok(!/<p\s[^>]*class="[^"]*integrations-desc/.test(html),
+                'Description wrapper must be <div>, not <p> — nested <p> breaks the DOM');
+            assert.ok(!/<p\s[^>]*class="[^"]*integrations-note/.test(html),
+                'Perf/when notes must be <div>, not <p> — would break out of parent <span>');
+            assert.ok(html.includes('<div class="integrations-expanded-block'),
+                'Expanded block must be <div> to contain block-level children');
+        });
+
         test('should use more label, line-clamp row class, and no legacy Show more/less copy on Integrations HTML', () => {
             const html = getIntegrationsPanelHtml();
             assert.ok(html.includes('integrations-desc-collapsible'));
