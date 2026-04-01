@@ -8,6 +8,7 @@ import { getViewerStyles } from '../viewer-styles/viewer-styles';
 import { getGotoLineStyles } from '../viewer/viewer-goto-line';
 import { getErrorHoverStyles } from '../viewer-decorations/viewer-error-hover-styles';
 import { getQualityBadgeStyles } from '../viewer-styles/viewer-styles-quality';
+import { getLintBadgeStyles } from '../viewer-styles/viewer-styles-lint-badge';
 import type { ViewerRepeatThresholds } from '../../modules/db/drift-db-repeat-thresholds';
 import type { ViewerSlowBurstThresholds } from '../../modules/db/drift-db-slow-burst-thresholds';
 import type { ViewerDbDetectorToggles } from '../../modules/config/config-types';
@@ -95,6 +96,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         ${getGotoLineStyles()}
         ${getErrorHoverStyles()}
         ${getQualityBadgeStyles()}
+        ${getLintBadgeStyles()}
     </style>
 </head>
 <body>

@@ -13,6 +13,7 @@
 
 import { escapeHtml } from "../../modules/capture/ansi";
 import { buildLogLineHtmlWithOptionalDriftArgsDim } from "../../modules/db/drift-log-line-args-fold";
+import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
 import { LineData } from "../../modules/session/session-manager";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { type ThreadDumpState, processLineForThreadDump, flushThreadDump } from "../viewer/viewer-thread-grouping";
@@ -36,17 +37,25 @@ export interface BatchTarget {
  * Build one viewer line from raw capture (ANSI, links, thread header styling, framework/coverage).
  * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
  */
-export function buildPendingLineFromLineData(data: LineData): PendingLine {
+export function buildPendingLineFromLineData(
+    data: LineData,
+    diagnosticCache?: DiagnosticCache,
+): PendingLine {
     let html = data.isMarker ? escapeHtml(data.text) : buildLogLineHtmlWithOptionalDriftArgsDim(data.text);
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
     const fw = helpers.classifyFrame(data.text);
     const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
+    const lint = (!data.isMarker && diagnosticCache)
+        ? diagnosticCache.lookupForLine(data.sourcePath, data.sourceLine, data.text)
+        : undefined;
     return {
         text: html, rawText: data.text,
         isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
         fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
+        ...(lint?.errors ? { lintErrors: lint.errors } : {}),
+        ...(lint?.warnings ? { lintWarnings: lint.warnings } : {}),
     };
 }
 

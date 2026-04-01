@@ -75,6 +75,10 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-category-badge" />
         Channel badge
     </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-lint-badge" />
+        Lint badge
+    </label>
 </div>`;
 }
 
@@ -186,6 +190,7 @@ function syncDecoSettingsUi() {
     var bar = document.getElementById('deco-opt-bar');
     var quality = document.getElementById('deco-opt-quality');
     var catBdg = document.getElementById('deco-opt-category-badge');
+    var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
@@ -198,6 +203,7 @@ function syncDecoSettingsUi() {
     if (bar) bar.checked = decoShowBar;
     if (quality) quality.checked = decoShowQuality;
     if (catBdg) catBdg.checked = showCategoryBadges;
+    if (lintBdg) lintBdg.checked = decoShowLintBadges;
     if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
 }
@@ -219,6 +225,7 @@ function onDecoOptionChange() {
     var bar = document.getElementById('deco-opt-bar');
     var quality = document.getElementById('deco-opt-quality');
     var catBdg = document.getElementById('deco-opt-category-badge');
+    var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     decoShowDot = dot ? dot.checked : true;
@@ -231,9 +238,10 @@ function onDecoOptionChange() {
     decoShowBar = bar ? bar.checked : false;
     decoShowQuality = quality ? quality.checked : true;
     showCategoryBadges = catBdg ? catBdg.checked : false;
+    decoShowLintBadges = lintBdg ? lintBdg.checked : false;
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
-    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowSessionElapsed && !decoShowBar && !decoShowQuality && !showCategoryBadges && decoLineColorMode === 'none';
+    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowSessionElapsed && !decoShowBar && !decoShowQuality && !showCategoryBadges && !decoShowLintBadges && decoLineColorMode === 'none';
     if (allOff) {
         showDecorations = false;
         closeDecoSettings();
@@ -255,6 +263,7 @@ var decoOptSessionElapsed = document.getElementById('deco-opt-session-elapsed');
 var decoOptBar = document.getElementById('deco-opt-bar');
 var decoOptQuality = document.getElementById('deco-opt-quality');
 var decoOptCategoryBadge = document.getElementById('deco-opt-category-badge');
+var decoOptLintBadge = document.getElementById('deco-opt-lint-badge');
 var decoOptLineColors = document.getElementById('deco-opt-line-colors');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
 
@@ -270,6 +279,7 @@ if (decoOptSessionElapsed) decoOptSessionElapsed.addEventListener('change', onDe
 if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
 if (decoOptQuality) decoOptQuality.addEventListener('change', onDecoOptionChange);
 if (decoOptCategoryBadge) decoOptCategoryBadge.addEventListener('change', onDecoOptionChange);
+if (decoOptLintBadge) decoOptLintBadge.addEventListener('change', onDecoOptionChange);
 if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
 
