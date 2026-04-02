@@ -129,17 +129,48 @@ test("isRootCauseHintsEligible / buildHypotheses: sql burst just below threshold
   assert.deepEqual(buildHypotheses(b), []);
 });
 
-test("buildHypotheses: duplicate error rows for same lineIndex produce one hypothesis", () => {
+test("buildHypotheses: same error text on different lines merges into one hypothesis with both evidence IDs", () => {
   const hy = buildHypotheses({
     ...base,
     errors: [
-      { lineIndex: 3, excerpt: "first message" },
-      { lineIndex: 3, excerpt: "second message ignored" },
+      { lineIndex: 3, excerpt: "connection refused on port 8642" },
+      { lineIndex: 7, excerpt: "connection refused on port 8642" },
     ],
   });
   const errHy = hy.filter((h) => h.templateId === "error-recent");
   assert.equal(errHy.length, 1);
-  assert.equal(errHy[0].evidenceLineIds[0], 3);
+  assert.ok(errHy[0].evidenceLineIds.includes(3));
+  assert.ok(errHy[0].evidenceLineIds.includes(7));
+});
+
+test("buildHypotheses: errors ranked by frequency, most frequent text first", () => {
+  const hy = buildHypotheses({
+    ...base,
+    errors: [
+      { lineIndex: 10, excerpt: "disk full" },
+      { lineIndex: 1, excerpt: "connection refused on port 8642" },
+      { lineIndex: 2, excerpt: "connection refused on port 8642" },
+      { lineIndex: 3, excerpt: "connection refused on port 8642" },
+    ],
+  });
+  const errHy = hy.filter((h) => h.templateId === "error-recent");
+  assert.equal(errHy.length, 2);
+  assert.equal(errHy[0].evidenceLineIds.length, 3);
+  assert.equal(errHy[1].evidenceLineIds.length, 1);
+});
+
+test("buildHypotheses: timestamp-varying duplicates merge (suffix-based key)", () => {
+  const hy = buildHypotheses({
+    ...base,
+    errors: [
+      { lineIndex: 5, excerpt: "04-01 17:23:59.153 565 565 E adbd : failed to connect to socket tcp:8642" },
+      { lineIndex: 6, excerpt: "04-01 17:23:59.467 565 565 E adbd : failed to connect to socket tcp:8642" },
+    ],
+  });
+  const errHy = hy.filter((h) => h.templateId === "error-recent");
+  assert.equal(errHy.length, 1);
+  assert.ok(errHy[0].evidenceLineIds.includes(5));
+  assert.ok(errHy[0].evidenceLineIds.includes(6));
 });
 
 test("buildHypotheses: whitespace-only error excerpts do not qualify (no strip)", () => {
