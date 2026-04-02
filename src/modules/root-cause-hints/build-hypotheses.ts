@@ -61,35 +61,40 @@ function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence |
   return 'low';
 }
 
+/** Stable grouping key: last 100 chars of normalized excerpt, skipping leading timestamps. */
+function normalizeErrKey(excerpt: string): string {
+  return excerpt.replace(/\s+/g, ' ').slice(-100).toLowerCase();
+}
+
 function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   const errs = bundle.errors;
   if (!errs || errs.length === 0) {
     return [];
   }
-  const out: WorkingHypothesis[] = [];
-  const seen = new Set<number>();
+  const groups = new Map<string, { excerpt: string; lineIds: number[] }>();
   for (const e of errs) {
-    if (!e || seen.has(e.lineIndex)) {
-      continue;
-    }
+    if (!e) continue;
     const ex = (e.excerpt || '').trim();
-    if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) {
-      continue;
-    }
-    seen.add(e.lineIndex);
-    out.push({
-      templateId: 'error-recent',
-      text: truncateText(`Error: ${ex}`, MAX_TEXT_LEN),
-      evidenceLineIds: [e.lineIndex],
-      confidence: 'medium',
-      hypothesisKey: `err::${e.lineIndex}`,
-      tier: 0,
-    });
-    if (out.length >= 2) {
-      break;
+    if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) continue;
+    const key = normalizeErrKey(ex);
+    const group = groups.get(key);
+    if (group) {
+      group.lineIds.push(e.lineIndex);
+    } else {
+      groups.set(key, { excerpt: ex, lineIds: [e.lineIndex] });
     }
   }
-  return out;
+  const ranked = Array.from(groups.entries())
+    .sort((a, b) => b[1].lineIds.length - a[1].lineIds.length)
+    .slice(0, 2);
+  return ranked.map(([key, { excerpt, lineIds }]) => ({
+    templateId: 'error-recent',
+    text: truncateText(`Error: ${excerpt}`, MAX_TEXT_LEN),
+    evidenceLineIds: lineIds.slice().sort((a, b) => a - b),
+    confidence: 'medium',
+    hypothesisKey: `err::${key}`,
+    tier: 0 as Tier,
+  }));
 }
 
 function nPlusOneHypotheses(hints: readonly RootCauseNPlusOneHint[] | undefined): WorkingHypothesis[] {

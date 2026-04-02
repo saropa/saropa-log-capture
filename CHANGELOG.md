@@ -28,14 +28,23 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.4.2]
 
+Fixes duplicate and unstable entries in the signals panel — repeated errors now merge into one signal, ranked by how often they appear instead of how recently they arrived.
+
 ### Fixed
 
+- Fixed duplicate signal hypotheses for the same error message appearing on different log lines (e.g. repeated connection-refused errors) — error signals now group by normalized message text instead of line index
+- Fixed signal hypotheses using timestamp-varying logcat lines as separate signals — grouping key uses the last 100 chars of the excerpt, which skips leading date/time/pid prefixes
+- Error signal hypotheses are now ranked by frequency (most repeated error first) rather than recency, making the signals panel more stable during live log streaming
+- Collection now samples up to 50 recent error lines (was 2) so the algorithm has enough occurrences to rank by frequency accurately
 - Fixed CI build failure: added missing braces to `if` statements in `config-normalizers.ts` (eslint `curly` rule)
 - Fixed CI build failure: removed unused `logcatLetterAnywhere` regex in `level-classifier.ts` (eslint `no-unused-vars` rule)
+- Fixed spurious `[+N lines]` continuation badges collapsing ASCII art and other plain stdout output — continuation grouping now requires both lines to have a logcat tag; source-only matching was collapsing unrelated lines that happened to share a wall-clock timestamp
 
 ---
 
 ## [5.4.1]
+
+Fixes the Integrations panel expand/collapse toggle and resolves CI build failures from stale compiled files.
 
 ### Fixed
 
