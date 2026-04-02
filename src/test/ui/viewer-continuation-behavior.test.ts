@@ -237,7 +237,9 @@ suite('Continuation behavioral (eval)', () => {
         assert.strictEqual(Object.keys(map).length, 0, 'contHeaderMap should be empty');
     });
 
-    test('should fall back to source matching when no logcatTag', () => {
+    test('should NOT group lines with no logcatTag even when source and timestamp match', () => {
+        // Wall-clock timestamps are identical for all lines in a rapid burst, so source-only
+        // matching would spuriously collapse ASCII art or server logs behind a [+N lines] badge.
         const env = buildEnv();
         const lines = env.allLines as Record<string, unknown>[];
         const check = env.checkContinuationOnNormalLine as (item: Record<string, unknown>) => void;
@@ -249,7 +251,7 @@ suite('Continuation behavioral (eval)', () => {
         lines.push(line2);
         check(line2);
 
-        assert.strictEqual(line2.contIsChild, true, 'should group by source when no logcatTag');
+        assert.strictEqual(line2.contIsChild, undefined, 'should NOT group when no logcatTag');
     });
 
     test('should NOT group lines with null timestamps', () => {
