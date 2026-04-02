@@ -99,6 +99,7 @@ function buildHypothesesEmbedded(bundle) {
     var n1List = bundle.nPlusOneHints;
     var n1Fp = Object.create(null);
     var hi, h, parts, i, j, k, text, sec, w, fp, L, b, da, rule, d0, e, d;
+    var errGroups, errKey, errGroup, errEx, errGroupKeys, egi;
 
     if (n1List) {
         for (hi = 0; hi < n1List.length; hi++) {
@@ -109,22 +110,33 @@ function buildHypothesesEmbedded(bundle) {
 
     parts = [];
 
-    if (bundle.errors) {
-        var seenErr = Object.create(null);
-        var errCount = 0;
-        for (i = 0; i < bundle.errors.length && errCount < 2; i++) {
+    if (bundle.errors && bundle.errors.length) {
+        errGroups = Object.create(null);
+        for (i = 0; i < bundle.errors.length; i++) {
             e = bundle.errors[i];
-            if (!e || seenErr[e.lineIndex]) continue;
-            var ex = String(e.excerpt || '').trim();
-            if (ex.length < ${MIN_ERR}) continue;
-            seenErr[e.lineIndex] = true;
-            errCount++;
+            if (!e) continue;
+            errEx = String(e.excerpt || '').trim();
+            if (errEx.length < ${MIN_ERR}) continue;
+            errKey = errEx.replace(/\\s+/g, ' ').slice(-100).toLowerCase();
+            errGroup = errGroups[errKey];
+            if (errGroup) {
+                if (errGroup.lineIds.indexOf(e.lineIndex) < 0) errGroup.lineIds.push(e.lineIndex);
+            } else {
+                errGroups[errKey] = { excerpt: errEx, lineIds: [e.lineIndex] };
+            }
+        }
+        errGroupKeys = Object.keys(errGroups);
+        errGroupKeys.sort(function(a, b) { return errGroups[b].lineIds.length - errGroups[a].lineIds.length; });
+        for (egi = 0; egi < errGroupKeys.length && egi < 2; egi++) {
+            errKey = errGroupKeys[egi];
+            errGroup = errGroups[errKey];
+            errGroup.lineIds.sort(function(a, b) { return a - b; });
             parts.push({
                 templateId: 'error-recent',
-                text: truncateRchText('Error: ' + ex, ${MAX_T}),
-                evidenceLineIds: [e.lineIndex],
+                text: truncateRchText('Error: ' + errGroup.excerpt, ${MAX_T}),
+                evidenceLineIds: errGroup.lineIds,
                 confidence: 'medium',
-                hypothesisKey: 'err::' + e.lineIndex,
+                hypothesisKey: 'err::' + errKey,
                 tier: 0
             });
         }

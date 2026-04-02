@@ -53,7 +53,7 @@ function collectRootCauseHintBundleEmbedded() {
     var i, row, plain, excerpt, im, keys, eEnt, j, line, fp, sampleIdx, sbk, sbi, sbSid, sbSt, h0, hL, wMs, sessionDiffSummary, regFps;
 
     if (typeof allLines !== 'undefined' && allLines.length) {
-        for (i = allLines.length - 1; i >= 0 && errors.length < 2; i--) {
+        for (i = allLines.length - 1; i >= 0 && errors.length < 50; i--) {
             row = allLines[i];
             if (!row || row.type !== 'line') continue;
             if (row.level !== 'error' || row.errorSuppressed) continue;
