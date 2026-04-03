@@ -62,15 +62,16 @@ export function getFilterDrawerHtml(): string {
 function getAccordionSections(): string {
     return /* html */ `
         ${accordionSection('log-inputs-section', 'Log Inputs', `
-            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
+            <div class="options-row-list tier-filter-list">
+                <label class="options-row" title="Show Flutter app output"><input type="checkbox" id="opt-flutter" checked /><span>Flutter</span></label>
+                <label class="options-row" title="Show device/system logs (excludes critical device errors which are always visible)"><input type="checkbox" id="opt-device" /><span>Device</span></label>
+            </div>
             <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
+            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
+            <div id="log-inputs-divider-cat" class="log-inputs-divider" style="display:none"></div>
             <div id="output-channels-list"></div>
         `)}
-        ${accordionSection('noise-section', 'Noise Reduction', `
-            <label class="options-row" title="Show only application output, hiding framework and system messages">
-                <input type="checkbox" id="opt-app-only" />
-                <span>App only (hide framework)</span>
-            </label>
+        ${accordionSection('exclusions-section', 'Exclusions', `
             <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>
             <div class="exclusion-input-wrapper">
                 <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
@@ -90,18 +91,14 @@ function getAccordionSections(): string {
             <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
         `)}
         ${accordionSection('scope-section', 'File Scope', `
-            <div class="options-hint">Narrow by file path from the debugger</div>
-            <div id="scope-status" class="options-hint">No active editor</div>
+            <div id="scope-status" class="options-hint"></div>
             <label class="options-row" title="Show all log lines regardless of source file"><input type="radio" name="scope" value="all" checked /> All logs</label>
-            <div id="scope-no-context-hint" class="options-hint">Open a source file to enable scope.</div>
-            <div id="scope-narrowing-block" style="display:none">
-                <label class="options-row" title="Show only logs from the current workspace"><input type="radio" name="scope" value="workspace" disabled /> Workspace</label>
-                <label class="options-row" title="Show only logs from the current package"><input type="radio" name="scope" value="package" disabled /> Package</label>
-                <label class="options-row" title="Show only logs from the active file\u2019s directory"><input type="radio" name="scope" value="directory" disabled /> Directory</label>
-                <label class="options-row" title="Show only logs from the active file"><input type="radio" name="scope" value="file" disabled /> File</label>
-                <label class="options-row" title="Hide log lines that have no associated file path from the debugger"><input type="checkbox" id="scope-hide-unattrib" /><span>Hide lines without file path</span></label>
-                <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
-            </div>
+            <label class="options-row" title="Show only logs from the current workspace"><input type="radio" name="scope" value="workspace" disabled /> Only workspace<span id="scope-suffix-workspace" class="scope-suffix"></span></label>
+            <label class="options-row" title="Show only logs from the current package"><input type="radio" name="scope" value="package" disabled /> Only package<span id="scope-suffix-package" class="scope-suffix"></span></label>
+            <label class="options-row" title="Show only logs from the active file\u2019s directory"><input type="radio" name="scope" value="directory" disabled /> Only directory<span id="scope-suffix-directory" class="scope-suffix"></span></label>
+            <label class="options-row" title="Show only logs from the active file"><input type="radio" name="scope" value="file" disabled /> Only file<span id="scope-suffix-file" class="scope-suffix"></span></label>
+            <label class="options-row scope-unattrib-row" title="When a scope is active, also exclude lines that have no source file from the debugger"><input type="checkbox" id="scope-hide-unattrib" /><span>Exclude lines with no source file</span></label>
+            <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
         `)}
         ${accordionSection('sql-patterns-section', 'SQL Commands', `
             <div class="options-row"><span id="sql-pattern-summary" class="source-tag-summary"></span></div>

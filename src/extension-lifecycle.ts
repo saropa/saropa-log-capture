@@ -55,7 +55,6 @@ function applySessionStartedState(
     if (cfg.exclusions.length > 0) { broadcaster.setExclusions(cfg.exclusions); }
     if (cfg.autoHidePatterns.length > 0) { broadcaster.setAutoHidePatterns(cfg.autoHidePatterns); }
     if (cfg.showElapsedTime) { broadcaster.setShowElapsed(true); }
-    if (cfg.showDecorations) { broadcaster.setShowDecorations(true); }
     broadcaster.setErrorClassificationSettings(
         cfg.suppressTransientErrors ?? false,
         cfg.breakOnCritical ?? false,

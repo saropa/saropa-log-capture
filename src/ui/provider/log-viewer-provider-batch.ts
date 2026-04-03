@@ -43,8 +43,9 @@ export function buildPendingLineFromLineData(
 ): PendingLine {
     let html = data.isMarker ? escapeHtml(data.text) : buildLogLineHtmlWithOptionalDriftArgsDim(data.text);
     if (!data.isMarker) { html = helpers.tryFormatThreadHeader(data.text, html); }
-    const fw = helpers.classifyFrame(data.text);
-    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
+    const tier = helpers.classifyFrame(data.text);
+    const fw = tier !== undefined ? tier !== 'flutter' : undefined;
+    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, tier);
     const lint = (!data.isMarker && diagnosticCache)
         ? diagnosticCache.lookupForLine(data.sourcePath, data.sourceLine, data.text)
         : undefined;
@@ -52,7 +53,7 @@ export function buildPendingLineFromLineData(
         text: html, rawText: data.text,
         isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
-        fw, sourcePath: data.sourcePath,
+        tier, fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
         ...(lint?.errors ? { lintErrors: lint.errors } : {}),
         ...(lint?.warnings ? { lintWarnings: lint.warnings } : {}),

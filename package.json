@@ -1131,6 +1131,11 @@
               },
               "appOnlyMode": {
                 "description": "%config.filterPresets.appOnlyMode.description%",
+                "type": "boolean",
+                "deprecationMessage": "Use deviceEnabled instead."
+              },
+              "deviceEnabled": {
+                "description": "Whether device logs should be shown when preset is applied.",
                 "type": "boolean"
               }
             },
@@ -2066,6 +2071,12 @@
           "type": "boolean",
           "title": "%config.integrations.adbLogcat.writeSidecar.title%"
         },
+        "saropaLogCapture.integrations.adbLogcat.captureDeviceOther": {
+          "default": false,
+          "description": "Capture non-critical device/system logcat lines (e.g. SettingsState, EGL_emulation). When false, these lines are dropped at capture time to reduce log bloat. Critical device events (AndroidRuntime, ActivityManager) are always captured regardless of this setting.",
+          "type": "boolean",
+          "title": "%config.integrations.adbLogcat.captureDeviceOther.title%"
+        },
         "saropaLogCapture.integrations.unifiedLog.writeAtSessionEnd": {
           "default": false,
           "description": "After session end, write basename.unified.jsonl next to the main log: one JSON line per row { \"source\", \"text\" } merging main log, .terminal.log, and external sidecars (for sharing or opening one file in the viewer with Sources filter).",
@@ -2193,12 +2204,6 @@
           "minimum": 1000,
           "type": "number",
           "title": "%config.replay.maxDelayMs.title%"
-        },
-        "saropaLogCapture.showDecorations": {
-          "default": true,
-          "description": "%config.showDecorations.description%",
-          "type": "boolean",
-          "title": "%config.showDecorations.title%"
         },
         "saropaLogCapture.showElapsedTime": {
           "default": false,
@@ -2543,5 +2548,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "5.4.2"
+  "version": "5.5.0"
 }

@@ -75,8 +75,13 @@ function applyPreset(presetName) {
         setExclusionsEnabled(preset.exclusionsEnabled);
     }
 
-    if (preset.appOnlyMode !== undefined && typeof setAppOnlyMode === 'function') {
-        setAppOnlyMode(preset.appOnlyMode);
+    // Legacy appOnlyMode migration: treat as showFlutter=true, showDevice=false
+    if (preset.appOnlyMode !== undefined) {
+        if (typeof setShowFlutter === 'function') setShowFlutter(true);
+        if (typeof setShowDevice === 'function') setShowDevice(!preset.appOnlyMode);
+    }
+    if (preset.deviceEnabled !== undefined && typeof setShowDevice === 'function') {
+        setShowDevice(preset.deviceEnabled);
     }
 
     if (preset.sources !== undefined) {
@@ -167,7 +172,7 @@ function getCurrentFilters() {
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
-    if (typeof appOnlyMode !== 'undefined' && appOnlyMode) { filters.appOnlyMode = true; }
+    if (typeof showDevice !== 'undefined' && showDevice) { filters.deviceEnabled = true; }
     if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
         filters.sources = window.enabledSources.slice();
     }
@@ -211,7 +216,8 @@ function resetAllFilters() {
     activeFilters = null;
     syncChannelCheckboxes();
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
-    if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
+    if (typeof setShowFlutter === 'function') setShowFlutter(true);
+    if (typeof setShowDevice === 'function') setShowDevice(false);
     if (typeof selectAllTags === 'function') selectAllTags();
     if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();

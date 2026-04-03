@@ -115,7 +115,6 @@ suite('ViewerContextMenu', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function handleToggleAction'));
             assert.ok(script.includes("'toggle-wrap'"));
-            assert.ok(script.includes("'toggle-decorations'"));
             assert.ok(script.includes("'toggle-spacing'"));
             assert.ok(script.includes("'toggle-line-height'"));
             assert.ok(script.includes("'toggle-hide-blank-lines'"));
@@ -127,7 +126,6 @@ suite('ViewerContextMenu', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('function syncContextMenuToggles'));
             assert.ok(script.includes('wordWrap'));
-            assert.ok(script.includes('showDecorations'));
             assert.ok(script.includes('visualSpacingEnabled'));
             assert.ok(script.includes('logLineHeight'));
             assert.ok(script.includes('hideBlankLines'));

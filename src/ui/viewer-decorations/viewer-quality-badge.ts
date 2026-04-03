@@ -14,11 +14,11 @@ var decoShowQuality = true;
 
 /**
  * Return a quality badge HTML string for the given line item.
- * Only rendered when decorations and the quality sub-toggle are on,
+ * Only rendered when the quality toggle is on
  * and the item carries a qualityPercent value.
  */
 function getQualityBadge(item) {
-    if (!showDecorations || !decoShowQuality) return '';
+    if (!decoShowQuality) return '';
     var pct = item.qualityPercent;
     if (pct === undefined || pct === null) return '';
     var cls = pct >= 80 ? 'high' : (pct >= 50 ? 'med' : 'low');

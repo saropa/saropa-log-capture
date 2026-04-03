@@ -44,7 +44,7 @@ function createScopeHintRuntime(): {
         var document = {
             getElementById: function(id) {
                 if (id === 'scope-filter-hint') return hintStub;
-                if (id === 'scope-hide-unattrib') return { checked: false, addEventListener: function(){} };
+                if (id === 'scope-hide-unattrib') return { checked: false, disabled: false, addEventListener: function(){}, closest: function() { return { classList: { toggle: function(){} } }; } };
                 if (id === 'scope-narrowing-block') return { style: {} };
                 if (id === 'scope-no-context-hint') return { style: {} };
                 if (id === 'scope-status') return { textContent: '', removeAttribute: function(){}, title: '' };
@@ -129,7 +129,7 @@ suite('Viewer scope filter hint (behavior)', () => {
             });
         }
         api.setScopeLevel('file');
-        assert.ok(hintEl.innerHTML.includes('no debugger file path'));
+        assert.ok(hintEl.innerHTML.includes('no source file'));
     });
 
     test('does not show no-path guidance when hide-unattrib is on (false positive guard)', () => {
@@ -143,7 +143,7 @@ suite('Viewer scope filter hint (behavior)', () => {
             });
         }
         api.setScopeLevel('file');
-        assert.ok(!hintEl.innerHTML.includes('no debugger file path'));
+        assert.ok(!hintEl.innerHTML.includes('no source file'));
     });
 
     test('clears hint when widening scope to all after active narrowing', () => {

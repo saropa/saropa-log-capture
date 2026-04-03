@@ -62,7 +62,8 @@ suite('Viewer toolbar', () => {
             'id="level-select-none"',
             'id="context-lines-slider"',
             'id="context-lines-label"',
-            'id="opt-app-only"',
+            'id="opt-flutter"',
+            'id="opt-device"',
             'id="preset-select"',
             'id="reset-all-filters"',
         ];
@@ -315,7 +316,7 @@ suite('Viewer toolbar', () => {
         assert.ok(html.includes('title="Show only logs from the current workspace"'), 'Workspace radio needs tooltip');
         assert.ok(html.includes('title="Show only logs from the current package"'), 'Package radio needs tooltip');
         assert.ok(html.includes('title="Show only logs from the active file"'), 'File radio needs tooltip');
-        assert.ok(html.includes('title="Hide log lines that have no associated file path'), 'Unattributed checkbox needs tooltip');
+        assert.ok(html.includes('title="When a scope is active, also exclude lines that have no source file'), 'Unattributed checkbox needs tooltip');
     });
 
     test('filter drawer exclusions checkbox should have tooltip', () => {

@@ -171,6 +171,7 @@ function applyErrorSuppression() {
     for (var i = 0; i < allLines.length; i++) {
         var line = allLines[i];
         if (line.type === 'marker' || line.type === 'stack-frame') continue;
+        if (line.tier === 'device-other') continue;
 
         var plain = stripTags(line.html || '');
         var classification = line.errorClass || classifyError(plain);

@@ -258,13 +258,13 @@ function calcItemHeight(item) {
     }
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
-    var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
+    var _tierHidden = (typeof isTierHidden === 'function') ? isTierHidden(item) : false;
     if (item.type === 'stack-frame' && item.groupId >= 0) {
         var header = (typeof groupHeaderMap !== 'undefined') ? groupHeaderMap[item.groupId] : null;
         if (!header) return 0;
         if (header.collapsed === true) return 0;
         if (header.collapsed === false) {
-            return (isAppOnly && item.fw) ? 0 : ROW_HEIGHT;
+            return (_tierHidden) ? 0 : ROW_HEIGHT;
         }
         if (header.collapsed === 'preview') {
             if (item.fw) return 0;
@@ -273,7 +273,7 @@ function calcItemHeight(item) {
         }
         return 0;
     }
-    if (isAppOnly && item.fw) return 0;
+    if (_tierHidden) return 0;
     if (item.type === 'repeat-notification' && item.sqlRepeatDrilldown && item.sqlRepeatDrilldownOpen) {
         return ROW_HEIGHT + estimateSqlRepeatDrilldownExtraHeight(item.sqlRepeatDrilldown);
     }

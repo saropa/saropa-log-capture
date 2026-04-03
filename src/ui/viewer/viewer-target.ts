@@ -39,7 +39,6 @@ export interface ViewerTarget {
   setContextViewLines(count: number): void;
   setCopyContextLines(count: number): void;
   setShowElapsed(show: boolean): void;
-  setShowDecorations(show: boolean): void;
   setErrorClassificationSettings(
     suppress: boolean,
     breakOn: boolean,

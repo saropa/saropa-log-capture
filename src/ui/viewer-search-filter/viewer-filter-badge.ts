@@ -3,7 +3,7 @@
  *
  * Shows a count of active filters on the toolbar filter icon badge.
  *
- * Hooks into recalcHeights() and toggleAppOnly() to auto-update.
+ * Hooks into recalcHeights() to auto-update.
  */
 
 /** Returns the JavaScript code for the filter badge. */
@@ -26,8 +26,9 @@ function updateFilterBadge() {
     if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
         && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) count++;
 
-    // App-only mode
-    if (typeof appOnlyMode !== 'undefined' && appOnlyMode) count++;
+    // Tier filters (Flutter or Device toggled from default)
+    if (typeof showFlutter !== 'undefined' && !showFlutter) count++;
+    if (typeof showDevice !== 'undefined' && showDevice) count++;
 
     // Source tags hidden
     if (typeof hiddenSourceTags !== 'undefined'
@@ -62,16 +63,6 @@ var _origRecalcForBadge = typeof recalcHeights === 'function' ? recalcHeights : 
 if (_origRecalcForBadge) {
     recalcHeights = function() {
         _origRecalcForBadge();
-        updateFilterBadge();
-        if (typeof updateLineCount === 'function') updateLineCount();
-    };
-}
-
-// Hook into toggleAppOnly (doesn't call recalcHeights)
-var _origAppOnlyForBadge = typeof toggleAppOnly === 'function' ? toggleAppOnly : null;
-if (_origAppOnlyForBadge) {
-    toggleAppOnly = function() {
-        _origAppOnlyForBadge();
         updateFilterBadge();
         if (typeof updateLineCount === 'function') updateLineCount();
     };

@@ -28,7 +28,7 @@ export const VIEWER_KEYBINDING_ACTION_IDS = [
   'insertMarker',
   'togglePin',
   'annotate',
-  'toggleAppOnly',
+  'toggleDevice',
   'copyRaw',
 ] as const;
 
@@ -56,7 +56,7 @@ const DEFAULT_ACTION_TO_KEY: Record<ViewerKeybindingActionId, string> = {
   insertMarker: 'm',
   togglePin: 'p',
   annotate: 'n',
-  toggleAppOnly: 'a',
+  toggleDevice: 'a',
   copyRaw: 'ctrl+alt+c',
 };
 
@@ -82,7 +82,7 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   insertMarker: 'Insert marker',
   togglePin: 'Pin line',
   annotate: 'Annotate line',
-  toggleAppOnly: 'App-only stack trace',
+  toggleDevice: 'Toggle device logs',
   copyRaw: 'Copy as raw text',
 };
 

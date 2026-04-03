@@ -47,13 +47,8 @@ if (lineHeightSlider && lineHeightLabel) {
 
 // Display options
 var optWrap = document.getElementById('opt-wrap');
-var optDeco = document.getElementById('opt-decorations');
 if (optWrap) optWrap.addEventListener('change', function(e) {
     if (typeof toggleWrap === 'function') toggleWrap();
-    syncOptionsPanelUi();
-});
-if (optDeco) optDeco.addEventListener('change', function(e) {
-    if (typeof toggleDecorations === 'function') toggleDecorations();
     syncOptionsPanelUi();
 });
 // Decoration sub-options — sync to deco settings panel and delegate to onDecoOptionChange

@@ -7,6 +7,7 @@
 import { spawn, execFileSync } from 'child_process';
 import type { ChildProcess } from 'child_process';
 import { parseLogcatLine, meetsMinLevel } from './adb-logcat-parser';
+import { getDeviceTier } from '../analysis/device-tag-tiers';
 
 /** Options for starting logcat capture. */
 export interface LogcatCaptureOptions {
@@ -15,6 +16,8 @@ export interface LogcatCaptureOptions {
     readonly minLevel: string;
     readonly filterByPid: boolean;
     readonly maxBufferLines: number;
+    /** When false (default), drop device-other lines before they reach the viewer. */
+    readonly captureDeviceOther: boolean;
     readonly outputChannel: { appendLine(msg: string): void };
     /** Called for each accepted logcat line (used to push into the active log session). */
     readonly onLine: (raw: string) => void;
@@ -24,6 +27,7 @@ let childProcess: ChildProcess | undefined;
 let buffer: string[] = [];
 let pidFilter: number | undefined;
 let filterByPid = true;
+let captureDeviceOther = false;
 let minLevel = 'V';
 let maxBuffer = 50_000;
 let remainder = '';
@@ -44,6 +48,7 @@ export function startLogcatCapture(options: LogcatCaptureOptions): void {
     stopLogcatCapture();
 
     filterByPid = options.filterByPid;
+    captureDeviceOther = options.captureDeviceOther;
     minLevel = options.minLevel;
     maxBuffer = Math.max(1000, Math.min(500_000, options.maxBufferLines));
     lineCb = options.onLine;
@@ -138,5 +143,6 @@ function acceptLine(raw: string): boolean {
     if (!parsed) { return true; }
     if (!meetsMinLevel(parsed.level, minLevel)) { return false; }
     if (filterByPid && pidFilter !== undefined && parsed.pid !== pidFilter) { return false; }
+    if (!captureDeviceOther && getDeviceTier(parsed.tag) === 'device-other') { return false; }
     return true;
 }
