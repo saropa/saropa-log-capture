@@ -116,7 +116,7 @@ function rebuildExclusionChips() {
         label.textContent = count > 0 ? 'Exclusions (' + count + ')' : 'Exclusions';
     }
     if (typeof setAccordionSummary === 'function') {
-        setAccordionSummary('noise-section', count > 0 ? count + ' pattern' + (count !== 1 ? 's' : '') : '');
+        setAccordionSummary('exclusions-section', count > 0 ? count + ' pattern' + (count !== 1 ? 's' : '') : '');
     }
     if (count === 0) { container.innerHTML = ''; container.className = 'exclusion-chips'; return; }
 

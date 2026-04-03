@@ -24,11 +24,11 @@ function applyLintDataToLastLine(ln) {
 
 /**
  * Return a lint badge HTML string for the given line item.
- * Only rendered when decorations and the lint sub-toggle are on,
+ * Only rendered when the lint badge toggle is on
  * and the item has lintErrors or lintWarnings > 0.
  */
 function getLintBadge(item) {
-    if (!showDecorations || !decoShowLintBadges) return '';
+    if (!decoShowLintBadges) return '';
     var e = item.lintErrors || 0;
     var w = item.lintWarnings || 0;
     if (e === 0 && w === 0) return '';

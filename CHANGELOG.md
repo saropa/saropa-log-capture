@@ -26,6 +26,34 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.5.0]
+
+### Added
+
+- **Device log triage:** Three-tier classification for logcat lines — Flutter (app), device-critical (always visible), device-other (hidden by default). Device-critical tags (`AndroidRuntime`, `ActivityManager`, `art`, etc.) are never hidden, so real crashes surface even with Device unchecked
+- **Flutter/Device checkboxes** in Log Inputs section replace the old "App only" toggle. Flutter is checked by default; Device is unchecked by default
+- **Device severity demotion:** Device-other lines (e.g. `E/SettingsState`) are demoted to info severity regardless of logcat level — no more false red errors from system noise
+- **Capture-level filtering:** New `integrations.adbLogcat.captureDeviceOther` setting (default: false) drops device-other lines at capture time before they reach the viewer or log file
+- **Curated critical tag list** in `device-tag-tiers.ts` — editorial classification maintained in code, not a user responsibility
+
+### Changed
+
+- **Noise Reduction → Exclusions:** Renamed the filter section now that app-only is gone; only exclusion patterns remain
+- **"App only" toggle removed:** Replaced by the Flutter/Device checkboxes with tier-aware filtering
+- **"No Framework Noise" preset → "Flutter Only":** Built-in preset renamed and uses `deviceEnabled: false`
+- **Keyboard shortcut "A"** now toggles the Device checkbox instead of the removed app-only mode
+- **Signal analysis** skips device-other lines — no more false positives from system errors in error classification
+- **Line decorations — no master switch:** Removed the `showDecorations` master toggle from the context menu, options panel, and VS Code settings. Each decoration option (severity dot, counter, timestamp, session elapsed, severity bar, line coloring, badges) can now be toggled independently. Decorations render when any individual option is on; the footer Deco button now opens the settings panel directly.
+- **File Scope cleanup:** All five radio buttons are always visible (disabled ones are dimmed instead of hidden); removed three redundant hint/status lines; "Hide lines without file path" renamed to "Exclude lines with no source file" and disabled when scope is "All logs"; each radio shows the actual path segment in a dimmed suffix (e.g. "Only directory _(lib/src/)_"); accordion summary shows "Only main.dart" instead of generic "File"
+
+### Fixed
+
+- Fixed Log Inputs category filter (e.g. unchecking "logcat") not hiding lines that arrive after the filter is toggled — new lines now respect the active category filter on arrival
+- Fixed File Scope filter never matching any lines on Windows — `uri.path` produces `/d:/…` but DAP source paths are `d:\…`; path normalization now strips the leading slash before drive letters
+- Fixed File Scope filter silently changing when switching editor tabs — scope paths are now locked when the user picks a level; switching editors updates the suffix labels but does not re-apply the filter
+
+---
+
 ## [5.4.2]
 
 Fixes duplicate and unstable entries in the signals panel — repeated errors now merge into one signal, ranked by how often they appear instead of how recently they arrived.

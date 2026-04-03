@@ -216,11 +216,6 @@ export function getContextMenuHtml(): string {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Word wrap</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-decorations">
-                <span class="codicon codicon-symbol-event" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Line decorations (dot, number, time)</span>
-            </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>

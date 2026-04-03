@@ -94,10 +94,10 @@ suite('Hidden-lines chevron insertion', () => {
         );
     });
 
-    test('should check framework + appOnlyMode for framework-only filter', () => {
+    test('should check tier-based filter via isTierHidden', () => {
         assert.ok(
-            viewportScript.includes('item.fw') && viewportScript.includes('appOnlyMode'),
-            'must check item.fw combined with appOnlyMode',
+            viewportScript.includes('isTierHidden'),
+            'must check tier filter via isTierHidden function',
         );
     });
 

@@ -9,7 +9,7 @@ window.addEventListener('message', function(event) {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier);
                 if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
@@ -178,9 +178,6 @@ window.addEventListener('message', function(event) {
             break;
         case 'setShowElapsed':
             if (typeof handleSetShowElapsed === 'function') handleSetShowElapsed(msg);
-            break;
-        case 'setShowDecorations':
-            if (typeof handleSetShowDecorations === 'function') handleSetShowDecorations(msg);
             break;
         case 'errorClassificationSettings':
             if (typeof handleErrorClassificationSettings === 'function') handleErrorClassificationSettings(msg);

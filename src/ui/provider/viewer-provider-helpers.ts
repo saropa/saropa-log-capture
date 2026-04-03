@@ -8,7 +8,8 @@
 import * as vscode from "vscode";
 import { t } from "../../l10n";
 import { findHeaderEnd } from "../viewer/viewer-file-loader";
-import { isFrameworkFrame, isFrameworkLogLine, isStackFrameLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
+import { isFrameworkFrame, classifyLogLine, isStackFrameLine, parseThreadHeader } from "../../modules/analysis/stack-parser";
+import { type DeviceTier } from "../../modules/analysis/device-tag-tiers";
 import { stripAnsi } from "../../modules/capture/ansi";
 import { extractSourceReference } from "../../modules/source/source-linker";
 import { getPerFileCoverageMap } from "../../modules/integrations/providers/code-coverage";
@@ -154,23 +155,26 @@ export function sendNewCategories(
 }
 
 /**
- * Classify a log line as framework or app code.
+ * Classify a log line by device tier.
  * Handles both stack frames ("    at ...") and regular output
  * (e.g. Android logcat "D/TAG(PID): msg", launch boilerplate).
+ * Stack frames return 'flutter' (app) or 'device-other' (framework).
  */
-export function classifyFrame(text: string): boolean | undefined {
+export function classifyFrame(text: string): DeviceTier | undefined {
 	if (/^\s+at\s/.test(text)) {
-		return isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+		const isFw = isFrameworkFrame(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+		if (isFw === undefined) { return undefined; }
+		return isFw ? 'device-other' : 'flutter';
 	}
-	return isFrameworkLogLine(text);
+	return classifyLogLine(text);
 }
 
 /**
  * Look up per-file coverage for an app-code stack frame line.
  * Returns coverage percent (0–100) or undefined if not applicable.
  */
-export function lookupQuality(text: string, fw: boolean | undefined): number | undefined {
-	if (fw !== false) { return undefined; }
+export function lookupQuality(text: string, tier: DeviceTier | undefined): number | undefined {
+	if (tier !== 'flutter') { return undefined; }
 	if (!isStackFrameLine(text)) { return undefined; }
 	const map = getPerFileCoverageMap();
 	if (!map) { return undefined; }

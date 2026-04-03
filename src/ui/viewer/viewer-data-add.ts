@@ -36,9 +36,12 @@ function proximityInheritAnchor() {
     return null;
 }
 
-function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText) {
-    /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). */
+function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
+    /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other' */
     var lineSource = source || 'debug';
+    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : undefined));
+    /* Category filter: lines arriving while a category is unchecked must start hidden. */
+    var catFiltered = !!(typeof activeFilters !== 'undefined' && activeFilters && !isMarker && !activeFilters.has(category));
     if (ts && !sessionStartTs) sessionStartTs = ts;
     if (isMarker) {
         resetCompressDupStreak();
@@ -71,7 +74,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                     if (activeGroupHeader.classTags.indexOf(cTagsF[ci]) < 0) activeGroupHeader.classTags.push(cTagsF[ci]);
                 }
             }
-            var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
+            var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, tier: lineTier, level: 'error', sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
             if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
             allLines.push(sfItem);
             activeGroupHeader.frameCount++;
@@ -83,10 +86,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (lTagH && lTagH === sTagH) lTagH = null;
         var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
         var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
-        var hdrH = hdrAutoHide ? 0 : ROW_HEIGHT;
+        var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
+        var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         // Expanded by default so every frame is visible; users can click the header to collapse or use preview.
-        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, tier: lineTier, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
@@ -105,6 +109,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
+    /* Device-other: demote error/warning to info so device noise never shows red/yellow. Device-critical keeps its real severity. */
+    if (lineTier === 'device-other' && (lvl === 'error' || lvl === 'warning')) lvl = 'info';
     // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
     // above (see Level Filters fly-up), it is tinted like an error so the incident reads as one band.
     // Those rows are flagged recentErrorContext and styled distinctly from the faulting line. Drift SQL
@@ -233,7 +239,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             var oldH = repeatItem.height;
             totalHeight -= oldH;
         }
-        var repeatH = repeatAutoHide ? 0 : ROW_HEIGHT;
+        var repeatTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
+        var repeatH = (repeatAutoHide || catFiltered || repeatTierHidden) ? 0 : ROW_HEIGHT;
         if (!isUpdate && repeatAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         if (!isUpdate) {
             repeatItem = {
@@ -249,6 +256,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                 sourceTag: sTag,
                 logcatTag: lTag,
                 sqlVerb: sqlMeta ? sqlMeta.verb : null,
+                tier: lineTier,
+                filteredOut: catFiltered,
                 sourceFiltered: false,
                 sqlPatternFiltered: false,
                 classFiltered: false,
@@ -318,15 +327,15 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             checkCriticalError(plain);
         }
 
-        var appHidden = (typeof appOnlyMode !== 'undefined' && appOnlyMode && fw);
+        var lineTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
         var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
         var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
-        var lineH = (errorSuppressed || appHidden || classHidden) ? 0 : ROW_HEIGHT;
+        var lineH = (errorSuppressed || lineTierHidden || classHidden || catFiltered) ? 0 : ROW_HEIGHT;
         var scopeFilt = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
         var finalH = (scopeFilt || isAutoHidden) ? 0 : lineH;
         if (isAutoHidden && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
-        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
+        var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
