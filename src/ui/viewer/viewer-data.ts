@@ -140,7 +140,7 @@ function applyCompressDedupModes() {
         var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!peeking && (row.userHidden || row.autoHidden)) return false;
         if ((typeof hideBlankLines !== 'undefined' && hideBlankLines) && isLineContentBlank(row)) return false;
-        if ((typeof appOnlyMode !== 'undefined' && appOnlyMode) && row.fw) return false;
+        if (typeof isTierHidden === 'function' && isTierHidden(row)) return false;
         return true;
     }
 

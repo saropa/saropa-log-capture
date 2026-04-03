@@ -9,14 +9,11 @@ import { getFilterDrawerHtml } from '../../ui/viewer-toolbar/viewer-toolbar-filt
 import { getPresetsScript } from '../../ui/viewer-search-filter/viewer-presets';
 
 suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
-    test('HTML uses Log Inputs, File Scope, and scope narrowing wrapper ids', () => {
+    test('HTML uses Log Inputs, File Scope, and scope element ids', () => {
         const html = getFiltersPanelHtml();
         assert.ok(html.includes('Log Inputs'));
         assert.ok(html.includes('SQL Commands'));
         assert.ok(html.includes('File Scope'));
-        assert.ok(html.includes('id="scope-narrowing-block"'));
-        assert.ok(html.includes('id="scope-no-context-hint"'));
-        assert.ok(html.includes('Hide lines without file path'));
         assert.ok(html.includes('id="scope-filter-hint"'));
     });
 
@@ -28,12 +25,11 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes('getSourceFilterCheckboxes'));
     });
 
-    test('scope script toggles narrowing visibility when no active editor', () => {
+    test('scope script disables unattributed checkbox when scope is all', () => {
         const script = getScopeFilterScript();
-        assert.ok(script.includes('function updateScopeNarrowingVisibility'));
-        assert.ok(script.includes('scope-narrowing-block'));
-        assert.ok(script.includes('scope-no-context-hint'));
-        assert.ok(script.includes('!scopeContext.activeFilePath && scopeLevel'));
+        assert.ok(script.includes('function updateScopeUnattribState'));
+        assert.ok(script.includes('scope-hide-unattrib'));
+        assert.ok(script.includes("scopeLevel !== 'all'"));
     });
 
     test('scope script updates contextual hint and hooks recalcHeights', () => {
@@ -89,7 +85,7 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
     test('exclusion script should set accordion summary', () => {
         const script = getExclusionScript();
         assert.ok(
-            script.includes("setAccordionSummary('noise-section'"),
+            script.includes("setAccordionSummary('exclusions-section'"),
             'exclusion rebuild should update accordion summary',
         );
     });
@@ -161,20 +157,23 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes("levelMenuBtn.classList.remove('u-hidden')"), 'should show dots on drawer close');
     });
 
-    test('Noise Reduction accordion should contain both App Only and Exclusions', () => {
+    test('Log Inputs should contain Flutter and Device checkboxes', () => {
         const html = getFilterDrawerHtml();
-        const noiseIdx = html.indexOf('noise-section');
-        assert.ok(noiseIdx >= 0, 'should have noise-section');
-        const noiseBody = html.substring(noiseIdx, html.indexOf('</div>\n    </div>', noiseIdx + 200));
-        assert.ok(noiseBody.includes('opt-app-only'), 'Noise Reduction should contain App Only checkbox');
-        assert.ok(noiseBody.includes('opt-exclusions'), 'Noise Reduction should contain Exclusions checkbox');
+        assert.ok(html.includes('opt-flutter'), 'Log Inputs should contain Flutter checkbox');
+        assert.ok(html.includes('opt-device'), 'Log Inputs should contain Device checkbox');
     });
 
-    test('preset save should capture appOnlyMode', () => {
+    test('Exclusions accordion should contain exclusion controls', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('exclusions-section'), 'should have exclusions-section');
+        assert.ok(html.includes('opt-exclusions'), 'Exclusions should contain exclusion checkbox');
+    });
+
+    test('preset save should capture deviceEnabled', () => {
         const script = getPresetsScript();
         assert.ok(
-            script.includes('filters.appOnlyMode'),
-            'getCurrentFilters should save appOnlyMode state',
+            script.includes('filters.deviceEnabled'),
+            'getCurrentFilters should save deviceEnabled state',
         );
     });
 });

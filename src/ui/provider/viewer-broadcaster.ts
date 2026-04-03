@@ -84,9 +84,6 @@ export class ViewerBroadcaster implements ViewerTarget {
   setShowElapsed(show: boolean): void {
     for (const t of this.targets) { t.setShowElapsed(show); }
   }
-  setShowDecorations(show: boolean): void {
-    for (const t of this.targets) { t.setShowDecorations(show); }
-  }
   setErrorClassificationSettings(
     suppress: boolean,
     breakOn: boolean,
