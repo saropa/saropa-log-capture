@@ -4,6 +4,8 @@
  * Used by viewer stack UI and analysis panel for frame filtering and grouping.
  */
 
+import { type DeviceTier, getDeviceTier } from './device-tag-tiers';
+
 /** Patterns that identify framework / library stack frames. */
 const frameworkPatterns: RegExp[] = [
     // Dart / Flutter
@@ -103,19 +105,29 @@ const launchPatterns: RegExp[] = [
 ];
 
 /**
- * Classify a regular (non-stack-frame) log line as framework or app.
- * Returns true for framework/system output, false for app output,
+ * Classify a regular (non-stack-frame) log line by device tier.
+ * Returns a DeviceTier for logcat lines, 'device-other' for launch boilerplate,
  * or undefined if the line format is unrecognised.
  */
-export function isFrameworkLogLine(text: string): boolean | undefined {
+export function classifyLogLine(text: string): DeviceTier | undefined {
     const m = logcatWithPid.exec(text) ?? logcatNoPid.exec(text);
     if (m) {
-        return m[1] !== 'flutter';
+        return getDeviceTier(m[1]);
     }
     for (const pat of launchPatterns) {
-        if (pat.test(text)) { return true; }
+        if (pat.test(text)) { return 'device-other'; }
     }
     return undefined;
+}
+
+/**
+ * Classify a regular (non-stack-frame) log line as framework or app.
+ * @deprecated Use classifyLogLine() for tier-aware classification.
+ */
+export function isFrameworkLogLine(text: string): boolean | undefined {
+    const tier = classifyLogLine(text);
+    if (tier === undefined) { return undefined; }
+    return tier !== 'flutter';
 }
 
 /**

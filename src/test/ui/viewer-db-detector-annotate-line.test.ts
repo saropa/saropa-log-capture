@@ -29,7 +29,9 @@ var sessionStartTs = null;
 var autoHiddenCount = 0;
 var strictLevelDetection = false;
 var suppressTransientErrors = false;
-var appOnlyMode = false;
+var showFlutter = true;
+var showDevice = false;
+function isTierHidden() { return false; }
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
 function isStackFrameText() { return false; }

@@ -167,7 +167,6 @@ export class LogViewerProvider
   setContextViewLines(count: number): void { state.setContextViewLinesImpl(this, count); }
   setCopyContextLines(count: number): void { state.setCopyContextLinesImpl(this, count); }
   setShowElapsed(show: boolean): void { state.setShowElapsedImpl(this, show); }
-  setShowDecorations(show: boolean): void { state.setShowDecorationsImpl(this, show); }
   startReplay(): void { state.postStartReplayImpl(this); }
   private getReplayConfig() { return state.getReplayConfig(); }
   setErrorClassificationSettings(

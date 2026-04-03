@@ -10,16 +10,27 @@
  * Also provides whole-line severity tinting (subtle background colors).
  *
  * All rendering is viewer-only — log files on disk are never modified.
- * Sub-toggles (decoShowDot, decoShowCounter, decoShowTimestamp) and
- * decoLineColorMode are declared in viewer-deco-settings.ts and shared
- * via the concatenated script scope.
+ * Individual toggles (decoShowDot, decoShowCounter, decoShowTimestamp, etc.)
+ * and decoLineColorMode are declared in viewer-deco-settings.ts and shared
+ * via the concatenated script scope. areDecorationsOn() returns true when
+ * any individual toggle is active.
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
 export function getDecorationsScript(): string {
     return /* javascript */ `
-/** Master switch — when false, all decoration rendering is skipped. */
-var showDecorations = false;
+/**
+ * Derived check — decorations are on when any sub-toggle is active.
+ * Replaces the former master switch; individual options now stand alone.
+ */
+function areDecorationsOn() {
+    return decoShowDot || decoShowCounter || decoShowCounterOnBlank
+        || decoShowTimestamp || showElapsed || decoShowSessionElapsed
+        || decoShowBar || (decoLineColorMode !== 'none')
+        || (typeof decoShowQuality !== 'undefined' && decoShowQuality)
+        || (typeof showCategoryBadges !== 'undefined' && showCategoryBadges)
+        || (typeof decoShowLintBadges !== 'undefined' && decoShowLintBadges);
+}
 
 /** Epoch ms of the first timestamped line — used for session elapsed display. */
 var sessionStartTs = 0;
@@ -96,8 +107,7 @@ function formatSessionElapsed(ms) {
 
 /**
  * Reset all sub-toggles to their defaults.
- * Called when the master toggle turns ON so the user starts
- * with a clean, fully-enabled decoration state.
+ * Used by the options panel "Reset to defaults" action.
  */
 function resetDecoDefaults() {
     decoShowDot = true;
@@ -142,14 +152,15 @@ function applyDecorationLayoutWidth() {
     lastAppliedCounterDigits = digits;
 }
 
-/** Update the Deco button style and tooltip to reflect the master toggle state. */
+/** Update the Deco button style and tooltip to reflect whether any decoration is active. */
 function updateDecoButton() {
     var btn = document.getElementById('deco-toggle');
     if (!btn) return;
-    btn.title = showDecorations
-        ? 'Decorations ON (click to toggle)'
-        : 'Decorations OFF (click to toggle)';
-    if (showDecorations) {
+    var on = areDecorationsOn();
+    btn.title = on
+        ? 'Decorations ON (click gear to configure)'
+        : 'Decorations OFF (click gear to configure)';
+    if (on) {
         btn.classList.remove('toggle-inactive');
     } else {
         btn.classList.add('toggle-inactive');
@@ -167,7 +178,7 @@ function updateDecoButton() {
  * (Emoji dot is only used in Copy with decorations, not in the viewer.)
  */
 function getDecorationPrefix(item, idx) {
-    if (!showDecorations) return '';
+    if (!areDecorationsOn()) return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
 
     var isBlank = typeof isLineContentBlank === 'function' && isLineContentBlank(item);
@@ -200,44 +211,18 @@ function getDecorationPrefix(item, idx) {
  * Only active when decoLineColorMode is 'line' and decorations are on.
  */
 function getLineTintClass(item) {
-    if (decoLineColorMode !== 'line' || !showDecorations) return '';
+    if (decoLineColorMode !== 'line') return '';
     if (!item || item.type === 'marker' || item.type === 'stack-frame') return '';
     if (item.level) return ' line-tint-' + item.level;
     return '';
 }
 
-/** Handle setShowDecorations message from the extension (sent at session start). */
-function handleSetShowDecorations(msg) {
-    showDecorations = !!msg.show;
-    if (showDecorations) {
-        resetDecoDefaults();
-    } else {
-        if (typeof closeDecoSettings === 'function') closeDecoSettings();
-    }
-    if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
-    updateDecoButton();
-    applyDecorationLayoutWidth();
-    renderViewport(true);
-}
-
-/** Toggle the master decoration switch via the footer Deco button. */
-function toggleDecorations() {
-    showDecorations = !showDecorations;
-    if (showDecorations) {
-        resetDecoDefaults();
-    } else {
-        if (typeof closeDecoSettings === 'function') closeDecoSettings();
-    }
-    if (typeof syncDecoSettingsUi === 'function') syncDecoSettingsUi();
-    updateDecoButton();
-    applyDecorationLayoutWidth();
-    renderViewport(true);
-}
-
-// Register decoration button click handlers
+// Register decoration button click — opens settings panel directly
 var decoToggleBtn = document.getElementById('deco-toggle');
 if (decoToggleBtn) {
-    decoToggleBtn.addEventListener('click', toggleDecorations);
+    decoToggleBtn.addEventListener('click', function() {
+        if (typeof toggleDecoSettings === 'function') toggleDecoSettings();
+    });
 }
 applyDecorationLayoutWidth();
 `;

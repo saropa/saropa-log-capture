@@ -68,9 +68,6 @@ export function setCopyContextLinesImpl(target: ProviderStateTarget, count: numb
 export function setShowElapsedImpl(target: ProviderStateTarget, show: boolean): void {
   target.postMessage({ type: "setShowElapsed", show });
 }
-export function setShowDecorationsImpl(target: ProviderStateTarget, show: boolean): void {
-  target.postMessage({ type: "setShowDecorations", show });
-}
 export function getReplayConfig(): { defaultMode: string; defaultSpeed: number; minLineDelayMs: number; maxDelayMs: number } {
   const r = getConfig().replay;
   return { defaultMode: r.defaultMode, defaultSpeed: r.defaultSpeed, minLineDelayMs: r.minLineDelayMs, maxDelayMs: r.maxDelayMs };

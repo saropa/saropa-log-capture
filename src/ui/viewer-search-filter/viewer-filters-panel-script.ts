@@ -176,10 +176,12 @@ function updateLogInputsSummary() {
 /** Sync filter-related checkboxes from current state. */
 function syncFiltersPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
-    var appOnlyCheck = document.getElementById('opt-app-only');
+    var flutterCheck = document.getElementById('opt-flutter');
+    var deviceCheck = document.getElementById('opt-device');
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
+    if (flutterCheck && typeof showFlutter !== 'undefined') flutterCheck.checked = showFlutter;
+    if (deviceCheck && typeof showDevice !== 'undefined') deviceCheck.checked = showDevice;
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof syncScopeUi === 'function') syncScopeUi();
@@ -189,15 +191,21 @@ function syncFiltersPanelUi() {
 
 /* Close button and search input bindings removed — filter drawer handles its own UI. */
 
-// Noise reduction controls
+// Exclusion controls
 var optExcl = document.getElementById('opt-exclusions');
-var optAppOnly = document.getElementById('opt-app-only');
 if (optExcl) optExcl.addEventListener('change', function(e) {
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(e.target.checked);
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
 });
-if (optAppOnly) optAppOnly.addEventListener('change', function(e) {
-    if (typeof setAppOnlyMode === 'function') setAppOnlyMode(e.target.checked);
+
+// Tier filter controls (Flutter / Device)
+var optFlutter = document.getElementById('opt-flutter');
+var optDevice = document.getElementById('opt-device');
+if (optFlutter) optFlutter.addEventListener('change', function(e) {
+    if (typeof setShowFlutter === 'function') setShowFlutter(e.target.checked);
+});
+if (optDevice) optDevice.addEventListener('change', function(e) {
+    if (typeof setShowDevice === 'function') setShowDevice(e.target.checked);
 });
 
 // Reset all filters

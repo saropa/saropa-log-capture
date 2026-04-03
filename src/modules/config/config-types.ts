@@ -82,7 +82,6 @@ export interface SaropaLogCaptureConfig {
   readonly highlightRules: readonly HighlightRule[];
   readonly includeSourceLocation: boolean;
   readonly includeElapsedTime: boolean;
-  readonly showDecorations: boolean;
   readonly captureAll: boolean;
   readonly filterContextLines: number;
   readonly contextViewLines: number;

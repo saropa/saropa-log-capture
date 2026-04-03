@@ -28,6 +28,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | Medium | Medium | Session comparison (3-way) | Compare three sessions side by side | [031](bugs/031_plan-session-comparison-three-way.md) |
 | Medium | High | Noise Learning | Learn from dismissals, suggest exclusion rules | [025](bugs/025_plan-noise-learning.md) |
 | Low | Medium | Incremental index for search | "Search in all logs" with scalable index | [029](bugs/029_plan-incremental-index-search.md) |
+| High | Medium | Device log triage | Classify device logs into critical (always visible) vs other (hidden, severity demoted, excluded from analysis); replace app-only toggle | [045](bugs/045_plan-device-log-triage.md) |
 | Medium | Low | adb logcat streaming | Live Android logcat alongside debug session; PID filter, sidecar | [042](bugs/042_plan-adb-logcat.md) |
 | Low | High | Integration adapters | database, externalLogs, http, browser, security — full implementation from specs | [001](bugs/001_integration-specs-index.md) · [009](bugs/009_integration-spec-application-file-logs.md)–[013](bugs/013_integration-spec-security-audit-logs.md) |
 

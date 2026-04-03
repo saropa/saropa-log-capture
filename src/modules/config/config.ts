@@ -112,7 +112,6 @@ export function getConfig(): SaropaLogCaptureConfig {
     showElapsedTime: ensureBoolean(cfg.get("showElapsedTime"), false),
     includeSourceLocation: ensureBoolean(cfg.get("includeSourceLocation"), false),
     includeElapsedTime: ensureBoolean(cfg.get("includeElapsedTime"), false),
-    showDecorations: ensureBoolean(cfg.get("showDecorations"), true),
     slowGapThreshold: clamp(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),
     watchPatterns: normalizeWatchPatterns(cfg.get("watchPatterns")),
     splitRules: parseSplitRules((cfg.get("splitRules") as Record<string, unknown>) ?? {}),

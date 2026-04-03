@@ -100,7 +100,9 @@ var sessionStartTs = null;
 var autoHiddenCount = 0;
 var strictLevelDetection = false;
 var suppressTransientErrors = false;
-var appOnlyMode = false;
+var showFlutter = true;
+var showDevice = false;
+function isTierHidden() { return false; }
 /* getDriftDebugServerFromLogScript assigns to window; Node vm has no browser global. */
 var window = globalThis;
 

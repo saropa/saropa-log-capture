@@ -241,6 +241,7 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
       filterByPid: ensureBoolean(cfg.get('integrations.adbLogcat.filterByPid'), true),
       maxBufferLines: clamp(cfg.get('integrations.adbLogcat.maxBufferLines'), 1000, 500000, 50000),
       writeSidecar: ensureBoolean(cfg.get('integrations.adbLogcat.writeSidecar'), true),
+      captureDeviceOther: ensureBoolean(cfg.get('integrations.adbLogcat.captureDeviceOther'), false),
     },
     integrationsUnifiedLog: {
       writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
