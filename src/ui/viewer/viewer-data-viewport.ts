@@ -44,7 +44,7 @@ function countHiddenNonBlank(fromIdx, toIdx) {
         if (item.sqlPatternFiltered) reasons.sqlPattern = (reasons.sqlPattern || 0) + 1;
         if (item.scopeFiltered) reasons.scope = (reasons.scope || 0) + 1;
         if (item.timeRangeFiltered) reasons.timeRange = (reasons.timeRange || 0) + 1;
-        if (item.fw && typeof appOnlyMode !== 'undefined' && appOnlyMode) reasons.framework = (reasons.framework || 0) + 1;
+        if (typeof isTierHidden === 'function' && isTierHidden(item)) reasons.tier = (reasons.tier || 0) + 1;
     }
     return { count: count, reasons: reasons };
 }
@@ -60,7 +60,7 @@ function buildHiddenTip(info) {
     if (r.search) parts.push(r.search + ' search-filtered');
     if (r.suppressed) parts.push(r.suppressed + ' suppressed');
     if (r.hidden) parts.push(r.hidden + ' manually hidden');
-    if (r.framework) parts.push(r.framework + ' framework-only');
+    if (r.tier) parts.push(r.tier + ' tier-filtered');
     if (r.repeat) parts.push(r.repeat + ' repeat-collapsed');
     if (r.duplicate) parts.push(r.duplicate + ' deduplicated');
     if (r.classTag) parts.push(r.classTag + ' class-filtered');

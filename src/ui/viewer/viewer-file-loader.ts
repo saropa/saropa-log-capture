@@ -8,6 +8,7 @@
 
 import { escapeHtml } from '../../modules/capture/ansi';
 import { buildLogLineHtmlWithOptionalDriftArgsDim } from '../../modules/db/drift-log-line-args-fold';
+import type { DeviceTier } from '../../modules/analysis/device-tag-tiers';
 export {
     SOURCE_TERMINAL,
     SOURCE_EXTERNAL_PREFIX,
@@ -32,6 +33,9 @@ export interface PendingLine {
     readonly timestamp: number;
     /** Elapsed ms since previous line (e.g. from [+125ms] in file). Used for replay timing. */
     readonly elapsedMs?: number;
+    /** Device tier: 'flutter' (app), 'device-critical', or 'device-other'. Replaces old boolean `fw`. */
+    readonly tier?: DeviceTier;
+    /** @deprecated Use `tier` instead. Kept for migration; will be removed. */
     readonly fw?: boolean;
     readonly sourcePath?: string;
     /** Per-file line coverage percent (0–100) for stack frames referencing app code. */
@@ -48,7 +52,7 @@ export interface PendingLine {
 
 /** Context for parsing file lines — bundles parameters to stay within limits. */
 export interface FileParseContext {
-    readonly classifyFrame: (text: string) => boolean | undefined;
+    readonly classifyFrame: (text: string) => DeviceTier | undefined;
     readonly sessionMidnightMs: number;
     /** Stream source id for multi-source view (e.g. SOURCE_DEBUG). Omit for default 'debug'. */
     readonly source?: string;
@@ -230,7 +234,7 @@ function buildMarkerLine(text: string, source?: string): PendingLine {
 interface FileLineOptions {
     text: string;
     category: string;
-    classifyFrame: (text: string) => boolean | undefined;
+    classifyFrame: (text: string) => DeviceTier | undefined;
     timestamp: number;
     elapsedMs?: number;
     source?: string;
@@ -238,6 +242,7 @@ interface FileLineOptions {
 
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
 function buildFileLine(opts: FileLineOptions): PendingLine {
+    const tier = opts.classifyFrame(opts.text);
     return {
         text: buildLogLineHtmlWithOptionalDriftArgsDim(opts.text),
         rawText: opts.text,
@@ -246,7 +251,8 @@ function buildFileLine(opts: FileLineOptions): PendingLine {
         category: opts.category,
         timestamp: opts.timestamp,
         ...(opts.elapsedMs !== undefined && opts.elapsedMs >= 0 ? { elapsedMs: opts.elapsedMs } : {}),
-        fw: opts.classifyFrame(opts.text),
+        tier,
+        fw: tier !== undefined ? tier !== 'flutter' : undefined,
         ...(opts.source ? { source: opts.source } : {}),
     };
 }

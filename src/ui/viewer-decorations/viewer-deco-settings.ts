@@ -10,8 +10,8 @@
  * via the concatenated script scope. Timestamp is also toggleable from
  * the viewer context menu (Options → Timestamp).
  *
- * Auto-off rule: when all checkboxes are unchecked AND coloring is "none",
- * the master showDecorations toggle is automatically turned off.
+ * Each decoration option is independently togglable; areDecorationsOn()
+ * derives the overall state from whether any sub-toggle is active.
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
@@ -130,17 +130,8 @@ function closeDecoSettings() {
     decoSettingsOpen = false;
 }
 
-/**
- * Toggle the settings panel via the gear button.
- * If decorations are OFF: turns them ON first, then opens the panel.
- * If decorations are ON: toggles the panel open/closed.
- */
+/** Toggle the settings panel via the gear button. */
 function toggleDecoSettings() {
-    if (!showDecorations) {
-        toggleDecorations();
-        openDecoSettings();
-        return;
-    }
     if (decoSettingsOpen) {
         closeDecoSettings();
     } else {
@@ -150,30 +141,22 @@ function toggleDecoSettings() {
 
 /**
  * Toggle timestamp in the line decoration prefix.
- * Callable from the context menu (Options → Timestamp).
- * If turning on and decorations are off, turns decorations on so the timestamp is visible.
+ * Callable from the context menu (Layout → Timestamp).
  */
 function toggleTimestamp() {
     decoShowTimestamp = !decoShowTimestamp;
-    if (decoShowTimestamp && !showDecorations) {
-        showDecorations = true;
-        if (typeof updateDecoButton === 'function') updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
 /**
  * Toggle session elapsed time in the line decoration prefix.
- * Callable from the context menu (Options → Session elapsed).
- * If turning on and decorations are off, turns decorations on so the time is visible.
+ * Callable from the context menu (Layout → Session elapsed).
  */
 function toggleSessionElapsed() {
     decoShowSessionElapsed = !decoShowSessionElapsed;
-    if (decoShowSessionElapsed && !showDecorations) {
-        showDecorations = true;
-        if (typeof updateDecoButton === 'function') updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
@@ -210,9 +193,7 @@ function syncDecoSettingsUi() {
 
 /**
  * Handle any change to a decoration option checkbox or dropdown.
- * Reads UI values into state variables and re-renders the viewport.
- * If all prefix parts are off AND line coloring is "none", automatically
- * disables the master toggle (avoids "on but invisible" state).
+ * Reads UI values into state variables, updates the footer button, and re-renders.
  */
 function onDecoOptionChange() {
     var dot = document.getElementById('deco-opt-dot');
@@ -241,12 +222,7 @@ function onDecoOptionChange() {
     decoShowLintBadges = lintBdg ? lintBdg.checked : false;
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
-    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowSessionElapsed && !decoShowBar && !decoShowQuality && !showCategoryBadges && !decoShowLintBadges && decoLineColorMode === 'none';
-    if (allOff) {
-        showDecorations = false;
-        closeDecoSettings();
-        updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     renderViewport(true);
 }
 
