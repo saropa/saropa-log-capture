@@ -1,27 +1,47 @@
 /**
- * Client-side JavaScript for the app-only filter.
- * When enabled, framework/system log lines and stack frames are hidden.
+ * Client-side JavaScript for the Flutter/Device log filter.
+ *
+ * Two checkboxes in Log Inputs control visibility:
+ *   - Flutter (checked by default): lines with tier === 'flutter'
+ *   - Device (unchecked by default): lines with tier === 'device-other'
+ *
+ * Device-critical lines (e.g. AndroidRuntime crashes) are always visible
+ * regardless of the Device checkbox — they bypass this filter entirely.
+ *
  * Uses recalcHeights() so the filter composes with all other filters.
  */
 export function getStackFilterScript(): string {
   return /* javascript */ `
-var appOnlyMode = false;
+var showFlutter = true;
+var showDevice = false;
 
-function setAppOnlyMode(enabled) {
-    if (appOnlyMode === enabled) return;
-    toggleAppOnly();
-}
-
-function toggleAppOnly() {
-    appOnlyMode = !appOnlyMode;
+/** Update Flutter checkbox state and refilter. */
+function setShowFlutter(enabled) {
+    if (showFlutter === enabled) return;
+    showFlutter = enabled;
     recalcHeights();
-    if (typeof vscodeApi !== 'undefined') {
-        vscodeApi.postMessage({ type: 'setCaptureAll', value: !appOnlyMode });
-    }
     renderViewport(true);
 }
 
-/* Key "A" for toggleAppOnly is handled by viewer-script-keyboard (configurable keybindings). */
+/** Update Device checkbox state and refilter. */
+function setShowDevice(enabled) {
+    if (showDevice === enabled) return;
+    showDevice = enabled;
+    recalcHeights();
+    renderViewport(true);
+}
+
+/**
+ * Check if an item is hidden by the Flutter/Device tier filter.
+ * Device-critical items always pass (never hidden by this filter).
+ */
+function isTierHidden(item) {
+    if (!item.tier) return false;
+    if (item.tier === 'device-critical') return false;
+    if (item.tier === 'flutter') return !showFlutter;
+    if (item.tier === 'device-other') return !showDevice;
+    return false;
+}
 
 `;
 }

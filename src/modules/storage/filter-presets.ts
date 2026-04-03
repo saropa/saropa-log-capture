@@ -26,7 +26,10 @@ export interface FilterPreset {
     /** Whether exclusions should be enabled when preset is applied. */
     readonly exclusionsEnabled?: boolean;
 
-    /** Whether app-only mode (hide framework logs) should be enabled. */
+    /** Whether device logs should be shown when preset is applied. */
+    readonly deviceEnabled?: boolean;
+
+    /** @deprecated Use deviceEnabled instead. Kept for migration. */
     readonly appOnlyMode?: boolean;
 
     /** Which stream sources to show (e.g. ["debug"], ["debug", "terminal"]). Empty/undefined = all sources. */
@@ -47,8 +50,8 @@ export const builtInPresets: readonly FilterPreset[] = [
         levels: ['error', 'warning'],
     },
     {
-        name: 'No Framework Noise',
-        appOnlyMode: true,
+        name: 'Flutter Only',
+        deviceEnabled: false,
     },
     {
         name: 'Just debug output',

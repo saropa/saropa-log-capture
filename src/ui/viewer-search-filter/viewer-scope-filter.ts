@@ -20,7 +20,10 @@ export function getScopeFilterScript(): string {
     return /* javascript */ `
 var scopeLevel = 'all';
 var scopeHideUnattributed = false;
+/** Live context from the active editor — updates on every editor change. */
 var scopeContext = { activeFilePath: null, workspaceFolder: null, packageRoot: null, activeDirectory: null };
+/** Locked context snapshot — set when user picks a scope level, used for filtering. */
+var scopeLocked = { activeFilePath: null, workspaceFolder: null, packageRoot: null, activeDirectory: null };
 var scopeHintMinLines = 8;
 var scopeHintHiddenRatio = 0.75;
 var scopeHintNoPathRatio = 0.25;
@@ -29,25 +32,28 @@ var scopeHintDebounceTimer = null;
 
 function normScopePath(p) {
     if (!p) return null;
-    return p.replace(/\\\\/g, '/').toLowerCase();
+    var n = p.replace(/\\\\/g, '/').toLowerCase();
+    /* Strip leading / before drive letter (uri.path gives /d:/… but DAP gives d:\\…). */
+    if (n.length >= 3 && n[0] === '/' && n[2] === ':') n = n.substring(1);
+    return n;
 }
 
-/** Returns true if the line should be hidden by the scope filter. */
+/** Returns true if the line should be hidden by the scope filter. Uses locked (snapshot) paths. */
 function calcScopeFiltered(sourcePath) {
     if (scopeLevel === 'all') return false;
     var sp = normScopePath(sourcePath);
     if (!sp) return scopeHideUnattributed;
     switch (scopeLevel) {
         case 'workspace':
-            return !scopeContext.workspaceFolder || sp.indexOf(scopeContext.workspaceFolder) !== 0;
+            return !scopeLocked.workspaceFolder || sp.indexOf(scopeLocked.workspaceFolder) !== 0;
         case 'package':
-            return !scopeContext.packageRoot || sp.indexOf(scopeContext.packageRoot) !== 0;
+            return !scopeLocked.packageRoot || sp.indexOf(scopeLocked.packageRoot) !== 0;
         case 'directory':
-            if (!scopeContext.activeDirectory) return true;
-            var dirPrefix = scopeContext.activeDirectory.endsWith('/') ? scopeContext.activeDirectory : scopeContext.activeDirectory + '/';
-            return sp.indexOf(dirPrefix) !== 0 && sp !== scopeContext.activeDirectory;
+            if (!scopeLocked.activeDirectory) return true;
+            var dirPrefix = scopeLocked.activeDirectory.endsWith('/') ? scopeLocked.activeDirectory : scopeLocked.activeDirectory + '/';
+            return sp.indexOf(dirPrefix) !== 0 && sp !== scopeLocked.activeDirectory;
         case 'file':
-            return !scopeContext.activeFilePath || sp !== scopeContext.activeFilePath;
+            return !scopeLocked.activeFilePath || sp !== scopeLocked.activeFilePath;
         default:
             return false;
     }
@@ -64,14 +70,40 @@ function applyScopeFilter() {
     if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
 }
 
+/** Extract last path segment for display. */
+function lastPathSegment(raw) {
+    if (!raw) return null;
+    var segs = raw.replace(/\\/+$/, '').split('/');
+    return segs[segs.length - 1] || raw;
+}
+
+function scopeSummaryLabel(level) {
+    if (level === 'all') return '';
+    var ids = { workspace: 'workspaceFolder', package: 'packageRoot', directory: 'activeDirectory', file: 'activeFilePath' };
+    var name = lastPathSegment(scopeLocked[ids[level]]);
+    return name ? ('Only ' + name) : level;
+}
+
 function setScopeLevel(level) {
     scopeLevel = level;
+    /* Lock the current context so switching editors won't change the active filter. */
+    if (level !== 'all') {
+        scopeLocked.activeFilePath = normScopePath(scopeContext.activeFilePath);
+        scopeLocked.workspaceFolder = normScopePath(scopeContext.workspaceFolder);
+        scopeLocked.packageRoot = normScopePath(scopeContext.packageRoot);
+        scopeLocked.activeDirectory = normScopePath(scopeContext.activeDirectory);
+    } else {
+        scopeLocked.activeFilePath = null;
+        scopeLocked.workspaceFolder = null;
+        scopeLocked.packageRoot = null;
+        scopeLocked.activeDirectory = null;
+    }
     if (typeof setAccordionSummary === 'function') {
-        var scopeLabels = { all: '', workspace: 'Workspace', package: 'Package', directory: 'Directory', file: 'File' };
-        setAccordionSummary('scope-section', scopeLabels[level] || '');
+        setAccordionSummary('scope-section', scopeSummaryLabel(level));
     }
     applyScopeFilter();
     updateScopeRadios();
+    updateScopeUnattribState();
     if (typeof markPresetDirty === 'function') markPresetDirty();
 }
 
@@ -80,25 +112,25 @@ function handleScopeContextMessage(msg) {
     scopeContext.workspaceFolder = msg.workspaceFolder || null;
     scopeContext.packageRoot = msg.packageRoot || null;
     scopeContext.activeDirectory = msg.activeDirectory || null;
-    if (!scopeContext.activeFilePath && scopeLevel !== 'all') {
-        scopeLevel = 'all';
-        if (typeof setAccordionSummary === 'function') setAccordionSummary('scope-section', '');
-        applyScopeFilter();
-    }
+    /* Update UI (suffixes, disabled state) but do NOT re-apply the filter — locked paths are stable. */
     updateScopeStatus();
     updateScopeRadioDisabled();
-    updateScopeNarrowingVisibility();
-    if (scopeLevel !== 'all') applyScopeFilter();
-    else if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
+    updateScopeSuffixes();
+    updateScopeUnattribState();
 }
 
 function resetScopeFilter() {
     scopeLevel = 'all';
+    scopeLocked.activeFilePath = null;
+    scopeLocked.workspaceFolder = null;
+    scopeLocked.packageRoot = null;
+    scopeLocked.activeDirectory = null;
     if (typeof setAccordionSummary === 'function') setAccordionSummary('scope-section', '');
     scopeHideUnattributed = false;
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = false;
     updateScopeRadios();
+    updateScopeUnattribState();
     applyScopeFilter();
 }
 
@@ -106,20 +138,20 @@ function syncScopeUi() {
     updateScopeRadios();
     updateScopeRadioDisabled();
     updateScopeStatus();
-    updateScopeNarrowingVisibility();
+    updateScopeUnattribState();
     var cb = document.getElementById('scope-hide-unattrib');
     if (cb) cb.checked = scopeHideUnattributed;
     if (typeof flushScopeFilterHint === 'function') flushScopeFilterHint();
 }
 
-/** Show workspace/package/directory/file controls only when an active editor file exists. */
-function updateScopeNarrowingVisibility() {
-    var block = document.getElementById('scope-narrowing-block');
-    var hint = document.getElementById('scope-no-context-hint');
-    if (!block || !hint) return;
-    var hasFile = !!scopeContext.activeFilePath;
-    block.style.display = hasFile ? '' : 'none';
-    hint.style.display = hasFile ? 'none' : '';
+/** Enable/disable the unattributed checkbox based on active scope. */
+function updateScopeUnattribState() {
+    var cb = document.getElementById('scope-hide-unattrib');
+    if (!cb) return;
+    var active = scopeLevel !== 'all';
+    cb.disabled = !active;
+    var lbl = cb.closest('label');
+    if (lbl) lbl.classList.toggle('scope-disabled', !active);
 }
 
 function updateScopeRadios() {
@@ -150,13 +182,28 @@ function updateScopeStatus() {
     var el = document.getElementById('scope-status');
     if (!el) return;
     if (!scopeContext.activeFilePath) {
-        el.textContent = 'No active editor — location filters are unavailable';
+        el.textContent = 'Open a source file to enable scope filters';
         el.removeAttribute('title');
         return;
     }
-    var parts = scopeContext.activeFilePath.split('/');
-    el.textContent = 'Active file: ' + (parts[parts.length - 1] || 'Unknown');
-    el.title = scopeContext.activeFilePath;
+    el.textContent = '';
+    el.removeAttribute('title');
+}
+
+/** Show the actual path segment each scope radio would filter to. */
+function updateScopeSuffixes() {
+    var ids = { workspace: 'workspaceFolder', package: 'packageRoot', directory: 'activeDirectory', file: 'activeFilePath' };
+    var keys = ['workspace', 'package', 'directory', 'file'];
+    for (var si = 0; si < keys.length; si++) {
+        var span = document.getElementById('scope-suffix-' + keys[si]);
+        if (!span) continue;
+        /* Show locked path for the active scope level, live context for others. */
+        var raw = (scopeLevel === keys[si]) ? scopeLocked[ids[keys[si]]] : scopeContext[ids[keys[si]]];
+        var name = lastPathSegment(raw);
+        if (!name) { span.textContent = ''; continue; }
+        span.textContent = ' (' + name + ')';
+        span.title = raw || '';
+    }
 }
 
 // Wire radio button change events
@@ -186,7 +233,7 @@ function clearScopeFilterHint() {
 
 /** Debounced hint refresh for high-frequency layout passes (e.g. virtual scroll). */
 function scheduleScopeFilterHint() {
-    if (scopeLevel === 'all' || !scopeContext.activeFilePath) {
+    if (scopeLevel === 'all' || !scopeLocked.activeFilePath) {
         if (scopeHintDebounceTimer) {
             clearTimeout(scopeHintDebounceTimer);
             scopeHintDebounceTimer = null;
@@ -207,7 +254,7 @@ function flushScopeFilterHint() {
         clearTimeout(scopeHintDebounceTimer);
         scopeHintDebounceTimer = null;
     }
-    if (scopeLevel === 'all' || !scopeContext.activeFilePath) {
+    if (scopeLevel === 'all' || !scopeLocked.activeFilePath) {
         clearScopeFilterHint();
         return;
     }
@@ -221,7 +268,7 @@ function flushScopeFilterHint() {
 function updateScopeFilterHint() {
     var el = document.getElementById('scope-filter-hint');
     if (!el) return;
-    if (typeof scopeLevel === 'undefined' || scopeLevel === 'all' || !scopeContext.activeFilePath) {
+    if (typeof scopeLevel === 'undefined' || scopeLevel === 'all' || !scopeLocked.activeFilePath) {
         clearScopeFilterHint();
         return;
     }
@@ -253,7 +300,7 @@ function updateScopeFilterHint() {
         suggestReset = true;
     }
     if (ratioNoPath >= scopeHintNoPathRatio && !scopeHideUnattributed) {
-        messages.push('Many lines have no debugger file path. Enable Hide lines without file path to drop them while a location scope is on.');
+        messages.push('Many lines have no source file. Enable "Exclude lines with no source file" to drop them.');
     }
     if (messages.length === 0) {
         clearScopeFilterHint();

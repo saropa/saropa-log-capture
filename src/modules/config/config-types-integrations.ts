@@ -172,6 +172,8 @@ export interface IntegrationAdbLogcatConfig {
   readonly maxBufferLines: number;
   /** Write buffered logcat as .logcat.log sidecar file at session end. */
   readonly writeSidecar: boolean;
+  /** When true, capture device-other (non-critical, non-Flutter) logcat lines. Default false. */
+  readonly captureDeviceOther: boolean;
 }
 
 /** Write `basename.unified.jsonl` merging main log + terminal + external sidecars (Phase 4). */

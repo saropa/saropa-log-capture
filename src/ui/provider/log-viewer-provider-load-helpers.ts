@@ -127,7 +127,7 @@ export function truncateMainContentLines(rawLines: readonly string[]): { headerE
   return { headerEnd, contentLines, didTruncate, truncatedShown };
 }
 
-export function buildMainCtx(fields: Record<string, string>, source: string): { classifyFrame: (text: string) => boolean | undefined; sessionMidnightMs: number; source: string } {
+export function buildMainCtx(fields: Record<string, string>, source: string): { classifyFrame: (text: string) => ReturnType<typeof helpers.classifyFrame>; sessionMidnightMs: number; source: string } {
   return { classifyFrame: (t: string) => helpers.classifyFrame(t), sessionMidnightMs: computeSessionMidnight(fields["Date"] ?? ""), source };
 }
 
