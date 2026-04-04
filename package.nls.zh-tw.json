@@ -257,6 +257,7 @@
   "config.integrations.adbLogcat.minLevel.title": "Minimum logcat level to capture.",
   "config.integrations.adbLogcat.tagFilters.title": "Logcat tag filter expressions passed to adb logcat.",
   "config.integrations.adbLogcat.writeSidecar.title": "Write buffered logcat as .logcat.log sidecar at session end.",
+  "config.integrations.adbLogcat.captureDeviceOther.title": "Capture non-critical device logcat lines (default: false).",
   "config.integrations.buildCi.azureOrg.title": "Azure DevOps organization name (required when buildCi source is azure).",
   "config.integrations.buildCi.azureProject.title": "Azure DevOps project name (required when buildCi source is azure).",
   "config.integrations.buildCi.buildInfoPath.title": "Path (relative to workspace) to last-build.json for build/CI integrat…",

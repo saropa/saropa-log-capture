@@ -24,7 +24,7 @@ var deemphasizeFrameworkLevels = false;
  */
 var transientPatterns = [
     /TimeoutException/i,
-    /SocketException/i,
+    /SocketException(?=.*(?:Connection refused|timed?\s*out|reset|unreachable|ECONNREFUSED|ETIMEDOUT|ECONNRESET|EHOSTUNREACH|broken pipe))/i,
     /ECONNREFUSED/i,
     /ETIMEDOUT/i,
     /ENOTFOUND/i,
