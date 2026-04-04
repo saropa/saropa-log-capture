@@ -17,11 +17,11 @@ Flutter emulator sessions flood the viewer with device (Android OS) log lines. S
 
 Every non-Flutter logcat line is classified into one of two device tiers. Classification is a curated editorial decision maintained in code — not a user responsibility.
 
-| Tier | What | Examples | Default visibility |
-|------|------|----------|--------------------|
-| **Flutter** | `flutter` logcat tag — the user's app | App prints, Dart exceptions, Drift SQL | Shown |
-| **Device — critical** | Device tags/patterns that can indicate a problem affecting the user's app | `AndroidRuntime`, `ActivityManager` (kill/crash), `FATAL EXCEPTION`, `System.err` | Shown |
-| **Device — other** | Everything else from the Android OS | `SettingsState`, `EGL_emulation`, `MediaCodec`, `Zygote`, boot chatter | Hidden |
+| Tier                  | What                                                                      | Examples                                                                          | Default visibility |
+| --------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------ |
+| **Flutter**           | `flutter` logcat tag — the user's app                                     | App prints, Dart exceptions, Drift SQL                                            | Shown              |
+| **Device — critical** | Device tags/patterns that can indicate a problem affecting the user's app | `AndroidRuntime`, `ActivityManager` (kill/crash), `FATAL EXCEPTION`, `System.err` | Shown              |
+| **Device — other**    | Everything else from the Android OS                                       | `SettingsState`, `EGL_emulation`, `MediaCodec`, `Zygote`, boot chatter            | Hidden             |
 
 **Device — critical lines are always shown regardless of the Device checkbox state.** They are the reason you cannot just hide all device logs.
 
@@ -68,6 +68,8 @@ This is distinct from PID filtering (`filterByPid`). PID filtering drops lines f
 ## Curated tag classification
 
 Maintained in a new file: `src/modules/analysis/device-tag-tiers.ts`.
+
+<!-- cspell:disable -->
 
 ### Device — critical (allowlist)
 
@@ -118,41 +120,41 @@ No need to enumerate — the critical list is the allowlist; everything else is 
 
 ## Settings changes
 
-| Setting | Change |
-|---------|--------|
-| `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` | **New.** Default `false`. |
-| `saropaLogCapture.filterPresets[].appOnlyMode` | **Deprecated.** Map to `deviceEnabled: false` on load. |
-| `saropaLogCapture.deemphasizeFrameworkLevels` | **Review.** May be replaced by per-tier severity rules. |
+| Setting                                                      | Change                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------- |
+| `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` | **New.** Default `false`.                               |
+| `saropaLogCapture.filterPresets[].appOnlyMode`               | **Deprecated.** Map to `deviceEnabled: false` on load.  |
+| `saropaLogCapture.deemphasizeFrameworkLevels`                | **Review.** May be replaced by per-tier severity rules. |
 
 ## Key files to modify
 
-| File | Change |
-|------|--------|
-| `src/modules/analysis/device-tag-tiers.ts` | **New.** Curated critical/other tag classification. |
-| `src/modules/analysis/stack-parser.ts` | `isFrameworkLogLine()` returns tier instead of boolean. |
-| `src/modules/integrations/adb-logcat-capture.ts` | Drop device-other at capture when setting is off. |
+| File                                                         | Change                                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `src/modules/analysis/device-tag-tiers.ts`                   | **New.** Curated critical/other tag classification.                                               |
+| `src/modules/analysis/stack-parser.ts`                       | `isFrameworkLogLine()` returns tier instead of boolean.                                           |
+| `src/modules/integrations/adb-logcat-capture.ts`             | Drop device-other at capture when setting is off.                                                 |
 | `src/ui/viewer-toolbar/viewer-toolbar-filter-drawer-html.ts` | Replace app-only checkbox with Flutter/Device in Log Inputs. Rename Noise Reduction → Exclusions. |
-| `src/ui/viewer-search-filter/viewer-filters-panel-html.ts` | Same changes for the old panel. |
-| `src/ui/viewer-stack-tags/viewer-stack-filter.ts` | Remove `appOnlyMode` / `toggleAppOnly`. Replace with tier-based filter. |
-| `src/ui/viewer/viewer-data-helpers-core.ts` | `calcItemHeight()` — tier-aware logic, device-critical bypass. |
-| `src/ui/viewer/viewer-data-add.ts` | Store tier on items, apply severity demotion for device-other. |
-| `src/ui/viewer-decorations/viewer-error-classification.ts` | Skip device-other in error classification. |
-| `src/ui/viewer-search-filter/viewer-filters-panel-script.ts` | Bind Flutter/Device checkboxes. |
-| `src/ui/viewer-search-filter/viewer-filter-badge.ts` | Update active filter count. |
-| `src/modules/storage/filter-presets.ts` | Replace `appOnlyMode` with `deviceEnabled`. |
-| `src/ui/analysis/*` | Exclude device-other from signal analysis. |
+| `src/ui/viewer-search-filter/viewer-filters-panel-html.ts`   | Same changes for the old panel.                                                                   |
+| `src/ui/viewer-stack-tags/viewer-stack-filter.ts`            | Remove `appOnlyMode` / `toggleAppOnly`. Replace with tier-based filter.                           |
+| `src/ui/viewer/viewer-data-helpers-core.ts`                  | `calcItemHeight()` — tier-aware logic, device-critical bypass.                                    |
+| `src/ui/viewer/viewer-data-add.ts`                           | Store tier on items, apply severity demotion for device-other.                                    |
+| `src/ui/viewer-decorations/viewer-error-classification.ts`   | Skip device-other in error classification.                                                        |
+| `src/ui/viewer-search-filter/viewer-filters-panel-script.ts` | Bind Flutter/Device checkboxes.                                                                   |
+| `src/ui/viewer-search-filter/viewer-filter-badge.ts`         | Update active filter count.                                                                       |
+| `src/modules/storage/filter-presets.ts`                      | Replace `appOnlyMode` with `deviceEnabled`.                                                       |
+| `src/ui/analysis/*`                                          | Exclude device-other from signal analysis.                                                        |
 
 ## Follow-up: per-tag user curation
 
 **Problem:** The curated critical tag list is maintained in code. Users cannot promote a tag from device-other to device-critical, or demote one they don't care about. With 250+ tags, the extension's editorial judgement will sometimes be wrong for a specific user's context.
 
-**Solution:** Let users override the curated tier for individual tags. When a user right-clicks a tag chip in Message Tags, offer "Always show (treat as critical)" and "Always hide (treat as device-other)". Store overrides in workspace settings (`saropaLogCapture.deviceTagOverrides`). Overrides take precedence over the curated list in `device-tag-tiers.ts`. This is distinct from the existing tag chip show/hide — those hide by source tag, this reclassifies the *logcat* tag tier.
+**Solution:** Let users override the curated tier for individual tags. When a user right-clicks a tag chip in Message Tags, offer "Always show (treat as critical)" and "Always hide (treat as device-other)". Store overrides in workspace settings (`saropaLogCapture.deviceTagOverrides`). Overrides take precedence over the curated list in `device-tag-tiers.ts`. This is distinct from the existing tag chip show/hide — those hide by source tag, this reclassifies the _logcat_ tag tier.
 
 **Integration:** Feeds into the noise learning plan (025) — accepted suggestions could auto-generate tag overrides.
 
 ## Follow-up: content-pattern classification
 
-**Problem:** Tag-based classification alone misses cases where the *message content* determines whether a line is noise or important. `E/SettingsState: invalid override flag name ...` is always noise regardless of the tag. Conversely, `I/ActivityManager: Force stopping ...` with your app's package name is important despite being level-I.
+**Problem:** Tag-based classification alone misses cases where the _message content_ determines whether a line is noise or important. `E/SettingsState: invalid override flag name ...` is always noise regardless of the tag. Conversely, `I/ActivityManager: Force stopping ...` with your app's package name is important despite being level-I.
 
 **Solution:** Add a content pattern layer to `device-tag-tiers.ts` that runs after tag classification. Two pattern lists:
 
