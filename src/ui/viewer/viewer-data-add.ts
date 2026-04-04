@@ -319,11 +319,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     } else {
 
         // Add the original line normally (includes first line of a streak and lines before threshold N).
-        var errorClass = (typeof classifyError === 'function' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
+        var errorClass = (typeof classifyError === 'function' && lineTier !== 'device-other' && (!strictLevelDetection || lvl === 'error')) ? classifyError(plain) : null;
         var errorSuppressed = (typeof suppressTransientErrors !== 'undefined' && suppressTransientErrors && errorClass === 'transient');
 
-        // Check for critical errors
-        if (typeof checkCriticalError === 'function') {
+        // Check for critical errors (skip device-other — system noise should never trigger notifications)
+        if (typeof checkCriticalError === 'function' && lineTier !== 'device-other') {
             checkCriticalError(plain);
         }
 
