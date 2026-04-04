@@ -26,6 +26,20 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.5.1]
+
+### Fixed
+
+- Fixed device-other lines (e.g. `E/gralloc4`) getting false error badges and critical notifications in loose detection mode — `classifyError()` and `checkCriticalError()` now skip device-other tier lines entirely
+- Fixed `SocketException` transient pattern matching deterministic bind/listen failures (e.g. hot-restart port conflicts) — pattern now requires known-transient indicators like "Connection refused" or "timed out"
+- Fixed missing `captureDeviceOther` NLS key in all non-English locale files (de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw)
+
+### Changed
+
+- Promoted `Choreographer` to device-critical tier — frame skip warnings report app main-thread jank and should keep their `performance` level rather than being suppressed as device noise
+
+---
+
 ## [5.5.0]
 
 ### Added

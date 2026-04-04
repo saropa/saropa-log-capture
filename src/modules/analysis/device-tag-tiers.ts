@@ -29,6 +29,7 @@ const criticalTags = new Set([
 	'windowmanager',        // App window lifecycle issues
 	'dalvikvm',             // Older runtime errors
 	'zygote',               // Process fork failures
+	'choreographer',        // Main thread jank — reports app behavior, not device state
 ]);
 
 /**
