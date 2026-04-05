@@ -27,22 +27,37 @@ import {
 } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
-import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerBroadcaster } from "../provider/viewer-broadcaster";
 import * as helpers from "../provider/viewer-provider-helpers";
 import { addLineToBatch, appendLiveLineToBatch } from "../provider/log-viewer-provider-batch";
 import { type ThreadDumpState, createThreadDumpState, flushThreadDump } from "../viewer/viewer-thread-grouping";
-import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
+import { dispatchViewerMessage } from "../provider/viewer-message-handler";
 import { executeLoadContent, type LogViewerLoadTarget } from "../provider/log-viewer-provider-load";
 import { queuePopOutViewerConfigMicrotask } from "./pop-out-panel-viewer-config-post";
 import { filterDeferredLinesAfterSnapshot } from "./pop-out-panel-deferred-replay";
+import {
+  postViewerRepeatThresholds, postViewerDbDetectorToggles, postDbBaselineFingerprintSummary,
+  postViewerSlowBurstThresholds, postErrorRateConfig, postScopeContext,
+} from "./pop-out-panel-viewer-state";
+import { startPopOutBatchTimer, stopPopOutBatchTimer } from "./pop-out-panel-batch";
+import { buildPopOutMessageContext } from "./pop-out-panel-message-context";
 
-const BATCH_INTERVAL_MS = 200;
-const BATCH_INTERVAL_UNDER_LOAD_MS = 500;
-const BATCH_BACKLOG_THRESHOLD = 1000;
+/** Construction options for the pop-out viewer panel. */
+export interface PopOutPanelOptions {
+  readonly extensionUri: vscode.Uri;
+  readonly version: string;
+  readonly context: vscode.ExtensionContext;
+  readonly broadcaster: ViewerBroadcaster;
+  readonly getHydrationUri?: () => vscode.Uri | undefined;
+}
 
 /** Pop-out viewer as an editor tab (movable to a floating window). */
 export class PopOutPanel implements ViewerTarget, vscode.Disposable {
+  private readonly extensionUri: vscode.Uri;
+  private readonly version: string;
+  private readonly context: vscode.ExtensionContext;
+  private readonly broadcaster: ViewerBroadcaster;
   private panel: vscode.WebviewPanel | undefined;
   /** Public for BatchTarget (same as LogViewerProvider). */
   pendingLines: PendingLine[] = [];
@@ -55,26 +70,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private isSessionActive = false;
 
   // Handler callbacks (wired from extension.ts, same pattern as LogViewerProvider).
-  private onMarkerRequest?: () => void;
-  private onLinkClick?: (path: string, line: number, col: number, split: boolean) => void;
-  private onTogglePause?: () => void;
-  private onExclusionAdded?: (pattern: string) => void;
-  private onExclusionRemoved?: (pattern: string) => void;
-  private onAnnotationPrompt?: (lineIndex: number, current: string) => void;
-  private onSearchCodebase?: (text: string) => void;
-  private onSearchSessions?: (text: string) => void;
-  private onAnalyzeLine?: (text: string, lineIndex: number, fileUri: vscode.Uri | undefined) => void;
-  private onAddToWatch?: (text: string) => void;
-  private onPartNavigate?: (part: number) => void;
-  private onSavePresetRequest?: (filters: Record<string, unknown>) => void;
-  private onSessionListRequest?: () => void;
-  private onOpenSessionFromPanel?: (uriString: string) => void;
-  private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
-  private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
-  private onBookmarkAction?: (msg: Record<string, unknown>) => void;
-  private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
-  private onBrowseSessionRoot?: () => Promise<void>;
-  private onClearSessionRoot?: () => Promise<void>;
+  private readonly handlers: import("./pop-out-panel-message-context").PopOutHandlerCallbacks = {};
 
   /** Snapshot URI from the main viewer so the pop-out can load full on-disk history when opened. */
   private readonly getHydrationUri?: () => vscode.Uri | undefined;
@@ -83,14 +79,12 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   private deferredLinesDuringHydrate: LineData[] = [];
   private hydrateGen = 0;
 
-  constructor(
-    private readonly extensionUri: vscode.Uri,
-    private readonly version: string,
-    private readonly context: vscode.ExtensionContext,
-    private readonly broadcaster: ViewerBroadcaster,
-    getHydrationUri?: () => vscode.Uri | undefined,
-  ) {
-    this.getHydrationUri = getHydrationUri;
+  constructor(opts: PopOutPanelOptions) {
+    this.extensionUri = opts.extensionUri;
+    this.version = opts.version;
+    this.context = opts.context;
+    this.broadcaster = opts.broadcaster;
+    this.getHydrationUri = opts.getHydrationUri;
   }
 
   /** Open or reveal the pop-out panel, then move to a new window. */
@@ -127,26 +121,26 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   get isOpen(): boolean { return !!this.panel; }
 
   // -- Handler setters --
-  setMarkerHandler(h: () => void): void { this.onMarkerRequest = h; }
-  setTogglePauseHandler(h: () => void): void { this.onTogglePause = h; }
-  setExclusionAddedHandler(h: (p: string) => void): void { this.onExclusionAdded = h; }
-  setExclusionRemovedHandler(h: (p: string) => void): void { this.onExclusionRemoved = h; }
-  setAnnotationPromptHandler(h: (i: number, c: string) => void): void { this.onAnnotationPrompt = h; }
-  setSearchCodebaseHandler(h: (t: string) => void): void { this.onSearchCodebase = h; }
-  setSearchSessionsHandler(h: (t: string) => void): void { this.onSearchSessions = h; }
-  setAnalyzeLineHandler(h: (t: string, i: number, u: vscode.Uri | undefined) => void): void { this.onAnalyzeLine = h; }
-  setAddToWatchHandler(h: (t: string) => void): void { this.onAddToWatch = h; }
-  setLinkClickHandler(h: (p: string, l: number, c: number, s: boolean) => void): void { this.onLinkClick = h; }
-  setPartNavigateHandler(h: (p: number) => void): void { this.onPartNavigate = h; }
-  setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void { this.onSavePresetRequest = h; }
-  setSessionListHandler(h: () => void): void { this.onSessionListRequest = h; }
-  setOpenSessionFromPanelHandler(h: (u: string) => void): void { this.onOpenSessionFromPanel = h; }
-  setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = h; }
-  setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.onAddBookmark = h; }
-  setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.onBookmarkAction = h; }
-  setSessionActionHandler(h: (a: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = h; }
-  setBrowseSessionRootHandler(h: () => Promise<void>): void { this.onBrowseSessionRoot = h; }
-  setClearSessionRootHandler(h: () => Promise<void>): void { this.onClearSessionRoot = h; }
+  setMarkerHandler(h: () => void): void { this.handlers.onMarkerRequest = h; }
+  setTogglePauseHandler(h: () => void): void { this.handlers.onTogglePause = h; }
+  setExclusionAddedHandler(h: (p: string) => void): void { this.handlers.onExclusionAdded = h; }
+  setExclusionRemovedHandler(h: (p: string) => void): void { this.handlers.onExclusionRemoved = h; }
+  setAnnotationPromptHandler(h: (i: number, c: string) => void): void { this.handlers.onAnnotationPrompt = h; }
+  setSearchCodebaseHandler(h: (t: string) => void): void { this.handlers.onSearchCodebase = h; }
+  setSearchSessionsHandler(h: (t: string) => void): void { this.handlers.onSearchSessions = h; }
+  setAnalyzeLineHandler(h: (t: string, i: number, u: vscode.Uri | undefined) => void): void { this.handlers.onAnalyzeLine = h; }
+  setAddToWatchHandler(h: (t: string) => void): void { this.handlers.onAddToWatch = h; }
+  setLinkClickHandler(h: (p: string, l: number, c: number, s: boolean) => void): void { this.handlers.onLinkClick = h; }
+  setPartNavigateHandler(h: (p: number) => void): void { this.handlers.onPartNavigate = h; }
+  setSavePresetRequestHandler(h: (f: Record<string, unknown>) => void): void { this.handlers.onSavePresetRequest = h; }
+  setSessionListHandler(h: () => void): void { this.handlers.onSessionListRequest = h; }
+  setOpenSessionFromPanelHandler(h: (u: string) => void): void { this.handlers.onOpenSessionFromPanel = h; }
+  setDisplayOptionsHandler(h: (o: SessionDisplayOptions) => void): void { this.handlers.onDisplayOptionsChange = h; }
+  setAddBookmarkHandler(h: (i: number, t: string, u: vscode.Uri | undefined) => void): void { this.handlers.onAddBookmark = h; }
+  setBookmarkActionHandler(h: (msg: Record<string, unknown>) => void): void { this.handlers.onBookmarkAction = h; }
+  setSessionActionHandler(h: (a: string, uriStrings: string[], filenames: string[]) => void): void { this.handlers.onSessionAction = h; }
+  setBrowseSessionRootHandler(h: () => Promise<void>): void { this.handlers.onBrowseSessionRoot = h; }
+  setClearSessionRootHandler(h: () => Promise<void>): void { this.handlers.onClearSessionRoot = h; }
   // -- ViewerTarget state methods --
   addLine(data: LineData): void {
     // During hydrate, capture all lines (even if panel not visible yet) so we don't drop or duplicate vs file load.
@@ -202,15 +196,8 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setContextViewLines(count: number): void { this.post({ type: "setContextViewLines", count }); }
   setCopyContextLines(count: number): void { this.post({ type: "setCopyContextLines", count }); }
   setShowElapsed(show: boolean): void { this.post({ type: "setShowElapsed", show }); }
-  setErrorClassificationSettings(s: boolean, b: boolean, d: string, fw: boolean, stderrAsErr: boolean): void {
-    this.post({
-      type: "errorClassificationSettings",
-      suppressTransientErrors: s,
-      breakOnCritical: b,
-      levelDetection: d,
-      deemphasizeFrameworkLevels: fw,
-      stderrTreatAsError: stderrAsErr,
-    });
+  setErrorClassificationSettings(settings: ErrorClassificationSettings): void {
+    this.post({ type: "errorClassificationSettings", ...settings });
   }
   applyPreset(name: string): void { this.post({ type: "applyPreset", name }); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
@@ -223,61 +210,23 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
     this.post({ type: "setPresets", presets, lastUsedPresetName: lastUsed });
   }
   setCurrentFile(uri: vscode.Uri | undefined): void { this.currentFileUri = uri; }
-  setScopeContext(ctx: ScopeContext): void { this.post({ type: "setScopeContext", ...ctx }); }
+  setScopeContext(ctx: ScopeContext): void { postScopeContext(this, ctx); }
   setMinimapShowInfo(show: boolean): void { this.post({ type: "minimapShowInfo", show }); }
   setMinimapShowSqlDensity(show: boolean): void { this.post({ type: "minimapShowSqlDensity", show }); }
   setMinimapProportionalLines(show: boolean): void { this.post({ type: "minimapProportionalLines", show }); }
   setMinimapViewportRedOutline(show: boolean): void { this.post({ type: "minimapViewportRedOutline", show }); }
   setMinimapViewportOutsideArrow(show: boolean): void { this.post({ type: "minimapViewportOutsideArrow", show }); }
-  setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
-    this.post({
-      type: "setViewerRepeatThresholds",
-      thresholds: {
-        globalMinCount: thresholds.globalMinCount,
-        readMinCount: thresholds.readMinCount,
-        transactionMinCount: thresholds.transactionMinCount,
-        dmlMinCount: thresholds.dmlMinCount,
-      },
-    });
-  }
-  setViewerDbInsightsEnabled(enabled: boolean): void {
-    this.post({ type: "setViewerDbInsightsEnabled", enabled });
-  }
-  setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
-    this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled });
-  }
-  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void {
-    this.post({
-      type: "setViewerDbDetectorToggles",
-      nPlusOneEnabled: toggles.nPlusOneEnabled,
-      slowBurstEnabled: toggles.slowBurstEnabled,
-      baselineHintsEnabled: toggles.baselineHintsEnabled,
-    });
-  }
-  setDbBaselineFingerprintSummary(
-    entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null,
-  ): void {
-    this.post({ type: "setDbBaselineFingerprintSummary", fingerprints: entries });
-  }
-  setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void {
-    this.post({
-      type: "setViewerSlowBurstThresholds",
-      thresholds: {
-        slowQueryMs: thresholds.slowQueryMs,
-        burstMinCount: thresholds.burstMinCount,
-        burstWindowMs: thresholds.burstWindowMs,
-        cooldownMs: thresholds.cooldownMs,
-      },
-    });
-  }
-
+  setViewerRepeatThresholds(t: ViewerRepeatThresholds): void { postViewerRepeatThresholds(this, t); }
+  setViewerDbInsightsEnabled(enabled: boolean): void { this.post({ type: "setViewerDbInsightsEnabled", enabled }); }
+  setStaticSqlFromFingerprintEnabled(enabled: boolean): void { this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled }); }
+  setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void { postViewerDbDetectorToggles(this, toggles); }
+  setDbBaselineFingerprintSummary(entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null): void { postDbBaselineFingerprintSummary(this, entries); }
+  setViewerSlowBurstThresholds(t: ViewerSlowBurstThresholds): void { postViewerSlowBurstThresholds(this, t); }
   setMinimapWidth(width: "xsmall" | "small" | "medium" | "large" | "xlarge"): void { this.post({ type: "minimapWidth", width }); }
   setScrollbarVisible(show: boolean): void { this.post({ type: "scrollbarVisible", show }); }
   setSearchMatchOptionsAlwaysVisible(always: boolean): void { this.post({ type: "searchMatchOptionsAlwaysVisible", always }); }
   setIconBarPosition(position: "left" | "right"): void { this.post({ type: "iconBarPosition", position }); }
-  setErrorRateConfig(config: ErrorRateConfig): void {
-    this.post({ type: "setErrorRateConfig", bucketSize: config.bucketSize, showWarnings: config.showWarnings, detectSpikes: config.detectSpikes });
-  }
+  setErrorRateConfig(config: ErrorRateConfig): void { postErrorRateConfig(this, config); }
   setAutoHidePatterns(patterns: readonly string[]): void { this.post({ type: "setAutoHidePatterns", patterns: [...patterns] }); }
   setSessionInfo(info: Record<string, string> | null): void { this.post({ type: "setSessionInfo", info }); }
   sendSessionList(sessions: readonly Record<string, unknown>[], rootInfo?: { label: string; path: string; isDefault: boolean }): void {
@@ -335,60 +284,16 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   }
 
   private handleMessage(msg: Record<string, unknown>): void {
-    const ctx: ViewerMessageContext = {
-      currentFileUri: this.currentFileUri,
-      isSessionActive: this.isSessionActive,
-      context: this.context,
-      extensionVersion: this.version,
-      post: (m) => this.post(m),
-      load: async () => { /* pop-out does not load files; edit will refresh via sidebar if needed */ },
-      onMarkerRequest: this.onMarkerRequest,
-      onTogglePause: this.onTogglePause,
-      onExclusionAdded: this.onExclusionAdded,
-      onExclusionRemoved: this.onExclusionRemoved,
-      onAnnotationPrompt: this.onAnnotationPrompt,
-      onSearchCodebase: this.onSearchCodebase,
-      onSearchSessions: this.onSearchSessions,
-      onAnalyzeLine: this.onAnalyzeLine,
-      onAddToWatch: this.onAddToWatch,
-      onLinkClick: this.onLinkClick,
-      onPartNavigate: this.onPartNavigate,
-      onSavePresetRequest: this.onSavePresetRequest,
-      onSessionListRequest: this.onSessionListRequest,
-      onOpenSessionFromPanel: this.onOpenSessionFromPanel,
-      onDisplayOptionsChange: this.onDisplayOptionsChange,
-      onAddBookmark: this.onAddBookmark,
-      onBookmarkAction: this.onBookmarkAction,
-      onSessionAction: this.onSessionAction,
-      onBrowseSessionRoot: this.onBrowseSessionRoot,
-      onClearSessionRoot: this.onClearSessionRoot,
-    };
+    const ctx = buildPopOutMessageContext(
+      { currentFileUri: this.currentFileUri, isSessionActive: this.isSessionActive, context: this.context, version: this.version, post: (m) => this.post(m) },
+      this.handlers,
+    );
     dispatchViewerMessage(msg, ctx);
   }
 
-  private startBatchTimer(): void {
-    this.stopBatchTimer();
-    this.scheduleNextBatch();
-  }
-  private scheduleNextBatch(): void {
-    if (!this.panel) { return; }
-    const delay = this.pendingLines.length > BATCH_BACKLOG_THRESHOLD ? BATCH_INTERVAL_UNDER_LOAD_MS : BATCH_INTERVAL_MS;
-    this.batchTimer = setTimeout(() => {
-      this.batchTimer = undefined;
-      this.flushBatch();
-      this.scheduleNextBatch();
-    }, delay);
-  }
-  private stopBatchTimer(): void {
-    if (this.batchTimer !== undefined) {
-      clearTimeout(this.batchTimer);
-      this.batchTimer = undefined;
-    }
-  }
-  private flushBatch(): void {
-    helpers.flushBatch(this.pendingLines, !!this.panel, (m) => this.post(m),
-      (lines) => helpers.sendNewCategories(lines, this.seenCategories, (m) => this.post(m)));
-  }
+  getPanel() { return this.panel; }
+  private startBatchTimer(): void { startPopOutBatchTimer(this); }
+  private stopBatchTimer(): void { stopPopOutBatchTimer(this); }
   private post(message: unknown): void { this.panel?.webview.postMessage(message); }
 
   postToWebview(message: unknown): void {

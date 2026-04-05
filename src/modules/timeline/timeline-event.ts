@@ -50,21 +50,27 @@ export interface DebugLogClassifyOptions {
     readonly stderrTreatAsError: boolean;
 }
 
+/** Options for parsing a single debug log line into a timeline event. */
+export interface ParseLogLineOptions {
+    readonly lineIndex: number;
+    readonly fileUri: string;
+    readonly sessionStartMs: number;
+    readonly classifyOpts?: DebugLogClassifyOptions;
+}
+
 export function parseLogLineToEvent(
     line: string,
-    lineIndex: number,
-    fileUri: string,
-    sessionStartMs: number,
-    classifyOpts: DebugLogClassifyOptions = { strict: true, stderrTreatAsError: false },
+    opts: ParseLogLineOptions,
 ): TimelineEvent | undefined {
     const match = logLinePattern.exec(line);
     if (!match) { return undefined; }
     const [, timeStr, category, rest] = match;
-    const timestamp = parseTimestamp(timeStr, sessionStartMs);
+    const timestamp = parseTimestamp(timeStr, opts.sessionStartMs);
     if (timestamp === undefined) { return undefined; }
+    const classify = opts.classifyOpts ?? { strict: true, stderrTreatAsError: false };
     const plainText = stripAnsi(rest);
-    const severity = classifyLevel(plainText, category, classifyOpts.strict, classifyOpts.stderrTreatAsError);
-    return { timestamp, source: 'debug', level: mapToTimelineLevel(severity), summary: plainText.slice(0, 120), detail: plainText, location: { file: fileUri, line: lineIndex + 1 } };
+    const severity = classifyLevel(plainText, category, classify.strict, classify.stderrTreatAsError);
+    return { timestamp, source: 'debug', level: mapToTimelineLevel(severity), summary: plainText.slice(0, 120), detail: plainText, location: { file: opts.fileUri, line: opts.lineIndex + 1 } };
 }
 
 export function parsePerfSampleToEvent(sample: PerfSample, sidecarUri: string, index: number, prevSample?: PerfSample): TimelineEvent | undefined {

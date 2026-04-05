@@ -23,6 +23,13 @@ interface ParsedLog {
     readonly sessionStart: string | null;
 }
 
+/** Options for parsing a single log line. */
+interface ParseLineOptions {
+    readonly sessionStart: string | null;
+    readonly strict: boolean;
+    readonly stderrTreatAsError: boolean;
+}
+
 /**
  * Export a log file to CSV format.
  */
@@ -90,7 +97,7 @@ async function parseLogFile(logUri: vscode.Uri): Promise<ParsedLog> {
         if (line.startsWith('---') || line.startsWith('===')) {
             continue;
         }
-        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart, strict, stderrTreatAsError);
+        const entry = parseLine(line, bodyStartIndex + i + 1, { sessionStart, strict, stderrTreatAsError });
         if (entry) {
             entries.push(entry);
         }
@@ -139,11 +146,10 @@ function extractSessionStart(headerLines: string[]): string | null {
 function parseLine(
     line: string,
     lineNumber: number,
-    sessionStart: string | null,
-    strict: boolean,
-    stderrTreatAsError: boolean,
+    opts: ParseLineOptions,
 ): LogEntry | null {
     const clean = stripAnsi(line);
+    const { sessionStart, strict, stderrTreatAsError } = opts;
 
     // Try format with timestamp: [HH:MM:SS.mmm] [category] message
     const withTs = clean.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})\]\s+\[(\w+)\]\s+(.*)$/);
