@@ -26,6 +26,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- Root-cause hints now merge logcat errors that differ only by leading timestamp into a single hypothesis
+
+---
+
 ## [5.5.2]
 
 ### Changed
