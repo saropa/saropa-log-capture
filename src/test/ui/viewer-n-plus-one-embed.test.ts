@@ -41,12 +41,12 @@ suite('Viewer N+1 detector embed', () => {
     });
 
     test('viewer data script can bake DB insights off (viewerDbInsightsEnabled false)', () => {
-        const data = getViewerDataScript(undefined, false);
+        const data = getViewerDataScript({ viewerDbInsightsEnabled: false });
         assert.ok(data.includes('var viewerDbInsightsEnabled = false'));
     });
 
     test('viewer data script can bake static SQL affordance off (staticSqlFromFingerprintEnabled false)', () => {
-        const data = getViewerDataScript(undefined, true, false);
+        const data = getViewerDataScript({ viewerDbInsightsEnabled: true, staticSqlFromFingerprintEnabled: false });
         assert.ok(data.includes('var staticSqlFromFingerprintEnabled = false'));
     });
 
