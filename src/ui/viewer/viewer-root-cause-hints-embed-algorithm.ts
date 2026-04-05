@@ -117,7 +117,7 @@ function buildHypothesesEmbedded(bundle) {
             if (!e) continue;
             errEx = String(e.excerpt || '').trim();
             if (errEx.length < ${MIN_ERR}) continue;
-            errKey = errEx.replace(/\\s+/g, ' ').slice(-100).toLowerCase();
+            errKey = errEx.replace(/^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d+\\s*/, '').replace(/\\s+/g, ' ').slice(-100).toLowerCase();
             errGroup = errGroups[errKey];
             if (errGroup) {
                 if (errGroup.lineIds.indexOf(e.lineIndex) < 0) errGroup.lineIds.push(e.lineIndex);

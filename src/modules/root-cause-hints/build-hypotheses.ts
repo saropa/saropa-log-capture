@@ -63,7 +63,11 @@ function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence |
 
 /** Stable grouping key: last 100 chars of normalized excerpt, skipping leading timestamps. */
 function normalizeErrKey(excerpt: string): string {
-  return excerpt.replace(/\s+/g, ' ').slice(-100).toLowerCase();
+  return excerpt
+    .replace(/^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\s*/, '')
+    .replace(/\s+/g, ' ')
+    .slice(-100)
+    .toLowerCase();
 }
 
 function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
