@@ -73,9 +73,9 @@ function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   }
   const groups = new Map<string, { excerpt: string; lineIds: number[] }>();
   for (const e of errs) {
-    if (!e) continue;
+    if (!e) { continue; }
     const ex = (e.excerpt || '').trim();
-    if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) continue;
+    if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) { continue; }
     const key = normalizeErrKey(ex);
     const group = groups.get(key);
     if (group) {

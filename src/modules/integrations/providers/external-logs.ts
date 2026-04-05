@@ -28,6 +28,32 @@ function readLastLines(filePath: string, maxLines: number): string[] {
     }
 }
 
+/** Read external log files from disk and build sidecar contributions. */
+function readFallbackSidecars(
+    context: IntegrationEndContext,
+    cfg: IntegrationEndContext['config']['integrationsExternalLogs'],
+): { contributions: Contribution[]; sidecars: string[] } {
+    const contributions: Contribution[] = [];
+    const sidecars: string[] = [];
+    for (const relPath of cfg.paths) {
+        const uri = resolveWorkspaceFileUri(context.workspaceFolder, relPath);
+        try {
+            const lines = readLastLines(uri.fsPath, cfg.maxLinesPerFile);
+            if (lines.length === 0) { continue; }
+            const label = pathToLabel(relPath);
+            const prefix = cfg.prefixLines ? `[${label}] ` : '';
+            const content = lines.map((l) => (l ? prefix + l : l)).join('\n');
+            const filename = `${context.baseFileName}.${label}.log`;
+            contributions.push({ kind: 'sidecar', filename, content, contentType: 'utf8' });
+            sidecars.push(filename);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            context.outputChannel.appendLine(`[externalLogs] ${relPath}: ${msg}`);
+        }
+    }
+    return { contributions, sidecars };
+}
+
 export const externalLogsProvider: IntegrationProvider = {
     id: 'externalLogs',
 
@@ -39,7 +65,6 @@ export const externalLogsProvider: IntegrationProvider = {
         if (!isEnabled(context)) { return undefined; }
         const cfg = context.config.integrationsExternalLogs;
         if (!cfg.writeSidecars) { return undefined; }
-        const workspaceFolder = context.workspaceFolder;
         const contributions: Contribution[] = [];
         const sidecars: string[] = [];
 
@@ -57,22 +82,9 @@ export const externalLogsProvider: IntegrationProvider = {
                 sidecars.push(filename);
             }
         } else if (cfg.paths.length > 0) {
-            for (const relPath of cfg.paths) {
-                const uri = resolveWorkspaceFileUri(workspaceFolder, relPath);
-                try {
-                    const lines = readLastLines(uri.fsPath, cfg.maxLinesPerFile);
-                    if (lines.length === 0) { continue; }
-                    const label = pathToLabel(relPath);
-                    const prefix = cfg.prefixLines ? `[${label}] ` : '';
-                    const content = lines.map((l) => (l ? prefix + l : l)).join('\n');
-                    const filename = `${context.baseFileName}.${label}.log`;
-                    contributions.push({ kind: 'sidecar', filename, content, contentType: 'utf8' });
-                    sidecars.push(filename);
-                } catch (err) {
-                    const msg = err instanceof Error ? err.message : String(err);
-                    context.outputChannel.appendLine(`[externalLogs] ${relPath}: ${msg}`);
-                }
-            }
+            const fallback = readFallbackSidecars(context, cfg);
+            contributions.push(...fallback.contributions);
+            sidecars.push(...fallback.sidecars);
         }
 
         if (contributions.length === 0) { return undefined; }
