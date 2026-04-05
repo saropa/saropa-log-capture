@@ -15,7 +15,7 @@ import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-th
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Contract for a webview that renders captured debug output. */
 export interface ViewerTarget {
@@ -39,13 +39,7 @@ export interface ViewerTarget {
   setContextViewLines(count: number): void;
   setCopyContextLines(count: number): void;
   setShowElapsed(show: boolean): void;
-  setErrorClassificationSettings(
-    suppress: boolean,
-    breakOn: boolean,
-    detection: string,
-    deemphasizeFw: boolean,
-    stderrTreatAsError: boolean,
-  ): void;
+  setErrorClassificationSettings(settings: ErrorClassificationSettings): void;
   applyPreset(name: string): void;
   setHighlightRules(rules: readonly HighlightRule[]): void;
   setPresets(presets: readonly FilterPreset[]): void;

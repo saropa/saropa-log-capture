@@ -13,13 +13,23 @@ import { getViewerDataAddScript } from './viewer-data-add';
 import { getViewerDataHelpers } from './viewer-data-helpers';
 import { getViewportRenderScript } from './viewer-data-viewport';
 
-export function getViewerDataScript(
-    repeatThresholds?: Partial<ViewerRepeatThresholds>,
-    viewerDbInsightsEnabled = true,
-    staticSqlFromFingerprintEnabled = true,
-    slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
-    dbDetectorToggles?: Partial<ViewerDbDetectorToggles>,
-): string {
+/** Options for building the viewer data webview script. */
+export interface ViewerDataScriptOptions {
+    readonly repeatThresholds?: Partial<ViewerRepeatThresholds>;
+    readonly viewerDbInsightsEnabled?: boolean;
+    readonly staticSqlFromFingerprintEnabled?: boolean;
+    readonly slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
+    readonly dbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
+}
+
+export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string {
+    const {
+        repeatThresholds,
+        viewerDbInsightsEnabled = true,
+        staticSqlFromFingerprintEnabled = true,
+        slowBurstThresholds,
+        dbDetectorToggles,
+    } = opts;
     return getViewerDataHelpers(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
 function scrollToAnchorSeq(seq) {

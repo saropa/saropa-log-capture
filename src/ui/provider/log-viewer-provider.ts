@@ -11,13 +11,14 @@ import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift
 import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
-import { executeLoadContent, createTailWatcher, type LoadResultFirstError } from "./log-viewer-provider-load";
+import { executeLoadContent, type LoadResultFirstError } from "./log-viewer-provider-load";
+import { type TailState, createTailState, stopTailing, startTailing } from "./log-viewer-provider-tailing";
 import { setupLogViewerWebview } from "./log-viewer-provider-setup";
 import { type PendingLine } from "../viewer/viewer-file-loader";
 import { SerializedHighlightRule, serializeHighlightRules } from "../viewer-decorations/viewer-highlight-serializer";
 import type { SessionDisplayOptions } from "../session/session-display";
 import type { ScopeContext } from "../../modules/storage/scope-context";
-import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import * as helpers from "./viewer-provider-helpers";
 import { createThreadDumpState, type ThreadDumpState } from "../viewer/viewer-thread-grouping";
@@ -79,11 +80,7 @@ export class LogViewerProvider
   private isSessionActive = false;
   private pendingLoadUri: vscode.Uri | undefined;
   private loadGeneration = 0;
-  private tailWatcher: vscode.Disposable | undefined;
-  private tailLastLineCount = 0;
-  private tailSessionMidnightMs = 0;
-  private tailUri: vscode.Uri | undefined;
-  private tailUpdateInProgress = false;
+  private readonly tail: TailState = createTailState();
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -169,16 +166,8 @@ export class LogViewerProvider
   setShowElapsed(show: boolean): void { state.setShowElapsedImpl(this, show); }
   startReplay(): void { state.postStartReplayImpl(this); }
   private getReplayConfig() { return state.getReplayConfig(); }
-  setErrorClassificationSettings(
-    suppressTransientErrors: boolean,
-    breakOnCritical: boolean,
-    levelDetection: string,
-    deemphasizeFrameworkLevels: boolean,
-    stderrTreatAsError: boolean,
-  ): void {
-    state.setErrorClassificationSettingsImpl(this, {
-      suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError,
-    });
+  setErrorClassificationSettings(settings: ErrorClassificationSettings): void {
+    state.setErrorClassificationSettingsImpl(this, settings);
   }
   applyPreset(name: string): void { state.applyPresetImpl(this, name); }
   setHighlightRules(rules: readonly HighlightRule[]): void {
@@ -246,7 +235,7 @@ export class LogViewerProvider
   setSessionActive(active: boolean): void { this.isSessionActive = active; state.setSessionStateImpl(this, active); }
 
   clear(): void {
-    this.stopTailing();
+    stopTailing(this.tail);
     flushPendingBatch(this);
     this.pendingLines = []; this.currentFileUri = undefined;
     this.postMessage({ type: "clear" });
@@ -261,7 +250,7 @@ export class LogViewerProvider
     for (const v of this.views) { v.show?.(true); }
     for (let i = 0; i < 20 && this.views.size === 0; i++) { await new Promise<void>(r => setTimeout(r, 50)); }
     if (this.views.size === 0 || gen !== this.loadGeneration) { return; }
-    this.stopTailing();
+    stopTailing(this.tail);
     this.clear();
     this.seenCategories.clear();
     this.currentFileUri = uri;
@@ -270,27 +259,16 @@ export class LogViewerProvider
     this.onFileLoaded?.(uri, loadResult);
     this.pendingLoadUri = undefined;
     if (options?.tail) {
-      this.startTailing(uri, loadResult.sessionMidnightMs, loadResult.contentLength);
+      startTailing(this.tail, { uri, sessionMidnightMs: loadResult.sessionMidnightMs, initialLineCount: loadResult.contentLength, target: this });
     }
     if (options?.replay) {
       this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
     }
   }
-  private stopTailing(): void {
-    this.tailWatcher?.dispose();
-    this.tailWatcher = undefined;
-    this.tailUri = undefined;
-  }
-  private startTailing(uri: vscode.Uri, sessionMidnightMs: number, initialLineCount: number): void {
-    this.stopTailing();
-    this.tailUri = uri;
-    this.tailSessionMidnightMs = sessionMidnightMs;
-    this.tailWatcher = createTailWatcher(uri, sessionMidnightMs, initialLineCount, this);
-  }
-  getTailLastLineCount(): number { return this.tailLastLineCount; }
-  setTailLastLineCount(n: number): void { this.tailLastLineCount = n; }
-  getTailUpdateInProgress(): boolean { return this.tailUpdateInProgress; }
-  setTailUpdateInProgress(v: boolean): void { this.tailUpdateInProgress = v; }
+  getTailLastLineCount(): number { return this.tail.tailLastLineCount; }
+  setTailLastLineCount(n: number): void { this.tail.tailLastLineCount = n; }
+  getTailUpdateInProgress(): boolean { return this.tail.tailUpdateInProgress; }
+  setTailUpdateInProgress(v: boolean): void { this.tail.tailUpdateInProgress = v; }
   getView(): vscode.WebviewView | undefined {
     return this.visibleView ?? this.views.values().next().value;
   }
@@ -304,7 +282,7 @@ export class LogViewerProvider
   }
 
   dispose(): void {
-    this.stopTailing();
+    stopTailing(this.tail);
     stopBatchTimer(this);
     this.views.clear();
     this.visibleView = undefined;

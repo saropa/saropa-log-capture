@@ -13,14 +13,10 @@ import { normalizeViewerSlowBurstThresholds } from "../db/drift-db-slow-burst-th
 import { parseSplitRules } from "../misc/file-splitter";
 import { getIntegrationConfig, getProjectIndexConfig } from "./integration-config";
 import { stripUiOnlyIntegrationAdapterIds } from "../integrations/integration-adapter-constants";
-import type { HighlightRule } from "../storage/highlight-rules";
-import type { AutoTagRule } from "../misc/auto-tagger";
 import {
-  defaultHighlightRules,
   type ErrorRateConfig,
   type SaropaLogCaptureConfig,
   type ViewerDbDetectorToggles,
-  type WatchPatternSetting,
 } from "./config-types";
 import {
   DEFAULT_CATEGORIES,

@@ -120,13 +120,13 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(
             nonce,
             getLayoutScript(),
-            getViewerDataScript(
-                viewerRepeatThresholds,
-                viewerDbInsightsEnabled !== false,
-                staticSqlFromFingerprintEnabled !== false,
-                viewerSlowBurstThresholds,
-                viewerDbDetectorToggles,
-            ),
+            getViewerDataScript({
+                repeatThresholds: viewerRepeatThresholds,
+                viewerDbInsightsEnabled: viewerDbInsightsEnabled !== false,
+                staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
+                slowBurstThresholds: viewerSlowBurstThresholds,
+                dbDetectorToggles: viewerDbDetectorToggles,
+            }),
             getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false),
             getViewerRootCauseHintsScript(),
             getViewerVisibilityScript(),

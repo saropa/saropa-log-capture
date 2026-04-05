@@ -82,13 +82,13 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     diagnosticCache.activate(context.subscriptions);
     broadcaster.setDiagnosticCache(diagnosticCache);
 
-    const popOutPanel = new PopOutPanel(
-      context.extensionUri,
+    const popOutPanel = new PopOutPanel({
+      extensionUri: context.extensionUri,
       version,
       context,
       broadcaster,
-      () => viewerProvider.getCurrentFileUri(),
-    );
+      getHydrationUri: () => viewerProvider.getCurrentFileUri(),
+    });
     broadcaster.addTarget(viewerProvider);
     broadcaster.addTarget(popOutPanel);
     context.subscriptions.push(popOutPanel);

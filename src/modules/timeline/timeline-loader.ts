@@ -162,7 +162,7 @@ async function loadMainLog(fileUri: vscode.Uri): Promise<{ events: TimelineEvent
         if (ts === 0) { continue; }
         if (firstTs === 0) { firstTs = ts; }
         lastTs = ts;
-        const event = parseLogLineToEvent(line, i, fileUriStr, midnightMs, classifyOpts);
+        const event = parseLogLineToEvent(line, { lineIndex: i, fileUri: fileUriStr, sessionStartMs: midnightMs, classifyOpts });
         if (event) { events.push(event); }
     }
 

@@ -11,7 +11,7 @@ import * as vscode from "vscode";
 import type { ViewerRepeatThresholds } from "../../modules/db/drift-db-repeat-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
-import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 import { getConfig } from "../../modules/config/config";
 import type { FilterPreset } from "../../modules/storage/filter-presets";
 import type { SessionDisplayOptions } from "../session/session-display";
@@ -74,13 +74,7 @@ export function getReplayConfig(): { defaultMode: string; defaultSpeed: number; 
 }
 export function setErrorClassificationSettingsImpl(
   target: ProviderStateTarget,
-  opts: {
-    suppressTransientErrors: boolean;
-    breakOnCritical: boolean;
-    levelDetection: string;
-    deemphasizeFrameworkLevels: boolean;
-    stderrTreatAsError: boolean;
-  },
+  opts: ErrorClassificationSettings,
 ): void {
   target.postMessage({ type: "errorClassificationSettings", ...opts });
 }
