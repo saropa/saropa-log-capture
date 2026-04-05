@@ -173,6 +173,21 @@ test("buildHypotheses: timestamp-varying duplicates merge (suffix-based key)", (
   assert.ok(errHy[0].evidenceLineIds.includes(6));
 });
 
+test("buildHypotheses: timestamp-stripped errors stay separate from genuinely different errors", () => {
+  const hy = buildHypotheses({
+    ...base,
+    errors: [
+      { lineIndex: 1, excerpt: "04-01 17:00:00.111 565 565 E adbd : failed to connect to socket tcp:8642" },
+      { lineIndex: 2, excerpt: "04-01 17:00:00.222 565 565 E adbd : failed to connect to socket tcp:8642" },
+      { lineIndex: 3, excerpt: "04-01 17:00:00.333 565 565 E SurfaceFlinger : display was null" },
+    ],
+  });
+  const errHy = hy.filter((h) => h.templateId === "error-recent");
+  assert.strictEqual(errHy.length, 2);
+  assert.strictEqual(errHy[0].evidenceLineIds.length, 2);
+  assert.strictEqual(errHy[1].evidenceLineIds.length, 1);
+});
+
 test("buildHypotheses: whitespace-only error excerpts do not qualify (no strip)", () => {
   const b: RootCauseHintBundle = {
     ...base,
