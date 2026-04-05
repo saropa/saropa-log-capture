@@ -26,7 +26,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
-## [Unreleased]
+## [5.5.3]
 
 ### Fixed
 
