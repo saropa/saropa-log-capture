@@ -18,7 +18,7 @@ import type { SessionDisplayOptions } from "../session/session-display";
 import type { ViewerTarget } from "../viewer/viewer-target";
 import type { PersistedDriftSqlFingerprintEntryV1 } from "../../modules/db/drift-sql-fingerprint-summary-persist";
 import type { DiagnosticCache } from "../../modules/diagnostics/diagnostic-cache";
-import type { ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
+import type { ErrorClassificationSettings, ErrorRateConfig, ViewerDbDetectorToggles } from "../../modules/config/config-types";
 
 /** Dispatches every ViewerTarget method to all registered targets. */
 export class ViewerBroadcaster implements ViewerTarget {
@@ -84,15 +84,9 @@ export class ViewerBroadcaster implements ViewerTarget {
   setShowElapsed(show: boolean): void {
     for (const t of this.targets) { t.setShowElapsed(show); }
   }
-  setErrorClassificationSettings(
-    suppress: boolean,
-    breakOn: boolean,
-    detection: string,
-    deemphasizeFw: boolean,
-    stderrTreatAsError: boolean,
-  ): void {
+  setErrorClassificationSettings(settings: ErrorClassificationSettings): void {
     for (const t of this.targets) {
-      t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError);
+      t.setErrorClassificationSettings(settings);
     }
   }
   applyPreset(name: string): void {

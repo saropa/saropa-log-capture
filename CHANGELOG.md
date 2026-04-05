@@ -26,6 +26,19 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.5.2]
+
+### Changed
+
+- Refactored `setErrorClassificationSettings` from 5 positional params to `ErrorClassificationSettings` options object across viewer target, broadcaster, providers, and all callers
+- Refactored `PopOutPanel` constructor from 5 positional params to `PopOutPanelOptions` options object
+- Refactored `parseLogLineToEvent` from 5 positional params to `ParseLogLineOptions` options object
+- Refactored `getViewerDataScript` from 5 positional params to `ViewerDataScriptOptions` options object
+- Refactored `recordSqlQueryHistoryObservation` (embedded JS + test interface) from 6 positional params to observation object
+- Refactored 9 files exceeding eslint `max-lines` limits by extracting cohesive sections into separate modules — no functional changes
+
+---
+
 ## [5.5.1]
 
 ### Fixed

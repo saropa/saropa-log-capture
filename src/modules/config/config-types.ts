@@ -27,7 +27,7 @@ import type {
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
 } from "./config-types-integrations";
-import type { ProjectIndexConfig, ProjectIndexSourceConfig } from "./config-types-project-index";
+import type { ProjectIndexConfig } from "./config-types-project-index";
 
 export interface SmartBookmarksConfig {
   readonly suggestFirstError: boolean;
@@ -174,6 +174,15 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
+}
+
+/** Bundled error-classification settings pushed to each viewer target. */
+export interface ErrorClassificationSettings {
+  readonly suppressTransientErrors: boolean;
+  readonly breakOnCritical: boolean;
+  readonly levelDetection: string;
+  readonly deemphasizeFrameworkLevels: boolean;
+  readonly stderrTreatAsError: boolean;
 }
 
 /** Error rate chart config pushed to the webview via `setErrorRateConfig`. */

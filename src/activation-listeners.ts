@@ -162,13 +162,13 @@ export function setupConfigListener(
             || e.affectsConfiguration('saropaLogCapture.deemphasizeFrameworkLevels')
             || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')
         ) {
-            broadcaster.setErrorClassificationSettings(
-                cfg.suppressTransientErrors,
-                cfg.breakOnCritical,
-                cfg.levelDetection,
-                cfg.deemphasizeFrameworkLevels,
-                cfg.stderrTreatAsError,
-            );
+            broadcaster.setErrorClassificationSettings({
+                suppressTransientErrors: cfg.suppressTransientErrors,
+                breakOnCritical: cfg.breakOnCritical,
+                levelDetection: cfg.levelDetection,
+                deemphasizeFrameworkLevels: cfg.deemphasizeFrameworkLevels,
+                stderrTreatAsError: cfg.stderrTreatAsError,
+            });
         }
     }));
 }
