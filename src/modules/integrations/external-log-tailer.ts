@@ -53,7 +53,6 @@ export function startExternalLogTailers(
     for (const relPath of paths) {
         const uri = resolveWorkspaceFileUri(workspaceFolder, relPath);
         const filePath = uri.fsPath;
-        let label: string;
         try {
             const stat = fs.statSync(filePath);
             if (!stat.isFile()) {
@@ -65,7 +64,7 @@ export function startExternalLogTailers(
             continue;
         }
 
-        label = pathToLabel(relPath);
+        const label = pathToLabel(relPath);
         const buffer: string[] = [];
         buffersByLabel.set(label, buffer);
 

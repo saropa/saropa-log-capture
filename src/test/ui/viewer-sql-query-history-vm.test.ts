@@ -24,14 +24,14 @@ interface HistorySandbox {
     sqlQueryHistoryByFp: Record<string, SqlHistoryEntry>;
     rebuildSqlQueryHistoryFromAllLines: () => void;
     resetSqlQueryHistory: () => void;
-    recordSqlQueryHistoryObservation: (
-        fp: string,
-        lineIdx: number,
-        ts: number,
-        preview: string,
-        dur?: number,
-        sampleSql?: string,
-    ) => void;
+    recordSqlQueryHistoryObservation: (obs: {
+        fp: string;
+        lineIdx: number;
+        ts: number;
+        preview: string;
+        dur?: number;
+        sampleSql?: string;
+    }) => void;
     recordSqlQueryHistoryForAppendedItem: (item: unknown) => void;
     sqlHistoryTargetLineLikelyHidden: (idx: number) => boolean;
 }
@@ -168,11 +168,11 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
 
     test('LRU eviction when over cap (small cap via test-only runtime)', () => {
         const ctx = loadRuntime([], 3);
-        ctx.recordSqlQueryHistoryObservation('a', 0, 1, 'p', undefined);
-        ctx.recordSqlQueryHistoryObservation('b', 1, 2, 'p', undefined);
-        ctx.recordSqlQueryHistoryObservation('c', 2, 3, 'p', undefined);
+        ctx.recordSqlQueryHistoryObservation({ fp: 'a', lineIdx: 0, ts: 1, preview: 'p' });
+        ctx.recordSqlQueryHistoryObservation({ fp: 'b', lineIdx: 1, ts: 2, preview: 'p' });
+        ctx.recordSqlQueryHistoryObservation({ fp: 'c', lineIdx: 2, ts: 3, preview: 'p' });
         assert.strictEqual(Object.keys(ctx.sqlQueryHistoryByFp).length, 3);
-        ctx.recordSqlQueryHistoryObservation('d', 3, 4, 'p', undefined);
+        ctx.recordSqlQueryHistoryObservation({ fp: 'd', lineIdx: 3, ts: 4, preview: 'p' });
         assert.strictEqual(Object.keys(ctx.sqlQueryHistoryByFp).length, 3);
         assert.strictEqual(ctx.sqlQueryHistoryByFp.a, undefined);
         assert.ok(ctx.sqlQueryHistoryByFp.d);
@@ -185,7 +185,7 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
         const n = 25_000;
         const t0 = Date.now();
         for (let i = 0; i < n; i++) {
-            ctx.recordSqlQueryHistoryObservation('oneFp', i, i, 'preview', undefined);
+            ctx.recordSqlQueryHistoryObservation({ fp: 'oneFp', lineIdx: i, ts: i, preview: 'preview' });
         }
         const ms = Date.now() - t0;
         assert.strictEqual(ctx.sqlQueryHistoryByFp.oneFp.count, n);
