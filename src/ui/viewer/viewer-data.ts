@@ -70,6 +70,11 @@ function trimData() {
     allLines.splice(0, excess);
     activeGroupHeader = null;
     if (typeof cleanupContinuationAfterTrim === 'function') cleanupContinuationAfterTrim(excess, trimmedForCont);
+    // Adjust art-block tracker: if in-progress block was trimmed away, reset; otherwise shift index
+    if (typeof artBlockTracker !== 'undefined' && artBlockTracker.startIdx >= 0) {
+        artBlockTracker.startIdx -= excess;
+        if (artBlockTracker.startIdx < 0) { artBlockTracker.startIdx = -1; artBlockTracker.count = 0; }
+    }
     // Adjust repeat tracker index after splice so it still points at the correct line
     if (repeatTracker.lastLineIndex >= 0) {
         repeatTracker.lastLineIndex -= excess;

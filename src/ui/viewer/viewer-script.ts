@@ -12,7 +12,7 @@ import { getViewerScriptFooterChunk } from './viewer-script-footer';
 import { getViewerScriptMessageHandler } from './viewer-script-messages';
 import { getViewerClickHandlerScript } from './viewer-script-click-handlers';
 
-export function getViewerScript(maxLines: number, viewerPreserveAsciiBoxArt = true): string {
+export function getViewerScript(maxLines: number, viewerPreserveAsciiBoxArt = true, viewerGroupAsciiArt = true): string {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
 var logWrapEl = document.getElementById('log-content-wrapper');
@@ -120,6 +120,8 @@ var loadTruncatedInfo = null;
 var correlationByLineIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
+/* When true, consecutive separator lines with the same timestamp are grouped into a visual block. */
+var viewerGroupAsciiArt = ${viewerGroupAsciiArt ? 'true' : 'false'};
 /* Minimap / scrollbar settings: mirrored from host postMessage for context-menu checkmarks (see viewer-script-messages). */
 var minimapProportionalLines = true;
 var minimapShowInfoMarkers = false;
