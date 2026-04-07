@@ -1,9 +1,8 @@
 # Ecosystem Knowledge Files
 
-Catalog of project folders and files that contain indexable knowledge, organized by ecosystem. Used by the project indexer (see `PLAN_PROJECT_INDEXER.md`) to inform default scan sources and guide future file-type support.
+Catalog of project folders and files that contain indexable knowledge, organized by ecosystem. Used by the project indexer (source: `src/modules/project-indexer/`) to inform default scan sources and guide file-type support.
 
-**Current indexer support:** `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`, `.xml`, `.arb`, `.rules`, `.rst`, `.adoc`, `.gradle`, `.gradle.kts`.
-**Planned:** Deeper ecosystem-specific extraction quality and structured entity scoring per file type.
+**Supported file types:** `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.toml`, `.xml`, `.arb`, `.rules`, `.rst`, `.adoc`, `.gradle`, `.kts`, `.dart`, `.ini`, `.cfg`, `.conf`, `.properties`, `.env`, `.sql`, `.proto`, `.hcl`, `.tf`, `.tfvars`, `.csproj`, `.sln`, `.props`, `.targets`, `.mod`, `.mk`, `.sh`, `.ps1`, `.http`, `.rest`, `dockerfile`, `makefile`, `requirements`, `pipfile`.
 
 ---
 
@@ -16,7 +15,7 @@ Folders and files found in nearly every software project.
 | Folder | Purpose | File Types | Notes |
 |--------|---------|------------|-------|
 | `docs/` | Primary documentation | `.md`, `.txt`, `.rst`, `.adoc` | Most common doc folder name |
-| `doc/` | Documentation (singular) | `.md`, `.txt`, `.rst`, `.rdoc` | Ruby, Python, Java, C/C++ convention |
+| `doc/` | Documentation (singular) | `.md`, `.txt`, `.rst` | Ruby, Python, Java, C/C++ convention |
 | `bugs/` | Internal issue tracking | `.md`, `.txt` | Project-local bug reports |
 | `.github/` | GitHub config & templates | `.md`, `.yml`, `.yaml` | Issue templates, PR templates, CONTRIBUTING, CODEOWNERS, SECURITY |
 | `adr/` | Architecture Decision Records | `.md` | Numbered decision docs (e.g. `0001-use-postgres.md`) |
@@ -45,7 +44,7 @@ Folders and files found in nearly every software project.
 
 ## Flutter / Dart
 
-Primary focus for initial release. Flutter projects have a distinctive structure with platform-specific subdirectories.
+Primary focus. Flutter projects have a distinctive structure with platform-specific subdirectories.
 
 ### Project Root Files
 
@@ -115,7 +114,7 @@ Primary focus for initial release. Flutter projects have a distinctive structure
 
 ## Node.js / TypeScript
 
-For reference — many Flutter projects have companion backends or tooling in Node.
+Many Flutter projects have companion backends or tooling in Node.
 
 ### Project Root Files
 
@@ -134,7 +133,7 @@ For reference — many Flutter projects have companion backends or tooling in No
 |--------|---------|------------|-------|
 | `src/` | Source code | `.ts`, `.js` | Not for content indexing — source linker handles |
 | `scripts/` | Build/dev scripts | `.sh`, `.js`, `.ts` | Low indexing value |
-| `config/` | App configuration | `.json`, `.yaml`, `.env.example` | Medium — env var names, feature flags |
+| `config/` | App configuration | `.json`, `.yaml`, `.env` | Medium — env var names, feature flags |
 
 ---
 
@@ -159,7 +158,7 @@ For reference — many Flutter projects have companion backends or tooling in No
 
 | File | Purpose | File Type | Indexing Value |
 |------|---------|-----------|---------------|
-| `go.mod` | Module definition + dependencies | Text | **High** — module path, dependency names |
+| `go.mod` | Module definition + dependencies | `.mod` | **High** — module path, dependency names (dedicated `go.mod` parser) |
 | `go.sum` | Dependency checksums | Text | Low — too noisy |
 | `Makefile` | Build automation | Makefile | Medium — build commands |
 
@@ -186,7 +185,7 @@ For reference — many Flutter projects have companion backends or tooling in No
 |------|---------|-----------|---------------|
 | `build.gradle` / `build.gradle.kts` | Build config | Groovy / Kotlin DSL | **High** — dependencies, plugins |
 | `settings.gradle` / `settings.gradle.kts` | Multi-module structure | Groovy / Kotlin DSL | Medium |
-| `pom.xml` | Maven dependencies | XML | **High** — artifact IDs, versions |
+| `pom.xml` | Maven dependencies | XML | **High** — artifact IDs, versions (dedicated `pom.xml` parser) |
 | `gradle.properties` | Build properties | Properties | Medium — versions, feature flags |
 
 ---
@@ -204,52 +203,98 @@ For reference — many Flutter projects have companion backends or tooling in No
 
 ---
 
-## Implementation Priority
+## .NET / C#
 
-For the project indexer's initial release, support is tiered:
+### Project Root Files
 
-### Tier 1 — Shipped (content tokenization + structured extraction)
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.csproj` | Project config + NuGet dependencies | XML (`.csproj`) | **High** — package references, target framework |
+| `*.sln` | Solution structure | `.sln` | Medium — project layout |
+| `Directory.Build.props` / `Directory.Build.targets` | Shared build properties | `.props` / `.targets` | Medium — centralised version management |
 
-File types with straightforward text parsing:
+---
 
-| Extension | Parser | Ecosystems |
-|-----------|--------|------------|
-| `.md` | Markdown-aware (headings, code blocks, bold) | All |
-| `.txt` | Whitespace-split | All |
-| `.json` | Keys + key paths + string values | Node.js, Flutter, Firebase |
-| `.yaml` / `.yml` | Keys + key paths + scalar string values | Flutter, GitHub, Python, Rust |
-| `.toml` | Keys + table paths + string values | Rust, Python |
-| `.xml` | Tag names + attributes + text values | iOS, Android, Java |
-| `.arb` | JSON-style keys + message values | Flutter l10n |
-| `.rules` | Match paths + allow clauses + body tokens | Firebase |
-| `.rst` / `.adoc` | Heading-aware + prose tokens | Python, Java, enterprise docs |
-| `.gradle` / `.gradle.kts` | Dependency/plugin focused token extraction | Android, Java |
+## Infrastructure / DevOps
 
-### Tier 2 — Fast follow (quality improvements)
+### Terraform / HCL
 
-Config and build files where extraction quality can be tightened:
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.tf` | Terraform config | HCL | **High** — resources, providers, variables |
+| `*.tfvars` | Terraform variable values | HCL | Medium — environment-specific settings |
+| `*.hcl` | Generic HCL config | HCL | Medium |
 
-| Extension | Parser | Key extraction | Ecosystems |
-|-----------|--------|----------------|------------|
-| `.yaml` / `.yml` | Better list/object handling | Dependency names, rule IDs, config keys | Flutter, GitHub, Python, Rust |
-| `.json` | Value typing and weighting | Package names, script names, config values | Node.js, Flutter, Firebase |
-| `.toml` | Inline table/array parsing depth | Crate names, Python packages, config | Rust, Python |
-| `.xml` | Manifest/plist-aware field extraction | Permissions, bundle IDs, package names | iOS, Android |
-| `.gradle` / `.gradle.kts` | Stronger dependency declaration parsing | Artifact IDs, versions, plugin IDs | Android, Java |
+### Docker
 
-### Tier 3 — Future (ecosystem-deep parsers)
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `Dockerfile` / `Dockerfile.*` | Container image definition | Dockerfile | **High** — base images, build steps, exposed ports |
+| `docker-compose.yml` | Multi-container orchestration | YAML | **High** — services, networking, volumes |
 
-Files needing ecosystem-specific parsing logic:
+### SQL
 
-| Extension | Parser | What to extract | Ecosystems |
-|-----------|--------|-----------------|------------|
-| `.gradle` / `.gradle.kts` | Dependency declaration regex | Artifact IDs, versions | Android, Java |
-| `.xml` (plist, manifest) | XML element/attribute extraction | Permissions, bundle IDs, package names | iOS, Android |
-| `.arb` | JSON with ICU message syntax | User-facing strings, error message templates | Flutter l10n |
-| `.rules` | Firebase rules DSL | Collection names, access patterns | Firebase |
-| `.rst` | reStructuredText headings + directives | Same as markdown | Python (Sphinx) |
-| `.adoc` | AsciiDoc headings | Same as markdown | Java, enterprise |
-| `.rdoc` | RDoc format | Same as markdown | Ruby |
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.sql` | Database schemas, migrations | SQL | **High** — table/column names, constraints |
+
+### Protocol Buffers
+
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.proto` | gRPC / Protobuf service definitions | Proto | **High** — message types, service methods |
+
+### HTTP Requests
+
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.http` / `*.rest` | HTTP request collections | HTTP | Medium — API endpoints, headers |
+
+### Shell / Scripts
+
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.sh` | Shell scripts | Shell | Low — build/deploy automation |
+| `*.ps1` | PowerShell scripts | PowerShell | Low — Windows automation |
+| `*.mk` | Makefile fragments | Makefile | Low |
+
+### Key-Value Config
+
+| File | Purpose | File Type | Indexing Value |
+|------|---------|-----------|---------------|
+| `*.ini` / `*.cfg` / `*.conf` | Configuration files | INI-style | Medium — settings, feature flags |
+| `*.properties` | Java/Gradle properties | Properties | Medium — versions, config |
+| `.env` / `.env.*` | Environment variables | Key-value | Medium — env var names (never index secrets) |
+
+---
+
+## Token Extraction Parsers
+
+Each supported file type maps to a specialised parser. The dispatch logic lives in `project-indexer-file-types.ts:extractDocTokensByType()`.
+
+| Parser | File Types | Extraction Strategy |
+|--------|-----------|---------------------|
+| Markdown | `.md` | Heading-aware, code blocks, bold — also extracts heading structure |
+| JSON | `.json`, `Pipfile.lock` | Keys, key paths, string values |
+| YAML | `.yaml`, `.yml` | Keys, key paths, scalar string values |
+| TOML | `.toml`, `Pipfile` | Keys, table paths, string values |
+| XML | `.xml` (generic) | Tag names, attributes, text values |
+| pom.xml | `pom.xml` | Dedicated Maven artifact/version extraction |
+| ARB | `.arb` | JSON-style keys, ICU message values |
+| Rules | `.rules` | Match paths, allow clauses, body tokens |
+| Structured text | `.rst`, `.adoc` | Heading-aware, prose tokens |
+| Gradle | `.gradle`, `.gradle.kts` | Dependency/plugin focused extraction |
+| SQL | `.sql` | Table/column names, constraints |
+| Proto | `.proto` | Message types, service methods, fields |
+| HCL | `.hcl`, `.tf`, `.tfvars` | Resource types, variable names, blocks |
+| Go mod | `go.mod` | Module path, dependency names |
+| .NET project | `.csproj`, `.sln`, `.props`, `.targets` | Package references, target frameworks |
+| HTTP requests | `.http`, `.rest` | Methods, URLs, headers |
+| Script text | `.mk`, `.sh`, `.ps1`, `Makefile` | Command and variable tokens |
+| Requirements | `requirements.txt` | Package names, version specifiers |
+| Key-value | `.ini`, `.cfg`, `.conf`, `.properties`, `.env*` | Key-value pairs |
+| Dockerfile | `Dockerfile`, `Dockerfile.*` | Base images, commands, args |
+| Plain text | fallback | Whitespace-split tokens |
 
 ---
 
@@ -270,4 +315,4 @@ Some folders must **never** be scanned regardless of user configuration:
 | `Pods/` | CocoaPods (iOS) |
 | `.pub-cache/` | Dart package cache |
 
-The indexer should maintain a hardcoded blocklist of these patterns, applied before any user-configured sources are scanned.
+The indexer maintains a hardcoded blocklist of these patterns in `project-indexer-file-types.ts`, applied before any user-configured sources are scanned.

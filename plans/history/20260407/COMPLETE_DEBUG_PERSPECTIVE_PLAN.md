@@ -1,6 +1,6 @@
 # Plan: Complete Debug Perspective with Manageable Filters
 
-**Implementation status (2026-03-19):** Phases 1–4 implemented. Viewer supports multi-source (debug + terminal + external): source filter (checkboxes) in Filters panel, `setSources` / `setEnabledSources` messages, `PendingLine.source`, load pipeline discovers `.terminal.log` and `basename.<label>.log` external sidecars and merges with main log. Presets "Just debug output" and "Complete (all sources)" plus optional `sources` on presets. **Phase 3 (external logs):** tail + sidecars + viewer + commands (see application-file-logs doc). **Phase 4 (unified file):** Opt-in `integrations.unifiedLog.writeAtSessionEnd` writes `basename.unified.jsonl` (JSONL: `{ "source", "text" }` per line) after session end, merging main log + terminal + external sidecars; viewer opens `.unified.jsonl` with the same Sources filter. **Decisions:** Storage = Option B + optional unified artifact; Source UI = checkboxes; View = unified.
+**Status: COMPLETE (archived 2026-04-07).** All four phases implemented and verified.
 
 ---
 
@@ -70,6 +70,7 @@ Introduce a stable **source id** for every line:
 - **`debug`** — DAP output (current main log). No change to how lines are written; they are implicitly `debug`.
 - **`terminal`** — Integrated Terminal (currently sidecar; see below).
 - **`external:<label>`** — Tailed file, e.g. `external:app.log`, `external:nginx`. Label = sanitized name from config.
+- **`browser`** — Browser DevTools (CDP) sidecar (`basename.browser.json`). Added during implementation but not in the original plan.
 
 **Label uniqueness:** Config validation (or auto-suffixing, e.g. `app.log`, `app.log_2`) must ensure two external tails never map to the same `external:<label>` so source ids, presets, and badges stay stable.
 
@@ -168,4 +169,7 @@ For Option B, no merge at capture time; merging is viewer-only when multiple sou
 - **Data model:** **Source id** per line (debug | terminal | external:label). Viewer derives source from which file the line came from (or from JSONL `source`); **labels unique**; filtering by source via checkboxes. **Merge:** §3.4 when multiple files are combined.
 - **No breaking change** to main log format; all new behavior is additive (sidecars, viewer source filter, presets, optional unified file).
 
-Phase 4 follow-ups (optional): interleave unified lines by parsed timestamps; timeline support for `.unified.jsonl`.
+### Considered and dropped follow-ups
+
+- **Interleave unified lines by parsed timestamps** — The `.unified.jsonl` writer (`unified-session-log-writer.ts`) emits lines in source blocks (all debug, then terminal, then externals) rather than chronologically interleaved. This is harmless because the viewer already merges and sorts in memory from sidecars (§3.4). Sorting the file itself would add complexity for no functional gain.
+- **Timeline support for `.unified.jsonl`** — The timeline panel loads events from individual sidecars. Loading from `.unified.jsonl` would only matter if someone had the unified artifact without the original sidecars. Not a real use case today.

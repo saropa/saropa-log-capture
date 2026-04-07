@@ -28,13 +28,24 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.6.1]
 
+Housekeeping — split oversized files and fixed a test that broke under minification.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.1/CHANGELOG.md)
+
 ### Changed
 
 - Modularized 6 files that exceeded the 300-line code limit: extracted edit modal styles, SQL drilldown UI, scope filter hint system, broadcaster config, and split large test files
 
+### Fixed
+
+- Fixed `viewer-performance-panel` test using brittle `.toString()` source inspection that breaks after esbuild minification — now tests actual function output instead
+- Fixed signals treating decorative separator lines (`═══════`, `────────`, etc.) as error hypotheses — excerpts with no alphanumeric characters are now filtered out, and lines with the `isSeparator` flag are excluded from error collection
+
 ---
 
 ## [5.6.0]
+
+Auto-loads your active session when you switch to the tab, groups ASCII art into tidy blocks, and adds a Copy All Filtered button.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.0/CHANGELOG.md)
 
 ### Added
 
@@ -57,6 +68,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.5.3]
 
+Merges duplicate logcat error hints that only differ by timestamp.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.3/CHANGELOG.md)
+
 ### Fixed
 
 - Root-cause hints now merge logcat errors that differ only by leading timestamp into a single hypothesis
@@ -64,6 +78,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.5.2]
+
+Internal cleanup — trimmed oversized parameter lists and split large files.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.2/CHANGELOG.md)
 
 ### Changed
 
@@ -78,6 +95,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.5.1]
 
+Fixes false error badges on device system logs and a broken SocketException pattern.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.1/CHANGELOG.md)
+
 ### Fixed
 
 - Fixed device-other lines (e.g. `E/gralloc4`) getting false error badges and critical notifications in loose detection mode — `classifyError()` and `checkCriticalError()` now skip device-other tier lines entirely
@@ -91,6 +111,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.5.0]
+
+Sorts device logs into three tiers so system noise stays out of the way and real crashes always show up.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.0/CHANGELOG.md)
 
 ### Added
 
