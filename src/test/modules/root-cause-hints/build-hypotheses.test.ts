@@ -200,6 +200,35 @@ test("buildHypotheses: whitespace-only error excerpts do not qualify (no strip)"
   assert.deepEqual(buildHypotheses(b), []);
 });
 
+test("buildHypotheses: decorative separator lines are filtered out (not real errors)", () => {
+  const separators: RootCauseHintBundle = {
+    ...base,
+    errors: [
+      { lineIndex: 0, excerpt: "═══════════════════════════════════════" },
+      { lineIndex: 1, excerpt: "────────────────────────────────────────" },
+      { lineIndex: 2, excerpt: "========================================" },
+      { lineIndex: 3, excerpt: "****************************************" },
+      { lineIndex: 4, excerpt: "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" },
+    ],
+  };
+  // Eligibility still passes (excerpts pass length check) but hypotheses are empty
+  assert.deepEqual(buildHypotheses(separators), []);
+});
+
+test("buildHypotheses: mixed decorative and real errors only surfaces real ones", () => {
+  const hy = buildHypotheses({
+    ...base,
+    errors: [
+      { lineIndex: 0, excerpt: "═══════════════════════════════════════" },
+      { lineIndex: 1, excerpt: "RenderFlex overflowed by 42 pixels" },
+      { lineIndex: 2, excerpt: "────────────────────────────────────────" },
+    ],
+  });
+  const errHy = hy.filter((h) => h.templateId === "error-recent");
+  assert.strictEqual(errHy.length, 1);
+  assert.ok(errHy[0].text.includes("RenderFlex"));
+});
+
 test("buildHypotheses: sql burst at threshold is eligible and emits burst template", () => {
   const b: RootCauseHintBundle = {
     ...base,

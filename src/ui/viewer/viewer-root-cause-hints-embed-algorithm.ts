@@ -117,6 +117,7 @@ function buildHypothesesEmbedded(bundle) {
             if (!e) continue;
             errEx = String(e.excerpt || '').trim();
             if (errEx.length < ${MIN_ERR}) continue;
+            if (!/[a-zA-Z0-9]/.test(errEx)) continue;
             errKey = errEx.replace(/^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d+\\s*/, '').replace(/\\s+/g, ' ').slice(-100).toLowerCase();
             errGroup = errGroups[errKey];
             if (errGroup) {

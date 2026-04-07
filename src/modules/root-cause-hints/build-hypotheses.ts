@@ -61,6 +61,11 @@ function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence |
   return 'low';
 }
 
+/** True when the excerpt is a decorative separator with no letters or digits (e.g. `═══════`). */
+function isDecorativeExcerpt(s: string): boolean {
+  return !/[a-zA-Z0-9]/.test(s);
+}
+
 /** Stable grouping key: last 100 chars of normalized excerpt, skipping leading timestamps. */
 function normalizeErrKey(excerpt: string): string {
   return excerpt
@@ -80,6 +85,7 @@ function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
     if (!e) { continue; }
     const ex = (e.excerpt || '').trim();
     if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) { continue; }
+    if (isDecorativeExcerpt(ex)) { continue; }
     const key = normalizeErrKey(ex);
     const group = groups.get(key);
     if (group) {
