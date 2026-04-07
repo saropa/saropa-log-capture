@@ -164,6 +164,22 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       );
       return true;
     }
+    case "copyAllFiltered": {
+      const text = clipTextFromMsg(msg);
+      const lineCount = typeof msg.lineCount === "number" ? msg.lineCount : 0;
+      if (text.length === 0 || lineCount === 0) {
+        vscode.window.showWarningMessage(t("msg.logCopyEmpty")).then(undefined, () => {});
+        return true;
+      }
+      void vscode.env.clipboard.writeText(text).then(
+        () => { vscode.window.showInformationMessage(t("msg.logCopyAllFiltered", lineCount)).then(undefined, () => {}); },
+        (err) => {
+          const detail = err instanceof Error ? err.message : String(err);
+          vscode.window.showErrorMessage(t("msg.logCopyFailed", detail)).then(undefined, () => {});
+        },
+      );
+      return true;
+    }
     case "copyWithSource": runCopyWithSource(msg); return true;
     case "presetApplied":
       if (msg.name) { ctx.context.workspaceState.update("saropaLogCapture.lastUsedPresetName", msgStr(msg, "name")).then(undefined, () => {}); }
