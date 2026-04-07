@@ -5,6 +5,7 @@
 import * as vm from 'node:vm';
 import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 import { getViewerDataHelpersCore } from '../../ui/viewer/viewer-data-helpers-core';
+import { getSqlDrilldownUiScript } from '../../ui/viewer/viewer-data-sql-drilldown-ui';
 import { getViewerDbDetectorFrameworkScript } from '../../ui/viewer/viewer-db-detector-framework-script';
 import { getNPlusOneDetectorScript } from '../../ui/viewer/viewer-data-n-plus-one-script';
 import { VIEWER_REPEAT_THRESHOLD_DEFAULTS } from '../../modules/db/drift-db-repeat-thresholds';
@@ -119,6 +120,7 @@ export function loadViewerRepeatSandbox(): SandboxVm {
         buildSandboxScript() +
         getNPlusOneDetectorScript(VIEWER_REPEAT_THRESHOLD_DEFAULTS) +
         getViewerDbDetectorFrameworkScript(false) +
+        getSqlDrilldownUiScript() +
         getViewerDataHelpersCore() +
         getViewerDataAddScript();
     const ctx = vm.createContext({ console });

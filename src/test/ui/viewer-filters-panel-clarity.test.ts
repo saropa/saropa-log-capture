@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { getFiltersPanelHtml } from '../../ui/viewer-search-filter/viewer-filters-panel-html';
 import { getFiltersPanelScript } from '../../ui/viewer-search-filter/viewer-filters-panel-script';
 import { getScopeFilterScript } from '../../ui/viewer-search-filter/viewer-scope-filter';
+import { getScopeFilterHintScript } from '../../ui/viewer-search-filter/viewer-scope-filter-hint';
 import { getFilterScript } from '../../ui/viewer-search-filter/viewer-filter';
 import { getExclusionScript } from '../../ui/viewer-search-filter/viewer-exclusions';
 import { getToolbarScript } from '../../ui/viewer-toolbar/viewer-toolbar-script';
@@ -32,8 +33,8 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes("scopeLevel !== 'all'"));
     });
 
-    test('scope script updates contextual hint and hooks recalcHeights', () => {
-        const script = getScopeFilterScript();
+    test('scope hint script updates contextual hint and hooks recalcHeights', () => {
+        const script = getScopeFilterHintScript();
         assert.ok(script.includes('function updateScopeFilterHint'));
         assert.ok(script.includes('function scheduleScopeFilterHint'));
         assert.ok(script.includes('function flushScopeFilterHint'));
