@@ -154,7 +154,6 @@
   "config.filterPresets.name.description": "프리셋의 표시 이름.",
   "config.filterPresets.searchPattern.description": "적용할 검색 패턴(문자열 또는 /regex/).",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.highlightRules.backgroundColor.description": "배경색(CSS 색상, 16진수 또는 VS Code CSS 변수).",
   "config.highlightRules.bold.description": "일치하는 줄에 굵은 스타일 적용.",
   "config.highlightRules.color.description": "텍스트 색상(CSS 색상, 16진수 또는 VS Code CSS 변수).",

@@ -108,7 +108,6 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
       suppressTransientErrors: c.suppressTransientErrors,
       breakOnCritical: c.breakOnCritical,
       levelDetection: c.levelDetection,
-      deemphasizeFrameworkLevels: c.deemphasizeFrameworkLevels,
       stderrTreatAsError: c.stderrTreatAsError,
     });
   });
