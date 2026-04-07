@@ -143,7 +143,6 @@
   "config.filterPresets.exclusionsEnabled.description": "Whether exclusions should be enabled.",
   "config.filterPresets.name.description": "Display name for the preset.",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.filterPresets.searchPattern.description": "Search pattern to apply (string or /regex/).",
   "config.highlightRules.backgroundColor.description": "Background color (CSS color, hex, or VS Code CSS variable).",
   "config.highlightRules.bold.description": "Apply bold styling to matching lines.",

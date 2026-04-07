@@ -141,7 +141,6 @@
   "config.fileTypes.title": "File extensions to include when listing logs in the reports directory.",
   "config.filterContextLines.description": "Number of preceding lines to show (dimmed) when filtering by log level.",
   "config.filterContextLines.title": "Number of preceding lines to show (dimmed) when filtering by log level.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.filterPresets.categories.description": "DAP categories to show (empty = all).",
   "config.filterPresets.description": "Saved Quick Filters for quick application. Each entry saves category filters, search pattern, and exclusion state.",
   "config.filterPresets.exclusionsEnabled.description": "Whether exclusions should be enabled.",

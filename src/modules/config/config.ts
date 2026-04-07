@@ -146,7 +146,6 @@ export function getConfig(): SaropaLogCaptureConfig {
       cooldownMs: cfg.get("viewerSlowBurstCooldownMs"),
     }),
 
-    deemphasizeFrameworkLevels: ensureBoolean(cfg.get("deemphasizeFrameworkLevels"), false),
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     stderrTreatAsError: ensureBoolean(cfg.get("stderrTreatAsError"), false),
     smartBookmarks: {
