@@ -26,6 +26,7 @@ export interface LogViewerSetupTarget {
   setView(view: vscode.WebviewView | undefined): void;
   removeView(webviewView: vscode.WebviewView): void;
   setVisibleView(webviewView: vscode.WebviewView | undefined): void;
+  onBecameVisible(): void;
   stopBatchTimer(): void;
   getView(): vscode.WebviewView | undefined;
   getUnreadWatchHits(): number;
@@ -112,11 +113,13 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   });
   const pending = target.getPendingLoadUri();
   if (pending) { queueMicrotask(() => { void target.loadFromFile(pending); }); }
+  else if (webviewView.visible) { queueMicrotask(() => target.onBecameVisible()); }
   webviewView.onDidChangeVisibility(() => {
     if (webviewView.visible) {
       target.setVisibleView(webviewView);
       target.setUnreadWatchHits(0);
       helpers.updateBadge(webviewView, target.getUnreadWatchHits());
+      target.onBecameVisible();
     }
   });
   webviewView.onDidDispose(() => {

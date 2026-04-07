@@ -208,6 +208,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         if (target) { await viewerProvider.loadFromFile(target); }
     });
 
+    viewerProvider.setBecameVisibleHandler(() => {
+        const activeUri = historyProvider.getActiveUri();
+        if (!activeUri) { return; }
+        // Skip reload if the active session is already displayed (avoids flash on tab switch).
+        if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) { return; }
+        void viewerProvider.loadFromFile(activeUri);
+    });
+
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
         if (!uriString) { return; }
         await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));

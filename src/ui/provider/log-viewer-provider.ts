@@ -72,6 +72,7 @@ export class LogViewerProvider
   private onSessionAction?: (action: string, uriStrings: string[], filenames: string[]) => void;
   private onBrowseSessionRoot?: () => Promise<void>;
   private onClearSessionRoot?: () => Promise<void>;
+  private onBecameVisibleHandler?: () => void;
   private readonly seenCategories = new Set<string>();
   private unreadWatchHits = 0;
   private cachedPresets: readonly FilterPreset[] = [];
@@ -108,6 +109,7 @@ export class LogViewerProvider
     if (this.views.size === 0) { stopBatchTimer(this); }
   }
   setVisibleView(webviewView: vscode.WebviewView | undefined): void { this.visibleView = webviewView; }
+  onBecameVisible(): void { this.onBecameVisibleHandler?.(); }
   getCachedPresets(): readonly FilterPreset[] { return this.cachedPresets; }
   getCachedHighlightRules(): SerializedHighlightRule[] { return this.cachedHighlightRules; }
   getPendingLoadUri(): vscode.Uri | undefined { return this.pendingLoadUri; }
@@ -149,6 +151,7 @@ export class LogViewerProvider
   setSessionActionHandler(handler: (action: string, uriStrings: string[], filenames: string[]) => void): void { this.onSessionAction = handler; }
   setBrowseSessionRootHandler(handler: () => Promise<void>): void { this.onBrowseSessionRoot = handler; }
   setClearSessionRootHandler(handler: () => Promise<void>): void { this.onClearSessionRoot = handler; }
+  setBecameVisibleHandler(handler: () => void): void { this.onBecameVisibleHandler = handler; }
   // -- Webview state methods --
   scrollToLine(line: number): void { state.scrollToLineImpl(this, line); }
   setExclusions(patterns: readonly string[]): void { state.setExclusionsImpl(this, patterns); }
