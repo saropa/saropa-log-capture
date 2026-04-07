@@ -112,7 +112,7 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(!html.includes('Code Tags'), 'drawer should not use old "Code Tags" title');
         assert.ok(!html.includes('sidecar'), 'drawer should not contain sidecar jargon');
         assert.ok(html.includes('Log Inputs'), 'drawer should use "Log Inputs" title');
-        assert.ok(html.includes('Noise Reduction'), 'drawer should use "Noise Reduction" title');
+        assert.ok(html.includes('Exclusions'), 'drawer should use "Exclusions" title');
         assert.ok(html.includes('Message Tags'), 'drawer should use "Message Tags" title');
         assert.ok(html.includes('Code Origins'), 'drawer should use "Code Origins" title');
         assert.ok(html.includes('File Scope'), 'drawer should use "File Scope" title');
@@ -123,7 +123,7 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(!html.includes('Log Streams'), 'panel should not use old "Log Streams" title');
         assert.ok(!html.includes('Output Channels'), 'panel should not use old "Output Channels" title');
         assert.ok(!html.includes('Code Tags'), 'panel should not use old "Code Tags" title');
-        assert.ok(html.includes('Noise Reduction'), 'panel should use "Noise Reduction" title');
+        assert.ok(html.includes('Exclusions'), 'panel should use "Exclusions" title');
         assert.ok(html.includes('Message Tags'), 'panel should use "Message Tags" title');
         assert.ok(html.includes('Code Origins'), 'panel should use "Code Origins" title');
     });

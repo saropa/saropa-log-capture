@@ -71,7 +71,7 @@ function getAccordionSections(): string {
             <div id="log-inputs-divider-cat" class="log-inputs-divider" style="display:none"></div>
             <div id="output-channels-list"></div>
         `)}
-        ${accordionSection('exclusions-section', 'Noise Reduction', `
+        ${accordionSection('exclusions-section', 'Exclusions', `
             <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>
             <div class="exclusion-input-wrapper">
                 <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
