@@ -1,37 +1,32 @@
 /**
- * Regression tests for `fwMuted` in `renderItem` (embedded webview script).
+ * Regression tests for framework line rendering in `renderItem` (embedded webview script).
  *
- * `saropaLogCapture.deemphasizeFrameworkLevels` must mute framework **error/warning** text colors
- * only — not **performance** (Choreographer jank, etc.). Assertions use string includes on the
- * emitted script (same pattern as viewer-compress-and-search-styles.test.ts).
+ * The tier system handles device-line severity: device-other lines have their level
+ * demoted to `info` in `addToData()`, so `renderItem` no longer needs `fwMuted` logic.
+ * These tests verify the old per-render muting is gone and the bar still derives from `item.level`.
  */
 import * as assert from 'node:assert';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 
-suite('viewer-data-helpers-render fwMuted (framework deemphasize)', () => {
+suite('viewer-data-helpers-render framework severity (tier system)', () => {
     const renderChunk = getViewerDataHelpersRender();
 
-    test('fwMuted gates on error or warning level when framework + deemphasize', () => {
+    test('fwMuted variable should not exist (tier system handles severity demotion)', () => {
         assert.ok(
-            renderChunk.includes("item.level === 'error' || item.level === 'warning'"),
-            'fwMuted must only apply to framework error/warning lines',
-        );
-        assert.ok(
-            renderChunk.includes('deemphasizeFrameworkLevels') && renderChunk.includes('item.fw'),
-            'fwMuted must still consider deemphasize + framework flag',
+            !renderChunk.includes('fwMuted'),
+            'renderItem must not contain fwMuted — device-other severity is demoted in addToData()',
         );
     });
 
-    test('does not use framework-only mute (before: all fw levels lost line colors)', () => {
-        /* Regression: prior implementation closed with `&& item.fw);` — no level branch. */
+    test('deemphasizeFrameworkLevels should not appear in render script', () => {
         assert.ok(
-            !renderChunk.includes('deemphasizeFrameworkLevels && item.fw);'),
-            'must not end fwMuted immediately after item.fw (performance would stay muted)',
+            !renderChunk.includes('deemphasizeFrameworkLevels'),
+            'renderItem must not reference the deprecated deemphasizeFrameworkLevels setting',
         );
     });
 
     /**
-     * Before: `barCls` picked `level-bar-framework` (charts blue) when `item.fw && !hasSeverity`,
+     * Before the tier system: `barCls` picked `level-bar-framework` (charts blue) when `item.fw && !hasSeverity`,
      * while `levelCls` still applied `level-debug` / `level-info` — blue bar + yellow text on Android D/ lines.
      * After: bar is always `level-bar-` + `item.level` (except recent-error-context), matching gutter CSS to line text.
      */

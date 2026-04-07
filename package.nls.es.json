@@ -154,7 +154,6 @@
   "config.filterPresets.name.description": "Nombre para mostrar del ajuste predefinido.",
   "config.filterPresets.searchPattern.description": "Patrón de búsqueda a aplicar (cadena o /regex/).",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.highlightRules.backgroundColor.description": "Color de fondo (color CSS, hexadecimal o variable CSS de VS Code).",
   "config.highlightRules.bold.description": "Aplicar estilo negrita a las líneas coincidentes.",
   "config.highlightRules.color.description": "Color del texto (color CSS, hexadecimal o variable CSS de VS Code).",

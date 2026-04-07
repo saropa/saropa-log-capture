@@ -2,13 +2,11 @@
  * renderItem() for the log viewer — item-to-HTML rendering.
  * Extracted to keep viewer-data-helpers.ts under the line limit.
  *
- * **Framework line colors vs `deemphasizeFrameworkLevels`:**
- * That setting only suppresses severity *text* classes for framework lines at **error** and **warning**
- * (matching the product copy for the option). **Performance** lines (e.g. Android Choreographer
- * “skipped frames”) keep `level-performance` / purple text even when `item.fw` is true, so jank
- * signals stay visible alongside neutral framework info noise.
- * The severity gutter always uses `level-bar-{item.level}` (never `level-bar-framework` for fw lines)
- * so dot/connector color matches `level-{item.level}` text.
+ * Severity coloring on device lines is handled by the tier system:
+ * - Device-other lines have their level demoted to `info` at capture in `addToData()`,
+ *   so they never show red/yellow regardless of logcat prefix.
+ * - Device-critical lines keep their real severity (e.g. `E/AndroidRuntime` shows red).
+ * The severity gutter always uses `level-bar-{item.level}` so dot/connector color matches text.
  */
 export function getViewerDataHelpersRender(): string {
     return /* javascript */ `
@@ -140,11 +138,8 @@ function renderItem(item, idx, prevVis) {
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
-    // Setting is "suppress error/warning coloring on framework lines" — keep performance (e.g. Choreographer jank) purple.
-    var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw
-        && (item.level === 'error' || item.level === 'warning'));
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
-    var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
+    var levelCls = (lcOn && item.level && !item.isContext) ? ' level-' + item.level : '';
     if (item.recentErrorContext && item.level === 'error' && !item.isContext) {
         levelCls += ' recent-error-context';
     }

@@ -75,10 +75,6 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "savePresetRequest":
       ctx.onSavePresetRequest?.((msg.filters as Record<string, unknown>) ?? {});
       return true;
-    case "setCaptureAll":
-      vscode.workspace.getConfiguration("saropaLogCapture")
-        .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
-      return true;
     case "setMinimapWidth": {
       const w = msgStr(msg, "value");
       const allowed = new Set(["xsmall", "small", "medium", "large", "xlarge"]);

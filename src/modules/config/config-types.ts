@@ -126,7 +126,6 @@ export interface SaropaLogCaptureConfig {
   /** Slow query burst marker thresholds in the log viewer (plan DB_08). */
   readonly viewerSlowBurstThresholds: ViewerSlowBurstThresholds;
 
-  readonly deemphasizeFrameworkLevels: boolean;
   readonly levelDetection: "strict" | "loose";
   /**
    * When true, lines captured with DAP category `stderr` are forced to error level and stderr styling.
@@ -183,7 +182,6 @@ export interface ErrorClassificationSettings {
   readonly suppressTransientErrors: boolean;
   readonly breakOnCritical: boolean;
   readonly levelDetection: string;
-  readonly deemphasizeFrameworkLevels: boolean;
   readonly stderrTreatAsError: boolean;
 }
 

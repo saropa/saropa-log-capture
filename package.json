@@ -731,7 +731,8 @@
           "default": false,
           "markdownDescription": "%config.deemphasizeFrameworkLevels.markdownDescription%",
           "type": "boolean",
-          "title": "%config.deemphasizeFrameworkLevels.title%"
+          "title": "%config.deemphasizeFrameworkLevels.title%",
+          "deprecationMessage": "No longer needed. The device tier system automatically demotes severity on device-other lines and preserves severity on device-critical lines."
         },
         "saropaLogCapture.docsScanDirs": {
           "default": [
@@ -1133,11 +1134,6 @@
                   "type": "string"
                 },
                 "type": "array"
-              },
-              "appOnlyMode": {
-                "description": "%config.filterPresets.appOnlyMode.description%",
-                "type": "boolean",
-                "deprecationMessage": "Use deviceEnabled instead."
               },
               "deviceEnabled": {
                 "description": "Whether device logs should be shown when preset is applied.",

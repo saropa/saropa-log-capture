@@ -34,9 +34,16 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - Copy All Filtered Lines button in the viewer title bar to copy all visible (filtered) lines to the clipboard with a toast showing the line count
 - **ASCII art block grouping** — consecutive separator/box-art lines with the same timestamp are now rendered as a single visual block: the first line keeps its decoration, subsequent lines show only the art content with a shimmer effect, continuous gutter bar, and subtle tinted background. New setting `saropaLogCapture.viewerGroupAsciiArt` (default on)
 
+### Changed
+
+- Renamed filter section "Noise Reduction" to "Exclusions" in both the toolbar filter drawer and the filters panel
+- Removed deprecated `appOnlyMode` setting definition from `package.json` (TS migration for old saved presets retained)
+- Deprecated `deemphasizeFrameworkLevels` setting — the device tier system now handles severity demotion automatically (device-other lines demoted to info, device-critical lines keep real severity)
+
 ### Fixed
 
 - ASCII art lines (e.g. Drift debug server banner) no longer get inconsistent colors — separator lines are always classified as `info` level regardless of text content like "DEBUG" or "database"
+- Removed dead `setCaptureAll` message handler that was no longer invoked
 
 ---
 

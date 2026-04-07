@@ -154,7 +154,6 @@
   "config.filterPresets.name.description": "プリセットの表示名。",
   "config.filterPresets.searchPattern.description": "適用する検索パターン（文字列または /regex/）。",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.highlightRules.backgroundColor.description": "背景色（CSS カラー、16 進数、または VS Code CSS 変数）。",
   "config.highlightRules.bold.description": "一致する行に太字スタイルを適用します。",
   "config.highlightRules.color.description": "テキストの色（CSS カラー、16 進数、または VS Code CSS 変数）。",
