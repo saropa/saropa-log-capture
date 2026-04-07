@@ -154,7 +154,6 @@
   "config.filterPresets.name.description": "预设的显示名称。",
   "config.filterPresets.searchPattern.description": "要应用的搜索模式（字符串或 /regex/）。",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.highlightRules.backgroundColor.description": "背景色（CSS 颜色、十六进制或 VS Code CSS 变量）。",
   "config.highlightRules.bold.description": "对匹配行应用粗体样式。",
   "config.highlightRules.color.description": "文字颜色（CSS 颜色、十六进制或 VS Code CSS 变量）。",

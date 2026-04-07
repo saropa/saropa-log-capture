@@ -59,7 +59,6 @@ function applySessionStartedState(
         suppressTransientErrors: cfg.suppressTransientErrors ?? false,
         breakOnCritical: cfg.breakOnCritical ?? false,
         levelDetection: cfg.levelDetection ?? "strict",
-        deemphasizeFrameworkLevels: cfg.deemphasizeFrameworkLevels ?? false,
         stderrTreatAsError: cfg.stderrTreatAsError,
     });
     if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }

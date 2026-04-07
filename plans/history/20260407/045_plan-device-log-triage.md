@@ -1,6 +1,8 @@
 # 045 — Device Log Triage
 
-## Status: Draft
+<!-- cspell:disable -->
+
+## Status: Done
 
 ## Problem
 
@@ -21,15 +23,53 @@ Every non-Flutter logcat line is classified into one of two device tiers. Classi
 | --------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------ |
 | **Flutter**           | `flutter` logcat tag — the user's app                                     | App prints, Dart exceptions, Drift SQL                                            | Shown              |
 | **Device — critical** | Device tags/patterns that can indicate a problem affecting the user's app | `AndroidRuntime`, `ActivityManager` (kill/crash), `FATAL EXCEPTION`, `System.err` | Shown              |
-| **Device — other**    | Everything else from the Android OS                                       | `SettingsState`, `EGL_emulation`, `MediaCodec`, `Zygote`, boot chatter            | Hidden             |
+| **Device — other**    | Everything else from the Android OS                                       | `SettingsState`, `EGL_emulation`, `MediaCodec`, boot chatter                      | Hidden             |
 
 **Device — critical lines are always shown regardless of the Device checkbox state.** They are the reason you cannot just hide all device logs.
+
+## Completed
+
+The core tier system is implemented and shipping:
+
+<!-- cspell:disable-next-line -->
+
+- **`device-tag-tiers.ts`** — `DeviceTier` type, `getDeviceTier()`, `isTierAlwaysVisible()`. Critical allowlist: `androidruntime`, `activitymanager`, `system.err`, `art`, `lowmemorykiller`, `inputdispatcher`, `windowmanager`, `dalvikvm`, `zygote`, `choreographer`.
+- **`stack-parser.ts`** — `classifyLogLine()` returns `DeviceTier`. Legacy `isFrameworkLogLine()` is a deprecated boolean wrapper that delegates to `classifyLogLine()`.
+- **`viewer-stack-filter.ts`** — Tier-based filter with `showFlutter`/`showDevice` variables and `isTierHidden()`. Device-critical bypasses the Device checkbox.
+- **`viewer-data-add.ts`** — `addToData()` accepts both `tier` and legacy `fw` parameters. Migration fallback: `fw: true` → `'device-other'`, `fw: false` → `'flutter'`. Both coexist for backward compatibility with cached/loaded sessions.
+- **`filter-presets.ts`** — `deviceEnabled` property. Legacy `appOnlyMode` marked `@deprecated` with migration path.
+- **`adb-logcat-capture.ts`** — `captureDeviceOther` setting drops device-other lines at capture time when `false` (default).
+- **Filter drawer + panel** — Flutter/Device checkboxes in Log Inputs section replace the old app-only toggle.
+
+## Remaining work
+
+### ~~P0 — Legacy cleanup~~ ✓ Done
+
+- ~~Remove `setCaptureAll` message handler~~ — removed from `viewer-message-handler-session-ui.ts`
+- ~~Remove `appOnlyMode` setting from `package.json` and nls files~~ — removed definition and all 11 translations. TS migration code in `filter-presets.ts` and `viewer-presets.ts` intentionally retained for old saved presets.
+- `toggleAppOnly` — already absent from `package.json`/nls files (removed in earlier work)
+
+### ~~P1 — Rename "Noise Reduction" → "Exclusions"~~ ✓ Done
+
+Renamed in:
+- `viewer-toolbar-filter-drawer-html.ts` (accordion title)
+- `viewer-filters-panel-html.ts` (section title)
+- `viewer-filters-panel.ts` (JSDoc comment)
+- Tests: `viewer-toolbar.test.ts`, `viewer-filters-panel-clarity.test.ts`
+
+### ~~P2 — Decide on `deemphasizeFrameworkLevels`~~ ✓ Done
+
+Decision: **Deprecated and disconnected.** The setting was either redundant or harmful:
+- Device-other: severity already demoted to `info` in `addToData()` — setting was redundant.
+- Device-critical: setting muted `E/AndroidRuntime` crashes — actively harmful, defeats the critical tier.
+
+Changes: removed `fwMuted` logic from `renderItem`, removed the variable and message handler from `viewer-error-classification.ts`, removed from config pipeline (`config-types.ts`, `config.ts`, `extension-lifecycle.ts`, `activation-listeners.ts`, `log-viewer-provider-setup.ts`). Setting marked deprecated in `package.json` with explanation. Tests updated.
 
 ## UI changes
 
 ### Log Inputs section (filter drawer + filters panel)
 
-Replace the "app only" checkbox with two checkboxes:
+**Done.** The "app only" checkbox is replaced with two checkboxes:
 
 ```
 [x] Flutter
@@ -39,11 +79,9 @@ Replace the "app only" checkbox with two checkboxes:
 - **Flutter** — checked by default. Controls all `flutter`-tagged lines.
 - **Device** — unchecked by default. Controls device-other lines only. Device-critical lines are always visible (not controlled by this checkbox).
 
-The "app only" toggle, `appOnlyMode` variable, keyboard shortcut "A", and `setCaptureAll` message are all removed.
-
 ### Noise Reduction → Exclusions
 
-Rename the section. With app-only moved out, only exclusion patterns remain. New title: **Exclusions**.
+**Not done.** With app-only moved out, only exclusion patterns remain. Rename the section title to **Exclusions**.
 
 ### Severity treatment
 
@@ -58,7 +96,7 @@ Rename the section. With app-only moved out, only exclusion patterns remain. New
 
 ### Capture-level exclusion
 
-New setting: `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` (default: `false`).
+**Done.** Setting: `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` (default: `false`).
 
 - When `false`: device-other lines are dropped at capture time in `adb-logcat-capture.ts` before they reach the viewer or the log file. Zero bloat.
 - When `true`: device-other lines are captured and written to the log. The Device checkbox in Log Inputs controls display visibility.
@@ -67,7 +105,7 @@ This is distinct from PID filtering (`filterByPid`). PID filtering drops lines f
 
 ## Curated tag classification
 
-Maintained in a new file: `src/modules/analysis/device-tag-tiers.ts`.
+Maintained in `src/modules/analysis/device-tag-tiers.ts`.
 
 <!-- cspell:disable -->
 
@@ -79,9 +117,12 @@ Tags where logcat errors/warnings can indicate real problems for the user's app:
 - `ActivityManager` — process killed, ANR, force stop
 - `System.err` — stderr output (may include app-relevant errors)
 - `art` — ART runtime errors (OOM, GC issues)
-- `lowmemorykiller` — process killed for memory
+- `lowmemorykiller` — process killed for memory pressure
 - `InputDispatcher` — ANR-related input timeouts
 - `WindowManager` — app window lifecycle issues
+- `dalvikvm` — older runtime errors (pre-ART devices)
+- `zygote` — process fork failures
+- `choreographer` — main thread jank (reports app behavior, not device state)
 
 This list is small and grows conservatively. If uncertain, a tag stays in device-other (safe default: hidden, not mislabelled).
 
@@ -89,60 +130,69 @@ This list is small and grows conservatively. If uncertain, a tag stays in device
 
 All non-Flutter, non-critical tags. Common examples:
 
-`SettingsState`, `EGL_emulation`, `MediaCodec`, `Zygote`, `SurfaceFlinger`, `gralloc`, `AudioFlinger`, `wifi`, `Bluetooth`, `telephony`, `adservices`, `DevicePersonalizationServices`, `NfcService`...
+`SettingsState`, `EGL_emulation`, `MediaCodec`, `SurfaceFlinger`, `gralloc`, `AudioFlinger`, `wifi`, `Bluetooth`, `telephony`, `adservices`, `DevicePersonalizationServices`, `NfcService`...
 
 No need to enumerate — the critical list is the allowlist; everything else is other.
+
+<!-- cspell:enable -->
 
 ## Data flow
 
 ### Extension side (capture time)
 
+**Done.**
+
 1. `adb-logcat-capture.ts` parses each line
 2. Extracts logcat tag via `adb-logcat-parser.ts`
 3. Looks up tier in `device-tag-tiers.ts`: `getDeviceTier(tag)` → `'flutter' | 'device-critical' | 'device-other'`
 4. If `captureDeviceOther` is false and tier is `device-other` → drop line
-5. Otherwise, send to viewer with tier info alongside existing `fw` flag
+5. Otherwise, send to viewer with tier info alongside legacy `fw` flag
 
 ### Webview side (display time)
 
-1. `addToData()` receives tier (replaces binary `fw`)
-2. Tier stored on line item (replaces `fw: boolean` with `tier: 'flutter' | 'device-critical' | 'device-other'`)
-3. `calcItemHeight()` checks Flutter/Device checkbox state + tier
+**Done.**
+
+1. `addToData()` receives `tier` (plus legacy `fw` for backward compat)
+2. Migration fallback: `fw: true` → `'device-other'`, `fw: false` → `'flutter'`
+3. `calcItemHeight()` calls `isTierHidden()` which checks Flutter/Device checkbox state + tier
 4. Device-critical lines bypass the Device checkbox — always visible
 5. Device-other severity forced to neutral in `classifyLevel()` or at render time
 
 ## Migration
 
+**Done.**
+
 - `fw: true` → `tier: 'device-other'` (conservative default for existing lines)
 - `fw: false` → `tier: 'flutter'`
-- `appOnlyMode` setting in filter presets → mapped to `deviceEnabled: false`
-- Keyboard shortcut "A" (toggleAppOnly) → remapped or removed
+- `appOnlyMode` in filter presets → mapped to `deviceEnabled: false` (deprecated property retained for migration)
+- Legacy `fw` parameter still accepted in `addToData()` for sessions saved before tier support
 
 ## Settings changes
 
-| Setting                                                      | Change                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------- |
-| `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` | **New.** Default `false`.                               |
-| `saropaLogCapture.filterPresets[].appOnlyMode`               | **Deprecated.** Map to `deviceEnabled: false` on load.  |
-| `saropaLogCapture.deemphasizeFrameworkLevels`                | **Review.** May be replaced by per-tier severity rules. |
+| Setting                                                      | Change                                                         |
+| ------------------------------------------------------------ | -------------------------------------------------------------- |
+| `saropaLogCapture.integrations.adbLogcat.captureDeviceOther` | **Done.** Default `false`.                                     |
+| `saropaLogCapture.filterPresets[].appOnlyMode`               | **Removed from `package.json`.** TS migration retained.        |
+| `saropaLogCapture.deemphasizeFrameworkLevels`                | **Deprecated.** Disconnected from pipeline; tier system handles it. |
 
-## Key files to modify
+## Key files
 
-| File                                                         | Change                                                                                            |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `src/modules/analysis/device-tag-tiers.ts`                   | **New.** Curated critical/other tag classification.                                               |
-| `src/modules/analysis/stack-parser.ts`                       | `isFrameworkLogLine()` returns tier instead of boolean.                                           |
-| `src/modules/integrations/adb-logcat-capture.ts`             | Drop device-other at capture when setting is off.                                                 |
-| `src/ui/viewer-toolbar/viewer-toolbar-filter-drawer-html.ts` | Replace app-only checkbox with Flutter/Device in Log Inputs. Rename Noise Reduction → Exclusions. |
-| `src/ui/viewer-search-filter/viewer-filters-panel-html.ts`   | Same changes for the old panel.                                                                   |
-| `src/ui/viewer-stack-tags/viewer-stack-filter.ts`            | Remove `appOnlyMode` / `toggleAppOnly`. Replace with tier-based filter.                           |
-| `src/ui/viewer/viewer-data-helpers-core.ts`                  | `calcItemHeight()` — tier-aware logic, device-critical bypass.                                    |
-| `src/ui/viewer/viewer-data-add.ts`                           | Store tier on items, apply severity demotion for device-other.                                    |
-| `src/ui/viewer-decorations/viewer-error-classification.ts`   | Skip device-other in error classification.                                                        |
-| `src/ui/viewer-search-filter/viewer-filters-panel-script.ts` | Bind Flutter/Device checkboxes.                                                                   |
-| `src/ui/viewer-search-filter/viewer-filter-badge.ts`         | Update active filter count.                                                                       |
-| `src/modules/storage/filter-presets.ts`                      | Replace `appOnlyMode` with `deviceEnabled`.                                                       |
-| `src/ui/analysis/*`                                          | Exclude device-other from signal analysis.                                                        |
+| File                                                         | Status      | Notes                                                                        |
+| ------------------------------------------------------------ | ----------- | ---------------------------------------------------------------------------- |
+| `src/modules/analysis/device-tag-tiers.ts`                   | **Done**    | Curated critical/other tag classification.                                   |
+| `src/modules/analysis/stack-parser.ts`                       | **Done**    | `classifyLogLine()` returns tier. `isFrameworkLogLine()` deprecated wrapper. |
+| `src/modules/integrations/adb-logcat-capture.ts`             | **Done**    | Drops device-other at capture when setting is off.                           |
+| `src/ui/viewer-toolbar/viewer-toolbar-filter-drawer-html.ts` | **Done**    | Flutter/Device checkboxes. Section renamed to "Exclusions".                  |
+| `src/ui/viewer-search-filter/viewer-filters-panel-html.ts`   | **Done**    | Flutter/Device checkboxes. Section renamed to "Exclusions".                  |
+| `src/ui/viewer-stack-tags/viewer-stack-filter.ts`            | **Done**    | Tier-based `isTierHidden()`. No trace of `appOnlyMode`.                      |
+| `src/ui/viewer/viewer-data-helpers-core.ts`                  | **Done**    | `calcItemHeight()` tier-aware via `isTierHidden()`.                          |
+| `src/ui/viewer/viewer-data-add.ts`                           | **Done**    | Stores tier on items with `fw` fallback migration.                           |
+| `src/ui/viewer-decorations/viewer-error-classification.ts`   | **Done**    | Skips device-other in error classification.                                  |
+| `src/ui/viewer-search-filter/viewer-filters-panel-script.ts` | **Done**    | Binds Flutter/Device checkboxes.                                             |
+| `src/ui/viewer-search-filter/viewer-filter-badge.ts`         | **Done**    | Active filter count updated.                                                 |
+| `src/modules/storage/filter-presets.ts`                      | **Done**    | `deviceEnabled` replaces `appOnlyMode` (deprecated, kept for migration).     |
+| `src/ui/provider/viewer-message-handler-session-ui.ts`       | **Done**    | Dead `setCaptureAll` handler removed.                                        |
+| `package.json` + `package.nls.*.json`                        | **Done**    | `appOnlyMode` setting definition and translations removed.                   |
 
 ## Follow-up: per-tag user curation
 
@@ -187,4 +237,4 @@ The curated subsystem list follows the same pattern as the Android tag list — 
 - `captureDeviceOther: false` → device-other lines absent from log file
 - `captureDeviceOther: true` → device-other lines in log file, hidden in viewer by default
 - Filter presets with `appOnlyMode` migrate correctly
-- Keyboard shortcut "A" no longer toggles a nonexistent mode
+- Legacy `fw` parameter in loaded sessions maps to correct tier

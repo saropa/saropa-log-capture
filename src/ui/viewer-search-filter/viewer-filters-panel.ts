@@ -4,7 +4,7 @@
  * Provides a slide-out panel with filter controls:
  *   - Quick Filters (presets + reset)
  *   - Log Inputs (merged sources + DAP category checkboxes)
- *   - Noise Reduction (app-only + exclusions)
+ *   - Exclusions (exclusion patterns)
  *   - Message Tags (source tag chips with search)
  *   - Code Origins (class/method tag chips with search)
  *   - File Scope (code location narrowing)
