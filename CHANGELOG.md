@@ -26,6 +26,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- Auto-load the active recording session when the Saropa Log Capture tab becomes visible
+
+---
+
 ## [5.5.3]
 
 ### Fixed
