@@ -88,6 +88,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     maxLines,
     viewerMaxLines,
     viewerPreserveAsciiBoxArt: ensureBoolean(cfg.get("viewerPreserveAsciiBoxArt"), true),
+    viewerGroupAsciiArt: ensureBoolean(cfg.get("viewerGroupAsciiArt"), true),
     includeTimestamp: ensureBoolean(cfg.get("includeTimestamp"), true),
     format: ensureEnum(cfg.get("format"), ["plaintext", "html"], "plaintext"),
     logDirectory: (() => {

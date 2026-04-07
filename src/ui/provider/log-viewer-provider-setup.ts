@@ -51,6 +51,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     codiconCssUri,
     viewerMaxLines,
     viewerPreserveAsciiBoxArt: cfg.viewerPreserveAsciiBoxArt,
+    viewerGroupAsciiArt: cfg.viewerGroupAsciiArt,
     viewerRepeatThresholds: cfg.viewerRepeatThresholds,
     viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
     staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
