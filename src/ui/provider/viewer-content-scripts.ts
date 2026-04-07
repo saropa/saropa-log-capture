@@ -45,6 +45,7 @@ import { getSqlQueryHistoryCoreScript } from '../viewer-stack-tags/viewer-sql-qu
 import { getSqlQueryHistoryPanelScript } from '../viewer-panels/viewer-sql-query-history-panel';
 import { getHighlightScript } from '../viewer-decorations/viewer-highlight';
 import { getScopeFilterScript } from '../viewer-search-filter/viewer-scope-filter';
+import { getScopeFilterHintScript } from '../viewer-search-filter/viewer-scope-filter-hint';
 import { getSessionTimeBucketsScript } from '../../modules/viewer/session-time-buckets';
 import { getViewerTimeRangeFilterScript } from '../viewer/viewer-time-range-filter';
 import { getPresetsScript } from '../viewer-search-filter/viewer-presets';
@@ -170,6 +171,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         ) +
         scriptTag(nonce, getHighlightScript()) +
         scriptTag(nonce, getScopeFilterScript()) +
+        scriptTag(nonce, getScopeFilterHintScript()) +
         scriptTag(nonce, getSessionTimeBucketsScript()) +
         scriptTag(nonce, getViewerTimeRangeFilterScript()) +
         scriptTag(nonce, getPresetsScript()) +
