@@ -92,6 +92,12 @@ function copyAllToClipboard() {
     vscodeApi.postMessage({ type: 'copyToClipboard', text: linesToPlainText(lines) });
 }
 
+function copyAllFilteredWithCount() {
+    var lines = getAllCopyableLines();
+    if (lines.length === 0) return;
+    vscodeApi.postMessage({ type: 'copyAllFiltered', text: linesToPlainText(lines), lineCount: lines.length });
+}
+
 function decorateLine(item) {
     var text = stripTags(item.html || '');
     var parts = [];

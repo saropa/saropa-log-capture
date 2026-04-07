@@ -21,6 +21,7 @@ export const stringsA: Record<string, string> = {
     'msg.logCopyEmpty': 'Nothing to copy. Select text in the log, or use Copy Line after right-clicking a line.',
     /** Status bar after a successful viewer copy-to-clipboard. */
     'msg.logCopyStatus': 'Copied {0} characters to clipboard.',
+    'msg.logCopyAllFiltered': 'Copied {0} filtered lines to clipboard.',
     'msg.logCopyFailed': 'Could not copy to clipboard: {0}',
     'msg.inlineDecorationsEnabled': 'Inline log decorations enabled',
     'msg.inlineDecorationsDisabled': 'Inline log decorations disabled',

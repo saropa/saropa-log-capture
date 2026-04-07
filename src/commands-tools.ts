@@ -124,6 +124,9 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
             }
             await vscode.window.showTextDocument(vscode.Uri.parse(picked.doc.uri), { preview: true });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.copyAllFilteredLines', () => {
+            broadcaster.postToWebview({ type: 'triggerCopyAllFiltered' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();
