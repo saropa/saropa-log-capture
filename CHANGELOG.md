@@ -26,6 +26,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.6.1]
+
+### Changed
+
+- Modularized 6 files that exceeded the 300-line code limit: extracted edit modal styles, SQL drilldown UI, scope filter hint system, broadcaster config, and split large test files
+
+---
+
 ## [5.6.0]
 
 ### Added

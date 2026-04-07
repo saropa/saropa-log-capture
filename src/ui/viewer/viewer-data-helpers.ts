@@ -11,6 +11,7 @@ import type { ViewerDbDetectorToggles } from '../../modules/config/config-types'
 import { getViewerDataHelpersCore } from './viewer-data-helpers-core';
 import { getViewerDataHelpersRender } from './viewer-data-helpers-render';
 import { getNPlusOneDetectorScript } from './viewer-data-n-plus-one-script';
+import { getSqlDrilldownUiScript } from './viewer-data-sql-drilldown-ui';
 import { getViewerDbDetectorFrameworkScript } from './viewer-db-detector-framework-script';
 
 export function getViewerDataHelpers(
@@ -22,6 +23,7 @@ export function getViewerDataHelpers(
     return (
         getNPlusOneDetectorScript(repeatThresholds) +
         getViewerDbDetectorFrameworkScript(viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) +
+        getSqlDrilldownUiScript() +
         getViewerDataHelpersCore() +
         getViewerDataHelpersRender()
     );
