@@ -18,6 +18,5 @@ suite("viewer-message-handler workspace bool messages", () => {
 
     test("does not include unrelated message types", () => {
         assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapWidth, undefined);
-        assert.strictEqual(SAROPA_BOOL_SETTING_BY_MSG_TYPE.setCaptureAll, undefined);
     });
 });

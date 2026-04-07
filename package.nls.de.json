@@ -154,7 +154,6 @@
   "config.filterPresets.name.description": "Anzeigename für die Voreinstellung.",
   "config.filterPresets.searchPattern.description": "Anzuwendendes Suchmuster (Zeichenkette oder /regex/).",
   "config.filterPresets.levels.description": "Severity levels to show (e.g. error, warning). Empty = all.",
-  "config.filterPresets.appOnlyMode.description": "Whether app-only (hide framework logs) mode is enabled.",
   "config.highlightRules.backgroundColor.description": "Hintergrundfarbe (CSS-Farbe, Hex oder VS Code CSS-Variable).",
   "config.highlightRules.bold.description": "Fettschrift-Stil auf übereinstimmende Zeilen anwenden.",
   "config.highlightRules.color.description": "Textfarbe (CSS-Farbe, Hex oder VS Code CSS-Variable).",

@@ -56,7 +56,7 @@ export function getFiltersPanelHtml(): string {
 
         <!-- Exclusions: exclusion patterns -->
         <div class="options-section">
-            <h3 class="options-section-title">Noise Reduction</h3>
+            <h3 class="options-section-title">Exclusions</h3>
             <label class="options-row" title="Hide log lines matching configured exclusion patterns">
                 <input type="checkbox" id="opt-exclusions" />
                 <span id="exclusion-label">Exclusion patterns</span>
