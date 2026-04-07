@@ -38,6 +38,8 @@ export interface ViewerHtmlOptions {
     readonly viewerMaxLines?: number;
     /** When true, paired `│ … │` lines are normal log lines, not stack frames (default true). */
     readonly viewerPreserveAsciiBoxArt?: boolean;
+    /** When true, consecutive separator lines with the same timestamp are grouped visually (default true). */
+    readonly viewerGroupAsciiArt?: boolean;
     /** Repeat-collapse thresholds baked into the viewer script at HTML build time. */
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** Slow-query burst detector thresholds (DB_08) baked into the viewer script. */
@@ -76,6 +78,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         extensionUri,
         viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
         viewerPreserveAsciiBoxArt: opts.viewerPreserveAsciiBoxArt,
+        viewerGroupAsciiArt: opts.viewerGroupAsciiArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,

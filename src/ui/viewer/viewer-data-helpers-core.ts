@@ -54,6 +54,25 @@ var repeatTracker = {
     lastRepeatNotificationIndex: -1
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
+/** Tracks consecutive separator lines with the same timestamp for art-block grouping. */
+var artBlockTracker = { startIdx: -1, timestamp: 0, count: 0 };
+/** Finalize an open art block: tag each line with its position ('start', 'middle', 'end'). */
+function finalizeArtBlock() {
+    if (artBlockTracker.count < 2 || artBlockTracker.startIdx < 0) {
+        artBlockTracker.startIdx = -1;
+        artBlockTracker.count = 0;
+        return;
+    }
+    var end = artBlockTracker.startIdx + artBlockTracker.count - 1;
+    for (var ai = artBlockTracker.startIdx; ai <= end; ai++) {
+        var it = allLines[ai];
+        if (ai === artBlockTracker.startIdx) it.artBlockPos = 'start';
+        else if (ai === end) it.artBlockPos = 'end';
+        else it.artBlockPos = 'middle';
+    }
+    artBlockTracker.startIdx = -1;
+    artBlockTracker.count = 0;
+}
 var repeatWindowMs = 3000;
 var repeatPreviewLength = 85;
 function generateRepeatHash(level, plainText) {

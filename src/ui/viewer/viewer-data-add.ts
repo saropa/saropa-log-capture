@@ -53,6 +53,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             activeGroupHeader = null;
         }
         cleanupTrailingRepeats();
+        if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
         var markerItem = { html: html, rawText: rawText || null, type: 'marker', height: MARKER_HEIGHT, category: category, groupId: -1, timestamp: ts, sourcePath: sp || null, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) markerItem.elapsedMs = elapsedMs;
         allLines.push(markerItem);
@@ -62,6 +63,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (isStackFrameText(html)) {
         resetCompressDupStreak();
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
+        if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
         var plainFrame = stripTags(html);
         var context = (typeof extractContext === 'function') ? extractContext(plainFrame) : null;
 
@@ -109,7 +111,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (typeof ingestDriftDebugServerFromPlain === 'function') ingestDriftDebugServerFromPlain(plain);
     var isSep = isSeparatorLine(plain);
     var isAi = category && category.indexOf('ai-') === 0;
-    var lvl = isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
+    var lvl = isSep ? 'info' : isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
     /* Device-other: demote error/warning to info so device noise never shows red/yellow. Device-critical keeps its real severity. */
     if (lineTier === 'device-other' && (lvl === 'error' || lvl === 'warning')) lvl = 'info';
     // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
@@ -128,7 +130,8 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     }
     var sTag = (typeof parseSourceTag === 'function') ? parseSourceTag(plain) : null;
     // Source-tag driven: any line tagged 'database' that isn't already error/warning gets the level.
-    if (sTag === 'database' && lvl !== 'error' && lvl !== 'warning' && lvl !== 'database') { lvl = 'database'; }
+    // Separator lines stay 'info' — source tags should not override decorative lines.
+    if (!isSep && sTag === 'database' && lvl !== 'error' && lvl !== 'warning' && lvl !== 'database') { lvl = 'database'; }
     var lTag = (typeof parseLogcatTag === 'function') ? parseLogcatTag(plain) : null;
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
@@ -212,6 +215,19 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
+        /* Art-block grouping: consecutive separator lines with the same timestamp form one visual block. */
+        if (viewerGroupAsciiArt && isSep && ts) {
+            if (artBlockTracker.count > 0 && artBlockTracker.timestamp === ts) {
+                artBlockTracker.count++;
+            } else {
+                if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
+                artBlockTracker.startIdx = allLines.length - 1;
+                artBlockTracker.timestamp = ts;
+                artBlockTracker.count = 1;
+            }
+        } else if (artBlockTracker.count > 0) {
+            if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
+        }
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
         if (repeatTracker.count === 1) {
             repeatTracker.lastLineIndex = allLines.length - 1;
