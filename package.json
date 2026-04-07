@@ -142,6 +142,11 @@
         "title": "%command.toggleInlineDecorations.title%"
       },
       {
+        "command": "saropaLogCapture.copyAllFilteredLines",
+        "icon": "$(copy)",
+        "title": "%command.copyAllFilteredLines.title%"
+      },
+      {
         "command": "saropaLogCapture.popOutViewer",
         "icon": "$(link-external)",
         "title": "%command.popOutViewer.title%"
@@ -1394,6 +1399,12 @@
           "type": "boolean",
           "title": "%config.viewerPreserveAsciiBoxArt.title%"
         },
+        "saropaLogCapture.viewerGroupAsciiArt": {
+          "default": true,
+          "description": "%config.viewerGroupAsciiArt.description%",
+          "type": "boolean",
+          "title": "%config.viewerGroupAsciiArt.title%"
+        },
         "saropaLogCapture.viewerDbInsightsEnabled": {
           "default": true,
           "description": "%config.viewerDbInsightsEnabled.description%",
@@ -2369,6 +2380,11 @@
     },
     "menus": {
       "view/title": [
+        {
+          "command": "saropaLogCapture.copyAllFilteredLines",
+          "group": "navigation",
+          "when": "view == saropaLogCapture.logViewer"
+        },
         {
           "command": "saropaLogCapture.popOutViewer",
           "group": "navigation",

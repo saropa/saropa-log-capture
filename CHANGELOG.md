@@ -31,6 +31,12 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ### Added
 
 - Auto-load the active recording session when the Saropa Log Capture tab becomes visible
+- Copy All Filtered Lines button in the viewer title bar to copy all visible (filtered) lines to the clipboard with a toast showing the line count
+- **ASCII art block grouping** — consecutive separator/box-art lines with the same timestamp are now rendered as a single visual block: the first line keeps its decoration, subsequent lines show only the art content with a shimmer effect, continuous gutter bar, and subtle tinted background. New setting `saropaLogCapture.viewerGroupAsciiArt` (default on)
+
+### Fixed
+
+- ASCII art lines (e.g. Drift debug server banner) no longer get inconsistent colors — separator lines are always classified as `info` level regardless of text content like "DEBUG" or "database"
 
 ---
 

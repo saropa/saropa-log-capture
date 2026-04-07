@@ -60,6 +60,8 @@ export interface SaropaLogCaptureConfig {
    * so stack preview does not collapse them with `[+N more]`.
    */
   readonly viewerPreserveAsciiBoxArt: boolean;
+  /** When true (default), consecutive separator lines with the same timestamp are grouped into a single visual block. */
+  readonly viewerGroupAsciiArt: boolean;
   readonly includeTimestamp: boolean;
   readonly format: "plaintext" | "html";
   readonly logDirectory: string;
