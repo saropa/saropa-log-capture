@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { getScopeFilterScript } from '../../ui/viewer-search-filter/viewer-scope-filter';
+import { getScopeFilterHintScript } from '../../ui/viewer-search-filter/viewer-scope-filter-hint';
 
 type HintElStub = {
     innerHTML: string;
@@ -57,6 +58,7 @@ function createScopeHintRuntime(): {
         var renderViewport = function() {};
         var markPresetDirty = function() {};
         ${getScopeFilterScript()}
+        ${getScopeFilterHintScript()}
         return {
             setActiveFilePath: function(p) { scopeContext.activeFilePath = p; },
             setScopeHideUnattrib: function(v) { scopeHideUnattributed = !!v; },

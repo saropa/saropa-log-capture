@@ -6,10 +6,11 @@
  */
 import { getContextMenuStyles } from './viewer-styles-context-menu';
 import { getDecorationStyles } from './viewer-styles-decoration';
+import { getEditModalStyles } from './viewer-styles-edit-modal';
 import { getModalStyles } from './viewer-styles-modal';
 
 export function getOverlayStyles(): string {
-    return getDecorationStyles() + getModalStyles() + getContextMenuStyles() + /* css */ `
+    return getDecorationStyles() + getEditModalStyles() + getModalStyles() + getContextMenuStyles() + /* css */ `
 
 /* ===================================================================
    Navigation Bars (Split Breadcrumb + Session Nav)

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri, viewerDbDetectorTogglesFromConfig, errorRateConfigFromConfig } from './modules/config/config';
+import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
@@ -12,7 +12,7 @@ import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { createUriHandler } from './modules/features/deep-links';
 import { importFromGist, importFromUrl } from './modules/share/gist-importer';
 import { clearGitHubToken } from './modules/share/github-auth';
-import { loadPresets } from './modules/storage/filter-presets';
+import { applyInitialBroadcasterConfig } from './activation-broadcaster-config';
 import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
 import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
@@ -131,27 +131,8 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         }),
     );
 
-    broadcaster.setPresets(loadPresets());
     const initCfg = getConfig();
-    if (initCfg.highlightRules.length > 0) {
-        broadcaster.setHighlightRules(initCfg.highlightRules);
-    }
-    broadcaster.setIconBarPosition(initCfg.iconBarPosition);
-    broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
-    broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
-    broadcaster.setMinimapProportionalLines(initCfg.minimapProportionalLines);
-    broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
-    broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
-    broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
-    broadcaster.setViewerDbDetectorToggles(viewerDbDetectorTogglesFromConfig(initCfg));
-    broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
-
-    broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
-    broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
-    broadcaster.setMinimapWidth(initCfg.minimapWidth);
-    broadcaster.setScrollbarVisible(initCfg.showScrollbar);
-    broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);
-    broadcaster.setErrorRateConfig(errorRateConfigFromConfig(initCfg));
+    applyInitialBroadcasterConfig(broadcaster, initCfg);
 
     setupConfigListener(context, sessionManager, broadcaster);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
