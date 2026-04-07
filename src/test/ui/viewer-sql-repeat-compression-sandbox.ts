@@ -62,6 +62,8 @@ var sessionStartTs = null;
 var autoHiddenCount = 0;
 var strictLevelDetection = false;
 var suppressTransientErrors = false;
+var viewerPreserveAsciiBoxArt = true;
+var viewerGroupAsciiArt = true;
 var showFlutter = true;
 var showDevice = false;
 function isTierHidden() { return false; }

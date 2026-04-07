@@ -40,7 +40,7 @@ function renderItem(item, idx, prevVis) {
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
         : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
     var spacingCls = '';
-    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
+    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled && !item.artBlockPos) {
         var spPrev = null;
         if (prevVis !== undefined) { spPrev = prevVis; }
         else {
@@ -102,6 +102,8 @@ function renderItem(item, idx, prevVis) {
             barCls = ' level-bar-' + item.level;
         }
     }
+    /* Art-block gutter: CSS border-left handles the continuous bar (not bar-up/bar-down pseudo
+       which would conflict with the shimmer ::after). Only the start line keeps its dot. */
     if (item.type === 'stack-header') {
         // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (code uses \\u25b6/\\u25bc/\\u25b7)
         var ch, sf;
@@ -147,10 +149,16 @@ function renderItem(item, idx, prevVis) {
         levelCls += ' recent-error-context';
     }
     var sepCls = item.isSeparator ? ' separator-line' : '';
-    var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
-    var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
+    /* Art-block classes: start gets decoration, middle/end get none. */
+    var abp = item.artBlockPos;
+    if (abp === 'start') sepCls += ' art-block-start';
+    else if (abp === 'middle') sepCls += ' art-block-middle';
+    else if (abp === 'end') sepCls += ' art-block-end';
+    var isArtCont = (abp === 'middle' || abp === 'end');
+    var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
+    var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
     /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
-    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '';
+    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     var compressDupBadge = '';
