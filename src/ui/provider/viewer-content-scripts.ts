@@ -90,6 +90,8 @@ export interface ViewerScriptsOptions {
     readonly viewerMaxLines: number;
     /** Baked into isStackFrameText — default true when omitted. */
     readonly viewerPreserveAsciiBoxArt?: boolean;
+    /** Baked into addToData art-block grouping — default true when omitted. */
+    readonly viewerGroupAsciiArt?: boolean;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
   /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
   readonly viewerDbInsightsEnabled?: boolean;
@@ -109,6 +111,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         extensionUri,
         viewerMaxLines: maxLines,
         viewerPreserveAsciiBoxArt,
+        viewerGroupAsciiArt,
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled,
@@ -127,7 +130,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 slowBurstThresholds: viewerSlowBurstThresholds,
                 dbDetectorToggles: viewerDbDetectorToggles,
             }),
-            getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false),
+            getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false),
             getViewerRootCauseHintsScript(),
             getViewerVisibilityScript(),
         ) +
