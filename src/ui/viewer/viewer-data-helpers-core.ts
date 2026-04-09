@@ -101,13 +101,19 @@ function cleanupTrailingRepeats() {
 /**
  * Separator / banner detection for .separator-line CSS. Must match
  * isLogViewerSeparatorLine in modules/analysis/log-viewer-separator-line.ts (unit-tested there).
+ * Both copies strip the logcat/bracket prefix before detection — keep separatorPrefixRe in sync
+ * with SOURCE_PREFIX in the TS module.
  */
 function isAsciiBoxDrawingDecorLine(plain) {
     return /^\\s*\\u2502\\s+(?:.*\\S\\s*)?\\u2502\\s*$/.test(plain);
 }
+/** Strip logcat / bracket prefix so separator detection works on the message body. */
+var separatorPrefixRe = /^(?:[VDIWEFA]\\/[^(:\\s]+\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[[^\\]]+\\]\\s)/;
 function isSeparatorLine(plainText) {
-    if (isAsciiBoxDrawingDecorLine(plainText)) return true;
-    var trimmed = plainText.trim();
+    var prefixM = separatorPrefixRe.exec(plainText);
+    var body = prefixM ? plainText.slice(prefixM[0].length) : plainText;
+    if (isAsciiBoxDrawingDecorLine(body)) return true;
+    var trimmed = body.trim();
     if (trimmed.length < 3) return false;
     /* Light arcs / corners used in Drift and other Unicode box art (not only ┌┐). */
     var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬╭╮╯╰\\\\-]/;
