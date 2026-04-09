@@ -32,6 +32,7 @@ var strictLevelDetection = false;
 var suppressTransientErrors = false;
 var viewerPreserveAsciiBoxArt = true;
 var viewerGroupAsciiArt = true;
+var viewerDetectAsciiArt = false;
 var showFlutter = true;
 var showDevice = false;
 function isTierHidden() { return false; }

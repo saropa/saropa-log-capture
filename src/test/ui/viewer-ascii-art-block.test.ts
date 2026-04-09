@@ -123,6 +123,78 @@ suite('ASCII art block grouping', () => {
         });
     });
 
+    suite('generalized ASCII art detector (plan 046)', () => {
+        test('should define feedAsciiArtDetector gated by viewerDetectAsciiArt', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('function feedAsciiArtDetector('),
+                'feedAsciiArtDetector must be defined in the data-add script',
+            );
+            assert.ok(
+                script.includes('if (!viewerDetectAsciiArt) return false'),
+                'detector must early-return when setting is off',
+            );
+        });
+
+        test('should define scoreAsciiArtLine with entropy heuristics', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('function scoreAsciiArtLine('),
+                'scoreAsciiArtLine must be defined',
+            );
+        });
+
+        test('should use majority-in-window detection (not strict consecutive)', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('majorityPct'),
+                'detector must use majority percentage for window qualification',
+            );
+            assert.ok(
+                script.includes('bLen'),
+                'window entries must track body length for vertical uniformity',
+            );
+        });
+
+        test('should call feedAsciiArtDetector for non-separator lines in addToData', () => {
+            const block = extractAddToDataBlock(getViewerDataAddScript());
+            assert.ok(
+                block.includes('feedAsciiArtDetector(plain, allLines.length - 1, ts)'),
+                'addToData must call feedAsciiArtDetector for non-separator lines',
+            );
+            assert.ok(
+                block.includes('!isSep && typeof feedAsciiArtDetector'),
+                'call must be gated by !isSep',
+            );
+        });
+
+        test('should define resetAsciiArtDetector for clear/session reset', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('function resetAsciiArtDetector()'),
+                'resetAsciiArtDetector must be defined',
+            );
+        });
+
+        test('should clear aaWindow after flagging a block to avoid cross-block pollution', () => {
+            const script = getViewerDataAddScript();
+            // After flagging, aaWindow must be reset so prior entries don't
+            // inflate the majority count when detecting the next art block.
+            assert.ok(
+                script.includes("aaWindow = [];\n    }\n\n    return flagged;"),
+                'aaWindow must be cleared inside the flagged branch before returning',
+            );
+        });
+
+        test('should include low-token heuristic in webview scoreAsciiArtLine', () => {
+            const script = getViewerDataAddScript();
+            assert.ok(
+                script.includes('Low token count'),
+                'scoreAsciiArtLine must include low-token-count heuristic (comment marker)',
+            );
+        });
+    });
+
     suite('state lifecycle', () => {
         test('should finalize art block on markers', () => {
             const block = extractAddToDataBlock(getViewerDataAddScript());
