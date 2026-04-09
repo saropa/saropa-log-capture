@@ -47,6 +47,33 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
         });
     });
 
+    suite("double-vertical-bar (║) boxes (e.g. Isar Connect)", () => {
+        test("logcat-prefixed ║ content line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter ( 5132): ║                     ISAR CONNECT STARTED                     ║'),
+                true,
+            );
+        });
+        test("logcat-prefixed ║ URL content line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter ( 5132): ║ https://inspect.isar-community.dev/3.3.0/#/37391/Q3SG7NeTAHc ║'),
+                true,
+            );
+        });
+        test("logcat-prefixed ╔ border line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter ( 5132): ╔══════════════════════════════════════════════════════════════╗'),
+                true,
+            );
+        });
+        test("logcat-prefixed ╟ divider line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter ( 5132): ╟──────────────────────────────────────────────────────────────╢'),
+                true,
+            );
+        });
+    });
+
     suite("after: Drift-style and Unicode box lines", () => {
         test("paired │ … │ interior row (Drift URL line)", () => {
             assert.strictEqual(
