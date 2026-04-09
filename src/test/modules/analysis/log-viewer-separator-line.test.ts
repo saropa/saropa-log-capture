@@ -14,6 +14,39 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
         });
     });
 
+    suite("logcat-prefixed lines strip prefix before detection", () => {
+        test("logcat-prefixed paired │ … │ content line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter (13876): │           DRIFT DEBUG SERVER   v3.0.2           │'),
+                true,
+            );
+        });
+        test("logcat-prefixed border line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter (13876): ┌──────────────────────────────────────────────────┐'),
+                true,
+            );
+        });
+        test("logcat-prefixed empty interior row is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter (13876): \u2502                                                      \u2502'),
+                true,
+            );
+        });
+        test("bracket-prefixed box line is a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('[log] │         http://127.0.0.1:8643         │'),
+                true,
+            );
+        });
+        test("logcat-prefixed plain text is not a separator", () => {
+            assert.strictEqual(
+                isLogViewerSeparatorLine('I/flutter (13876): Starting application...'),
+                false,
+            );
+        });
+    });
+
     suite("after: Drift-style and Unicode box lines", () => {
         test("paired │ … │ interior row (Drift URL line)", () => {
             assert.strictEqual(
