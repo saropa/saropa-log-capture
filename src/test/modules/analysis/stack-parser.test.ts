@@ -15,6 +15,13 @@ suite('StackParser', () => {
             assert.strictEqual(isAsciiBoxDrawingDecorLine('   \u2502     \u2502  '), true);
         });
 
+        test('detects double-vertical-bar (║) banner rows', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('║                     ISAR CONNECT STARTED                     ║'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('║             Open the link to connect to the Isar             ║'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('║ https://inspect.isar-community.dev/3.3.0/#/37391/Q3SG7NeTAHc ║'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('\u2551     \u2551'), true);
+        });
+
         test('does not match single gutter lines', () => {
             assert.strictEqual(isAsciiBoxDrawingDecorLine('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
             assert.strictEqual(isAsciiBoxDrawingDecorLine('│  at Object.run (main.js:1:1)'), false);

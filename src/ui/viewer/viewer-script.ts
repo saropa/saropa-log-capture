@@ -12,7 +12,7 @@ import { getViewerScriptFooterChunk } from './viewer-script-footer';
 import { getViewerScriptMessageHandler } from './viewer-script-messages';
 import { getViewerClickHandlerScript } from './viewer-script-click-handlers';
 
-export function getViewerScript(maxLines: number, viewerPreserveAsciiBoxArt = true, viewerGroupAsciiArt = true): string {
+export function getViewerScript(maxLines: number, viewerPreserveAsciiBoxArt = true, viewerGroupAsciiArt = true, viewerDetectAsciiArt = false): string {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
 var logWrapEl = document.getElementById('log-content-wrapper');
@@ -122,6 +122,8 @@ var correlationByLineIndex = {};
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
 /* When true, consecutive separator lines with the same timestamp are grouped into a visual block. */
 var viewerGroupAsciiArt = ${viewerGroupAsciiArt ? 'true' : 'false'};
+/* Experimental: detect pixel-based ASCII art via entropy heuristics (default false). */
+var viewerDetectAsciiArt = ${viewerDetectAsciiArt ? 'true' : 'false'};
 /* Minimap / scrollbar settings: mirrored from host postMessage for context-menu checkmarks (see viewer-script-messages). */
 var minimapProportionalLines = true;
 var minimapShowInfoMarkers = false;
