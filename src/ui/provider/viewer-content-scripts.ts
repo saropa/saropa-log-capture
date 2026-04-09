@@ -93,6 +93,8 @@ export interface ViewerScriptsOptions {
     readonly viewerPreserveAsciiBoxArt?: boolean;
     /** Baked into addToData art-block grouping — default true when omitted. */
     readonly viewerGroupAsciiArt?: boolean;
+    /** Experimental: detect pixel-based ASCII art via entropy heuristics (default false). */
+    readonly viewerDetectAsciiArt?: boolean;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
   /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
   readonly viewerDbInsightsEnabled?: boolean;
@@ -113,6 +115,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerMaxLines: maxLines,
         viewerPreserveAsciiBoxArt,
         viewerGroupAsciiArt,
+        viewerDetectAsciiArt,
         viewerRepeatThresholds,
         viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled,
@@ -131,7 +134,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 slowBurstThresholds: viewerSlowBurstThresholds,
                 dbDetectorToggles: viewerDbDetectorToggles,
             }),
-            getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false),
+            getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true),
             getViewerRootCauseHintsScript(),
             getViewerVisibilityScript(),
         ) +

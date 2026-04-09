@@ -1401,6 +1401,12 @@
           "type": "boolean",
           "title": "%config.viewerGroupAsciiArt.title%"
         },
+        "saropaLogCapture.viewerDetectAsciiArt": {
+          "default": false,
+          "description": "%config.viewerDetectAsciiArt.description%",
+          "type": "boolean",
+          "title": "%config.viewerDetectAsciiArt.title%"
+        },
         "saropaLogCapture.viewerDbInsightsEnabled": {
           "default": true,
           "description": "%config.viewerDbInsightsEnabled.description%",
@@ -2560,5 +2566,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "5.6.2"
+  "version": "5.6.3"
 }
