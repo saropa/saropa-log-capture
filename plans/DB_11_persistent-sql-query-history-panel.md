@@ -1,4 +1,4 @@
-# DB_11 Persistent Query History Panel
+# DB_11 Persistent SQL Query History Panel
 
 ## Goal
 Provide a durable, scrollable view of parsed SQL activity for the **current capture session** that survives line compression and viewport scrolling—complementing inline drilldown (`DB_06`). History lives in memory for that session only; **persisting or reopening history for saved sessions is out of scope for v1** (would pair with session restore work later).
