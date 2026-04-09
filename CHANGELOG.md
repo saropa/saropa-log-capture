@@ -26,6 +26,19 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [5.6.3] - Unreleased
+
+### Added
+
+- New `viewerDetectAsciiArt` setting (default off) — experimental heuristic that detects pixel-based ASCII art (logos, figlet banners) and groups them as art blocks with the existing shimmer/yellow treatment
+
+### Changed
+
+- ASCII art detector uses majority-in-window (70%) instead of strict consecutive runs, so one weak line inside an art block no longer breaks detection
+- ASCII art scoring adds low-token-count heuristic (+15 for long lines with ≤2 tokens) and vertical-uniformity window bonus (+10 when line lengths cluster tightly)
+
+---
+
 ## [5.6.2]
 
 ### Fixed
@@ -47,6 +60,7 @@ Housekeeping — split oversized files and fixed a test that broke under minific
 
 - Fixed `viewer-performance-panel` test using brittle `.toString()` source inspection that breaks after esbuild minification — now tests actual function output instead
 - Fixed signals treating decorative separator lines (`═══════`, `────────`, etc.) as error hypotheses — excerpts with no alphanumeric characters are now filtered out, and lines with the `isSeparator` flag are excluded from error collection
+- Fixed `isAsciiBoxDrawingDecorLine` only matching single-vertical `│` borders — now also matches double-vertical `║` borders (e.g. Isar Connect banners), preventing text-heavy box content lines from being misclassified as errors
 
 ---
 
