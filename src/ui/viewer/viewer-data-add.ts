@@ -17,9 +17,10 @@ import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detector
 import { getViewerDataAddStackGroupLearningAndToggleScript } from './viewer-data-add-stack-group-learning-and-toggle';
 import { getDriftDebugServerFromLogScript } from './viewer-drift-debug-server-from-log-script';
 import { getRepeatCollapseBranchScript } from './viewer-data-add-repeat-collapse';
+import { getAsciiArtDetectScript } from './viewer-data-add-ascii-art-detect';
 
 export function getViewerDataAddScript(staticSqlFromFingerprintEnabled = true): string {
-    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + /* javascript */ `
+    return getDriftDebugServerFromLogScript() + getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnabled) + getContinuationScript() + getRepeatCollapseBranchScript() + getAsciiArtDetectScript() + /* javascript */ `
 
 /** Nearest earlier line used for the “recent error context” window (skips Drift SQL rows). */
 function proximityInheritAnchor() {
@@ -227,6 +228,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             }
         } else if (artBlockTracker.count > 0) {
             if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
+        }
+        /* Generalized ASCII art detection (plan 046): score non-separator lines via entropy heuristics. */
+        if (!isSep && typeof feedAsciiArtDetector === 'function') {
+            feedAsciiArtDetector(plain, allLines.length - 1, ts);
         }
         // Anchor the first visible line of this streak for hide-on-collapse (intermediate duplicates keep the same index).
         if (repeatTracker.count === 1) {
