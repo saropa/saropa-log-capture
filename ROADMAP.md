@@ -30,6 +30,7 @@ Single table: **Wow** (High → Medium → Low), then **Effort** (Low → Medium
 | Low | Medium | Incremental index for search | "Search in all logs" with scalable index | [029](bugs/029_plan-incremental-index-search.md) |
 | High | Medium | Device log triage | Classify device logs into critical (always visible) vs other (hidden, severity demoted, excluded from analysis); replace app-only toggle | [045](bugs/045_plan-device-log-triage.md) |
 | Medium | Low | adb logcat streaming | Live Android logcat alongside debug session; PID filter, sidecar | [042](bugs/042_plan-adb-logcat.md) |
+| Medium | Medium | Generalized ASCII art detection | Detect pixel-based ASCII art (logos, figlet banners) via entropy/uniformity heuristics; apply art-block grouping | [046](bugs/046_plan-generalized-ascii-art-detection.md) |
 | Low | High | Integration adapters | database, externalLogs, http, browser, security — full implementation from specs | [001](bugs/001_integration-specs-index.md) · [009](bugs/009_integration-spec-application-file-logs.md)–[013](bugs/013_integration-spec-security-audit-logs.md) |
 
 See [bugs/019_cohesion-plans-index.md](bugs/019_cohesion-plans-index.md) for cohesion/intelligence index.

@@ -40,6 +40,8 @@ export interface ViewerHtmlOptions {
     readonly viewerPreserveAsciiBoxArt?: boolean;
     /** When true, consecutive separator lines with the same timestamp are grouped visually (default true). */
     readonly viewerGroupAsciiArt?: boolean;
+    /** Experimental: detect pixel-based ASCII art via entropy heuristics (default false). */
+    readonly viewerDetectAsciiArt?: boolean;
     /** Repeat-collapse thresholds baked into the viewer script at HTML build time. */
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** Slow-query burst detector thresholds (DB_08) baked into the viewer script. */
@@ -79,6 +81,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerMaxLines: opts.viewerMaxLines ?? DEFAULT_VIEWER_LINES,
         viewerPreserveAsciiBoxArt: opts.viewerPreserveAsciiBoxArt,
         viewerGroupAsciiArt: opts.viewerGroupAsciiArt,
+        viewerDetectAsciiArt: opts.viewerDetectAsciiArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,

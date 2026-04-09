@@ -105,7 +105,7 @@ function cleanupTrailingRepeats() {
  * with SOURCE_PREFIX in the TS module.
  */
 function isAsciiBoxDrawingDecorLine(plain) {
-    return /^\\s*\\u2502\\s+(?:.*\\S\\s*)?\\u2502\\s*$/.test(plain);
+    return /^\\s*[\\u2502\\u2551]\\s+(?:.*\\S\\s*)?[\\u2502\\u2551]\\s*$/.test(plain);
 }
 /** Strip logcat / bracket prefix so separator detection works on the message body. */
 var separatorPrefixRe = /^(?:[VDIWEFA]\\/[^(:\\s]+\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[[^\\]]+\\]\\s)/;

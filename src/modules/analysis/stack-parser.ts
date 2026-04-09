@@ -131,13 +131,14 @@ export function isFrameworkLogLine(text: string): boolean | undefined {
 }
 
 /**
- * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`),
- * e.g. Drift debug server output. These are not trace gutters; the viewer avoids grouping them
- * as stack frames so preview mode does not insert `[+N more]` mid-banner.
+ * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`
+ * or `║ … ║`), e.g. Drift debug server output or Isar connect banners. These are not trace
+ * gutters; the viewer avoids grouping them as stack frames so preview mode does not insert
+ * `[+N more]` mid-banner.
  */
 export function isAsciiBoxDrawingDecorLine(line: string): boolean {
-    // Paired bars with optional content between them — matches both `│ text │` and `│      │`.
-    return /^\s*\u2502\s+(?:.*\S\s*)?\u2502\s*$/.test(line);
+    // Paired bars with optional content between them — matches both `│ text │` and `║ text ║`.
+    return /^\s*[\u2502\u2551]\s+(?:.*\S\s*)?[\u2502\u2551]\s*$/.test(line);
 }
 
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */

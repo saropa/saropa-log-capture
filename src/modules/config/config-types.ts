@@ -62,6 +62,8 @@ export interface SaropaLogCaptureConfig {
   readonly viewerPreserveAsciiBoxArt: boolean;
   /** When true (default), consecutive separator lines with the same timestamp are grouped into a single visual block. */
   readonly viewerGroupAsciiArt: boolean;
+  /** Experimental: detect pixel-based ASCII art (logos, figlet banners) via entropy heuristics. Default off. */
+  readonly viewerDetectAsciiArt: boolean;
   readonly includeTimestamp: boolean;
   readonly format: "plaintext" | "html";
   readonly logDirectory: string;
