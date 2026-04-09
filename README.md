@@ -98,7 +98,7 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Pin lines:** Press P to pin important lines above scroll area.
 - **Line annotations:** Press N to annotate a log line.
 - **JSON rendering:** Embedded JSON shown as collapsible pretty-printed blocks.
-- **ASCII art detection:** Box-drawing and separator characters styled for readability. Consecutive art lines with the same timestamp are grouped into a single visual block with a shimmer effect (`viewerGroupAsciiArt`, default on).
+- **ASCII art detection:** Box-drawing and separator characters styled for readability. Consecutive art lines with the same timestamp are grouped into a single visual block with a shimmer effect (`viewerGroupAsciiArt`, default on). Opt-in heuristic detection of pixel-based ASCII art such as logos and figlet banners (`viewerDetectAsciiArt`, default off).
 - **Scroll position memory:** Viewer remembers scroll position per file when switching between logs.
 - **Tail mode:** Command **Saropa Log Capture: Open Tailed File** opens any workspace file matching `saropaLogCapture.tailPatterns` (default `**/*.log`); the viewer appends new lines as the file grows.
 - **Run navigation:** Logs with multiple app runs (e.g. Flutter launch, hot restart, hot reload) show "Run 1 of N" with Prev/Next in the title bar; run separators (bar with run number, time range, duration, issue counts) appear above each run in the list.
