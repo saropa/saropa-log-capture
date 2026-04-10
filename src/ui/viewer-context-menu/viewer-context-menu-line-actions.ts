@@ -30,6 +30,18 @@ function handleLineAction(action, lineIdx) {
             }
             return true;
         }
+        case 'copy-decorated': {
+            /* Copy clicked/selected line(s) with decorations (emoji dot, seq, timestamp). */
+            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+            var lo = Math.min(start, end);
+            var hi = Math.max(start, end);
+            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
+            var decoLines = multiLine && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
+            var decoText = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(decoLines) : plainText;
+            vscodeApi.postMessage({ type: 'copyToClipboard', text: decoText });
+            return true;
+        }
         case 'copy-with-source': {
             var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
             var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
