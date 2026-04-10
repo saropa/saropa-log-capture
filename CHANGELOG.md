@@ -31,11 +31,15 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ### Added
 
 - **Copy Line Decorated** context menu option — copies clicked/selected line(s) with severity emoji, sequence number, and timestamp
+- **Configurable severity keywords** (`saropaLogCapture.severityKeywords`) — users can customize which keywords trigger each severity level (error, warning, performance, todo, debug, notice). Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) remain built-in
+- **Severity Keywords section** in the viewer Options panel — shows current keyword-to-level mapping with color indicators and a button to open VS Code settings for editing
 
 ### Changed
 
+- **Project Logs panel now loads progressively** — items appear with metadata top-to-bottom as each file resolves instead of waiting for all files to finish loading
 - Copy & Export submenu now groups "All" items (Copy All, Copy All Decorated, Copy as snippet) together with separators for clarity
 - Downgraded `failed`/`failure`/`fail` keywords from error to warning severity — these indicate something worth investigating, not a definitive error
+- Severity classification now separates structural patterns (hardcoded) from keyword patterns (user-configurable), improving transparency and customizability
 
 ### Fixed
 
