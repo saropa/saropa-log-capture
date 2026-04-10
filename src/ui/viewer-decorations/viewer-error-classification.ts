@@ -139,7 +139,7 @@ function handleErrorClassificationSettings(msg) {
     }
     if (msg.severityKeywords !== undefined) {
         if (typeof applySeverityKeywords === 'function') applySeverityKeywords(msg.severityKeywords);
-        if (typeof currentSeverityKeywords !== 'undefined') currentSeverityKeywords = msg.severityKeywords;
+        if (typeof currentSeverityKeywords !== 'undefined') currentSeverityKeywords = msg.severityKeywords || null;
         if (typeof renderSeverityKeywordsDisplay === 'function') renderSeverityKeywordsDisplay();
     }
     // Re-render when stderr policy, strict mode, or keywords change (levels recalc).

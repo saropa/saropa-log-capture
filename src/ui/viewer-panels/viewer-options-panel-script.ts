@@ -171,7 +171,7 @@ function renderSeverityKeywordsDisplay() {
     var html = '';
     for (var i = 0; i < levels.length; i++) {
         var lv = levels[i];
-        var kws = (typeof currentSeverityKeywords !== 'undefined' && currentSeverityKeywords[lv.key]) || [];
+        var kws = (currentSeverityKeywords && currentSeverityKeywords[lv.key]) || [];
         var kwHtml = kws.map(function(k) { return '<span class="sk-pill">' + escapeHtml(k) + '</span>'; }).join(' ');
         html += '<div class="sk-level-row">'
             + '<span class="sk-dot" style="background:' + lv.color + '"></span>'
