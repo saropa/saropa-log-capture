@@ -176,5 +176,30 @@ export function getSessionRenderingScript(): string {
         }).join('');
         sessionListEl.innerHTML = html;
     }
+
+    /** Update preview items in-place with resolved metadata (progressive loading). */
+    function updateSessionBatchItems(items) {
+        if (!sessionListEl || !items) return;
+        for (var i = 0; i < items.length; i++) {
+            var s = items[i];
+            var el = sessionListEl.querySelector('.session-item[data-uri="' + CSS.escape(s.uriString || '') + '"]');
+            if (!el) continue;
+            var icon = s.isActive ? 'codicon-record' : (s.hasTimestamps ? 'codicon-history' : 'codicon-output');
+            var iconTitle = s.isActive ? 'Actively recording' : (s.hasTimestamps ? 'Completed session' : 'Log file');
+            var iconEl = el.querySelector('.session-item-icon');
+            if (iconEl) {
+                var dot = !s.isActive && (s.updatedInLastMinute || s.updatedSinceViewed)
+                    ? '<span class="session-item-update-dot" title="' + (s.updatedInLastMinute ? 'Updated in the last minute' : 'New lines since last viewed') + '"></span>' : '';
+                iconEl.innerHTML = '<span class="codicon ' + icon + '"></span>' + dot;
+                iconEl.title = iconTitle;
+            }
+            var metaEl = el.querySelector('.session-item-meta');
+            if (metaEl) {
+                metaEl.classList.remove('session-shimmer-meta');
+                var dots = renderSeverityDots(s);
+                metaEl.innerHTML = buildSessionMeta(s, dots, null);
+            }
+        }
+    }
 `;
 }
