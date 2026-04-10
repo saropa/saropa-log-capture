@@ -129,12 +129,10 @@ function buildDriftStaticSqlSearchPlan(fingerprint) {
             continue;
         }
         extra.push(...row.extraIndexerTokens);
-        if (row.optionalPathGlobPatterns?.length) {
-            for (const g of row.optionalPathGlobPatterns) {
-                const gg = g.trim();
-                if (gg) {
-                    globSet.add(gg);
-                }
+        for (const g of row.optionalPathGlobPatterns ?? []) {
+            const gg = g.trim();
+            if (gg) {
+                globSet.add(gg);
             }
         }
     }

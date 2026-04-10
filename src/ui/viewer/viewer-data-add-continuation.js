@@ -37,10 +37,13 @@ function matchesContinuation(item, prev) {
     if (!prev || !item) return false;
     if (item.timestamp == null || prev.timestamp == null) return false;
     if (item.timestamp !== prev.timestamp) return false;
-    if (item.logcatTag || prev.logcatTag) {
-        return item.logcatTag === prev.logcatTag;
-    }
-    return item.source === prev.source;
+    // Require both lines to have a logcat tag for continuation grouping.
+    // Source-only matching is intentionally excluded: wall-clock timestamps
+    // assigned at capture time are identical for all lines in a rapid burst,
+    // which causes unrelated lines (e.g. ASCII art, server logs) to be
+    // spuriously grouped and collapsed behind a [+N lines] badge.
+    if (!item.logcatTag || !prev.logcatTag) return false;
+    return item.logcatTag === prev.logcatTag;
 }
 
 /**

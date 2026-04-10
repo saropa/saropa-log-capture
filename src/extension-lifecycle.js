@@ -75,10 +75,12 @@ function applySessionStartedState(deps, session) {
     if (cfg.showElapsedTime) {
         broadcaster.setShowElapsed(true);
     }
-    if (cfg.showDecorations) {
-        broadcaster.setShowDecorations(true);
-    }
-    broadcaster.setErrorClassificationSettings(cfg.suppressTransientErrors ?? false, cfg.breakOnCritical ?? false, cfg.levelDetection ?? "strict", cfg.deemphasizeFrameworkLevels ?? false, cfg.stderrTreatAsError);
+    broadcaster.setErrorClassificationSettings({
+        suppressTransientErrors: cfg.suppressTransientErrors ?? false,
+        breakOnCritical: cfg.breakOnCritical ?? false,
+        levelDetection: cfg.levelDetection ?? "strict",
+        stderrTreatAsError: cfg.stderrTreatAsError,
+    });
     if (cfg.highlightRules.length > 0) {
         broadcaster.setHighlightRules(cfg.highlightRules);
     }

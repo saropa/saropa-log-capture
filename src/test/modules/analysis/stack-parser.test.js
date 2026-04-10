@@ -41,9 +41,32 @@ suite('StackParser', () => {
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│      Open in browser to view your database:      │'), true);
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('      │              http://127.0.0.1:8642               │'), true);
         });
+        test('detects paired bars with only whitespace between them', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('\u2502          \u2502'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('\u2502 \u2502'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('   \u2502     \u2502  '), true);
+        });
+        test('detects double-vertical-bar (║) banner rows', () => {
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('║                     ISAR CONNECT STARTED                     ║'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('║             Open the link to connect to the Isar             ║'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('║ https://inspect.isar-community.dev/3.3.0/#/37391/Q3SG7NeTAHc ║'), true);
+            assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('\u2551     \u2551'), true);
+        });
         test('does not match single gutter lines', () => {
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
             assert.strictEqual((0, stack_parser_1.isAsciiBoxDrawingDecorLine)('│  at Object.run (main.js:1:1)'), false);
+        });
+    });
+    suite('isStackFrameLine — box art exemption', () => {
+        test('should not treat paired empty bars as a stack frame', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('\u2502          \u2502'), false);
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('\u2502 \u2502'), false);
+        });
+        test('should not treat paired content bars as a stack frame', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('\u2502  DRIFT DEBUG SERVER  \u2502'), false);
+        });
+        test('should still treat single gutter bar as a stack frame', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('\u2502 #0  main (package:foo/main.dart:1:1)'), true);
         });
     });
     // --- Dart / Flutter ---

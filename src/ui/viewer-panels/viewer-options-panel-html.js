@@ -58,43 +58,37 @@ function getOptionsPanelHtml() {
                 <input type="checkbox" id="opt-wrap" />
                 <span>Word wrap</span>
             </label>
-            <label class="options-row" title="Show severity dot, line number, and timestamp before each line">
-                <input type="checkbox" id="opt-decorations" />
-                <span>Line decorations (&#x1F7E2; N T00:00:00)</span>
+            <label class="options-row" title="Show colored circle indicating log severity">
+                <input type="checkbox" id="opt-deco-dot" checked />
+                <span>Severity dot</span>
             </label>
-            <div class="options-indent" id="decoration-options">
-                <label class="options-row" title="Show colored circle indicating log severity">
-                    <input type="checkbox" id="opt-deco-dot" checked />
-                    <span>Severity dot</span>
-                </label>
-                <label class="options-row" title="Show the line number in the prefix">
-                    <input type="checkbox" id="opt-deco-counter" checked />
-                    <span>Counter</span>
-                </label>
-                <label class="options-row" title="Show the time each line was logged">
-                    <input type="checkbox" id="opt-deco-timestamp" checked />
-                    <span>Timestamp</span>
-                </label>
-                <label class="options-row" title="Include millisecond precision in timestamps">
-                    <input type="checkbox" id="opt-deco-milliseconds" />
-                    <span>Show milliseconds</span>
-                </label>
-                <label class="options-row" title="Show time elapsed since the previous log line">
-                    <input type="checkbox" id="opt-deco-elapsed" />
-                    <span>Elapsed time (+Nms)</span>
-                </label>
-                <div class="options-row" title="Apply background color to lines based on severity level">
-                    <span>Line coloring</span>
-                    <select id="opt-line-color">
-                        <option value="none">None</option>
-                        <option value="line">Whole line</option>
-                    </select>
-                </div>
-                <label class="options-row" title="Show colored left border based on log severity">
-                    <input type="checkbox" id="opt-deco-bar" checked />
-                    <span>Severity bar (left border)</span>
-                </label>
+            <label class="options-row" title="Show the line number in the prefix">
+                <input type="checkbox" id="opt-deco-counter" checked />
+                <span>Counter</span>
+            </label>
+            <label class="options-row" title="Show the time each line was logged">
+                <input type="checkbox" id="opt-deco-timestamp" checked />
+                <span>Timestamp</span>
+            </label>
+            <label class="options-row" title="Include millisecond precision in timestamps">
+                <input type="checkbox" id="opt-deco-milliseconds" />
+                <span>Show milliseconds</span>
+            </label>
+            <label class="options-row" title="Show time elapsed since the previous log line">
+                <input type="checkbox" id="opt-deco-elapsed" />
+                <span>Elapsed time (+Nms)</span>
+            </label>
+            <div class="options-row" title="Apply background color to lines based on severity level">
+                <span>Line coloring</span>
+                <select id="opt-line-color">
+                    <option value="none">None</option>
+                    <option value="line">Whole line</option>
+                </select>
             </div>
+            <label class="options-row" title="Show colored left border based on log severity">
+                <input type="checkbox" id="opt-deco-bar" checked />
+                <span>Severity bar (left border)</span>
+            </label>
         </div>
 
         <!-- Integrations: button opens dedicated Integrations screen -->

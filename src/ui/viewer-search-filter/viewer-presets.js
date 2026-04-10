@@ -77,8 +77,13 @@ function applyPreset(presetName) {
         setExclusionsEnabled(preset.exclusionsEnabled);
     }
 
-    if (preset.appOnlyMode !== undefined && typeof setAppOnlyMode === 'function') {
-        setAppOnlyMode(preset.appOnlyMode);
+    // Legacy appOnlyMode migration: treat as showFlutter=true, showDevice=false
+    if (preset.appOnlyMode !== undefined) {
+        if (typeof setShowFlutter === 'function') setShowFlutter(true);
+        if (typeof setShowDevice === 'function') setShowDevice(!preset.appOnlyMode);
+    }
+    if (preset.deviceEnabled !== undefined && typeof setShowDevice === 'function') {
+        setShowDevice(preset.deviceEnabled);
     }
 
     if (preset.sources !== undefined) {
@@ -163,12 +168,13 @@ function onPresetSelectChange(e) {
 function getCurrentFilters() {
     var filters = {};
     if (activeFilters) { filters.categories = Array.from(activeFilters); }
-    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7) {
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < allLevelNames.length) {
         filters.levels = Array.from(enabledLevels);
     }
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
+    if (typeof showDevice !== 'undefined' && showDevice) { filters.deviceEnabled = true; }
     if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
         filters.sources = window.enabledSources.slice();
     }
@@ -188,17 +194,17 @@ function markPresetDirty() {
 /** Re-enable all level filters and update footer circle buttons. */
 function resetLevelFilters() {
     if (typeof enabledLevels !== 'undefined') {
-        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
+        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database']);
     }
-    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice'];
+    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database'];
     for (var li = 0; li < ids.length; li++) {
         var btn = document.getElementById('level-' + ids[li] + '-toggle');
         if (btn) btn.classList.add('active');
     }
 }
 
-/** Clear the search input and re-run to remove any active search filter. */
-function clearSearchFilter() {
+/** Empty the search text box and re-run search so any active search/filter is removed. */
+function presetClearSearchInputValue() {
     var input = document.getElementById('search-input');
     if (input && input.value) {
         input.value = '';
@@ -212,13 +218,14 @@ function resetAllFilters() {
     activeFilters = null;
     syncChannelCheckboxes();
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
-    if (typeof appOnlyMode !== 'undefined' && appOnlyMode && typeof toggleAppOnly === 'function') toggleAppOnly();
+    if (typeof setShowFlutter === 'function') setShowFlutter(true);
+    if (typeof setShowDevice === 'function') setShowDevice(false);
     if (typeof selectAllTags === 'function') selectAllTags();
     if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
     if (typeof clearDbTimeRangeFilter === 'function') clearDbTimeRangeFilter();
-    clearSearchFilter();
+    presetClearSearchInputValue();
     if (typeof window !== 'undefined') window.enabledSources = null;
     activePresetName = null;
     updatePresetDropdown();

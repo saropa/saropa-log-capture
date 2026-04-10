@@ -101,7 +101,7 @@ function paintMinimap() {
         }
         var lv = it.level;
         if (!lv || !mmColors[lv]) continue;
-        if (lv === 'info' && !mmShowInfo) continue;
+        if ((lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo) continue;
         if (!groups[lv]) groups[lv] = [];
         groups[lv].push({ py: py, w: mmBarWidthFrac(it) });
     }
@@ -123,7 +123,7 @@ function paintMinimap() {
 
     var mc = 0;
     for (var k in groups) mc += groups[k].length;
-    /* When "show info on minimap" is off, typical Saropa logs are mostly info — severity groups are empty and the canvas stays blank. Draw a neutral presence band so opened files and dense info streams still show scroll structure. */
+    /* When "show info on minimap" is off, info/debug/notice bars are hidden — severity groups may be empty. Draw a neutral presence band so the canvas is not blank and still shows scroll structure. */
     if (mc === 0 && total > 0) {
         mmCtx.fillStyle = 'rgba(140, 140, 140, 0.24)';
         var barN = 2;
@@ -147,7 +147,7 @@ function paintMinimap() {
         title += ' Turn on "SQL activity on scroll map" in Layout options for SQL shading.';
     }
     if (mc === 0 && total > 0) {
-        title += ' Enable info markers in settings for colored ticks on info-heavy logs.';
+        title += ' Enable info/debug/notice markers in settings for colored ticks on info-heavy logs.';
     }
     title += ' ' + Math.round(total) + ' px content.';
     minimapEl.title = title;

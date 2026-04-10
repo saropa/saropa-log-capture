@@ -90,13 +90,11 @@ function getFilterDrawerStyles() {
     margin-left: 4px;
 }
 .filter-drawer-context input[type="range"] { width: 60px; }
-.filter-drawer-app-only {
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+
+/* Log Inputs divider between sources and categories */
+.log-inputs-divider {
+    border-top: 1px dashed var(--vscode-panel-border);
+    margin: 4px 0;
 }
 
 /* ===================================================================
@@ -135,9 +133,7 @@ function getFilterDrawerStyles() {
     background: var(--vscode-list-hoverBackground);
 }
 .filter-accordion-arrow {
-    font-size: 11px;
-    width: 14px;
-    text-align: center;
+    font-size: 14px;
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
@@ -146,10 +142,9 @@ function getFilterDrawerStyles() {
 }
 .filter-accordion-title { font-weight: 600; }
 .filter-accordion-summary {
-    flex: 1;
-    text-align: right;
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
+    margin-left: 4px;
 }
 /* Accordion body — hidden by default via max-height, animated on expand */
 .filter-accordion-body {

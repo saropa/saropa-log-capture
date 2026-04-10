@@ -51,7 +51,6 @@ suite("viewer-message-handler workspace bool messages", () => {
     });
     test("does not include unrelated message types", () => {
         assert.strictEqual(viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE.setMinimapWidth, undefined);
-        assert.strictEqual(viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE.setCaptureAll, undefined);
     });
 });
 //# sourceMappingURL=viewer-message-handler-workspace-bool.test.js.map

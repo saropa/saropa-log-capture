@@ -100,15 +100,7 @@ function closeOptionsPanel() {
 /** Sync display checkboxes and sliders from state. */
 function syncDisplayUi() {
     var wrapCheck = document.getElementById('opt-wrap');
-    var decoCheck = document.getElementById('opt-decorations');
-    var decoIndent = document.getElementById('decoration-options');
     if (wrapCheck) wrapCheck.checked = wordWrap;
-    if (decoCheck) decoCheck.checked = showDecorations;
-    if (decoIndent) {
-        decoIndent.classList.toggle('options-indent-disabled', !showDecorations);
-        var decoInputs = decoIndent.querySelectorAll('input, select');
-        for (var i = 0; i < decoInputs.length; i++) decoInputs[i].disabled = !showDecorations;
-    }
     var fSlider = document.getElementById('font-size-slider');
     var fLabel = document.getElementById('font-size-label');
     if (fSlider && typeof logFontSize !== 'undefined') {
@@ -193,7 +185,6 @@ function resetOptionsToDefault() {
     wordWrap = false;
     var logEl = document.getElementById('log-content');
     if (logEl) logEl.classList.toggle('nowrap', true);
-    showDecorations = true;
     if (typeof resetDecoDefaults === 'function') resetDecoDefaults();
     if (typeof showMilliseconds !== 'undefined') showMilliseconds = false;
     showElapsed = false;

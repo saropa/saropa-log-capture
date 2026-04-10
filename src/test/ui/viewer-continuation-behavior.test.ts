@@ -254,6 +254,36 @@ suite('Continuation behavioral (eval)', () => {
         assert.strictEqual(line2.contIsChild, undefined, 'should NOT group when no logcatTag');
     });
 
+    test('should group console lines without logcatTag when same category and child has no sourceTag', () => {
+        const env = buildEnv();
+        const lines = env.allLines as Record<string, unknown>[];
+        const check = env.checkContinuationOnNormalLine as (item: Record<string, unknown>) => void;
+
+        const line1: Record<string, unknown> = { type: 'line', timestamp: 1000, logcatTag: null, category: 'console', sourceTag: 'log', source: 'debug', isSeparator: false, height: 20 };
+        const line2: Record<string, unknown> = { type: 'line', timestamp: 1000, logcatTag: null, category: 'console', sourceTag: null, source: 'debug', isSeparator: false, height: 20 };
+        lines.push(line1);
+        check(line1);
+        lines.push(line2);
+        check(line2);
+
+        assert.strictEqual(line2.contIsChild, true, 'should group: same ts, same category, child has no sourceTag');
+    });
+
+    test('should NOT group console lines when child has a sourceTag (signals new log entry)', () => {
+        const env = buildEnv();
+        const lines = env.allLines as Record<string, unknown>[];
+        const check = env.checkContinuationOnNormalLine as (item: Record<string, unknown>) => void;
+
+        const line1: Record<string, unknown> = { type: 'line', timestamp: 1000, logcatTag: null, category: 'console', sourceTag: 'log', source: 'debug', isSeparator: false, height: 20 };
+        const line2: Record<string, unknown> = { type: 'line', timestamp: 1000, logcatTag: null, category: 'console', sourceTag: 'log', source: 'debug', isSeparator: false, height: 20 };
+        lines.push(line1);
+        check(line1);
+        lines.push(line2);
+        check(line2);
+
+        assert.strictEqual(line2.contIsChild, undefined, 'should NOT group: child has sourceTag [log], indicating a new entry');
+    });
+
     test('should NOT group lines with null timestamps', () => {
         const env = buildEnv();
         const lines = env.allLines as Record<string, unknown>[];

@@ -47,7 +47,7 @@ const session_history_provider_1 = require("./ui/session/session-history-provide
 const deep_links_1 = require("./modules/features/deep-links");
 const gist_importer_1 = require("./modules/share/gist-importer");
 const github_auth_1 = require("./modules/share/github-auth");
-const filter_presets_1 = require("./modules/storage/filter-presets");
+const activation_broadcaster_config_1 = require("./activation-broadcaster-config");
 const commands_1 = require("./commands");
 const session_display_1 = require("./ui/session/session-display");
 const viewer_broadcaster_1 = require("./ui/provider/viewer-broadcaster");
@@ -70,6 +70,7 @@ const investigation_store_1 = require("./modules/investigation/investigation-sto
 const investigation_panel_1 = require("./ui/investigation/investigation-panel");
 const activation_providers_1 = require("./activation-providers");
 const activation_listeners_1 = require("./activation-listeners");
+const diagnostic_cache_1 = require("./modules/diagnostics/diagnostic-cache");
 const extension_activation_helpers_1 = require("./extension-activation-helpers");
 const learning_runtime_1 = require("./modules/learning/learning-runtime");
 const learning_notifications_1 = require("./modules/learning/learning-notifications");
@@ -94,7 +95,16 @@ function runActivation(context, outputChannel) {
     const version = String(context.extension.packageJSON.version ?? '');
     const { viewerProvider, inlineDecorations } = (0, activation_providers_1.setupWebviewProviders)(context, version);
     const broadcaster = new viewer_broadcaster_1.ViewerBroadcaster();
-    const popOutPanel = new pop_out_panel_1.PopOutPanel(context.extensionUri, version, context, broadcaster, () => viewerProvider.getCurrentFileUri());
+    const diagnosticCache = new diagnostic_cache_1.DiagnosticCache();
+    diagnosticCache.activate(context.subscriptions);
+    broadcaster.setDiagnosticCache(diagnosticCache);
+    const popOutPanel = new pop_out_panel_1.PopOutPanel({
+        extensionUri: context.extensionUri,
+        version,
+        context,
+        broadcaster,
+        getHydrationUri: () => viewerProvider.getCurrentFileUri(),
+    });
     broadcaster.addTarget(viewerProvider);
     broadcaster.addTarget(popOutPanel);
     context.subscriptions.push(popOutPanel);
@@ -133,29 +143,12 @@ function runActivation(context, outputChannel) {
             await (0, github_auth_1.clearGitHubToken)(context);
         }
     }));
-    broadcaster.setPresets((0, filter_presets_1.loadPresets)());
     const initCfg = (0, config_1.getConfig)();
-    if (initCfg.highlightRules.length > 0) {
-        broadcaster.setHighlightRules(initCfg.highlightRules);
-    }
-    broadcaster.setIconBarPosition(initCfg.iconBarPosition);
-    broadcaster.setMinimapShowInfo(initCfg.minimapShowInfoMarkers);
-    broadcaster.setMinimapShowSqlDensity(initCfg.minimapShowSqlDensity);
-    broadcaster.setMinimapProportionalLines(initCfg.minimapProportionalLines);
-    broadcaster.setViewerRepeatThresholds(initCfg.viewerRepeatThresholds);
-    broadcaster.setViewerDbInsightsEnabled(initCfg.viewerDbInsightsEnabled);
-    broadcaster.setStaticSqlFromFingerprintEnabled(initCfg.staticSqlFromFingerprintEnabled);
-    broadcaster.setViewerDbDetectorToggles((0, config_1.viewerDbDetectorTogglesFromConfig)(initCfg));
-    broadcaster.setViewerSlowBurstThresholds(initCfg.viewerSlowBurstThresholds);
-    broadcaster.setMinimapViewportRedOutline(initCfg.minimapViewportRedOutline);
-    broadcaster.setMinimapViewportOutsideArrow(initCfg.minimapViewportOutsideArrow);
-    broadcaster.setMinimapWidth(initCfg.minimapWidth);
-    broadcaster.setScrollbarVisible(initCfg.showScrollbar);
-    broadcaster.setSearchMatchOptionsAlwaysVisible(initCfg.viewerAlwaysShowSearchMatchOptions);
-    broadcaster.setErrorRateConfig((0, config_1.errorRateConfigFromConfig)(initCfg));
+    (0, activation_broadcaster_config_1.applyInitialBroadcasterConfig)(broadcaster, initCfg);
     (0, activation_listeners_1.setupConfigListener)(context, sessionManager, broadcaster);
     (0, activation_listeners_1.setupLineListeners)({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     (0, activation_listeners_1.setupScopeContextListener)(context, broadcaster);
+    (0, activation_listeners_1.setupDiagnosticListener)(context, diagnosticCache, broadcaster);
     const displayKey = 'slc.sessionDisplayOptions';
     const stored = context.workspaceState.get(displayKey, {});
     const displayOpts = {
@@ -209,6 +202,17 @@ function runActivation(context, outputChannel) {
         if (target) {
             await viewerProvider.loadFromFile(target);
         }
+    });
+    viewerProvider.setBecameVisibleHandler(() => {
+        const activeUri = historyProvider.getActiveUri();
+        if (!activeUri) {
+            return;
+        }
+        // Skip reload if the active session is already displayed (avoids flash on tab switch).
+        if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) {
+            return;
+        }
+        void viewerProvider.loadFromFile(activeUri);
     });
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
         if (!uriString) {

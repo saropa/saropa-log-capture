@@ -38,13 +38,13 @@ function renderIntegrationRow(a) {
         : '';
     let perf = '';
     if (a.performanceNote) {
-        perf = `<p class="integrations-note integrations-perf">
+        perf = `<div class="integrations-note integrations-perf">
             <span class="integrations-note-label">Performance:</span>
             <span>${(0, ansi_1.escapeHtml)(perfNote.text)}</span>
-        </p>`;
+        </div>`;
     }
     const when = a.whenToDisable
-        ? `<p class="integrations-note integrations-when">When to disable: ${(0, ansi_1.escapeHtml)(a.whenToDisable)}</p>`
+        ? `<div class="integrations-note integrations-when">When to disable: ${(0, ansi_1.escapeHtml)(a.whenToDisable)}</div>`
         : '';
     const searchText = [a.label, longDesc, a.performanceNote ?? '', a.whenToDisable ?? ''].join(' ').toLowerCase();
     const escapedLongDesc = (0, ansi_1.escapeHtml)(longDesc);
@@ -53,18 +53,18 @@ function renderIntegrationRow(a) {
         !!a.whenToDisable;
     // Collapsed: line-clamped preview (CSS). Expanded: full text, notes, then "less" toggle at end.
     const descBlock = hasExpandable
-        ? `<p class="integrations-desc integrations-desc-collapsible">
+        ? `<div class="integrations-desc integrations-desc-collapsible">
                 <span class="integrations-desc-preview">${escapedLongDesc}</span>
-                <span class="integrations-expanded-block options-filtered-hidden">
+                <div class="integrations-expanded-block options-filtered-hidden">
                     <span class="integrations-desc-full">${escapedLongDesc}</span>
                     ${perf}
                     ${when}
-                </span>
+                </div>
                 <button type="button" class="integrations-desc-toggle" data-expanded="false" aria-expanded="false">more</button>
-            </p>`
-        : `<p class="integrations-desc">
+            </div>`
+        : `<div class="integrations-desc">
                 <span class="integrations-desc-only">${escapedLongDesc}</span>
-            </p>`;
+            </div>`;
     return `
         <label class="integrations-row" title="${(0, ansi_1.escapeHtml)(longDesc)}" data-search-text="${(0, ansi_1.escapeHtml)(searchText)}">
             <input type="checkbox" id="int-${(0, ansi_1.escapeHtml)(a.id)}" data-adapter-id="${(0, ansi_1.escapeHtml)(a.id)}" />

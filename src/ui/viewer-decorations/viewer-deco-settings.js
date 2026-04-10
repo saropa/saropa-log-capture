@@ -11,8 +11,8 @@
  * via the concatenated script scope. Timestamp is also toggleable from
  * the viewer context menu (Options → Timestamp).
  *
- * Auto-off rule: when all checkboxes are unchecked AND coloring is "none",
- * the master showDecorations toggle is automatically turned off.
+ * Each decoration option is independently togglable; areDecorationsOn()
+ * derives the overall state from whether any sub-toggle is active.
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
@@ -74,6 +74,14 @@ function getDecoSettingsHtml() {
         <input type="checkbox" id="deco-opt-quality" checked />
         Coverage badge
     </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-category-badge" />
+        Channel badge
+    </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-lint-badge" />
+        Lint badge
+    </label>
 </div>`;
 }
 /** Returns the JavaScript code for the decoration settings panel. */
@@ -124,17 +132,8 @@ function closeDecoSettings() {
     decoSettingsOpen = false;
 }
 
-/**
- * Toggle the settings panel via the gear button.
- * If decorations are OFF: turns them ON first, then opens the panel.
- * If decorations are ON: toggles the panel open/closed.
- */
+/** Toggle the settings panel via the gear button. */
 function toggleDecoSettings() {
-    if (!showDecorations) {
-        toggleDecorations();
-        openDecoSettings();
-        return;
-    }
     if (decoSettingsOpen) {
         closeDecoSettings();
     } else {
@@ -144,30 +143,22 @@ function toggleDecoSettings() {
 
 /**
  * Toggle timestamp in the line decoration prefix.
- * Callable from the context menu (Options → Timestamp).
- * If turning on and decorations are off, turns decorations on so the timestamp is visible.
+ * Callable from the context menu (Layout → Timestamp).
  */
 function toggleTimestamp() {
     decoShowTimestamp = !decoShowTimestamp;
-    if (decoShowTimestamp && !showDecorations) {
-        showDecorations = true;
-        if (typeof updateDecoButton === 'function') updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
 /**
  * Toggle session elapsed time in the line decoration prefix.
- * Callable from the context menu (Options → Session elapsed).
- * If turning on and decorations are off, turns decorations on so the time is visible.
+ * Callable from the context menu (Layout → Session elapsed).
  */
 function toggleSessionElapsed() {
     decoShowSessionElapsed = !decoShowSessionElapsed;
-    if (decoShowSessionElapsed && !showDecorations) {
-        showDecorations = true;
-        if (typeof updateDecoButton === 'function') updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     syncDecoSettingsUi();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
@@ -183,6 +174,8 @@ function syncDecoSettingsUi() {
     var sessEl = document.getElementById('deco-opt-session-elapsed');
     var bar = document.getElementById('deco-opt-bar');
     var quality = document.getElementById('deco-opt-quality');
+    var catBdg = document.getElementById('deco-opt-category-badge');
+    var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     if (dot) dot.checked = decoShowDot;
@@ -194,15 +187,15 @@ function syncDecoSettingsUi() {
     if (sessEl) sessEl.checked = decoShowSessionElapsed;
     if (bar) bar.checked = decoShowBar;
     if (quality) quality.checked = decoShowQuality;
+    if (catBdg) catBdg.checked = showCategoryBadges;
+    if (lintBdg) lintBdg.checked = decoShowLintBadges;
     if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
 }
 
 /**
  * Handle any change to a decoration option checkbox or dropdown.
- * Reads UI values into state variables and re-renders the viewport.
- * If all prefix parts are off AND line coloring is "none", automatically
- * disables the master toggle (avoids "on but invisible" state).
+ * Reads UI values into state variables, updates the footer button, and re-renders.
  */
 function onDecoOptionChange() {
     var dot = document.getElementById('deco-opt-dot');
@@ -214,6 +207,8 @@ function onDecoOptionChange() {
     var sessEl = document.getElementById('deco-opt-session-elapsed');
     var bar = document.getElementById('deco-opt-bar');
     var quality = document.getElementById('deco-opt-quality');
+    var catBdg = document.getElementById('deco-opt-category-badge');
+    var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
     decoShowDot = dot ? dot.checked : true;
@@ -225,14 +220,11 @@ function onDecoOptionChange() {
     decoShowSessionElapsed = sessEl ? sessEl.checked : false;
     decoShowBar = bar ? bar.checked : false;
     decoShowQuality = quality ? quality.checked : true;
+    showCategoryBadges = catBdg ? catBdg.checked : false;
+    decoShowLintBadges = lintBdg ? lintBdg.checked : false;
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
-    var allOff = !decoShowDot && !decoShowCounter && !decoShowTimestamp && !showElapsed && !decoShowSessionElapsed && !decoShowBar && !decoShowQuality && decoLineColorMode === 'none';
-    if (allOff) {
-        showDecorations = false;
-        closeDecoSettings();
-        updateDecoButton();
-    }
+    if (typeof updateDecoButton === 'function') updateDecoButton();
     renderViewport(true);
 }
 
@@ -248,6 +240,8 @@ var decoOptElapsed = document.getElementById('deco-opt-elapsed');
 var decoOptSessionElapsed = document.getElementById('deco-opt-session-elapsed');
 var decoOptBar = document.getElementById('deco-opt-bar');
 var decoOptQuality = document.getElementById('deco-opt-quality');
+var decoOptCategoryBadge = document.getElementById('deco-opt-category-badge');
+var decoOptLintBadge = document.getElementById('deco-opt-lint-badge');
 var decoOptLineColors = document.getElementById('deco-opt-line-colors');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
 
@@ -262,6 +256,8 @@ if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange
 if (decoOptSessionElapsed) decoOptSessionElapsed.addEventListener('change', onDecoOptionChange);
 if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
 if (decoOptQuality) decoOptQuality.addEventListener('change', onDecoOptionChange);
+if (decoOptCategoryBadge) decoOptCategoryBadge.addEventListener('change', onDecoOptionChange);
+if (decoOptLintBadge) decoOptLintBadge.addEventListener('change', onDecoOptionChange);
 if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
 

@@ -61,12 +61,21 @@ suite('buildPendingLineFromLineData', () => {
         assert.strictEqual(a.text, b.text);
         assert.strictEqual(a.lineCount, b.lineCount);
     });
-    test('Drift Sent line with with args gets fold markup in PendingLine text', () => {
+    test('Drift Sent line with args gets dimmed markup in PendingLine text', () => {
         const drift = 'I/flutter (28183): Drift: Sent PRAGMA table_info("x") with args []';
         const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: drift, lineCount: 1 }));
-        assert.ok(pl.text.includes('drift-args-fold'), 'expected fold wrapper');
-        assert.ok(pl.text.includes('drift-args-fold-btn'), 'expected ellipsis button');
-        assert.ok(pl.text.includes(' with args []'), 'suffix should remain in HTML for expand/copy');
+        assert.ok(pl.text.includes('drift-args-dim'), 'expected dim wrapper');
+        assert.ok(pl.text.includes(' with args []'), 'suffix should remain in HTML');
+    });
+    test('rawText preserves original unprocessed text for regular lines', () => {
+        const raw = 'Hello \x1b[31mworld\x1b[0m';
+        const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: raw, lineCount: 1 }));
+        assert.strictEqual(pl.rawText, raw, 'rawText should be the original text before HTML conversion');
+        assert.ok(pl.text.includes('color:'), 'HTML should contain ANSI-converted span');
+    });
+    test('rawText preserves original text for marker lines', () => {
+        const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: '--- MARKER: test ---', isMarker: true, lineCount: 0 }));
+        assert.strictEqual(pl.rawText, '--- MARKER: test ---');
     });
 });
 suite('ViewerBroadcaster.addLine — single build, fan-out', () => {
@@ -120,6 +129,30 @@ suite('ViewerBroadcaster.addLine — single build, fan-out', () => {
 suite('viewer batch size constant', () => {
     test('MAX_LINES_PER_BATCH is capped to limit webview addLines payload size', () => {
         assert.strictEqual(viewer_provider_helpers_1.MAX_LINES_PER_BATCH, 800);
+    });
+});
+suite('buildPendingLineFromLineData — lint data', () => {
+    test('without DiagnosticCache, PendingLine has no lint fields', () => {
+        const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: 'no cache', lineCount: 1 }));
+        assert.strictEqual(pl.lintErrors, undefined);
+        assert.strictEqual(pl.lintWarnings, undefined);
+    });
+    test('marker lines skip lint lookup even with DiagnosticCache', () => {
+        // Pass undefined as cache — marker lines short-circuit before cache access
+        const pl = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(sampleLineData({ text: '=== SESSION ===', isMarker: true, lineCount: 0 }), undefined);
+        assert.strictEqual(pl.lintErrors, undefined);
+        assert.strictEqual(pl.lintWarnings, undefined);
+    });
+});
+suite('ViewerBroadcaster.setDiagnosticCache', () => {
+    test('setDiagnosticCache does not throw when called before addLine', () => {
+        const b = new viewer_broadcaster_1.ViewerBroadcaster();
+        // Create a minimal mock cache
+        const mockCache = {
+            lookupForLine: () => undefined,
+        };
+        b.setDiagnosticCache(mockCache);
+        // No assertion — just verifying no exception
     });
 });
 //# sourceMappingURL=viewer-broadcaster-live-line.test.js.map

@@ -11,12 +11,15 @@ const log_viewer_provider_batch_1 = require("./log-viewer-provider-batch");
 /** Dispatches every ViewerTarget method to all registered targets. */
 class ViewerBroadcaster {
     targets = new Set();
+    diagnosticCache;
+    /** Set the diagnostic cache used to attach lint counts to outgoing lines. */
+    setDiagnosticCache(cache) { this.diagnosticCache = cache; }
     /** Register a target to receive broadcasts. */
     addTarget(target) { this.targets.add(target); }
     /** Unregister a target. */
     removeTarget(target) { this.targets.delete(target); }
     addLine(data) {
-        const line = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(data);
+        const line = (0, log_viewer_provider_batch_1.buildPendingLineFromLineData)(data, this.diagnosticCache);
         for (const t of this.targets) {
             // Pop-out defers raw LineData while loading disk snapshot; it cannot use pre-built HTML yet.
             if (t.isLiveCaptureHydrating?.()) {
@@ -91,14 +94,9 @@ class ViewerBroadcaster {
             t.setShowElapsed(show);
         }
     }
-    setShowDecorations(show) {
+    setErrorClassificationSettings(settings) {
         for (const t of this.targets) {
-            t.setShowDecorations(show);
-        }
-    }
-    setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError) {
-        for (const t of this.targets) {
-            t.setErrorClassificationSettings(suppress, breakOn, detection, deemphasizeFw, stderrTreatAsError);
+            t.setErrorClassificationSettings(settings);
         }
     }
     applyPreset(name) {

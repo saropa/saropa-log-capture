@@ -43,6 +43,24 @@ suite('StackParser', () => {
         });
     });
 
+    suite('isStackFrameLine — mid-line Dart source paths', () => {
+        test('should detect package: path mid-line with ⠀ » prefix', () => {
+            assert.strictEqual(isStackFrameLine('      \u2800 \u00BB _InterceptedExecutor.runSelect package:drift/src/runtime/executor/interceptor.dart:163:25'), true);
+        });
+
+        test('should detect parenthesized relative path mid-line with ⠀ » prefix', () => {
+            assert.strictEqual(isStackFrameLine('      \u2800 \u00BB DriftDebugInterceptor._log (./lib/database/drift/drift_debug_interceptor.dart:92:5)'), true);
+        });
+
+        test('should detect package: path without any prefix', () => {
+            assert.strictEqual(isStackFrameLine('ServerContext.log package:saropa_drift_advisor/src/server/server_context.dart:202:35'), true);
+        });
+
+        test('should not false-positive on normal log mentioning .dart without line numbers', () => {
+            assert.strictEqual(isStackFrameLine('Loading config from main.dart'), false);
+        });
+    });
+
     // --- Dart / Flutter ---
 
     test('should detect Flutter package frame as framework', () => {

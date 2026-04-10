@@ -68,6 +68,8 @@ function formatElapsedLabel(ts) {
 /** Escape HTML special characters to prevent XSS when using innerHTML. */
 function escapeHtml(text) {
     return text
+        // Strip control characters (except tab and newline) to prevent tofu boxes in the webview.
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')

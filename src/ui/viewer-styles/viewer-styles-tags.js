@@ -4,7 +4,7 @@ exports.getTagStyles = getTagStyles;
 /**
  * CSS styles for source tag chips in the viewer webview.
  *
- * Chips appear in the Log Tags section of the options panel, showing
+ * Chips appear in the Message Tags section of the options panel, showing
  * discovered source tags (e.g. logcat tags like "flutter", "FirebaseSessions").
  * Each chip shows the tag name and line count; clicking toggles visibility.
  */

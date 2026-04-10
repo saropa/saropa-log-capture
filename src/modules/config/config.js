@@ -80,6 +80,8 @@ function getConfig() {
         maxLines,
         viewerMaxLines,
         viewerPreserveAsciiBoxArt: (0, config_validation_1.ensureBoolean)(cfg.get("viewerPreserveAsciiBoxArt"), true),
+        viewerGroupAsciiArt: (0, config_validation_1.ensureBoolean)(cfg.get("viewerGroupAsciiArt"), true),
+        viewerDetectAsciiArt: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDetectAsciiArt"), false),
         includeTimestamp: (0, config_validation_1.ensureBoolean)(cfg.get("includeTimestamp"), true),
         format: (0, config_validation_1.ensureEnum)(cfg.get("format"), ["plaintext", "html"], "plaintext"),
         logDirectory: (() => {
@@ -100,7 +102,6 @@ function getConfig() {
         showElapsedTime: (0, config_validation_1.ensureBoolean)(cfg.get("showElapsedTime"), false),
         includeSourceLocation: (0, config_validation_1.ensureBoolean)(cfg.get("includeSourceLocation"), false),
         includeElapsedTime: (0, config_validation_1.ensureBoolean)(cfg.get("includeElapsedTime"), false),
-        showDecorations: (0, config_validation_1.ensureBoolean)(cfg.get("showDecorations"), true),
         slowGapThreshold: (0, config_validation_1.clamp)(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),
         watchPatterns: (0, config_normalizers_1.normalizeWatchPatterns)(cfg.get("watchPatterns")),
         splitRules: (0, file_splitter_1.parseSplitRules)(cfg.get("splitRules") ?? {}),
@@ -137,7 +138,6 @@ function getConfig() {
             burstWindowMs: cfg.get("viewerSlowBurstWindowMs"),
             cooldownMs: cfg.get("viewerSlowBurstCooldownMs"),
         }),
-        deemphasizeFrameworkLevels: (0, config_validation_1.ensureBoolean)(cfg.get("deemphasizeFrameworkLevels"), false),
         levelDetection: (0, config_validation_1.ensureEnum)(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
         stderrTreatAsError: (0, config_validation_1.ensureBoolean)(cfg.get("stderrTreatAsError"), false),
         smartBookmarks: {

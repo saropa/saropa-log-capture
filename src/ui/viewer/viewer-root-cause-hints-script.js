@@ -5,11 +5,13 @@ exports.getViewerRootCauseHintsScript = getViewerRootCauseHintsScript;
  * DB_14 — Root-cause hypotheses strip (webview embed).
  *
  * Bundles the deterministic hypothesis algorithm (`viewer-root-cause-hints-embed-algorithm.ts`) with UI:
- * collapse state, evidence scroll targets, and **Explain with AI** / **Explain root-cause hypotheses**
- * (command + context menu post `triggerExplainRootCauseHypotheses` from the host; webview calls
- * `runTriggerExplainRootCauseHypothesesFromHost`, which mirrors the strip button and posts
- * `explainRootCauseHypotheses` or `explainRootCauseHypothesesEmpty`). No host round-trip for the explain
- * path beyond that single postMessage — avoids duplicate LLM entry points in script.
+ * evidence scroll targets, **Copy signals** clipboard action, and per-signal dismiss/restore.
+ *
+ * Visibility is controlled by the toolbar signals icon (`#toolbar-signals-btn`).
+ * The toolbar badge (`#toolbar-signals-count`) shows the number of detected signals.
+ *
+ * The host command/context-menu path still uses `runTriggerExplainRootCauseHypothesesFromHost` for
+ * `explainRootCauseHypotheses` / `explainRootCauseHypothesesEmpty` messages.
  *
  * **Signal strength:** Each hypothesis may show a compact emoji (stronger vs weaker heuristic); copy lives in
  * `viewer.rchConfTooltip*` and is applied via `title` / `aria-label` — not a statistical confidence score.
@@ -24,24 +26,7 @@ function rchStr(key, fallback) {
     return (typeof v === 'string' && v.length) ? v : fallback;
 }
 
-function rchCollapseStorageKey() {
-    return 'saropa-rch-collapsed::' + String(rootCauseHintSessionEpoch || 0) + '|' + (typeof currentFilename !== 'undefined' ? currentFilename : '');
-}
-
-function isRchStripCollapsed() {
-    try {
-        return sessionStorage.getItem(rchCollapseStorageKey()) === '1';
-    } catch (_e) {
-        return false;
-    }
-}
-
-function setRchStripCollapsed(v) {
-    try {
-        if (v) sessionStorage.setItem(rchCollapseStorageKey(), '1');
-        else sessionStorage.removeItem(rchCollapseStorageKey());
-    } catch (_e) { /* storage unavailable */ }
-}
+var rchDismissedKeys = Object.create(null);
 
 function buildRootCauseHypothesesExplainText(bundle, hy) {
     var lines = [];
@@ -55,7 +40,7 @@ function buildRootCauseHypothesesExplainText(bundle, hy) {
     return lines.join('\\n');
 }
 
-/** Command + context menu: same flow as the strip “Explain with AI” button; empty hypotheses → host info message. */
+/** Command + context menu: posts explainRootCauseHypotheses to extension host. */
 function runTriggerExplainRootCauseHypothesesFromHost() {
     if (typeof vscodeApi === 'undefined' || !vscodeApi) return;
     var b = collectRootCauseHintBundleEmbedded();
@@ -80,64 +65,106 @@ function scrollViewerToLineIndex0(idx) {
     logEl.scrollTop = ch;
     suppressScroll = false;
     autoScroll = false;
+    requestAnimationFrame(function() {
+        flashLineAtIndex(idx);
+    });
+}
+
+/** Briefly flash-highlight a rendered line so the user can see where they landed. */
+function flashLineAtIndex(idx) {
+    var el = document.querySelector('[data-idx="' + idx + '"]');
+    if (!el) return;
+    el.classList.remove('rch-evidence-flash');
+    void el.offsetWidth;
+    el.classList.add('rch-evidence-flash');
+    el.addEventListener('animationend', function handler() {
+        el.classList.remove('rch-evidence-flash');
+        el.removeEventListener('animationend', handler);
+    });
+}
+
+/** Update the toolbar signals badge with the current count. */
+function updateSignalsBadge(count) {
+    var badge = document.getElementById('toolbar-signals-count');
+    if (badge) badge.textContent = count > 0 ? String(count) : '';
+}
+
+/** Show a brief toast inside the signals panel. */
+function showRchToast(host, msg) {
+    var existing = host.querySelector('.rch-toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('span');
+    toast.className = 'rch-toast';
+    toast.textContent = msg;
+    host.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 1500);
 }
 
 function renderRootCauseHypothesesIfNeeded() {
     var host = document.getElementById('root-cause-hypotheses');
     if (!host) return;
     if (typeof allLines === 'undefined' || !allLines.length) {
-        host.classList.add('u-hidden');
+        updateSignalsBadge(0);
         host.innerHTML = '';
+        if (typeof hideSignalsPanel === 'function') hideSignalsPanel();
         return;
     }
     var bundle = collectRootCauseHintBundleEmbedded();
     var hy = buildHypothesesEmbedded(bundle);
-    if (!hy.length) {
-        host.classList.add('u-hidden');
+    var visible = [];
+    var dismissedCount = 0;
+    var vi;
+    for (vi = 0; vi < hy.length; vi++) {
+        if (rchDismissedKeys[hy[vi].hypothesisKey]) dismissedCount++;
+        else visible.push(hy[vi]);
+    }
+    if (!visible.length && !dismissedCount) {
+        updateSignalsBadge(0);
         host.innerHTML = '';
+        if (typeof hideSignalsPanel === 'function') hideSignalsPanel();
         return;
     }
-    var collapsed = isRchStripCollapsed();
+    updateSignalsBadge(visible.length);
     var parts = [];
-    parts.push('<div class="root-cause-hypotheses-header">');
-    parts.push('<button type="button" class="root-cause-hyp-toggle" data-rch-toggle="1" aria-expanded="' + (collapsed ? 'false' : 'true') + '" aria-label="' + escapeHtml(collapsed ? rchStr('expandAria', 'Expand signals') : rchStr('collapseAria', 'Collapse signals')) + '" title="' + escapeHtml(collapsed ? rchStr('expandTitle', 'Expand') : rchStr('collapseTitle', 'Collapse')) + '">' + (collapsed ? '\\u25b6' : '\\u25bc') + '</button>');
-    parts.push('<span class="root-cause-hypotheses-title">' + escapeHtml(rchStr('title', 'Signals')) + '</span>');
-    parts.push('<button type="button" class="root-cause-hyp-explain-ai" data-rch-explain="1" aria-label="' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '">' + escapeHtml(rchStr('explainAi', 'Explain with AI')) + '</button>');
-    parts.push('</div>');
-    parts.push('<div class="root-cause-hypotheses-body' + (collapsed ? ' u-hidden' : '') + '">');
-    parts.push('<ul class="root-cause-hypotheses-list">');
-    var hi, item, li, ev, ei, idx, validIdx, confNorm, confTip, confEmoji;
-    for (hi = 0; hi < hy.length; hi++) {
-        item = hy[hi];
-        li = '<li>';
-        li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
-        li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
-        if (item.confidence) {
-            confNorm = String(item.confidence).toLowerCase();
-            if (confNorm === 'medium') {
-                confEmoji = '\uD83D\uDFE1';
-                confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
-            } else {
-                confEmoji = '\u26AA';
-                confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
+    if (visible.length) {
+        parts.push('<ul class="root-cause-hypotheses-list">');
+        var hi, item, li, ev, ei, idx, validIdx, confNorm, confTip, confEmoji;
+        for (hi = 0; hi < visible.length; hi++) {
+            item = visible[hi];
+            li = '<li>';
+            li += '<span class="rch-hyp-text">' + escapeHtml(item.text) + '</span>';
+            li += ' <button type="button" class="rch-copy-btn" data-rch-copy="' + escapeHtml(item.text) + '" aria-label="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '" title="' + escapeHtml(rchStr('copyAria', 'Copy signal')) + '"><span class="codicon codicon-copy"></span></button>';
+            if (item.confidence) {
+                confNorm = String(item.confidence).toLowerCase();
+                if (confNorm === 'medium') {
+                    confEmoji = '\\uD83D\\uDFE1';
+                    confTip = rchStr('confTooltipMedium', 'Stronger hint: tied to a concrete log line or a higher-certainty DB pattern. Still a heuristic, not proof.');
+                } else {
+                    confEmoji = '\\u26AA';
+                    confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
+                }
+                li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
             }
-            li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
-        }
-        ev = item.evidenceLineIds || [];
-        for (ei = 0; ei < ev.length; ei++) {
-            idx = ev[ei];
-            validIdx = typeof idx === 'number' && idx >= 0 && idx < allLines.length;
-            if (validIdx) {
-                li += ' <button type="button" class="root-cause-hyp-evidence" data-line-idx="' + idx + '" title="Scroll to evidence">line ' + (idx + 1) + '</button>';
+            ev = item.evidenceLineIds || [];
+            for (ei = 0; ei < ev.length; ei++) {
+                idx = ev[ei];
+                validIdx = typeof idx === 'number' && idx >= 0 && idx < allLines.length;
+                if (validIdx) {
+                    li += ' <button type="button" class="root-cause-hyp-evidence" data-line-idx="' + idx + '" title="Scroll to evidence">line ' + (idx + 1) + '</button>';
+                }
             }
+            li += ' <button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';
+            li += '</li>';
+            parts.push(li);
         }
-        li += '</li>';
-        parts.push(li);
+        parts.push('</ul>');
+        parts.push('<button type="button" class="rch-copy-all-btn" data-rch-copy-all="1">Copy signals</button>');
     }
-    parts.push('</ul>');
-    parts.push('</div>');
+    if (dismissedCount > 0) {
+        parts.push('<button type="button" class="rch-restore-btn" data-rch-restore="1">' + dismissedCount + ' dismissed \\u2014 restore all</button>');
+    }
     host.innerHTML = parts.join('');
-    host.classList.remove('u-hidden');
+    if (visible.length && typeof showSignalsPanel === 'function') showSignalsPanel();
 }
 
 function scheduleRootCauseHypothesesRefresh() {
@@ -149,13 +176,15 @@ function scheduleRootCauseHypothesesRefresh() {
 }
 
 function resetRootCauseHypothesesSession() {
+    rchDismissedKeys = Object.create(null);
     if (typeof clearRootCauseHintHostFields === 'function') clearRootCauseHintHostFields();
     rootCauseHintSessionEpoch = (rootCauseHintSessionEpoch || 0) + 1;
     var host = document.getElementById('root-cause-hypotheses');
     if (host) {
-        host.classList.add('u-hidden');
         host.innerHTML = '';
+        if (typeof hideSignalsPanel === 'function') hideSignalsPanel();
     }
+    updateSignalsBadge(0);
 }
 
 function initRootCauseHypothesesUi() {
@@ -164,15 +193,35 @@ function initRootCauseHypothesesUi() {
     host.dataset.rchInit = '1';
     host.addEventListener('click', function(ev) {
         var t = ev.target;
-        if (t && t.dataset && t.dataset.rchToggle === '1') {
+        var copyAllBtn = t && t.closest ? t.closest('.rch-copy-all-btn') : null;
+        if (copyAllBtn) {
             ev.preventDefault();
-            setRchStripCollapsed(!isRchStripCollapsed());
-            renderRootCauseHypothesesIfNeeded();
+            var b = collectRootCauseHintBundleEmbedded();
+            var hList = buildHypothesesEmbedded(b);
+            var hVisible = [];
+            for (var ci = 0; ci < hList.length; ci++) {
+                if (!rchDismissedKeys[hList[ci].hypothesisKey]) hVisible.push(hList[ci]);
+            }
+            if (!hVisible.length) return;
+            var text = buildRootCauseHypothesesExplainText(b, hVisible);
+            navigator.clipboard.writeText(text).then(function() {
+                showRchToast(host, 'Copied!');
+            }).catch(function() {});
             return;
         }
-        if (t && t.dataset && t.dataset.rchExplain === '1') {
+        var dismissBtn = t && t.closest ? t.closest('.rch-dismiss-btn') : null;
+        if (dismissBtn && dismissBtn.dataset && dismissBtn.dataset.rchDismiss) {
             ev.preventDefault();
-            runTriggerExplainRootCauseHypothesesFromHost();
+            rchDismissedKeys[dismissBtn.dataset.rchDismiss] = true;
+            renderRootCauseHypothesesIfNeeded();
+            showRchToast(host, 'Signal hidden for this session');
+            return;
+        }
+        var restoreBtn = t && t.closest ? t.closest('.rch-restore-btn') : null;
+        if (restoreBtn) {
+            ev.preventDefault();
+            rchDismissedKeys = Object.create(null);
+            renderRootCauseHypothesesIfNeeded();
             return;
         }
         var copyBtn = t && t.closest ? t.closest('.rch-copy-btn') : null;

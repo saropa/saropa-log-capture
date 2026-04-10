@@ -25,6 +25,7 @@ const viewer_replay_1 = require("../viewer/viewer-replay");
 const viewer_decorations_1 = require("../viewer-decorations/viewer-decorations");
 const viewer_deco_settings_1 = require("../viewer-decorations/viewer-deco-settings");
 const viewer_quality_badge_1 = require("../viewer-decorations/viewer-quality-badge");
+const viewer_lint_badge_1 = require("../viewer-decorations/viewer-lint-badge");
 const viewer_stack_dedup_1 = require("../viewer-stack-tags/viewer-stack-dedup");
 const viewer_stack_filter_1 = require("../viewer-stack-tags/viewer-stack-filter");
 const viewer_tag_selection_guard_1 = require("../viewer-stack-tags/viewer-tag-selection-guard");
@@ -43,6 +44,7 @@ const viewer_sql_query_history_core_1 = require("../viewer-stack-tags/viewer-sql
 const viewer_sql_query_history_panel_1 = require("../viewer-panels/viewer-sql-query-history-panel");
 const viewer_highlight_1 = require("../viewer-decorations/viewer-highlight");
 const viewer_scope_filter_1 = require("../viewer-search-filter/viewer-scope-filter");
+const viewer_scope_filter_hint_1 = require("../viewer-search-filter/viewer-scope-filter-hint");
 const session_time_buckets_1 = require("../../modules/viewer/session-time-buckets");
 const viewer_time_range_filter_1 = require("../viewer/viewer-time-range-filter");
 const viewer_presets_1 = require("../viewer-search-filter/viewer-presets");
@@ -81,9 +83,15 @@ function scriptTag(nonce, ...parts) {
 }
 /** Build all script tags in the order required by the viewer. */
 function getViewerScriptTags(opts) {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerGroupAsciiArt, viewerDetectAsciiArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, } = opts;
     return (scriptTag(nonce, (0, viewer_error_handler_1.getErrorHandlerScript)()) +
-        scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)(viewerRepeatThresholds, viewerDbInsightsEnabled !== false, staticSqlFromFingerprintEnabled !== false, viewerSlowBurstThresholds, viewerDbDetectorToggles), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
+        scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)({
+            repeatThresholds: viewerRepeatThresholds,
+            viewerDbInsightsEnabled: viewerDbInsightsEnabled !== false,
+            staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
+            slowBurstThresholds: viewerSlowBurstThresholds,
+            dbDetectorToggles: viewerDbDetectorToggles,
+        }), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
         scriptTag(nonce, (0, viewer_scroll_anchor_1.getScrollAnchorScript)()) +
         scriptTag(nonce, (0, viewer_filter_1.getFilterScript)()) +
         scriptTag(nonce, (0, viewer_watch_1.getWatchScript)()) +
@@ -98,6 +106,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_decorations_1.getDecorationsScript)()) +
         scriptTag(nonce, (0, viewer_deco_settings_1.getDecoSettingsScript)()) +
         scriptTag(nonce, (0, viewer_quality_badge_1.getQualityBadgeScript)()) +
+        scriptTag(nonce, (0, viewer_lint_badge_1.getLintBadgeScript)()) +
         scriptTag(nonce, (0, viewer_stack_dedup_1.getStackDedupScript)()) +
         scriptTag(nonce, (0, viewer_stack_filter_1.getStackFilterScript)()) +
         scriptTag(nonce, (0, viewer_split_nav_1.getSplitNavScript)()) +
@@ -114,6 +123,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(), (0, viewer_sql_query_history_core_1.getSqlQueryHistoryCoreScript)(), (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)()) +
         scriptTag(nonce, (0, viewer_highlight_1.getHighlightScript)()) +
         scriptTag(nonce, (0, viewer_scope_filter_1.getScopeFilterScript)()) +
+        scriptTag(nonce, (0, viewer_scope_filter_hint_1.getScopeFilterHintScript)()) +
         scriptTag(nonce, (0, session_time_buckets_1.getSessionTimeBucketsScript)()) +
         scriptTag(nonce, (0, viewer_time_range_filter_1.getViewerTimeRangeFilterScript)()) +
         scriptTag(nonce, (0, viewer_presets_1.getPresetsScript)()) +

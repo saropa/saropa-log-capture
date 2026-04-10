@@ -106,5 +106,32 @@ suite('Viewer toolbar search', () => {
         const src = readSrc('ui/viewer-nav/viewer-session-header.ts');
         assert.ok(!src.includes('setupSmartStickyHeader'), 'smart-sticky header removed — toolbar is always visible');
     });
+    test('search and presets modules have no global function name collisions', () => {
+        const searchSrc = readSrc('ui/viewer-search-filter/viewer-search.ts');
+        const presetsSrc = readSrc('ui/viewer-search-filter/viewer-presets.ts');
+        const fnPattern = /^function\s+(\w+)\s*\(/gm;
+        const searchFns = new Set();
+        const presetsFns = new Set();
+        let m;
+        while ((m = fnPattern.exec(searchSrc)) !== null) {
+            searchFns.add(m[1]);
+        }
+        fnPattern.lastIndex = 0;
+        while ((m = fnPattern.exec(presetsSrc)) !== null) {
+            presetsFns.add(m[1]);
+        }
+        const collisions = [...searchFns].filter(n => presetsFns.has(n));
+        assert.strictEqual(collisions.length, 0, `global function name collision(s) between viewer-search and viewer-presets: ${collisions.join(', ')}`);
+    });
+    test('clearSearchFilteredFlags exists in search script (not clearSearchFilter)', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-search.ts');
+        assert.ok(src.includes('function clearSearchFilteredFlags()'), 'expected clearSearchFilteredFlags in viewer-search.ts');
+        assert.ok(!src.includes('function clearSearchFilter('), 'clearSearchFilter must not exist — renamed to avoid presets collision');
+    });
+    test('presetClearSearchInputValue exists in presets script (not clearSearchFilter)', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-presets.ts');
+        assert.ok(src.includes('function presetClearSearchInputValue()'), 'expected presetClearSearchInputValue in viewer-presets.ts');
+        assert.ok(!src.includes('function clearSearchFilter('), 'clearSearchFilter must not exist — renamed to avoid search collision');
+    });
 });
 //# sourceMappingURL=viewer-session-nav-search.test.js.map

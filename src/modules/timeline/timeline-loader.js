@@ -157,7 +157,7 @@ async function loadMainLog(fileUri) {
             firstTs = ts;
         }
         lastTs = ts;
-        const event = (0, timeline_event_1.parseLogLineToEvent)(line, i, fileUriStr, midnightMs, classifyOpts);
+        const event = (0, timeline_event_1.parseLogLineToEvent)(line, { lineIndex: i, fileUri: fileUriStr, sessionStartMs: midnightMs, classifyOpts });
         if (event) {
             events.push(event);
         }

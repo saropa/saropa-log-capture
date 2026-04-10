@@ -1,11 +1,10 @@
 "use strict";
 /**
- * Filter badge script for the log viewer footer.
+ * Filter badge script for the log viewer toolbar.
  *
- * Shows a count of active filters in the footer. Clicking the badge
- * opens the filters panel so the user can see what's filtering.
+ * Shows a count of active filters on the toolbar filter icon badge.
  *
- * Hooks into recalcHeights() and toggleAppOnly() to auto-update.
+ * Hooks into recalcHeights() to auto-update.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFilterBadgeScript = getFilterBadgeScript;
@@ -13,24 +12,25 @@ exports.getFilterBadgeScript = getFilterBadgeScript;
 function getFilterBadgeScript() {
     return /* javascript */ `
 /**
- * Count active filters and update the footer badge.
+ * Count active filters and update the toolbar filter icon badge.
  * Called automatically after filter changes via recalcHeights hook.
  */
 function updateFilterBadge() {
-    var badge = document.getElementById('filter-badge');
+    var badge = document.getElementById('toolbar-filter-count');
     if (!badge) return;
 
     var count = 0;
 
     // Level filters (any level disabled)
-    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < 7) count++;
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size < allLevelNames.length) count++;
 
     // Exclusions active with rules
     if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
         && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) count++;
 
-    // App-only mode
-    if (typeof appOnlyMode !== 'undefined' && appOnlyMode) count++;
+    // Tier filters (Flutter or Device toggled from default)
+    if (typeof showFlutter !== 'undefined' && !showFlutter) count++;
+    if (typeof showDevice !== 'undefined' && showDevice) count++;
 
     // Source tags hidden
     if (typeof hiddenSourceTags !== 'undefined'
@@ -57,12 +57,7 @@ function updateFilterBadge() {
     // DB Performance tab time brush (DB_13)
     if (typeof dbTimeFilterActive !== 'undefined' && dbTimeFilterActive) count++;
 
-    if (count > 0) {
-        badge.textContent = count + (count === 1 ? ' filter' : ' filters');
-        badge.style.display = 'inline-block';
-    } else {
-        badge.style.display = 'none';
-    }
+    badge.textContent = count > 0 ? String(count) : '';
 }
 
 // Hook into recalcHeights to auto-update after most filter changes
@@ -73,24 +68,6 @@ if (_origRecalcForBadge) {
         updateFilterBadge();
         if (typeof updateLineCount === 'function') updateLineCount();
     };
-}
-
-// Hook into toggleAppOnly (doesn't call recalcHeights)
-var _origAppOnlyForBadge = typeof toggleAppOnly === 'function' ? toggleAppOnly : null;
-if (_origAppOnlyForBadge) {
-    toggleAppOnly = function() {
-        _origAppOnlyForBadge();
-        updateFilterBadge();
-        if (typeof updateLineCount === 'function') updateLineCount();
-    };
-}
-
-// Click badge: open filter drawer to show all active filters
-var filterBadgeEl = document.getElementById('filter-badge');
-if (filterBadgeEl) {
-    filterBadgeEl.addEventListener('click', function() {
-        if (typeof openFilterDrawer === 'function') openFilterDrawer();
-    });
 }
 `;
 }

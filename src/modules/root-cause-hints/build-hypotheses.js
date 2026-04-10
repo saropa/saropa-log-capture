@@ -42,35 +42,55 @@ function mapN1Confidence(c) {
     }
     return 'low';
 }
+/** True when the excerpt is a decorative separator with no letters or digits (e.g. `═══════`). */
+function isDecorativeExcerpt(s) {
+    return !/[a-zA-Z0-9]/.test(s);
+}
+/** Stable grouping key: last 100 chars of normalized excerpt, skipping leading timestamps. */
+function normalizeErrKey(excerpt) {
+    return excerpt
+        .replace(/^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\s*/, '')
+        .replace(/\s+/g, ' ')
+        .slice(-100)
+        .toLowerCase();
+}
 function errorHypotheses(bundle) {
     const errs = bundle.errors;
     if (!errs || errs.length === 0) {
         return [];
     }
-    const out = [];
-    const seen = new Set();
+    const groups = new Map();
     for (const e of errs) {
-        if (!e || seen.has(e.lineIndex)) {
+        if (!e) {
             continue;
         }
         const ex = (e.excerpt || '').trim();
         if (ex.length < root_cause_hint_eligibility_1.ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) {
             continue;
         }
-        seen.add(e.lineIndex);
-        out.push({
-            templateId: 'error-recent',
-            text: truncateText(`Recent error: ${ex}`, MAX_TEXT_LEN),
-            evidenceLineIds: [e.lineIndex],
-            confidence: 'medium',
-            hypothesisKey: `err::${e.lineIndex}`,
-            tier: 0,
-        });
-        if (out.length >= 2) {
-            break;
+        if (isDecorativeExcerpt(ex)) {
+            continue;
+        }
+        const key = normalizeErrKey(ex);
+        const group = groups.get(key);
+        if (group) {
+            group.lineIds.push(e.lineIndex);
+        }
+        else {
+            groups.set(key, { excerpt: ex, lineIds: [e.lineIndex] });
         }
     }
-    return out;
+    const ranked = Array.from(groups.entries())
+        .sort((a, b) => b[1].lineIds.length - a[1].lineIds.length)
+        .slice(0, 2);
+    return ranked.map(([key, { excerpt, lineIds }]) => ({
+        templateId: 'error-recent',
+        text: truncateText(`Error: ${excerpt}`, MAX_TEXT_LEN),
+        evidenceLineIds: lineIds.slice().sort((a, b) => a - b),
+        confidence: 'medium',
+        hypothesisKey: `err::${key}`,
+        tier: 0,
+    }));
 }
 function nPlusOneHypotheses(hints) {
     if (!hints || hints.length === 0) {
@@ -82,7 +102,7 @@ function nPlusOneHypotheses(hints) {
             continue;
         }
         const sec = (h.windowSpanMs / 1000).toFixed(1);
-        const text = truncateText(`Possible N+1: ${h.repeats} similar DB calls (${h.distinctArgs} arg variants) in ${sec}s — not certain.`, MAX_TEXT_LEN);
+        const text = truncateText(`${h.repeats} similar DB calls with ${h.distinctArgs} different arguments in ${sec}s (possible N+1 query)`, MAX_TEXT_LEN);
         out.push({
             templateId: 'n-plus-one',
             text,
@@ -107,7 +127,7 @@ function sqlBurstHypotheses(bundle) {
         const w = typeof b.windowMs === 'number' ? ` in ~${Math.round(b.windowMs)}ms` : '';
         out.push({
             templateId: 'sql-burst',
-            text: truncateText(`SQL burst: ${b.count} similar queries${w} — may be normal traffic or a loop.`, MAX_TEXT_LEN),
+            text: truncateText(`${b.count} identical queries fired${w} (rapid burst)`, MAX_TEXT_LEN),
             evidenceLineIds: [],
             confidence: 'low',
             hypothesisKey: `burst::${b.fingerprint}`,
@@ -130,7 +150,7 @@ function fingerprintLeaderHypotheses(leaders, n1Fingerprints) {
         }
         out.push({
             templateId: 'fingerprint-leader',
-            text: truncateText(`Repeated SQL fingerprint (${L.count} hits this session) — possible hot path or missing batching.`, MAX_TEXT_LEN),
+            text: truncateText(`Same SQL query executed ${L.count} times this session (consider batching or caching)`, MAX_TEXT_LEN),
             evidenceLineIds: L.sampleLineIndex >= 0 ? [L.sampleLineIndex] : [],
             confidence: 'low',
             hypothesisKey: `fp::${L.fingerprint}`,
@@ -148,7 +168,7 @@ function diffHypotheses(bundle) {
     return [
         {
             templateId: 'session-diff-regression',
-            text: truncateText(`Session compare: increased activity for a SQL fingerprint vs baseline — regression hypothesis.`, MAX_TEXT_LEN),
+            text: truncateText(`SQL query volume increased compared to previous session (performance regression)`, MAX_TEXT_LEN),
             evidenceLineIds: [],
             confidence: 'low',
             hypothesisKey: `diff::${fp}`,
@@ -165,7 +185,7 @@ function driftHypotheses(bundle) {
     return [
         {
             templateId: 'drift-advisor',
-            text: truncateText(`Drift Advisor reports ${da.issueCount} issue(s)${rule} in the workspace — may relate to DB noise here.`, MAX_TEXT_LEN),
+            text: truncateText(`Drift static analysis found ${da.issueCount} issue${da.issueCount === 1 ? '' : 's'}${rule} in the workspace`, MAX_TEXT_LEN),
             evidenceLineIds: [],
             confidence: 'low',
             hypothesisKey: 'drift::summary',

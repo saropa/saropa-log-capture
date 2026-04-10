@@ -71,87 +71,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @see viewer-data-add.ts — `addToData` repeat branch
  */
 const assert = __importStar(require("node:assert"));
-const vm = __importStar(require("node:vm"));
-const viewer_data_add_1 = require("../../ui/viewer/viewer-data-add");
-const viewer_data_helpers_core_1 = require("../../ui/viewer/viewer-data-helpers-core");
-const viewer_db_detector_framework_script_1 = require("../../ui/viewer/viewer-db-detector-framework-script");
-const viewer_data_n_plus_one_script_1 = require("../../ui/viewer/viewer-data-n-plus-one-script");
-const drift_db_repeat_thresholds_1 = require("../../modules/db/drift-db-repeat-thresholds");
+const viewer_sql_repeat_compression_sandbox_1 = require("./viewer-sql-repeat-compression-sandbox");
 /** Logcat-style prefix so sandbox `parseSourceTag` matches Drift DB tagging (see source-tag-parser). */
 const FLUTTER = 'I/flutter (1): ';
 const ROW_HEIGHT_EXPECTED = 20;
-function buildSandboxScript() {
-    // Stubs and globals required before the real viewer chunks (mirrors load order in viewer-data.ts).
-    return /* javascript */ `
-var ROW_HEIGHT = 20;
-var MARKER_HEIGHT = 28;
-var allLines = [];
-var totalHeight = 0;
-var nextSeq = 1;
-var nextGroupId = 0;
-var activeGroupHeader = null;
-var groupHeaderMap = {};
-var sessionStartTs = null;
-var autoHiddenCount = 0;
-var strictLevelDetection = false;
-var suppressTransientErrors = false;
-var appOnlyMode = false;
-/* getDriftDebugServerFromLogScript assigns to window; Node vm has no browser global. */
-var window = globalThis;
-
-function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
-function isStackFrameText() { return false; }
-function parseClassTags() { return []; }
-function parseLogcatTag() { return null; }
-function classifyLevel() { return 'info'; }
-function classifyError() { return null; }
-function checkCriticalError() {}
-function isClassFiltered() { return false; }
-function calcScopeFiltered() { return false; }
-function testAutoHide() { return false; }
-function finalizeStackGroup() {}
-function registerClassTags() {}
-function registerSourceTag() {}
-function registerSqlPattern() {}
-function resetCompressDupStreak() {}
-function updateCompressDupStreakAfterLine() {}
-
-function recalcHeights() {
-    totalHeight = 0;
-    for (var i = 0; i < allLines.length; i++) {
-        allLines[i].height = calcItemHeight(allLines[i]);
-        totalHeight += allLines[i].height;
-    }
-}
-function renderViewport() {}
-
-/* Minimal parseSourceTag aligned with source-tag-parser driftStatementPattern gate. */
-function parseSourceTag(plainText) {
-    var sourceTagPattern = /^(?:([VDIWEFA])\\/([^(:\\s]+)\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[([^\\]]+)\\]\\s)/;
-    var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
-    var m = sourceTagPattern.exec(plainText);
-    if (m) {
-        var raw = m[2] || m[3];
-        if (!raw) return null;
-        var tag = raw.toLowerCase();
-        var body = plainText.slice(m[0].length);
-        if (driftStatementPattern.test(body)) return 'database';
-        return tag;
-    }
-    return null;
-}
-`;
-}
-function loadViewerRepeatSandbox() {
-    const code = buildSandboxScript() +
-        (0, viewer_data_n_plus_one_script_1.getNPlusOneDetectorScript)(drift_db_repeat_thresholds_1.VIEWER_REPEAT_THRESHOLD_DEFAULTS) +
-        (0, viewer_db_detector_framework_script_1.getViewerDbDetectorFrameworkScript)(false) +
-        (0, viewer_data_helpers_core_1.getViewerDataHelpersCore)() +
-        (0, viewer_data_add_1.getViewerDataAddScript)();
-    const ctx = vm.createContext({ console });
-    vm.runInContext(code, ctx, { filename: 'viewer-sql-repeat-compression-sandbox.js', timeout: 10_000 });
-    return ctx;
-}
 function driftSelectWithArgs(id) {
     return `${FLUTTER}Drift: Sent SELECT * FROM contacts WHERE id = ${id} with args [${id}]`;
 }
@@ -161,7 +84,7 @@ function driftSelectWhereColumn(col) {
 }
 suite('Viewer SQL repeat compression (DB_03)', () => {
     test('many identical plain lines yield one repeat row (not one row per duplicate after threshold)', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 11_000_000;
         const msg = 'flutter accessibility_bridge duplicate line';
         for (let i = 0; i < 10; i++) {
@@ -172,7 +95,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(repeats[0].html?.includes('10 × Repeated:'), repeats[0].html);
     });
     test('same SQL shape with different args stays one fingerprint-keyed streak (N × SQL repeated:)', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 1_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
@@ -185,7 +108,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.strictEqual(lines[0].repeatHidden, true);
     });
     test('different SQL fingerprints do not merge into one streak', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 2_000_000;
         s.addToData(driftSelectWhereColumn('foo_id'), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         s.addToData(driftSelectWhereColumn('foo_id'), false, 'stdout', t0 + 50, false, null, undefined, undefined, 'debug');
@@ -200,7 +123,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(lines.every((l) => l.repeatHidden === true));
     });
     test('database line with forced null fingerprint falls back to plain repeat hash (× Repeated:, not SQL repeated)', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const realParse = s.parseSqlFingerprint;
         assert.ok(typeof realParse === 'function');
         s.parseSqlFingerprint = function (plain) {
@@ -220,7 +143,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(!repeats[0].html?.includes('SQL repeated'));
     });
     test('gap beyond repeatWindowMs starts a new streak (does not extend SQL repeated count)', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 6_000_000;
         // repeatWindowMs defaults to 3000 in viewer-data-helpers-core embed.
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
@@ -235,7 +158,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(visibleTail[0].html?.includes('Drift: Sent'));
     });
     test('Drift-shaped text without logcat prefix is not database-tagged (no SQL repeated label)', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 7_000_000;
         const bare = 'Drift: Sent SELECT 1 with args [x]';
         s.addToData(bare, false, 'stdout', t0, false, null, undefined, undefined, 'debug');
@@ -247,7 +170,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(!repeats[0].html?.includes('SQL repeated'));
     });
     test('non-database identical lines use legacy repeat suppression wording', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 4_000_000;
         const msg = 'plain duplicate line without logcat prefix';
         s.addToData(msg, false, 'stdout', t0, false, null, undefined, undefined, 'debug');
@@ -260,7 +183,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(!repeats[0].html?.includes('sql-repeat-drilldown-toggle'));
     });
     test('DB_06: SQL repeat rows carry drilldown snapshot and toggle; expand increases height', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 8_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
@@ -283,7 +206,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(hOpen > ROW_HEIGHT_EXPECTED);
     });
     test('DB_06: more than 10 distinct arg variants surface moreVariantCount', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 9_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         for (let k = 2; k <= 11; k++) {
@@ -296,7 +219,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.strictEqual(tail.sqlRepeatDrilldown.moreVariantCount, 1);
     });
     test('DB_06: collapsed rows have no detail HTML; second toggle closes; unknown seq is no-op', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 10_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
@@ -315,7 +238,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(!tail.html?.includes('sql-repeat-drilldown-detail'));
     });
     test('marker boundary restores hidden anchor row and clears repeat tracker state', () => {
-        const s = loadViewerRepeatSandbox();
+        const s = (0, viewer_sql_repeat_compression_sandbox_1.loadViewerRepeatSandbox)();
         const t0 = 5_000_000;
         s.addToData(driftSelectWithArgs(1), false, 'stdout', t0, false, null, undefined, undefined, 'debug');
         s.addToData(driftSelectWithArgs(2), false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');

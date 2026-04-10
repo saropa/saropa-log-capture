@@ -199,8 +199,10 @@ function updateSqlPatternSummary() {
         hk = chipKeys[hi];
         if (hiddenSqlVerbs[hk]) hidden++;
     }
-    el.textContent = total + ' command type' + (total !== 1 ? 's' : '')
+    var summary = total + ' command type' + (total !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+    el.textContent = summary;
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', summary);
     var section = document.getElementById('sql-patterns-section');
     if (section) section.style.display = total > 0 ? '' : 'none';
 }

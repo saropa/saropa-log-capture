@@ -1,17 +1,16 @@
 "use strict";
 /**
- * Drift SQL log lines often end with ` with args [...]` (bound parameters). Collapsing that
- * suffix behind a clickable ellipsis keeps noisy PRAGMA / introspection lines readable while
- * preserving the full text when expanded (see webview `.drift-args-fold` + click handler).
+ * Drift SQL log lines often end with ` with args [...]` (bound parameters). The args suffix
+ * is visually dimmed to reduce noise while keeping the full text always visible.
  *
  * Split is applied on **raw** capture text before `ansiToHtml` so ANSI spans never straddle
- * the fold boundary.
+ * the dim boundary.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.trySplitDriftSqlArgsSuffix = trySplitDriftSqlArgsSuffix;
-exports.buildDriftArgsFoldHtml = buildDriftArgsFoldHtml;
+exports.buildDriftArgsDimHtml = buildDriftArgsDimHtml;
 exports.ansiLinkifyLineHtml = ansiLinkifyLineHtml;
-exports.buildLogLineHtmlWithOptionalDriftArgsFold = buildLogLineHtmlWithOptionalDriftArgsFold;
+exports.buildLogLineHtmlWithOptionalDriftArgsDim = buildLogLineHtmlWithOptionalDriftArgsDim;
 const ansi_1 = require("../capture/ansi");
 const source_linker_1 = require("../source/source-linker");
 const DRIFT_SENT = "Drift: Sent ";
@@ -35,33 +34,20 @@ function trySplitDriftSqlArgsSuffix(raw) {
     const prefix = raw.substring(0, bodyStart + argsIdx);
     return { prefix, suffix };
 }
-function escapeAttrTitle(s) {
-    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-}
-/** Inline HTML: ellipsis button (tooltip = full suffix) + hidden-until-open suffix span. */
-function buildDriftArgsFoldHtml(suffixRaw) {
+/** Inline HTML: always-visible but dimmed args suffix. */
+function buildDriftArgsDimHtml(suffixRaw) {
     const escBody = (0, ansi_1.escapeHtml)(suffixRaw);
-    const title = escapeAttrTitle(suffixRaw);
-    return ('<span class="drift-args-fold">'
-        + '<button type="button" class="drift-args-fold-btn" aria-expanded="false" tabindex="0" title="'
-        + title
-        + '">'
-        + '<span class="dcf-lbl-collapsed">\u2026</span><span class="dcf-lbl-expanded">\u25be</span>'
-        + "</button>"
-        + '<span class="drift-args-suffix">'
-        + escBody
-        + "</span>"
-        + "</span>");
+    return '<span class="drift-args-dim">' + escBody + "</span>";
 }
 function ansiLinkifyLineHtml(raw) {
     return (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(raw)));
 }
-/** ANSI + linkify, with Drift ` with args ` tail folded when applicable. */
-function buildLogLineHtmlWithOptionalDriftArgsFold(raw) {
+/** ANSI + linkify, with Drift ` with args ` tail dimmed when applicable. */
+function buildLogLineHtmlWithOptionalDriftArgsDim(raw) {
     const sp = trySplitDriftSqlArgsSuffix(raw);
     if (!sp) {
         return ansiLinkifyLineHtml(raw);
     }
-    return ansiLinkifyLineHtml(sp.prefix) + buildDriftArgsFoldHtml(sp.suffix);
+    return ansiLinkifyLineHtml(sp.prefix) + buildDriftArgsDimHtml(sp.suffix);
 }
 //# sourceMappingURL=drift-log-line-args-fold.js.map
