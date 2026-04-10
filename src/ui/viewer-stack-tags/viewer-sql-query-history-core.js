@@ -77,39 +77,39 @@ function evictSqlQueryHistoryToCap() {
     }
 }
 
-function recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur, sampleSql) {
-    var prev = sqlQueryHistoryByFp[fp];
-    var previewT = truncateSqlHistoryPreviewString(preview);
-    var sampleT = (sampleSql && String(sampleSql).trim()) || '';
+function recordSqlQueryHistoryObservationMerge(obs) {
+    var prev = sqlQueryHistoryByFp[obs.fp];
+    var previewT = truncateSqlHistoryPreviewString(obs.preview);
+    var sampleT = (obs.sampleSql && String(obs.sampleSql).trim()) || '';
     if (!prev) {
-        sqlQueryHistoryByFp[fp] = {
+        sqlQueryHistoryByFp[obs.fp] = {
             count: 1,
-            firstIdx: lineIdx,
-            lastIdx: lineIdx,
-            lastSeen: ts,
+            firstIdx: obs.lineIdx,
+            lastIdx: obs.lineIdx,
+            lastSeen: obs.ts,
             preview: previewT,
-            maxDur: dur,
+            maxDur: obs.dur,
             sampleSql: sampleT || undefined
         };
         return;
     }
     prev.count++;
-    if (lineIdx < prev.firstIdx) prev.firstIdx = lineIdx;
-    if (lineIdx > prev.lastIdx) prev.lastIdx = lineIdx;
-    if (ts > prev.lastSeen) prev.lastSeen = ts;
+    if (obs.lineIdx < prev.firstIdx) prev.firstIdx = obs.lineIdx;
+    if (obs.lineIdx > prev.lastIdx) prev.lastIdx = obs.lineIdx;
+    if (obs.ts > prev.lastSeen) prev.lastSeen = obs.ts;
     if (!prev.preview && previewT) prev.preview = previewT;
     if (!prev.sampleSql && sampleT) prev.sampleSql = sampleT;
-    if (typeof dur === 'number' && isFinite(dur) && dur >= 0) {
-        if (prev.maxDur === undefined || dur > prev.maxDur) prev.maxDur = dur;
+    if (typeof obs.dur === 'number' && isFinite(obs.dur) && obs.dur >= 0) {
+        if (prev.maxDur === undefined || obs.dur > prev.maxDur) prev.maxDur = obs.dur;
     }
 }
 
-function recordSqlQueryHistoryObservation(fp, lineIdx, ts, preview, dur, sampleSql) {
-    if (!fp || typeof fp !== 'string') return;
-    if (!sqlQueryHistoryByFp[fp] && Object.keys(sqlQueryHistoryByFp).length >= SQL_QUERY_HISTORY_MAX_FP) {
+function recordSqlQueryHistoryObservation(obs) {
+    if (!obs.fp || typeof obs.fp !== 'string') return;
+    if (!sqlQueryHistoryByFp[obs.fp] && Object.keys(sqlQueryHistoryByFp).length >= SQL_QUERY_HISTORY_MAX_FP) {
         evictOneSqlQueryHistoryLru();
     }
-    recordSqlQueryHistoryObservationMerge(fp, lineIdx, ts, preview, dur, sampleSql);
+    recordSqlQueryHistoryObservationMerge(obs);
 }
 
 function recordSqlQueryHistoryForAppendedItem(item) {
@@ -121,7 +121,7 @@ function recordSqlQueryHistoryForAppendedItem(item) {
     var sampleSql = extractSqlHistorySampleSql(item);
     var dur = (typeof item.elapsedMs === 'number' && isFinite(item.elapsedMs) && item.elapsedMs >= 0) ? item.elapsedMs : undefined;
     var ts = (typeof item.timestamp === 'number' && isFinite(item.timestamp)) ? item.timestamp : Date.now();
-    recordSqlQueryHistoryObservation(fp, idx, ts, preview, dur, sampleSql);
+    recordSqlQueryHistoryObservation({ fp: fp, lineIdx: idx, ts: ts, preview: preview, dur: dur, sampleSql: sampleSql });
 }
 
 function rebuildSqlQueryHistoryFromAllLines() {
@@ -134,7 +134,7 @@ function rebuildSqlQueryHistoryFromAllLines() {
         preview = extractSqlHistoryPreview(it, fp);
         dur = (typeof it.elapsedMs === 'number' && isFinite(it.elapsedMs) && it.elapsedMs >= 0) ? it.elapsedMs : undefined;
         ts = (typeof it.timestamp === 'number' && isFinite(it.timestamp)) ? it.timestamp : 0;
-        recordSqlQueryHistoryObservationMerge(fp, i, ts, preview, dur, extractSqlHistorySampleSql(it));
+        recordSqlQueryHistoryObservationMerge({ fp: fp, lineIdx: i, ts: ts, preview: preview, dur: dur, sampleSql: extractSqlHistorySampleSql(it) });
     }
     evictSqlQueryHistoryToCap();
 }

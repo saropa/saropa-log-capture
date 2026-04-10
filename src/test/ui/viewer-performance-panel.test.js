@@ -69,8 +69,13 @@ suite('ViewerPerformancePanel', () => {
             assert.ok(script.includes("type: 'copyToClipboard'"));
         });
         test('should use positive condition for ID prefix (Sonar S7735)', () => {
-            const implementation = viewer_performance_panel_1.getPerformancePanelScript.toString();
-            assert.ok(implementation.includes("typeof prefix === 'string'"));
+            // When no prefix is given, the script should contain the runtime fallback
+            const noPrefix = (0, viewer_performance_panel_1.getPerformancePanelScript)();
+            assert.ok(noPrefix.includes('__insightPerfIdPrefix'));
+            // When a prefix string is given, it should be inlined directly
+            const withPrefix = (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-');
+            assert.ok(withPrefix.includes("'insight-'"));
+            assert.ok(!withPrefix.includes('__insightPerfIdPrefix'));
         });
         test('webview should bind to embedded insight- panel IDs', () => {
             const script = (0, viewer_performance_panel_1.getPerformancePanelScript)('insight-');

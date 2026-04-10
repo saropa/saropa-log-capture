@@ -13,6 +13,7 @@ const viewer_styles_1 = require("../viewer-styles/viewer-styles");
 const viewer_goto_line_1 = require("../viewer/viewer-goto-line");
 const viewer_error_hover_styles_1 = require("../viewer-decorations/viewer-error-hover-styles");
 const viewer_styles_quality_1 = require("../viewer-styles/viewer-styles-quality");
+const viewer_styles_lint_badge_1 = require("../viewer-styles/viewer-styles-lint-badge");
 const viewer_content_body_1 = require("./viewer-content-body");
 const viewer_content_scripts_1 = require("./viewer-content-scripts");
 /** Fallback viewer cap when buildViewerHtml is called without explicit viewerMaxLines. */
@@ -50,6 +51,8 @@ function buildViewerHtml(opts) {
         extensionUri,
         viewerMaxLines: opts.viewerMaxLines ?? exports.DEFAULT_VIEWER_LINES,
         viewerPreserveAsciiBoxArt: opts.viewerPreserveAsciiBoxArt,
+        viewerGroupAsciiArt: opts.viewerGroupAsciiArt,
+        viewerDetectAsciiArt: opts.viewerDetectAsciiArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
         viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
@@ -69,6 +72,7 @@ function buildViewerHtml(opts) {
         ${(0, viewer_goto_line_1.getGotoLineStyles)()}
         ${(0, viewer_error_hover_styles_1.getErrorHoverStyles)()}
         ${(0, viewer_styles_quality_1.getQualityBadgeStyles)()}
+        ${(0, viewer_styles_lint_badge_1.getLintBadgeStyles)()}
     </style>
 </head>
 <body>
