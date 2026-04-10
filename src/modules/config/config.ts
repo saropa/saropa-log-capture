@@ -23,6 +23,7 @@ import {
   DEFAULT_FILE_TYPES,
   normalizeAutoTagRules,
   normalizeHighlightRules,
+  normalizeSeverityKeywords,
   normalizeWatchPatterns,
 } from "./config-normalizers";
 import {
@@ -34,6 +35,7 @@ import {
 } from "./config-validation";
 
 export type {
+  SeverityKeywords,
   WatchPatternSetting,
   AiActivityConfig,
   SaropaLogCaptureConfig,
@@ -149,6 +151,7 @@ export function getConfig(): SaropaLogCaptureConfig {
 
     levelDetection: ensureEnum(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
     stderrTreatAsError: ensureBoolean(cfg.get("stderrTreatAsError"), false),
+    severityKeywords: normalizeSeverityKeywords(cfg.get("severityKeywords")),
     smartBookmarks: {
       suggestFirstError: ensureBoolean(cfg.get("smartBookmarks.suggestFirstError"), true),
       suggestFirstWarning: ensureBoolean(cfg.get("smartBookmarks.suggestFirstWarning"), false),

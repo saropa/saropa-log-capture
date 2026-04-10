@@ -3,6 +3,7 @@
 import * as os from 'os';
 import * as vscode from 'vscode';
 import { getConfig } from './modules/config/config';
+import { setSeverityKeywords } from './modules/analysis/level-classifier';
 import { loadPresets } from './modules/storage/filter-presets';
 import type { SessionManagerImpl } from './modules/session/session-manager';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
@@ -55,11 +56,13 @@ function applySessionStartedState(
     if (cfg.exclusions.length > 0) { broadcaster.setExclusions(cfg.exclusions); }
     if (cfg.autoHidePatterns.length > 0) { broadcaster.setAutoHidePatterns(cfg.autoHidePatterns); }
     if (cfg.showElapsedTime) { broadcaster.setShowElapsed(true); }
+    setSeverityKeywords(cfg.severityKeywords);
     broadcaster.setErrorClassificationSettings({
         suppressTransientErrors: cfg.suppressTransientErrors ?? false,
         breakOnCritical: cfg.breakOnCritical ?? false,
         levelDetection: cfg.levelDetection ?? "strict",
         stderrTreatAsError: cfg.stderrTreatAsError,
+        severityKeywords: cfg.severityKeywords,
     });
     if (cfg.highlightRules.length > 0) { broadcaster.setHighlightRules(cfg.highlightRules); }
     broadcaster.setContextLines(cfg.filterContextLines);
