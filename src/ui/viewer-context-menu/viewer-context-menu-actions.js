@@ -12,9 +12,10 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getContextMenuActionsScript = getContextMenuActionsScript;
+const viewer_context_menu_line_actions_1 = require("./viewer-context-menu-line-actions");
 /** Get the context menu action handler script. */
 function getContextMenuActionsScript() {
-    return /* javascript */ String.raw `
+    return (0, viewer_context_menu_line_actions_1.getContextMenuLineActionsScript)() + /* javascript */ String.raw `
 function handleGlobalAction(action, savedLineIdx) {
     if (action === 'copy-selection') {
         var sel = window.getSelection();
@@ -170,7 +171,6 @@ function handleWorkspaceToggleAction(action) {
 function handleToggleAction(action) {
     var toggleFns = {
         'toggle-wrap': typeof toggleWrap === 'function' ? toggleWrap : null,
-        'toggle-decorations': typeof toggleDecorations === 'function' ? toggleDecorations : null,
         'toggle-timestamp': typeof toggleTimestamp === 'function' ? toggleTimestamp : null,
         'toggle-session-elapsed': typeof toggleSessionElapsed === 'function' ? toggleSessionElapsed : null,
         'toggle-spacing': typeof toggleVisualSpacing === 'function' ? toggleVisualSpacing : null,
@@ -197,167 +197,7 @@ function onContextMenuAction(action) {
 
     if (handleGlobalAction(action, lineIdx)) return;
     if (handleSourceAction(action)) return;
-    if (lineIdx < 0 || lineIdx >= allLines.length) return;
-
-    var lineData = allLines[lineIdx];
-    var plainText = stripTags(lineData.html || '');
-
-    switch (action) {
-        case 'copy': {
-            /* When multiple lines are selected (shift+click) and right-click is inside that range, copy all selected full lines; else copy single line. */
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
-            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
-                var lines = getSelectedLines();
-                var text = lines.length > 0 ? linesToPlainText(lines) : plainText;
-                vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
-            } else {
-                vscodeApi.postMessage({ type: 'copyToClipboard', text: plainText });
-            }
-            break;
-        }
-        case 'copy-with-source': {
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var baseLo = lo >= 0 ? lo : lineIdx;
-            var baseHi = hi > lo ? hi : lineIdx;
-            /* Include N lines before/after selection (copyContextLines) for stack traces and surrounding context. */
-            var n = typeof copyContextLines === 'number' ? Math.max(0, Math.min(20, copyContextLines)) : 0;
-            var loExpand = Math.max(0, baseLo - n);
-            var hiExpand = Math.min(allLines.length - 1, baseHi + n);
-            var parts = [];
-            for (var i = loExpand; i <= hiExpand; i++) {
-                var item = allLines[i];
-                if (item && item.html != null) parts.push(stripTags(item.html));
-            }
-            var logText = parts.join('\\n');
-            var refs = collectSourceRefsForLineRange(loExpand, hiExpand);
-            if (logText.length > 0 || refs.length > 0) vscodeApi.postMessage({ type: 'copyWithSource', text: logText, sourceRefs: refs });
-            break;
-        }
-        case 'copy-to-search':
-            if (typeof openSearch === 'function' && typeof searchInputEl !== 'undefined') {
-                openSearch();
-                searchInputEl.value = plainText;
-                if (typeof updateSearch === 'function') updateSearch();
-            }
-            break;
-        case 'search-codebase': vscodeApi.postMessage({ type: 'searchCodebase', text: plainText }); break;
-        case 'search-sessions': vscodeApi.postMessage({ type: 'searchSessions', text: plainText }); break;
-        case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText, lineIndex: lineIdx }); break;
-        case 'generate-report': vscodeApi.postMessage({ type: 'generateReport', text: plainText, lineIndex: lineIdx }); break;
-        case 'create-report-file': {
-            var crStart = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var crEnd = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var crLo = Math.min(crStart, crEnd);
-            var crHi = Math.max(crStart, crEnd);
-            var crMulti = crStart >= 0 && crHi > crLo && lineIdx >= crLo && lineIdx <= crHi;
-            var crSelText, crSelStart, crSelEnd;
-            if (crMulti && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
-                var crLines = getSelectedLines();
-                crSelText = crLines.length > 0 ? linesToPlainText(crLines) : plainText;
-                crSelStart = crLo;
-                crSelEnd = crHi;
-            } else {
-                crSelText = plainText;
-                crSelStart = lineIdx;
-                crSelEnd = lineIdx;
-            }
-            var crAllLines = typeof getAllCopyableLines === 'function' ? getAllCopyableLines() : [];
-            var crDecorated = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(crAllLines) : '';
-            vscodeApi.postMessage({
-                type: 'createReportFile',
-                selectedText: crSelText,
-                selectedLineStart: crSelStart,
-                selectedLineEnd: crSelEnd,
-                fullDecoratedOutput: crDecorated,
-                fullOutputLineCount: crAllLines.length,
-                lineIndex: lineIdx,
-                text: plainText,
-                sessionInfo: typeof sessionInfoData !== 'undefined' ? sessionInfoData : null,
-            });
-            break;
-        }
-        case 'explain-with-ai': {
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
-            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
-                var lines = getSelectedLines();
-                var selText = lines.length > 0 ? linesToPlainText(lines) : plainText;
-                var firstTs = (allLines[lo] && (allLines[lo].ts || allLines[lo].timestamp)) || lineData.ts || lineData.timestamp;
-                vscodeApi.postMessage({ type: 'explainWithAi', text: selText, lineIndex: lo, lineEndIndex: hi, timestamp: firstTs });
-            } else {
-                vscodeApi.postMessage({ type: 'explainWithAi', text: plainText, lineIndex: lineIdx, timestamp: lineData.ts || lineData.timestamp });
-            }
-            break;
-        }
-        case 'explain-root-cause-hypotheses':
-            if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
-            break;
-        case 'add-watch': vscodeApi.postMessage({ type: 'addToWatch', text: plainText }); break;
-        case 'add-exclusion': vscodeApi.postMessage({ type: 'addToExclusion', text: plainText }); break;
-        case 'pin': if (typeof togglePin === 'function') togglePin(lineIdx); break;
-        case 'annotate': if (typeof promptAnnotation === 'function') promptAnnotation(lineIdx); break;
-        case 'bookmark': vscodeApi.postMessage({ type: 'addBookmark', lineIndex: lineIdx, text: plainText }); break;
-        case 'open-source':
-            var viewport = document.getElementById('viewport');
-            if (viewport) {
-                var lineEl = viewport.querySelector('[data-idx="' + lineIdx + '"] .source-link');
-                if (lineEl) lineEl.click();
-            }
-            break;
-        case 'edit': if (typeof openEditModal === 'function') openEditModal(lineIdx); break;
-        case 'show-context': if (typeof openContextModal === 'function') openContextModal(lineIdx); break;
-        case 'find-static-sources-line': {
-            var fpLine = lineData.dbInsight && lineData.dbInsight.fingerprint;
-            if (fpLine && typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled) {
-                vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpLine });
-            }
-            break;
-        }
-        case 'show-integration-context': {
-            var ts = lineData.ts || lineData.timestamp;
-            var hasDbLine = !!(lineData && lineData.sourceTag === 'database');
-            vscodeApi.postMessage({ type: 'showIntegrationContext', lineIndex: lineIdx, timestamp: ts, hasDatabaseLine: hasDbLine, lineText: plainText });
-            break;
-        }
-        case 'show-related-queries': {
-            var rqTs = lineData.ts || lineData.timestamp;
-            vscodeApi.postMessage({ type: 'showRelatedQueries', lineIndex: lineIdx, timestamp: rqTs, lineText: plainText });
-            break;
-        }
-        case 'show-code-quality': {
-            if (typeof showPopoverToast === 'function') showPopoverToast('Loading code quality…');
-            vscodeApi.postMessage({ type: 'showCodeQualityForFrame', lineIndex: lineIdx, lineText: plainText });
-            break;
-        }
-        case 'hide-line':
-            if (typeof hideLine === 'function') hideLine(lineIdx);
-            break;
-        case 'unhide-line':
-            if (typeof unhideLine === 'function') unhideLine(lineIdx);
-            break;
-        case 'hide-selection':
-            if (typeof hideSelection === 'function') hideSelection();
-            break;
-        case 'unhide-selection':
-            if (typeof unhideSelection === 'function') unhideSelection();
-            break;
-        case 'hide-all-visible':
-            if (typeof hideAllVisible === 'function') hideAllVisible();
-            break;
-        case 'unhide-all':
-            if (typeof unhideAll === 'function') unhideAll();
-            break;
-    }
+    handleLineAction(action, lineIdx);
 }
 
 function onLogContextMenu(e) {

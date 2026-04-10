@@ -19,10 +19,10 @@ function getScrollChromeMenuTogglesHtml() {
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Show native scrollbar</span>
             </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info markers on minimap">
+            <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-info-markers" title="Info / debug / notice on minimap">
                 <span class="codicon codicon-info" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Info markers on minimap</span>
+                <span class="context-menu-label">Info / debug / notice on minimap</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-minimap-sql-density" title="SQL density on minimap">
                 <span class="codicon codicon-database" aria-hidden="true"></span>
@@ -75,6 +75,10 @@ function getContextMenuHtml() {
             <div class="context-menu-item" data-action="copy" data-line-action>
                 <span class="codicon codicon-copy"></span> Copy Line
             </div>
+            <div class="context-menu-item" data-action="copy-decorated" data-line-action>
+                <span class="codicon codicon-copy"></span> Copy Line Decorated
+            </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="copy-all">
                 <span class="codicon codicon-clippy"></span> Copy All
             </div>
@@ -84,6 +88,7 @@ function getContextMenuHtml() {
             <div class="context-menu-item" data-action="copy-as-snippet">
                 <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
             </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="copy-with-source">
                 <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
             </div>
@@ -218,11 +223,6 @@ function getContextMenuHtml() {
                 <span class="codicon codicon-word-wrap" aria-hidden="true"></span>
                 <span class="context-menu-check codicon codicon-check"></span>
                 <span class="context-menu-label">Word wrap</span>
-            </div>
-            <div class="context-menu-item context-menu-toggle" data-action="toggle-decorations">
-                <span class="codicon codicon-symbol-event" aria-hidden="true"></span>
-                <span class="context-menu-check codicon codicon-check"></span>
-                <span class="context-menu-label">Line decorations (dot, number, time)</span>
             </div>
             <div class="context-menu-item context-menu-toggle" data-action="toggle-timestamp">
                 <span class="codicon codicon-clock" aria-hidden="true"></span>
