@@ -2,6 +2,9 @@
  * Context menu line-specific action handlers (copy, search, analyze, report, explain, etc.).
  * Handles actions that operate on a specific log line identified by index.
  * Extracted from viewer-context-menu-actions.ts to keep files under the line limit.
+ *
+ * Also defines `getSelectionRange()` — the shared shift+click selection helper used by
+ * both `handleLineAction` (this file) and `handleGlobalAction` (viewer-context-menu-actions.ts).
  */
 
 /** Get the line-scoped context menu action handler script. */
