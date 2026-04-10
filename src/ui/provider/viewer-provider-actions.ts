@@ -49,6 +49,44 @@ export async function updateLastViewed(context: vscode.ExtensionContext, uri: vs
     await context.workspaceState.update(LOG_LAST_VIEWED_KEY, map);
 }
 
+/** Shared type for session metadata fields needed to build a webview record. */
+type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean };
+
+/** Build a single webview record from session metadata. */
+export async function buildSessionItemRecord(
+    m: Meta,
+    activeStr: string | undefined,
+    options?: SessionListPayloadOptions,
+): Promise<Record<string, unknown>> {
+    const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
+    const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
+    const mtime = await resolveMtime(uri, m.mtime);
+    const uriStr = m.uri.toString();
+    const isActive = activeStr === uriStr;
+    const lastUpdatedAt = isActive && getActiveLastWriteTime
+        ? (getActiveLastWriteTime() ?? mtime)
+        : mtime;
+    const lastViewedAt = getLastViewedAt?.(uriStr);
+    const oneMinuteAgo = Date.now() - 60_000;
+    const updatedInLastMinute = lastUpdatedAt >= oneMinuteAgo;
+    const updatedSinceViewed = lastViewedAt !== undefined && lastUpdatedAt > lastViewedAt;
+    return {
+        filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
+        size: m.size, mtime, formattedMtime: formatMtime(mtime),
+        formattedTime: formatMtimeTimeOnly(mtime), relativeTime: formatRelativeTime(mtime), date: m.date,
+        hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
+        durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
+        warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
+        fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
+        isActive,
+        updatedSinceViewed,
+        updatedInLastMinute,
+        uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
+        autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
+        hasPerformanceData: m.hasPerformanceData ?? false,
+    };
+}
+
 /** Convert tree items to a flat session list for the webview panel. Uses filesystem stat when mtime is missing; processes items sequentially to avoid I/O burst. */
 export async function buildSessionListPayload(
     items: readonly TreeItem[],
@@ -56,44 +94,12 @@ export async function buildSessionListPayload(
     options?: SessionListPayloadOptions,
 ): Promise<Record<string, unknown>[]> {
     const activeStr = activeUri?.toString();
-    const { getActiveLastWriteTime, getLastViewedAt } = options ?? {};
-    const now = Date.now();
-    const oneMinuteAgo = now - 60 * 1000;
-    /* Recent-updates: lastUpdatedAt is active session's lastWriteTime or file mtime; compare to lastViewed and oneMinuteAgo. */
-    type Meta = { filename: string; displayName?: string; adapter?: string; size: number; mtime: number; date?: string; hasTimestamps?: boolean; lineCount?: number; durationMs?: number; errorCount?: number; warningCount?: number; perfCount?: number; fwCount?: number; infoCount?: number; uri: { toString(): string }; trashed?: boolean; tags?: string[]; autoTags?: string[]; correlationTags?: string[]; hasPerformanceData?: boolean };
-    const toRecord = async (m: Meta): Promise<Record<string, unknown>> => {
-        const uri = m.uri instanceof vscode.Uri ? m.uri : vscode.Uri.parse(m.uri.toString());
-        const mtime = await resolveMtime(uri, m.mtime);
-        const uriStr = m.uri.toString();
-        const isActive = activeStr === uriStr;
-        const lastUpdatedAt = isActive && getActiveLastWriteTime
-            ? (getActiveLastWriteTime() ?? mtime)
-            : mtime;
-        const lastViewedAt = getLastViewedAt?.(uriStr);
-        const updatedInLastMinute = lastUpdatedAt >= oneMinuteAgo;
-        const updatedSinceViewed = lastViewedAt !== undefined && lastUpdatedAt > lastViewedAt;
-        return {
-            filename: m.filename, displayName: m.displayName ?? m.filename, adapter: m.adapter,
-            size: m.size, mtime, formattedMtime: formatMtime(mtime),
-            formattedTime: formatMtimeTimeOnly(mtime), relativeTime: formatRelativeTime(mtime), date: m.date,
-            hasTimestamps: m.hasTimestamps ?? false, lineCount: m.lineCount ?? 0,
-            durationMs: m.durationMs ?? 0, errorCount: m.errorCount ?? 0,
-            warningCount: m.warningCount ?? 0, perfCount: m.perfCount ?? 0,
-            fwCount: m.fwCount ?? 0, infoCount: m.infoCount ?? 0,
-            isActive,
-            updatedSinceViewed,
-            updatedInLastMinute,
-            uriString: uriStr, trashed: m.trashed ?? false, tags: m.tags ?? [],
-            autoTags: m.autoTags ?? [], correlationTags: m.correlationTags ?? [],
-            hasPerformanceData: m.hasPerformanceData ?? false,
-        };
-    };
     const records: Record<string, unknown>[] = [];
     for (const item of items) {
         if (isSplitGroup(item)) {
-            for (const part of item.parts) { records.push(await toRecord(part)); }
+            for (const part of item.parts) { records.push(await buildSessionItemRecord(part, activeStr, options)); }
         } else {
-            records.push(await toRecord(item));
+            records.push(await buildSessionItemRecord(item, activeStr, options));
         }
     }
     return records;
