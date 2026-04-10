@@ -7,6 +7,19 @@
 /** Get the line-scoped context menu action handler script. */
 export function getContextMenuLineActionsScript(): string {
     return /* javascript */ String.raw`
+/**
+ * Return the current shift+click selection range relative to lineIdx.
+ * @returns {{ lo: number, hi: number, multiLine: boolean }}
+ */
+function getSelectionRange(lineIdx) {
+    var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
+    var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
+    var lo = Math.min(start, end);
+    var hi = Math.max(start, end);
+    var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
+    return { lo: lo, hi: hi, multiLine: multiLine };
+}
+
 function handleLineAction(action, lineIdx) {
     if (lineIdx < 0 || lineIdx >= allLines.length) return false;
 
@@ -15,13 +28,8 @@ function handleLineAction(action, lineIdx) {
 
     switch (action) {
         case 'copy': {
-            /* When multiple lines are selected (shift+click) and right-click is inside that range, copy all selected full lines; else copy single line. */
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
-            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            var sel = getSelectionRange(lineIdx);
+            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var lines = getSelectedLines();
                 var text = lines.length > 0 ? linesToPlainText(lines) : plainText;
                 vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
@@ -31,24 +39,16 @@ function handleLineAction(action, lineIdx) {
             return true;
         }
         case 'copy-decorated': {
-            /* Copy clicked/selected line(s) with decorations (emoji dot, seq, timestamp). */
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
-            var decoLines = multiLine && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
+            var sel = getSelectionRange(lineIdx);
+            var decoLines = sel.multiLine && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
             var decoText = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(decoLines) : plainText;
             vscodeApi.postMessage({ type: 'copyToClipboard', text: decoText });
             return true;
         }
         case 'copy-with-source': {
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var baseLo = lo >= 0 ? lo : lineIdx;
-            var baseHi = hi > lo ? hi : lineIdx;
+            var sel = getSelectionRange(lineIdx);
+            var baseLo = sel.lo >= 0 ? sel.lo : lineIdx;
+            var baseHi = sel.hi > sel.lo ? sel.hi : lineIdx;
             /* Include N lines before/after selection (copyContextLines) for stack traces and surrounding context. */
             var n = typeof copyContextLines === 'number' ? Math.max(0, Math.min(20, copyContextLines)) : 0;
             var loExpand = Math.max(0, baseLo - n);
@@ -75,17 +75,13 @@ function handleLineAction(action, lineIdx) {
         case 'analyze-line': vscodeApi.postMessage({ type: 'analyzeLine', text: plainText, lineIndex: lineIdx }); return true;
         case 'generate-report': vscodeApi.postMessage({ type: 'generateReport', text: plainText, lineIndex: lineIdx }); return true;
         case 'create-report-file': {
-            var crStart = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var crEnd = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var crLo = Math.min(crStart, crEnd);
-            var crHi = Math.max(crStart, crEnd);
-            var crMulti = crStart >= 0 && crHi > crLo && lineIdx >= crLo && lineIdx <= crHi;
+            var sel = getSelectionRange(lineIdx);
             var crSelText, crSelStart, crSelEnd;
-            if (crMulti && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var crLines = getSelectedLines();
                 crSelText = crLines.length > 0 ? linesToPlainText(crLines) : plainText;
-                crSelStart = crLo;
-                crSelEnd = crHi;
+                crSelStart = sel.lo;
+                crSelEnd = sel.hi;
             } else {
                 crSelText = plainText;
                 crSelStart = lineIdx;
@@ -107,16 +103,12 @@ function handleLineAction(action, lineIdx) {
             return true;
         }
         case 'explain-with-ai': {
-            var start = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var end = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var lo = Math.min(start, end);
-            var hi = Math.max(start, end);
-            var multiLine = start >= 0 && hi > lo && lineIdx >= lo && lineIdx <= hi;
-            if (multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            var sel = getSelectionRange(lineIdx);
+            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var lines = getSelectedLines();
                 var selText = lines.length > 0 ? linesToPlainText(lines) : plainText;
-                var firstTs = (allLines[lo] && (allLines[lo].ts || allLines[lo].timestamp)) || lineData.ts || lineData.timestamp;
-                vscodeApi.postMessage({ type: 'explainWithAi', text: selText, lineIndex: lo, lineEndIndex: hi, timestamp: firstTs });
+                var firstTs = (allLines[sel.lo] && (allLines[sel.lo].ts || allLines[sel.lo].timestamp)) || lineData.ts || lineData.timestamp;
+                vscodeApi.postMessage({ type: 'explainWithAi', text: selText, lineIndex: sel.lo, lineEndIndex: sel.hi, timestamp: firstTs });
             } else {
                 vscodeApi.postMessage({ type: 'explainWithAi', text: plainText, lineIndex: lineIdx, timestamp: lineData.ts || lineData.timestamp });
             }
