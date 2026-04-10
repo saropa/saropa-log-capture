@@ -128,9 +128,39 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="explain-root-cause-hypotheses"'));
         });
 
+        test('should include Copy Line Decorated menu item', () => {
+            const html = getContextMenuHtml();
+            assert.ok(html.includes('Copy Line Decorated'));
+            assert.ok(html.includes('data-action="copy-decorated" data-line-action'));
+        });
+
+        test('should group "All" items between separators in Copy & Export submenu', () => {
+            const html = getContextMenuHtml();
+            const copyAllIdx = html.indexOf('data-action="copy-all"');
+            const copyAllDecIdx = html.indexOf('data-action="copy-all-decorated"');
+            const snippetIdx = html.indexOf('data-action="copy-as-snippet"');
+            assert.ok(copyAllIdx > 0);
+            assert.ok(copyAllDecIdx > copyAllIdx, 'Copy All Decorated should follow Copy All');
+            assert.ok(snippetIdx > copyAllDecIdx, 'Copy as snippet should follow Copy All Decorated');
+
+            // Separator before the "All" group
+            const beforeAll = html.lastIndexOf('context-menu-separator', copyAllIdx);
+            assert.ok(beforeAll > 0, 'separator should precede the All group');
+            // No non-separator menu items between the separator and Copy All
+            const betweenSepAndAll = html.slice(beforeAll, copyAllIdx);
+            assert.ok(!betweenSepAndAll.includes('data-action='), 'no actions between separator and Copy All');
+
+            // Separator after the "All" group
+            const afterSnippet = html.indexOf('context-menu-separator', snippetIdx);
+            assert.ok(afterSnippet > snippetIdx, 'separator should follow the All group');
+            const betweenSnippetAndSep = html.slice(snippetIdx + 1, afterSnippet);
+            assert.ok(!betweenSnippetAndSep.includes('data-action="copy-with-source"'), 'copy-with-source should be after the separator');
+        });
+
         test('should mark line-specific items with data-line-action', () => {
             const html = getContextMenuHtml();
             assert.ok(html.includes('data-action="copy" data-line-action'));
+            assert.ok(html.includes('data-action="copy-decorated" data-line-action'));
             assert.ok(!html.includes('data-action="copy-selection" data-line-action'));
             assert.ok(!html.includes('data-action="select-all" data-line-action'));
         });

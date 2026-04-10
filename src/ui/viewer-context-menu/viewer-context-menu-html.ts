@@ -72,6 +72,10 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="copy" data-line-action>
                 <span class="codicon codicon-copy"></span> Copy Line
             </div>
+            <div class="context-menu-item" data-action="copy-decorated" data-line-action>
+                <span class="codicon codicon-copy"></span> Copy Line Decorated
+            </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="copy-all">
                 <span class="codicon codicon-clippy"></span> Copy All
             </div>
@@ -81,6 +85,7 @@ export function getContextMenuHtml(): string {
             <div class="context-menu-item" data-action="copy-as-snippet">
                 <span class="codicon codicon-markdown"></span> Copy as snippet (GitHub/GitLab)
             </div>
+            <div class="context-menu-separator"></div>
             <div class="context-menu-item" data-action="copy-with-source">
                 <span class="codicon codicon-file-code"></span> Copy with source (filename + source code)
             </div>

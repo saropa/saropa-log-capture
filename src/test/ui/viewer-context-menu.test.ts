@@ -38,6 +38,7 @@ suite('ViewerContextMenu', () => {
         test('should handle all expected actions', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes("case 'copy':"));
+            assert.ok(script.includes("case 'copy-decorated':"));
             assert.ok(script.includes("case 'search-codebase':"));
             assert.ok(script.includes("case 'search-sessions':"));
             assert.ok(script.includes("case 'add-watch':"));
@@ -46,6 +47,16 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'annotate':"));
             assert.ok(script.includes("case 'open-source':"));
             assert.ok(script.includes("case 'show-context':"));
+        });
+
+        test('copy-decorated should use linesToDecoratedText for decorated copy', () => {
+            const script = getContextMenuScript();
+            const start = script.indexOf("case 'copy-decorated':");
+            assert.ok(start >= 0, 'copy-decorated case must exist');
+            const block = script.slice(start, start + 800);
+            assert.ok(block.includes('linesToDecoratedText'), 'should call linesToDecoratedText');
+            assert.ok(block.includes('getSelectedLines'), 'should support multi-line selection');
+            assert.ok(block.includes('copyToClipboard'), 'should post clipboard message');
         });
 
         test('should handle hide/unhide line actions', () => {
