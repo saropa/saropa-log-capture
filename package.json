@@ -1347,6 +1347,28 @@
           "type": "boolean",
           "title": "%config.stderrTreatAsError.title%"
         },
+        "saropaLogCapture.severityKeywords": {
+          "type": "object",
+          "default": {
+            "error": ["fatal", "panic", "critical"],
+            "warning": ["warn", "warning", "caution", "fail", "failed", "failure"],
+            "performance": ["perf", "performance", "dropped frame", "fps", "framerate", "jank", "stutter", "choreographer", "doing too much work", "anr", "application not responding"],
+            "todo": ["TODO", "FIXME", "HACK", "XXX", "BUG", "KLUDGE", "WORKAROUND"],
+            "debug": ["breadcrumb", "trace", "debug"],
+            "notice": ["notice", "note", "important"]
+          },
+          "properties": {
+            "error": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.error.description%" },
+            "warning": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.warning.description%" },
+            "performance": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.performance.description%" },
+            "todo": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.todo.description%" },
+            "debug": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.debug.description%" },
+            "notice": { "type": "array", "items": { "type": "string" }, "description": "%config.severityKeywords.notice.description%" }
+          },
+          "additionalProperties": false,
+          "markdownDescription": "%config.severityKeywords.markdownDescription%",
+          "title": "%config.severityKeywords.title%"
+        },
         "saropaLogCapture.logDirectory": {
           "default": "reports",
           "description": "%config.logDirectory.description%",
