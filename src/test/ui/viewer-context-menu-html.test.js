@@ -75,7 +75,6 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('codicon-settings-gear"></span> Layout'), 'gear row is the layout/toggles submenu (was labeled Options)');
             assert.ok(!html.includes('codicon-settings-gear"></span> Options'), 'layout submenu must not use the old Options label');
             assert.ok(html.includes('data-action="toggle-wrap"'));
-            assert.ok(html.includes('data-action="toggle-decorations"'));
             assert.ok(html.includes('data-action="toggle-timestamp"'));
             assert.ok(html.includes('data-action="toggle-session-elapsed"'));
             assert.ok(html.includes('data-action="toggle-spacing"'));
@@ -83,7 +82,6 @@ suite('ViewerContextMenuHtml', () => {
             assert.ok(html.includes('data-action="toggle-compress-lines"'));
             assert.ok(html.includes('data-action="toggle-compress-lines-global"'));
             assert.ok(html.includes('Word wrap'));
-            assert.ok(html.includes('Line decorations (dot, number, time)'));
             assert.ok(html.includes('Timestamp'));
             assert.ok(html.includes('Session elapsed'));
             assert.ok(html.includes('Visual spacing'));
@@ -94,7 +92,6 @@ suite('ViewerContextMenuHtml', () => {
         test('should include leading codicons on Layout toggles and hide-blank toggle', () => {
             const html = (0, viewer_context_menu_1.getContextMenuHtml)();
             assert.ok(html.includes('data-action="toggle-wrap"') && html.includes('codicon-word-wrap'));
-            assert.ok(html.includes('codicon-symbol-event') && html.includes('toggle-decorations'));
             assert.ok(html.includes('codicon-clock') && html.includes('toggle-timestamp'));
             assert.ok(html.includes('codicon-watch') && html.includes('toggle-session-elapsed'));
             assert.ok(html.includes('codicon-layout-panel') && html.includes('toggle-spacing'));
@@ -227,7 +224,7 @@ suite('ViewerContextMenuHtml', () => {
         test('should use context-menu-label class on all toggle text spans', () => {
             const html = (0, viewer_context_menu_1.getContextMenuHtml)();
             const toggleActions = [
-                'toggle-wrap', 'toggle-decorations', 'toggle-timestamp',
+                'toggle-wrap', 'toggle-timestamp',
                 'toggle-session-elapsed', 'toggle-spacing', 'toggle-line-height',
                 'toggle-compress-lines', 'toggle-compress-lines-global',
                 'toggle-hide-blank-lines',
@@ -252,7 +249,7 @@ suite('ViewerContextMenuHtml', () => {
             const html = (0, viewer_context_menu_1.getScrollChromeContextMenuHtml)();
             assert.ok(html.includes('title="Proportional line width (minimap)"'));
             assert.ok(html.includes('title="Show native scrollbar"'));
-            assert.ok(html.includes('title="Info markers on minimap"'));
+            assert.ok(html.includes('title="Info / debug / notice on minimap"'));
             assert.ok(html.includes('title="SQL density on minimap"'));
             assert.ok(html.includes('title="Red outline on viewport"'));
             assert.ok(html.includes('title="Yellow arrow outside minimap"'));

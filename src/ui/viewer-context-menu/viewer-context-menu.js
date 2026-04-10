@@ -102,7 +102,6 @@ function syncContextMenuToggles() {
             var action = t.dataset.action;
             var on = false;
             if (action === 'toggle-wrap') on = (typeof wordWrap !== 'undefined') && wordWrap;
-            else if (action === 'toggle-decorations') on = (typeof showDecorations !== 'undefined') && showDecorations;
             else if (action === 'toggle-timestamp') on = (typeof decoShowTimestamp !== 'undefined') && decoShowTimestamp; /* per-line time in margin */
             else if (action === 'toggle-session-elapsed') on = (typeof decoShowSessionElapsed !== 'undefined') && decoShowSessionElapsed;
             else if (action === 'toggle-spacing') on = (typeof visualSpacingEnabled !== 'undefined') && visualSpacingEnabled;
