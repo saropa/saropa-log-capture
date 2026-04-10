@@ -4,14 +4,19 @@
  * Provides a popover (anchored above the footer gear button) with:
  *   - Checkboxes to toggle individual prefix parts (dot, counter, timestamp)
  *   - A dropdown for line-coloring mode (none / whole line)
+ *   - Strip source tag prefix toggle (hides [log], [SDA] etc. from display)
+ *   - Stack frame defaults: initial collapsed state and preview frame count
  *
  * State variables (decoShowDot, decoShowCounter, decoShowTimestamp,
- * decoShowSessionElapsed, decoLineColorMode) are globals shared with viewer-decorations.ts
- * via the concatenated script scope. Timestamp is also toggleable from
- * the viewer context menu (Options → Timestamp).
+ * decoShowSessionElapsed, decoLineColorMode, stripSourceTagPrefix,
+ * stackDefaultState, stackPreviewCount) are globals shared with
+ * viewer-decorations.ts and viewer-data-add.ts via the concatenated
+ * script scope.
  *
  * Each decoration option is independently togglable; areDecorationsOn()
  * derives the overall state from whether any sub-toggle is active.
+ * Strip/stack settings are NOT included in areDecorationsOn() since they
+ * control content/layout, not the decoration prefix.
  *
  * Concatenated into the same script scope as viewer-script.ts.
  */
@@ -79,6 +84,24 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-lint-badge" />
         Lint badge
     </label>
+    <div class="deco-settings-separator"></div>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-strip-source-tag" checked />
+        Strip source tag prefix
+    </label>
+    <div class="deco-settings-separator"></div>
+    <div class="deco-settings-row">
+        <span>Stack frames</span>
+        <select id="deco-stack-default-state">
+            <option value="expanded">Expanded</option>
+            <option value="preview">Preview</option>
+            <option value="collapsed">Collapsed</option>
+        </select>
+    </div>
+    <div class="deco-settings-row deco-indent">
+        <span>Preview count</span>
+        <input type="number" id="deco-stack-preview-count" min="1" max="20" value="3" style="width:3.5em" />
+    </div>
 </div>`;
 }
 
@@ -103,6 +126,12 @@ var decoLineColorMode = 'none';
 var decoShowBar = true;
 /** Apply level-based text colors to log lines. */
 var lineColorsEnabled = true;
+/** Strip bracket source tag prefix (e.g. [log]) from displayed line text. */
+var stripSourceTagPrefix = true;
+/** Default collapsed state for new stack groups: false (expanded), true (collapsed), 'preview'. */
+var stackDefaultState = false;
+/** Number of app frames shown in preview mode. */
+var stackPreviewCount = 3;
 /** Whether the settings panel popover is currently visible. */
 var decoSettingsOpen = false;
 
@@ -176,6 +205,7 @@ function syncDecoSettingsUi() {
     var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
+    var stripTag = document.getElementById('deco-opt-strip-source-tag');
     if (dot) dot.checked = decoShowDot;
     if (ctr) ctr.checked = decoShowCounter;
     if (ctrBlank) ctrBlank.checked = decoShowCounterOnBlank;
@@ -189,6 +219,11 @@ function syncDecoSettingsUi() {
     if (lintBdg) lintBdg.checked = decoShowLintBadges;
     if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
+    if (stripTag) stripTag.checked = stripSourceTagPrefix;
+    var stackState = document.getElementById('deco-stack-default-state');
+    var stackPreview = document.getElementById('deco-stack-preview-count');
+    if (stackState) stackState.value = stackDefaultState === true ? 'collapsed' : (stackDefaultState === 'preview' ? 'preview' : 'expanded');
+    if (stackPreview) stackPreview.value = String(stackPreviewCount);
 }
 
 /**
@@ -209,6 +244,7 @@ function onDecoOptionChange() {
     var lintBdg = document.getElementById('deco-opt-lint-badge');
     var lc = document.getElementById('deco-opt-line-colors');
     var mode = document.getElementById('deco-line-color-mode');
+    var stripTag = document.getElementById('deco-opt-strip-source-tag');
     decoShowDot = dot ? dot.checked : true;
     decoShowCounter = ctr ? ctr.checked : true;
     decoShowCounterOnBlank = ctrBlank ? ctrBlank.checked : false;
@@ -222,6 +258,12 @@ function onDecoOptionChange() {
     decoShowLintBadges = lintBdg ? lintBdg.checked : false;
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
+    stripSourceTagPrefix = stripTag ? stripTag.checked : true;
+    var stackState = document.getElementById('deco-stack-default-state');
+    var stackPreview = document.getElementById('deco-stack-preview-count');
+    var sv = stackState ? stackState.value : 'expanded';
+    stackDefaultState = sv === 'collapsed' ? true : (sv === 'preview' ? 'preview' : false);
+    stackPreviewCount = stackPreview ? Math.max(1, Math.min(20, parseInt(stackPreview.value, 10) || 3)) : 3;
     if (typeof updateDecoButton === 'function') updateDecoButton();
     renderViewport(true);
 }
@@ -242,6 +284,9 @@ var decoOptCategoryBadge = document.getElementById('deco-opt-category-badge');
 var decoOptLintBadge = document.getElementById('deco-opt-lint-badge');
 var decoOptLineColors = document.getElementById('deco-opt-line-colors');
 var decoLineColorSelect = document.getElementById('deco-line-color-mode');
+var decoOptStripSourceTag = document.getElementById('deco-opt-strip-source-tag');
+var decoStackDefaultState = document.getElementById('deco-stack-default-state');
+var decoStackPreviewCount = document.getElementById('deco-stack-preview-count');
 
 if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSettings);
 if (decoCloseBtn) decoCloseBtn.addEventListener('click', closeDecoSettings);
@@ -258,6 +303,9 @@ if (decoOptCategoryBadge) decoOptCategoryBadge.addEventListener('change', onDeco
 if (decoOptLintBadge) decoOptLintBadge.addEventListener('change', onDecoOptionChange);
 if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
 if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
+if (decoOptStripSourceTag) decoOptStripSourceTag.addEventListener('change', onDecoOptionChange);
+if (decoStackDefaultState) decoStackDefaultState.addEventListener('change', onDecoOptionChange);
+if (decoStackPreviewCount) decoStackPreviewCount.addEventListener('change', onDecoOptionChange);
 
 /* Close panel when clicking outside it or the gear button. */
 document.addEventListener('click', function(e) {

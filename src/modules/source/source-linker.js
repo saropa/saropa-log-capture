@@ -55,6 +55,7 @@ function linkifyHtml(html) {
 /** Apply file:line regex to a single text segment (no HTML tags). */
 function linkifyTextSegment(text) {
     fileLineRegex.lastIndex = 0;
+    // eslint-disable-next-line max-params -- regex capture groups
     return text.replace(fileLineRegex, (match, filePath, _ext, line, col) => {
         if (isUrlPort(match, text)) {
             return match;

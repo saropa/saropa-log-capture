@@ -44,6 +44,37 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
             assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("hi"), false);
         });
     });
+    suite("logcat-prefixed lines strip prefix before detection", () => {
+        test("logcat-prefixed paired │ … │ content line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): │           DRIFT DEBUG SERVER   v3.0.2           │'), true);
+        });
+        test("logcat-prefixed border line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): ┌──────────────────────────────────────────────────┐'), true);
+        });
+        test("logcat-prefixed empty interior row is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): \u2502                                                      \u2502'), true);
+        });
+        test("bracket-prefixed box line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('[log] │         http://127.0.0.1:8643         │'), true);
+        });
+        test("logcat-prefixed plain text is not a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter (13876): Starting application...'), false);
+        });
+    });
+    suite("double-vertical-bar (║) boxes (e.g. Isar Connect)", () => {
+        test("logcat-prefixed ║ content line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter ( 5132): ║                     ISAR CONNECT STARTED                     ║'), true);
+        });
+        test("logcat-prefixed ║ URL content line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter ( 5132): ║ https://inspect.isar-community.dev/3.3.0/#/37391/Q3SG7NeTAHc ║'), true);
+        });
+        test("logcat-prefixed ╔ border line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter ( 5132): ╔══════════════════════════════════════════════════════════════╗'), true);
+        });
+        test("logcat-prefixed ╟ divider line is a separator", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)('I/flutter ( 5132): ╟──────────────────────────────────────────────────────────────╢'), true);
+        });
+    });
     suite("after: Drift-style and Unicode box lines", () => {
         test("paired │ … │ interior row (Drift URL line)", () => {
             assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("      │              http://127.0.0.1:8642               │"), true);
@@ -53,6 +84,9 @@ suite("log-viewer-separator-line (viewer banner / rule detection)", () => {
         });
         test("╭/╯ border row (corners counted as art — previously missed without ╭╮╯╰ in set)", () => {
             assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("╭──────────────────────────────────────────────────╮"), true);
+        });
+        test("paired │ │ empty interior row (whitespace only between bars)", () => {
+            assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("\u2502                                                      \u2502"), true);
         });
         test("classic === rule", () => {
             assert.strictEqual((0, log_viewer_separator_line_1.isLogViewerSeparatorLine)("==============================="), true);

@@ -60,8 +60,8 @@ exports.builtInPresets = [
         levels: ['error', 'warning'],
     },
     {
-        name: 'No Framework Noise',
-        appOnlyMode: true,
+        name: 'Flutter Only',
+        deviceEnabled: false,
     },
     {
         name: 'Just debug output',

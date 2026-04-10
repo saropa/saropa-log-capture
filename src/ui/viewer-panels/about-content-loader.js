@@ -70,8 +70,9 @@ async function loadAndPostAboutContent(extensionUri, extensionVersion, extension
                 // Try next candidate.
             }
         }
-        if (!buf)
+        if (!buf) {
             throw new Error("CHANGELOG not found");
+        }
         const full = Buffer.from(buf).toString("utf-8");
         const sections = full.split(/\n(?=##\s)/);
         const excerpt = sections.slice(0, MAX_SECTIONS).join("\n").slice(0, MAX_EXCERPT_CHARS);
