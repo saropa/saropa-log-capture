@@ -14,13 +14,23 @@ export interface LoadMetadataTarget {
     readonly metaCache: Map<string, SessionMetadata>;
 }
 
+/** Callback fired after each item finishes loading (index is the original file order). */
+export type OnItemLoaded = (item: SessionMetadata, index: number) => void;
+
+/** Options for loadBatch beyond the required parameters. */
+export interface LoadBatchOptions {
+    readonly centralMeta: ReadonlyMap<string, SessionMeta>;
+    readonly onItemLoaded?: OnItemLoaded;
+}
+
 /** Load metadata for all files with bounded concurrency (max 8 parallel). */
 export async function loadBatch(
     target: LoadMetadataTarget,
     logDir: vscode.Uri,
     files: readonly string[],
-    centralMeta: ReadonlyMap<string, SessionMeta>,
+    opts: LoadBatchOptions,
 ): Promise<SessionMetadata[]> {
+    const { centralMeta, onItemLoaded } = opts;
     const results: SessionMetadata[] = new Array(files.length);
     const limit = 8;
     let index = 0;
@@ -28,6 +38,7 @@ export async function loadBatch(
         while (index < files.length) {
             const i = index++;
             results[i] = await loadMetadata(target, logDir, files[i], centralMeta);
+            onItemLoaded?.(results[i], i);
         }
     };
     const count = Math.min(limit, files.length);

@@ -11,13 +11,14 @@ import { t } from "../../l10n";
 import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
+import type { SessionMetadata } from "../session/session-history-grouping";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
 import { loadPresets, promptSavePreset } from "../../modules/storage/filter-presets";
-import { buildSessionListPayload, openSourceFile, LOG_LAST_VIEWED_KEY } from "./viewer-provider-helpers";
+import { buildSessionListPayload, buildSessionItemRecord, openSourceFile, LOG_LAST_VIEWED_KEY, type SessionListPayloadOptions } from "./viewer-provider-helpers";
 import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
@@ -177,23 +178,63 @@ async function sendQuickPreview(broadcaster: ViewerBroadcaster, context: vscode.
   broadcaster.postToWebview({ type: 'sessionListPreview', previews });
 }
 
+/** Build the options object used for session payload records. */
+function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
+  const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
+  return {
+    getActiveLastWriteTime: () => deps.sessionManager.getActiveLastWriteTime?.(),
+    getLastViewedAt: (uri) => lastViewedMap[uri],
+  };
+}
+
+/** Batch size for streaming session metadata to the webview. */
+const streamBatchSize = 5;
+
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
   const { historyProvider, broadcaster, sessionManager } = deps;
+
+  /** Non-streaming full refresh (used by the polling interval). */
   const refreshSessionList = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const items = overrideUri
       ? await historyProvider.getAllChildrenFromRoot(overrideUri)
       : await historyProvider.getAllChildren();
-    const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
-    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), {
-      getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
-      getLastViewedAt: (uri) => lastViewedMap[uri],
-    });
+    const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), makePayloadOptions(deps));
     const rootLabel = getSessionRootPath(deps.context);
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
+
+  /** Streaming refresh: sends items to webview progressively as metadata loads. */
+  const refreshSessionListStreaming = async (): Promise<void> => {
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+    const activeStr = historyProvider.getActiveUri()?.toString();
+    const opts = makePayloadOptions(deps);
+    const pending: Record<string, unknown>[] = [];
+    const allRecords: Record<string, unknown>[] = [];
+    const recordPromises: Promise<void>[] = [];
+    const flush = (): void => {
+      if (pending.length === 0) { return; }
+      broadcaster.postToWebview({ type: 'sessionListBatch', items: pending.splice(0) });
+    };
+    const onItemLoaded = (item: SessionMetadata): void => {
+      recordPromises.push(
+        buildSessionItemRecord(item, activeStr, opts).then(rec => {
+          allRecords.push(rec);
+          pending.push(rec);
+          if (pending.length >= streamBatchSize) { flush(); }
+        }).catch(() => {}),
+      );
+    };
+    await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri);
+    await Promise.all(recordPromises);
+    flush();
+    const rootLabel = getSessionRootPath(deps.context);
+    broadcaster.sendSessionList(allRecords, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+  };
+
   const ref: { timer?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } = {};
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
@@ -201,7 +242,7 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     ref.timer = setTimeout(() => {
       void (async () => {
         await sendQuickPreview(broadcaster, deps.context).catch(() => {});
-        await refreshSessionList();
+        await refreshSessionListStreaming();
       })();
       if (ref.interval) { clearInterval(ref.interval); }
       ref.interval = setInterval(() => {

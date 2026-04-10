@@ -149,6 +149,9 @@ export function getSessionPanelEventsScript(): string {
         if (e.data.type === 'sessionListPreview') {
             renderSessionListPreview(e.data.previews);
         }
+        if (e.data.type === 'sessionListBatch') {
+            updateSessionBatchItems(e.data.items);
+        }
         if (e.data.type === 'sessionList') {
             cachedSessions = e.data.sessions;
             sessionListPage = 0;

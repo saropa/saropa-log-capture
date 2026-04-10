@@ -8,6 +8,7 @@ import {
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
 import { buildDescription, buildTooltip, formatCount } from './session-history-helpers';
 import { fetchItemsCore, type FetchTarget } from './session-history-fetching';
+import { type OnItemLoaded } from './session-history-metadata';
 
 /** Extract the basename from a relative path (strip folder prefix). */
 function getBasename(name: string): string {
@@ -186,6 +187,21 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
         if (logDirOverride) { return fetchItemsCore(this, logDirOverride); }
         return this.getCachedOrFetch();
+    }
+
+    /** Fetch all items, calling onItemLoaded as each file's metadata resolves. Populates the cache when done. */
+    async getAllChildrenStreaming(
+        onItemLoaded: OnItemLoaded,
+        logDirOverride?: vscode.Uri,
+    ): Promise<TreeItem[]> {
+        if (!logDirOverride && this.itemsCache) { return this.itemsCache; }
+        const items = await fetchItemsCore(this, logDirOverride, onItemLoaded);
+        if (!logDirOverride) {
+            this.itemsCache = items;
+            this.fetchInFlight = undefined;
+            this.computeDuplicateBasenames(items);
+        }
+        return items;
     }
 
     /** Return cached items if available, or deduplicate a single in-flight fetch. */
