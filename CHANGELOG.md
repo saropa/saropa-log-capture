@@ -26,6 +26,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Options panel crash when severity keywords not yet loaded** — `renderSeverityKeywordsDisplay` threw `TypeError: Cannot read properties of null` because the `typeof` guard did not catch `null` (`typeof null === 'object'`). Now uses truthiness check
+
+---
+
 ## [5.7.0]
 
 ### Added
@@ -45,10 +53,6 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - Copy & Export submenu now groups "All" items (Copy All, Copy All Decorated, Copy as snippet) together with separators for clarity
 - Downgraded `failed`/`failure`/`fail` keywords from error to warning severity — these indicate something worth investigating, not a definitive error
 - Severity classification now separates structural patterns (hardcoded) from keyword patterns (user-configurable), improving transparency and customizability
-
-### Fixed
-
-- **Options panel crash when severity keywords not yet loaded** — `renderSeverityKeywordsDisplay` threw `TypeError: Cannot read properties of null` because the `typeof` guard did not catch `null` (`typeof null === 'object'`). Now uses truthiness check
 - Root-cause hypotheses no longer produce duplicate signals for stack-frame continuation lines that inherited error level via proximity
 
 ---
