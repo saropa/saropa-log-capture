@@ -55,8 +55,8 @@ function updateLineCount() {
     var el = document.getElementById('line-count');
     if (!el) return;
     if (lineCount <= 0) { el.textContent = ''; return; }
-    var badge = document.getElementById('filter-badge');
-    var isFiltered = badge && badge.style.display !== 'none';
+    var badge = document.getElementById('toolbar-filter-count');
+    var isFiltered = badge && badge.textContent !== '';
     if (isFiltered) {
         if (typeof window !== 'undefined' && window.__visibleCountDirty) { cachedVisibleCount = -1; window.__visibleCountDirty = false; }
         var now = Date.now();

@@ -145,7 +145,7 @@ function getSqlQueryHistoryPanelStyles() {
     outline-offset: -2px;
 }
 
-/* Order: Count | SQL | Slowest — fixed-width numeric columns; SQL column takes remaining space. */
+/* Order: Count | SQL | Slow — fixed-width numeric columns; SQL column takes remaining space. */
 .sql-qh-header-count,
 .sql-qh-cell-count {
     width: 3.5rem;

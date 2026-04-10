@@ -2,16 +2,19 @@
 /** Message handler script for the log viewer webview. Extracted to keep viewer-script.ts under the line limit. */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getViewerScriptMessageHandler = getViewerScriptMessageHandler;
+const viewer_script_messages_db_1 = require("./viewer-script-messages-db");
 function getViewerScriptMessageHandler() {
-    return /* javascript */ `
+    return (0, viewer_script_messages_db_1.getViewerScriptDbMessageHandler)() + /* javascript */ `
 window.addEventListener('message', function(event) {
     var msg = event.data;
+    if (typeof handleDbMessages === 'function' && handleDbMessages(msg)) return;
     switch (msg.type) {
         case 'addLines': {
             var isHidden = typeof document !== 'undefined' && document.visibilityState === 'hidden';
             for (var i = 0; i < msg.lines.length; i++) {
                 var ln = msg.lines[i];
-                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source);
+                addToData(ln.text, ln.isMarker, ln.category, ln.timestamp, ln.fw, ln.sourcePath, ln.elapsedMs, ln.qualityPercent, ln.source, ln.rawText, ln.tier);
+                if (typeof applyLintDataToLastLine === 'function') applyLintDataToLastLine(ln);
             }
             trimData();
             if (msg.lineCount !== undefined) {
@@ -43,6 +46,9 @@ window.addEventListener('message', function(event) {
             correlationByLineIndex = msg.correlationByLineIndex || {};
             if (typeof renderViewport === 'function') renderViewport(true);
             break;
+        case 'updateLintData':
+            if (typeof handleUpdateLintData === 'function') handleUpdateLintData(msg);
+            break;
         case 'clear':
             loadTruncatedInfo = null;
             correlationByLineIndex = {};
@@ -61,7 +67,8 @@ window.addEventListener('message', function(event) {
             if (typeof closeContextModal === 'function') closeContextModal();
             if (typeof resetSourceTags === 'function') resetSourceTags(); if (typeof resetClassTags === 'function') resetClassTags(); if (typeof resetSqlPatternTags === 'function') resetSqlPatternTags(); if (typeof resetScopeFilter === 'function') resetScopeFilter(); if (typeof dbTimeFilterActive !== 'undefined') { dbTimeFilterActive = false; dbTimeFilterMin = 0; dbTimeFilterMax = 0; } if (typeof window !== 'undefined') { window.driftAdvisorDbPanelMeta = null; window.ppDbTimelineMeta = null; } if (typeof resetDriftDebugServerFromLogSession === 'function') resetDriftDebugServerFromLogSession(); if (typeof updateSessionNav === 'function') updateSessionNav(false, false, 0, 0);
             if (typeof clearRunNav === 'function') clearRunNav();
-            if (typeof driftArgsFoldOpenByIdx !== 'undefined') driftArgsFoldOpenByIdx = Object.create(null);
+            if (typeof artBlockTracker !== 'undefined') { artBlockTracker.startIdx = -1; artBlockTracker.count = 0; artBlockTracker.timestamp = 0; }
+            if (typeof resetAsciiArtDetector === 'function') resetAsciiArtDetector();
             if (typeof repeatTracker !== 'undefined') {
                 repeatTracker.lastHash = null; repeatTracker.lastPlainText = null; repeatTracker.lastLevel = null; repeatTracker.count = 0;
                 repeatTracker.lastTimestamp = 0; repeatTracker.lastLineIndex = -1; repeatTracker.lastRepeatNotificationIndex = -1; repeatTracker.streakMinN = 2; repeatTracker.streakSqlFp = false;
@@ -111,12 +118,6 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
-        case 'setDbBaselineFingerprintSummary':
-            if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') {
-                setDbBaselineFingerprintSummaryFromHost(msg.fingerprints || null);
-            }
-            if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
-            break;
         case 'setRootCauseHintHostFields':
             if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
                 rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;
@@ -129,6 +130,9 @@ window.addEventListener('message', function(event) {
         case 'setRootCauseHintL10n':
             if (typeof window !== 'undefined') window.rchL10n = (msg.strings && typeof msg.strings === 'object') ? msg.strings : {};
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
+            break;
+        case 'triggerCopyAllFiltered':
+            if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount();
             break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
@@ -177,9 +181,6 @@ window.addEventListener('message', function(event) {
             break;
         case 'setShowElapsed':
             if (typeof handleSetShowElapsed === 'function') handleSetShowElapsed(msg);
-            break;
-        case 'setShowDecorations':
-            if (typeof handleSetShowDecorations === 'function') handleSetShowDecorations(msg);
             break;
         case 'errorClassificationSettings':
             if (typeof handleErrorClassificationSettings === 'function') handleErrorClassificationSettings(msg);
@@ -245,46 +246,6 @@ window.addEventListener('message', function(event) {
         case 'minimapProportionalLines':
             minimapProportionalLines = msg.show !== false;
             if (typeof handleMinimapProportionalLines === 'function') handleMinimapProportionalLines(msg);
-            break;
-        case 'setViewerRepeatThresholds':
-            if (typeof dbRepeatThresholds !== 'undefined' && msg.thresholds && typeof msg.thresholds === 'object') {
-                var th = msg.thresholds;
-                var clampRepeatN = function(n) {
-                    var x = typeof n === 'number' ? n : parseInt(n, 10);
-                    if (!isFinite(x)) return 2;
-                    return Math.max(2, Math.min(50, Math.floor(x)));
-                };
-                dbRepeatThresholds.global = clampRepeatN(th.globalMinCount);
-                dbRepeatThresholds.read = clampRepeatN(th.readMinCount);
-                dbRepeatThresholds.transaction = clampRepeatN(th.transactionMinCount);
-                dbRepeatThresholds.dml = clampRepeatN(th.dmlMinCount);
-            }
-            break;
-        case 'setViewerSlowBurstThresholds':
-            if (typeof viewerSlowBurstThresholds !== 'undefined' && msg.thresholds && typeof msg.thresholds === 'object') {
-                var sb = msg.thresholds;
-                var clampSb = function(n, lo, hi, fb) {
-                    var x = typeof n === 'number' ? n : parseInt(n, 10);
-                    if (!isFinite(x)) return fb;
-                    return Math.max(lo, Math.min(hi, Math.floor(x)));
-                };
-                viewerSlowBurstThresholds.slowQueryMs = clampSb(sb.slowQueryMs, 1, 120000, viewerSlowBurstThresholds.slowQueryMs);
-                viewerSlowBurstThresholds.burstMinCount = clampSb(sb.burstMinCount, 2, 100, viewerSlowBurstThresholds.burstMinCount);
-                viewerSlowBurstThresholds.burstWindowMs = clampSb(sb.burstWindowMs, 100, 120000, viewerSlowBurstThresholds.burstWindowMs);
-                viewerSlowBurstThresholds.cooldownMs = clampSb(sb.cooldownMs, 0, 300000, viewerSlowBurstThresholds.cooldownMs);
-            }
-            break;
-        case 'setViewerDbInsightsEnabled':
-            viewerDbInsightsEnabled = msg.enabled !== false;
-            break;
-        case 'setStaticSqlFromFingerprintEnabled':
-            staticSqlFromFingerprintEnabled = msg.enabled !== false;
-            break;
-        case 'setViewerDbDetectorToggles':
-            viewerDbDetectorNPlusOneEnabled = msg.nPlusOneEnabled !== false;
-            viewerDbDetectorSlowBurstEnabled = msg.slowBurstEnabled !== false;
-            viewerDbDetectorBaselineHintsEnabled = msg.baselineHintsEnabled !== false;
-            if (typeof baselineVolumeHintEmitted !== 'undefined') baselineVolumeHintEmitted = Object.create(null);
             break;
         case 'minimapViewportRedOutline':
             minimapViewportRedOutline = msg.show === true;

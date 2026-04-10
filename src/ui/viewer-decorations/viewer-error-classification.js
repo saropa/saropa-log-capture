@@ -18,16 +18,13 @@ var suppressTransientErrors = false;
 /** Whether to trigger notifications for critical errors. */
 var breakOnCritical = false;
 
-/** Suppress error/warning text coloring on framework lines. */
-var deemphasizeFrameworkLevels = false;
-
 /**
  * Transient error patterns - expected, temporary failures.
  * Examples: network timeouts, connection refused, socket errors.
  */
 var transientPatterns = [
     /TimeoutException/i,
-    /SocketException/i,
+    /SocketException(?=.*(?:Connection refused|timed?\s*out|reset|unreachable|ECONNREFUSED|ETIMEDOUT|ECONNRESET|EHOSTUNREACH|broken pipe))/i,
     /ECONNREFUSED/i,
     /ETIMEDOUT/i,
     /ENOTFOUND/i,
@@ -143,15 +140,6 @@ function handleErrorClassificationSettings(msg) {
     if (msg.stderrTreatAsError !== undefined) {
         stderrTreatAsError = !!msg.stderrTreatAsError;
     }
-    if (msg.deemphasizeFrameworkLevels !== undefined) {
-        var prev = deemphasizeFrameworkLevels;
-        deemphasizeFrameworkLevels = !!msg.deemphasizeFrameworkLevels;
-        if (prev !== deemphasizeFrameworkLevels) {
-            if (typeof recalcAndRender === 'function') { recalcAndRender(); }
-            else { recalcHeights(); renderViewport(true); }
-        }
-    }
-
     // Re-render when stderr policy or strict mode changes (levels and stderr CSS class).
     if (msg.stderrTreatAsError !== undefined || msg.levelDetection !== undefined) {
         if (typeof recalcAndRender === 'function') { recalcAndRender(); }
@@ -174,6 +162,7 @@ function applyErrorSuppression() {
     for (var i = 0; i < allLines.length; i++) {
         var line = allLines[i];
         if (line.type === 'marker' || line.type === 'stack-frame') continue;
+        if (line.tier === 'device-other') continue;
 
         var plain = stripTags(line.html || '');
         var classification = line.errorClass || classifyError(plain);

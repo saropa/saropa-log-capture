@@ -20,6 +20,7 @@ function parseTerminalSidecarToPending(content) {
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => ({
         text: (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.ansiToHtml)(raw))),
+        rawText: raw,
         isMarker: false,
         lineCount: 0,
         category: 'console',
@@ -38,6 +39,7 @@ function parseExternalSidecarToPending(content, label) {
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
     return lines.map((raw) => ({
         text: (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.escapeHtml)(raw))),
+        rawText: raw,
         isMarker: false,
         lineCount: 0,
         category: 'console',
@@ -126,6 +128,7 @@ function parseBrowserSidecarToPending(content) {
         }
         result.push({
             text: (0, ansi_1.escapeHtml)(formatted),
+            rawText: formatted,
             isMarker: false,
             lineCount: 0,
             category: 'console',

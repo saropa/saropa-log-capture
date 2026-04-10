@@ -74,6 +74,14 @@ suite('Viewer toolbar animations', () => {
         test('should set transform-origin: top on actions popover', () => {
             assert.match(css, /\.toolbar-actions-popover\s*\{[^}]*transform-origin:\s*top/s, 'actions popover needs transform-origin: top for scaleY animation');
         });
+        test('should put underline on .footer-filename, not .toolbar-filename', () => {
+            assert.ok(!css.match(/\.toolbar-filename\s*\{[^}]*text-decoration:\s*underline/s), '.toolbar-filename must not have text-decoration: underline (moved to .footer-filename)');
+            assert.match(css, /\.footer-filename\s*\{[^}]*text-decoration:\s*underline/s, '.footer-filename should have text-decoration: underline');
+            assert.match(css, /\.footer-filename\s*\{[^}]*text-decoration-style:\s*dotted/s, '.footer-filename should have dotted underline');
+        });
+        test('hover should change .footer-filename underline to solid', () => {
+            assert.match(css, /\.toolbar-filename:hover\s+\.footer-filename\s*\{[^}]*text-decoration-style:\s*solid/s, 'parent hover should switch child underline to solid');
+        });
         test('reduced-motion media query should cover all animation classes', () => {
             assert.match(css, /prefers-reduced-motion.*anim-flyout-open/s, 'reduced motion must cover anim-flyout-open');
             assert.match(css, /prefers-reduced-motion.*anim-dropdown-close/s, 'reduced motion must cover anim-dropdown-close');

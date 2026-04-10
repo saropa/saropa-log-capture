@@ -189,6 +189,7 @@ function getIntegrationConfig(cfg) {
             filterByPid: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.adbLogcat.filterByPid'), true),
             maxBufferLines: (0, config_validation_1.clamp)(cfg.get('integrations.adbLogcat.maxBufferLines'), 1000, 500000, 50000),
             writeSidecar: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.adbLogcat.writeSidecar'), true),
+            captureDeviceOther: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.adbLogcat.captureDeviceOther'), false),
         },
         integrationsUnifiedLog: {
             writeAtSessionEnd: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),

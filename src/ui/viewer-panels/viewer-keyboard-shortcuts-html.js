@@ -34,7 +34,7 @@ function getKeyboardShortcutsViewHtml() {
                     <tr data-action-id="copyMarkdown"><td><kbd>Ctrl+Shift+C</kbd></td><td>Copy selection as markdown</td></tr>
                     <tr data-action-id="copyAll"><td><kbd>Ctrl+Shift+A</kbd></td><td>Copy all visible lines to clipboard</td></tr>
                     <tr data-action-id="annotate"><td><kbd>N</kbd></td><td>Annotate center line</td></tr>
-                    <tr data-action-id="toggleAppOnly"><td><kbd>A</kbd></td><td>Toggle app-only stack trace mode</td></tr>
+                    <tr data-action-id="toggleDevice"><td><kbd>A</kbd></td><td>Toggle device logs</td></tr>
                     <tr><td>Double-click</td><td>Open inline peek with context lines</td></tr>
                     <tr data-action-id="home"><td><kbd>Home</kbd></td><td>Scroll to top</td></tr>
                     <tr data-action-id="end"><td><kbd>End</kbd></td><td>Scroll to bottom</td></tr>

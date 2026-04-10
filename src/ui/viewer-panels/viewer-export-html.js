@@ -30,52 +30,68 @@ function getExportModalHtml() {
                 </select>
             </div>
 
-            <div class="export-section">
-                <h4>Include Levels</h4>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-error" checked />
-                    <span>🔴 Error</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-warning" checked />
-                    <span>🟠 Warning</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-info" checked />
-                    <span>🟢 Info</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-performance" />
-                    <span>🟣 Performance</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-notice" />
-                    <span>🟦 Notice</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-todo" />
-                    <span>⚪ TODO/FIXME</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-level-debug" />
-                    <span>🟤 Debug/Trace</span>
-                </label>
+            <div class="export-accordion expanded" id="export-levels-section">
+                <button type="button" class="export-accordion-header" aria-expanded="true">
+                    <span class="export-accordion-arrow codicon codicon-chevron-right"></span>
+                    <span class="export-accordion-title">Include Levels</span>
+                    <span class="export-accordion-summary" id="export-levels-summary"></span>
+                </button>
+                <div class="export-accordion-body">
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-error" checked />
+                        <span>🔴 Error</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-warning" checked />
+                        <span>🟠 Warning</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-info" checked />
+                        <span>🟢 Info</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-performance" />
+                        <span>🟣 Performance</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-notice" />
+                        <span>🟦 Notice</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-todo" />
+                        <span>⚪ TODO/FIXME</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-debug" />
+                        <span>🟤 Debug/Trace</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-database" />
+                        <span>🟡 Database</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="export-section">
-                <h4>Export Options</h4>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-include-timestamps" checked />
-                    <span>Include timestamps</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-include-decorations" />
-                    <span>Include decorations (counter, severity)</span>
-                </label>
-                <label class="export-checkbox">
-                    <input type="checkbox" id="export-strip-ansi" checked />
-                    <span>Strip ANSI codes (plain text)</span>
-                </label>
+            <div class="export-accordion expanded" id="export-options-section">
+                <button type="button" class="export-accordion-header" aria-expanded="true">
+                    <span class="export-accordion-arrow codicon codicon-chevron-right"></span>
+                    <span class="export-accordion-title">Export Options</span>
+                    <span class="export-accordion-summary" id="export-options-summary"></span>
+                </button>
+                <div class="export-accordion-body">
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-include-timestamps" checked />
+                        <span>Include timestamps</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-include-decorations" />
+                        <span>Include decorations (counter, severity)</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-strip-ansi" checked />
+                        <span>Strip ANSI codes (plain text)</span>
+                    </label>
+                </div>
             </div>
 
             <div class="export-section">
@@ -86,6 +102,8 @@ function getExportModalHtml() {
             </div>
         </div>
         <div class="modal-footer">
+            <button id="export-quick-save-btn" class="modal-btn" title="Save current view as-is to the reports folder (no extra filtering)">Quick Save</button>
+            <span class="modal-footer-spacer"></span>
             <button id="export-cancel-btn" class="modal-btn">Cancel</button>
             <button id="export-confirm-btn" class="modal-btn modal-btn-primary">Export to File</button>
         </div>

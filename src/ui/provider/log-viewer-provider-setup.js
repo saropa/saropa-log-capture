@@ -63,6 +63,8 @@ function setupLogViewerWebview(target, webviewView) {
         codiconCssUri,
         viewerMaxLines,
         viewerPreserveAsciiBoxArt: cfg.viewerPreserveAsciiBoxArt,
+        viewerGroupAsciiArt: cfg.viewerGroupAsciiArt,
+        viewerDetectAsciiArt: cfg.viewerDetectAsciiArt,
         viewerRepeatThresholds: cfg.viewerRepeatThresholds,
         viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
         staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
@@ -117,7 +119,6 @@ function setupLogViewerWebview(target, webviewView) {
             suppressTransientErrors: c.suppressTransientErrors,
             breakOnCritical: c.breakOnCritical,
             levelDetection: c.levelDetection,
-            deemphasizeFrameworkLevels: c.deemphasizeFrameworkLevels,
             stderrTreatAsError: c.stderrTreatAsError,
         });
     });
@@ -125,11 +126,15 @@ function setupLogViewerWebview(target, webviewView) {
     if (pending) {
         queueMicrotask(() => { void target.loadFromFile(pending); });
     }
+    else if (webviewView.visible) {
+        queueMicrotask(() => target.onBecameVisible());
+    }
     webviewView.onDidChangeVisibility(() => {
         if (webviewView.visible) {
             target.setVisibleView(webviewView);
             target.setUnreadWatchHits(0);
             helpers.updateBadge(webviewView, target.getUnreadWatchHits());
+            target.onBecameVisible();
         }
     });
     webviewView.onDidDispose(() => {

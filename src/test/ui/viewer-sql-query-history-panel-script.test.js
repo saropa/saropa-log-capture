@@ -79,6 +79,11 @@ suite('viewer-sql-query-history panel script', () => {
         assert.ok(s.includes('sql-qh-cell-dur'), 'rows should include duration cell');
         assert.ok(s.includes('sql-qh-cell-preview'), 'rows should include preview cell');
     });
+    test('duration cell shows raw number without ms suffix', () => {
+        const s = (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)();
+        assert.ok(s.includes("String(r.maxDur)"), 'should render numeric maxDur value');
+        assert.ok(!s.includes("+ ' ms'"), 'should not append ms suffix to cell text');
+    });
     test('header copy shows row count feedback in hint bar', () => {
         const s = (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)();
         assert.ok(s.includes('copyVisibleSqlHistoryJson'));

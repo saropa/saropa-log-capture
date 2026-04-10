@@ -13,10 +13,12 @@ exports.getLogcatBuffer = getLogcatBuffer;
 exports.clearLogcatBuffer = clearLogcatBuffer;
 const child_process_1 = require("child_process");
 const adb_logcat_parser_1 = require("./adb-logcat-parser");
+const device_tag_tiers_1 = require("../analysis/device-tag-tiers");
 let childProcess;
 let buffer = [];
 let pidFilter;
 let filterByPid = true;
+let captureDeviceOther = false;
 let minLevel = 'V';
 let maxBuffer = 50_000;
 let remainder = '';
@@ -35,6 +37,7 @@ function isAdbAvailable() {
 function startLogcatCapture(options) {
     stopLogcatCapture();
     filterByPid = options.filterByPid;
+    captureDeviceOther = options.captureDeviceOther;
     minLevel = options.minLevel;
     maxBuffer = Math.max(1000, Math.min(500_000, options.maxBufferLines));
     lineCb = options.onLine;
@@ -129,6 +132,9 @@ function acceptLine(raw) {
         return false;
     }
     if (filterByPid && pidFilter !== undefined && parsed.pid !== pidFilter) {
+        return false;
+    }
+    if (!captureDeviceOther && (0, device_tag_tiers_1.getDeviceTier)(parsed.tag) === 'device-other') {
         return false;
     }
     return true;

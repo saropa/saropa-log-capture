@@ -50,6 +50,7 @@ document.addEventListener('keydown', function(e) {
     }
     if (action === 'copyMarkdown') { e.preventDefault(); if (typeof copyAsMarkdown === 'function') copyAsMarkdown(); return; }
     if (action === 'copyAll') { e.preventDefault(); if (typeof copyAllToClipboard === 'function') copyAllToClipboard(); return; }
+    if (action === 'copyRaw') { e.preventDefault(); if (typeof copyAsRawText === 'function') copyAsRawText(); return; }
     if (action === 'openFindPanel') {
         e.preventDefault();
         if (typeof setActivePanel === 'function') setActivePanel('find');
@@ -95,7 +96,7 @@ document.addEventListener('keydown', function(e) {
     if (action === 'insertMarker') { e.preventDefault(); vscodeApi.postMessage({ type: 'insertMarker' }); return; }
     if (action === 'togglePin' && typeof togglePin === 'function') { e.preventDefault(); togglePin(getCenterIdx()); return; }
     if (action === 'annotate' && typeof promptAnnotation === 'function') { e.preventDefault(); promptAnnotation(getCenterIdx()); return; }
-    if (action === 'toggleAppOnly' && typeof toggleAppOnly === 'function') { e.preventDefault(); toggleAppOnly(); return; }
+    if (action === 'toggleDevice' && typeof setShowDevice === 'function') { e.preventDefault(); setShowDevice(!showDevice); var dc = document.getElementById('opt-device'); if (dc) dc.checked = showDevice; return; }
 });
 `;
 }

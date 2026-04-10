@@ -9,9 +9,10 @@ exports.getOverlayStyles = getOverlayStyles;
  */
 const viewer_styles_context_menu_1 = require("./viewer-styles-context-menu");
 const viewer_styles_decoration_1 = require("./viewer-styles-decoration");
+const viewer_styles_edit_modal_1 = require("./viewer-styles-edit-modal");
 const viewer_styles_modal_1 = require("./viewer-styles-modal");
 function getOverlayStyles() {
-    return (0, viewer_styles_decoration_1.getDecorationStyles)() + (0, viewer_styles_modal_1.getModalStyles)() + (0, viewer_styles_context_menu_1.getContextMenuStyles)() + /* css */ `
+    return (0, viewer_styles_decoration_1.getDecorationStyles)() + (0, viewer_styles_edit_modal_1.getEditModalStyles)() + (0, viewer_styles_modal_1.getModalStyles)() + (0, viewer_styles_context_menu_1.getContextMenuStyles)() + /* css */ `
 
 /* ===================================================================
    Navigation Bars (Split Breadcrumb + Session Nav)

@@ -112,6 +112,9 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-notice {
     color: var(--vscode-charts-blue, #2196f3);
 }
+.line.level-database {
+    color: var(--vscode-terminal-ansiCyan, #00bcd4);
+}
 
 /* --- ASCII separator lines (===, ---, +---, Drift/Unicode box banners, etc.) --- */
 .line.separator-line {

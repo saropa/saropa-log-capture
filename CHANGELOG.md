@@ -26,10 +26,15 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
-## [Unreleased]
+## [5.7.0]
 
 ### Added
 
+- **Source Logger Best Practices** guide (`docs/SOURCE_LOGGER_BEST_PRACTICES.md`) — documents how to structure `dart:developer` `log()` calls for optimal Saropa Log Capture experience
+- **Mid-line stack frame detection** — `isStackFrameText()` now recognizes Dart source paths (`package:*.dart:N` and `(./lib/*.dart:N:N)`) anywhere in the line, not just at the start. Fixes detection for `stack_trace` package output with `⠀ »` prefix
+- **Strip source tag prefix** toggle in Decoration Settings — hides `[log]`, `[SDA]`, and other bracket prefixes from displayed text when already parsed as a source tag (on by default)
+- **Configurable stack frame defaults** in Decoration Settings — choose initial collapsed state (expanded/preview/collapsed) and preview frame count for stack groups
+- **Console continuation grouping** — multi-line `dart:developer` `log()` output split by the Dart DA into separate events now groups as continuation lines (same timestamp, same category, no source tag on child)
 - **Copy Line Decorated** context menu option — copies clicked/selected line(s) with severity emoji, sequence number, and timestamp
 - **Configurable severity keywords** (`saropaLogCapture.severityKeywords`) — users can customize which keywords trigger each severity level (error, warning, performance, todo, debug, notice). Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) remain built-in
 - **Severity Keywords section** in the viewer Options panel — shows current keyword-to-level mapping with color indicators and a button to open VS Code settings for editing

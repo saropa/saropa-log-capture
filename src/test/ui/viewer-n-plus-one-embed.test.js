@@ -72,11 +72,11 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes(`dml: ${drift_db_repeat_thresholds_1.VIEWER_REPEAT_THRESHOLD_DEFAULTS.dmlMinCount}`));
     });
     test('viewer data script can bake DB insights off (viewerDbInsightsEnabled false)', () => {
-        const data = (0, viewer_data_1.getViewerDataScript)(undefined, false);
+        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbInsightsEnabled: false });
         assert.ok(data.includes('var viewerDbInsightsEnabled = false'));
     });
     test('viewer data script can bake static SQL affordance off (staticSqlFromFingerprintEnabled false)', () => {
-        const data = (0, viewer_data_1.getViewerDataScript)(undefined, true, false);
+        const data = (0, viewer_data_1.getViewerDataScript)({ viewerDbInsightsEnabled: true, staticSqlFromFingerprintEnabled: false });
         assert.ok(data.includes('var staticSqlFromFingerprintEnabled = false'));
     });
     test('full viewer data script includes N+1 insight row type, insightMeta, and DB_15 detector pipeline', () => {
@@ -116,7 +116,7 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('clearRootCauseHintHostFields'));
         assert.ok(chunk.includes('slowBurstBySession'));
         assert.ok(chunk.includes('collectSessionDiffRegressionFpsEmbedded'));
-        assert.ok(chunk.includes('rchCollapseStorageKey'));
+        assert.ok(chunk.includes('updateSignalsBadge'));
         assert.ok(chunk.includes('explainRootCauseHypotheses'));
         assert.ok(chunk.includes('runTriggerExplainRootCauseHypothesesFromHost'));
         assert.ok(chunk.includes('explainRootCauseHypothesesEmpty'));

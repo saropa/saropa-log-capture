@@ -117,6 +117,9 @@ function resetDecoDefaults() {
     decoShowSessionElapsed = false;
     decoLineColorMode = 'none';
     decoShowBar = true;
+    stripSourceTagPrefix = true;
+    stackDefaultState = false;
+    stackPreviewCount = 3;
 }
 
 /**

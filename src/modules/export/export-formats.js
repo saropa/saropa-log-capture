@@ -103,7 +103,7 @@ async function parseLogFile(logUri) {
         if (line.startsWith('---') || line.startsWith('===')) {
             continue;
         }
-        const entry = parseLine(line, bodyStartIndex + i + 1, sessionStart, strict, stderrTreatAsError);
+        const entry = parseLine(line, bodyStartIndex + i + 1, { sessionStart, strict, stderrTreatAsError });
         if (entry) {
             entries.push(entry);
         }
@@ -141,8 +141,9 @@ function extractSessionStart(headerLines) {
  * Format: [HH:MM:SS.mmm] [category] message
  * Or:     [category] message (no timestamp)
  */
-function parseLine(line, lineNumber, sessionStart, strict, stderrTreatAsError) {
+function parseLine(line, lineNumber, opts) {
     const clean = (0, ansi_1.stripAnsi)(line);
+    const { sessionStart, strict, stderrTreatAsError } = opts;
     // Try format with timestamp: [HH:MM:SS.mmm] [category] message
     const withTs = clean.match(/^\[(\d{2}:\d{2}:\d{2}\.\d{3})\]\s+\[(\w+)\]\s+(.*)$/);
     if (withTs) {

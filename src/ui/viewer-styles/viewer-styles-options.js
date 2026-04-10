@@ -126,6 +126,7 @@ function getOptionsStyles() {
     cursor: pointer;
 }
 .scope-disabled { opacity: 0.4; pointer-events: none; }
+.scope-suffix { opacity: 0.5; margin-left: 4px; font-style: italic; }
 
 .options-row select {
     background: var(--vscode-input-background);
@@ -152,29 +153,23 @@ function getOptionsStyles() {
     transition: opacity 0.15s ease;
 }
 
-.options-indent-disabled {
-    opacity: 0.4;
-    pointer-events: none;
-}
-
 .options-row input:disabled + span,
 .deco-settings-row input:disabled + span {
     opacity: 0.4;
 }
 
-/* Action buttons in options panel (Reset to default, Reset extension settings) */
+/* Action buttons (Reset to default, Reset all, SQL Query History…) */
 .options-action-btn {
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
+    background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.5));
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
     border: 1px solid var(--vscode-button-border, transparent);
     font-size: 11px;
     padding: 4px 12px;
     cursor: pointer;
     border-radius: 3px;
-    width: 100%;
 }
 .options-action-btn:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.7));
 }
 
 /* Hint/status text under a control */
@@ -185,7 +180,7 @@ function getOptionsStyles() {
     padding: 0 0 4px 24px;
 }
 
-/* Log Streams: subheading before external sidecar checkboxes */
+/* Log Inputs: subheading before external source checkboxes */
 .source-external-group-title {
     margin-top: 8px;
     padding-top: 4px;
