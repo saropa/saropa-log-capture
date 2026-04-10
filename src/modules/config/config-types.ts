@@ -29,6 +29,16 @@ import type {
 } from "./config-types-integrations";
 import type { ProjectIndexConfig } from "./config-types-project-index";
 
+/** User-configurable keyword lists per severity level. Each keyword is matched as a case-insensitive whole word. */
+export interface SeverityKeywords {
+  readonly error: readonly string[];
+  readonly warning: readonly string[];
+  readonly performance: readonly string[];
+  readonly todo: readonly string[];
+  readonly debug: readonly string[];
+  readonly notice: readonly string[];
+}
+
 export interface SmartBookmarksConfig {
   readonly suggestFirstError: boolean;
   readonly suggestFirstWarning: boolean;
@@ -134,6 +144,7 @@ export interface SaropaLogCaptureConfig {
    * When false (default), stderr is classified from message text (logcat, Drift SQL, keywords) like other channels.
    */
   readonly stderrTreatAsError: boolean;
+  readonly severityKeywords: SeverityKeywords;
   readonly smartBookmarks: SmartBookmarksConfig;
   readonly verboseDap: boolean;
   /** When true, log capture pipeline events to Output (session/buffer/write) for debugging empty logs. */
@@ -185,6 +196,7 @@ export interface ErrorClassificationSettings {
   readonly breakOnCritical: boolean;
   readonly levelDetection: string;
   readonly stderrTreatAsError: boolean;
+  readonly severityKeywords: SeverityKeywords;
 }
 
 /** Error rate chart config pushed to the webview via `setErrorRateConfig`. */
