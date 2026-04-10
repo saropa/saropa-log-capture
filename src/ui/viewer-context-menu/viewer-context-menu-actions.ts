@@ -27,13 +27,9 @@ function handleGlobalAction(action, savedLineIdx) {
         if (typeof savedLineIdx === 'number' && savedLineIdx >= 0 && savedLineIdx < allLines.length) {
             var lineDataCs = allLines[savedLineIdx];
             var plainCs = stripTags(lineDataCs.html || '');
-            var scStart = typeof selectionStart !== 'undefined' ? selectionStart : -1;
-            var scEnd = typeof selectionEnd !== 'undefined' ? selectionEnd : -1;
-            var scLo = Math.min(scStart, scEnd);
-            var scHi = Math.max(scStart, scEnd);
-            var scMulti = scStart >= 0 && scHi > scLo && savedLineIdx >= scLo && savedLineIdx <= scHi;
+            var sel = getSelectionRange(savedLineIdx);
             var outCs;
-            if (scMulti && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var linesCs = getSelectedLines();
                 outCs = linesCs.length > 0 ? linesToPlainText(linesCs) : plainCs;
             } else {
