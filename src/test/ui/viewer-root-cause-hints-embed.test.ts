@@ -36,3 +36,11 @@ test("strength uses emoji + l10n tooltips (no confPrefix label)", () => {
   assert.ok(chunk.includes('role="img"'));
   assert.ok(!chunk.includes("rchStr('confPrefix'"));
 });
+
+test("error collector skips recentErrorContext lines (proximity-inherited errors)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  assert.ok(
+    chunk.includes("row.recentErrorContext"),
+    "collect loop must filter out proximity-inherited error lines to prevent duplicate hypotheses from stack-frame continuations",
+  );
+});
