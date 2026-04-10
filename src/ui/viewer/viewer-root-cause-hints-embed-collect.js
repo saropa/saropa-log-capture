@@ -50,13 +50,14 @@ function collectRootCauseHintBundleEmbedded() {
     var i, row, plain, excerpt, im, keys, eEnt, j, line, fp, sampleIdx, sbk, sbi, sbSid, sbSt, h0, hL, wMs, sessionDiffSummary, regFps;
 
     if (typeof allLines !== 'undefined' && allLines.length) {
-        for (i = allLines.length - 1; i >= 0 && errors.length < 2; i--) {
+        for (i = allLines.length - 1; i >= 0 && errors.length < 50; i--) {
             row = allLines[i];
             if (!row || row.type !== 'line') continue;
-            if (row.level !== 'error' || row.errorSuppressed) continue;
+            if (row.level !== 'error' || row.errorSuppressed || row.isSeparator || row.recentErrorContext) continue;
             plain = stripTags(row.html || '');
             excerpt = plain.replace(/\\s+/g, ' ').trim();
             if (excerpt.length < ${MIN_ERR}) continue;
+            if (!/[a-zA-Z0-9]/.test(excerpt)) continue;
             if (excerpt.length > 400) excerpt = excerpt.substring(0, 397) + '...';
             errors.push({ lineIndex: i, excerpt: excerpt });
         }
