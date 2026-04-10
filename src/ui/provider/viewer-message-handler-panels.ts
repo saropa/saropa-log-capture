@@ -71,6 +71,9 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "resetAllSettings":
         void vscode.commands.executeCommand('saropaLogCapture.resetAllSettings');
         return true;
+      case "openSeverityKeywordsSettings":
+        void vscode.commands.executeCommand('workbench.action.openSettings', 'saropaLogCapture.severityKeywords');
+        return true;
       case "setCaptureEnabled": {
         const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
         const enabled = msg.enabled === true;
