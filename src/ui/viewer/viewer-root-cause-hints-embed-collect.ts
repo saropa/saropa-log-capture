@@ -56,7 +56,7 @@ function collectRootCauseHintBundleEmbedded() {
         for (i = allLines.length - 1; i >= 0 && errors.length < 50; i--) {
             row = allLines[i];
             if (!row || row.type !== 'line') continue;
-            if (row.level !== 'error' || row.errorSuppressed || row.isSeparator) continue;
+            if (row.level !== 'error' || row.errorSuppressed || row.isSeparator || row.recentErrorContext) continue;
             plain = stripTags(row.html || '');
             excerpt = plain.replace(/\\s+/g, ' ').trim();
             if (excerpt.length < ${MIN_ERR}) continue;
