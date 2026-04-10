@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri, readTrackedFiles } from '../../modules/config/config';
 import { SessionMetadataStore, migrateSidecarsInDirectory } from '../../modules/session/session-metadata';
 import { SessionMetadata, TreeItem, groupSplitFiles } from './session-history-grouping';
-import { loadBatch, LoadMetadataTarget } from './session-history-metadata';
+import { loadBatch, LoadMetadataTarget, type OnItemLoaded } from './session-history-metadata';
 
 /** Target interface for fetch operations that need access to provider state. */
 export interface FetchTarget extends LoadMetadataTarget {
@@ -38,6 +38,7 @@ async function migrateIfNeeded(
 export async function fetchItemsCore(
     target: FetchTarget,
     logDirOverride?: vscode.Uri,
+    onItemLoaded?: OnItemLoaded,
 ): Promise<TreeItem[]> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder && !logDirOverride) { return []; }
@@ -48,7 +49,7 @@ export async function fetchItemsCore(
         const { fileTypes, includeSubfolders } = getConfig();
         const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
         const centralMeta = await target.metaStore.loadAllMetadata(logDir);
-        const items = await loadBatch(target, logDir, logFiles, centralMeta);
+        const items = await loadBatch(target, logDir, logFiles, { centralMeta, onItemLoaded });
         pruneCache(target, items);
         const grouped = groupSplitFiles(items);
         return grouped.sort((a, b) => b.mtime - a.mtime);
