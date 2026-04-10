@@ -27,9 +27,9 @@ function handleGlobalAction(action, savedLineIdx) {
         if (typeof savedLineIdx === 'number' && savedLineIdx >= 0 && savedLineIdx < allLines.length) {
             var lineDataCs = allLines[savedLineIdx];
             var plainCs = stripTags(lineDataCs.html || '');
-            var sel = getSelectionRange(savedLineIdx);
+            var selRange = getSelectionRange(savedLineIdx);
             var outCs;
-            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            if (selRange.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var linesCs = getSelectedLines();
                 outCs = linesCs.length > 0 ? linesToPlainText(linesCs) : plainCs;
             } else {
