@@ -44,6 +44,7 @@ const assert = __importStar(require("node:assert"));
 const vm = __importStar(require("node:vm"));
 const viewer_data_add_1 = require("../../ui/viewer/viewer-data-add");
 const viewer_data_helpers_core_1 = require("../../ui/viewer/viewer-data-helpers-core");
+const viewer_data_sql_drilldown_ui_1 = require("../../ui/viewer/viewer-data-sql-drilldown-ui");
 const viewer_db_detector_framework_script_1 = require("../../ui/viewer/viewer-db-detector-framework-script");
 const viewer_data_n_plus_one_script_1 = require("../../ui/viewer/viewer-data-n-plus-one-script");
 const drift_db_repeat_thresholds_1 = require("../../modules/db/drift-db-repeat-thresholds");
@@ -62,7 +63,12 @@ var sessionStartTs = null;
 var autoHiddenCount = 0;
 var strictLevelDetection = false;
 var suppressTransientErrors = false;
-var appOnlyMode = false;
+var viewerPreserveAsciiBoxArt = true;
+var viewerGroupAsciiArt = true;
+var viewerDetectAsciiArt = false;
+var showFlutter = true;
+var showDevice = false;
+function isTierHidden() { return false; }
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }
 function isStackFrameText() { return false; }
@@ -118,6 +124,7 @@ function loadAnnotateSandbox() {
     const code = buildAnnotateSandboxScript() +
         (0, viewer_data_n_plus_one_script_1.getNPlusOneDetectorScript)(drift_db_repeat_thresholds_1.VIEWER_REPEAT_THRESHOLD_DEFAULTS) +
         (0, viewer_db_detector_framework_script_1.getViewerDbDetectorFrameworkScript)(true) +
+        (0, viewer_data_sql_drilldown_ui_1.getSqlDrilldownUiScript)() +
         (0, viewer_data_helpers_core_1.getViewerDataHelpersCore)() +
         (0, viewer_data_add_1.getViewerDataAddScript)() +
         VM_TEST_ANNOTATE_DETECTOR;

@@ -37,14 +37,14 @@ const assert = __importStar(require("assert"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const viewer_toolbar_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-html");
-const viewer_toolbar_search_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-search-html");
 const viewer_toolbar_filter_drawer_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html");
 const viewer_toolbar_actions_html_1 = require("../../ui/viewer-toolbar/viewer-toolbar-actions-html");
 /**
- * Tests for the toolbar, search flyout, filter drawer, and actions dropdown.
+ * Structure and integration tests for the toolbar, filter drawer, and actions dropdown.
  *
  * Verifies that all required DOM element IDs are preserved so existing
  * webview scripts continue to bind correctly.
+ * Tooltip tests are in viewer-toolbar-tooltips.test.ts.
  */
 suite('Viewer toolbar', () => {
     function readSrc(relFromSrc) {
@@ -64,7 +64,7 @@ suite('Viewer toolbar', () => {
             'id="line-count"',
             'id="hidden-lines-counter"',
             'id="footer-selection"',
-            'id="filter-badge"',
+            'id="toolbar-signals-btn"',
             'id="footer-text"',
         ];
         for (const id of required) {
@@ -91,13 +91,22 @@ suite('Viewer toolbar', () => {
             'id="level-select-none"',
             'id="context-lines-slider"',
             'id="context-lines-label"',
-            'id="opt-app-only"',
+            'id="opt-flutter"',
+            'id="opt-device"',
             'id="preset-select"',
             'id="reset-all-filters"',
         ];
         for (const id of required) {
             assert.ok(html.includes(id), `filter drawer must contain ${id}`);
         }
+    });
+    test('context label uses compact \u00b1N format', () => {
+        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
+        assert.ok(html.includes('>\u00B13</span>'), 'context label should show \u00b13 (not "Context: 3 lines")');
+    });
+    test('syncContextSlider produces matching \u00b1N format', () => {
+        const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
+        assert.ok(src.includes("'\\u00B1' + contextLinesBefore"), 'syncContextSlider should set label to \u00b1N');
     });
     test('filter drawer has accordion sections', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
@@ -187,60 +196,15 @@ suite('Viewer toolbar', () => {
         const src = readSrc('ui/viewer/viewer-script.ts');
         assert.ok(src.includes("getElementById('viewer-toolbar')"), 'viewer-script should use toolbar for paused class toggle');
     });
-    test('filter badge click opens filter drawer', () => {
+    test('filter badge updates toolbar icon badge', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-filter-badge.ts');
-        assert.ok(src.includes('openFilterDrawer'), 'badge click should open filter drawer');
-        assert.ok(!src.includes("setActivePanel('filters')"), 'badge should not open old filters panel');
+        assert.ok(src.includes("getElementById('toolbar-filter-count')"), 'badge should update the toolbar filter icon badge');
+        assert.ok(!src.includes("getElementById('filter-badge')"), 'should not reference removed standalone filter-badge');
     });
     test('level filter delegates to filter drawer', () => {
         const src = readSrc('ui/viewer-search-filter/viewer-level-filter.ts');
         assert.ok(src.includes('toggleFilterDrawer'), 'toggleLevelMenu should delegate to toggleFilterDrawer');
         assert.ok(!src.includes("getElementById('level-flyup')"), 'should not reference removed #level-flyup element');
-    });
-    test('toolbar elements should have descriptive tooltips', () => {
-        const html = (0, viewer_toolbar_html_1.getToolbarHtml)({ version: '1.0.0' });
-        // Nav buttons
-        assert.ok(html.includes('title="Navigate to the previous'), 'prev button needs descriptive tooltip');
-        assert.ok(html.includes('title="Navigate to the next'), 'next button needs descriptive tooltip');
-        // Icon buttons
-        assert.ok(html.includes('title="Open search to find text'), 'search button needs descriptive tooltip');
-        assert.ok(html.includes('title="Open filter drawer'), 'filter button needs descriptive tooltip');
-        assert.ok(html.includes('title="Open actions menu'), 'actions button needs descriptive tooltip');
-        // Level dots
-        assert.ok(html.includes('title="Info — click to toggle, double-click to show only Info"'), 'level dots need descriptive tooltips');
-        // Status elements
-        assert.ok(html.includes('title="Total number of lines'), 'line count needs tooltip');
-        assert.ok(html.includes('title="Number of currently selected lines"'), 'selection needs tooltip');
-        // Interactive elements describe their actions
-        assert.ok(html.includes('double-click to open folder'), 'filename tooltip should describe double-click');
-        assert.ok(html.includes('long-press to copy path'), 'filename tooltip should describe long-press');
-        assert.ok(html.includes('click to open filter drawer'), 'trigger label should describe click action');
-    });
-    test('search flyout elements should have descriptive tooltips', () => {
-        const html = (0, viewer_toolbar_search_html_1.getSearchFlyoutHtml)();
-        assert.ok(html.includes('title="Type to search or filter'), 'search input needs tooltip');
-        assert.ok(html.includes('title="Match Case — toggle'), 'case toggle needs descriptive tooltip');
-        assert.ok(html.includes('title="Match Whole Word — only'), 'word toggle needs descriptive tooltip');
-        assert.ok(html.includes('title="Number of matches found"'), 'match count needs tooltip');
-        assert.ok(html.includes('title="Switch between highlighting'), 'funnel button needs descriptive tooltip');
-    });
-    test('filter drawer level buttons should have tooltips', () => {
-        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('title="Click to show all log levels"'), 'All button needs tooltip');
-        assert.ok(html.includes('title="Click to hide all log levels"'), 'None button needs tooltip');
-        assert.ok(html.includes('title="Info — click to show/hide informational'), 'Info toggle needs descriptive tooltip');
-        assert.ok(html.includes('title="Error — click to show/hide error'), 'Error toggle needs descriptive tooltip');
-    });
-    test('filter drawer accordion headers should have tooltips', () => {
-        const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('title="Click to expand or collapse the Log Streams'), 'Log Streams accordion needs tooltip');
-        assert.ok(html.includes('title="Click to expand or collapse the Exclusions'), 'Exclusions accordion needs tooltip');
-    });
-    test('actions dropdown items should have tooltips', () => {
-        const html = (0, viewer_toolbar_actions_html_1.getActionsDropdownHtml)();
-        assert.ok(html.includes('title="Replay the log session'), 'replay needs tooltip');
-        assert.ok(html.includes('title="Generate and open a quality report'), 'quality report needs tooltip');
-        assert.ok(html.includes('title="Export log lines'), 'export needs tooltip');
     });
 });
 //# sourceMappingURL=viewer-toolbar.test.js.map

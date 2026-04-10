@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const assert = __importStar(require("assert"));
 const viewer_scope_filter_1 = require("../../ui/viewer-search-filter/viewer-scope-filter");
+const viewer_scope_filter_hint_1 = require("../../ui/viewer-search-filter/viewer-scope-filter-hint");
 /** Minimal DOM + globals to evaluate the injected scope-filter script for hint behavior. */
 function createScopeHintRuntime() {
     const hintEl = {
@@ -53,7 +54,7 @@ function createScopeHintRuntime() {
         var document = {
             getElementById: function(id) {
                 if (id === 'scope-filter-hint') return hintStub;
-                if (id === 'scope-hide-unattrib') return { checked: false, addEventListener: function(){} };
+                if (id === 'scope-hide-unattrib') return { checked: false, disabled: false, addEventListener: function(){}, closest: function() { return { classList: { toggle: function(){} } }; } };
                 if (id === 'scope-narrowing-block') return { style: {} };
                 if (id === 'scope-no-context-hint') return { style: {} };
                 if (id === 'scope-status') return { textContent: '', removeAttribute: function(){}, title: '' };
@@ -66,6 +67,7 @@ function createScopeHintRuntime() {
         var renderViewport = function() {};
         var markPresetDirty = function() {};
         ${(0, viewer_scope_filter_1.getScopeFilterScript)()}
+        ${(0, viewer_scope_filter_hint_1.getScopeFilterHintScript)()}
         return {
             setActiveFilePath: function(p) { scopeContext.activeFilePath = p; },
             setScopeHideUnattrib: function(v) { scopeHideUnattributed = !!v; },
@@ -123,7 +125,7 @@ suite('Viewer scope filter hint (behavior)', () => {
             });
         }
         api.setScopeLevel('file');
-        assert.ok(hintEl.innerHTML.includes('no debugger file path'));
+        assert.ok(hintEl.innerHTML.includes('no source file'));
     });
     test('does not show no-path guidance when hide-unattrib is on (false positive guard)', () => {
         const { allLines, api, hintEl } = createScopeHintRuntime();
@@ -136,7 +138,7 @@ suite('Viewer scope filter hint (behavior)', () => {
             });
         }
         api.setScopeLevel('file');
-        assert.ok(!hintEl.innerHTML.includes('no debugger file path'));
+        assert.ok(!hintEl.innerHTML.includes('no source file'));
     });
     test('clears hint when widening scope to all after active narrowing', () => {
         const { allLines, api, hintEl } = createScopeHintRuntime();

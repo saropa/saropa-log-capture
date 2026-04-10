@@ -22,7 +22,7 @@ function processOutputEvent(deps, target, sessionId, body) {
         return;
     }
     const category = body.category ?? 'console';
-    const text = body.output.replace(/\r?\n$/, '');
+    const text = body.output.replace(/[\r\n]+$/, '');
     if (text.length === 0) {
         return;
     }
@@ -65,7 +65,7 @@ function processApiWriteLine(deps, target, input) {
     if (!deps.config.enabled) {
         return;
     }
-    const normalized = input.text.replace(/\r?\n$/, '');
+    const normalized = input.text.replace(/[\r\n]+$/, '');
     const lines = normalized.includes('\n') ? normalized.split(/\r?\n/) : [normalized];
     for (const line of lines) {
         writeOneLine(deps, target, { ...input, text: line });

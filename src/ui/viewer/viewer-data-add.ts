@@ -93,8 +93,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
         var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        // Expanded by default so every frame is visible; users can click the header to collapse or use preview.
-        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, tier: lineTier, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        // Use configurable defaults: stackDefaultState (false/true/'preview'), stackPreviewCount (1-20).
+        var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
+        var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
+        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }

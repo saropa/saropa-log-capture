@@ -5,25 +5,43 @@ exports.getViewerDataHelpersRender = getViewerDataHelpersRender;
  * renderItem() for the log viewer — item-to-HTML rendering.
  * Extracted to keep viewer-data-helpers.ts under the line limit.
  *
- * **Framework line colors vs `deemphasizeFrameworkLevels`:**
- * That setting only suppresses severity *text* classes for framework lines at **error** and **warning**
- * (matching the product copy for the option). **Performance** lines (e.g. Android Choreographer
- * “skipped frames”) keep `level-performance` / purple text even when `item.fw` is true, so jank
- * signals stay visible alongside neutral framework info noise.
- * The severity gutter always uses `level-bar-{item.level}` (never `level-bar-framework` for fw lines)
- * so dot/connector color matches `level-{item.level}` text.
+ * Severity coloring on device lines is handled by the tier system:
+ * - Device-other lines have their level demoted to `info` at capture in `addToData()`,
+ *   so they never show red/yellow regardless of logcat prefix.
+ * - Device-critical lines keep their real severity (e.g. `E/AndroidRuntime` shows red).
+ * The severity gutter always uses `level-bar-{item.level}` so dot/connector color matches text.
  */
 function getViewerDataHelpersRender() {
     return /* javascript */ `
-/** Per line index: Drift \` with args [...]\` fold is expanded (see drift-log-line-args-fold.ts). */
-var driftArgsFoldOpenByIdx = Object.create(null);
+/** Whether to show output channel badges on log lines (toggled from Decorations panel). */
+var showCategoryBadges = false;
+
+/** Channel badge colors keyed by DAP category. */
+var categoryBadgeColors = {
+    stdout: '#4ec9b0',
+    stderr: '#f48771',
+    'ai-bash': '#ce9178',
+    'ai-edit': '#d7ba7d',
+    logcat: '#9cdcfe',
+    'db-insight': '#c586c0',
+    system: '#b5cea8'
+};
+
+/** Return a small inline badge for the line's output channel, or empty string. */
+function getCategoryBadge(item) {
+    if (!showCategoryBadges || !item.category || item.category === 'console') return '';
+    var label = item.category;
+    var clr = categoryBadgeColors[label] || '#888';
+    return '<span class="category-badge" style="--cat-clr:' + clr + '" title="Output channel: ' + label + '">' + label + '</span> ';
+}
+
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
         : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
     var spacingCls = '';
-    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled) {
+    if (typeof visualSpacingEnabled !== 'undefined' && visualSpacingEnabled && !item.artBlockPos) {
         var spPrev = null;
         if (prevVis !== undefined) { spPrev = prevVis; }
         else {
@@ -85,6 +103,8 @@ function renderItem(item, idx, prevVis) {
             barCls = ' level-bar-' + item.level;
         }
     }
+    /* Art-block gutter: CSS border-left handles the continuous bar (not bar-up/bar-down pseudo
+       which would conflict with the shimmer ::after). Only the start line keeps its dot. */
     if (item.type === 'stack-header') {
         // Unicode triangles for state: ▶ collapsed, ▼ expanded, ▷ preview (code uses \\u25b6/\\u25bc/\\u25b7)
         var ch, sf;
@@ -121,19 +141,22 @@ function renderItem(item, idx, prevVis) {
         return '<div class="line ai-line ' + aiCat + matchCls + spacingCls + '"' + idxAttr + '>' + aiPrefix + aiCompress + aiBody + '</div>';
     }
     var cat = (item.category === 'stderr' && stderrTreatAsError) ? ' cat-stderr' : '';
-    // Setting is "suppress error/warning coloring on framework lines" — keep performance (e.g. Choreographer jank) purple.
-    var fwMuted = (typeof deemphasizeFrameworkLevels !== 'undefined' && deemphasizeFrameworkLevels && item.fw
-        && (item.level === 'error' || item.level === 'warning'));
     var lcOn = (typeof lineColorsEnabled !== 'undefined' && lineColorsEnabled);
-    var levelCls = (lcOn && item.level && !item.isContext && !fwMuted) ? ' level-' + item.level : '';
+    var levelCls = (lcOn && item.level && !item.isContext) ? ' level-' + item.level : '';
     if (item.recentErrorContext && item.level === 'error' && !item.isContext) {
         levelCls += ' recent-error-context';
     }
     var sepCls = item.isSeparator ? ' separator-line' : '';
-    var gap = (typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '';
-    var elapsed = (typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '';
+    /* Art-block classes: start gets decoration, middle/end get none. */
+    var abp = item.artBlockPos;
+    if (abp === 'start') sepCls += ' art-block-start';
+    else if (abp === 'middle') sepCls += ' art-block-middle';
+    else if (abp === 'end') sepCls += ' art-block-end';
+    var isArtCont = (abp === 'middle' || abp === 'end');
+    var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
+    var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
     /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
-    var deco = (typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '';
+    var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     var compressDupBadge = '';
@@ -143,6 +166,7 @@ function renderItem(item, idx, prevVis) {
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
+    if (typeof getLintBadge === 'function') badge += getLintBadge(item);
     var corr = (typeof correlationByLineIndex !== 'undefined' && correlationByLineIndex[idx]);
     if (corr) badge += '<span class="correlation-badge" data-correlation-id="' + (corr.id || '').replace(/"/g, '&quot;') + '" title="' + (corr.description || '').replace(/"/g, '&quot;') + '">\\u27a4</span> ';
     var titleAttr = '';
@@ -155,10 +179,6 @@ function renderItem(item, idx, prevVis) {
     if (typeof wrapTagLink === 'function') {
         if (item.logcatTag) html = wrapTagLink(html, item.logcatTag);
         if (item.sourceTag) html = wrapTagLink(html, item.sourceTag);
-    }
-    if (html.indexOf('drift-args-fold') >= 0 && driftArgsFoldOpenByIdx[idx]) {
-        html = html.replace('<span class="drift-args-fold">', '<span class="drift-args-fold drift-args-fold-open">');
-        html = html.replace('class="drift-args-fold-btn" aria-expanded="false"', 'class="drift-args-fold-btn" aria-expanded="true"');
     }
     if (item.recentErrorContext && item.level === 'error') {
         var recTip = 'Recent-error context: not the primary faulting line; tinted because a real error or stack line occurred within 2 seconds above.';
@@ -187,7 +207,8 @@ function renderItem(item, idx, prevVis) {
         var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse continuation lines';
         contBadge = ' <span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + html + contBadge + '</div>' + annHtml;
+    var catBadge = getCategoryBadge(item);
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + catBadge + html + contBadge + '</div>' + annHtml;
 }
 `;
 }

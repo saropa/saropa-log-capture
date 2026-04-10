@@ -80,7 +80,6 @@ function startExternalLogTailers(workspaceFolder, paths, config, outputChannel) 
     for (const relPath of paths) {
         const uri = (0, workspace_path_1.resolveWorkspaceFileUri)(workspaceFolder, relPath);
         const filePath = uri.fsPath;
-        let label;
         try {
             const stat = fs.statSync(filePath);
             if (!stat.isFile()) {
@@ -92,7 +91,7 @@ function startExternalLogTailers(workspaceFolder, paths, config, outputChannel) 
             outputChannel.appendLine(`[externalLogs] External log not found: ${relPath}`);
             continue;
         }
-        label = pathToLabel(relPath);
+        const label = pathToLabel(relPath);
         const buffer = [];
         buffersByLabel.set(label, buffer);
         const cap = () => {

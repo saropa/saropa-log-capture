@@ -28,6 +28,7 @@ function getSearchScript() {
 var sessionNavSearchOuter = document.getElementById('search-flyout');
 var searchInputEl = document.getElementById('search-input');
 var matchCountEl = document.getElementById('match-count');
+var toolbarSearchBadge = document.getElementById('toolbar-search-count');
 var searchModeToggleEl = document.getElementById('search-mode-toggle');
 var searchFunnelBtn = document.getElementById('search-funnel-btn');
 var searchOptionsPopover = document.getElementById('search-options-popover');
@@ -73,7 +74,7 @@ function closeSearch() {
     if (typeof renderSearchHistory === 'function') renderSearchHistory();
     if (typeof clearActivePanel === 'function') clearActivePanel('search');
     searchRegex = null;
-    clearSearchFilter();
+    clearSearchFilteredFlags();
     renderViewport(true); // clears match highlighting (and covers non-filter case)
     syncSearchMatchOptionsVisibility();
 }
@@ -87,6 +88,7 @@ function clearSearchState() {
     matchIndices = [];
     currentMatchIdx = -1;
     if (matchCountEl) matchCountEl.textContent = '';
+    if (toolbarSearchBadge) toolbarSearchBadge.textContent = '';
     var sp = document.getElementById('search-prev');
     var sn = document.getElementById('search-next');
     if (sp) sp.disabled = true;
@@ -102,7 +104,7 @@ function updateSearch() {
         var query = searchInputEl ? searchInputEl.value : '';
         if (!query) {
             clearSearchState();
-            clearSearchFilter();
+            clearSearchFilteredFlags();
             renderViewport(true);
             return;
         }
@@ -131,7 +133,7 @@ function updateSearch() {
         if (searchFilterMode) {
             applySearchFilter();
         } else {
-            clearSearchFilter();
+            clearSearchFilteredFlags();
             renderViewport(true);
         }
         if (currentMatchIdx >= 0 && !searchFilterMode) scrollToMatch();
@@ -155,7 +157,8 @@ function applySearchFilter() {
     else { recalcHeights(); }
 }
 
-function clearSearchFilter() {
+/** Reset the searchFiltered flag on every line item so all lines become visible again. */
+function clearSearchFilteredFlags() {
     if (!searchFilterDirty) return;
     searchFilterDirty = false;
     for (var i = 0; i < allLines.length; i++) {
@@ -176,6 +179,9 @@ function updateMatchDisplay() {
     var navDisabled = matchIndices.length === 0;
     if (sp) sp.disabled = navDisabled;
     if (sn) sn.disabled = navDisabled;
+    if (toolbarSearchBadge) {
+        toolbarSearchBadge.textContent = matchIndices.length > 0 ? String(matchIndices.length) : '';
+    }
 }
 
 function searchNext() {

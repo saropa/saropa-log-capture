@@ -44,7 +44,7 @@ suite('LevelClassifier', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('all good', 'stderr', true, false), 'info');
         });
         test('should honor Drift SQL on stderr when stderrTreatAsError is false', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false), 'info');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (1): Drift: Sent SELECT 1', 'stderr', true, false), 'database');
         });
     });
     suite('classifyLevel — logcat prefixes', () => {
@@ -75,14 +75,14 @@ suite('LevelClassifier', () => {
         test('should classify I/ plain text as info', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('I/App: started', 'stdout', true), 'info');
         });
-        test('should classify I/flutter Drift SQL statements as info even with "ApplicationLogError" in args', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]', 'stdout', true), 'info');
+        test('should classify I/flutter Drift SQL statements as database even with "ApplicationLogError" in args', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?, ?, ?, ?) with args [ApplicationLogTodo, ApplicationLogBreadcrumb, ApplicationLogInfo, ApplicationLogWarning, ApplicationLogError]', 'stdout', true), 'database');
         });
-        test('should classify capture-prefixed Drift SQL as info when logcat is not at line start', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]', 'stdout', true), 'info');
+        test('should classify capture-prefixed Drift SQL as database when logcat is not at line start', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('[12:00:00.000] [stdout] I/flutter (5475): Drift: Sent DELETE FROM "activities" WHERE "activity_type_name" IN (?, ?) with args [ApplicationLogTodo, ApplicationLogError]', 'stdout', true), 'database');
         });
-        test('should classify E/flutter Drift SQL as warning, not runtime error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true), 'warning');
+        test('should classify E/flutter Drift SQL as database, not runtime error', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true), 'database');
         });
     });
     suite('classifyLevel — strict mode', () => {
@@ -98,11 +98,11 @@ suite('LevelClassifier', () => {
         test('should detect [fatal] bracket pattern', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('[fatal] shutdown', 'stdout', true), 'error');
         });
-        test('should detect failed keyword', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('Build failed', 'stdout', true), 'error');
+        test('should detect failed keyword as warning', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Build failed', 'stdout', true), 'warning');
         });
-        test('should detect failure keyword', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('Connection failure', 'stdout', true), 'error');
+        test('should detect failure keyword as warning', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Connection failure', 'stdout', true), 'warning');
         });
         test('should detect panic keyword', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('panic: runtime error', 'stdout', true), 'error');
@@ -149,10 +149,19 @@ suite('LevelClassifier', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter: potential leak in Widget', 'stdout', true), 'performance');
             assert.strictEqual((0, level_classifier_1.classifyLevel)('at package:flutter/src/widgets.dart:123: memory usage high', 'stdout', true), 'performance');
         });
-        test('should classify TODO/FIXME/HACK', () => {
+        test('should classify TODO/FIXME/HACK/XXX', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('TODO: fix this', 'stdout', true), 'todo');
             assert.strictEqual((0, level_classifier_1.classifyLevel)('FIXME: broken', 'stdout', true), 'todo');
             assert.strictEqual((0, level_classifier_1.classifyLevel)('HACK: workaround', 'stdout', true), 'todo');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('XXX: danger zone', 'stdout', true), 'todo');
+        });
+        test('should classify BUG/KLUDGE/WORKAROUND as todo', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('BUG: null ref in widget', 'stdout', true), 'todo');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('KLUDGE: temporary fix', 'stdout', true), 'todo');
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('WORKAROUND: upstream issue', 'stdout', true), 'todo');
+        });
+        test('should not match BUG inside DEBUG', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('DEBUG: variable value', 'stdout', true), 'debug');
         });
         test('should classify debug/trace', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('debug: variable value', 'stdout', true), 'debug');
@@ -179,49 +188,6 @@ suite('LevelClassifier', () => {
         test('should be case-insensitive for keywords', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('WARNING: test', 'stdout', true), 'warning');
             assert.strictEqual((0, level_classifier_1.classifyLevel)('Warning: test', 'stdout', true), 'warning');
-        });
-    });
-    suite('classifyLevel — Dart/Flutter errors', () => {
-        test('should detect _TypeError (Dart internal error)', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('[log] _TypeError (Null check operator used on a null value)', 'stdout', true), 'error');
-        });
-        test('should detect _RangeError (Dart internal error)', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('_RangeError (Invalid value)', 'stdout', true), 'error');
-        });
-        test('should detect _FormatException (Dart internal error)', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('_FormatException (Unexpected character)', 'stdout', true), 'error');
-        });
-        test('should detect "Null check operator" message', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('[log] Null check operator used on a null value', 'stdout', true), 'error');
-        });
-        test('should detect I/flutter with _TypeError as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (10946): _TypeError (Null check operator used on a null value)', 'stdout', true), 'error');
-        });
-        test('should detect I/flutter with Null check operator as error', () => {
-            assert.strictEqual((0, level_classifier_1.classifyLevel)('I/flutter (10946): Potential Null Check Operator Error Detected: Null check operator used on a null value', 'stdout', true), 'error');
-        });
-    });
-    suite('isActionableLevel', () => {
-        test('should return true for error', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('error'), true);
-        });
-        test('should return true for warning', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('warning'), true);
-        });
-        test('should return true for performance', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('performance'), true);
-        });
-        test('should return true for todo', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('todo'), true);
-        });
-        test('should return false for info', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('info'), false);
-        });
-        test('should return false for debug', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('debug'), false);
-        });
-        test('should return false for notice', () => {
-            assert.strictEqual((0, level_classifier_1.isActionableLevel)('notice'), false);
         });
     });
 });

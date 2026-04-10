@@ -10,14 +10,14 @@ exports.classifyLevel = classifyLevel;
 exports.isAnrLine = isAnrLine;
 exports.isActionableLevel = isActionableLevel;
 const logcatLevelPattern = /^([VDIWEFA])\//;
-/** Logcat severity (I/, E/, …) may appear after capture prefixes like `[12:00:00] [stdout]`. */
-const logcatLetterAnywhere = /\b([VDIWEFA])\//;
+/** Threadtime format: `MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message` (from `adb logcat -v threadtime`). */
+const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+([VDIWEFA])\s/;
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
 // Treat them as query/debug output so they don't get misclassified as runtime errors.
 const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
-const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|\bfail(?:ed|ure)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
-const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fail(?:ed|ure)?|fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
-const warnPattern = /\b(warn(ing)?|caution)\b/i;
+const strictErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|\b(?:fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+const looseErrorPattern = /\b(?:error|exception)(?!\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\b|\b(?:fatal|panic|critical)\b|_\w*(?:Error|Exception)\b|Null check operator/i;
+const warnPattern = /\b(warn(ing)?|caution|fail(?:ed|ure)?)\b/i;
 const anrPattern = /\b(anr|application\s+not\s+responding|input\s+dispatching\s+timed\s+out)\b/i;
 // Performance: PERF/jank/GC/ANR — well-established patterns.
 const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stutter|skipped\s+\d+\s+frames?|choreographer|doing\s+too\s+much\s+work|gc\s+(?:pause|freed|concurrent)|anr|application\s+not\s+responding)\b/i;
@@ -25,32 +25,12 @@ const perfPattern = /\b(perf(?:ormance)?|dropped\s+frame|fps|framerate|jank|stut
 // High-confidence phrases only; no bare "heap"/"memory" to avoid false positives in other runtimes.
 const flutterDartContextRe = /(?:^[VDIW]\/(?:flutter|dart)[\s:]|package[\/:](?:flutter|dart)\b)/i;
 const memoryPhraseRe = /\b(Memory\s*:\s*\d+|memory\s+(?:pressure|usage|leak)|(?:old|new)\s+gen\s|retained\s+\d+|leak\s+detected|potential\s+leak)\b/i;
-const todoPattern = /\b(TODO|FIXME|HACK|XXX)\b/i;
+const todoPattern = /\b(TODO|FIXME|HACK|XXX|BUG|KLUDGE|WORKAROUND)\b/i;
 const debugPattern = /\b(breadcrumb|trace|debug)\b/i;
 const noticePattern = /\b(notice|note|important)\b/i;
-/**
- * Drift `Sent SELECT|INSERT|…` lines are framework SQL tracing, not runtime failures.
- * Never classify them as `error` (avoids false positives from enum names like ApplicationLogError in args).
- * Must run before `^I/` logcat handling so capture-prefixed lines still match.
- */
-function classifyDriftSqlLine(plainText) {
-    const lcm = logcatLevelPattern.exec(plainText);
-    const m = lcm ?? logcatLetterAnywhere.exec(plainText);
-    if (!m) {
-        return 'info';
-    }
-    const prefix = m[1];
-    if (prefix === 'D' || prefix === 'V') {
-        return 'debug';
-    }
-    if (prefix === 'W') {
-        return 'warning';
-    }
-    if (prefix === 'E' || prefix === 'F' || prefix === 'A') {
-        return 'warning';
-    }
-    return 'info';
-}
+// Generic SQL: requires structural keyword pairs to avoid false positives on bare words.
+// Drift lines are caught earlier by driftStatementPattern; this covers other ORMs and raw SQL.
+const genericSqlPattern = /\bSELECT\b.{1,80}\bFROM\b|\bINSERT\s+INTO\b|\bUPDATE\b\s+\S+\s+SET\b|\bDELETE\s+FROM\b|\bCREATE\s+(?:TABLE|INDEX|VIEW)\b|\bALTER\s+(?:TABLE|INDEX)\b|\bDROP\s+(?:TABLE|INDEX|VIEW)\b|\bPRAGMA\s+\w+/i;
 /** True when the line is a Drift SQL trace (`Drift: Sent …`). Used by the viewer to skip severity proximity inheritance. */
 function isDriftSqlStatementLine(plainText) {
     return driftStatementPattern.test(plainText);
@@ -67,9 +47,9 @@ function classifyLevel(plainText, category, strict, stderrTreatAsError = true) {
         return 'error';
     }
     if (driftStatementPattern.test(plainText)) {
-        return classifyDriftSqlLine(plainText);
+        return 'database';
     }
-    const lcm = logcatLevelPattern.exec(plainText);
+    const lcm = logcatLevelPattern.exec(plainText) ?? threadtimeLevelPattern.exec(plainText);
     if (lcm) {
         return classifyLogcat(lcm[1], plainText, strict);
     }
@@ -111,6 +91,9 @@ function classifyLogcat(prefix, plainText, strict) {
     if (noticePattern.test(plainText)) {
         return 'notice';
     }
+    if (genericSqlPattern.test(plainText)) {
+        return 'database';
+    }
     return 'info';
 }
 function classifyNonError(plainText) {
@@ -135,6 +118,9 @@ function classifyNonError(plainText) {
     }
     if (noticePattern.test(plainText)) {
         return 'notice';
+    }
+    if (genericSqlPattern.test(plainText)) {
+        return 'database';
     }
     return 'info';
 }

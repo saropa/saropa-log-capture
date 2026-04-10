@@ -6,10 +6,12 @@ exports.getFiltersPanelScript = exports.getFiltersPanelHtml = void 0;
  *
  * Provides a slide-out panel with filter controls:
  *   - Quick Filters (presets + reset)
- *   - Output Channels (DAP category checkboxes)
- *   - Log Tags (source tag chips with search)
- *   - Class Tags (class tag chips with search)
- *   - Noise Reduction (exclusions + app-only)
+ *   - Log Inputs (merged sources + DAP category checkboxes)
+ *   - Exclusions (exclusion patterns)
+ *   - Message Tags (source tag chips with search)
+ *   - Code Origins (class/method tag chips with search)
+ *   - File Scope (code location narrowing)
+ *   - SQL Commands (query type chips)
  */
 const viewer_filters_panel_html_1 = require("./viewer-filters-panel-html");
 Object.defineProperty(exports, "getFiltersPanelHtml", { enumerable: true, get: function () { return viewer_filters_panel_html_1.getFiltersPanelHtml; } });

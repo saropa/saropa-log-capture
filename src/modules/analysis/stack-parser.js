@@ -7,11 +7,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isFrameworkFrame = isFrameworkFrame;
 exports.isAppFrame = isAppFrame;
+exports.classifyLogLine = classifyLogLine;
 exports.isFrameworkLogLine = isFrameworkLogLine;
 exports.isAsciiBoxDrawingDecorLine = isAsciiBoxDrawingDecorLine;
 exports.isStackFrameLine = isStackFrameLine;
 exports.parseThreadHeader = parseThreadHeader;
 exports.extractDateFromFilename = extractDateFromFilename;
+const device_tag_tiers_1 = require("./device-tag-tiers");
 /** Patterns that identify framework / library stack frames. */
 const frameworkPatterns = [
     // Dart / Flutter
@@ -101,30 +103,42 @@ const launchPatterns = [
     /^[√✓] Built\s/,
 ];
 /**
- * Classify a regular (non-stack-frame) log line as framework or app.
- * Returns true for framework/system output, false for app output,
+ * Classify a regular (non-stack-frame) log line by device tier.
+ * Returns a DeviceTier for logcat lines, 'device-other' for launch boilerplate,
  * or undefined if the line format is unrecognised.
  */
-function isFrameworkLogLine(text) {
+function classifyLogLine(text) {
     const m = logcatWithPid.exec(text) ?? logcatNoPid.exec(text);
     if (m) {
-        return m[1] !== 'flutter';
+        return (0, device_tag_tiers_1.getDeviceTier)(m[1]);
     }
     for (const pat of launchPatterns) {
         if (pat.test(text)) {
-            return true;
+            return 'device-other';
         }
     }
     return undefined;
 }
 /**
- * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`),
- * e.g. Drift debug server output. These are not trace gutters; the viewer avoids grouping them
- * as stack frames so preview mode does not insert `[+N more]` mid-banner.
+ * Classify a regular (non-stack-frame) log line as framework or app.
+ * @deprecated Use classifyLogLine() for tier-aware classification.
+ */
+function isFrameworkLogLine(text) {
+    const tier = classifyLogLine(text);
+    if (tier === undefined) {
+        return undefined;
+    }
+    return tier !== 'flutter';
+}
+/**
+ * True for decorative log banners that pair vertical box-drawing bars on one line (`│ … │`
+ * or `║ … ║`), e.g. Drift debug server output or Isar connect banners. These are not trace
+ * gutters; the viewer avoids grouping them as stack frames so preview mode does not insert
+ * `[+N more]` mid-banner.
  */
 function isAsciiBoxDrawingDecorLine(line) {
-    // Require non-whitespace between bars so single gutter lines stay stack frames.
-    return /^\s*\u2502\s+.+\S\s*\u2502\s*$/.test(line);
+    // Paired bars with optional content between them — matches both `│ text │` and `║ text ║`.
+    return /^\s*[\u2502\u2551]\s+(?:.*\S\s*)?[\u2502\u2551]\s*$/.test(line);
 }
 /** Detect whether a line is a continuation of a stack trace. Multi-language. */
 function isStackFrameLine(line) {
@@ -142,6 +156,9 @@ function isStackFrameLine(line) {
         return true;
     }
     if (/^\s*\u2502\s/.test(line)) {
+        if (isAsciiBoxDrawingDecorLine(line)) {
+            return false;
+        }
         return true;
     }
     if (/^package:/.test(trimmed)) {

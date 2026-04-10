@@ -87,8 +87,8 @@ suite('Hidden-lines chevron insertion', () => {
     test('should check userHidden and autoHidden for manual/auto-hide', () => {
         assert.ok(viewportScript.includes('item.userHidden') && viewportScript.includes('item.autoHidden'), 'must check both userHidden and autoHidden flags');
     });
-    test('should check framework + appOnlyMode for framework-only filter', () => {
-        assert.ok(viewportScript.includes('item.fw') && viewportScript.includes('appOnlyMode'), 'must check item.fw combined with appOnlyMode');
+    test('should check tier-based filter via isTierHidden', () => {
+        assert.ok(viewportScript.includes('isTierHidden'), 'must check tier filter via isTierHidden function');
     });
     test('should define buildHiddenTip for tooltip formatting', () => {
         assert.ok(viewportScript.includes('function buildHiddenTip('), 'viewport script must define buildHiddenTip');

@@ -3,20 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getViewerDataHelpersCore = getViewerDataHelpersCore;
 /**
  * Core viewer data helpers: escapeHtml, repeat tracking, separator/context detection, calcItemHeight.
- * Extracted to keep viewer-data-helpers.ts under the line limit.
  *
- * **DB_06 (SQL repeat drilldown)** — Embedded functions below the template literal also include:
- * - `repeatTracker` fields that accumulate **first-seen** `argsKey` variants and capped SQL snippet text
- *   while a `database` + fingerprint repeat streak is active.
- * - `snapshotSqlRepeatDrilldown(ts)` — immutable per-row payload attached to each emitted SQL
- *   `repeat-notification` (see `viewer-data-add.ts`).
- * - `buildSqlRepeatNotificationRowHtml` / `toggleSqlRepeatDrilldown` — collapsible UI; heights use
- *   `estimateSqlRepeatDrilldownExtraHeight` (heuristic, not DOM-measured) plus `recalcHeights` after toggle.
- * - **Single repeat row per streak:** `repeatTracker.lastRepeatNotificationIndex` points at the one
- *   `repeat-notification` line updated as `count` grows; `trimData` / clear / `cleanupTrailingRepeats` reset it.
- * - **Security:** all user-derived strings in the detail panel go through `escapeHtml`; `data-seq` is numeric.
- *
- * Drift N+1 burst detection lives in `viewer-data-n-plus-one-script.ts` (loaded before this chunk).
+ * SQL drilldown UI functions (DB_06) live in viewer-data-sql-drilldown-ui.ts.
+ * Drift N+1 burst detection lives in viewer-data-n-plus-one-script.ts.
  */
 function getViewerDataHelpersCore() {
     return /* javascript */ `
@@ -28,9 +17,6 @@ function escapeHtml(text) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
-var SQL_REPEAT_DRILLDOWN_MAX_SAMPLES = 10;
-var SQL_REPEAT_SNIPPET_STORE_CAP = 500;
-var SQL_REPEAT_ARG_KEY_CAP = 220;
 var repeatTracker = {
     lastHash: null,
     lastPlainText: null,
@@ -57,6 +43,25 @@ var repeatTracker = {
     lastRepeatNotificationIndex: -1
 };
 var anrPattern = /\\b(anr|application\\s+not\\s+responding|input\\s+dispatching\\s+timed\\s+out)\\b/i;
+/** Tracks consecutive separator lines with the same timestamp for art-block grouping. */
+var artBlockTracker = { startIdx: -1, timestamp: 0, count: 0 };
+/** Finalize an open art block: tag each line with its position ('start', 'middle', 'end'). */
+function finalizeArtBlock() {
+    if (artBlockTracker.count < 2 || artBlockTracker.startIdx < 0) {
+        artBlockTracker.startIdx = -1;
+        artBlockTracker.count = 0;
+        return;
+    }
+    var end = artBlockTracker.startIdx + artBlockTracker.count - 1;
+    for (var ai = artBlockTracker.startIdx; ai <= end; ai++) {
+        var it = allLines[ai];
+        if (ai === artBlockTracker.startIdx) it.artBlockPos = 'start';
+        else if (ai === end) it.artBlockPos = 'end';
+        else it.artBlockPos = 'middle';
+    }
+    artBlockTracker.startIdx = -1;
+    artBlockTracker.count = 0;
+}
 var repeatWindowMs = 3000;
 var repeatPreviewLength = 85;
 function generateRepeatHash(level, plainText) {
@@ -96,130 +101,22 @@ function cleanupTrailingRepeats() {
     repeatTracker.sqlStreakVariantCounts = null;
     repeatTracker.lastRepeatNotificationIndex = -1;
 }
-function resetSqlStreakVariantAccumulators() {
-    repeatTracker.sqlStreakVariantOrder = [];
-    repeatTracker.sqlStreakVariantCounts = Object.create(null);
-}
-function bumpSqlStreakVariant(argsKey) {
-    if (!repeatTracker.sqlStreakVariantCounts) repeatTracker.sqlStreakVariantCounts = Object.create(null);
-    var ak = argsKey != null && argsKey !== '' ? String(argsKey) : '[]';
-    if (!repeatTracker.sqlStreakVariantCounts[ak]) {
-        repeatTracker.sqlStreakVariantCounts[ak] = 0;
-        repeatTracker.sqlStreakVariantOrder.push(ak);
-    }
-    repeatTracker.sqlStreakVariantCounts[ak]++;
-}
-function capSqlSnippetForDrilldown(s) {
-    var t = s != null ? String(s) : '';
-    if (t.length <= SQL_REPEAT_SNIPPET_STORE_CAP) return t;
-    return t.substring(0, SQL_REPEAT_SNIPPET_STORE_CAP - 3) + '...';
-}
-function capArgKeyForDrilldown(s) {
-    var t = s != null ? String(s) : '[]';
-    if (t.length <= SQL_REPEAT_ARG_KEY_CAP) return t;
-    return t.substring(0, SQL_REPEAT_ARG_KEY_CAP - 3) + '...';
-}
-/** Immutable snapshot for one emitted SQL repeat-notification row (DB_06). */
-function snapshotSqlRepeatDrilldown(ts) {
-    var order = repeatTracker.sqlStreakVariantOrder || [];
-    var counts = repeatTracker.sqlStreakVariantCounts || {};
-    var variants = [];
-    var i;
-    for (i = 0; i < order.length && variants.length < SQL_REPEAT_DRILLDOWN_MAX_SAMPLES; i++) {
-        var rawAk = order[i];
-        variants.push({ argsKey: capArgKeyForDrilldown(rawAk), count: counts[rawAk] || 0 });
-    }
-    var moreVariantCount = order.length > SQL_REPEAT_DRILLDOWN_MAX_SAMPLES ? order.length - SQL_REPEAT_DRILLDOWN_MAX_SAMPLES : 0;
-    return {
-        fingerprint: repeatTracker.sqlStreakFingerprint || '',
-        sqlSnippet: capSqlSnippetForDrilldown(repeatTracker.sqlStreakSqlSnippet || ''),
-        firstTs: repeatTracker.sqlStreakFirstTs,
-        lastTs: ts || repeatTracker.sqlStreakLastTs || repeatTracker.sqlStreakFirstTs,
-        variants: variants,
-        moreVariantCount: moreVariantCount,
-        repeatCount: repeatTracker.count
-    };
-}
-function formatSqlRepeatDrilldownTs(ms) {
-    if (ms == null || !isFinite(ms)) return '\\u2014';
-    if (typeof formatRunTime === 'function') return formatRunTime(ms);
-    return String(ms);
-}
-function estimateSqlRepeatDrilldownExtraHeight(d) {
-    if (!d) return 0;
-    var sqlChars = (d.sqlSnippet && d.sqlSnippet.length) || 0;
-    var sqlLines = Math.ceil(Math.min(sqlChars, SQL_REPEAT_SNIPPET_STORE_CAP) / 68);
-    sqlLines = Math.max(1, Math.min(sqlLines, 6));
-    var v = d.variants ? d.variants.length : 0;
-    var more = d.moreVariantCount > 0 ? 1 : 0;
-    var staticRow = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) ? 28 : 0;
-    return 44 + sqlLines * 16 + v * 18 + more * 16 + staticRow;
-}
-/** Build repeat-notification inner HTML for SQL fingerprint rows (collapsed or expanded). */
-function buildSqlRepeatNotificationRowHtml(item) {
-    var d = item.sqlRepeatDrilldown;
-    var expanded = !!item.sqlRepeatDrilldownOpen;
-    var preview = escapeHtml(item.repeatPreviewText || '\\u2026');
-    var cnt = d ? d.repeatCount : 0;
-    var label = cnt + ' × SQL repeated:';
-    var seq = item.seq;
-    var ariaExp = expanded ? 'true' : 'false';
-    var head = '<span class="repeat-notification repeat-sql-fp">' +
-        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="' + ariaExp + '" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
-        escapeHtml(label) + '</button>' +
-        ' <span class="repeat-preview">' + preview + '</span>';
-    if (!expanded || !d) {
-        return head + '</span>';
-    }
-    var fpDisp = escapeHtml(d.fingerprint || '');
-    var t0 = formatSqlRepeatDrilldownTs(d.firstTs);
-    var t1 = formatSqlRepeatDrilldownTs(d.lastTs);
-    var sqlEsc = escapeHtml(d.sqlSnippet || '');
-    var detail = '<div class="sql-repeat-drilldown-detail" role="region" aria-label="SQL repeat samples" tabindex="-1">' +
-        '<div class="sql-repeat-drilldown-meta"><span class="sql-repeat-drilldown-meta-label">Fingerprint</span> <code class="sql-repeat-drilldown-fp">' + fpDisp + '</code></div>' +
-        '<div class="sql-repeat-drilldown-meta">' + escapeHtml('Time') + ': ' + escapeHtml(t0) + ' \\u2013 ' + escapeHtml(t1) + '</div>' +
-        '<pre class="sql-repeat-drilldown-snippet">' + sqlEsc + '</pre>' +
-        '<div class="sql-repeat-drilldown-variant-title">' + escapeHtml('Argument variants (first-seen order, capped)') + '</div>';
-    var vi;
-    for (vi = 0; vi < (d.variants || []).length; vi++) {
-        var vr = d.variants[vi];
-        detail += '<div class="sql-repeat-drilldown-variant"><span class="sql-repeat-drilldown-variant-count">×' + (vr.count | 0) + '</span> <code>' + escapeHtml(vr.argsKey || '') + '</code></div>';
-    }
-    if (d.moreVariantCount > 0) {
-        detail += '<div class="sql-repeat-drilldown-more">' + escapeHtml('+' + d.moreVariantCount + ' more distinct arg variant(s)') + '</div>';
-    }
-    if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled && d.fingerprint) {
-        detail += '<div class="sql-repeat-drilldown-actions"><button type="button" class="sql-repeat-static-sources" data-fingerprint="' + escapeHtml(d.fingerprint) + '">Possible Dart sources (static index, not stack)</button></div>';
-    }
-    detail += '</div>';
-    return '<span class="repeat-notification repeat-sql-fp repeat-sql-fp-expanded">' +
-        '<button type="button" class="sql-repeat-drilldown-toggle" data-seq="' + seq + '" aria-expanded="true" aria-label="SQL repeat details: ' + escapeHtml(label) + '">' +
-        escapeHtml(label) + '</button>' +
-        ' <span class="repeat-preview">' + preview + '</span></span>' + detail;
-}
-function toggleSqlRepeatDrilldown(seq) {
-    var idx;
-    for (idx = 0; idx < allLines.length; idx++) {
-        var it = allLines[idx];
-        if (it && it.type === 'repeat-notification' && it.seq === seq && it.sqlRepeatDrilldown) {
-            it.sqlRepeatDrilldownOpen = !it.sqlRepeatDrilldownOpen;
-            it.html = buildSqlRepeatNotificationRowHtml(it);
-            if (typeof recalcHeights === 'function') recalcHeights();
-            if (typeof renderViewport === 'function') renderViewport(true);
-            return;
-        }
-    }
-}
 /**
  * Separator / banner detection for .separator-line CSS. Must match
  * isLogViewerSeparatorLine in modules/analysis/log-viewer-separator-line.ts (unit-tested there).
+ * Both copies strip the logcat/bracket prefix before detection — keep separatorPrefixRe in sync
+ * with SOURCE_PREFIX in the TS module.
  */
 function isAsciiBoxDrawingDecorLine(plain) {
-    return /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain);
+    return /^\\s*[\\u2502\\u2551]\\s+(?:.*\\S\\s*)?[\\u2502\\u2551]\\s*$/.test(plain);
 }
+/** Strip logcat / bracket prefix so separator detection works on the message body. */
+var separatorPrefixRe = /^(?:[VDIWEFA]\\/[^(:\\s]+\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[[^\\]]+\\]\\s)/;
 function isSeparatorLine(plainText) {
-    if (isAsciiBoxDrawingDecorLine(plainText)) return true;
-    var trimmed = plainText.trim();
+    var prefixM = separatorPrefixRe.exec(plainText);
+    var body = prefixM ? plainText.slice(prefixM[0].length) : plainText;
+    if (isAsciiBoxDrawingDecorLine(body)) return true;
+    var trimmed = body.trim();
     if (trimmed.length < 3) return false;
     /* Light arcs / corners used in Drift and other Unicode box art (not only ┌┐). */
     var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬╭╮╯╰\\\\-]/;
@@ -261,13 +158,13 @@ function calcItemHeight(item) {
     }
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
-    var isAppOnly = (typeof appOnlyMode !== 'undefined' && appOnlyMode);
+    var _tierHidden = (typeof isTierHidden === 'function') ? isTierHidden(item) : false;
     if (item.type === 'stack-frame' && item.groupId >= 0) {
         var header = (typeof groupHeaderMap !== 'undefined') ? groupHeaderMap[item.groupId] : null;
         if (!header) return 0;
         if (header.collapsed === true) return 0;
         if (header.collapsed === false) {
-            return (isAppOnly && item.fw) ? 0 : ROW_HEIGHT;
+            return (_tierHidden) ? 0 : ROW_HEIGHT;
         }
         if (header.collapsed === 'preview') {
             if (item.fw) return 0;
@@ -276,7 +173,7 @@ function calcItemHeight(item) {
         }
         return 0;
     }
-    if (isAppOnly && item.fw) return 0;
+    if (_tierHidden) return 0;
     if (item.type === 'repeat-notification' && item.sqlRepeatDrilldown && item.sqlRepeatDrilldownOpen) {
         return ROW_HEIGHT + estimateSqlRepeatDrilldownExtraHeight(item.sqlRepeatDrilldown);
     }
