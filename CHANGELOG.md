@@ -26,6 +26,23 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Copy Line Decorated** context menu option — copies clicked/selected line(s) with severity emoji, sequence number, and timestamp
+
+### Changed
+
+- Copy & Export submenu now groups "All" items (Copy All, Copy All Decorated, Copy as snippet) together with separators for clarity
+- Downgraded `failed`/`failure`/`fail` keywords from error to warning severity — these indicate something worth investigating, not a definitive error
+
+### Fixed
+
+- Root-cause hypotheses no longer produce duplicate signals for stack-frame continuation lines that inherited error level via proximity
+
+---
+
 ## [5.6.3]
 
 ### Added
