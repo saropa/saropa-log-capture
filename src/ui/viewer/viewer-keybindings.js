@@ -70,7 +70,8 @@ exports.VIEWER_KEYBINDING_ACTION_IDS = [
     'insertMarker',
     'togglePin',
     'annotate',
-    'toggleAppOnly',
+    'toggleDevice',
+    'copyRaw',
 ];
 /** Default key descriptor per action (one key per action; openSearch also has f3 in keyToAction). */
 const DEFAULT_ACTION_TO_KEY = {
@@ -94,7 +95,8 @@ const DEFAULT_ACTION_TO_KEY = {
     insertMarker: 'm',
     togglePin: 'p',
     annotate: 'n',
-    toggleAppOnly: 'a',
+    toggleDevice: 'a',
+    copyRaw: 'ctrl+alt+c',
 };
 /** Short labels for status bar when recording a keybinding. */
 exports.VIEWER_ACTION_LABELS = {
@@ -118,7 +120,8 @@ exports.VIEWER_ACTION_LABELS = {
     insertMarker: 'Insert marker',
     togglePin: 'Pin line',
     annotate: 'Annotate line',
-    toggleAppOnly: 'App-only stack trace',
+    toggleDevice: 'Toggle device logs',
+    copyRaw: 'Copy as raw text',
 };
 function getViewerActionLabel(actionId) {
     return exports.VIEWER_ACTION_LABELS[actionId] ?? actionId;

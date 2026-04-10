@@ -6,8 +6,8 @@ const viewer_level_events_1 = require("./viewer-level-events");
 /** Fly-up level filter menu with dot summary, select all/none, and per-file persistence. */
 function getLevelFilterScript() {
     return /* javascript */ `
-var enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice']);
-var allLevelNames = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice'];
+var enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database']);
+var allLevelNames = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database'];
 var contextLinesBefore = 3;
 var levelMenuOpen = false;
 
@@ -26,7 +26,7 @@ ${(0, viewer_level_events_1.getLevelEventHandlers)()}
 function getApplyLevelFilterFn() {
     return /* javascript */ `
 function applyLevelFilter() {
-    var allEnabled = enabledLevels.size === 7;
+    var allEnabled = enabledLevels.size === allLevelNames.length;
     for (var i = 0; i < allLines.length; i++) {
         var item = allLines[i];
         item.isContext = false;
@@ -80,13 +80,13 @@ function syncLevelDots() {
     var count = enabledLevels.size;
     var label = document.getElementById('level-trigger-label');
     if (label) {
-        if (count === 7) label.textContent = 'All';
+        if (count === allLevelNames.length) label.textContent = 'All';
         else if (count === 0) label.textContent = 'None';
-        else label.textContent = count + '/7';
+        else label.textContent = count + '/' + allLevelNames.length;
     }
     var selAll = document.getElementById('level-select-all');
     var selNone = document.getElementById('level-select-none');
-    if (selAll) selAll.classList.toggle('active', count === 7);
+    if (selAll) selAll.classList.toggle('active', count === allLevelNames.length);
     if (selNone) selNone.classList.toggle('active', count === 0);
 }`;
 }
@@ -150,7 +150,7 @@ function syncContextSlider() {
     var slider = document.getElementById('context-lines-slider');
     var label = document.getElementById('context-lines-label');
     if (slider) slider.value = contextLinesBefore;
-    if (label) label.textContent = contextLinesBefore + (contextLinesBefore === 1 ? ' line' : ' lines');
+    if (label) label.textContent = '\u00B1' + contextLinesBefore;
 }`;
 }
 /** Send/restore level filter state for per-file persistence. */

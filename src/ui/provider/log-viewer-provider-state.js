@@ -54,7 +54,6 @@ exports.setContextLinesImpl = setContextLinesImpl;
 exports.setContextViewLinesImpl = setContextViewLinesImpl;
 exports.setCopyContextLinesImpl = setCopyContextLinesImpl;
 exports.setShowElapsedImpl = setShowElapsedImpl;
-exports.setShowDecorationsImpl = setShowDecorationsImpl;
 exports.getReplayConfig = getReplayConfig;
 exports.setErrorClassificationSettingsImpl = setErrorClassificationSettingsImpl;
 exports.applyPresetImpl = applyPresetImpl;
@@ -136,9 +135,6 @@ function setCopyContextLinesImpl(target, count) {
 }
 function setShowElapsedImpl(target, show) {
     target.postMessage({ type: "setShowElapsed", show });
-}
-function setShowDecorationsImpl(target, show) {
-    target.postMessage({ type: "setShowDecorations", show });
 }
 function getReplayConfig() {
     const r = (0, config_1.getConfig)().replay;

@@ -107,17 +107,60 @@ const base = {
     strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)(b), false);
     strict_1.default.deepEqual((0, build_hypotheses_1.buildHypotheses)(b), []);
 });
-(0, node_test_1.default)("buildHypotheses: duplicate error rows for same lineIndex produce one hypothesis", () => {
+(0, node_test_1.default)("buildHypotheses: same error text on different lines merges into one hypothesis with both evidence IDs", () => {
     const hy = (0, build_hypotheses_1.buildHypotheses)({
         ...base,
         errors: [
-            { lineIndex: 3, excerpt: "first message" },
-            { lineIndex: 3, excerpt: "second message ignored" },
+            { lineIndex: 3, excerpt: "connection refused on port 8642" },
+            { lineIndex: 7, excerpt: "connection refused on port 8642" },
         ],
     });
     const errHy = hy.filter((h) => h.templateId === "error-recent");
     strict_1.default.equal(errHy.length, 1);
-    strict_1.default.equal(errHy[0].evidenceLineIds[0], 3);
+    strict_1.default.ok(errHy[0].evidenceLineIds.includes(3));
+    strict_1.default.ok(errHy[0].evidenceLineIds.includes(7));
+});
+(0, node_test_1.default)("buildHypotheses: errors ranked by frequency, most frequent text first", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 10, excerpt: "disk full" },
+            { lineIndex: 1, excerpt: "connection refused on port 8642" },
+            { lineIndex: 2, excerpt: "connection refused on port 8642" },
+            { lineIndex: 3, excerpt: "connection refused on port 8642" },
+        ],
+    });
+    const errHy = hy.filter((h) => h.templateId === "error-recent");
+    strict_1.default.equal(errHy.length, 2);
+    strict_1.default.equal(errHy[0].evidenceLineIds.length, 3);
+    strict_1.default.equal(errHy[1].evidenceLineIds.length, 1);
+});
+(0, node_test_1.default)("buildHypotheses: timestamp-varying duplicates merge (suffix-based key)", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 5, excerpt: "04-01 17:23:59.153 565 565 E adbd : failed to connect to socket tcp:8642" },
+            { lineIndex: 6, excerpt: "04-01 17:23:59.467 565 565 E adbd : failed to connect to socket tcp:8642" },
+        ],
+    });
+    const errHy = hy.filter((h) => h.templateId === "error-recent");
+    strict_1.default.equal(errHy.length, 1);
+    strict_1.default.ok(errHy[0].evidenceLineIds.includes(5));
+    strict_1.default.ok(errHy[0].evidenceLineIds.includes(6));
+});
+(0, node_test_1.default)("buildHypotheses: timestamp-stripped errors stay separate from genuinely different errors", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 1, excerpt: "04-01 17:00:00.111 565 565 E adbd : failed to connect to socket tcp:8642" },
+            { lineIndex: 2, excerpt: "04-01 17:00:00.222 565 565 E adbd : failed to connect to socket tcp:8642" },
+            { lineIndex: 3, excerpt: "04-01 17:00:00.333 565 565 E SurfaceFlinger : display was null" },
+        ],
+    });
+    const errHy = hy.filter((h) => h.templateId === "error-recent");
+    strict_1.default.strictEqual(errHy.length, 2);
+    strict_1.default.strictEqual(errHy[0].evidenceLineIds.length, 2);
+    strict_1.default.strictEqual(errHy[1].evidenceLineIds.length, 1);
 });
 (0, node_test_1.default)("buildHypotheses: whitespace-only error excerpts do not qualify (no strip)", () => {
     const b = {
@@ -129,6 +172,33 @@ const base = {
     };
     strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)(b), false);
     strict_1.default.deepEqual((0, build_hypotheses_1.buildHypotheses)(b), []);
+});
+(0, node_test_1.default)("buildHypotheses: decorative separator lines are filtered out (not real errors)", () => {
+    const separators = {
+        ...base,
+        errors: [
+            { lineIndex: 0, excerpt: "═══════════════════════════════════════" },
+            { lineIndex: 1, excerpt: "────────────────────────────────────────" },
+            { lineIndex: 2, excerpt: "========================================" },
+            { lineIndex: 3, excerpt: "****************************************" },
+            { lineIndex: 4, excerpt: "▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼" },
+        ],
+    };
+    // Eligibility still passes (excerpts pass length check) but hypotheses are empty
+    strict_1.default.deepEqual((0, build_hypotheses_1.buildHypotheses)(separators), []);
+});
+(0, node_test_1.default)("buildHypotheses: mixed decorative and real errors only surfaces real ones", () => {
+    const hy = (0, build_hypotheses_1.buildHypotheses)({
+        ...base,
+        errors: [
+            { lineIndex: 0, excerpt: "═══════════════════════════════════════" },
+            { lineIndex: 1, excerpt: "RenderFlex overflowed by 42 pixels" },
+            { lineIndex: 2, excerpt: "────────────────────────────────────────" },
+        ],
+    });
+    const errHy = hy.filter((h) => h.templateId === "error-recent");
+    strict_1.default.strictEqual(errHy.length, 1);
+    strict_1.default.ok(errHy[0].text.includes("RenderFlex"));
 });
 (0, node_test_1.default)("buildHypotheses: sql burst at threshold is eligible and emits burst template", () => {
     const b = {

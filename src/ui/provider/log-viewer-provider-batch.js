@@ -62,18 +62,25 @@ const BATCH_BACKLOG_THRESHOLD = 1000;
  * Build one viewer line from raw capture (ANSI, links, thread header styling, framework/coverage).
  * Shared so ViewerBroadcaster can build once and fan out to sidebar + pop-out.
  */
-function buildPendingLineFromLineData(data) {
-    let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsFold)(data.text);
+function buildPendingLineFromLineData(data, diagnosticCache) {
+    let html = data.isMarker ? (0, ansi_1.escapeHtml)(data.text) : (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsDim)(data.text);
     if (!data.isMarker) {
         html = helpers.tryFormatThreadHeader(data.text, html);
     }
-    const fw = helpers.classifyFrame(data.text);
-    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, fw);
+    const tier = helpers.classifyFrame(data.text);
+    const fw = tier !== undefined ? tier !== 'flutter' : undefined;
+    const qualityPercent = data.isMarker ? undefined : helpers.lookupQuality(data.text, tier);
+    const lint = (!data.isMarker && diagnosticCache)
+        ? diagnosticCache.lookupForLine(data.sourcePath, data.sourceLine, data.text)
+        : undefined;
     return {
-        text: html, isMarker: data.isMarker, lineCount: data.lineCount,
+        text: html, rawText: data.text,
+        isMarker: data.isMarker, lineCount: data.lineCount,
         category: data.category, timestamp: data.timestamp.getTime(),
-        fw, sourcePath: data.sourcePath,
+        tier, fw, sourcePath: data.sourcePath,
         ...(qualityPercent !== undefined ? { qualityPercent } : {}),
+        ...(lint?.errors ? { lintErrors: lint.errors } : {}),
+        ...(lint?.warnings ? { lintWarnings: lint.warnings } : {}),
     };
 }
 /** Append a pre-built line to the pending queue (per-viewer thread-dump state). */

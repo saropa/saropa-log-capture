@@ -4,7 +4,7 @@
  *
  * Handles open/close, tag chip search, noise reduction controls,
  * and preset/reset button wiring. Tag search filters individual
- * chip labels across Log Tags and Class Tags sections.
+ * chip labels across Message Tags and Code Origins sections.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFiltersPanelScript = getFiltersPanelScript;
@@ -81,25 +81,25 @@ function closeFiltersPanel() {
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
 }
 
-/** Human-readable label for a stream source id (debug, terminal, or external sidecar prefix). */
+/** Human-readable label for an input source id. */
 function sourceFilterLabel(id) {
     if (id === 'debug') return 'Debug output';
     if (id === 'terminal') return 'Terminal';
     if (id === 'browser') return 'Browser console';
     if (typeof id === 'string' && id.indexOf('external:') === 0) {
         var rest = id.slice(9);
-        if (!rest || rest === 'external') return 'External (sidecar log)';
-        return 'External · ' + rest;
+        if (!rest || rest === 'external') return 'External log';
+        return rest + ' (external)';
     }
     return id;
 }
 
-/** Collect checkboxes under the log-streams list (core rows + external group). */
+/** Collect checkboxes under the source filter list. */
 function getSourceFilterCheckboxes(list) {
     return list.querySelectorAll('input[type="checkbox"][data-source]');
 }
 
-/** Rebuild enabledSources from checkbox state; null means all streams on. */
+/** Rebuild enabledSources from checkbox state; null means all on. */
 function commitSourceFilterFromCheckboxes(list) {
     var boxes = getSourceFilterCheckboxes(list);
     var checked = [];
@@ -107,28 +107,35 @@ function commitSourceFilterFromCheckboxes(list) {
         if (boxes[j].checked) checked.push(boxes[j].dataset.source);
     }
     window.enabledSources = checked.length === boxes.length ? null : checked;
+    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
     if (typeof recalcHeights === 'function') recalcHeights();
     if (typeof renderViewport === 'function') renderViewport(true);
 }
 
-/** Sync source filter checkboxes from window.availableSources / window.enabledSources. Called after setSources. */
+/** Sync source filter checkboxes from window.availableSources / window.enabledSources. */
 function syncSourceFilterUi() {
-    var section = document.getElementById('source-filter-section');
+    var section = document.getElementById('log-inputs-section');
     var list = document.getElementById('source-filter-list');
-    if (!section || !list) return;
+    var divider = document.getElementById('log-inputs-divider');
+    if (!list) return;
     var available = (typeof window !== 'undefined' && window.availableSources) ? window.availableSources : [];
-    if (available.length < 2) {
-        section.style.display = 'none';
+    var hasSources = available.length >= 2;
+    while (list.firstChild) list.removeChild(list.firstChild);
+    if (divider) divider.style.display = 'none';
+
+    if (!hasSources) {
+        if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
         return;
     }
-    section.style.display = '';
+
     var enabled = (typeof window !== 'undefined' && window.enabledSources) ? window.enabledSources : null;
     var allEnabled = !enabled || enabled.length === available.length;
-    while (list.firstChild) list.removeChild(list.firstChild);
 
-    function addStreamRow(sid) {
+    for (var i = 0; i < available.length; i++) {
+        var sid = available[i];
         var row = document.createElement('label');
         row.className = 'options-row';
+        row.title = 'Show or hide ' + sourceFilterLabel(sid) + ' output';
         var cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.dataset.source = sid;
@@ -139,33 +146,44 @@ function syncSourceFilterUi() {
         list.appendChild(row);
     }
 
-    var externals = [];
-    for (var i = 0; i < available.length; i++) {
-        var sid = available[i];
-        if (typeof sid === 'string' && sid.indexOf('external:') === 0) {
-            externals.push(sid);
-        } else {
-            addStreamRow(sid);
-        }
+    // Show divider if categories also exist
+    var channelsList = document.getElementById('output-channels-list');
+    if (divider && channelsList && channelsList.children.length > 0) {
+        divider.style.display = '';
     }
-    if (externals.length > 0) {
-        var groupTitle = document.createElement('div');
-        groupTitle.className = 'options-hint source-external-group-title';
-        groupTitle.textContent = 'External sidecars (' + externals.length + ')';
-        list.appendChild(groupTitle);
-        for (var e = 0; e < externals.length; e++) {
-            addStreamRow(externals[e]);
-        }
+    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
+}
+
+/** Update the combined Log Inputs accordion summary (sources + categories). */
+function updateLogInputsSummary() {
+    if (typeof setAccordionSummary !== 'function') return;
+    var sourceList = document.getElementById('source-filter-list');
+    var channelsList = document.getElementById('output-channels-list');
+    var totalSrc = 0, enabledSrc = 0, totalCat = 0, enabledCat = 0;
+    if (sourceList) {
+        var srcBoxes = sourceList.querySelectorAll('input[type="checkbox"][data-source]');
+        totalSrc = srcBoxes.length;
+        for (var s = 0; s < srcBoxes.length; s++) { if (srcBoxes[s].checked) enabledSrc++; }
     }
+    if (channelsList) {
+        var catBoxes = channelsList.querySelectorAll('input[type="checkbox"]');
+        totalCat = catBoxes.length;
+        for (var c = 0; c < catBoxes.length; c++) { if (catBoxes[c].checked) enabledCat++; }
+    }
+    var total = totalSrc + totalCat;
+    var enabled = enabledSrc + enabledCat;
+    setAccordionSummary('log-inputs-section', total > 0 ? (enabled + '/' + total) : '');
 }
 
 /** Sync filter-related checkboxes from current state. */
 function syncFiltersPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
-    var appOnlyCheck = document.getElementById('opt-app-only');
+    var flutterCheck = document.getElementById('opt-flutter');
+    var deviceCheck = document.getElementById('opt-device');
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    if (appOnlyCheck && typeof appOnlyMode !== 'undefined') appOnlyCheck.checked = appOnlyMode;
+    if (flutterCheck && typeof showFlutter !== 'undefined') flutterCheck.checked = showFlutter;
+    if (deviceCheck && typeof showDevice !== 'undefined') deviceCheck.checked = showDevice;
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof syncScopeUi === 'function') syncScopeUi();
@@ -175,15 +193,21 @@ function syncFiltersPanelUi() {
 
 /* Close button and search input bindings removed — filter drawer handles its own UI. */
 
-// Noise reduction controls
+// Exclusion controls
 var optExcl = document.getElementById('opt-exclusions');
-var optAppOnly = document.getElementById('opt-app-only');
 if (optExcl) optExcl.addEventListener('change', function(e) {
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(e.target.checked);
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
 });
-if (optAppOnly) optAppOnly.addEventListener('change', function(e) {
-    if (typeof setAppOnlyMode === 'function') setAppOnlyMode(e.target.checked);
+
+// Tier filter controls (Flutter / Device)
+var optFlutter = document.getElementById('opt-flutter');
+var optDevice = document.getElementById('opt-device');
+if (optFlutter) optFlutter.addEventListener('change', function(e) {
+    if (typeof setShowFlutter === 'function') setShowFlutter(e.target.checked);
+});
+if (optDevice) optDevice.addEventListener('change', function(e) {
+    if (typeof setShowDevice === 'function') setShowDevice(e.target.checked);
 });
 
 // Reset all filters

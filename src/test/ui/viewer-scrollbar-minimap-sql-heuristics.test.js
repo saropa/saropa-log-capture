@@ -98,6 +98,10 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
         });
     });
     suite('SQL density painting (scroll map vs editor minimap)', () => {
+        test('sqlDensity color is pink (not blue) so bands read as annotation, not error', () => {
+            const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
+            assert.ok(script.includes("sqlDensity: 'rgba(200, 120, 180, 1)'"), 'SQL density must use pink rgba(200,120,180) — blue was mistaken for selection highlights');
+        });
         test('after: paintSqlDensityBuckets uses full strip width (regression: no right-rail-only 0.42 fraction)', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
             const fn = script.split('function paintSqlDensityBuckets')[1];
@@ -110,7 +114,7 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
     suite('neutral presence fallback (severity hidden / info-only)', () => {
         test('before: without neutral branch, info-only logs could paint nothing when info markers are off', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
-            assert.ok(script.includes("lv === 'info' && !mmShowInfo"), 'info still skipped from severity groups when setting off');
+            assert.ok(script.includes("(lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo"), 'info/debug/notice skipped from severity groups when setting off');
         });
         test('after: paintMinimap fills neutral strokes when mc === 0 && total > 0', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
@@ -120,7 +124,7 @@ suite('viewer-scrollbar-minimap-sql-heuristics', () => {
         test('hover title explains scroll map in plain language', () => {
             const script = (0, viewer_scrollbar_minimap_1.getScrollbarMinimapScript)();
             assert.ok(script.includes('Scroll map — click or drag'), 'plain hover explanation');
-            assert.ok(script.includes('Enable info markers in settings'), 'points to settings for info colors');
+            assert.ok(script.includes('Enable info/debug/notice markers in settings'), 'points to settings for info colors');
         });
     });
 });

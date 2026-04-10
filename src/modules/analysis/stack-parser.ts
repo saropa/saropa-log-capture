@@ -153,7 +153,10 @@ export function isStackFrameLine(line: string): boolean {
         return true;
     }
     if (/^package:/.test(trimmed)) { return true; }
-    return /^\s+\S+\.\S+:\d+/.test(line);
+    if (/^\s+\S+\.\S+:\d+/.test(line)) { return true; }
+    // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
+    if (/\bpackage:\S+\.dart:\d+/.test(line)) { return true; }
+    return /\(\.\/\S+\.dart:\d+:\d+\)/.test(line);
 }
 
 /** Parsed thread header metadata from Android/Java thread dumps. */

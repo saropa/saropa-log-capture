@@ -41,6 +41,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LogViewerProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const log_viewer_provider_load_1 = require("./log-viewer-provider-load");
+const log_viewer_provider_tailing_1 = require("./log-viewer-provider-tailing");
 const log_viewer_provider_setup_1 = require("./log-viewer-provider-setup");
 const viewer_highlight_serializer_1 = require("../viewer-decorations/viewer-highlight-serializer");
 const helpers = __importStar(require("./viewer-provider-helpers"));
@@ -89,6 +90,7 @@ class LogViewerProvider {
     onSessionAction;
     onBrowseSessionRoot;
     onClearSessionRoot;
+    onBecameVisibleHandler;
     seenCategories = new Set();
     unreadWatchHits = 0;
     cachedPresets = [];
@@ -97,11 +99,7 @@ class LogViewerProvider {
     isSessionActive = false;
     pendingLoadUri;
     loadGeneration = 0;
-    tailWatcher;
-    tailLastLineCount = 0;
-    tailSessionMidnightMs = 0;
-    tailUri;
-    tailUpdateInProgress = false;
+    tail = (0, log_viewer_provider_tailing_1.createTailState)();
     constructor(extensionUri, version, context) {
         this.extensionUri = extensionUri;
         this.version = version;
@@ -130,6 +128,7 @@ class LogViewerProvider {
         }
     }
     setVisibleView(webviewView) { this.visibleView = webviewView; }
+    onBecameVisible() { this.onBecameVisibleHandler?.(); }
     getCachedPresets() { return this.cachedPresets; }
     getCachedHighlightRules() { return this.cachedHighlightRules; }
     getPendingLoadUri() { return this.pendingLoadUri; }
@@ -176,6 +175,7 @@ class LogViewerProvider {
     setSessionActionHandler(handler) { this.onSessionAction = handler; }
     setBrowseSessionRootHandler(handler) { this.onBrowseSessionRoot = handler; }
     setClearSessionRootHandler(handler) { this.onClearSessionRoot = handler; }
+    setBecameVisibleHandler(handler) { this.onBecameVisibleHandler = handler; }
     // -- Webview state methods --
     scrollToLine(line) { state.scrollToLineImpl(this, line); }
     setExclusions(patterns) { state.setExclusionsImpl(this, patterns); }
@@ -191,13 +191,10 @@ class LogViewerProvider {
     setContextViewLines(count) { state.setContextViewLinesImpl(this, count); }
     setCopyContextLines(count) { state.setCopyContextLinesImpl(this, count); }
     setShowElapsed(show) { state.setShowElapsedImpl(this, show); }
-    setShowDecorations(show) { state.setShowDecorationsImpl(this, show); }
     startReplay() { state.postStartReplayImpl(this); }
     getReplayConfig() { return state.getReplayConfig(); }
-    setErrorClassificationSettings(suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError) {
-        state.setErrorClassificationSettingsImpl(this, {
-            suppressTransientErrors, breakOnCritical, levelDetection, deemphasizeFrameworkLevels, stderrTreatAsError,
-        });
+    setErrorClassificationSettings(settings) {
+        state.setErrorClassificationSettingsImpl(this, settings);
     }
     applyPreset(name) { state.applyPresetImpl(this, name); }
     setHighlightRules(rules) {
@@ -262,7 +259,7 @@ class LogViewerProvider {
     sendIntegrationsAdapters(adapterIds) { state.sendIntegrationsAdaptersImpl(this, adapterIds); }
     setSessionActive(active) { this.isSessionActive = active; state.setSessionStateImpl(this, active); }
     clear() {
-        this.stopTailing();
+        (0, log_viewer_provider_tailing_1.stopTailing)(this.tail);
         (0, log_viewer_provider_batch_1.flushPendingBatch)(this);
         this.pendingLines = [];
         this.currentFileUri = undefined;
@@ -284,7 +281,7 @@ class LogViewerProvider {
         if (this.views.size === 0 || gen !== this.loadGeneration) {
             return;
         }
-        this.stopTailing();
+        (0, log_viewer_provider_tailing_1.stopTailing)(this.tail);
         this.clear();
         this.seenCategories.clear();
         this.currentFileUri = uri;
@@ -295,27 +292,16 @@ class LogViewerProvider {
         this.onFileLoaded?.(uri, loadResult);
         this.pendingLoadUri = undefined;
         if (options?.tail) {
-            this.startTailing(uri, loadResult.sessionMidnightMs, loadResult.contentLength);
+            (0, log_viewer_provider_tailing_1.startTailing)(this.tail, { uri, sessionMidnightMs: loadResult.sessionMidnightMs, initialLineCount: loadResult.contentLength, target: this });
         }
         if (options?.replay) {
             this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
         }
     }
-    stopTailing() {
-        this.tailWatcher?.dispose();
-        this.tailWatcher = undefined;
-        this.tailUri = undefined;
-    }
-    startTailing(uri, sessionMidnightMs, initialLineCount) {
-        this.stopTailing();
-        this.tailUri = uri;
-        this.tailSessionMidnightMs = sessionMidnightMs;
-        this.tailWatcher = (0, log_viewer_provider_load_1.createTailWatcher)(uri, sessionMidnightMs, initialLineCount, this);
-    }
-    getTailLastLineCount() { return this.tailLastLineCount; }
-    setTailLastLineCount(n) { this.tailLastLineCount = n; }
-    getTailUpdateInProgress() { return this.tailUpdateInProgress; }
-    setTailUpdateInProgress(v) { this.tailUpdateInProgress = v; }
+    getTailLastLineCount() { return this.tail.tailLastLineCount; }
+    setTailLastLineCount(n) { this.tail.tailLastLineCount = n; }
+    getTailUpdateInProgress() { return this.tail.tailUpdateInProgress; }
+    setTailUpdateInProgress(v) { this.tail.tailUpdateInProgress = v; }
     getView() {
         return this.visibleView ?? this.views.values().next().value;
     }
@@ -332,7 +318,7 @@ class LogViewerProvider {
         }
     }
     dispose() {
-        this.stopTailing();
+        (0, log_viewer_provider_tailing_1.stopTailing)(this.tail);
         (0, log_viewer_provider_batch_1.stopBatchTimer)(this);
         this.views.clear();
         this.visibleView = undefined;

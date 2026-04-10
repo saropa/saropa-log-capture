@@ -167,22 +167,27 @@ function sendNewCategories(lines, seenCategories, postMessage) {
     }
 }
 /**
- * Classify a log line as framework or app code.
+ * Classify a log line by device tier.
  * Handles both stack frames ("    at ...") and regular output
  * (e.g. Android logcat "D/TAG(PID): msg", launch boilerplate).
+ * Stack frames return 'flutter' (app) or 'device-other' (framework).
  */
 function classifyFrame(text) {
     if (/^\s+at\s/.test(text)) {
-        return (0, stack_parser_1.isFrameworkFrame)(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+        const isFw = (0, stack_parser_1.isFrameworkFrame)(text, vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+        if (isFw === undefined) {
+            return undefined;
+        }
+        return isFw ? 'device-other' : 'flutter';
     }
-    return (0, stack_parser_1.isFrameworkLogLine)(text);
+    return (0, stack_parser_1.classifyLogLine)(text);
 }
 /**
  * Look up per-file coverage for an app-code stack frame line.
  * Returns coverage percent (0–100) or undefined if not applicable.
  */
-function lookupQuality(text, fw) {
-    if (fw !== false) {
+function lookupQuality(text, tier) {
+    if (tier !== 'flutter') {
         return undefined;
     }
     if (!(0, stack_parser_1.isStackFrameLine)(text)) {

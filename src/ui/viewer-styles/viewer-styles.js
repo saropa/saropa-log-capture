@@ -38,6 +38,7 @@ const viewer_styles_root_cause_hints_1 = require("./viewer-styles-root-cause-hin
 const viewer_styles_toolbar_1 = require("./viewer-styles-toolbar");
 const viewer_styles_filter_drawer_1 = require("./viewer-styles-filter-drawer");
 const viewer_styles_lines_1 = require("./viewer-styles-lines");
+const viewer_styles_ascii_art_1 = require("./viewer-styles-ascii-art");
 function getViewerStyles() {
     return /* css */ `
 /* Utility: hide element without inline style (CSP-friendly) */
@@ -156,11 +157,12 @@ body.scrollbar-visible #log-content-wrapper { --scrollbar-w: 10px; }
     overflow-anchor: none;
     padding: 4px 0 40px;
     position: relative;
-    /* Hide native vertical scrollbar when showScrollbar is off (WebKit rules below; this catches overlay/standard behavior). */
-    scrollbar-width: none;
+    /* Vertical scrollbar hidden by ::-webkit-scrollbar width:0 below; horizontal stays 10px.
+       Do NOT add scrollbar-width:none — Chromium 130+ treats it as authoritative and hides
+       the horizontal bar too, making wide nowrap lines invisible on the right side. */
 }
 body.scrollbar-visible #log-content {
-    scrollbar-width: auto;
+    scrollbar-width: auto; /* show both scrollbars when the user opts in */
 }
 #log-content::-webkit-scrollbar { width: 0; height: 10px; }
 body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -172,6 +174,6 @@ body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + (0, viewer_styles_lines_1.getLineStyles)() + (0, viewer_styles_content_1.getContentStyles)() + (0, viewer_styles_n_plus_one_insight_1.getNPlusOneInsightStyles)() + (0, viewer_styles_sql_repeat_drilldown_1.getSqlRepeatDrilldownStyles)() + (0, viewer_styles_replay_1.getReplayStyles)() + (0, viewer_styles_components_1.getComponentStyles)() + (0, viewer_styles_overlays_1.getOverlayStyles)() + (0, viewer_styles_tags_1.getTagStyles)() + (0, viewer_styles_options_1.getOptionsStyles)() + (0, viewer_styles_errors_1.getErrorStyles)() + (0, viewer_styles_icon_bar_1.getIconBarStyles)() + (0, viewer_styles_session_1.getSessionPanelStyles)() + (0, viewer_styles_find_1.getFindPanelStyles)() + (0, viewer_styles_bookmarks_1.getBookmarkPanelStyles)() + (0, viewer_styles_sql_query_history_1.getSqlQueryHistoryPanelStyles)() + (0, viewer_styles_trash_1.getTrashPanelStyles)() + (0, viewer_styles_about_1.getAboutPanelStyles)() + (0, viewer_styles_crashlytics_1.getCrashlyticsPanelStyles)() + (0, viewer_styles_recurring_1.getRecurringPanelStyles)() + (0, viewer_styles_performance_1.getPerformancePanelStyles)() + (0, viewer_styles_insight_1.getInsightPanelStyles)() + (0, viewer_styles_ai_1.getAiStyles)() + (0, viewer_styles_run_separator_1.getRunSeparatorStyles)() + (0, viewer_styles_ui_1.getContextPopoverStyles)() + (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)() + (0, viewer_styles_toolbar_1.getToolbarStyles)() + (0, viewer_styles_filter_drawer_1.getFilterDrawerStyles)();
+` + (0, viewer_styles_lines_1.getLineStyles)() + (0, viewer_styles_ascii_art_1.getAsciiArtStyles)() + (0, viewer_styles_content_1.getContentStyles)() + (0, viewer_styles_n_plus_one_insight_1.getNPlusOneInsightStyles)() + (0, viewer_styles_sql_repeat_drilldown_1.getSqlRepeatDrilldownStyles)() + (0, viewer_styles_replay_1.getReplayStyles)() + (0, viewer_styles_components_1.getComponentStyles)() + (0, viewer_styles_overlays_1.getOverlayStyles)() + (0, viewer_styles_tags_1.getTagStyles)() + (0, viewer_styles_options_1.getOptionsStyles)() + (0, viewer_styles_errors_1.getErrorStyles)() + (0, viewer_styles_icon_bar_1.getIconBarStyles)() + (0, viewer_styles_session_1.getSessionPanelStyles)() + (0, viewer_styles_find_1.getFindPanelStyles)() + (0, viewer_styles_bookmarks_1.getBookmarkPanelStyles)() + (0, viewer_styles_sql_query_history_1.getSqlQueryHistoryPanelStyles)() + (0, viewer_styles_trash_1.getTrashPanelStyles)() + (0, viewer_styles_about_1.getAboutPanelStyles)() + (0, viewer_styles_crashlytics_1.getCrashlyticsPanelStyles)() + (0, viewer_styles_recurring_1.getRecurringPanelStyles)() + (0, viewer_styles_performance_1.getPerformancePanelStyles)() + (0, viewer_styles_insight_1.getInsightPanelStyles)() + (0, viewer_styles_ai_1.getAiStyles)() + (0, viewer_styles_run_separator_1.getRunSeparatorStyles)() + (0, viewer_styles_ui_1.getContextPopoverStyles)() + (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)() + (0, viewer_styles_toolbar_1.getToolbarStyles)() + (0, viewer_styles_filter_drawer_1.getFilterDrawerStyles)();
 }
 //# sourceMappingURL=viewer-styles.js.map

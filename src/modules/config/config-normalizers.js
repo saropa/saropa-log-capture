@@ -13,8 +13,9 @@ exports.DEFAULT_WATCH_PATTERNS = [
     { keyword: "warning", alert: "badge" },
 ];
 function asObjectRecord(value) {
-    if (!value || typeof value !== "object")
+    if (!value || typeof value !== "object") {
         return undefined;
+    }
     return value;
 }
 function readOptionalString(o, key) {
@@ -23,16 +24,19 @@ function readOptionalString(o, key) {
 }
 function readOptionalScope(o) {
     const v = o.scope;
-    if (v === "line")
+    if (v === "line") {
         return "line";
-    if (v === "keyword")
+    }
+    if (v === "keyword") {
         return "keyword";
+    }
     return undefined;
 }
 function readPattern(o) {
     const v = o.pattern;
-    if (typeof v !== "string")
+    if (typeof v !== "string") {
         return undefined;
+    }
     const t = v.trim();
     return t.length > 0 ? t : undefined;
 }
@@ -41,17 +45,20 @@ function readBooleanOrFalse(o, key) {
     return typeof v === "boolean" ? v : false;
 }
 function normalizeWatchPatterns(raw) {
-    if (!Array.isArray(raw))
+    if (!Array.isArray(raw)) {
         return exports.DEFAULT_WATCH_PATTERNS;
+    }
     const alertValues = ["flash", "badge", "none"];
     const out = [];
     for (const item of raw) {
-        if (!item || typeof item !== "object")
+        if (!item || typeof item !== "object") {
             continue;
+        }
         const o = item;
         const keyword = typeof o.keyword === "string" ? o.keyword.trim() : "";
-        if (!keyword)
+        if (!keyword) {
             continue;
+        }
         const alert = typeof o.alert === "string" && alertValues.includes(o.alert)
             ? o.alert
             : "badge";
@@ -61,11 +68,13 @@ function normalizeWatchPatterns(raw) {
 }
 function normalizeHighlightRuleItem(item) {
     const o = asObjectRecord(item);
-    if (!o)
+    if (!o) {
         return undefined;
+    }
     const pattern = readPattern(o);
-    if (!pattern)
+    if (!pattern) {
         return undefined;
+    }
     return {
         pattern,
         color: readOptionalString(o, "color"),
@@ -77,28 +86,33 @@ function normalizeHighlightRuleItem(item) {
     };
 }
 function normalizeHighlightRules(raw) {
-    if (!Array.isArray(raw))
+    if (!Array.isArray(raw)) {
         return (0, config_default_highlight_rules_1.defaultHighlightRules)();
+    }
     const out = [];
     for (const item of raw) {
         const rule = normalizeHighlightRuleItem(item);
-        if (rule)
+        if (rule) {
             out.push(rule);
+        }
     }
     return out.length > 0 ? out : (0, config_default_highlight_rules_1.defaultHighlightRules)();
 }
 function normalizeAutoTagRules(raw) {
-    if (!Array.isArray(raw))
+    if (!Array.isArray(raw)) {
         return [];
+    }
     return raw
         .map((item) => {
-        if (!item || typeof item !== "object")
+        if (!item || typeof item !== "object") {
             return null;
+        }
         const o = item;
         const pattern = typeof o.pattern === "string" ? o.pattern.trim() : "";
         const tag = typeof o.tag === "string" ? o.tag.trim() : "";
-        if (!pattern || !tag)
+        if (!pattern || !tag) {
             return null;
+        }
         return { pattern, tag };
     })
         .filter((r) => r !== null);

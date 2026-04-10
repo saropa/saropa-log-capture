@@ -22,7 +22,7 @@ var exportTemplates = {
     'errors-only': new Set(['error']),
     'warnings-errors': new Set(['error', 'warning']),
     'production': new Set(['error', 'warning', 'info', 'notice']),
-    'full-debug': new Set(['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug']),
+    'full-debug': new Set(['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database']),
     'performance': new Set(['error', 'warning', 'performance']),
     'custom': new Set(['error', 'warning', 'info'])
 };
@@ -37,12 +37,19 @@ var exportOptions = {
 ${(0, viewer_export_init_1.getExportInitScript)()}
 
 /**
- * Open the export modal.
+ * Open the export modal, seeded from the viewer's current level filter.
  */
 function openExportModal() {
     if (!exportModalEl) return;
+
+    // Seed from the viewer's active level filter
+    if (typeof enabledLevels !== 'undefined' && enabledLevels.size > 0) {
+        exportLevels = new Set(enabledLevels);
+    }
+
     syncExportModalUi();
     updateExportPreview();
+    updateExportSummaries();
     exportModalEl.classList.add('visible');
 }
 window.openExportModal = openExportModal;
@@ -66,7 +73,7 @@ function applyExportTemplate(templateName) {
     exportLevels = new Set(template);
 
     // Update UI
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug'];
+    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox) {
@@ -75,6 +82,22 @@ function applyExportTemplate(templateName) {
     }
 
     updateExportPreview();
+    updateExportSummaries();
+}
+
+/**
+ * Resolve the template dropdown to match the current exportLevels, or 'custom'.
+ */
+function resolveTemplateDropdown() {
+    var templateSelect = document.getElementById('export-template');
+    if (!templateSelect) return;
+    for (var key in exportTemplates) {
+        if (setsEqual(exportLevels, exportTemplates[key])) {
+            templateSelect.value = key;
+            return;
+        }
+    }
+    templateSelect.value = 'custom';
 }
 
 /**
@@ -82,29 +105,14 @@ function applyExportTemplate(templateName) {
  */
 function updateExportLevels() {
     exportLevels = new Set();
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug'];
+    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox && checkbox.checked) {
             exportLevels.add(levels[i]);
         }
     }
-
-    // Update template selector to "custom" if manual change
-    var templateSelect = document.getElementById('export-template');
-    if (templateSelect) {
-        var matchesTemplate = false;
-        for (var key in exportTemplates) {
-            if (setsEqual(exportLevels, exportTemplates[key])) {
-                templateSelect.value = key;
-                matchesTemplate = true;
-                break;
-            }
-        }
-        if (!matchesTemplate) {
-            templateSelect.value = 'custom';
-        }
-    }
+    resolveTemplateDropdown();
 }
 
 /**
@@ -144,13 +152,15 @@ function updateExportPreview() {
  */
 function syncExportModalUi() {
     // Sync level checkboxes
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug'];
+    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox) {
             checkbox.checked = exportLevels.has(levels[i]);
         }
     }
+
+    resolveTemplateDropdown();
 
     // Sync options
     var tsCheck = document.getElementById('export-include-timestamps');
@@ -159,6 +169,25 @@ function syncExportModalUi() {
     if (tsCheck) tsCheck.checked = exportOptions.includeTimestamps;
     if (decoCheck) decoCheck.checked = exportOptions.includeDecorations;
     if (ansiCheck) ansiCheck.checked = exportOptions.stripAnsi;
+}
+
+/**
+ * Update accordion summary counts for levels and options sections.
+ */
+function updateExportSummaries() {
+    var levelSummary = document.getElementById('export-levels-summary');
+    if (levelSummary) {
+        levelSummary.textContent = exportLevels.size + '/8';
+    }
+
+    var optSummary = document.getElementById('export-options-summary');
+    if (optSummary) {
+        var count = 0;
+        if (exportOptions.includeTimestamps) count++;
+        if (exportOptions.includeDecorations) count++;
+        if (exportOptions.stripAnsi) count++;
+        optSummary.textContent = count + '/3';
+    }
 }
 
 /**
@@ -209,6 +238,58 @@ function performExport() {
             includeTimestamps: exportOptions.includeTimestamps,
             includeDecorations: exportOptions.includeDecorations,
             lineCount: lines.length
+        }
+    });
+
+    closeExportModal();
+}
+
+/**
+ * Quick-save the current view as-is (no extra filtering) to the reports folder.
+ */
+function performQuickExport() {
+    var lines = [];
+    var totalLines = 0;
+    var levelCounts = {};
+
+    for (var i = 0; i < allLines.length; i++) {
+        var item = allLines[i];
+        if (item.type === 'marker') continue;
+        totalLines++;
+        if (calcItemHeight(item) <= 0) continue;
+
+        var text = stripTags(item.html || '');
+        lines.push(text);
+        var lvl = item.level || 'info';
+        levelCounts[lvl] = (levelCounts[lvl] || 0) + 1;
+    }
+
+    if (lines.length === 0) {
+        vscodeApi.postMessage({
+            type: 'showMessage',
+            level: 'warning',
+            message: 'No visible lines to export.'
+        });
+        return;
+    }
+
+    // Gather active filter metadata
+    var searchEl = document.getElementById('search-input');
+    var searchTerm = searchEl ? searchEl.value.trim() : '';
+
+    vscodeApi.postMessage({
+        type: 'quickExportLogs',
+        lines: lines,
+        metadata: {
+            sourceFile: currentFilename || '(unknown)',
+            totalLines: totalLines,
+            visibleLines: lines.length,
+            enabledLevels: typeof enabledLevels !== 'undefined' ? Array.from(enabledLevels) : [],
+            showFlutter: typeof showFlutter !== 'undefined' ? showFlutter : true,
+            showDevice: typeof showDevice !== 'undefined' ? showDevice : false,
+            exclusionsActive: typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled,
+            searchTerm: searchTerm,
+            levelCounts: levelCounts
         }
     });
 

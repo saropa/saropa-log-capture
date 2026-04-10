@@ -13,7 +13,8 @@ exports.getViewerScript = getViewerScript;
 const viewer_script_keyboard_1 = require("./viewer-script-keyboard");
 const viewer_script_footer_1 = require("./viewer-script-footer");
 const viewer_script_messages_1 = require("./viewer-script-messages");
-function getViewerScript(maxLines, viewerPreserveAsciiBoxArt = true) {
+const viewer_script_click_handlers_1 = require("./viewer-script-click-handlers");
+function getViewerScript(maxLines, viewerPreserveAsciiBoxArt = true, viewerGroupAsciiArt = true, viewerDetectAsciiArt = false) {
     return /* javascript */ `
 var logEl = document.getElementById('log-content');
 var logWrapEl = document.getElementById('log-content-wrapper');
@@ -62,26 +63,34 @@ var footerVersion = footerTextEl ? (footerTextEl.getAttribute('data-version') ||
 /* Footer filename gestures: click=reveal, long-press=copy, dblclick=open folder. */
 var _fnPressTimer = null;
 var _fnLongFired = false;
+function _fnCancelTimer() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } }
 if (footerTextEl) {
     footerTextEl.addEventListener('mousedown', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        if (e.button !== 0) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
+        e.preventDefault();
         _fnLongFired = false;
         _fnPressTimer = setTimeout(function() {
+            _fnPressTimer = null;
             _fnLongFired = true;
             vscodeApi.postMessage({ type: 'copyCurrentFilePath' });
-            e.target.title = 'Copied!';
-            setTimeout(function() { e.target.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
+            fnEl.title = 'Copied!';
+            setTimeout(function() { fnEl.title = 'Click: reveal \\u00b7 Hold: copy path \\u00b7 Double-click: open folder'; }, 1500);
         }, 500);
     });
-    footerTextEl.addEventListener('mouseup', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
-    footerTextEl.addEventListener('mouseleave', function() { if (_fnPressTimer) { clearTimeout(_fnPressTimer); _fnPressTimer = null; } });
+    footerTextEl.addEventListener('mouseup', _fnCancelTimer);
+    footerTextEl.addEventListener('mouseleave', _fnCancelTimer);
+    footerTextEl.addEventListener('dragstart', function(e) { e.preventDefault(); _fnCancelTimer(); });
     footerTextEl.addEventListener('click', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
         if (_fnLongFired) { _fnLongFired = false; return; }
         vscodeApi.postMessage({ type: 'revealLogFile' });
     });
     footerTextEl.addEventListener('dblclick', function(e) {
-        if (!e.target || !e.target.classList || !e.target.classList.contains('footer-filename')) return;
+        var fnEl = e.target && e.target.closest ? e.target.closest('.footer-filename') : null;
+        if (!fnEl) return;
         e.preventDefault();
         vscodeApi.postMessage({ type: 'openCurrentFileFolder' });
     });
@@ -113,6 +122,10 @@ var loadTruncatedInfo = null;
 var correlationByLineIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};
+/* When true, consecutive separator lines with the same timestamp are grouped into a visual block. */
+var viewerGroupAsciiArt = ${viewerGroupAsciiArt ? 'true' : 'false'};
+/* Experimental: detect pixel-based ASCII art via entropy heuristics (default false). */
+var viewerDetectAsciiArt = ${viewerDetectAsciiArt ? 'true' : 'false'};
 /* Minimap / scrollbar settings: mirrored from host postMessage for context-menu checkmarks (see viewer-script-messages). */
 var minimapProportionalLines = true;
 var minimapShowInfoMarkers = false;
@@ -134,7 +147,7 @@ function isStackFrameText(html) {
     if (/^\\s+File "/.test(plain)) return true;          // Python: '  File "foo.py"'
     // LIGHT VERTICAL (│): real traces often use a single gutter bar; paired bars on one line are log banners.
     if (/^\\s*\\u2502\\s/.test(plain)) {
-        if (viewerPreserveAsciiBoxArt && /^\\s*\\u2502\\s+.+\\S\\s*\\u2502\\s*$/.test(plain)) return false;
+        if (viewerPreserveAsciiBoxArt && /^\\s*\\u2502\\s+(?:.*\\S\\s*)?\\u2502\\s*$/.test(plain)) return false;
         return true;
     }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
@@ -210,129 +223,7 @@ if (logEl) logEl.addEventListener('wheel', function(e) {
     logEl.scrollTop += e.deltaY * scale;
 }, { passive: false });
 
-if (viewportEl) viewportEl.addEventListener('click', function(e) {
-    var badge = e.target.closest('.error-badge-interactive');
-    if (badge) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof closeErrorHover === 'function') { closeErrorHover(); }
-        var lineEl = badge.closest('[data-idx]');
-        if (lineEl) {
-            var idx = parseInt(lineEl.dataset.idx, 10);
-            var item = allLines[idx];
-            if (item) {
-                var plain = stripTags(item.html || '');
-                vscodeApi.postMessage({ type: 'openErrorAnalysis', text: plain, lineIndex: idx });
-            }
-        }
-        return;
-    }
-    var urlLink = e.target.closest('.url-link');
-    if (urlLink) {
-        e.preventDefault();
-        vscodeApi.postMessage({ type: 'openUrl', url: urlLink.dataset.url || '' });
-        return;
-    }
-    var burstMk = e.target.closest('.slow-query-burst-marker[data-anchor-seq]');
-    if (burstMk) {
-        e.preventDefault();
-        e.stopPropagation();
-        var asq = parseInt(burstMk.getAttribute('data-anchor-seq') || '', 10);
-        if (!isNaN(asq) && typeof scrollToAnchorSeq === 'function') scrollToAnchorSeq(asq);
-        return;
-    }
-    /* N+1 insight row actions (see viewer-data-add.ts + drift-n-plus-one-detector.ts). */
-    var n1Action = e.target.closest('.n1-action');
-    if (n1Action) {
-        e.preventDefault();
-        e.stopPropagation();
-        var action = n1Action.dataset.action || '';
-        if (action === 'focus-db' && typeof soloSourceTag === 'function') {
-            soloSourceTag('database');
-        } else if (action === 'focus-fingerprint') {
-            var fp = n1Action.dataset.fingerprint || '';
-            var searchInput = document.getElementById('search-input');
-            if (searchInput && fp) {
-                searchInput.value = fp;
-                if (typeof openSearch === 'function') openSearch();
-                if (typeof updateSearch === 'function') updateSearch();
-            }
-        } else if (action === 'find-static-sources') {
-            if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && !staticSqlFromFingerprintEnabled) return;
-            var fpSrc = n1Action.dataset.fingerprint || '';
-            if (fpSrc && typeof vscodeApi !== 'undefined' && vscodeApi) {
-                vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpSrc });
-            }
-        }
-        return;
-    }
-    var sqlStaticBtn = e.target.closest('.sql-repeat-static-sources');
-    if (sqlStaticBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof staticSqlFromFingerprintEnabled !== 'undefined' && !staticSqlFromFingerprintEnabled) return;
-        var fpStatic = sqlStaticBtn.getAttribute('data-fingerprint') || '';
-        if (fpStatic && typeof vscodeApi !== 'undefined' && vscodeApi) {
-            vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpStatic });
-        }
-        return;
-    }
-    var sqlRepToggle = e.target.closest('.sql-repeat-drilldown-toggle');
-    if (sqlRepToggle) {
-        e.preventDefault();
-        e.stopPropagation();
-        var repSeq = parseInt(sqlRepToggle.dataset.seq || '', 10);
-        if (!isNaN(repSeq) && typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(repSeq);
-        return;
-    }
-    var driftFoldBtn = e.target.closest('.drift-args-fold-btn');
-    if (driftFoldBtn) {
-        e.preventDefault();
-        e.stopPropagation();
-        var driftLine = driftFoldBtn.closest('[data-idx]');
-        if (driftLine && driftLine.dataset.idx !== undefined) {
-            var dIdx = parseInt(driftLine.dataset.idx, 10);
-            if (!isNaN(dIdx) && typeof driftArgsFoldOpenByIdx !== 'undefined') {
-                driftArgsFoldOpenByIdx[dIdx] = !driftArgsFoldOpenByIdx[dIdx];
-                if (typeof renderViewport === 'function') renderViewport(true);
-            }
-        }
-        return;
-    }
-    var link = e.target.closest('.source-link');
-    if (link) {
-        e.preventDefault();
-        vscodeApi.postMessage({
-            type: 'linkClicked',
-            path: link.dataset.path || '',
-            line: parseInt(link.dataset.line || '1'),
-            col: parseInt(link.dataset.col || '1'),
-            splitEditor: e.ctrlKey || e.metaKey,
-        });
-        return;
-    }
-    var header = e.target.closest('.stack-header');
-    if (header && header.dataset.gid !== undefined) {
-        toggleStackGroup(parseInt(header.dataset.gid));
-        return;
-    }
-    var contBadge = e.target.closest('.cont-badge');
-    if (contBadge && contBadge.dataset.contGid !== undefined && typeof toggleContinuationGroup === 'function') {
-        toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
-    }
-});
-
-if (viewportEl) viewportEl.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape') return;
-    var lineEl = e.target.closest('[data-idx]');
-    if (!lineEl) return;
-    var idx = parseInt(lineEl.dataset.idx, 10);
-    if (isNaN(idx) || idx < 0 || idx >= allLines.length) return;
-    var rItem = allLines[idx];
-    if (!rItem || !rItem.sqlRepeatDrilldown || !rItem.sqlRepeatDrilldownOpen) return;
-    e.preventDefault();
-    if (typeof toggleSqlRepeatDrilldown === 'function') toggleSqlRepeatDrilldown(rItem.seq);
-});
+${(0, viewer_script_click_handlers_1.getViewerClickHandlerScript)()}
 
 function toggleWrap() { wordWrap = !wordWrap; if (logEl) logEl.classList.toggle('nowrap', !wordWrap); renderViewport(true); }
 if (wrapToggle) wrapToggle.addEventListener('click', toggleWrap);
@@ -384,6 +275,9 @@ function onLogOrWrapResize() {
 }
 if (logEl) new ResizeObserver(onLogOrWrapResize).observe(logEl);
 if (logWrapEl) new ResizeObserver(onLogOrWrapResize).observe(logWrapEl);
+/* Fallback: some VS Code webview resize scenarios (e.g. window border drag) may not
+   trigger ResizeObserver on the log element. window.resize guarantees re-layout. */
+window.addEventListener('resize', onLogOrWrapResize);
 requestAnimationFrame(function() { requestAnimationFrame(syncJumpButtonInset); });
 `;
 }

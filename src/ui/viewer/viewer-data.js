@@ -5,7 +5,8 @@ const viewer_data_compress_streak_1 = require("./viewer-data-compress-streak");
 const viewer_data_add_1 = require("./viewer-data-add");
 const viewer_data_helpers_1 = require("./viewer-data-helpers");
 const viewer_data_viewport_1 = require("./viewer-data-viewport");
-function getViewerDataScript(repeatThresholds, viewerDbInsightsEnabled = true, staticSqlFromFingerprintEnabled = true, slowBurstThresholds, dbDetectorToggles) {
+function getViewerDataScript(opts = {}) {
+    const { repeatThresholds, viewerDbInsightsEnabled = true, staticSqlFromFingerprintEnabled = true, slowBurstThresholds, dbDetectorToggles, } = opts;
     return (0, viewer_data_helpers_1.getViewerDataHelpers)(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) + (0, viewer_data_compress_streak_1.getCompressStreakScript)() + (0, viewer_data_add_1.getViewerDataAddScript)(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
 function scrollToAnchorSeq(seq) {
@@ -46,6 +47,11 @@ function trimData() {
     allLines.splice(0, excess);
     activeGroupHeader = null;
     if (typeof cleanupContinuationAfterTrim === 'function') cleanupContinuationAfterTrim(excess, trimmedForCont);
+    // Adjust art-block tracker: if in-progress block was trimmed away, reset; otherwise shift index
+    if (typeof artBlockTracker !== 'undefined' && artBlockTracker.startIdx >= 0) {
+        artBlockTracker.startIdx -= excess;
+        if (artBlockTracker.startIdx < 0) { artBlockTracker.startIdx = -1; artBlockTracker.count = 0; }
+    }
     // Adjust repeat tracker index after splice so it still points at the correct line
     if (repeatTracker.lastLineIndex >= 0) {
         repeatTracker.lastLineIndex -= excess;
@@ -65,9 +71,6 @@ function trimData() {
     }
     if (typeof finalizeSqlPatternState === 'function') finalizeSqlPatternState();
     else if (typeof buildPrefixSums === 'function') buildPrefixSums();
-    if (typeof driftArgsFoldOpenByIdx !== 'undefined') {
-        driftArgsFoldOpenByIdx = Object.create(null);
-    }
     if (typeof pruneDbDetectorStateAfterTrim === 'function' && allLines.length > 0) {
         var oldestKept = allLines[0].timestamp;
         if (typeof oldestKept === 'number' && isFinite(oldestKept)) {
@@ -129,7 +132,7 @@ function applyCompressDedupModes() {
         var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!peeking && (row.userHidden || row.autoHidden)) return false;
         if ((typeof hideBlankLines !== 'undefined' && hideBlankLines) && isLineContentBlank(row)) return false;
-        if ((typeof appOnlyMode !== 'undefined' && appOnlyMode) && row.fw) return false;
+        if (typeof isTierHidden === 'function' && isTierHidden(row)) return false;
         return true;
     }
 

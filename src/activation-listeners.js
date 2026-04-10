@@ -42,6 +42,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.setupLineListeners = setupLineListeners;
 exports.setupConfigListener = setupConfigListener;
 exports.setupScopeContextListener = setupScopeContextListener;
+exports.setupDiagnosticListener = setupDiagnosticListener;
 const vscode = __importStar(require("vscode"));
 const config_1 = require("./modules/config/config");
 const source_linker_1 = require("./modules/source/source-linker");
@@ -160,9 +161,13 @@ function setupConfigListener(context, sessionManager, broadcaster) {
         if (e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
             || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
             || e.affectsConfiguration('saropaLogCapture.levelDetection')
-            || e.affectsConfiguration('saropaLogCapture.deemphasizeFrameworkLevels')
             || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')) {
-            broadcaster.setErrorClassificationSettings(cfg.suppressTransientErrors, cfg.breakOnCritical, cfg.levelDetection, cfg.deemphasizeFrameworkLevels, cfg.stderrTreatAsError);
+            broadcaster.setErrorClassificationSettings({
+                suppressTransientErrors: cfg.suppressTransientErrors,
+                breakOnCritical: cfg.breakOnCritical,
+                levelDetection: cfg.levelDetection,
+                stderrTreatAsError: cfg.stderrTreatAsError,
+            });
         }
     }));
 }
@@ -198,5 +203,18 @@ function setupScopeContextListener(context, broadcaster) {
     };
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => { }); }));
     updateScopeContext().catch(() => { });
+}
+/**
+ * Setup diagnostic change listener for lint badge live updates.
+ * When diagnostics change for files already seen in logs, broadcasts
+ * updated lint counts to the webview.
+ */
+function setupDiagnosticListener(context, diagnosticCache, broadcaster) {
+    context.subscriptions.push(vscode.languages.onDidChangeDiagnostics((event) => {
+        const updates = diagnosticCache.getUpdatesForChangedUris(event.uris);
+        if (updates) {
+            broadcaster.postToWebview({ type: 'updateLintData', fileUpdates: updates });
+        }
+    }));
 }
 //# sourceMappingURL=activation-listeners.js.map

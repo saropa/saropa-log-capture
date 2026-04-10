@@ -199,6 +199,7 @@ function parseFileLine(raw, ctx) {
 function buildMarkerLine(text, source) {
     return {
         text: (0, ansi_1.escapeHtml)(text),
+        rawText: text,
         isMarker: true,
         lineCount: 0,
         category: 'console',
@@ -208,14 +209,17 @@ function buildMarkerLine(text, source) {
 }
 /** Build a PendingLine for a regular log line. Converts ANSI codes to HTML and linkifies paths. */
 function buildFileLine(opts) {
+    const tier = opts.classifyFrame(opts.text);
     return {
-        text: (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsFold)(opts.text),
+        text: (0, drift_log_line_args_fold_1.buildLogLineHtmlWithOptionalDriftArgsDim)(opts.text),
+        rawText: opts.text,
         isMarker: false,
         lineCount: 0,
         category: opts.category,
         timestamp: opts.timestamp,
         ...(opts.elapsedMs !== undefined && opts.elapsedMs >= 0 ? { elapsedMs: opts.elapsedMs } : {}),
-        fw: opts.classifyFrame(opts.text),
+        tier,
+        fw: tier !== undefined ? tier !== 'flutter' : undefined,
         ...(opts.source ? { source: opts.source } : {}),
     };
 }

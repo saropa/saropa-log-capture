@@ -38,16 +38,16 @@ suite('viewer-data-add embed', () => {
         );
     });
 
-    test('new stack-header row defaults to fully expanded (not stack preview)', () => {
+    test('stack-header uses configurable default state via stackDefaultState var', () => {
         const block = extractAddToDataBlock(getViewerDataAddScript());
         assert.ok(block.length > 0, 'expected addToData block');
         assert.ok(
-            block.includes("type: 'stack-header'") && block.includes('frameCount: 1, collapsed: false'),
-            'new traces should default to expanded so frames are not hidden behind [+N more]',
+            block.includes("type: 'stack-header'") && block.includes('collapsed: _sds'),
+            'stack-header collapsed state should use the configurable _sds variable',
         );
         assert.ok(
-            !block.includes("frameCount: 1, collapsed: 'preview'"),
-            'regression: preview default would hide frames until user expands',
+            block.includes('? stackDefaultState : false'),
+            'stackDefaultState should default to false (expanded) when not configured',
         );
     });
 });

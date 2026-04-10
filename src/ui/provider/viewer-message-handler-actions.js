@@ -54,25 +54,17 @@ const helpers = __importStar(require("./viewer-provider-helpers"));
 const bug_report_panel_1 = require("../panels/bug-report-panel");
 const viewer_message_handler_panels_1 = require("./viewer-message-handler-panels");
 const report_file_writer_1 = require("../../modules/bug-report/report-file-writer");
-const extension_logger_1 = require("../../modules/misc/extension-logger");
 const ai_context_builder_1 = require("../../modules/ai/ai-context-builder");
 const ai_explain_1 = require("../../modules/ai/ai-explain");
 const ai_explain_panel_1 = require("../panels/ai-explain-panel");
 const viewer_keybindings_1 = require("../viewer/viewer-keybindings");
-const learning_runtime_1 = require("../../modules/learning/learning-runtime");
 const viewer_message_handler_root_cause_ai_1 = require("./viewer-message-handler-root-cause-ai");
 const viewer_message_handler_static_sql_1 = require("./viewer-message-handler-static-sql");
 const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
 const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
 const viewer_workspace_bool_message_map_1 = require("./viewer-workspace-bool-message-map");
 Object.defineProperty(exports, "SAROPA_BOOL_SETTING_BY_MSG_TYPE", { enumerable: true, get: function () { return viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE; } });
-function isAllowedExternalUrl(url) {
-    const trimmed = url.trim();
-    if (trimmed.length === 0 || trimmed.length > 2048) {
-        return false;
-    }
-    return /^https?:\/\//i.test(trimmed) || /^vscode:\/\//i.test(trimmed);
-}
+const viewer_message_handler_session_ui_1 = require("./viewer-message-handler-session-ui");
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m, key, fallback = "") {
     const v = m[key];
@@ -84,7 +76,7 @@ function clipTextFromMsg(m) {
     if (typeof v === "string") {
         return v;
     }
-    if (v == null) {
+    if (v === null || v === undefined) {
         return "";
     }
     if (typeof v === "number" || typeof v === "boolean") {
@@ -216,6 +208,19 @@ function handleCopyAndSettingsActions(type, msg, ctx) {
             });
             return true;
         }
+        case "copyAllFiltered": {
+            const text = clipTextFromMsg(msg);
+            const lineCount = typeof msg.lineCount === "number" ? msg.lineCount : 0;
+            if (text.length === 0 || lineCount === 0) {
+                vscode.window.showWarningMessage((0, l10n_1.t)("msg.logCopyEmpty")).then(undefined, () => { });
+                return true;
+            }
+            void vscode.env.clipboard.writeText(text).then(() => { vscode.window.showInformationMessage((0, l10n_1.t)("msg.logCopyAllFiltered", lineCount)).then(undefined, () => { }); }, (err) => {
+                const detail = err instanceof Error ? err.message : String(err);
+                vscode.window.showErrorMessage((0, l10n_1.t)("msg.logCopyFailed", detail)).then(undefined, () => { });
+            });
+            return true;
+        }
         case "copyWithSource":
             runCopyWithSource(msg);
             return true;
@@ -308,166 +313,6 @@ function handleCopyAndSettingsActions(type, msg, ctx) {
             return false;
     }
 }
-function runOpenUrl(msg) {
-    const url = msgStr(msg, "url");
-    if (isAllowedExternalUrl(url)) {
-        vscode.env.openExternal(vscode.Uri.parse(url)).then(undefined, () => { });
-    }
-    else {
-        (0, extension_logger_1.logExtensionWarn)('viewerMessage', 'openUrl rejected: invalid or disallowed scheme');
-    }
-}
-function runSessionAction(msg, ctx) {
-    const uriStrings = Array.isArray(msg.uriStrings) ? msg.uriStrings : [msgStr(msg, "uriString")];
-    const filenames = Array.isArray(msg.filenames) ? msg.filenames : [msgStr(msg, "filename")];
-    ctx.onSessionAction?.(msgStr(msg, "action"), uriStrings, filenames);
-}
-function handleSessionAndUiActions(type, msg, ctx) {
-    const boolKey = viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE[type];
-    if (boolKey) {
-        vscode.workspace.getConfiguration("saropaLogCapture")
-            .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
-        return true;
-    }
-    switch (type) {
-        case "addToWatch":
-            ctx.onAddToWatch?.(msgStr(msg, "text"));
-            return true;
-        case "promptAnnotation":
-            ctx.onAnnotationPrompt?.((0, viewer_message_handler_panels_1.safeLineIndex)(msg.lineIndex, 0), msgStr(msg, "current"));
-            return true;
-        case "addBookmark": {
-            const bm = msgStr(msg, "text").trim();
-            if (bm) {
-                (0, learning_runtime_1.getInteractionTracker)()?.track({ type: "explicit-keep", lineText: bm, lineLevel: "" });
-            }
-            ctx.onAddBookmark?.((0, viewer_message_handler_panels_1.safeLineIndex)(msg.lineIndex, 0), msgStr(msg, "text"), ctx.currentFileUri);
-            return true;
-        }
-        case "linkClicked":
-            ctx.onLinkClick?.(msgStr(msg, "path"), Number(msg.line ?? 1), Number(msg.col ?? 1), Boolean(msg.splitEditor));
-            return true;
-        case "openUrl":
-            runOpenUrl(msg);
-            return true;
-        case "navigatePart":
-            ctx.onPartNavigate?.(Math.max(1, (0, viewer_message_handler_panels_1.safeLineIndex)(msg.part, 1)));
-            return true;
-        case "navigateSession": {
-            const d = Number(msg.direction);
-            ctx.onSessionNavigate?.(d < 0 ? -1 : 1);
-            return true;
-        }
-        case "savePresetRequest":
-            ctx.onSavePresetRequest?.(msg.filters ?? {});
-            return true;
-        case "setCaptureAll":
-            vscode.workspace.getConfiguration("saropaLogCapture")
-                .update("captureAll", Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
-            return true;
-        case "setMinimapWidth": {
-            const w = msgStr(msg, "value");
-            const allowed = new Set(["xsmall", "small", "medium", "large", "xlarge"]);
-            if (!allowed.has(w))
-                return true;
-            vscode.workspace.getConfiguration("saropaLogCapture")
-                .update("minimapWidth", w, vscode.ConfigurationTarget.Workspace);
-            return true;
-        }
-        case "editLine":
-            helpers.handleEditLine(ctx.currentFileUri, ctx.isSessionActive, {
-                lineIndex: (0, viewer_message_handler_panels_1.safeLineIndex)(msg.lineIndex, 0), newText: msgStr(msg, "newText"),
-                timestamp: Number(msg.timestamp ?? 0), loadFromFile: ctx.load,
-            }).catch((err) => { vscode.window.showErrorMessage((0, l10n_1.t)('msg.failedEditLine', err.message)); });
-            return true;
-        case "exportLogs":
-            helpers.handleExportLogs(msgStr(msg, "text"), msg.options ?? {})
-                .catch((err) => { vscode.window.showErrorMessage((0, l10n_1.t)('msg.failedExportLogs', err.message)); });
-            return true;
-        case "saveLevelFilters":
-            helpers.saveLevelFilters(ctx.context, msgStr(msg, "filename"), msg.levels ?? []);
-            return true;
-        case "requestFindInFiles":
-            ctx.onFindInFiles?.(msgStr(msg, "query"), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-            return true;
-        case "openFindResult":
-            ctx.onOpenFindResult?.(msgStr(msg, "uriString"), msgStr(msg, "query"), { caseSensitive: msg.caseSensitive, wholeWord: msg.wholeWord, useRegex: msg.useRegex });
-            return true;
-        case "findNavigateMatch":
-            ctx.onFindNavigateMatch?.(msgStr(msg, "uriString"), (0, viewer_message_handler_panels_1.safeLineIndex)(msg.matchIndex, 0));
-            return true;
-        case "requestBookmarks":
-        case "deleteBookmark":
-        case "deleteFileBookmarks":
-        case "deleteAllBookmarks":
-        case "editBookmarkNote":
-        case "openBookmark":
-            ctx.onBookmarkAction?.(msg);
-            return true;
-        case "requestSessionList":
-            ctx.onSessionListRequest?.();
-            return true;
-        case "runCommand":
-            vscode.commands.executeCommand(msgStr(msg, "command"), ...(Array.isArray(msg.args) ? msg.args : [])).then(undefined, () => { });
-            return true;
-        case "browseSessionRoot":
-            ctx.onBrowseSessionRoot?.()?.then(undefined, () => { });
-            return true;
-        case "clearSessionRoot":
-            ctx.onClearSessionRoot?.()?.then(undefined, () => { });
-            return true;
-        case "openSessionFromPanel":
-            ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString"));
-            return true;
-        case "sessionAction":
-            runSessionAction(msg, ctx);
-            return true;
-        case "popOutViewer":
-            ctx.onPopOutRequest?.();
-            return true;
-        case "openInsightTab":
-            ctx.onOpenInsightTabRequest?.();
-            return true;
-        case "revealLogFile":
-            if (ctx.currentFileUri && ctx.onRevealLogFile) {
-                Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => { });
-            }
-            return true;
-        // Hold-to-copy path: show status bar confirmation so users get visible feedback.
-        case "copyCurrentFilePath":
-            if (ctx.currentFileUri) {
-                vscode.env.clipboard.writeText(ctx.currentFileUri.fsPath).then(() => { vscode.window.setStatusBarMessage((0, l10n_1.t)('msg.filePathCopied'), 2000); }, () => { });
-            }
-            return true;
-        // Reveal current file in OS so the containing folder opens (not the parent folder).
-        case "openCurrentFileFolder":
-            if (ctx.currentFileUri) {
-                vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => { }, () => { });
-            }
-            return true;
-        case "openSidecarFile": {
-            const sidecar = msgStr(msg, "filename");
-            if (sidecar && ctx.currentFileUri && !sidecar.includes('/') && !sidecar.includes('\\')) {
-                vscode.window.showTextDocument(vscode.Uri.joinPath(ctx.currentFileUri, '..', sidecar), { preview: true, viewColumn: vscode.ViewColumn.Beside }).then(undefined, () => { });
-            }
-            return true;
-        }
-        case "setSessionDisplayOptions":
-            ctx.onDisplayOptionsChange?.(msg.options);
-            return true;
-        case "promptGoToLine":
-            vscode.window.showInputBox({
-                prompt: (0, l10n_1.t)('prompt.goToLine'),
-                validateInput: (v) => /^\d+$/.test(v) ? null : (0, l10n_1.t)('prompt.goToLineValidate'),
-            })
-                .then((v) => { if (v) {
-                ctx.post({ type: "scrollToLine", line: Number.parseInt(v, 10) });
-            } });
-            return true;
-        default:
-            return false;
-    }
-}
 /**
  * Handle action messages (copy, settings, keybindings, search, edit, session, etc.).
  * Returns true if the message was handled.
@@ -477,7 +322,7 @@ function dispatchViewerActionMessage(msg, ctx) {
     if (handleCopyAndSettingsActions(type, msg, ctx)) {
         return true;
     }
-    if (handleSessionAndUiActions(type, msg, ctx)) {
+    if ((0, viewer_message_handler_session_ui_1.handleSessionAndUiActions)(type, msg, ctx)) {
         return true;
     }
     return false;
