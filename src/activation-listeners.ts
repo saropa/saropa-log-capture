@@ -7,6 +7,7 @@
 
 import * as vscode from 'vscode';
 import { getConfig, errorRateConfigFromConfig } from './modules/config/config';
+import { setSeverityKeywords } from './modules/analysis/level-classifier';
 import type { SessionManagerImpl } from './modules/session/session-manager';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
@@ -160,12 +161,15 @@ export function setupConfigListener(
             || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
             || e.affectsConfiguration('saropaLogCapture.levelDetection')
             || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')
+            || e.affectsConfiguration('saropaLogCapture.severityKeywords')
         ) {
+            setSeverityKeywords(cfg.severityKeywords);
             broadcaster.setErrorClassificationSettings({
                 suppressTransientErrors: cfg.suppressTransientErrors,
                 breakOnCritical: cfg.breakOnCritical,
                 levelDetection: cfg.levelDetection,
                 stderrTreatAsError: cfg.stderrTreatAsError,
+                severityKeywords: cfg.severityKeywords,
             });
         }
     }));

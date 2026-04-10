@@ -137,8 +137,13 @@ function handleErrorClassificationSettings(msg) {
     if (msg.stderrTreatAsError !== undefined) {
         stderrTreatAsError = !!msg.stderrTreatAsError;
     }
-    // Re-render when stderr policy or strict mode changes (levels and stderr CSS class).
-    if (msg.stderrTreatAsError !== undefined || msg.levelDetection !== undefined) {
+    if (msg.severityKeywords !== undefined) {
+        if (typeof applySeverityKeywords === 'function') applySeverityKeywords(msg.severityKeywords);
+        if (typeof currentSeverityKeywords !== 'undefined') currentSeverityKeywords = msg.severityKeywords;
+        if (typeof renderSeverityKeywordsDisplay === 'function') renderSeverityKeywordsDisplay();
+    }
+    // Re-render when stderr policy, strict mode, or keywords change (levels recalc).
+    if (msg.stderrTreatAsError !== undefined || msg.levelDetection !== undefined || msg.severityKeywords !== undefined) {
         if (typeof recalcAndRender === 'function') { recalcAndRender(); }
         else { recalcHeights(); renderViewport(true); }
     }
