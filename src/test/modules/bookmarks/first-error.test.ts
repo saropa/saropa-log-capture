@@ -13,7 +13,22 @@ suite('FirstError', () => {
         '[12:00:01] [stderr] Something failed',
         '[12:00:02] [stdout] Another error: null',
       ];
+      /* stderrTreatAsError=false: "failed" matches warnPattern (warning), not error.
+         First true error is line 2 ("error:" matches looseErrorPattern). */
       const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: false });
+      assert.ok(result.firstError);
+      assert.strictEqual(result.firstError!.lineIndex, 2);
+      assert.strictEqual(result.firstError!.level, 'error');
+      assert.ok(result.firstError!.snippet.includes('error') || result.firstError!.lineText.includes('error'));
+    });
+
+    test('returns stderr as error when stderrTreatAsError is true', () => {
+      const lines = [
+        '[12:00:00] [stdout] Info message',
+        '[12:00:01] [stderr] Something failed',
+        '[12:00:02] [stdout] Another error: null',
+      ];
+      const result = findFirstErrorLines(lines, { strict: false, includeWarning: false, stderrTreatAsError: true });
       assert.ok(result.firstError);
       assert.strictEqual(result.firstError!.lineIndex, 1);
       assert.strictEqual(result.firstError!.level, 'error');
