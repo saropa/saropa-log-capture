@@ -19,12 +19,21 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('__programmaticScroll'));
         });
 
+        test('should use getSelectionRange helper for selection detection across actions', () => {
+            const script = getContextMenuScript();
+            assert.ok(script.includes('function getSelectionRange(lineIdx)'));
+            assert.ok(script.includes('selectionStart'));
+            assert.ok(script.includes('selectionEnd'));
+            /* All selection-aware actions should call the helper, not inline the boilerplate. */
+            const helper = script.indexOf('function getSelectionRange');
+            const handler = script.indexOf('function handleLineAction');
+            assert.ok(helper < handler, 'getSelectionRange should be defined before handleLineAction');
+        });
+
         test('should copy all selected lines when multiple lines selected (Copy Line uses getSelectedLines)', () => {
             const script = getContextMenuScript();
             assert.ok(script.includes('getSelectedLines'));
             assert.ok(script.includes('linesToPlainText'));
-            assert.ok(script.includes('selectionStart'));
-            assert.ok(script.includes('selectionEnd'));
         });
 
         test('should use copyContextLines for Copy with source (expand range before/after)', () => {
