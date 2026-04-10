@@ -1,6 +1,6 @@
 import type { HighlightRule } from "../storage/highlight-rules";
 import type { AutoTagRule } from "../misc/auto-tagger";
-import type { WatchPatternSetting } from "./config-types";
+import type { SeverityKeywords, WatchPatternSetting } from "./config-types";
 
 import { defaultHighlightRules } from "./config-default-highlight-rules";
 
@@ -102,5 +102,43 @@ export function normalizeAutoTagRules(raw: unknown): AutoTagRule[] {
       return { pattern, tag };
     })
     .filter((r): r is AutoTagRule => r !== null);
+}
+
+export const DEFAULT_SEVERITY_KEYWORDS: SeverityKeywords = {
+  error: ["fatal", "panic", "critical"],
+  warning: ["warn", "warning", "caution", "fail", "failed", "failure"],
+  performance: [
+    "perf", "performance", "dropped frame", "fps", "framerate",
+    "jank", "stutter", "choreographer", "doing too much work",
+    "anr", "application not responding",
+  ],
+  todo: ["TODO", "FIXME", "HACK", "XXX", "BUG", "KLUDGE", "WORKAROUND"],
+  debug: ["breadcrumb", "trace", "debug"],
+  notice: ["notice", "note", "important"],
+};
+
+const severityLevels: readonly (keyof SeverityKeywords)[] = [
+  "error", "warning", "performance", "todo", "debug", "notice",
+];
+
+function normalizeStringArray(raw: unknown): string[] {
+  if (!Array.isArray(raw)) { return []; }
+  return raw
+    .filter((v): v is string => typeof v === "string")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+export function normalizeSeverityKeywords(raw: unknown): SeverityKeywords {
+  if (!raw || typeof raw !== "object") { return DEFAULT_SEVERITY_KEYWORDS; }
+  const o = raw as Record<string, unknown>;
+  const result: Record<string, readonly string[]> = {};
+
+  for (const level of severityLevels) {
+    const arr = normalizeStringArray(o[level]);
+    result[level] = arr.length > 0 ? arr : DEFAULT_SEVERITY_KEYWORDS[level];
+  }
+
+  return result as unknown as SeverityKeywords;
 }
 

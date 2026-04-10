@@ -1,5 +1,6 @@
 import * as assert from 'assert';
-import { classifyLevel } from '../../../modules/analysis/level-classifier';
+import { classifyLevel, setSeverityKeywords } from '../../../modules/analysis/level-classifier';
+import { DEFAULT_SEVERITY_KEYWORDS } from '../../../modules/config/config-normalizers';
 
 suite('LevelClassifier', () => {
 
@@ -110,12 +111,12 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('[fatal] shutdown', 'stdout', true), 'error');
         });
 
-        test('should detect failed keyword', () => {
-            assert.strictEqual(classifyLevel('Build failed', 'stdout', true), 'error');
+        test('should detect failed keyword as warning', () => {
+            assert.strictEqual(classifyLevel('Build failed', 'stdout', true), 'warning');
         });
 
-        test('should detect failure keyword', () => {
-            assert.strictEqual(classifyLevel('Connection failure', 'stdout', true), 'error');
+        test('should detect failure keyword as warning', () => {
+            assert.strictEqual(classifyLevel('Connection failure', 'stdout', true), 'warning');
         });
 
         test('should detect panic keyword', () => {
@@ -223,6 +224,66 @@ suite('LevelClassifier', () => {
         test('should be case-insensitive for keywords', () => {
             assert.strictEqual(classifyLevel('WARNING: test', 'stdout', true), 'warning');
             assert.strictEqual(classifyLevel('Warning: test', 'stdout', true), 'warning');
+        });
+    });
+
+    suite('classifyLevel — custom severity keywords', () => {
+
+        teardown(() => {
+            // Restore defaults after each test to avoid leaking state.
+            setSeverityKeywords(DEFAULT_SEVERITY_KEYWORDS);
+        });
+
+        test('should classify custom error keyword', () => {
+            setSeverityKeywords({
+                ...DEFAULT_SEVERITY_KEYWORDS,
+                error: [...DEFAULT_SEVERITY_KEYWORDS.error, 'kaboom'],
+            });
+            assert.strictEqual(classifyLevel('kaboom happened', 'stdout', true), 'error');
+        });
+
+        test('should move keyword between levels', () => {
+            // Move "fatal" from error to warning
+            setSeverityKeywords({
+                ...DEFAULT_SEVERITY_KEYWORDS,
+                error: ['panic', 'critical'],
+                warning: [...DEFAULT_SEVERITY_KEYWORDS.warning, 'fatal'],
+            });
+            assert.strictEqual(classifyLevel('fatal crash', 'stdout', true), 'warning');
+        });
+
+        test('should handle empty keyword list', () => {
+            setSeverityKeywords({ ...DEFAULT_SEVERITY_KEYWORDS, warning: [] });
+            // "failed" was in warning keywords — with empty list, falls through to info
+            assert.strictEqual(classifyLevel('Build failed', 'stdout', true), 'info');
+        });
+
+        test('should still match structural patterns regardless of keywords', () => {
+            // Clear all error keywords — structural Error: should still match
+            setSeverityKeywords({ ...DEFAULT_SEVERITY_KEYWORDS, error: [] });
+            assert.strictEqual(classifyLevel('Error: something broke', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('[fatal] shutdown', 'stdout', true), 'error');
+            assert.strictEqual(classifyLevel('_TypeError (null)', 'stdout', true), 'error');
+        });
+
+        test('should match multi-word keyword phrases', () => {
+            setSeverityKeywords({
+                ...DEFAULT_SEVERITY_KEYWORDS,
+                error: ['bad thing happened'],
+            });
+            assert.strictEqual(classifyLevel('a bad thing happened here', 'stdout', true), 'error');
+        });
+
+        test('should allow user to restore failed/failure to error level', () => {
+            // Before: "failed" was hardcoded error. After: default is warning.
+            assert.strictEqual(classifyLevel('Build failed', 'stdout', true), 'warning');
+            // User moves it back to error via config
+            setSeverityKeywords({
+                ...DEFAULT_SEVERITY_KEYWORDS,
+                error: [...DEFAULT_SEVERITY_KEYWORDS.error, 'failed', 'failure'],
+                warning: ['warn', 'warning', 'caution'],
+            });
+            assert.strictEqual(classifyLevel('Build failed', 'stdout', true), 'error');
         });
     });
 

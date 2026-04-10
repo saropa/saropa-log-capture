@@ -174,6 +174,15 @@ if (resetSettingsBtn) {
     });
 }
 
+// Severity keywords: open VS Code settings
+var optEditSeverityKeywords = document.getElementById('options-edit-severity-keywords');
+if (optEditSeverityKeywords) optEditSeverityKeywords.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (typeof vscodeApi !== 'undefined' && vscodeApi.postMessage) {
+        vscodeApi.postMessage({ type: 'openSeverityKeywordsSettings' });
+    }
+});
+
 document.addEventListener('click', function(e) {
     if (!optionsPanelOpen) return;
     var panel = document.getElementById('options-panel');
