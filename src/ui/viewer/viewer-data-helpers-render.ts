@@ -124,7 +124,8 @@ function renderItem(item, idx, prevVis) {
         var dup = item.dupCount > 1 ? ' <span class="stack-dedup-badge">(x' + item.dupCount + ')</span>' : '';
         var hdrQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
         var hdrHeat = (item.qualityPercent != null && typeof decoShowQuality !== 'undefined' && decoShowQuality) ? (item.qualityPercent >= 80 ? ' line-quality-high' : (item.qualityPercent >= 50 ? ' line-quality-med' : ' line-quality-low')) : '';
-        return '<div class="stack-header' + matchCls + spacingCls + barCls + hdrHeat + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + hdrQb + html.trim() + dup + sf + '</div>';
+        var hdrLevelCls = item.level ? ' level-' + item.level : '';
+        return '<div class="stack-header' + hdrLevelCls + matchCls + spacingCls + barCls + hdrHeat + '"' + idxAttr + ' data-gid="' + item.groupId + '">' + ch + ' ' + hdrQb + html.trim() + dup + sf + '</div>';
     }
     if (item.type === 'stack-frame') {
         var sfQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
