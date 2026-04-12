@@ -142,6 +142,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     viewerDbDetectorNPlusOneEnabled: ensureBoolean(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
     viewerDbDetectorSlowBurstEnabled: ensureBoolean(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
     viewerDbDetectorBaselineHintsEnabled: ensureBoolean(cfg.get("viewerDbDetectorBaselineHintsEnabled"), true),
+    viewerDbDetectorTimestampBurstEnabled: ensureBoolean(cfg.get("viewerDbDetectorTimestampBurstEnabled"), true),
     viewerSlowBurstThresholds: normalizeViewerSlowBurstThresholds({
       slowQueryMs: cfg.get("viewerSlowBurstSlowQueryMs"),
       burstMinCount: cfg.get("viewerSlowBurstMinCount"),
@@ -235,6 +236,7 @@ export function viewerDbDetectorTogglesFromConfig(cfg: SaropaLogCaptureConfig): 
     nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
     slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
     baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+    timestampBurstEnabled: cfg.viewerDbDetectorTimestampBurstEnabled,
   };
 }
 
