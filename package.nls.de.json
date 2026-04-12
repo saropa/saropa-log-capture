@@ -48,6 +48,7 @@
   "command.openWalkthrough.title": "Saropa Log Capture: Erste Schritte",
   "command.pause.title": "Saropa Log Capture: Aufnahme pausieren/fortsetzen",
   "command.popOutViewer.title": "Saropa Log Capture: Viewer in neuem Fenster öffnen",
+  "command.collapseAllSections.title": "Saropa Log Capture: Alle Abschnitte einklappen",
   "command.refreshHistory.title": "Protokollverlauf aktualisieren",
   "command.removeFromInvestigation.title": "Aus Untersuchung entfernen",
   "command.renameSession.title": "Protokoll umbenennen",

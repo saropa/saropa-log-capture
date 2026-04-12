@@ -42,7 +42,8 @@ const vscode = __importStar(require("vscode"));
 const session_metadata_1 = require("../../modules/session/session-metadata");
 const session_history_helpers_1 = require("./session-history-helpers");
 /** Load metadata for all files with bounded concurrency (max 8 parallel). */
-async function loadBatch(target, logDir, files, centralMeta) {
+async function loadBatch(target, logDir, files, opts) {
+    const { centralMeta, onItemLoaded } = opts;
     const results = new Array(files.length);
     const limit = 8;
     let index = 0;
@@ -50,6 +51,7 @@ async function loadBatch(target, logDir, files, centralMeta) {
         while (index < files.length) {
             const i = index++;
             results[i] = await loadMetadata(target, logDir, files[i], centralMeta);
+            onItemLoaded?.(results[i], i);
         }
     };
     const count = Math.min(limit, files.length);

@@ -152,6 +152,11 @@
         "title": "%command.popOutViewer.title%"
       },
       {
+        "command": "saropaLogCapture.collapseAllSections",
+        "icon": "$(collapse-all)",
+        "title": "%command.collapseAllSections.title%"
+      },
+      {
         "command": "saropaLogCapture.showInsights",
         "icon": "$(graph)",
         "title": "%command.showInsights.title%"
@@ -2419,6 +2424,11 @@
           "command": "saropaLogCapture.popOutViewer",
           "group": "navigation",
           "when": "view == saropaLogCapture.logViewer"
+        },
+        {
+          "command": "saropaLogCapture.collapseAllSections",
+          "group": "navigation",
+          "when": "view == saropaLogCapture.logViewer"
         }
       ]
     },
@@ -2594,5 +2604,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "5.7.1"
+  "version": "5.8.0"
 }

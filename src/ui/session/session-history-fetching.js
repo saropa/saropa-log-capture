@@ -60,7 +60,7 @@ async function migrateIfNeeded(folder, configuredDir, logDirOverride) {
     }
 }
 /** Fetch session items from disk, loading metadata and grouping split files. */
-async function fetchItemsCore(target, logDirOverride) {
+async function fetchItemsCore(target, logDirOverride, onItemLoaded) {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder && !logDirOverride) {
         return [];
@@ -72,7 +72,7 @@ async function fetchItemsCore(target, logDirOverride) {
         const { fileTypes, includeSubfolders } = (0, config_1.getConfig)();
         const logFiles = await (0, config_1.readTrackedFiles)(logDir, fileTypes, includeSubfolders);
         const centralMeta = await target.metaStore.loadAllMetadata(logDir);
-        const items = await (0, session_history_metadata_1.loadBatch)(target, logDir, logFiles, centralMeta);
+        const items = await (0, session_history_metadata_1.loadBatch)(target, logDir, logFiles, { centralMeta, onItemLoaded });
         pruneCache(target, items);
         const grouped = (0, session_history_grouping_1.groupSplitFiles)(items);
         return grouped.sort((a, b) => b.mtime - a.mtime);

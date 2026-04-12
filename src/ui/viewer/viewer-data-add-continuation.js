@@ -9,7 +9,9 @@
  *
  * **Detection heuristic:** consecutive `line` items where:
  * - Same `ts` (exact equality, non-null)
- * - Same `logcatTag` (or same `source` when no logcatTag)
+ * - Same `logcatTag` — OR, when neither line has a logcatTag: same
+ *   `category` and child has no `sourceTag` (a bracket tag like `[log]`
+ *   signals a new log entry, not a continuation)
  * - Max group size: 200
  *
  * Groups with >5 children auto-collapse; ≤5 stay expanded.
@@ -37,13 +39,15 @@ function matchesContinuation(item, prev) {
     if (!prev || !item) return false;
     if (item.timestamp == null || prev.timestamp == null) return false;
     if (item.timestamp !== prev.timestamp) return false;
-    // Require both lines to have a logcat tag for continuation grouping.
-    // Source-only matching is intentionally excluded: wall-clock timestamps
-    // assigned at capture time are identical for all lines in a rapid burst,
-    // which causes unrelated lines (e.g. ASCII art, server logs) to be
-    // spuriously grouped and collapsed behind a [+N lines] badge.
-    if (!item.logcatTag || !prev.logcatTag) return false;
-    return item.logcatTag === prev.logcatTag;
+    // Primary path: both lines have a logcat tag — match on tag equality.
+    if (item.logcatTag && prev.logcatTag) return item.logcatTag === prev.logcatTag;
+    // Fallback for console lines (e.g. dart:developer log() split by DA):
+    // same category, neither has a logcat tag, and the child has no source
+    // tag (a [tag] prefix signals a new log entry, not a continuation).
+    if (!item.logcatTag && !prev.logcatTag && item.category && item.category === prev.category) {
+        return !item.sourceTag;
+    }
+    return false;
 }
 
 /**

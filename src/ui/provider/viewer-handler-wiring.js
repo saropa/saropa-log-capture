@@ -170,22 +170,59 @@ async function sendQuickPreview(broadcaster, context) {
     }));
     broadcaster.postToWebview({ type: 'sessionListPreview', previews });
 }
+/** Build the options object used for session payload records. */
+function makePayloadOptions(deps) {
+    const lastViewedMap = deps.context.workspaceState.get(viewer_provider_helpers_1.LOG_LAST_VIEWED_KEY, {});
+    return {
+        getActiveLastWriteTime: () => deps.sessionManager.getActiveLastWriteTime?.(),
+        getLastViewedAt: (uri) => lastViewedMap[uri],
+    };
+}
+/** Batch size for streaming session metadata to the webview. */
+const streamBatchSize = 5;
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target, deps) {
     const { historyProvider, broadcaster, sessionManager } = deps;
+    /** Non-streaming full refresh (used by the polling interval). */
     const refreshSessionList = async () => {
         const overrideUriStr = deps.context.workspaceState.get(exports.SESSION_PANEL_ROOT_KEY);
         const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
         const items = overrideUri
             ? await historyProvider.getAllChildrenFromRoot(overrideUri)
             : await historyProvider.getAllChildren();
-        const lastViewedMap = deps.context.workspaceState.get(viewer_provider_helpers_1.LOG_LAST_VIEWED_KEY, {});
-        const payload = await (0, viewer_provider_helpers_1.buildSessionListPayload)(items, historyProvider.getActiveUri(), {
-            getActiveLastWriteTime: () => sessionManager.getActiveLastWriteTime?.(),
-            getLastViewedAt: (uri) => lastViewedMap[uri],
-        });
+        const payload = await (0, viewer_provider_helpers_1.buildSessionListPayload)(items, historyProvider.getActiveUri(), makePayloadOptions(deps));
         const rootLabel = getSessionRootPath(deps.context);
         broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+    };
+    /** Streaming refresh: sends items to webview progressively as metadata loads. */
+    const refreshSessionListStreaming = async () => {
+        const overrideUriStr = deps.context.workspaceState.get(exports.SESSION_PANEL_ROOT_KEY);
+        const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
+        const activeStr = historyProvider.getActiveUri()?.toString();
+        const opts = makePayloadOptions(deps);
+        const pending = [];
+        const allRecords = [];
+        const recordPromises = [];
+        const flush = () => {
+            if (pending.length === 0) {
+                return;
+            }
+            broadcaster.postToWebview({ type: 'sessionListBatch', items: pending.splice(0) });
+        };
+        const onItemLoaded = (item) => {
+            recordPromises.push((0, viewer_provider_helpers_1.buildSessionItemRecord)(item, activeStr, opts).then(rec => {
+                allRecords.push(rec);
+                pending.push(rec);
+                if (pending.length >= streamBatchSize) {
+                    flush();
+                }
+            }).catch(() => { }));
+        };
+        await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri);
+        await Promise.all(recordPromises);
+        flush();
+        const rootLabel = getSessionRootPath(deps.context);
+        broadcaster.sendSessionList(allRecords, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
     };
     const ref = {};
     target.setSessionListHandler(() => {
@@ -196,7 +233,7 @@ function wireSessionListHandlers(target, deps) {
         ref.timer = setTimeout(() => {
             void (async () => {
                 await sendQuickPreview(broadcaster, deps.context).catch(() => { });
-                await refreshSessionList();
+                await refreshSessionListStreaming();
             })();
             if (ref.interval) {
                 clearInterval(ref.interval);
