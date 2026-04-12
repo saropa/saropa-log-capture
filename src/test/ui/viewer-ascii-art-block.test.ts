@@ -55,11 +55,11 @@ suite('ASCII art block grouping', () => {
             );
         });
 
-        test('should finalize previous block when timestamp changes', () => {
+        test('should use timestamp proximity (not strict equality) for block continuity', () => {
             const block = extractAddToDataBlock(getViewerDataAddScript());
             assert.ok(
-                block.includes('artBlockTracker.timestamp === ts'),
-                'tracker must compare timestamps for block continuity',
+                block.includes('Math.abs(ts - artBlockTracker.timestamp) < 1000'),
+                'tracker must compare timestamps with 1 s tolerance for block continuity',
             );
             const finalizeCount = (block.match(/finalizeArtBlock/g) || []).length;
             assert.ok(
