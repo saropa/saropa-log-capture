@@ -7,7 +7,7 @@ import {
 } from './session-history-grouping';
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
 import { buildDescription, buildTooltip, formatCount } from './session-history-helpers';
-import { fetchItemsCore, type FetchTarget } from './session-history-fetching';
+import { fetchItemsCore, type FetchTarget, type FetchCallbacks } from './session-history-fetching';
 import { type OnItemLoaded } from './session-history-metadata';
 
 /** Extract the basename from a relative path (strip folder prefix). */
@@ -193,9 +193,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     async getAllChildrenStreaming(
         onItemLoaded: OnItemLoaded,
         logDirOverride?: vscode.Uri,
+        onFilesListed?: FetchCallbacks['onFilesListed'],
     ): Promise<TreeItem[]> {
         if (!logDirOverride && this.itemsCache) { return this.itemsCache; }
-        const items = await fetchItemsCore(this, logDirOverride, onItemLoaded);
+        const items = await fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
         if (!logDirOverride) {
             this.itemsCache = items;
             this.fetchInFlight = undefined;

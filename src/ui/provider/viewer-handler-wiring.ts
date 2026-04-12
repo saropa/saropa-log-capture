@@ -13,7 +13,7 @@ import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
 import type { SessionMetadata } from "../session/session-history-grouping";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
-import { getConfig, getLogDirectoryUri, readTrackedFiles } from "../../modules/config/config";
+import { getLogDirectoryUri } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
 import { openLogAtLine } from "../../modules/search/log-search";
 import { showAnalysis } from "../analysis/analysis-panel";
@@ -165,19 +165,6 @@ function getSessionRootPath(context: vscode.ExtensionContext): string {
   return getLogDir(context)?.fsPath ?? "No workspace";
 }
 
-/** Send a lightweight filename-only preview so items appear before full metadata loads. */
-async function sendQuickPreview(broadcaster: ViewerBroadcaster, context: vscode.ExtensionContext): Promise<void> {
-  const logDir = getLogDir(context);
-  if (!logDir) { return; }
-  const { fileTypes, includeSubfolders } = getConfig();
-  const files = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
-  const previews = files.map(f => ({
-    filename: f,
-    uriString: vscode.Uri.joinPath(logDir, f).toString(),
-  }));
-  broadcaster.postToWebview({ type: 'sessionListPreview', previews });
-}
-
 /** Build the options object used for session payload records. */
 function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   const lastViewedMap = deps.context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
@@ -228,31 +215,31 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
         }).catch(() => {}),
       );
     };
-    await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri);
+    const onFilesListed = (files: readonly string[], logDir: vscode.Uri): void => {
+      const previews = files.map(f => ({
+        filename: f,
+        uriString: vscode.Uri.joinPath(logDir, f).toString(),
+      }));
+      broadcaster.postToWebview({ type: 'sessionListPreview', previews });
+    };
+    await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
     await Promise.all(recordPromises);
     flush();
     const rootLabel = getSessionRootPath(deps.context);
     broadcaster.sendSessionList(allRecords, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
 
-  const ref: { timer?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> } = {};
+  const ref: { interval?: ReturnType<typeof setInterval> } = {};
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
-    if (ref.timer) { clearTimeout(ref.timer); }
-    ref.timer = setTimeout(() => {
-      void (async () => {
-        await sendQuickPreview(broadcaster, deps.context).catch(() => {});
-        await refreshSessionListStreaming();
-      })();
-      if (ref.interval) { clearInterval(ref.interval); }
-      ref.interval = setInterval(() => {
-        if (sessionManager.getActiveSession()) { void refreshSessionList(); }
-      }, 30000);
-    }, 150);
+    void refreshSessionListStreaming();
+    if (ref.interval) { clearInterval(ref.interval); }
+    ref.interval = setInterval(() => {
+      if (sessionManager.getActiveSession()) { void refreshSessionList(); }
+    }, 30000);
   });
   deps.context.subscriptions.push({
     dispose() {
-      if (ref.timer) { clearTimeout(ref.timer); ref.timer = undefined; }
       if (ref.interval) { clearInterval(ref.interval); ref.interval = undefined; }
     },
   });
