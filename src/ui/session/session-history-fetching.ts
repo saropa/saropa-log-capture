@@ -14,6 +14,14 @@ export interface FetchTarget extends LoadMetadataTarget {
     readonly metaStore: SessionMetadataStore;
 }
 
+/** Callbacks for progressive loading in fetchItemsCore. */
+export interface FetchCallbacks {
+    /** Fired after the file list is read but before metadata loading begins. */
+    readonly onFilesListed?: (files: readonly string[], logDir: vscode.Uri) => void;
+    /** Fired after each file's metadata finishes loading. */
+    readonly onItemLoaded?: OnItemLoaded;
+}
+
 const migratedDirsThisActivation = new Set<string>();
 
 /** Run one-time sidecar migration for all relevant directories. */
@@ -38,7 +46,7 @@ async function migrateIfNeeded(
 export async function fetchItemsCore(
     target: FetchTarget,
     logDirOverride?: vscode.Uri,
-    onItemLoaded?: OnItemLoaded,
+    callbacks?: FetchCallbacks,
 ): Promise<TreeItem[]> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder && !logDirOverride) { return []; }
@@ -48,8 +56,9 @@ export async function fetchItemsCore(
     try {
         const { fileTypes, includeSubfolders } = getConfig();
         const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);
+        try { callbacks?.onFilesListed?.(logFiles, logDir); } catch { /* preview is non-critical */ }
         const centralMeta = await target.metaStore.loadAllMetadata(logDir);
-        const items = await loadBatch(target, logDir, logFiles, { centralMeta, onItemLoaded });
+        const items = await loadBatch(target, logDir, logFiles, { centralMeta, onItemLoaded: callbacks?.onItemLoaded });
         pruneCache(target, items);
         const grouped = groupSplitFiles(items);
         return grouped.sort((a, b) => b.mtime - a.mtime);
