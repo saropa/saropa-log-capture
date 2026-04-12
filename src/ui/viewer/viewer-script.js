@@ -151,7 +151,10 @@ function isStackFrameText(html) {
         return true;
     }
     if (/^package:/.test(trimmed)) return true;          // Dart package paths
-    return /^\\s+\\S+\\.\\S+:\\d+/.test(plain);          // Generic: "  pkg.Func:123"
+    if (/^\\s+\\S+\\.\\S+:\\d+/.test(plain)) return true; // Generic: "  pkg.Func:123"
+    // Mid-line Dart source paths: "Method package:foo/bar.dart:1:2" or "(./lib/foo.dart:1:2)"
+    if (/\\bpackage:\\S+\\.dart:\\d+/.test(plain)) return true;
+    return /\\(\\.\\\/\\S+\\.dart:\\d+:\\d+\\)/.test(plain);
 }
 
 function handleScroll() {
