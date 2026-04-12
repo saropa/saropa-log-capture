@@ -24,7 +24,9 @@ import type { ViewerDbDetectorToggles } from "../../modules/config/config-types"
 import { SLOW_QUERY_BURST_DETECTOR_ID } from "../../modules/db/drift-db-slow-burst-detector";
 import { normalizeViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
 import type { ViewerSlowBurstThresholds } from "../../modules/db/drift-db-slow-burst-thresholds";
+import { normalizeViewerTimestampBurstThresholds } from "../../modules/db/drift-db-timestamp-burst-thresholds";
 import { EMBED_MERGE_DB_DETECTOR_RESULTS_JS } from "./generated/db-detector-embed-merge.generated";
+import { getTimestampBurstDetectorEmbedJs } from "./viewer-db-detector-timestamp-burst-embed";
 
 const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
 
@@ -44,12 +46,21 @@ export function getViewerDbDetectorFrameworkScript(
   const nPlusOneJs = detectorToggles?.nPlusOneEnabled !== false ? "true" : "false";
   const slowBurstEnJs = detectorToggles?.slowBurstEnabled !== false ? "true" : "false";
   const baselineHintsJs = detectorToggles?.baselineHintsEnabled !== false ? "true" : "false";
+  const tsBurstEnJs = detectorToggles?.timestampBurstEnabled !== false ? "true" : "false";
+  const tsb = normalizeViewerTimestampBurstThresholds();
+  const tsBurstJson = JSON.stringify({
+    minCount: tsb.minCount,
+    toleranceMs: tsb.toleranceMs,
+    cooldownMs: tsb.cooldownMs,
+  });
   return /* javascript */ `
 var viewerDbInsightsEnabled = ${enabledJs};
 var viewerSlowBurstThresholds = ${burstJson};
+var viewerTimestampBurstThresholds = ${tsBurstJson};
 var viewerDbDetectorNPlusOneEnabled = ${nPlusOneJs};
 var viewerDbDetectorSlowBurstEnabled = ${slowBurstEnJs};
 var viewerDbDetectorBaselineHintsEnabled = ${baselineHintsJs};
+var viewerDbDetectorTimestampBurstEnabled = ${tsBurstEnJs};
 var dbDetectorRegistry = [];
 var dbDetectorSessionDisabled = Object.create(null);
 var dbDetectorErrorLogged = Object.create(null);
@@ -76,6 +87,8 @@ function setDbBaselineFingerprintSummaryFromHost(fingerprints) {
 }
 /** Per-session slow-burst sliding window (plan DB_08). */
 var slowBurstBySession = Object.create(null);
+/** Per-session timestamp burst tracking (plan DB_16). */
+var tsBurstBySession = Object.create(null);
 function registerDbDetector(detector) {
     if (!detector || !detector.id || typeof detector.feed !== 'function') return;
     dbDetectorRegistry.push(detector);
@@ -168,12 +181,16 @@ function resetDbInsightDetectorSession() {
     if (typeof slowBurstBySession !== 'undefined') {
         slowBurstBySession = Object.create(null);
     }
+    if (typeof tsBurstBySession !== 'undefined') {
+        tsBurstBySession = Object.create(null);
+    }
     if (typeof dbInsightSessionRollup !== 'undefined') {
         dbInsightSessionRollup = Object.create(null);
     }
     baselineVolumeHintEmitted = Object.create(null);
 }
 function registerBuiltinDbDetectors() {
+${getTimestampBurstDetectorEmbedJs()}
     registerDbDetector({
         id: '${SLOW_QUERY_BURST_DETECTOR_ID}',
         priority: 85,
