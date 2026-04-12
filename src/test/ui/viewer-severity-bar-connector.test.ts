@@ -10,6 +10,7 @@ import * as assert from 'node:assert';
 import { getViewportRenderScript } from '../../ui/viewer/viewer-data-viewport';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
 import { getDecorationStyles } from '../../ui/viewer-styles/viewer-styles-decoration';
+import { getViewerDataAddScript } from '../../ui/viewer/viewer-data-add';
 
 suite('Severity bar connector (same-level joining)', () => {
     const viewportScript = getViewportRenderScript();
@@ -160,6 +161,72 @@ suite('renderItem blank-line bar class removal', () => {
         assert.ok(
             renderChunk.includes("tintCls = ' line-tint-' + allLines[idx - 1].level"),
             'blank line tint must still inherit from previous line',
+        );
+    });
+});
+
+suite('Stack level inheritance from parent line', () => {
+    const addScript = getViewerDataAddScript();
+
+    test('should define previousLineLevel helper', () => {
+        assert.ok(
+            addScript.includes('function previousLineLevel('),
+            'addToData script must define previousLineLevel',
+        );
+    });
+
+    test('should use previousLineLevel for stack-header level', () => {
+        assert.ok(
+            addScript.includes('level: previousLineLevel()'),
+            'stack-header must inherit level from previous line via previousLineLevel()',
+        );
+    });
+
+    test('should use activeGroupHeader.level for stack-frame level', () => {
+        assert.ok(
+            addScript.includes('level: activeGroupHeader.level'),
+            'stack-frame must inherit level from its group header',
+        );
+    });
+
+    test('should not hardcode error level for stack items', () => {
+        // Count occurrences of level: 'error' — should only appear in the
+        // previousLineLevel fallback, not in stack-frame or stack-header creation.
+        const lines = addScript.split('\n');
+        const hardcodedInItems = lines.filter(l =>
+            l.includes("level: 'error'") &&
+            !l.includes('return') &&
+            !l.includes('//'),
+        );
+        assert.strictEqual(
+            hardcodedInItems.length, 0,
+            'no stack item should hardcode level: \'error\' — found: ' + hardcodedInItems.join(' | '),
+        );
+    });
+
+    test('should fall back to error when previous line is a marker', () => {
+        assert.ok(
+            addScript.includes("it.type === 'marker'") &&
+            addScript.includes("return 'error'"),
+            'previousLineLevel must return error when hitting a marker boundary',
+        );
+    });
+});
+
+suite('Stack header level CSS class in renderItem', () => {
+    const renderChunk = getViewerDataHelpersRender();
+
+    test('should apply level class to stack-header div', () => {
+        assert.ok(
+            renderChunk.includes("hdrLevelCls = item.level ? ' level-' + item.level : ''"),
+            'renderItem must compute hdrLevelCls from item.level for stack headers',
+        );
+    });
+
+    test('should include hdrLevelCls in stack-header class list', () => {
+        assert.ok(
+            renderChunk.includes("stack-header' + hdrLevelCls + matchCls"),
+            'stack-header div must include the level class before other class concatenations',
         );
     });
 });
