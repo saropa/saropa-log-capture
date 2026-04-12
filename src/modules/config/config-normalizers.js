@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_WATCH_PATTERNS = exports.DEFAULT_FILE_TYPES = exports.DEFAULT_CATEGORIES = void 0;
+exports.DEFAULT_SEVERITY_KEYWORDS = exports.DEFAULT_WATCH_PATTERNS = exports.DEFAULT_FILE_TYPES = exports.DEFAULT_CATEGORIES = void 0;
 exports.normalizeWatchPatterns = normalizeWatchPatterns;
 exports.normalizeHighlightRules = normalizeHighlightRules;
 exports.normalizeAutoTagRules = normalizeAutoTagRules;
+exports.normalizeSeverityKeywords = normalizeSeverityKeywords;
 const config_default_highlight_rules_1 = require("./config-default-highlight-rules");
 exports.DEFAULT_CATEGORIES = ["console", "stdout", "stderr"];
 exports.DEFAULT_FILE_TYPES = [".log", ".txt", ".md", ".csv", ".json", ".jsonl", ".html"];
@@ -116,5 +117,41 @@ function normalizeAutoTagRules(raw) {
         return { pattern, tag };
     })
         .filter((r) => r !== null);
+}
+exports.DEFAULT_SEVERITY_KEYWORDS = {
+    error: ["fatal", "panic", "critical"],
+    warning: ["warn", "warning", "caution", "fail", "failed", "failure"],
+    performance: [
+        "perf", "performance", "dropped frame", "fps", "framerate",
+        "jank", "stutter", "choreographer", "doing too much work",
+        "anr", "application not responding",
+    ],
+    todo: ["TODO", "FIXME", "HACK", "XXX", "BUG", "KLUDGE", "WORKAROUND"],
+    debug: ["breadcrumb", "trace", "debug"],
+    notice: ["notice", "note", "important"],
+};
+const severityLevels = [
+    "error", "warning", "performance", "todo", "debug", "notice",
+];
+function normalizeStringArray(raw) {
+    if (!Array.isArray(raw)) {
+        return [];
+    }
+    return raw
+        .filter((v) => typeof v === "string")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+}
+function normalizeSeverityKeywords(raw) {
+    if (!raw || typeof raw !== "object") {
+        return exports.DEFAULT_SEVERITY_KEYWORDS;
+    }
+    const o = raw;
+    const result = {};
+    for (const level of severityLevels) {
+        const arr = normalizeStringArray(o[level]);
+        result[level] = arr.length > 0 ? arr : exports.DEFAULT_SEVERITY_KEYWORDS[level];
+    }
+    return result;
 }
 //# sourceMappingURL=config-normalizers.js.map

@@ -48,6 +48,7 @@
   "command.openWalkthrough.title": "Saropa Log Capture：開始使用",
   "command.pause.title": "Saropa Log Capture：暫停/繼續擷取",
   "command.popOutViewer.title": "Saropa Log Capture：在新視窗開啟檢視器",
+  "command.collapseAllSections.title": "Saropa Log Capture：摺疊所有區段",
   "command.refreshHistory.title": "重新整理記錄歷程",
   "command.removeFromInvestigation.title": "從調查移除",
   "command.renameSession.title": "重新命名記錄",

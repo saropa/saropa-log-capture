@@ -23,12 +23,9 @@ function getDecorationStyles() {
 /* Decoration prefix (severity dot, counter, timestamp) — scale with zoom via em */
 .line-decoration {
     font-size: 0.85em;
-    opacity: 0.85;
+    color: var(--vscode-editorLineNumber-foreground, #858585);
     white-space: nowrap;
     user-select: none;
-}
-.deco-counter {
-    color: var(--vscode-editorLineNumber-foreground, #858585);
 }
 
 /* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
@@ -245,19 +242,23 @@ function getDecorationStyles() {
     z-index: 3;
 }
 
-/* Continuation line collapse badge — pill on header line, toggles group visibility */
+/* Continuation line collapse badge — pill on header line, toggles group visibility.
+   Absolutely positioned so it cannot wrap and overlap adjacent lines
+   (.line already has position:relative). */
 .cont-badge {
-    display: inline-block;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     padding: 1px 6px;
-    margin-left: 6px;
     border-radius: 3px;
     font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     color: var(--vscode-descriptionForeground, #888);
     background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 50%, transparent);
-    vertical-align: middle;
     user-select: none;
+    z-index: 2;
 }
 .cont-badge:hover {
     background: var(--vscode-badge-background, #4d4d4d);
