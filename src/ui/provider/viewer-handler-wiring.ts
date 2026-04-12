@@ -193,6 +193,13 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
   };
 
+  /** Send the final session list to the webview (always clears the shimmer). */
+  const sendFinalList = (records: readonly Record<string, unknown>[]): void => {
+    const rootLabel = getSessionRootPath(deps.context);
+    const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
+    broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr });
+  };
+
   /** Streaming refresh: sends items to webview progressively as metadata loads. */
   const refreshSessionListStreaming = async (): Promise<void> => {
     const overrideUriStr = deps.context.workspaceState.get<string>(SESSION_PANEL_ROOT_KEY);
@@ -222,17 +229,22 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
       }));
       broadcaster.postToWebview({ type: 'sessionListPreview', previews });
     };
-    await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
+    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
     await Promise.all(recordPromises);
     flush();
-    const rootLabel = getSessionRootPath(deps.context);
-    broadcaster.sendSessionList(allRecords, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+    // When cache was hit, callbacks never fired — build payload from returned items.
+    if (allRecords.length === 0 && items.length > 0) {
+      const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);
+      sendFinalList(payload);
+      return;
+    }
+    sendFinalList(allRecords);
   };
 
   const ref: { interval?: ReturnType<typeof setInterval> } = {};
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
-    void refreshSessionListStreaming();
+    void refreshSessionListStreaming().catch(() => sendFinalList([]));
     if (ref.interval) { clearInterval(ref.interval); }
     ref.interval = setInterval(() => {
       if (sessionManager.getActiveSession()) { void refreshSessionList(); }
