@@ -1459,6 +1459,12 @@
           "type": "boolean",
           "title": "%config.viewerDbDetectorBaselineHintsEnabled.title%"
         },
+        "saropaLogCapture.viewerDbDetectorTimestampBurstEnabled": {
+          "default": true,
+          "description": "%config.viewerDbDetectorTimestampBurstEnabled.description%",
+          "type": "boolean",
+          "title": "%config.viewerDbDetectorTimestampBurstEnabled.title%"
+        },
         "saropaLogCapture.viewerSlowBurstSlowQueryMs": {
           "default": 50,
           "minimum": 1,

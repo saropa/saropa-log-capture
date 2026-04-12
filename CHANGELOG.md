@@ -28,6 +28,10 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [Unreleased]
 
+### Added
+
+- **DB timestamp burst detector (DB_16)** — emits a marker when 3+ database queries fire at the same timestamp (within 10ms tolerance), surfacing redundant or concurrent DB lookups as a code smell. Toggle via `saropaLogCapture.viewerDbDetectorTimestampBurstEnabled`
+
 ### Changed
 
 - **Decoration prefix uses grey text** — timestamp, counter, elapsed time, and `»` separator now render in `editorLineNumber` grey instead of inheriting the line's severity color, visually separating metadata from log content
@@ -35,7 +39,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
-- **"Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu action only copied the single right-clicked line. Now copies all selected lines decorated. Also fixed shift-click selection using wrong indices when filtered lines are present
+- **Stack traces always showed error severity regardless of parent line** — stack frames and headers were hardcoded to `level: 'error'`, so a database query's stack trace showed red dots while the query itself showed cyan. Stack groups now inherit the severity of the preceding log line, keeping the severity bar visually connected
+- **"Copy Line" and "Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu actions only copied the single right-clicked line. Now both copy all selected lines. Also fixed shift-click selection using wrong indices when filtered lines are present
 - **Decorated copy duplicated severity emoji dot** — `decorateLine` prepended a severity dot (e.g. 🟢) but the line text already contained one from the original log, producing a double dot. Now strips the leading dot from text when the decoration adds one
 - **Continuation badge overlapping log text** — the `[+N lines]` collapse badge was rendered inline, causing it to wrap and overlap adjacent lines when the log line was long. Now absolutely positioned at the right edge of the line
 - **ASCII art block grouping broken for multi-event output** — consecutive separator lines (e.g. Drift Debug Server banner) were not grouped because each DAP output event created a new `Date()` with different milliseconds. Timestamp comparison now uses 1 s proximity instead of strict equality
