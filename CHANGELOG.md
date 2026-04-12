@@ -40,6 +40,8 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
+- **Session list stuck on shimmer permanently** — if streaming metadata load threw an unhandled error (e.g. sidecar migration failure), the final session list message was never sent and the loading shimmer stayed forever. Now always sends a final list, falling back to an empty state on error
+- **Session list went blank on second panel open** — when cached items were returned, the streaming callbacks never fired, so the webview received an empty list instead of the cached data
 - **Stack traces always showed error severity regardless of parent line** — stack frames and headers were hardcoded to `level: 'error'`, so a database query's stack trace showed red dots and red text while the query itself showed cyan. Stack groups now inherit the severity of the preceding log line, keeping the severity bar and text color visually connected
 - **"Copy Line" and "Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu actions only copied the single right-clicked line. Now both copy all selected lines. Also fixed shift-click selection using wrong indices when filtered lines are present
 - **Decorated copy duplicated severity emoji dot** — `decorateLine` prepended a severity dot (e.g. 🟢) but the line text already contained one from the original log, producing a double dot. Now strips the leading dot from text when the decoration adds one
