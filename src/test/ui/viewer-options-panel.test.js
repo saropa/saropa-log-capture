@@ -224,6 +224,14 @@ suite('ViewerOptionsPanel', () => {
             assert.ok(script.includes('closeShortcutsView'));
             assert.ok(script.includes('shortcutsViewOpen'));
         });
+        test('renderSeverityKeywordsDisplay uses truthiness guard, not typeof, for null safety', () => {
+            const script = (0, viewer_options_panel_1.getOptionsPanelScript)();
+            // The variable is initialized to null — a typeof !== 'undefined' guard
+            // would pass for null (typeof null === 'object') and crash on property access.
+            assert.ok(script.includes('currentSeverityKeywords = null'), 'currentSeverityKeywords must be initialized to null');
+            assert.ok(script.includes('(currentSeverityKeywords && currentSeverityKeywords[lv.key])'), 'Must use truthiness check, not typeof, to guard null property access');
+            assert.ok(!script.includes("typeof currentSeverityKeywords !== 'undefined' && currentSeverityKeywords["), 'Must NOT use typeof guard before bracket access on a null-initialized variable');
+        });
     });
 });
 //# sourceMappingURL=viewer-options-panel.test.js.map

@@ -56,15 +56,26 @@ function getLineStyles() {
 
 /* --- Clickable source file links within log lines --- */
 .source-link {
-    color: var(--vscode-textLink-foreground, #3794ff);
+    color: var(--vscode-editorLineNumber-foreground, #858585);
     text-decoration: none;
     cursor: pointer;
+    transition: color 0.15s ease;
 }
-.source-link:hover { text-decoration: underline; }
+.source-link:hover {
+    color: var(--vscode-textLink-foreground, #3794ff);
+    text-decoration: underline;
+}
 
 /* --- Clickable URL links within log lines --- */
-.url-link { color: var(--vscode-textLink-foreground, #3794ff); cursor: pointer; text-decoration: underline; }
-.url-link:hover { opacity: 0.8; }
+.url-link {
+    color: var(--vscode-editorLineNumber-foreground, #858585);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+}
+.url-link:hover {
+    color: var(--vscode-textLink-foreground, #3794ff);
+}
 
 /* --- Focus indicators for keyboard navigation --- */
 button:focus-visible, .ib-icon:focus-visible, input:focus-visible {

@@ -77,6 +77,7 @@ function buildSandbox() {
     const messageHandlers = [];
     const sandbox = {
         document,
+        CSS: { escape: (v) => v },
         vscodeApi: { postMessage: noop },
         requestAnimationFrame: (fn) => fn(),
         __sharedPanelWidth: 560,
@@ -181,6 +182,63 @@ suite('Session panel script runtime', () => {
         }
         const finalHtml = String(listEl?.innerHTML);
         assert.ok(!finalHtml.includes('session-shimmer-meta'), 'Full render should not have shimmer');
+    });
+    test('should handle sessionListBatch without ReferenceError', () => {
+        const { sandbox, messageHandlers } = buildSandbox();
+        bootPanel(sandbox);
+        // Send preview first, then batch update
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionListPreview',
+                    previews: [{ filename: 'alpha.log', uriString: 'file:///alpha.log' }],
+                },
+            });
+        }
+        // Batch arrives — should not throw even if querySelector returns null
+        try {
+            for (const handler of messageHandlers) {
+                handler({
+                    data: {
+                        type: 'sessionListBatch',
+                        items: [{
+                                uriString: 'file:///alpha.log', filename: 'alpha.log',
+                                displayName: 'alpha.log', mtime: Date.now(),
+                                hasTimestamps: true, size: 1024, trashed: false,
+                            }],
+                    },
+                });
+            }
+        }
+        catch (e) {
+            const err = e;
+            assert.fail(`sessionListBatch threw: ${err.name}: ${err.message}`);
+        }
+    });
+    test('should handle sessionListBatch with empty items', () => {
+        const { sandbox, messageHandlers } = buildSandbox();
+        bootPanel(sandbox);
+        for (const handler of messageHandlers) {
+            handler({ data: { type: 'sessionListBatch', items: [] } });
+        }
+        assert.ok(true, 'Empty batch should not throw');
+    });
+    test('should handle sessionListBatch before preview without error', () => {
+        const { sandbox, messageHandlers } = buildSandbox();
+        bootPanel(sandbox);
+        // Batch arrives without a prior preview — should degrade gracefully
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionListBatch',
+                    items: [{
+                            uriString: 'file:///orphan.log', filename: 'orphan.log',
+                            displayName: 'orphan.log', mtime: Date.now(), trashed: false,
+                        }],
+                },
+            });
+        }
+        assert.ok(true, 'Batch without preview should not throw');
     });
     test('should handle empty preview gracefully', () => {
         const { sandbox, messageHandlers, elements } = buildSandbox();

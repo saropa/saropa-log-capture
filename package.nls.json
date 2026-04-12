@@ -50,6 +50,7 @@
   "command.pause.title": "Saropa Log Capture: Pause/Resume Capture",
   "command.copyAllFilteredLines.title": "Saropa Log Capture: Copy All Filtered Lines",
   "command.popOutViewer.title": "Saropa Log Capture: Pop Out Viewer to New Window",
+  "command.collapseAllSections.title": "Saropa Log Capture: Collapse All Sections",
   "command.refreshHistory.title": "Refresh Log History",
   "command.removeFromInvestigation.title": "Remove from Investigation",
   "command.renameSession.title": "Rename Log",

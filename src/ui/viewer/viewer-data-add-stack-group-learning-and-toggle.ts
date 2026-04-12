@@ -19,6 +19,32 @@ function trackLearningDismissForStackGroup(groupId) {
     }
 }
 
+/** Collapse every toggleable section: stack groups, continuation groups, and SQL repeat drilldowns. */
+function collapseAllSections() {
+    var gid;
+    for (gid in groupHeaderMap) {
+        if (groupHeaderMap[gid] && groupHeaderMap[gid].collapsed !== true) {
+            groupHeaderMap[gid].collapsed = true;
+        }
+    }
+    if (typeof contHeaderMap !== 'undefined') {
+        for (gid in contHeaderMap) {
+            if (contHeaderMap[gid] && !contHeaderMap[gid].contCollapsed) {
+                contHeaderMap[gid].contCollapsed = true;
+            }
+        }
+    }
+    for (var ci = 0; ci < allLines.length; ci++) {
+        var cit = allLines[ci];
+        if (cit && cit.sqlRepeatDrilldownOpen) {
+            cit.sqlRepeatDrilldownOpen = false;
+            cit.html = buildSqlRepeatNotificationRowHtml(cit);
+        }
+    }
+    if (typeof recalcAndRender === 'function') { recalcAndRender(); }
+    else { recalcHeights(); renderViewport(true); }
+}
+
 function toggleStackGroup(groupId) {
     var header = groupHeaderMap[groupId];
     if (!header) return;

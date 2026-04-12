@@ -69,6 +69,20 @@ suite('StackParser', () => {
             assert.strictEqual((0, stack_parser_1.isStackFrameLine)('\u2502 #0  main (package:foo/main.dart:1:1)'), true);
         });
     });
+    suite('isStackFrameLine — mid-line Dart source paths', () => {
+        test('should detect package: path mid-line with ⠀ » prefix', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('      \u2800 \u00BB _InterceptedExecutor.runSelect package:drift/src/runtime/executor/interceptor.dart:163:25'), true);
+        });
+        test('should detect parenthesized relative path mid-line with ⠀ » prefix', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('      \u2800 \u00BB DriftDebugInterceptor._log (./lib/database/drift/drift_debug_interceptor.dart:92:5)'), true);
+        });
+        test('should detect package: path without any prefix', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('ServerContext.log package:saropa_drift_advisor/src/server/server_context.dart:202:35'), true);
+        });
+        test('should not false-positive on normal log mentioning .dart without line numbers', () => {
+            assert.strictEqual((0, stack_parser_1.isStackFrameLine)('Loading config from main.dart'), false);
+        });
+    });
     // --- Dart / Flutter ---
     test('should detect Flutter package frame as framework', () => {
         assert.strictEqual((0, stack_parser_1.isFrameworkFrame)('  at package:flutter/src/widgets/framework.dart:4567'), true);

@@ -211,6 +211,19 @@ class SessionHistoryProvider {
         }
         return this.getCachedOrFetch();
     }
+    /** Fetch all items, calling onItemLoaded as each file's metadata resolves. Populates the cache when done. */
+    async getAllChildrenStreaming(onItemLoaded, logDirOverride) {
+        if (!logDirOverride && this.itemsCache) {
+            return this.itemsCache;
+        }
+        const items = await (0, session_history_fetching_1.fetchItemsCore)(this, logDirOverride, onItemLoaded);
+        if (!logDirOverride) {
+            this.itemsCache = items;
+            this.fetchInFlight = undefined;
+            this.computeDuplicateBasenames(items);
+        }
+        return items;
+    }
     /** Return cached items if available, or deduplicate a single in-flight fetch. */
     async getCachedOrFetch() {
         if (this.itemsCache) {

@@ -179,6 +179,17 @@ function getOptionsPanelHtml() {
             </div>
         </div>
 
+        <!-- Severity Keywords Section -->
+        <div class="options-section">
+            <h3 class="options-section-title">Severity keywords</h3>
+            <div id="severity-keywords-display" class="severity-keywords-display"></div>
+            <div class="options-row">
+                <button type="button" id="options-edit-severity-keywords" class="options-integrations-btn" title="Open VS Code settings to customize severity keyword lists">
+                    <span class="codicon codicon-edit"></span> Customize keywords\u2026
+                </button>
+            </div>
+        </div>
+
         <!-- Actions Section -->
         <div class="options-section">
             <h3 class="options-section-title">Actions</h3>

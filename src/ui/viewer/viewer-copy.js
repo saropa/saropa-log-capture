@@ -105,8 +105,12 @@ function decorateLine(item) {
     var text = stripTags(item.html || '');
     var parts = [];
     /* Emoji dot only in copy when "Severity dot (copy only)" is checked; viewer uses gutter bar only. */
-    if (typeof decoShowDot !== 'undefined' && decoShowDot && typeof getLevelDot === 'function') {
-        parts.push(getLevelDot(item.level || 'info', !!item.fw));
+    var addingDot = typeof decoShowDot !== 'undefined' && decoShowDot && typeof getLevelDot === 'function';
+    if (addingDot) {
+        var dot = getLevelDot(item.level || 'info', !!item.fw);
+        parts.push(dot);
+        /* Strip leading emoji dot from text to avoid duplication — the line may already contain one. */
+        if (text.indexOf(dot) === 0) text = text.substring(dot.length).replace(/^\\s+/, '');
     }
     if (item.seq !== undefined) {
         parts.push(String(item.seq).padStart(5, ' '));
@@ -145,7 +149,7 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         if (children[i] === lineEl) { clickOffset = i; break; }
     }
     if (clickOffset < 0) return;
-    var dataIdx = lastStart + clickOffset;
+    var dataIdx = lineEl.dataset.idx !== undefined ? parseInt(lineEl.dataset.idx, 10) : lastStart + clickOffset;
     if (selectionStart < 0 || !e.shiftKey) {
         selectionStart = dataIdx;
         selectionEnd = dataIdx;

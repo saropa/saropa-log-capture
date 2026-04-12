@@ -50,12 +50,20 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes('isContextMenuOpen'));
             assert.ok(script.includes('__programmaticScroll'));
         });
+        test('should use getSelectionRange helper for selection detection across actions', () => {
+            const script = (0, viewer_context_menu_1.getContextMenuScript)();
+            assert.ok(script.includes('function getSelectionRange(lineIdx)'));
+            assert.ok(script.includes('selectionStart'));
+            assert.ok(script.includes('selectionEnd'));
+            /* All selection-aware actions should call the helper, not inline the boilerplate. */
+            const helper = script.indexOf('function getSelectionRange');
+            const handler = script.indexOf('function handleLineAction');
+            assert.ok(helper < handler, 'getSelectionRange should be defined before handleLineAction');
+        });
         test('should copy all selected lines when multiple lines selected (Copy Line uses getSelectedLines)', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();
             assert.ok(script.includes('getSelectedLines'));
             assert.ok(script.includes('linesToPlainText'));
-            assert.ok(script.includes('selectionStart'));
-            assert.ok(script.includes('selectionEnd'));
         });
         test('should use copyContextLines for Copy with source (expand range before/after)', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();
@@ -67,6 +75,7 @@ suite('ViewerContextMenu', () => {
         test('should handle all expected actions', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();
             assert.ok(script.includes("case 'copy':"));
+            assert.ok(script.includes("case 'copy-decorated':"));
             assert.ok(script.includes("case 'search-codebase':"));
             assert.ok(script.includes("case 'search-sessions':"));
             assert.ok(script.includes("case 'add-watch':"));
@@ -75,6 +84,15 @@ suite('ViewerContextMenu', () => {
             assert.ok(script.includes("case 'annotate':"));
             assert.ok(script.includes("case 'open-source':"));
             assert.ok(script.includes("case 'show-context':"));
+        });
+        test('copy-decorated should use linesToDecoratedText for decorated copy', () => {
+            const script = (0, viewer_context_menu_1.getContextMenuScript)();
+            const start = script.indexOf("case 'copy-decorated':");
+            assert.ok(start >= 0, 'copy-decorated case must exist');
+            const block = script.slice(start, start + 800);
+            assert.ok(block.includes('linesToDecoratedText'), 'should call linesToDecoratedText');
+            assert.ok(block.includes('getSelectedLines'), 'should support multi-line selection');
+            assert.ok(block.includes('copyToClipboard'), 'should post clipboard message');
         });
         test('should handle hide/unhide line actions', () => {
             const script = (0, viewer_context_menu_1.getContextMenuScript)();

@@ -37,7 +37,11 @@ function getCategoryBadge(item) {
 
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
-    var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(item.html) : item.html;
+    var rawHtml = item.html;
+    if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
+        rawHtml = rawHtml.replace(/^\\[([^\\]]+)\\]\\s?/, '');
+    }
+    var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(rawHtml) : rawHtml;
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
         : (typeof isSearchMatch === 'function' && isSearchMatch(idx)) ? ' search-match' : '';
     var spacingCls = '';
