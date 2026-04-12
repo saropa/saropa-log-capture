@@ -26,6 +26,22 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Decoration prefix uses grey text** — timestamp, counter, elapsed time, and `»` separator now render in `editorLineNumber` grey instead of inheriting the line's severity color, visually separating metadata from log content
+- **Links use grey text until hovered** — source file links and URL links render in `editorLineNumber` grey, revealing their blue link color only on hover
+
+### Fixed
+
+- **"Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu action only copied the single right-clicked line. Now copies all selected lines decorated. Also fixed shift-click selection using wrong indices when filtered lines are present
+- **Decorated copy duplicated severity emoji dot** — `decorateLine` prepended a severity dot (e.g. 🟢) but the line text already contained one from the original log, producing a double dot. Now strips the leading dot from text when the decoration adds one
+- **Continuation badge overlapping log text** — the `[+N lines]` collapse badge was rendered inline, causing it to wrap and overlap adjacent lines when the log line was long. Now absolutely positioned at the right edge of the line
+- **ASCII art block grouping broken for multi-event output** — consecutive separator lines (e.g. Drift Debug Server banner) were not grouped because each DAP output event created a new `Date()` with different milliseconds. Timestamp comparison now uses 1 s proximity instead of strict equality
+
+---
+
 ## [5.7.1]
 
 ### Fixed
