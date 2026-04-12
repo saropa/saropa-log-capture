@@ -31,6 +31,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ### Added
 
 - **DB timestamp burst detector (DB_16)** — emits a marker when 3+ database queries fire at the same timestamp (within 10ms tolerance), surfacing redundant or concurrent DB lookups as a code smell. Toggle via `saropaLogCapture.viewerDbDetectorTimestampBurstEnabled`
+- **Auto-load latest log on first visit** — when the viewer panel first opens with no active debug session, the most recent log file loads automatically instead of showing an empty viewer. If a different session was last viewed, a "Resume" banner appears to quick-switch back
 
 ### Changed
 
