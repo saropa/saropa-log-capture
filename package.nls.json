@@ -398,6 +398,8 @@
   "config.viewerDbDetectorSlowBurstEnabled.title": "Log viewer: slow query burst markers",
   "config.viewerDbDetectorBaselineHintsEnabled.description": "When a SQL baseline is set (e.g. from log comparison), emit a one-time marker when this session exceeds the baseline execution count for a fingerprint.",
   "config.viewerDbDetectorBaselineHintsEnabled.title": "Log viewer: baseline volume hints",
+  "config.viewerDbDetectorTimestampBurstEnabled.description": "When database insights are on, emit a marker when multiple DB queries fire at the same timestamp (within 10ms tolerance), indicating redundant or concurrent lookups.",
+  "config.viewerDbDetectorTimestampBurstEnabled.title": "Log viewer: DB timestamp burst markers",
   "config.viewerSlowBurstSlowQueryMs.description": "Minimum query duration (milliseconds, from per-line replay metadata) to count toward a slow-query burst marker.",
   "config.viewerSlowBurstSlowQueryMs.title": "Slow burst: minimum slow query duration (ms)",
   "config.viewerSlowBurstMinCount.description": "How many slow queries within the window are required before inserting a burst marker.",

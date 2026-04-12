@@ -32,7 +32,8 @@ function handleLineAction(action, lineIdx) {
     switch (action) {
         case 'copy': {
             var sel = getSelectionRange(lineIdx);
-            if (sel.multiLine && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
+            var hasAnySel = typeof selectionStart !== 'undefined' && selectionStart >= 0 && sel.hi > sel.lo;
+            if ((sel.multiLine || hasAnySel) && typeof getSelectedLines === 'function' && typeof linesToPlainText === 'function') {
                 var lines = getSelectedLines();
                 var text = lines.length > 0 ? linesToPlainText(lines) : plainText;
                 vscodeApi.postMessage({ type: 'copyToClipboard', text: text });
@@ -43,7 +44,8 @@ function handleLineAction(action, lineIdx) {
         }
         case 'copy-decorated': {
             var sel = getSelectionRange(lineIdx);
-            var decoLines = sel.multiLine && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
+            var hasAnySel = typeof selectionStart !== 'undefined' && selectionStart >= 0 && sel.hi > sel.lo;
+            var decoLines = (sel.multiLine || hasAnySel) && typeof getSelectedLines === 'function' ? getSelectedLines() : [lineData];
             var decoText = typeof linesToDecoratedText === 'function' ? linesToDecoratedText(decoLines) : plainText;
             vscodeApi.postMessage({ type: 'copyToClipboard', text: decoText });
             return true;

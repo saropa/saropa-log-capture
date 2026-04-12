@@ -135,6 +135,8 @@ export interface SaropaLogCaptureConfig {
   readonly viewerDbDetectorSlowBurstEnabled: boolean;
   /** Markers when live session SQL volume exceeds the comparison baseline for a fingerprint. */
   readonly viewerDbDetectorBaselineHintsEnabled: boolean;
+  /** Markers when multiple DB queries fire at the same timestamp (plan DB_16). */
+  readonly viewerDbDetectorTimestampBurstEnabled: boolean;
   /** Slow query burst marker thresholds in the log viewer (plan DB_08). */
   readonly viewerSlowBurstThresholds: ViewerSlowBurstThresholds;
 
@@ -211,6 +213,7 @@ export interface ViewerDbDetectorToggles {
   readonly nPlusOneEnabled: boolean;
   readonly slowBurstEnabled: boolean;
   readonly baselineHintsEnabled: boolean;
+  readonly timestampBurstEnabled: boolean;
 }
 
 /** Session replay defaults (loaded log playback with optional timing). */

@@ -124,11 +124,13 @@ export function setupConfigListener(
             e.affectsConfiguration('saropaLogCapture.viewerDbDetectorNPlusOneEnabled')
             || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorSlowBurstEnabled')
             || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorBaselineHintsEnabled')
+            || e.affectsConfiguration('saropaLogCapture.viewerDbDetectorTimestampBurstEnabled')
         ) {
             broadcaster.setViewerDbDetectorToggles({
                 nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
                 slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
                 baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+                timestampBurstEnabled: cfg.viewerDbDetectorTimestampBurstEnabled,
             });
         }
         if (
