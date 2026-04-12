@@ -3,7 +3,7 @@ import { getConfig, getFileTypeGlob, getLogDirectoryUri } from '../../modules/co
 import { SessionMetadataStore } from '../../modules/session/session-metadata';
 import {
     SessionMetadata, SplitGroup, TreeItem,
-    isSplitGroup, buildSplitGroupTooltip, formatSize, totalLineCount,
+    isSplitGroup, getTreeItemUri, buildSplitGroupTooltip, formatSize, totalLineCount,
 } from './session-history-grouping';
 import { applyDisplayOptions, SessionDisplayOptions, defaultDisplayOptions } from './session-display';
 import { buildDescription, buildTooltip, formatCount } from './session-history-helpers';
@@ -155,16 +155,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         });
         const total = items.length;
         if (idx < 0) { return { index: 0, total }; }
-        const getUri = (item: TreeItem): vscode.Uri => {
-            if (isSplitGroup(item)) {
-                const sorted = [...item.parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
-                return sorted[0].uri;
-            }
-            return item.uri;
-        };
         return {
-            next: idx > 0 ? getUri(items[idx - 1]) : undefined,
-            prev: idx < total - 1 ? getUri(items[idx + 1]) : undefined,
+            next: idx > 0 ? getTreeItemUri(items[idx - 1]) : undefined,
+            prev: idx < total - 1 ? getTreeItemUri(items[idx + 1]) : undefined,
             index: total - idx,
             total,
         };
