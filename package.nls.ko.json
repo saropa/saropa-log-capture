@@ -48,6 +48,7 @@
   "command.openWalkthrough.title": "Saropa Log Capture: 시작하기",
   "command.pause.title": "Saropa Log Capture: 캡처 일시정지/재개",
   "command.popOutViewer.title": "Saropa Log Capture: 새 창에 뷰어 팝아웃",
+  "command.collapseAllSections.title": "Saropa Log Capture: 모든 섹션 접기",
   "command.refreshHistory.title": "로그 기록 새로고침",
   "command.removeFromInvestigation.title": "조사에서 제거",
   "command.renameSession.title": "로그 이름 바꾸기",

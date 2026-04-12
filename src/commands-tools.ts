@@ -127,6 +127,9 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand('saropaLogCapture.copyAllFilteredLines', () => {
             broadcaster.postToWebview({ type: 'triggerCopyAllFiltered' });
         }),
+        vscode.commands.registerCommand('saropaLogCapture.collapseAllSections', () => {
+            broadcaster.postToWebview({ type: 'triggerCollapseAllSections' });
+        }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {
             const match = await showSearchQuickPick();

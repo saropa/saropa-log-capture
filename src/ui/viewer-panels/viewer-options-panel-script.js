@@ -158,6 +158,34 @@ function syncCaptureEnabledUi() {
     if (check) check.checked = (typeof window !== 'undefined' && window.captureEnabled !== false);
 }
 
+/** Render the severity keywords display from the current keyword config. */
+function renderSeverityKeywordsDisplay() {
+    var container = document.getElementById('severity-keywords-display');
+    if (!container) return;
+    var levels = [
+        { key: 'error', label: 'Error', color: 'var(--vscode-debugConsole-errorForeground, #f48771)' },
+        { key: 'warning', label: 'Warning', color: 'var(--vscode-debugConsole-warningForeground, #cca700)' },
+        { key: 'performance', label: 'Performance', color: 'var(--vscode-charts-purple, #b180d7)' },
+        { key: 'todo', label: 'TODO', color: 'var(--vscode-charts-blue, #75beff)' },
+        { key: 'debug', label: 'Debug', color: 'var(--vscode-debugConsole-infoForeground, #75beff)' },
+        { key: 'notice', label: 'Notice', color: 'var(--vscode-charts-green, #89d185)' },
+    ];
+    var html = '';
+    for (var i = 0; i < levels.length; i++) {
+        var lv = levels[i];
+        var kws = (currentSeverityKeywords && currentSeverityKeywords[lv.key]) || [];
+        var kwHtml = kws.map(function(k) { return '<span class="sk-pill">' + escapeHtml(k) + '</span>'; }).join(' ');
+        html += '<div class="sk-level-row">'
+            + '<span class="sk-dot" style="background:' + lv.color + '"></span>'
+            + '<span class="sk-label">' + lv.label + '</span>'
+            + '<span class="sk-pills">' + (kwHtml || '<em>none</em>') + '</span>'
+            + '</div>';
+    }
+    container.innerHTML = html;
+}
+
+var currentSeverityKeywords = null;
+
 /** Sync all options panel controls from current state variables. */
 function syncOptionsPanelUi() {
     syncCaptureEnabledUi();
@@ -175,6 +203,7 @@ function syncOptionsPanelUi() {
     if (compressGlobalCheck && typeof compressNonConsecutiveMode !== 'undefined') compressGlobalCheck.checked = compressNonConsecutiveMode;
     syncIntegrationsUi();
     syncAudioUi();
+    renderSeverityKeywordsDisplay();
     if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
 }
 

@@ -120,6 +120,7 @@ function setupLogViewerWebview(target, webviewView) {
             breakOnCritical: c.breakOnCritical,
             levelDetection: c.levelDetection,
             stderrTreatAsError: c.stderrTreatAsError,
+            severityKeywords: c.severityKeywords,
         });
     });
     const pending = target.getPendingLoadUri();

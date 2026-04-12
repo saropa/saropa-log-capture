@@ -39,7 +39,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_LINES_PER_BATCH = exports.updateLastViewed = exports.LOG_LAST_VIEWED_KEY = exports.buildCopyWithSource = exports.copySourcePath = exports.openSourceFile = exports.buildSessionListPayload = void 0;
+exports.MAX_LINES_PER_BATCH = exports.updateLastViewed = exports.LOG_LAST_VIEWED_KEY = exports.buildCopyWithSource = exports.copySourcePath = exports.openSourceFile = exports.buildSessionItemRecord = exports.buildSessionListPayload = void 0;
 exports.handleEditLine = handleEditLine;
 exports.handleExportLogs = handleExportLogs;
 exports.flushBatch = flushBatch;
@@ -64,6 +64,7 @@ const coverage_per_file_1 = require("../../modules/integrations/providers/covera
 const extension_logger_1 = require("../../modules/misc/extension-logger");
 var viewer_provider_actions_1 = require("./viewer-provider-actions");
 Object.defineProperty(exports, "buildSessionListPayload", { enumerable: true, get: function () { return viewer_provider_actions_1.buildSessionListPayload; } });
+Object.defineProperty(exports, "buildSessionItemRecord", { enumerable: true, get: function () { return viewer_provider_actions_1.buildSessionItemRecord; } });
 Object.defineProperty(exports, "openSourceFile", { enumerable: true, get: function () { return viewer_provider_actions_1.openSourceFile; } });
 Object.defineProperty(exports, "copySourcePath", { enumerable: true, get: function () { return viewer_provider_actions_1.copySourcePath; } });
 Object.defineProperty(exports, "buildCopyWithSource", { enumerable: true, get: function () { return viewer_provider_actions_1.buildCopyWithSource; } });

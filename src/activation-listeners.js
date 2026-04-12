@@ -45,6 +45,7 @@ exports.setupScopeContextListener = setupScopeContextListener;
 exports.setupDiagnosticListener = setupDiagnosticListener;
 const vscode = __importStar(require("vscode"));
 const config_1 = require("./modules/config/config");
+const level_classifier_1 = require("./modules/analysis/level-classifier");
 const source_linker_1 = require("./modules/source/source-linker");
 const scope_context_1 = require("./modules/storage/scope-context");
 const learning_webview_options_1 = require("./modules/learning/learning-webview-options");
@@ -161,12 +162,15 @@ function setupConfigListener(context, sessionManager, broadcaster) {
         if (e.affectsConfiguration('saropaLogCapture.suppressTransientErrors')
             || e.affectsConfiguration('saropaLogCapture.breakOnCritical')
             || e.affectsConfiguration('saropaLogCapture.levelDetection')
-            || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')) {
+            || e.affectsConfiguration('saropaLogCapture.stderrTreatAsError')
+            || e.affectsConfiguration('saropaLogCapture.severityKeywords')) {
+            (0, level_classifier_1.setSeverityKeywords)(cfg.severityKeywords);
             broadcaster.setErrorClassificationSettings({
                 suppressTransientErrors: cfg.suppressTransientErrors,
                 breakOnCritical: cfg.breakOnCritical,
                 levelDetection: cfg.levelDetection,
                 stderrTreatAsError: cfg.stderrTreatAsError,
+                severityKeywords: cfg.severityKeywords,
             });
         }
     }));
