@@ -61,6 +61,11 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
         <button type="button" id="compress-suggest-enable" class="compress-suggest-btn">Enable</button>
         <button type="button" id="compress-suggest-dismiss" class="compress-suggest-dismiss" title="Dismiss">\u00d7</button>
     </div>
+    <div id="resume-session-banner" class="resume-session-banner u-hidden" role="status" aria-live="polite">
+        <span class="resume-session-msg">Loaded latest log.</span>
+        <button type="button" id="resume-session-btn" class="resume-session-action" title="Open last viewed session"></button>
+        <button type="button" id="resume-session-dismiss" class="resume-session-dismiss" title="Dismiss">\u00d7</button>
+    </div>
     <div id="split-breadcrumb">
         <button id="split-prev" title="Previous part" aria-label="Previous part" disabled>&#x25C0;</button>
         <span class="nav-bar-label" aria-hidden="true">Part <span id="split-current">1</span> of <span id="split-total">1</span></span>

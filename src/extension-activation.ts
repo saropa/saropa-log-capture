@@ -37,7 +37,7 @@ import { disposeInvestigationPanel } from './ui/investigation/investigation-pane
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
-import { maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { autoLoadLatest, maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
@@ -190,11 +190,17 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     });
 
     viewerProvider.setBecameVisibleHandler(() => {
+        // Active session always takes priority.
         const activeUri = historyProvider.getActiveUri();
-        if (!activeUri) { return; }
-        // Skip reload if the active session is already displayed (avoids flash on tab switch).
-        if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) { return; }
-        void viewerProvider.loadFromFile(activeUri);
+        if (activeUri) {
+            if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) { return; }
+            void viewerProvider.loadFromFile(activeUri);
+            return;
+        }
+        // Already showing content — don't interrupt on tab switch.
+        if (viewerProvider.getCurrentFileUri()) { return; }
+        // First visit with no active session — auto-load the latest log.
+        void autoLoadLatest(context, historyProvider, viewerProvider);
     });
 
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
