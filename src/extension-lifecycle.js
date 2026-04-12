@@ -38,6 +38,7 @@ exports.registerDebugLifecycle = registerDebugLifecycle;
 const os = __importStar(require("os"));
 const vscode = __importStar(require("vscode"));
 const config_1 = require("./modules/config/config");
+const level_classifier_1 = require("./modules/analysis/level-classifier");
 const filter_presets_1 = require("./modules/storage/filter-presets");
 const ai_session_resolver_1 = require("./modules/ai/ai-session-resolver");
 /** Session ids we've already triggered a late start for (output arrived before onDidStartDebugSession). */
@@ -75,11 +76,13 @@ function applySessionStartedState(deps, session) {
     if (cfg.showElapsedTime) {
         broadcaster.setShowElapsed(true);
     }
+    (0, level_classifier_1.setSeverityKeywords)(cfg.severityKeywords);
     broadcaster.setErrorClassificationSettings({
         suppressTransientErrors: cfg.suppressTransientErrors ?? false,
         breakOnCritical: cfg.breakOnCritical ?? false,
         levelDetection: cfg.levelDetection ?? "strict",
         stderrTreatAsError: cfg.stderrTreatAsError,
+        severityKeywords: cfg.severityKeywords,
     });
     if (cfg.highlightRules.length > 0) {
         broadcaster.setHighlightRules(cfg.highlightRules);

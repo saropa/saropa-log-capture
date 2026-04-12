@@ -95,8 +95,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
         var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
-        // Expanded by default so every frame is visible; users can click the header to collapse or use preview.
-        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: false, previewCount: 3, timestamp: ts, fw: fw, tier: lineTier, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        // Use configurable defaults: stackDefaultState (false/true/'preview'), stackPreviewCount (1-20).
+        var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
+        var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
+        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: 'error', seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
@@ -218,10 +220,12 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
         allLines.push(lineItem);
-        /* Art-block grouping: consecutive separator lines with the same timestamp form one visual block. */
+        /* Art-block grouping: consecutive separator lines within 1 s form one visual block.
+           Each DAP output event creates a new Date() so lines in the same banner differ by milliseconds. */
         if (viewerGroupAsciiArt && isSep && ts) {
-            if (artBlockTracker.count > 0 && artBlockTracker.timestamp === ts) {
+            if (artBlockTracker.count > 0 && Math.abs(ts - artBlockTracker.timestamp) < 1000) {
                 artBlockTracker.count++;
+                artBlockTracker.timestamp = ts;
             } else {
                 if (typeof finalizeArtBlock === 'function') finalizeArtBlock();
                 artBlockTracker.startIdx = allLines.length - 1;

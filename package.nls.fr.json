@@ -48,6 +48,7 @@
   "command.openWalkthrough.title": "Saropa Log Capture : Démarrer",
   "command.pause.title": "Saropa Log Capture : Pause / Reprise",
   "command.popOutViewer.title": "Saropa Log Capture : Ouvrir la vue dans une nouvelle fenêtre",
+  "command.collapseAllSections.title": "Saropa Log Capture : Réduire toutes les sections",
   "command.refreshHistory.title": "Actualiser l'historique des journaux",
   "command.removeFromInvestigation.title": "Retirer de l'enquête",
   "command.renameSession.title": "Renommer le journal",

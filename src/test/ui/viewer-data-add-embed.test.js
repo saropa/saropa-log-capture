@@ -59,11 +59,11 @@ suite('viewer-data-add embed', () => {
         assert.ok(block.includes('sTag === \'database\'') && block.includes('sqlMeta.fingerprint'), 'repeat hash must gate sqlfp on source tag so non-database Drift-shaped noise does not use fingerprint key');
         assert.ok(!block.includes('sqlMetaRepeat'), 'legacy sqlMetaRepeat name should stay removed to avoid two-parse regression');
     });
-    test('new stack-header row defaults to fully expanded (not stack preview)', () => {
+    test('stack-header uses configurable default state via stackDefaultState var', () => {
         const block = extractAddToDataBlock((0, viewer_data_add_1.getViewerDataAddScript)());
         assert.ok(block.length > 0, 'expected addToData block');
-        assert.ok(block.includes("type: 'stack-header'") && block.includes('frameCount: 1, collapsed: false'), 'new traces should default to expanded so frames are not hidden behind [+N more]');
-        assert.ok(!block.includes("frameCount: 1, collapsed: 'preview'"), 'regression: preview default would hide frames until user expands');
+        assert.ok(block.includes("type: 'stack-header'") && block.includes('collapsed: _sds'), 'stack-header collapsed state should use the configurable _sds variable');
+        assert.ok(block.includes('? stackDefaultState : false'), 'stackDefaultState should default to false (expanded) when not configured');
     });
 });
 //# sourceMappingURL=viewer-data-add-embed.test.js.map

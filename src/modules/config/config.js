@@ -140,6 +140,7 @@ function getConfig() {
         }),
         levelDetection: (0, config_validation_1.ensureEnum)(cfg.get("levelDetection"), ["strict", "loose"], "strict"),
         stderrTreatAsError: (0, config_validation_1.ensureBoolean)(cfg.get("stderrTreatAsError"), false),
+        severityKeywords: (0, config_normalizers_1.normalizeSeverityKeywords)(cfg.get("severityKeywords")),
         smartBookmarks: {
             suggestFirstError: (0, config_validation_1.ensureBoolean)(cfg.get("smartBookmarks.suggestFirstError"), true),
             suggestFirstWarning: (0, config_validation_1.ensureBoolean)(cfg.get("smartBookmarks.suggestFirstWarning"), false),
