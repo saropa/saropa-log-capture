@@ -60,6 +60,49 @@ export function getOverlayStyles(): string {
     color: var(--vscode-foreground);
     background: var(--vscode-toolbar-hoverBackground);
 }
+.resume-session-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 4px 8px 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--vscode-foreground);
+    background: var(--vscode-inputValidation-infoBackground, rgba(55, 148, 255, 0.12));
+    border-top: 1px solid var(--vscode-inputValidation-infoBorder, var(--vscode-focusBorder));
+}
+.resume-session-msg { flex: 0 0 auto; }
+.resume-session-action {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-button-border, transparent);
+    border-radius: 2px;
+    padding: 2px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.resume-session-action:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+.resume-session-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 4px;
+    border-radius: 2px;
+    margin-left: auto;
+}
+.resume-session-dismiss:hover {
+    color: var(--vscode-foreground);
+    background: var(--vscode-toolbar-hoverBackground);
+}
 .session-details-inline {
     margin-left: 8px;
     padding-left: 8px;
