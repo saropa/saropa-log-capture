@@ -5,7 +5,7 @@ import { BookmarkStore } from './modules/storage/bookmark-store';
 import type { LoadResultFirstError } from './ui/provider/log-viewer-provider-load';
 import type { FirstErrorResult } from './modules/bookmarks/first-error';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
-import { isSplitGroup, type TreeItem } from './ui/session/session-history-grouping';
+import { isSplitGroup, getTreeItemUri, type TreeItem } from './ui/session/session-history-grouping';
 import { LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 
 const walkthroughShownKey = 'slc.walkthroughShown';
@@ -66,15 +66,6 @@ export function showWalkthroughOnFirstInstall(context: vscode.ExtensionContext):
     );
 }
 
-/** Get the URI for a tree item (first part for split groups). */
-function getItemUri(item: TreeItem): vscode.Uri {
-    if (isSplitGroup(item)) {
-        const sorted = [...item.parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
-        return sorted[0].uri;
-    }
-    return item.uri;
-}
-
 /** Get the display name for a tree item. */
 function getItemName(item: TreeItem): string {
     if (isSplitGroup(item)) { return item.displayName ?? item.baseFilename; }
@@ -111,7 +102,7 @@ export async function autoLoadLatest(
     const items = await historyProvider.getAllChildren();
     const latest = items.find(i => isSplitGroup(i) || !i.trashed);
     if (!latest) { return; }
-    const latestUri = getItemUri(latest);
+    const latestUri = getTreeItemUri(latest);
     void target.loadFromFile(latestUri);
     // Offer resume if a different session was last viewed.
     const lastViewedMap = context.workspaceState.get<Record<string, number>>(LOG_LAST_VIEWED_KEY, {});
