@@ -26,7 +26,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
-## [Unreleased]
+## [6.1.0]
 
 ### Added
 
@@ -34,6 +34,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - **Save Report button on signal reports.** Saves a markdown report to the configured log directory (`saropaLogCapture.logDirectory`).
 - **PERF-line slow-operation signal detection.** `[log] PERF operationName: Nms` lines are now recognized as slow operations, with the operation name shown in the hypothesis text (e.g. "Slow operation (1.0s): dbEventCountForDate").
 - **Configurable slow-operation threshold.** New setting `saropaLogCapture.signalSlowOpThresholdMs` (default 500ms, range 100-60000) controls the minimum duration for a slow-operation signal. Lowered from the previous hardcoded 2000ms.
+- **Copy Log Path button on session-end notification.** A new "Copy Log Path" button appears alongside "Open Log" when a session completes, copying the log file path to the clipboard.
 
 ### Changed
 
@@ -42,6 +43,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Fixed
 
+- **Severity dot order inconsistent between project list and viewer toolbar.** Unified all severity level orderings (toolbar dots, filter drawer, export panel, project list) to a single canonical order: error → warning → info → performance → todo → notice → debug → database.
 - **Confidence badge unreadable in some themes.** Replaced theme-variable-only colors with explicit high-contrast foreground, background, and border values.
 - **External sidecar timestamps not parsed.** Lines from external sidecars (e.g. SDA logs) with ISO 8601 timestamps now have their timestamps extracted, enabling Session time (T+), elapsed time, and timestamp decorations.
 - **Warning-recurring signal missed for device-other lines (plan 050).** Device-other tier demotion (error/warning → info for display) was also suppressing signal detection. The original pre-demotion level is now preserved on line items so the signal collector sees the true classification while display remains unchanged.
