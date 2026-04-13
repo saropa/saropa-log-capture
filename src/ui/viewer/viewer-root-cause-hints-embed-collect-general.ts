@@ -6,11 +6,11 @@
  * Results are appended to the bundle by `collectRootCauseHintBundleEmbedded`.
  */
 
-import { ROOT_CAUSE_SLOW_OP_MIN_MS, ROOT_CAUSE_WARNING_MIN_COUNT } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
+import { ROOT_CAUSE_WARNING_MIN_COUNT } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
 
-export function getViewerRootCauseHintsGeneralCollectChunk(): string {
+export function getViewerRootCauseHintsGeneralCollectChunk(slowOpThresholdMs: number): string {
   const MIN_WARN = ROOT_CAUSE_WARNING_MIN_COUNT;
-  const MIN_SLOW_MS = ROOT_CAUSE_SLOW_OP_MIN_MS;
+  const MIN_SLOW_MS = slowOpThresholdMs;
 
   return /* javascript */ `
 var rchNetworkPatterns = [
@@ -37,6 +37,27 @@ var rchBugPatterns = [
     'Uncaught', 'Unexpected token', 'Invalid argument'
 ];
 var rchDurationRe = /(?:took|elapsed|duration[=:]?|in)\\s*(\\d+(?:\\.\\d+)?)\\s*(ms|s|seconds?|milliseconds?)/i;
+/* PERF-line pattern: "PERF operationName: 503ms (extras)" — captures name and duration separately. */
+var rchPerfRe = /\\bPERF\\s+([\\w.]+):\\s*(\\d+(?:\\.\\d+)?)\\s*(ms|s)/i;
+
+/** Known HTTP error status codes — explicit map avoids false positives on arbitrary 3-digit numbers. */
+var rchHttpErrorCodes = {
+    '400': 'Bad Request',
+    '401': 'Unauthorized',
+    '403': 'Forbidden',
+    '404': 'Not Found',
+    '405': 'Method Not Allowed',
+    '408': 'Request Timeout',
+    '409': 'Conflict',
+    '413': 'Payload Too Large',
+    '422': 'Unprocessable Entity',
+    '429': 'Too Many Requests',
+    '500': 'Internal Server Error',
+    '502': 'Bad Gateway',
+    '503': 'Service Unavailable',
+    '504': 'Gateway Timeout'
+};
+var rchHttpCodeRe = new RegExp('\\\\b(' + Object.keys(rchHttpErrorCodes).join('|') + ')\\\\b');
 
 function rchMatchesAny(text, patterns) {
     for (var pi = 0; pi < patterns.length; pi++) {
@@ -45,13 +66,24 @@ function rchMatchesAny(text, patterns) {
     return null;
 }
 
+/**
+ * Extract duration (and optional PERF operation name) from a log line.
+ * Returns { durationMs, operationName? } or null if no duration found.
+ * Tries the more-specific PERF regex first, then the generic duration regex.
+ */
 function rchExtractDuration(text) {
+    var pm = rchPerfRe.exec(text);
+    if (pm) {
+        var pVal = parseFloat(pm[2]);
+        if (pm[3].toLowerCase() === 's') pVal *= 1000;
+        return { durationMs: pVal, operationName: pm[1] };
+    }
     var m = rchDurationRe.exec(text);
-    if (!m) return -1;
+    if (!m) return null;
     var val = parseFloat(m[1]);
     var unit = m[2].toLowerCase();
-    if (unit === 's' || unit === 'seconds' || unit === 'second') return val * 1000;
-    return val;
+    if (unit === 's' || unit === 'seconds' || unit === 'second') val *= 1000;
+    return { durationMs: val, operationName: undefined };
 }
 
 function collectGeneralSignals() {
@@ -61,7 +93,7 @@ function collectGeneralSignals() {
     var slowOperations = [];
     var permissionDenials = [];
     var classifiedErrors = [];
-    var i, row, plain, wKey, match, dur;
+    var i, row, plain, wKey, match, durResult;
 
     if (typeof allLines === 'undefined' || !allLines.length) {
         return { warnings: [], networkFailures: [], memoryEvents: [], slowOperations: [], permissionDenials: [], classifiedErrors: [] };
@@ -74,7 +106,10 @@ function collectGeneralSignals() {
         plain = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
         if (plain.length < 4) continue;
 
-        if (row.level === 'warning') {
+        /* Use pre-demotion level for signal analysis: device-other lines demoted from
+           warning/error to info still carry originalLevel so recurring patterns surface (plan 050). */
+        var signalLevel = row.originalLevel || row.level;
+        if (signalLevel === 'warning') {
             wKey = plain.slice(-80).toLowerCase();
             if (!warnings[wKey]) {
                 warnings[wKey] = { excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, count: 0, lineIndices: [] };
@@ -83,7 +118,7 @@ function collectGeneralSignals() {
             if (warnings[wKey].lineIndices.length < 8) warnings[wKey].lineIndices.push(i);
         }
 
-        if (row.level === 'error' && !row.recentErrorContext) {
+        if (signalLevel === 'error' && !row.recentErrorContext) {
             match = rchMatchesAny(plain, rchNetworkPatterns);
             if (match && networkFailures.length < 20) {
                 networkFailures.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, pattern: match });
@@ -107,9 +142,19 @@ function collectGeneralSignals() {
             }
         }
 
-        dur = rchExtractDuration(plain);
-        if (dur >= ${MIN_SLOW_MS} && slowOperations.length < 10) {
-            slowOperations.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, durationMs: dur });
+        /* HTTP status code detection — runs at any level except database,
+           which can contain numeric values that match codes in SQL result sets.
+           Stack frames are already excluded by the row.type !== 'line' guard above. */
+        var httpMatch = plain.match(rchHttpCodeRe);
+        if (httpMatch && row.level !== 'database' && networkFailures.length < 20) {
+            var httpCode = httpMatch[1];
+            var httpReason = rchHttpErrorCodes[httpCode] || httpCode;
+            networkFailures.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, pattern: httpCode + ' ' + httpReason });
+        }
+
+        durResult = rchExtractDuration(plain);
+        if (durResult && durResult.durationMs >= ${MIN_SLOW_MS} && slowOperations.length < 10) {
+            slowOperations.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, durationMs: durResult.durationMs, operationName: durResult.operationName });
         }
     }
 
