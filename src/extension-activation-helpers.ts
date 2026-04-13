@@ -4,7 +4,6 @@ import { getConfig } from './modules/config/config';
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import type { LoadResultFirstError } from './ui/provider/log-viewer-provider-load';
 import type { FirstErrorResult } from './modules/bookmarks/first-error';
-import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { isSplitGroup, getTreeItemUri, type TreeItem } from './ui/session/session-history-grouping';
 import { LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 
@@ -91,15 +90,15 @@ export interface AutoLoadTarget {
 
 /**
  * Auto-load the latest log into the viewer on first visit.
+ * Called after the session list streaming fetch completes — items are already loaded, no extra I/O.
  * If a different session was last viewed, sends a `showResumeSession` message
  * so the webview can offer a quick-switch button.
  */
 export async function autoLoadLatest(
     context: vscode.ExtensionContext,
-    historyProvider: SessionHistoryProvider,
+    items: readonly TreeItem[],
     target: AutoLoadTarget,
 ): Promise<void> {
-    const items = await historyProvider.getAllChildren();
     const latest = items.find(i => isSplitGroup(i) || !i.trashed);
     if (!latest) { return; }
     const latestUri = getTreeItemUri(latest);

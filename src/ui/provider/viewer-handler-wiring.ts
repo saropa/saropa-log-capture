@@ -11,7 +11,7 @@ import { t } from "../../l10n";
 import { getInteractionTracker } from "../../modules/learning/learning-runtime";
 import type { SessionManagerImpl } from "../../modules/session/session-manager";
 import type { SessionHistoryProvider } from "../session/session-history-provider";
-import type { SessionMetadata } from "../session/session-history-grouping";
+import type { SessionMetadata, TreeItem } from "../session/session-history-grouping";
 import type { ViewerBroadcaster } from "./viewer-broadcaster";
 import { getLogDirectoryUri } from "../../modules/config/config";
 import { showSearchQuickPick } from "../../modules/search/log-search-ui";
@@ -59,6 +59,8 @@ export interface HandlerDeps {
   readonly onOpenBookmark?: (fileUri: string, lineIndex: number) => void;
   /** Open a session and start replay (focus viewer + load with replay option). */
   readonly openSessionForReplay?: (uri: vscode.Uri) => Promise<void>;
+  /** Called after the first streaming session list load completes with the fetched items. */
+  readonly onFirstSessionListReady?: (items: readonly TreeItem[]) => void;
 }
 
 /** Wire common webview→extension handlers on a viewer target. */
@@ -241,10 +243,17 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     sendFinalList(allRecords);
   };
 
+  let firstLoadFired = false;
   const ref: { interval?: ReturnType<typeof setInterval> } = {};
   target.setSessionListHandler(() => {
     broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
-    void refreshSessionListStreaming().catch(() => sendFinalList([]));
+    void refreshSessionListStreaming().then(() => {
+      if (!firstLoadFired && deps.onFirstSessionListReady) {
+        firstLoadFired = true;
+        const cached = historyProvider.getItemsCache();
+        if (cached) { deps.onFirstSessionListReady(cached); }
+      }
+    }).catch(() => sendFinalList([]));
     if (ref.interval) { clearInterval(ref.interval); }
     ref.interval = setInterval(() => {
       if (sessionManager.getActiveSession()) { void refreshSessionList(); }
