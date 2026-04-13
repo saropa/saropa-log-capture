@@ -19,6 +19,7 @@ import {
   permissionHypotheses,
   slowOpHypotheses,
   warningHypotheses,
+  type Tier,
   type WorkingHypothesis,
 } from './build-hypotheses-general';
 import { classifyCategory, hashFingerprint, normalizeLine } from '../analysis/error-fingerprint-pure';
@@ -45,8 +46,6 @@ export const ROOT_CAUSE_MAX_EVIDENCE_IDS = 8;
 const MAX_BULLETS = ROOT_CAUSE_MAX_HYPOTHESES;
 const MAX_TEXT_LEN = ROOT_CAUSE_MAX_TEXT_LEN;
 const MAX_EVIDENCE_IDS = ROOT_CAUSE_MAX_EVIDENCE_IDS;
-
-type Tier = 0 | 1 | 2;
 
 function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence {
   const x = (c || '').toLowerCase();
