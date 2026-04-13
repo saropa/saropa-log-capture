@@ -1,15 +1,11 @@
 import {
   isRootCauseHintsEligible,
   ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN,
-  ROOT_CAUSE_FP_LEADER_MIN_COUNT,
-  ROOT_CAUSE_SQL_BURST_MIN_COUNT,
 } from './root-cause-hint-eligibility';
 import type {
-  RootCauseFingerprintLeader,
   RootCauseHintBundle,
   RootCauseHypothesis,
   RootCauseHypothesisConfidence,
-  RootCauseNPlusOneHint,
 } from './root-cause-hint-types';
 import {
   anrHypotheses,
@@ -22,6 +18,13 @@ import {
   type Tier,
   type WorkingHypothesis,
 } from './build-hypotheses-general';
+import {
+  diffHypotheses,
+  driftHypotheses,
+  fingerprintLeaderHypotheses,
+  nPlusOneHypotheses,
+  sqlBurstHypotheses,
+} from './build-hypotheses-sql';
 import { classifyCategory, hashFingerprint, normalizeLine } from '../analysis/error-fingerprint-pure';
 import { truncateText } from './build-hypotheses-text';
 
@@ -46,12 +49,6 @@ export const ROOT_CAUSE_MAX_EVIDENCE_IDS = 8;
 const MAX_BULLETS = ROOT_CAUSE_MAX_HYPOTHESES;
 const MAX_TEXT_LEN = ROOT_CAUSE_MAX_TEXT_LEN;
 const MAX_EVIDENCE_IDS = ROOT_CAUSE_MAX_EVIDENCE_IDS;
-
-function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence {
-  const x = (c || '').toLowerCase();
-  if (x === 'high' || x === 'medium') { return 'medium'; }
-  return 'low';
-}
 
 /** True when the excerpt is a decorative separator with no letters or digits (e.g. `═══════`). */
 function isDecorativeExcerpt(s: string): boolean {
@@ -95,121 +92,6 @@ function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
     hypothesisKey: `err::${key}`,
     tier: 0 as Tier,
   }));
-}
-
-function nPlusOneHypotheses(hints: readonly RootCauseNPlusOneHint[] | undefined): WorkingHypothesis[] {
-  if (!hints || hints.length === 0) {
-    return [];
-  }
-  const out: WorkingHypothesis[] = [];
-  for (const h of hints) {
-    if (!h || !h.fingerprint) {
-      continue;
-    }
-    const sec = (h.windowSpanMs / 1000).toFixed(1);
-    const text = truncateText(
-      `${h.repeats} similar DB calls with ${h.distinctArgs} different arguments in ${sec}s (possible N+1 query)`,
-      MAX_TEXT_LEN,
-    );
-    out.push({
-      templateId: 'n-plus-one',
-      text,
-      evidenceLineIds: [h.lineIndex],
-      confidence: mapN1Confidence(h.confidence),
-      hypothesisKey: `n1::${h.fingerprint}`,
-      tier: 1,
-    });
-  }
-  return out;
-}
-
-function sqlBurstHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
-  const bursts = bundle.sqlBursts;
-  if (!bursts || bursts.length === 0) {
-    return [];
-  }
-  const out: WorkingHypothesis[] = [];
-  for (const b of bursts) {
-    if (!b || !b.fingerprint || b.count < ROOT_CAUSE_SQL_BURST_MIN_COUNT) {
-      continue;
-    }
-    const w = typeof b.windowMs === 'number' ? ` in ~${Math.round(b.windowMs)}ms` : '';
-    out.push({
-      templateId: 'sql-burst',
-      text: truncateText(`${b.count} identical queries fired${w} (rapid burst)`, MAX_TEXT_LEN),
-      evidenceLineIds: [],
-      confidence: 'low',
-      hypothesisKey: `burst::${b.fingerprint}`,
-      tier: 1,
-    });
-  }
-  return out;
-}
-
-function fingerprintLeaderHypotheses(
-  leaders: readonly RootCauseFingerprintLeader[] | undefined,
-  n1Fingerprints: Set<string>,
-): WorkingHypothesis[] {
-  if (!leaders || leaders.length === 0) {
-    return [];
-  }
-  const out: WorkingHypothesis[] = [];
-  for (const L of leaders) {
-    if (!L || !L.fingerprint || L.count < ROOT_CAUSE_FP_LEADER_MIN_COUNT) {
-      continue;
-    }
-    if (n1Fingerprints.has(L.fingerprint)) {
-      continue;
-    }
-    out.push({
-      templateId: 'fingerprint-leader',
-      text: truncateText(
-        `Same SQL query executed ${L.count} times this session (consider batching or caching)`,
-        MAX_TEXT_LEN,
-      ),
-      evidenceLineIds: L.sampleLineIndex >= 0 ? [L.sampleLineIndex] : [],
-      confidence: 'low',
-      hypothesisKey: `fp::${L.fingerprint}`,
-      tier: 2,
-    });
-  }
-  return out;
-}
-
-function diffHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
-  const d = bundle.sessionDiffSummary;
-  if (!d || !d.regressionFingerprints || d.regressionFingerprints.length === 0) {
-    return [];
-  }
-  const fp = d.regressionFingerprints[0];
-  return [
-    {
-      templateId: 'session-diff-regression',
-      text: truncateText(`SQL query volume increased compared to previous session (performance regression)`, MAX_TEXT_LEN),
-      evidenceLineIds: [],
-      confidence: 'low',
-      hypothesisKey: `diff::${fp}`,
-      tier: 0,
-    },
-  ];
-}
-
-function driftHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
-  const da = bundle.driftAdvisorSummary;
-  if (!da || da.issueCount <= 0) {
-    return [];
-  }
-  const rule = da.topRuleId ? ` (${da.topRuleId})` : '';
-  return [
-    {
-      templateId: 'drift-advisor',
-      text: truncateText(`Drift static analysis found ${da.issueCount} issue${da.issueCount === 1 ? '' : 's'}${rule} in the workspace`, MAX_TEXT_LEN),
-      evidenceLineIds: [],
-      confidence: 'low',
-      hypothesisKey: 'drift::summary',
-      tier: 1,
-    },
-  ];
 }
 
 const confRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
@@ -282,11 +164,11 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
 
   const parts: WorkingHypothesis[] = [
     ...errorHypotheses(bundle),
-    ...diffHypotheses(bundle),
-    ...nPlusOneHypotheses(n1List),
-    ...sqlBurstHypotheses(bundle),
-    ...driftHypotheses(bundle),
-    ...fingerprintLeaderHypotheses(bundle.fingerprintLeaders, n1Fingerprints),
+    ...diffHypotheses(bundle, MAX_TEXT_LEN),
+    ...nPlusOneHypotheses(n1List, MAX_TEXT_LEN),
+    ...sqlBurstHypotheses(bundle, MAX_TEXT_LEN),
+    ...driftHypotheses(bundle, MAX_TEXT_LEN),
+    ...fingerprintLeaderHypotheses(bundle.fingerprintLeaders, n1Fingerprints, MAX_TEXT_LEN),
     // v2 general signals
     ...warningHypotheses(bundle, MAX_TEXT_LEN),
     ...networkHypotheses(bundle, MAX_TEXT_LEN),
