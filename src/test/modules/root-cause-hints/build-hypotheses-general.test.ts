@@ -72,6 +72,42 @@ test("buildHypotheses: slow operations include actual duration", () => {
   assert.ok(hy[0].text.includes("5.2s"));
 });
 
+test("buildHypotheses: slow operations use operationName when present", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    slowOperations: [{ lineIndex: 20, excerpt: "PERF dbEventCountForDate: 1023ms (fast=0ms)", durationMs: 1023, operationName: "dbEventCountForDate" }],
+  });
+  assert.ok(hy.some((h) => h.templateId === "slow-operation"));
+  /* operationName should appear in the text, not the raw excerpt. */
+  assert.ok(hy[0].text.includes("dbEventCountForDate"), "hypothesis text should contain the operation name");
+  assert.ok(!hy[0].text.includes("fast=0ms"), "hypothesis text should not contain raw excerpt extras when operationName is present");
+});
+
+test("buildHypotheses: slow operations fall back to excerpt when operationName absent", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    slowOperations: [{ lineIndex: 20, excerpt: "loadDashboard took 5200ms", durationMs: 5200 }],
+  });
+  assert.ok(hy.some((h) => h.templateId === "slow-operation"));
+  assert.ok(hy[0].text.includes("loadDashboard took 5200ms"), "hypothesis text should fall back to excerpt");
+});
+
+test("buildHypotheses: slow operations sorted by duration descending", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    slowOperations: [
+      { lineIndex: 1, excerpt: "PERF a: 503ms", durationMs: 503, operationName: "a" },
+      { lineIndex: 2, excerpt: "PERF b: 1500ms", durationMs: 1500, operationName: "b" },
+      { lineIndex: 3, excerpt: "PERF c: 800ms", durationMs: 800, operationName: "c" },
+    ],
+  });
+  const slowHy = hy.filter((h) => h.templateId === "slow-operation");
+  /* Highest duration first. */
+  assert.ok(slowHy[0].text.includes("b"));
+  assert.ok(slowHy[1].text.includes("c"));
+  assert.ok(slowHy[2].text.includes("a"));
+});
+
 test("buildHypotheses: slow operations with same excerpt at different lines merge via content key", () => {
   const hy = buildHypotheses({
     ...baseV2,
@@ -91,6 +127,70 @@ test("buildHypotheses: permission denials produce hypothesis", () => {
   });
   assert.ok(hy.some((h) => h.templateId === "permission-denial"));
   assert.ok(hy[0].text.includes("CAMERA"));
+});
+
+// --- HTTP status code confidence tests ---
+
+test("buildHypotheses: HTTP 4xx network failures get low confidence", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    networkFailures: [
+      { lineIndex: 10, excerpt: "[API] 404 Not Found (338ms)", pattern: "404 Not Found" },
+      { lineIndex: 15, excerpt: "[API] 404 Not Found (340ms)", pattern: "404 Not Found" },
+    ],
+  });
+  const netHy = hy.filter((h) => h.templateId === "network-failure");
+  assert.strictEqual(netHy.length, 1, "same HTTP code should group into one hypothesis");
+  assert.strictEqual(netHy[0].confidence, "low", "4xx codes should get low confidence");
+  assert.ok(netHy[0].text.includes("2 occurrences"), "should show occurrence count");
+});
+
+test("buildHypotheses: HTTP 5xx network failures get medium confidence", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    networkFailures: [
+      { lineIndex: 20, excerpt: "HTTP 500 Internal Server Error", pattern: "500 Internal Server Error" },
+    ],
+  });
+  const netHy = hy.filter((h) => h.templateId === "network-failure");
+  assert.strictEqual(netHy.length, 1);
+  assert.strictEqual(netHy[0].confidence, "medium", "5xx codes should get medium confidence");
+});
+
+test("buildHypotheses: transport-level network failures still get medium confidence", () => {
+  /* Regression check: existing transport patterns must remain medium confidence. */
+  const hy = buildHypotheses({
+    ...baseV2,
+    networkFailures: [
+      { lineIndex: 5, excerpt: "SocketException: Connection refused", pattern: "SocketException" },
+    ],
+  });
+  const netHy = hy.filter((h) => h.templateId === "network-failure");
+  assert.strictEqual(netHy.length, 1);
+  assert.strictEqual(netHy[0].confidence, "medium", "transport patterns must stay medium confidence");
+});
+
+test("buildHypotheses: mixed HTTP and transport failures produce separate hypotheses", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    networkFailures: [
+      { lineIndex: 10, excerpt: "[API] 404 Not Found", pattern: "404 Not Found" },
+      { lineIndex: 20, excerpt: "ECONNREFUSED on port 8080", pattern: "ECONNREFUSED" },
+      { lineIndex: 30, excerpt: "HTTP 503 Service Unavailable", pattern: "503 Service Unavailable" },
+    ],
+  });
+  const netHy = hy.filter((h) => h.templateId === "network-failure");
+  assert.strictEqual(netHy.length, 3, "each distinct pattern should produce its own hypothesis");
+  /* Verify confidence differs by type. */
+  const h404 = netHy.find((h) => h.hypothesisKey === "net::404 Not Found");
+  const h503 = netHy.find((h) => h.hypothesisKey === "net::503 Service Unavailable");
+  const hTransport = netHy.find((h) => h.hypothesisKey === "net::ECONNREFUSED");
+  assert.ok(h404, "404 hypothesis should exist");
+  assert.ok(h503, "503 hypothesis should exist");
+  assert.ok(hTransport, "transport hypothesis should exist");
+  assert.strictEqual(h404!.confidence, "low");
+  assert.strictEqual(h503!.confidence, "medium");
+  assert.strictEqual(hTransport!.confidence, "medium");
 });
 
 // --- FNV-1a fingerprinting tests ---
