@@ -72,6 +72,18 @@ test("buildHypotheses: slow operations include actual duration", () => {
   assert.ok(hy[0].text.includes("5.2s"));
 });
 
+test("buildHypotheses: slow operations with same excerpt at different lines merge via content key", () => {
+  const hy = buildHypotheses({
+    ...baseV2,
+    slowOperations: [
+      { lineIndex: 10, excerpt: "loadDashboard took 5200ms", durationMs: 5200 },
+      { lineIndex: 50, excerpt: "loadDashboard took 5200ms", durationMs: 5200 },
+    ],
+  });
+  const slowHy = hy.filter((h) => h.templateId === "slow-operation");
+  assert.strictEqual(slowHy.length, 1, "same excerpt should merge into one hypothesis");
+});
+
 test("buildHypotheses: permission denials produce hypothesis", () => {
   const hy = buildHypotheses({
     ...baseV2,

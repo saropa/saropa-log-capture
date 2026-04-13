@@ -50,6 +50,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - **Signals: FNV-1a error fingerprinting** — errors are now grouped by normalized fingerprint (strips timestamps, UUIDs, hex, paths, numbers) instead of last-100-char suffix matching; errors differing only in port numbers or IDs now merge correctly
 - **Signals: crash category confidence** — error signals use crash category (fatal/anr/oom/native) to set high confidence instead of defaulting everything to medium
 - **Signals panel hidden by default** — the root-cause signals panel no longer auto-opens when signals are detected; the toolbar badge still shows the count and users click the icon to reveal it
+- **Signal report copy feedback** — clipboard copy now shows a status bar message on success or failure instead of silently swallowing errors
+- **Signal report not-ready feedback** — clicking a signal hypothesis before the bundle has loaded now shows a status bar message instead of doing nothing
+
+### Fixed
+
+- **Stale ANR scores across sessions** — host-side ANR risk cache is now cleared when the session changes, preventing stale scores from a previous session
+- **Signal report panel leak on deactivation** — the signal report webview panel is now explicitly disposed during extension deactivation
+- **Slow operation dedup** — slow operation hypothesis keys now use content-based excerpt keys instead of line indices, so the same slow operation at different line positions correctly merges into one hypothesis
 - **Deduplicated session list I/O on startup** — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
 
 ---
