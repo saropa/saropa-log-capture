@@ -11,7 +11,6 @@ import type {
 } from './root-cause-hint-types';
 import {
   ROOT_CAUSE_ANR_MIN_SCORE,
-  ROOT_CAUSE_SLOW_OP_MIN_MS,
   ROOT_CAUSE_WARNING_MIN_COUNT,
 } from './root-cause-hint-eligibility';
 import { excerptKey, truncateText } from './build-hypotheses-text';
@@ -62,11 +61,18 @@ export function networkHypotheses(bundle: RootCauseHintBundle, maxLen: number): 
   const out: WorkingHypothesis[] = [];
   for (const [key, { excerpt, lines }] of groups) {
     const suffix = lines.length > 1 ? ` (${lines.length} occurrences)` : '';
+
+    /* HTTP 4xx codes get low confidence — they may be expected app behavior
+       (e.g., 404 on an optional resource check). 5xx and transport-level
+       patterns stay medium because they always indicate a real problem. */
+    const isHttp4xx = /^4\d{2}\s/.test(key);
+    const confidence: RootCauseHypothesisConfidence = isHttp4xx ? 'low' : 'medium';
+
     out.push({
       templateId: 'network-failure',
       text: truncateText(`Network failure: ${excerpt}${suffix}`, maxLen),
       evidenceLineIds: lines.slice(0, 8),
-      confidence: 'medium',
+      confidence,
       hypothesisKey: `net::${key}`,
       tier: 1,
     });
@@ -91,22 +97,26 @@ export function memoryHypotheses(bundle: RootCauseHintBundle, maxLen: number): W
   }];
 }
 
-/** Slow operations exceeding threshold. */
+/**
+ * Slow operations exceeding threshold.
+ * The webview collector already applied the user-configured threshold, so all items qualify.
+ * When `operationName` is present (PERF lines), use it as the label instead of the raw excerpt.
+ */
 export function slowOpHypotheses(bundle: RootCauseHintBundle, maxLen: number): WorkingHypothesis[] {
   const ops = bundle.slowOperations;
   if (!ops || ops.length === 0) { return []; }
-  const qualifying = ops.filter(o => o.durationMs >= ROOT_CAUSE_SLOW_OP_MIN_MS);
-  if (qualifying.length === 0) { return []; }
-  const sorted = qualifying.slice().sort((a, b) => b.durationMs - a.durationMs);
+  const sorted = ops.slice().sort((a, b) => b.durationMs - a.durationMs);
   const out: WorkingHypothesis[] = [];
   for (const op of sorted.slice(0, 3)) {
     const sec = (op.durationMs / 1000).toFixed(1);
+    /* PERF lines include the operation name — use it for a cleaner label. */
+    const label = op.operationName ?? op.excerpt;
     out.push({
       templateId: 'slow-operation',
-      text: truncateText(`Slow operation (${sec}s): ${op.excerpt}`, maxLen),
+      text: truncateText(`Slow operation (${sec}s): ${label}`, maxLen),
       evidenceLineIds: [op.lineIndex],
       confidence: 'low',
-      hypothesisKey: `slow::${excerptKey(op.excerpt)}`,
+      hypothesisKey: `slow::${excerptKey(label)}`,
       tier: 2,
     });
   }
