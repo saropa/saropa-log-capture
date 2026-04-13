@@ -53,3 +53,50 @@ test("error collector skips recentErrorContext lines (proximity-inherited errors
     "collect loop must filter out proximity-inherited error lines to prevent duplicate hypotheses from stack-frame continuations",
   );
 });
+
+test("should contain PERF regex for slow-operation detection", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  assert.ok(chunk.includes("rchPerfRe"), "PERF regex must be defined for PERF-line slow-op detection");
+  assert.ok(chunk.includes("operationName"), "slow-op collection must pass operationName from PERF lines");
+});
+
+// --- HTTP status code detection ---
+
+test("should contain HTTP error code map for network-failure signal detection", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  assert.ok(chunk.includes("rchHttpErrorCodes"), "HTTP error codes map must be defined");
+  assert.ok(chunk.includes("rchHttpCodeRe"), "HTTP code regex must be defined");
+  /* Verify a sample of known codes appear in the map. */
+  assert.ok(chunk.includes("'404': 'Not Found'"), "404 must be in the known-code map");
+  assert.ok(chunk.includes("'500': 'Internal Server Error'"), "500 must be in the known-code map");
+  assert.ok(chunk.includes("'503': 'Service Unavailable'"), "503 must be in the known-code map");
+});
+
+test("HTTP detection skips database-level lines to avoid SQL false positives", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* The httpMatch guard must check row.level !== 'database'. */
+  assert.ok(
+    chunk.includes("row.level !== 'database'"),
+    "HTTP detection must skip database-level lines to prevent false positives from SQL result sets",
+  );
+});
+
+test("HTTP detection pushes to networkFailures with pattern containing code and reason", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* The pattern field should combine code + reason: "404 Not Found". */
+  assert.ok(
+    chunk.includes("httpCode + ' ' + httpReason"),
+    "HTTP pattern must combine status code and reason phrase (e.g. '404 Not Found')",
+  );
+});
+
+test("slow-op threshold is baked from parameter, not hardcoded", () => {
+  /* Default threshold (no arg) should embed 500. */
+  const defaultChunk = getViewerRootCauseHintsScript();
+  assert.ok(defaultChunk.includes(">= 500"), "default threshold should be 500");
+
+  /* Custom threshold should be injected. */
+  const customChunk = getViewerRootCauseHintsScript(1000);
+  assert.ok(customChunk.includes(">= 1000"), "custom threshold should be baked into the JS");
+  assert.ok(!customChunk.includes(">= 500"), "default threshold should not appear when custom is set");
+});
