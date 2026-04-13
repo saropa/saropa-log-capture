@@ -14,8 +14,9 @@ const base: RootCauseHintBundle = {
 };
 
 test("isRootCauseHintsEligible: false for wrong version or missing sessionId", () => {
-  assert.equal(isRootCauseHintsEligible({ ...base, bundleVersion: 2 }), false);
+  assert.equal(isRootCauseHintsEligible({ ...base, bundleVersion: 99 }), false);
   assert.equal(isRootCauseHintsEligible({ bundleVersion: 1, sessionId: "" }), false);
+  assert.equal(isRootCauseHintsEligible({ bundleVersion: 2, sessionId: "" }), false);
 });
 
 test("isRootCauseHintsEligible: true with qualifying error excerpt", () => {
@@ -238,3 +239,5 @@ test("buildHypotheses: sql burst at threshold is eligible and emits burst templa
   const hy = buildHypotheses(b);
   assert.ok(hy.some((h) => h.templateId === "sql-burst" && h.hypothesisKey === "burst::bfp"));
 });
+
+// v2 general signal tests and fingerprinting tests are in build-hypotheses-general.test.ts

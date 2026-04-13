@@ -24,6 +24,10 @@ import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLabel } from '../viewer/viewer-keybindings';
 import type { ViewerMessageContext } from './viewer-message-types';
 import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
+import { buildHypotheses } from '../../modules/root-cause-hints/build-hypotheses';
+import type { RootCauseHintBundle, RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
+import { showSignalReport } from '../signals/signal-report-panel';
+import { enrichBundleWithHostSignals } from '../../modules/root-cause-hints/signal-host-collectors';
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
 import { getAiEnabledConfigurationTarget } from '../../modules/ai/ai-enable-scope';
 import { showAiExplainRunFailure } from '../../modules/ai/ai-explain-ui';
@@ -31,6 +35,9 @@ import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message
 import { handleSessionAndUiActions } from './viewer-message-handler-session-ui';
 
 export { SAROPA_BOOL_SETTING_BY_MSG_TYPE };
+
+let lastRchBundle: RootCauseHintBundle | undefined;
+let lastRchHypotheses: RootCauseHypothesis[] = [];
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -234,6 +241,23 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       return true;
     case "createReportFile": runCreateReportFile(msg, ctx); return true;
     case "explainWithAi": runExplainWithAi(msg, ctx); return true;
+    case "rootCauseBundle": {
+      enrichBundleWithHostSignals(msg.bundle as RootCauseHintBundle, ctx.currentFileUri).then(enriched => {
+        lastRchBundle = enriched;
+        lastRchHypotheses = buildHypotheses(enriched);
+        ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
+      }).catch(() => {
+        lastRchBundle = msg.bundle as RootCauseHintBundle;
+        lastRchHypotheses = buildHypotheses(lastRchBundle);
+        ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
+      });
+      return true;
+    }
+    case "openSignalReport": {
+      const hyp = lastRchHypotheses.find(h => h.hypothesisKey === msgStr(msg, "hypothesisKey"));
+      if (hyp && lastRchBundle) { showSignalReport(hyp, lastRchBundle, ctx.currentFileUri).catch(() => {}); }
+      return true;
+    }
     case "explainRootCauseHypotheses": runExplainRootCauseHypotheses(msg, ctx); return true;
     case "explainRootCauseHypothesesEmpty":
       vscode.window.showInformationMessage(t("msg.explainRootCauseHypothesesEmpty")).then(undefined, () => {});

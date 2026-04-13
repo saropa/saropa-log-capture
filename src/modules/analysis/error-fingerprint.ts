@@ -6,15 +6,14 @@
  */
 
 import * as vscode from 'vscode';
-import { stripAnsi } from '../capture/ansi';
 import { isErrorLine } from '../features/error-rate-alert';
+import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from './error-fingerprint-pure';
+
+export { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory };
 
 const maxScanLines = 5000;
 const maxFingerprints = 30;
 const maxExampleLength = 200;
-
-/** Crash category for error sub-classification. */
-export type CrashCategory = 'fatal' | 'anr' | 'oom' | 'native' | 'non-fatal';
 
 /** Compact fingerprint entry stored in sidecar metadata. */
 export interface FingerprintEntry {
@@ -36,43 +35,6 @@ export async function scanForFingerprints(fileUri: vscode.Uri): Promise<Fingerpr
         collectFingerprint(lines[i], groups);
     }
     return rankFingerprints(groups);
-}
-
-/** Normalize a single line for fingerprinting. */
-export function normalizeLine(text: string): string {
-    let s = stripAnsi(text);
-    s = s.replace(/^\[[\d:.,T\-Z ]+\]\s*/, '');
-    s = s.replace(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}[.\d]*/g, '<TS>');
-    s = s.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<UUID>');
-    s = s.replace(/\b0x[0-9a-fA-F]{4,}\b/g, '<HEX>');
-    s = s.replace(/\b\d{2,}\b/g, '<N>');
-    s = s.replace(/(?:[a-zA-Z]:)?[\\/](?:[\w.\-]+[\\/])+/g, '');
-    s = s.replace(/\s+/g, ' ').trim();
-    return s;
-}
-
-/** FNV-1a 32-bit hash, returned as 8-char hex. */
-export function hashFingerprint(normalized: string): string {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < normalized.length; i++) {
-        hash ^= normalized.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-    return hash.toString(16).padStart(8, '0');
-}
-
-const anrRe = /ANR|Application Not Responding|Input dispatching timed out/i;
-const oomRe = /OutOfMemoryError|heap exhaustion|\bOOM\b|Cannot allocate/i;
-const nativeRe = /SIGSEGV|SIGABRT|SIGBUS|libflutter\.so|native crash/i;
-const fatalRe = /\bFATAL\b|unhandled exception|uncaught/i;
-
-/** Classify an error line into a crash category. */
-export function classifyCategory(text: string): CrashCategory {
-    if (anrRe.test(text)) { return 'anr'; }
-    if (oomRe.test(text)) { return 'oom'; }
-    if (nativeRe.test(text)) { return 'native'; }
-    if (fatalRe.test(text)) { return 'fatal'; }
-    return 'non-fatal';
 }
 
 type FpAccum = { n: string; e: string; c: number; cat: CrashCategory };
