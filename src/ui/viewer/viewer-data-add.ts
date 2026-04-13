@@ -127,7 +127,10 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     var isSep = isSeparatorLine(slp ? slp.msg : plain);
     var isAi = category && category.indexOf('ai-') === 0;
     var lvl = isSep ? 'info' : isAi ? 'notice' : ((typeof classifyLevel === 'function') ? classifyLevel(plain, category) : 'info');
-    /* Device-other: demote error/warning to info so device noise never shows red/yellow. Device-critical keeps its real severity. */
+    /* Device-other: demote error/warning to info for display, but preserve original
+       level for signal analysis — demoted warnings/errors must still feed the signal
+       collector so recurring patterns are not silently suppressed (plan 050). */
+    var preDemotionLevel = lvl;
     if (lineTier === 'device-other' && (lvl === 'error' || lvl === 'warning')) lvl = 'info';
     // Recent-error context: if this line is plain info but falls inside 2s after a real error/stack line
     // above (see Level Filters fly-up), it is tinted like an error so the incident reads as one band.
@@ -229,6 +232,9 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         var isAnr = (lvl === 'performance' && anrPattern.test(plain));
         var lineItem = { html: html, rawText: rawText || null, type: 'line', height: finalH, category: category, groupId: -1, timestamp: ts, level: lvl, seq: nextSeq++, sourceTag: sTag, logcatTag: lTag, sqlVerb: sqlMeta ? sqlMeta.verb : null, tier: lineTier, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: !!classHidden, classTags: cTags, isSeparator: isSep, errorClass: errorClass, errorSuppressed: errorSuppressed, fw: fw, sourcePath: sp || null, scopeFiltered: scopeFilt, isAnr: isAnr, autoHidden: isAutoHidden, source: lineSource, timeRangeFiltered: false, recentErrorContext: recentErrorContext, parsedPid: slp ? slp.pid : undefined, parsedTid: slp ? slp.tid : undefined, parsedTag: slp ? slp.tag : undefined, parsedRawLevel: slp ? slp.rawLvl : undefined, structuredPrefixLen: slp ? slp.prefixLen : 0, levelTooltip: (typeof getLevelTooltip === 'function' && slp) ? getLevelTooltip(slp.rawLvl, lvl) : ((typeof getLevelTooltip === 'function') ? getLevelTooltip(null, lvl) : null) };
         if (elapsedMs !== undefined && elapsedMs >= 0) lineItem.elapsedMs = elapsedMs;
+        /* Only set originalLevel when demotion changed the display level — saves memory on
+           the vast majority of lines where no demotion occurs (plan 050). */
+        if (preDemotionLevel !== lvl) lineItem.originalLevel = preDemotionLevel;
         allLines.push(lineItem);
         /* Art-block grouping: consecutive separator lines within 1 s form one visual block.
            Each DAP output event creates a new Date() so lines in the same banner differ by milliseconds. */
