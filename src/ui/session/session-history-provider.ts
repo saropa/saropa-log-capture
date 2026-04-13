@@ -189,7 +189,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         onFilesListed?: FetchCallbacks['onFilesListed'],
     ): Promise<TreeItem[]> {
         if (!logDirOverride && this.itemsCache) { return this.itemsCache; }
-        const items = await fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
+        // Reuse an in-flight fetch to avoid duplicate I/O (callbacks won't fire but the final list is correct).
+        if (!logDirOverride && this.fetchInFlight) { return this.fetchInFlight; }
+        const promise = fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
+        if (!logDirOverride) { this.fetchInFlight = promise; }
+        const items = await promise;
         if (!logDirOverride) {
             this.itemsCache = items;
             this.fetchInFlight = undefined;
