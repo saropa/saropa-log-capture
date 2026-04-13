@@ -58,7 +58,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
     viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
-
+    signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
   });
   webviewView.webview.onDidReceiveMessage((msg: Record<string, unknown>) => target.handleMessage(msg));
   target.startBatchTimer();
