@@ -1,17 +1,29 @@
 /**
- * Embedded bundle collection for DB_14 (host fields, slow bursts, baseline diff). Split from
- * `viewer-root-cause-hints-embed-algorithm.ts` for ESLint max-lines.
+ * Embedded bundle collection for DB_14 (host fields, slow bursts, baseline diff).
+ *
+ * Collects raw signal data from the webview's `allLines` and posts the bundle to
+ * the extension host for hypothesis building. The host runs `buildHypotheses()`
+ * (single TypeScript source of truth) and posts results back.
+ *
+ * Threshold constants are injected as simple numeric vars so the webview does not
+ * need to duplicate the full algorithm.
  */
 
-export function getViewerRootCauseHintsEmbedCollectChunk(
-  BV: number,
-  MIN_ERR: number,
-  MIN_FP: number,
-  MIN_BURST: number,
-): string {
-  return /* javascript */ `
+import { ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN, ROOT_CAUSE_FP_LEADER_MIN_COUNT, ROOT_CAUSE_SQL_BURST_MIN_COUNT } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
+import { ROOT_CAUSE_HINT_BUNDLE_VERSION } from '../../modules/root-cause-hints/root-cause-hint-types';
+import { getViewerRootCauseHintsGeneralCollectChunk } from './viewer-root-cause-hints-embed-collect-general';
+
+export function getViewerRootCauseHintsEmbedCollectChunk(): string {
+  const BV = ROOT_CAUSE_HINT_BUNDLE_VERSION;
+  const MIN_ERR = ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN;
+  const MIN_FP = ROOT_CAUSE_FP_LEADER_MIN_COUNT;
+  const MIN_BURST = ROOT_CAUSE_SQL_BURST_MIN_COUNT;
+
+  return getViewerRootCauseHintsGeneralCollectChunk() + /* javascript */ `
 var rchHostDriftAdvisorSummary = null;
 var rchHostSessionDiffSummary = null;
+var rootCauseHintSessionEpoch = 0;
+var rootCauseHypothesesRaf = null;
 
 function clearRootCauseHintHostFields() {
     rchHostDriftAdvisorSummary = null;
@@ -126,6 +138,8 @@ function collectRootCauseHintBundleEmbedded() {
         if (regFps.length) sessionDiffSummary = { regressionFingerprints: regFps };
     }
 
+    var general = collectGeneralSignals();
+
     return {
         bundleVersion: ${BV},
         sessionId: sid,
@@ -134,7 +148,13 @@ function collectRootCauseHintBundleEmbedded() {
         fingerprintLeaders: leaders,
         sqlBursts: sqlBursts.length ? sqlBursts : undefined,
         driftAdvisorSummary: rchHostDriftAdvisorSummary || undefined,
-        sessionDiffSummary: sessionDiffSummary || undefined
+        sessionDiffSummary: sessionDiffSummary || undefined,
+        warningGroups: general.warnings.length ? general.warnings : undefined,
+        networkFailures: general.networkFailures.length ? general.networkFailures : undefined,
+        memoryEvents: general.memoryEvents.length ? general.memoryEvents : undefined,
+        slowOperations: general.slowOperations.length ? general.slowOperations : undefined,
+        permissionDenials: general.permissionDenials.length ? general.permissionDenials : undefined,
+        classifiedErrors: general.classifiedErrors.length ? general.classifiedErrors : undefined
     };
 }
 `;

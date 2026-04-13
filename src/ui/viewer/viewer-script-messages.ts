@@ -118,6 +118,8 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
+        case 'rootCauseHypothesesResult':
+            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses); break;
         case 'setRootCauseHintHostFields':
             if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
                 rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;

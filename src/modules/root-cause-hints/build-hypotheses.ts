@@ -11,15 +11,25 @@ import type {
   RootCauseHypothesisConfidence,
   RootCauseNPlusOneHint,
 } from './root-cause-hint-types';
+import {
+  anrHypotheses,
+  classifiedErrorHypotheses,
+  memoryHypotheses,
+  networkHypotheses,
+  permissionHypotheses,
+  slowOpHypotheses,
+  warningHypotheses,
+  type WorkingHypothesis,
+} from './build-hypotheses-general';
+import { classifyCategory, hashFingerprint, normalizeLine } from '../analysis/error-fingerprint-pure';
+import { truncateText } from './build-hypotheses-text';
 
 /**
  * Deterministic, template-only root-cause **hypotheses** for the log viewer (plan **DB_14**).
  *
- * **Why this module exists:** The webview cannot import TypeScript at runtime, so the same numeric
- * thresholds and ordering rules are mirrored in `viewer-root-cause-hints-embed-algorithm.ts`. This
- * file is the source of truth for **unit tests** and for any future host-side reuse (e.g. AI explain
- * payload). When you change eligibility floors, template text, tier order, dedup keys, or caps, update
- * both places and run `build-hypotheses.test.ts` plus embed tests in `viewer-n-plus-one-embed.test.ts`.
+ * **Why this module exists:** This is the single source of truth for hypothesis generation. The
+ * webview collects raw signal data and posts the bundle to the host, which calls `buildHypotheses`
+ * here. No algorithm duplication — changes only need to be made in this file.
  *
  * **Safety:** `buildHypotheses` is pure (no I/O). It returns an empty array for unknown
  * `bundleVersion` or ineligible bundles so the UI stays silent rather than guessing.
@@ -38,18 +48,6 @@ const MAX_EVIDENCE_IDS = ROOT_CAUSE_MAX_EVIDENCE_IDS;
 
 type Tier = 0 | 1 | 2;
 
-interface WorkingHypothesis extends RootCauseHypothesis {
-  readonly tier: Tier;
-}
-
-function truncateText(s: string, max: number): string {
-  const t = s.replace(/\s+/g, ' ').trim();
-  if (t.length <= max) {
-    return t;
-  }
-  return `${t.slice(0, Math.max(0, max - 1))}…`;
-}
-
 function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence | undefined {
   const x = (c || '').toLowerCase();
   if (x === 'high' || x === 'medium') {
@@ -66,42 +64,40 @@ function isDecorativeExcerpt(s: string): boolean {
   return !/[a-zA-Z0-9]/.test(s);
 }
 
-/** Stable grouping key: last 100 chars of normalized excerpt, skipping leading timestamps. */
-function normalizeErrKey(excerpt: string): string {
-  return excerpt
-    .replace(/^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\s*/, '')
-    .replace(/\s+/g, ' ')
-    .slice(-100)
-    .toLowerCase();
+/** Map crash category to confidence level. */
+function categoryConfidence(cat: string): RootCauseHypothesisConfidence {
+  if (cat === 'fatal' || cat === 'anr' || cat === 'oom' || cat === 'native') {
+    return 'high';
+  }
+  return 'medium';
 }
 
 function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   const errs = bundle.errors;
-  if (!errs || errs.length === 0) {
-    return [];
-  }
-  const groups = new Map<string, { excerpt: string; lineIds: number[] }>();
+  if (!errs || errs.length === 0) { return []; }
+  const groups = new Map<string, { excerpt: string; lineIds: number[]; cat: string }>();
   for (const e of errs) {
     if (!e) { continue; }
     const ex = (e.excerpt || '').trim();
     if (ex.length < ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN) { continue; }
     if (isDecorativeExcerpt(ex)) { continue; }
-    const key = normalizeErrKey(ex);
+    const key = e.fingerprint ?? hashFingerprint(normalizeLine(ex));
+    const cat = e.category ?? classifyCategory(ex);
     const group = groups.get(key);
     if (group) {
       group.lineIds.push(e.lineIndex);
     } else {
-      groups.set(key, { excerpt: ex, lineIds: [e.lineIndex] });
+      groups.set(key, { excerpt: ex, lineIds: [e.lineIndex], cat });
     }
   }
   const ranked = Array.from(groups.entries())
     .sort((a, b) => b[1].lineIds.length - a[1].lineIds.length)
     .slice(0, 2);
-  return ranked.map(([key, { excerpt, lineIds }]) => ({
+  return ranked.map(([key, { excerpt, lineIds, cat }]) => ({
     templateId: 'error-recent',
     text: truncateText(`Error: ${excerpt}`, MAX_TEXT_LEN),
     evidenceLineIds: lineIds.slice().sort((a, b) => a - b),
-    confidence: 'medium',
+    confidence: categoryConfidence(cat),
     hypothesisKey: `err::${key}`,
     tier: 0 as Tier,
   }));
@@ -222,6 +218,15 @@ function driftHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
   ];
 }
 
+const confRank: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+function pickHigherConfidence(
+  a: RootCauseHypothesisConfidence | undefined,
+  b: RootCauseHypothesisConfidence | undefined,
+): RootCauseHypothesisConfidence | undefined {
+  return (confRank[a ?? ''] ?? 0) >= (confRank[b ?? ''] ?? 0) ? a : b;
+}
+
 function dedupeAndMerge(work: WorkingHypothesis[]): WorkingHypothesis[] {
   const byKey = new Map<string, WorkingHypothesis>();
   for (const h of work) {
@@ -237,7 +242,7 @@ function dedupeAndMerge(work: WorkingHypothesis[]): WorkingHypothesis[] {
       ...prev,
       evidenceLineIds: merged,
       tier,
-      confidence: prev.confidence === 'medium' || h.confidence === 'medium' ? 'medium' : prev.confidence ?? h.confidence,
+      confidence: pickHigherConfidence(prev.confidence, h.confidence),
     });
   }
   return Array.from(byKey.values());
@@ -264,9 +269,9 @@ function stripWorking(h: WorkingHypothesis): RootCauseHypothesis {
   };
 }
 
-/** @see module comment above for contract and sync requirements with the webview embed. */
+/** Single source of truth for hypothesis generation. */
 export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesis[] {
-  if (!bundle || bundle.bundleVersion !== 1) {
+  if (!bundle || (bundle.bundleVersion !== 1 && bundle.bundleVersion !== 2)) {
     return [];
   }
   if (!isRootCauseHintsEligible(bundle)) {
@@ -277,9 +282,7 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
   const n1Fingerprints = new Set<string>();
   if (n1List) {
     for (const h of n1List) {
-      if (h?.fingerprint) {
-        n1Fingerprints.add(h.fingerprint);
-      }
+      if (h?.fingerprint) { n1Fingerprints.add(h.fingerprint); }
     }
   }
 
@@ -290,13 +293,19 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
     ...sqlBurstHypotheses(bundle),
     ...driftHypotheses(bundle),
     ...fingerprintLeaderHypotheses(bundle.fingerprintLeaders, n1Fingerprints),
+    // v2 general signals
+    ...warningHypotheses(bundle, MAX_TEXT_LEN),
+    ...networkHypotheses(bundle, MAX_TEXT_LEN),
+    ...memoryHypotheses(bundle, MAX_TEXT_LEN),
+    ...slowOpHypotheses(bundle, MAX_TEXT_LEN),
+    ...permissionHypotheses(bundle, MAX_TEXT_LEN),
+    ...classifiedErrorHypotheses(bundle, MAX_TEXT_LEN),
+    ...anrHypotheses(bundle, MAX_TEXT_LEN),
   ];
 
   const merged = dedupeAndMerge(parts);
   merged.sort((a, b) => {
-    if (a.tier !== b.tier) {
-      return a.tier - b.tier;
-    }
+    if (a.tier !== b.tier) { return a.tier - b.tier; }
     return a.hypothesisKey.localeCompare(b.hypothesisKey);
   });
 
