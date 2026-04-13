@@ -120,6 +120,11 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.metaStore;
     }
 
+    /** Return cached items if available (populated after first fetch). */
+    getItemsCache(): TreeItem[] | undefined {
+        return this.itemsCache;
+    }
+
     /** Invalidate cached metadata for a URI (e.g. after metadata change). */
     invalidateMeta(uri: vscode.Uri): void {
         const prefix = uri.toString() + '|';
@@ -189,11 +194,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         onFilesListed?: FetchCallbacks['onFilesListed'],
     ): Promise<TreeItem[]> {
         if (!logDirOverride && this.itemsCache) { return this.itemsCache; }
-        // Reuse an in-flight fetch to avoid duplicate I/O (callbacks won't fire but the final list is correct).
-        if (!logDirOverride && this.fetchInFlight) { return this.fetchInFlight; }
-        const promise = fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
-        if (!logDirOverride) { this.fetchInFlight = promise; }
-        const items = await promise;
+        const items = await fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
         if (!logDirOverride) {
             this.itemsCache = items;
             this.fetchInFlight = undefined;
