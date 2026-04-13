@@ -163,6 +163,7 @@ suite('LevelClassifier', () => {
             assert.strictEqual(classifyLevel('fps dropped to 15', 'stdout', true), 'performance');
             assert.strictEqual(classifyLevel('jank detected', 'stdout', true), 'performance');
             assert.strictEqual(classifyLevel('GC pause 200ms', 'stdout', true), 'performance');
+            assert.strictEqual(classifyLevel('Slow operation: took 5000ms', 'stdout', true), 'performance');
         });
 
         test('should classify Flutter/Dart memory lines as performance only with Flutter/Dart context', () => {

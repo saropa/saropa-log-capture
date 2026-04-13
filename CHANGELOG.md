@@ -28,8 +28,27 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [Unreleased]
 
+### Added
+
+- **Signal report panel** — clicking a signal in the strip opens a rich webview report with evidence lines in context (5 lines surrounding each evidence line), related lines summary, and actionable recommendations per signal type; follows the analysis panel pattern with progressive section loading
+- **Structured line parsing (plan 047)** — auto-detects known log line formats (Android logcat threadtime, logcat shorthand, Log4j/Logback, Python logging, bracketed timestamp+level, ISO timestamp+level, syslog RFC 3164, SDA log) and extracts metadata (timestamp, PID, TID, log level, tag). Strips the structured prefix from displayed text for a clean view. Default on, toggle via Decoration Settings
+- **PID/TID display toggle** — show process and thread IDs in the decoration prefix (off by default); click to filter by PID or TID
+- **Level prefix display toggle** — show the raw log level indicator (e.g. "D", "INFO") in the decoration prefix (off by default)
+- **Parsed tag display** — extracted log tags (e.g. "Zygote", "ActivityManager") shown as clickable filter toggles in the decoration prefix
+- **Metadata click-to-filter** — clicking a PID, TID, or tag value toggles an inclusive filter showing only lines with that value
+- **Level tooltips** — hovering over a log line shows the full severity level name (e.g. "Debug", "Warning", "Fatal")
+- **Format sniffer** — for file-loaded logs, samples lines from the file head and middle to auto-detect the primary format; known sources (live logcat, etc.) skip sniffing
+- **"Slow operation" performance keyword** — added to default performance keywords so Android `Slow operation` messages are classified as performance issues
+
 ### Changed
 
+- **Signals: general log pattern detection** — signals now detect recurring warnings, network failures (SocketException, ECONNREFUSED, etc.), memory pressure (OOM, heap exhaustion), slow operations (>2s), permission denials, and classified errors (critical/bug) — not just SQL patterns
+- **Signals: ANR risk detection** — surfaces ANR risk score from host-side analysis with detailed signal breakdown; host-side enrichment pipeline scans the log file for ANR patterns (choreographer warnings, GC pauses, dropped frames, jank) and injects the result into the bundle before hypothesis building
+- **Signals: eliminated algorithm duplication** — hypothesis building now runs exclusively on the host (single TypeScript source of truth) instead of being duplicated as ~280 lines of embedded JavaScript in the webview
+- **Signals: three confidence levels** — high/medium/low with red/yellow/white dots; crashes and OOM get high confidence, recurring patterns get medium, volume-based hints stay low
+- **Signals: actionable text** — signal text includes the actual problem (e.g. "Network failure: SocketException: Connection refused (5 occurrences)") instead of generic templates
+- **Signals: FNV-1a error fingerprinting** — errors are now grouped by normalized fingerprint (strips timestamps, UUIDs, hex, paths, numbers) instead of last-100-char suffix matching; errors differing only in port numbers or IDs now merge correctly
+- **Signals: crash category confidence** — error signals use crash category (fatal/anr/oom/native) to set high confidence instead of defaulting everything to medium
 - **Signals panel hidden by default** — the root-cause signals panel no longer auto-opens when signals are detected; the toolbar badge still shows the count and users click the icon to reveal it
 - **Deduplicated session list I/O on startup** — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
 
