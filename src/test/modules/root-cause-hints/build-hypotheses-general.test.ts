@@ -92,20 +92,26 @@ test("buildHypotheses: slow operations fall back to excerpt when operationName a
   assert.ok(hy[0].text.includes("loadDashboard took 5200ms"), "hypothesis text should fall back to excerpt");
 });
 
-test("buildHypotheses: slow operations sorted by duration descending", () => {
+test("buildHypotheses: slow operations selects top 3 by duration", () => {
   const hy = buildHypotheses({
     ...baseV2,
     slowOperations: [
-      { lineIndex: 1, excerpt: "PERF a: 503ms", durationMs: 503, operationName: "a" },
-      { lineIndex: 2, excerpt: "PERF b: 1500ms", durationMs: 1500, operationName: "b" },
-      { lineIndex: 3, excerpt: "PERF c: 800ms", durationMs: 800, operationName: "c" },
+      { lineIndex: 1, excerpt: "PERF alpha: 503ms", durationMs: 503, operationName: "alpha" },
+      { lineIndex: 2, excerpt: "PERF bravo: 1500ms", durationMs: 1500, operationName: "bravo" },
+      { lineIndex: 3, excerpt: "PERF charlie: 800ms", durationMs: 800, operationName: "charlie" },
+      { lineIndex: 4, excerpt: "PERF delta: 200ms", durationMs: 200, operationName: "delta" },
     ],
   });
   const slowHy = hy.filter((h) => h.templateId === "slow-operation");
-  /* Highest duration first. */
-  assert.ok(slowHy[0].text.includes("b"));
-  assert.ok(slowHy[1].text.includes("c"));
-  assert.ok(slowHy[2].text.includes("a"));
+  /* slowOpHypotheses picks the 3 highest-duration items; buildHypotheses then
+     re-sorts all hypotheses by tier + hypothesisKey (alphabetical). So we only
+     verify that the top 3 by duration are present and the lowest (delta) is not. */
+  assert.strictEqual(slowHy.length, 3);
+  const texts = slowHy.map((h) => h.text).join(" ");
+  assert.ok(texts.includes("bravo"), "1500ms op should be selected");
+  assert.ok(texts.includes("charlie"), "800ms op should be selected");
+  assert.ok(texts.includes("alpha"), "503ms op should be selected");
+  assert.ok(!texts.includes("delta"), "200ms op should NOT be selected (4th by duration)");
 });
 
 test("buildHypotheses: slow operations with same excerpt at different lines merge via content key", () => {

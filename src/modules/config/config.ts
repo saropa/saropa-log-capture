@@ -110,6 +110,7 @@ export function getConfig(): SaropaLogCaptureConfig {
     exclusions: ensureStringArray(cfg.get("exclusions"), []),
     autoHidePatterns: ensureStringArray(cfg.get("autoHidePatterns"), []),
     showElapsedTime: ensureBoolean(cfg.get("showElapsedTime"), false),
+    signalSlowOpThresholdMs: clamp(cfg.get("signalSlowOpThresholdMs"), 100, 60000, 500),
     includeSourceLocation: ensureBoolean(cfg.get("includeSourceLocation"), false),
     includeElapsedTime: ensureBoolean(cfg.get("includeElapsedTime"), false),
     slowGapThreshold: clamp(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),

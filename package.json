@@ -2257,6 +2257,14 @@
           "type": "boolean",
           "title": "%config.showElapsedTime.title%"
         },
+        "saropaLogCapture.signalSlowOpThresholdMs": {
+          "default": 500,
+          "description": "%config.signalSlowOpThresholdMs.description%",
+          "minimum": 100,
+          "maximum": 60000,
+          "type": "number",
+          "title": "%config.signalSlowOpThresholdMs.title%"
+        },
         "saropaLogCapture.slowGapThreshold": {
           "default": 1000,
           "description": "%config.slowGapThreshold.description%",

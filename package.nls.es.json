@@ -357,6 +357,8 @@
   "config.share.uploadPutUrl.title": "Share › Upload Put Url",
   "config.showElapsedTime.description": "Mostrar el tiempo transcurrido (+Nms) entre líneas de registro consecutivas en el visor.",
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+  "config.signalSlowOpThresholdMs.description": "Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored.",
+  "config.signalSlowOpThresholdMs.title": "Signal: slow operation threshold (ms)",
   "config.showScrollbar.description": "Mostrar la barra de desplazamiento vertical nativa en el visor de registros. Cuando está desactivada (valor predeterminado), el minimapa es el único indicador de desplazamiento.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
   "config.slowGapThreshold.description": "Umbral de tiempo transcurrido (ms) para resaltar brechas lentas entre líneas.",

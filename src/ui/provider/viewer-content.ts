@@ -52,7 +52,8 @@ export interface ViewerHtmlOptions {
   readonly staticSqlFromFingerprintEnabled?: boolean;
   /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
   readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-
+  /** Minimum duration (ms) for a slow-operation signal (default 500). */
+  readonly signalSlowOpThresholdMs?: number;
 }
 
 /**
@@ -87,7 +88,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
-
+        signalSlowOpThresholdMs: opts.signalSlowOpThresholdMs,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
