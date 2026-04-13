@@ -234,6 +234,13 @@ suite('Viewer toolbar animations', () => {
             );
         });
 
+        test('should not export showSignalsPanel to window', () => {
+            assert.ok(
+                !src.includes('window.showSignalsPanel'),
+                'showSignalsPanel must not be exported — panel is only opened via toggleSignalsPanel',
+            );
+        });
+
         test('accordion should not use body.hidden', () => {
             assert.ok(
                 !src.includes('body.hidden'),
