@@ -145,21 +145,30 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * Show a session summary notification.
+ * Show a session summary notification with Open Log and Copy Log Path buttons.
  */
 export function showSummaryNotification(summary: SessionSummary): void {
     const message = `${summary.title}\n${summary.lines.join(' | ')}`;
+    const openLabel = t('action.openLog');
+    const copyLabel = t('action.copyLogPath');
 
     vscode.window.showInformationMessage(
         message,
-        t('action.openLog'),
+        openLabel,
+        copyLabel,
     ).then((selection) => {
-        if (selection !== t('action.openLog')) { return; }
-        // After finalize there is no active session; open the finalized log when we have its URI.
-        if (summary.logUri) {
-            void vscode.window.showTextDocument(summary.logUri);
-        } else {
-            void vscode.commands.executeCommand('saropaLogCapture.open');
+        if (selection === openLabel) {
+            // After finalize there is no active session; open the finalized log when we have its URI.
+            if (summary.logUri) {
+                void vscode.window.showTextDocument(summary.logUri);
+            } else {
+                void vscode.commands.executeCommand('saropaLogCapture.open');
+            }
+        } else if (selection === copyLabel) {
+            // Copy the log file path to the clipboard for external use.
+            if (summary.logUri) {
+                void vscode.env.clipboard.writeText(summary.logUri.fsPath);
+            }
         }
     });
 }
