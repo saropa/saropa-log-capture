@@ -192,9 +192,9 @@ function markPresetDirty() {
 /** Re-enable all level filters and update footer circle buttons. */
 function resetLevelFilters() {
     if (typeof enabledLevels !== 'undefined') {
-        enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database']);
+        enabledLevels = new Set(['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database']);
     }
-    var ids = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database'];
+    var ids = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
     for (var li = 0; li < ids.length; li++) {
         var btn = document.getElementById('level-' + ids[li] + '-toggle');
         if (btn) btn.classList.add('active');
