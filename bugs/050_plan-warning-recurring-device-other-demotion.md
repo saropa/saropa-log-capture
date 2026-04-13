@@ -1,6 +1,6 @@
 # Plan 050 — warning-recurring signal blocked by device-other tier demotion
 
-## Status: Open
+## Status: Implemented
 
 ## Goal
 
