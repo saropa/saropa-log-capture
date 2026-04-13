@@ -357,6 +357,8 @@
   "config.share.uploadPutUrl.title": "Share › Upload Put Url",
   "config.showElapsedTime.description": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+  "config.signalSlowOpThresholdMs.description": "Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored.",
+  "config.signalSlowOpThresholdMs.title": "Signal: slow operation threshold (ms)",
   "config.showScrollbar.description": "Показывать стандартную вертикальную полосу прокрутки в просмотрщике логов. Если выключено (по умолчанию), мини-карта — единственный индикатор прокрутки.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
   "config.slowGapThreshold.description": "Elapsed time threshold (ms) for highlighting slow gaps between lines.",
