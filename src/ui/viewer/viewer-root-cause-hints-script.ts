@@ -163,7 +163,7 @@ function renderRootCauseHypothesesIfNeeded() {
         parts.push('<button type="button" class="rch-restore-btn" data-rch-restore="1">' + dismissedCount + ' dismissed \\u2014 restore all</button>');
     }
     host.innerHTML = parts.join('');
-    if (visible.length && typeof showSignalsPanel === 'function') showSignalsPanel();
+    // Badge count updates above; panel stays hidden until the user clicks the toolbar icon.
 }
 
 function scheduleRootCauseHypothesesRefresh() {
