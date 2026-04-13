@@ -13,13 +13,13 @@ import { ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN, ROOT_CAUSE_FP_LEADER_MIN_COUNT, ROOT_
 import { ROOT_CAUSE_HINT_BUNDLE_VERSION } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getViewerRootCauseHintsGeneralCollectChunk } from './viewer-root-cause-hints-embed-collect-general';
 
-export function getViewerRootCauseHintsEmbedCollectChunk(): string {
+export function getViewerRootCauseHintsEmbedCollectChunk(slowOpThresholdMs: number): string {
   const BV = ROOT_CAUSE_HINT_BUNDLE_VERSION;
   const MIN_ERR = ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN;
   const MIN_FP = ROOT_CAUSE_FP_LEADER_MIN_COUNT;
   const MIN_BURST = ROOT_CAUSE_SQL_BURST_MIN_COUNT;
 
-  return getViewerRootCauseHintsGeneralCollectChunk() + /* javascript */ `
+  return getViewerRootCauseHintsGeneralCollectChunk(slowOpThresholdMs) + /* javascript */ `
 var rchHostDriftAdvisorSummary = null;
 var rchHostSessionDiffSummary = null;
 var rootCauseHintSessionEpoch = 0;

@@ -12,11 +12,12 @@
  * **Signal strength:** Each hypothesis may show a compact emoji (stronger vs weaker heuristic); copy lives in
  * `viewer.rchConfTooltip*` and is applied via `title` / `aria-label` — not a statistical confidence score.
  */
+import { ROOT_CAUSE_SLOW_OP_MIN_MS_DEFAULT } from '../../modules/root-cause-hints/root-cause-hint-eligibility';
 import { getViewerRootCauseHintsEmbedCollectChunk } from './viewer-root-cause-hints-embed-collect';
 
-export function getViewerRootCauseHintsScript(): string {
+export function getViewerRootCauseHintsScript(slowOpThresholdMs?: number): string {
   return (
-    getViewerRootCauseHintsEmbedCollectChunk() +
+    getViewerRootCauseHintsEmbedCollectChunk(slowOpThresholdMs ?? ROOT_CAUSE_SLOW_OP_MIN_MS_DEFAULT) +
     /* javascript */ `
 var rchCachedHypotheses = [];
 var rchCachedBundle = null;

@@ -271,7 +271,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
       viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
-
+      signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
     });
     wv.onDidReceiveMessage((msg: Record<string, unknown>) => this.handleMessage(msg));
     this.startBatchTimer();
