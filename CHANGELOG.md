@@ -28,6 +28,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [Unreleased]
 
+### Added
+
+- **Session time (T+) toggle in context menu.** Layout submenu now includes a quick toggle for session elapsed time, matching the gear panel checkbox.
+
+### Fixed
+
+- **External sidecar timestamps not parsed.** Lines from external sidecars (e.g. SDA logs) with ISO 8601 timestamps now have their timestamps extracted, enabling Session time (T+), elapsed time, and timestamp decorations.
+
 ### Maintenance
 
 - Split `build-hypotheses.ts`, `viewer-continuation-behavior.test.ts`, and `viewer-styles-decoration.ts` to stay within the 300-line limit
