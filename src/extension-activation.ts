@@ -163,7 +163,12 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
         await viewerProvider.loadFromFile(uri, { replay: true });
     };
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay };
+    const onFirstSessionListReady = (items: readonly import('./ui/session/session-history-grouping').TreeItem[]): void => {
+        if (viewerProvider.getCurrentFileUri()) { return; }
+        if (historyProvider.getActiveUri()) { return; }
+        void autoLoadLatest(context, items, viewerProvider);
+    };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay, onFirstSessionListReady };
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
@@ -197,10 +202,6 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
             void viewerProvider.loadFromFile(activeUri);
             return;
         }
-        // Already showing content — don't interrupt on tab switch.
-        if (viewerProvider.getCurrentFileUri()) { return; }
-        // First visit with no active session — auto-load the latest log.
-        void autoLoadLatest(context, historyProvider, viewerProvider);
     });
 
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
