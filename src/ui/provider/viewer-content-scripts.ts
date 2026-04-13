@@ -107,7 +107,8 @@ export interface ViewerScriptsOptions {
   readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
     readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
-
+    /** Minimum duration (ms) for a slow-operation signal (default 500). */
+    readonly signalSlowOpThresholdMs?: number;
 }
 
 /** Build all script tags in the order required by the viewer. */
@@ -124,6 +125,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds,
         viewerDbDetectorToggles,
+        signalSlowOpThresholdMs,
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
@@ -139,7 +141,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
                 dbDetectorToggles: viewerDbDetectorToggles,
             }),
             getViewerScript(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true),
-            getViewerRootCauseHintsScript(),
+            getViewerRootCauseHintsScript(signalSlowOpThresholdMs),
             getViewerVisibilityScript(),
         ) +
         scriptTag(nonce, getScrollAnchorScript()) +

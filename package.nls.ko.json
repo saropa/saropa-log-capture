@@ -357,6 +357,8 @@
   "config.share.uploadPutUrl.title": "Share › Upload Put Url",
   "config.showElapsedTime.description": "뷰어에서 연속 로그 줄 사이의 경과 시간(+Nms)을 표시합니다.",
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+  "config.signalSlowOpThresholdMs.description": "Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored.",
+  "config.signalSlowOpThresholdMs.title": "Signal: slow operation threshold (ms)",
   "config.showScrollbar.description": "로그 뷰어에서 기본 세로 스크롤바를 표시합니다. 끄면(기본값) 미니맵만 스크롤 표시로 사용됩니다.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
   "config.slowGapThreshold.description": "줄 사이 느린 간격을 강조 표시하기 위한 경과 시간 임계값(ms).",

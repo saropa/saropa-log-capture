@@ -343,6 +343,8 @@
   "config.share.uploadPutUrl.title": "Share › Upload Put Url",
   "config.showElapsedTime.description": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+  "config.signalSlowOpThresholdMs.description": "Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored.",
+  "config.signalSlowOpThresholdMs.title": "Signal: slow operation threshold (ms)",
   "config.showScrollbar.description": "Show the native vertical scrollbar in the log viewer. When off (default), the minimap is the only scroll indicator.",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
   "config.viewerAlwaysShowSearchMatchOptions.description": "Always show match case, whole word, and regular expression toggles in the log viewer search bar. When off (default), those toggles appear only while the search field is focused or has text.",

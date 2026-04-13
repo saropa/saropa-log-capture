@@ -90,6 +90,48 @@ test("HTTP detection pushes to networkFailures with pattern containing code and 
   );
 });
 
+// --- originalLevel / pre-demotion signal analysis (plan 050) ---
+
+test("signal collector uses originalLevel for warning detection (plan 050)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* The collector must read row.originalLevel (set by viewer-data-add when device-other
+     demotion occurs) so demoted warnings still feed the warning-recurring signal. */
+  assert.ok(
+    chunk.includes("row.originalLevel || row.level"),
+    "signalLevel must fall back from originalLevel to level so demoted lines are analyzed",
+  );
+});
+
+test("signal collector uses signalLevel (not row.level) for warning check (plan 050)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* Before plan 050, the check was `row.level === 'warning'` which missed demoted lines.
+     After, it must use `signalLevel === 'warning'`. */
+  assert.ok(
+    chunk.includes("signalLevel === 'warning'"),
+    "warning collection must check signalLevel, not row.level",
+  );
+});
+
+test("signal collector uses signalLevel (not row.level) for error check (plan 050)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* Same pattern for errors: demoted device-other errors must still feed classified-error
+     and network-failure signal detection. */
+  assert.ok(
+    chunk.includes("signalLevel === 'error'"),
+    "error collection must check signalLevel, not row.level",
+  );
+});
+
+test("HTTP detection still uses row.level for database exclusion (plan 050 no-change)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  /* HTTP status code detection intentionally uses the DISPLAY level (row.level) for its
+     database exclusion guard — this is a display-category check, not a signal-level check. */
+  assert.ok(
+    chunk.includes("row.level !== 'database'"),
+    "HTTP database guard must remain on row.level (display concern, not signal concern)",
+  );
+});
+
 test("slow-op threshold is baked from parameter, not hardcoded", () => {
   /* Default threshold (no arg) should embed 500. */
   const defaultChunk = getViewerRootCauseHintsScript();

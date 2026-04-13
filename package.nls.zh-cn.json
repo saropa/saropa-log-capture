@@ -357,6 +357,8 @@
   "config.share.uploadPutUrl.title": "Share › Upload Put Url",
   "config.showElapsedTime.description": "在查看器中显示相邻日志行之间的已用时间（+Nms）。",
   "config.showElapsedTime.title": "Show elapsed time (+Nms) between consecutive log lines in the viewer.",
+  "config.signalSlowOpThresholdMs.description": "Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored.",
+  "config.signalSlowOpThresholdMs.title": "Signal: slow operation threshold (ms)",
   "config.showScrollbar.description": "在日志查看器中显示原生垂直滚动条。关闭（默认）时，缩略图是唯一的滚动指示器。",
   "config.showScrollbar.title": "Show scrollbar in log viewer (default: off)",
   "config.slowGapThreshold.description": "用于高亮显示行间慢间隙的已用时间阈值（毫秒）。",

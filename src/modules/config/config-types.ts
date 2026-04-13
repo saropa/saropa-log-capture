@@ -89,6 +89,8 @@ export interface SaropaLogCaptureConfig {
   /** Text patterns to auto-hide in the viewer. Lines containing any pattern (case-insensitive) are hidden. */
   readonly autoHidePatterns: readonly string[];
   readonly showElapsedTime: boolean;
+  /** Minimum duration (ms) for a slow-operation signal. Operations faster than this are ignored. */
+  readonly signalSlowOpThresholdMs: number;
   readonly slowGapThreshold: number;
   readonly watchPatterns: readonly WatchPatternSetting[];
   readonly splitRules: SplitRules;
