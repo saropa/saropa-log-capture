@@ -73,6 +73,8 @@ export interface SignalSlowOperation {
   readonly lineIndex: number;
   readonly excerpt: string;
   readonly durationMs: number;
+  /** PERF-line operation name (e.g. "dbEventCountForDate"), absent for generic duration lines. */
+  readonly operationName?: string;
 }
 
 /** Permission denial. */

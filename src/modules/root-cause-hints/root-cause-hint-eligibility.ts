@@ -12,8 +12,12 @@ export const ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN = 4;
 /** Minimum occurrences for a recurring warning to qualify. */
 export const ROOT_CAUSE_WARNING_MIN_COUNT = 3;
 
-/** Minimum duration (ms) for a slow operation to qualify. */
-export const ROOT_CAUSE_SLOW_OP_MIN_MS = 2000;
+/**
+ * Default minimum duration (ms) for a slow operation to qualify as a signal.
+ * The actual threshold is user-configurable via `saropaLogCapture.signalSlowOpThresholdMs`
+ * and applied in the webview collector — the host treats any item in the bundle as qualifying.
+ */
+export const ROOT_CAUSE_SLOW_OP_MIN_MS_DEFAULT = 500;
 
 /** Minimum ANR risk score to surface as a signal. */
 export const ROOT_CAUSE_ANR_MIN_SCORE = 20;
@@ -89,11 +93,8 @@ function hasQualifyingWarnings(bundle: RootCauseHintBundle): boolean {
   return false;
 }
 
+/** Webview collector already applied the user's threshold — any item present qualifies. */
 function hasQualifyingSlowOps(bundle: RootCauseHintBundle): boolean {
   const ops = bundle.slowOperations;
-  if (!ops) { return false; }
-  for (const op of ops) {
-    if (op && op.durationMs >= ROOT_CAUSE_SLOW_OP_MIN_MS) { return true; }
-  }
-  return false;
+  return !!ops && ops.length > 0;
 }
