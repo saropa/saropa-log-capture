@@ -59,6 +59,11 @@ var rchHttpErrorCodes = {
 };
 var rchHttpCodeRe = new RegExp('\\\\b(' + Object.keys(rchHttpErrorCodes).join('|') + ')\\\\b');
 
+/** Truncate text to a max-200-char excerpt for bundle payloads. */
+function rchExcerpt(text) {
+    return text.length > 200 ? text.substring(0, 197) + '...' : text;
+}
+
 function rchMatchesAny(text, patterns) {
     for (var pi = 0; pi < patterns.length; pi++) {
         if (text.indexOf(patterns[pi]) >= 0) return patterns[pi];
@@ -112,7 +117,7 @@ function collectGeneralSignals() {
         if (signalLevel === 'warning') {
             wKey = plain.slice(-80).toLowerCase();
             if (!warnings[wKey]) {
-                warnings[wKey] = { excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, count: 0, lineIndices: [] };
+                warnings[wKey] = { excerpt: rchExcerpt(plain), count: 0, lineIndices: [] };
             }
             warnings[wKey].count++;
             if (warnings[wKey].lineIndices.length < 8) warnings[wKey].lineIndices.push(i);
@@ -121,23 +126,23 @@ function collectGeneralSignals() {
         if (signalLevel === 'error' && !row.recentErrorContext) {
             match = rchMatchesAny(plain, rchNetworkPatterns);
             if (match && networkFailures.length < 20) {
-                networkFailures.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, pattern: match });
+                networkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: match });
             }
             match = rchMatchesAny(plain, rchMemoryPatterns);
             if (match && memoryEvents.length < 10) {
-                memoryEvents.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain });
+                memoryEvents.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
             }
             match = rchMatchesAny(plain, rchPermissionPatterns);
             if (match && permissionDenials.length < 10) {
-                permissionDenials.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain });
+                permissionDenials.push({ lineIndex: i, excerpt: rchExcerpt(plain) });
             }
             match = rchMatchesAny(plain, rchCriticalPatterns);
             if (match && classifiedErrors.length < 10) {
-                classifiedErrors.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, classification: 'critical' });
+                classifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'critical' });
             } else {
                 match = rchMatchesAny(plain, rchBugPatterns);
                 if (match && classifiedErrors.length < 10) {
-                    classifiedErrors.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, classification: 'bug' });
+                    classifiedErrors.push({ lineIndex: i, excerpt: rchExcerpt(plain), classification: 'bug' });
                 }
             }
         }
@@ -149,12 +154,12 @@ function collectGeneralSignals() {
         if (httpMatch && row.level !== 'database' && networkFailures.length < 20) {
             var httpCode = httpMatch[1];
             var httpReason = rchHttpErrorCodes[httpCode] || httpCode;
-            networkFailures.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, pattern: httpCode + ' ' + httpReason });
+            networkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: httpCode + ' ' + httpReason });
         }
 
         durResult = rchExtractDuration(plain);
         if (durResult && durResult.durationMs >= ${MIN_SLOW_MS} && slowOperations.length < 10) {
-            slowOperations.push({ lineIndex: i, excerpt: plain.length > 200 ? plain.substring(0, 197) + '...' : plain, durationMs: durResult.durationMs, operationName: durResult.operationName });
+            slowOperations.push({ lineIndex: i, excerpt: rchExcerpt(plain), durationMs: durResult.durationMs, operationName: durResult.operationName });
         }
     }
 
