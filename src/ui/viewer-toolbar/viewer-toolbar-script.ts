@@ -259,7 +259,6 @@ export function getToolbarScript(): string {
     window.closeSearchFlyout = closeSearchFlyout;
     window.toggleFilterDrawer = toggleFilterDrawer;
     window.toggleSignalsPanel = toggleSignalsPanel;
-    window.showSignalsPanel = showSignalsPanel;
     window.hideSignalsPanel = hideSignalsPanel;
     window.closeActionsDropdown = closeActionsDropdown;
     /** Backward compat for replay script's action toggle. */
