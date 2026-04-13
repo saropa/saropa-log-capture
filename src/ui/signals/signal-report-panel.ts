@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import type { RootCauseHypothesis, RootCauseHintBundle } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getNonce } from '../provider/viewer-content';
 import { buildSignalReportShell, renderEvidenceSection, renderRecommendations } from './signal-report-render';
+import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -97,7 +98,7 @@ function buildRelatedHtml(hypothesis: RootCauseHypothesis, bundle: RootCauseHint
     const warnKey = key.slice(6); // strip 'warn::' prefix
     for (const g of bundle.warningGroups) {
       if (!g) { continue; }
-      const gKey = g.excerpt.replace(/\s+/g, ' ').trim().slice(-80).toLowerCase();
+      const gKey = excerptKey(g.excerpt);
       if (gKey === warnKey) {
         parts.push(`<div>Warning repeated ${g.count} times across ${g.lineIndices.length} distinct locations.</div>`);
       }
@@ -139,7 +140,10 @@ function copyReport(): void {
   if (!lastReportHypothesis) { return; }
   const conf = lastReportHypothesis.confidence ?? 'low';
   const text = `Signal: ${lastReportHypothesis.text}\nConfidence: ${conf}\nTemplate: ${lastReportHypothesis.templateId}`;
-  vscode.env.clipboard.writeText(text).then(undefined, () => {});
+  vscode.env.clipboard.writeText(text).then(
+    () => { vscode.window.setStatusBarMessage('Signal report copied', 2000); },
+    () => { vscode.window.setStatusBarMessage('Failed to copy signal report', 3000); },
+  );
 }
 
 /** Dispose the panel. */

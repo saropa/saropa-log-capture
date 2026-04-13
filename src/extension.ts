@@ -15,6 +15,7 @@ import { disposeInsightsPanel } from './ui/insights/insights-panel';
 import { disposeInsightTabPanel } from './ui/viewer-panels/insight-tab-panel';
 import { disposeBugReportPanel } from './ui/panels/bug-report-panel';
 import { disposeTimelinePanel } from './ui/panels/timeline-panel';
+import { disposeSignalReportPanel } from './ui/signals/signal-report-panel';
 import type { SaropaLogCaptureApi } from './api-types';
 
 /** Refs returned by runActivation; used in deactivate to stop sessions, dispose API, indexer and pop-out. */
@@ -47,4 +48,5 @@ export function deactivate(): void {
     disposeInsightTabPanel();
     disposeBugReportPanel();
     disposeTimelinePanel();
+    disposeSignalReportPanel();
 }
