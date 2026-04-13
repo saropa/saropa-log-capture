@@ -25,6 +25,7 @@ import { getTimingScript } from '../viewer/viewer-timing';
 import { getReplayScript } from '../viewer/viewer-replay';
 import { getDecorationsScript } from '../viewer-decorations/viewer-decorations';
 import { getDecoSettingsScript } from '../viewer-decorations/viewer-deco-settings';
+import { getDecoSettingsListenersScript } from '../viewer-decorations/viewer-deco-settings-listeners';
 import { getQualityBadgeScript } from '../viewer-decorations/viewer-quality-badge';
 import { getLintBadgeScript } from '../viewer-decorations/viewer-lint-badge';
 import { getStackDedupScript } from '../viewer-stack-tags/viewer-stack-dedup';
@@ -79,6 +80,8 @@ import { getErrorClassificationScript } from '../viewer-decorations/viewer-error
 import { getErrorHoverScript } from '../viewer-decorations/viewer-error-hover-script';
 import { getGotoLineScript } from '../viewer/viewer-goto-line';
 import { getRunNavScript } from '../viewer-nav/viewer-run-nav';
+import { getStructuredLineParserScript } from '../viewer/viewer-structured-line-parser';
+import { getMetadataFilterScript } from '../viewer-search-filter/viewer-metadata-filter';
 
 function scriptTag(nonce: string, ...parts: string[]): string {
     return `<script nonce="${nonce}">${parts.join('\n')}</script>`;
@@ -124,6 +127,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
     } = opts;
     return (
         scriptTag(nonce, getErrorHandlerScript()) +
+        scriptTag(nonce, getStructuredLineParserScript()) +
         scriptTag(
             nonce,
             getLayoutScript(),
@@ -151,6 +155,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getReplayScript()) +
         scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsScript()) +
+        scriptTag(nonce, getDecoSettingsListenersScript()) +
         scriptTag(nonce, getQualityBadgeScript()) +
         scriptTag(nonce, getLintBadgeScript()) +
         scriptTag(nonce, getStackDedupScript()) +
@@ -173,6 +178,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
             getSqlQueryHistoryPanelScript(),
         ) +
         scriptTag(nonce, getHighlightScript()) +
+        scriptTag(nonce, getMetadataFilterScript()) +
         scriptTag(nonce, getScopeFilterScript()) +
         scriptTag(nonce, getScopeFilterHintScript()) +
         scriptTag(nonce, getSessionTimeBucketsScript()) +

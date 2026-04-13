@@ -25,6 +25,26 @@ export function getDecorationStyles(): string {
     user-select: none;
 }
 
+/* Clickable metadata filter toggles (PID, TID, tag) in the decoration prefix. */
+.meta-filter-toggle {
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+.meta-filter-toggle:hover {
+    background: var(--vscode-editor-hoverHighlightBackground, rgba(173, 214, 255, 0.15));
+    text-decoration: underline;
+}
+.deco-parsed-tag {
+    color: var(--vscode-textLink-foreground, #3794ff);
+}
+.deco-pid-tid {
+    opacity: 0.7;
+}
+.deco-level-prefix {
+    font-weight: bold;
+}
+
 /* Hanging indent for decorated lines: overflow text aligns with content, not decoration. 13em scales with --log-font-size. */
 /* When time/number are shown, reserve 1.25em left for severity bar (dot at 0.69em + 0.54em) so the bar does not cover the numbers. */
 .line:has(.line-decoration) {

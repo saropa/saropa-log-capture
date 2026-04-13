@@ -203,6 +203,18 @@ function getDecorationPrefix(item, idx) {
     if (!isBlank && decoShowSessionElapsed && item.timestamp && sessionStartTs) {
         parts.push(formatSessionElapsed(item.timestamp - sessionStartTs));
     }
+    if (!isBlank && typeof showParsedPidTid !== 'undefined' && showParsedPidTid) {
+        var pidParts = [];
+        if (item.parsedPid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="pid" data-meta-value="' + item.parsedPid + '" title="Filter by PID ' + item.parsedPid + '">' + item.parsedPid + '</span>');
+        if (item.parsedTid != null) pidParts.push('<span class="meta-filter-toggle" data-meta-key="tid" data-meta-value="' + item.parsedTid + '" title="Filter by TID ' + item.parsedTid + '">' + item.parsedTid + '</span>');
+        if (pidParts.length) parts.push('<span class="deco-pid-tid">[' + pidParts.join(':') + ']</span>');
+    }
+    if (!isBlank && typeof showParsedLevelPrefix !== 'undefined' && showParsedLevelPrefix && item.parsedRawLevel) {
+        parts.push('<span class="deco-level-prefix">' + item.parsedRawLevel + '</span>');
+    }
+    if (!isBlank && item.parsedTag && typeof structuredLineParsing !== 'undefined' && structuredLineParsing) {
+        parts.push('<span class="meta-filter-toggle deco-parsed-tag" data-meta-key="tag" data-meta-value="' + item.parsedTag.replace(/"/g, '&quot;') + '" title="Filter by tag: ' + item.parsedTag.replace(/"/g, '&quot;') + '">' + item.parsedTag + '</span>');
+    }
     if (parts.length === 0) return '';
     return '<span class="line-decoration">'
         + parts.join('&nbsp; ') + '&nbsp;\\u00BB '

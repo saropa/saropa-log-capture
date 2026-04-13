@@ -35,7 +35,11 @@ function getCategoryBadge(item) {
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var rawHtml = item.html;
-    if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
+    /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
+       When active, this subsumes source-tag stripping for structured formats. */
+    if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing && item.structuredPrefixLen > 0) {
+        rawHtml = (typeof stripHtmlPrefix === 'function') ? stripHtmlPrefix(rawHtml, item.structuredPrefixLen) : rawHtml;
+    } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
         rawHtml = rawHtml.replace(/^\\[([^\\]]+)\\]\\s?/, '');
     }
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(rawHtml) : rawHtml;
@@ -191,6 +195,10 @@ function renderItem(item, idx, prevVis) {
         } else {
             titleAttr = ' title=\"' + recTip.replace(/\"/g, '&quot;') + '\"';
         }
+    }
+    /* Level tooltip: show the full level name (e.g. "Warning") on hover. */
+    if (!titleAttr && item.levelTooltip) {
+        titleAttr = ' title="' + item.levelTooltip + '"';
     }
     var ctxCls = item.isContext ? ' context-line' + (item.isContextFirst ? ' context-first' : '') : '';
     var tintCls = (typeof getLineTintClass === 'function' && !item.isContext) ? getLineTintClass(item) : '';

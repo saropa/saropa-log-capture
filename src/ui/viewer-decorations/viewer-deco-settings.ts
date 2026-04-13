@@ -89,6 +89,18 @@ export function getDecoSettingsHtml(): string {
         <input type="checkbox" id="deco-opt-strip-source-tag" checked />
         Strip source tag prefix
     </label>
+    <label class="deco-settings-row">
+        <input type="checkbox" id="deco-opt-structured-parsing" checked />
+        Strip structured prefix
+    </label>
+    <label class="deco-settings-row deco-indent">
+        <input type="checkbox" id="deco-opt-show-pid-tid" />
+        Show PID/TID
+    </label>
+    <label class="deco-settings-row deco-indent">
+        <input type="checkbox" id="deco-opt-show-level-prefix" />
+        Show level prefix
+    </label>
     <div class="deco-settings-separator"></div>
     <div class="deco-settings-row">
         <span>Stack frames</span>
@@ -220,6 +232,12 @@ function syncDecoSettingsUi() {
     if (lc) lc.checked = lineColorsEnabled;
     if (mode) mode.value = decoLineColorMode;
     if (stripTag) stripTag.checked = stripSourceTagPrefix;
+    var structParse = document.getElementById('deco-opt-structured-parsing');
+    var showPT = document.getElementById('deco-opt-show-pid-tid');
+    var showLP = document.getElementById('deco-opt-show-level-prefix');
+    if (structParse) structParse.checked = (typeof structuredLineParsing !== 'undefined') ? structuredLineParsing : true;
+    if (showPT) showPT.checked = (typeof showParsedPidTid !== 'undefined') ? showParsedPidTid : false;
+    if (showLP) showLP.checked = (typeof showParsedLevelPrefix !== 'undefined') ? showParsedLevelPrefix : false;
     var stackState = document.getElementById('deco-stack-default-state');
     var stackPreview = document.getElementById('deco-stack-preview-count');
     if (stackState) stackState.value = stackDefaultState === true ? 'collapsed' : (stackDefaultState === 'preview' ? 'preview' : 'expanded');
@@ -259,6 +277,12 @@ function onDecoOptionChange() {
     lineColorsEnabled = lc ? lc.checked : true;
     decoLineColorMode = mode ? mode.value : 'none';
     stripSourceTagPrefix = stripTag ? stripTag.checked : true;
+    var structParse = document.getElementById('deco-opt-structured-parsing');
+    var showPT = document.getElementById('deco-opt-show-pid-tid');
+    var showLP = document.getElementById('deco-opt-show-level-prefix');
+    if (typeof structuredLineParsing !== 'undefined') structuredLineParsing = structParse ? structParse.checked : true;
+    if (typeof showParsedPidTid !== 'undefined') showParsedPidTid = showPT ? showPT.checked : false;
+    if (typeof showParsedLevelPrefix !== 'undefined') showParsedLevelPrefix = showLP ? showLP.checked : false;
     var stackState = document.getElementById('deco-stack-default-state');
     var stackPreview = document.getElementById('deco-stack-preview-count');
     var sv = stackState ? stackState.value : 'expanded';
@@ -268,53 +292,5 @@ function onDecoOptionChange() {
     renderViewport(true);
 }
 
-/* Register event listeners for settings panel controls. */
-var decoSettingsBtn = document.getElementById('deco-settings-btn');
-var decoCloseBtn = document.querySelector('.deco-settings-close');
-var decoOptDot = document.getElementById('deco-opt-dot');
-var decoOptCounter = document.getElementById('deco-opt-counter');
-var decoOptCounterOnBlank = document.getElementById('deco-opt-counter-on-blank');
-var decoOptTimestamp = document.getElementById('deco-opt-timestamp');
-var decoOptMilliseconds = document.getElementById('deco-opt-milliseconds');
-var decoOptElapsed = document.getElementById('deco-opt-elapsed');
-var decoOptSessionElapsed = document.getElementById('deco-opt-session-elapsed');
-var decoOptBar = document.getElementById('deco-opt-bar');
-var decoOptQuality = document.getElementById('deco-opt-quality');
-var decoOptCategoryBadge = document.getElementById('deco-opt-category-badge');
-var decoOptLintBadge = document.getElementById('deco-opt-lint-badge');
-var decoOptLineColors = document.getElementById('deco-opt-line-colors');
-var decoLineColorSelect = document.getElementById('deco-line-color-mode');
-var decoOptStripSourceTag = document.getElementById('deco-opt-strip-source-tag');
-var decoStackDefaultState = document.getElementById('deco-stack-default-state');
-var decoStackPreviewCount = document.getElementById('deco-stack-preview-count');
-
-if (decoSettingsBtn) decoSettingsBtn.addEventListener('click', toggleDecoSettings);
-if (decoCloseBtn) decoCloseBtn.addEventListener('click', closeDecoSettings);
-if (decoOptDot) decoOptDot.addEventListener('change', onDecoOptionChange);
-if (decoOptCounter) decoOptCounter.addEventListener('change', onDecoOptionChange);
-if (decoOptCounterOnBlank) decoOptCounterOnBlank.addEventListener('change', onDecoOptionChange);
-if (decoOptTimestamp) decoOptTimestamp.addEventListener('change', onDecoOptionChange);
-if (decoOptMilliseconds) decoOptMilliseconds.addEventListener('change', onDecoOptionChange);
-if (decoOptElapsed) decoOptElapsed.addEventListener('change', onDecoOptionChange);
-if (decoOptSessionElapsed) decoOptSessionElapsed.addEventListener('change', onDecoOptionChange);
-if (decoOptBar) decoOptBar.addEventListener('change', onDecoOptionChange);
-if (decoOptQuality) decoOptQuality.addEventListener('change', onDecoOptionChange);
-if (decoOptCategoryBadge) decoOptCategoryBadge.addEventListener('change', onDecoOptionChange);
-if (decoOptLintBadge) decoOptLintBadge.addEventListener('change', onDecoOptionChange);
-if (decoOptLineColors) decoOptLineColors.addEventListener('change', onDecoOptionChange);
-if (decoLineColorSelect) decoLineColorSelect.addEventListener('change', onDecoOptionChange);
-if (decoOptStripSourceTag) decoOptStripSourceTag.addEventListener('change', onDecoOptionChange);
-if (decoStackDefaultState) decoStackDefaultState.addEventListener('change', onDecoOptionChange);
-if (decoStackPreviewCount) decoStackPreviewCount.addEventListener('change', onDecoOptionChange);
-
-/* Close panel when clicking outside it or the gear button. */
-document.addEventListener('click', function(e) {
-    if (!decoSettingsOpen) return;
-    var panel = document.getElementById('deco-settings');
-    var gearBtn = document.getElementById('deco-settings-btn');
-    if (panel && !panel.contains(e.target) && gearBtn !== e.target) {
-        closeDecoSettings();
-    }
-});
 `;
 }

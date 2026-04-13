@@ -102,6 +102,14 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
     var contBadge = e.target.closest('.cont-badge');
     if (contBadge && contBadge.dataset.contGid !== undefined && typeof toggleContinuationGroup === 'function') {
         toggleContinuationGroup(parseInt(contBadge.dataset.contGid));
+        return;
+    }
+    /* Metadata filter toggle: PID, TID, or tag click in decoration prefix. */
+    var metaSpan = e.target.closest('[data-meta-key]');
+    if (metaSpan && typeof toggleMetadataFilter === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleMetadataFilter(metaSpan.dataset.metaKey, metaSpan.dataset.metaValue);
     }
 });
 
