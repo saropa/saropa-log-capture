@@ -37,6 +37,14 @@ test("strength uses emoji + l10n tooltips (no confPrefix label)", () => {
   assert.ok(!chunk.includes("rchStr('confPrefix'"));
 });
 
+test("should not auto-open signals panel when signals are detected", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  assert.ok(
+    !chunk.includes("showSignalsPanel"),
+    "render function must not call showSignalsPanel — panel stays hidden until the user clicks the toolbar icon",
+  );
+});
+
 test("error collector skips recentErrorContext lines (proximity-inherited errors)", () => {
   const chunk = getViewerRootCauseHintsScript();
   assert.ok(

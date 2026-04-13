@@ -31,6 +31,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ### Changed
 
 - **Signals panel hidden by default** — the root-cause signals panel no longer auto-opens when signals are detected; the toolbar badge still shows the count and users click the icon to reveal it
+- **Deduplicated session list I/O on startup** — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
 
 ---
 
@@ -40,19 +41,14 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 - **Collapse All Sections button** — new `$(collapse-all)` icon on the viewer title bar collapses all expanded stack groups, continuation line groups, and SQL repeat drilldown panels in one click
 - **DB timestamp burst detector (DB_16)** — emits a marker when 3+ database queries fire at the same timestamp (within 10ms tolerance), surfacing redundant or concurrent DB lookups as a code smell. Toggle via `saropaLogCapture.viewerDbDetectorTimestampBurstEnabled`
-- **Auto-load latest log on first visit** — when the viewer panel first opens with no active debug session, the most recent log file loads automatically instead of showing an empty viewer. If a different session was last viewed, a "Resume" banner appears to quick-switch back
 
 ### Changed
 
 - **Decoration prefix uses grey text** — timestamp, counter, elapsed time, and `»` separator now render in `editorLineNumber` grey instead of inheriting the line's severity color, visually separating metadata from log content
 - **Links use grey text until hovered** — source file links and URL links render in `editorLineNumber` grey, revealing their blue link color only on hover
-- **Session list loads progressively** — file names appear immediately after directory scan; metadata fills in as each file is processed, eliminating the long shimmer delay on large project lists
-- **Deduplicated session list I/O on startup** — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
 
 ### Fixed
 
-- **Session list stuck on shimmer permanently** — if streaming metadata load threw an unhandled error (e.g. sidecar migration failure), the final session list message was never sent and the loading shimmer stayed forever. Now always sends a final list, falling back to an empty state on error
-- **Session list went blank on second panel open** — when cached items were returned, the streaming callbacks never fired, so the webview received an empty list instead of the cached data
 - **Stack traces always showed error severity regardless of parent line** — stack frames and headers were hardcoded to `level: 'error'`, so a database query's stack trace showed red dots and red text while the query itself showed cyan. Stack groups now inherit the severity of the preceding log line, keeping the severity bar and text color visually connected
 - **"Copy Line" and "Copy Line Decorated" ignored multi-line selection** — when shift-click selected multiple lines, the context menu actions only copied the single right-clicked line. Now both copy all selected lines. Also fixed shift-click selection using wrong indices when filtered lines are present
 - **Decorated copy duplicated severity emoji dot** — `decorateLine` prepended a severity dot (e.g. 🟢) but the line text already contained one from the original log, producing a double dot. Now strips the leading dot from text when the decoration adds one
