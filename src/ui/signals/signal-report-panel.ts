@@ -8,8 +8,10 @@
 import * as vscode from 'vscode';
 import type { RootCauseHypothesis, RootCauseHintBundle } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getNonce } from '../provider/viewer-content';
-import { buildSignalReportShell, renderEvidenceSection, renderRecommendations } from './signal-report-render';
+import { buildSignalReportShell, renderEvidenceSection, renderRecommendations, resolveSourcePaths } from './signal-report-render';
 import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
+import { getLogDirectoryUri } from '../../modules/config/config';
+import { logExtensionError } from '../../modules/misc/extension-logger';
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -20,6 +22,7 @@ export async function showSignalReport(
   fileUri: vscode.Uri | undefined,
 ): Promise<void> {
   lastReportHypothesis = hypothesis;
+  lastReportFileUri = fileUri;
   ensurePanel();
   panel!.webview.html = buildSignalReportShell({
     nonce: getNonce(),
@@ -32,7 +35,7 @@ function ensurePanel(): void {
   if (panel) { panel.reveal(); return; }
   panel = vscode.window.createWebviewPanel(
     'saropaLogCapture.signalReport',
-    'Signal Report',
+    'Saropa Signal Report',
     vscode.ViewColumn.Beside,
     { enableScripts: true, localResourceRoots: [] },
   );
@@ -128,22 +131,80 @@ function postSection(id: string, title: string, html: string): void {
 }
 
 function handleMessage(msg: Record<string, unknown>): void {
-  if (msg.type === 'copyReport') {
-    copyReport();
-  }
+  if (msg.type === 'copyReport') { copyReport(); }
+  if (msg.type === 'saveReport') { saveReport(); }
 }
 
-/** Stored for copy — set when showSignalReport is called. */
+/** Stored for save/copy — set when showSignalReport is called. */
 let lastReportHypothesis: RootCauseHypothesis | undefined;
+let lastReportFileUri: vscode.Uri | undefined;
 
 function copyReport(): void {
-  if (!lastReportHypothesis) { return; }
-  const conf = lastReportHypothesis.confidence ?? 'low';
-  const text = `Signal: ${lastReportHypothesis.text}\nConfidence: ${conf}\nTemplate: ${lastReportHypothesis.templateId}`;
-  vscode.env.clipboard.writeText(text).then(
-    () => { vscode.window.setStatusBarMessage('Signal report copied', 2000); },
-    () => { vscode.window.setStatusBarMessage('Failed to copy signal report', 3000); },
-  );
+  buildMarkdownReport().then(
+    (md) => {
+      if (!md) { return; }
+      vscode.env.clipboard.writeText(md).then(
+        () => { vscode.window.setStatusBarMessage('Signal report copied', 2000); },
+        () => { vscode.window.setStatusBarMessage('Failed to copy signal report', 3000); },
+      );
+    },
+  ).catch(() => { vscode.window.setStatusBarMessage('Failed to build report', 3000); });
+}
+
+function saveReport(): void {
+  buildMarkdownReport().then((md) => {
+    if (!md) { return; }
+    const wsFolder = vscode.workspace.workspaceFolders?.[0];
+    const logDirUri = getLogDirectoryUri(wsFolder);
+    const filename = buildSaveFilename(new Date());
+    const destUri = vscode.Uri.joinPath(logDirUri, filename);
+    return vscode.workspace.fs.createDirectory(logDirUri)
+      .then(() => vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8')))
+      .then(() => { vscode.window.setStatusBarMessage(`Signal report saved to ${filename}`, 3000); });
+  }).catch((err) => {
+    logExtensionError('saveSignalReport', err instanceof Error ? err : new Error(String(err)));
+    vscode.window.setStatusBarMessage('Failed to save signal report', 3000);
+  });
+}
+
+function buildSaveFilename(now: Date): string {
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const safe = (lastReportHypothesis?.templateId ?? 'signal').replace(/[^a-zA-Z0-9_-]/g, '_');
+  return `${stamp}_signal_${safe}.md`;
+}
+
+async function buildMarkdownReport(): Promise<string | undefined> {
+  if (!lastReportHypothesis) { return undefined; }
+  const h = lastReportHypothesis;
+  const conf = h.confidence ?? 'low';
+  const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const out: string[] = [
+    '# Saropa Signal Report',
+    '',
+    `**Signal:** ${h.text}`,
+    `**Confidence:** ${conf}`,
+    `**Template:** ${h.templateId}`,
+  ];
+  if (lastReportFileUri) {
+    out.push(`**Log file:** \`${lastReportFileUri.fsPath}\``);
+  }
+  out.push('', '---', '');
+  // Evidence lines
+  if (lastReportFileUri && h.evidenceLineIds.length > 0) {
+    const logLines = await readLogLines(lastReportFileUri);
+    if (logLines.length > 0) {
+      out.push('## Evidence', '');
+      for (const idx of h.evidenceLineIds) {
+        if (idx < 0 || idx >= logLines.length) { continue; }
+        const raw = logLines[idx];
+        const resolved = wsRoot ? resolveSourcePaths(raw, wsRoot) : raw;
+        out.push(`- **Line ${idx + 1}:** \`${resolved}\``);
+      }
+      out.push('');
+    }
+  }
+  return out.join('\n');
 }
 
 /** Dispose the panel. */
