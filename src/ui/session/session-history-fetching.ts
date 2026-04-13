@@ -52,7 +52,7 @@ export async function fetchItemsCore(
     if (!folder && !logDirOverride) { return []; }
     const configuredDir = folder ? getLogDirectoryUri(folder) : undefined;
     const logDir = logDirOverride ?? configuredDir!;
-    await migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride);
+    try { await migrateIfNeeded(folder ?? undefined, configuredDir, logDirOverride); } catch { /* migration is best-effort */ }
     try {
         const { fileTypes, includeSubfolders } = getConfig();
         const logFiles = await readTrackedFiles(logDir, fileTypes, includeSubfolders);

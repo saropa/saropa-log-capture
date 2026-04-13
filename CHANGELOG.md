@@ -26,6 +26,10 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+---
+
 ## [5.8.0]
 
 ### Added
@@ -39,6 +43,7 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 - **Decoration prefix uses grey text** — timestamp, counter, elapsed time, and `»` separator now render in `editorLineNumber` grey instead of inheriting the line's severity color, visually separating metadata from log content
 - **Links use grey text until hovered** — source file links and URL links render in `editorLineNumber` grey, revealing their blue link color only on hover
 - **Session list loads progressively** — file names appear immediately after directory scan; metadata fills in as each file is processed, eliminating the long shimmer delay on large project lists
+- **Deduplicated session list I/O on startup** — auto-load and streaming session list now share a single in-flight fetch instead of scanning the directory and loading every file header twice
 
 ### Fixed
 
