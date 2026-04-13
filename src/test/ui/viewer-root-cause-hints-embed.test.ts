@@ -60,6 +60,14 @@ test("should contain PERF regex for slow-operation detection", () => {
   assert.ok(chunk.includes("operationName"), "slow-op collection must pass operationName from PERF lines");
 });
 
+test("excerpt truncation uses shared rchExcerpt helper (no inline duplication)", () => {
+  const chunk = getViewerRootCauseHintsScript();
+  assert.ok(chunk.includes("function rchExcerpt("), "rchExcerpt helper must be defined");
+  /* The inline pattern should no longer appear — all call sites use the helper. */
+  const inlineCount = (chunk.match(/plain\.length > 200/g) || []).length;
+  assert.strictEqual(inlineCount, 0, "no inline 200-char truncation should remain — all must use rchExcerpt");
+});
+
 // --- HTTP status code detection ---
 
 test("should contain HTTP error code map for network-failure signal detection", () => {
