@@ -25,10 +25,11 @@ export function buildSignalReportShell(opts: ShellOptions): string {
 <style nonce="${nonce}">${getSignalReportStyles()}</style>
 </head>
 <body>
-<h1>
+<h1>Saropa Signal Report</h1>
+<div class="signal-summary">
   <span>${escapeHtml(hypothesis.text)}</span>
   <span class="conf-badge conf-badge--${escapeHtml(conf)}">${escapeHtml(confLabel)}</span>
-</h1>
+</div>
 
 <div id="section-evidence" class="section-slot">
   <h2>Evidence</h2>
@@ -45,7 +46,10 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   <div class="section-loading">Generating recommendations...</div>
 </div>
 
-<button class="copy-btn" id="copy-report-btn">Copy Report</button>
+<div class="btn-row">
+  <button class="copy-btn" id="copy-report-btn">Copy Report</button>
+  <button class="copy-btn" id="save-report-btn">Save Report</button>
+</div>
 
 <script nonce="${nonce}">
 (function() {
@@ -61,6 +65,12 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   if (copyBtn) {
     copyBtn.addEventListener('click', function() {
       vscodeApi.postMessage({ type: 'copyReport' });
+    });
+  }
+  var saveBtn = document.getElementById('save-report-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+      vscodeApi.postMessage({ type: 'saveReport' });
     });
   }
 })();
@@ -97,6 +107,15 @@ export function renderRecommendations(templateId: string): string {
   const recs = getRecommendation(templateId);
   if (!recs) { return '<div class="no-data">No specific recommendations</div>'; }
   return `<div class="recommendation">${escapeHtml(recs)}</div>`;
+}
+
+/** Replace relative source paths (e.g. ./lib/foo.dart:42) with absolute paths. */
+export function resolveSourcePaths(line: string, wsRoot: string): string {
+  const normalized = wsRoot.replace(/\\/g, '/');
+  return line.replace(
+    /(?:\.\/)([\w/.-]+\.dart(?::\d+(?::\d+)?)?)/g,
+    (_match, rel: string) => `${normalized}/${rel}`,
+  );
 }
 
 function getRecommendation(templateId: string): string | undefined {
