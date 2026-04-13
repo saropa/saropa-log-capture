@@ -48,14 +48,9 @@ const MAX_EVIDENCE_IDS = ROOT_CAUSE_MAX_EVIDENCE_IDS;
 
 type Tier = 0 | 1 | 2;
 
-function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence | undefined {
+function mapN1Confidence(c: string | undefined): RootCauseHypothesisConfidence {
   const x = (c || '').toLowerCase();
-  if (x === 'high' || x === 'medium') {
-    return 'medium';
-  }
-  if (x === 'low') {
-    return 'low';
-  }
+  if (x === 'high' || x === 'medium') { return 'medium'; }
   return 'low';
 }
 
