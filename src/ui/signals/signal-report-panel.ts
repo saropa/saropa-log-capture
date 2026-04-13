@@ -190,21 +190,28 @@ async function buildMarkdownReport(): Promise<string | undefined> {
     out.push(`**Log file:** \`${lastReportFileUri.fsPath}\``);
   }
   out.push('', '---', '');
-  // Evidence lines
-  if (lastReportFileUri && h.evidenceLineIds.length > 0) {
-    const logLines = await readLogLines(lastReportFileUri);
-    if (logLines.length > 0) {
-      out.push('## Evidence', '');
-      for (const idx of h.evidenceLineIds) {
-        if (idx < 0 || idx >= logLines.length) { continue; }
-        const raw = logLines[idx];
-        const resolved = wsRoot ? resolveSourcePaths(raw, wsRoot) : raw;
-        out.push(`- **Line ${idx + 1}:** \`${resolved}\``);
-      }
-      out.push('');
-    }
-  }
+  // Evidence lines — appended in-place by helper to stay within nesting limit
+  await appendEvidenceLines(out, h.evidenceLineIds, wsRoot);
   return out.join('\n');
+}
+
+/** Append markdown evidence lines to `out`, reading from the last-reported log file. */
+async function appendEvidenceLines(
+  out: string[],
+  evidenceLineIds: readonly number[],
+  wsRoot: string | undefined,
+): Promise<void> {
+  if (!lastReportFileUri || evidenceLineIds.length === 0) { return; }
+  const logLines = await readLogLines(lastReportFileUri);
+  if (logLines.length === 0) { return; }
+  out.push('## Evidence', '');
+  for (const idx of evidenceLineIds) {
+    if (idx < 0 || idx >= logLines.length) { continue; }
+    const raw = logLines[idx];
+    const resolved = wsRoot ? resolveSourcePaths(raw, wsRoot) : raw;
+    out.push(`- **Line ${idx + 1}:** \`${resolved}\``);
+  }
+  out.push('');
 }
 
 /** Dispose the panel. */
