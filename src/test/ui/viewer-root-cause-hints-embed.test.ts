@@ -23,9 +23,10 @@ test("should contain restore button with rch-restore-btn class", () => {
   assert.ok(chunk.includes("dismissed"), "restore button text must mention dismissed count");
 });
 
-test("should filter dismissed signals from copy-all", () => {
+test("should open report panel when signal text clicked", () => {
   const chunk = getViewerRootCauseHintsScript();
-  assert.ok(chunk.includes("hVisible"), "copy-all handler must filter to visible signals only");
+  assert.ok(chunk.includes("rch-report-btn"), "signal text must be a clickable report button");
+  assert.ok(chunk.includes("openSignalReport"), "clicking signal must post openSignalReport to host");
 });
 
 test("strength uses emoji + l10n tooltips (no confPrefix label)", () => {
