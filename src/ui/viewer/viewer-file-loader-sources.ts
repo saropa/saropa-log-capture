@@ -1,5 +1,6 @@
 import { ansiToHtml, escapeHtml } from '../../modules/capture/ansi';
 import { linkifyHtml, linkifyUrls } from '../../modules/source/source-linker';
+import { extractTimestamp } from '../../modules/timeline/timestamp-parser';
 import type { FileParseContext, PendingLine } from './viewer-file-loader';
 import { parseRawLinesToPending, SOURCE_DEBUG } from './viewer-file-loader';
 
@@ -33,15 +34,18 @@ export function externalSidecarLabelFromFileName(mainLogBase: string, sidecarFil
 export function parseExternalSidecarToPending(content: string, label: string): PendingLine[] {
     const sourceId = SOURCE_EXTERNAL_PREFIX + label;
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
-    return lines.map((raw) => ({
-        text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
-        rawText: raw,
-        isMarker: false,
-        lineCount: 0,
-        category: 'console',
-        timestamp: 0,
-        source: sourceId,
-    }));
+    return lines.map((raw) => {
+        const extracted = extractTimestamp(raw);
+        return {
+            text: linkifyUrls(linkifyHtml(escapeHtml(raw))),
+            rawText: raw,
+            isMarker: false,
+            lineCount: 0,
+            category: 'console',
+            timestamp: extracted?.timestamp ?? 0,
+            source: sourceId,
+        };
+    });
 }
 
 export function parseUnifiedJsonlToPending(
