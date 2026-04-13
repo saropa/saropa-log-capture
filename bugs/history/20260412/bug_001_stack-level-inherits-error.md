@@ -1,6 +1,6 @@
 # Bug 001 — Stack traces always show error severity regardless of parent line
 
-## Status: Fix Ready
+## Status: Done
 
 ## Problem
 
@@ -56,4 +56,4 @@ Added two new test suites (7 tests total):
 
 ## Commits
 
-<!-- Add commit hashes as fixes land. -->
+- `3fef20b` fix(viewer): inherit severity level from parent line for stack traces
