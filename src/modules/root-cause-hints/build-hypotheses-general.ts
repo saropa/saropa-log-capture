@@ -14,7 +14,7 @@ import {
   ROOT_CAUSE_SLOW_OP_MIN_MS,
   ROOT_CAUSE_WARNING_MIN_COUNT,
 } from './root-cause-hint-eligibility';
-import { truncateText } from './build-hypotheses-text';
+import { excerptKey, truncateText } from './build-hypotheses-text';
 
 type Tier = 0 | 1 | 2;
 
@@ -25,11 +25,6 @@ export interface WorkingHypothesis {
   readonly confidence?: RootCauseHypothesisConfidence;
   readonly hypothesisKey: string;
   readonly tier: Tier;
-}
-
-/** Stable key from excerpt: lowercase, collapse whitespace, take last 80 chars. */
-function excerptKey(excerpt: string): string {
-  return excerpt.replace(/\s+/g, ' ').trim().slice(-80).toLowerCase();
 }
 
 /** Recurring warnings grouped by text. */
@@ -110,7 +105,7 @@ export function slowOpHypotheses(bundle: RootCauseHintBundle, maxLen: number): W
       text: truncateText(`Slow operation (${sec}s): ${op.excerpt}`, maxLen),
       evidenceLineIds: [op.lineIndex],
       confidence: 'low',
-      hypothesisKey: `slow::${op.lineIndex}`,
+      hypothesisKey: `slow::${excerptKey(op.excerpt)}`,
       tier: 2,
     });
   }
@@ -134,7 +129,7 @@ export function permissionHypotheses(bundle: RootCauseHintBundle, maxLen: number
   }];
 }
 
-/** Classified errors (transient, critical, bug). */
+/** Classified errors (critical, bug). */
 export function classifiedErrorHypotheses(bundle: RootCauseHintBundle, maxLen: number): WorkingHypothesis[] {
   const classified = bundle.classifiedErrors;
   if (!classified || classified.length === 0) { return []; }
@@ -147,7 +142,7 @@ export function classifiedErrorHypotheses(bundle: RootCauseHintBundle, maxLen: n
   }
   const out: WorkingHypothesis[] = [];
   for (const [cls, { excerpt, lines }] of groups) {
-    const conf: RootCauseHypothesisConfidence = cls === 'critical' ? 'high' : cls === 'bug' ? 'medium' : 'low';
+    const conf: RootCauseHypothesisConfidence = cls === 'critical' ? 'high' : 'medium';
     const tier: Tier = cls === 'critical' ? 0 : 1;
     const suffix = lines.length > 1 ? ` (${lines.length} occurrences)` : '';
     out.push({

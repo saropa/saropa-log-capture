@@ -85,7 +85,7 @@ export interface SignalPermissionDenial {
 export interface SignalClassifiedError {
   readonly lineIndex: number;
   readonly excerpt: string;
-  readonly classification: 'transient' | 'critical' | 'bug';
+  readonly classification: 'critical' | 'bug';
 }
 
 /** ANR risk result from host-side scorer. */
