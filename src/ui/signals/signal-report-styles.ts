@@ -14,10 +14,14 @@ body {
 h1 {
     font-size: 16px;
     font-weight: 600;
-    margin: 0 0 12px;
+    margin: 0 0 4px;
+}
+.signal-summary {
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 13px;
+    margin: 0 0 12px;
 }
 h2 {
     font-size: 14px;
@@ -32,19 +36,23 @@ h2 {
     font-size: 12px;
     padding: 1px 6px;
     border-radius: 3px;
-    font-weight: 500;
+    font-weight: 600;
+    border: 1px solid;
 }
 .conf-badge--high {
-    background: var(--vscode-inputValidation-errorBackground, rgba(255, 0, 0, 0.15));
-    color: var(--vscode-errorForeground, #f48771);
+    background: rgba(255, 80, 80, 0.18);
+    color: #f14c4c;
+    border-color: #f14c4c;
 }
 .conf-badge--medium {
-    background: var(--vscode-inputValidation-warningBackground, rgba(255, 200, 0, 0.15));
-    color: var(--vscode-editorWarning-foreground, #cca700);
+    background: rgba(255, 200, 0, 0.18);
+    color: #cca700;
+    border-color: #cca700;
 }
 .conf-badge--low {
-    background: var(--vscode-badge-background, rgba(128, 128, 128, 0.15));
-    color: var(--vscode-descriptionForeground);
+    background: rgba(128, 128, 128, 0.18);
+    color: var(--vscode-foreground);
+    border-color: var(--vscode-widget-border, rgba(128, 128, 128, 0.5));
 }
 .section-slot {
     margin: 8px 0;
@@ -130,6 +138,11 @@ details summary:hover {
 }
 .copy-btn:hover {
     background: var(--vscode-button-secondaryHoverBackground, rgba(90, 93, 94, 0.5));
+}
+.btn-row {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
 }
 `;
 }

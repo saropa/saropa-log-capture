@@ -30,10 +30,17 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ### Added
 
-- **Session time (T+) toggle in context menu.** Layout submenu now includes a quick toggle for session elapsed time, matching the gear panel checkbox.
+- **Session time (T+) toggle in context menu.** Options submenu now includes a quick toggle for session elapsed time, matching the gear panel checkbox.
+- **Save Report button on signal reports.** Saves a markdown report to the configured log directory (`saropaLogCapture.logDirectory`).
+
+### Changed
+
+- **Signal report title** is now "Saropa Signal Report" (panel tab and heading).
+- **Copy Report** now copies the report as markdown with evidence lines and resolved source file paths.
 
 ### Fixed
 
+- **Confidence badge unreadable in some themes.** Replaced theme-variable-only colors with explicit high-contrast foreground, background, and border values.
 - **External sidecar timestamps not parsed.** Lines from external sidecars (e.g. SDA logs) with ISO 8601 timestamps now have their timestamps extracted, enabling Session time (T+), elapsed time, and timestamp decorations.
 
 ### Maintenance

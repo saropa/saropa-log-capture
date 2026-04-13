@@ -3,7 +3,7 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import { renderEvidenceSection, renderRecommendations, buildSignalReportShell } from "../../ui/signals/signal-report-render";
+import { renderEvidenceSection, renderRecommendations, buildSignalReportShell, resolveSourcePaths } from "../../ui/signals/signal-report-render";
 
 // --- renderEvidenceSection ---
 
@@ -106,4 +106,99 @@ test("buildSignalReportShell: should default to low confidence when undefined", 
   });
   assert.ok(html.includes("Low confidence"));
   assert.ok(html.includes("conf-badge--low"));
+});
+
+// --- Title and layout (post-refactor) ---
+
+test("buildSignalReportShell: should include Saropa Signal Report title", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Some signal",
+      evidenceLineIds: [],
+      hypothesisKey: "test::3",
+    },
+  });
+  assert.ok(html.includes("<h1>Saropa Signal Report</h1>"));
+});
+
+test("buildSignalReportShell: should render signal text in summary div", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Slow operation (3000ms)",
+      evidenceLineIds: [],
+      confidence: "medium",
+      hypothesisKey: "test::4",
+    },
+  });
+  assert.ok(html.includes('class="signal-summary"'));
+  assert.ok(html.includes("Slow operation (3000ms)"));
+  assert.ok(html.includes("Medium confidence"));
+});
+
+test("buildSignalReportShell: should include save report button", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::5",
+    },
+  });
+  assert.ok(html.includes('id="save-report-btn"'));
+  assert.ok(html.includes("Save Report"));
+});
+
+test("buildSignalReportShell: should include both copy and save buttons in btn-row", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::6",
+    },
+  });
+  assert.ok(html.includes('class="btn-row"'));
+  assert.ok(html.includes('id="copy-report-btn"'));
+  assert.ok(html.includes('id="save-report-btn"'));
+});
+
+// --- resolveSourcePaths ---
+
+test("resolveSourcePaths: should resolve relative dart path to absolute", () => {
+  const line = "  \u2800 \u00BB _EventBadgeWrapperState._loadBadgeCount (./lib/components/event/event_badge_wrapper.dart:233:7)";
+  const result = resolveSourcePaths(line, "/home/user/project");
+  assert.ok(result.includes("/home/user/project/lib/components/event/event_badge_wrapper.dart:233:7"));
+  assert.ok(!result.includes("./lib"));
+});
+
+test("resolveSourcePaths: should normalize Windows backslashes", () => {
+  const line = "at (./lib/foo.dart:10:5)";
+  const result = resolveSourcePaths(line, "D:\\src\\myproject");
+  assert.ok(result.includes("D:/src/myproject/lib/foo.dart:10:5"));
+  assert.ok(!result.includes("\\"));
+});
+
+test("resolveSourcePaths: should handle path without line numbers", () => {
+  const line = "see ./lib/utils/helpers.dart for details";
+  const result = resolveSourcePaths(line, "/workspace");
+  assert.ok(result.includes("/workspace/lib/utils/helpers.dart"));
+});
+
+test("resolveSourcePaths: should not modify lines without relative paths", () => {
+  const line = "[log] Drift SELECT: SELECT * FROM users; | args: []";
+  const result = resolveSourcePaths(line, "/workspace");
+  assert.strictEqual(result, line);
+});
+
+test("resolveSourcePaths: should resolve multiple paths in one line", () => {
+  const line = "called from ./lib/a.dart:1 via ./lib/b.dart:2";
+  const result = resolveSourcePaths(line, "/ws");
+  assert.ok(result.includes("/ws/lib/a.dart:1"));
+  assert.ok(result.includes("/ws/lib/b.dart:2"));
 });
