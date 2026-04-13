@@ -28,6 +28,10 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [Unreleased]
 
+### Changed
+
+- **Signals panel hidden by default** — the root-cause signals panel no longer auto-opens when signals are detected; the toolbar badge still shows the count and users click the icon to reveal it
+
 ---
 
 ## [5.8.0]
