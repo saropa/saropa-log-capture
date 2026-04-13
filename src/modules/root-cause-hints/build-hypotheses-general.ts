@@ -16,7 +16,8 @@ import {
 } from './root-cause-hint-eligibility';
 import { excerptKey, truncateText } from './build-hypotheses-text';
 
-type Tier = 0 | 1 | 2;
+/** Hypothesis priority tier: 0 = critical, 1 = normal, 2 = low-priority. */
+export type Tier = 0 | 1 | 2;
 
 export interface WorkingHypothesis {
   readonly templateId: string;
