@@ -26,7 +26,20 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [Unreleased]
+
+### Maintenance
+
+- Split `build-hypotheses.ts`, `viewer-continuation-behavior.test.ts`, and `viewer-styles-decoration.ts` to stay within the 300-line limit
+- Reclassified internal-only CHANGELOG entries (file splits, CI fixes, param refactors, script cleanup) from Changed/Fixed to Maintenance across 7 releases
+- Added missing intro lines and `[log]` links to 9 releases; added missing `## [5.0.3]` heading and `---` separators
+
+---
+
 ## [6.0.0]
+
+Adds structured line parsing for known log formats, a signal report panel with evidence context, and metadata click-to-filter — plus general-purpose signal detection beyond SQL.
+[log](https://github.com/saropa/saropa-log-capture/blob/v6.0.0/CHANGELOG.md)
 
 ### Added
 
@@ -64,6 +77,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.8.0]
 
+Adds a Collapse All button and DB timestamp burst detection, fixes stack traces ignoring parent severity, and tightens up decoration and copy behavior.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.8.0/CHANGELOG.md)
+
 ### Added
 
 - **Collapse All Sections button** — new `$(collapse-all)` icon on the viewer title bar collapses all expanded stack groups, continuation line groups, and SQL repeat drilldown panels in one click
@@ -86,6 +102,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.7.1]
 
+Fixes an options panel crash when severity keywords haven't loaded yet.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.7.1/CHANGELOG.md)
+
 ### Fixed
 
 - **Options panel crash when severity keywords not yet loaded** — `renderSeverityKeywordsDisplay` threw `TypeError: Cannot read properties of null` because the `typeof` guard did not catch `null` (`typeof null === 'object'`). Now uses truthiness check
@@ -93,6 +112,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 ---
 
 ## [5.7.0]
+
+Adds configurable severity keywords, console continuation grouping, Copy Line Decorated, strip-source-tag toggle, and configurable stack frame defaults.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.7.0/CHANGELOG.md)
 
 ### Added
 
@@ -117,6 +139,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.6.3]
 
+Adds an experimental ASCII art detector with improved majority-in-window scoring.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.3/CHANGELOG.md)
+
 ### Added
 
 - New `viewerDetectAsciiArt` setting (default off) — experimental heuristic that detects pixel-based ASCII art (logos, figlet banners) and groups them as art blocks with the existing shimmer/yellow treatment
@@ -130,6 +155,9 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ## [5.6.2]
 
+Fixes ASCII art block grouping not working for logcat-prefixed lines.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.2/CHANGELOG.md)
+
 ### Fixed
 
 - Fixed ASCII art block grouping not working for logcat-prefixed lines (e.g. `I/flutter (13876): │ text │`) — separator detection now strips the logcat/bracket prefix before checking art-char ratio
@@ -141,15 +169,15 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 Housekeeping — split oversized files and fixed a test that broke under minification.
 [log](https://github.com/saropa/saropa-log-capture/blob/v5.6.1/CHANGELOG.md)
 
-### Changed
-
-- Modularized 6 files that exceeded the 300-line code limit: extracted edit modal styles, SQL drilldown UI, scope filter hint system, broadcaster config, and split large test files
-
 ### Fixed
 
 - Fixed `viewer-performance-panel` test using brittle `.toString()` source inspection that breaks after esbuild minification — now tests actual function output instead
 - Fixed signals treating decorative separator lines (`═══════`, `────────`, etc.) as error hypotheses — excerpts with no alphanumeric characters are now filtered out, and lines with the `isSeparator` flag are excluded from error collection
 - Fixed `isAsciiBoxDrawingDecorLine` only matching single-vertical `│` borders — now also matches double-vertical `║` borders (e.g. Isar Connect banners), preventing text-heavy box content lines from being misclassified as errors
+
+### Maintenance
+
+- Modularized 6 files that exceeded the 300-line code limit: extracted edit modal styles, SQL drilldown UI, scope filter hint system, broadcaster config, and split large test files
 
 ---
 
@@ -193,7 +221,7 @@ Merges duplicate logcat error hints that only differ by timestamp.
 Internal cleanup — trimmed oversized parameter lists and split large files.
 [log](https://github.com/saropa/saropa-log-capture/blob/v5.5.2/CHANGELOG.md)
 
-### Changed
+### Maintenance
 
 - Refactored `setErrorClassificationSettings` from 5 positional params to `ErrorClassificationSettings` options object across viewer target, broadcaster, providers, and all callers
 - Refactored `PopOutPanel` constructor from 5 positional params to `PopOutPanelOptions` options object
@@ -255,6 +283,7 @@ Sorts device logs into three tiers so system noise stays out of the way and real
 ## [5.4.2]
 
 Fixes duplicate and unstable entries in the signals panel — repeated errors now merge into one signal, ranked by how often they appear instead of how recently they arrived.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.4.2/CHANGELOG.md)
 
 ### Fixed
 
@@ -262,24 +291,28 @@ Fixes duplicate and unstable entries in the signals panel — repeated errors no
 - Fixed signal hypotheses using timestamp-varying logcat lines as separate signals — grouping key uses the last 100 chars of the excerpt, which skips leading date/time/pid prefixes
 - Error signal hypotheses are now ranked by frequency (most repeated error first) rather than recency, making the signals panel more stable during live log streaming
 - Collection now samples up to 50 recent error lines (was 2) so the algorithm has enough occurrences to rank by frequency accurately
+- Fixed spurious `[+N lines]` continuation badges collapsing ASCII art and other plain stdout output — continuation grouping now requires both lines to have a logcat tag; source-only matching was collapsing unrelated lines that happened to share a wall-clock timestamp
+
+### Maintenance
+
 - Fixed CI build failure: added missing braces to `if` statements in `config-normalizers.ts` (eslint `curly` rule)
 - Fixed CI build failure: removed unused `logcatLetterAnywhere` regex in `level-classifier.ts` (eslint `no-unused-vars` rule)
-- Fixed spurious `[+N lines]` continuation badges collapsing ASCII art and other plain stdout output — continuation grouping now requires both lines to have a logcat tag; source-only matching was collapsing unrelated lines that happened to share a wall-clock timestamp
 
 ---
 
 ## [5.4.1]
 
 Fixes the Integrations panel expand/collapse toggle and resolves CI build failures from stale compiled files.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.4.1/CHANGELOG.md)
 
 ### Fixed
 
-- Fixed CI build failure caused by 750 stale compiled `.js` files committed to `src/` — removed from git, added to `.gitignore`
-- Fixed ESLint flat config applying rules to all file types instead of only `.ts` files
 - Fixed Integrations panel more/less toggle not working — nested `<p>` tags broke the DOM, leaving descriptions always expanded and the toggle button disconnected
 
-### Changed
+### Maintenance
 
+- Fixed CI build failure caused by 750 stale compiled `.js` files committed to `src/` — removed from git, added to `.gitignore`
+- Fixed ESLint flat config applying rules to all file types instead of only `.ts` files
 - Updated CI workflow to Node.js 22 and latest GitHub Action versions (checkout v6, setup-node v6, upload-artifact v7) to resolve Node.js 20 deprecation warnings
 - Added log viewer SQL screenshot to README
 
@@ -388,7 +421,7 @@ Fixes publish script path after v5.1.0 restructure. [log](https://github.com/sar
 
 - Publish script Step 16 (store propagation check) failed with "Missing check-stores-version.ps1" — path not updated after v5.1.0 move to `scripts/modules/`
 
-### Changed
+### Maintenance
 
 - Split `viewer-continuation.test.ts` (326 lines) into static checks and behavioral eval files
 - Split `viewer-script-null-guards.test.ts` (602 lines) into three topical files: core viewer, interaction, and panels/nav
@@ -426,6 +459,8 @@ Adds adb logcat integration for live Android log streaming, continuation line co
 - "Hide blank lines" toggle was indented incorrectly in the Hide context submenu — the invisible checkmark span was taking up space in the flex layout, pushing the label right compared to regular menu items
 
 ---
+
+## [5.0.3]
 
 Fixes toolbar search and actions menus not responding to clicks, applies standard VS Code themed styling to buttons and dropdowns, and adds an element ID wiring test to catch stale references. [log](https://github.com/saropa/saropa-log-capture/blob/v5.0.3/CHANGELOG.md)
 
@@ -474,10 +509,10 @@ Adds two-pass Project Logs loading with shimmer previews, hardens webview script
 ### Removed
 
 - Remove irrecoverable dismiss [x] button from Signals strip — the collapse toggle is the only hide mechanism now
+
+### Maintenance
+
 - Delete stale one-off commit message scripts (`write-commit-msg.ps1`, `write-drift-commit.ps1`)
-
-### Changed
-
 - Move `generate-db-detector-embed-merge.mjs`, `check-stores-version.ps1`, and `marketplace-gallery-query-body.json` from `scripts/` root into `scripts/modules/`
 
 ---
@@ -594,6 +629,8 @@ Adds Explain with AI alongside session adapters in Integrations (with fallbacks 
 
 • **Log viewer — stack traces** — New stack groups open fully expanded (every frame visible). Click the stack header to cycle: expanded → fully collapsed → preview (`[+N more]`) → expanded.
 
+---
+
 ## [4.0.1]
 
 Refines error tinting so Drift SQL traces stay query/debug output, replaces the signals strip strength label with a compact emoji plus tooltip, and presents SQL Query History as a table with header-driven sorting. [log](https://github.com/saropa/saropa-log-capture/blob/v4.0.1/CHANGELOG.md)
@@ -606,9 +643,12 @@ Refines error tinting so Drift SQL traces stay query/debug output, replaces the 
 
 • **SQL Query History — table + header sorting** — SQL Query History is now presented as a table, and sorting is controlled by clicking the column headers (toggle asc/desc) instead of a dropdown.
 
+---
+
 ## [4.0.0]
 
 Focused on richer cross-source debugging: new database, browser, and security context flows with stronger request-id correlation, plus accessibility and SQL-history reliability polish across the viewer.
+[log](https://github.com/saropa/saropa-log-capture/blob/v4.0.0/CHANGELOG.md)
 
 ### Added
 
@@ -644,10 +684,6 @@ Focused on richer cross-source debugging: new database, browser, and security co
 
 • **Accessibility — focus trap for slide-out panels** — Tab and Shift+Tab now cycle through focusable elements within the active panel only, preventing focus from escaping to the background viewer. Escape closes the active panel.
 
-• **Modularized oversized files** — Split 6 files that exceeded the 300-line code limit into smaller, focused modules: extracted DB tab styles, footer styles, context-menu styles, DB tab timeline/brush script, popover DB-insight section, and merge-parity tests into dedicated files.
-
-• **SQL history — redundant eviction removed** — Eliminated a wasteful O(n) `Object.keys()` scan that ran on every new-fingerprint observation after the LRU pre-check had already ensured the cap.
-
 • **SQL history — expanded rows survive re-render** — Expanded query rows now stay open when the panel re-renders due to sort change, search input, or data refresh.
 
 • **SQL history — accessibility** — Added `role="button"` to expandable rows so screen readers announce expand/collapse behavior.
@@ -667,6 +703,12 @@ Focused on richer cross-source debugging: new database, browser, and security co
 • **SQL history — HTML escaping for fingerprints** — Replaced incomplete `escAttr` (only `&` and `"`) with the global `escapeHtml`, preventing potential HTML injection from fingerprints containing `<` or `>`.
 
 • **SQL history — copy button missing `type="button"`** — Added explicit `type="button"` to the per-row copy button to prevent accidental form submission.
+
+### Maintenance
+
+• **Modularized oversized files** — Split 6 files that exceeded the 300-line code limit into smaller, focused modules: extracted DB tab styles, footer styles, context-menu styles, DB tab timeline/brush script, popover DB-insight section, and merge-parity tests into dedicated files.
+
+• **SQL history — redundant eviction removed** — Eliminated a wasteful O(n) `Object.keys()` scan that ran on every new-fingerprint observation after the LRU pre-check had already ensured the cap.
 
 ---
 
@@ -707,6 +749,8 @@ Cleans up SQL history (deduplicated rows, HTML entities, copy UX), renames Hypot
 • **SQL history & repeat previews — HTML entities rendered** — `&quot;`, `&lt;`, `&gt;`, `&#39;`, and `&amp;` now display as their actual characters in the SQL query history panel and repeat notification previews instead of showing as raw entity text.
 
 • **Smart bookmarks — skip prompt for inactive logs** — The "add bookmark at first error" suggestion now only appears for the active (recording) session, not when browsing historical logs.
+
+---
 
 ## [3.13.0]
 
