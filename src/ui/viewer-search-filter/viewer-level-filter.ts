@@ -4,8 +4,8 @@ import { getLevelEventHandlers } from './viewer-level-events';
 /** Fly-up level filter menu with dot summary, select all/none, and per-file persistence. */
 export function getLevelFilterScript(): string {
     return /* javascript */ `
-var enabledLevels = new Set(['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database']);
-var allLevelNames = ['info', 'warning', 'error', 'performance', 'todo', 'debug', 'notice', 'database'];
+var enabledLevels = new Set(['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database']);
+var allLevelNames = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
 var contextLinesBefore = 3;
 var levelMenuOpen = false;
 

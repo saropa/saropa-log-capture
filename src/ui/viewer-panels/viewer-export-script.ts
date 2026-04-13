@@ -20,7 +20,7 @@ var exportTemplates = {
     'errors-only': new Set(['error']),
     'warnings-errors': new Set(['error', 'warning']),
     'production': new Set(['error', 'warning', 'info', 'notice']),
-    'full-debug': new Set(['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database']),
+    'full-debug': new Set(['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database']),
     'performance': new Set(['error', 'warning', 'performance']),
     'custom': new Set(['error', 'warning', 'info'])
 };
@@ -71,7 +71,7 @@ function applyExportTemplate(templateName) {
     exportLevels = new Set(template);
 
     // Update UI
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
+    var levels = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox) {
@@ -103,7 +103,7 @@ function resolveTemplateDropdown() {
  */
 function updateExportLevels() {
     exportLevels = new Set();
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
+    var levels = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox && checkbox.checked) {
@@ -150,7 +150,7 @@ function updateExportPreview() {
  */
 function syncExportModalUi() {
     // Sync level checkboxes
-    var levels = ['error', 'warning', 'info', 'performance', 'notice', 'todo', 'debug', 'database'];
+    var levels = ['error', 'warning', 'info', 'performance', 'todo', 'notice', 'debug', 'database'];
     for (var i = 0; i < levels.length; i++) {
         var checkbox = document.getElementById('export-level-' + levels[i]);
         if (checkbox) {

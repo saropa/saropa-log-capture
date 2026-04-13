@@ -52,12 +52,12 @@ export function getExportModalHtml(): string {
                         <span>🟣 Performance</span>
                     </label>
                     <label class="export-checkbox">
-                        <input type="checkbox" id="export-level-notice" />
-                        <span>🟦 Notice</span>
-                    </label>
-                    <label class="export-checkbox">
                         <input type="checkbox" id="export-level-todo" />
                         <span>⚪ TODO/FIXME</span>
+                    </label>
+                    <label class="export-checkbox">
+                        <input type="checkbox" id="export-level-notice" />
+                        <span>🟦 Notice</span>
                     </label>
                     <label class="export-checkbox">
                         <input type="checkbox" id="export-level-debug" />
