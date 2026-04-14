@@ -28,8 +28,25 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Changed
+
+- **Signal report "Related Lines" section now shows actual items.** Previously the section displayed only summary counts like "7 error(s) in this session match this pattern" with no detail. Now lists each related item with its line number and full log text, so you can see exactly which errors, warnings, network failures, slow operations, or classified errors were detected. Items are rendered in a scrollable list capped at 20 entries.
+- **Signal report evidence context expanded to 10 lines.** Preceding context increased from 5 to 10 lines so you see more of the log leading up to each evidence line.
+- **Signal report evidence now captures stack traces.** After each evidence line, the context window extends past the normal radius to include contiguous Dart/Flutter (`#0 ...`) and Java/Kotlin (`at ...`) stack trace frames, up to 30 lines.
+- **Signal report log file read once per panel.** All sections now share a single file read instead of reading the log file independently, reducing I/O.
+
+### Added
+
+- **Signal report: Session Overview section.** Shows aggregate stats from the session bundle — total log lines, error/warning/network/memory/slow-op counts, SQL burst and N+1 counts, ANR risk score, and Drift Advisor issues — rendered as stat cards at the top of the report.
+- **Signal report: Signal Details section.** Shows type-specific data not visible in Evidence or Related: N+1 query fingerprint/repeats/distinct-args/window, SQL burst fingerprint/count/window, fingerprint leader counts, ANR score/level/contributing-factors list. Also includes distribution analysis (first/last occurrence, span, clustered vs spread pattern) for signals with multiple occurrences.
+- **Signal report: Other Signals section.** Lists other hypotheses detected in the same session (excluding the current one) with confidence badges, so you can see correlated issues without opening separate reports.
+- **Signal report: full markdown export.** Copy Report and Save Report now produce a comprehensive document with all sections (overview, evidence with context blocks, distribution, type-specific details, related items, other signals) instead of just the header and evidence lines.
+
 ### Fixed
 
+- **DriftDebugInterceptor SQL lines now recognized.** The SQL pipeline (source tag classification, level classification, SQL fingerprinting, SQL Query History, N+1 detection, args dimming) only recognized the standard Drift `LogInterceptor` format (`Drift: Sent SELECT … with args [...]`). Lines from `DriftDebugInterceptor` (`Drift SELECT: SELECT …; | args: [...]`) were silently ignored — no `database` source tag, no SQL History entries, no repeat compression. Now both formats are recognized across all six parser locations (extension-side and webview-side).
+- **Dot-separated project names now display correctly.** Filenames like `contacts.drift-advisor.json` showed as "Contacts.drift Advisor" because the normalize function only treated underscores and hyphens as word separators. Now dots are also treated as separators, producing "Contacts Drift Advisor". Fixed in both the tree view and the webview session panel.
+- **Bracket-prefixed log lines now fully stripped.** Flutter DAP output often prepends `[timestamp] [logcat]` or `[timestamp] [stdout]` before the actual log format. The structured prefix parser could not detect the logcat format behind these brackets, and the source-tag strip only removed the first bracket pair. Now the structured parser skips leading bracket metadata (up to 3 pairs) to find the real format, and the fallback strip removes all leading bracket pairs — so lines display only the message body.
 - **Continuation badge no longer floats over log text.** The `[+N lines]` collapse/expand badge was absolutely positioned at the right edge of the line, overlapping content and leaving a confusing empty blue button when expanded. Moved the badge inline next to the line counter as a compact `[+]`/`[−]` pill with the line count shown only in the tooltip.
 - **Signal reports now open in separate tabs.** Previously every signal report reused a single panel, replacing whatever report you were reading. Each report now opens its own tab (titled with the signal template ID) so you can compare multiple reports side by side.
 - **Signals panel text wrapping.** Long signal descriptions (e.g. ANR risk with many indicators) overflowed the panel instead of wrapping. Switched list items to flex layout so the emoji and dismiss button stay pinned while the signal text wraps within the available width.
