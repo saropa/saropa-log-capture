@@ -89,6 +89,9 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
                 }
             }
             var sfItem = { html: html, rawText: rawText || null, type: 'stack-frame', height: 0, category: category, groupId: activeGroupHeader.groupId, timestamp: ts, fw: fw, tier: lineTier, level: activeGroupHeader.level, sourceTag: activeGroupHeader.sourceTag, logcatTag: activeGroupHeader.logcatTag, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsF, context: context, _appFrameIdx: appIdx, sourcePath: sp || null, scopeFiltered: false, autoHidden: false, qualityPercent: qualityPercent, source: lineSource };
+            /* Inherit originalLevel from header so warnplus mode in calcItemHeight
+               correctly shows frames from demoted device-other error/warning stacks. */
+            if (activeGroupHeader.originalLevel) sfItem.originalLevel = activeGroupHeader.originalLevel;
             if (elapsedMs !== undefined && elapsedMs >= 0) sfItem.elapsedMs = elapsedMs;
             allLines.push(sfItem);
             activeGroupHeader.frameCount++;
@@ -100,13 +103,25 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         if (lTagH && lTagH === sTagH) lTagH = null;
         var cTagsH = (typeof parseClassTags === 'function') ? parseClassTags(plainFrame) : [];
         var hdrAutoHide = (typeof testAutoHide === 'function') ? testAutoHide(plainFrame) : false;
-        var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
+        /* Find the previous non-marker line to get both its level and originalLevel.
+           Device-other lines demote error/warning to info but store the pre-demotion
+           level in originalLevel — warnplus mode needs this to keep stack headers
+           visible when they follow a demoted error/warning line. */
+        var _prevForHdr = null;
+        for (var _ph = allLines.length - 1; _ph >= 0; _ph--) {
+            var _phi = allLines[_ph];
+            if (_phi.type !== 'marker' && _phi.type !== 'run-separator') { _prevForHdr = _phi; break; }
+        }
+        var _hdrLevel = previousLineLevel();
+        var _hdrOrigLevel = (_prevForHdr && _prevForHdr.originalLevel) ? _prevForHdr.originalLevel : undefined;
+        var hdrTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: _hdrLevel, originalLevel: _hdrOrigLevel }) : false;
         var hdrH = (hdrAutoHide || catFiltered || hdrTierHidden) ? 0 : ROW_HEIGHT;
         if (hdrAutoHide && typeof autoHiddenCount !== 'undefined') autoHiddenCount++;
         // Use configurable defaults: stackDefaultState (false/true/'preview'), stackPreviewCount (1-20).
         var _sds = (typeof stackDefaultState !== 'undefined') ? stackDefaultState : false;
         var _spc = (typeof stackPreviewCount !== 'undefined') ? stackPreviewCount : 3;
-        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: previousLineLevel(), seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        var hdr = { html: html, rawText: rawText || null, type: 'stack-header', height: hdrH, category: category, groupId: gid, frameCount: 1, collapsed: _sds, previewCount: _spc, timestamp: ts, fw: fw, tier: lineTier, level: _hdrLevel, seq: nextSeq++, sourceTag: sTagH, logcatTag: lTagH, filteredOut: catFiltered, sourceFiltered: false, classFiltered: false, classTags: cTagsH, context: context, _appFrameCount: (fw ? 0 : 1), sourcePath: sp || null, scopeFiltered: false, autoHidden: hdrAutoHide, qualityPercent: qualityPercent, source: lineSource };
+        if (_hdrOrigLevel) hdr.originalLevel = _hdrOrigLevel;
         if (elapsedMs !== undefined && elapsedMs >= 0) hdr.elapsedMs = elapsedMs;
         allLines.push(hdr);
         if (typeof registerSourceTag === 'function') { registerSourceTag(hdr); }
@@ -222,7 +237,9 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
             checkCriticalError(plain);
         }
 
-        var lineTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier }) : false;
+        /* Pass level + originalLevel so isTierHidden can evaluate 'warnplus' mode —
+           device-other lines demote error/warning to info but preserve the original. */
+        var lineTierHidden = (typeof isTierHidden === 'function') ? isTierHidden({ tier: lineTier, level: lvl, originalLevel: preDemotionLevel !== lvl ? preDemotionLevel : undefined }) : false;
         var classHidden = (typeof isClassFiltered === 'function' && isClassFiltered({ classTags: cTags, type: 'line' }));
         var isAutoHidden = (typeof testAutoHide === 'function') ? testAutoHide(plain) : false;
         var lineH = (errorSuppressed || lineTierHidden || classHidden || catFiltered) ? 0 : ROW_HEIGHT;

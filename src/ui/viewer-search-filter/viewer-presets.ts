@@ -75,13 +75,20 @@ function applyPreset(presetName) {
         setExclusionsEnabled(preset.exclusionsEnabled);
     }
 
-    // Legacy appOnlyMode migration: treat as showFlutter=true, showDevice=false
+    // Legacy appOnlyMode migration: treat as showFlutter='all', showDevice='none'
     if (preset.appOnlyMode !== undefined) {
-        if (typeof setShowFlutter === 'function') setShowFlutter(true);
-        if (typeof setShowDevice === 'function') setShowDevice(!preset.appOnlyMode);
+        if (typeof setShowFlutter === 'function') setShowFlutter('all');
+        if (typeof setShowDevice === 'function') setShowDevice(preset.appOnlyMode ? 'none' : 'all');
     }
-    if (preset.deviceEnabled !== undefined && typeof setShowDevice === 'function') {
-        setShowDevice(preset.deviceEnabled);
+    /* Tri-state tier modes: 'all' | 'warnplus' | 'none'.
+       Legacy boolean deviceEnabled is mapped: true → 'all', false → 'none'. */
+    if (preset.deviceMode !== undefined && typeof setShowDevice === 'function') {
+        setShowDevice(preset.deviceMode);
+    } else if (preset.deviceEnabled !== undefined && typeof setShowDevice === 'function') {
+        setShowDevice(preset.deviceEnabled ? 'all' : 'none');
+    }
+    if (preset.flutterMode !== undefined && typeof setShowFlutter === 'function') {
+        setShowFlutter(preset.flutterMode);
     }
 
     if (preset.sources !== undefined) {
@@ -172,7 +179,9 @@ function getCurrentFilters() {
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
-    if (typeof showDevice !== 'undefined' && showDevice) { filters.deviceEnabled = true; }
+    /* Save tri-state tier modes — only save non-default values to keep presets lean */
+    if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') { filters.flutterMode = showFlutter; }
+    if (typeof showDevice !== 'undefined' && showDevice !== 'none') { filters.deviceMode = showDevice; }
     if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
         filters.sources = window.enabledSources.slice();
     }
@@ -216,8 +225,8 @@ function resetAllFilters() {
     activeFilters = null;
     syncChannelCheckboxes();
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
-    if (typeof setShowFlutter === 'function') setShowFlutter(true);
-    if (typeof setShowDevice === 'function') setShowDevice(false);
+    if (typeof setShowFlutter === 'function') setShowFlutter('all');
+    if (typeof setShowDevice === 'function') setShowDevice('none');
     if (typeof selectAllTags === 'function') selectAllTags();
     if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
