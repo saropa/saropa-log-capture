@@ -137,10 +137,11 @@ function renderRootCauseHypothesesFromCache() {
                     confEmoji = '\\u26AA';
                     confTip = rchStr('confTooltipLow', 'Weaker hint: from volume or patterns only; may be normal traffic or noise. Use as a lead.');
                 }
-                li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span> ';
+                /* No trailing space — flex gap handles spacing between children */
+                li += '<span class="root-cause-hyp-conf root-cause-hyp-conf--' + escapeHtml(confNorm) + '" role="img" aria-label="' + escapeHtml(confTip) + '" title="' + escapeHtml(confTip) + '">' + confEmoji + '</span>';
             }
             li += '<button type="button" class="rch-hyp-text rch-report-btn" data-rch-key="' + escapeHtml(item.hypothesisKey) + '" title="Open signal report">' + escapeHtml(item.text) + '</button>';
-            li += ' <button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';
+            li += '<button type="button" class="rch-dismiss-btn" data-rch-dismiss="' + escapeHtml(item.hypothesisKey) + '" aria-label="Dismiss signal" title="Dismiss signal"><span class="codicon codicon-close"></span></button>';
             li += '</li>';
             parts.push(li);
         }
