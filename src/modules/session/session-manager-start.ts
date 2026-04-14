@@ -40,7 +40,10 @@ export async function startSessionImpl(
     context: vscode.ExtensionContext,
     deps: StartSessionDeps,
 ): Promise<StartSessionOutcome> {
-    if (!deps.config.enabled) { return { kind: 'skipped' }; }
+    if (!deps.config.enabled) {
+        deps.outputChannel.appendLine(`Session start skipped: saropaLogCapture.enabled is false (type=${session.type})`);
+        return { kind: 'skipped' };
+    }
 
     if (session.parentSession && deps.sessions.has(session.parentSession.id)) {
         deps.sessions.set(session.id, deps.sessions.get(session.parentSession.id)!);
@@ -96,6 +99,9 @@ export async function startSessionImpl(
         },
     } as InitSessionParams);
 
-    if (!result) { return { kind: 'skipped' }; }
+    if (!result) {
+        deps.outputChannel.appendLine(`Session initialization failed: no log session created (type=${session.type} id=${session.id})`);
+        return { kind: 'skipped' };
+    }
     return { kind: 'created', result };
 }
