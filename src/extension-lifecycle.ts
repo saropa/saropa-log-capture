@@ -96,11 +96,14 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
 
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.
-    sessionManager.setOnOutputBufferedWithNoSession((sessionId: string) => {
+    // NOTE: Don't require active.id === sessionId — Flutter creates parent + child sessions with
+    // different IDs. Output arrives on the child (Dart VM) but activeDebugSession is the parent
+    // (Flutter). An exact-match check would silently skip capture for the entire session.
+    sessionManager.setOnOutputBufferedWithNoSession((_sessionId: string) => {
         const active = vscode.debug.activeDebugSession;
-        if (!active || active.id !== sessionId) { return; }
-        if (lateStartTriggered.has(sessionId)) { return; }
-        lateStartTriggered.add(sessionId);
+        if (!active) { return; }
+        if (lateStartTriggered.has(active.id)) { return; }
+        lateStartTriggered.add(active.id);
         void sessionManager.startSession(active, context).then(() => {
             broadcaster.setPaused(false);
             applySessionStartedState(deps, active);
@@ -109,9 +112,16 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
 
     context.subscriptions.push(
         vscode.debug.onDidStartDebugSession(async (session) => {
-            broadcaster.setPaused(false);
-            await sessionManager.startSession(session, context);
-            applySessionStartedState(deps, session);
+            try {
+                broadcaster.setPaused(false);
+                await sessionManager.startSession(session, context);
+                applySessionStartedState(deps, session);
+            } catch (err) {
+                // Log failures — without this, async rejections are silently swallowed by VS Code's
+                // event infrastructure and the session is invisibly dropped.
+                const msg = err instanceof Error ? err.message : String(err);
+                sessionManager.logToOutputChannel(`onDidStartDebugSession failed: ${msg} (type=${session.type} id=${session.id})`);
+            }
         }),
         vscode.debug.onDidTerminateDebugSession(async (session) => {
             lateStartTriggered.delete(session.id);
@@ -133,6 +143,30 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
             aiWatcher.stop();
         }),
     );
+
+    // Attach to a debug session that was already running before the extension activated.
+    // Covers window reload, extension host restart, and late activation scenarios where
+    // onDidStartDebugSession never fires for the existing session.
+    attachToExistingSession(deps);
+}
+
+/**
+ * If a debug session is already active when the extension activates (e.g. after
+ * a window reload or extension host restart), start capture for it immediately.
+ * Without this, onDidStartDebugSession never fires for the pre-existing session
+ * and the session is invisible in the Project Logs panel.
+ */
+function attachToExistingSession(deps: DebugLifecycleDeps): void {
+    const { context, sessionManager, broadcaster } = deps;
+    const active = vscode.debug.activeDebugSession;
+    if (!active) { return; }
+    if (sessionManager.hasSession(active.id)) { return; }
+    // Mark as late-start so the buffered-output callback doesn't race with us.
+    lateStartTriggered.add(active.id);
+    void sessionManager.startSession(active, context).then(() => {
+        broadcaster.setPaused(false);
+        applySessionStartedState(deps, active);
+    }).catch(() => { /* startSession logs its own errors */ });
 }
 
 async function startAiWatcherIfEnabled(
