@@ -1,15 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getInsightsPanelScript = getInsightsPanelScript;
 /** Webview script for the cross-session insights panel. */
-function getInsightsPanelScript() {
+export function getInsightsPanelScript(): string {
     return `(function() {
     const vscode = acquireVsCodeApi();
     document.getElementById('refresh-btn')?.addEventListener('click', () => {
         vscode.postMessage({ type: 'refresh' });
     });
     document.getElementById('export-summary-btn')?.addEventListener('click', () => {
-        vscode.postMessage({ type: 'exportInsightsSummary' });
+        vscode.postMessage({ type: 'exportSignalsSummary' });
     });
     document.getElementById('time-range')?.addEventListener('change', (e) => {
         vscode.postMessage({ type: 'setTimeRange', range: e.target.value });
@@ -108,4 +105,3 @@ function getInsightsPanelScript() {
     });
 })();`;
 }
-//# sourceMappingURL=insights-panel-script.js.map

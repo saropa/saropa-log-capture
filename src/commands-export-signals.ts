@@ -8,10 +8,10 @@ import * as vscode from 'vscode';
 import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { getLogDirectoryUri } from './modules/config/config';
-import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from './modules/export/insights-export-formats';
+import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from './modules/export/signals-export-formats';
 import { aggregateInsights, buildInsightsFromMetas, type CrossSessionInsights } from './modules/misc/cross-session-aggregator';
 import { loadMetasForPaths } from './modules/session/metadata-loader';
-import { buildInsightsSummary } from './modules/insights/insights-summary';
+import { buildInsightsSummary } from './modules/signals/signals-summary';
 
 export type ScopeChoice = 'currentSession' | 'investigation' | '7d' | 'all';
 

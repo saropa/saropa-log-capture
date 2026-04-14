@@ -17,7 +17,7 @@ import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
 import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
-import { openInsightTab } from './ui/viewer-panels/insight-tab-panel';
+import { openInsightTab } from './ui/viewer-panels/signal-tab-panel';
 import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
 import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';

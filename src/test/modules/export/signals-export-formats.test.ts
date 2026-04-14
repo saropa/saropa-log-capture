@@ -2,8 +2,8 @@ import * as assert from 'assert';
 import {
     formatInsightsSummaryToCsv,
     formatInsightsSummaryToJson,
-} from '../../../modules/export/insights-export-formats';
-import type { InsightsSummary } from '../../../modules/insights/insights-summary';
+} from '../../../modules/export/signals-export-formats';
+import type { InsightsSummary } from '../../../modules/signals/signals-summary';
 
 function minimalSummary(overrides?: Partial<InsightsSummary>): InsightsSummary {
     return {
