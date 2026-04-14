@@ -26,6 +26,17 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Signal reports now open in separate tabs.** Previously every signal report reused a single panel, replacing whatever report you were reading. Each report now opens its own tab (titled with the signal template ID) so you can compare multiple reports side by side.
+- **Signals panel text wrapping.** Long signal descriptions (e.g. ANR risk with many indicators) overflowed the panel instead of wrapping. Switched list items to flex layout so the emoji and dismiss button stay pinned while the signal text wraps within the available width.
+- **Device-other lines no longer re-promoted as recent-error context.** Framework logcat lines (ActivityManager, WindowManager, etc.) are demoted from error/warning to info to suppress noise, but the recent-error-context feature was undoing that demotion — painting them with dimmed red dots and error borders when a real error occurred nearby. These lines now stay demoted as intended.
+- **Recent-error-context border no longer shifts line content.** The dashed left border used `padding-left: 5px` which overrode the base `1.85em` padding when decorations were off, shifting text leftward. Replaced with an inset `box-shadow` that adds the visual indicator without affecting layout.
+
+---
+
 ## [6.2.1]
 
 Fixes CI failures from a misnamed CSS test selector and coverage thresholds that no longer matched the codebase. [log](https://github.com/saropa/saropa-log-capture/blob/v6.2.1/CHANGELOG.md)
