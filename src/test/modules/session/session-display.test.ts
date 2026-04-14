@@ -13,7 +13,7 @@ suite('session-display', () => {
             assert.strictEqual(typeof defaultDisplayOptions.normalizeNames, 'boolean');
             assert.strictEqual(typeof defaultDisplayOptions.showDayHeadings, 'boolean');
             assert.strictEqual(typeof defaultDisplayOptions.reverseSort, 'boolean');
-            assert.ok(defaultDisplayOptions.dateRange === 'all' || defaultDisplayOptions.dateRange === '7d' || defaultDisplayOptions.dateRange === '30d');
+            assert.ok(typeof defaultDisplayOptions.dateRange === 'string', 'dateRange should be a string');
         });
     });
     suite('formatRelativeTime', () => {

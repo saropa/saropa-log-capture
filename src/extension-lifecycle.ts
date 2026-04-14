@@ -13,8 +13,9 @@ import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import type { AiWatcher } from './modules/ai/ai-watcher';
 import { hasClaudeProject } from './modules/ai/ai-session-resolver';
 import type { SaropaSessionEvent } from './api-types';
+import { SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
 
-interface DebugLifecycleDeps {
+export interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
     readonly sessionManager: SessionManagerImpl;
     readonly broadcaster: ViewerBroadcaster;
@@ -30,8 +31,12 @@ interface DebugLifecycleDeps {
 /** Session ids we've already triggered a late start for (output arrived before onDidStartDebugSession). */
 const lateStartTriggered = new Set<string>();
 
-/** Apply UI state after a session has started (shared by onDidStartDebugSession and late-start fallback). */
-function applySessionStartedState(
+/**
+ * Apply UI state after a session has started (shared by onDidStartDebugSession and late-start fallback).
+ * Exported for testing — not intended for external callers.
+ * @internal
+ */
+export function applySessionStartedState(
     deps: DebugLifecycleDeps,
     session: vscode.DebugSession,
 ): void {
@@ -69,6 +74,11 @@ function applySessionStartedState(
     broadcaster.setContextViewLines(cfg.contextViewLines);
     broadcaster.setCopyContextLines(cfg.copyContextLines);
     broadcaster.setPresets(loadPresets());
+    // Clear any stale Project Logs panel root override so the panel reverts to the
+    // workspace default — which matches the session's log directory for standalone
+    // workspaces. Without this, a folder previously chosen via "Browse" persists
+    // across debug sessions and shows logs from a different project.
+    context.workspaceState.update(SESSION_PANEL_ROOT_KEY, undefined);
     historyProvider.setActiveUri(activeSession?.fileUri);
     historyProvider.refresh();
     fireSessionStart({
