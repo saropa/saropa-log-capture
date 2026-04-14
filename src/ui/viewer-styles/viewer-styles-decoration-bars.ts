@@ -120,23 +120,20 @@ export function getDecorationBarStyles(): string {
     z-index: 3;
 }
 
-/* Continuation line collapse badge — pill on header line, toggles group visibility.
-   Absolutely positioned so it cannot wrap and overlap adjacent lines
-   (.line already has position:relative). */
+/* Continuation line collapse badge — inline pill next to the line counter.
+   Toggles group visibility on click; count shown in tooltip only. */
 .cont-badge {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 1px 6px;
+    display: inline-block;
+    padding: 1px 4px;
+    margin: 0 4px;
     border-radius: 3px;
     font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     color: var(--vscode-descriptionForeground, #888);
-    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 50%, transparent);
+    background: color-mix(in srgb, var(--vscode-badge-background, #4d4d4d) 40%, transparent);
     user-select: none;
-    z-index: 2;
+    vertical-align: baseline;
 }
 .cont-badge:hover {
     background: var(--vscode-badge-background, #4d4d4d);
