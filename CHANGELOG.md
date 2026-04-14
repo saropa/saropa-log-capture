@@ -34,7 +34,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
-- **Collapsible daily groupings in Project Logs.** Click a day heading to collapse or expand that group. Collapsed state persists while the panel stays open. Headings show a chevron indicator and support keyboard navigation (Enter/Space).
+- **Collapsible daily groupings in Project Logs.** Click a day heading to collapse or expand that group. Collapsed state persists across panel close/reopen via workspace storage. Headings show a chevron indicator and support keyboard navigation (Enter/Space).
 - **Tri-state tier filter for Flutter and Device logs.** The Log Inputs section in the filter drawer now offers three modes per tier — All, Warn+, and None — instead of a simple on/off checkbox. "Warn+" surfaces only warnings and errors from that tier while hiding info/debug noise. The keyboard shortcut `A` cycles Device through all three states.
 - **Flutter CLI crash log detection.** When Flutter's tooling crashes (`flutter test`, `flutter run`, `flutter build`), it writes `flutter_XX.log` files to the workspace root. The extension now auto-detects these files, imports them into the reports directory so they appear in the session history list, and annotates any active debug session with the crash details. Enabled by default via the `flutterCrashLogs` integration adapter.
 

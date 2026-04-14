@@ -22,6 +22,8 @@ export interface SessionDisplayOptions {
     readonly dateRange?: SessionDateRange;
     /** Sessions per page in Project Logs list (pagination). Default 100. */
     readonly sessionListPageSize?: number;
+    /** Day groups the user has collapsed in the session list, keyed by YYYY-MM-DD. */
+    readonly collapsedDays?: Readonly<Record<string, boolean>>;
 }
 
 /** Default display options. */
