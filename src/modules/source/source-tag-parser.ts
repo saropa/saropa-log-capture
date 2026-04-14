@@ -28,8 +28,12 @@ const inlineTagPattern = /\[([A-Za-z][A-Za-z0-9 _-]*)\]/;
 /** ALL-CAPS prefix at start of message body: HERO-DEBUG, MY_APP, etc. */
 const capsPrefix = /^([A-Z][A-Z0-9_-]+) /;
 
-/** Drift SQL statement logs should map to a dedicated database source tag. */
-const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
+/**
+ * Drift SQL statement logs should map to a dedicated database source tag.
+ * Matches both standard LogInterceptor format (`Drift: Sent SELECT ...`)
+ * and DriftDebugInterceptor format (`Drift SELECT: SELECT ...`).
+ */
+const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:)\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
 
 /** Extract a sub-tag from the message body of a generic logcat line. */
 function extractSubTag(messageBody: string): string | null {

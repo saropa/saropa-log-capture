@@ -15,7 +15,7 @@
  * **Not:** Static ORM analysis or guaranteed N+1 proof — logs are best-effort signals.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NPlusOneDetector = exports.DRIFT_SQL_HEAD = exports.N_PLUS_ONE_EMBED_CONFIG = void 0;
+exports.NPlusOneDetector = exports.DRIFT_SQL_HEAD = exports.DRIFT_SQL_VERB_COLON = exports.DRIFT_SQL_SENT = exports.N_PLUS_ONE_EMBED_CONFIG = void 0;
 exports.parseDriftSqlFingerprint = parseDriftSqlFingerprint;
 const drift_sql_fingerprint_normalize_1 = require("./drift-sql-fingerprint-normalize");
 /** Default thresholds (plan DB_07: window up to 2s, min repeats 8+). */
@@ -34,28 +34,60 @@ exports.N_PLUS_ONE_EMBED_CONFIG = {
     /** Drop tracked fingerprints idle longer than this (ms) when over cap. */
     pruneIdleMs: 30_000,
 };
-/** Match Drift statement prefix (align with `source-tag-parser` / viewer `driftStatementPattern`). */
-exports.DRIFT_SQL_HEAD = /\bDrift:\s+Sent\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
+/** Standard LogInterceptor: `Drift: Sent SELECT …`. */
+exports.DRIFT_SQL_SENT = /\bDrift:\s+Sent\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
+/** DriftDebugInterceptor: `Drift SELECT: SELECT …`. */
+exports.DRIFT_SQL_VERB_COLON = /\bDrift\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:/i;
+/**
+ * Combined head pattern: matches either format.
+ * Align with `source-tag-parser` / viewer `driftStatementPattern`.
+ */
+exports.DRIFT_SQL_HEAD = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:)\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
 /**
  * Parse plain log text: extract normalized SQL fingerprint and args key.
- * Returns null if the line is not a Drift `Sent` statement we recognize.
+ * Handles both standard (`Drift: Sent SELECT …`) and
+ * DriftDebugInterceptor (`Drift SELECT: SELECT …`) formats.
  */
 function parseDriftSqlFingerprint(plainText) {
-    if (!plainText || !exports.DRIFT_SQL_HEAD.test(plainText)) {
+    if (!plainText) {
         return null;
     }
+    let body;
+    let argsIdx;
+    let argsLen;
+    /* Try standard format: "Drift: Sent <SQL> with args [...]" */
     const sentIdx = plainText.indexOf('Drift: Sent ');
-    if (sentIdx < 0) {
-        return null;
+    if (sentIdx >= 0 && exports.DRIFT_SQL_SENT.test(plainText)) {
+        body = plainText.slice(sentIdx + 12).trim();
+        argsIdx = body.lastIndexOf(' with args ');
+        argsLen = 11;
     }
-    const body = plainText.slice(sentIdx + 12).trim();
+    else {
+        /* Try DriftDebugInterceptor: "Drift SELECT: <SQL> | args: [...]" */
+        const vcMatch = exports.DRIFT_SQL_VERB_COLON.exec(plainText);
+        if (!vcMatch) {
+            return null;
+        }
+        const afterColon = plainText.indexOf(':', vcMatch.index + 5);
+        if (afterColon < 0) {
+            return null;
+        }
+        body = plainText.slice(afterColon + 1).trim();
+        /* Primary delimiter is " | args: "; fall back to " with args " */
+        argsIdx = body.lastIndexOf(' | args: ');
+        argsLen = 9;
+        if (argsIdx < 0) {
+            argsIdx = body.lastIndexOf(' with args ');
+            argsLen = 11;
+        }
+    }
     if (!body) {
         return null;
     }
-    const argsIdx = body.lastIndexOf(' with args ');
     const sqlPart = argsIdx >= 0 ? body.slice(0, argsIdx) : body;
-    const argsPart = argsIdx >= 0 ? body.slice(argsIdx + 11).trim() : '';
-    const sql = sqlPart.trim();
+    const argsPart = argsIdx >= 0 ? body.slice(argsIdx + argsLen).trim() : '';
+    /* Strip trailing semicolons — DriftDebugInterceptor appends them before args. */
+    const sql = sqlPart.trim().replace(/;\s*$/, '');
     if (!sql) {
         return null;
     }

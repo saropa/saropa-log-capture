@@ -10,7 +10,7 @@ export function getLevelClassifyScript(): string {
 // ── Structural patterns (hardcoded) ─────────────────────────────────
 var strictStructuralErrorPattern = /\\w*(?:error|exception)\\s*[:\\]!]|\\[(?:error|exception|fatal|panic|critical)\\]|_\\w*(?:Error|Exception)\\b|Null check operator/i;
 var looseStructuralErrorPattern = /\\b(?:error|exception)(?!\\s+(?:handl|recover|logg|report|track|manag|prone|bound|callback|safe))\\b|_\\w*(?:Error|Exception)\\b|Null check operator/i;
-var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 var structuralPerfPattern = /\\b(skipped\\s+\\d+\\s+frames?|gc\\s+(?:pause|freed|concurrent))\\b/i;
 var strictLevelDetection = true;
 var stderrTreatAsError = false;

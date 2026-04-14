@@ -85,6 +85,12 @@ suite('LevelClassifier', () => {
         test('should classify E/flutter Drift SQL as database, not runtime error', () => {
             assert.strictEqual((0, level_classifier_1.classifyLevel)('E/flutter (1): Drift: Sent SELECT 1', 'stdout', true), 'database');
         });
+        test('should classify DriftDebugInterceptor SELECT as database', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ?; | args: [42]', 'stdout', true), 'database');
+        });
+        test('should classify DriftDebugInterceptor UPDATE as database', () => {
+            assert.strictEqual((0, level_classifier_1.classifyLevel)('Drift UPDATE: UPDATE "organizations" SET "version" = ?; | args: [null]', 'stdout', true), 'database');
+        });
     });
     suite('classifyLevel — strict mode', () => {
         test('should detect error with colon suffix', () => {
