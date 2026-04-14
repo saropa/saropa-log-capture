@@ -89,11 +89,10 @@ button:focus-visible, .ib-icon:focus-visible, input:focus-visible {
 .line.level-error {
     color: var(--vscode-debugConsole-errorForeground, #f48771);
 }
-/* Softer than primary fault lines; dashed edge matches severity bar "recent context" tone. */
+/* Softer than primary fault lines; dashed edge matches severity bar "recent context" tone.
+   Uses outline-style trick: inset box-shadow avoids shifting content (no padding override). */
 .line.recent-error-context {
-    border-left: 2px dashed color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 50%, var(--vscode-panel-border, #555));
-    padding-left: 5px;
-    box-sizing: border-box;
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 50%, var(--vscode-panel-border, #555));
 }
 .line.level-error.recent-error-context {
     color: color-mix(in srgb, var(--vscode-debugConsole-errorForeground, #f48771) 72%, var(--vscode-editor-foreground, #d4d4d4));

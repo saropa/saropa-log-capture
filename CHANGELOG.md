@@ -30,6 +30,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+- **Continuation badge no longer floats over log text.** The `[+N lines]` collapse/expand badge was absolutely positioned at the right edge of the line, overlapping content and leaving a confusing empty blue button when expanded. Moved the badge inline next to the line counter as a compact `[+]`/`[−]` pill with the line count shown only in the tooltip.
 - **Signal reports now open in separate tabs.** Previously every signal report reused a single panel, replacing whatever report you were reading. Each report now opens its own tab (titled with the signal template ID) so you can compare multiple reports side by side.
 - **Signals panel text wrapping.** Long signal descriptions (e.g. ANR risk with many indicators) overflowed the panel instead of wrapping. Switched list items to flex layout so the emoji and dismiss button stay pinned while the signal text wraps within the available width.
 - **Device-other lines no longer re-promoted as recent-error context.** Framework logcat lines (ActivityManager, WindowManager, etc.) are demoted from error/warning to info to suppress noise, but the recent-error-context feature was undoing that demotion — painting them with dimmed red dots and error borders when a real error occurred nearby. These lines now stay demoted as intended.

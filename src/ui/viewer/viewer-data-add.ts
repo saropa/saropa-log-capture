@@ -153,7 +153,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     // never gets this tint and is skipped when locating the prior error so it does not break the band.
     var skipProximityInherit = (typeof isDriftSqlStatementLine === 'function' && isDriftSqlStatementLine(plain));
     var recentErrorContext = false;
-    if (lvl === 'info' && !isSep && !skipProximityInherit && typeof proximityInheritAnchor === 'function') {
+    /* Device-other lines are intentionally demoted (error/warning → info) to suppress
+       framework noise.  Skip recentErrorContext so the demotion is not undone — these
+       system messages (ActivityManager, WindowManager, etc.) are unrelated to the
+       actual fault and should never show error-colored dots/borders. */
+    if (lvl === 'info' && !isSep && !skipProximityInherit && lineTier !== 'device-other' && typeof proximityInheritAnchor === 'function') {
         var anchor = proximityInheritAnchor();
         if (anchor && anchor.level === 'error' && ts && anchor.timestamp
             && Math.abs(ts - anchor.timestamp) <= 2000) {
