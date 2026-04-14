@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { formatRelativeTime, defaultDisplayOptions } from '../../../ui/session/session-display';
+import { formatRelativeTime, defaultDisplayOptions, normalizeFilename } from '../../../ui/session/session-display';
 
 suite('session-display', () => {
 
@@ -49,6 +49,51 @@ suite('session-display', () => {
 
         test('should return empty string for future timestamps', () => {
             assert.strictEqual(formatRelativeTime(Date.now() + 60_000), '');
+        });
+    });
+
+    suite('normalizeFilename', () => {
+        test('should replace underscores with spaces and Title Case', () => {
+            assert.strictEqual(normalizeFilename('my_app_name.log'), 'My App Name.log');
+        });
+
+        test('should replace hyphens with spaces and Title Case', () => {
+            assert.strictEqual(normalizeFilename('my-app-name.log'), 'My App Name.log');
+        });
+
+        test('should replace dots with spaces and Title Case', () => {
+            // Bug fix: "contacts.drift-advisor" was showing as "Contacts.drift Advisor"
+            assert.strictEqual(
+                normalizeFilename('contacts.drift-advisor.json'),
+                'Contacts Drift Advisor.json',
+            );
+        });
+
+        test('should handle mixed separators', () => {
+            assert.strictEqual(
+                normalizeFilename('my_app.sub-module.log'),
+                'My App Sub Module.log',
+            );
+        });
+
+        test('should collapse consecutive separators', () => {
+            assert.strictEqual(normalizeFilename('foo__bar--baz.log'), 'Foo Bar Baz.log');
+        });
+
+        test('should preserve extension for known types', () => {
+            assert.strictEqual(normalizeFilename('test.json'), 'Test.json');
+            assert.strictEqual(normalizeFilename('test.log'), 'Test.log');
+            assert.strictEqual(normalizeFilename('test.csv'), 'Test.csv');
+        });
+
+        test('should handle name with no known extension', () => {
+            // No known extension — the whole string is the base
+            assert.strictEqual(normalizeFilename('my_app'), 'My App');
+        });
+
+        test('should fall back to original base when separators produce empty string', () => {
+            // Edge case: name is only separators plus extension — falls back to raw base
+            assert.strictEqual(normalizeFilename('___.log'), '___.log');
         });
     });
 });
