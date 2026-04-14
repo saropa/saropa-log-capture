@@ -87,4 +87,13 @@ describe("SessionManagerImpl", () => {
     const mgr = makeSessionManager();
     assert.strictEqual(mgr.getActiveLastWriteTime(), undefined, "no active session => undefined");
   });
+
+  it("logToOutputChannel writes to the extension output channel", () => {
+    const messages: string[] = [];
+    const oc = { appendLine: (s: string) => { messages.push(s); } };
+    const mgr = new SessionManagerImpl(mockStatusBar as any, oc as any);
+    mgr.logToOutputChannel("test message");
+    assert.strictEqual(messages.length, 1);
+    assert.strictEqual(messages[0], "test message");
+  });
 });
