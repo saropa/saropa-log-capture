@@ -13,6 +13,7 @@ import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import type { ViewerMessageContext } from './viewer-message-types';
 import { handleQuickExportLogs } from './viewer-quick-export';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
+import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-handlers';
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
@@ -119,6 +120,13 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     case "browseSessionRoot": ctx.onBrowseSessionRoot?.()?.then(undefined, () => {}); return true;
     case "clearSessionRoot": ctx.onClearSessionRoot?.()?.then(undefined, () => {}); return true;
     case "openSessionFromPanel": ctx.onOpenSessionFromPanel?.(msgStr(msg, "uriString")); return true;
+    case "openSessionForSignalType": {
+      // Find the most recent session with this signal type and open it in the viewer
+      handleOpenSessionForSignalType(msgStr(msg, "signalType")).then(uri => {
+        if (uri) { ctx.onOpenSessionFromPanel?.(uri); }
+      }).catch(() => {});
+      return true;
+    }
     case "sessionAction": runSessionAction(msg, ctx); return true;
     case "popOutViewer": ctx.onPopOutRequest?.(); return true;
     case "openInsightTab": ctx.onOpenInsightTabRequest?.(); return true;
