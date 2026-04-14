@@ -78,3 +78,25 @@ test("url-link reveals blue on hover", () => {
     ".url-link:hover must switch to textLink blue",
   );
 });
+
+// --- Recent-error-context border ---
+
+test("recent-error-context uses box-shadow, not border-left (no layout shift)", () => {
+  const css = getLineStyles();
+  const rule = css.match(/\.line\.recent-error-context\s*\{[^}]*\}/s)?.[0] ?? "";
+  /* Before this fix, the rule used border-left + padding-left: 5px, which
+     overrode the base 1.85em left padding and shifted content leftward when
+     decorations were off.  box-shadow avoids layout participation entirely. */
+  assert.ok(
+    rule.includes("box-shadow"),
+    ".line.recent-error-context must use box-shadow for the left indicator",
+  );
+  assert.ok(
+    !rule.includes("border-left"),
+    ".line.recent-error-context must not use border-left (causes layout shift)",
+  );
+  assert.ok(
+    !rule.includes("padding-left"),
+    ".line.recent-error-context must not override padding-left (causes content shift)",
+  );
+});
