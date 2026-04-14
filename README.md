@@ -15,24 +15,26 @@
                     └─────────────────────────────────────────┘
 ```
 
-In VS Code, when you stop debugging or switch target, the Debug Console is cleared. Everything you printed is gone. This extension saves that output to log files and adds a viewer so you can keep sessions, search them, compare runs, and click a log line to jump to the source line. No setup: install, hit F5, logs are captured for any adapter (Dart, Node, Python, C++, Go, etc.).
+VS Code deletes your Debug Console the moment you stop debugging. Every `print`, every stack trace, every clue — gone. Saropa Log Capture fixes that. Install it, hit F5, and every debug session is automatically saved, searchable, and browsable. No configuration. Works with any debug adapter: Dart, Flutter, Node, Python, C++, Go, Java, and more.
 
-**What you get that VS Code doesn't:**
+But this is not just a log saver. It is a **full diagnostic workstation** built into VS Code:
 
-- **Logs saved to files** — Debug Console is cleared on stop; here output goes to `reports/*.log` and stays.
-- **Click to source** — Click `file.ts:42` in the log to open that file and line (Ctrl+Click for split).
-- **Search** — Regex search over the log, with history; search across all sessions.
-- **Filter by level** — Show only errors, or warnings, or hide noise; filter by tag (e.g. logcat tags).
-- **Keep and compare sessions** — Open any past session; diff two logs side by side.
-- **Big logs** — Virtual scroll over 100K+ lines without freezing.
-- **Pop-out viewer** — Move the viewer to a second monitor.
-- **Export** — Current view or full session as HTML, CSV, JSON, a shareable `.slc` bundle, or push to Grafana Loki.
+- **Never lose output again** — Debug Console output is saved to `reports/*.log` automatically. Stop debugging, restart, switch targets — your logs survive.
+- **Click to source** — Click `file.ts:42` in any log line to jump straight to the code (Ctrl+Click for split editor).
+- **Search everything** — Regex search with history across the current log or all past sessions.
+- **Filter the noise** — Eight severity levels, source tag chips, exclusion patterns, category filters, and saved presets. Show only what matters.
+- **Compare sessions** — Side-by-side diff of any two runs. Spot regressions instantly.
+- **100K+ lines, no lag** — Virtual scrolling handles massive logs without freezing.
+- **Error intelligence** — Errors auto-classified as CRITICAL, TRANSIENT, or BUG with inline badges. Recurring patterns surfaced across sessions. Optional sound/flash alerts.
+- **Signals** — Automatic detection of slow operations, N+1 queries, ANR risk, and error clusters with evidence-backed reports.
+- **SQL diagnostics** — Drift ORM query fingerprinting, repeat compression, N+1 detection, slow query burst markers, and session SQL comparison.
+- **Pop-out viewer** — Move the viewer to a second monitor for full-screen log analysis.
+- **Export anywhere** — HTML, CSV, JSON, shareable `.slc` bundles, or push to Grafana Loki.
 - **Tail any log** — Open any workspace `.log` file and watch new lines live.
-- **Run navigation** — For Flutter: jump between runs (launch, hot restart, hot reload) inside one log.
-- **Error alerts** — Optional sound or flash when errors appear; errors classified (e.g. crash vs timeout).
-- **Session context** — Optional: lockfile hash, Git state, env snapshot, test results in each log header.
-
-The viewer is built for real use: virtual scrolling, severity filters, run navigation for Flutter, side-by-side diff. You can tail any workspace log, export filtered views or full sessions, or attach optional adapters (lockfile, Git, env, test results, crash dumps) to session headers.
+- **Run navigation** — Jump between Flutter runs (launch, hot restart, hot reload) inside a single log.
+- **Session context** — Optional adapters attach lockfile hashes, Git state, env snapshots, test results, crash dumps, Docker inspect, and more to each session header.
+- **Structured log parsing** — Auto-detects logcat, syslog, and other formats; strips prefix metadata; click-to-filter on extracted fields.
+- **ASCII art detection** — Box-drawing characters and figlet banners detected and grouped into styled visual blocks.
 
 <!-- GitHub Activity -->
 [![GitHub stars](https://img.shields.io/github/stars/saropa/saropa-log-capture?style=social)](https://github.com/saropa/saropa-log-capture)
@@ -51,13 +53,59 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 
 ---
 
-## Overview
+## Installation & Quick Start
 
-- **Logs saved, not lost:** VS Code clears the Debug Console when you stop; this extension writes output to files and gives you a viewer that handles 100K+ lines (virtual scroll), click-to-source, and theme support.
-- **No config:** Install, start debugging (F5); logs are captured automatically. Works with any debug adapter.
-- **Viewer:** Click source links in logs to jump to code (Ctrl+Click for split). Pop-out to a second monitor. Run navigator (Run 1 of N) for Flutter hot restart/reload. Error classification and optional sound/flash on errors. Tail any workspace `.log` file live. Export filtered views or full sessions as `.slc` bundles. Optional adapters add lockfile hash, Git, env, test/coverage/crash data to session headers.
+1. Install the extension from the VS Code Marketplace
+2. Start a debug session (F5)
+3. Output is automatically captured to the `reports/` directory
+4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
+
+**Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host. To run the test suite in the IDE, install the recommended **Extension Test Runner** and use the Testing view; see Contributing for details.
+
+---
+
+## Contents
+
+- [Screenshots](#screenshots)
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Remote development](#remote-development-ssh-wsl-dev-containers)
+- [Usage](#usage)
+  - [Full Debug Console Capture](#full-debug-console-capture-app-only-off)
+  - [Power Shortcuts](#power-shortcuts-panel-viewer)
+- [Key Commands](#key-commands)
+- [Configuration](#configuration)
+  - [Capture Settings](#capture-settings)
+  - [Viewer & Display Settings](#viewer--display-settings)
+  - [Filter & Search Settings](#filter--search-settings)
+  - [Alert & Diagnostics Settings](#alert--diagnostics-settings)
+  - [File Splitting Rules](#file-splitting-rules)
+  - [Advanced Settings](#advanced-settings)
+- [Extension API](#extension-api)
+- [Known Limitations](#known-limitations)
+- [Keyboard shortcuts and accessibility](#keyboard-shortcuts-and-accessibility)
+- [Contributing](#contributing)
+- [Documentation](#documentation)
+- [License](#license)
+
+---
+
+## Screenshots
+
+![Debug output in the log viewer with colored severity markers, framework classification, and run navigation](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/screenshots/20260414_project_log_view.png)
 
 ![Log viewer showing Drift SQL queries with syntax highlighting and diagnostic badges](https://raw.githubusercontent.com/saropa/saropa-log-capture/main/images/screenshots/20260401_log_viewer_sql.png)
+
+---
+
+## Overview
+
+- **Zero-config capture:** Install, start debugging (F5), done. Every debug session is saved to `reports/*.log` automatically. Works with any debug adapter — Dart, Flutter, Node, Python, C++, Go, Java, and more.
+- **Diagnostic viewer:** Not just a log file reader — a virtual-scrolling, severity-filtered, click-to-source viewer that handles 100K+ lines. Pop-out to a second monitor. Run navigation for Flutter. Side-by-side session diff.
+- **Error intelligence and signals:** Errors auto-classified by type (crash, timeout, bug). Recurring patterns aggregated across sessions. Automatic detection of slow operations, N+1 queries, ANR risk, and error clusters — each with evidence-backed signal reports.
+- **SQL diagnostics:** Drift ORM query fingerprinting, repeat compression, N+1 detection, slow burst markers, and cross-session SQL comparison.
+- **Export and share:** HTML, CSV, JSON, `.slc` bundles, Grafana Loki push, deep links, and investigation sharing.
 
 ---
 
@@ -73,7 +121,26 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **File retention:** Oldest logs auto-deleted when limit exceeded.
 - **Auto file split:** Split logs by line count, size, keywords, duration, or silence.
 - **Context header:** Each log file starts with session metadata.
-- **Integration adapters:** Opt-in adapters add header lines and meta per session; status bar shows which contributed. Configure via `saropaLogCapture.integrations.adapters`. Adapters: Packages (lockfile hash), Build/CI (file or GitHub/Azure/GitLab API; tokens via command palette), Git (describe, uncommitted, stash), Environment snapshot, Test results (file or JUnit XML), Code coverage (lcov/Cobertura), Crash dumps (scan at session end; optional copy into session folder), Windows Event Log (Application/System, Windows only), Docker (container inspect/logs at session end), Performance (system snapshot, optional sampling, optional profiler file copy and debug process memory), Terminal output (capture Integrated Terminal to sidecar), WSL/Linux logs (dmesg, journalctl), Application/file logs (tail configured paths during session, write `basename.<label>.log` sidecars; viewer **Sources** filter includes `external:<label>`; commands to add a path and open sidecars); optional **unified session log** (`integrations.unifiedLog.writeAtSessionEnd`) writes `basename.unified.jsonl` for one-file sharing; open it in the viewer with the same Sources filter, Security/audit (Windows Security channel, app audit file), Database query logs (correlate by request ID), HTTP/network (request log, HAR), Browser/DevTools (browser console log file), Drift Advisor (built-in session-end pull from Drift `getSessionSnapshot()` or `.saropa/drift-advisor-session.json` when adapter enabled; meta/sidecar; Open in Drift Advisor on drift-perf/drift-query lines when extension installed). See Options → Integrations… (opens a dedicated screen with descriptions, performance notes, and when-to-disable for each adapter).
+- **Integration adapters:** Opt-in adapters add header lines and metadata per session; the status bar shows which contributed. Configure via `saropaLogCapture.integrations.adapters`. See Options → Integrations… for descriptions, performance notes, and when-to-disable guidance.
+  - **Packages** — lockfile hash
+  - **Build/CI** — file or GitHub/Azure/GitLab API (tokens via command palette)
+  - **Git** — describe, uncommitted changes, stash
+  - **Environment snapshot** — captured env vars (respects `redactEnvVars`)
+  - **Test results** — file or JUnit XML
+  - **Code coverage** — lcov/Cobertura
+  - **Crash dumps** — scan at session end; optional copy into session folder
+  - **Windows Event Log** — Application/System channels (Windows only)
+  - **Docker** — container inspect/logs at session end
+  - **Performance** — system snapshot, optional sampling, profiler file copy, debug process memory
+  - **Terminal output** — capture Integrated Terminal to a `.terminal.log` sidecar
+  - **WSL/Linux logs** — dmesg, journalctl
+  - **Application/file logs** — tail configured paths during session; write `basename.<label>.log` sidecars; viewer Sources filter includes `external:<label>`; commands to add a path and open sidecars
+  - **Security/audit** — Windows Security channel, app audit file
+  - **Database query logs** — correlate by request ID
+  - **HTTP/network** — request log, HAR
+  - **Browser/DevTools** — browser console log file
+  - **Drift Advisor** — built-in session-end pull from Drift `getSessionSnapshot()` or `.saropa/drift-advisor-session.json`; Open in Drift Advisor on drift-perf/drift-query lines when the extension is installed
+  - **Unified session log** — optional (`integrations.unifiedLog.writeAtSessionEnd`); writes `basename.unified.jsonl` for one-file sharing; opens in the viewer with the same Sources filter
 - **ANSI preservation:** Raw ANSI codes kept in files for external tools.
 - **Gitignore safety:** Offers to add log dir to `.gitignore` on first run.
 - **Full Debug Console Capture:** Toggle "App Only" or set `saropaLogCapture.captureAll` to capture all output including system/framework logs.
@@ -83,12 +150,12 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar). Virtual scroll rebuilds only when the visible line range changes (stable when filters hide most lines); tail-follow uses hysteresis so it does not thrash near the end of the log.
 - **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Find in Files, filters, bookmarks, trash, Options, and Pop Out. In-log search lives in the **session bar** (not a slide-out): **Ctrl+F** focuses the field; **case / whole word / regex** show while the field is focused or has text (or always if **`saropaLogCapture.viewerAlwaysShowSearchMatchOptions`** is on). **Compress lines** (hide blanks + collapse consecutive duplicates) is a toggle on the **log pane** (top-left), also available under Options → Layout. Clicking an icon toggles its slide-out panel where applicable. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
 - **Session log navigation:** **Log *n* of *N*** in the session bar uses **chevron-only** prev/next buttons (full wording in tooltips for screen readers).
-- **Drift SQL N+1 hint:** Bursts of the same normalized `Drift: Sent …` query with different `with args` payloads may insert a synthetic insight row (confidence label + **Focus DB** / **Find fingerprint** / **Static sources** — workspace index search for possible call sites; suggestive only). Sample lines: `examples/drift-n-plus-one-sample-lines.txt`.
+- **Drift SQL N+1 hint:** Bursts of the same normalized `Drift: Sent …` query with different `with args` payloads may insert a synthetic signal row (confidence label + **Focus DB** / **Find fingerprint** / **Static sources** — workspace index search for possible call sites; suggestive only). Sample lines: `examples/drift-n-plus-one-sample-lines.txt`.
 - **Slow query burst marker (DB_08):** When **`database`**-tagged lines include replay/capture **`[+Nms]`** durations, five or more “slow” queries (default ≥ 50ms) inside a 2s window insert a green **Slow query burst** marker; click scrolls to the completing line. Settings: `saropaLogCapture.viewerSlowBurst*`. Sample: `examples/drift-slow-burst-sample-lines.txt`.
-- **Signals strip (DB_14):** When the log has enough correlated signal (recent errors, N+1 insights, or high-volume SQL fingerprints), a compact **Signals** panel above the log shows template bullets with optional confidence labels and line links to evidence; dismiss is per log until clear. QA notes: `examples/root-cause-hypotheses-sample.txt`.
+- **Signals strip (DB_14):** When the log has enough correlated signal (recent errors, N+1 signals, or high-volume SQL fingerprints), a compact **Signals** panel above the log shows template bullets with optional confidence labels and line links to evidence; dismiss is per log until clear. QA notes: `examples/root-cause-hypotheses-sample.txt`.
 - **Drift SQL repeat collapse:** For **`database`**-tagged lines, duplicate suppression keys normalized SQL fingerprints (same shape, different args = one streak) and uses **verb-specific** minimum repeat counts before collapsing (reads vs transactions vs DML). **SQL repeated** summary rows can be **expanded** for arg samples and timestamps without turning off compression. Settings: `saropaLogCapture.repeatCollapse*`. QA notes: `examples/drift-repeat-collapse-thresholds.txt`.
 - **Top SQL Patterns (filters):** Fingerprint chips for repeated Drift SQL shapes (with **Other SQL** for rare shapes). Settings: `saropaLogCapture.viewerSqlPatternChipMinCount`, `viewerSqlPatternMaxChips`. QA: `examples/sql-fingerprint-guardrails-sample.txt`.
-- **DB insights sub-toggles & session SQL compare (`DB_15` / `DB_10`):** When **database insights** are on, optional settings turn **N+1**, **slow burst**, and **baseline volume** hints on or off independently. Compare-two-sessions can set a SQL baseline from the other file; the viewer may show **Slow A / B / Δ slow** when scans use duration brackets and the slow threshold. QA: `examples/session-comparison-drift-sql-qa.txt` and `examples/README.md`.
+- **DB signals sub-toggles & session SQL compare (`DB_15` / `DB_10`):** When **database signals** are on, optional settings turn **N+1**, **slow burst**, and **baseline volume** hints on or off independently. Compare-two-sessions can set a SQL baseline from the other file; the viewer may show **Slow A / B / Δ slow** when scans use duration brackets and the slow threshold. QA: `examples/session-comparison-drift-sql-qa.txt` and `examples/README.md`.
 - **Pop-out viewer:** Click the pop-out icon to open the viewer as a floating window, movable to a second monitor. The pop-out loads the same log file as the sidebar so you see full history from the start, and both surfaces keep receiving live data. You can also open the Saropa Log Capture tab in a new window (e.g. right‑click tab → Open in New Window); clicking a session there shows the log in that window.
 - **Click-to-source:** Click `file.ts:42` in logs to jump to source; Ctrl+Click for split editor.
 - **Collapsible stack traces:** Stack frames are grouped and collapsed by default. Click to cycle through preview (first 3 app frames), expanded, and collapsed.
@@ -120,8 +187,8 @@ The viewer is built for real use: virtual scrolling, severity filters, run navig
 - **Error breakpoints:** Visual and audio alerts when errors appear—flash border, sound, counter badge, optional modal popup.
 - **Multi-level classification:** Eight severity levels—Error, Warning, Info, Performance, TODO, Debug/Trace, Notice, and Database—each auto-detected with dedicated colors and filters. Drift `Drift: Sent …` SQL trace lines classify as Database (not runtime errors). The TODO level catches TODO, FIXME, HACK, XXX, BUG, KLUDGE, and WORKAROUND keywords. After a primary error or stack line, nearby plain lines within a short time window may show as **recent-error context** (softer red and dashed accent; see Level Filters fly-up); interleaved Drift SQL does not break that band.
 
-### Insight (Cases, Recurring, Hot files, Performance)
-- **Insight panel:** Single icon-bar panel (lightbulb), one scroll, no tabs. Accordion sections: **Active Cases** (investigations—create and open named collections of sessions/files; top 3 + View All), **Recurring errors** (aggregated error patterns across sessions; top 5; Export summary), **Frequently modified files** (hot files across sessions; collapsed by default), and **Performance** (when a log is open: **Current**, **Trends**, **Log**, **Database**, and **Errors** — Drift SQL session rollup + simple timeline; Flutter/Dart memory lines, when context-gated, appear in a **Memory** group under Current). Context-aware: with no log selected you see Cases, Recurring, and Hot files; with a log selected Performance moves to the top. Project Logs shows only the session list; create and manage investigations from Insight → Cases. Session bar **Performance** chip opens Insight and focuses the Performance section.
+### Signals (Cases, All Signals, Hot files, Performance)
+- **Signals panel:** Single icon-bar panel (lightbulb), one scroll, no tabs. Accordion sections: **Active Cases** (investigations—create and open named collections of sessions/files; top 3 + View All), **All Signals** (unified cross-session list of errors, warnings, performance fingerprints, SQL fingerprints, network/memory/slow-op detections, and Drift Advisor issues — sorted by severity then impact; each entry shows kind icon, detail, session count, duration stats, and severity badge), **Frequently modified files** (hot files across sessions; collapsed by default), and **Performance** (when a log is open: **Current**, **Trends**, **Log**, **Database**, and **Errors** — Drift SQL session rollup + simple timeline). Context-aware: with no log selected you see Cases, All Signals, and Hot files; with a log selected "This log" shows all signals detected in the current session. Session bar **Performance** chip opens the Signals panel and focuses the Performance section.
 
 ### Display & Layout
 - **Line decorations:** Severity dots, sequential counters, timestamps (with optional milliseconds), session elapsed time (e.g. 5m 15s), and whole-line coloring — each togglable independently via the Options panel or context menu (Layout submenu). No master switch; decorations appear when any individual option is on. Blank lines skip the severity dot (the vertical bar continues); counter on blank lines is optional via **Decoration settings** → **Show line number on blank lines** (off by default) so Go to Line matches file references.
@@ -182,15 +249,6 @@ The extension runs in the **workspace** context, so when you open a folder via *
 - **Supported:** [Remote - SSH](https://code.visualstudio.com/docs/remote/ssh), [WSL](https://code.visualstudio.com/docs/remote/wsl), [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers).
 - **Recommendation:** Use a **relative** log directory (e.g. `reports` or `.logs`) in remote workspaces so logs stay under the workspace. An absolute `saropaLogCapture.logDirectory` is resolved on the extension host (the remote), which is fine but less portable.
 - **No extra setup:** Install the extension; when you open a remote folder and start debugging, capture and viewer behave the same as on a local workspace.
-
-## Installation & Quick Start
-
-1. Install the extension from the VS Code Marketplace
-2. Start a debug session (F5)
-3. Output is automatically captured to the `reports/` directory
-4. Click the **Saropa Log Capture** icon on the activity bar to view output in real time
-
-**Testing the extension (F5):** Use **VS Code** (not Cursor) to run the Extension Development Host: **File → Open Folder** → this repo, then press **F5**. Cursor may not load the extension when used as the F5 host. To run the test suite in the IDE, install the recommended **Extension Test Runner** and use the Testing view; see Contributing for details.
 
 ---
 
@@ -265,48 +323,75 @@ All settings are prefixed with `saropaLogCapture.`
 <details>
 <summary><strong>Click to expand settings table</strong></summary>
 
-| Setting                         | Default                                                                     | Description                                                                                                                                                                           |
-| ------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enabled`                       | `true`                                                                      | Enable/disable automatic log capture. Also toggled in Options → Capture.                                                                                                                                                  |
-| `categories`                    | `["console","stdout","stderr"]`                                             | DAP output categories to capture                                                                                                                                                      |
-| `maxLines`                      | `100000`                                                                    | Maximum lines per log file                                                                                                                                                            |
-| `viewerMaxLines`                | `0`                                                                         | Max lines shown in viewer (0 = 50,000). Cannot exceed `maxLines`. Reduce for large files.                                                                                             |
-| `includeTimestamp`              | `true`                                                                      | Prefix each line with a timestamp                                                                                                                                                     |
-| `includeSourceLocation`         | `false`                                                                     | Include source file and line number in log lines                                                                                                                                      |
-| `includeElapsedTime`            | `false`                                                                     | Show elapsed time since previous line in log files                                                                                                                                    |
-| `format`                        | `"plaintext"`                                                               | Output format (plaintext only for now)                                                                                                                                                |
-| `logDirectory`                  | `"reports"`                                                                 | Where to save log files (relative to workspace root)                                                                                                                                  |
-| `autoOpen`                      | `false`                                                                     | Open log file when debug session ends                                                                                                                                                 |
-| `maxLogFiles`                   | `10`                                                                        | Max log files to retain (0 = unlimited)                                                                                                                                               |
-| `organizeFolders`               | `true`                                                                      | Move flat log files into `yyyymmdd/` date subfolders on session start                                                                                                                 |
-| `includeSubfolders`             | `true`                                                                      | Include log files from date subfolders in session history, search, and analysis                                                                                                       |
-| `gitignoreCheck`                | `true`                                                                      | Offer to add log directory to .gitignore on first run                                                                                                                                 |
-| `redactEnvVars`                 | `[]`                                                                        | Env var patterns to redact from headers. **Tip:** Redact secrets (e.g. `API_KEY`, `SECRET_*`, `*_TOKEN`) by adding matching patterns so they never appear in session context headers. |
-| `captureAll`                    | `false`                                                                     | Capture all Debug Console output, bypassing filters                                                                                                                                   |
-| `exclusions`                    | `[]`                                                                        | Patterns to exclude from viewer (string or `/regex/`)                                                                                                                                 |
-| `viewerAlwaysShowSearchMatchOptions` | `false`                                                                | Always show case / whole word / regex toggles in the session-bar search; when off, they appear only while the field is focused or has text                                          |
-| `filterContextLines`            | `3`                                                                         | Context lines shown around level-filter matches                                                                                                                                       |
-| `contextViewLines`              | `10`                                                                        | Context lines shown in inline peek on double-click                                                                                                                                    |
-| `watchPatterns`                 | `[{keyword:"error",...},{keyword:"exception",...},{keyword:"warning",...}]` | Keywords to watch with alert type                                                                                                                                                     |
-| `showElapsedTime`               | `false`                                                                     | Show elapsed time between consecutive log lines                                                                                                                                       |
-| `slowGapThreshold`              | `1000`                                                                      | Elapsed time threshold (ms) for highlighting slow gaps                                                                                                                                |
-| `suppressTransientErrors`       | `false`                                                                     | Hide expected transient errors (timeout, socket, etc.)                                                                                                                                |
-| `breakOnCritical`               | `false`                                                                     | Show notification when critical errors appear                                                                                                                                         |
-| `levelDetection`                | `"strict"`                                                                  | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere)                                                                                                       |
-| `stderrTreatAsError`            | `false`                                                                     | When true, force all DAP `stderr` lines to error/red; when false, classify stderr by content like other categories                                                                   |
-| `severityKeywords`              | *(see below)*                                                               | User-editable keyword lists per severity level (error, warning, performance, todo, debug, notice). Each keyword is matched as a case-insensitive whole word. Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) are built-in |
-| `verboseDap`                    | `false`                                                                     | Log all raw DAP protocol messages to the log file                                                                                                                                     |
-| `diagnosticCapture`            | `false`                                                                     | Log capture pipeline events (session/buffer/write) to the Saropa Log Capture output channel; use when log files are empty to debug                                                                 |
-| `highlightRules`                | *(3 built-in rules)*                                                        | Pattern-based line coloring rules                                                                                                                                                     |
-| `filterPresets`                 | `[]`                                                                        | Saved filter presets for quick application                                                                                                                                            |
-| `autoTagRules`                  | `[]`                                                                        | Rules for auto-tagging sessions by content patterns                                                                                                                                   |
-| `splitRules.maxLines`           | `0`                                                                         | Split file after N lines (0 = disabled)                                                                                                                                               |
-| `splitRules.maxSizeKB`          | `0`                                                                         | Split file after N KB (0 = disabled)                                                                                                                                                  |
-| `splitRules.keywords`           | `[]`                                                                        | Split when keyword or `/regex/` matched                                                                                                                                               |
-| `splitRules.maxDurationMinutes` | `0`                                                                         | Split after N minutes (0 = disabled)                                                                                                                                                  |
-| `splitRules.silenceMinutes`     | `0`                                                                         | Split after N minutes of silence (0 = disabled)                                                                                                                                       |
-| `tailPatterns`                  | `["**/*.log"]`                                                              | Glob patterns for **Open Tailed File** (workspace-relative)                                                                                                                           |
-| `projectIndex.enabled`         | `true`                                                                      | Enable project-wide indexing of docs and session metadata (`.saropa/index/`) for faster analysis and doc matching                                                                     |
+### Capture Settings
+
+| Setting              | Default                         | Description                                                                                                                                      |
+| -------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enabled`            | `true`                          | Enable/disable automatic log capture. Also toggled in Options → Capture.                                                                         |
+| `categories`         | `["console","stdout","stderr"]` | DAP output categories to capture                                                                                                                 |
+| `maxLines`           | `100000`                        | Maximum lines per log file                                                                                                                       |
+| `includeTimestamp`   | `true`                          | Prefix each line with a timestamp                                                                                                                |
+| `includeSourceLocation` | `false`                      | Include source file and line number in log lines                                                                                                 |
+| `includeElapsedTime` | `false`                         | Show elapsed time since previous line in log files                                                                                               |
+| `format`             | `"plaintext"`                   | Output format (plaintext only for now)                                                                                                           |
+| `captureAll`         | `false`                         | Capture all Debug Console output, bypassing filters                                                                                              |
+
+### Viewer & Display Settings
+
+| Setting              | Default          | Description                                                                                                          |
+| -------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `viewerMaxLines`     | `0`              | Max lines shown in viewer (0 = 50,000). Cannot exceed `maxLines`. Reduce for large files.                            |
+| `showElapsedTime`    | `false`          | Show elapsed time between consecutive log lines                                                                      |
+| `slowGapThreshold`   | `1000`           | Elapsed time threshold (ms) for highlighting slow gaps                                                               |
+| `contextViewLines`   | `10`             | Context lines shown in inline peek on double-click                                                                   |
+| `highlightRules`     | *(3 built-in)*   | Pattern-based line coloring rules                                                                                    |
+
+### Filter & Search Settings
+
+| Setting              | Default                                                              | Description                                                                                                          |
+| -------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `exclusions`         | `[]`                                                                 | Patterns to exclude from viewer (string or `/regex/`)                                                                |
+| `viewerAlwaysShowSearchMatchOptions` | `false`                                            | Always show case / whole word / regex toggles in the session-bar search; when off, they appear only while the field is focused or has text |
+| `filterContextLines` | `3`                                                                  | Context lines shown around level-filter matches                                                                      |
+| `watchPatterns`      | `[{keyword:"error",...},{keyword:"exception",...},{keyword:"warning",...}]` | Keywords to watch with alert type                                                                              |
+| `filterPresets`      | `[]`                                                                 | Saved filter presets for quick application                                                                           |
+
+### Alert & Diagnostics Settings
+
+| Setting                | Default        | Description                                                                                                                                                                        |
+| ---------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `suppressTransientErrors` | `false`     | Hide expected transient errors (timeout, socket, etc.)                                                                                                                             |
+| `breakOnCritical`      | `false`        | Show notification when critical errors appear                                                                                                                                      |
+| `levelDetection`       | `"strict"`     | Error detection mode: `strict` (label positions) or `loose` (keywords anywhere)                                                                                                    |
+| `stderrTreatAsError`   | `false`        | When true, force all DAP `stderr` lines to error/red; when false, classify stderr by content like other categories                                                                 |
+| `severityKeywords`     | *(see below)*  | User-editable keyword lists per severity level (error, warning, performance, todo, debug, notice). Each keyword is matched as a case-insensitive whole word. Structural patterns (logcat prefixes, `Error:`, `[error]`, Dart `_TypeError`) are built-in |
+
+### File Splitting Rules
+
+| Setting                         | Default      | Description                                |
+| ------------------------------- | ------------ | ------------------------------------------ |
+| `splitRules.maxLines`           | `0`          | Split file after N lines (0 = disabled)    |
+| `splitRules.maxSizeKB`          | `0`          | Split file after N KB (0 = disabled)       |
+| `splitRules.keywords`           | `[]`         | Split when keyword or `/regex/` matched    |
+| `splitRules.maxDurationMinutes` | `0`          | Split after N minutes (0 = disabled)       |
+| `splitRules.silenceMinutes`     | `0`          | Split after N minutes of silence (0 = disabled) |
+
+### Advanced Settings
+
+| Setting              | Default          | Description                                                                                                                                      |
+| -------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `logDirectory`       | `"reports"`      | Where to save log files (relative to workspace root)                                                                                             |
+| `autoOpen`           | `false`          | Open log file when debug session ends                                                                                                            |
+| `maxLogFiles`        | `10`             | Max log files to retain (0 = unlimited)                                                                                                          |
+| `organizeFolders`    | `true`           | Move flat log files into `yyyymmdd/` date subfolders on session start                                                                            |
+| `includeSubfolders`  | `true`           | Include log files from date subfolders in session history, search, and analysis                                                                   |
+| `gitignoreCheck`     | `true`           | Offer to add log directory to .gitignore on first run                                                                                            |
+| `redactEnvVars`      | `[]`             | Env var patterns to redact from headers. **Tip:** Add `API_KEY`, `SECRET_*`, `*_TOKEN` to keep secrets out of session context headers.            |
+| `autoTagRules`       | `[]`             | Rules for auto-tagging sessions by content patterns                                                                                              |
+| `tailPatterns`       | `["**/*.log"]`   | Glob patterns for **Open Tailed File** (workspace-relative)                                                                                      |
+| `projectIndex.enabled` | `true`         | Enable project-wide indexing of docs and session metadata (`.saropa/index/`) for faster analysis and doc matching                                 |
+| `verboseDap`         | `false`          | Log all raw DAP protocol messages to the log file                                                                                                |
+| `diagnosticCapture`  | `false`          | Log capture pipeline events (session/buffer/write) to the Saropa Log Capture output channel; use when log files are empty to debug                |
 
 </details>
 
@@ -372,13 +457,13 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 ## Known Limitations
 
-- **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header or one line, use **Prev/Next** in the viewer (output may be in the other log from the same run) and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](bugs/010_runbook-missing-or-empty-logs.md).
+- **Empty or near-empty log files:** If the Debug Console has output but the open log shows only a header or one line, use **Prev/Next** in the viewer (output may be in the other log from the same run) and enable `diagnosticCapture` to inspect the pipeline. See [Runbook: Missing or empty log files](plans/integrations/010_runbook-missing-or-empty-logs.md).
 - **Viewer line cap:** When opening a log file, the viewer shows the first N lines. The cap is `saropaLogCapture.viewerMaxLines` (0 = default 50,000) and cannot exceed `saropaLogCapture.maxLines` (default 100,000). Set `viewerMaxLines` lower to reduce memory for very large files. The toolbar shows "Showing first X of Y lines" when truncated. The full file is kept on disk up to `maxLines`.
 - **Debug Console only:** The main capture stream is from the VS Code Debug Console (DAP). To also capture Integrated Terminal output, enable the `terminal` integration adapter — terminal output is written to a separate `.terminal.log` file at session end.
 
 ### Keyboard shortcuts and accessibility
 
-**Accessibility:** The webview viewer is built for keyboard and assistive tech use. The main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` and a live region that announces line-count updates when filtering or loading. Slide-out panels (Options, Project Logs, etc.) have `region` landmarks and labeled controls; when you open a panel, focus moves into it, and **Escape** or the panel’s Close button returns focus to the icon bar. Native controls (buttons, selects, range inputs) are focusable and operable with Enter/Space. Replay controls, session/split navigation, and level filters are labeled. VS Code’s webview hosts this UI, so focus behavior at the editor boundary follows the host. For a full audit and remaining work, see [bugs/028_plan-webview-accessibility.md](bugs/028_plan-webview-accessibility.md) and [bugs/028_webview-a11y-audit.md](bugs/028_webview-a11y-audit.md).
+**Accessibility:** The webview viewer is built for keyboard and assistive tech use. The main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` and a live region that announces line-count updates when filtering or loading. Slide-out panels (Options, Project Logs, etc.) have `region` landmarks and labeled controls; when you open a panel, focus moves into it, and **Escape** or the panel’s Close button returns focus to the icon bar. Native controls (buttons, selects, range inputs) are focusable and operable with Enter/Space. Replay controls, session/split navigation, and level filters are labeled. VS Code’s webview hosts this UI, so focus behavior at the editor boundary follows the host. For a full audit and remaining work, see [plans/028_plan-webview-accessibility.md](plans/028_plan-webview-accessibility.md) and [plans/028_webview-a11y-audit.md](plans/028_webview-a11y-audit.md).
 
 **Keyboard shortcuts** (when the log viewer has focus):
 
@@ -458,7 +543,7 @@ Four top-level docs (plus `CHANGELOG_ARCHIVE.md` for older releases):
 | -------------------------------------------------------- | ------------------------------------------------------- |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                       | Developer setup, code standards, and how to contribute  |
 | [CHANGELOG.md](../CHANGELOG.md)                             | Version history and release notes                       |
-| [ROADMAP.md](ROADMAP.md)                                 | Planned features, project review, and direction         |
+| [ROADMAP.md](ROADMAP.md)                                 | Links to feature plans and completed work               |
 | [STYLE_GUIDE.md](STYLE_GUIDE.md)                         | Code style conventions and patterns                     |
 
 ---
