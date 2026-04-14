@@ -176,9 +176,16 @@ suite('Stack level inheritance from parent line', () => {
     });
 
     test('should use previousLineLevel for stack-header level', () => {
+        /* The header stores level: _hdrLevel, where _hdrLevel = previousLineLevel().
+           The indirection exists so the same backward-scan result feeds both the
+           level property and the isTierHidden warnplus check. */
         assert.ok(
-            addScript.includes('level: previousLineLevel()'),
-            'stack-header must inherit level from previous line via previousLineLevel()',
+            addScript.includes('var _hdrLevel = previousLineLevel()'),
+            'stack-header level must come from previousLineLevel() via _hdrLevel',
+        );
+        assert.ok(
+            addScript.includes('level: _hdrLevel'),
+            'stack-header must store level from _hdrLevel',
         );
     });
 

@@ -8,7 +8,7 @@ All notable changes to Saropa Log Capture will be documented in this file.
 
 **GitHub Source Code** - [github.com / saropa / saropa-log-capture](https://github.com/saropa/saropa-log-capture)
 
-For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
+For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md).
 
 <!-- MAINTENANCE NOTES -- IMPORTANT --
 
@@ -23,6 +23,20 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
     **Published version**: See field "version": "x.y.z" in [package.json](./package.json)
 
 -->
+
+---
+
+## [Unreleased]
+
+### Fixed
+
+- **Capture now attaches to debug sessions that are already running at activation time.** After a window reload, extension host restart, or late activation, the extension detects the active debug session and starts capture immediately instead of silently missing it.
+
+### Added
+
+- **Collapsible daily groupings in Project Logs.** Click a day heading to collapse or expand that group. Collapsed state persists while the panel stays open. Headings show a chevron indicator and support keyboard navigation (Enter/Space).
+- **Tri-state tier filter for Flutter and Device logs.** The Log Inputs section in the filter drawer now offers three modes per tier — All, Warn+, and None — instead of a simple on/off checkbox. "Warn+" surfaces only warnings and errors from that tier while hiding info/debug noise. The keyboard shortcut `A` cycles Device through all three states.
+- **Flutter CLI crash log detection.** When Flutter's tooling crashes (`flutter test`, `flutter run`, `flutter build`), it writes `flutter_XX.log` files to the workspace root. The extension now auto-detects these files, imports them into the reports directory so they appear in the session history list, and annotates any active debug session with the crash details. Enabled by default via the `flutterCrashLogs` integration adapter.
 
 ---
 
