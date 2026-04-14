@@ -6,7 +6,7 @@
  */
 import { t } from '../../l10n';
 import { getPerformancePanelHtml } from './viewer-performance-panel';
-import { getInsightPanelScriptContent, type InsightScriptStrings } from './viewer-insight-panel-script';
+import { getInsightPanelScriptContent, type InsightScriptStrings } from './viewer-signal-panel-script';
 
 const INSIGHT_STORAGE_KEY = 'insightSectionState';
 

@@ -14,7 +14,7 @@ import {
     setBuildCiAzurePat, deleteBuildCiAzurePat,
     setBuildCiGitlabToken, deleteBuildCiGitlabToken,
 } from './modules/integrations/providers/build-ci';
-import { exportSignalsSummaryCmd } from './commands-export-insights';
+import { exportSignalsSummaryCmd } from './commands-export-signals';
 import { htmlExportCmd, fileExportCmd, buildCiTokenCmd, importInvestigationFromSlc } from './commands-export-helpers';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {

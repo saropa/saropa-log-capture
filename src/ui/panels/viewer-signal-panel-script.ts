@@ -10,10 +10,10 @@
  * label; export confirmation (handled in command). Section order State A: Cases → Across → Env.
  */
 
-import { getInsightScriptPartA } from './viewer-insight-panel-script-part-a';
-import { getInsightScriptPartB } from './viewer-insight-panel-script-part-b';
-import { getInsightScriptPartC } from './viewer-insight-panel-script-part-c';
-import { getInsightScriptPartD } from './viewer-insight-panel-script-part-d';
+import { getInsightScriptPartA } from './viewer-signal-panel-script-part-a';
+import { getInsightScriptPartB } from './viewer-signal-panel-script-part-b';
+import { getInsightScriptPartC } from './viewer-signal-panel-script-part-c';
+import { getInsightScriptPartD } from './viewer-signal-panel-script-part-d';
 
 const MAX_RECURRING_TEXT_LEN = 90;
 
