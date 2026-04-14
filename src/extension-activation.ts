@@ -41,6 +41,7 @@ import { autoLoadLatest, maybeSuggestSmartBookmark, showWalkthroughOnFirstInstal
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
+import { startFlutterCrashWatcher } from './modules/integrations/flutter-crash-watcher';
 
 export interface ActivationRefs {
     readonly api: SaropaLogCaptureApi;
@@ -73,6 +74,11 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     }
 
     registerAllIntegrations();
+
+    // Watch workspace root for Flutter CLI crash logs (flutter_*.log) and import to reports.
+    if (folder && (getConfig().integrationsAdapters ?? []).includes('flutterCrashLogs')) {
+        context.subscriptions.push(startFlutterCrashWatcher(folder, outputChannel));
+    }
 
     const version = String(context.extension.packageJSON.version ?? '');
     const { viewerProvider, inlineDecorations } = setupWebviewProviders(context, version);

@@ -23,6 +23,7 @@ import { httpNetworkProvider } from './modules/integrations/providers/http-netwo
 import { browserDevtoolsProvider } from './modules/integrations/providers/browser-devtools';
 import { codeQualityMetricsProvider } from './modules/integrations/providers/code-quality-metrics';
 import { adbLogcatProvider } from './modules/integrations/providers/adb-logcat';
+import { flutterCrashLogsProvider } from './modules/integrations/providers/flutter-crash-logs';
 import { driftAdvisorBuiltinProvider } from './modules/integrations/providers/drift-advisor-builtin';
 
 /** Register all built-in integration providers with the global registry. */
@@ -49,6 +50,7 @@ export function registerAllIntegrations(): void {
     registry.register(httpNetworkProvider);
     registry.register(browserDevtoolsProvider);
     registry.register(adbLogcatProvider);
+    registry.register(flutterCrashLogsProvider);
     // Drift Advisor: meta/sidecar from extension API or `.saropa/drift-advisor-session.json`.
     // External bridge registers after built-ins; last writer wins for same meta key.
     registry.register(driftAdvisorBuiltinProvider);
