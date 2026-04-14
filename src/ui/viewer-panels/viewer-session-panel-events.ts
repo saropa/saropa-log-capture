@@ -76,6 +76,8 @@ export function getSessionPanelEventsScript(): string {
                 var key = group.getAttribute('data-day-key');
                 if (!key) return;
                 collapsedDays[key] = !collapsedDays[key];
+                /* Remove falsy entries to keep the persisted object small. */
+                if (!collapsedDays[key]) delete collapsedDays[key];
                 group.classList.toggle('collapsed', !!collapsedDays[key]);
                 var chevron = heading.querySelector('.session-day-chevron');
                 if (chevron) {
@@ -83,6 +85,12 @@ export function getSessionPanelEventsScript(): string {
                     chevron.classList.toggle('codicon-chevron-down', !collapsedDays[key]);
                 }
                 heading.setAttribute('aria-expanded', String(!collapsedDays[key]));
+                /* Persist collapsed state through the display-options pipeline. */
+                var optsCopy = {};
+                for (var ck in sessionDisplayOptions) optsCopy[ck] = sessionDisplayOptions[ck];
+                optsCopy.collapsedDays = collapsedDays;
+                sessionDisplayOptions = optsCopy;
+                vscodeApi.postMessage({ type: 'setSessionDisplayOptions', options: sessionDisplayOptions });
                 return;
             }
             var item = e.target.closest('.session-item');
@@ -195,6 +203,13 @@ export function getSessionPanelEventsScript(): string {
         if (e.data.type === 'sessionDisplayOptions') {
             var opts = e.data.options || sessionDisplayOptions;
             sessionDisplayOptions = opts.dateRange !== undefined ? opts : Object.assign({}, opts, { dateRange: 'all' });
+            /* Restore persisted collapsed-day state from options. */
+            if (opts.collapsedDays) {
+                collapsedDays = Object.create(null);
+                for (var dk in opts.collapsedDays) {
+                    if (opts.collapsedDays[dk]) collapsedDays[dk] = true;
+                }
+            }
             sessionListPage = 0;
             window.__sharedPanelWidth = Math.max(MIN_PANEL_WIDTH, sessionDisplayOptions.panelWidth || 0);
             var slot = document.getElementById('panel-slot');
