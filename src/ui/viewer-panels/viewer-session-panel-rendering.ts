@@ -23,12 +23,31 @@ export function getSessionRenderingScript(): string {
         var active = sessions.filter(function(s) { return !s.trashed; });
         if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
-        /* Date range filter: keep sessions with mtime >= (now - 7d or 30d). */
+        /* Date range filter: keep sessions with mtime >= (now - range). */
         var range = sessionDisplayOptions.dateRange || 'all';
         if (range !== 'all') {
-            var now = Date.now(), ms = range === '7d' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
-            var cutoff = now - ms;
+            var h = 60 * 60 * 1000, d = 24 * h;
+            var rangeMs = { '1h': h, '4h': 4*h, '8h': 8*h, '1d': d, '7d': 7*d, '30d': 30*d, '3m': 91*d, '6m': 182*d, '1y': 365*d };
+            var cutoff = Date.now() - (rangeMs[range] || 0);
             active = active.filter(function(s) { return (s.mtime || 0) >= cutoff; });
+        }
+        /* Name filter: hide or show-only sessions matching a canonical name.
+           Recompute the canonical target from rawBasename each render so the filter
+           adapts when the user toggles stripDatetime or normalizeNames. */
+        if (sessionNameFilter) {
+            var nfMode = sessionNameFilter.mode;
+            var nfTarget = applySessionDisplayOptions(sessionNameFilter.rawBasename);
+            active = active.filter(function(s) {
+                var cn = applySessionDisplayOptions(getSessionRawBasename(s));
+                return nfMode === 'only' ? cn === nfTarget : cn !== nfTarget;
+            });
+        }
+        /* When all filters produce zero results, show a hint instead of a blank list. */
+        if (active.length === 0) {
+            sessionListEl.innerHTML = '<div class="session-empty-filtered">No sessions match the current filters</div>';
+            if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
+            renderNameFilterBar();
+            return;
         }
         /* Compute which basenames need subfolder disambiguation. */
         var basenameCounts = {};
@@ -46,6 +65,7 @@ export function getSessionRenderingScript(): string {
         var pageSessions = sorted.slice(start, start + pageSize);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
         sessionListEl.innerHTML = html;
+        renderNameFilterBar();
         /* Pagination: show bar only when multiple pages; render "Showing X–Y of Z" and Prev/Next. */
         if (sessionListPaginationEl) {
             if (totalPages <= 1) {
@@ -59,6 +79,28 @@ export function getSessionRenderingScript(): string {
                     + '<button type="button" id="session-pagination-next" class="session-list-pagination-btn" title="Next page" ' + (sessionListPage >= totalPages - 1 ? ' disabled' : '') + '><span class="codicon codicon-chevron-right"></span></button>';
             }
         }
+    }
+
+    /** Update the name filter bar: show label + clear button when active, hide when not. */
+    function renderNameFilterBar() {
+        var nameFilterBarEl = document.getElementById('session-name-filter-bar');
+        if (!nameFilterBarEl) return;
+        if (!sessionNameFilter) {
+            nameFilterBarEl.style.display = 'none';
+            nameFilterBarEl.innerHTML = '';
+            return;
+        }
+        /* Display label uses current display-option transforms so it matches
+           what the user sees in the list (adapts when Dates/Tidy change). */
+        var nfLabel = applySessionDisplayOptions(sessionNameFilter.rawBasename);
+        var verb = sessionNameFilter.mode === 'only' ? 'Showing only' : 'Hiding';
+        nameFilterBarEl.innerHTML = '<span class="session-name-filter-label">'
+            + '<span class="codicon codicon-filter"></span> '
+            + escapeHtmlText(verb + ': ' + nfLabel)
+            + '</span>'
+            + '<button type="button" id="session-name-filter-clear" class="session-name-filter-clear" title="Clear name filter" aria-label="Clear name filter">'
+            + '<span class="codicon codicon-close"></span> Show All</button>';
+        nameFilterBarEl.style.display = '';
     }
 
     function sortSessions(sessions) {

@@ -26,6 +26,19 @@ For older versions (3.11.0 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_AR
 
 ---
 
+## [6.1.1]
+
+### Fixed
+
+- **Project Logs panel now follows the active debug session.** Starting a debug session automatically points the panel at that session's log directory, so logs appear immediately instead of showing stale entries from a previously browsed folder.
+
+### Added
+
+- **Expanded date range filter options in Project Logs panel.** The dropdown now offers 10 choices: Last hour, Last 4 hours, Last 8 hours, Last 24 hours, Last 7 days, Last 30 days, Last 3 months, Last 6 months, Last year, and All time. The same expanded options are available in the Insights panel time-range selector.
+- **Name-based filtering in Project Logs panel.** Right-click any session to "Hide This Name" (exclude all sessions with the same canonical name, ignoring dates) or "Show Only This Name" (show only matching sessions). A filter bar appears with the active filter and a "Show All" button to clear it.
+
+---
+
 ## [6.1.0]
 
 ### Added
