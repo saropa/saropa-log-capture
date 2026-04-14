@@ -48,6 +48,24 @@ suite("drift-log-line-args-fold", () => {
     test("trySplitDriftSqlArgsSuffix returns null without Drift: Sent", () => {
         assert.strictEqual((0, drift_log_line_args_fold_1.trySplitDriftSqlArgsSuffix)("SELECT 1 with args []"), null);
     });
+    test("trySplitDriftSqlArgsSuffix splits DriftDebugInterceptor pipe-args format", () => {
+        const raw = 'Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ?; | args: [42]';
+        const sp = (0, drift_log_line_args_fold_1.trySplitDriftSqlArgsSuffix)(raw);
+        if (!sp) {
+            assert.fail("expected split for DriftDebugInterceptor format");
+        }
+        assert.strictEqual(sp.prefix, 'Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ?;');
+        assert.strictEqual(sp.suffix, " | args: [42]");
+    });
+    test("trySplitDriftSqlArgsSuffix splits DriftDebugInterceptor UPDATE format", () => {
+        const raw = 'Drift UPDATE: UPDATE "organizations" SET "version" = ? WHERE "id" = ?; | args: [null, 195]';
+        const sp = (0, drift_log_line_args_fold_1.trySplitDriftSqlArgsSuffix)(raw);
+        if (!sp) {
+            assert.fail("expected split for DriftDebugInterceptor UPDATE");
+        }
+        assert.ok(sp.prefix.endsWith('?;'));
+        assert.strictEqual(sp.suffix, " | args: [null, 195]");
+    });
     test("buildDriftArgsDimHtml wraps suffix in dimmed span", () => {
         const h = (0, drift_log_line_args_fold_1.buildDriftArgsDimHtml)(" with args []");
         assert.ok(h.includes('class="drift-args-dim"'));

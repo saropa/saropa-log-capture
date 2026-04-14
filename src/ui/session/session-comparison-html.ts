@@ -194,7 +194,7 @@ function renderDatabaseFingerprintSection(
         return /* html */ `<details class="db-fp-section" open>
 <summary>${escapeHtml(summaryLine)}</summary>
 ${markersBlock}
-<p class="db-fp-hint">No <code>Drift: Sent …</code> lines found in these logs (after the session header).</p>
+<p class="db-fp-hint">No Drift SQL lines found in these logs (after the session header).</p>
 </details>`;
     }
     const rows = db.rows.slice(0, SESSION_DB_FP_COMPARE_MAX_ROWS);

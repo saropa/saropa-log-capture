@@ -26,7 +26,10 @@ export function getNPlusOneDetectorScript(embedThresholds?: Partial<ViewerRepeat
     const rt = normalizeViewerRepeatThresholds(embedThresholds);
     const driftRepeatMinNJs = getDriftRepeatMinNJsSource();
     return /* javascript */ `
-var driftSqlPattern = /\\bDrift:\\s+Sent\\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+/* Standard LogInterceptor: "Drift: Sent SELECT …" */
+var driftSqlSentPattern = /\\bDrift:\\s+Sent\\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+/* DriftDebugInterceptor: "Drift SELECT: SELECT …" */
+var driftSqlVerbColonPattern = /\\bDrift\\s+(SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*:/i;
 var driftSqlKwRe = new RegExp('\\\\b(?:${DRIFT_SQL_KEYWORD_ALT})\\\\b', 'gi');
 function normalizeDriftSqlFingerprintSql(sql) {
     if (!sql) return '';
@@ -59,27 +62,58 @@ var nPlusOneDetector = {
     pruneIdleMs: ${N1.pruneIdleMs},
     byFingerprint: Object.create(null)
 };
+/**
+ * Parse a Drift SQL fingerprint from plain text.
+ * Handles two formats:
+ *   Standard:  "Drift: Sent SELECT ... with args [...]"
+ *   Custom:    "Drift SELECT: SELECT ...; | args: [...]"
+ */
 function parseSqlFingerprint(plainText) {
     if (!plainText) return null;
-    var verbMatch = driftSqlPattern.exec(plainText);
-    if (!verbMatch) return null;
-    var sentIdx = plainText.indexOf('Drift: Sent ');
-    if (sentIdx < 0) return null;
-    var body = plainText.substring(sentIdx + 12).trim();
+    /* Try standard format first: "Drift: Sent <VERB>" */
+    var verbMatch = driftSqlSentPattern.exec(plainText);
+    var body, argsIdx, argsLen;
+    if (verbMatch) {
+        var sentIdx = plainText.indexOf('Drift: Sent ');
+        if (sentIdx < 0) return null;
+        body = plainText.substring(sentIdx + 12).trim();
+        argsIdx = body.lastIndexOf(' with args ');
+        argsLen = 11;
+    } else {
+        /* Try DriftDebugInterceptor format: "Drift SELECT: SELECT ..." */
+        verbMatch = driftSqlVerbColonPattern.exec(plainText);
+        if (!verbMatch) return null;
+        /* Body starts after "Drift SELECT: " (the full match plus colon/space). */
+        var afterColon = plainText.indexOf(':', verbMatch.index + 5);
+        if (afterColon < 0) return null;
+        body = plainText.substring(afterColon + 1).trim();
+        /* Args delimiter is " | args: " (pipe-separated) for this format. */
+        argsIdx = body.lastIndexOf(' | args: ');
+        argsLen = 9;
+        /* Also accept " with args " if the interceptor uses that. */
+        if (argsIdx < 0) {
+            argsIdx = body.lastIndexOf(' with args ');
+            argsLen = 11;
+        }
+    }
     if (!body) return null;
-    var argsIdx = body.lastIndexOf(' with args ');
     var sqlPart = argsIdx >= 0 ? body.substring(0, argsIdx) : body;
-    var argsPart = argsIdx >= 0 ? body.substring(argsIdx + 11).trim() : '';
-    var sql = sqlPart.trim();
+    var argsPart = argsIdx >= 0 ? body.substring(argsIdx + argsLen).trim() : '';
+    /* Strip trailing semicolons — DriftDebugInterceptor appends them before args.
+       Done here (not in normalizeDriftSqlFingerprintSql) to stay in sync with the
+       extension-side mirror in drift-sql-fingerprint-normalize.ts. */
+    var sql = sqlPart.trim().replace(/;\\s*$/, '');
     if (!sql) return null;
     var fp = normalizeDriftSqlFingerprintSql(sql);
     if (!fp) return null;
     return { fingerprint: fp, argsKey: argsPart || '[]', sqlSnippet: sqlPart, verb: verbMatch[1].toUpperCase() };
 }
-/* Fallback dbInsight snippet from plain text: substring from first Drift: onward, max 500 chars (shared with emitDbLineDetectors). */
+/* Fallback dbInsight snippet from plain text: substring from first Drift prefix onward, max 500 chars (shared with emitDbLineDetectors). */
 function driftSqlSnippetFromPlain(plain) {
     if (!plain) return '';
+    /* Try "Drift:" first, then bare "Drift " for DriftDebugInterceptor lines like "Drift SELECT:". */
     var di = plain.indexOf('Drift:');
+    if (di < 0) di = plain.indexOf('Drift ');
     var raw = di >= 0 ? plain.substring(di).trim() : plain.trim();
     return raw.length > 500 ? raw.substring(0, 497) + '...' : raw;
 }

@@ -130,6 +130,20 @@ suite('SourceTagParser', () => {
             );
         });
 
+        test('should classify DriftDebugInterceptor SELECT as database source tag', () => {
+            assert.strictEqual(
+                parseSourceTag('[log] Drift SELECT: SELECT * FROM "contacts" WHERE "data_source_name" = ?; | args: [StarTrek]'),
+                'database',
+            );
+        });
+
+        test('should classify DriftDebugInterceptor UPDATE as database source tag', () => {
+            assert.strictEqual(
+                parseSourceTag('[log] Drift UPDATE: UPDATE "organizations" SET "version" = ? WHERE "id" = ?; | args: [null, 195]'),
+                'database',
+            );
+        });
+
         test('should extract bracket sub-tag from flutter', () => {
             assert.strictEqual(
                 parseSourceTag('I/flutter ( 9812): [Awesome Notifications] channel created'),
