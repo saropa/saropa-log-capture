@@ -1357,7 +1357,7 @@
           "default": {
             "error": ["fatal", "panic", "critical"],
             "warning": ["warn", "warning", "caution", "fail", "failed", "failure"],
-            "performance": ["perf", "performance", "dropped frame", "fps", "framerate", "jank", "stutter", "choreographer", "doing too much work", "anr", "application not responding"],
+            "performance": ["perf", "performance", "dropped frame", "fps", "framerate", "jank", "stutter", "choreographer", "doing too much work", "anr", "application not responding", "slow operation"],
             "todo": ["TODO", "FIXME", "HACK", "XXX", "BUG", "KLUDGE", "WORKAROUND"],
             "debug": ["breadcrumb", "trace", "debug"],
             "notice": ["notice", "note", "important"]
@@ -2612,5 +2612,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "6.1.0"
+  "version": "6.1.1"
 }
