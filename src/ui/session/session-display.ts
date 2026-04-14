@@ -133,10 +133,11 @@ function titleWord(word: string): string {
     return word[0].toUpperCase() + word.slice(1).toLowerCase();
 }
 
-/** Normalize a filename: replace underscores/hyphens with spaces, Title Case. */
+/** Normalize a filename: replace underscores/hyphens/dots with spaces, Title Case. */
 export function normalizeFilename(name: string): string {
     const [base, ext] = splitExt(name);
-    const spaced = base.replace(/[_-]+/g, ' ').trim();
+    // Dots are separators in names like "contacts.drift-advisor"
+    const spaced = base.replace(/[_.\-]+/g, ' ').trim();
     const titled = spaced.split(/\s+/).map(titleWord).join(' ');
     return (titled || base) + ext;
 }
