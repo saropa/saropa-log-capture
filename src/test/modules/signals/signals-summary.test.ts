@@ -3,8 +3,8 @@
  */
 
 import * as assert from 'assert';
-import { buildInsightsSummary } from '../../../modules/insights/insights-summary';
-import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from '../../../modules/export/insights-export-formats';
+import { buildInsightsSummary } from '../../../modules/signals/signals-summary';
+import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from '../../../modules/export/signals-export-formats';
 import type { CrossSessionInsights } from '../../../modules/misc/cross-session-aggregator';
 
 function mockInsights(overrides?: Partial<CrossSessionInsights>): CrossSessionInsights {

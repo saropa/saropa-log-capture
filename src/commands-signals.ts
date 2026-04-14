@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
-import { openInsightTab } from './ui/viewer-panels/insight-tab-panel';
+import { openInsightTab } from './ui/viewer-panels/signal-tab-panel';
 
 /** Register cross-session insights commands. Opens the viewer's Insight panel (no separate WebviewPanel). */
 export function insightsCommands(deps: CommandDeps): vscode.Disposable[] {

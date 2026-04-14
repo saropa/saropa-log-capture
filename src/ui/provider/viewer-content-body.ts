@@ -15,7 +15,7 @@ import { getSqlQueryHistoryPanelHtml } from '../viewer-panels/viewer-sql-query-h
 import { getTrashPanelHtml } from '../viewer-panels/viewer-trash-panel';
 import { getOptionsPanelHtml } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelHtml } from '../panels/viewer-crashlytics-panel';
-import { getInsightPanelHtml } from '../panels/viewer-insight-panel';
+import { getInsightPanelHtml } from '../panels/viewer-signal-panel';
 import { getAboutPanelHtml } from '../viewer-panels/viewer-about-panel';
 import { getScrollbarMinimapHtml } from '../viewer/viewer-scrollbar-minimap';
 import { getGotoLineHtml } from '../viewer/viewer-goto-line';
