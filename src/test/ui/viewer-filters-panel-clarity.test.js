@@ -150,19 +150,20 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes("levelMenuBtn.classList.add('u-hidden')"), 'should hide dots on drawer open');
         assert.ok(script.includes("levelMenuBtn.classList.remove('u-hidden')"), 'should show dots on drawer close');
     });
-    test('Log Inputs should contain Flutter and Device checkboxes', () => {
+    test('Log Inputs should contain Flutter and Device radio groups', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
-        assert.ok(html.includes('opt-flutter'), 'Log Inputs should contain Flutter checkbox');
-        assert.ok(html.includes('opt-device'), 'Log Inputs should contain Device checkbox');
+        assert.ok(html.includes('name="tier-flutter"'), 'Log Inputs should contain Flutter radio group');
+        assert.ok(html.includes('name="tier-device"'), 'Log Inputs should contain Device radio group');
     });
     test('Exclusions accordion should contain exclusion controls', () => {
         const html = (0, viewer_toolbar_filter_drawer_html_1.getFilterDrawerHtml)();
         assert.ok(html.includes('exclusions-section'), 'should have exclusions-section');
         assert.ok(html.includes('opt-exclusions'), 'Exclusions should contain exclusion checkbox');
     });
-    test('preset save should capture deviceEnabled', () => {
+    test('preset save should capture tri-state tier modes', () => {
         const script = (0, viewer_presets_1.getPresetsScript)();
-        assert.ok(script.includes('filters.deviceEnabled'), 'getCurrentFilters should save deviceEnabled state');
+        assert.ok(script.includes('filters.deviceMode'), 'getCurrentFilters should save deviceMode state');
+        assert.ok(script.includes('filters.flutterMode'), 'getCurrentFilters should save flutterMode state');
     });
 });
 //# sourceMappingURL=viewer-filters-panel-clarity.test.js.map

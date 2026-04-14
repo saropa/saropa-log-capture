@@ -13,6 +13,7 @@ const session_manager_replay_1 = require("./session-manager-replay");
  */
 async function startSessionImpl(session, context, deps) {
     if (!deps.config.enabled) {
+        deps.outputChannel.appendLine(`Session start skipped: saropaLogCapture.enabled is false (type=${session.type})`);
         return { kind: 'skipped' };
     }
     if (session.parentSession && deps.sessions.has(session.parentSession.id)) {
@@ -65,6 +66,7 @@ async function startSessionImpl(session, context, deps) {
         },
     });
     if (!result) {
+        deps.outputChannel.appendLine(`Session initialization failed: no log session created (type=${session.type} id=${session.id})`);
         return { kind: 'skipped' };
     }
     return { kind: 'created', result };

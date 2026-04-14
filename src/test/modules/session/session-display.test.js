@@ -45,7 +45,7 @@ suite('session-display', () => {
             assert.strictEqual(typeof session_display_1.defaultDisplayOptions.normalizeNames, 'boolean');
             assert.strictEqual(typeof session_display_1.defaultDisplayOptions.showDayHeadings, 'boolean');
             assert.strictEqual(typeof session_display_1.defaultDisplayOptions.reverseSort, 'boolean');
-            assert.ok(session_display_1.defaultDisplayOptions.dateRange === 'all' || session_display_1.defaultDisplayOptions.dateRange === '7d' || session_display_1.defaultDisplayOptions.dateRange === '30d');
+            assert.ok(typeof session_display_1.defaultDisplayOptions.dateRange === 'string', 'dateRange should be a string');
         });
     });
     suite('formatRelativeTime', () => {

@@ -75,6 +75,7 @@ const extension_activation_helpers_1 = require("./extension-activation-helpers")
 const learning_runtime_1 = require("./modules/learning/learning-runtime");
 const learning_notifications_1 = require("./modules/learning/learning-notifications");
 const ai_auto_enable_1 = require("./modules/ai/ai-auto-enable");
+const flutter_crash_watcher_1 = require("./modules/integrations/flutter-crash-watcher");
 function runActivation(context, outputChannel) {
     const statusBar = new status_bar_1.StatusBar();
     context.subscriptions.push(statusBar, outputChannel);
@@ -92,6 +93,10 @@ function runActivation(context, outputChannel) {
         context.subscriptions.push({ dispose: () => { projectIndexer?.dispose(); projectIndexer = null; (0, project_indexer_1.setGlobalProjectIndexer)(null); } });
     }
     (0, activation_integrations_1.registerAllIntegrations)();
+    // Watch workspace root for Flutter CLI crash logs (flutter_*.log) and import to reports.
+    if (folder && ((0, config_1.getConfig)().integrationsAdapters ?? []).includes('flutterCrashLogs')) {
+        context.subscriptions.push((0, flutter_crash_watcher_1.startFlutterCrashWatcher)(folder, outputChannel));
+    }
     const version = String(context.extension.packageJSON.version ?? '');
     const { viewerProvider, inlineDecorations } = (0, activation_providers_1.setupWebviewProviders)(context, version);
     const broadcaster = new viewer_broadcaster_1.ViewerBroadcaster();
@@ -172,7 +177,16 @@ function runActivation(context, outputChannel) {
         await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
         await viewerProvider.loadFromFile(uri, { replay: true });
     };
-    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay };
+    const onFirstSessionListReady = (items) => {
+        if (viewerProvider.getCurrentFileUri()) {
+            return;
+        }
+        if (historyProvider.getActiveUri()) {
+            return;
+        }
+        void (0, extension_activation_helpers_1.autoLoadLatest)(context, items, viewerProvider);
+    };
+    const handlerDeps = { sessionManager, broadcaster, historyProvider, bookmarkStore, context, onOpenBookmark, openSessionForReplay, onFirstSessionListReady };
     (0, viewer_handler_wiring_1.wireSharedHandlers)(viewerProvider, handlerDeps);
     (0, viewer_handler_wiring_1.wireSharedHandlers)(popOutPanel, handlerDeps);
     const updateSessionNav = async () => {
@@ -204,15 +218,15 @@ function runActivation(context, outputChannel) {
         }
     });
     viewerProvider.setBecameVisibleHandler(() => {
+        // Active session always takes priority.
         const activeUri = historyProvider.getActiveUri();
-        if (!activeUri) {
+        if (activeUri) {
+            if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) {
+                return;
+            }
+            void viewerProvider.loadFromFile(activeUri);
             return;
         }
-        // Skip reload if the active session is already displayed (avoids flash on tab switch).
-        if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) {
-            return;
-        }
-        void viewerProvider.loadFromFile(activeUri);
     });
     viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
         if (!uriString) {

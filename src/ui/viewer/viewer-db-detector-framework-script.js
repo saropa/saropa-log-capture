@@ -3,7 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getViewerDbDetectorFrameworkScript = getViewerDbDetectorFrameworkScript;
 const drift_db_slow_burst_detector_1 = require("../../modules/db/drift-db-slow-burst-detector");
 const drift_db_slow_burst_thresholds_1 = require("../../modules/db/drift-db-slow-burst-thresholds");
+const drift_db_timestamp_burst_thresholds_1 = require("../../modules/db/drift-db-timestamp-burst-thresholds");
 const db_detector_embed_merge_generated_1 = require("./generated/db-detector-embed-merge.generated");
+const viewer_db_detector_timestamp_burst_embed_1 = require("./viewer-db-detector-timestamp-burst-embed");
 const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
 function getViewerDbDetectorFrameworkScript(dbInsightsEnabled, slowBurstThresholds, detectorToggles) {
     const enabledJs = dbInsightsEnabled ? "true" : "false";
@@ -17,12 +19,21 @@ function getViewerDbDetectorFrameworkScript(dbInsightsEnabled, slowBurstThreshol
     const nPlusOneJs = detectorToggles?.nPlusOneEnabled !== false ? "true" : "false";
     const slowBurstEnJs = detectorToggles?.slowBurstEnabled !== false ? "true" : "false";
     const baselineHintsJs = detectorToggles?.baselineHintsEnabled !== false ? "true" : "false";
+    const tsBurstEnJs = detectorToggles?.timestampBurstEnabled !== false ? "true" : "false";
+    const tsb = (0, drift_db_timestamp_burst_thresholds_1.normalizeViewerTimestampBurstThresholds)();
+    const tsBurstJson = JSON.stringify({
+        minCount: tsb.minCount,
+        toleranceMs: tsb.toleranceMs,
+        cooldownMs: tsb.cooldownMs,
+    });
     return /* javascript */ `
 var viewerDbInsightsEnabled = ${enabledJs};
 var viewerSlowBurstThresholds = ${burstJson};
+var viewerTimestampBurstThresholds = ${tsBurstJson};
 var viewerDbDetectorNPlusOneEnabled = ${nPlusOneJs};
 var viewerDbDetectorSlowBurstEnabled = ${slowBurstEnJs};
 var viewerDbDetectorBaselineHintsEnabled = ${baselineHintsJs};
+var viewerDbDetectorTimestampBurstEnabled = ${tsBurstEnJs};
 var dbDetectorRegistry = [];
 var dbDetectorSessionDisabled = Object.create(null);
 var dbDetectorErrorLogged = Object.create(null);
@@ -49,6 +60,8 @@ function setDbBaselineFingerprintSummaryFromHost(fingerprints) {
 }
 /** Per-session slow-burst sliding window (plan DB_08). */
 var slowBurstBySession = Object.create(null);
+/** Per-session timestamp burst tracking (plan DB_16). */
+var tsBurstBySession = Object.create(null);
 function registerDbDetector(detector) {
     if (!detector || !detector.id || typeof detector.feed !== 'function') return;
     dbDetectorRegistry.push(detector);
@@ -141,12 +154,16 @@ function resetDbInsightDetectorSession() {
     if (typeof slowBurstBySession !== 'undefined') {
         slowBurstBySession = Object.create(null);
     }
+    if (typeof tsBurstBySession !== 'undefined') {
+        tsBurstBySession = Object.create(null);
+    }
     if (typeof dbInsightSessionRollup !== 'undefined') {
         dbInsightSessionRollup = Object.create(null);
     }
     baselineVolumeHintEmitted = Object.create(null);
 }
 function registerBuiltinDbDetectors() {
+${(0, viewer_db_detector_timestamp_burst_embed_1.getTimestampBurstDetectorEmbedJs)()}
     registerDbDetector({
         id: '${drift_db_slow_burst_detector_1.SLOW_QUERY_BURST_DETECTOR_ID}',
         priority: 85,
