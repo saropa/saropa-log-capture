@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.applySessionStartedState = applySessionStartedState;
 exports.registerDebugLifecycle = registerDebugLifecycle;
 const os = __importStar(require("os"));
 const vscode = __importStar(require("vscode"));
@@ -41,9 +42,14 @@ const config_1 = require("./modules/config/config");
 const level_classifier_1 = require("./modules/analysis/level-classifier");
 const filter_presets_1 = require("./modules/storage/filter-presets");
 const ai_session_resolver_1 = require("./modules/ai/ai-session-resolver");
+const viewer_handler_wiring_1 = require("./ui/provider/viewer-handler-wiring");
 /** Session ids we've already triggered a late start for (output arrived before onDidStartDebugSession). */
 const lateStartTriggered = new Set();
-/** Apply UI state after a session has started (shared by onDidStartDebugSession and late-start fallback). */
+/**
+ * Apply UI state after a session has started (shared by onDidStartDebugSession and late-start fallback).
+ * Exported for testing — not intended for external callers.
+ * @internal
+ */
 function applySessionStartedState(deps, session) {
     const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart } = deps;
     const activeSession = sessionManager.getActiveSession();
@@ -91,6 +97,11 @@ function applySessionStartedState(deps, session) {
     broadcaster.setContextViewLines(cfg.contextViewLines);
     broadcaster.setCopyContextLines(cfg.copyContextLines);
     broadcaster.setPresets((0, filter_presets_1.loadPresets)());
+    // Clear any stale Project Logs panel root override so the panel reverts to the
+    // workspace default — which matches the session's log directory for standalone
+    // workspaces. Without this, a folder previously chosen via "Browse" persists
+    // across debug sessions and shows logs from a different project.
+    context.workspaceState.update(viewer_handler_wiring_1.SESSION_PANEL_ROOT_KEY, undefined);
     historyProvider.setActiveUri(activeSession?.fileUri);
     historyProvider.refresh();
     fireSessionStart({
@@ -106,24 +117,35 @@ function registerDebugLifecycle(deps) {
     const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd } = deps;
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.
-    sessionManager.setOnOutputBufferedWithNoSession((sessionId) => {
+    // NOTE: Don't require active.id === sessionId — Flutter creates parent + child sessions with
+    // different IDs. Output arrives on the child (Dart VM) but activeDebugSession is the parent
+    // (Flutter). An exact-match check would silently skip capture for the entire session.
+    sessionManager.setOnOutputBufferedWithNoSession((_sessionId) => {
         const active = vscode.debug.activeDebugSession;
-        if (!active || active.id !== sessionId) {
+        if (!active) {
             return;
         }
-        if (lateStartTriggered.has(sessionId)) {
+        if (lateStartTriggered.has(active.id)) {
             return;
         }
-        lateStartTriggered.add(sessionId);
+        lateStartTriggered.add(active.id);
         void sessionManager.startSession(active, context).then(() => {
             broadcaster.setPaused(false);
             applySessionStartedState(deps, active);
         }).catch(() => { });
     });
     context.subscriptions.push(vscode.debug.onDidStartDebugSession(async (session) => {
-        broadcaster.setPaused(false);
-        await sessionManager.startSession(session, context);
-        applySessionStartedState(deps, session);
+        try {
+            broadcaster.setPaused(false);
+            await sessionManager.startSession(session, context);
+            applySessionStartedState(deps, session);
+        }
+        catch (err) {
+            // Log failures — without this, async rejections are silently swallowed by VS Code's
+            // event infrastructure and the session is invisibly dropped.
+            const msg = err instanceof Error ? err.message : String(err);
+            sessionManager.logToOutputChannel(`onDidStartDebugSession failed: ${msg} (type=${session.type} id=${session.id})`);
+        }
     }), vscode.debug.onDidTerminateDebugSession(async (session) => {
         lateStartTriggered.delete(session.id);
         // Fire API event before stopping so fileUri is still valid for consumers.
@@ -143,6 +165,32 @@ function registerDebugLifecycle(deps) {
         updateSessionNav().catch(() => { });
         aiWatcher.stop();
     }));
+    // Attach to a debug session that was already running before the extension activated.
+    // Covers window reload, extension host restart, and late activation scenarios where
+    // onDidStartDebugSession never fires for the existing session.
+    attachToExistingSession(deps);
+}
+/**
+ * If a debug session is already active when the extension activates (e.g. after
+ * a window reload or extension host restart), start capture for it immediately.
+ * Without this, onDidStartDebugSession never fires for the pre-existing session
+ * and the session is invisible in the Project Logs panel.
+ */
+function attachToExistingSession(deps) {
+    const { context, sessionManager, broadcaster } = deps;
+    const active = vscode.debug.activeDebugSession;
+    if (!active) {
+        return;
+    }
+    if (sessionManager.hasSession(active.id)) {
+        return;
+    }
+    // Mark as late-start so the buffered-output callback doesn't race with us.
+    lateStartTriggered.add(active.id);
+    void sessionManager.startSession(active, context).then(() => {
+        broadcaster.setPaused(false);
+        applySessionStartedState(deps, active);
+    }).catch(() => { });
 }
 async function startAiWatcherIfEnabled(cfg, session, aiWatcher) {
     const ai = cfg.aiActivity;

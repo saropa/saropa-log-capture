@@ -66,8 +66,8 @@ var suppressTransientErrors = false;
 var viewerPreserveAsciiBoxArt = true;
 var viewerGroupAsciiArt = true;
 var viewerDetectAsciiArt = false;
-var showFlutter = true;
-var showDevice = false;
+var showFlutter = 'all';
+var showDevice = 'none';
 function isTierHidden() { return false; }
 
 function stripTags(html) { var s = (html == null ? '' : String(html)).replace(/<[^>]*>/g, ''); return s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'); }

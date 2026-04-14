@@ -63,6 +63,7 @@ async function initializeSession(params) {
     const { session, context, outputChannel, onLineCount, onSplit } = params;
     const config = (0, config_1.getConfig)();
     if (!config.enabled) {
+        outputChannel.appendLine('initializeSession: skipped — saropaLogCapture.enabled is false');
         return undefined;
     }
     const workspaceFolder = session.workspaceFolder ?? getWorkspaceFolder();

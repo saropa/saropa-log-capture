@@ -81,6 +81,7 @@ window.addEventListener('message', function(event) {
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();
             if (typeof compressSuggestShown !== 'undefined') { compressSuggestShown = false; compressSuggestBannerDismissed = false; }
             if (typeof hideCompressSuggestionBanner === 'function') hideCompressSuggestionBanner();
+            var _rb = document.getElementById('resume-session-banner'); if (_rb) _rb.classList.add('u-hidden');
             if (typeof hiddenLineIndices !== 'undefined') { hiddenLineIndices.clear(); isPeeking = false; autoHiddenCount = 0; sessionAutoHidePatterns = []; updateHiddenDisplay(); }
             if (footerTextEl) footerTextEl.textContent = 'Cleared'; updateLineCount(); renderViewport(true); if (typeof scheduleMinimap === 'function') scheduleMinimap();
             break;
@@ -118,6 +119,8 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.driftAdvisorDbPanelMeta = (msg.payload != null) ? msg.payload : null; break;
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
+        case 'rootCauseHypothesesResult':
+            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses); break;
         case 'setRootCauseHintHostFields':
             if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
                 rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;
@@ -131,9 +134,8 @@ window.addEventListener('message', function(event) {
             if (typeof window !== 'undefined') window.rchL10n = (msg.strings && typeof msg.strings === 'object') ? msg.strings : {};
             if (typeof scheduleRootCauseHypothesesRefresh === 'function') scheduleRootCauseHypothesesRefresh();
             break;
-        case 'triggerCopyAllFiltered':
-            if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount();
-            break;
+        case 'triggerCopyAllFiltered': if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount(); break;
+        case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
             break;
@@ -293,8 +295,31 @@ window.addEventListener('message', function(event) {
         case 'viewerKeybindingRecordMode':
             window.viewerKeybindingRecordingFor = msg.active ? (msg.actionId || null) : null;
             break;
+        case 'showResumeSession': {
+            var rb = document.getElementById('resume-session-banner');
+            var rbtn = document.getElementById('resume-session-btn');
+            if (rb && rbtn && msg.uriString && msg.name) {
+                rbtn.textContent = 'Resume: ' + msg.name;
+                rbtn.setAttribute('data-uri', msg.uriString);
+                rb.classList.remove('u-hidden');
+            }
+            break;
+        }
     }
 });
+(function() {
+    var resumeBtn = document.getElementById('resume-session-btn');
+    var resumeDismiss = document.getElementById('resume-session-dismiss');
+    var resumeBanner = document.getElementById('resume-session-banner');
+    if (resumeBtn) resumeBtn.addEventListener('click', function() {
+        var uri = resumeBtn.getAttribute('data-uri');
+        if (uri) vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+        if (resumeBanner) resumeBanner.classList.add('u-hidden');
+    });
+    if (resumeDismiss) resumeDismiss.addEventListener('click', function() {
+        if (resumeBanner) resumeBanner.classList.add('u-hidden');
+    });
+})();
 `;
 }
 //# sourceMappingURL=viewer-script-messages.js.map

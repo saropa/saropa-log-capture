@@ -120,7 +120,7 @@ exports.VIEWER_ACTION_LABELS = {
     insertMarker: 'Insert marker',
     togglePin: 'Pin line',
     annotate: 'Annotate line',
-    toggleDevice: 'Toggle device logs',
+    toggleDevice: 'Cycle device logs (None / Warn+ / All)',
     copyRaw: 'Copy as raw text',
 };
 function getViewerActionLabel(actionId) {

@@ -46,7 +46,13 @@ exports.loadMetasForPaths = loadMetasForPaths;
 const vscode = __importStar(require("vscode"));
 const config_1 = require("../config/config");
 const session_metadata_1 = require("./session-metadata");
-const timeRangeMs = { '24h': 86400000, '7d': 604800000, '30d': 2592000000 };
+const h = 3_600_000;
+const d = 24 * h;
+const timeRangeMs = {
+    '1h': h, '4h': 4 * h, '8h': 8 * h, '24h': d,
+    '7d': 7 * d, '30d': 30 * d, '3m': 91 * d,
+    '6m': 182 * d, '1y': 365 * d,
+};
 /** Parse a session date from a log filename like `20260224_163302_....log`. */
 function parseSessionDate(filename) {
     const base = filename.split('/').pop() ?? filename;

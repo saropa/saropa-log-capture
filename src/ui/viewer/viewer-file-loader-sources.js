@@ -9,6 +9,7 @@ exports.parseBrowserSidecarToPending = parseBrowserSidecarToPending;
 exports.sendPendingLinesBatched = sendPendingLinesBatched;
 const ansi_1 = require("../../modules/capture/ansi");
 const source_linker_1 = require("../../modules/source/source-linker");
+const timestamp_parser_1 = require("../../modules/timeline/timestamp-parser");
 const viewer_file_loader_1 = require("./viewer-file-loader");
 /** Source id for terminal sidecar lines. */
 exports.SOURCE_TERMINAL = 'terminal';
@@ -37,15 +38,18 @@ function externalSidecarLabelFromFileName(mainLogBase, sidecarFileName) {
 function parseExternalSidecarToPending(content, label) {
     const sourceId = exports.SOURCE_EXTERNAL_PREFIX + label;
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);
-    return lines.map((raw) => ({
-        text: (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.escapeHtml)(raw))),
-        rawText: raw,
-        isMarker: false,
-        lineCount: 0,
-        category: 'console',
-        timestamp: 0,
-        source: sourceId,
-    }));
+    return lines.map((raw) => {
+        const extracted = (0, timestamp_parser_1.extractTimestamp)(raw);
+        return {
+            text: (0, source_linker_1.linkifyUrls)((0, source_linker_1.linkifyHtml)((0, ansi_1.escapeHtml)(raw))),
+            rawText: raw,
+            isMarker: false,
+            lineCount: 0,
+            category: 'console',
+            timestamp: extracted?.timestamp ?? 0,
+            source: sourceId,
+        };
+    });
 }
 function parseUnifiedJsonlToPending(content, baseCtx) {
     const records = [];

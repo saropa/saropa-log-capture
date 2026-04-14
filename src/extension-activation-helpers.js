@@ -35,9 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.maybeSuggestSmartBookmark = maybeSuggestSmartBookmark;
 exports.showWalkthroughOnFirstInstall = showWalkthroughOnFirstInstall;
+exports.autoLoadLatest = autoLoadLatest;
 const vscode = __importStar(require("vscode"));
 const l10n_1 = require("./l10n");
 const config_1 = require("./modules/config/config");
+const session_history_grouping_1 = require("./ui/session/session-history-grouping");
+const viewer_provider_helpers_1 = require("./ui/provider/viewer-provider-helpers");
 const walkthroughShownKey = 'slc.walkthroughShown';
 /**
  * Smart bookmarks: after a log loads, suggest adding a bookmark at the first error (or warning) line.
@@ -95,5 +98,58 @@ function showWalkthroughOnFirstInstall(context) {
     }
     void context.globalState.update(walkthroughShownKey, true);
     void vscode.commands.executeCommand('workbench.action.openWalkthrough', 'saropa.saropa-log-capture#saropaLogCapture.getStarted', false);
+}
+/** Get the display name for a tree item. */
+function getItemName(item) {
+    if ((0, session_history_grouping_1.isSplitGroup)(item)) {
+        return item.displayName ?? item.baseFilename;
+    }
+    return item.displayName ?? item.filename;
+}
+/** Find the most recently viewed URI from the last-viewed workspace state map. */
+function findLastViewedUri(lastViewedMap) {
+    let best;
+    let bestTime = 0;
+    for (const [uri, time] of Object.entries(lastViewedMap)) {
+        if (time > bestTime) {
+            bestTime = time;
+            best = uri;
+        }
+    }
+    return best;
+}
+/**
+ * Auto-load the latest log into the viewer on first visit.
+ * Called after the session list streaming fetch completes — items are already loaded, no extra I/O.
+ * If a different session was last viewed, sends a `showResumeSession` message
+ * so the webview can offer a quick-switch button.
+ */
+async function autoLoadLatest(context, items, target) {
+    const latest = items.find(i => (0, session_history_grouping_1.isSplitGroup)(i) || !i.trashed);
+    if (!latest) {
+        return;
+    }
+    const latestUri = (0, session_history_grouping_1.getTreeItemUri)(latest);
+    void target.loadFromFile(latestUri);
+    // Offer resume if a different session was last viewed.
+    const lastViewedMap = context.workspaceState.get(viewer_provider_helpers_1.LOG_LAST_VIEWED_KEY, {});
+    const lastViewedUriStr = findLastViewedUri(lastViewedMap);
+    if (!lastViewedUriStr || lastViewedUriStr === latestUri.toString()) {
+        return;
+    }
+    const lastItem = items.find(i => {
+        if ((0, session_history_grouping_1.isSplitGroup)(i)) {
+            return i.parts.some(p => p.uri.toString() === lastViewedUriStr);
+        }
+        return i.uri.toString() === lastViewedUriStr;
+    });
+    if (!lastItem) {
+        return;
+    }
+    target.postMessage({
+        type: 'showResumeSession',
+        uriString: lastViewedUriStr,
+        name: getItemName(lastItem),
+    });
 }
 //# sourceMappingURL=extension-activation-helpers.js.map

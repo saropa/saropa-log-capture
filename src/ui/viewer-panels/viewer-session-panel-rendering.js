@@ -25,12 +25,31 @@ function getSessionRenderingScript() {
         var active = sessions.filter(function(s) { return !s.trashed; });
         if (sessionDisplayOptions.showLatestOnly) active = active.filter(function(s) { return !!s.isLatestOfName; });
         if (typeof filterSessionsByTags === 'function') active = filterSessionsByTags(active);
-        /* Date range filter: keep sessions with mtime >= (now - 7d or 30d). */
+        /* Date range filter: keep sessions with mtime >= (now - range). */
         var range = sessionDisplayOptions.dateRange || 'all';
         if (range !== 'all') {
-            var now = Date.now(), ms = range === '7d' ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
-            var cutoff = now - ms;
+            var h = 60 * 60 * 1000, d = 24 * h;
+            var rangeMs = { '1h': h, '4h': 4*h, '8h': 8*h, '1d': d, '7d': 7*d, '30d': 30*d, '3m': 91*d, '6m': 182*d, '1y': 365*d };
+            var cutoff = Date.now() - (rangeMs[range] || 0);
             active = active.filter(function(s) { return (s.mtime || 0) >= cutoff; });
+        }
+        /* Name filter: hide or show-only sessions matching a canonical name.
+           Recompute the canonical target from rawBasename each render so the filter
+           adapts when the user toggles stripDatetime or normalizeNames. */
+        if (sessionNameFilter) {
+            var nfMode = sessionNameFilter.mode;
+            var nfTarget = applySessionDisplayOptions(sessionNameFilter.rawBasename);
+            active = active.filter(function(s) {
+                var cn = applySessionDisplayOptions(getSessionRawBasename(s));
+                return nfMode === 'only' ? cn === nfTarget : cn !== nfTarget;
+            });
+        }
+        /* When all filters produce zero results, show a hint instead of a blank list. */
+        if (active.length === 0) {
+            sessionListEl.innerHTML = '<div class="session-empty-filtered">No sessions match the current filters</div>';
+            if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';
+            renderNameFilterBar();
+            return;
         }
         /* Compute which basenames need subfolder disambiguation. */
         var basenameCounts = {};
@@ -48,6 +67,7 @@ function getSessionRenderingScript() {
         var pageSessions = sorted.slice(start, start + pageSize);
         var html = sessionDisplayOptions.showDayHeadings ? renderGrouped(pageSessions, basenameCounts) : renderFlat(pageSessions, basenameCounts);
         sessionListEl.innerHTML = html;
+        renderNameFilterBar();
         /* Pagination: show bar only when multiple pages; render "Showing X–Y of Z" and Prev/Next. */
         if (sessionListPaginationEl) {
             if (totalPages <= 1) {
@@ -63,6 +83,28 @@ function getSessionRenderingScript() {
         }
     }
 
+    /** Update the name filter bar: show label + clear button when active, hide when not. */
+    function renderNameFilterBar() {
+        var nameFilterBarEl = document.getElementById('session-name-filter-bar');
+        if (!nameFilterBarEl) return;
+        if (!sessionNameFilter) {
+            nameFilterBarEl.style.display = 'none';
+            nameFilterBarEl.innerHTML = '';
+            return;
+        }
+        /* Display label uses current display-option transforms so it matches
+           what the user sees in the list (adapts when Dates/Tidy change). */
+        var nfLabel = applySessionDisplayOptions(sessionNameFilter.rawBasename);
+        var verb = sessionNameFilter.mode === 'only' ? 'Showing only' : 'Hiding';
+        nameFilterBarEl.innerHTML = '<span class="session-name-filter-label">'
+            + '<span class="codicon codicon-filter"></span> '
+            + escapeHtmlText(verb + ': ' + nfLabel)
+            + '</span>'
+            + '<button type="button" id="session-name-filter-clear" class="session-name-filter-clear" title="Clear name filter" aria-label="Clear name filter">'
+            + '<span class="codicon codicon-close"></span> Show All</button>';
+        nameFilterBarEl.style.display = '';
+    }
+
     function sortSessions(sessions) {
         var list = sessions.slice();
         list.sort(function(a, b) {
@@ -75,13 +117,30 @@ function getSessionRenderingScript() {
     function renderFlat(sessions, bnCounts) { return sessions.map(function(s) { return renderItem(s, bnCounts); }).join(''); }
 
     function renderGrouped(sessions, bnCounts) {
-        var groups = [], currentKey = '';
+        var groups = [], currentKey = '', dayItems = [];
         for (var i = 0; i < sessions.length; i++) {
             var key = toDateKey(sessions[i].mtime || 0);
-            if (key !== currentKey) { currentKey = key; groups.push(renderDayHeading(sessions[i].mtime || 0)); }
-            groups.push(renderItem(sessions[i], bnCounts));
+            if (key !== currentKey) {
+                /* Flush previous day group. */
+                if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
+                currentKey = key;
+                dayItems = [];
+            }
+            dayItems.push(renderItem(sessions[i], bnCounts));
         }
+        /* Flush final day group. */
+        if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
         return groups.join('');
+    }
+
+    /** Wrap a day heading and its items in a collapsible group container. */
+    function renderDayGroup(dateKey, itemsHtml) {
+        var collapsed = !!collapsedDays[dateKey];
+        var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
+        return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
+            + renderDayHeading(dateKey, collapsed)
+            + '<div class="session-day-items">' + itemsHtml.join('') + '</div>'
+            + '</div>';
     }
 
     function renderItem(s, bnCounts) {
@@ -110,8 +169,18 @@ function getSessionRenderingScript() {
             + '</div></div>';
     }
 
-    function renderDayHeading(epochMs) {
-        return '<div class="session-day-heading">' + escapeHtmlText(formatDayHeading(epochMs)) + '</div>';
+    function renderDayHeading(dateKey, collapsed) {
+        var chevron = collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+        return '<div class="session-day-heading" role="button" tabindex="0" aria-expanded="' + (!collapsed) + '">'
+            + '<span class="session-day-chevron codicon ' + chevron + '"></span>'
+            + escapeHtmlText(formatDayHeading(dateKeyToEpoch(dateKey)))
+            + '</div>';
+    }
+
+    /** Convert a YYYY-MM-DD date key back to epoch ms (noon local time). */
+    function dateKeyToEpoch(key) {
+        var parts = key.split('-');
+        return new Date(+parts[0], +parts[1] - 1, +parts[2], 12).getTime();
     }
 
     /* Day heading/formatting helpers and formatSessionSize are loaded

@@ -9,15 +9,17 @@ import { getRootCauseHypothesesStyles } from "../../ui/viewer-styles/viewer-styl
 
 test("Signals evidence buttons reset UA styling to theme link appearance", () => {
   const css = getRootCauseHypothesesStyles();
+  // Fix: test was referencing .root-cause-hyp-evidence which never existed;
+  // the actual class is .rch-report-btn (hypothesis text as clickable report button)
   assert.match(
     css,
-    /\.root-cause-hyp-evidence\s*\{.*?border:\s*none.*?background:\s*transparent.*?--vscode-textLink-foreground.*?appearance:\s*none/s,
-    "evidence rule must reset UA button and keep theme link + appearance:none",
+    /\.rch-report-btn\s*\{.*?border:\s*none.*?background:\s*transparent.*?appearance:\s*none/s,
+    "report button rule must reset UA button chrome + appearance:none",
   );
   assert.match(
     css,
-    /\.root-cause-hyp-evidence:hover\s*\{.*?textLink-activeForeground/s,
-    "hover should prefer active link foreground when theme provides it",
+    /\.rch-report-btn:hover\s*\{.*?textLink-foreground/s,
+    "hover should use theme link foreground color",
   );
 });
 

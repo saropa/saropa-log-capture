@@ -28,9 +28,9 @@ function updateFilterBadge() {
     if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
         && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) count++;
 
-    // Tier filters (Flutter or Device toggled from default)
-    if (typeof showFlutter !== 'undefined' && !showFlutter) count++;
-    if (typeof showDevice !== 'undefined' && showDevice) count++;
+    // Tier filters (Flutter or Device changed from default: Flutter='all', Device='none')
+    if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') count++;
+    if (typeof showDevice !== 'undefined' && showDevice !== 'none') count++;
 
     // Source tags hidden
     if (typeof hiddenSourceTags !== 'undefined'
