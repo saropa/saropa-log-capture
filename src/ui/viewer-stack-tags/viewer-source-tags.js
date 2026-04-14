@@ -47,8 +47,9 @@ var inlineTagPattern = /\\[([A-Za-z][A-Za-z0-9 _-]*)\\]/g;
 /** ALL-CAPS prefix at start of message body (e.g. HERO-DEBUG, MY_APP). */
 var capsPrefix = /^([A-Z][A-Z0-9_-]+) /;
 
-/** Drift SQL statement logs should map to a dedicated database source tag. */
-var driftStatementPattern = /\\bDrift:\\s+Sent\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
+/** Drift SQL statement logs should map to a dedicated database source tag.
+ *  Matches LogInterceptor (Drift: Sent SELECT) and DriftDebugInterceptor (Drift SELECT: SELECT). */
+var driftStatementPattern = /\\bDrift(?:\\:\\s+Sent|\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\s*\\:)\\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\\b/i;
 
 /** Generic logcat tags where sub-tag detection looks into the message body. */
 var genericLogcatTags = { 'flutter': 1, 'android': 1, 'system.err': 1 };
