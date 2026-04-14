@@ -6,7 +6,9 @@
  */
 
 /** Date range filter for the session list. */
-export type SessionDateRange = 'all' | '7d' | '30d';
+export type SessionDateRange =
+    | '1h' | '4h' | '8h' | '1d' | '7d' | '30d'
+    | '3m' | '6m' | '1y' | 'all';
 
 /** Persisted display options for the session list. */
 export interface SessionDisplayOptions {
