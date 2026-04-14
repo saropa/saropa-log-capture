@@ -63,8 +63,18 @@ function getAccordionSections(): string {
     return /* html */ `
         ${accordionSection('log-inputs-section', 'Log Inputs', `
             <div class="options-row-list tier-filter-list">
-                <label class="options-row" title="Show Flutter app output"><input type="checkbox" id="opt-flutter" checked /><span>Flutter</span></label>
-                <label class="options-row" title="Show device/system logs (excludes critical device errors which are always visible)"><input type="checkbox" id="opt-device" /><span>Device</span></label>
+                <fieldset class="tier-radio-group">
+                    <legend>Flutter</legend>
+                    <label title="Show all Flutter output"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
+                    <label title="Show only Flutter warnings and errors"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
+                    <label title="Hide all Flutter output"><input type="radio" name="tier-flutter" value="none" /> None</label>
+                </fieldset>
+                <fieldset class="tier-radio-group">
+                    <legend>Device</legend>
+                    <label title="Show all device/system logs (excludes critical device errors which are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
+                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" /> Warn+</label>
+                    <label title="Hide all device/system logs"><input type="radio" name="tier-device" value="none" checked /> None</label>
+                </fieldset>
             </div>
             <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
             <div id="source-filter-list" class="options-row-list source-filter-list"></div>

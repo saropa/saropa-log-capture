@@ -144,6 +144,38 @@ export function getOptionsStyles(): string {
     background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
 }
 
+/* Tier radio groups (Flutter / Device) — inline radios with a legend label */
+.tier-radio-group {
+    border: none;
+    margin: 0;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+.tier-radio-group legend {
+    /* Float legend inline with the radios instead of the default fieldset caption */
+    float: left;
+    padding: 0;
+    margin-right: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--vscode-foreground);
+}
+.tier-radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.tier-radio-group input[type="radio"] {
+    accent-color: var(--vscode-button-background);
+    cursor: pointer;
+    margin: 0;
+}
+
 .options-indent {
     margin-left: 20px;
     padding-left: 12px;
