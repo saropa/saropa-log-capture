@@ -51,6 +51,26 @@ suite('DriftNPlusOneDetector', () => {
         assert.ok(a.fingerprint.includes('SELECT'), 'fingerprint uses uppercase SQL keyword shape');
         assert.strictEqual(a.sqlSnippet, b.sqlSnippet);
     });
+    test('parseDriftSqlFingerprint handles DriftDebugInterceptor SELECT format', () => {
+        const result = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)('Drift SELECT: SELECT * FROM "contacts" WHERE "data_source_name" = ?; | args: [StarTrek]');
+        assert.ok(result, 'should parse DriftDebugInterceptor SELECT');
+        assert.ok(result.fingerprint.includes('SELECT'));
+        assert.strictEqual(result.argsKey, '[StarTrek]');
+        /* Trailing semicolon should be stripped from sqlSnippet. */
+        assert.ok(!result.sqlSnippet.endsWith(';'), 'trailing semicolon should be stripped');
+    });
+    test('parseDriftSqlFingerprint handles DriftDebugInterceptor UPDATE format', () => {
+        const result = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)('Drift UPDATE: UPDATE "organizations" SET "version" = ? WHERE "id" = ?; | args: [null, 195]');
+        assert.ok(result, 'should parse DriftDebugInterceptor UPDATE');
+        assert.ok(result.fingerprint.includes('UPDATE'));
+        assert.strictEqual(result.argsKey, '[null, 195]');
+    });
+    test('parseDriftSqlFingerprint produces same fingerprint for both formats', () => {
+        const standard = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)('I/flutter (5475): Drift: Sent SELECT * FROM "contacts" WHERE "id" = ? LIMIT 1; with args [42]');
+        const custom = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)('Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ? LIMIT 1; | args: [42]');
+        assert.ok(standard && custom);
+        assert.strictEqual(standard.fingerprint, custom.fingerprint, 'same SQL should produce the same fingerprint regardless of format');
+    });
     test('before: fewer than minRepeats does not emit insight', () => {
         const d = new drift_n_plus_one_detector_1.NPlusOneDetector();
         const fp = (0, drift_n_plus_one_detector_1.parseDriftSqlFingerprint)(baseLine(0));

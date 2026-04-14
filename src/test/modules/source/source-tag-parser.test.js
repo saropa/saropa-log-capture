@@ -115,6 +115,12 @@ suite('SourceTagParser', () => {
         test('should classify Drift SQL statements as database source tag', () => {
             assert.strictEqual((0, source_tag_parser_1.parseSourceTag)('I/flutter ( 5475): Drift: Sent SELECT * FROM "contacts" WHERE "contact_saropa_u_u_i_d" = ? LIMIT 1; with args [sar-c4bd35cd-c72d-4f95-b5a2-405348819d01]'), 'database');
         });
+        test('should classify DriftDebugInterceptor SELECT as database source tag', () => {
+            assert.strictEqual((0, source_tag_parser_1.parseSourceTag)('[log] Drift SELECT: SELECT * FROM "contacts" WHERE "data_source_name" = ?; | args: [StarTrek]'), 'database');
+        });
+        test('should classify DriftDebugInterceptor UPDATE as database source tag', () => {
+            assert.strictEqual((0, source_tag_parser_1.parseSourceTag)('[log] Drift UPDATE: UPDATE "organizations" SET "version" = ? WHERE "id" = ?; | args: [null, 195]'), 'database');
+        });
         test('should extract bracket sub-tag from flutter', () => {
             assert.strictEqual((0, source_tag_parser_1.parseSourceTag)('I/flutter ( 9812): [Awesome Notifications] channel created'), 'awesome notifications');
         });
