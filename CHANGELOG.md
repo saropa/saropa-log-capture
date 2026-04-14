@@ -30,7 +30,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
-- **Capture now attaches to debug sessions that are already running at activation time.** After a window reload, extension host restart, or late activation, the extension detects the active debug session and starts capture immediately instead of silently missing it.
+- **Flutter debug sessions now captured when `onDidStartDebugSession` does not fire.** The late-start fallback required an exact session ID match between the buffering session and `activeDebugSession`, which always fails for Flutter's parent/child session model (output arrives on the Dart VM child, but the active session is the Flutter parent). Removed the strict ID check so any buffered output triggers capture via the active session. Also added `attachToExistingSession` to detect sessions already running at activation time (covers window reload and extension host restart), wrapped the `onDidStartDebugSession` handler in try/catch so errors are logged instead of silently swallowed, and added diagnostic logging at every silent skip path in the session-start pipeline.
 
 ### Added
 

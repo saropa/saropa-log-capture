@@ -332,4 +332,6 @@ suite('Session panel script runtime', () => {
             assert.ok(!html.includes('file:///a1.log'), 'No sessions should be rendered');
         });
     });
+
 });
+
