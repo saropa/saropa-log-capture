@@ -115,13 +115,30 @@ export function getSessionRenderingScript(): string {
     function renderFlat(sessions, bnCounts) { return sessions.map(function(s) { return renderItem(s, bnCounts); }).join(''); }
 
     function renderGrouped(sessions, bnCounts) {
-        var groups = [], currentKey = '';
+        var groups = [], currentKey = '', dayItems = [];
         for (var i = 0; i < sessions.length; i++) {
             var key = toDateKey(sessions[i].mtime || 0);
-            if (key !== currentKey) { currentKey = key; groups.push(renderDayHeading(sessions[i].mtime || 0)); }
-            groups.push(renderItem(sessions[i], bnCounts));
+            if (key !== currentKey) {
+                /* Flush previous day group. */
+                if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
+                currentKey = key;
+                dayItems = [];
+            }
+            dayItems.push(renderItem(sessions[i], bnCounts));
         }
+        /* Flush final day group. */
+        if (currentKey) groups.push(renderDayGroup(currentKey, dayItems));
         return groups.join('');
+    }
+
+    /** Wrap a day heading and its items in a collapsible group container. */
+    function renderDayGroup(dateKey, itemsHtml) {
+        var collapsed = !!collapsedDays[dateKey];
+        var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
+        return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
+            + renderDayHeading(dateKey, collapsed)
+            + '<div class="session-day-items">' + itemsHtml.join('') + '</div>'
+            + '</div>';
     }
 
     function renderItem(s, bnCounts) {
@@ -150,8 +167,18 @@ export function getSessionRenderingScript(): string {
             + '</div></div>';
     }
 
-    function renderDayHeading(epochMs) {
-        return '<div class="session-day-heading">' + escapeHtmlText(formatDayHeading(epochMs)) + '</div>';
+    function renderDayHeading(dateKey, collapsed) {
+        var chevron = collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+        return '<div class="session-day-heading" role="button" tabindex="0" aria-expanded="' + (!collapsed) + '">'
+            + '<span class="session-day-chevron codicon ' + chevron + '"></span>'
+            + escapeHtmlText(formatDayHeading(dateKeyToEpoch(dateKey)))
+            + '</div>';
+    }
+
+    /** Convert a YYYY-MM-DD date key back to epoch ms (noon local time). */
+    function dateKeyToEpoch(key) {
+        var parts = key.split('-');
+        return new Date(+parts[0], +parts[1] - 1, +parts[2], 12).getTime();
     }
 
     /* Day heading/formatting helpers and formatSessionSize are loaded
