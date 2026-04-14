@@ -13,6 +13,7 @@
 import { getInsightScriptPartA } from './viewer-insight-panel-script-part-a';
 import { getInsightScriptPartB } from './viewer-insight-panel-script-part-b';
 import { getInsightScriptPartC } from './viewer-insight-panel-script-part-c';
+import { getInsightScriptPartD } from './viewer-insight-panel-script-part-d';
 
 const MAX_RECURRING_TEXT_LEN = 90;
 
@@ -61,6 +62,7 @@ export function getInsightPanelScriptContent(storageKey: string, strings?: Insig
         getInsightScriptPartA(storageKey, scriptStringsJson) +
         getInsightScriptPartB(MAX_RECURRING_TEXT_LEN) +
         getInsightScriptPartC() +
+        getInsightScriptPartD() +
         `})();\n`
     );
 }

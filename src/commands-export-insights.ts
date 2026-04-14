@@ -52,11 +52,11 @@ export async function resolveInsights(
     return aggregateInsights('all');
 }
 
-export function exportInsightsSummaryCmd(
+export function exportSignalsSummaryCmd(
     viewerProvider: CommandDeps['viewerProvider'],
     investigationStore: CommandDeps['investigationStore'],
 ): vscode.Disposable {
-    return vscode.commands.registerCommand('saropaLogCapture.exportInsightsSummary', async () => {
+    return vscode.commands.registerCommand('saropaLogCapture.exportSignalsSummary', async () => {
         const scopeItem = await vscode.window.showQuickPick(
             [
                 { label: t('insightsExport.scope.currentSession'), value: 'currentSession' as ScopeChoice },

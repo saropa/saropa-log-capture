@@ -5,6 +5,10 @@
 
 import type { CrashCategory, FingerprintEntry } from '../analysis/error-fingerprint';
 import { loadFilteredMetas, type LoadedMeta, type TimeRange } from '../session/metadata-loader';
+import { isPersistedSignalSummaryV1 } from '../root-cause-hints/signal-summary-types';
+import type { SignalSummaryCounts } from '../root-cause-hints/signal-summary-types';
+import { buildAllRecurringSignals } from './recurring-signal-builder';
+export type { RecurringSignalEntry, SignalKind } from './recurring-signal-builder';
 export type { TimeRange } from '../session/metadata-loader';
 
 /** A source file mentioned across multiple sessions. */
@@ -35,10 +39,29 @@ export interface EnvironmentStat {
     readonly sessionCount: number;
 }
 
+/** A signal type that recurs across multiple sessions. */
+export interface RecurringSignal {
+    readonly signalType: keyof SignalSummaryCounts;
+    readonly sessionCount: number;
+    readonly totalOccurrences: number;
+}
+
+/** An N+1 query fingerprint seen across multiple sessions. */
+export interface RecurringNPlusOne {
+    readonly fingerprint: string;
+    readonly sessionCount: number;
+}
+
 /** Aggregated cross-session insights. */
 export interface CrossSessionInsights {
     readonly hotFiles: readonly HotFile[];
     readonly recurringErrors: readonly RecurringError[];
+    readonly recurringSignals: readonly RecurringSignal[];
+    readonly recurringNPlusOnes: readonly RecurringNPlusOne[];
+    /** Unified signal list: errors, warnings, perf, SQL, network, memory, etc. all in one. */
+    readonly allSignals: readonly import('./recurring-signal-builder').RecurringSignalEntry[];
+    /** Number of sessions that had signal summary data (viewer was opened). */
+    readonly signalSessionCount: number;
     readonly sessionCount: number;
     readonly platforms: readonly EnvironmentStat[];
     readonly sdkVersions: readonly EnvironmentStat[];
@@ -52,9 +75,14 @@ const maxErrors = 30;
 /** Build insights from an existing list of loaded session metas (e.g. for a single session or investigation). */
 export function buildInsightsFromMetas(metas: readonly LoadedMeta[]): CrossSessionInsights {
     const envStats = buildEnvironmentStats(metas);
+    const signalData = buildRecurringSignals(metas);
     return {
         hotFiles: buildHotFiles(metas),
         recurringErrors: buildRecurringErrors(metas),
+        recurringSignals: signalData.signals,
+        recurringNPlusOnes: signalData.nPlusOnes,
+        allSignals: buildAllRecurringSignals(metas),
+        signalSessionCount: signalData.count,
         sessionCount: metas.length,
         ...envStats,
         queriedAt: Date.now(),
@@ -122,6 +150,40 @@ function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap:
             firstVer: version, lastVer: version, cat: fp.cat,
         });
     }
+}
+
+const maxNPlusOnes = 10;
+
+/** Aggregate signal summaries across sessions into recurring signal types and N+1 fingerprints. */
+function buildRecurringSignals(metas: readonly LoadedMeta[]): { signals: RecurringSignal[]; nPlusOnes: RecurringNPlusOne[]; count: number } {
+    const signalMap = new Map<keyof SignalSummaryCounts, { sessions: number; total: number }>();
+    const n1Map = new Map<string, number>();
+    let count = 0;
+    for (const { meta } of metas) {
+        const s = meta.signalSummary;
+        if (!s || !isPersistedSignalSummaryV1(s)) { continue; }
+        count++;
+        for (const [key, val] of Object.entries(s.counts)) {
+            if (typeof val !== 'number' || val <= 0) { continue; }
+            const k = key as keyof SignalSummaryCounts;
+            const existing = signalMap.get(k) ?? { sessions: 0, total: 0 };
+            existing.sessions++;
+            existing.total += val;
+            signalMap.set(k, existing);
+        }
+        for (const fp of s.topNPlusOneFingerprints ?? []) {
+            n1Map.set(fp, (n1Map.get(fp) ?? 0) + 1);
+        }
+    }
+    const signals = [...signalMap.entries()]
+        .map(([signalType, { sessions, total }]) => ({ signalType, sessionCount: sessions, totalOccurrences: total }))
+        .sort((a, b) => b.sessionCount - a.sessionCount);
+    const nPlusOnes = [...n1Map.entries()]
+        .map(([fingerprint, sessionCount]) => ({ fingerprint, sessionCount }))
+        .filter(e => e.sessionCount >= 2)
+        .sort((a, b) => b.sessionCount - a.sessionCount)
+        .slice(0, maxNPlusOnes);
+    return { signals, nPlusOnes, count };
 }
 
 const platformTagRe = /^(?:platform|os|device|runtime)$/i;
