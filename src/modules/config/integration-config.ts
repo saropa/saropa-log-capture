@@ -24,6 +24,7 @@ import type {
     IntegrationBrowserConfig,
     IntegrationAdbLogcatConfig,
     IntegrationUnifiedLogConfig,
+    IntegrationFlutterCrashLogsConfig,
     ProjectIndexConfig,
     ProjectIndexSourceConfig,
 } from './config';
@@ -72,6 +73,7 @@ export type IntegrationConfigBlock = {
   integrationsBrowser: IntegrationBrowserConfig;
   integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   integrationsUnifiedLog: IntegrationUnifiedLogConfig;
+  integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
 };
 
 function parseProjectIndexSources(
@@ -246,6 +248,11 @@ export function getIntegrationConfig(cfg: vscode.WorkspaceConfiguration): Integr
     integrationsUnifiedLog: {
       writeAtSessionEnd: ensureBoolean(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
       maxLinesPerSource: clamp(cfg.get('integrations.unifiedLog.maxLinesPerSource'), 1000, 500000, 50000),
+    },
+    integrationsFlutterCrashLogs: {
+      deleteOriginals: ensureBoolean(cfg.get('integrations.flutterCrashLogs.deleteOriginals'), true),
+      leadMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.leadMinutes', 1),
+      lagMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.lagMinutes', 5),
     },
   };
 }
