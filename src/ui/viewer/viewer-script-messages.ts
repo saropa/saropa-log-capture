@@ -119,7 +119,7 @@ window.addEventListener('message', function(event) {
         case 'driftViewerHealth':
             if (typeof applyDriftViewerHealthFromHost === 'function') applyDriftViewerHealthFromHost(msg); break;
         case 'rootCauseHypothesesResult':
-            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses); break;
+            if (typeof handleRootCauseHypothesesResult === 'function') handleRootCauseHypothesesResult(msg.hypotheses, msg.trends); break;
         case 'setRootCauseHintHostFields':
             if (Object.prototype.hasOwnProperty.call(msg, 'driftAdvisorSummary')) {
                 rchHostDriftAdvisorSummary = (msg.driftAdvisorSummary && typeof msg.driftAdvisorSummary.issueCount === 'number' && msg.driftAdvisorSummary.issueCount > 0) ? msg.driftAdvisorSummary : null;

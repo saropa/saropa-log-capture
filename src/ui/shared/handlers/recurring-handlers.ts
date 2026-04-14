@@ -12,6 +12,10 @@ import { aggregateInsights } from '../../../modules/misc/cross-session-aggregato
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
 import { getFirstSeenHintsForErrors } from '../../../modules/regression/regression-hint-service';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
+import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/metadata-loader';
+import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
+import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
+import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import type { PostFn } from './crashlytics-handlers';
 
 /** First-seen regression hint for display in Insights (commit for session where error first appeared). */
@@ -72,6 +76,7 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
     let recurringInThisLog: RecurringError[] | undefined;
     let errorsInThisLog: ErrorInThisLogItem[] | undefined;
     let errorsInThisLogTotal: number | undefined;
+    let signalsInThisLog: RecurringSignalEntry[] | undefined;
     if (currentFileUri) {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (folder) {
@@ -98,6 +103,12 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
                 errorsInThisLog = top3;
             }
             errorsInThisLogTotal = fps.length;
+            // Build unified signals for this session from all metadata sources
+            const sessionFilename = path.basename(currentFileUri.fsPath);
+            const thisSessionSignals = buildAllRecurringSignals([{ filename: sessionFilename, meta }]);
+            if (thisSessionSignals.length > 0) {
+                signalsInThisLog = thisSessionSignals;
+            }
         } catch {
             // ignore
         }
@@ -115,5 +126,31 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         errorsInThisLog,
         errorsInThisLogTotal,
         regressionHints,
+        recurringSignals: insights?.recurringSignals ?? [],
+        signalSessionCount: insights?.signalSessionCount ?? 0,
+        allSignals: insights?.allSignals ?? [],
+        signalsInThisLog: signalsInThisLog ?? [],
     });
+}
+
+/**
+ * Find the most recent session that has the given signal type and return its URI string.
+ * Returns undefined if no matching session found.
+ */
+export async function handleOpenSessionForSignalType(signalType: string): Promise<string | undefined> {
+    const metas = await loadFilteredMetas('all');
+    const matching = metas
+        .filter(m => {
+            const s = m.meta.signalSummary;
+            if (!s || !isPersistedSignalSummaryV1(s)) { return false; }
+            // Check if this session has a non-zero count for the requested signal type
+            const count = (s.counts as Record<string, number | undefined>)[signalType];
+            return typeof count === 'number' && count > 0;
+        })
+        .sort((a, b) => parseSessionDate(b.filename) - parseSessionDate(a.filename));
+    if (matching.length === 0) { return undefined; }
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { return undefined; }
+    const logDir = getLogDirectoryUri(folder);
+    return vscode.Uri.joinPath(logDir, matching[0].filename).toString();
 }

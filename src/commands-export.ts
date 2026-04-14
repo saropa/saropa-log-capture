@@ -14,7 +14,7 @@ import {
     setBuildCiAzurePat, deleteBuildCiAzurePat,
     setBuildCiGitlabToken, deleteBuildCiGitlabToken,
 } from './modules/integrations/providers/build-ci';
-import { exportInsightsSummaryCmd } from './commands-export-insights';
+import { exportSignalsSummaryCmd } from './commands-export-insights';
 import { htmlExportCmd, fileExportCmd, buildCiTokenCmd, importInvestigationFromSlc } from './commands-export-helpers';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
@@ -25,7 +25,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
         fileExportCmd('exportCsv', exportToCsv),
         fileExportCmd('exportJson', exportToJson),
         fileExportCmd('exportJsonl', exportToJsonl),
-        exportInsightsSummaryCmd(viewerProvider, investigationStore),
+        exportSignalsSummaryCmd(viewerProvider, investigationStore),
         vscode.commands.registerCommand('saropaLogCapture.exportSlc',
             async (item: { uri: vscode.Uri } | undefined) => {
                 const uri = item?.uri ?? viewerProvider.getCurrentFileUri();

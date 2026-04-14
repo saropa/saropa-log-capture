@@ -24,11 +24,11 @@ export function getInsightPanelHtml(): string {
     const emptyRecurring = t('insight.emptyRecurring');
     const emptyHotFiles = t('insight.emptyHotFiles');
     return /* html */ `
-<div id="insight-panel" class="insight-panel" role="region" aria-label="Insights">
+<div id="insight-panel" class="insight-panel" role="region" aria-label="Signals">
     <div class="insight-panel-header">
-        <span>Insights</span>
+        <span>Signals</span>
         <div class="insight-panel-actions">
-            <button id="insight-panel-open-tab" class="insight-panel-copy-md" title="Open in new tab" aria-label="Open Insights in new tab">
+            <button id="insight-panel-open-tab" class="insight-panel-copy-md" title="Open in new tab" aria-label="Open Signals in new tab">
                 <span class="codicon codicon-link-external"></span>
             </button>
             <button id="insight-panel-copy-md" class="insight-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
@@ -73,6 +73,10 @@ export function getInsightPanelHtml(): string {
                     <div class="insight-narrative-block">
                         <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">🔁</span><span id="insight-recurring-in-log-summary">Recurring in this log</span></div>
                         <div id="insight-recurring-in-log-list" class="recurring-list-inner"></div>
+                    </div>
+                    <div class="insight-narrative-block">
+                        <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📡</span><span id="insight-signals-in-log-summary">All signals in this log</span></div>
+                        <div id="insight-signals-in-log-list" class="insight-hotfiles-list"></div>
                     </div>
                 </div>
             </div>
@@ -125,6 +129,11 @@ export function getInsightPanelHtml(): string {
                     <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📁</span><span id="insight-hotfiles-summary">Frequently modified files</span></div>
                     <div id="insight-hotfiles-empty" class="insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
                     <div id="insight-hotfiles-list" class="insight-hotfiles-list"></div>
+                </div>
+                <div class="insight-narrative-block">
+                    <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📡</span><span id="insight-signal-trends-summary">All signals</span></div>
+                    <div id="insight-signal-trends-empty" class="insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
+                    <div id="insight-signal-trends-list" class="insight-hotfiles-list"></div>
                 </div>
             </div>
         </section>

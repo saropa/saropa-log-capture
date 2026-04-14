@@ -12,6 +12,7 @@ import { KeywordWatcher } from '../features/keyword-watcher';
 import { SessionMetadataStore } from './session-metadata';
 import { scanForCorrelationTags } from '../analysis/correlation-scanner';
 import { scanForFingerprints } from '../analysis/error-fingerprint';
+import { scanForWarningFingerprints } from '../analysis/warning-fingerprint';
 import { scanForPerfFingerprints } from '../misc/perf-fingerprint';
 import { scanAnrRisk } from '../analysis/anr-risk-scorer';
 import { detectAppVersion } from '../misc/app-version';
@@ -29,6 +30,8 @@ import { stopExternalLogTailers } from '../integrations/external-log-tailer';
 import { stopLogcatCapture } from '../integrations/adb-logcat-capture';
 import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
 import { scanAndPersistDriftSqlFingerprintSummary } from './session-drift-sql-fingerprint-persist';
+import { getLastSignalBundle, getLastSignalHypotheses } from '../../ui/provider/viewer-message-handler-actions';
+import { extractSignalSummary } from '../root-cause-hints/signal-summary-extract';
 
 /** Parameters for session finalization. */
 export interface FinalizeSessionParams {
@@ -137,6 +140,17 @@ export async function finalizeSession(
         outputChannel.appendLine(`Failed to scan fingerprints: ${err}`);
     });
 
+    const pWarnFp = scanForWarningFingerprints(logSession.fileUri).then(async (wfps) => {
+        if (wfps.length > 0) {
+            const meta = await metadataStore.loadMetadata(logSession.fileUri);
+            meta.warningFingerprints = wfps;
+            await metadataStore.saveMetadata(logSession.fileUri, meta);
+            outputChannel.appendLine(`Warning fingerprints: ${wfps.length} patterns`);
+        }
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to scan warning fingerprints: ${err}`);
+    });
+
     const pPerf = scanForPerfFingerprints(logSession.fileUri).then(async (pfs) => {
         if (pfs.length > 0) {
             await metadataStore.setPerfFingerprints(logSession.fileUri, pfs);
@@ -148,7 +162,23 @@ export async function finalizeSession(
 
     const pDriftSql = scanAndPersistDriftSqlFingerprintSummary(logSession.fileUri, metadataStore, outputChannel);
 
-    Promise.allSettled([pCorr, pFp, pPerf, pDriftSql]).then(() => {
+    // Persist signal summary from the last viewer-collected root-cause hint bundle.
+    // If the viewer was never opened for this session, getLastSignalBundle() returns
+    // undefined and we skip — same as fingerprints when no errors found.
+    const pSignal = Promise.resolve().then(async () => {
+        const bundle = getLastSignalBundle();
+        if (!bundle) { return; }
+        const summary = extractSignalSummary(bundle, getLastSignalHypotheses());
+        if (!summary) { return; }
+        const meta = await metadataStore.loadMetadata(logSession.fileUri);
+        meta.signalSummary = summary;
+        await metadataStore.saveMetadata(logSession.fileUri, meta);
+        outputChannel.appendLine(`Signal summary: ${JSON.stringify(summary.counts)}`);
+    }).catch((err) => {
+        outputChannel.appendLine(`Failed to persist signal summary: ${err}`);
+    });
+
+    Promise.allSettled([pCorr, pFp, pWarnFp, pPerf, pDriftSql, pSignal]).then(() => {
         params.onReportsIndexReady?.(logSession.fileUri);
     }).catch(() => {});
 

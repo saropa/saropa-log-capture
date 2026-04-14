@@ -27,8 +27,8 @@ const _currentTimeRange: TimeRange = 'all';
  * Show the cross-session insights panel.
  * Retired: the separate WebviewPanel is no longer used. This now opens the unified Insight panel in the viewer.
  */
-export async function showInsightsPanel(_timeRange?: TimeRange): Promise<void> {
-    await vscode.commands.executeCommand('saropaLogCapture.showInsights');
+export async function showSignalsPanel(_timeRange?: TimeRange): Promise<void> {
+    await vscode.commands.executeCommand('saropaLogCapture.showSignals');
 }
 
 /** Dispose the singleton panel. */
@@ -37,7 +37,7 @@ export function disposeInsightsPanel(): void { panel?.dispose(); panel = undefin
 function _ensurePanel(): void {
     if (panel) { return; }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.insights', 'Saropa Cross-Session Insights',
+        'saropaLogCapture.insights', 'Saropa Cross-Session Signals',
         vscode.ViewColumn.Beside, { enableScripts: true, localResourceRoots: [] },
     );
     panel.webview.onDidReceiveMessage(handleMessage);
@@ -55,14 +55,14 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         const match = { uri: vscode.Uri.parse(String(msg.uri)), filename: String(msg.filename), lineNumber: Number(msg.line), lineText: '', matchStart: 0, matchEnd: 0 };
         openLogAtLine(match).catch(() => {});
     } else if (msg.type === 'setTimeRange') {
-        showInsightsPanel(String(msg.range) as TimeRange).catch(() => {});
+        showSignalsPanel(String(msg.range) as TimeRange).catch(() => {});
     } else if (msg.type === 'refresh') {
-        showInsightsPanel().catch(() => {});
+        showSignalsPanel().catch(() => {});
     } else if (msg.type === 'setErrorStatus') {
         await setErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open') as ErrorStatus);
-        showInsightsPanel().catch(() => {});
-    } else if (msg.type === 'exportInsightsSummary') {
-        void vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary');
+        showSignalsPanel().catch(() => {});
+    } else if (msg.type === 'exportSignalsSummary') {
+        void vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary');
     }
 }
 
@@ -114,7 +114,7 @@ function renderHeader(insights: CrossSessionInsights): string {
         + _renderTimeRangeOption('all', 'All time');
     return `<div class="header">
 <div class="header-left">
-<div class="title">Saropa Cross-Session Insights</div>
+<div class="title">Saropa Cross-Session Signals</div>
 <div class="summary">Analyzed ${insights.sessionCount} session${insights.sessionCount !== 1 ? 's' : ''} &middot; ${fileCount} hot file${fileCount !== 1 ? 's' : ''} &middot; ${errorCount} error pattern${errorCount !== 1 ? 's' : ''} &middot; ${formatElapsedLabel(insights.queriedAt)}</div>
 </div>
 <div class="header-right"><input id="insights-search" class="insights-search" type="text" placeholder="Filter..." />

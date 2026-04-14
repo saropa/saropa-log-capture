@@ -172,7 +172,7 @@ export function getInsightScriptPartC(): string {
     var recurringListEl = document.getElementById('insight-recurring-list');
     if (recurringListEl) recurringListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addInsightItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
+        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
         var act = e.target.closest('.re-action');
         if (!act) return;
         e.stopPropagation();
@@ -181,12 +181,12 @@ export function getInsightScriptPartC(): string {
     var hotfilesListEl = document.getElementById('insight-hotfiles-list');
     if (hotfilesListEl) hotfilesListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.preventDefault(); vscodeApi.postMessage({ type: 'addInsightItemToCase', payload: { type: 'hotfile', filename: addBtn.dataset.filename || '' } }); }
+        if (addBtn) { e.preventDefault(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'hotfile', filename: addBtn.dataset.filename || '' } }); }
     });
     var recurringInLogListEl = document.getElementById('insight-recurring-in-log-list');
     if (recurringInLogListEl) recurringInLogListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addInsightItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
+        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
         var act = e.target.closest('.re-action');
         if (!act) return;
         e.stopPropagation();
@@ -195,12 +195,12 @@ export function getInsightScriptPartC(): string {
     var errorsInLogListEl = document.getElementById('insight-errors-in-log-list');
     if (errorsInLogListEl) errorsInLogListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addInsightItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); }
+        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); }
     });
 
     var exportSummaryEl = document.getElementById('insight-export-summary');
     if (exportSummaryEl) exportSummaryEl.addEventListener('click', function() {
-        vscodeApi.postMessage({ type: 'exportInsightsSummary' });
+        vscodeApi.postMessage({ type: 'exportSignalsSummary' });
     });
 
     window.addEventListener('message', function(e) {
@@ -250,21 +250,19 @@ export function getInsightScriptPartC(): string {
             if (errEl) { errEl.textContent = e.data.message || 'Failed to create'; errEl.style.display = ''; }
         }
         if (e.data.type === 'insightData') {
+            var d = e.data;
             insightDataCache = {
-                errors: e.data.errors || [], statuses: e.data.statuses || {}, hotFiles: e.data.hotFiles || [],
-                recurringInThisLog: e.data.recurringInThisLog || [], errorsInThisLog: e.data.errorsInThisLog || [],
-                errorsInThisLogTotal: e.data.errorsInThisLogTotal,
-                platforms: e.data.platforms || [], sdkVersions: e.data.sdkVersions || [], debugAdapters: e.data.debugAdapters || [],
-                regressionHints: e.data.regressionHints || {}
+                errors: d.errors || [], statuses: d.statuses || {}, hotFiles: d.hotFiles || [],
+                recurringInThisLog: d.recurringInThisLog || [], errorsInThisLog: d.errorsInThisLog || [],
+                errorsInThisLogTotal: d.errorsInThisLogTotal, platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
+                debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {}, recurringSignals: d.recurringSignals || [],
+                signalSessionCount: d.signalSessionCount || 0, allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || []
             };
             var loadEl = document.getElementById('insight-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';
-            renderRecurringList();
-            renderHotFiles();
-            renderRecurringInLog();
-            renderErrorsInLog();
-            renderThisLogEmptyState();
-            renderEnvironment();
+            renderRecurringList(); renderHotFiles(); renderRecurringInLog();
+            renderErrorsInLog(); renderThisLogEmptyState(); renderSignalsInThisLog();
+            renderEnvironment(); renderSignalTrends();
         }
         if (e.data.type === 'recurringErrorsData') {
             insightDataCache.errors = e.data.errors || [];
