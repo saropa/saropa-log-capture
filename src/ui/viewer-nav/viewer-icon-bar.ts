@@ -34,8 +34,8 @@ export function getIconBarHtml(): string {
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
-    <button id="ib-insight" class="ib-icon" tabindex="0" title="Click to open/close — performance insights and analysis for this session" aria-label="Insights">
-        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Insights</span>
+    <button id="ib-insight" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
+        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Signals</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>

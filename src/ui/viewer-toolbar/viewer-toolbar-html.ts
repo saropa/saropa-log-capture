@@ -66,7 +66,7 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="hidden-count-text"></span>
         </span>
         <span id="footer-selection" class="footer-selection" title="Number of currently selected lines"></span>
-        <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Performance data available — click to open the Insights panel" aria-label="Performance data available">Performance</button>
+        <button type="button" id="session-perf-chip" class="session-perf-chip u-hidden" title="Performance data available — click to open the Signals panel" aria-label="Performance data available">Performance</button>
     </div>
     <div class="toolbar-right">
         <span id="session-details-inline" class="session-details-inline" aria-label="Log context" title="Log session context and metadata"></span>

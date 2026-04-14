@@ -157,14 +157,14 @@
         "title": "%command.collapseAllSections.title%"
       },
       {
-        "command": "saropaLogCapture.showInsights",
+        "command": "saropaLogCapture.showSignals",
         "icon": "$(graph)",
-        "title": "%command.showInsights.title%"
+        "title": "%command.showSignals.title%"
       },
       {
-        "command": "saropaLogCapture.openInsightsInTab",
+        "command": "saropaLogCapture.openSignalsInTab",
         "icon": "$(link-external)",
-        "title": "%command.openInsightsInTab.title%"
+        "title": "%command.openSignalsInTab.title%"
       },
       {
         "command": "saropaLogCapture.generateReport",
@@ -254,9 +254,9 @@
         "title": "%command.exportSlc.title%"
       },
       {
-        "command": "saropaLogCapture.exportInsightsSummary",
+        "command": "saropaLogCapture.exportSignalsSummary",
         "icon": "$(graph)",
-        "title": "%command.exportInsightsSummary.title%"
+        "title": "%command.exportSignalsSummary.title%"
       },
       {
         "command": "saropaLogCapture.exportToLoki",
@@ -370,9 +370,9 @@
         "title": "%command.addToInvestigation.title%"
       },
       {
-        "command": "saropaLogCapture.addInsightItemToCase",
+        "command": "saropaLogCapture.addSignalItemToCase",
         "icon": "$(add)",
-        "title": "%command.addInsightItemToCase.title%"
+        "title": "%command.addSignalItemToCase.title%"
       },
       {
         "command": "saropaLogCapture.removeFromInvestigation",

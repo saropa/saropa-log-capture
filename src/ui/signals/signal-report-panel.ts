@@ -1,119 +1,171 @@
 /**
  * Signal report webview panel — shows a rich diagnostic report for a single signal.
  *
- * Follows the `analysis-panel.ts` pattern: singleton WebviewPanel in ViewColumn.Beside,
- * progressive section rendering via postMessage.
+ * Each click opens a NEW tab so previous reports stay accessible.
+ * Progressive section rendering via postMessage.
  */
 
 import * as vscode from 'vscode';
 import type { RootCauseHypothesis, RootCauseHintBundle } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getNonce } from '../provider/viewer-content';
-import { buildSignalReportShell, renderEvidenceSection, renderRecommendations, resolveSourcePaths } from './signal-report-render';
-import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
+import { buildSignalReportShell, renderEvidenceSection, renderRecommendations } from './signal-report-render';
+import { buildRelatedHtml } from './signal-report-related';
+import { buildOverviewHtml, buildOtherSignalsHtml } from './signal-report-overview';
+import { buildDetailsHtml } from './signal-report-details';
+import { buildFullMarkdownReport } from './signal-report-markdown';
 import { getLogDirectoryUri } from '../../modules/config/config';
 import { logExtensionError } from '../../modules/misc/extension-logger';
+import { loadSignalHistory } from './signal-report-history-loader';
+import { buildHistoryHtml } from './signal-report-history';
 
-let panel: vscode.WebviewPanel | undefined;
+/** Per-panel state for save/copy actions. Includes bundle for full markdown export. */
+interface PanelState {
+  readonly hypothesis: RootCauseHypothesis;
+  readonly bundle: RootCauseHintBundle;
+  readonly fileUri: vscode.Uri | undefined;
+}
 
-/** Show a signal report for the given hypothesis. */
+/** All open signal report panels, so they can be disposed on deactivation. */
+const openPanels = new Set<vscode.WebviewPanel>();
+
+/**
+ * Show a signal report for the given hypothesis.
+ * Each call opens a new tab so previous reports remain accessible.
+ */
 export async function showSignalReport(
   hypothesis: RootCauseHypothesis,
   bundle: RootCauseHintBundle,
   fileUri: vscode.Uri | undefined,
 ): Promise<void> {
-  lastReportHypothesis = hypothesis;
-  lastReportFileUri = fileUri;
-  ensurePanel();
-  panel!.webview.html = buildSignalReportShell({
+  const state: PanelState = { hypothesis, bundle, fileUri };
+  const panel = createPanel(hypothesis);
+  panel.webview.onDidReceiveMessage(
+    (msg) => handleMessage(msg, state),
+  );
+  panel.webview.html = buildSignalReportShell({
     nonce: getNonce(),
     hypothesis,
   });
-  await populateSections(hypothesis, bundle, fileUri);
+  await populateSections(panel, state);
 }
 
-function ensurePanel(): void {
-  if (panel) { panel.reveal(); return; }
-  panel = vscode.window.createWebviewPanel(
+/** Build a short panel title from the hypothesis template ID. */
+function panelTitle(hypothesis: RootCauseHypothesis): string {
+  return `Signal: ${hypothesis.templateId}`;
+}
+
+function createPanel(hypothesis: RootCauseHypothesis): vscode.WebviewPanel {
+  const panel = vscode.window.createWebviewPanel(
     'saropaLogCapture.signalReport',
-    'Saropa Signal Report',
+    panelTitle(hypothesis),
     vscode.ViewColumn.Beside,
     { enableScripts: true, localResourceRoots: [] },
   );
-  panel.webview.onDidReceiveMessage(handleMessage);
-  panel.onDidDispose(() => { panel = undefined; });
+  openPanels.add(panel);
+  panel.onDidDispose(() => { openPanels.delete(panel); });
+  return panel;
 }
 
-/** Populate sections with evidence data. */
+/** Populate all report sections — reads the log file once and shares across all builders. */
 async function populateSections(
-  hypothesis: RootCauseHypothesis,
-  bundle: RootCauseHintBundle,
-  fileUri: vscode.Uri | undefined,
+  panel: vscode.WebviewPanel,
+  state: PanelState,
 ): Promise<void> {
-  // Evidence section — read context around each evidence line
-  const evidenceHtml = await buildEvidenceHtml(hypothesis, fileUri);
-  postSection('evidence', 'Evidence', evidenceHtml);
+  const { hypothesis, bundle, fileUri } = state;
+  const logLines = fileUri ? await readLogLines(fileUri) : [];
 
-  // Related lines — look for other lines matching the same pattern
-  const relatedHtml = buildRelatedHtml(hypothesis, bundle);
-  postSection('related', 'Related Lines', relatedHtml);
+  // 1. Session overview — aggregate stats from the bundle
+  const overviewHtml = buildOverviewHtml({
+    bundle,
+    logLineCount: logLines.length,
+    logFilePath: fileUri?.fsPath,
+  });
+  postSection(panel, 'overview', 'Session Overview', overviewHtml);
 
-  // Recommendations
+  // 2. Evidence — target lines with 10 lines of context and stack trace extension
+  const evidenceHtml = buildEvidenceHtml(hypothesis, logLines);
+  postSection(panel, 'evidence', 'Evidence', evidenceHtml);
+
+  // 3. Signal-type-specific details (N+1, SQL burst, ANR, distribution analysis)
+  const detailsHtml = buildDetailsHtml(hypothesis, bundle);
+  const detailsFallback = '<div class="no-data">No additional details for this signal type</div>';
+  postSection(panel, 'details', 'Signal Details', detailsHtml || detailsFallback);
+
+  // 4. Related lines — all matching items with excerpts and line numbers
+  const relatedHtml = buildRelatedHtml(hypothesis, bundle, logLines);
+  postSection(panel, 'related', 'Related Lines', relatedHtml);
+
+  // 5. Other signals detected in the same session
+  const otherHtml = buildOtherSignalsHtml(hypothesis, bundle);
+  postSection(panel, 'other-signals', 'Other Signals', otherHtml);
+
+  // 6. Recommendations — template-based advice
   const recsHtml = renderRecommendations(hypothesis.templateId);
-  postSection('recommendations', 'Recommendations', recsHtml);
+  postSection(panel, 'recommendations', 'Recommendations', recsHtml);
+
+  // 7. Cross-session history — other sessions with the same signal type
+  const history = await loadSignalHistory(hypothesis.templateId);
+  const historyHtml = buildHistoryHtml({
+    sessions: history.sessions,
+    totalSessionCount: history.totalSessionCount,
+  });
+  postSection(panel, 'history', 'Cross-Session History', historyHtml);
 }
 
-/** Read the log file and extract context around each evidence line index. */
-async function buildEvidenceHtml(
+/**
+ * Build evidence HTML from hypothesis line indices and pre-read log lines.
+ * Shows 10 lines of preceding context and extends past stack trace frames.
+ */
+function buildEvidenceHtml(
   hypothesis: RootCauseHypothesis,
-  fileUri: vscode.Uri | undefined,
-): Promise<string> {
+  logLines: readonly string[],
+): string {
   const ids = hypothesis.evidenceLineIds;
-  if (ids.length === 0 || !fileUri) {
+  if (ids.length === 0) {
     return '<div class="no-data">No evidence lines to display</div>';
   }
-  const lines = await readLogLines(fileUri);
-  if (lines.length === 0) {
-    return '<div class="no-data">Could not read log file</div>';
+  if (logLines.length === 0) {
+    // Log file unreadable — still show which lines were referenced
+    const idList = ids.map(i => `Line ${i + 1}`).join(', ');
+    return `<div class="no-data">Could not read log file. Evidence at: ${idList}</div>`;
   }
-  const contextRadius = 5;
+  const contextRadius = 10;
+  const maxStackExtend = 30;
   const groups: { lineIndex: number; text: string; isTarget: boolean }[][] = [];
   for (const targetIdx of ids) {
-    if (targetIdx < 0 || targetIdx >= lines.length) { continue; }
+    if (targetIdx < 0 || targetIdx >= logLines.length) { continue; }
     const start = Math.max(0, targetIdx - contextRadius);
-    const end = Math.min(lines.length - 1, targetIdx + contextRadius);
+    let end = Math.min(logLines.length - 1, targetIdx + contextRadius);
+    // Extend past stack trace frames that follow the target line — captures the
+    // full trace even when it exceeds the normal context radius.
+    while (end < logLines.length - 1 && end < targetIdx + maxStackExtend) {
+      if (!isStackTraceLine(logLines[end + 1])) { break; }
+      end++;
+    }
     const group: { lineIndex: number; text: string; isTarget: boolean }[] = [];
     for (let i = start; i <= end; i++) {
-      group.push({ lineIndex: i, text: lines[i], isTarget: i === targetIdx });
+      group.push({ lineIndex: i, text: logLines[i], isTarget: i === targetIdx });
     }
     groups.push(group);
+  }
+  if (groups.length === 0) {
+    // All indices were out of range — the log file may have been modified since signals ran
+    const idList = ids.map(i => `Line ${i + 1}`).join(', ');
+    return `<div class="no-data">Evidence lines out of range (file may have changed). Referenced: ${idList}</div>`;
   }
   return renderEvidenceSection(groups);
 }
 
-/** Build related lines HTML from bundle data using hypothesis key prefix. */
-function buildRelatedHtml(hypothesis: RootCauseHypothesis, bundle: RootCauseHintBundle): string {
-  const parts: string[] = [];
-  const key = hypothesis.hypothesisKey;
-  if (key.startsWith('err::') && bundle.errors && bundle.errors.length > 0) {
-    parts.push(`<div>${bundle.errors.length} error(s) in this session match this pattern.</div>`);
-  }
-  if (key.startsWith('warn::') && bundle.warningGroups) {
-    const warnKey = key.slice(6); // strip 'warn::' prefix
-    for (const g of bundle.warningGroups) {
-      if (!g) { continue; }
-      const gKey = excerptKey(g.excerpt);
-      if (gKey === warnKey) {
-        parts.push(`<div>Warning repeated ${g.count} times across ${g.lineIndices.length} distinct locations.</div>`);
-      }
-    }
-  }
-  if (key.startsWith('net::') && bundle.networkFailures && bundle.networkFailures.length > 0) {
-    parts.push(`<div>${bundle.networkFailures.length} network failure(s) detected in this session.</div>`);
-  }
-  if (parts.length === 0) {
-    return '<div class="no-data">No additional related lines found</div>';
-  }
-  return parts.join('');
+/** Check if a line looks like a stack trace frame (Dart, Java, or generic). */
+function isStackTraceLine(line: string): boolean {
+  const t = line.trimStart();
+  // Dart/Flutter: #0  main (package:app/main.dart:42)
+  if (/^#\d+\s/.test(t)) { return true; }
+  // Java/Kotlin: at com.example.Class.method(File.java:42)
+  if (/^at\s+\S/.test(t)) { return true; }
+  // Indented continuation common in stack traces (tab + method reference)
+  if (line.startsWith('\t') && /\.\w+\(/.test(line)) { return true; }
+  return false;
 }
 
 /** Read all lines from a log file URI. */
@@ -126,21 +178,21 @@ async function readLogLines(fileUri: vscode.Uri): Promise<string[]> {
   }
 }
 
-function postSection(id: string, title: string, html: string): void {
-  panel?.webview.postMessage({ type: 'sectionReady', id, title, html });
+function postSection(panel: vscode.WebviewPanel, id: string, title: string, html: string): void {
+  panel.webview.postMessage({ type: 'sectionReady', id, title, html });
 }
 
-function handleMessage(msg: Record<string, unknown>): void {
-  if (msg.type === 'copyReport') { copyReport(); }
-  if (msg.type === 'saveReport') { saveReport(); }
+function handleMessage(msg: Record<string, unknown>, state: PanelState): void {
+  if (msg.type === 'copyReport') { copyReport(state); }
+  if (msg.type === 'saveReport') { saveReport(state); }
+  if (msg.type === 'openSessionFromHistory') {
+    const uri = msg.uriString as string;
+    if (uri) { vscode.commands.executeCommand('saropaLogCapture.openLog', vscode.Uri.parse(uri)); }
+  }
 }
 
-/** Stored for save/copy — set when showSignalReport is called. */
-let lastReportHypothesis: RootCauseHypothesis | undefined;
-let lastReportFileUri: vscode.Uri | undefined;
-
-function copyReport(): void {
-  buildMarkdownReport().then(
+function copyReport(state: PanelState): void {
+  buildMarkdownReport(state).then(
     (md) => {
       if (!md) { return; }
       vscode.env.clipboard.writeText(md).then(
@@ -151,12 +203,12 @@ function copyReport(): void {
   ).catch(() => { vscode.window.setStatusBarMessage('Failed to build report', 3000); });
 }
 
-function saveReport(): void {
-  buildMarkdownReport().then((md) => {
+function saveReport(state: PanelState): void {
+  buildMarkdownReport(state).then((md) => {
     if (!md) { return; }
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const logDirUri = getLogDirectoryUri(wsFolder);
-    const filename = buildSaveFilename(new Date());
+    const filename = buildSaveFilename(state, new Date());
     const destUri = vscode.Uri.joinPath(logDirUri, filename);
     return vscode.workspace.fs.createDirectory(logDirUri)
       .then(() => vscode.workspace.fs.writeFile(destUri, Buffer.from(md, 'utf-8')))
@@ -167,55 +219,31 @@ function saveReport(): void {
   });
 }
 
-function buildSaveFilename(now: Date): string {
+function buildSaveFilename(state: PanelState, now: Date): string {
   const pad = (n: number): string => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  const safe = (lastReportHypothesis?.templateId ?? 'signal').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const safe = state.hypothesis.templateId.replace(/[^a-zA-Z0-9_-]/g, '_');
   return `${stamp}_signal_${safe}.md`;
 }
 
-async function buildMarkdownReport(): Promise<string | undefined> {
-  if (!lastReportHypothesis) { return undefined; }
-  const h = lastReportHypothesis;
-  const conf = h.confidence ?? 'low';
+/** Build full markdown report by reading log file fresh and delegating to markdown module. */
+async function buildMarkdownReport(state: PanelState): Promise<string> {
+  const logLines = state.fileUri ? await readLogLines(state.fileUri) : [];
   const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  const out: string[] = [
-    '# Saropa Signal Report',
-    '',
-    `**Signal:** ${h.text}`,
-    `**Confidence:** ${conf}`,
-    `**Template:** ${h.templateId}`,
-  ];
-  if (lastReportFileUri) {
-    out.push(`**Log file:** \`${lastReportFileUri.fsPath}\``);
-  }
-  out.push('', '---', '');
-  // Evidence lines — appended in-place by helper to stay within nesting limit
-  await appendEvidenceLines(out, h.evidenceLineIds, wsRoot);
-  return out.join('\n');
+  return buildFullMarkdownReport({
+    hypothesis: state.hypothesis,
+    bundle: state.bundle,
+    logLines,
+    filePath: state.fileUri?.fsPath,
+    wsRoot,
+  });
 }
 
-/** Append markdown evidence lines to `out`, reading from the last-reported log file. */
-async function appendEvidenceLines(
-  out: string[],
-  evidenceLineIds: readonly number[],
-  wsRoot: string | undefined,
-): Promise<void> {
-  if (!lastReportFileUri || evidenceLineIds.length === 0) { return; }
-  const logLines = await readLogLines(lastReportFileUri);
-  if (logLines.length === 0) { return; }
-  out.push('## Evidence', '');
-  for (const idx of evidenceLineIds) {
-    if (idx < 0 || idx >= logLines.length) { continue; }
-    const raw = logLines[idx];
-    const resolved = wsRoot ? resolveSourcePaths(raw, wsRoot) : raw;
-    out.push(`- **Line ${idx + 1}:** \`${resolved}\``);
-  }
-  out.push('');
-}
-
-/** Dispose the panel. */
+/** Dispose all open signal report panels. */
 export function disposeSignalReportPanel(): void {
-  panel?.dispose();
-  panel = undefined;
+  // Snapshot the set — dispose() triggers onDidDispose which mutates it
+  for (const p of [...openPanels]) {
+    p.dispose();
+  }
+  openPanels.clear();
 }

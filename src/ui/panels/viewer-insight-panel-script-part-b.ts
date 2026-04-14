@@ -238,5 +238,62 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
             listEl.innerHTML = parts.length === 0 ? '<p class="insight-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
         }
     }
+
+    /** Human-readable labels for signal kinds. */
+    var kindLabels = {
+        error: '\u26D4', warning: '\u26A0\uFE0F', perf: '\u23F1\uFE0F', sql: '\uD83D\uDDC4\uFE0F',
+        network: '\uD83C\uDF10', memory: '\uD83E\uDDE0', 'slow-op': '\uD83D\uDC22',
+        anr: '\u26A0\uFE0F', permission: '\uD83D\uDD12', classified: '\uD83D\uDEA8'
+    };
+
+    /** Format duration for display (ms → readable). */
+    function fmtMs(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms'; }
+
+    /** Render the unified signal list across sessions — errors, warnings, perf, SQL, etc. all in one. */
+    function renderSignalTrends() {
+        var listEl = document.getElementById('insight-signal-trends-list');
+        var emptyEl = document.getElementById('insight-signal-trends-empty');
+        var summaryEl = document.getElementById('insight-signal-trends-summary');
+        var allSignals = (insightDataCache.allSignals || []).slice(0, 20);
+        if (summaryEl) {
+            summaryEl.textContent = allSignals.length === 0 ? 'All signals' : 'All signals (' + allSignals.length + ')';
+        }
+        if (allSignals.length === 0) {
+            if (listEl) listEl.innerHTML = '';
+            if (emptyEl) emptyEl.style.display = '';
+            return;
+        }
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (listEl) listEl.innerHTML = allSignals.map(function(s) {
+            var icon = kindLabels[s.kind] || '\u2139\uFE0F';
+            var text = s.label.length > 60 ? s.label.slice(0, 57) + '...' : s.label;
+            var meta = s.sessionCount + ' session' + (s.sessionCount === 1 ? '' : 's') + ', ' + s.totalOccurrences + ' total';
+            if (s.avgDurationMs) { meta += ', avg ' + fmtMs(s.avgDurationMs); }
+            if (s.maxDurationMs) { meta += ', max ' + fmtMs(s.maxDurationMs); }
+            if (s.category) { meta += ' [' + esc(s.category) + ']'; }
+            /* Severity badge: critical/high get colored indicators, recurring signals get a ↻ marker */
+            var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
+            var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="Recurring in ' + s.sessionCount + ' sessions">\u21BB</span>' : '';
+            return '<div class="insight-env-row insight-signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
+                + '<span>' + icon + recurBadge + ' ' + esc(text) + '</span>'
+                + '<span class="insight-hotfile-meta">' + meta + '</span></div>';
+        }).join('');
+    }
+
+    /** Render signals detected in the current log session (all kinds: errors, warnings, perf, SQL). */
+    function renderSignalsInThisLog() {
+        var listEl = document.getElementById('insight-signals-in-log-list');
+        var summaryEl = document.getElementById('insight-signals-in-log-summary');
+        var signals = insightDataCache.signalsInThisLog || [];
+        if (summaryEl) summaryEl.textContent = signals.length === 0 ? 'All signals in this log' : 'All signals in this log (' + signals.length + ')';
+        if (!listEl) { return; }
+        if (signals.length === 0) { listEl.innerHTML = ''; return; }
+        listEl.innerHTML = signals.slice(0, 15).map(function(s) {
+            var icon = kindLabels[s.kind] || '\u2139\uFE0F';
+            var text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
+            var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
+            return '<div class="insight-env-row" title="' + esc(s.label) + '"><span>' + icon + ' ' + esc(text) + '</span><span class="insight-hotfile-meta">' + meta + '</span></div>';
+        }).join('');
+    }
 `;
 }
