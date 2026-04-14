@@ -44,7 +44,8 @@ function stripSessionDatetime(name) {
 
 function normalizeSessionName(name) {
     var parts = splitFileExt(name);
-    var spaced = parts[0].replace(/[_-]+/g, ' ').trim();
+    // Dots are separators in names like "contacts.drift-advisor"
+    var spaced = parts[0].replace(/[_.\-]+/g, ' ').trim();
     var titled = spaced.split(/\\s+/).map(function(w) {
         return w.length ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w;
     }).join(' ');
