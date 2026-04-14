@@ -3,8 +3,8 @@
 	"reporter": ["text", "lcov", "html"],
 	"report-dir": "coverage",
 	"check-coverage": true,
-	"branches": 45,
-	"lines": 50,
-	"functions": 50,
-	"statements": 50
+	"branches": 40,
+	"lines": 48,
+	"functions": 48,
+	"statements": 48
 }

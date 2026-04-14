@@ -142,8 +142,12 @@ function _renderTimeRangeOption(value, label) {
 function renderHeader(insights) {
     const fileCount = insights.hotFiles.length;
     const errorCount = insights.recurringErrors.length;
-    const opts = _renderTimeRangeOption('all', 'All time') + _renderTimeRangeOption('30d', 'Last 30 days')
-        + _renderTimeRangeOption('7d', 'Last 7 days') + _renderTimeRangeOption('24h', 'Last 24 hours');
+    const opts = _renderTimeRangeOption('1h', 'Last hour') + _renderTimeRangeOption('4h', 'Last 4 hours')
+        + _renderTimeRangeOption('8h', 'Last 8 hours') + _renderTimeRangeOption('24h', 'Last 24 hours')
+        + _renderTimeRangeOption('7d', 'Last 7 days')
+        + _renderTimeRangeOption('30d', 'Last 30 days') + _renderTimeRangeOption('3m', 'Last 3 months')
+        + _renderTimeRangeOption('6m', 'Last 6 months') + _renderTimeRangeOption('1y', 'Last year')
+        + _renderTimeRangeOption('all', 'All time');
     return `<div class="header">
 <div class="header-left">
 <div class="title">Saropa Cross-Session Insights</div>
