@@ -51,6 +51,7 @@ const insights_panel_1 = require("./ui/insights/insights-panel");
 const insight_tab_panel_1 = require("./ui/viewer-panels/insight-tab-panel");
 const bug_report_panel_1 = require("./ui/panels/bug-report-panel");
 const timeline_panel_1 = require("./ui/panels/timeline-panel");
+const signal_report_panel_1 = require("./ui/signals/signal-report-panel");
 /** Refs returned by runActivation; used in deactivate to stop sessions, dispose API, indexer and pop-out. */
 let activationRefs = null;
 function activate(context) {
@@ -78,5 +79,6 @@ function deactivate() {
     (0, insight_tab_panel_1.disposeInsightTabPanel)();
     (0, bug_report_panel_1.disposeBugReportPanel)();
     (0, timeline_panel_1.disposeTimelinePanel)();
+    (0, signal_report_panel_1.disposeSignalReportPanel)();
 }
 //# sourceMappingURL=extension.js.map

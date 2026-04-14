@@ -107,12 +107,13 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(vs.includes('find-static-sources'));
         assert.ok(vs.includes('findStaticSourcesForSqlFingerprint'));
     });
-    test('root-cause hypotheses embed defines strip refresh and bundle builder', () => {
+    test('root-cause hypotheses embed defines strip refresh and bundle collection (host round-trip)', () => {
         const chunk = (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)();
         assert.ok(chunk.includes('collectRootCauseHintBundleEmbedded'));
         assert.ok(chunk.includes('scheduleRootCauseHypothesesRefresh'));
         assert.ok(chunk.includes('resetRootCauseHypothesesSession'));
-        assert.ok(chunk.includes('buildHypothesesEmbedded'));
+        assert.ok(chunk.includes('postBundleToHost'));
+        assert.ok(chunk.includes('handleRootCauseHypothesesResult'));
         assert.ok(chunk.includes('clearRootCauseHintHostFields'));
         assert.ok(chunk.includes('slowBurstBySession'));
         assert.ok(chunk.includes('collectSessionDiffRegressionFpsEmbedded'));
@@ -120,6 +121,8 @@ suite('Viewer N+1 detector embed', () => {
         assert.ok(chunk.includes('explainRootCauseHypotheses'));
         assert.ok(chunk.includes('runTriggerExplainRootCauseHypothesesFromHost'));
         assert.ok(chunk.includes('explainRootCauseHypothesesEmpty'));
+        // Algorithm no longer duplicated in webview — host runs buildHypotheses
+        assert.ok(!chunk.includes('buildHypothesesEmbedded'), 'algorithm must not be embedded — host runs it');
     });
     test('DB detector framework embed bakes slow burst thresholds and DB_08 detector id', () => {
         const chunk = (0, viewer_db_detector_framework_script_1.getViewerDbDetectorFrameworkScript)(true);

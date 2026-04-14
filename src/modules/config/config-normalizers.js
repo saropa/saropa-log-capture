@@ -124,7 +124,7 @@ exports.DEFAULT_SEVERITY_KEYWORDS = {
     performance: [
         "perf", "performance", "dropped frame", "fps", "framerate",
         "jank", "stutter", "choreographer", "doing too much work",
-        "anr", "application not responding",
+        "anr", "application not responding", "slow operation",
     ],
     todo: ["TODO", "FIXME", "HACK", "XXX", "BUG", "KLUDGE", "WORKAROUND"],
     debug: ["breadcrumb", "trace", "debug"],

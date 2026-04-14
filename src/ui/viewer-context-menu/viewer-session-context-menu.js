@@ -46,6 +46,13 @@ function getSessionContextMenuHtml() {
         <span class="codicon codicon-copy"></span> Copy File Path
     </div>
     <div class="context-menu-separator session-normal-only"></div>
+    <div class="context-menu-item session-normal-only" data-session-action="hideByName">
+        <span class="codicon codicon-eye-closed"></span> Hide This Name
+    </div>
+    <div class="context-menu-item session-normal-only" data-session-action="showOnlyByName">
+        <span class="codicon codicon-eye"></span> Show Only This Name
+    </div>
+    <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="addToInvestigation">
         <span class="codicon codicon-pin"></span> Add to Investigation
     </div>
@@ -106,6 +113,28 @@ function getSessionContextMenuScript() {
             if (!item) return;
             var action = item.dataset.sessionAction;
             hideSessionContextMenu();
+            /* Name filter actions are handled locally in the webview, not sent to the extension.
+               Look up the session record from cachedSessions by URI so we get the correct
+               displayName (which may differ from filename if the session was renamed).
+               Store the raw (pre-transform) basename so the filter adapts when the user
+               toggles display options after setting a name filter. */
+            if (action === 'hideByName' || action === 'showOnlyByName') {
+                var targetUri = sessionCtxUris[0] || '';
+                var rawBn = '';
+                if (typeof cachedSessions !== 'undefined' && cachedSessions) {
+                    for (var si = 0; si < cachedSessions.length; si++) {
+                        if (cachedSessions[si].uriString === targetUri) {
+                            rawBn = getSessionBasename(cachedSessions[si].displayName || cachedSessions[si].filename);
+                            break;
+                        }
+                    }
+                }
+                /* Fallback to raw filename if session not found in cache. */
+                if (!rawBn) rawBn = getSessionBasename(sessionCtxFilenames[0] || '');
+                var mode = action === 'hideByName' ? 'hide' : 'only';
+                if (typeof setSessionNameFilter === 'function') setSessionNameFilter(mode, rawBn);
+                return;
+            }
             vscodeApi.postMessage({
                 type: 'sessionAction', action: action,
                 uriStrings: sessionCtxUris, filenames: sessionCtxFilenames,

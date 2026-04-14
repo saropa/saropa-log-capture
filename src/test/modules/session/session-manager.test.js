@@ -107,5 +107,13 @@ function makeConfig(overrides) {
         const mgr = makeSessionManager();
         assert.strictEqual(mgr.getActiveLastWriteTime(), undefined, "no active session => undefined");
     });
+    (0, mocha_1.it)("logToOutputChannel writes to the extension output channel", () => {
+        const messages = [];
+        const oc = { appendLine: (s) => { messages.push(s); } };
+        const mgr = new session_manager_1.SessionManagerImpl(mockStatusBar, oc);
+        mgr.logToOutputChannel("test message");
+        assert.strictEqual(messages.length, 1);
+        assert.strictEqual(messages[0], "test message");
+    });
 });
 //# sourceMappingURL=session-manager.test.js.map

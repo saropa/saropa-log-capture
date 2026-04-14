@@ -105,9 +105,9 @@ function renderSeverityDots(s) {
     var parts = [];
     if (s.errorCount > 0) parts.push('<span class="sev-pair" title="Errors"><span class="sev-dot sev-error"></span>' + s.errorCount + '</span>');
     if (s.warningCount > 0) parts.push('<span class="sev-pair" title="Warnings"><span class="sev-dot sev-warning"></span>' + s.warningCount + '</span>');
+    if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
     if (s.perfCount > 0) parts.push('<span class="sev-pair" title="Performance"><span class="sev-dot sev-perf"></span>' + s.perfCount + '</span>');
     if (s.fwCount > 0) parts.push('<span class="sev-pair" title="Framework"><span class="sev-dot sev-fw"></span>' + s.fwCount + '</span>');
-    if (s.infoCount > 0) parts.push('<span class="sev-pair" title="Info"><span class="sev-dot sev-info"></span>' + s.infoCount + '</span>');
     var categorized = (s.errorCount || 0) + (s.warningCount || 0) + (s.perfCount || 0) + (s.fwCount || 0) + (s.infoCount || 0);
     var other = (s.lineCount || 0) - categorized;
     if (other > 0) parts.push('<span class="sev-pair" title="Other lines"><span class="sev-dot sev-other"></span>' + other + '</span>');

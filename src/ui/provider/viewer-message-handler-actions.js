@@ -59,12 +59,18 @@ const ai_explain_1 = require("../../modules/ai/ai-explain");
 const ai_explain_panel_1 = require("../panels/ai-explain-panel");
 const viewer_keybindings_1 = require("../viewer/viewer-keybindings");
 const viewer_message_handler_root_cause_ai_1 = require("./viewer-message-handler-root-cause-ai");
+const build_hypotheses_1 = require("../../modules/root-cause-hints/build-hypotheses");
+const signal_report_panel_1 = require("../signals/signal-report-panel");
+const signal_host_collectors_1 = require("../../modules/root-cause-hints/signal-host-collectors");
 const viewer_message_handler_static_sql_1 = require("./viewer-message-handler-static-sql");
 const ai_enable_scope_1 = require("../../modules/ai/ai-enable-scope");
 const ai_explain_ui_1 = require("../../modules/ai/ai-explain-ui");
 const viewer_workspace_bool_message_map_1 = require("./viewer-workspace-bool-message-map");
 Object.defineProperty(exports, "SAROPA_BOOL_SETTING_BY_MSG_TYPE", { enumerable: true, get: function () { return viewer_workspace_bool_message_map_1.SAROPA_BOOL_SETTING_BY_MSG_TYPE; } });
 const viewer_message_handler_session_ui_1 = require("./viewer-message-handler-session-ui");
+let lastRchBundle;
+let lastRchHypotheses = [];
+let lastRchSessionId;
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m, key, fallback = "") {
     const v = m[key];
@@ -300,6 +306,33 @@ function handleCopyAndSettingsActions(type, msg, ctx) {
         case "explainWithAi":
             runExplainWithAi(msg, ctx);
             return true;
+        case "rootCauseBundle": {
+            const incomingBundle = msg.bundle;
+            if (incomingBundle.sessionId !== lastRchSessionId) {
+                (0, signal_host_collectors_1.clearHostSignalCache)();
+                lastRchSessionId = incomingBundle.sessionId;
+            }
+            (0, signal_host_collectors_1.enrichBundleWithHostSignals)(incomingBundle, ctx.currentFileUri).then(enriched => {
+                lastRchBundle = enriched;
+                lastRchHypotheses = (0, build_hypotheses_1.buildHypotheses)(enriched);
+                ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
+            }).catch(() => {
+                lastRchBundle = incomingBundle;
+                lastRchHypotheses = (0, build_hypotheses_1.buildHypotheses)(lastRchBundle);
+                ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
+            });
+            return true;
+        }
+        case "openSignalReport": {
+            const hyp = lastRchHypotheses.find(h => h.hypothesisKey === msgStr(msg, "hypothesisKey"));
+            if (hyp && lastRchBundle) {
+                (0, signal_report_panel_1.showSignalReport)(hyp, lastRchBundle, ctx.currentFileUri).catch(() => { });
+            }
+            else {
+                vscode.window.setStatusBarMessage((0, l10n_1.t)("msg.signalReportNotReady"), 3000);
+            }
+            return true;
+        }
         case "explainRootCauseHypotheses":
             (0, viewer_message_handler_root_cause_ai_1.runExplainRootCauseHypotheses)(msg, ctx);
             return true;

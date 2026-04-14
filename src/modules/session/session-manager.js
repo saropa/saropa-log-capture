@@ -105,6 +105,8 @@ class SessionManagerImpl {
         this.onOutputBufferedWithNoSession = callback;
     }
     get activeSessionCount() { return this.ownerSessionIds.size; }
+    /** Write a message to the extension's output channel. */
+    logToOutputChannel(message) { this.outputChannel.appendLine(message); }
     /** Register a listener that receives every line written to the log. */
     addLineListener(listener) { this.lineListeners.push(listener); }
     /** Remove a previously registered line listener. */
@@ -171,7 +173,11 @@ class SessionManagerImpl {
             clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
         };
         const outcome = await (0, session_manager_start_1.startSessionImpl)(session, context, deps);
-        if (outcome.kind === 'aliased' || outcome.kind === 'skipped') {
+        // startSessionImpl already logs the specific skip reason (disabled / init failed).
+        if (outcome.kind === 'skipped') {
+            return;
+        }
+        if (outcome.kind === 'aliased') {
             return;
         }
         const onOut = (id, b) => this.onOutputEvent(id, b);

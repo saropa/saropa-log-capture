@@ -33,7 +33,42 @@ function getSessionPanelScript() {
     };
     var MIN_PANEL_WIDTH = 560;
     var selectedSessionUris = Object.create(null);
+    /** Track which day groups are collapsed (keyed by YYYY-MM-DD). */
+    var collapsedDays = Object.create(null);
     window.__sharedPanelWidth = MIN_PANEL_WIDTH;
+
+    /**
+     * Name-based filter for the session list.
+     * mode 'hide' = hide all sessions matching this canonical name.
+     * mode 'only' = show only sessions matching this canonical name.
+     * rawBasename stores the pre-transform basename so the filter adapts
+     * when display options (stripDatetime, normalizeNames) change.
+     * null = no name filter active.
+     */
+    var sessionNameFilter = null; /* { mode: 'hide'|'only', rawBasename: string } */
+
+    /** Get the raw (pre-transform) basename for a session record. */
+    function getSessionRawBasename(s) {
+        return getSessionBasename(s.displayName || s.filename);
+    }
+
+    /**
+     * Set name filter from context menu and re-render.
+     * Accepts the raw basename (before display-option transforms) so the
+     * filter stays correct when the user toggles Dates/Tidy after filtering.
+     */
+    window.setSessionNameFilter = function(mode, rawBasename) {
+        sessionNameFilter = { mode: mode, rawBasename: rawBasename };
+        sessionListPage = 0;
+        if (cachedSessions) renderSessionList(cachedSessions);
+    };
+
+    /** Clear the name filter and re-render. */
+    window.clearSessionNameFilter = function() {
+        sessionNameFilter = null;
+        sessionListPage = 0;
+        if (cachedSessions) renderSessionList(cachedSessions);
+    };
 
     /** Opens panel and moves focus into it for a11y (keyboard/screen-reader). */
     window.openSessionPanel = function() {

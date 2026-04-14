@@ -15,6 +15,7 @@ exports.stringsB = {
     'action.cancel': 'Cancel',
     'action.deleteAll': 'Delete All',
     'action.openLog': 'Open Log',
+    'action.copyLogPath': 'Copy Log Path',
     'action.add': 'Add',
     'action.clear': 'Clear',
     'action.unpin': 'Unpin',

@@ -270,6 +270,7 @@ class PopOutPanel {
             staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
             viewerDbDetectorToggles: (0, config_1.viewerDbDetectorTogglesFromConfig)(cfg),
             viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
+            signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
         });
         wv.onDidReceiveMessage((msg) => this.handleMessage(msg));
         this.startBatchTimer();
