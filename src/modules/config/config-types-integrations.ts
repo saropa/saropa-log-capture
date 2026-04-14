@@ -176,6 +176,15 @@ export interface IntegrationAdbLogcatConfig {
   readonly captureDeviceOther: boolean;
 }
 
+export interface IntegrationFlutterCrashLogsConfig {
+  /** Delete flutter_*.log originals from workspace root after importing to reports. */
+  readonly deleteOriginals: boolean;
+  /** Minutes before session start to include when scanning for crash logs. */
+  readonly leadMinutes: number;
+  /** Minutes after session end to include when scanning for crash logs. */
+  readonly lagMinutes: number;
+}
+
 /** Write `basename.unified.jsonl` merging main log + terminal + external sidecars (Phase 4). */
 export interface IntegrationUnifiedLogConfig {
   readonly writeAtSessionEnd: boolean;
