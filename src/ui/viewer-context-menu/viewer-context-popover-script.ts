@@ -20,7 +20,7 @@
  */
 
 import { getContextPopoverBrowserScript } from './viewer-context-popover-browser';
-import { getContextPopoverDbInsightScript } from './viewer-context-popover-db-insight';
+import { getContextPopoverDbInsightScript } from './viewer-context-popover-db-signal';
 import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript, getRelatedQueriesPopoverScript } from './viewer-context-popover-integration-sections';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
