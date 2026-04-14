@@ -175,15 +175,20 @@ function updateLogInputsSummary() {
     setAccordionSummary('log-inputs-section', total > 0 ? (enabled + '/' + total) : '');
 }
 
-/** Sync filter-related checkboxes from current state. */
+/** Sync filter-related controls from current state. */
 function syncFiltersPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
-    var flutterCheck = document.getElementById('opt-flutter');
-    var deviceCheck = document.getElementById('opt-device');
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    if (flutterCheck && typeof showFlutter !== 'undefined') flutterCheck.checked = showFlutter;
-    if (deviceCheck && typeof showDevice !== 'undefined') deviceCheck.checked = showDevice;
+    /* Sync tri-state tier radio buttons from current showFlutter/showDevice values */
+    if (typeof showFlutter !== 'undefined') {
+        var flutterRadio = document.querySelector('input[name="tier-flutter"][value="' + showFlutter + '"]');
+        if (flutterRadio) flutterRadio.checked = true;
+    }
+    if (typeof showDevice !== 'undefined') {
+        var deviceRadio = document.querySelector('input[name="tier-device"][value="' + showDevice + '"]');
+        if (deviceRadio) deviceRadio.checked = true;
+    }
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof syncScopeUi === 'function') syncScopeUi();
@@ -200,14 +205,18 @@ if (optExcl) optExcl.addEventListener('change', function(e) {
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
 });
 
-// Tier filter controls (Flutter / Device)
-var optFlutter = document.getElementById('opt-flutter');
-var optDevice = document.getElementById('opt-device');
-if (optFlutter) optFlutter.addEventListener('change', function(e) {
-    if (typeof setShowFlutter === 'function') setShowFlutter(e.target.checked);
+// Tier filter controls (Flutter / Device) — tri-state radio groups
+var tierFlutterRadios = document.querySelectorAll('input[name="tier-flutter"]');
+tierFlutterRadios.forEach(function(radio) {
+    radio.addEventListener('change', function(e) {
+        if (e.target.checked && typeof setShowFlutter === 'function') setShowFlutter(e.target.value);
+    });
 });
-if (optDevice) optDevice.addEventListener('change', function(e) {
-    if (typeof setShowDevice === 'function') setShowDevice(e.target.checked);
+var tierDeviceRadios = document.querySelectorAll('input[name="tier-device"]');
+tierDeviceRadios.forEach(function(radio) {
+    radio.addEventListener('change', function(e) {
+        if (e.target.checked && typeof setShowDevice === 'function') setShowDevice(e.target.value);
+    });
 });
 
 // Reset all filters

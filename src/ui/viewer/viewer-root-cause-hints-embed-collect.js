@@ -1,14 +1,29 @@
 "use strict";
 /**
- * Embedded bundle collection for DB_14 (host fields, slow bursts, baseline diff). Split from
- * `viewer-root-cause-hints-embed-algorithm.ts` for ESLint max-lines.
+ * Embedded bundle collection for DB_14 (host fields, slow bursts, baseline diff).
+ *
+ * Collects raw signal data from the webview's `allLines` and posts the bundle to
+ * the extension host for hypothesis building. The host runs `buildHypotheses()`
+ * (single TypeScript source of truth) and posts results back.
+ *
+ * Threshold constants are injected as simple numeric vars so the webview does not
+ * need to duplicate the full algorithm.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getViewerRootCauseHintsEmbedCollectChunk = getViewerRootCauseHintsEmbedCollectChunk;
-function getViewerRootCauseHintsEmbedCollectChunk(BV, MIN_ERR, MIN_FP, MIN_BURST) {
-    return /* javascript */ `
+const root_cause_hint_eligibility_1 = require("../../modules/root-cause-hints/root-cause-hint-eligibility");
+const root_cause_hint_types_1 = require("../../modules/root-cause-hints/root-cause-hint-types");
+const viewer_root_cause_hints_embed_collect_general_1 = require("./viewer-root-cause-hints-embed-collect-general");
+function getViewerRootCauseHintsEmbedCollectChunk(slowOpThresholdMs) {
+    const BV = root_cause_hint_types_1.ROOT_CAUSE_HINT_BUNDLE_VERSION;
+    const MIN_ERR = root_cause_hint_eligibility_1.ROOT_CAUSE_ERROR_EXCERPT_MIN_LEN;
+    const MIN_FP = root_cause_hint_eligibility_1.ROOT_CAUSE_FP_LEADER_MIN_COUNT;
+    const MIN_BURST = root_cause_hint_eligibility_1.ROOT_CAUSE_SQL_BURST_MIN_COUNT;
+    return (0, viewer_root_cause_hints_embed_collect_general_1.getViewerRootCauseHintsGeneralCollectChunk)(slowOpThresholdMs) + /* javascript */ `
 var rchHostDriftAdvisorSummary = null;
 var rchHostSessionDiffSummary = null;
+var rootCauseHintSessionEpoch = 0;
+var rootCauseHypothesesRaf = null;
 
 function clearRootCauseHintHostFields() {
     rchHostDriftAdvisorSummary = null;
@@ -123,6 +138,8 @@ function collectRootCauseHintBundleEmbedded() {
         if (regFps.length) sessionDiffSummary = { regressionFingerprints: regFps };
     }
 
+    var general = collectGeneralSignals();
+
     return {
         bundleVersion: ${BV},
         sessionId: sid,
@@ -131,7 +148,13 @@ function collectRootCauseHintBundleEmbedded() {
         fingerprintLeaders: leaders,
         sqlBursts: sqlBursts.length ? sqlBursts : undefined,
         driftAdvisorSummary: rchHostDriftAdvisorSummary || undefined,
-        sessionDiffSummary: sessionDiffSummary || undefined
+        sessionDiffSummary: sessionDiffSummary || undefined,
+        warningGroups: general.warnings.length ? general.warnings : undefined,
+        networkFailures: general.networkFailures.length ? general.networkFailures : undefined,
+        memoryEvents: general.memoryEvents.length ? general.memoryEvents : undefined,
+        slowOperations: general.slowOperations.length ? general.slowOperations : undefined,
+        permissionDenials: general.permissionDenials.length ? general.permissionDenials : undefined,
+        classifiedErrors: general.classifiedErrors.length ? general.classifiedErrors : undefined
     };
 }
 `;

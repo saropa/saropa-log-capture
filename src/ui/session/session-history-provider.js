@@ -138,6 +138,10 @@ class SessionHistoryProvider {
     getMetaStore() {
         return this.metaStore;
     }
+    /** Return cached items if available (populated after first fetch). */
+    getItemsCache() {
+        return this.itemsCache;
+    }
     /** Invalidate cached metadata for a URI (e.g. after metadata change). */
     invalidateMeta(uri) {
         const prefix = uri.toString() + '|';
@@ -179,16 +183,9 @@ class SessionHistoryProvider {
         if (idx < 0) {
             return { index: 0, total };
         }
-        const getUri = (item) => {
-            if ((0, session_history_grouping_1.isSplitGroup)(item)) {
-                const sorted = [...item.parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
-                return sorted[0].uri;
-            }
-            return item.uri;
-        };
         return {
-            next: idx > 0 ? getUri(items[idx - 1]) : undefined,
-            prev: idx < total - 1 ? getUri(items[idx + 1]) : undefined,
+            next: idx > 0 ? (0, session_history_grouping_1.getTreeItemUri)(items[idx - 1]) : undefined,
+            prev: idx < total - 1 ? (0, session_history_grouping_1.getTreeItemUri)(items[idx + 1]) : undefined,
             index: total - idx,
             total,
         };
@@ -212,11 +209,11 @@ class SessionHistoryProvider {
         return this.getCachedOrFetch();
     }
     /** Fetch all items, calling onItemLoaded as each file's metadata resolves. Populates the cache when done. */
-    async getAllChildrenStreaming(onItemLoaded, logDirOverride) {
+    async getAllChildrenStreaming(onItemLoaded, logDirOverride, onFilesListed) {
         if (!logDirOverride && this.itemsCache) {
             return this.itemsCache;
         }
-        const items = await (0, session_history_fetching_1.fetchItemsCore)(this, logDirOverride, onItemLoaded);
+        const items = await (0, session_history_fetching_1.fetchItemsCore)(this, logDirOverride, { onItemLoaded, onFilesListed });
         if (!logDirOverride) {
             this.itemsCache = items;
             this.fetchInFlight = undefined;

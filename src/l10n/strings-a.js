@@ -69,6 +69,7 @@ exports.stringsA = {
     'msg.aiExplainProgress': 'Explaining with AI…',
     'msg.aiExplainHypothesesProgress': 'Explaining signals with AI…',
     'msg.explainRootCauseHypothesesEmpty': 'No signals for this log (or the strip is empty). Load a log with matching signals or clear filters.',
+    'msg.signalReportNotReady': 'Signal report not ready — wait for signals to finish loading.',
     'msg.staticSqlSourcesNoIndexer': 'Project index is not available. Open a workspace folder to search static sources.',
     'msg.staticSqlSourcesNoTokens': 'Could not derive search tokens from this fingerprint.',
     'msg.staticSqlSourcesNoMatches': 'No indexed files matched tokens: {0}',

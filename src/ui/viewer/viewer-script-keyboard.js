@@ -96,7 +96,8 @@ document.addEventListener('keydown', function(e) {
     if (action === 'insertMarker') { e.preventDefault(); vscodeApi.postMessage({ type: 'insertMarker' }); return; }
     if (action === 'togglePin' && typeof togglePin === 'function') { e.preventDefault(); togglePin(getCenterIdx()); return; }
     if (action === 'annotate' && typeof promptAnnotation === 'function') { e.preventDefault(); promptAnnotation(getCenterIdx()); return; }
-    if (action === 'toggleDevice' && typeof setShowDevice === 'function') { e.preventDefault(); setShowDevice(!showDevice); var dc = document.getElementById('opt-device'); if (dc) dc.checked = showDevice; return; }
+    /* Cycle device tier: none → warnplus → all → none */
+    if (action === 'toggleDevice' && typeof setShowDevice === 'function') { e.preventDefault(); var _dm = showDevice === 'none' ? 'warnplus' : showDevice === 'warnplus' ? 'all' : 'none'; setShowDevice(_dm); var _dr = document.querySelector('input[name="tier-device"][value="' + _dm + '"]'); if (_dr) _dr.checked = true; return; }
 });
 `;
 }

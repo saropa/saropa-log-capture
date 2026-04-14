@@ -42,6 +42,13 @@ function getContentStyles() {
     overflow-wrap: normal;
     user-select: none;
 }
+/* Stack-header text color follows inherited level — same tokens as .line.level-* in viewer-styles-lines.ts. */
+.stack-header.level-warning { color: var(--vscode-debugConsole-warningForeground, #cca700); }
+.stack-header.level-performance { color: var(--vscode-charts-purple, #a855f7); }
+.stack-header.level-info { color: var(--vscode-debugConsole-infoForeground, #b695f8); }
+.stack-header.level-debug { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+.stack-header.level-notice { color: var(--vscode-charts-blue, #2196f3); }
+.stack-header.level-database { color: var(--vscode-terminal-ansiCyan, #00bcd4); }
 .stack-header:hover { background: var(--vscode-list-hoverBackground); }
 /* When collapsed, hide all child frame lines */
 .stack-group.collapsed .stack-frames { display: none; }

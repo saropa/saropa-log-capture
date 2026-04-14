@@ -24,6 +24,7 @@ const viewer_timing_1 = require("../viewer/viewer-timing");
 const viewer_replay_1 = require("../viewer/viewer-replay");
 const viewer_decorations_1 = require("../viewer-decorations/viewer-decorations");
 const viewer_deco_settings_1 = require("../viewer-decorations/viewer-deco-settings");
+const viewer_deco_settings_listeners_1 = require("../viewer-decorations/viewer-deco-settings-listeners");
 const viewer_quality_badge_1 = require("../viewer-decorations/viewer-quality-badge");
 const viewer_lint_badge_1 = require("../viewer-decorations/viewer-lint-badge");
 const viewer_stack_dedup_1 = require("../viewer-stack-tags/viewer-stack-dedup");
@@ -78,20 +79,23 @@ const viewer_error_classification_1 = require("../viewer-decorations/viewer-erro
 const viewer_error_hover_script_1 = require("../viewer-decorations/viewer-error-hover-script");
 const viewer_goto_line_1 = require("../viewer/viewer-goto-line");
 const viewer_run_nav_1 = require("../viewer-nav/viewer-run-nav");
+const viewer_structured_line_parser_1 = require("../viewer/viewer-structured-line-parser");
+const viewer_metadata_filter_1 = require("../viewer-search-filter/viewer-metadata-filter");
 function scriptTag(nonce, ...parts) {
     return `<script nonce="${nonce}">${parts.join('\n')}</script>`;
 }
 /** Build all script tags in the order required by the viewer. */
 function getViewerScriptTags(opts) {
-    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerGroupAsciiArt, viewerDetectAsciiArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, } = opts;
+    const { nonce, extensionUri, viewerMaxLines: maxLines, viewerPreserveAsciiBoxArt, viewerGroupAsciiArt, viewerDetectAsciiArt, viewerRepeatThresholds, viewerDbInsightsEnabled, staticSqlFromFingerprintEnabled, viewerSlowBurstThresholds, viewerDbDetectorToggles, signalSlowOpThresholdMs, } = opts;
     return (scriptTag(nonce, (0, viewer_error_handler_1.getErrorHandlerScript)()) +
+        scriptTag(nonce, (0, viewer_structured_line_parser_1.getStructuredLineParserScript)()) +
         scriptTag(nonce, (0, viewer_layout_1.getLayoutScript)(), (0, viewer_data_1.getViewerDataScript)({
             repeatThresholds: viewerRepeatThresholds,
             viewerDbInsightsEnabled: viewerDbInsightsEnabled !== false,
             staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
             slowBurstThresholds: viewerSlowBurstThresholds,
             dbDetectorToggles: viewerDbDetectorToggles,
-        }), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
+        }), (0, viewer_script_1.getViewerScript)(maxLines, viewerPreserveAsciiBoxArt !== false, viewerGroupAsciiArt !== false, viewerDetectAsciiArt === true), (0, viewer_root_cause_hints_script_1.getViewerRootCauseHintsScript)(signalSlowOpThresholdMs), (0, viewer_visibility_1.getViewerVisibilityScript)()) +
         scriptTag(nonce, (0, viewer_scroll_anchor_1.getScrollAnchorScript)()) +
         scriptTag(nonce, (0, viewer_filter_1.getFilterScript)()) +
         scriptTag(nonce, (0, viewer_watch_1.getWatchScript)()) +
@@ -105,6 +109,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_replay_1.getReplayScript)()) +
         scriptTag(nonce, (0, viewer_decorations_1.getDecorationsScript)()) +
         scriptTag(nonce, (0, viewer_deco_settings_1.getDecoSettingsScript)()) +
+        scriptTag(nonce, (0, viewer_deco_settings_listeners_1.getDecoSettingsListenersScript)()) +
         scriptTag(nonce, (0, viewer_quality_badge_1.getQualityBadgeScript)()) +
         scriptTag(nonce, (0, viewer_lint_badge_1.getLintBadgeScript)()) +
         scriptTag(nonce, (0, viewer_stack_dedup_1.getStackDedupScript)()) +
@@ -122,6 +127,7 @@ function getViewerScriptTags(opts) {
         scriptTag(nonce, (0, viewer_class_tags_1.getClassTagsScript)()) +
         scriptTag(nonce, (0, viewer_sql_pattern_tags_1.getSqlPatternTagsScript)(), (0, viewer_sql_query_history_core_1.getSqlQueryHistoryCoreScript)(), (0, viewer_sql_query_history_panel_1.getSqlQueryHistoryPanelScript)()) +
         scriptTag(nonce, (0, viewer_highlight_1.getHighlightScript)()) +
+        scriptTag(nonce, (0, viewer_metadata_filter_1.getMetadataFilterScript)()) +
         scriptTag(nonce, (0, viewer_scope_filter_1.getScopeFilterScript)()) +
         scriptTag(nonce, (0, viewer_scope_filter_hint_1.getScopeFilterHintScript)()) +
         scriptTag(nonce, (0, session_time_buckets_1.getSessionTimeBucketsScript)()) +

@@ -58,6 +58,7 @@ function buildViewerHtml(opts) {
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,
+        signalSlowOpThresholdMs: opts.signalSlowOpThresholdMs,
     });
     return /* html */ `<!DOCTYPE html>
 <html lang="en">

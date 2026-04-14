@@ -156,20 +156,6 @@ function getLogDir(context) {
 function getSessionRootPath(context) {
     return getLogDir(context)?.fsPath ?? "No workspace";
 }
-/** Send a lightweight filename-only preview so items appear before full metadata loads. */
-async function sendQuickPreview(broadcaster, context) {
-    const logDir = getLogDir(context);
-    if (!logDir) {
-        return;
-    }
-    const { fileTypes, includeSubfolders } = (0, config_1.getConfig)();
-    const files = await (0, config_1.readTrackedFiles)(logDir, fileTypes, includeSubfolders);
-    const previews = files.map(f => ({
-        filename: f,
-        uriString: vscode.Uri.joinPath(logDir, f).toString(),
-    }));
-    broadcaster.postToWebview({ type: 'sessionListPreview', previews });
-}
 /** Build the options object used for session payload records. */
 function makePayloadOptions(deps) {
     const lastViewedMap = deps.context.workspaceState.get(viewer_provider_helpers_1.LOG_LAST_VIEWED_KEY, {});
@@ -193,6 +179,12 @@ function wireSessionListHandlers(target, deps) {
         const payload = await (0, viewer_provider_helpers_1.buildSessionListPayload)(items, historyProvider.getActiveUri(), makePayloadOptions(deps));
         const rootLabel = getSessionRootPath(deps.context);
         broadcaster.sendSessionList(payload, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+    };
+    /** Send the final session list to the webview (always clears the shimmer). */
+    const sendFinalList = (records) => {
+        const rootLabel = getSessionRootPath(deps.context);
+        const overrideUriStr = deps.context.workspaceState.get(exports.SESSION_PANEL_ROOT_KEY);
+        broadcaster.sendSessionList(records, { label: rootLabel, path: rootLabel, isDefault: !overrideUriStr });
     };
     /** Streaming refresh: sends items to webview progressively as metadata loads. */
     const refreshSessionListStreaming = async () => {
@@ -218,39 +210,48 @@ function wireSessionListHandlers(target, deps) {
                 }
             }).catch(() => { }));
         };
-        await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri);
+        const onFilesListed = (files, logDir) => {
+            const previews = files.map(f => ({
+                filename: f,
+                uriString: vscode.Uri.joinPath(logDir, f).toString(),
+            }));
+            broadcaster.postToWebview({ type: 'sessionListPreview', previews });
+        };
+        const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
         await Promise.all(recordPromises);
         flush();
-        const rootLabel = getSessionRootPath(deps.context);
-        broadcaster.sendSessionList(allRecords, { label: rootLabel, path: rootLabel, isDefault: !overrideUri });
+        // When cache was hit, callbacks never fired — build payload from returned items.
+        if (allRecords.length === 0 && items.length > 0) {
+            const payload = await (0, viewer_provider_helpers_1.buildSessionListPayload)(items, historyProvider.getActiveUri(), opts);
+            sendFinalList(payload);
+            return;
+        }
+        sendFinalList(allRecords);
     };
+    let firstLoadFired = false;
     const ref = {};
     target.setSessionListHandler(() => {
         broadcaster.sendSessionListLoading(getSessionRootPath(deps.context));
-        if (ref.timer) {
-            clearTimeout(ref.timer);
-        }
-        ref.timer = setTimeout(() => {
-            void (async () => {
-                await sendQuickPreview(broadcaster, deps.context).catch(() => { });
-                await refreshSessionListStreaming();
-            })();
-            if (ref.interval) {
-                clearInterval(ref.interval);
-            }
-            ref.interval = setInterval(() => {
-                if (sessionManager.getActiveSession()) {
-                    void refreshSessionList();
+        void refreshSessionListStreaming().then(() => {
+            if (!firstLoadFired && deps.onFirstSessionListReady) {
+                firstLoadFired = true;
+                const cached = historyProvider.getItemsCache();
+                if (cached) {
+                    deps.onFirstSessionListReady(cached);
                 }
-            }, 30000);
-        }, 150);
+            }
+        }).catch(() => sendFinalList([]));
+        if (ref.interval) {
+            clearInterval(ref.interval);
+        }
+        ref.interval = setInterval(() => {
+            if (sessionManager.getActiveSession()) {
+                void refreshSessionList();
+            }
+        }, 30000);
     });
     deps.context.subscriptions.push({
         dispose() {
-            if (ref.timer) {
-                clearTimeout(ref.timer);
-                ref.timer = undefined;
-            }
             if (ref.interval) {
                 clearInterval(ref.interval);
                 ref.interval = undefined;

@@ -100,6 +100,7 @@ function getConfig() {
         exclusions: (0, config_validation_1.ensureStringArray)(cfg.get("exclusions"), []),
         autoHidePatterns: (0, config_validation_1.ensureStringArray)(cfg.get("autoHidePatterns"), []),
         showElapsedTime: (0, config_validation_1.ensureBoolean)(cfg.get("showElapsedTime"), false),
+        signalSlowOpThresholdMs: (0, config_validation_1.clamp)(cfg.get("signalSlowOpThresholdMs"), 100, 60000, 500),
         includeSourceLocation: (0, config_validation_1.ensureBoolean)(cfg.get("includeSourceLocation"), false),
         includeElapsedTime: (0, config_validation_1.ensureBoolean)(cfg.get("includeElapsedTime"), false),
         slowGapThreshold: (0, config_validation_1.clamp)(cfg.get("slowGapThreshold"), 0, 86_400_000, 1000),
@@ -132,6 +133,7 @@ function getConfig() {
         viewerDbDetectorNPlusOneEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
         viewerDbDetectorSlowBurstEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
         viewerDbDetectorBaselineHintsEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorBaselineHintsEnabled"), true),
+        viewerDbDetectorTimestampBurstEnabled: (0, config_validation_1.ensureBoolean)(cfg.get("viewerDbDetectorTimestampBurstEnabled"), true),
         viewerSlowBurstThresholds: (0, drift_db_slow_burst_thresholds_1.normalizeViewerSlowBurstThresholds)({
             slowQueryMs: cfg.get("viewerSlowBurstSlowQueryMs"),
             burstMinCount: cfg.get("viewerSlowBurstMinCount"),
@@ -212,6 +214,7 @@ function viewerDbDetectorTogglesFromConfig(cfg) {
         nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,
         slowBurstEnabled: cfg.viewerDbDetectorSlowBurstEnabled,
         baselineHintsEnabled: cfg.viewerDbDetectorBaselineHintsEnabled,
+        timestampBurstEnabled: cfg.viewerDbDetectorTimestampBurstEnabled,
     };
 }
 /** Error rate chart config for the viewer (bucketSize, showWarnings, detectSpikes). */
