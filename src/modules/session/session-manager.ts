@@ -92,6 +92,9 @@ export class SessionManagerImpl implements SessionManager {
 
     get activeSessionCount(): number { return this.ownerSessionIds.size; }
 
+    /** Write a message to the extension's output channel. */
+    logToOutputChannel(message: string): void { this.outputChannel.appendLine(message); }
+
     /** Register a listener that receives every line written to the log. */
     addLineListener(listener: LineListener): void { this.lineListeners.push(listener); }
 
@@ -167,7 +170,9 @@ export class SessionManagerImpl implements SessionManager {
             clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
         };
         const outcome = await startSessionImpl(session, context, deps);
-        if (outcome.kind === 'aliased' || outcome.kind === 'skipped') { return; }
+        // startSessionImpl already logs the specific skip reason (disabled / init failed).
+        if (outcome.kind === 'skipped') { return; }
+        if (outcome.kind === 'aliased') { return; }
         const onOut = (id: string, b: import('../capture/tracker').DapOutputBody) => this.onOutputEvent(id, b);
         applyStartResult({
             sessions: this.sessions, ownerSessionIds: this.ownerSessionIds, ownerSessionCreatedAt: this.ownerSessionCreatedAt,

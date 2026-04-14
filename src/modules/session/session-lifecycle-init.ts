@@ -52,7 +52,10 @@ export async function initializeSession(
 ): Promise<SessionSetupResult | undefined> {
     const { session, context, outputChannel, onLineCount, onSplit } = params;
     const config = getConfig();
-    if (!config.enabled) { return undefined; }
+    if (!config.enabled) {
+        outputChannel.appendLine('initializeSession: skipped — saropaLogCapture.enabled is false');
+        return undefined;
+    }
 
     const workspaceFolder = session.workspaceFolder ?? getWorkspaceFolder();
     if (!workspaceFolder) {
