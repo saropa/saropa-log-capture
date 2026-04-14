@@ -86,4 +86,25 @@ suite('viewer-data-add device-other demotion preserves originalLevel (plan 050)'
             'device-other demotion must still overwrite lvl to info for display',
         );
     });
+
+    test('recentErrorContext skips device-other lines so demotion is not undone', () => {
+        const block = extractAddToDataBlock(getViewerDataAddScript());
+        /* Before this fix, device-other lines were demoted to info (line 149), then
+           the recentErrorContext check (line 156) only tested `lvl === 'info'` and
+           re-promoted them to error — undoing the demotion.  The guard ensures
+           framework noise (ActivityManager, WindowManager, etc.) stays suppressed. */
+        assert.ok(
+            block.includes("lineTier !== 'device-other'"),
+            'recentErrorContext condition must exclude device-other tier to prevent re-promotion of demoted lines',
+        );
+        /* The device-other guard must appear in the same conditional as the
+           existing recentErrorContext checks (lvl === info, !isSep, !skipProximityInherit). */
+        const condLine = block.split('\n').find(
+            (l: string) => l.includes("lineTier !== 'device-other'") && l.includes("lvl === 'info'"),
+        );
+        assert.ok(
+            condLine,
+            'device-other guard must be in the same if-condition as the lvl === info check',
+        );
+    });
 });
