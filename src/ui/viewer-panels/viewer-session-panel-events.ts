@@ -98,6 +98,15 @@ export function getSessionPanelEventsScript(): string {
         });
     }
 
+    /* Name filter bar: clear button uses event delegation because the bar content is dynamic. */
+    var nameFilterBarEl = document.getElementById('session-name-filter-bar');
+    if (nameFilterBarEl) {
+        nameFilterBarEl.addEventListener('click', function(e) {
+            var btn = e.target.closest('#session-name-filter-clear');
+            if (btn && typeof clearSessionNameFilter === 'function') clearSessionNameFilter();
+        });
+    }
+
     var closeBtn = document.getElementById('session-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSessionPanel);
     var refreshBtn = document.getElementById('session-refresh');
