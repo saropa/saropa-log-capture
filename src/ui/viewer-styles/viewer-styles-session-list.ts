@@ -91,7 +91,7 @@ export function getSessionListStyles(): string {
 /* --- Latest suffix --- */
 .session-latest { opacity: 0.5; font-style: italic; font-size: 11px; margin-left: 3px; }
 
-/* --- Day headings --- */
+/* --- Day headings (collapsible) --- */
 .session-day-heading {
     padding: 6px 12px 4px;
     font-size: 11px;
@@ -102,6 +102,24 @@ export function getSessionListStyles(): string {
     position: sticky;
     top: 0;
     z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.session-day-heading:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+.session-day-chevron {
+    font-size: 12px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+/* Collapsed day group: hide session items. */
+.session-day-group.collapsed > .session-day-items {
+    display: none;
 }
 
 /* --- Session list pagination --- */

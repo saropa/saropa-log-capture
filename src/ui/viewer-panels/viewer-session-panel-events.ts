@@ -67,7 +67,24 @@ export function getSessionPanelEventsScript(): string {
     });
 
     if (sessionListEl) {
+        /* Day heading collapse/expand: toggle on click or Enter/Space. */
         sessionListEl.addEventListener('click', function(e) {
+            var heading = e.target.closest('.session-day-heading');
+            if (heading) {
+                var group = heading.closest('.session-day-group');
+                if (!group) return;
+                var key = group.getAttribute('data-day-key');
+                if (!key) return;
+                collapsedDays[key] = !collapsedDays[key];
+                group.classList.toggle('collapsed', !!collapsedDays[key]);
+                var chevron = heading.querySelector('.session-day-chevron');
+                if (chevron) {
+                    chevron.classList.toggle('codicon-chevron-right', !!collapsedDays[key]);
+                    chevron.classList.toggle('codicon-chevron-down', !collapsedDays[key]);
+                }
+                heading.setAttribute('aria-expanded', String(!collapsedDays[key]));
+                return;
+            }
             var item = e.target.closest('.session-item');
             if (!item) return;
             var uri = item.getAttribute('data-uri') || '';
@@ -80,6 +97,14 @@ export function getSessionPanelEventsScript(): string {
             selectedSessionUris = Object.create(null);
             if (cachedSessions) renderSessionList(cachedSessions);
             vscodeApi.postMessage({ type: 'openSessionFromPanel', uriString: uri });
+        });
+        /* Keyboard support: Enter/Space on focused day heading toggles collapse. */
+        sessionListEl.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            var heading = e.target.closest('.session-day-heading');
+            if (!heading) return;
+            e.preventDefault();
+            heading.click();
         });
         sessionListEl.addEventListener('contextmenu', function(e) {
             var item = e.target.closest('.session-item');
