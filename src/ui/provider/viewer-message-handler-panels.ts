@@ -61,10 +61,10 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); return true;
       case "openInsights": ctx.post({ type: 'openInsight', tab: 'recurring' }); return true;
-      case "addInsightItemToCase":
-        vscode.commands.executeCommand('saropaLogCapture.addInsightItemToCase', msg.payload);
+      case "addSignalItemToCase":
+        vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCase', msg.payload);
         return true;
-      case "exportInsightsSummary": vscode.commands.executeCommand('saropaLogCapture.exportInsightsSummary'); return true;
+      case "exportSignalsSummary": vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary'); return true;
       case "requestAboutContent":
         void loadAndPostAboutContent(ctx.context.extensionUri, ctx.extensionVersion, ctx.context.extension.id, ctx.post);
         return true;

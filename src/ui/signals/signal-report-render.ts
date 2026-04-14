@@ -31,14 +31,34 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   <span class="conf-badge conf-badge--${escapeHtml(conf)}">${escapeHtml(confLabel)}</span>
 </div>
 
+<div id="section-overview" class="section-slot">
+  <h2>Session Overview</h2>
+  <div class="section-loading">Loading session data...</div>
+</div>
+
 <div id="section-evidence" class="section-slot">
   <h2>Evidence</h2>
   <div class="section-loading">Loading evidence lines...</div>
 </div>
 
+<div id="section-details" class="section-slot">
+  <h2>Signal Details</h2>
+  <div class="section-loading">Analyzing signal...</div>
+</div>
+
 <div id="section-related" class="section-slot">
   <h2>Related Lines</h2>
   <div class="section-loading">Scanning for related lines...</div>
+</div>
+
+<div id="section-other-signals" class="section-slot">
+  <h2>Other Signals</h2>
+  <div class="section-loading">Checking for other signals...</div>
+</div>
+
+<div id="section-history" class="section-slot">
+  <h2>Cross-Session History</h2>
+  <div class="section-loading">Checking session history\u2026</div>
 </div>
 
 <div id="section-recommendations" class="section-slot">
@@ -59,6 +79,14 @@ export function buildSignalReportShell(opts: ShellOptions): string {
     if (msg.type === 'sectionReady') {
       var slot = document.getElementById('section-' + msg.id);
       if (slot) slot.innerHTML = '<h2>' + (msg.title || msg.id) + '</h2>' + msg.html;
+    }
+  });
+  /* Delegated click handler for cross-session history rows — opens the selected session */
+  document.addEventListener('click', function(ev) {
+    var row = ev.target && ev.target.closest ? ev.target.closest('.history-session-row') : null;
+    if (row && row.dataset && row.dataset.uri) {
+      ev.preventDefault();
+      vscodeApi.postMessage({ type: 'openSessionFromHistory', uriString: row.dataset.uri });
     }
   });
   var copyBtn = document.getElementById('copy-report-btn');

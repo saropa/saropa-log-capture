@@ -8,13 +8,13 @@ import { openInsightTab } from './ui/viewer-panels/insight-tab-panel';
 export function insightsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
-            'saropaLogCapture.showInsights',
+            'saropaLogCapture.showSignals',
             () => {
                 deps.viewerProvider.postMessage({ type: 'openInsight', tab: 'recurring' });
             },
         ),
         vscode.commands.registerCommand(
-            'saropaLogCapture.openInsightsInTab',
+            'saropaLogCapture.openSignalsInTab',
             () => {
                 openInsightTab({
                     getCurrentFileUri: () => deps.viewerProvider.getCurrentFileUri(),

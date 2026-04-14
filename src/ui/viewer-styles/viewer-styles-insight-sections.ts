@@ -199,5 +199,14 @@ export function getInsightSectionsStyles(): string {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Signal trend rows — clickable to open the most recent matching session */
+.insight-signal-trend-row { cursor: pointer; border-radius: 3px; }
+.insight-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
+/* Severity indicators: critical gets a red left border, high gets orange */
+.signal-sev-critical { border-left: 3px solid var(--vscode-errorForeground, #f44); }
+.signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, #fa4); }
+/* Recurring badge — small ↻ marker next to the icon */
+.signal-recurring-badge { font-size: 10px; opacity: 0.7; margin: 0 1px; }
 `;
 }

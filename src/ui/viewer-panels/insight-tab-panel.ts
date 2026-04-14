@@ -17,7 +17,7 @@ import { getPerformancePanelStyles } from "../viewer-styles/viewer-styles-perfor
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
 
 const VIEW_TYPE = "saropaLogCapture.insightTab";
-const TITLE = "Insights";
+const TITLE = "Signals";
 
 let panel: vscode.WebviewPanel | undefined;
 

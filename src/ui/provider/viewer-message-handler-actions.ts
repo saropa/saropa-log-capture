@@ -23,22 +23,15 @@ import { explainError } from '../../modules/ai/ai-explain';
 import { showAIExplanationPanel } from '../panels/ai-explain-panel';
 import { setViewerKeybinding, getViewerKeybindingsFromConfig, getViewerActionLabel } from '../viewer/viewer-keybindings';
 import type { ViewerMessageContext } from './viewer-message-types';
-import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
-import { buildHypotheses } from '../../modules/root-cause-hints/build-hypotheses';
-import type { RootCauseHintBundle, RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
-import { showSignalReport } from '../signals/signal-report-panel';
-import { clearHostSignalCache, enrichBundleWithHostSignals } from '../../modules/root-cause-hints/signal-host-collectors';
 import { runFindStaticSourcesForSqlFingerprint } from './viewer-message-handler-static-sql';
 import { getAiEnabledConfigurationTarget } from '../../modules/ai/ai-enable-scope';
 import { showAiExplainRunFailure } from '../../modules/ai/ai-explain-ui';
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 import { handleSessionAndUiActions } from './viewer-message-handler-session-ui';
+import { dispatchRootCauseMessage } from './viewer-message-handler-root-cause';
 
 export { SAROPA_BOOL_SETTING_BY_MSG_TYPE };
-
-let lastRchBundle: RootCauseHintBundle | undefined;
-let lastRchHypotheses: RootCauseHypothesis[] = [];
-let lastRchSessionId: string | undefined;
+export { getLastSignalBundle, getLastSignalHypotheses } from './viewer-message-handler-root-cause';
 
 /** Coerce message field to string; never stringify objects (avoids '[object Object]'). */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
@@ -242,36 +235,6 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
       return true;
     case "createReportFile": runCreateReportFile(msg, ctx); return true;
     case "explainWithAi": runExplainWithAi(msg, ctx); return true;
-    case "rootCauseBundle": {
-      const incomingBundle = msg.bundle as RootCauseHintBundle;
-      if (incomingBundle.sessionId !== lastRchSessionId) {
-        clearHostSignalCache();
-        lastRchSessionId = incomingBundle.sessionId;
-      }
-      enrichBundleWithHostSignals(incomingBundle, ctx.currentFileUri).then(enriched => {
-        lastRchBundle = enriched;
-        lastRchHypotheses = buildHypotheses(enriched);
-        ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
-      }).catch(() => {
-        lastRchBundle = incomingBundle;
-        lastRchHypotheses = buildHypotheses(lastRchBundle);
-        ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses });
-      });
-      return true;
-    }
-    case "openSignalReport": {
-      const hyp = lastRchHypotheses.find(h => h.hypothesisKey === msgStr(msg, "hypothesisKey"));
-      if (hyp && lastRchBundle) {
-        showSignalReport(hyp, lastRchBundle, ctx.currentFileUri).catch(() => {});
-      } else {
-        vscode.window.setStatusBarMessage(t("msg.signalReportNotReady"), 3000);
-      }
-      return true;
-    }
-    case "explainRootCauseHypotheses": runExplainRootCauseHypotheses(msg, ctx); return true;
-    case "explainRootCauseHypothesesEmpty":
-      vscode.window.showInformationMessage(t("msg.explainRootCauseHypothesesEmpty")).then(undefined, () => {});
-      return true;
     case "findStaticSourcesForSqlFingerprint":
       void runFindStaticSourcesForSqlFingerprint(msgStr(msg, "fingerprint"));
       return true;
@@ -287,6 +250,7 @@ function handleCopyAndSettingsActions(type: string, msg: Record<string, unknown>
  */
 export function dispatchViewerActionMessage(msg: Record<string, unknown>, ctx: ViewerMessageContext): boolean {
   const type = msg.type as string;
+  if (dispatchRootCauseMessage(type, msg, ctx)) { return true; }
   if (handleCopyAndSettingsActions(type, msg, ctx)) { return true; }
   if (handleSessionAndUiActions(type, msg, ctx)) { return true; }
   return false;

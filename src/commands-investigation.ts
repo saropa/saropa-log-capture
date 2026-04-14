@@ -17,9 +17,9 @@ import {
 } from './investigation-commands-helpers';
 import { tryPinSaropaLintsViolationsSnapshot } from './commands-investigation-lints';
 
-import type { AddInsightItemToCasePayload } from './investigation-commands-helpers';
+import type { AddSignalItemToCasePayload } from './investigation-commands-helpers';
 
-export type { AddInsightItemToCasePayload } from './investigation-commands-helpers';
+export type { AddSignalItemToCasePayload } from './investigation-commands-helpers';
 
 export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
@@ -237,7 +237,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
             }
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.addInsightItemToCase', async (payload?: AddInsightItemToCasePayload) => {
+        vscode.commands.registerCommand('saropaLogCapture.addSignalItemToCase', async (payload?: AddSignalItemToCasePayload) => {
             const line = formatInsightItemLine(payload);
             if (!line) {
                 vscode.window.showWarningMessage(t('msg.nothingToAddToCase'));
