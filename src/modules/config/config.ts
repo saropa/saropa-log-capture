@@ -61,6 +61,7 @@ export type {
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
+  IntegrationFlutterCrashLogsConfig,
   ProjectIndexSourceConfig,
   ProjectIndexConfig,
 } from "./config-types";

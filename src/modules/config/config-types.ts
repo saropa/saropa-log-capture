@@ -26,6 +26,7 @@ import type {
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
+  IntegrationFlutterCrashLogsConfig,
 } from "./config-types-integrations";
 import type { ProjectIndexConfig } from "./config-types-project-index";
 
@@ -190,6 +191,7 @@ export interface SaropaLogCaptureConfig {
   readonly integrationsAdbLogcat: IntegrationAdbLogcatConfig;
   /** Optional merged session artifact (Phase 4): `basename.unified.jsonl` next to main log. */
   readonly integrationsUnifiedLog: IntegrationUnifiedLogConfig;
+  readonly integrationsFlutterCrashLogs: IntegrationFlutterCrashLogsConfig;
   readonly projectIndex: ProjectIndexConfig;
   readonly replay: ReplayConfig;
 }
@@ -248,6 +250,7 @@ export type {
   IntegrationBrowserConfig,
   IntegrationAdbLogcatConfig,
   IntegrationUnifiedLogConfig,
+  IntegrationFlutterCrashLogsConfig,
 } from "./config-types-integrations";
 
 export type {

@@ -1545,9 +1545,10 @@
             "git",
             "environment",
             "performance",
-            "terminal"
+            "terminal",
+            "flutterCrashLogs"
           ],
-          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
+          "description": "Integration adapters to enable (e.g. packages, buildCi, git, environment, testResults, coverage, crashDumps, windowsEvents, docker, performance, terminal, linuxLogs, flutterCrashLogs, crashlytics). Session adapters run at start/end; crashlytics shows the Crashlytics sidebar. Clear to disable all.",
           "items": {
             "type": "string"
           },
@@ -1789,6 +1790,24 @@
           "description": "Copy discovered crash dump files into the log folder for portability.",
           "type": "boolean",
           "title": "%config.integrations.crashDumps.copyToSession.title%"
+        },
+        "saropaLogCapture.integrations.flutterCrashLogs.deleteOriginals": {
+          "default": true,
+          "description": "Delete flutter_*.log files from workspace root after importing to reports.",
+          "type": "boolean",
+          "title": "%config.integrations.flutterCrashLogs.deleteOriginals.title%"
+        },
+        "saropaLogCapture.integrations.flutterCrashLogs.leadMinutes": {
+          "default": 1,
+          "description": "Minutes before session start to include when scanning for Flutter crash logs.",
+          "type": "number",
+          "title": "%config.integrations.flutterCrashLogs.leadMinutes.title%"
+        },
+        "saropaLogCapture.integrations.flutterCrashLogs.lagMinutes": {
+          "default": 5,
+          "description": "Minutes after session end to include when scanning for Flutter crash logs.",
+          "type": "number",
+          "title": "%config.integrations.flutterCrashLogs.lagMinutes.title%"
         },
         "saropaLogCapture.integrations.windowsEvents.logs": {
           "default": [
