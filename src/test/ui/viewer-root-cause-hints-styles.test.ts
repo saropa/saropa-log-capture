@@ -43,6 +43,58 @@ test("should contain dismiss button styles with hover-reveal pattern", () => {
   );
 });
 
+test("should use flex layout on list items so signal text wraps", () => {
+  const css = getRootCauseHypothesesStyles();
+  // Before fix: list items used default inline layout, long signal text
+  // overflowed the panel. After fix: flex layout constrains the text button.
+  assert.match(
+    css,
+    /\.root-cause-hypotheses-list\s+li\s*\{[^}]*display:\s*flex/s,
+    "list items must use flex layout for wrapping",
+  );
+  assert.match(
+    css,
+    /\.root-cause-hypotheses-list\s+li\s*\{[^}]*gap:\s*4px/s,
+    "list items must have gap for spacing between children",
+  );
+});
+
+test("should allow report button text to wrap within available width", () => {
+  const css = getRootCauseHypothesesStyles();
+  // Before fix: button text never wrapped (default button behavior).
+  // After fix: flex:1 + min-width:0 + word-break let long text wrap.
+  assert.match(
+    css,
+    /\.rch-report-btn\s*\{[^}]*flex:\s*1/s,
+    "report button must flex-grow to fill available width",
+  );
+  assert.match(
+    css,
+    /\.rch-report-btn\s*\{[^}]*min-width:\s*0/s,
+    "report button must allow shrinking below intrinsic width",
+  );
+  assert.match(
+    css,
+    /\.rch-report-btn\s*\{[^}]*word-break:\s*break-word/s,
+    "report button text must break long words to prevent overflow",
+  );
+});
+
+test("should prevent emoji and dismiss button from shrinking in flex", () => {
+  const css = getRootCauseHypothesesStyles();
+  // Emoji badge and dismiss × must stay fixed-size while text wraps
+  assert.match(
+    css,
+    /\.root-cause-hyp-conf\s*\{[^}]*flex-shrink:\s*0/s,
+    "confidence emoji must not shrink in flex layout",
+  );
+  assert.match(
+    css,
+    /\.rch-dismiss-btn\s*\{[^}]*flex-shrink:\s*0/s,
+    "dismiss button must not shrink in flex layout",
+  );
+});
+
 test("should contain restore button styles", () => {
   const css = getRootCauseHypothesesStyles();
   assert.ok(css.includes(".rch-restore-btn"), "restore button class must exist");
