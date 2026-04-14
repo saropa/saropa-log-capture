@@ -8,11 +8,11 @@ import { InvestigationStore } from './modules/investigation/investigation-store'
 import type { Investigation } from './modules/investigation/investigation-types';
 
 /** Payload from Insight panel "+" (add to case) for recurring error or hot file. */
-export type AddInsightItemToCasePayload =
+export type AddSignalItemToCasePayload =
     | { type: 'recurring'; normalizedText?: string; exampleLine?: string }
     | { type: 'hotfile'; filename?: string };
 
-export function formatInsightItemLine(payload: AddInsightItemToCasePayload | undefined): string {
+export function formatInsightItemLine(payload: AddSignalItemToCasePayload | undefined): string {
     if (!payload) { return ''; }
     if (payload.type === 'recurring') {
         const text = (payload.exampleLine ?? payload.normalizedText ?? '').trim();
