@@ -82,7 +82,7 @@ export const VIEWER_ACTION_LABELS: Record<ViewerKeybindingActionId, string> = {
   insertMarker: 'Insert marker',
   togglePin: 'Pin line',
   annotate: 'Annotate line',
-  toggleDevice: 'Toggle device logs',
+  toggleDevice: 'Cycle device logs (None / Warn+ / All)',
   copyRaw: 'Copy as raw text',
 };
 

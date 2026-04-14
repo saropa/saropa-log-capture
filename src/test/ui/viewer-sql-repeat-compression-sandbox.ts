@@ -66,8 +66,8 @@ var suppressTransientErrors = false;
 var viewerPreserveAsciiBoxArt = true;
 var viewerGroupAsciiArt = true;
 var viewerDetectAsciiArt = false;
-var showFlutter = true;
-var showDevice = false;
+var showFlutter = 'all';
+var showDevice = 'none';
 function isTierHidden() { return false; }
 /* getDriftDebugServerFromLogScript assigns to window; Node vm has no browser global. */
 var window = globalThis;
