@@ -19,7 +19,8 @@ const logcatLevelPattern = /^([VDIWEFA])\//;
 /** Threadtime format: `MM-DD HH:MM:SS.mmm  PID  TID LEVEL TAG: message` (from `adb logcat -v threadtime`). */
 const threadtimeLevelPattern = /^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+([VDIWEFA])\s/;
 // Drift SQL statement logs can contain enum values like "ApplicationLogError" in args.
-const driftStatementPattern = /\bDrift:\s+Sent\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
+// Matches both LogInterceptor (`Drift: Sent SELECT`) and DriftDebugInterceptor (`Drift SELECT: SELECT`).
+const driftStatementPattern = /\bDrift(?::\s+Sent|\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\s*:)\s+(?:SELECT|INSERT|UPDATE|DELETE|WITH|PRAGMA|BEGIN|COMMIT|ROLLBACK)\b/i;
 
 /** Strict structural error: keyword in label position (`Error:`, `[error]`), Dart private types, Null check. */
 const strictStructuralErrorPattern = /\w*(?:error|exception)\s*[:\]!]|\[(?:error|exception|fatal|panic|critical)\]|_\w*(?:Error|Exception)\b|Null check operator/i;
@@ -76,7 +77,7 @@ export function setSeverityKeywords(kw: SeverityKeywords): void {
 
 // ── Public API ──────────────────────────────────────────────────────────
 
-/** True when the line is a Drift SQL trace (`Drift: Sent …`). */
+/** True when the line is a Drift SQL trace (`Drift: Sent …` or `Drift SELECT: …`). */
 export function isDriftSqlStatementLine(plainText: string): boolean {
     return driftStatementPattern.test(plainText);
 }

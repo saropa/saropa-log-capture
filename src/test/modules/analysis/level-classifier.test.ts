@@ -91,6 +91,20 @@ suite('LevelClassifier', () => {
                 'database',
             );
         });
+
+        test('should classify DriftDebugInterceptor SELECT as database', () => {
+            assert.strictEqual(
+                classifyLevel('Drift SELECT: SELECT * FROM "contacts" WHERE "id" = ?; | args: [42]', 'stdout', true),
+                'database',
+            );
+        });
+
+        test('should classify DriftDebugInterceptor UPDATE as database', () => {
+            assert.strictEqual(
+                classifyLevel('Drift UPDATE: UPDATE "organizations" SET "version" = ?; | args: [null]', 'stdout', true),
+                'database',
+            );
+        });
     });
 
     suite('classifyLevel — strict mode', () => {
