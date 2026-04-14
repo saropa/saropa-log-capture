@@ -4,32 +4,36 @@ exports.getStackFilterScript = getStackFilterScript;
 /**
  * Client-side JavaScript for the Flutter/Device log filter.
  *
- * Two checkboxes in Log Inputs control visibility:
- *   - Flutter (checked by default): lines with tier === 'flutter'
- *   - Device (unchecked by default): lines with tier === 'device-other'
+ * Radio groups in Log Inputs control visibility with three states:
+ *   - 'all':      show every line from that tier
+ *   - 'warnplus': show only warnings and errors (checks originalLevel for
+ *                 device-other lines whose level was demoted to info)
+ *   - 'none':     hide every line from that tier
+ *
+ * Defaults: Flutter = 'all', Device = 'none'.
  *
  * Device-critical lines (e.g. AndroidRuntime crashes) are always visible
- * regardless of the Device checkbox — they bypass this filter entirely.
+ * regardless of the Device setting — they bypass this filter entirely.
  *
  * Uses recalcHeights() so the filter composes with all other filters.
  */
 function getStackFilterScript() {
     return /* javascript */ `
-var showFlutter = true;
-var showDevice = false;
+var showFlutter = 'all';
+var showDevice = 'none';
 
-/** Update Flutter checkbox state and refilter. */
-function setShowFlutter(enabled) {
-    if (showFlutter === enabled) return;
-    showFlutter = enabled;
+/** Update Flutter tier filter mode ('all' | 'warnplus' | 'none') and refilter. */
+function setShowFlutter(mode) {
+    if (showFlutter === mode) return;
+    showFlutter = mode;
     recalcHeights();
     renderViewport(true);
 }
 
-/** Update Device checkbox state and refilter. */
-function setShowDevice(enabled) {
-    if (showDevice === enabled) return;
-    showDevice = enabled;
+/** Update Device tier filter mode ('all' | 'warnplus' | 'none') and refilter. */
+function setShowDevice(mode) {
+    if (showDevice === mode) return;
+    showDevice = mode;
     recalcHeights();
     renderViewport(true);
 }
@@ -37,13 +41,20 @@ function setShowDevice(enabled) {
 /**
  * Check if an item is hidden by the Flutter/Device tier filter.
  * Device-critical items always pass (never hidden by this filter).
+ *
+ * In 'warnplus' mode, checks originalLevel (pre-demotion) first, then
+ * falls back to level — device-other lines demote error/warning to info
+ * but preserve the original in originalLevel (plan 050).
  */
 function isTierHidden(item) {
     if (!item.tier) return false;
     if (item.tier === 'device-critical') return false;
-    if (item.tier === 'flutter') return !showFlutter;
-    if (item.tier === 'device-other') return !showDevice;
-    return false;
+    var mode = (item.tier === 'flutter') ? showFlutter : (item.tier === 'device-other') ? showDevice : 'all';
+    if (mode === 'all') return false;
+    if (mode === 'none') return true;
+    /* 'warnplus': show only warnings and errors */
+    var effectiveLevel = item.originalLevel || item.level || 'info';
+    return effectiveLevel !== 'error' && effectiveLevel !== 'warning';
 }
 
 `;

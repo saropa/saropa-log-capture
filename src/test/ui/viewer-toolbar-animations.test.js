@@ -147,6 +147,9 @@ suite('Viewer toolbar animations', () => {
             assert.ok(src.includes("classList.add('signals-drawer-hidden')"), 'signals collapse should use signals-drawer-hidden');
             assert.ok(src.includes("classList.remove('signals-drawer-hidden')"), 'signals restore should remove signals-drawer-hidden');
         });
+        test('should not export showSignalsPanel to window', () => {
+            assert.ok(!src.includes('window.showSignalsPanel'), 'showSignalsPanel must not be exported — panel is only opened via toggleSignalsPanel');
+        });
         test('accordion should not use body.hidden', () => {
             assert.ok(!src.includes('body.hidden'), 'accordion must not set body.hidden (CSS max-height handles visibility)');
         });

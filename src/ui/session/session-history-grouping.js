@@ -8,6 +8,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isSplitGroup = isSplitGroup;
+exports.getTreeItemUri = getTreeItemUri;
 exports.groupSplitFiles = groupSplitFiles;
 exports.totalLineCount = totalLineCount;
 exports.buildSplitGroupTooltip = buildSplitGroupTooltip;
@@ -15,6 +16,14 @@ exports.formatSize = formatSize;
 /** Type guard: check if a tree item is a SplitGroup. */
 function isSplitGroup(item) {
     return item.type === 'split-group';
+}
+/** Get the primary URI for a tree item (first part for split groups, sorted by part number). */
+function getTreeItemUri(item) {
+    if (isSplitGroup(item)) {
+        const sorted = [...item.parts].sort((a, b) => (a.partNumber ?? 0) - (b.partNumber ?? 0));
+        return sorted[0].uri;
+    }
+    return item.uri;
 }
 /** Pattern to detect split file parts: _001.log, _001.txt, etc. */
 const SPLIT_PART_PATTERN = /^(.+)_(\d{3})\.(log|txt|md|csv|json|jsonl|html)$/;

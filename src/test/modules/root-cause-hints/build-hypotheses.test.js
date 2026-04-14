@@ -12,8 +12,9 @@ const base = {
     sessionId: "s1",
 };
 (0, node_test_1.default)("isRootCauseHintsEligible: false for wrong version or missing sessionId", () => {
-    strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)({ ...base, bundleVersion: 2 }), false);
+    strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)({ ...base, bundleVersion: 99 }), false);
     strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)({ bundleVersion: 1, sessionId: "" }), false);
+    strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)({ bundleVersion: 2, sessionId: "" }), false);
 });
 (0, node_test_1.default)("isRootCauseHintsEligible: true with qualifying error excerpt", () => {
     strict_1.default.equal((0, root_cause_hint_eligibility_1.isRootCauseHintsEligible)({
@@ -209,4 +210,5 @@ const base = {
     const hy = (0, build_hypotheses_1.buildHypotheses)(b);
     strict_1.default.ok(hy.some((h) => h.templateId === "sql-burst" && h.hypothesisKey === "burst::bfp"));
 });
+// v2 general signal tests and fingerprinting tests are in build-hypotheses-general.test.ts
 //# sourceMappingURL=build-hypotheses.test.js.map

@@ -13,8 +13,10 @@ const strict_1 = __importDefault(require("node:assert/strict"));
 const viewer_styles_root_cause_hints_1 = require("../../ui/viewer-styles/viewer-styles-root-cause-hints");
 (0, node_test_1.default)("Signals evidence buttons reset UA styling to theme link appearance", () => {
     const css = (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)();
-    strict_1.default.match(css, /\.root-cause-hyp-evidence\s*\{.*?border:\s*none.*?background:\s*transparent.*?--vscode-textLink-foreground.*?appearance:\s*none/s, "evidence rule must reset UA button and keep theme link + appearance:none");
-    strict_1.default.match(css, /\.root-cause-hyp-evidence:hover\s*\{.*?textLink-activeForeground/s, "hover should prefer active link foreground when theme provides it");
+    // Fix: test was referencing .root-cause-hyp-evidence which never existed;
+    // the actual class is .rch-report-btn (hypothesis text as clickable report button)
+    strict_1.default.match(css, /\.rch-report-btn\s*\{.*?border:\s*none.*?background:\s*transparent.*?appearance:\s*none/s, "report button rule must reset UA button chrome + appearance:none");
+    strict_1.default.match(css, /\.rch-report-btn:hover\s*\{.*?textLink-foreground/s, "hover should use theme link foreground color");
 });
 (0, node_test_1.default)("should contain dismiss button styles with hover-reveal pattern", () => {
     const css = (0, viewer_styles_root_cause_hints_1.getRootCauseHypothesesStyles)();

@@ -120,6 +120,28 @@ suite('Viewer file loader', () => {
             const pending = (0, viewer_file_loader_1.parseExternalSidecarToPending)('raw <b>text</b>', 'app');
             assert.strictEqual(pending[0].rawText, 'raw <b>text</b>');
         });
+        test('should extract ISO 8601 timestamps from sidecar lines', () => {
+            const line = '2026-04-13T11:46:50.066Z  [CACHE]  HIT  flutter.releases';
+            const pending = (0, viewer_file_loader_1.parseExternalSidecarToPending)(line, 'sda');
+            assert.strictEqual(pending.length, 1);
+            const expected = new Date('2026-04-13T11:46:50.066Z').getTime();
+            assert.strictEqual(pending[0].timestamp, expected);
+        });
+        test('should return timestamp 0 for lines without timestamps', () => {
+            const pending = (0, viewer_file_loader_1.parseExternalSidecarToPending)('plain log line', 'sda');
+            assert.strictEqual(pending[0].timestamp, 0);
+        });
+        test('should extract timestamps from multiple SDA lines', () => {
+            const content = [
+                '2026-04-13T11:46:50.066Z  [CACHE]  HIT  flutter.releases',
+                '2026-04-13T11:46:50.067Z  [INFO ]  Scan started',
+            ].join('\n');
+            const pending = (0, viewer_file_loader_1.parseExternalSidecarToPending)(content, 'sda');
+            assert.strictEqual(pending.length, 2);
+            assert.ok(pending[0].timestamp > 0);
+            assert.ok(pending[1].timestamp > 0);
+            assert.ok(pending[1].timestamp >= pending[0].timestamp);
+        });
     });
     suite('parseUnifiedJsonlToPending', () => {
         test('parses JSONL lines and preserves source order', () => {

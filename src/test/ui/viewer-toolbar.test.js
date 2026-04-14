@@ -91,8 +91,8 @@ suite('Viewer toolbar', () => {
             'id="level-select-none"',
             'id="context-lines-slider"',
             'id="context-lines-label"',
-            'id="opt-flutter"',
-            'id="opt-device"',
+            'name="tier-flutter"',
+            'name="tier-device"',
             'id="preset-select"',
             'id="reset-all-filters"',
         ];

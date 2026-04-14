@@ -70,6 +70,7 @@ function setupLogViewerWebview(target, webviewView) {
         staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
         viewerDbDetectorToggles: (0, config_1.viewerDbDetectorTogglesFromConfig)(cfg),
         viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
+        signalSlowOpThresholdMs: cfg.signalSlowOpThresholdMs,
     });
     webviewView.webview.onDidReceiveMessage((msg) => target.handleMessage(msg));
     target.startBatchTimer();

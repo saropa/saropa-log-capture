@@ -195,6 +195,11 @@ function getIntegrationConfig(cfg) {
             writeAtSessionEnd: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.unifiedLog.writeAtSessionEnd'), false),
             maxLinesPerSource: (0, config_validation_1.clamp)(cfg.get('integrations.unifiedLog.maxLinesPerSource'), 1000, 500000, 50000),
         },
+        integrationsFlutterCrashLogs: {
+            deleteOriginals: (0, config_validation_1.ensureBoolean)(cfg.get('integrations.flutterCrashLogs.deleteOriginals'), true),
+            leadMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.leadMinutes', 1),
+            lagMinutes: configNonNegative(cfg, 'integrations.flutterCrashLogs.lagMinutes', 5),
+        },
     };
 }
 function getProjectIndexConfig(cfg) {

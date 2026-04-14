@@ -140,20 +140,27 @@ function formatBytes(bytes) {
     return `${mb.toFixed(2)} MB`;
 }
 /**
- * Show a session summary notification.
+ * Show a session summary notification with Open Log and Copy Log Path buttons.
  */
 function showSummaryNotification(summary) {
     const message = `${summary.title}\n${summary.lines.join(' | ')}`;
-    vscode.window.showInformationMessage(message, (0, l10n_1.t)('action.openLog')).then((selection) => {
-        if (selection !== (0, l10n_1.t)('action.openLog')) {
-            return;
+    const openLabel = (0, l10n_1.t)('action.openLog');
+    const copyLabel = (0, l10n_1.t)('action.copyLogPath');
+    vscode.window.showInformationMessage(message, openLabel, copyLabel).then((selection) => {
+        if (selection === openLabel) {
+            // After finalize there is no active session; open the finalized log when we have its URI.
+            if (summary.logUri) {
+                void vscode.window.showTextDocument(summary.logUri);
+            }
+            else {
+                void vscode.commands.executeCommand('saropaLogCapture.open');
+            }
         }
-        // After finalize there is no active session; open the finalized log when we have its URI.
-        if (summary.logUri) {
-            void vscode.window.showTextDocument(summary.logUri);
-        }
-        else {
-            void vscode.commands.executeCommand('saropaLogCapture.open');
+        else if (selection === copyLabel) {
+            // Copy the log file path to the clipboard for external use.
+            if (summary.logUri) {
+                void vscode.env.clipboard.writeText(summary.logUri.fsPath);
+            }
         }
     });
 }

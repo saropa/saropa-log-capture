@@ -45,6 +45,7 @@ const assert = __importStar(require("node:assert"));
 const viewer_data_viewport_1 = require("../../ui/viewer/viewer-data-viewport");
 const viewer_data_helpers_render_1 = require("../../ui/viewer/viewer-data-helpers-render");
 const viewer_styles_decoration_1 = require("../../ui/viewer-styles/viewer-styles-decoration");
+const viewer_data_add_1 = require("../../ui/viewer/viewer-data-add");
 suite('Severity bar connector (same-level joining)', () => {
     const viewportScript = (0, viewer_data_viewport_1.getViewportRenderScript)();
     test('should use findNextDotSibling instead of findNextBarSibling', () => {
@@ -119,6 +120,44 @@ suite('renderItem blank-line bar class removal', () => {
     test('should still preserve tint inheritance for blank lines', () => {
         // Tint CSS class (line-tint-*) is separate from bar class.
         assert.ok(renderChunk.includes("tintCls = ' line-tint-' + allLines[idx - 1].level"), 'blank line tint must still inherit from previous line');
+    });
+});
+suite('Stack level inheritance from parent line', () => {
+    const addScript = (0, viewer_data_add_1.getViewerDataAddScript)();
+    test('should define previousLineLevel helper', () => {
+        assert.ok(addScript.includes('function previousLineLevel('), 'addToData script must define previousLineLevel');
+    });
+    test('should use previousLineLevel for stack-header level', () => {
+        /* The header stores level: _hdrLevel, where _hdrLevel = previousLineLevel().
+           The indirection exists so the same backward-scan result feeds both the
+           level property and the isTierHidden warnplus check. */
+        assert.ok(addScript.includes('var _hdrLevel = previousLineLevel()'), 'stack-header level must come from previousLineLevel() via _hdrLevel');
+        assert.ok(addScript.includes('level: _hdrLevel'), 'stack-header must store level from _hdrLevel');
+    });
+    test('should use activeGroupHeader.level for stack-frame level', () => {
+        assert.ok(addScript.includes('level: activeGroupHeader.level'), 'stack-frame must inherit level from its group header');
+    });
+    test('should not hardcode error level for stack items', () => {
+        // Count occurrences of level: 'error' — should only appear in the
+        // previousLineLevel fallback, not in stack-frame or stack-header creation.
+        const lines = addScript.split('\n');
+        const hardcodedInItems = lines.filter(l => l.includes("level: 'error'") &&
+            !l.includes('return') &&
+            !l.includes('//'));
+        assert.strictEqual(hardcodedInItems.length, 0, 'no stack item should hardcode level: \'error\' — found: ' + hardcodedInItems.join(' | '));
+    });
+    test('should fall back to error when previous line is a marker', () => {
+        assert.ok(addScript.includes("it.type === 'marker'") &&
+            addScript.includes("return 'error'"), 'previousLineLevel must return error when hitting a marker boundary');
+    });
+});
+suite('Stack header level CSS class in renderItem', () => {
+    const renderChunk = (0, viewer_data_helpers_render_1.getViewerDataHelpersRender)();
+    test('should apply level class to stack-header div', () => {
+        assert.ok(renderChunk.includes("hdrLevelCls = item.level ? ' level-' + item.level : ''"), 'renderItem must compute hdrLevelCls from item.level for stack headers');
+    });
+    test('should include hdrLevelCls in stack-header class list', () => {
+        assert.ok(renderChunk.includes("stack-header' + hdrLevelCls + matchCls"), 'stack-header div must include the level class before other class concatenations');
     });
 });
 suite('Hidden-chevron CSS', () => {

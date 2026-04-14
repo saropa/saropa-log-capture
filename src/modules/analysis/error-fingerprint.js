@@ -39,13 +39,14 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.classifyCategory = exports.hashFingerprint = exports.normalizeLine = void 0;
 exports.scanForFingerprints = scanForFingerprints;
-exports.normalizeLine = normalizeLine;
-exports.hashFingerprint = hashFingerprint;
-exports.classifyCategory = classifyCategory;
 const vscode = __importStar(require("vscode"));
-const ansi_1 = require("../capture/ansi");
 const error_rate_alert_1 = require("../features/error-rate-alert");
+const error_fingerprint_pure_1 = require("./error-fingerprint-pure");
+Object.defineProperty(exports, "normalizeLine", { enumerable: true, get: function () { return error_fingerprint_pure_1.normalizeLine; } });
+Object.defineProperty(exports, "hashFingerprint", { enumerable: true, get: function () { return error_fingerprint_pure_1.hashFingerprint; } });
+Object.defineProperty(exports, "classifyCategory", { enumerable: true, get: function () { return error_fingerprint_pure_1.classifyCategory; } });
 const maxScanLines = 5000;
 const maxFingerprints = 30;
 const maxExampleLength = 200;
@@ -61,63 +62,22 @@ async function scanForFingerprints(fileUri) {
     }
     return rankFingerprints(groups);
 }
-/** Normalize a single line for fingerprinting. */
-function normalizeLine(text) {
-    let s = (0, ansi_1.stripAnsi)(text);
-    s = s.replace(/^\[[\d:.,T\-Z ]+\]\s*/, '');
-    s = s.replace(/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}[.\d]*/g, '<TS>');
-    s = s.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<UUID>');
-    s = s.replace(/\b0x[0-9a-fA-F]{4,}\b/g, '<HEX>');
-    s = s.replace(/\b\d{2,}\b/g, '<N>');
-    s = s.replace(/(?:[a-zA-Z]:)?[\\/](?:[\w.\-]+[\\/])+/g, '');
-    s = s.replace(/\s+/g, ' ').trim();
-    return s;
-}
-/** FNV-1a 32-bit hash, returned as 8-char hex. */
-function hashFingerprint(normalized) {
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < normalized.length; i++) {
-        hash ^= normalized.charCodeAt(i);
-        hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-    return hash.toString(16).padStart(8, '0');
-}
-const anrRe = /ANR|Application Not Responding|Input dispatching timed out/i;
-const oomRe = /OutOfMemoryError|heap exhaustion|\bOOM\b|Cannot allocate/i;
-const nativeRe = /SIGSEGV|SIGABRT|SIGBUS|libflutter\.so|native crash/i;
-const fatalRe = /\bFATAL\b|unhandled exception|uncaught/i;
-/** Classify an error line into a crash category. */
-function classifyCategory(text) {
-    if (anrRe.test(text)) {
-        return 'anr';
-    }
-    if (oomRe.test(text)) {
-        return 'oom';
-    }
-    if (nativeRe.test(text)) {
-        return 'native';
-    }
-    if (fatalRe.test(text)) {
-        return 'fatal';
-    }
-    return 'non-fatal';
-}
 function collectFingerprint(line, groups) {
     const trimmed = line.trim();
     if (!trimmed || !(0, error_rate_alert_1.isErrorLine)(trimmed, 'stdout')) {
         return;
     }
-    const normalized = normalizeLine(trimmed);
+    const normalized = (0, error_fingerprint_pure_1.normalizeLine)(trimmed);
     if (normalized.length < 5) {
         return;
     }
-    const hash = hashFingerprint(normalized);
+    const hash = (0, error_fingerprint_pure_1.hashFingerprint)(normalized);
     const existing = groups.get(hash);
     if (existing) {
         existing.c++;
     }
     else {
-        groups.set(hash, { n: normalized, e: trimmed.slice(0, maxExampleLength), c: 1, cat: classifyCategory(trimmed) });
+        groups.set(hash, { n: normalized, e: trimmed.slice(0, maxExampleLength), c: 1, cat: (0, error_fingerprint_pure_1.classifyCategory)(trimmed) });
     }
 }
 function rankFingerprints(groups) {
