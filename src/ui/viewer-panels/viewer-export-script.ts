@@ -283,8 +283,8 @@ function performQuickExport() {
             totalLines: totalLines,
             visibleLines: lines.length,
             enabledLevels: typeof enabledLevels !== 'undefined' ? Array.from(enabledLevels) : [],
-            showFlutter: typeof showFlutter !== 'undefined' ? showFlutter : true,
-            showDevice: typeof showDevice !== 'undefined' ? showDevice : false,
+            showFlutter: typeof showFlutter !== 'undefined' ? showFlutter : 'all',
+            showDevice: typeof showDevice !== 'undefined' ? showDevice : 'none',
             exclusionsActive: typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled,
             searchTerm: searchTerm,
             levelCounts: levelCounts
