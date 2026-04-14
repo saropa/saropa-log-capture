@@ -140,6 +140,52 @@ export function getSessionListStyles(): string {
     cursor: default;
 }
 
+/* --- Filtered-empty hint (shown when filters produce zero results) --- */
+.session-empty-filtered {
+    padding: 16px 12px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    text-align: center;
+}
+
+/* --- Name filter bar --- */
+.session-name-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: var(--vscode-editorInfo-background, rgba(55, 148, 255, 0.1));
+    border-bottom: 1px solid var(--vscode-panel-border);
+    font-size: 11px;
+    color: var(--vscode-foreground);
+}
+.session-name-filter-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.session-name-filter-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: 1px solid var(--vscode-button-border, transparent);
+    color: var(--vscode-textLink-foreground);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.session-name-filter-clear:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+
 /* --- Session context menu --- */
 .session-context-menu {
     display: none; position: fixed; z-index: 300;
