@@ -66,7 +66,7 @@ import { getFiltersPanelScript } from '../viewer-search-filter/viewer-filters-pa
 import { getToolbarScript } from '../viewer-toolbar/viewer-toolbar-script';
 import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
-import { getInsightPanelScript } from '../panels/viewer-insight-panel';
+import { getInsightPanelScript } from '../panels/viewer-signal-panel';
 import { getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
 import { getIconBarScript } from '../viewer-nav/viewer-icon-bar';

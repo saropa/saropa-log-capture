@@ -9,8 +9,8 @@
 
 import * as vscode from "vscode";
 import { getNonce } from "../provider/viewer-content";
-import { getInsightPanelHtml, getInsightPanelScript } from "../panels/viewer-insight-panel";
-import { getInsightPanelStyles } from "../viewer-styles/viewer-styles-insight";
+import { getInsightPanelHtml, getInsightPanelScript } from "../panels/viewer-signal-panel";
+import { getInsightPanelStyles } from "../viewer-styles/viewer-styles-signal";
 import { getSessionPanelStyles } from "../viewer-styles/viewer-styles-session";
 import { getRecurringPanelStyles } from "../viewer-styles/viewer-styles-recurring";
 import { getPerformancePanelStyles } from "../viewer-styles/viewer-styles-performance";

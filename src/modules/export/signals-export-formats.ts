@@ -3,7 +3,7 @@
  * Used by the Export Insights Summary command.
  */
 
-import type { InsightsSummary } from '../insights/insights-summary';
+import type { InsightsSummary } from '../signals/signals-summary';
 import { escapeCsvField } from './export-formats';
 
 /**

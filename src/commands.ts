@@ -10,7 +10,7 @@ import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
-import { insightsCommands } from './commands-insights';
+import { insightsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
 import { qualityCommands } from './commands-quality';
 import { timelineCommands } from './commands-timeline';

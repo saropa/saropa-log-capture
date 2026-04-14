@@ -6,7 +6,6 @@
 
 import * as assert from 'assert';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
-import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import type { LoadedMeta } from '../../../modules/session/metadata-loader';
 import type { SessionMeta } from '../../../modules/session/session-metadata';
 

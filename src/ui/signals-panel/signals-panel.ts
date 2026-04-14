@@ -13,11 +13,11 @@ import { getNonce } from '../provider/viewer-content';
 import { type CrossSessionInsights, type HotFile, type RecurringError, type TimeRange } from '../../modules/misc/cross-session-aggregator';
 import { findInWorkspace } from '../../modules/misc/workspace-analyzer';
 import { searchLogFiles, openLogAtLine } from '../../modules/search/log-search';
-import { getInsightsStyles } from './insights-panel-styles';
-import { renderEnvironmentSection } from './insights-panel-environment';
-import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './insights-drill-down';
-import { getInsightsPanelScript } from './insights-panel-script';
-import { getDrillDownStyles } from './insights-drill-down-styles';
+import { getInsightsStyles } from './signals-panel-styles';
+import { renderEnvironmentSection } from './signals-panel-environment';
+import { buildFuzzyPattern, groupMatchesBySession, renderDrillDownHtml } from './signals-drill-down';
+import { getInsightsPanelScript } from './signals-panel-script';
+import { getDrillDownStyles } from './signals-drill-down-styles';
 import { setErrorStatus, type ErrorStatus } from '../../modules/misc/error-status-store';
 
 let panel: vscode.WebviewPanel | undefined;
