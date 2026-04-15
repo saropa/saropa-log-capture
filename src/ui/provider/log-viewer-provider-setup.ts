@@ -54,7 +54,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     viewerGroupAsciiArt: cfg.viewerGroupAsciiArt,
     viewerDetectAsciiArt: cfg.viewerDetectAsciiArt,
     viewerRepeatThresholds: cfg.viewerRepeatThresholds,
-    viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+    viewerDbSignalsEnabled: cfg.viewerDbSignalsEnabled,
     staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
     viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
     viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,
@@ -80,7 +80,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
   }));
   queueMicrotask(() => target.postMessage({
     type: 'setViewerDbInsightsEnabled',
-    enabled: getConfig().viewerDbInsightsEnabled,
+    enabled: getConfig().viewerDbSignalsEnabled,
   }));
   queueMicrotask(() => target.postMessage({
     type: 'setStaticSqlFromFingerprintEnabled',

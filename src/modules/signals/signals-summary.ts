@@ -37,18 +37,18 @@ const defaultMaxErrors = 500;
 const defaultMaxFiles = 500;
 
 /**
- * Build an exportable summary from cross-session insights.
+ * Build an exportable summary from cross-session signals.
  * Caps errors and files to avoid huge exports.
  */
 export function buildSignalsSummary(
-    insights: CrossSessionSignals,
+    aggregated: CrossSessionSignals,
     options?: { maxErrors?: number; maxFiles?: number; timeRangeLabel?: string },
 ): SignalsSummary {
     const maxErrors = options?.maxErrors ?? defaultMaxErrors;
     const maxFiles = options?.maxFiles ?? defaultMaxFiles;
     const timeRangeLabel = options?.timeRangeLabel ?? 'all';
 
-    const errors: ErrorSummary[] = insights.recurringErrors.slice(0, maxErrors).map((e: RecurringError) => ({
+    const errors: ErrorSummary[] = aggregated.recurringErrors.slice(0, maxErrors).map((e: RecurringError) => ({
         signature: e.hash,
         count: e.totalOccurrences,
         sessions: e.timeline.map(t => t.session),
@@ -58,7 +58,7 @@ export function buildSignalsSummary(
         category: e.category,
     }));
 
-    const files: FileSummary[] = insights.hotFiles.slice(0, maxFiles).map((f: HotFile) => ({
+    const files: FileSummary[] = aggregated.hotFiles.slice(0, maxFiles).map((f: HotFile) => ({
         path: f.filename,
         sessionCount: f.sessionCount,
     }));
@@ -67,9 +67,9 @@ export function buildSignalsSummary(
         errors,
         files,
         meta: {
-            sessionCount: insights.sessionCount,
+            sessionCount: aggregated.sessionCount,
             timeRange: timeRangeLabel,
-            exportedAt: new Date(insights.queriedAt).toISOString(),
+            exportedAt: new Date(aggregated.queriedAt).toISOString(),
         },
     };
 }

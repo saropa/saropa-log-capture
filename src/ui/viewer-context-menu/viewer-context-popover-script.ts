@@ -5,7 +5,7 @@
  * HTTP requests, terminal output, etc.) filtered to ±N seconds around
  * a clicked log line. Triggered from the context menu "Show Integration Context".
  *
- * ## Database insight (line-local)
+ * ## Database signal (line-local)
  *
  * Rows with `sourceTag === 'database'` (Drift `Sent` SQL) carry `dbInsight` from the data layer
  * (fingerprint, session seen-count, optional avg/max `elapsedMs`, `sqlSnippet`). The embedded
@@ -15,7 +15,7 @@
  * ## Drift Advisor CTA
  *
  * "Open in Drift Advisor" appears only when `window.driftAdvisorAvailable` is true (set from the extension host).
- * Multiple buttons (Database insight + session Drift meta) share the class `popover-drift-open`; handlers use
+ * Multiple buttons (Database signal + session Drift meta) share the class `popover-drift-open`; handlers use
  * `querySelectorAll` so each fires `openDriftAdvisor`.
  */
 

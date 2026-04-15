@@ -63,9 +63,9 @@ export async function runErrorTimeline(
 ): Promise<Partial<SectionData>> {
     const { post, signal, progress } = ctx;
     progress('error-timeline', '📊 Loading error history...');
-    const insights = await aggregateSignals('all').catch(() => undefined);
+    const aggregated = await aggregateSignals('all').catch(() => undefined);
     if (signal.aborted) { return {}; }
-    const match: RecurringError | undefined = insights?.recurringErrors.find(e => e.hash === errCtx.hash);
+    const match: RecurringError | undefined = aggregated?.recurringErrors.find(e => e.hash === errCtx.hash);
     if (!match) {
         post('error-timeline', emptySlot('error-timeline', '📊 First occurrence — no history yet'));
         return {};

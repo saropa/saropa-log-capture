@@ -143,7 +143,7 @@ export interface CompareLogSessionsWithDbResult {
     readonly dbFingerprints: SessionDbFingerprintCompareResult;
     readonly summaryMapA: Map<string, DbFingerprintSummaryEntry>;
     readonly summaryMapB: Map<string, DbFingerprintSummaryEntry>;
-    /** Batch `compare()` detector output (baseline volume markers when DB insights are enabled). */
+    /** Batch `compare()` detector output (baseline volume markers when DB signals are enabled). */
     readonly dbCompareDetectorResults: readonly DbDetectorResult[];
 }
 
@@ -162,9 +162,9 @@ export async function compareLogSessionsWithDbFingerprints(
     const scanOpts = typeof slowMs === 'number' && slowMs > 0 ? { slowQueryMs: slowMs } : undefined;
     const scanA = scanSaropaLogDatabaseFingerprints(textA, scanOpts);
     const scanB = scanSaropaLogDatabaseFingerprints(textB, scanOpts);
-    const insightsOn = getConfig().viewerDbInsightsEnabled;
+    const signalsOn = getConfig().viewerDbSignalsEnabled;
     const dbCompareState = createDbDetectorSessionState();
-    const dbCompareDetectorResults = insightsOn
+    const dbCompareDetectorResults = signalsOn
         ? runDefaultSessionDbCompareDetectors(
               { baseline: scanA.summary, target: scanB.summary },
               dbCompareState,

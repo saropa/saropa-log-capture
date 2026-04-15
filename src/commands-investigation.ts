@@ -25,7 +25,7 @@ export interface InvestigationCommandDeps {
     readonly context: vscode.ExtensionContext;
     readonly investigationStore: InvestigationStore;
     readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
-    /** Used to open the viewer's Insight panel to the Cases tab after add/create/open. */
+    /** Used to open the viewer's Signal panel to the Cases tab after add/create/open. */
     readonly viewerProvider?: { postMessage(message: unknown): void };
 }
 

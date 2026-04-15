@@ -50,7 +50,7 @@ export interface SessionComparisonHtmlArgs {
     /** When false, Drift SQL toolbar buttons are omitted. */
     readonly showDbToolbar: boolean;
     readonly db: SessionDbFingerprintCompareResult;
-    /** Batch compare detector markers (e.g. SQL volume up); empty when DB insights are off or no hits. */
+    /** Batch compare detector markers (e.g. SQL volume up); empty when DB signals are off or no hits. */
     readonly dbCompareDetectorResults: readonly DbDetectorResult[];
     readonly sessionA: SessionComparisonPaneViewModel;
     readonly sessionB: SessionComparisonPaneViewModel;

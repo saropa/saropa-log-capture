@@ -57,7 +57,7 @@ suite('DriftNPlusOneDetector', () => {
             'same SQL should produce the same fingerprint regardless of format');
     });
 
-    test('before: fewer than minRepeats does not emit insight', () => {
+    test('before: fewer than minRepeats does not emit signal', () => {
         const d = new NPlusOneDetector();
         const fp = parseDriftSqlFingerprint(baseLine(0));
         assert.ok(fp);
@@ -68,17 +68,17 @@ suite('DriftNPlusOneDetector', () => {
         assert.strictEqual(last, null);
     });
 
-    test('after: minRepeats with distinct args emits insight', () => {
+    test('after: minRepeats with distinct args emits signal', () => {
         const d = new NPlusOneDetector();
         const fp = parseDriftSqlFingerprint(baseLine(0));
         assert.ok(fp);
-        let insight = null;
+        let signal = null;
         for (let i = 0; i < N_PLUS_ONE_EMBED_CONFIG.minRepeats; i++) {
-            insight = d.feed(2000 + i * 10, fp.fingerprint, `[row-${i}]`);
+            signal = d.feed(2000 + i * 10, fp.fingerprint, `[row-${i}]`);
         }
-        assert.ok(insight);
-        assert.strictEqual(insight.repeats, N_PLUS_ONE_EMBED_CONFIG.minRepeats);
-        assert.strictEqual(insight.distinctArgs, N_PLUS_ONE_EMBED_CONFIG.minRepeats);
+        assert.ok(signal);
+        assert.strictEqual(signal.repeats, N_PLUS_ONE_EMBED_CONFIG.minRepeats);
+        assert.strictEqual(signal.distinctArgs, N_PLUS_ONE_EMBED_CONFIG.minRepeats);
     });
 
     test('false positive guard: same args repeated many times does not trigger', () => {
@@ -101,7 +101,7 @@ suite('DriftNPlusOneDetector', () => {
         }
     });
 
-    test('cooldown suppresses a second insight for the same fingerprint', () => {
+    test('cooldown suppresses a second signal for the same fingerprint', () => {
         const d = new NPlusOneDetector();
         const fp = parseDriftSqlFingerprint(baseLine(0));
         assert.ok(fp);

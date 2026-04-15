@@ -79,7 +79,7 @@ function collectRootCauseHintBundleEmbedded() {
 
         for (i = 0; i < allLines.length; i++) {
             row = allLines[i];
-            if (!row || row.type !== 'n-plus-one-insight' || !row.insightMeta) continue;
+            if (!row || row.type !== 'n-plus-one-signal' || !row.insightMeta) continue;
             im = row.insightMeta;
             nPlusOneHints.push({
                 lineIndex: i,

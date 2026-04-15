@@ -12,8 +12,13 @@
  * If uncertain, a tag stays in device-other (hidden by default).
  */
 
-/** Device log tier for display and filtering. */
-export type DeviceTier = 'flutter' | 'device-critical' | 'device-other';
+/** Log line tier for display and filtering.
+ * - 'flutter': your app's code output from the Debug Console
+ * - 'device-critical': Android system logs that indicate real app problems (crashes, ANR, OOM)
+ * - 'device-other': other Android system logs (logcat)
+ * - 'external': data from outside the Debug Console (external log files, terminal, browser, drift-perf)
+ */
+export type DeviceTier = 'flutter' | 'device-critical' | 'device-other' | 'external';
 
 /**
  * Logcat tags whose errors/warnings can indicate real problems for the user's app.
@@ -47,7 +52,7 @@ export function getDeviceTier(tag: string | undefined): DeviceTier {
 }
 
 /**
- * Check if a tier should bypass the Device visibility checkbox.
+ * Check if a tier should bypass the Device visibility radio.
  * Device-critical lines are always visible to prevent missing real errors.
  */
 export function isTierAlwaysVisible(tier: DeviceTier): boolean {
