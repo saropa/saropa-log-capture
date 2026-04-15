@@ -1,27 +1,30 @@
 /**
  * Tests for context menu toggle CSS — verifies the checkmark span is
- * absolutely positioned so it does not push labels out of alignment
- * when toggle items are mixed with regular menu items.
+ * inline in the flex flow (between icon and label) so it cannot be
+ * mistaken for a submenu arrow on the right edge.
  */
 import * as assert from 'node:assert';
 import { getContextMenuStyles } from '../../ui/viewer-styles/viewer-styles-context-menu';
 
 suite('ViewerContextMenuStyles', () => {
-    test('should position toggle checkmark absolutely to avoid flex misalignment', () => {
+    test('should NOT position toggle checkmark absolutely (prevents submenu-arrow confusion)', () => {
         const css = getContextMenuStyles();
-        assert.match(
-            css,
-            /\.context-menu-toggle\s+\.context-menu-check\s*\{[^}]*position:\s*absolute/s,
-            'context-menu-check must be position:absolute so it does not shift label text',
+        /* The check sits inline between icon and label. Absolute positioning at
+           right:8px made it look like a submenu ▸ indicator. */
+        const checkBlock = css.match(/\.context-menu-toggle\s+\.context-menu-check\s*\{([^}]*)\}/s);
+        assert.ok(checkBlock, 'context-menu-check rule must exist');
+        assert.ok(
+            !checkBlock[1].includes('position'),
+            'context-menu-check must NOT have position:absolute — it flows inline in the flex row',
         );
     });
 
-    test('should set position:relative on toggle row for absolute child', () => {
+    test('should set position:relative on toggle row for children', () => {
         const css = getContextMenuStyles();
         assert.match(
             css,
             /\.context-menu-toggle\s*\{[^}]*position:\s*relative/s,
-            'context-menu-toggle needs position:relative as containing block for the check',
+            'context-menu-toggle keeps position:relative for potential absolute-positioned overlays',
         );
     });
 

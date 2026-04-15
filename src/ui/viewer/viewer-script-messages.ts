@@ -147,7 +147,7 @@ window.addEventListener('message', function(event) {
             break;
         case 'setSources':
             if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
-            var _srcSec = document.getElementById('log-inputs-section'); if (_srcSec) _srcSec.style.display = '';
+            var _srcSec = document.getElementById('log-sources-section'); if (_srcSec) _srcSec.style.display = '';
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
             if (typeof updateFooterText === 'function') updateFooterText();
@@ -252,6 +252,7 @@ window.addEventListener('message', function(event) {
             if (typeof handleMinimapViewportOutsideArrow === 'function') handleMinimapViewportOutsideArrow(msg);
             break;
         case 'minimapWidth': if (typeof handleMinimapWidth === 'function') handleMinimapWidth(msg); break;
+        case 'minimapWidthPx': if (typeof handleMinimapWidthPx === 'function') handleMinimapWidthPx(msg); break;
         case 'scrollbarVisible': /* Apply showScrollbar setting: body class drives --scrollbar-w and vertical scrollbar width in CSS */ document.body.classList.toggle('scrollbar-visible', msg.show === true); syncJumpButtonInset(); break;
         case 'searchMatchOptionsAlwaysVisible': document.body.classList.toggle('search-match-options-always', msg.always === true); break;
         case 'iconBarPosition':

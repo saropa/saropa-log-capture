@@ -140,6 +140,12 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     const initCfg = getConfig();
     applyInitialBroadcasterConfig(broadcaster, initCfg);
 
+    /* Restore custom minimap drag-to-resize width from workspace state (overrides preset) */
+    const customMmPx = context.workspaceState.get<number>('saropaLogCapture.minimapCustomPx');
+    if (typeof customMmPx === 'number' && customMmPx >= 20 && customMmPx <= 160) {
+        broadcaster.postToWebview({ type: 'minimapWidthPx', px: customMmPx });
+    }
+
     setupConfigListener(context, sessionManager, broadcaster);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     setupScopeContextListener(context, broadcaster);

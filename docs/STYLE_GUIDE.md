@@ -313,7 +313,7 @@ Every element that looks clickable must be clickable, and vice versa:
 
 ## Minimap Panel
 
-The minimap is an always-on 60px wide interactive panel that **replaces** the native scrollbar. It sits as a flex sibling next to `#log-content`, not as an overlay on top of the scrollbar. There is no toggle — the minimap is always visible.
+The minimap is an always-on interactive panel that **replaces** the native scrollbar. It sits as a flex sibling next to `#log-content`, not as an overlay on top of the scrollbar. There is no toggle — the minimap is always visible. Default width is 60px (medium preset); the user can drag the left-edge resize handle to set any width between 20px and 160px.
 
 ### Layout
 
@@ -321,7 +321,10 @@ The minimap is an always-on 60px wide interactive panel that **replaces** the na
 #log-content-wrapper (display: flex)
   #log-content (flex: 1, native scrollbar hidden unless setting is on)
   jump Top/Bottom buttons (absolute; horizontal inset from syncJumpButtonInset)
-  #scrollbar-minimap (width: 60px, flex-shrink: 0)
+  #scrollbar-minimap-column (flex row: resize handle + optional arrow + minimap)
+    #minimap-resize-handle (4px, cursor: col-resize)
+    #minimap-outside-arrow (optional 12px yellow arrow strip)
+    #scrollbar-minimap (width: 20–160px via drag or preset, flex-shrink: 0)
 ```
 
 ### Interaction
@@ -329,11 +332,12 @@ The minimap is an always-on 60px wide interactive panel that **replaces** the na
 | Action | Behavior |
 |--------|----------|
 | Click | Centers the viewport on the clicked position |
-| Drag | Continuous scroll while dragging |
+| Drag (minimap) | Continuous scroll while dragging |
+| Drag (left edge) | Resize the minimap width (20–160px); persisted to workspace state |
 | Mouse wheel | Forwarded to `#log-content.scrollTop` |
 | Viewport indicator | Shows current visible region; follows scroll |
 
-The minimap container has `cursor: pointer` and receives mouse events directly (no `pointer-events: none`). The viewport indicator has `pointer-events: none` so clicks pass through to the container's handler.
+The minimap container has `cursor: pointer` and receives mouse events directly (no `pointer-events: none`). The viewport indicator has `pointer-events: none` so clicks pass through to the container's handler. The resize handle uses `setPointerCapture` and a `body.mm-resizing` class to lock the cursor during drag.
 
 ### Scrollbar Visibility
 
