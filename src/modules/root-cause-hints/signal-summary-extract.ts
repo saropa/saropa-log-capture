@@ -75,28 +75,29 @@ function extractTopSlowOps(bundle: RootCauseHintBundle): string[] | undefined {
 
 const maxEntries = 20;
 
-/** Extract V2 entries for signal types that only store counts in V1 (network, memory, slow ops, etc.). */
+/** Extract V2 entries for signal types that only store counts in V1 (network, memory, slow ops, etc.).
+ *  Each entry includes the line index for jump-to-line navigation. */
 function extractEntries(bundle: RootCauseHintBundle): PersistedSignalEntryV2[] | undefined {
     const entries: PersistedSignalEntryV2[] = [];
     for (const nf of bundle.networkFailures ?? []) {
         const label = nf.excerpt.slice(0, 120) || 'Network failure';
-        entries.push({ kind: 'network', fingerprint: nf.pattern, label, count: 1 });
+        entries.push({ kind: 'network', fingerprint: nf.pattern, label, count: 1, lineIndices: [nf.lineIndex] });
     }
     for (const me of bundle.memoryEvents ?? []) {
         const label = me.excerpt.slice(0, 120) || 'Memory event';
-        entries.push({ kind: 'memory', fingerprint: label, label, count: 1 });
+        entries.push({ kind: 'memory', fingerprint: label, label, count: 1, lineIndices: [me.lineIndex] });
     }
     for (const so of bundle.slowOperations ?? []) {
         const name = so.operationName ?? so.excerpt.slice(0, 80);
-        entries.push({ kind: 'slow-op', fingerprint: name, label: name, count: 1, avgDurationMs: so.durationMs, maxDurationMs: so.durationMs });
+        entries.push({ kind: 'slow-op', fingerprint: name, label: name, count: 1, avgDurationMs: so.durationMs, maxDurationMs: so.durationMs, lineIndices: [so.lineIndex] });
     }
     for (const pd of bundle.permissionDenials ?? []) {
         const label = pd.excerpt.slice(0, 120) || 'Permission denied';
-        entries.push({ kind: 'permission', fingerprint: label, label, count: 1 });
+        entries.push({ kind: 'permission', fingerprint: label, label, count: 1, lineIndices: [pd.lineIndex] });
     }
     for (const ce of bundle.classifiedErrors ?? []) {
         const label = ce.excerpt.slice(0, 120) || 'Classified error';
-        entries.push({ kind: 'classified', fingerprint: label, label, category: ce.classification, count: 1 });
+        entries.push({ kind: 'classified', fingerprint: label, label, category: ce.classification, count: 1, lineIndices: [ce.lineIndex] });
     }
     return entries.length > 0 ? entries.slice(0, maxEntries) : undefined;
 }

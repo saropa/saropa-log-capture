@@ -256,13 +256,14 @@ export function getSignalScriptPartC(): string {
                 recurringInThisLog: d.recurringInThisLog || [], errorsInThisLog: d.errorsInThisLog || [],
                 errorsInThisLogTotal: d.errorsInThisLogTotal, platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
                 debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {},
-                allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || []
+                allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || [],
+                coOccurrences: d.coOccurrences || []
             };
             var loadEl = document.getElementById('signal-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';
             renderRecurringList(); renderHotFiles(); renderRecurringInLog();
             renderErrorsInLog(); renderThisLogEmptyState(); renderSignalsInThisLog();
-            renderEnvironment(); renderSignalTrends();
+            renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
         }
         if (e.data.type === 'recurringErrorsData') {
             signalDataCache.errors = e.data.errors || [];

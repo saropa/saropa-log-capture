@@ -212,5 +212,8 @@ export function getSignalSectionsStyles(): string {
 .signal-trend-up { font-size: 10px; color: var(--vscode-editorError-foreground, #f44); margin: 0 1px; }
 .signal-trend-down { font-size: 10px; color: var(--vscode-testing-iconPassed, #4a4); margin: 0 1px; }
 .signal-trend-stable { font-size: 10px; opacity: 0.5; margin: 0 1px; }
+/* Jumpable signal rows — cursor pointer and hover highlight to indicate clickability */
+.signal-jumpable { cursor: pointer; }
+.signal-jumpable:hover { background: var(--vscode-list-hoverBackground, rgba(255,255,255,0.04)); }
 `;
 }

@@ -18,7 +18,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var heroLoading = false;
     var createInvestigationInProgress = false;
     var investigationsData = { investigations: [], activeId: '' };
-    var signalDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, allSignals: [], signalsInThisLog: [] };
+    var signalDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, allSignals: [], signalsInThisLog: [], coOccurrences: [] };
     var sectionExpanded = { 'session-details': false, 'this-log': true, cases: true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
