@@ -7,12 +7,11 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getConfig, getLogDirectoryUri } from '../../../modules/config/config';
+import { getLogDirectoryUri } from '../../../modules/config/config';
 import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
 import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
-import { getFirstSeenHintsForErrors } from '../../../modules/regression/regression-hint-service';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/metadata-loader';
 import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
@@ -20,126 +19,44 @@ import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signa
 import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
 import type { PostFn } from './crashlytics-handlers';
 
-/** First-seen regression hint for display in Signals (commit for session where error first appeared). */
-export interface RegressionHintPayload {
-    readonly hash: string;
-    readonly session: string;
-    readonly commitUrl?: string;
-}
-
-/** Top errors in one session (from fingerprints). */
-export interface ErrorInThisLogItem {
-    readonly normalizedText: string;
-    readonly exampleLine: string;
-    readonly count: number;
-}
-
-/** Normalize path segment for comparison with timeline session (forward slashes). */
-function normSession(s: string): string {
-    return s.replace(/\\/g, '/');
-}
-
-/** Signals that appear in the given session (timeline contains session path). */
-function filterSignalsInSession(signals: readonly RecurringSignalEntry[], sessionRelPath: string): RecurringSignalEntry[] {
-    const norm = normSession(sessionRelPath);
-    return signals.filter(s => s.timeline.some(t => normSession(t.session) === norm || normSession(t.session).endsWith(norm)));
-}
-
-/** Aggregate recurring errors and send to webview (used by the standalone recurring panel). */
-export async function handleRecurringRequest(post: PostFn): Promise<void> {
-    const aggregated = await aggregateSignals('all').catch(() => undefined);
-    const errors = (aggregated?.allSignals ?? []).filter(s => s.kind === 'error');
-    const statuses = await getErrorStatusBatch(errors.map(e => e.fingerprint));
-    post({ type: 'recurringErrorsData', errors, statuses });
-}
-
-/** Update error status and refresh. */
-export async function handleSetErrorStatus(hash: string, status: string, post: PostFn): Promise<void> {
+/** Update error/warning triage status and refresh the signal panel.
+ *  Needs currentFileUri so the refresh includes "Signals in this log" data. */
+export async function handleSetErrorStatus(hash: string, status: string, post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
     await setErrorStatus(hash, status as ErrorStatus);
-    await handleRecurringRequest(post);
+    // Re-send full signal data so the unified list re-renders with updated triage states
+    await handleSignalDataRequest(post, currentFileUri);
 }
 
 /** Full signal payload (unified signals + hot files + environment). */
 export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
     const aggregated = await aggregateSignals('all').catch(() => undefined);
     const allSignals = aggregated?.allSignals ?? [];
-    const errorSignals = allSignals.filter(s => s.kind === 'error');
-    const hotFiles = aggregated?.hotFiles ?? [];
-    const platforms = aggregated?.platforms ?? [];
-    const sdkVersions = aggregated?.sdkVersions ?? [];
-    const debugAdapters = aggregated?.debugAdapters ?? [];
-    const statuses = await getErrorStatusBatch(errorSignals.map(e => e.fingerprint));
+    const errorFingerprints = allSignals.filter(s => s.kind === 'error' || s.kind === 'warning').map(s => s.fingerprint);
+    const statuses = await getErrorStatusBatch(errorFingerprints);
 
-    const commitLinks = getConfig().integrationsGit?.commitLinks ?? true;
-    const regressionHints = await getFirstSeenHintsForErrors(errorSignals.map(e => e.fingerprint), {
-        resolveCommitUrls: commitLinks,
-        cap: 15,
-    }).catch(() => ({}));
-
-    let recurringInThisLog: RecurringSignalEntry[] | undefined;
-    let errorsInThisLog: ErrorInThisLogItem[] | undefined;
-    let errorsInThisLogTotal: number | undefined;
     let signalsInThisLog: RecurringSignalEntry[] | undefined;
-    /** Correlation tags from the current session — `file:lib/foo.dart` entries for stack trace files. */
     let sessionCorrelationTags: readonly string[] = [];
     if (currentFileUri) {
-        const folder = vscode.workspace.workspaceFolders?.[0];
-        if (folder) {
-            const logDir = getLogDirectoryUri(folder);
-            const rel = path.relative(logDir.fsPath, currentFileUri.fsPath);
-            const sessionRel = normSession(rel);
-            if (!rel.startsWith('..') && sessionRel.length > 0) {
-                recurringInThisLog = filterSignalsInSession(errorSignals, sessionRel);
-            }
-        }
         try {
             const store = new SessionMetadataStore();
             const meta = await store.loadMetadata(currentFileUri);
-            const fps = meta?.fingerprints ?? [];
-            const top3 = [...fps]
-                .sort((a, b) => (b.c ?? 0) - (a.c ?? 0))
-                .slice(0, 3)
-                .map(f => ({
-                    normalizedText: f.n ?? '',
-                    exampleLine: f.e ?? '',
-                    count: f.c ?? 0,
-                }));
-            if (top3.length > 0) {
-                errorsInThisLog = top3;
-            }
-            errorsInThisLogTotal = fps.length;
-            // Capture correlation tags for lint enrichment — these are the source files
-            // from stack traces that saropa_lints and the Dart analyzer should analyze
             sessionCorrelationTags = meta?.correlationTags ?? [];
-            // Build unified signals for this session from all metadata sources
             const sessionFilename = path.basename(currentFileUri.fsPath);
             const thisSessionSignals = buildAllRecurringSignals([{ filename: sessionFilename, meta }]);
-            if (thisSessionSignals.length > 0) {
-                signalsInThisLog = thisSessionSignals;
-            }
+            if (thisSessionSignals.length > 0) { signalsInThisLog = thisSessionSignals; }
         } catch {
-            // ignore
+            // ignore — metadata may not exist yet for new sessions
         }
     }
 
     post({
         type: 'signalData',
-        // Error signals sent as 'errors' for webview recurring-error cards
-        errors: errorSignals,
         statuses,
-        hotFiles,
-        platforms,
-        sdkVersions,
-        debugAdapters,
-        recurringInThisLog,
-        errorsInThisLog,
-        errorsInThisLogTotal,
-        regressionHints,
-        // Enrich signals with lint diagnostics from ALL source files in the session's
-        // stack traces (correlation tags). Opens unanalyzed files to trigger saropa_lints /
-        // Dart analyzer / ESLint, waits up to 2s for results.
-        // Then enrich SQL signals with Drift Advisor table metadata (schema info,
-        // index suggestions) when the DA extension is installed.
+        hotFiles: aggregated?.hotFiles ?? [],
+        platforms: aggregated?.platforms ?? [],
+        sdkVersions: aggregated?.sdkVersions ?? [],
+        debugAdapters: aggregated?.debugAdapters ?? [],
+        // Enrich signals with lint diagnostics + DA table metadata
         allSignals: await enrichSignalsWithDaContext(
             await enrichSignalsWithLintContext([...allSignals], sessionCorrelationTags),
         ),
