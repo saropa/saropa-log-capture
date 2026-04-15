@@ -30,6 +30,9 @@ export function getIconBarHtml(): string {
     <button id="ib-options" class="ib-icon" tabindex="0" title="Click to open/close — display, layout, and audio settings" aria-label="Options">
         <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
     </button>
+    <button id="ib-tags" class="ib-icon" tabindex="0" title="Click to open/close — browse and filter by message tags, code origins, and SQL commands" aria-label="Tags &amp; Origins">
+        <span class="codicon codicon-tag"></span><span class="ib-label">Tags</span>
+    </button>
     <div class="ib-separator"></div>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
@@ -125,6 +128,7 @@ export function getIconBarScript(): string {
         sqlHistory: document.getElementById('ib-sql-query-history'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
+        tags: document.getElementById('ib-tags'),
         crashlytics: document.getElementById('ib-crashlytics'),
         signal: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
@@ -134,7 +138,8 @@ export function getIconBarScript(): string {
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
-        if (typeof closeFiltersPanel === 'function') closeFiltersPanel();
+        /* closeFiltersPanel is a backward-compat alias for closeTagsPanel — call only the canonical name */
+        if (typeof closeTagsPanel === 'function') closeTagsPanel();
         if (typeof closeSqlQueryHistoryPanel === 'function') closeSqlQueryHistoryPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
@@ -177,6 +182,8 @@ export function getIconBarScript(): string {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
+        } else if (name === 'tags' && typeof openTagsPanel === 'function') {
+            openTagsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
         } else if (name === 'signal' && typeof openSignalPanel === 'function') {
@@ -225,6 +232,9 @@ export function getIconBarScript(): string {
     }
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
+    }
+    if (iconButtons.tags) {
+        iconButtons.tags.addEventListener('click', function() { setActivePanel('tags'); });
     }
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
