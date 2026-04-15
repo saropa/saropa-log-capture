@@ -42,6 +42,19 @@ export function getViewerStyles(): string {
 /* Utility: hide element without inline style (CSP-friendly) */
 .u-hidden { display: none !important; }
 
+/* Utility: visually hidden but accessible to screen readers */
+.u-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /* ===================================================================
    Reset & Root Layout
    The webview body is a flex row: icon bar + main content column.

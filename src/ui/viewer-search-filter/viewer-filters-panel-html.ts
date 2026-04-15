@@ -60,7 +60,7 @@ export function getFiltersPanelHtml(): string {
                 </fieldset>
                 <fieldset class="tier-radio-group">
                     <legend>External</legend>
-                    <div class="tier-hint">Log files, terminal, browser, drift-perf</div>
+                    <div class="tier-hint">Saved logs, terminal, browser, drift-perf</div>
                     <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
                     <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
                     <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
@@ -71,11 +71,8 @@ export function getFiltersPanelHtml(): string {
         <!-- Exclusions: exclusion patterns -->
         <div class="options-section">
             <h3 class="options-section-title">Exclusions</h3>
-            <label class="options-row" title="Hide log lines matching configured exclusion patterns">
-                <input type="checkbox" id="opt-exclusions" />
-                <span id="exclusion-label">Exclusion patterns</span>
-            </label>
             <div class="exclusion-input-wrapper">
+                <label class="exclusion-toggle" title="Hide log lines matching configured exclusion patterns"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label" class="u-sr-only">Exclusion patterns</span></label>
                 <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" />
                 <button id="exclusion-add-btn" title="Add exclusion pattern">Add</button>
             </div>

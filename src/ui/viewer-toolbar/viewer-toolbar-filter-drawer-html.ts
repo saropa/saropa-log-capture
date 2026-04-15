@@ -78,7 +78,7 @@ function getAccordionSections(): string {
                 </fieldset>
                 <fieldset class="tier-radio-group">
                     <legend>External</legend>
-                    <div class="tier-hint">Log files, terminal, browser, drift-perf</div>
+                    <div class="tier-hint">Saved logs, terminal, browser, drift-perf</div>
                     <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
                     <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
                     <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
@@ -86,8 +86,8 @@ function getAccordionSections(): string {
             </div>
         `)}
         ${accordionSection('exclusions-section', 'Exclusions', `
-            <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>
             <div class="exclusion-input-wrapper">
+                <label class="exclusion-toggle" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label" class="u-sr-only">Exclusion patterns</span></label>
                 <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" title="Enter a text pattern or /regex/i to exclude matching log lines" />
                 <button id="exclusion-add-btn" title="Add this pattern to the exclusion list">Add</button>
             </div>
