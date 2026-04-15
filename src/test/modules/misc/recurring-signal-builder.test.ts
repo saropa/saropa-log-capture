@@ -121,7 +121,7 @@ suite('RecurringSignalBuilder', () => {
             }),
         ];
         const result = buildAllRecurringSignals(metas);
-        const sig = result.find(s => s.fingerprint === 'error::chrono12');
+        const sig = result.find(s => s.fingerprint === 'chrono12');
         assert.ok(sig);
         // firstSeen should be the earlier session, lastSeen the later — regardless of insertion order
         assert.ok(sig.firstSeen.includes('20260401'), `firstSeen should be 0401 but was ${sig.firstSeen}`);
