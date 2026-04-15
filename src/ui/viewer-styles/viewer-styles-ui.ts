@@ -172,6 +172,21 @@ export function getUiStyles(): string {
     filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
     transition: top 0.08s linear;
 }
+/* Drag-to-resize grip on the left edge of the minimap column */
+.minimap-resize-handle {
+    flex: 0 0 4px;
+    width: 4px;
+    cursor: col-resize;
+    align-self: stretch;
+    background: transparent;
+    transition: background 0.15s;
+    z-index: 1; /* above minimap canvas */
+}
+.minimap-resize-handle:hover {
+    background: var(--vscode-sash-hoverBorder, rgba(0, 122, 204, 0.6));
+}
+/* Lock cursor to col-resize during drag so it does not flicker */
+body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 .scrollbar-minimap {
     flex: 0 0 auto;
     width: 60px;
