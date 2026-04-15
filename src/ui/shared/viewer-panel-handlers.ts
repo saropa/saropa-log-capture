@@ -21,7 +21,6 @@ export {
 } from './handlers/crashlytics-handlers';
 
 export {
-    handleRecurringRequest,
     handleSetErrorStatus,
     handleSignalDataRequest,
 } from './handlers/recurring-handlers';
