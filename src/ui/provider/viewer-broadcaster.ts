@@ -146,8 +146,8 @@ export class ViewerBroadcaster implements ViewerTarget {
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
     for (const t of this.targets) { t.setViewerRepeatThresholds(thresholds); }
   }
-  setViewerDbInsightsEnabled(enabled: boolean): void {
-    for (const t of this.targets) { t.setViewerDbInsightsEnabled(enabled); }
+  setViewerDbSignalsEnabled(enabled: boolean): void {
+    for (const t of this.targets) { t.setViewerDbSignalsEnabled(enabled); }
   }
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
     for (const t of this.targets) { t.setStaticSqlFromFingerprintEnabled(enabled); }

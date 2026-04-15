@@ -129,7 +129,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     function renderRecurringList() {
         var listEl = document.getElementById('signal-recurring-list');
         var emptyEl = document.getElementById('signal-recurring-empty');
-        var visible = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var visible = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
         var toShow = visible.slice(0, 5);
         if (toShow.length === 0) {
             if (listEl) listEl.innerHTML = '';
@@ -138,19 +138,19 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }
         if (emptyEl) emptyEl.style.display = 'none';
         if (listEl) listEl.innerHTML = toShow.map(function(e) {
-            var status = (signalDataCache.statuses || {})[e.hash] || 'open';
+            var status = (signalDataCache.statuses || {})[e.fingerprint] || 'open';
             var dimCls = status === 'closed' ? ' re-closed' : '';
             var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
             var total = e.totalOccurrences + ' total';
             var actions = status === 'open'
-                ? '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="closed">Close</span><span class="re-action" data-hash="' + esc(e.hash) + '" data-status="muted">Mute</span>'
-                : '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="open">Re-open</span>';
+                ? '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="closed">Close</span><span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="muted">Mute</span>'
+                : '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="open">Re-open</span>';
             var cat = e.category ? '<span class="re-cat-badge re-cat-' + esc(e.category) + '">' + esc(e.category).toUpperCase() + '</span> ' : '';
-            var fullText = e.normalizedText || '';
+            var fullText = e.label || '';
             var displayText = truncateForDisplay(fullText);
-            var titleAttr = esc((e.exampleLine || fullText).trim() || '');
-            var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-            var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.hash]);
+            var titleAttr = esc((e.detail || fullText).trim() || '');
+            var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.fingerprint) + '" data-normalized="' + esc(e.label || '') + '" data-example="' + esc(e.detail || '') + '">+</span>';
+            var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.fingerprint]);
             return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
         }).join('');
     }
@@ -171,32 +171,29 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     function renderRecurringInLog() {
         var summaryEl = document.getElementById('signal-recurring-in-log-summary');
         var listEl = document.getElementById('signal-recurring-in-log-list');
-        var inLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var inLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
         if (summaryEl) summaryEl.textContent = inLog.length === 0 ? 'Recurring in this log' : (inLog.length + ' of your recurring error' + (inLog.length === 1 ? '' : 's') + ' appear in this log');
         if (listEl) {
             if (inLog.length === 0) listEl.innerHTML = '<p class="signal-hotfiles-empty">None of your recurring errors appear in this log.</p>';
             else listEl.innerHTML = inLog.map(function(e) {
-                var status = (signalDataCache.statuses || {})[e.hash] || 'open';
+                var status = (signalDataCache.statuses || {})[e.fingerprint] || 'open';
                 var dimCls = status === 'closed' ? ' re-closed' : '';
                 var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
                 var total = e.totalOccurrences + ' total';
-                var actions = status === 'open' ? '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="closed">Close</span><span class="re-action" data-hash="' + esc(e.hash) + '" data-status="muted">Mute</span>' : '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="open">Re-open</span>';
+                var actions = status === 'open' ? '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="closed">Close</span><span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="muted">Mute</span>' : '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="open">Re-open</span>';
                 var cat = e.category ? '<span class="re-cat-badge re-cat-' + esc(e.category) + '">' + esc(e.category).toUpperCase() + '</span> ' : '';
-                var fullText = e.normalizedText || '';
+                var fullText = e.label || '';
                 var displayText = truncateForDisplay(fullText);
-                var titleAttr = esc((e.exampleLine || fullText).trim() || '');
-                var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-                var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.hash]);
+                var titleAttr = esc((e.detail || fullText).trim() || '');
+                var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.fingerprint) + '" data-normalized="' + esc(e.label || '') + '" data-example="' + esc(e.detail || '') + '">+</span>';
+                var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.fingerprint]);
                 return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
             }).join('');
         }
     }
     function renderErrorsInLog() {
-        var subtitleEl = document.getElementById('signal-errors-in-log-subtitle');
-        var listEl = document.getElementById('signal-errors-in-log-list');
-        var emptyEl = document.getElementById('signal-errors-in-log-empty');
-        var items = (signalDataCache.errorsInThisLog || []).slice(0, 3);
-        var total = signalDataCache.errorsInThisLogTotal;
+        var subtitleEl = document.getElementById('signal-errors-in-log-subtitle'), listEl = document.getElementById('signal-errors-in-log-list'), emptyEl = document.getElementById('signal-errors-in-log-empty');
+        var items = (signalDataCache.errorsInThisLog || []).slice(0, 3), total = signalDataCache.errorsInThisLogTotal;
         var showTopOfN = items.length === 3 && (total != null && total > 3);
         if (subtitleEl) subtitleEl.textContent = showTopOfN && SIGNAL_STRINGS.topOfTotal
             ? (SIGNAL_STRINGS.topOfTotal.replace('{0}', String(total))) : (SIGNAL_STRINGS.sectionErrorsInLog || 'Errors in this log');
@@ -213,30 +210,27 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }
     }
     function renderThisLogEmptyState() {
-        var emptyBlock = document.getElementById('signal-this-log-empty');
-        var contentBlock = document.getElementById('signal-this-log-content');
+        var emptyBlock = document.getElementById('signal-this-log-empty'), contentBlock = document.getElementById('signal-this-log-content');
         var errorsEmpty = (signalDataCache.errorsInThisLog || []).length === 0;
-        var inLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
-        var recurringEmpty = inLog.length === 0;
+        var recurringEmpty = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; }).length === 0;
         var bothEmpty = errorsEmpty && recurringEmpty;
         if (emptyBlock) emptyBlock.style.display = bothEmpty ? '' : 'none';
         if (contentBlock) contentBlock.style.display = bothEmpty ? 'none' : '';
     }
+    function envGroupHtml(title, items) {
+        if (!items.length) return '';
+        var rows = items.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('');
+        return '<div class="signal-env-group"><div class="signal-env-title">' + title + '</div>' + rows + '</div>';
+    }
     function renderEnvironment() {
         var summaryEl = document.getElementById('signal-environment-summary');
         var listEl = document.getElementById('signal-environment-list');
-        var platforms = signalDataCache.platforms || [];
-        var sdks = signalDataCache.sdkVersions || [];
-        var adapters = signalDataCache.debugAdapters || [];
+        var platforms = signalDataCache.platforms || [], sdks = signalDataCache.sdkVersions || [], adapters = signalDataCache.debugAdapters || [];
         var total = platforms.length + sdks.length + adapters.length;
         if (summaryEl) summaryEl.textContent = total === 0 ? 'Environment' : ('Environment (' + total + ' entries)');
-        if (listEl) {
-            var parts = [];
-            if (platforms.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">Platforms</div>' + platforms.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + ' session' + (p.sessionCount === 1 ? '' : 's') + '</span></div>'; }).join('') + '</div>');
-            if (sdks.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">SDK / runtime</div>' + sdks.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
-            if (adapters.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">Debug adapters</div>' + adapters.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
-            listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
-        }
+        if (!listEl) return;
+        var parts = [envGroupHtml('Platforms', platforms), envGroupHtml('SDK / runtime', sdks), envGroupHtml('Debug adapters', adapters)].filter(Boolean);
+        listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
     }
 
     /** Human-readable labels for signal kinds. */
@@ -248,6 +242,16 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
 
     /** Format duration for display (ms → readable). */
     function fmtMs(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms'; }
+
+    /** Extract lint rule name from signal detail and build a clickable link button. */
+    function buildLintRuleLink(detail) {
+        if (!detail) return '';
+        /* Match pattern: [saropa_lints] rule_name (severity): message */
+        var m = detail.match(/\\[saropa_lints\\]\\s+(\\S+)\\s+\\(/);
+        if (!m) return '';
+        var rule = m[1];
+        return ' <span class="re-action signal-lint-link" role="button" title="Open rule docs for ' + esc(rule) + '" data-rule="' + esc(rule) + '" data-source="saropa_lints">\\uD83D\\uDCCB Rule</span>';
+    }
 
     /** Render the unified signal list across sessions — errors, warnings, perf, SQL, etc. all in one. */
     function renderSignalTrends() {
@@ -271,14 +275,22 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.avgDurationMs) { meta += ', avg ' + fmtMs(s.avgDurationMs); }
             if (s.maxDurationMs) { meta += ', max ' + fmtMs(s.maxDurationMs); }
             if (s.category) { meta += ' [' + esc(s.category) + ']'; }
+            /* Cross-extension link buttons: lint rule docs and Drift Advisor */
+            var lintBtn = buildLintRuleLink(s.detail || '');
+            var daBtn = s.kind === 'sql' ? ' <span class="re-action signal-da-link" role="button" title="Open Drift Advisor">\\uD83D\\uDD0D DA</span>' : '';
             /* Severity badge: critical/high get colored indicators, recurring signals get a ↻ marker */
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
             var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="Recurring in ' + s.sessionCount + ' sessions">\u21BB</span>' : '';
+            /* Trend arrow: ↑ increasing, ↓ decreasing, — stable (only shown when trend data available) */
+            var trendBadge = '';
+            if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="Increasing — getting worse">\u2191</span>'; }
+            else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="Decreasing — improving">\u2193</span>'; }
+            else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="Stable — consistent rate">\u2014</span>'; }
             /* Add-to-case button on each signal row — data attributes carry the payload */
             var addBtn = '<span class="re-action re-add-to-case-signal" data-kind="' + esc(s.kind) + '" data-label="' + esc(s.label) + '" data-detail="' + esc(s.detail || '') + '" data-fp="' + esc(s.fingerprint || '') + '" title="' + SIGNAL_STRINGS.addToCase + '">+</span>';
             return '<div class="signal-env-row signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
-                + '<span>' + icon + recurBadge + ' ' + esc(text) + '</span>'
-                + '<span class="signal-hotfile-meta">' + meta + '</span>' + addBtn + '</div>';
+                + '<span>' + icon + recurBadge + trendBadge + ' ' + esc(text) + '</span>'
+                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + addBtn + '</div>';
         }).join('');
     }
 

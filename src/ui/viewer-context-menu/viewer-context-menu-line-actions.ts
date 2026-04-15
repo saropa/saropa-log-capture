@@ -137,7 +137,7 @@ function handleLineAction(action, lineIdx) {
         case 'edit': if (typeof openEditModal === 'function') openEditModal(lineIdx); return true;
         case 'show-context': if (typeof openContextModal === 'function') openContextModal(lineIdx); return true;
         case 'find-static-sources-line': {
-            var fpLine = lineData.dbInsight && lineData.dbInsight.fingerprint;
+            var fpLine = lineData.dbSignal && lineData.dbSignal.fingerprint;
             if (fpLine && typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled) {
                 vscodeApi.postMessage({ type: 'findStaticSourcesForSqlFingerprint', fingerprint: fpLine });
             }

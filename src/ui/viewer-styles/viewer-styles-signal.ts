@@ -1,5 +1,5 @@
 /**
- * CSS styles for the Signal panel — single-scroll unified view (Unified Insight Model).
+ * CSS styles for the Signal panel — single-scroll unified view (Unified Signal Model).
  * Accordion sections; no tabs. Reuses session-investigation and recurring card classes.
  */
 

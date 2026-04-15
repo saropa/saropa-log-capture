@@ -139,7 +139,7 @@ export class LogViewerProvider
   setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
   setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
   setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
-  setOpenInsightTabHandler(handler: () => void): void { this.onOpenSignalTabRequest = handler; }
+  setOpenSignalTabHandler(handler: () => void): void { this.onOpenSignalTabRequest = handler; }
   setRevealLogFileHandler(handler: (uriString: string) => void): void { this.onRevealLogFile = handler; }
   setAddBookmarkHandler(handler: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void { this.onAddBookmark = handler; }
   setFindInFilesHandler(handler: (query: string, options: Record<string, unknown>) => void): void { this.onFindInFiles = handler; }
@@ -198,8 +198,8 @@ export class LogViewerProvider
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void {
     state.setViewerRepeatThresholdsImpl(this, thresholds);
   }
-  setViewerDbInsightsEnabled(enabled: boolean): void {
-    state.setViewerDbInsightsEnabledImpl(this, enabled);
+  setViewerDbSignalsEnabled(enabled: boolean): void {
+    state.setViewerDbSignalsEnabledImpl(this, enabled);
   }
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void {
     state.setStaticSqlFromFingerprintEnabledImpl(this, enabled);

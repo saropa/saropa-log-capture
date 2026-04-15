@@ -51,10 +51,10 @@ export function getSignalScriptPartC(): string {
         }
     }
 
-    /** Build a single markdown string from current Insight state and Performance DOM (for copy-to-clipboard). */
-    function buildInsightMarkdown() {
+    /** Build a single markdown string from current Signal state and Performance DOM (for copy-to-clipboard). */
+    function buildSignalMarkdown() {
         var lines = [];
-        lines.push('# Insights');
+        lines.push('# Signals');
         lines.push('');
         lines.push('## Current log');
         lines.push(hasLog && currentLogLabel ? currentLogLabel : 'No log open');
@@ -87,8 +87,8 @@ export function getSignalScriptPartC(): string {
                 lines.push('');
             }
         }
-        var errorsInLog = (signalDataCache.errorsInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
-        var recurringInLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var errorsInLog = (signalDataCache.errorsInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
+        var recurringInLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
         if (hasLog && (errorsInLog.length > 0 || recurringInLog.length > 0)) {
             lines.push('## This log');
             lines.push('');
@@ -107,7 +107,7 @@ export function getSignalScriptPartC(): string {
                 lines.push('### Recurring in this log');
                 for (var j = 0; j < recurringInLog.length; j++) {
                     var rec = recurringInLog[j];
-                    var recText = (rec.normalizedText || rec.exampleLine || '').trim();
+                    var recText = (rec.label || rec.detail || '').trim();
                     if (recText) lines.push('- ' + recText);
                 }
                 lines.push('');
@@ -120,7 +120,7 @@ export function getSignalScriptPartC(): string {
             for (var k = 0; k < invs.length; k++) lines.push('- ' + (invs[k].name || 'Unnamed'));
             lines.push('');
         }
-        var recurring = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var recurring = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
         var hotFiles = signalDataCache.hotFiles || [];
         if (recurring.length > 0 || hotFiles.length > 0) {
             lines.push('## Across your logs');
@@ -128,7 +128,7 @@ export function getSignalScriptPartC(): string {
             if (recurring.length > 0) {
                 lines.push('### Recurring errors');
                 for (var r = 0; r < recurring.length; r++) {
-                    var t = (recurring[r].normalizedText || recurring[r].exampleLine || '').trim();
+                    var t = (recurring[r].label || recurring[r].detail || '').trim();
                     if (t) lines.push('- ' + t);
                 }
                 lines.push('');
@@ -156,16 +156,16 @@ export function getSignalScriptPartC(): string {
         return lines.join('\\n');
     }
 
-    /* Open in new tab: opens Insights as a main editor tab; extension handles via onOpenSignalTabRequest. */
+    /* Open in new tab: opens Signals as a main editor tab; extension handles via onOpenSignalTabRequest. */
     var openTabBtn = document.getElementById('signal-panel-open-tab');
     if (openTabBtn) openTabBtn.addEventListener('click', function() {
         vscodeApi.postMessage({ type: 'openSignalTab' });
     });
 
-    /* Copy entire Insights case to clipboard as markdown (header button). */
+    /* Copy entire Signals summary to clipboard as markdown (header button). */
     var copyMdBtn = document.getElementById('signal-panel-copy-md');
     if (copyMdBtn) copyMdBtn.addEventListener('click', function() {
-        var md = buildInsightMarkdown();
+        var md = buildSignalMarkdown();
         if (md) vscodeApi.postMessage({ type: 'copyToClipboard', text: md });
     });
 
@@ -207,7 +207,7 @@ export function getSignalScriptPartC(): string {
         if (!e.data) return;
         if (e.data.type === 'openSignalPanel') {
             openSignalPanel();
-            if (e.data.tab) setInsightTab(e.data.tab);
+            if (e.data.tab) setSignalTab(e.data.tab);
             return;
         }
         if (e.data.type === 'currentLogChanged') {
@@ -255,8 +255,8 @@ export function getSignalScriptPartC(): string {
                 errors: d.errors || [], statuses: d.statuses || {}, hotFiles: d.hotFiles || [],
                 recurringInThisLog: d.recurringInThisLog || [], errorsInThisLog: d.errorsInThisLog || [],
                 errorsInThisLogTotal: d.errorsInThisLogTotal, platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
-                debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {}, recurringSignals: d.recurringSignals || [],
-                signalSessionCount: d.signalSessionCount || 0, allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || []
+                debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {},
+                allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || []
             };
             var loadEl = document.getElementById('signal-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';

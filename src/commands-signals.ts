@@ -25,7 +25,7 @@ export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
             },
         ),
         vscode.commands.registerCommand(
-            'saropaLogCapture.refreshRecurringErrors',
+            'saropaLogCapture.refreshRecurringSignals',
             () => {
                 deps.viewerProvider.postMessage({ type: 'signalRefreshRecurring' });
             },

@@ -60,12 +60,12 @@ export function getPerformanceDbTabScript(): string {
     function buildDbStatsView() {
         if (!ppDbView) return;
         bindDbViewChromeOnce();
-        if (typeof dbInsightSessionRollup === 'undefined' || !dbInsightSessionRollup) {
+        if (typeof dbSignalSessionRollup === 'undefined' || !dbSignalSessionRollup) {
             ppDbView.innerHTML = '<p class="pp-db-empty">No database line rollup in this session.</p>';
             window.ppDbTimelineMeta = null;
             return;
         }
-        var keys = Object.keys(dbInsightSessionRollup);
+        var keys = Object.keys(dbSignalSessionRollup);
         if (!keys.length) {
             ppDbView.innerHTML = '<p class="pp-db-empty">No Drift SQL fingerprints recorded.</p>';
             window.ppDbTimelineMeta = null;
@@ -75,7 +75,7 @@ export function getPerformanceDbTabScript(): string {
         var ki, fp, ent;
         for (ki = 0; ki < keys.length; ki++) {
             fp = keys[ki];
-            ent = dbInsightSessionRollup[fp];
+            ent = dbSignalSessionRollup[fp];
             if (!ent) continue;
             entries.push({ fp: fp, count: ent.count, sumMs: ent.sumMs, countWithMs: ent.countWithMs, maxMs: ent.maxMs });
         }
@@ -101,7 +101,7 @@ export function getPerformanceDbTabScript(): string {
             for (bi = 0; bi < allLines.length; bi++) {
                 row = allLines[bi];
                 if (!row || row.type !== 'line') continue;
-                if (row.sourceTag !== 'database' && !(row.dbInsight && row.dbInsight.fingerprint)) continue;
+                if (row.sourceTag !== 'database' && !(row.dbSignal && row.dbSignal.fingerprint)) continue;
                 ms = row.elapsedMs;
                 if (typeof ms === 'number' && isFinite(ms) && ms >= 0) {
                     durLineN++;
@@ -135,7 +135,7 @@ export function getPerformanceDbTabScript(): string {
             for (bi = 0; bi < allLines.length; bi++) {
                 row = allLines[bi];
                 if (!row || row.type !== 'line') continue;
-                if (row.sourceTag !== 'database' && !(row.dbInsight && row.dbInsight.fingerprint)) continue;
+                if (row.sourceTag !== 'database' && !(row.dbSignal && row.dbSignal.fingerprint)) continue;
                 ts = row.timestamp;
                 if (typeof ts !== 'number' || !isFinite(ts)) continue;
                 if (ts < tMin) tMin = ts;
@@ -155,7 +155,7 @@ export function getPerformanceDbTabScript(): string {
                 for (bi = 0; bi < allLines.length; bi++) {
                     row = allLines[bi];
                     if (!row || row.type !== 'line') continue;
-                    if (row.sourceTag !== 'database' && !(row.dbInsight && row.dbInsight.fingerprint)) continue;
+                    if (row.sourceTag !== 'database' && !(row.dbSignal && row.dbSignal.fingerprint)) continue;
                     ts = row.timestamp;
                     if (typeof ts !== 'number' || !isFinite(ts)) continue;
                     var ix = (typeof sessionTimeBucketIndex === 'function')

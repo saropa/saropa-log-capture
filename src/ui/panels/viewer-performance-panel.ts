@@ -1,9 +1,9 @@
 /**
- * Performance panel HTML and script for the webview (standalone + Insight-embedded via `prefix`).
+ * Performance panel HTML and script for the webview (standalone + Signal-embedded via `prefix`).
  *
  * Tabs: **Current** (scan `allLines` for perf events), **Trends** (host `requestPerformanceData`),
  * **Log** (session snapshot / intro when no perf payload), **Database** (`buildDbStatsView` in
- * `viewer-performance-db-tab.ts`: Drift rollup `dbInsightSessionRollup`, client-side timeline buckets).
+ * `viewer-performance-db-tab.ts`: Drift rollup `dbSignalSessionRollup`, client-side timeline buckets).
  * Opening the panel replays the active tab’s refresh path so **Log** reloads snapshot data after dismiss.
  * Log intro: right-click copies full text via the small context menu.
  */
@@ -251,7 +251,7 @@ export function getPerformancePanelScript(prefix?: string): string {
         if (typeof window.ensureSignalSlideoutOpen === 'function') window.ensureSignalSlideoutOpen();
         else if (typeof window.setActivePanel === 'function') window.setActivePanel('signal');
         else if (typeof openSignalPanel === 'function') openSignalPanel();
-        if (typeof window.setInsightTab === 'function') window.setInsightTab('performance');
+        if (typeof window.setSignalTab === 'function') window.setSignalTab('performance');
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
 

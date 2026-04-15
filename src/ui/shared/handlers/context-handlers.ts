@@ -5,7 +5,7 @@
  *
  * ## Database-tagged lines (Drift SQL)
  *
- * The webview attaches `dbInsight` to `sourceTag === 'database'` rows and may send
+ * The webview attaches `dbSignal` to `sourceTag === 'database'` rows and may send
  * `hasDatabaseLine: true` with **Show integration context**. When there is no HTTP/perf/etc.
  * data in the ±window and no `saropa-drift-advisor` session meta, we still open the popover
  * so **Database signal** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
