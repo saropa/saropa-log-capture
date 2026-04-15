@@ -47,7 +47,6 @@ function applyPreset(presetName) {
 
     if (preset.categories && preset.categories.length > 0) {
         activeFilters = new Set(preset.categories);
-        syncChannelCheckboxes();
         applyFilter();
     }
 
@@ -90,6 +89,9 @@ function applyPreset(presetName) {
     if (preset.flutterMode !== undefined && typeof setShowFlutter === 'function') {
         setShowFlutter(preset.flutterMode);
     }
+    if (preset.externalMode !== undefined && typeof setShowExternal === 'function') {
+        setShowExternal(preset.externalMode);
+    }
 
     if (preset.sources !== undefined) {
         if (typeof window !== 'undefined') {
@@ -103,16 +105,6 @@ function applyPreset(presetName) {
     applyingPreset = false;
     updatePresetDropdown();
     vscodeApi.postMessage({ type: 'presetApplied', name: preset.name });
-}
-
-/**
- * Sync output channel checkboxes with activeFilters set.
- */
-function syncChannelCheckboxes() {
-    var boxes = document.querySelectorAll('#output-channels-list input[type="checkbox"]');
-    for (var i = 0; i < boxes.length; i++) {
-        boxes[i].checked = !activeFilters || activeFilters.has(boxes[i].dataset.category);
-    }
 }
 
 /**
@@ -179,12 +171,11 @@ function getCurrentFilters() {
     var searchInput = document.getElementById('search-input');
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
-    /* Save tri-state tier modes — only save non-default values to keep presets lean */
+    /* Save tri-state tier modes — only save non-default values to keep presets lean.
+       Defaults: Flutter App='all', Device='warnplus', External='warnplus'. */
     if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') { filters.flutterMode = showFlutter; }
-    if (typeof showDevice !== 'undefined' && showDevice !== 'none') { filters.deviceMode = showDevice; }
-    if (typeof window !== 'undefined' && window.availableSources && window.availableSources.length > 1 && window.enabledSources) {
-        filters.sources = window.enabledSources.slice();
-    }
+    if (typeof showDevice !== 'undefined' && showDevice !== 'warnplus') { filters.deviceMode = showDevice; }
+    if (typeof showExternal !== 'undefined' && showExternal !== 'warnplus') { filters.externalMode = showExternal; }
     return filters;
 }
 
@@ -219,21 +210,21 @@ function presetClearSearchInputValue() {
     }
 }
 
-/** Reset all filters back to defaults. */
+/** Reset all filters back to defaults.
+ * Defaults: Flutter App=all, Device=warnplus, External=warnplus. */
 function resetAllFilters() {
     resetLevelFilters();
     activeFilters = null;
-    syncChannelCheckboxes();
     if (typeof setExclusionsEnabled === 'function') setExclusionsEnabled(false);
     if (typeof setShowFlutter === 'function') setShowFlutter('all');
-    if (typeof setShowDevice === 'function') setShowDevice('none');
+    if (typeof setShowDevice === 'function') setShowDevice('warnplus');
+    if (typeof setShowExternal === 'function') setShowExternal('warnplus');
     if (typeof selectAllTags === 'function') selectAllTags();
     if (typeof selectAllSqlPatterns === 'function') selectAllSqlPatterns();
     if (typeof selectAllClassTags === 'function') selectAllClassTags();
     if (typeof resetScopeFilter === 'function') resetScopeFilter();
     if (typeof clearDbTimeRangeFilter === 'function') clearDbTimeRangeFilter();
     presetClearSearchInputValue();
-    if (typeof window !== 'undefined') window.enabledSources = null;
     activePresetName = null;
     updatePresetDropdown();
     if (typeof applyLevelFilter === 'function') applyLevelFilter();
@@ -241,7 +232,6 @@ function resetAllFilters() {
     applyFilter();
     if (typeof recalcHeights === 'function') recalcHeights();
     if (typeof renderViewport === 'function') renderViewport(true);
-    if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
     if (typeof syncOptionsPanelUi === 'function') syncOptionsPanelUi();
     if (typeof updateFilterBadge === 'function') updateFilterBadge();
 }

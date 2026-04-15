@@ -6,145 +6,145 @@
  */
 import { t } from '../../l10n';
 import { getPerformancePanelHtml } from './viewer-performance-panel';
-import { getInsightPanelScriptContent, type InsightScriptStrings } from './viewer-signal-panel-script';
+import { getSignalPanelScriptContent, type SignalScriptStrings } from './viewer-signal-panel-script';
 
-const INSIGHT_STORAGE_KEY = 'insightSectionState';
+const SIGNAL_STORAGE_KEY = 'signalSectionState';
 
 /** Generate the Insight panel HTML: one narrative (This log → Your cases → Across your logs → Environment). */
-export function getInsightPanelHtml(): string {
-    const sectionErrorsInLog = t('insight.sectionErrorsInLog');
-    const errorsInLogEmpty = t('insight.errorsInLogEmpty');
-    const sessionDetails = t('insight.sessionDetails');
-    const sessionDetailsHint = t('insight.sessionDetailsHint');
-    const thisLog = t('insight.thisLog');
-    const thisLogEmpty = t('insight.thisLogEmpty');
-    const yourCases = t('insight.yourCases');
-    const acrossYourLogs = t('insight.acrossYourLogs');
-    const emptyCases = t('insight.emptyCases');
-    const emptyRecurring = t('insight.emptyRecurring');
-    const emptyHotFiles = t('insight.emptyHotFiles');
+export function getSignalPanelHtml(): string {
+    const sectionErrorsInLog = t('signal.sectionErrorsInLog');
+    const errorsInLogEmpty = t('signal.errorsInLogEmpty');
+    const sessionDetails = t('signal.sessionDetails');
+    const sessionDetailsHint = t('signal.sessionDetailsHint');
+    const thisLog = t('signal.thisLog');
+    const thisLogEmpty = t('signal.thisLogEmpty');
+    const yourCases = t('signal.yourCases');
+    const acrossYourLogs = t('signal.acrossYourLogs');
+    const emptyCases = t('signal.emptyCases');
+    const emptyRecurring = t('signal.emptyRecurring');
+    const emptyHotFiles = t('signal.emptyHotFiles');
     return /* html */ `
-<div id="insight-panel" class="insight-panel" role="region" aria-label="Signals">
-    <div class="insight-panel-header">
+<div id="signal-panel" class="signal-panel" role="region" aria-label="Signals">
+    <div class="signal-panel-header">
         <span>Signals</span>
-        <div class="insight-panel-actions">
-            <button id="insight-panel-open-tab" class="insight-panel-copy-md" title="Open in new tab" aria-label="Open Signals in new tab">
+        <div class="signal-panel-actions">
+            <button id="signal-panel-open-tab" class="signal-panel-copy-md" title="Open in new tab" aria-label="Open Signals in new tab">
                 <span class="codicon codicon-link-external"></span>
             </button>
-            <button id="insight-panel-copy-md" class="insight-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
+            <button id="signal-panel-copy-md" class="signal-panel-copy-md" title="Copy to Markdown" aria-label="Copy to Markdown">
                 <span class="codicon codicon-copy"></span>
             </button>
-            <button id="insight-panel-close" class="insight-panel-close" title="Close" aria-label="Close">&times;</button>
+            <button id="signal-panel-close" class="signal-panel-close" title="Close" aria-label="Close">&times;</button>
         </div>
     </div>
-    <div id="insight-scroll" class="insight-panel-content">
+    <div id="signal-scroll" class="signal-panel-content">
         <!-- Current log at a glance (no section header) -->
-        <div id="insight-hero-block" class="insight-hero-block" aria-hidden="true" style="display:none">
-            <div id="insight-performance-scope" class="insight-scope-label" style="display:none">Current log: <span id="insight-current-log-label"></span></div>
-            <div id="insight-performance-hero" class="insight-performance-hero" style="display:none" aria-live="polite"></div>
+        <div id="signal-hero-block" class="signal-hero-block" aria-hidden="true" style="display:none">
+            <div id="signal-performance-scope" class="signal-scope-label" style="display:none">Current log: <span id="insight-current-log-label"></span></div>
+            <div id="signal-performance-hero" class="signal-performance-hero" style="display:none" aria-live="polite"></div>
         </div>
         <!-- Session details (collapsed by default) -->
-        <section id="insight-section-session-details" class="insight-section insight-section-session-details" aria-hidden="true" style="display:none">
-            <button type="button" class="insight-section-header" id="insight-header-session-details" aria-expanded="false" aria-controls="insight-body-session-details">
-                <span class="insight-section-emoji" aria-hidden="true">📊</span>
-                <span class="insight-section-title">${sessionDetails}</span>
-                <span class="insight-section-toggle" aria-hidden="true"></span>
+        <section id="signal-section-session-details" class="signal-section signal-section-session-details" aria-hidden="true" style="display:none">
+            <button type="button" class="signal-section-header" id="signal-header-session-details" aria-expanded="false" aria-controls="signal-body-session-details">
+                <span class="signal-section-emoji" aria-hidden="true">📊</span>
+                <span class="signal-section-title">${sessionDetails}</span>
+                <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
-            <div id="insight-body-session-details" class="insight-section-body" style="display:none">
+            <div id="signal-body-session-details" class="signal-section-body" style="display:none">
                 <p class="insight-session-details-hint">${sessionDetailsHint}</p>
-                ${getPerformancePanelHtml('insight-')}
+                ${getPerformancePanelHtml('signal-')}
             </div>
         </section>
         <!-- This log (State B only): errors + recurring in this log -->
-        <section id="insight-section-this-log" class="insight-section" aria-hidden="true" style="display:none">
-            <button type="button" class="insight-section-header" id="insight-header-this-log" aria-expanded="true" aria-controls="insight-body-this-log">
-                <span class="insight-section-emoji" aria-hidden="true">📄</span>
-                <span class="insight-section-title">${thisLog}</span>
-                <span class="insight-section-toggle" aria-hidden="true"></span>
+        <section id="signal-section-this-log" class="signal-section" aria-hidden="true" style="display:none">
+            <button type="button" class="signal-section-header" id="signal-header-this-log" aria-expanded="true" aria-controls="signal-body-this-log">
+                <span class="signal-section-emoji" aria-hidden="true">📄</span>
+                <span class="signal-section-title">${thisLog}</span>
+                <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
-            <div id="insight-body-this-log" class="insight-section-body">
-                <div id="insight-this-log-empty" class="insight-this-log-empty insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>${thisLogEmpty}</div>
-                <div id="insight-this-log-content" class="insight-this-log-content">
-                    <div class="insight-narrative-block">
-                        <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">⚠️</span><span id="insight-errors-in-log-subtitle">${sectionErrorsInLog}</span></div>
-                        <div id="insight-errors-in-log-list" class="insight-errors-in-log-list"></div>
-                        <div id="insight-errors-in-log-empty" class="insight-hotfiles-empty" style="display:none">${errorsInLogEmpty}</div>
+            <div id="signal-body-this-log" class="signal-section-body">
+                <div id="signal-this-log-empty" class="signal-this-log-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${thisLogEmpty}</div>
+                <div id="signal-this-log-content" class="signal-this-log-content">
+                    <div class="signal-narrative-block">
+                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">⚠️</span><span id="signal-errors-in-log-subtitle">${sectionErrorsInLog}</span></div>
+                        <div id="signal-errors-in-log-list" class="signal-errors-in-log-list"></div>
+                        <div id="signal-errors-in-log-empty" class="signal-hotfiles-empty" style="display:none">${errorsInLogEmpty}</div>
                     </div>
-                    <div class="insight-narrative-block">
-                        <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">🔁</span><span id="insight-recurring-in-log-summary">Recurring in this log</span></div>
-                        <div id="insight-recurring-in-log-list" class="recurring-list-inner"></div>
+                    <div class="signal-narrative-block">
+                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔁</span><span id="signal-recurring-in-log-summary">Recurring in this log</span></div>
+                        <div id="signal-recurring-in-log-list" class="recurring-list-inner"></div>
                     </div>
-                    <div class="insight-narrative-block">
-                        <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📡</span><span id="insight-signals-in-log-summary">All signals in this log</span></div>
-                        <div id="insight-signals-in-log-list" class="insight-hotfiles-list"></div>
+                    <div class="signal-narrative-block">
+                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">All signals in this log</span></div>
+                        <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
                     </div>
                 </div>
             </div>
         </section>
         <!-- Your cases -->
-        <section id="insight-section-cases" class="insight-section">
-            <button type="button" class="insight-section-header" id="insight-header-cases" aria-expanded="true" aria-controls="insight-body-cases">
-                <span class="insight-section-emoji" aria-hidden="true">📌</span>
-                <span class="insight-section-title">${yourCases}</span>
-                <span class="insight-section-toggle" aria-hidden="true"></span>
+        <section id="signal-section-cases" class="signal-section">
+            <button type="button" class="signal-section-header" id="signal-header-cases" aria-expanded="true" aria-controls="signal-body-cases">
+                <span class="signal-section-emoji" aria-hidden="true">📌</span>
+                <span class="signal-section-title">${yourCases}</span>
+                <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
-            <div id="insight-body-cases" class="insight-section-body">
+            <div id="signal-body-cases" class="signal-section-body">
                 <div class="session-investigations">
-                    <p id="insight-cases-hint" class="session-investigations-hint">Pin sessions and files to search and export together.</p>
-                    <div id="insight-cases-loading" class="session-loading-label" style="display:none">Loading…</div>
-                    <div id="insight-cases-empty" class="insight-hotfiles-empty" style="display:none">${emptyCases}</div>
-                    <div id="insight-cases-list" class="session-investigations-list"></div>
-                    <div id="insight-cases-view-all" class="insight-view-all" style="display:none"><span id="insight-cases-view-all-link">View All</span></div>
-                    <div id="insight-cases-create-row" class="session-investigations-create-row">
-                        <button id="insight-cases-create" class="session-investigations-create">+ Create Investigation...</button>
+                    <p id="signal-cases-hint" class="session-investigations-hint">Pin sessions and files to search and export together.</p>
+                    <div id="signal-cases-loading" class="session-loading-label" style="display:none">Loading…</div>
+                    <div id="signal-cases-empty" class="signal-hotfiles-empty" style="display:none">${emptyCases}</div>
+                    <div id="signal-cases-list" class="session-investigations-list"></div>
+                    <div id="signal-cases-view-all" class="signal-view-all" style="display:none"><span id="signal-cases-view-all-link">View All</span></div>
+                    <div id="signal-cases-create-row" class="session-investigations-create-row">
+                        <button id="signal-cases-create" class="session-investigations-create">+ Create Investigation...</button>
                     </div>
-                    <div id="insight-cases-create-form" class="session-investigations-create-form" style="display:none">
-                        <input type="text" id="insight-cases-name-input" class="session-investigations-name-input" placeholder="e.g., Auth Timeout Bug #1234" maxlength="100" />
+                    <div id="signal-cases-create-form" class="session-investigations-create-form" style="display:none">
+                        <input type="text" id="signal-cases-name-input" class="session-investigations-name-input" placeholder="e.g., Auth Timeout Bug #1234" maxlength="100" />
                         <div class="session-investigations-create-form-actions">
-                            <button type="button" id="insight-cases-create-confirm" class="session-investigations-create-confirm">Create</button>
-                            <button type="button" id="insight-cases-create-cancel" class="session-investigations-create-cancel">Cancel</button>
+                            <button type="button" id="signal-cases-create-confirm" class="session-investigations-create-confirm">Create</button>
+                            <button type="button" id="signal-cases-create-cancel" class="session-investigations-create-cancel">Cancel</button>
                         </div>
-                        <div id="insight-cases-create-error" class="session-investigations-create-error" style="display:none"></div>
+                        <div id="signal-cases-create-error" class="session-investigations-create-error" style="display:none"></div>
                     </div>
                 </div>
             </div>
         </section>
         <!-- Across your logs: recurring errors + hot files -->
-        <section id="insight-section-across-logs" class="insight-section">
-            <button type="button" class="insight-section-header" id="insight-header-across-logs" aria-expanded="true" aria-controls="insight-body-across-logs">
-                <span class="insight-section-emoji" aria-hidden="true">🔁</span>
-                <span class="insight-section-title">${acrossYourLogs}</span>
-                <span class="insight-section-toggle" aria-hidden="true"></span>
+        <section id="signal-section-across-logs" class="signal-section">
+            <button type="button" class="signal-section-header" id="signal-header-across-logs" aria-expanded="true" aria-controls="signal-body-across-logs">
+                <span class="signal-section-emoji" aria-hidden="true">🔁</span>
+                <span class="signal-section-title">${acrossYourLogs}</span>
+                <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
-            <div id="insight-body-across-logs" class="insight-section-body">
-                <div class="insight-narrative-block">
-                    <div id="insight-recurring-loading" class="recurring-loading" style="display:none">Loading error data…</div>
-                    <div id="insight-recurring-list" class="recurring-list-inner"></div>
-                    <div id="insight-recurring-empty" class="recurring-empty insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>${emptyRecurring}</div>
-                    <div id="insight-recurring-footer" class="insight-recurring-footer">
-                        <span id="insight-export-summary" class="recurring-footer-action" title="Export recurring errors and hot files">Export summary</span>
+            <div id="signal-body-across-logs" class="signal-section-body">
+                <div class="signal-narrative-block">
+                    <div id="signal-recurring-loading" class="recurring-loading" style="display:none">Loading error data…</div>
+                    <div id="signal-recurring-list" class="recurring-list-inner"></div>
+                    <div id="signal-recurring-empty" class="recurring-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyRecurring}</div>
+                    <div id="signal-recurring-footer" class="signal-recurring-footer">
+                        <span id="signal-export-summary" class="recurring-footer-action" title="Export recurring errors and hot files">Export summary</span>
                     </div>
                 </div>
-                <div class="insight-narrative-block">
-                    <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📁</span><span id="insight-hotfiles-summary">Frequently modified files</span></div>
-                    <div id="insight-hotfiles-empty" class="insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
-                    <div id="insight-hotfiles-list" class="insight-hotfiles-list"></div>
+                <div class="signal-narrative-block">
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📁</span><span id="signal-hotfiles-summary">Frequently modified files</span></div>
+                    <div id="signal-hotfiles-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
+                    <div id="signal-hotfiles-list" class="signal-hotfiles-list"></div>
                 </div>
-                <div class="insight-narrative-block">
-                    <div class="insight-narrative-subtitle"><span class="insight-margin-emoji" aria-hidden="true">📡</span><span id="insight-signal-trends-summary">All signals</span></div>
-                    <div id="insight-signal-trends-empty" class="insight-hotfiles-empty" style="display:none"><span class="insight-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
-                    <div id="insight-signal-trends-list" class="insight-hotfiles-list"></div>
+                <div class="signal-narrative-block">
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signal-trends-summary">All signals</span></div>
+                    <div id="signal-trends-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
+                    <div id="signal-trends-list" class="signal-hotfiles-list"></div>
                 </div>
             </div>
         </section>
         <!-- Environment -->
-        <section id="insight-section-environment" class="insight-section">
-            <button type="button" class="insight-section-header" id="insight-header-environment" aria-expanded="false" aria-controls="insight-body-environment">
-                <span class="insight-section-emoji" aria-hidden="true">⚙️</span>
-                <span class="insight-section-title" id="insight-environment-summary">Environment</span>
-                <span class="insight-section-toggle" aria-hidden="true"></span>
+        <section id="signal-section-environment" class="signal-section">
+            <button type="button" class="signal-section-header" id="signal-header-environment" aria-expanded="false" aria-controls="signal-body-environment">
+                <span class="signal-section-emoji" aria-hidden="true">⚙️</span>
+                <span class="signal-section-title" id="insight-environment-summary">Environment</span>
+                <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
-            <div id="insight-body-environment" class="insight-section-body" style="display:none">
+            <div id="signal-body-environment" class="signal-section-body" style="display:none">
                 <div id="insight-environment-list" class="insight-environment-list"></div>
             </div>
         </section>
@@ -153,23 +153,23 @@ export function getInsightPanelHtml(): string {
 }
 
 /** Generate the Insight panel script. Single scroll; context-aware sections (State A vs B). */
-export function getInsightPanelScript(): string {
-    const strings: InsightScriptStrings = {
-        addToCase: t('insight.addToCase'),
-        heroSparklineTitle: t('insight.heroSparklineTitle'),
-        heroLoading: t('insight.heroLoading'),
-        heroNoSamplingHint: t('insight.heroNoSamplingHint'),
-        errorsInLogEmpty: t('insight.errorsInLogEmpty'),
-        emptyCases: t('insight.emptyCases'),
-        emptyRecurring: t('insight.emptyRecurring'),
-        emptyHotFiles: t('insight.emptyHotFiles'),
-        thisLogEmpty: t('insight.thisLogEmpty'),
-        sessionTrendLabel: t('insight.sessionTrendLabel'),
-        topOfTotal: t('insight.topOfTotal'),
-        sourcesCount: t('insight.sourcesCount'),
-        updatedAgo: t('insight.updatedAgo'),
-        heroNoErrorsWarnings: t('insight.heroNoErrorsWarnings'),
-        sectionErrorsInLog: t('insight.sectionErrorsInLog'),
+export function getSignalPanelScript(): string {
+    const strings: SignalScriptStrings = {
+        addToCase: t('signal.addToCase'),
+        heroSparklineTitle: t('signal.heroSparklineTitle'),
+        heroLoading: t('signal.heroLoading'),
+        heroNoSamplingHint: t('signal.heroNoSamplingHint'),
+        errorsInLogEmpty: t('signal.errorsInLogEmpty'),
+        emptyCases: t('signal.emptyCases'),
+        emptyRecurring: t('signal.emptyRecurring'),
+        emptyHotFiles: t('signal.emptyHotFiles'),
+        thisLogEmpty: t('signal.thisLogEmpty'),
+        sessionTrendLabel: t('signal.sessionTrendLabel'),
+        topOfTotal: t('signal.topOfTotal'),
+        sourcesCount: t('signal.sourcesCount'),
+        updatedAgo: t('signal.updatedAgo'),
+        heroNoErrorsWarnings: t('signal.heroNoErrorsWarnings'),
+        sectionErrorsInLog: t('signal.sectionErrorsInLog'),
     };
-    return getInsightPanelScriptContent(INSIGHT_STORAGE_KEY, strings);
+    return getSignalPanelScriptContent(SIGNAL_STORAGE_KEY, strings);
 }

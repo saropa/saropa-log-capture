@@ -34,7 +34,7 @@ export function getIconBarHtml(): string {
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
-    <button id="ib-insight" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
+    <button id="ib-signal" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
         <span class="codicon codicon-lightbulb"></span><span class="ib-label">Signals</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
@@ -126,7 +126,7 @@ export function getIconBarScript(): string {
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
-        insight: document.getElementById('ib-insight'),
+        insight: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
     };
 
@@ -139,7 +139,7 @@ export function getIconBarScript(): string {
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
-        if (typeof closeInsightPanel === 'function') closeInsightPanel();
+        if (typeof closeSignalPanel === 'function') closeSignalPanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
         if (typeof closeSessionPanel === 'function') closeSessionPanel();
     }
@@ -179,8 +179,8 @@ export function getIconBarScript(): string {
             openOptionsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
-        } else if (name === 'insight' && typeof openInsightPanel === 'function') {
-            openInsightPanel();
+        } else if (name === 'signal' && typeof openSignalPanel === 'function') {
+            openSignalPanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
             openAboutPanel();
         }
@@ -188,15 +188,15 @@ export function getIconBarScript(): string {
 
     /**
      * Open the Insights slide-out without treating a second request as "close".
-     * The header Performance chip uses this: setActivePanel('insight') alone toggles off when
+     * The header Performance chip uses this: setActivePanel('signal') alone toggles off when
      * Insights is already active, leaving panel-slot width 0 so nothing appears.
      */
-    window.ensureInsightSlideoutOpen = function() {
-        if (activePanel === 'insight') {
-            if (typeof openInsightPanel === 'function') openInsightPanel();
+    window.ensureSignalSlideoutOpen = function() {
+        if (activePanel === 'signal') {
+            if (typeof openSignalPanel === 'function') openSignalPanel();
             return;
         }
-        setActivePanel('insight');
+        setActivePanel('signal');
     };
 
     /** Allow panels to clear their icon state when closed externally. */
@@ -230,7 +230,7 @@ export function getIconBarScript(): string {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
     }
     if (iconButtons.insight) {
-        iconButtons.insight.addEventListener('click', function() { setActivePanel('insight'); });
+        iconButtons.insight.addEventListener('click', function() { setActivePanel('signal'); });
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });

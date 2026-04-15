@@ -46,7 +46,7 @@ suite('ViewerIconBar', () => {
             const ids = [
                 'ib-sessions', 'ib-find', 'ib-bookmarks',
                 'ib-sql-query-history', 'ib-trash', 'ib-options',
-                'ib-crashlytics', 'ib-insight', 'ib-about',
+                'ib-crashlytics', 'ib-signal', 'ib-about',
             ];
             for (const id of ids) {
                 const match = html.match(new RegExp(`id="${id}"[^>]*title="([^"]*)"`));
@@ -73,17 +73,17 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('applyLabelsVisible'));
         });
 
-        test('should define ensureInsightSlideoutOpen that skips toggle when insight already active', () => {
+        test('should define ensureSignalSlideoutOpen that skips toggle when insight already active', () => {
             const script = getIconBarScript();
-            assert.ok(script.includes('ensureInsightSlideoutOpen'));
+            assert.ok(script.includes('ensureSignalSlideoutOpen'));
             // When insight is already active, it must NOT call setActivePanel (which toggles off)
-            // Instead it calls openInsightPanel directly — verify both branches exist
+            // Instead it calls openSignalPanel directly — verify both branches exist
             assert.ok(
-                script.includes("activePanel === 'insight'"),
+                script.includes("activePanel === 'signal'"),
                 'must check whether insight is already the active panel',
             );
             assert.ok(
-                script.includes("setActivePanel('insight')"),
+                script.includes("setActivePanel('signal')"),
                 'must delegate to setActivePanel when insight is not active',
             );
         });

@@ -128,7 +128,7 @@ test("runDbDetectorsCompare: runs compare hooks and merges stableKey by priority
   assert.strictEqual(out[0].detectorId, "c-high");
 });
 
-test("runDbDetectorsCompare: insightsEnabled false returns empty", () => {
+test("runDbDetectorsCompare: signalsEnabled false returns empty", () => {
   const d: DbDetectorDefinition = {
     id: "x",
     priority: 0,
@@ -145,7 +145,7 @@ test("runDbDetectorsCompare: insightsEnabled false returns empty", () => {
   };
   const state = createDbDetectorSessionState();
   const out = runDbDetectorsCompare([d], { baseline: new Map(), target: new Map() }, state, {
-    insightsEnabled: false,
+    signalsEnabled: false,
   });
   assert.deepStrictEqual(out, []);
 });
@@ -290,7 +290,7 @@ test("runDefaultSessionDbCompareDetectors: same marker count as manual registry 
   assert.strictEqual(a[0]?.detectorId, b[0]?.detectorId);
 });
 
-test("runDbDetectorsIngest: insightsEnabled false returns empty", () => {
+test("runDbDetectorsIngest: signalsEnabled false returns empty", () => {
   const d: DbDetectorDefinition = {
     id: "x",
     priority: 0,
@@ -305,6 +305,6 @@ test("runDbDetectorsIngest: insightsEnabled false returns empty", () => {
     ],
   };
   const state = createDbDetectorSessionState();
-  const out = runDbDetectorsIngest([d], baseCtx, state, { insightsEnabled: false });
+  const out = runDbDetectorsIngest([d], baseCtx, state, { signalsEnabled: false });
   assert.deepStrictEqual(out, []);
 });

@@ -4,7 +4,7 @@
  * Slide-out panel from the right side with organized sections for all
  * viewer filter controls:
  *   - Quick Filters (presets + reset)
- *   - Log Inputs (tier checkboxes + sources + DAP category checkboxes)
+ *   - Log Inputs (Flutter App / Device / External tier radios)
  *   - Exclusions (exclusion patterns)
  *   - Message Tags (source tag chips from logging framework)
  *   - Code Origins (class/method tag chips)
@@ -41,17 +41,31 @@ export function getFiltersPanelHtml(): string {
             </div>
         </div>
 
-        <!-- Log Inputs: tier checkboxes + sources + categories -->
+        <!-- Log Inputs: Flutter App / Device / External tier radios -->
         <div class="options-section" id="log-inputs-section" style="display:none">
             <h3 class="options-section-title">Log Inputs</h3>
             <div class="options-row-list tier-filter-list">
-                <label class="options-row" title="Show Flutter app output"><input type="checkbox" id="opt-flutter" checked /><span>Flutter</span></label>
-                <label class="options-row" title="Show device/system logs (excludes critical device errors which are always visible)"><input type="checkbox" id="opt-device" /><span>Device</span></label>
+                <fieldset class="tier-radio-group">
+                    <legend>Flutter App</legend>
+                    <label title="Show all output from your app code"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
+                    <label title="Show only warnings and errors from your app"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
+                    <label title="Hide all app output"><input type="radio" name="tier-flutter" value="none" /> None</label>
+                </fieldset>
+                <fieldset class="tier-radio-group">
+                    <legend>Device</legend>
+                    <div class="tier-hint">Logcat, Android system logs</div>
+                    <label title="Show all device/system logs (critical errors like crashes and ANR are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
+                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" checked /> Warn+</label>
+                    <label title="Hide device/system logs (critical errors remain visible)"><input type="radio" name="tier-device" value="none" /> None</label>
+                </fieldset>
+                <fieldset class="tier-radio-group">
+                    <legend>External</legend>
+                    <div class="tier-hint">Log files, terminal, browser, drift-perf</div>
+                    <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
+                    <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
+                    <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
+                </fieldset>
             </div>
-            <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
-            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
-            <div id="log-inputs-divider-cat" class="log-inputs-divider" style="display:none"></div>
-            <div id="output-channels-list"></div>
         </div>
 
         <!-- Exclusions: exclusion patterns -->

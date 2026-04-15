@@ -134,7 +134,7 @@ suite('Webview script null guards – panels & nav', () => {
     });
 
     suite('viewer-performance-panel switchTab', () => {
-        const script = getPerformancePanelScript('insight-');
+        const script = getPerformancePanelScript('signal-');
 
         test('should guard ppTabCurrent.classList in switchTab', () => {
             const tabBlock = script.slice(

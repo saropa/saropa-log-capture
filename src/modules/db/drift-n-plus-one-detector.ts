@@ -66,7 +66,7 @@ export interface DriftSqlFingerprint {
     readonly sqlSnippet: string;
 }
 
-export interface NPlusOneInsight {
+export interface NPlusOneSignal {
     readonly repeats: number;
     readonly distinctArgs: number;
     readonly windowSpanMs: number;
@@ -159,7 +159,7 @@ export class NPlusOneDetector {
     constructor(private readonly cfg: NPlusOneDetectorConfig = N_PLUS_ONE_EMBED_CONFIG) {}
 
     /** @param ts - Epoch ms (log line timestamp or synthetic test clock). */
-    feed(ts: number, fingerprint: string, argsKey: string): NPlusOneInsight | null {
+    feed(ts: number, fingerprint: string, argsKey: string): NPlusOneSignal | null {
         if (!fingerprint) {
             return null;
         }
@@ -196,7 +196,7 @@ export class NPlusOneDetector {
         }
         entry.lastInsightTs = now;
         const windowSpanMs = entry.hits[entry.hits.length - 1].ts - entry.hits[0].ts;
-        const insight: NPlusOneInsight = {
+        const insight: NPlusOneSignal = {
             repeats,
             distinctArgs,
             windowSpanMs,
