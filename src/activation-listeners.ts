@@ -93,6 +93,9 @@ export function setupConfigListener(
         }
         if (e.affectsConfiguration('saropaLogCapture.minimapWidth')) {
             broadcaster.setMinimapWidth(cfg.minimapWidth);
+            /* Explicit preset change clears any custom drag-to-resize width */
+            context.workspaceState.update('saropaLogCapture.minimapCustomPx', undefined)
+                .then(undefined, () => {});
         }
         if (e.affectsConfiguration('saropaLogCapture.showScrollbar')) {
             broadcaster.setScrollbarVisible(cfg.showScrollbar);

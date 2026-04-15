@@ -22,18 +22,21 @@ import { getScrollbarMinimapSqlScript } from './viewer-scrollbar-minimap-sql';
 import { getScrollbarMinimapStateScript } from './viewer-scrollbar-minimap-state';
 import { getScrollbarMinimapPaintScript } from './viewer-scrollbar-minimap-paint';
 import { getScrollbarMinimapInjectedScript } from './viewer-scrollbar-minimap-injected';
+import { getScrollbarMinimapResizeScript } from './viewer-scrollbar-minimap-resize';
 
 /** Returns the JavaScript code for the scrollbar minimap in the webview. */
 export function getScrollbarMinimapScript(): string {
     return getScrollbarMinimapSqlScript()
         + getScrollbarMinimapStateScript()
         + getScrollbarMinimapPaintScript()
+        + getScrollbarMinimapResizeScript()
         + getScrollbarMinimapInjectedScript();
 }
 
 /** Returns the HTML for the scrollbar minimap element. */
 export function getScrollbarMinimapHtml(): string {
     return `<div id="scrollbar-minimap-column" class="scrollbar-minimap-column">
+<div id="minimap-resize-handle" class="minimap-resize-handle" title="Drag to resize scroll map"></div>
 <div id="minimap-outside-arrow" class="minimap-outside-arrow u-hidden" aria-hidden="true"><span class="minimap-outside-arrow-glyph" aria-hidden="true"></span></div>
 <div id="scrollbar-minimap" class="scrollbar-minimap" role="img" aria-label="Log scroll map. Click or drag to scroll the log. Short ticks show level and search; optional pink and orange shading shows SQL activity along the log."></div>
 </div>`;
