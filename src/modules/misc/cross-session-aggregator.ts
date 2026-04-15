@@ -1,14 +1,13 @@
 /**
  * Cross-session aggregator: read all sidecar metadata files and build
- * aggregated insights — hot files and recurring error patterns.
+ * aggregated signals — hot files and unified recurring signal patterns.
  */
 
-import type { CrashCategory, FingerprintEntry } from '../analysis/error-fingerprint';
 import { loadFilteredMetas, type LoadedMeta, type TimeRange } from '../session/metadata-loader';
-import { isPersistedSignalSummaryV1 } from '../root-cause-hints/signal-summary-types';
-import type { SignalSummaryCounts } from '../root-cause-hints/signal-summary-types';
 import { buildAllRecurringSignals } from './recurring-signal-builder';
+import { detectCoOccurrences, type SignalCoOccurrence } from './signal-co-occurrence';
 export type { RecurringSignalEntry, SignalKind } from './recurring-signal-builder';
+export type { SignalCoOccurrence } from './signal-co-occurrence';
 export type { TimeRange } from '../session/metadata-loader';
 
 /** A source file mentioned across multiple sessions. */
@@ -18,50 +17,19 @@ export interface HotFile {
     readonly sessions: readonly { readonly filename: string; readonly uri: string }[];
 }
 
-/** A recurring error group across sessions. */
-export interface RecurringError {
-    readonly hash: string;
-    readonly normalizedText: string;
-    readonly exampleLine: string;
-    readonly sessionCount: number;
-    readonly totalOccurrences: number;
-    readonly firstSeen: string;
-    readonly lastSeen: string;
-    readonly firstSeenVersion?: string;
-    readonly lastSeenVersion?: string;
-    readonly category?: CrashCategory;
-    readonly timeline: readonly { readonly session: string; readonly count: number }[];
-}
-
 /** Environment distribution entry from session headers. */
 export interface EnvironmentStat {
     readonly value: string;
     readonly sessionCount: number;
 }
 
-/** A signal type that recurs across multiple sessions. */
-export interface RecurringSignal {
-    readonly signalType: keyof SignalSummaryCounts;
-    readonly sessionCount: number;
-    readonly totalOccurrences: number;
-}
-
-/** An N+1 query fingerprint seen across multiple sessions. */
-export interface RecurringNPlusOne {
-    readonly fingerprint: string;
-    readonly sessionCount: number;
-}
-
 /** Aggregated cross-session signals. */
 export interface CrossSessionSignals {
     readonly hotFiles: readonly HotFile[];
-    readonly recurringErrors: readonly RecurringError[];
-    readonly recurringSignals: readonly RecurringSignal[];
-    readonly recurringNPlusOnes: readonly RecurringNPlusOne[];
     /** Unified signal list: errors, warnings, perf, SQL, network, memory, etc. all in one. */
     readonly allSignals: readonly import('./recurring-signal-builder').RecurringSignalEntry[];
-    /** Number of sessions that had signal summary data (viewer was opened). */
-    readonly signalSessionCount: number;
+    /** Signal pairs that consistently co-occur in the same sessions (Jaccard > 0.5). */
+    readonly coOccurrences: readonly SignalCoOccurrence[];
     readonly sessionCount: number;
     readonly platforms: readonly EnvironmentStat[];
     readonly sdkVersions: readonly EnvironmentStat[];
@@ -70,19 +38,15 @@ export interface CrossSessionSignals {
 }
 
 const maxHotFiles = 20;
-const maxErrors = 30;
 
 /** Build signals from an existing list of loaded session metas (e.g. for a single session or investigation). */
 export function buildSignalsFromMetas(metas: readonly LoadedMeta[]): CrossSessionSignals {
     const envStats = buildEnvironmentStats(metas);
-    const signalData = buildRecurringSignals(metas);
+    const allSignals = buildAllRecurringSignals(metas);
     return {
         hotFiles: buildHotFiles(metas),
-        recurringErrors: buildRecurringErrors(metas),
-        recurringSignals: signalData.signals,
-        recurringNPlusOnes: signalData.nPlusOnes,
-        allSignals: buildAllRecurringSignals(metas),
-        signalSessionCount: signalData.count,
+        allSignals,
+        coOccurrences: detectCoOccurrences(allSignals),
         sessionCount: metas.length,
         ...envStats,
         queriedAt: Date.now(),
@@ -110,80 +74,6 @@ function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {
         .map(([name, { sessions }]) => ({ filename: name, sessionCount: sessions.length, sessions }))
         .sort((a, b) => b.sessionCount - a.sessionCount)
         .slice(0, maxHotFiles);
-}
-
-type ErrorAccum = {
-    n: string; e: string; total: number;
-    timeline: { session: string; count: number }[];
-    firstVer?: string; lastVer?: string;
-    cat?: CrashCategory;
-};
-
-function buildRecurringErrors(metas: readonly LoadedMeta[]): RecurringError[] {
-    const errorMap = new Map<string, ErrorAccum>();
-    for (const { filename, meta } of metas) {
-        const ver = meta.appVersion;
-        for (const fp of meta.fingerprints ?? []) { accumulateFingerprint(fp, filename, errorMap, ver); }
-    }
-    return [...errorMap.entries()]
-        .map(([hash, { n, e, total, timeline, firstVer, lastVer, cat }]) => ({
-            hash, normalizedText: n, exampleLine: e,
-            sessionCount: timeline.length, totalOccurrences: total,
-            firstSeen: timeline[0].session, lastSeen: timeline[timeline.length - 1].session,
-            firstSeenVersion: firstVer, lastSeenVersion: lastVer,
-            category: cat, timeline,
-        }))
-        .sort((a, b) => (b.sessionCount * b.totalOccurrences) - (a.sessionCount * a.totalOccurrences))
-        .slice(0, maxErrors);
-}
-
-function accumulateFingerprint(fp: FingerprintEntry, filename: string, errorMap: Map<string, ErrorAccum>, version?: string): void {
-    const existing = errorMap.get(fp.h);
-    if (existing) {
-        existing.total += fp.c;
-        if (!existing.timeline.some(t => t.session === filename)) { existing.timeline.push({ session: filename, count: fp.c }); }
-        if (version) { existing.lastVer = version; }
-    } else {
-        errorMap.set(fp.h, {
-            n: fp.n, e: fp.e, total: fp.c,
-            timeline: [{ session: filename, count: fp.c }],
-            firstVer: version, lastVer: version, cat: fp.cat,
-        });
-    }
-}
-
-const maxNPlusOnes = 10;
-
-/** Aggregate signal summaries across sessions into recurring signal types and N+1 fingerprints. */
-function buildRecurringSignals(metas: readonly LoadedMeta[]): { signals: RecurringSignal[]; nPlusOnes: RecurringNPlusOne[]; count: number } {
-    const signalMap = new Map<keyof SignalSummaryCounts, { sessions: number; total: number }>();
-    const n1Map = new Map<string, number>();
-    let count = 0;
-    for (const { meta } of metas) {
-        const s = meta.signalSummary;
-        if (!s || !isPersistedSignalSummaryV1(s)) { continue; }
-        count++;
-        for (const [key, val] of Object.entries(s.counts)) {
-            if (typeof val !== 'number' || val <= 0) { continue; }
-            const k = key as keyof SignalSummaryCounts;
-            const existing = signalMap.get(k) ?? { sessions: 0, total: 0 };
-            existing.sessions++;
-            existing.total += val;
-            signalMap.set(k, existing);
-        }
-        for (const fp of s.topNPlusOneFingerprints ?? []) {
-            n1Map.set(fp, (n1Map.get(fp) ?? 0) + 1);
-        }
-    }
-    const signals = [...signalMap.entries()]
-        .map(([signalType, { sessions, total }]) => ({ signalType, sessionCount: sessions, totalOccurrences: total }))
-        .sort((a, b) => b.sessionCount - a.sessionCount);
-    const nPlusOnes = [...n1Map.entries()]
-        .map(([fingerprint, sessionCount]) => ({ fingerprint, sessionCount }))
-        .filter(e => e.sessionCount >= 2)
-        .sort((a, b) => b.sessionCount - a.sessionCount)
-        .slice(0, maxNPlusOnes);
-    return { signals, nPlusOnes, count };
 }
 
 const platformTagRe = /^(?:platform|os|device|runtime)$/i;

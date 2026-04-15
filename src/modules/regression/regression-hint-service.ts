@@ -81,7 +81,8 @@ export async function getFirstSeenCommitForError(
     options?: { resolveCommitUrl?: boolean },
 ): Promise<FirstSeenHint | undefined> {
     const aggregated = await aggregateSignals('all').catch(() => undefined);
-    const error = aggregated?.recurringErrors.find(e => e.hash === errorHash);
+    // Find matching error signal by fingerprint (raw hash for error-kind signals)
+    const error = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === errorHash);
     if (!error?.firstSeen) { return undefined; }
 
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -132,7 +133,7 @@ export async function getRegressionHintsForError(
 }
 
 /**
- * Batch first-seen commit hints for recurring errors (e.g. for Insights panel).
+ * Batch first-seen commit hints for recurring errors (e.g. for Signal panel).
  * Loads session meta for first-seen sessions in parallel; caps count for performance.
  */
 export async function getFirstSeenHintsForErrors(
@@ -145,7 +146,7 @@ export async function getFirstSeenHintsForErrors(
     if (!aggregated) { return {}; }
 
     const toFetch = errorHashes.slice(0, cap).filter(h => {
-        const err = aggregated.recurringErrors.find(e => e.hash === h);
+        const err = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === h);
         return err?.firstSeen !== undefined && err?.firstSeen !== null;
     });
 
@@ -158,7 +159,7 @@ export async function getFirstSeenHintsForErrors(
 
     const entries = await Promise.all(
         toFetch.map(async (hash): Promise<[string, FirstSeenHint] | undefined> => {
-            const error = aggregated.recurringErrors.find(e => e.hash === hash);
+            const error = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
             if (!error?.firstSeen) { return undefined; }
             const firstSeenNorm = normSession(error.firstSeen);
             try {

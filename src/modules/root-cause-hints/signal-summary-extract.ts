@@ -7,7 +7,12 @@
  */
 
 import type { RootCauseHintBundle, RootCauseHypothesis } from './root-cause-hint-types';
-import { SIGNAL_SUMMARY_SCHEMA_VERSION, type PersistedSignalSummaryV1, type SignalSummaryCounts } from './signal-summary-types';
+import {
+    SIGNAL_SUMMARY_SCHEMA_VERSION_V2,
+    type PersistedSignalSummaryV2, type PersistedSignalEntryV2, type SignalSummaryCounts,
+} from './signal-summary-types';
+// Re-export V2 as the default summary type for callers
+export type { PersistedSignalSummaryV2 };
 
 const maxTemplateIds = 5;
 const maxNPlusOneFingerprints = 3;
@@ -68,14 +73,42 @@ function extractTopSlowOps(bundle: RootCauseHintBundle): string[] | undefined {
         .map(([name]) => name);
 }
 
+const maxEntries = 20;
+
+/** Extract V2 entries for signal types that only store counts in V1 (network, memory, slow ops, etc.). */
+function extractEntries(bundle: RootCauseHintBundle): PersistedSignalEntryV2[] | undefined {
+    const entries: PersistedSignalEntryV2[] = [];
+    for (const nf of bundle.networkFailures ?? []) {
+        const label = nf.excerpt.slice(0, 120) || 'Network failure';
+        entries.push({ kind: 'network', fingerprint: nf.pattern, label, count: 1 });
+    }
+    for (const me of bundle.memoryEvents ?? []) {
+        const label = me.excerpt.slice(0, 120) || 'Memory event';
+        entries.push({ kind: 'memory', fingerprint: label, label, count: 1 });
+    }
+    for (const so of bundle.slowOperations ?? []) {
+        const name = so.operationName ?? so.excerpt.slice(0, 80);
+        entries.push({ kind: 'slow-op', fingerprint: name, label: name, count: 1, avgDurationMs: so.durationMs, maxDurationMs: so.durationMs });
+    }
+    for (const pd of bundle.permissionDenials ?? []) {
+        const label = pd.excerpt.slice(0, 120) || 'Permission denied';
+        entries.push({ kind: 'permission', fingerprint: label, label, count: 1 });
+    }
+    for (const ce of bundle.classifiedErrors ?? []) {
+        const label = ce.excerpt.slice(0, 120) || 'Classified error';
+        entries.push({ kind: 'classified', fingerprint: label, label, category: ce.classification, count: 1 });
+    }
+    return entries.length > 0 ? entries.slice(0, maxEntries) : undefined;
+}
+
 /**
- * Extract a compact signal summary from a root-cause hint bundle and its hypotheses.
- * Returns undefined if there is no meaningful signal data to persist.
+ * Extract a compact signal summary (V2) from a root-cause hint bundle and its hypotheses.
+ * V2 includes actual entries for count-only signal types. Returns undefined if no meaningful data.
  */
 export function extractSignalSummary(
     bundle: RootCauseHintBundle,
     hypotheses: readonly RootCauseHypothesis[],
-): PersistedSignalSummaryV1 | undefined {
+): PersistedSignalSummaryV2 | undefined {
     const counts = buildCounts(bundle);
     const anrRiskLevel = bundle.anrRisk?.level;
     const templateIds = hypotheses.length > 0
@@ -86,11 +119,12 @@ export function extractSignalSummary(
     if (isEmptyCounts(counts) && !anrRiskLevel && !templateIds) { return undefined; }
 
     return {
-        schemaVersion: SIGNAL_SUMMARY_SCHEMA_VERSION,
+        schemaVersion: SIGNAL_SUMMARY_SCHEMA_VERSION_V2,
         counts,
         anrRiskLevel,
         hypothesisTemplateIds: templateIds,
         topNPlusOneFingerprints: extractTopNPlusOneFingerprints(bundle),
         topSlowOps: extractTopSlowOps(bundle),
+        entries: extractEntries(bundle),
     };
 }

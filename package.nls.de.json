@@ -1,6 +1,6 @@
 {
   "command.addExternalLogPath.title": "Saropa Log Capture: Add external log path",
-  "command.addSignalItemToCase.title": "Insight-Eintrag zu Fall hinzufügen",
+  "command.addSignalItemToCase.title": "Signal-Eintrag zu Fall hinzufügen",
   "command.addToInvestigation.title": "Zur Untersuchung hinzufügen",
   "command.applyPreset.title": "Saropa Log Capture: Filtervoreinstellung anwenden",
   "command.applyTemplate.title": "Saropa Log Capture: Protokollvorlage anwenden",
@@ -25,7 +25,7 @@
   "command.exportCsv.title": "Als CSV exportieren",
   "command.exportHtml.title": "Als HTML exportieren (statisch)",
   "command.exportHtmlInteractive.title": "Als HTML exportieren (interaktiv)",
-  "command.exportSignalsSummary.title": "Insights-Zusammenfassung exportieren",
+  "command.exportSignalsSummary.title": "Signals-Zusammenfassung exportieren",
   "command.exportInvestigation.title": "Untersuchung als .slc exportieren",
   "command.exportJson.title": "Als JSON exportieren",
   "command.exportJsonl.title": "Als JSONL exportieren",

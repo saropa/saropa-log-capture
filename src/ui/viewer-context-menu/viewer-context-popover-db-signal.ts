@@ -5,12 +5,12 @@
  * and optional "Find sources" / "Open in Drift Advisor" buttons.
  */
 
-/** Returns the JavaScript for `buildDatabaseInsightPopoverSection()`. */
+/** Returns the JavaScript for `buildDatabaseSignalPopoverSection()`. */
 export function getContextPopoverDbSignalScript(): string {
     return /* javascript */ `
-function buildDatabaseInsightPopoverSection(lineIdx) {
+function buildDatabaseSignalPopoverSection(lineIdx) {
     var row = (typeof allLines !== 'undefined' && lineIdx >= 0 && lineIdx < allLines.length) ? allLines[lineIdx] : null;
-    var ins = row && row.dbInsight;
+    var ins = row && row.dbSignal;
     if (!ins) return '';
     var seenCountSafe = (typeof ins.seenCount === 'number' && isFinite(ins.seenCount) && ins.seenCount >= 1)
         ? Math.floor(ins.seenCount) : 1;

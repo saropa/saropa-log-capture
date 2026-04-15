@@ -11,6 +11,20 @@ export function getSignalScriptPartD(): string {
     var signalTrendsEl = document.getElementById('signal-trends-list');
     if (signalTrendsEl) {
         signalTrendsEl.addEventListener('click', function(e) {
+            /* Lint rule link — opens VS Code settings search for the saropa_lints rule */
+            var lintLink = e.target.closest('.signal-lint-link');
+            if (lintLink && lintLink.dataset.rule) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'openLintRule', rule: lintLink.dataset.rule, source: lintLink.dataset.source || 'saropa_lints' });
+                return;
+            }
+            /* Drift Advisor link — opens the DA panel for SQL signal context */
+            var daLink = e.target.closest('.signal-da-link');
+            if (daLink) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'openDriftAdvisor' });
+                return;
+            }
             /* Add-to-case "+" button on signal rows — sends signal payload to case system */
             var addBtn = e.target.closest('.re-add-to-case-signal');
             if (addBtn && addBtn.dataset.kind) {

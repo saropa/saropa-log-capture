@@ -36,7 +36,7 @@ function handleDbMessages(msg) {
                 viewerSlowBurstThresholds.cooldownMs = clampSb(sb.cooldownMs, 0, 300000, viewerSlowBurstThresholds.cooldownMs);
             }
             return true;
-        case 'setViewerDbInsightsEnabled':
+        case 'setViewerDbSignalsEnabled':
             viewerDbSignalsEnabled = msg.enabled !== false;
             return true;
         case 'setStaticSqlFromFingerprintEnabled':

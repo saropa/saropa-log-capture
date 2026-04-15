@@ -98,7 +98,7 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             repeatItem.sqlRepeatDrilldownOpen = false;
             repeatItem.repeatPreviewText = preview || '\\u2026';
         }
-        /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbInsight on these rows). */
+        /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbSignal on these rows). */
         if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
             repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
             var histPvwNew = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();

@@ -208,5 +208,9 @@ export function getSignalSectionsStyles(): string {
 .signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, #fa4); }
 /* Recurring badge — small ↻ marker next to the icon */
 .signal-recurring-badge { font-size: 10px; opacity: 0.7; margin: 0 1px; }
+/* Trend arrows — ↑ increasing (red), ↓ decreasing (green), — stable (muted) */
+.signal-trend-up { font-size: 10px; color: var(--vscode-editorError-foreground, #f44); margin: 0 1px; }
+.signal-trend-down { font-size: 10px; color: var(--vscode-testing-iconPassed, #4a4); margin: 0 1px; }
+.signal-trend-stable { font-size: 10px; opacity: 0.5; margin: 0 1px; }
 `;
 }

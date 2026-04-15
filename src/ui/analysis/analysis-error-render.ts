@@ -8,7 +8,7 @@
 import { escapeHtml } from '../../modules/capture/ansi';
 import type { CrashCategory } from '../../modules/analysis/error-fingerprint';
 import type { ErrorStatus } from '../../modules/misc/error-status-store';
-import type { RecurringError } from '../../modules/misc/cross-session-aggregator';
+import type { RecurringSignalEntry } from '../../modules/misc/recurring-signal-builder';
 import { extractDateFromFilename } from '../../modules/analysis/stack-parser';
 import { doneSlot, emptySlot } from './analysis-panel-render';
 
@@ -62,33 +62,34 @@ export function renderTriageUpdate(hash: string, status: ErrorStatus): string {
 }
 
 /** Render cross-session timeline section with sparkline SVG. */
-export function renderTimelineSection(error: RecurringError): string {
-    const trend = error.timeline
+export function renderTimelineSection(signal: RecurringSignalEntry): string {
+    const trend = signal.timeline
         .map(t => ({ date: extractDateFromFilename(t.session), count: t.count }))
         .filter((t): t is { date: string; count: number } => t.date !== undefined)
         .sort((a, b) => a.date.localeCompare(b.date));
 
-    const logs = `${error.sessionCount} log${error.sessionCount !== 1 ? 's' : ''}`;
-    let html = `<details class="group" open><summary class="group-header">📊 Error History <span class="match-count">${error.totalOccurrences} occurrences across ${logs}</span></summary>`;
-    html += renderVersionInfo(error);
+    const logs = `${signal.sessionCount} log${signal.sessionCount !== 1 ? 's' : ''}`;
+    let html = `<details class="group" open><summary class="group-header">📊 Error History <span class="match-count">${signal.totalOccurrences} occurrences across ${logs}</span></summary>`;
+    html += renderVersionInfo(signal);
     if (trend.length >= 2) { html += buildSparkline(trend); }
     html += '</details>';
     return doneSlot('error-timeline', html);
 }
 
-function renderVersionInfo(error: RecurringError): string {
+/** Render first-seen / last-seen version info for the error timeline. */
+function renderVersionInfo(signal: RecurringSignalEntry): string {
     const parts: string[] = [];
-    if (error.firstSeen) {
-        const date = extractDateFromFilename(error.firstSeen);
+    if (signal.firstSeen) {
+        const date = extractDateFromFilename(signal.firstSeen);
         if (date) { parts.push(`First: ${escapeHtml(date)}`); }
     }
-    if (error.lastSeen) {
-        const date = extractDateFromFilename(error.lastSeen);
+    if (signal.lastSeen) {
+        const date = extractDateFromFilename(signal.lastSeen);
         if (date) { parts.push(`Last: ${escapeHtml(date)}`); }
     }
-    if (error.firstSeenVersion) { parts.push(`v${escapeHtml(error.firstSeenVersion)}`); }
-    if (error.lastSeenVersion && error.lastSeenVersion !== error.firstSeenVersion) {
-        parts.push(`→ v${escapeHtml(error.lastSeenVersion)}`);
+    if (signal.firstSeenVersion) { parts.push(`v${escapeHtml(signal.firstSeenVersion)}`); }
+    if (signal.lastSeenVersion && signal.lastSeenVersion !== signal.firstSeenVersion) {
+        parts.push(`→ v${escapeHtml(signal.lastSeenVersion)}`);
     }
     return parts.length > 0 ? `<div class="err-version-info">${parts.join(' &middot; ')}</div>` : '';
 }

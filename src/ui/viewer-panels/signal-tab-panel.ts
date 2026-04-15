@@ -1,8 +1,8 @@
 /**
- * Insights as a main VS Code editor tab.
+ * Signal panel as a main VS Code editor tab.
  *
  * Opens a WebviewPanel that shows only the Signal panel content (same HTML/script
- * as the sidebar viewer's Insights), so users can read it in a large tab. Loading
+ * as the sidebar viewer's Signal panel), so users can read it in a large tab. Loading
  * states (e.g. "Loading error data…", "Loading…" for cases) are inherited from the
  * shared signal panel content; no extra spinners or progress UI in this module.
  */
@@ -16,7 +16,7 @@ import { getRecurringPanelStyles } from "../viewer-styles/viewer-styles-recurrin
 import { getPerformancePanelStyles } from "../viewer-styles/viewer-styles-performance";
 import { dispatchViewerMessage, type ViewerMessageContext } from "../provider/viewer-message-handler";
 
-const VIEW_TYPE = "saropaLogCapture.insightTab";
+const VIEW_TYPE = "saropaLogCapture.signalTab";
 const TITLE = "Signals";
 
 let panel: vscode.WebviewPanel | undefined;
@@ -29,10 +29,10 @@ export type OpenSignalTabDeps = {
 };
 
 /**
- * Build HTML for the standalone Insights tab: signal panel only, full viewport,
+ * Build HTML for the standalone Signals tab: signal panel only, full viewport,
  * with styles and script. Panel is shown as visible by default.
  */
-function buildInsightTabHtml(opts: {
+function buildSignalTabHtml(opts: {
   nonce: string;
   codiconCssUri: string;
   cspSource: string;
@@ -50,13 +50,13 @@ function buildInsightTabHtml(opts: {
     getPerformancePanelStyles();
 
   // Signal panel HTML: add class "visible" so it shows in the tab (no icon bar to toggle it).
-  const insightHtml = getSignalPanelHtml().replace(
+  const signalHtml = getSignalPanelHtml().replace(
     'id="signal-panel" class="signal-panel"',
     'id="signal-panel" class="signal-panel visible"'
   );
 
   // Provide vscodeApi and closeSignalPanel (close = close tab). Do not set openSignalPanel
-  // so the signal script's implementation runs and requests data when we post openInsight.
+  // so the signal script's implementation runs and requests data when we post openSignal.
   const bootstrapScript = `
 (function() {
   var api = typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null;
@@ -67,9 +67,9 @@ function buildInsightTabHtml(opts: {
 })();
 `;
 
-  const insightScript = getSignalPanelScript();
+  const signalScript = getSignalPanelScript();
   // Re-apply close handler after signal script (script overwrites closeSignalPanel for sidebar behavior).
-  // Signal ready so extension posts openInsight only after the script has attached its message listener (avoids race).
+  // Signal ready so extension posts openSignal only after the script has attached its message listener (avoids race).
   const closeTabScript = `
 window.closeSignalPanel = function() { if (window.vscodeApi) window.vscodeApi.postMessage({ type: 'closeSignalTab' }); };
 if (window.vscodeApi) window.vscodeApi.postMessage({ type: 'signalTabReady' });
@@ -90,16 +90,16 @@ if (window.vscodeApi) window.vscodeApi.postMessage({ type: 'signalTabReady' });
   </style>
 </head>
 <body>
-  ${insightHtml}
+  ${signalHtml}
   <script nonce="${nonce}">${bootstrapScript}</script>
-  <script nonce="${nonce}">${insightScript}</script>
+  <script nonce="${nonce}">${signalScript}</script>
   <script nonce="${nonce}">${closeTabScript}</script>
 </body>
 </html>`;
 }
 
 /**
- * Open the Insights tab or reveal it if already open.
+ * Open the Signal tab or reveal it if already open.
  */
 export function openSignalTab(deps: OpenSignalTabDeps): void {
   const { getCurrentFileUri, context, extensionUri, version } = deps;
@@ -127,7 +127,7 @@ export function openSignalTab(deps: OpenSignalTabDeps): void {
   ).toString();
   const nonce = getNonce();
 
-  webview.html = buildInsightTabHtml({
+  webview.html = buildSignalTabHtml({
     nonce,
     codiconCssUri,
     cspSource: webview.cspSource,

@@ -3,7 +3,7 @@
  *
  * ## Purpose
  * Produce a **compact, stable string** for grouping identical *statement shapes* in the log viewer:
- * N+1 heuristics, `dbInsight` rollups, SQL pattern chips, and in-log search. The goal is to avoid
+ * N+1 heuristics, `dbSignal` rollups, SQL pattern chips, and in-log search. The goal is to avoid
  * high-cardinality tokens (literals, UUIDs, bare integers) becoming unique “chips” or fingerprint keys.
  *
  * ## Algorithm (keep in sync with the webview)

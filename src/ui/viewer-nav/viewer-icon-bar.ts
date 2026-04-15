@@ -187,9 +187,9 @@ export function getIconBarScript(): string {
     };
 
     /**
-     * Open the Insights slide-out without treating a second request as "close".
+     * Open the Signal slide-out without treating a second request as "close".
      * The header Performance chip uses this: setActivePanel('signal') alone toggles off when
-     * Insights is already active, leaving panel-slot width 0 so nothing appears.
+     * Signal is already active, leaving panel-slot width 0 so nothing appears.
      */
     window.ensureSignalSlideoutOpen = function() {
         if (activePanel === 'signal') {

@@ -1,5 +1,5 @@
 /**
- * Insights export command and scope resolution.
+ * Signals export command and scope resolution.
  * Extracted to keep commands-export.ts under the line limit.
  */
 

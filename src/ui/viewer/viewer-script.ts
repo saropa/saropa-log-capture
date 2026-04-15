@@ -31,7 +31,11 @@ function syncJumpButtonInset() {
     if (lr.width < 8 || lr.height < 8) return;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var rightPx = Math.max(8, Math.round(vw - lr.right + 8));
+    /* Chromium compositor does not always update getBoundingClientRect when
+       ::-webkit-scrollbar width changes via a dynamic class toggle, so read
+       --scrollbar-w explicitly to guarantee the buttons clear the scrollbar. */
+    var sbW = logWrapEl ? (parseInt(getComputedStyle(logWrapEl).getPropertyValue('--scrollbar-w'), 10) || 0) : 0;
+    var rightPx = Math.max(8, Math.round(vw - lr.right + 8 + sbW));
     var replayBar = document.getElementById('replay-bar');
     var replayNudge = replayBar && replayBar.classList.contains('replay-bar-visible') ? 44 : 0;
     if (jumpBtn) {

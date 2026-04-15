@@ -1,5 +1,5 @@
 /**
- * Signal panel: single-scroll unified view (Unified Insight Model).
+ * Signal panel: single-scroll unified view (Unified Signal Model).
  * One narrative — Cases, Recurring errors, Hot files, Performance — no tabs.
  * State A (no log): Cases + Recurring + Hot files. State B (log selected): Performance + Recurring + Cases.
  * Plan: bugs/history/20260317/041_plan-unify-investigation-recurring-performance.md

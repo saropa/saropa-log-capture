@@ -7,7 +7,7 @@ export function getSignalLayoutStyles(): string {
     return /* css */ `
 
 /* ===================================================================
-   Insight Panel — single scroll (Cases, Recurring, Hot files, Performance)
+   Signal Panel — single scroll (Cases, Recurring, Hot files, Performance)
    =================================================================== */
 .signal-panel {
     width: 100%;

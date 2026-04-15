@@ -9,7 +9,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     return /* js */ `
     var SIGNAL_STRINGS = ${scriptStringsJson};
     window.__signalPerfIdPrefix = 'signal-';
-    var insightPanel = document.getElementById('signal-panel');
+    var signalPanel = document.getElementById('signal-panel');
     var heroBlock = document.getElementById('signal-hero-block');
     var sectionSessionDetails = document.getElementById('signal-section-session-details');
     var sectionThisLog = document.getElementById('signal-section-this-log');
@@ -18,7 +18,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var heroLoading = false;
     var createInvestigationInProgress = false;
     var investigationsData = { investigations: [], activeId: '' };
-    var signalDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, recurringSignals: [], signalSessionCount: 0, allSignals: [], signalsInThisLog: [] };
+    var signalDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, allSignals: [], signalsInThisLog: [] };
     var sectionExpanded = { 'session-details': false, 'this-log': true, cases: true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
@@ -108,9 +108,9 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     });
 
     window.openSignalPanel = function() {
-        if (!insightPanel) return;
+        if (!signalPanel) return;
         signalPanelOpen = true;
-        insightPanel.classList.add('visible');
+        signalPanel.classList.add('visible');
         var stored = getStoredSectionState();
         if (stored && typeof stored === 'object') {
             if (stored['session-details'] === true) sectionExpanded['session-details'] = true;
@@ -135,15 +135,15 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     };
 
     window.closeSignalPanel = function() {
-        if (!insightPanel) return;
-        insightPanel.classList.remove('visible');
+        if (!signalPanel) return;
+        signalPanel.classList.remove('visible');
         signalPanelOpen = false;
         setStoredSectionState(sectionExpanded);
         if (typeof clearActivePanel === 'function') clearActivePanel('signal');
     };
 
-    window.setInsightTab = function(tab) {
-        if (!signalPanelOpen || !insightPanel || !insightPanel.classList.contains('visible')) return;
+    window.setSignalTab = function(tab) {
+        if (!signalPanelOpen || !signalPanel || !signalPanel.classList.contains('visible')) return;
         if (tab === 'performance') { setSectionExpanded('session-details', true); renderSectionAccordion('session-details'); var el = document.getElementById('signal-section-session-details'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
         else if (tab === 'cases') { setSectionExpanded('cases', true); renderSectionAccordion('cases'); var el = document.getElementById('signal-section-cases'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
         else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('signal-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
@@ -154,7 +154,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
 
     document.addEventListener('click', function(e) {
         if (!signalPanelOpen) return;
-        if (insightPanel && insightPanel.contains(e.target)) return;
+        if (signalPanel && signalPanel.contains(e.target)) return;
         var ibBtn = document.getElementById('ib-signal');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
         closeSignalPanel();

@@ -79,7 +79,7 @@ export function setupLogViewerWebview(target: LogViewerSetupTarget, webviewView:
     thresholds: getConfig().viewerRepeatThresholds,
   }));
   queueMicrotask(() => target.postMessage({
-    type: 'setViewerDbInsightsEnabled',
+    type: 'setViewerDbSignalsEnabled',
     enabled: getConfig().viewerDbSignalsEnabled,
   }));
   queueMicrotask(() => target.postMessage({

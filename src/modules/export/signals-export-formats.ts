@@ -1,13 +1,13 @@
 /**
- * Export formatters for insights summary: CSV and JSON.
- * Used by the Export Insights Summary command.
+ * Export formatters for signals summary: CSV and JSON.
+ * Used by the Export Signals Summary command.
  */
 
 import type { SignalsSummary } from '../signals/signals-summary';
 import { escapeCsvField } from './export-formats';
 
 /**
- * Serialize insights summary to CSV.
+ * Serialize signals summary to CSV.
  * Two sections: errors (signature, count, sessions, sampleLine, firstSeen, lastSeen, category), then files (path, sessionCount).
  */
 export function formatSignalsSummaryToCsv(summary: SignalsSummary): string {
@@ -39,7 +39,7 @@ export function formatSignalsSummaryToCsv(summary: SignalsSummary): string {
 }
 
 /**
- * Serialize insights summary to JSON.
+ * Serialize signals summary to JSON.
  * Structure: { errors: ErrorSummary[], files: FileSummary[], meta: { sessionCount, timeRange, exportedAt } }.
  */
 export function formatSignalsSummaryToJson(summary: SignalsSummary): string {

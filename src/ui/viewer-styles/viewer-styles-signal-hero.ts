@@ -17,7 +17,7 @@ export function getSignalHeroStyles(): string {
     text-decoration: underline;
 }
 
-/* Embedded performance panel inside Insight */
+/* Embedded performance panel inside Signal panel */
 .signal-hero-block {
     padding-bottom: 6px;
     padding-left: 8px;

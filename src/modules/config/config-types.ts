@@ -129,7 +129,7 @@ export interface SaropaLogCaptureConfig {
    * collapsing into repeat rows). Non-SQL lines use `globalMinCount` only.
    */
   readonly viewerRepeatThresholds: ViewerRepeatThresholds;
-  /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbInsight rollup in the viewer. */
+  /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbSignal rollup in the viewer. */
   readonly viewerDbSignalsEnabled: boolean;
   /** When true, N+1 rows and host actions may offer “static sources” search from SQL fingerprints (DB_12). */
   readonly staticSqlFromFingerprintEnabled: boolean;
