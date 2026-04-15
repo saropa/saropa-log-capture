@@ -158,7 +158,7 @@
       },
       {
         "command": "saropaLogCapture.showSignals",
-        "icon": "$(graph)",
+        "icon": "$(pulse)",
         "title": "%command.showSignals.title%"
       },
       {
@@ -1433,6 +1433,12 @@
           "description": "%config.viewerDetectAsciiArt.description%",
           "type": "boolean",
           "title": "%config.viewerDetectAsciiArt.title%"
+        },
+        "saropaLogCapture.signalAutoTrack": {
+          "default": true,
+          "description": "%config.signalAutoTrack.description%",
+          "type": "boolean",
+          "title": "%config.signalAutoTrack.title%"
         },
         "saropaLogCapture.viewerDbSignalsEnabled": {
           "default": true,
