@@ -1,6 +1,6 @@
 /**
  * Tests for signal summary extraction — verifying that a RootCauseHintBundle
- * is correctly compressed into a compact PersistedSignalSummaryV1.
+ * is correctly compressed into a compact PersistedSignalSummaryV2.
  */
 
 import * as assert from 'assert';
@@ -33,7 +33,7 @@ suite('SignalSummaryExtract', () => {
         const result = extractSignalSummary(bundle, []);
         assert.ok(result);
         assert.strictEqual(result.counts.errors, 2);
-        assert.strictEqual(result.schemaVersion, 1);
+        assert.strictEqual(result.schemaVersion, 2);
     });
 
     test('should extract hypothesis template IDs (max 5)', () => {

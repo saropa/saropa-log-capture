@@ -59,6 +59,12 @@ suite('Webview element ID wiring', () => {
         'deco-toggle',
         'error-breakpoint-toggle',
         'wrap-toggle',
+        // Old log sources section — removed from body HTML
+        'log-sources-section',
+        // Old recurring signals elements — replaced by signal-trends-* in panel refactor
+        'signal-recurring-loading',
+        'signal-recurring-list',
+        'signal-recurring-empty',
     ]);
 
     /** Combined allowlist of IDs that aren't expected in static HTML. */
