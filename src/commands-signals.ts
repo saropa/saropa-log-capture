@@ -2,21 +2,21 @@
 
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
-import { openInsightTab } from './ui/viewer-panels/signal-tab-panel';
+import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
 
 /** Register cross-session insights commands. Opens the viewer's Insight panel (no separate WebviewPanel). */
-export function insightsCommands(deps: CommandDeps): vscode.Disposable[] {
+export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
             'saropaLogCapture.showSignals',
             () => {
-                deps.viewerProvider.postMessage({ type: 'openInsight', tab: 'recurring' });
+                deps.viewerProvider.postMessage({ type: 'openSignalPanel', tab: 'recurring' });
             },
         ),
         vscode.commands.registerCommand(
             'saropaLogCapture.openSignalsInTab',
             () => {
-                openInsightTab({
+                openSignalTab({
                     getCurrentFileUri: () => deps.viewerProvider.getCurrentFileUri(),
                     context: deps.context,
                     extensionUri: deps.context.extensionUri,
@@ -27,7 +27,7 @@ export function insightsCommands(deps: CommandDeps): vscode.Disposable[] {
         vscode.commands.registerCommand(
             'saropaLogCapture.refreshRecurringErrors',
             () => {
-                deps.viewerProvider.postMessage({ type: 'insightRefreshRecurring' });
+                deps.viewerProvider.postMessage({ type: 'signalRefreshRecurring' });
             },
         ),
     ];

@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri } from '../../../modules/config/config';
 import type { RecurringError } from '../../../modules/misc/cross-session-aggregator';
-import { aggregateInsights } from '../../../modules/misc/cross-session-aggregator';
+import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
 import { getFirstSeenHintsForErrors } from '../../../modules/regression/regression-hint-service';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
@@ -46,7 +46,7 @@ function filterRecurringInSession(errors: readonly RecurringError[], sessionRelP
 
 /** Aggregate recurring errors and send to webview. */
 export async function handleRecurringRequest(post: PostFn): Promise<void> {
-    const insights = await aggregateInsights('all').catch(() => undefined);
+    const insights = await aggregateSignals('all').catch(() => undefined);
     const errors = insights?.recurringErrors ?? [];
     const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
     post({ type: 'recurringErrorsData', errors, statuses });
@@ -59,8 +59,8 @@ export async function handleSetErrorStatus(hash: string, status: string, post: P
 }
 
 /** Full insight payload (recurring + hot files + environment + optional recurringInThisLog). */
-export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
-    const insights = await aggregateInsights('all').catch(() => undefined);
+export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
+    const insights = await aggregateSignals('all').catch(() => undefined);
     const errors = insights?.recurringErrors ?? [];
     const hotFiles = insights?.hotFiles ?? [];
     const platforms = insights?.platforms ?? [];
@@ -121,7 +121,7 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
     }
 
     post({
-        type: 'insightData',
+        type: 'signalData',
         errors,
         statuses,
         hotFiles,

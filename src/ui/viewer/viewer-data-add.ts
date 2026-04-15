@@ -49,9 +49,11 @@ function previousLineLevel() {
 }
 
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
-    /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other' */
+    /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
-    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : undefined));
+    /* Tier: explicit tier wins, then fw boolean, then non-debug-console
+       sources get 'external' so the External radio controls them. */
+    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
     /* Category filter: lines arriving while a category is unchecked must start hidden. */
     var catFiltered = !!(typeof activeFilters !== 'undefined' && activeFilters && !isMarker && !activeFilters.has(category));
     if (ts && !sessionStartTs) sessionStartTs = ts;

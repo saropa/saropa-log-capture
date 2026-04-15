@@ -2,7 +2,7 @@
  * Embedded DB detector framework (plan **DB_15**).
  *
  * **Load order:** This script is concatenated after `getNPlusOneDetectorScript` so globals such as
- * `detectNPlusOneInsight`, `parseSqlFingerprint`, and `updateDbInsightRollup` already exist. Detector
+ * `detectNPlusOneSignal`, `parseSqlFingerprint`, and `updateDbInsightRollup` already exist. Detector
  * registration order is by `priority`; results are merged by `stableKey` like the TypeScript
  * `runDbDetectors` / `mergeDbDetectorResultsByStableKey` (merge is **codegen** from `db-detector-merge-stable-key.ts`).
  *
@@ -267,8 +267,8 @@ ${getTimestampBurstDetectorEmbedJs()}
         feed: function(ctx) {
             if (typeof viewerDbDetectorNPlusOneEnabled !== 'undefined' && !viewerDbDetectorNPlusOneEnabled) return [];
             if (!ctx || !ctx.sql || !ctx.sql.fingerprint) return [];
-            if (typeof detectNPlusOneInsight !== 'function') return [];
-            var insight = detectNPlusOneInsight(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
+            if (typeof detectNPlusOneSignal !== 'function') return [];
+            var insight = detectNPlusOneSignal(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
             if (!insight) return [];
             var stableKey = 'db.n-plus-one::' + ctx.sql.fingerprint + '::' + ctx.timestampMs;
             return [{

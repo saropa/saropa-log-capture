@@ -1,5 +1,5 @@
 /** Styles for synthetic N+1 / DB burst insight rows in the log viewer. */
-export function getNPlusOneInsightStyles(): string {
+export function getNPlusOneSignalStyles(): string {
     return /* css */ `
 /* Drift SQL N+1 heuristic insight row (see modules/db/drift-n-plus-one-detector.ts) */
 .n1-insight {

@@ -118,7 +118,7 @@ export function feedSlowQueryBurstDetector(
       stableKey: `${SLOW_QUERY_BURST_DETECTOR_ID}::${sid}::${windowStartMs}`,
       priority: 85,
       payload: {
-        category: "db-insight",
+        category: "db-signal",
         label: "Slow query burst",
         anchorSeq: anc,
       },

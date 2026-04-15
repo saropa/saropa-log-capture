@@ -1,10 +1,10 @@
 /**
  * Insight panel script part B: utils, cases list/form, recurring, hot files, errors in log, environment.
- * Concatenated by viewer-insight-panel-script.ts to stay under max-lines.
+ * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
 /** Returns the second fragment of the Insight panel IIFE (render helpers and lists). */
-export function getInsightScriptPartB(maxRecurringTextLen: number): string {
+export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     return /* js */ `
     function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function escapeAttr(str) { return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
@@ -22,29 +22,29 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
 
     function setCreateInvestigationLoading(loading) {
         createInvestigationInProgress = loading;
-        var input = document.getElementById('insight-cases-name-input');
-        var confirmBtn = document.getElementById('insight-cases-create-confirm');
+        var input = document.getElementById('signal-cases-name-input');
+        var confirmBtn = document.getElementById('signal-cases-create-confirm');
         if (input) input.disabled = loading;
         if (confirmBtn) { confirmBtn.disabled = loading; confirmBtn.textContent = loading ? 'Creating…' : 'Create'; }
     }
     function showCreateInvestigationForm(show) {
-        var row = document.getElementById('insight-cases-create-row');
-        var form = document.getElementById('insight-cases-create-form');
-        var input = document.getElementById('insight-cases-name-input');
-        var errEl = document.getElementById('insight-cases-create-error');
+        var row = document.getElementById('signal-cases-create-row');
+        var form = document.getElementById('signal-cases-create-form');
+        var input = document.getElementById('signal-cases-name-input');
+        var errEl = document.getElementById('signal-cases-create-error');
         if (row) row.style.display = show ? 'none' : '';
         if (form) form.style.display = show ? 'flex' : 'none';
         if (input) { input.value = ''; input.disabled = createInvestigationInProgress; if (show) input.focus(); }
         if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-        var confirmBtn = document.getElementById('insight-cases-create-confirm');
+        var confirmBtn = document.getElementById('signal-cases-create-confirm');
         if (confirmBtn) { confirmBtn.disabled = createInvestigationInProgress; confirmBtn.textContent = createInvestigationInProgress ? 'Creating…' : 'Create'; }
     }
     function renderCasesList() {
-        var listEl = document.getElementById('insight-cases-list');
-        var emptyEl = document.getElementById('insight-cases-empty');
-        var viewAllRow = document.getElementById('insight-cases-view-all');
-        var viewAllLink = document.getElementById('insight-cases-view-all-link');
-        var createBtn = document.getElementById('insight-cases-create');
+        var listEl = document.getElementById('signal-cases-list');
+        var emptyEl = document.getElementById('signal-cases-empty');
+        var viewAllRow = document.getElementById('signal-cases-view-all');
+        var viewAllLink = document.getElementById('signal-cases-view-all-link');
+        var createBtn = document.getElementById('signal-cases-create');
         if (!listEl) return;
         var invs = (investigationsData.investigations || []);
         var activeId = investigationsData.activeId || '';
@@ -65,11 +65,11 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
         showCreateInvestigationForm(false);
     }
     function bindCreateInvestigationForm() {
-        var form = document.getElementById('insight-cases-create-form');
-        var input = document.getElementById('insight-cases-name-input');
-        var confirmBtn = document.getElementById('insight-cases-create-confirm');
-        var cancelBtn = document.getElementById('insight-cases-create-cancel');
-        var errEl = document.getElementById('insight-cases-create-error');
+        var form = document.getElementById('signal-cases-create-form');
+        var input = document.getElementById('signal-cases-name-input');
+        var confirmBtn = document.getElementById('signal-cases-create-confirm');
+        var cancelBtn = document.getElementById('signal-cases-create-cancel');
+        var errEl = document.getElementById('signal-cases-create-error');
         if (!form || !input || !confirmBtn || !cancelBtn || !errEl) return;
         function hideError() { errEl.style.display = 'none'; errEl.textContent = ''; }
         function showError(msg) { errEl.textContent = msg; errEl.style.display = ''; }
@@ -91,18 +91,18 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
     }
     function buildCaseItemHtml(inv, activeId) {
         var active = inv.id === (activeId || '') ? ' session-investigation-active' : '';
-        var srcStr = (inv.sourceCount != null) ? (INSIGHT_STRINGS.sourcesCount || '{0} source(s)').replace('{0}', String(inv.sourceCount)) : '';
-        var upStr = (inv.updatedAt != null) ? (INSIGHT_STRINGS.updatedAgo || 'Updated {0}').replace('{0}', formatUpdatedAgo(inv.updatedAt)) : '';
+        var srcStr = (inv.sourceCount != null) ? (SIGNAL_STRINGS.sourcesCount || '{0} source(s)').replace('{0}', String(inv.sourceCount)) : '';
+        var upStr = (inv.updatedAt != null) ? (SIGNAL_STRINGS.updatedAgo || 'Updated {0}').replace('{0}', formatUpdatedAgo(inv.updatedAt)) : '';
         var meta = [srcStr, upStr].filter(Boolean).join(' \\u00b7 ');
         var label = inv.name + (meta ? ' \\u00b7 ' + meta : '');
         var activeMark = inv.id === (activeId || '') ? ' <span class="session-investigation-check">&#10003;</span>' : '';
         return '<div class="session-investigation-item' + active + '" data-investigation-id="' + escapeAttr(inv.id) + '">' + esc(label) + activeMark + '</div>';
     }
-    var viewAllLinkEl = document.getElementById('insight-cases-view-all-link');
+    var viewAllLinkEl = document.getElementById('signal-cases-view-all-link');
     if (viewAllLinkEl) viewAllLinkEl.addEventListener('click', function() {
         setSectionExpanded('cases', true);
         renderSectionAccordion('cases');
-        var listEl = document.getElementById('insight-cases-list');
+        var listEl = document.getElementById('signal-cases-list');
         if (listEl) {
             var invs = (investigationsData.investigations || []);
             var activeId = investigationsData.activeId || '';
@@ -114,7 +114,7 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
                 });
             });
         }
-        var vw = document.getElementById('insight-cases-view-all');
+        var vw = document.getElementById('signal-cases-view-all');
         if (vw) vw.style.display = 'none';
     });
     bindCreateInvestigationForm();
@@ -127,9 +127,9 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
         return '<div class="re-regression">Introduced in commit ' + link + '</div>';
     }
     function renderRecurringList() {
-        var listEl = document.getElementById('insight-recurring-list');
-        var emptyEl = document.getElementById('insight-recurring-empty');
-        var visible = (insightDataCache.errors || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var listEl = document.getElementById('signal-recurring-list');
+        var emptyEl = document.getElementById('signal-recurring-empty');
+        var visible = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
         var toShow = visible.slice(0, 5);
         if (toShow.length === 0) {
             if (listEl) listEl.innerHTML = '';
@@ -138,7 +138,7 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
         }
         if (emptyEl) emptyEl.style.display = 'none';
         if (listEl) listEl.innerHTML = toShow.map(function(e) {
-            var status = (insightDataCache.statuses || {})[e.hash] || 'open';
+            var status = (signalDataCache.statuses || {})[e.hash] || 'open';
             var dimCls = status === 'closed' ? ' re-closed' : '';
             var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
             var total = e.totalOccurrences + ' total';
@@ -149,34 +149,34 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
             var fullText = e.normalizedText || '';
             var displayText = truncateForDisplay(fullText);
             var titleAttr = esc((e.exampleLine || fullText).trim() || '');
-            var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-            var intro = regressionHintHtml((insightDataCache.regressionHints || {})[e.hash]);
+            var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
+            var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.hash]);
             return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
         }).join('');
     }
     function renderHotFiles() {
-        var summaryEl = document.getElementById('insight-hotfiles-summary');
-        var emptyEl = document.getElementById('insight-hotfiles-empty');
-        var listEl = document.getElementById('insight-hotfiles-list');
-        var files = insightDataCache.hotFiles || [];
+        var summaryEl = document.getElementById('signal-hotfiles-summary');
+        var emptyEl = document.getElementById('signal-hotfiles-empty');
+        var listEl = document.getElementById('signal-hotfiles-list');
+        var files = signalDataCache.hotFiles || [];
         if (summaryEl) summaryEl.textContent = files.length === 0 ? 'Frequently modified files' : (files.length + ' file' + (files.length === 1 ? '' : 's') + ' frequently modified');
         var toShow = files.slice(0, 5);
         if (emptyEl) emptyEl.style.display = toShow.length === 0 ? '' : 'none';
         if (listEl) {
             listEl.innerHTML = toShow.length === 0 ? '' : toShow.map(function(f) {
-                return '<div class="insight-hotfile-item"><span class="re-action re-add-to-case insight-hotfile-add" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-filename="' + esc(f.filename || '') + '">+</span><span class="insight-hotfile-name">' + esc(f.filename) + '</span><span class="insight-hotfile-meta">' + (f.sessionCount || 0) + ' session' + (f.sessionCount === 1 ? '' : 's') + '</span></div>';
+                return '<div class="signal-hotfile-item"><span class="re-action re-add-to-case signal-hotfile-add" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-filename="' + esc(f.filename || '') + '">+</span><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + (f.sessionCount || 0) + ' session' + (f.sessionCount === 1 ? '' : 's') + '</span></div>';
             }).join('');
         }
     }
     function renderRecurringInLog() {
-        var summaryEl = document.getElementById('insight-recurring-in-log-summary');
-        var listEl = document.getElementById('insight-recurring-in-log-list');
-        var inLog = (insightDataCache.recurringInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var summaryEl = document.getElementById('signal-recurring-in-log-summary');
+        var listEl = document.getElementById('signal-recurring-in-log-list');
+        var inLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
         if (summaryEl) summaryEl.textContent = inLog.length === 0 ? 'Recurring in this log' : (inLog.length + ' of your recurring error' + (inLog.length === 1 ? '' : 's') + ' appear in this log');
         if (listEl) {
-            if (inLog.length === 0) listEl.innerHTML = '<p class="insight-hotfiles-empty">None of your recurring errors appear in this log.</p>';
+            if (inLog.length === 0) listEl.innerHTML = '<p class="signal-hotfiles-empty">None of your recurring errors appear in this log.</p>';
             else listEl.innerHTML = inLog.map(function(e) {
-                var status = (insightDataCache.statuses || {})[e.hash] || 'open';
+                var status = (signalDataCache.statuses || {})[e.hash] || 'open';
                 var dimCls = status === 'closed' ? ' re-closed' : '';
                 var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
                 var total = e.totalOccurrences + ' total';
@@ -185,38 +185,38 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
                 var fullText = e.normalizedText || '';
                 var displayText = truncateForDisplay(fullText);
                 var titleAttr = esc((e.exampleLine || fullText).trim() || '');
-                var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
-                var intro = regressionHintHtml((insightDataCache.regressionHints || {})[e.hash]);
+                var addBtn = '<span class="re-action re-add-to-case" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-hash="' + esc(e.hash) + '" data-normalized="' + esc(e.normalizedText || '') + '" data-example="' + esc(e.exampleLine || '') + '">+</span>';
+                var intro = regressionHintHtml((signalDataCache.regressionHints || {})[e.hash]);
                 return '<div class="re-card' + dimCls + '"><div class="re-text" title="' + titleAttr + '">' + cat + esc(displayText) + '</div><div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>' + intro + '<div class="re-actions">' + addBtn + ' ' + actions + '</div></div>';
             }).join('');
         }
     }
     function renderErrorsInLog() {
-        var subtitleEl = document.getElementById('insight-errors-in-log-subtitle');
-        var listEl = document.getElementById('insight-errors-in-log-list');
-        var emptyEl = document.getElementById('insight-errors-in-log-empty');
-        var items = (insightDataCache.errorsInThisLog || []).slice(0, 3);
-        var total = insightDataCache.errorsInThisLogTotal;
+        var subtitleEl = document.getElementById('signal-errors-in-log-subtitle');
+        var listEl = document.getElementById('signal-errors-in-log-list');
+        var emptyEl = document.getElementById('signal-errors-in-log-empty');
+        var items = (signalDataCache.errorsInThisLog || []).slice(0, 3);
+        var total = signalDataCache.errorsInThisLogTotal;
         var showTopOfN = items.length === 3 && (total != null && total > 3);
-        if (subtitleEl) subtitleEl.textContent = showTopOfN && INSIGHT_STRINGS.topOfTotal
-            ? (INSIGHT_STRINGS.topOfTotal.replace('{0}', String(total))) : (INSIGHT_STRINGS.sectionErrorsInLog || 'Errors in this log');
-        if (emptyEl) { emptyEl.style.display = items.length === 0 ? '' : 'none'; if (items.length === 0) emptyEl.innerHTML = '<span class="insight-margin-emoji" aria-hidden="true">\\u2139\\uFE0F</span>' + esc(INSIGHT_STRINGS.errorsInLogEmpty); }
+        if (subtitleEl) subtitleEl.textContent = showTopOfN && SIGNAL_STRINGS.topOfTotal
+            ? (SIGNAL_STRINGS.topOfTotal.replace('{0}', String(total))) : (SIGNAL_STRINGS.sectionErrorsInLog || 'Errors in this log');
+        if (emptyEl) { emptyEl.style.display = items.length === 0 ? '' : 'none'; if (items.length === 0) emptyEl.innerHTML = '<span class="signal-margin-emoji" aria-hidden="true">\\u2139\\uFE0F</span>' + esc(SIGNAL_STRINGS.errorsInLogEmpty); }
         if (listEl) {
             if (items.length === 0) listEl.innerHTML = '';
             else listEl.innerHTML = items.map(function(it) {
                 var text = (it.normalizedText || it.exampleLine || '').trim() || 'Error';
                 var displayText = truncateForDisplay(text);
                 var count = (it.count != null) ? it.count : 0;
-                var addBtn = '<span class="re-action re-add-to-case insight-errors-in-log-add" role="button" title="' + esc(INSIGHT_STRINGS.addToCase) + '" aria-label="' + esc(INSIGHT_STRINGS.addToCase) + '" data-normalized="' + esc(it.normalizedText || '') + '" data-example="' + esc(it.exampleLine || '') + '">+</span>';
-                return '<div class="re-card insight-errors-in-log-item"><div class="re-text" title="' + esc(it.exampleLine || text) + '">' + esc(displayText) + '</div><div class="re-meta">' + count + ' occurrence' + (count === 1 ? '' : 's') + '</div><div class="re-actions">' + addBtn + '</div></div>';
+                var addBtn = '<span class="re-action re-add-to-case signal-errors-in-log-add" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-normalized="' + esc(it.normalizedText || '') + '" data-example="' + esc(it.exampleLine || '') + '">+</span>';
+                return '<div class="re-card signal-errors-in-log-item"><div class="re-text" title="' + esc(it.exampleLine || text) + '">' + esc(displayText) + '</div><div class="re-meta">' + count + ' occurrence' + (count === 1 ? '' : 's') + '</div><div class="re-actions">' + addBtn + '</div></div>';
             }).join('');
         }
     }
     function renderThisLogEmptyState() {
-        var emptyBlock = document.getElementById('insight-this-log-empty');
-        var contentBlock = document.getElementById('insight-this-log-content');
-        var errorsEmpty = (insightDataCache.errorsInThisLog || []).length === 0;
-        var inLog = (insightDataCache.recurringInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var emptyBlock = document.getElementById('signal-this-log-empty');
+        var contentBlock = document.getElementById('signal-this-log-content');
+        var errorsEmpty = (signalDataCache.errorsInThisLog || []).length === 0;
+        var inLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
         var recurringEmpty = inLog.length === 0;
         var bothEmpty = errorsEmpty && recurringEmpty;
         if (emptyBlock) emptyBlock.style.display = bothEmpty ? '' : 'none';
@@ -225,17 +225,17 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
     function renderEnvironment() {
         var summaryEl = document.getElementById('insight-environment-summary');
         var listEl = document.getElementById('insight-environment-list');
-        var platforms = insightDataCache.platforms || [];
-        var sdks = insightDataCache.sdkVersions || [];
-        var adapters = insightDataCache.debugAdapters || [];
+        var platforms = signalDataCache.platforms || [];
+        var sdks = signalDataCache.sdkVersions || [];
+        var adapters = signalDataCache.debugAdapters || [];
         var total = platforms.length + sdks.length + adapters.length;
         if (summaryEl) summaryEl.textContent = total === 0 ? 'Environment' : ('Environment (' + total + ' entries)');
         if (listEl) {
             var parts = [];
-            if (platforms.length) parts.push('<div class="insight-env-group"><div class="insight-env-title">Platforms</div>' + platforms.slice(0, 5).map(function(p) { return '<div class="insight-env-row"><span>' + esc(p.value) + '</span><span class="insight-hotfile-meta">' + p.sessionCount + ' session' + (p.sessionCount === 1 ? '' : 's') + '</span></div>'; }).join('') + '</div>');
-            if (sdks.length) parts.push('<div class="insight-env-group"><div class="insight-env-title">SDK / runtime</div>' + sdks.slice(0, 5).map(function(p) { return '<div class="insight-env-row"><span>' + esc(p.value) + '</span><span class="insight-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
-            if (adapters.length) parts.push('<div class="insight-env-group"><div class="insight-env-title">Debug adapters</div>' + adapters.slice(0, 5).map(function(p) { return '<div class="insight-env-row"><span>' + esc(p.value) + '</span><span class="insight-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
-            listEl.innerHTML = parts.length === 0 ? '<p class="insight-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
+            if (platforms.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">Platforms</div>' + platforms.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + ' session' + (p.sessionCount === 1 ? '' : 's') + '</span></div>'; }).join('') + '</div>');
+            if (sdks.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">SDK / runtime</div>' + sdks.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
+            if (adapters.length) parts.push('<div class="signal-env-group"><div class="signal-env-title">Debug adapters</div>' + adapters.slice(0, 5).map(function(p) { return '<div class="signal-env-row"><span>' + esc(p.value) + '</span><span class="signal-hotfile-meta">' + p.sessionCount + '</span></div>'; }).join('') + '</div>');
+            listEl.innerHTML = parts.length === 0 ? '<p class="signal-hotfiles-empty">No environment data across sessions.</p>' : parts.join('');
         }
     }
 
@@ -251,10 +251,10 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
 
     /** Render the unified signal list across sessions — errors, warnings, perf, SQL, etc. all in one. */
     function renderSignalTrends() {
-        var listEl = document.getElementById('insight-signal-trends-list');
-        var emptyEl = document.getElementById('insight-signal-trends-empty');
-        var summaryEl = document.getElementById('insight-signal-trends-summary');
-        var allSignals = (insightDataCache.allSignals || []).slice(0, 20);
+        var listEl = document.getElementById('signal-trends-list');
+        var emptyEl = document.getElementById('signal-trends-empty');
+        var summaryEl = document.getElementById('signal-trends-summary');
+        var allSignals = (signalDataCache.allSignals || []).slice(0, 20);
         if (summaryEl) {
             summaryEl.textContent = allSignals.length === 0 ? 'All signals' : 'All signals (' + allSignals.length + ')';
         }
@@ -274,17 +274,19 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
             /* Severity badge: critical/high get colored indicators, recurring signals get a ↻ marker */
             var sevCls = s.severity === 'critical' ? ' signal-sev-critical' : s.severity === 'high' ? ' signal-sev-high' : '';
             var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="Recurring in ' + s.sessionCount + ' sessions">\u21BB</span>' : '';
-            return '<div class="insight-env-row insight-signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
+            /* Add-to-case button on each signal row — data attributes carry the payload */
+            var addBtn = '<span class="re-action re-add-to-case-signal" data-kind="' + esc(s.kind) + '" data-label="' + esc(s.label) + '" data-detail="' + esc(s.detail || '') + '" data-fp="' + esc(s.fingerprint || '') + '" title="' + SIGNAL_STRINGS.addToCase + '">+</span>';
+            return '<div class="signal-env-row insight-signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + ' ' + esc(text) + '</span>'
-                + '<span class="insight-hotfile-meta">' + meta + '</span></div>';
+                + '<span class="signal-hotfile-meta">' + meta + '</span>' + addBtn + '</div>';
         }).join('');
     }
 
     /** Render signals detected in the current log session (all kinds: errors, warnings, perf, SQL). */
     function renderSignalsInThisLog() {
-        var listEl = document.getElementById('insight-signals-in-log-list');
-        var summaryEl = document.getElementById('insight-signals-in-log-summary');
-        var signals = insightDataCache.signalsInThisLog || [];
+        var listEl = document.getElementById('signals-in-log-list');
+        var summaryEl = document.getElementById('signals-in-log-summary');
+        var signals = signalDataCache.signalsInThisLog || [];
         if (summaryEl) summaryEl.textContent = signals.length === 0 ? 'All signals in this log' : 'All signals in this log (' + signals.length + ')';
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }
@@ -292,7 +294,7 @@ export function getInsightScriptPartB(maxRecurringTextLen: number): string {
             var icon = kindLabels[s.kind] || '\u2139\uFE0F';
             var text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
             var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
-            return '<div class="insight-env-row" title="' + esc(s.label) + '"><span>' + icon + ' ' + esc(text) + '</span><span class="insight-hotfile-meta">' + meta + '</span></div>';
+            return '<div class="signal-env-row" title="' + esc(s.label) + '"><span>' + icon + ' ' + esc(text) + '</span><span class="signal-hotfile-meta">' + meta + '</span></div>';
         }).join('');
     }
 `;

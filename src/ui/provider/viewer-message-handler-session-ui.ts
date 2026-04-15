@@ -129,7 +129,7 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
     }
     case "sessionAction": runSessionAction(msg, ctx); return true;
     case "popOutViewer": ctx.onPopOutRequest?.(); return true;
-    case "openInsightTab": ctx.onOpenInsightTabRequest?.(); return true;
+    case "openSignalTab": ctx.onOpenSignalTabRequest?.(); return true;
     case "revealLogFile":
       if (ctx.currentFileUri && ctx.onRevealLogFile) { Promise.resolve(ctx.onRevealLogFile(ctx.currentFileUri.toString())).catch(() => {}); }
       return true;

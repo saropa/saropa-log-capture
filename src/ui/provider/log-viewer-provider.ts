@@ -60,7 +60,7 @@ export class LogViewerProvider
   private onOpenSessionFromPanel?: (uriString: string) => void;
   private onDisplayOptionsChange?: (options: SessionDisplayOptions) => void;
   private onPopOutRequest?: () => void;
-  private onOpenInsightTabRequest?: () => void;
+  private onOpenSignalTabRequest?: () => void;
   private onRevealLogFile?: (uriString: string) => void;
   private onAddBookmark?: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void;
   private onFindInFiles?: (query: string, options: Record<string, unknown>) => void;
@@ -139,7 +139,7 @@ export class LogViewerProvider
   setOpenSessionFromPanelHandler(handler: (uriString: string) => void): void { this.onOpenSessionFromPanel = handler; }
   setDisplayOptionsHandler(handler: (options: SessionDisplayOptions) => void): void { this.onDisplayOptionsChange = handler; }
   setPopOutHandler(handler: () => void): void { this.onPopOutRequest = handler; }
-  setOpenInsightTabHandler(handler: () => void): void { this.onOpenInsightTabRequest = handler; }
+  setOpenInsightTabHandler(handler: () => void): void { this.onOpenSignalTabRequest = handler; }
   setRevealLogFileHandler(handler: (uriString: string) => void): void { this.onRevealLogFile = handler; }
   setAddBookmarkHandler(handler: (lineIndex: number, text: string, fileUri: vscode.Uri | undefined) => void): void { this.onAddBookmark = handler; }
   setFindInFilesHandler(handler: (query: string, options: Record<string, unknown>) => void): void { this.onFindInFiles = handler; }
@@ -309,7 +309,7 @@ export class LogViewerProvider
       onPartNavigate: this.onPartNavigate, onSavePresetRequest: this.onSavePresetRequest,
       onSessionListRequest: this.onSessionListRequest, onOpenSessionFromPanel: this.onOpenSessionFromPanel,
       onDisplayOptionsChange: this.onDisplayOptionsChange, onPopOutRequest: this.onPopOutRequest,
-      onOpenInsightTabRequest: this.onOpenInsightTabRequest, onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
+      onOpenSignalTabRequest: this.onOpenSignalTabRequest, onRevealLogFile: this.onRevealLogFile, onAddBookmark: this.onAddBookmark,
       onFindInFiles: this.onFindInFiles, onOpenFindResult: this.onOpenFindResult,
       onFindNavigateMatch: this.onFindNavigateMatch, onBookmarkAction: this.onBookmarkAction,
       onSessionNavigate: this.onSessionNavigate, onSessionAction: this.onSessionAction,

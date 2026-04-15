@@ -12,7 +12,7 @@ import { scanDocsForTokens } from '../../modules/misc/docs-scanner';
 import { extractImports } from '../../modules/source/import-extractor';
 import { resolveSymbols } from '../../modules/source/symbol-resolver';
 import { normalizeLine, hashFingerprint } from '../../modules/analysis/error-fingerprint';
-import { aggregateInsights } from '../../modules/misc/cross-session-aggregator';
+import { aggregateSignals } from '../../modules/misc/cross-session-aggregator';
 import { extractDateFromFilename } from '../../modules/analysis/stack-parser';
 import { searchLogFiles } from '../../modules/search/log-search';
 import type { SectionData } from '../../modules/analysis/analysis-relevance';
@@ -129,7 +129,7 @@ export async function runCrossSessionLookup(
         if (normalized.length < 5) { return {}; }
         const hash = hashFingerprint(normalized);
         progress('trend', '📊 Reading session metadata...');
-        const insights = await aggregateInsights();
+        const insights = await aggregateSignals();
         const match = insights.recurringErrors.find(e => e.hash === hash);
         if (!match) { return {}; }
         const firstDate = extractDateFromFilename(match.firstSeen);

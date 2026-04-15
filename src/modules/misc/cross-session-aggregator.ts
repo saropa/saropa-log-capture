@@ -53,7 +53,7 @@ export interface RecurringNPlusOne {
 }
 
 /** Aggregated cross-session insights. */
-export interface CrossSessionInsights {
+export interface CrossSessionSignals {
     readonly hotFiles: readonly HotFile[];
     readonly recurringErrors: readonly RecurringError[];
     readonly recurringSignals: readonly RecurringSignal[];
@@ -73,7 +73,7 @@ const maxHotFiles = 20;
 const maxErrors = 30;
 
 /** Build insights from an existing list of loaded session metas (e.g. for a single session or investigation). */
-export function buildInsightsFromMetas(metas: readonly LoadedMeta[]): CrossSessionInsights {
+export function buildSignalsFromMetas(metas: readonly LoadedMeta[]): CrossSessionSignals {
     const envStats = buildEnvironmentStats(metas);
     const signalData = buildRecurringSignals(metas);
     return {
@@ -90,9 +90,9 @@ export function buildInsightsFromMetas(metas: readonly LoadedMeta[]): CrossSessi
 }
 
 /** Aggregate insights across all session metadata files. */
-export async function aggregateInsights(timeRange: TimeRange = 'all'): Promise<CrossSessionInsights> {
+export async function aggregateSignals(timeRange: TimeRange = 'all'): Promise<CrossSessionSignals> {
     const filtered = await loadFilteredMetas(timeRange);
-    return buildInsightsFromMetas(filtered);
+    return buildSignalsFromMetas(filtered);
 }
 
 function buildHotFiles(metas: readonly LoadedMeta[]): HotFile[] {

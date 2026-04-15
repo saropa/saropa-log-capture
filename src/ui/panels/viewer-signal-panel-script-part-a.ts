@@ -1,24 +1,24 @@
 /**
  * Insight panel script part A: state, storage, accordion, panel open/close/setTab.
- * Concatenated by viewer-insight-panel-script.ts to stay under max-lines.
+ * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
 /** Returns the first fragment of the Insight panel IIFE (vars, storage, accordion, panel API). */
-export function getInsightScriptPartA(storageKey: string, scriptStringsJson: string): string {
+export function getSignalScriptPartA(storageKey: string, scriptStringsJson: string): string {
     const storageKeyJson = JSON.stringify(storageKey);
     return /* js */ `
-    var INSIGHT_STRINGS = ${scriptStringsJson};
-    window.__insightPerfIdPrefix = 'insight-';
-    var insightPanel = document.getElementById('insight-panel');
-    var heroBlock = document.getElementById('insight-hero-block');
-    var sectionSessionDetails = document.getElementById('insight-section-session-details');
-    var sectionThisLog = document.getElementById('insight-section-this-log');
-    var insightOpen = false;
+    var SIGNAL_STRINGS = ${scriptStringsJson};
+    window.__signalPerfIdPrefix = 'signal-';
+    var insightPanel = document.getElementById('signal-panel');
+    var heroBlock = document.getElementById('signal-hero-block');
+    var sectionSessionDetails = document.getElementById('signal-section-session-details');
+    var sectionThisLog = document.getElementById('signal-section-this-log');
+    var signalPanelOpen = false;
     var hasLog = false;
     var heroLoading = false;
     var createInvestigationInProgress = false;
     var investigationsData = { investigations: [], activeId: '' };
-    var insightDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, recurringSignals: [], signalSessionCount: 0, allSignals: [], signalsInThisLog: [] };
+    var signalDataCache = { errors: [], statuses: {}, hotFiles: [], recurringInThisLog: [], errorsInThisLog: [], errorsInThisLogTotal: undefined, platforms: [], sdkVersions: [], debugAdapters: [], regressionHints: {}, recurringSignals: [], signalSessionCount: 0, allSignals: [], signalsInThisLog: [] };
     var sectionExpanded = { 'session-details': false, 'this-log': true, cases: true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
@@ -69,8 +69,8 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
         return !!sectionExpanded[name];
     }
     function renderSectionAccordion(name) {
-        var header = document.getElementById('insight-header-' + name);
-        var body = document.getElementById('insight-body-' + name);
+        var header = document.getElementById('signal-header-' + name);
+        var body = document.getElementById('signal-body-' + name);
         if (!header || !body) return;
         var exp = isSectionExpanded(name);
         header.setAttribute('aria-expanded', exp ? 'true' : 'false');
@@ -83,19 +83,19 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
         setStoredSectionState(sectionExpanded);
     }
     function focusSectionHeader(name) {
-        var el = document.getElementById('insight-header-' + name);
+        var el = document.getElementById('signal-header-' + name);
         if (el) el.focus();
     }
     function expandCasesAndScrollToNew() {
         setSectionExpanded('cases', true);
         renderSectionAccordion('cases');
         setStoredSectionState(sectionExpanded);
-        var casesSection = document.getElementById('insight-section-cases');
+        var casesSection = document.getElementById('signal-section-cases');
         if (casesSection) casesSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     var sectionNames = ['session-details', 'this-log', 'cases', 'across-logs', 'environment'];
     sectionNames.forEach(function(name) {
-        var header = document.getElementById('insight-header-' + name);
+        var header = document.getElementById('signal-header-' + name);
         if (header) {
             header.setAttribute('tabindex', '0');
             header.addEventListener('click', function() { toggleSection(name); });
@@ -107,9 +107,9 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
         }
     });
 
-    window.openInsightPanel = function() {
+    window.openSignalPanel = function() {
         if (!insightPanel) return;
-        insightOpen = true;
+        signalPanelOpen = true;
         insightPanel.classList.add('visible');
         var stored = getStoredSectionState();
         if (stored && typeof stored === 'object') {
@@ -123,7 +123,7 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
             if (stored.environment === true) sectionExpanded.environment = true;
         }
         vscodeApi.postMessage({ type: 'requestInvestigations' });
-        vscodeApi.postMessage({ type: 'requestInsightData' });
+        vscodeApi.postMessage({ type: 'requestSignalData' });
         vscodeApi.postMessage({ type: 'requestPerformanceData' });
         applyStateAB();
         renderSectionAccordion('cases');
@@ -134,30 +134,30 @@ export function getInsightScriptPartA(storageKey: string, scriptStringsJson: str
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     };
 
-    window.closeInsightPanel = function() {
+    window.closeSignalPanel = function() {
         if (!insightPanel) return;
         insightPanel.classList.remove('visible');
-        insightOpen = false;
+        signalPanelOpen = false;
         setStoredSectionState(sectionExpanded);
         if (typeof clearActivePanel === 'function') clearActivePanel('insight');
     };
 
     window.setInsightTab = function(tab) {
-        if (!insightOpen || !insightPanel || !insightPanel.classList.contains('visible')) return;
-        if (tab === 'performance') { setSectionExpanded('session-details', true); renderSectionAccordion('session-details'); var el = document.getElementById('insight-section-session-details'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
-        else if (tab === 'cases') { setSectionExpanded('cases', true); renderSectionAccordion('cases'); var el = document.getElementById('insight-section-cases'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
-        else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('insight-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+        if (!signalPanelOpen || !insightPanel || !insightPanel.classList.contains('visible')) return;
+        if (tab === 'performance') { setSectionExpanded('session-details', true); renderSectionAccordion('session-details'); var el = document.getElementById('signal-section-session-details'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+        else if (tab === 'cases') { setSectionExpanded('cases', true); renderSectionAccordion('cases'); var el = document.getElementById('signal-section-cases'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+        else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('signal-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
     };
 
-    var closeBtn = document.getElementById('insight-panel-close');
-    if (closeBtn) closeBtn.addEventListener('click', closeInsightPanel);
+    var closeBtn = document.getElementById('signal-panel-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeSignalPanel);
 
     document.addEventListener('click', function(e) {
-        if (!insightOpen) return;
+        if (!signalPanelOpen) return;
         if (insightPanel && insightPanel.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-insight');
+        var ibBtn = document.getElementById('ib-signal');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
-        closeInsightPanel();
+        closeSignalPanel();
     });
 `;
 }

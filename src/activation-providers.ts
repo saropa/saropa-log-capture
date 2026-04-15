@@ -56,7 +56,7 @@ export function registerNoRestoreSerializers(context: vscode.ExtensionContext): 
         deserializeWebviewPanel(p) { p.dispose(); return Promise.resolve(); },
     };
     for (const viewType of [
-        'saropaLogCapture.insights', 'saropaLogCapture.insightTab', 'saropaLogCapture.bugReport',
+        'saropaLogCapture.signals', 'saropaLogCapture.signalTab', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
         'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
         'saropaLogCapture.popOutViewer',
