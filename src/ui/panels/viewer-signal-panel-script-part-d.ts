@@ -42,5 +42,39 @@ export function getSignalScriptPartD(): string {
             vscodeApi.postMessage({ type: 'openSessionForSignalType', signalType: row.dataset.signalType });
         });
     }
+
+    /* "Signals in this log" rows — click to jump to the line where the signal was detected */
+    var signalsInLogEl = document.getElementById('signals-in-log-list');
+    if (signalsInLogEl) {
+        signalsInLogEl.addEventListener('click', function(e) {
+            var row = e.target.closest('.signal-jumpable');
+            if (!row || !row.dataset.line) return;
+            e.stopPropagation();
+            var lineIdx = parseInt(row.dataset.line, 10);
+            if (isNaN(lineIdx)) return;
+            /* scrollToLineNumber is defined in viewer-goto-line.ts — scrolls to the given 1-based line number */
+            if (typeof scrollToLineNumber === 'function') { scrollToLineNumber(lineIdx + 1); }
+        });
+    }
+
+    /** Render co-occurring signal pairs in the "Related signals" block. */
+    function renderCoOccurrences() {
+        var blockEl = document.getElementById('signal-cooccurrence-block');
+        var listEl = document.getElementById('signal-cooccurrence-list');
+        var summaryEl = document.getElementById('signal-cooccurrence-summary');
+        var pairs = signalDataCache.coOccurrences || [];
+        if (!blockEl || !listEl) return;
+        if (pairs.length === 0) { blockEl.style.display = 'none'; return; }
+        blockEl.style.display = '';
+        if (summaryEl) summaryEl.textContent = 'Related signals (' + pairs.length + ' pair' + (pairs.length === 1 ? '' : 's') + ')';
+        listEl.innerHTML = pairs.map(function(p) {
+            var pct = Math.round(p.jaccard * 100);
+            var lA = p.labelA.length > 40 ? p.labelA.slice(0, 37) + '...' : p.labelA;
+            var lB = p.labelB.length > 40 ? p.labelB.slice(0, 37) + '...' : p.labelB;
+            return '<div class="signal-env-row signal-cooccurrence-row" title="' + esc(p.labelA) + ' and ' + esc(p.labelB) + ' co-occur in ' + p.sharedSessions + ' sessions">'
+                + '<span>\\uD83D\\uDD17 ' + esc(lA) + ' \\u2194 ' + esc(lB) + '</span>'
+                + '<span class="signal-hotfile-meta">' + p.sharedSessions + ' shared, ' + pct + '% overlap</span></div>';
+        }).join('');
+    }
 `;
 }

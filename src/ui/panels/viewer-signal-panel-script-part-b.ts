@@ -294,19 +294,19 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         }).join('');
     }
 
-    /** Render signals detected in the current log session (all kinds: errors, warnings, perf, SQL). */
+    /** Render signals detected in the current log session (all kinds). */
     function renderSignalsInThisLog() {
-        var listEl = document.getElementById('signals-in-log-list');
-        var summaryEl = document.getElementById('signals-in-log-summary');
+        var listEl = document.getElementById('signals-in-log-list'), summaryEl = document.getElementById('signals-in-log-summary');
         var signals = signalDataCache.signalsInThisLog || [];
         if (summaryEl) summaryEl.textContent = signals.length === 0 ? 'All signals in this log' : 'All signals in this log (' + signals.length + ')';
         if (!listEl) { return; }
         if (signals.length === 0) { listEl.innerHTML = ''; return; }
         listEl.innerHTML = signals.slice(0, 15).map(function(s) {
-            var icon = kindLabels[s.kind] || '\u2139\uFE0F';
-            var text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
+            var icon = kindLabels[s.kind] || '\u2139\uFE0F', text = s.label.length > 50 ? s.label.slice(0, 47) + '...' : s.label;
             var meta = s.totalOccurrences + 'x' + (s.avgDurationMs ? ', avg ' + fmtMs(s.avgDurationMs) : '');
-            return '<div class="signal-env-row" title="' + esc(s.label) + '"><span>' + icon + ' ' + esc(text) + '</span><span class="signal-hotfile-meta">' + meta + '</span></div>';
+            var lineAttr = s.lineIndices && s.lineIndices.length > 0 ? ' data-line="' + s.lineIndices[0] + '"' : '';
+            var clickCls = lineAttr ? ' signal-jumpable' : '';
+            return '<div class="signal-env-row signal-in-log-row' + clickCls + '"' + lineAttr + ' title="' + esc(s.label) + (lineAttr ? ' — click to jump' : '') + '"><span>' + icon + ' ' + esc(text) + '</span><span class="signal-hotfile-meta">' + meta + '</span></div>';
         }).join('');
     }
 `;
