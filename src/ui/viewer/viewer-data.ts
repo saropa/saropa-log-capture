@@ -16,7 +16,7 @@ import { getViewportRenderScript } from './viewer-data-viewport';
 /** Options for building the viewer data webview script. */
 export interface ViewerDataScriptOptions {
     readonly repeatThresholds?: Partial<ViewerRepeatThresholds>;
-    readonly viewerDbInsightsEnabled?: boolean;
+    readonly viewerDbSignalsEnabled?: boolean;
     readonly staticSqlFromFingerprintEnabled?: boolean;
     readonly slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
     readonly dbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
@@ -25,12 +25,12 @@ export interface ViewerDataScriptOptions {
 export function getViewerDataScript(opts: ViewerDataScriptOptions = {}): string {
     const {
         repeatThresholds,
-        viewerDbInsightsEnabled = true,
+        viewerDbSignalsEnabled = true,
         staticSqlFromFingerprintEnabled = true,
         slowBurstThresholds,
         dbDetectorToggles,
     } = opts;
-    return getViewerDataHelpers(repeatThresholds, viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
+    return getViewerDataHelpers(repeatThresholds, viewerDbSignalsEnabled, slowBurstThresholds, dbDetectorToggles) + getCompressStreakScript() + getViewerDataAddScript(staticSqlFromFingerprintEnabled) + /* javascript */ `
 
 function scrollToAnchorSeq(seq) {
     if (seq == null || !isFinite(seq) || allLines.length === 0 || window.isContextMenuOpen) return;
@@ -150,7 +150,6 @@ function applyCompressDedupModes() {
      */
     function isLineEligibleForDupCompress(row) {
         if (!row || row.type !== 'line') return false;
-        if (typeof window !== 'undefined' && window.enabledSources && row.source && window.enabledSources.indexOf(row.source) < 0) return false;
         if (row.filteredOut || row.excluded || row.levelFiltered || row.sourceFiltered || row.classFiltered || row.sqlPatternFiltered || row.searchFiltered || row.errorSuppressed || row.scopeFiltered || row.repeatHidden || (row.type === 'line' && row.timeRangeFiltered)) return false;
         var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!peeking && (row.userHidden || row.autoHidden)) return false;

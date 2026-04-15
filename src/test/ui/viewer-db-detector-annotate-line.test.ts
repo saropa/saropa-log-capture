@@ -1,7 +1,7 @@
 /**
  * VM tests for **`annotate-line`** and primary ingest rollup wiring (plan **DB_15**).
  *
- * Runs the same script chunks as `viewer-sql-repeat-compression.test.ts` plus DB insights on,
+ * Runs the same script chunks as `viewer-sql-repeat-compression.test.ts` plus DB signals on,
  * registers a test detector that patches the current line via **`ctx.anchorSeq`**, and exercises
  * direct **`applyDbAnnotateLineResult`** for false positives and height deltas.
  */
@@ -97,7 +97,7 @@ interface LineVm {
     level?: string;
     vmTestAnnotate?: boolean;
     bad?: boolean;
-    dbInsight?: unknown;
+    dbSignal?: unknown;
 }
 
 interface AnnotateSandboxVm {
@@ -135,7 +135,7 @@ suite("Viewer DB annotate-line (DB_15 VM)", () => {
         assert.strictEqual(line.type, "line");
         assert.strictEqual(line.vmTestAnnotate, true);
         assert.strictEqual(line.level, "performance");
-        assert.ok(line.dbInsight);
+        assert.ok(line.dbSignal);
     });
 
     test("applyDbAnnotateLineResult: unknown targetSeq is no-op (false positive guard)", () => {

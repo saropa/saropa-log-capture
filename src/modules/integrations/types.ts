@@ -54,11 +54,34 @@ export interface IntegrationEndContext extends IntegrationContext {
     readonly debugProcessId?: number;
 }
 
+/**
+ * Writer interface for streaming providers to push lines into the active
+ * log session. Passed to onSessionStartStreaming so providers don't need
+ * a direct LogSession reference.
+ */
+export interface StreamingWriter {
+    /** Append a line to the log session. */
+    writeLine(text: string, category: string, timestamp?: Date): void;
+}
+
 /** Provider contract: contributes data at start (sync/async) and end. */
 export interface IntegrationProvider {
     readonly id: string;
     isEnabled(context: IntegrationContext): boolean | Promise<boolean>;
     onSessionStartSync?(context: IntegrationContext): Contribution[] | undefined;
     onSessionStartAsync?(context: IntegrationContext): Promise<Contribution[] | undefined>;
+    /**
+     * Begin streaming lines into the log session. Called after session.start()
+     * for providers that spawn long-running child processes (e.g. adb logcat).
+     * The provider pushes lines via writer.writeLine(); the registry handles
+     * the isEnabled gate.
+     */
+    onSessionStartStreaming?(context: IntegrationContext, writer: StreamingWriter): void;
+    /**
+     * Called when a DAP process event delivers the debug target's system PID.
+     * Streaming providers that filter by PID (e.g. adb logcat) use this to
+     * narrow their output.
+     */
+    onProcessId?(processId: number): void;
     onSessionEnd?(context: IntegrationEndContext): Promise<Contribution[] | undefined>;
 }

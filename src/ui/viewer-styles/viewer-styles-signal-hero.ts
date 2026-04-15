@@ -1,8 +1,8 @@
 /**
- * Insight panel CSS: add-to-case button, hero block, embedded performance panel.
+ * Signal panel CSS: add-to-case button, hero block, embedded performance panel.
  */
 
-/** Return CSS for Insight panel hero and add-to-case styles. */
+/** Return CSS for Signal panel hero and add-to-case styles. */
 export function getSignalHeroStyles(): string {
     return /* css */ `
 

@@ -38,7 +38,7 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         if (!isNaN(asq) && typeof scrollToAnchorSeq === 'function') scrollToAnchorSeq(asq);
         return;
     }
-    /* N+1 insight row actions (see viewer-data-add.ts + drift-n-plus-one-detector.ts). */
+    /* N+1 signal row actions (see viewer-data-add.ts + drift-n-plus-one-detector.ts). */
     var n1Action = e.target.closest('.n1-action');
     if (n1Action) {
         e.preventDefault();
