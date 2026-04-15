@@ -1,8 +1,8 @@
 /**
- * Signal panel: single-scroll unified view (Unified Signal Model).
- * One narrative — Cases, Recurring errors, Hot files, Performance — no tabs.
- * State A (no log): Cases + Recurring + Hot files. State B (log selected): Performance + Recurring + Cases.
- * Plan: bugs/history/20260317/041_plan-unify-investigation-recurring-performance.md
+ * Signal panel: single-scroll unified view.
+ * Two signal lists: "Signals in this log" (current session) and "All signals" (cross-session).
+ * No duplication — every signal kind rendered through the same unified RecurringSignalEntry list.
+ * State A (no log): Cases + All signals + Hot files. State B (log open): Performance + This log + Cases + All signals.
  */
 import { t } from '../../l10n';
 import { getPerformancePanelHtml } from './viewer-performance-panel';
@@ -12,8 +12,6 @@ const SIGNAL_STORAGE_KEY = 'signalSectionState';
 
 /** Generate the Signal panel HTML: one narrative (This log → Your cases → Across your logs → Environment). */
 export function getSignalPanelHtml(): string {
-    const sectionErrorsInLog = t('signal.sectionErrorsInLog');
-    const errorsInLogEmpty = t('signal.errorsInLogEmpty');
     const sessionDetails = t('signal.sessionDetails');
     const sessionDetailsHint = t('signal.sessionDetailsHint');
     const thisLog = t('signal.thisLog');
@@ -21,7 +19,6 @@ export function getSignalPanelHtml(): string {
     const yourCases = t('signal.yourCases');
     const acrossYourLogs = t('signal.acrossYourLogs');
     const emptyCases = t('signal.emptyCases');
-    const emptyRecurring = t('signal.emptyRecurring');
     const emptyHotFiles = t('signal.emptyHotFiles');
     return /* html */ `
 <div id="signal-panel" class="signal-panel" role="region" aria-label="Signals">
@@ -55,7 +52,7 @@ export function getSignalPanelHtml(): string {
                 ${getPerformancePanelHtml('signal-')}
             </div>
         </section>
-        <!-- This log (State B only): errors + recurring in this log -->
+        <!-- This log (State B only): unified signals from current session -->
         <section id="signal-section-this-log" class="signal-section" aria-hidden="true" style="display:none">
             <button type="button" class="signal-section-header" id="signal-header-this-log" aria-expanded="true" aria-controls="signal-body-this-log">
                 <span class="signal-section-emoji" aria-hidden="true">📄</span>
@@ -64,20 +61,9 @@ export function getSignalPanelHtml(): string {
             </button>
             <div id="signal-body-this-log" class="signal-section-body">
                 <div id="signal-this-log-empty" class="signal-this-log-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${thisLogEmpty}</div>
-                <div id="signal-this-log-content" class="signal-this-log-content">
-                    <div class="signal-narrative-block">
-                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">⚠️</span><span id="signal-errors-in-log-subtitle">${sectionErrorsInLog}</span></div>
-                        <div id="signal-errors-in-log-list" class="signal-errors-in-log-list"></div>
-                        <div id="signal-errors-in-log-empty" class="signal-hotfiles-empty" style="display:none">${errorsInLogEmpty}</div>
-                    </div>
-                    <div class="signal-narrative-block">
-                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔁</span><span id="signal-recurring-in-log-summary">Recurring in this log</span></div>
-                        <div id="signal-recurring-in-log-list" class="recurring-list-inner"></div>
-                    </div>
-                    <div class="signal-narrative-block">
-                        <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">All signals in this log</span></div>
-                        <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
-                    </div>
+                <div class="signal-narrative-block">
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signals-in-log-summary">Signals in this log</span></div>
+                    <div id="signals-in-log-list" class="signal-hotfiles-list"></div>
                 </div>
             </div>
         </section>
@@ -118,14 +104,6 @@ export function getSignalPanelHtml(): string {
             </button>
             <div id="signal-body-across-logs" class="signal-section-body">
                 <div class="signal-narrative-block">
-                    <div id="signal-recurring-loading" class="recurring-loading" style="display:none">Loading error data…</div>
-                    <div id="signal-recurring-list" class="recurring-list-inner"></div>
-                    <div id="signal-recurring-empty" class="recurring-empty signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyRecurring}</div>
-                    <div id="signal-recurring-footer" class="signal-recurring-footer">
-                        <span id="signal-export-summary" class="recurring-footer-action" title="Export recurring errors and hot files">Export summary</span>
-                    </div>
-                </div>
-                <div class="signal-narrative-block">
                     <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📁</span><span id="signal-hotfiles-summary">Frequently modified files</span></div>
                     <div id="signal-hotfiles-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>${emptyHotFiles}</div>
                     <div id="signal-hotfiles-list" class="signal-hotfiles-list"></div>
@@ -134,6 +112,9 @@ export function getSignalPanelHtml(): string {
                     <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">📡</span><span id="signal-trends-summary">All signals</span></div>
                     <div id="signal-trends-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
                     <div id="signal-trends-list" class="signal-hotfiles-list"></div>
+                    <div id="signal-trends-footer" class="signal-recurring-footer">
+                        <span id="signal-export-summary" class="recurring-footer-action" title="Export signals summary">Export summary</span>
+                    </div>
                 </div>
                 <div class="signal-narrative-block" id="signal-cooccurrence-block" style="display:none">
                     <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔗</span><span id="signal-cooccurrence-summary">Related signals</span></div>
