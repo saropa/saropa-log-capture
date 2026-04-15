@@ -17,15 +17,14 @@ import { registerCommands } from './commands';
 import { SessionDisplayOptions, defaultDisplayOptions } from './ui/session/session-display';
 import { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
 import { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
-import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
+import { wireViewerSpecificHandlers } from './extension-activation-handlers';
 import { wireSharedHandlers, SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
 import { checkGitignoreSaropa } from './modules/config/gitignore-checker';
 import { migrateCrashlyticsCacheToSaropa } from './modules/crashlytics/crashlytics-io';
 import { migrateSidecarsInDirectory } from './modules/session/session-metadata';
 import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-indexer/project-indexer';
-import { searchLogFilesConcurrent } from './modules/search/log-search';
 import { BookmarkStore } from './modules/storage/bookmark-store';
-import { buildSessionListPayload, LOG_LAST_VIEWED_KEY, updateLastViewed } from './ui/provider/viewer-provider-helpers';
+import { buildSessionListPayload, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
@@ -37,7 +36,7 @@ import { disposeInvestigationPanel } from './ui/investigation/investigation-pane
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
-import { autoLoadLatest, maybeSuggestSmartBookmark, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
+import { autoLoadLatest, showWalkthroughOnFirstInstall } from './extension-activation-helpers';
 import { initLearningRuntime, flushLearningBuffer } from './modules/learning/learning-runtime';
 import { scheduleLearningSuggestionCheck } from './modules/learning/learning-notifications';
 import { scheduleMaybeAutoEnableAiFromLanguageModels } from './modules/ai/ai-auto-enable';
@@ -184,69 +183,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     wireSharedHandlers(viewerProvider, handlerDeps);
     wireSharedHandlers(popOutPanel, handlerDeps);
 
-    const updateSessionNav = async (): Promise<void> => {
-        const uri = viewerProvider.getCurrentFileUri();
-        if (!uri) { viewerProvider.setSessionNavInfo(false, false, 0, 0); return; }
-        const adj = await historyProvider.getAdjacentSessions(uri);
-        viewerProvider.setSessionNavInfo(!!adj.prev, !!adj.next, adj.index, adj.total);
-    };
-    const smartBookmarkSuggestedForUri = new Set<string>();
-    viewerProvider.setFileLoadedHandler((uri, loadResult) => {
-        void updateSessionNav();
-        const isActive = historyProvider.getActiveUri()?.toString() === uri.toString();
-        if (isActive) {
-            void maybeSuggestSmartBookmark(uri, loadResult, bookmarkStore, smartBookmarkSuggestedForUri);
-        }
+    const { updateSessionNav } = wireViewerSpecificHandlers({
+        viewerProvider, historyProvider, bookmarkStore, popOutPanel, context, version,
     });
-    viewerProvider.setSessionNavigateHandler(async (direction) => {
-        const uri = viewerProvider.getCurrentFileUri();
-        if (!uri) { return; }
-        const adj = await historyProvider.getAdjacentSessions(uri);
-        const target = direction < 0 ? adj.prev : adj.next;
-        if (target) { await viewerProvider.loadFromFile(target); }
-    });
-
-    viewerProvider.setBecameVisibleHandler(() => {
-        // Active session always takes priority.
-        const activeUri = historyProvider.getActiveUri();
-        if (activeUri) {
-            if (viewerProvider.getCurrentFileUri()?.toString() === activeUri.toString()) { return; }
-            void viewerProvider.loadFromFile(activeUri);
-            return;
-        }
-    });
-
-    viewerProvider.setOpenSessionFromPanelHandler(async (uriString) => {
-        if (!uriString) { return; }
-        await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
-        await updateLastViewed(context, uriString);
-    });
-    viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
-    viewerProvider.setOpenSignalTabHandler(() => {
-        openSignalTab({
-            getCurrentFileUri: () => viewerProvider.getCurrentFileUri(),
-            context,
-            extensionUri: context.extensionUri,
-            version,
-        });
-    });
-    viewerProvider.setRevealLogFileHandler(async () => {
-        await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
-    });
-    viewerProvider.setFindInFilesHandler(async (query, options) => {
-        const results = await searchLogFilesConcurrent(query, {
-            caseSensitive: Boolean(options.caseSensitive),
-            useRegex: Boolean(options.useRegex),
-            wholeWord: Boolean(options.wholeWord),
-        });
-        viewerProvider.sendFindResults(results);
-    });
-    viewerProvider.setOpenFindResultHandler(async (uriString, query, options) => {
-        if (!uriString) { return; }
-        await viewerProvider.loadFromFile(vscode.Uri.parse(uriString));
-        viewerProvider.setupFindSearch(query, options);
-    });
-    viewerProvider.setFindNavigateMatchHandler(() => { viewerProvider.findNextMatch(); });
 
     context.subscriptions.push(
         vscode.debug.registerDebugAdapterTrackerFactory('*', new SaropaTrackerFactory(sessionManager)),

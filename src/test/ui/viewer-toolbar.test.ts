@@ -65,7 +65,6 @@ suite('Viewer toolbar', () => {
             'name="tier-flutter"',
             'name="tier-device"',
             'id="preset-select"',
-            'id="reset-all-filters"',
         ];
         for (const id of required) {
             assert.ok(html.includes(id), `filter drawer must contain ${id}`);
@@ -100,21 +99,19 @@ suite('Viewer toolbar', () => {
         );
     });
 
-    test('filter drawer has preset label and reset after summary', () => {
+    test('filter drawer has Saved Filters label in footer', () => {
         const html = getFilterDrawerHtml();
         assert.ok(
             html.includes('filter-drawer-footer-label'),
-            'footer should have a preset label',
+            'footer should have a label',
         );
         assert.ok(
-            html.includes('>Preset:</span>'),
-            'preset label should read "Preset:"',
+            html.includes('>Saved Filters:</span>'),
+            'footer label should read "Saved Filters:"',
         );
-        const summaryIdx = html.indexOf('id="filter-drawer-summary"');
-        const resetIdx = html.indexOf('id="reset-all-filters"');
         assert.ok(
-            summaryIdx < resetIdx,
-            'reset button should appear after summary (far right)',
+            html.includes('>Default</option>'),
+            'default preset option should read "Default"',
         );
     });
 
@@ -154,10 +151,11 @@ suite('Viewer toolbar', () => {
         assert.ok(src.includes('getActionsDropdownHtml'), 'body should import actions');
     });
 
-    test('content body does not include old footer or filters panel', () => {
+    test('content body includes Tags panel and does not include old footer', () => {
         const src = readSrc('ui/provider/viewer-content-body.ts');
         assert.ok(!src.includes('id="footer"'), 'old footer removed');
-        assert.ok(!src.includes('getFiltersPanelHtml'), 'filters panel removed from body');
+        assert.ok(!src.includes('getFiltersPanelHtml'), 'old filters panel name removed from body');
+        assert.ok(src.includes('getTagsPanelHtml'), 'Tags & Origins panel should be in body');
     });
 
     test('toolbar should be inside log-area-with-footer, not above panel-content-row', () => {

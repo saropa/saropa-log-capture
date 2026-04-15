@@ -88,7 +88,7 @@ export function getFilterDrawerStyles(): string {
 }
 .filter-drawer-context input[type="range"] { width: 60px; }
 
-/* Log Inputs divider between sources and categories */
+/* Log Sources divider between tiers */
 .log-inputs-divider {
     border-top: 1px dashed var(--vscode-panel-border);
     margin: 4px 0;
