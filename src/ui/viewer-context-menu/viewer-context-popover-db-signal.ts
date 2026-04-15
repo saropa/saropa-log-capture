@@ -1,5 +1,5 @@
 /**
- * Database insight popover section builder.
+ * Database signal popover section builder.
  *
  * Renders fingerprint, seen-count, duration stats, SQL snippet,
  * and optional "Find sources" / "Open in Drift Advisor" buttons.
@@ -15,8 +15,8 @@ function buildDatabaseInsightPopoverSection(lineIdx) {
     var seenCountSafe = (typeof ins.seenCount === 'number' && isFinite(ins.seenCount) && ins.seenCount >= 1)
         ? Math.floor(ins.seenCount) : 1;
     var driftAvail = (typeof window !== 'undefined' && window.driftAdvisorAvailable);
-    var html = '<div class="popover-section popover-section-db-insight">';
-    html += '<div class="popover-section-header"><span class="codicon codicon-database popover-icon" aria-hidden="true"></span> Database insight</div>';
+    var html = '<div class="popover-section popover-section-db-signal">';
+    html += '<div class="popover-section-header"><span class="codicon codicon-database popover-icon" aria-hidden="true"></span> Database signal</div>';
     html += '<div class="popover-section-content">';
     if (ins.fingerprint) {
         var fpFull = ins.fingerprint;

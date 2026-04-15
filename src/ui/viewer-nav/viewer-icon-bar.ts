@@ -126,7 +126,7 @@ export function getIconBarScript(): string {
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
         crashlytics: document.getElementById('ib-crashlytics'),
-        insight: document.getElementById('ib-signal'),
+        signal: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
     };
 
@@ -229,8 +229,8 @@ export function getIconBarScript(): string {
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });
     }
-    if (iconButtons.insight) {
-        iconButtons.insight.addEventListener('click', function() { setActivePanel('signal'); });
+    if (iconButtons.signal) {
+        iconButtons.signal.addEventListener('click', function() { setActivePanel('signal'); });
     }
     if (iconButtons.about) {
         iconButtons.about.addEventListener('click', function() { setActivePanel('about'); });

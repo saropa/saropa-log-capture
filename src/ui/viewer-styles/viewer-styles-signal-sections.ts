@@ -1,8 +1,8 @@
 /**
- * Insight panel CSS: view-all, recurring, hot files, scope, performance hero, errors, environment.
+ * Signal panel CSS: view-all, recurring, hot files, scope, performance hero, errors, environment.
  */
 
-/** Return CSS for Insight panel section content (view-all, lists, hero, env). */
+/** Return CSS for Signal panel section content (view-all, lists, hero, env). */
 export function getSignalSectionsStyles(): string {
     return /* css */ `
 
@@ -136,7 +136,7 @@ export function getSignalSectionsStyles(): string {
 }
 
 /* Session details one-line hint */
-.insight-session-details-hint {
+.signal-session-details-hint {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     margin: 0 0 8px 0;
@@ -173,7 +173,7 @@ export function getSignalSectionsStyles(): string {
 }
 
 /* Environment section */
-.insight-environment-list {
+.signal-environment-list {
     font-size: 12px;
 }
 
@@ -201,8 +201,8 @@ export function getSignalSectionsStyles(): string {
 }
 
 /* Signal trend rows — clickable to open the most recent matching session */
-.insight-signal-trend-row { cursor: pointer; border-radius: 3px; }
-.insight-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
+.signal-signal-trend-row { cursor: pointer; border-radius: 3px; }
+.signal-signal-trend-row:hover { background: var(--vscode-list-hoverBackground); }
 /* Severity indicators: critical gets a red left border, high gets orange */
 .signal-sev-critical { border-left: 3px solid var(--vscode-errorForeground, #f44); }
 .signal-sev-high { border-left: 3px solid var(--vscode-editorWarning-foreground, #fa4); }

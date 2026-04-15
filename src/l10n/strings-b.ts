@@ -1,5 +1,5 @@
 /**
- * English strings (part 2): actions, investigation, share, insights.
+ * English strings (part 2): actions, investigation, share, signals.
  * Merged in ../l10n.ts.
  */
 export const stringsB: Record<string, string> = {

@@ -16,13 +16,13 @@ import { getViewerDbDetectorFrameworkScript } from './viewer-db-detector-framewo
 
 export function getViewerDataHelpers(
     repeatThresholds?: Partial<ViewerRepeatThresholds>,
-    viewerDbInsightsEnabled = true,
+    viewerDbSignalsEnabled = true,
     slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
     dbDetectorToggles?: Partial<ViewerDbDetectorToggles>,
 ): string {
     return (
         getNPlusOneDetectorScript(repeatThresholds) +
-        getViewerDbDetectorFrameworkScript(viewerDbInsightsEnabled, slowBurstThresholds, dbDetectorToggles) +
+        getViewerDbDetectorFrameworkScript(viewerDbSignalsEnabled, slowBurstThresholds, dbDetectorToggles) +
         getSqlDrilldownUiScript() +
         getViewerDataHelpersCore() +
         getViewerDataHelpersRender()

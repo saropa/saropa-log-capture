@@ -8,7 +8,7 @@
  * The webview attaches `dbInsight` to `sourceTag === 'database'` rows and may send
  * `hasDatabaseLine: true` with **Show integration context**. When there is no HTTP/perf/etc.
  * data in the ±window and no `saropa-drift-advisor` session meta, we still open the popover
- * so **Database insight** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
+ * so **Database signal** can render from line-local metadata. {@link shouldPostNoIntegrationDataError}
  * encodes that gate for tests and keeps the “empty context” decision in one place.
  */
 
@@ -139,7 +139,7 @@ function buildSnapshotSummary(sessionData: Record<string, unknown> | undefined):
 
 /** Aggregate performance fingerprints and optional session data for current log. */
 export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri): Promise<void> {
-    const [insights, logContext] = await Promise.all([
+    const [aggregated, logContext] = await Promise.all([
         aggregatePerformance('all').catch(() => undefined),
         logUri ? (async () => {
             try {
@@ -164,8 +164,8 @@ export async function handlePerformanceRequest(post: PostFn, logUri?: vscode.Uri
     const sessionData = logContext?.sessionData;
     post({
         type: 'performanceData',
-        trends: insights?.trends ?? [],
-        sessionCount: insights?.sessionCount ?? 0,
+        trends: aggregated?.trends ?? [],
+        sessionCount: aggregated?.sessionCount ?? 0,
         sessionData: sessionData ?? undefined,
         currentLogLabel: currentLogLabel ?? undefined,
         heroErrorCount: logContext?.errorCount,
@@ -202,7 +202,7 @@ export async function handleIntegrationContextRequest(
         let centerTime = timestamp && timestamp > 0
             ? timestamp
             : getSessionCenterTime(meta.integrations);
-        // Database-tagged lines still show line-local insight even without a captured timestamp.
+        // Database-tagged lines still show line-local signal even without a captured timestamp.
         if (centerTime === 0 && hasDatabaseLine) {
             centerTime = Date.now();
         }

@@ -193,7 +193,7 @@ export function getContextPopoverStyles(): string {
     background: var(--vscode-button-hoverBackground);
 }
 
-/* Line-local database insight (Drift SQL fingerprint + snippet) */
+/* Line-local database signal (Drift SQL fingerprint + snippet) */
 .popover-meta-label {
     font-weight: 600;
     color: var(--vscode-foreground);

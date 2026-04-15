@@ -146,21 +146,16 @@ window.addEventListener('message', function(event) {
             updateFooterText();
             break;
         case 'setSources':
-            // Multi-source view: which streams exist (debug, terminal, …) and which are visible.
-            if (typeof window !== 'undefined') {
-                window.availableSources = Array.isArray(msg.sources) ? msg.sources : [];
-                window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null;
-            }
+            if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
+            var _srcSec = document.getElementById('log-inputs-section'); if (_srcSec) _srcSec.style.display = '';
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
             if (typeof updateFooterText === 'function') updateFooterText();
-            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
             break;
         case 'setEnabledSources':
             if (typeof window !== 'undefined' && Array.isArray(msg.enabledSources)) window.enabledSources = msg.enabledSources;
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
-            if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
             break;
         case 'setCategories':
             handleSetCategories(msg);

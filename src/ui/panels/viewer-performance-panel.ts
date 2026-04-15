@@ -14,8 +14,8 @@ import { getPerformanceDbTabScript } from './viewer-performance-db-tab';
 import { getErrorRateTabScript } from './viewer-error-rate-tab';
 
 /**
- * When prefix is 'signal-', IDs become insight-pp-panel, insight-pp-current-view, etc.
- * Used when embedding the performance panel inside the Insight panel.
+ * When prefix is 'signal-', IDs become signal-pp-panel, signal-pp-current-view, etc.
+ * Used when embedding the performance panel inside the Signal panel.
  */
 export function getPerformancePanelHtml(prefix?: string): string {
     const id = prefix ? prefix + 'pp-panel' : 'performance-panel';
@@ -80,7 +80,7 @@ export function getPerformancePanelHtml(prefix?: string): string {
 </div>`;
 }
 
-/** Generate the performance panel script. When prefix is 'signal-', binds to insight-pp-* elements (set window.__signalPerfIdPrefix before this script runs). */
+/** Generate the performance panel script. When prefix is 'signal-', binds to signal-pp-* elements (set window.__signalPerfIdPrefix before this script runs). */
 export function getPerformancePanelScript(prefix?: string): string {
     // Positive condition (Sonar S7735): use prefix when it is a string; otherwise emit runtime fallback.
     const ppIdPrefix = typeof prefix === 'string'

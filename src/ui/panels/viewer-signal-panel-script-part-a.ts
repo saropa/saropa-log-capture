@@ -1,9 +1,9 @@
 /**
- * Insight panel script part A: state, storage, accordion, panel open/close/setTab.
+ * Signal panel script part A: state, storage, accordion, panel open/close/setTab.
  * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
-/** Returns the first fragment of the Insight panel IIFE (vars, storage, accordion, panel API). */
+/** Returns the first fragment of the Signal panel IIFE (vars, storage, accordion, panel API). */
 export function getSignalScriptPartA(storageKey: string, scriptStringsJson: string): string {
     const storageKeyJson = JSON.stringify(storageKey);
     return /* js */ `
@@ -139,7 +139,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
         insightPanel.classList.remove('visible');
         signalPanelOpen = false;
         setStoredSectionState(sectionExpanded);
-        if (typeof clearActivePanel === 'function') clearActivePanel('insight');
+        if (typeof clearActivePanel === 'function') clearActivePanel('signal');
     };
 
     window.setInsightTab = function(tab) {

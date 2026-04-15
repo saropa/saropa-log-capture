@@ -1,5 +1,5 @@
 /**
- * Insight panel script content (single-scroll, context-aware).
+ * Signal panel script content (single-scroll, context-aware).
  * Assembled from part-a, part-b, part-c to stay under max-lines.
  *
  * UX enhancements (14 items): empty states (Cases, Recurring, Hot files); loading states;
@@ -53,7 +53,7 @@ const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     sectionErrorsInLog: 'Errors in this log',
 };
 
-/** Generate the Insight panel script. Single scroll; State A vs B. */
+/** Generate the Signal panel script. Single scroll; State A vs B. */
 export function getSignalPanelScriptContent(storageKey: string, strings?: SignalScriptStrings): string {
     const s = strings ?? DEFAULT_SIGNAL_STRINGS;
     const scriptStringsJson = JSON.stringify(s);

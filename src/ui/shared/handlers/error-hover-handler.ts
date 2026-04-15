@@ -55,12 +55,12 @@ export async function handleErrorHoverRequest(
     const crashCategory = classifyCategory(text);
 
     // Parallel: cross-session lookup + triage status
-    const [insights, statuses] = await Promise.all([
+    const [aggregated, statuses] = await Promise.all([
         aggregateSignals('all').catch(() => undefined),
         getErrorStatusBatch([hash]).catch(() => ({} as Record<string, ErrorStatus>)),
     ]);
 
-    const match: RecurringError | undefined = insights?.recurringErrors.find(e => e.hash === hash);
+    const match: RecurringError | undefined = aggregated?.recurringErrors.find(e => e.hash === hash);
     const triageStatus = statuses[hash] ?? 'open';
 
     const resolveUrls = getConfig().integrationsGit?.commitLinks ?? true;

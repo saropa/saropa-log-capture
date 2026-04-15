@@ -54,7 +54,7 @@ export function getViewerDbDetectorFrameworkScript(
     cooldownMs: tsb.cooldownMs,
   });
   return /* javascript */ `
-var viewerDbInsightsEnabled = ${enabledJs};
+var viewerDbSignalsEnabled = ${enabledJs};
 var viewerSlowBurstThresholds = ${burstJson};
 var viewerTimestampBurstThresholds = ${tsBurstJson};
 var viewerDbDetectorNPlusOneEnabled = ${nPlusOneJs};
@@ -111,7 +111,7 @@ function applyDbSessionRollupPatches(results) {
     }
 }
 function runDbDetectors(ctx) {
-    if (typeof viewerDbInsightsEnabled !== 'undefined' && !viewerDbInsightsEnabled) return [];
+    if (typeof viewerDbSignalsEnabled !== 'undefined' && !viewerDbSignalsEnabled) return [];
     var all = [];
     var list = dbDetectorRegistry.slice().sort(function(a, b) { return (a.priority || 0) - (b.priority || 0); });
     var i, d, j, chunk;
@@ -225,7 +225,7 @@ ${getTimestampBurstDetectorEmbedJs()}
                 stableKey: '${SLOW_QUERY_BURST_DETECTOR_ID}::' + sid + '::' + windowStartMs,
                 priority: 85,
                 payload: {
-                    category: 'db-insight',
+                    category: 'db-signal',
                     label: 'Slow query burst',
                     anchorSeq: anc
                 }
@@ -254,7 +254,7 @@ ${getTimestampBurstDetectorEmbedJs()}
                 stableKey: '${BASELINE_VOLUME_HINT_ID}::' + fp,
                 priority: 92,
                 payload: {
-                    category: 'db-insight',
+                    category: 'db-signal',
                     label: 'SQL count above baseline (' + cur + ' vs ' + bEnt.count + ')',
                     anchorSeq: anc
                 }
@@ -268,8 +268,8 @@ ${getTimestampBurstDetectorEmbedJs()}
             if (typeof viewerDbDetectorNPlusOneEnabled !== 'undefined' && !viewerDbDetectorNPlusOneEnabled) return [];
             if (!ctx || !ctx.sql || !ctx.sql.fingerprint) return [];
             if (typeof detectNPlusOneSignal !== 'function') return [];
-            var insight = detectNPlusOneSignal(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
-            if (!insight) return [];
+            var signal = detectNPlusOneSignal(ctx.timestampMs, ctx.sql.fingerprint, ctx.sql.argsKey);
+            if (!signal) return [];
             var stableKey = 'db.n-plus-one::' + ctx.sql.fingerprint + '::' + ctx.timestampMs;
             return [{
                 kind: 'synthetic-line',
@@ -277,12 +277,12 @@ ${getTimestampBurstDetectorEmbedJs()}
                 stableKey: stableKey,
                 priority: 100,
                 payload: {
-                    syntheticType: 'n-plus-one-insight',
-                    insight: {
-                        repeats: insight.repeats,
-                        distinctArgs: insight.distinctArgs,
-                        windowSpanMs: insight.windowSpanMs,
-                        confidence: insight.confidence
+                    syntheticType: 'n-plus-one-signal',
+                    signal: {
+                        repeats: signal.repeats,
+                        distinctArgs: signal.distinctArgs,
+                        windowSpanMs: signal.windowSpanMs,
+                        confidence: signal.confidence
                     },
                     sqlMeta: {
                         fingerprint: ctx.sql.fingerprint,

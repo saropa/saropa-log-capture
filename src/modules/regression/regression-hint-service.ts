@@ -80,8 +80,8 @@ export async function getFirstSeenCommitForError(
     errorHash: string,
     options?: { resolveCommitUrl?: boolean },
 ): Promise<FirstSeenHint | undefined> {
-    const insights = await aggregateSignals('all').catch(() => undefined);
-    const error = insights?.recurringErrors.find(e => e.hash === errorHash);
+    const aggregated = await aggregateSignals('all').catch(() => undefined);
+    const error = aggregated?.recurringErrors.find(e => e.hash === errorHash);
     if (!error?.firstSeen) { return undefined; }
 
     const folder = vscode.workspace.workspaceFolders?.[0];
@@ -141,11 +141,11 @@ export async function getFirstSeenHintsForErrors(
 ): Promise<Record<string, FirstSeenHint>> {
     const cap = options?.cap ?? 15;
     const resolve = options?.resolveCommitUrls ?? true;
-    const insights = await aggregateSignals('all').catch(() => undefined);
-    if (!insights) { return {}; }
+    const aggregated = await aggregateSignals('all').catch(() => undefined);
+    if (!aggregated) { return {}; }
 
     const toFetch = errorHashes.slice(0, cap).filter(h => {
-        const err = insights.recurringErrors.find(e => e.hash === h);
+        const err = aggregated.recurringErrors.find(e => e.hash === h);
         return err?.firstSeen !== undefined && err?.firstSeen !== null;
     });
 
@@ -158,7 +158,7 @@ export async function getFirstSeenHintsForErrors(
 
     const entries = await Promise.all(
         toFetch.map(async (hash): Promise<[string, FirstSeenHint] | undefined> => {
-            const error = insights.recurringErrors.find(e => e.hash === hash);
+            const error = aggregated.recurringErrors.find(e => e.hash === hash);
             if (!error?.firstSeen) { return undefined; }
             const firstSeenNorm = normSession(error.firstSeen);
             try {

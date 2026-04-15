@@ -20,11 +20,11 @@ suite('ViewerPerformancePanel', () => {
             assert.ok(html.includes('Copy message'));
         });
 
-        test('should support insight prefix for embedded panel', () => {
+        test('should support signal prefix for embedded panel', () => {
             const html = getPerformancePanelHtml('signal-');
-            assert.ok(html.includes('id="insight-pp-panel"'));
-            assert.ok(html.includes('id="insight-pp-session-intro"'));
-            assert.ok(html.includes('id="insight-pp-copy-message-menu"'));
+            assert.ok(html.includes('id="signal-pp-panel"'));
+            assert.ok(html.includes('id="signal-pp-session-intro"'));
+            assert.ok(html.includes('id="signal-pp-copy-message-menu"'));
         });
     });
 
@@ -49,13 +49,13 @@ suite('ViewerPerformancePanel', () => {
             assert.ok(!withPrefix.includes('__signalPerfIdPrefix'));
         });
 
-        test('webview should bind to embedded insight- panel IDs', () => {
+        test('webview should bind to embedded signal- panel IDs', () => {
             const script = getPerformancePanelScript('signal-');
             assert.ok(script.includes("'signal-'"));
-            assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("insight-pp-panel"));
+            assert.ok(script.includes("ppIdPrefix + 'pp-panel'") || script.includes("signal-pp-panel"));
         });
 
-        test('session perf chip should open Insight without setActivePanel toggle-off', () => {
+        test('session perf chip should open Signal without setActivePanel toggle-off', () => {
             const script = getPerformancePanelScript('signal-');
             assert.ok(script.includes('ensureSignalSlideoutOpen'));
             assert.ok(script.includes('session-perf-chip'));
@@ -78,7 +78,7 @@ suite('ViewerPerformancePanel', () => {
             // The setActivePanel('signal') call must be in an else-if, not a standalone if
             assert.ok(
                 handlerBlock.includes('else if (typeof window.setActivePanel'),
-                'setActivePanel(insight) must be else-if (only fires when ensureSignalSlideoutOpen is absent)',
+                'setActivePanel(signal) must be else-if (only fires when ensureSignalSlideoutOpen is absent)',
             );
         });
     });

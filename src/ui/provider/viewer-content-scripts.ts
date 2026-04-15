@@ -100,12 +100,12 @@ export interface ViewerScriptsOptions {
     readonly viewerDetectAsciiArt?: boolean;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
   /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
-  readonly viewerDbInsightsEnabled?: boolean;
+  readonly viewerDbSignalsEnabled?: boolean;
   /** DB_12: static SQL source search affordance in N+1 rows (default true). */
   readonly staticSqlFromFingerprintEnabled?: boolean;
   /** Slow query burst marker thresholds (plan DB_08). */
   readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
-    /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
+    /** N+1 / slow-burst / baseline-hint sub-toggles when DB signals are on. */
     readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
     /** Minimum duration (ms) for a slow-operation signal (default 500). */
     readonly signalSlowOpThresholdMs?: number;
@@ -121,7 +121,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         viewerGroupAsciiArt,
         viewerDetectAsciiArt,
         viewerRepeatThresholds,
-        viewerDbInsightsEnabled,
+        viewerDbSignalsEnabled,
         staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds,
         viewerDbDetectorToggles,
@@ -135,7 +135,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
             getLayoutScript(),
             getViewerDataScript({
                 repeatThresholds: viewerRepeatThresholds,
-                viewerDbInsightsEnabled: viewerDbInsightsEnabled !== false,
+                viewerDbSignalsEnabled: viewerDbSignalsEnabled !== false,
                 staticSqlFromFingerprintEnabled: staticSqlFromFingerprintEnabled !== false,
                 slowBurstThresholds: viewerSlowBurstThresholds,
                 dbDetectorToggles: viewerDbDetectorToggles,
@@ -202,7 +202,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
         scriptTag(nonce, getSignalPanelScript()) +
-        // Performance UI lives only inside Insight (insight-pp-*); standalone performance-panel was removed.
+        // Performance UI lives only inside Insight (signal-pp-*); standalone performance-panel was removed.
         scriptTag(nonce, getPerformancePanelScript('signal-')) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +

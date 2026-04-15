@@ -46,11 +46,11 @@ export interface ViewerHtmlOptions {
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
     /** Slow-query burst detector thresholds (DB_08) baked into the viewer script. */
     readonly viewerSlowBurstThresholds?: Partial<ViewerSlowBurstThresholds>;
-  /** Master toggle for DB insight detectors + rollup (default true). */
-  readonly viewerDbInsightsEnabled?: boolean;
+  /** Master toggle for DB signal detectors + rollup (default true). */
+  readonly viewerDbSignalsEnabled?: boolean;
   /** DB_12: “Static sources” from SQL fingerprints (default true). */
   readonly staticSqlFromFingerprintEnabled?: boolean;
-  /** N+1 / slow-burst / baseline-hint sub-toggles when DB insights are on. */
+  /** N+1 / slow-burst / baseline-hint sub-toggles when DB signals are on. */
   readonly viewerDbDetectorToggles?: Partial<ViewerDbDetectorToggles>;
   /** Minimum duration (ms) for a slow-operation signal (default 500). */
   readonly signalSlowOpThresholdMs?: number;
@@ -84,7 +84,7 @@ export function buildViewerHtml(opts: ViewerHtmlOptions): string {
         viewerGroupAsciiArt: opts.viewerGroupAsciiArt,
         viewerDetectAsciiArt: opts.viewerDetectAsciiArt,
         viewerRepeatThresholds: opts.viewerRepeatThresholds,
-        viewerDbInsightsEnabled: opts.viewerDbInsightsEnabled,
+        viewerDbSignalsEnabled: opts.viewerDbSignalsEnabled,
         staticSqlFromFingerprintEnabled: opts.staticSqlFromFingerprintEnabled,
         viewerSlowBurstThresholds: opts.viewerSlowBurstThresholds,
         viewerDbDetectorToggles: opts.viewerDbDetectorToggles,

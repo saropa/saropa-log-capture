@@ -114,8 +114,8 @@ export function setupConfigListener(
         ) {
             broadcaster.setViewerRepeatThresholds(cfg.viewerRepeatThresholds);
         }
-        if (e.affectsConfiguration('saropaLogCapture.viewerDbInsightsEnabled')) {
-            broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
+        if (e.affectsConfiguration('saropaLogCapture.viewerDbSignalsEnabled')) {
+            broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbSignalsEnabled);
         }
         if (e.affectsConfiguration('saropaLogCapture.staticSqlFromFingerprint.enabled')) {
             broadcaster.setStaticSqlFromFingerprintEnabled(cfg.staticSqlFromFingerprintEnabled);

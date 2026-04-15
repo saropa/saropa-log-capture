@@ -1,8 +1,8 @@
-/** Styles for synthetic N+1 / DB burst insight rows in the log viewer. */
+/** Styles for synthetic N+1 / DB burst signal rows in the log viewer. */
 export function getNPlusOneSignalStyles(): string {
     return /* css */ `
-/* Drift SQL N+1 heuristic insight row (see modules/db/drift-n-plus-one-detector.ts) */
-.n1-insight {
+/* Drift SQL N+1 heuristic signal row (see modules/db/drift-n-plus-one-detector.ts) */
+.n1-signal {
     color: var(--vscode-editorWarning-foreground, #ffcc00);
     font-style: normal;
 }

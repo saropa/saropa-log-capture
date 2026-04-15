@@ -30,7 +30,7 @@ function truncateSqlHistoryPreviewString(s) {
 
 function extractSqlHistoryFingerprint(it) {
     if (!it || it.sourceTag !== 'database') return null;
-    if (it.type !== 'line' && it.type !== 'repeat-notification' && it.type !== 'n-plus-one-insight') return null;
+    if (it.type !== 'line' && it.type !== 'repeat-notification' && it.type !== 'n-plus-one-signal') return null;
     if (it.dbInsight && it.dbInsight.fingerprint) return it.dbInsight.fingerprint;
     if (it.sqlHistoryFp) return it.sqlHistoryFp;
     if (it.insightMeta && it.insightMeta.fingerprint) return it.insightMeta.fingerprint;

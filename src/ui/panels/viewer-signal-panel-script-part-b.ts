@@ -1,9 +1,9 @@
 /**
- * Insight panel script part B: utils, cases list/form, recurring, hot files, errors in log, environment.
+ * Signal panel script part B: utils, cases list/form, recurring, hot files, errors in log, environment.
  * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
-/** Returns the second fragment of the Insight panel IIFE (render helpers and lists). */
+/** Returns the second fragment of the Signal panel IIFE (render helpers and lists). */
 export function getSignalScriptPartB(maxRecurringTextLen: number): string {
     return /* js */ `
     function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -223,8 +223,8 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (contentBlock) contentBlock.style.display = bothEmpty ? 'none' : '';
     }
     function renderEnvironment() {
-        var summaryEl = document.getElementById('insight-environment-summary');
-        var listEl = document.getElementById('insight-environment-list');
+        var summaryEl = document.getElementById('signal-environment-summary');
+        var listEl = document.getElementById('signal-environment-list');
         var platforms = signalDataCache.platforms || [];
         var sdks = signalDataCache.sdkVersions || [];
         var adapters = signalDataCache.debugAdapters || [];
@@ -276,7 +276,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             var recurBadge = s.recurring ? ' <span class="signal-recurring-badge" title="Recurring in ' + s.sessionCount + ' sessions">\u21BB</span>' : '';
             /* Add-to-case button on each signal row — data attributes carry the payload */
             var addBtn = '<span class="re-action re-add-to-case-signal" data-kind="' + esc(s.kind) + '" data-label="' + esc(s.label) + '" data-detail="' + esc(s.detail || '') + '" data-fp="' + esc(s.fingerprint || '') + '" title="' + SIGNAL_STRINGS.addToCase + '">+</span>';
-            return '<div class="signal-env-row insight-signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
+            return '<div class="signal-env-row signal-trend-row' + sevCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + ' ' + esc(text) + '</span>'
                 + '<span class="signal-hotfile-meta">' + meta + '</span>' + addBtn + '</div>';
         }).join('');

@@ -24,7 +24,7 @@ import {
     applyStartResult,
 } from './session-manager-internals';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
-import { setLogcatPidFilter } from '../integrations/adb-logcat-capture';
+import { getDefaultIntegrationRegistry } from '../integrations';
 export { LineData, LineListener, SplitListener };
 
 /**
@@ -144,9 +144,8 @@ export class SessionManagerImpl implements SessionManager {
     /** Called by the DAP tracker when a process event with systemProcessId is received. */
     onProcessId(sessionId: string, processId: number): void {
         this.processIds.set(sessionId, processId);
-        if (this.cachedConfig.integrationsAdapters?.includes('adbLogcat')) {
-            setLogcatPidFilter(processId);
-        }
+        // Forward to all streaming providers that care about PID filtering
+        getDefaultIntegrationRegistry().dispatchProcessId(processId);
     }
 
     /** Start capturing a debug session. */

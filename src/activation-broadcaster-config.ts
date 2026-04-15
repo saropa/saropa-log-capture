@@ -24,7 +24,7 @@ export function applyInitialBroadcasterConfig(
     broadcaster.setMinimapShowSqlDensity(cfg.minimapShowSqlDensity);
     broadcaster.setMinimapProportionalLines(cfg.minimapProportionalLines);
     broadcaster.setViewerRepeatThresholds(cfg.viewerRepeatThresholds);
-    broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbInsightsEnabled);
+    broadcaster.setViewerDbInsightsEnabled(cfg.viewerDbSignalsEnabled);
     broadcaster.setStaticSqlFromFingerprintEnabled(cfg.staticSqlFromFingerprintEnabled);
     broadcaster.setViewerDbDetectorToggles(viewerDbDetectorTogglesFromConfig(cfg));
     broadcaster.setViewerSlowBurstThresholds(cfg.viewerSlowBurstThresholds);

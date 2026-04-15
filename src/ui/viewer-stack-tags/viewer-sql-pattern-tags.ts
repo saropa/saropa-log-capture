@@ -12,7 +12,7 @@
  * - **Chip key** = verb category string (e.g. `'SELECT'`, `'Transaction'`, `'Other SQL'`).
  * - `parseSqlFingerprint().verb` is mapped to a category by `sqlVerbCategory()`.
  * - Lines with `sourceTag === 'database'` but no parseable verb go to **`Other SQL`**.
- * - Lines counted: `line`, `repeat-notification`, and `n-plus-one-insight` with `sourceTag === 'database'`.
+ * - Lines counted: `line`, `repeat-notification`, and `n-plus-one-signal` with `sourceTag === 'database'`.
  *
  * ## Performance
  * - **`registerSqlPattern`** (hot path during streaming): O(1) per line — just increment verb count.
@@ -47,7 +47,7 @@ function sqlVerbCategory(verb) {
 function shouldTrackSqlPatternLine(item) {
     if (!item || item.type === 'marker') return false;
     if (item.sourceTag !== 'database') return false;
-    return item.type === 'line' || item.type === 'repeat-notification' || item.type === 'n-plus-one-insight';
+    return item.type === 'line' || item.type === 'repeat-notification' || item.type === 'n-plus-one-signal';
 }
 
 function sqlPatternRowHidden(item) {
