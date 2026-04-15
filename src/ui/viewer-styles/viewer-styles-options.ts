@@ -5,6 +5,7 @@
  */
 import { getExclusionChipStyles } from './viewer-styles-exclusion-chips';
 import { getOptionsExtraStyles } from './viewer-styles-options-extra';
+import { getSeverityKeywordsStyles } from './viewer-styles-options-severity-keywords';
 
 export function getOptionsStyles(): string {
     return /* css */ `
@@ -218,7 +219,7 @@ export function getOptionsStyles(): string {
     padding: 0 0 4px 24px;
 }
 
-/* Log Inputs: subheading before external source checkboxes */
+/* Log Sources: subheading before external source checkboxes */
 .source-external-group-title {
     margin-top: 8px;
     padding-top: 4px;
@@ -270,46 +271,5 @@ export function getOptionsStyles(): string {
     display: none !important;
 }
 
-/* Severity keywords display */
-.severity-keywords-display {
-    margin-bottom: 8px;
-}
-.sk-level-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 3px 0;
-    font-size: 11px;
-}
-.sk-dot {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-    border-radius: 50%;
-    margin-top: 3px;
-}
-.sk-label {
-    font-weight: 600;
-    min-width: 80px;
-    color: var(--vscode-foreground);
-}
-.sk-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 3px;
-}
-.sk-pill {
-    background: var(--vscode-badge-background, rgba(90, 93, 94, 0.4));
-    color: var(--vscode-badge-foreground, var(--vscode-foreground));
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    white-space: nowrap;
-}
-.sk-pills em {
-    opacity: 0.5;
-    font-size: 10px;
-}
-
-` + getOptionsExtraStyles() + getExclusionChipStyles();
+` + getOptionsExtraStyles() + getExclusionChipStyles() + getSeverityKeywordsStyles();
 }

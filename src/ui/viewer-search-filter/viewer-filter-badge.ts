@@ -26,7 +26,7 @@ function updateFilterBadge() {
     if (typeof exclusionsEnabled !== 'undefined' && exclusionsEnabled
         && typeof exclusionRules !== 'undefined' && exclusionRules.length > 0) count++;
 
-    // Tier filters changed from default (Flutter App=all, Device=warnplus, External=warnplus)
+    // Tier filters changed from default (Flutter DAP=all, Device=warnplus, External=warnplus)
     if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') count++;
     if (typeof showDevice !== 'undefined' && showDevice !== 'warnplus') count++;
     if (typeof showExternal !== 'undefined' && showExternal !== 'warnplus') count++;

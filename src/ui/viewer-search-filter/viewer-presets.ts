@@ -172,7 +172,7 @@ function getCurrentFilters() {
     if (searchInput && searchInput.value) { filters.searchPattern = searchInput.value; }
     if (typeof exclusionsEnabled !== 'undefined') { filters.exclusionsEnabled = exclusionsEnabled; }
     /* Save tri-state tier modes — only save non-default values to keep presets lean.
-       Defaults: Flutter App='all', Device='warnplus', External='warnplus'. */
+       Defaults: Flutter DAP='all', Device='warnplus', External='warnplus'. */
     if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') { filters.flutterMode = showFlutter; }
     if (typeof showDevice !== 'undefined' && showDevice !== 'warnplus') { filters.deviceMode = showDevice; }
     if (typeof showExternal !== 'undefined' && showExternal !== 'warnplus') { filters.externalMode = showExternal; }
@@ -211,7 +211,7 @@ function presetClearSearchInputValue() {
 }
 
 /** Reset all filters back to defaults.
- * Defaults: Flutter App=all, Device=warnplus, External=warnplus. */
+ * Defaults: Flutter DAP=all, Device=warnplus, External=warnplus. */
 function resetAllFilters() {
     resetLevelFilters();
     activeFilters = null;

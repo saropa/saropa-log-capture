@@ -5,7 +5,7 @@
  * 'warnplus' (show only warnings and errors), and 'none' (hide everything).
  * Device-critical items always bypass the filter regardless of mode.
  *
- * Defaults: Flutter App = 'all', Device = 'warnplus', External = 'warnplus'.
+ * Defaults: Flutter DAP = 'all', Device = 'warnplus', External = 'warnplus'.
  *
  * Tests exercise isTierHidden() by evaluating the generated script and
  * calling the function with various item shapes.
@@ -32,7 +32,7 @@ function buildSandbox(testBody: string): () => unknown {
 
 suite('viewer-stack-filter tri-state', () => {
     suite('default state', () => {
-        test('should default Flutter App to all, Device to warnplus, External to warnplus', () => {
+        test('should default Flutter DAP to all, Device to warnplus, External to warnplus', () => {
             const result = buildSandbox(`return { f: showFlutter, d: showDevice, e: showExternal };`)();
             assert.deepStrictEqual(result, { f: 'all', d: 'warnplus', e: 'warnplus' });
         });

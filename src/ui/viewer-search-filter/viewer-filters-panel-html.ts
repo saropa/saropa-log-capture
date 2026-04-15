@@ -1,86 +1,34 @@
 /**
- * HTML template for the filters panel.
+ * HTML template for the Tags & Origins slide-out panel.
  *
- * Slide-out panel from the right side with organized sections for all
- * viewer filter controls:
- *   - Quick Filters (presets + reset)
- *   - Log Inputs (Flutter App / Device / External tier radios)
- *   - Exclusions (exclusion patterns)
+ * Opened from the icon bar Tags button. Contains chip-heavy browsing
+ * sections that need room to breathe — moved out of the narrow filter
+ * drawer where they were crammed into tiny accordions.
+ *
+ * Sections:
  *   - Message Tags (source tag chips from logging framework)
  *   - Code Origins (class/method tag chips)
- *   - File Scope (narrow by active editor path)
  *   - SQL Commands (normalized Drift SQL fingerprints)
+ *   - Individual Sources (per-category toggles — hidden placeholder)
  *
- * Tag search input at the top filters chip labels across tag sections.
+ * Tag search input at the top filters chip labels across all sections.
  */
 
-/** Returns the HTML for the filters panel element. */
-export function getFiltersPanelHtml(): string {
-    return `<div id="filters-panel" class="options-panel" role="region" aria-label="Filters">
+/** Returns the HTML for the Tags & Origins panel element. */
+export function getTagsPanelHtml(): string {
+    return `<div id="tags-panel" class="options-panel" role="region" aria-label="Tags and Origins">
     <div class="options-header">
-        <span>Filters</span>
-        <button class="filters-close options-close" title="Close" aria-label="Close Filters">&times;</button>
+        <span>Tags &amp; Origins</span>
+        <button class="tags-close options-close" title="Close" aria-label="Close Tags &amp; Origins">&times;</button>
     </div>
 
     <div class="options-search-wrapper">
-        <input id="filters-search" type="text" placeholder="Search tags\u2026" aria-label="Search tags" />
-        <button id="filters-search-clear" class="options-search-clear" title="Clear" aria-label="Clear search">&times;</button>
+        <input id="tags-search" type="text" placeholder="Search tags\u2026" aria-label="Search tags" />
+        <button id="tags-search-clear" class="options-search-clear" title="Clear" aria-label="Clear search">&times;</button>
     </div>
 
     <div class="options-content">
-        <!-- Quick Filters Section -->
-        <div class="options-section">
-            <h3 class="options-section-title">Quick Filters</h3>
-            <div class="options-row">
-                <select id="preset-select" title="Quick Filters" style="flex:1">
-                    <option value="">None</option>
-                </select>
-            </div>
-            <div class="options-row">
-                <button id="reset-all-filters" class="options-action-btn" title="Clear all active filters and return to default view">Reset all filters</button>
-            </div>
-        </div>
-
-        <!-- Log Inputs: Flutter App / Device / External tier radios -->
-        <div class="options-section" id="log-inputs-section" style="display:none">
-            <h3 class="options-section-title">Log Inputs</h3>
-            <div class="options-row-list tier-filter-list">
-                <fieldset class="tier-radio-group">
-                    <legend>Flutter App</legend>
-                    <label title="Show all output from your app code"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
-                    <label title="Show only warnings and errors from your app"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
-                    <label title="Hide all app output"><input type="radio" name="tier-flutter" value="none" /> None</label>
-                </fieldset>
-                <fieldset class="tier-radio-group">
-                    <legend>Device</legend>
-                    <div class="tier-hint">Logcat, Android system logs</div>
-                    <label title="Show all device/system logs (critical errors like crashes and ANR are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
-                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" checked /> Warn+</label>
-                    <label title="Hide device/system logs (critical errors remain visible)"><input type="radio" name="tier-device" value="none" /> None</label>
-                </fieldset>
-                <fieldset class="tier-radio-group">
-                    <legend>External</legend>
-                    <div class="tier-hint">Saved logs, terminal, browser, drift-perf</div>
-                    <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
-                    <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
-                    <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
-                </fieldset>
-            </div>
-        </div>
-
-        <!-- Exclusions: exclusion patterns -->
-        <div class="options-section">
-            <h3 class="options-section-title">Exclusions</h3>
-            <div class="exclusion-input-wrapper">
-                <label class="exclusion-toggle" title="Hide log lines matching configured exclusion patterns"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label" class="u-sr-only">Exclusion patterns</span></label>
-                <input id="exclusion-add-input" type="text" placeholder="e.g. verbose or /debug/i" />
-                <button id="exclusion-add-btn" title="Add exclusion pattern">Add</button>
-            </div>
-            <div id="exclusion-chips" class="exclusion-chips"></div>
-            <div class="options-hint" id="exclusion-count"></div>
-        </div>
-
-        <!-- Message Tags Section (populated dynamically) -->
+        <!-- Message Tags Section (populated dynamically by rebuildTagChips) -->
         <div class="options-section" id="log-tags-section" style="display:none">
             <h3 class="options-section-title">Message Tags</h3>
             <div class="options-hint">Tags from your logging framework</div>
@@ -90,7 +38,7 @@ export function getFiltersPanelHtml(): string {
             <div id="source-tag-chips" class="source-tag-chips options-tags"></div>
         </div>
 
-        <!-- Code Origins Section (populated dynamically) -->
+        <!-- Code Origins Section (populated dynamically by rebuildClassTagChips) -->
         <div class="options-section" id="class-tags-section" style="display:none">
             <h3 class="options-section-title">Code Origins</h3>
             <div class="options-hint">Class &amp; method where log originated</div>
@@ -98,22 +46,6 @@ export function getFiltersPanelHtml(): string {
                 <span id="class-tag-summary" class="source-tag-summary"></span>
             </div>
             <div id="class-tag-chips" class="source-tag-chips options-tags"></div>
-        </div>
-
-        <!-- File Scope: DAP source path relative to active editor -->
-        <div class="options-section" id="scope-section">
-            <h3 class="options-section-title">File Scope</h3>
-            <div id="scope-status" class="options-hint"></div>
-            <label class="options-row"><input type="radio" name="scope" value="all" checked /> All logs</label>
-            <label class="options-row"><input type="radio" name="scope" value="workspace" disabled /> Only workspace<span id="scope-suffix-workspace" class="scope-suffix"></span></label>
-            <label class="options-row"><input type="radio" name="scope" value="package" disabled /> Only package<span id="scope-suffix-package" class="scope-suffix"></span></label>
-            <label class="options-row"><input type="radio" name="scope" value="directory" disabled /> Only directory<span id="scope-suffix-directory" class="scope-suffix"></span></label>
-            <label class="options-row"><input type="radio" name="scope" value="file" disabled /> Only file<span id="scope-suffix-file" class="scope-suffix"></span></label>
-            <label class="options-row scope-unattrib-row" title="When a scope is active, also exclude lines that have no source file from the debugger">
-                <input type="checkbox" id="scope-hide-unattrib" />
-                <span>Exclude lines with no source file</span>
-            </label>
-            <div id="scope-filter-hint" class="options-hint scope-filter-hint" style="display:none" aria-live="polite"></div>
         </div>
 
         <!-- SQL command-type chips (verb-based: SELECT, INSERT, etc.) -->
@@ -124,8 +56,18 @@ export function getFiltersPanelHtml(): string {
             </div>
             <div id="sql-pattern-chips" class="source-tag-chips options-tags"></div>
             <div class="options-row">
-                <button type="button" id="open-sql-query-history-from-filters" class="options-action-btn" title="Open scrollable list of SQL fingerprints for this session">SQL Query History\u2026</button>
+                <button type="button" id="open-sql-query-history-from-tags" class="options-action-btn" title="Open scrollable list of SQL fingerprints for this session">SQL Query History\u2026</button>
             </div>
+        </div>
+
+        <!-- Individual Sources: per-category toggles (placeholder, hidden until populated) -->
+        <div class="options-section" id="individual-sources-section" style="display:none">
+            <h3 class="options-section-title">Individual Sources</h3>
+            <div class="options-hint">Toggle visibility of individual output channels</div>
+            <div class="options-row">
+                <span id="source-category-summary" class="source-tag-summary"></span>
+            </div>
+            <div id="source-category-chips" class="source-tag-chips options-tags"></div>
         </div>
     </div>
 </div>`;
