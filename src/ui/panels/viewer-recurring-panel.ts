@@ -24,7 +24,7 @@ export function getRecurringPanelHtml(): string {
         <div id="recurring-loading" class="recurring-loading" style="display:none">Loading error data\u2026</div>
     </div>
     <div id="recurring-footer" class="recurring-footer">
-        <span id="recurring-footer-insights">Open Full Signals</span>
+        <span id="recurring-footer-signals">Open Full Signals</span>
         <span id="recurring-export-summary" class="recurring-footer-action" title="Export recurring errors and hot files as CSV or JSON">Export summary</span>
     </div>
 </div>`;
@@ -113,9 +113,9 @@ export function getRecurringPanelScript(): string {
         vscodeApi.postMessage({ type: 'requestRecurringErrors' });
     });
 
-    var footerInsights = document.getElementById('recurring-footer-insights');
-    if (footerInsights) footerInsights.addEventListener('click', function() {
-        vscodeApi.postMessage({ type: 'openInsights' });
+    var footerSignals = document.getElementById('recurring-footer-signals');
+    if (footerSignals) footerSignals.addEventListener('click', function() {
+        vscodeApi.postMessage({ type: 'openSignals' });
     });
     var exportSummaryEl = document.getElementById('recurring-export-summary');
     if (exportSummaryEl) exportSummaryEl.addEventListener('click', function() {

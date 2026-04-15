@@ -64,22 +64,26 @@ function getAccordionSections(): string {
         ${accordionSection('log-inputs-section', 'Log Inputs', `
             <div class="options-row-list tier-filter-list">
                 <fieldset class="tier-radio-group">
-                    <legend>Flutter</legend>
-                    <label title="Show all Flutter output"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
-                    <label title="Show only Flutter warnings and errors"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
-                    <label title="Hide all Flutter output"><input type="radio" name="tier-flutter" value="none" /> None</label>
+                    <legend>Flutter App</legend>
+                    <label title="Show all output from your app code"><input type="radio" name="tier-flutter" value="all" checked /> All</label>
+                    <label title="Show only warnings and errors from your app"><input type="radio" name="tier-flutter" value="warnplus" /> Warn+</label>
+                    <label title="Hide all app output"><input type="radio" name="tier-flutter" value="none" /> None</label>
                 </fieldset>
                 <fieldset class="tier-radio-group">
                     <legend>Device</legend>
-                    <label title="Show all device/system logs (excludes critical device errors which are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
-                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" /> Warn+</label>
-                    <label title="Hide all device/system logs"><input type="radio" name="tier-device" value="none" checked /> None</label>
+                    <div class="tier-hint">Logcat, Android system logs</div>
+                    <label title="Show all device/system logs (critical errors like crashes and ANR are always visible)"><input type="radio" name="tier-device" value="all" /> All</label>
+                    <label title="Show only device warnings and errors"><input type="radio" name="tier-device" value="warnplus" checked /> Warn+</label>
+                    <label title="Hide device/system logs (critical errors remain visible)"><input type="radio" name="tier-device" value="none" /> None</label>
+                </fieldset>
+                <fieldset class="tier-radio-group">
+                    <legend>External</legend>
+                    <div class="tier-hint">Log files, terminal, browser, drift-perf</div>
+                    <label title="Show all external source output"><input type="radio" name="tier-external" value="all" /> All</label>
+                    <label title="Show only warnings and errors from external sources"><input type="radio" name="tier-external" value="warnplus" checked /> Warn+</label>
+                    <label title="Hide all external source output"><input type="radio" name="tier-external" value="none" /> None</label>
                 </fieldset>
             </div>
-            <div id="log-inputs-divider" class="log-inputs-divider" style="display:none"></div>
-            <div id="source-filter-list" class="options-row-list source-filter-list"></div>
-            <div id="log-inputs-divider-cat" class="log-inputs-divider" style="display:none"></div>
-            <div id="output-channels-list"></div>
         `)}
         ${accordionSection('exclusions-section', 'Exclusions', `
             <label class="options-row" title="Enable or disable exclusion pattern filtering"><input type="checkbox" id="opt-exclusions" /><span id="exclusion-label">Exclusion patterns</span></label>

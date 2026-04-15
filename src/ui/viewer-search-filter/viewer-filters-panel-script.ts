@@ -79,98 +79,15 @@ function closeFiltersPanel() {
     if (typeof clearActivePanel === 'function') clearActivePanel('filters');
 }
 
-/** Human-readable label for an input source id. */
-function sourceFilterLabel(id) {
-    if (id === 'debug') return 'Debug output';
-    if (id === 'terminal') return 'Terminal';
-    if (id === 'browser') return 'Browser console';
-    if (typeof id === 'string' && id.indexOf('external:') === 0) {
-        var rest = id.slice(9);
-        if (!rest || rest === 'external') return 'External log';
-        return rest + ' (external)';
-    }
-    return id;
-}
-
-/** Collect checkboxes under the source filter list. */
-function getSourceFilterCheckboxes(list) {
-    return list.querySelectorAll('input[type="checkbox"][data-source]');
-}
-
-/** Rebuild enabledSources from checkbox state; null means all on. */
-function commitSourceFilterFromCheckboxes(list) {
-    var boxes = getSourceFilterCheckboxes(list);
-    var checked = [];
-    for (var j = 0; j < boxes.length; j++) {
-        if (boxes[j].checked) checked.push(boxes[j].dataset.source);
-    }
-    window.enabledSources = checked.length === boxes.length ? null : checked;
-    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
-    if (typeof recalcHeights === 'function') recalcHeights();
-    if (typeof renderViewport === 'function') renderViewport(true);
-}
-
-/** Sync source filter checkboxes from window.availableSources / window.enabledSources. */
-function syncSourceFilterUi() {
-    var section = document.getElementById('log-inputs-section');
-    var list = document.getElementById('source-filter-list');
-    var divider = document.getElementById('log-inputs-divider');
-    if (!list) return;
-    var available = (typeof window !== 'undefined' && window.availableSources) ? window.availableSources : [];
-    var hasSources = available.length >= 2;
-    while (list.firstChild) list.removeChild(list.firstChild);
-    if (divider) divider.style.display = 'none';
-
-    if (!hasSources) {
-        if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
-        return;
-    }
-
-    var enabled = (typeof window !== 'undefined' && window.enabledSources) ? window.enabledSources : null;
-    var allEnabled = !enabled || enabled.length === available.length;
-
-    for (var i = 0; i < available.length; i++) {
-        var sid = available[i];
-        var row = document.createElement('label');
-        row.className = 'options-row';
-        row.title = 'Show or hide ' + sourceFilterLabel(sid) + ' output';
-        var cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.dataset.source = sid;
-        cb.checked = allEnabled || (enabled && enabled.indexOf(sid) >= 0);
-        cb.addEventListener('change', function() { commitSourceFilterFromCheckboxes(list); });
-        row.appendChild(cb);
-        row.appendChild(document.createTextNode(' ' + sourceFilterLabel(sid)));
-        list.appendChild(row);
-    }
-
-    // Show divider if categories also exist
-    var channelsList = document.getElementById('output-channels-list');
-    if (divider && channelsList && channelsList.children.length > 0) {
-        divider.style.display = '';
-    }
-    if (typeof updateLogInputsSummary === 'function') updateLogInputsSummary();
-}
-
-/** Update the combined Log Inputs accordion summary (sources + categories). */
+/** Update the Log Inputs accordion summary based on tier radio state. */
 function updateLogInputsSummary() {
     if (typeof setAccordionSummary !== 'function') return;
-    var sourceList = document.getElementById('source-filter-list');
-    var channelsList = document.getElementById('output-channels-list');
-    var totalSrc = 0, enabledSrc = 0, totalCat = 0, enabledCat = 0;
-    if (sourceList) {
-        var srcBoxes = sourceList.querySelectorAll('input[type="checkbox"][data-source]');
-        totalSrc = srcBoxes.length;
-        for (var s = 0; s < srcBoxes.length; s++) { if (srcBoxes[s].checked) enabledSrc++; }
-    }
-    if (channelsList) {
-        var catBoxes = channelsList.querySelectorAll('input[type="checkbox"]');
-        totalCat = catBoxes.length;
-        for (var c = 0; c < catBoxes.length; c++) { if (catBoxes[c].checked) enabledCat++; }
-    }
-    var total = totalSrc + totalCat;
-    var enabled = enabledSrc + enabledCat;
-    setAccordionSummary('log-inputs-section', total > 0 ? (enabled + '/' + total) : '');
+    /* Count how many tiers are not at default (Flutter=all, Device=warnplus, External=warnplus) */
+    var changed = 0;
+    if (typeof showFlutter !== 'undefined' && showFlutter !== 'all') changed++;
+    if (typeof showDevice !== 'undefined' && showDevice !== 'warnplus') changed++;
+    if (typeof showExternal !== 'undefined' && showExternal !== 'warnplus') changed++;
+    setAccordionSummary('log-inputs-section', changed > 0 ? (changed + ' changed') : '');
 }
 
 /** Sync filter-related controls from current state. */
@@ -178,7 +95,7 @@ function syncFiltersPanelUi() {
     var exclCheck = document.getElementById('opt-exclusions');
     if (exclCheck && typeof exclusionsEnabled !== 'undefined') exclCheck.checked = exclusionsEnabled;
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
-    /* Sync tri-state tier radio buttons from current showFlutter/showDevice values */
+    /* Sync tri-state tier radio buttons from current showFlutter/showDevice/showExternal values */
     if (typeof showFlutter !== 'undefined') {
         var flutterRadio = document.querySelector('input[name="tier-flutter"][value="' + showFlutter + '"]');
         if (flutterRadio) flutterRadio.checked = true;
@@ -187,10 +104,13 @@ function syncFiltersPanelUi() {
         var deviceRadio = document.querySelector('input[name="tier-device"][value="' + showDevice + '"]');
         if (deviceRadio) deviceRadio.checked = true;
     }
+    if (typeof showExternal !== 'undefined') {
+        var externalRadio = document.querySelector('input[name="tier-external"][value="' + showExternal + '"]');
+        if (externalRadio) externalRadio.checked = true;
+    }
     if (typeof rebuildTagChips === 'function') rebuildTagChips();
     if (typeof rebuildClassTagChips === 'function') rebuildClassTagChips();
     if (typeof syncScopeUi === 'function') syncScopeUi();
-    if (typeof syncSourceFilterUi === 'function') syncSourceFilterUi();
     if (typeof updatePresetDropdown === 'function') updatePresetDropdown();
 }
 
@@ -203,7 +123,7 @@ if (optExcl) optExcl.addEventListener('change', function(e) {
     if (typeof rebuildExclusionChips === 'function') rebuildExclusionChips();
 });
 
-// Tier filter controls (Flutter / Device) — tri-state radio groups
+// Tier filter controls (Flutter App / Device / External) — tri-state radio groups
 var tierFlutterRadios = document.querySelectorAll('input[name="tier-flutter"]');
 tierFlutterRadios.forEach(function(radio) {
     radio.addEventListener('change', function(e) {
@@ -214,6 +134,12 @@ var tierDeviceRadios = document.querySelectorAll('input[name="tier-device"]');
 tierDeviceRadios.forEach(function(radio) {
     radio.addEventListener('change', function(e) {
         if (e.target.checked && typeof setShowDevice === 'function') setShowDevice(e.target.value);
+    });
+});
+var tierExternalRadios = document.querySelectorAll('input[name="tier-external"]');
+tierExternalRadios.forEach(function(radio) {
+    radio.addEventListener('change', function(e) {
+        if (e.target.checked && typeof setShowExternal === 'function') setShowExternal(e.target.value);
     });
 });
 

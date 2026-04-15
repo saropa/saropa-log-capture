@@ -4,7 +4,7 @@ import { extractSourceReference, extractPackageHint } from '../source/source-lin
 import { isFrameworkFrame, isStackFrameLine, parseThreadHeader } from '../analysis/stack-parser';
 import { findInWorkspace, getSourcePreview, getGitHistory, getGitHistoryForLines, type SourceCodePreview, type GitCommit } from '../misc/workspace-analyzer';
 import { getGitBlame, type BlameLine } from '../git/git-blame';
-import { aggregateInsights } from '../misc/cross-session-aggregator';
+import { aggregateSignals } from '../misc/cross-session-aggregator';
 import { extractImports, type ImportResults } from '../source/import-extractor';
 import type { StackFrame, FileAnalysis, CrossSessionMatch } from './bug-report-collector';
 
@@ -66,7 +66,7 @@ export async function collectWorkspaceData(
         uri && crashLine ? getGitBlame(uri, crashLine).catch(() => undefined) : Promise.resolve(undefined),
         uri ? getGitHistory(uri, 10) : Promise.resolve([]),
         uri && crashLine ? getGitHistoryForLines(uri, lineStart, lineEnd) : Promise.resolve([]),
-        aggregateInsights(),
+        aggregateSignals(),
         uri ? extractImports(uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
     const match = insights.recurringErrors.find(e => e.hash === fingerprint);
