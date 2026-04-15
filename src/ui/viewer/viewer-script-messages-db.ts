@@ -1,6 +1,6 @@
 /**
  * Database-related message handlers for the log viewer webview.
- * Handles repeat thresholds, slow burst thresholds, DB insights, detector toggles, and baseline summaries.
+ * Handles repeat thresholds, slow burst thresholds, DB signals, detector toggles, and baseline summaries.
  * Extracted from viewer-script-messages.ts to keep the file under the line limit.
  */
 
@@ -37,7 +37,7 @@ function handleDbMessages(msg) {
             }
             return true;
         case 'setViewerDbInsightsEnabled':
-            viewerDbInsightsEnabled = msg.enabled !== false;
+            viewerDbSignalsEnabled = msg.enabled !== false;
             return true;
         case 'setStaticSqlFromFingerprintEnabled':
             staticSqlFromFingerprintEnabled = msg.enabled !== false;

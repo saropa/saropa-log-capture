@@ -150,8 +150,9 @@ export function getOptionsStyles(): string {
     margin: 0;
     padding: 4px 0;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 4px 10px;
     font-size: 12px;
 }
 .tier-radio-group legend {
@@ -162,6 +163,13 @@ export function getOptionsStyles(): string {
     font-weight: 600;
     font-size: 12px;
     color: var(--vscode-foreground);
+}
+/* Subdescription under the tier legend — explains what the tier includes */
+.tier-hint {
+    width: 100%;
+    font-size: 11px;
+    opacity: 0.7;
+    margin: -2px 0 2px 0;
 }
 .tier-radio-group label {
     display: flex;

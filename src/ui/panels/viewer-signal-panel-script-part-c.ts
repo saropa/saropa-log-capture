@@ -1,9 +1,9 @@
 /**
- * Insight panel script part C: performance hero, list click handlers, message handler.
+ * Signal panel script part C: performance hero, list click handlers, message handler.
  * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
-/** Returns the third fragment of the Insight panel IIFE (hero, delegates, messages). */
+/** Returns the third fragment of the Signal panel IIFE (hero, delegates, messages). */
 export function getSignalScriptPartC(): string {
     return /* js */ `
     function renderPerformanceHero() {
@@ -67,7 +67,7 @@ export function getSignalScriptPartC(): string {
             if (heroSnapshotSummary) lines.push(heroSnapshotSummary);
             lines.push('');
         }
-        var perfView = document.getElementById('insight-pp-current-view');
+        var perfView = document.getElementById('signal-pp-current-view');
         if (perfView && perfView.children.length > 0) {
             lines.push('## Session details \\u2014 Performance');
             lines.push('');
@@ -282,7 +282,7 @@ export function getSignalScriptPartC(): string {
             heroSnapshotSummary = (e.data.heroSnapshotSummary != null && e.data.heroSnapshotSummary !== '') ? String(e.data.heroSnapshotSummary) : '';
             heroSparklineData = e.data.heroSparklineData || undefined;
             var scopeEl = document.getElementById('signal-performance-scope');
-            var labelEl = document.getElementById('insight-current-log-label');
+            var labelEl = document.getElementById('signal-current-log-label');
             if (scopeEl && labelEl) {
                 if (hasLog && currentLogLabel) { labelEl.textContent = currentLogLabel; scopeEl.style.display = ''; }
                 else if (hasLog) { labelEl.textContent = 'No log open'; scopeEl.style.display = ''; }

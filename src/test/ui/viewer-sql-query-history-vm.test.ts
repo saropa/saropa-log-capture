@@ -48,7 +48,7 @@ function dbLine(fp: string, ts: number, extra: Record<string, unknown> = {}): Re
         sourceTag: 'database',
         height: 20,
         timestamp: ts,
-        dbInsight: { fingerprint: fp, sqlSnippet: `SELECT ${fp}` },
+        dbSignal: { fingerprint: fp, sqlSnippet: `SELECT ${fp}` },
         ...extra,
     };
 }
@@ -86,7 +86,7 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
     test('sampleSql keeps raw sqlSnippet (quoted table names) for display', () => {
         const ctx = loadRuntime([
             dbLine("fp1", 10, {
-                dbInsight: { fingerprint: "fp1", sqlSnippet: 'SELECT * FROM "contacts" WHERE id = 1' },
+                dbSignal: { fingerprint: "fp1", sqlSnippet: 'SELECT * FROM "contacts" WHERE id = 1' },
             }),
         ]);
         ctx.rebuildSqlQueryHistoryFromAllLines();
@@ -123,7 +123,7 @@ suite('viewer-sql-query-history VM (DB_11)', () => {
     test('jump target: sqlHistoryTargetLineLikelyHidden delegates to calcItemHeight', () => {
         /* Inject a stub calcItemHeight into the sandbox to verify delegation. */
         const lines: unknown[] = [
-            { type: 'line', sourceTag: 'database', height: 20, timestamp: 1, dbInsight: { fingerprint: 'f' } },
+            { type: 'line', sourceTag: 'database', height: 20, timestamp: 1, dbSignal: { fingerprint: 'f' } },
         ];
         const context = vm.createContext({
             allLines: lines,

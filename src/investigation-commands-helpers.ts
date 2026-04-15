@@ -1,5 +1,5 @@
 /**
- * Helpers for investigation commands: resolve/pick investigation, format insight payload.
+ * Helpers for investigation commands: resolve/pick investigation, format signal payload.
  */
 
 import * as vscode from 'vscode';

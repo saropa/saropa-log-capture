@@ -36,7 +36,7 @@ export const N_PLUS_ONE_EMBED_CONFIG: NPlusOneDetectorConfig = {
     minDistinctArgs: 4,
     /** distinctArgs / repeats — dampens “same few args cycling” false positives. */
     minDistinctRatio: 0.5,
-    /** Suppress duplicate insight rows for the same fingerprint (ms). */
+    /** Suppress duplicate signal rows for the same fingerprint (ms). */
     cooldownMs: 8000,
     /** Cap map entries so long sessions do not grow `byFingerprint` without bound. */
     maxFingerprintsTracked: 64,
@@ -189,21 +189,21 @@ export class NPlusOneDetector {
             this.pruneFingerprints(now);
             return null;
         }
-        /* Cooldown only after at least one insight (0 means "never fired"). */
+        /* Cooldown only after at least one signal (0 means "never fired"). */
         if (entry.lastInsightTs > 0 && now - entry.lastInsightTs < this.cfg.cooldownMs) {
             this.pruneFingerprints(now);
             return null;
         }
         entry.lastInsightTs = now;
         const windowSpanMs = entry.hits[entry.hits.length - 1].ts - entry.hits[0].ts;
-        const insight: NPlusOneSignal = {
+        const signal: NPlusOneSignal = {
             repeats,
             distinctArgs,
             windowSpanMs,
             confidence: confidenceFor(distinctRatio, repeats),
         };
         this.pruneFingerprints(now);
-        return insight;
+        return signal;
     }
 
     /** Visible for tests that assert pruning behavior. */

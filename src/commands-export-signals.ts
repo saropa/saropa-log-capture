@@ -15,7 +15,7 @@ import { buildSignalsSummary } from './modules/signals/signals-summary';
 
 export type ScopeChoice = 'currentSession' | 'investigation' | '7d' | 'all';
 
-/** Resolve cross-session insights for the chosen scope (current session, investigation, 7d, or all). */
+/** Resolve cross-session signals for the chosen scope (current session, investigation, 7d, or all). */
 export async function resolveSignals(
     scope: ScopeChoice,
     viewerProvider: CommandDeps['viewerProvider'],
@@ -68,12 +68,12 @@ export function exportSignalsSummaryCmd(
         );
         if (!scopeItem) { return; }
 
-        const insights = await vscode.window.withProgress(
+        const aggregated = await vscode.window.withProgress(
             { location: vscode.ProgressLocation.Notification, title: t('signalsExport.progress') },
             async () => resolveSignals(scopeItem.value, viewerProvider, investigationStore),
         );
 
-        if (!insights) {
+        if (!aggregated) {
             void vscode.window.showWarningMessage(t('signalsExport.noData'));
             return;
         }
@@ -88,9 +88,9 @@ export function exportSignalsSummaryCmd(
         if (!formatItem) { return; }
 
         const timeRangeLabel = scopeItem.value === '7d' ? '7d' : scopeItem.value === 'all' ? 'all' : scopeItem.value === 'investigation' ? 'investigation' : 'session';
-        const summary = buildSignalsSummary(insights, { timeRangeLabel });
+        const summary = buildSignalsSummary(aggregated, { timeRangeLabel });
         const ext = formatItem.value;
-        const defaultName = `insights-summary.${ext}`;
+        const defaultName = `signals-summary.${ext}`;
         const filters: Record<string, string[]> = ext === 'json' ? { JSON: ['json'] } : { CSV: ['csv'] };
         const uri = await vscode.window.showSaveDialog({
             defaultUri: vscode.Uri.file(defaultName),

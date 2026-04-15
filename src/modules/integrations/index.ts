@@ -7,6 +7,7 @@
 export type {
     Contribution, HeaderContribution, MetaContribution, SidecarContribution,
     IntegrationProvider, IntegrationContext, IntegrationEndContext,
+    StreamingWriter,
 } from './types';
 export { IntegrationRegistry, type RunOnSessionStartAsyncOptions } from './registry';
 export {

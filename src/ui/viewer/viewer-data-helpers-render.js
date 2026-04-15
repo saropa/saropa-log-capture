@@ -39,11 +39,16 @@ function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
-       When active, this subsumes source-tag stripping for structured formats. */
+       When active, this subsumes source-tag stripping for structured formats.
+       parseStructuredPrefix already accounts for leading [bracket] pairs
+       (e.g. [11:49:55.128] [logcat]) in the prefixLen, so one stripHtmlPrefix
+       call removes brackets + structured prefix together. */
     if (typeof structuredLineParsing !== 'undefined' && structuredLineParsing && item.structuredPrefixLen > 0) {
         rawHtml = (typeof stripHtmlPrefix === 'function') ? stripHtmlPrefix(rawHtml, item.structuredPrefixLen) : rawHtml;
     } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && item.sourceTag) {
-        rawHtml = rawHtml.replace(/^\\[([^\\]]+)\\]\\s?/, '');
+        /* Strip ALL leading [bracket] pairs — DAP adapters may prepend multiple
+           (e.g. [11:49:55.128] [stdout]) and we only want the message body. */
+        rawHtml = rawHtml.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
     }
     var html = (typeof highlightSearchInHtml === 'function') ? highlightSearchInHtml(rawHtml) : rawHtml;
     var matchCls = (typeof isCurrentMatch === 'function' && isCurrentMatch(idx)) ? ' current-match'
@@ -216,12 +221,12 @@ function renderItem(item, idx, prevVis) {
     var contBadge = '';
     if (item.contChildCount > 0 && item.contGroupId >= 0) {
         var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
-        var contLabel = item.contCollapsed ? '[+' + item.contChildCount + ' lines]' : '[\\u2212' + item.contChildCount + ' lines]';
-        var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse continuation lines';
-        contBadge = ' <span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
+        var contLabel = item.contCollapsed ? '[+]' : '[\\u2212]';
+        var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse ' + item.contChildCount + ' continuation lines';
+        contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
     var catBadge = getCategoryBadge(item);
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + elapsed + badge + compressDupBadge + catBadge + html + contBadge + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }
