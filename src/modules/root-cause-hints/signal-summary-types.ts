@@ -63,6 +63,8 @@ export interface PersistedSignalEntryV2 {
     readonly category?: string;
     readonly avgDurationMs?: number;
     readonly maxDurationMs?: number;
+    /** Top line indices where this signal was detected (for jump-to-line navigation). Max 3. */
+    readonly lineIndices?: readonly number[];
 }
 
 /**

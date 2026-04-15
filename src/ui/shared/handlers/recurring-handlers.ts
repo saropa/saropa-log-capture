@@ -146,6 +146,7 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
         signalsInThisLog: await enrichSignalsWithDaContext(
             await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
         ),
+        coOccurrences: aggregated?.coOccurrences ?? [],
     });
 }
 
