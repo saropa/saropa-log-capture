@@ -4,7 +4,7 @@
  * **Drift SQL:** `parseSqlFingerprint(plain)` runs **once** per normal log line; the result
  * drives repeat keys (for `database`-tagged lines), `emitDbLineDetectors` (DB_15: primary
  * `session-rollup-patch`, slow-burst markers, N+1, `annotate-line`). Session rollup and
- * `lineItem.dbInsight` are applied inside `emitDbLineDetectors`. Repeat-collapse and full-line
+ * `lineItem.dbSignal` are applied inside `emitDbLineDetectors`. Repeat-collapse and full-line
  * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
  * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`.
  *
@@ -175,7 +175,7 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     if (lTag && lTag === sTag) lTag = null;
     var cTags = (typeof parseClassTags === 'function') ? parseClassTags(plain) : [];
 
-    // One parse per line: repeat tracker, dbInsight, and DB detectors share this object.
+    // One parse per line: repeat tracker, dbSignal, and DB detectors share this object.
     var sqlMeta = (typeof parseSqlFingerprint === 'function') ? parseSqlFingerprint(plain) : null;
 
     // Real-time repeat detection (fingerprint key only for database-tagged Drift SQL).

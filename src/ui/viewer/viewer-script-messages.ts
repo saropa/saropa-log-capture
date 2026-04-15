@@ -74,7 +74,7 @@ window.addEventListener('message', function(event) {
                 repeatTracker.sqlRepeatPreview = null; repeatTracker.sqlStreakFingerprint = null; repeatTracker.sqlStreakSqlSnippet = '';
                 repeatTracker.sqlStreakFirstTs = 0; repeatTracker.sqlStreakLastTs = 0; repeatTracker.sqlStreakVariantOrder = []; repeatTracker.sqlStreakVariantCounts = null;
             }
-            if (typeof resetDbInsightDetectorSession === 'function') resetDbInsightDetectorSession();
+            if (typeof resetDbSignalDetectorSession === 'function') resetDbSignalDetectorSession();
             if (typeof setDbBaselineFingerprintSummaryFromHost === 'function') setDbBaselineFingerprintSummaryFromHost(null);
             if (typeof resetRootCauseHypothesesSession === 'function') resetRootCauseHypothesesSession();
             if (typeof resetCompressDupStreak === 'function') resetCompressDupStreak();

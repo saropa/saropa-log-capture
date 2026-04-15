@@ -3,8 +3,8 @@
  * Split from `viewer-data-add.ts` to stay under the file line budget.
  *
  * **Primary SQL rollup:** Ingest applies one `session-rollup-patch` (`db.ingest-rollup`) per parsed Drift fingerprint
- * before `runDbDetectors`, so `dbInsightSessionRollup` matches what baseline-volume and other detectors read. Normal
- * `lineItem.dbInsight` is attached afterward via `peekDbInsightRollup` (and a fallback object when the line is
+ * before `runDbDetectors`, so `dbSignalSessionRollup` matches what baseline-volume and other detectors read. Normal
+ * `lineItem.dbSignal` is attached afterward via `peekDbSignalRollup` (and a fallback object when the line is
  * `database`-tagged but not parsed as Drift SQL).
  *
  * **Result ordering:** After `mergeDbDetectorResultsByStableKey`, `applyDbDetectorResultsInPriorityOrder` runs
@@ -73,7 +73,7 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 autoHidden: false,
                 source: lineSource,
                 timeRangeFiltered: false,
-                insightMeta: {
+                signalMeta: {
                     fingerprint: sqlMeta.fingerprint,
                     repeats: signal.repeats,
                     distinctArgs: signal.distinctArgs,
@@ -186,9 +186,9 @@ function applyDbDetectorResultsInPriorityOrder(merged, scopeFilt, ts, sp, lineSo
 /**
  * Drift SQL database lines: primary rollup patch, then registered DB detectors (slow burst, N+1, etc.).
  * Runs when sourceTag is 'database' and the line has parsed SQL and/or a replay duration.
- * @param lineItemForDbInsight - When set, attaches \`dbInsight\` after primary rollup (normal line row only).
+ * @param lineItemForDbSignal - When set, attaches \`dbSignal\` after primary rollup (normal line row only).
  */
-function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineSource, lvl, elapsedMs, plain, anchorSeq, lineItemForDbInsight) {
+function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineSource, lvl, elapsedMs, plain, anchorSeq, lineItemForDbSignal) {
     if (typeof runDbDetectors !== 'function') return;
     if (sourceTag !== 'database') return;
     var hasSql = !!sqlMeta;
@@ -205,15 +205,15 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
                 payload: { fingerprint: sqlMeta.fingerprint, elapsedMs: hasDur ? elapsedMs : undefined }
             }]);
         }
-        if (lineItemForDbInsight && typeof viewerDbSignalsEnabled !== 'undefined' && viewerDbSignalsEnabled && sourceTag === 'database') {
+        if (lineItemForDbSignal && typeof viewerDbSignalsEnabled !== 'undefined' && viewerDbSignalsEnabled && sourceTag === 'database') {
             var plainForSnip = plain || '';
             var snipFallback = (typeof driftSqlSnippetFromPlain === 'function')
                 ? driftSqlSnippetFromPlain(plainForSnip)
                 : plainForSnip;
             if (sqlMeta && sqlMeta.fingerprint) {
-                var rollupDb = (typeof peekDbInsightRollup === 'function') ? peekDbInsightRollup(sqlMeta.fingerprint) : null;
+                var rollupDb = (typeof peekDbSignalRollup === 'function') ? peekDbSignalRollup(sqlMeta.fingerprint) : null;
                 var snipDb = sqlMeta.sqlSnippet ? sqlMeta.sqlSnippet : snipFallback;
-                lineItemForDbInsight.dbInsight = {
+                lineItemForDbSignal.dbSignal = {
                     fingerprint: sqlMeta.fingerprint,
                     sqlSnippet: snipDb,
                     seenCount: rollupDb ? rollupDb.seenCount : 1,
@@ -221,7 +221,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
                     maxDurationMs: rollupDb ? rollupDb.maxDurationMs : undefined
                 };
             } else {
-                lineItemForDbInsight.dbInsight = {
+                lineItemForDbSignal.dbSignal = {
                     fingerprint: null,
                     sqlSnippet: snipFallback,
                     seenCount: 1,

@@ -2,7 +2,7 @@
  * Recurring Errors panel HTML and script for the webview.
  *
  * Superseded by the unified Signal panel (Recurring tab). This file is no longer
- * loaded; kept for reference. Styles in viewer-styles-recurring.ts are still used by Insight.
+ * loaded; kept for reference. Styles in viewer-styles-recurring.ts are still used by Signal panel.
  */
 
 /** Generate the recurring errors panel HTML. */
@@ -65,7 +65,7 @@ export function getRecurringPanelScript(): string {
 
     function renderErrors(errors, statuses) {
         if (recurLoadingEl) recurLoadingEl.style.display = 'none';
-        var visible = (errors || []).filter(function(e) { return (statuses || {})[e.hash] !== 'muted'; });
+        var visible = (errors || []).filter(function(e) { return (statuses || {})[e.fingerprint] !== 'muted'; });
         if (visible.length === 0) {
             if (recurListEl) recurListEl.innerHTML = '';
             if (recurEmptyEl) recurEmptyEl.style.display = '';
@@ -73,7 +73,7 @@ export function getRecurringPanelScript(): string {
         }
         if (recurEmptyEl) recurEmptyEl.style.display = 'none';
         if (recurListEl) recurListEl.innerHTML = visible.map(function(e) {
-            return renderCard(e, (statuses || {})[e.hash] || 'open');
+            return renderCard(e, (statuses || {})[e.fingerprint] || 'open');
         }).join('');
     }
 
@@ -82,14 +82,14 @@ export function getRecurringPanelScript(): string {
         var sessions = e.sessionCount === 1 ? '1 session' : e.sessionCount + ' sessions';
         var total = e.totalOccurrences + ' total';
         var actions = status === 'open'
-            ? '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="closed">Close</span>'
-              + '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="muted">Mute</span>'
-            : '<span class="re-action" data-hash="' + esc(e.hash) + '" data-status="open">Re-open</span>';
+            ? '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="closed">Close</span>'
+              + '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="muted">Mute</span>'
+            : '<span class="re-action" data-hash="' + esc(e.fingerprint) + '" data-status="open">Re-open</span>';
         var cat = e.category
             ? '<span class="re-cat-badge re-cat-' + esc(e.category) + '">' + esc(e.category).toUpperCase() + '</span> '
             : '';
         return '<div class="re-card' + dimCls + '">'
-            + '<div class="re-text" title="' + esc(e.exampleLine || '') + '">' + cat + esc(e.normalizedText) + '</div>'
+            + '<div class="re-text" title="' + esc(e.detail || '') + '">' + cat + esc(e.label) + '</div>'
             + '<div class="re-meta">' + sessions + ' \\u00b7 ' + total + '</div>'
             + '<div class="re-actions">' + actions + '</div></div>';
     }

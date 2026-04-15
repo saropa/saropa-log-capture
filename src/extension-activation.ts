@@ -216,7 +216,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         await updateLastViewed(context, uriString);
     });
     viewerProvider.setPopOutHandler(() => { void popOutPanel.open(); });
-    viewerProvider.setOpenInsightTabHandler(() => {
+    viewerProvider.setOpenSignalTabHandler(() => {
         openSignalTab({
             getCurrentFileUri: () => viewerProvider.getCurrentFileUri(),
             context,
