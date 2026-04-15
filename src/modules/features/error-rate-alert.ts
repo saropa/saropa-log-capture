@@ -159,7 +159,9 @@ export function isErrorLine(text: string, category: string): boolean {
         lowerText.includes('error') ||
         lowerText.includes('exception') ||
         lowerText.includes('fatal') ||
-        lowerText.includes('failed')
+        lowerText.includes('failed') ||
+        // Logcat E/ (error), F/ (fatal), A/ (assert) prefixes
+        /^[efa]\/\S/.test(lowerText)
     );
 }
 
@@ -168,5 +170,6 @@ export function isErrorLine(text: string, category: string): boolean {
  */
 export function isWarningLine(text: string): boolean {
     const lowerText = text.toLowerCase();
-    return lowerText.includes('warn');
+    // Check for 'warn' keyword or logcat W/ prefix (e.g. "W/SomeTag: ...")
+    return lowerText.includes('warn') || /^w\/\S/.test(lowerText);
 }

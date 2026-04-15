@@ -13,7 +13,7 @@ import { getSessionPanelScript } from '../../ui/viewer-panels/viewer-session-pan
 
 function noop(): void {}
 function mockEl(): Record<string, unknown> {
-    return {
+    const el: Record<string, unknown> = {
         classList: { add: noop, remove: noop, toggle: noop },
         style: { display: '', width: '' },
         innerHTML: '',
@@ -26,6 +26,11 @@ function mockEl(): Record<string, unknown> {
         setAttribute: noop,
         focus: noop,
     };
+    // Append HTML to innerHTML, matching real Element.insertAdjacentHTML('beforeend', ...)
+    el.insertAdjacentHTML = (_position: string, html: string) => {
+        el.innerHTML = String(el.innerHTML) + html;
+    };
+    return el;
 }
 
 /** Create a VM sandbox with mock DOM and capture message handlers. */
