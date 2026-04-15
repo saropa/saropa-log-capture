@@ -30,12 +30,14 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
-- **Log Inputs simplified to three tier radios.** Replaced the confusing mix of checkboxes and radio buttons with three clear radio groups: "Flutter App" (your app's output, default All), "Device" (logcat/Android system logs, default Warn+), and "External" (log files, terminal, browser, drift-perf, default Warn+). Each tier has All / Warn+ / None. The six source/category checkboxes (Debug output, External log, logcat, console, stdout, drift-perf) are removed — the tier radios now control all visibility.
+- **Exclusion checkbox moved inline with textbox.** The enable/disable checkbox for exclusion patterns is now inside the text input row instead of on a separate line above it, saving vertical space in the Exclusions accordion.
+- **Log Inputs simplified to three tier radios.** Replaced the confusing mix of checkboxes and radio buttons with three clear radio groups: "Flutter App" (your app's output, default All), "Device" (logcat/Android system logs, default Warn+), and "External" (saved logs, terminal, browser, drift-perf, default Warn+). Each tier has All / Warn+ / None. The six source/category checkboxes (Debug output, External log, logcat, console, stdout, drift-perf) are removed — the tier radios now control all visibility.
 - **New "External" tier for non-debug-console sources.** Lines from external log files, terminal sidecars, browser console, and drift-perf are now classified as tier "external" and filtered by the External radio. Previously these lines bypassed the tier filter entirely.
 - **Signal report "Related Lines" section now shows actual items.** Previously the section displayed only summary counts like "7 error(s) in this session match this pattern" with no detail. Now lists each related item with its line number and full log text, so you can see exactly which errors, warnings, network failures, slow operations, or classified errors were detected. Items are rendered in a scrollable list capped at 20 entries.
 - **Signal report evidence context expanded to 10 lines.** Preceding context increased from 5 to 10 lines so you see more of the log leading up to each evidence line.
 - **Signal report evidence now captures stack traces.** After each evidence line, the context window extends past the normal radius to include contiguous Dart/Flutter (`#0 ...`) and Java/Kotlin (`at ...`) stack trace frames, up to 30 lines.
 - **Signal report log file read once per panel.** All sections now share a single file read instead of reading the log file independently, reducing I/O.
+- **Double-click to solo filter chips.** Double-clicking a Code Origins or Message Tags chip now solos that tag — hiding all other tags so only matching lines are visible. Double-click the same chip again to restore the previous filter state. Single-click toggle behavior is unchanged.
 
 ### Added
 
