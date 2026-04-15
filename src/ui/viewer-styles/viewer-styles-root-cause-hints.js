@@ -41,8 +41,13 @@ function getRootCauseHypothesesStyles() {
 }
 .root-cause-hypotheses-list li {
     margin: 4px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
 }
-/* Hypothesis text as clickable report button */
+/* Hypothesis text as clickable report button — flex: 1 lets it
+   fill remaining width so long signal text wraps instead of
+   overflowing the panel. */
 .rch-report-btn {
     border: none;
     background: transparent;
@@ -52,6 +57,10 @@ function getRootCauseHypothesesStyles() {
     padding: 0;
     text-align: left;
     appearance: none;
+    flex: 1;
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
 }
 .rch-report-btn:hover {
     color: var(--vscode-textLink-foreground, #3794ff);
@@ -66,7 +75,8 @@ function getRootCauseHypothesesStyles() {
     padding: 1px 4px;
     margin-left: 2px;
     border-radius: 2px;
-    vertical-align: middle;
+    flex-shrink: 0;
+    align-self: flex-start;
     opacity: 0;
     transition: opacity 0.15s;
 }
@@ -94,9 +104,9 @@ function getRootCauseHypothesesStyles() {
 }
 .root-cause-hyp-conf {
     display: inline-block;
+    flex-shrink: 0;
     font-size: 12px;
     line-height: 1;
-    vertical-align: middle;
     opacity: 0.92;
     cursor: help;
 }

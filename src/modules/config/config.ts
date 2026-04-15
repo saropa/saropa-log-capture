@@ -139,7 +139,7 @@ export function getConfig(): SaropaLogCaptureConfig {
       transactionMinCount: cfg.get("repeatCollapseTransactionMinCount"),
       dmlMinCount: cfg.get("repeatCollapseDmlMinCount"),
     }),
-    viewerDbInsightsEnabled: ensureBoolean(cfg.get("viewerDbInsightsEnabled"), true),
+    viewerDbSignalsEnabled: ensureBoolean(cfg.get("viewerDbSignalsEnabled"), true),
     staticSqlFromFingerprintEnabled: ensureBoolean(cfg.get("staticSqlFromFingerprint.enabled"), true),
     viewerDbDetectorNPlusOneEnabled: ensureBoolean(cfg.get("viewerDbDetectorNPlusOneEnabled"), true),
     viewerDbDetectorSlowBurstEnabled: ensureBoolean(cfg.get("viewerDbDetectorSlowBurstEnabled"), true),
@@ -232,7 +232,7 @@ export function getSaropaIndexDirUri(workspaceFolder: vscode.WorkspaceFolder | u
   return vscode.Uri.joinPath(getSaropaDirUri(workspaceFolder), 'index');
 }
 
-/** Per-detector flags for the log viewer DB pipeline (when master DB insights is on). */
+/** Per-detector flags for the log viewer DB pipeline (when master DB signals is on). */
 export function viewerDbDetectorTogglesFromConfig(cfg: SaropaLogCaptureConfig): ViewerDbDetectorToggles {
   return {
     nPlusOneEnabled: cfg.viewerDbDetectorNPlusOneEnabled,

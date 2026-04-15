@@ -25,7 +25,7 @@ export interface PerfTimelineEntry {
     readonly date: number;
 }
 
-/** Aggregated cross-session performance insights. */
+/** Aggregated cross-session performance signals. */
 export interface PerfSignals {
     readonly trends: readonly PerfTrend[];
     readonly sessionCount: number;

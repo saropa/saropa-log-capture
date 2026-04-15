@@ -61,7 +61,7 @@ export async function collectWorkspaceData(
     const uri = filePath ? await resolveSourceUri(filePath) : undefined;
     const lineStart = crashLine ? Math.max(1, crashLine - 2) : 0;
     const lineEnd = crashLine ? crashLine + 2 : 0;
-    const [preview, blame, history, lineHistory, insights, imports] = await Promise.all([
+    const [preview, blame, history, lineHistory, aggregated, imports] = await Promise.all([
         uri && crashLine ? getSourcePreview(uri, crashLine) : Promise.resolve(undefined),
         uri && crashLine ? getGitBlame(uri, crashLine).catch(() => undefined) : Promise.resolve(undefined),
         uri ? getGitHistory(uri, 10) : Promise.resolve([]),
@@ -69,7 +69,7 @@ export async function collectWorkspaceData(
         aggregateSignals(),
         uri ? extractImports(uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
-    const match = insights.recurringErrors.find(e => e.hash === fingerprint);
+    const match = aggregated.recurringErrors.find(e => e.hash === fingerprint);
     const crossMatch = match ? {
         sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences,
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,

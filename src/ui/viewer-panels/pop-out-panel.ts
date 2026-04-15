@@ -267,7 +267,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
       viewerGroupAsciiArt: cfg.viewerGroupAsciiArt,
       viewerDetectAsciiArt: cfg.viewerDetectAsciiArt,
       viewerRepeatThresholds: cfg.viewerRepeatThresholds,
-      viewerDbInsightsEnabled: cfg.viewerDbInsightsEnabled,
+      viewerDbSignalsEnabled: cfg.viewerDbSignalsEnabled,
       staticSqlFromFingerprintEnabled: cfg.staticSqlFromFingerprintEnabled,
       viewerDbDetectorToggles: viewerDbDetectorTogglesFromConfig(cfg),
       viewerSlowBurstThresholds: cfg.viewerSlowBurstThresholds,

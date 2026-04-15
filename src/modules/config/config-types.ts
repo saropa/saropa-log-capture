@@ -130,10 +130,10 @@ export interface SaropaLogCaptureConfig {
    */
   readonly viewerRepeatThresholds: ViewerRepeatThresholds;
   /** Master toggle: DB detectors (N+1, future burst/diff) and per-line dbInsight rollup in the viewer. */
-  readonly viewerDbInsightsEnabled: boolean;
+  readonly viewerDbSignalsEnabled: boolean;
   /** When true, N+1 rows and host actions may offer “static sources” search from SQL fingerprints (DB_12). */
   readonly staticSqlFromFingerprintEnabled: boolean;
-  /** Per-detector gates when `viewerDbInsightsEnabled` is true (plan DB_15 follow-ups). */
+  /** Per-detector gates when `viewerDbSignalsEnabled` is true (plan DB_15 follow-ups). */
   readonly viewerDbDetectorNPlusOneEnabled: boolean;
   readonly viewerDbDetectorSlowBurstEnabled: boolean;
   /** Markers when live session SQL volume exceeds the comparison baseline for a fingerprint. */
@@ -212,7 +212,7 @@ export interface ErrorRateConfig {
   readonly detectSpikes: boolean;
 }
 
-/** Sub-toggles when `viewerDbInsightsEnabled` is true (baked into webview + postMessage updates). */
+/** Sub-toggles when `viewerDbSignalsEnabled` is true (baked into webview + postMessage updates). */
 export interface ViewerDbDetectorToggles {
   readonly nPlusOneEnabled: boolean;
   readonly slowBurstEnabled: boolean;

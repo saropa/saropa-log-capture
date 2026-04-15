@@ -1,10 +1,10 @@
 /**
  * Insights as a main VS Code editor tab.
  *
- * Opens a WebviewPanel that shows only the Insight panel content (same HTML/script
+ * Opens a WebviewPanel that shows only the Signal panel content (same HTML/script
  * as the sidebar viewer's Insights), so users can read it in a large tab. Loading
  * states (e.g. "Loading error data…", "Loading…" for cases) are inherited from the
- * shared insight panel content; no extra spinners or progress UI in this module.
+ * shared signal panel content; no extra spinners or progress UI in this module.
  */
 
 import * as vscode from "vscode";
@@ -29,7 +29,7 @@ export type OpenSignalTabDeps = {
 };
 
 /**
- * Build HTML for the standalone Insights tab: insight panel only, full viewport,
+ * Build HTML for the standalone Insights tab: signal panel only, full viewport,
  * with styles and script. Panel is shown as visible by default.
  */
 function buildInsightTabHtml(opts: {
@@ -49,14 +49,14 @@ function buildInsightTabHtml(opts: {
     getRecurringPanelStyles() +
     getPerformancePanelStyles();
 
-  // Insight panel HTML: add class "visible" so it shows in the tab (no icon bar to toggle it).
+  // Signal panel HTML: add class "visible" so it shows in the tab (no icon bar to toggle it).
   const insightHtml = getSignalPanelHtml().replace(
     'id="signal-panel" class="signal-panel"',
     'id="signal-panel" class="signal-panel visible"'
   );
 
   // Provide vscodeApi and closeSignalPanel (close = close tab). Do not set openSignalPanel
-  // so the insight script's implementation runs and requests data when we post openInsight.
+  // so the signal script's implementation runs and requests data when we post openInsight.
   const bootstrapScript = `
 (function() {
   var api = typeof acquireVsCodeApi !== 'undefined' ? acquireVsCodeApi() : null;
@@ -68,7 +68,7 @@ function buildInsightTabHtml(opts: {
 `;
 
   const insightScript = getSignalPanelScript();
-  // Re-apply close handler after insight script (script overwrites closeSignalPanel for sidebar behavior).
+  // Re-apply close handler after signal script (script overwrites closeSignalPanel for sidebar behavior).
   // Signal ready so extension posts openInsight only after the script has attached its message listener (avoids race).
   const closeTabScript = `
 window.closeSignalPanel = function() { if (window.vscodeApi) window.vscodeApi.postMessage({ type: 'closeSignalTab' }); };

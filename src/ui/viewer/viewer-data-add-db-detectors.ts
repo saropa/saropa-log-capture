@@ -20,27 +20,27 @@ export function getViewerDataAddDbDetectorsScript(staticSqlFromFingerprintEnable
     const staticSqlJs = staticSqlFromFingerprintEnabled ? "true" : "false";
     return /* javascript */ `
 var staticSqlFromFingerprintEnabled = ${staticSqlJs};
-/** Apply only synthetic-line / n-plus-one insight payloads (batch; caller splits merged detector output). */
+/** Apply only synthetic-line / n-plus-one signal payloads (batch; caller splits merged detector output). */
 function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
     if (!results || !results.length) return;
-    var i, r, pl, insight, sqlMeta, windowSec, confLabel, previewFingerprint, n1Html, n1Item;
+    var i, r, pl, signal, sqlMeta, windowSec, confLabel, previewFingerprint, n1Html, n1Item;
     for (i = 0; i < results.length; i++) {
         r = results[i];
         if (!r || r.kind !== 'synthetic-line' || !r.payload) continue;
         pl = r.payload;
-        if (pl.syntheticType !== 'n-plus-one-insight' || !pl.insight || !pl.sqlMeta) continue;
+        if (pl.syntheticType !== 'n-plus-one-signal' || !pl.signal || !pl.sqlMeta) continue;
         try {
-            insight = pl.insight;
+            signal = pl.signal;
             sqlMeta = pl.sqlMeta;
-            windowSec = (insight.windowSpanMs / 1000).toFixed(2);
-            confLabel = insight.confidence.toUpperCase();
+            windowSec = (signal.windowSpanMs / 1000).toFixed(2);
+            confLabel = signal.confidence.toUpperCase();
             previewFingerprint = sqlMeta.fingerprint.length > 96
                 ? sqlMeta.fingerprint.substring(0, 96) + '...'
                 : sqlMeta.fingerprint;
-            n1Html = '<span class="repeat-notification n1-insight">'
+            n1Html = '<span class="repeat-notification n1-signal">'
                 + '\\u26a0 Potential N+1 query '
-                + '<span class="n1-conf n1-conf-' + insight.confidence + '">[' + confLabel + ']</span> '
-                + ' - ' + insight.repeats + ' repeats / ' + insight.distinctArgs + ' arg variants in ' + windowSec + 's'
+                + '<span class="n1-conf n1-conf-' + signal.confidence + '">[' + confLabel + ']</span> '
+                + ' - ' + signal.repeats + ' repeats / ' + signal.distinctArgs + ' arg variants in ' + windowSec + 's'
                 + ' <span class="n1-fp">(' + escapeHtml(previewFingerprint) + ')</span>'
                 + ' <span class="n1-actions">'
                 + '<span class="n1-action" data-action="focus-db" title="Show only database-tagged lines">Focus DB</span>'
@@ -53,9 +53,9 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 + '</span>';
             n1Item = {
                 html: n1Html,
-                type: 'n-plus-one-insight',
+                type: 'n-plus-one-signal',
                 height: ROW_HEIGHT,
-                category: 'db-insight',
+                category: 'db-signal',
                 groupId: -1,
                 timestamp: ts,
                 level: 'performance',
@@ -75,13 +75,13 @@ function applyDbSyntheticLineResults(results, scopeFilt, ts, sp, lineSource) {
                 timeRangeFiltered: false,
                 insightMeta: {
                     fingerprint: sqlMeta.fingerprint,
-                    repeats: insight.repeats,
-                    distinctArgs: insight.distinctArgs,
-                    windowSpanMs: insight.windowSpanMs,
-                    confidence: insight.confidence
+                    repeats: signal.repeats,
+                    distinctArgs: signal.distinctArgs,
+                    windowSpanMs: signal.windowSpanMs,
+                    confidence: signal.confidence
                 }
             };
-            /* DB_11: same fingerprint source as chips / insight row for session query history. */
+            /* DB_11: same fingerprint source as chips / signal row for session query history. */
             n1Item.sqlHistoryFp = sqlMeta.fingerprint;
             var n1Snip = (sqlMeta.sqlSnippet || sqlMeta.fingerprint || '').trim();
             n1Item.sqlHistoryPreview = n1Snip.length > 120 ? n1Snip.substring(0, 117) + '...' : n1Snip;
@@ -102,7 +102,7 @@ function applyDbMarkerResults(results, ts, sp, lineSource) {
         r = results[i];
         if (!r || r.kind !== 'marker' || !r.payload) continue;
         pl = r.payload;
-        cat = pl.category || 'db-insight';
+        cat = pl.category || 'db-signal';
         lbl = pl.label || 'Slow query burst';
         anc = pl.anchorSeq;
         anchorAttr = (typeof anc === 'number' && isFinite(anc)) ? ' data-anchor-seq="' + anc + '"' : '';
@@ -195,7 +195,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
     var hasDur = typeof elapsedMs === 'number' && elapsedMs >= 0 && isFinite(elapsedMs);
     if (!hasSql && !hasDur) return;
     try {
-        if (typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sqlMeta && sqlMeta.fingerprint
+        if (typeof viewerDbSignalsEnabled !== 'undefined' && viewerDbSignalsEnabled && sqlMeta && sqlMeta.fingerprint
             && typeof applyDbSessionRollupPatches === 'function') {
             applyDbSessionRollupPatches([{
                 kind: 'session-rollup-patch',
@@ -205,7 +205,7 @@ function emitDbLineDetectors(nowTs, sqlMeta, sourceTag, scopeFilt, ts, sp, lineS
                 payload: { fingerprint: sqlMeta.fingerprint, elapsedMs: hasDur ? elapsedMs : undefined }
             }]);
         }
-        if (lineItemForDbInsight && typeof viewerDbInsightsEnabled !== 'undefined' && viewerDbInsightsEnabled && sourceTag === 'database') {
+        if (lineItemForDbInsight && typeof viewerDbSignalsEnabled !== 'undefined' && viewerDbSignalsEnabled && sourceTag === 'database') {
             var plainForSnip = plain || '';
             var snipFallback = (typeof driftSqlSnippetFromPlain === 'function')
                 ? driftSqlSnippetFromPlain(plainForSnip)

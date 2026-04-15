@@ -45,7 +45,7 @@ export function getTimestampBurstDetectorEmbedJs(): string {
                 stableKey: '${TIMESTAMP_BURST_DETECTOR_ID}::' + sid + '::' + st.firstSeq,
                 priority: 80,
                 payload: {
-                    category: 'db-insight',
+                    category: 'db-signal',
                     label: 'DB timestamp burst (' + st.count + ' queries at same instant)',
                     anchorSeq: anc
                 }

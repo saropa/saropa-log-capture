@@ -73,18 +73,18 @@ suite('ViewerIconBar', () => {
             assert.ok(script.includes('applyLabelsVisible'));
         });
 
-        test('should define ensureSignalSlideoutOpen that skips toggle when insight already active', () => {
+        test('should define ensureSignalSlideoutOpen that skips toggle when signal already active', () => {
             const script = getIconBarScript();
             assert.ok(script.includes('ensureSignalSlideoutOpen'));
-            // When insight is already active, it must NOT call setActivePanel (which toggles off)
+            // When signal is already active, it must NOT call setActivePanel (which toggles off)
             // Instead it calls openSignalPanel directly — verify both branches exist
             assert.ok(
                 script.includes("activePanel === 'signal'"),
-                'must check whether insight is already the active panel',
+                'must check whether signal is already the active panel',
             );
             assert.ok(
                 script.includes("setActivePanel('signal')"),
-                'must delegate to setActivePanel when insight is not active',
+                'must delegate to setActivePanel when signal is not active',
             );
         });
     });

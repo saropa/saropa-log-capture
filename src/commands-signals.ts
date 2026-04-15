@@ -1,10 +1,10 @@
-/** Command registration for cross-session insights. Retargets to the unified Insight panel in the viewer. */
+/** Command registration for cross-session signals. Retargets to the unified Signal panel in the viewer. */
 
 import * as vscode from 'vscode';
 import type { CommandDeps } from './commands-deps';
 import { openSignalTab } from './ui/viewer-panels/signal-tab-panel';
 
-/** Register cross-session insights commands. Opens the viewer's Insight panel (no separate WebviewPanel). */
+/** Register cross-session signals commands. Opens the viewer's Signal panel (no separate WebviewPanel). */
 export function signalsCommands(deps: CommandDeps): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand(
