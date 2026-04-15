@@ -13,17 +13,16 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
     test('HTML uses Log Inputs, File Scope, and scope element ids', () => {
         const html = getFiltersPanelHtml();
         assert.ok(html.includes('Log Inputs'));
-        assert.ok(html.includes('SQL Commands'));
         assert.ok(html.includes('File Scope'));
         assert.ok(html.includes('id="scope-filter-hint"'));
     });
 
-    test('filters panel script maps external: stream ids to readable labels', () => {
+    test('filters panel script wires tier radio event handlers', () => {
         const script = getFiltersPanelScript();
-        assert.ok(script.includes('External log'));
-        assert.ok(script.includes("id.indexOf('external:') === 0"));
-        assert.ok(script.includes('commitSourceFilterFromCheckboxes'));
-        assert.ok(script.includes('getSourceFilterCheckboxes'));
+        assert.ok(script.includes('tier-flutter'), 'should wire Flutter App radio handlers');
+        assert.ok(script.includes('tier-device'), 'should wire Device radio handlers');
+        assert.ok(script.includes('tier-external'), 'should wire External radio handlers');
+        assert.ok(script.includes('setShowExternal'), 'should call setShowExternal on change');
     });
 
     test('scope script disables unattributed checkbox when scope is all', () => {
@@ -59,27 +58,19 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         );
     });
 
-    test('source filter script should update log inputs summary and tooltips', () => {
+    test('filters panel script should define updateLogInputsSummary', () => {
         const script = getFiltersPanelScript();
         assert.ok(
             script.includes('updateLogInputsSummary'),
-            'source filter should call updateLogInputsSummary on change',
-        );
-        assert.ok(
-            script.includes('Show or hide'),
-            'stream rows should have descriptive tooltip text',
+            'should define updateLogInputsSummary for tier summary',
         );
     });
 
-    test('category filter script should update log inputs summary and tooltips', () => {
+    test('category filter script should show log-inputs-section on categories', () => {
         const script = getFilterScript();
         assert.ok(
-            script.includes('updateLogInputsSummary'),
-            'channel filter should call updateLogInputsSummary',
-        );
-        assert.ok(
-            script.includes('Show or hide'),
-            'channel labels should have descriptive tooltip text',
+            script.includes('log-inputs-section'),
+            'handleSetCategories should show the log-inputs-section',
         );
     });
 
@@ -119,36 +110,24 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(html.includes('File Scope'), 'drawer should use "File Scope" title');
     });
 
-    test('panel HTML should not contain old section names', () => {
+    test('panel HTML should not contain old section names or checkboxes', () => {
         const html = getFiltersPanelHtml();
         assert.ok(!html.includes('Log Streams'), 'panel should not use old "Log Streams" title');
         assert.ok(!html.includes('Output Channels'), 'panel should not use old "Output Channels" title');
         assert.ok(!html.includes('Code Tags'), 'panel should not use old "Code Tags" title');
+        assert.ok(!html.includes('output-channels-list'), 'panel should not have channel checkboxes');
+        assert.ok(!html.includes('source-filter-list'), 'panel should not have source checkboxes');
         assert.ok(html.includes('Exclusions'), 'panel should use "Exclusions" title');
         assert.ok(html.includes('Message Tags'), 'panel should use "Message Tags" title');
         assert.ok(html.includes('Code Origins'), 'panel should use "Code Origins" title');
     });
 
-    test('source filter script should not contain sidecar jargon', () => {
+    test('filters panel script should not contain source checkbox code', () => {
         const script = getFiltersPanelScript();
-        assert.ok(!script.includes('sidecar'), 'source filter should not use sidecar jargon');
-        assert.ok(!script.includes('External (sidecar log)'), 'should not use old sidecar label');
-        assert.ok(script.includes('External log'), 'should use clean "External log" label');
-    });
-
-    test('merged Log Inputs section should contain divider element', () => {
-        const drawerHtml = getFilterDrawerHtml();
-        assert.ok(drawerHtml.includes('id="log-inputs-divider"'), 'drawer should have divider between sources and categories');
-        const panelHtml = getFiltersPanelHtml();
-        assert.ok(panelHtml.includes('id="log-inputs-divider"'), 'panel should have divider between sources and categories');
-    });
-
-    test('updateLogInputsSummary should count both sources and categories', () => {
-        const script = getFiltersPanelScript();
-        assert.ok(script.includes('function updateLogInputsSummary'), 'should define updateLogInputsSummary');
-        assert.ok(script.includes('source-filter-list'), 'should query source filter list');
-        assert.ok(script.includes('output-channels-list'), 'should query output channels list');
-        assert.ok(script.includes("setAccordionSummary('log-inputs-section'"), 'should target log-inputs-section');
+        assert.ok(!script.includes('sidecar'), 'should not use sidecar jargon');
+        assert.ok(!script.includes('commitSourceFilterFromCheckboxes'), 'source checkboxes removed');
+        assert.ok(!script.includes('getSourceFilterCheckboxes'), 'source checkboxes removed');
+        assert.ok(!script.includes('syncSourceFilterUi'), 'source filter sync removed');
     });
 
     test('toolbar script should hide level dots when filter drawer opens', () => {
@@ -158,10 +137,20 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes("levelMenuBtn.classList.remove('u-hidden')"), 'should show dots on drawer close');
     });
 
-    test('Log Inputs should contain Flutter and Device radio groups', () => {
+    test('Log Inputs should contain all three tier radio groups', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(html.includes('name="tier-flutter"'), 'Log Inputs should contain Flutter radio group');
-        assert.ok(html.includes('name="tier-device"'), 'Log Inputs should contain Device radio group');
+        assert.ok(html.includes('name="tier-flutter"'), 'should contain Flutter App radio group');
+        assert.ok(html.includes('name="tier-device"'), 'should contain Device radio group');
+        assert.ok(html.includes('name="tier-external"'), 'should contain External radio group');
+        /* Descriptions explain what each tier includes */
+        assert.ok(html.includes('Logcat'), 'Device should mention logcat');
+        assert.ok(html.includes('Saved logs'), 'External should mention saved logs');
+    });
+
+    test('drawer HTML should not contain source/category checkbox containers', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(!html.includes('source-filter-list'), 'source checkboxes removed from drawer');
+        assert.ok(!html.includes('output-channels-list'), 'category checkboxes removed from drawer');
     });
 
     test('Exclusions accordion should contain exclusion controls', () => {
@@ -170,15 +159,42 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(html.includes('opt-exclusions'), 'Exclusions should contain exclusion checkbox');
     });
 
-    test('preset save should capture tri-state tier modes', () => {
+    test('exclusion checkbox should be inline with text input in drawer', () => {
+        const html = getFilterDrawerHtml();
+        /* The checkbox label must be INSIDE the exclusion-input-wrapper,
+         * not in a separate options-row above it. Verify ordering:
+         * exclusion-toggle appears before exclusion-add-input, both inside the wrapper. */
+        const wrapperStart = html.indexOf('exclusion-input-wrapper');
+        const togglePos = html.indexOf('exclusion-toggle', wrapperStart);
+        const inputPos = html.indexOf('exclusion-add-input', wrapperStart);
+        assert.ok(wrapperStart > -1, 'should have exclusion-input-wrapper');
+        assert.ok(togglePos > wrapperStart, 'checkbox toggle should be inside wrapper');
+        assert.ok(inputPos > togglePos, 'text input should follow checkbox inside wrapper');
+    });
+
+    test('exclusion checkbox should be inline with text input in panel', () => {
+        const html = getFiltersPanelHtml();
+        const wrapperStart = html.indexOf('exclusion-input-wrapper');
+        const togglePos = html.indexOf('exclusion-toggle', wrapperStart);
+        const inputPos = html.indexOf('exclusion-add-input', wrapperStart);
+        assert.ok(wrapperStart > -1, 'should have exclusion-input-wrapper');
+        assert.ok(togglePos > wrapperStart, 'checkbox toggle should be inside wrapper');
+        assert.ok(inputPos > togglePos, 'text input should follow checkbox inside wrapper');
+    });
+
+    test('exclusion label should be screen-reader-only', () => {
+        const drawerHtml = getFilterDrawerHtml();
+        const panelHtml = getFiltersPanelHtml();
+        /* The exclusion-label span uses u-sr-only so the accordion header
+         * provides the visible label while screen readers still get text. */
+        assert.ok(drawerHtml.includes('u-sr-only'), 'drawer exclusion label should use u-sr-only');
+        assert.ok(panelHtml.includes('u-sr-only'), 'panel exclusion label should use u-sr-only');
+    });
+
+    test('preset save should capture tri-state tier modes for all three tiers', () => {
         const script = getPresetsScript();
-        assert.ok(
-            script.includes('filters.deviceMode'),
-            'getCurrentFilters should save deviceMode state',
-        );
-        assert.ok(
-            script.includes('filters.flutterMode'),
-            'getCurrentFilters should save flutterMode state',
-        );
+        assert.ok(script.includes('filters.flutterMode'), 'should save flutterMode');
+        assert.ok(script.includes('filters.deviceMode'), 'should save deviceMode');
+        assert.ok(script.includes('filters.externalMode'), 'should save externalMode');
     });
 });
