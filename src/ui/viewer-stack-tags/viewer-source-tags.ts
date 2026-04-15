@@ -32,6 +32,11 @@ var sourceTagShowAll = false;
 var sourceTagMaxChips = 20;
 var sourceTagMinChip = 2;
 
+/** Saved hidden state before a solo action, so double-tap-again restores it. */
+var savedHiddenSourceTags = null;
+/** Which source tag is currently solo'd (null if none). */
+var soloedSourceTag = null;
+
 /**
  * Regex to parse source tags from plain text (start of line only).
  * Group 1: logcat level (V/D/I/W/E/F/A) — captured but ignored for grouping.
@@ -211,6 +216,9 @@ function toggleDatabaseSqlFromToolbar() {
 
 /** Toggle a single source tag on/off and re-apply the filter. */
 function toggleSourceTag(tag) {
+    /* Manual toggle breaks any active solo — discard saved state. */
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     if (hiddenSourceTags[tag]) {
         delete hiddenSourceTags[tag];
     } else {
@@ -224,6 +232,8 @@ function toggleSourceTag(tag) {
 
 /** Show all source tags (remove all from hidden set). */
 function selectAllTags() {
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     hiddenSourceTags = {};
     applySourceTagFilter();
     rebuildTagChips();
@@ -231,6 +241,8 @@ function selectAllTags() {
 
 /** Hide all source tags (add all to hidden set). */
 function deselectAllTags() {
+    savedHiddenSourceTags = null;
+    soloedSourceTag = null;
     var keys = Object.keys(sourceTagCounts);
     for (var i = 0; i < keys.length; i++) {
         hiddenSourceTags[keys[i]] = true;
