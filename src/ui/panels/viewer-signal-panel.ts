@@ -135,6 +135,10 @@ export function getSignalPanelHtml(): string {
                     <div id="signal-trends-empty" class="signal-hotfiles-empty" style="display:none"><span class="signal-margin-emoji" aria-hidden="true">ℹ️</span>No signals across sessions yet. Errors, warnings, performance, and SQL patterns will appear here as you capture logs.</div>
                     <div id="signal-trends-list" class="signal-hotfiles-list"></div>
                 </div>
+                <div class="signal-narrative-block" id="signal-cooccurrence-block" style="display:none">
+                    <div class="signal-narrative-subtitle"><span class="signal-margin-emoji" aria-hidden="true">🔗</span><span id="signal-cooccurrence-summary">Related signals</span></div>
+                    <div id="signal-cooccurrence-list" class="signal-hotfiles-list"></div>
+                </div>
             </div>
         </section>
         <!-- Environment -->
