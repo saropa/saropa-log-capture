@@ -179,8 +179,8 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 - **Source tag filter:** Auto-discovers logcat tags (e.g. `D/FlutterJNI`) and bracket prefixes (e.g. `[log]`, `[API]`). Click chips to toggle visibility.
 - **Exclusion filter:** Patterns shown as removable chips in the Options panel. Chip count badge on the toggle label.
 - **Keyword watch:** Track patterns with live counters, flash alerts, and badges. Watch chips in the toolbar are clickable—opens search pre-filled with the keyword.
-- **Filter presets:** Save and apply filter combinations; built-in presets included (e.g. Errors Only, Just debug output, Complete (all sources)).
-- **Source filter:** When a log has multiple inputs (e.g. Debug Console + Terminal), the filter drawer's **Log Inputs** section lets you show or hide each source independently.
+- **Saved Filters:** Save and apply filter combinations; built-in presets included (e.g. Errors Only, Just debug output, Complete (all sources)).
+- **Log Sources:** Three tier radios in the filter drawer — Flutter DAP, Device, External — each with All / Warn+ / None. Browse individual sources, message tags, and code origins in the Tags & Origins side panel.
 - **Cross-session search:** Search all log files via Quick Pick.
 
 ### Error Intelligence
