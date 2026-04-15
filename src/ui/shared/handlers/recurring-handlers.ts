@@ -16,6 +16,7 @@ import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/me
 import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
 import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
+import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
 import type { PostFn } from './crashlytics-handlers';
 
 /** First-seen regression hint for display in Insights (commit for session where error first appeared). */
@@ -128,8 +129,10 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         regressionHints,
         recurringSignals: insights?.recurringSignals ?? [],
         signalSessionCount: insights?.signalSessionCount ?? 0,
-        allSignals: insights?.allSignals ?? [],
-        signalsInThisLog: signalsInThisLog ?? [],
+        // Enrich signals with lint diagnostics from referenced source files
+        // (saropa_lints, Dart analyzer, ESLint, etc. — any active VS Code diagnostic provider)
+        allSignals: enrichSignalsWithLintContext([...(insights?.allSignals ?? [])]),
+        signalsInThisLog: enrichSignalsWithLintContext([...(signalsInThisLog ?? [])]),
     });
 }
 
