@@ -66,6 +66,11 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   <div class="section-loading">Generating recommendations...</div>
 </div>
 
+<div id="section-ecosystem" class="section-slot">
+  <h2>Companion Extensions</h2>
+  <div class="section-loading">Checking installed extensions\u2026</div>
+</div>
+
 <div class="btn-row">
   <button class="copy-btn" id="copy-report-btn">Copy Report</button>
   <button class="copy-btn" id="save-report-btn">Save Report</button>
@@ -87,6 +92,14 @@ export function buildSignalReportShell(opts: ShellOptions): string {
     if (row && row.dataset && row.dataset.uri) {
       ev.preventDefault();
       vscodeApi.postMessage({ type: 'openSessionFromHistory', uriString: row.dataset.uri });
+      return;
+    }
+    /* Companion extension install links — open Marketplace URL */
+    var link = ev.target && ev.target.closest ? ev.target.closest('.ecosystem-prompt-link') : null;
+    if (link) {
+      ev.preventDefault();
+      var url = link.getAttribute('data-url');
+      if (url) { vscodeApi.postMessage({ type: 'openUrl', url: url }); }
     }
   });
   var copyBtn = document.getElementById('copy-report-btn');

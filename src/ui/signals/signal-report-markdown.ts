@@ -15,6 +15,7 @@ import { resolveText } from './signal-report-related';
 import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
 import { loadSignalHistory } from './signal-report-history-loader';
 import { buildHistoryMarkdown } from './signal-report-history';
+import { buildEcosystemMarkdown } from './signal-report-ecosystem';
 
 interface MarkdownReportOptions {
   readonly hypothesis: RootCauseHypothesis;
@@ -61,6 +62,10 @@ export async function buildFullMarkdownReport(opts: MarkdownReportOptions): Prom
   // Other signals in this session
   const othersMd = buildOtherSignalsMarkdown(hypothesis, bundle);
   if (othersMd) { out.push(othersMd); }
+
+  // Companion extensions (Drift Advisor + Saropa Lints)
+  const ecosystemMd = buildEcosystemMarkdown(bundle);
+  if (ecosystemMd) { out.push(ecosystemMd); }
 
   // Cross-session history
   const history = await loadSignalHistory(hypothesis.templateId);

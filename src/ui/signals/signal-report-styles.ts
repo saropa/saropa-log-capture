@@ -1,5 +1,7 @@
 /** CSS for the signal report webview panel. */
 
+import { getEcosystemStyles } from './signal-report-ecosystem-styles';
+
 export function getSignalReportStyles(): string {
   return /* css */ `
 body {
@@ -278,5 +280,5 @@ details summary:hover {
 .history-session-row:hover { background: var(--vscode-list-hoverBackground); }
 .history-session-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-session-date { flex-shrink: 0; color: var(--vscode-descriptionForeground); margin-left: 12px; }
-`;
+` + getEcosystemStyles();
 }
