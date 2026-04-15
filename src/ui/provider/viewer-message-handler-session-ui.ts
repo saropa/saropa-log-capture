@@ -54,6 +54,13 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       .update(boolKey, Boolean(msg.value), vscode.ConfigurationTarget.Workspace);
     return true;
   }
+  /* Minimap drag-to-resize: persist custom pixel width to workspace state */
+  if (type === "setMinimapCustomPx") {
+    const px = typeof msg.value === "number" ? msg.value : 0;
+    ctx.context.workspaceState.update("saropaLogCapture.minimapCustomPx", px > 0 ? px : undefined)
+      .then(undefined, () => {});
+    return true;
+  }
   switch (type) {
     case "addToWatch": ctx.onAddToWatch?.(msgStr(msg, "text")); return true;
     case "promptAnnotation":
