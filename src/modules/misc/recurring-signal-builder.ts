@@ -46,6 +46,8 @@ export interface RecurringSignalEntry {
     readonly recurring: boolean;
     /** Trend direction based on comparing older vs newer half of timeline. */
     readonly trend?: SignalTrend;
+    /** Top line indices from the current session for jump-to-line navigation (single-session signals only). */
+    readonly lineIndices?: readonly number[];
     readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
@@ -59,6 +61,8 @@ type Accum = {
     weightedMsSum?: number; weightedMsCount?: number;
     /** App version from the first and last session where this signal appeared. */
     firstVer?: string; lastVer?: string;
+    /** Top line indices from V2 entries (for single-session jump-to-line). */
+    lineIdxs?: number[];
 };
 
 /** Build a unified list of recurring signals from all metadata sources. */
@@ -186,7 +190,7 @@ function accumulateAnrRisk(map: Map<string, Accum>, level: string, session: stri
     }
 }
 
-/** Accumulate a V2 signal entry with full detail (label, fingerprint, duration). */
+/** Accumulate a V2 signal entry with full detail (label, fingerprint, duration, line indices). */
 function accumulateV2Entry(map: Map<string, Accum>, entry: PersistedSignalEntryV2, session: string): void {
     const kind = entry.kind as SignalKind;
     const key = `${kind}::${entry.fingerprint}`;
@@ -195,7 +199,8 @@ function accumulateV2Entry(map: Map<string, Accum>, entry: PersistedSignalEntryV
         existing.total += entry.count;
         if (!existing.timeline.some(t => t.session === session)) { existing.timeline.push({ session, count: entry.count }); }
     } else {
-        map.set(key, { kind, label: entry.label, detail: entry.detail, total: entry.count, timeline: [{ session, count: entry.count }], category: entry.category, avgMs: entry.avgDurationMs, maxMs: entry.maxDurationMs });
+        const lines = entry.lineIndices ? [...entry.lineIndices] : undefined;
+        map.set(key, { kind, label: entry.label, detail: entry.detail, total: entry.count, timeline: [{ session, count: entry.count }], category: entry.category, avgMs: entry.avgDurationMs, maxMs: entry.maxDurationMs, lineIdxs: lines });
     }
 }
 
@@ -345,6 +350,7 @@ function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
                 severity: sev,
                 recurring: sessionCount >= recurringThreshold,
                 trend: computeTrend(a.timeline),
+                lineIndices: a.lineIdxs,
                 timeline: a.timeline,
             };
         })
