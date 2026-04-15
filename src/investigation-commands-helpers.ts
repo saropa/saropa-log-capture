@@ -7,12 +7,14 @@ import { t } from './l10n';
 import { InvestigationStore } from './modules/investigation/investigation-store';
 import type { Investigation } from './modules/investigation/investigation-types';
 
-/** Payload from Insight panel "+" (add to case) for recurring error or hot file. */
+/** Payload from Signals panel "+" (add to case) for any signal type, recurring error, or hot file. */
 export type AddSignalItemToCasePayload =
     | { type: 'recurring'; normalizedText?: string; exampleLine?: string }
-    | { type: 'hotfile'; filename?: string };
+    | { type: 'hotfile'; filename?: string }
+    | { type: 'signal'; kind: string; label: string; detail?: string; fingerprint?: string };
 
-export function formatInsightItemLine(payload: AddSignalItemToCasePayload | undefined): string {
+/** Format a case item payload as a single-line summary for the investigation notes. */
+export function formatSignalItemLine(payload: AddSignalItemToCasePayload | undefined): string {
     if (!payload) { return ''; }
     if (payload.type === 'recurring') {
         const text = (payload.exampleLine ?? payload.normalizedText ?? '').trim();
@@ -21,6 +23,12 @@ export function formatInsightItemLine(payload: AddSignalItemToCasePayload | unde
     if (payload.type === 'hotfile') {
         const name = (payload.filename ?? '').trim();
         return name ? `Hot file: ${name}` : '';
+    }
+    if (payload.type === 'signal') {
+        // Format: "Signal [kind]: label — detail" for unified signal entries
+        const kindLabel = payload.kind.charAt(0).toUpperCase() + payload.kind.slice(1);
+        const detail = payload.detail ? ` — ${payload.detail.slice(0, 100)}` : '';
+        return `Signal [${kindLabel}]: ${payload.label}${detail}`;
     }
     return '';
 }

@@ -8,19 +8,19 @@ import * as vscode from 'vscode';
 import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { getLogDirectoryUri } from './modules/config/config';
-import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from './modules/export/signals-export-formats';
-import { aggregateInsights, buildInsightsFromMetas, type CrossSessionInsights } from './modules/misc/cross-session-aggregator';
+import { formatSignalsSummaryToCsv, formatSignalsSummaryToJson } from './modules/export/signals-export-formats';
+import { aggregateSignals, buildSignalsFromMetas, type CrossSessionSignals } from './modules/misc/cross-session-aggregator';
 import { loadMetasForPaths } from './modules/session/metadata-loader';
-import { buildInsightsSummary } from './modules/signals/signals-summary';
+import { buildSignalsSummary } from './modules/signals/signals-summary';
 
 export type ScopeChoice = 'currentSession' | 'investigation' | '7d' | 'all';
 
 /** Resolve cross-session insights for the chosen scope (current session, investigation, 7d, or all). */
-export async function resolveInsights(
+export async function resolveSignals(
     scope: ScopeChoice,
     viewerProvider: CommandDeps['viewerProvider'],
     investigationStore: CommandDeps['investigationStore'],
-): Promise<CrossSessionInsights | null> {
+): Promise<CrossSessionSignals | null> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return null; }
     const logDir = getLogDirectoryUri(folder);
@@ -32,7 +32,7 @@ export async function resolveInsights(
         const normalized = rel.split(path.sep).join('/');
         if (normalized.startsWith('..')) { return null; }
         const metas = await loadMetasForPaths(logDir, [normalized]);
-        return metas.length > 0 ? buildInsightsFromMetas(metas) : null;
+        return metas.length > 0 ? buildSignalsFromMetas(metas) : null;
     }
 
     if (scope === 'investigation') {
@@ -45,11 +45,11 @@ export async function resolveInsights(
         const validPaths = sessionPaths.filter(p => !p.startsWith('..'));
         if (validPaths.length === 0) { return null; }
         const metas = await loadMetasForPaths(logDir, validPaths);
-        return metas.length > 0 ? buildInsightsFromMetas(metas) : null;
+        return metas.length > 0 ? buildSignalsFromMetas(metas) : null;
     }
 
-    if (scope === '7d') { return aggregateInsights('7d'); }
-    return aggregateInsights('all');
+    if (scope === '7d') { return aggregateSignals('7d'); }
+    return aggregateSignals('all');
 }
 
 export function exportSignalsSummaryCmd(
@@ -59,22 +59,22 @@ export function exportSignalsSummaryCmd(
     return vscode.commands.registerCommand('saropaLogCapture.exportSignalsSummary', async () => {
         const scopeItem = await vscode.window.showQuickPick(
             [
-                { label: t('insightsExport.scope.currentSession'), value: 'currentSession' as ScopeChoice },
-                { label: t('insightsExport.scope.investigation'), value: 'investigation' as ScopeChoice },
-                { label: t('insightsExport.scope.last7Days'), value: '7d' as ScopeChoice },
-                { label: t('insightsExport.scope.all'), value: 'all' as ScopeChoice },
+                { label: t('signalsExport.scope.currentSession'), value: 'currentSession' as ScopeChoice },
+                { label: t('signalsExport.scope.investigation'), value: 'investigation' as ScopeChoice },
+                { label: t('signalsExport.scope.last7Days'), value: '7d' as ScopeChoice },
+                { label: t('signalsExport.scope.all'), value: 'all' as ScopeChoice },
             ],
-            { title: t('insightsExport.scopeTitle'), placeHolder: t('insightsExport.scopePlaceholder') },
+            { title: t('signalsExport.scopeTitle'), placeHolder: t('signalsExport.scopePlaceholder') },
         );
         if (!scopeItem) { return; }
 
         const insights = await vscode.window.withProgress(
-            { location: vscode.ProgressLocation.Notification, title: t('insightsExport.progress') },
-            async () => resolveInsights(scopeItem.value, viewerProvider, investigationStore),
+            { location: vscode.ProgressLocation.Notification, title: t('signalsExport.progress') },
+            async () => resolveSignals(scopeItem.value, viewerProvider, investigationStore),
         );
 
         if (!insights) {
-            void vscode.window.showWarningMessage(t('insightsExport.noData'));
+            void vscode.window.showWarningMessage(t('signalsExport.noData'));
             return;
         }
 
@@ -83,25 +83,25 @@ export function exportSignalsSummaryCmd(
                 { label: 'CSV', value: 'csv' as const },
                 { label: 'JSON', value: 'json' as const },
             ],
-            { title: t('insightsExport.formatTitle'), placeHolder: t('insightsExport.formatPlaceholder') },
+            { title: t('signalsExport.formatTitle'), placeHolder: t('signalsExport.formatPlaceholder') },
         );
         if (!formatItem) { return; }
 
         const timeRangeLabel = scopeItem.value === '7d' ? '7d' : scopeItem.value === 'all' ? 'all' : scopeItem.value === 'investigation' ? 'investigation' : 'session';
-        const summary = buildInsightsSummary(insights, { timeRangeLabel });
+        const summary = buildSignalsSummary(insights, { timeRangeLabel });
         const ext = formatItem.value;
         const defaultName = `insights-summary.${ext}`;
         const filters: Record<string, string[]> = ext === 'json' ? { JSON: ['json'] } : { CSV: ['csv'] };
         const uri = await vscode.window.showSaveDialog({
             defaultUri: vscode.Uri.file(defaultName),
             filters,
-            title: t('insightsExport.saveTitle'),
+            title: t('signalsExport.saveTitle'),
         });
         if (!uri) { return; }
 
         const content = formatItem.value === 'json'
-            ? formatInsightsSummaryToJson(summary)
-            : formatInsightsSummaryToCsv(summary);
+            ? formatSignalsSummaryToJson(summary)
+            : formatSignalsSummaryToCsv(summary);
         await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
         const action = await vscode.window.showInformationMessage(
             t('msg.exportedTo', uri.fsPath.split(/[\\/]/).pop() ?? ''),

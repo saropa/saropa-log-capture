@@ -14,7 +14,7 @@ import { getPerformanceDbTabScript } from './viewer-performance-db-tab';
 import { getErrorRateTabScript } from './viewer-error-rate-tab';
 
 /**
- * When prefix is 'insight-', IDs become insight-pp-panel, insight-pp-current-view, etc.
+ * When prefix is 'signal-', IDs become insight-pp-panel, insight-pp-current-view, etc.
  * Used when embedding the performance panel inside the Insight panel.
  */
 export function getPerformancePanelHtml(prefix?: string): string {
@@ -80,12 +80,12 @@ export function getPerformancePanelHtml(prefix?: string): string {
 </div>`;
 }
 
-/** Generate the performance panel script. When prefix is 'insight-', binds to insight-pp-* elements (set window.__insightPerfIdPrefix before this script runs). */
+/** Generate the performance panel script. When prefix is 'signal-', binds to insight-pp-* elements (set window.__signalPerfIdPrefix before this script runs). */
 export function getPerformancePanelScript(prefix?: string): string {
     // Positive condition (Sonar S7735): use prefix when it is a string; otherwise emit runtime fallback.
     const ppIdPrefix = typeof prefix === 'string'
         ? `'${prefix}'`
-        : `(typeof window.__insightPerfIdPrefix === 'undefined' ? '' : window.__insightPerfIdPrefix)`;
+        : `(typeof window.__signalPerfIdPrefix === 'undefined' ? '' : window.__signalPerfIdPrefix)`;
     const pid = (s: string) => `document.getElementById(${ppIdPrefix} + 'pp-${s}')`;
     return /* javascript */ `
 (function() {
@@ -248,9 +248,9 @@ export function getPerformancePanelScript(prefix?: string): string {
 
     var sessionPerfChip = document.getElementById('session-perf-chip');
     if (sessionPerfChip) sessionPerfChip.addEventListener('click', function() {
-        if (typeof window.ensureInsightSlideoutOpen === 'function') window.ensureInsightSlideoutOpen();
-        else if (typeof window.setActivePanel === 'function') window.setActivePanel('insight');
-        else if (typeof openInsightPanel === 'function') openInsightPanel();
+        if (typeof window.ensureSignalSlideoutOpen === 'function') window.ensureSignalSlideoutOpen();
+        else if (typeof window.setActivePanel === 'function') window.setActivePanel('signal');
+        else if (typeof openSignalPanel === 'function') openSignalPanel();
         if (typeof window.setInsightTab === 'function') window.setInsightTab('performance');
         if (typeof openPerformancePanel === 'function') openPerformancePanel();
     });
@@ -258,7 +258,7 @@ export function getPerformancePanelScript(prefix?: string): string {
     document.addEventListener('click', function(e) {
         if (!ppOpen) return;
         if (ppPanel && ppPanel.contains(e.target)) return;
-        var ibBtn = document.getElementById('ib-insight');
+        var ibBtn = document.getElementById('ib-signal');
         if (ibBtn && (ibBtn === e.target || ibBtn.contains(e.target))) return;
         var perfChip = document.getElementById('session-perf-chip');
         if (perfChip && (perfChip === e.target || perfChip.contains(e.target))) return;

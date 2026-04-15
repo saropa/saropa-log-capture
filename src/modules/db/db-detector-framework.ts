@@ -27,7 +27,7 @@ export interface DbDetectorsCompareMaps {
 export type DbAnnotateTargetLineRow = { seq?: number; height?: number } & Record<string, unknown>;
 
 export interface RunDbDetectorsCompareOptions {
-  readonly insightsEnabled?: boolean;
+  readonly signalsEnabled?: boolean;
   /** When set, applies **`annotate-line`** entries in the merged compare results (same phase order as embed rollup phase). */
   readonly annotateTargetLines?: DbAnnotateTargetLineRow[];
   readonly onAnnotateHeightDelta?: (delta: number) => void;
@@ -59,9 +59,9 @@ export function runDbDetectorsIngest(
   registry: readonly DbDetectorDefinition[],
   ctx: DbDetectorContext,
   state: DbDetectorSessionState,
-  options?: { readonly insightsEnabled?: boolean },
+  options?: { readonly signalsEnabled?: boolean },
 ): DbDetectorResult[] {
-  if (options?.insightsEnabled === false) {
+  if (options?.signalsEnabled === false) {
     return [];
   }
   const collected: DbDetectorResult[] = [];
@@ -95,7 +95,7 @@ export function runDbDetectorsCompare(
   state: DbDetectorSessionState,
   options?: RunDbDetectorsCompareOptions,
 ): DbDetectorResult[] {
-  if (options?.insightsEnabled === false) {
+  if (options?.signalsEnabled === false) {
     return [];
   }
   const { baseline, target } = maps;

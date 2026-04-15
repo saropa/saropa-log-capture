@@ -3,13 +3,13 @@
  */
 
 /** Return CSS for Insight panel layout and accordion structure. */
-export function getInsightLayoutStyles(): string {
+export function getSignalLayoutStyles(): string {
     return /* css */ `
 
 /* ===================================================================
    Insight Panel — single scroll (Cases, Recurring, Hot files, Performance)
    =================================================================== */
-.insight-panel {
+.signal-panel {
     width: 100%;
     min-width: 280px;
     height: 100%;
@@ -21,11 +21,11 @@ export function getInsightLayoutStyles(): string {
     overflow: hidden;
 }
 
-.insight-panel.visible {
+.signal-panel.visible {
     display: flex;
 }
 
-.insight-panel-header {
+.signal-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,13 +36,13 @@ export function getInsightLayoutStyles(): string {
     flex-shrink: 0;
 }
 
-.insight-panel-actions {
+.signal-panel-actions {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.insight-panel-copy-md {
+.signal-panel-copy-md {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
@@ -55,12 +55,12 @@ export function getInsightLayoutStyles(): string {
     transition: color 0.12s ease, background 0.12s ease;
 }
 
-.insight-panel-copy-md:hover {
+.signal-panel-copy-md:hover {
     color: var(--vscode-foreground);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
-.insight-panel-close {
+.signal-panel-close {
     background: none;
     border: none;
     color: var(--vscode-descriptionForeground);
@@ -72,12 +72,12 @@ export function getInsightLayoutStyles(): string {
     transition: color 0.12s ease, background 0.12s ease;
 }
 
-.insight-panel-close:hover {
+.signal-panel-close:hover {
     color: var(--vscode-foreground);
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
 }
 
-.insight-panel-content {
+.signal-panel-content {
     flex: 1;
     min-height: 0;
     overflow: auto;
@@ -85,16 +85,16 @@ export function getInsightLayoutStyles(): string {
 }
 
 /* Accordion sections */
-.insight-section {
+.signal-section {
     border-bottom: 1px solid var(--vscode-panel-border);
     margin-bottom: 4px;
 }
 
-.insight-section:last-child {
+.signal-section:last-child {
     border-bottom: none;
 }
 
-.insight-section-header {
+.signal-section-header {
     width: 100%;
     display: flex;
     align-items: center;
@@ -110,48 +110,48 @@ export function getInsightLayoutStyles(): string {
     transition: background 0.12s ease, color 0.12s ease;
 }
 
-.insight-section-header:hover {
+.signal-section-header:hover {
     background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.15));
     color: var(--vscode-foreground);
 }
 
-.insight-section-emoji {
+.signal-section-emoji {
     margin-right: 6px;
     font-size: 14px;
     line-height: 1;
     flex-shrink: 0;
 }
 
-.insight-section-title {
+.signal-section-title {
     flex: 1;
 }
 
-.insight-section-toggle {
+.signal-section-toggle {
     width: 16px;
     height: 16px;
     opacity: 0.7;
     transition: transform 0.15s ease;
 }
 
-.insight-section-toggle::before {
+.signal-section-toggle::before {
     content: "\\25BC";
     font-size: 10px;
 }
 
-.insight-section-header.expanded .insight-section-toggle {
+.signal-section-header.expanded .signal-section-toggle {
     transform: rotate(0deg);
 }
 
-.insight-section-header:not(.expanded) .insight-section-toggle {
+.signal-section-header:not(.expanded) .signal-section-toggle {
     transform: rotate(-90deg);
 }
 
-.insight-section-body {
+.signal-section-body {
     padding: 4px 0 12px;
     overflow: hidden;
 }
 
-.insight-section .session-investigations {
+.signal-section .session-investigations {
     flex: 0 0 auto;
 }
 `;

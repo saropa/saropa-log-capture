@@ -82,7 +82,7 @@ export type DbDetectorResultKind =
 
 /** N+1 synthetic row payload (adapter builds HTML / line item). */
 export interface DbNPlusOneSyntheticPayload {
-  readonly syntheticType: "n-plus-one-insight";
+  readonly syntheticType: "n-plus-one-signal";
   readonly insight: {
     readonly repeats: number;
     readonly distinctArgs: number;

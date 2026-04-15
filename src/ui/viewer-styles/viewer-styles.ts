@@ -9,7 +9,7 @@
  * blend seamlessly with the surrounding panel chrome.
  */
 import { getContentStyles } from './viewer-styles-content';
-import { getNPlusOneInsightStyles } from './viewer-styles-n-plus-one-signal';
+import { getNPlusOneSignalStyles } from './viewer-styles-n-plus-one-signal';
 import { getSqlRepeatDrilldownStyles } from './viewer-styles-sql-repeat-drilldown';
 import { getComponentStyles } from './viewer-styles-components';
 import { getOverlayStyles } from './viewer-styles-overlays';
@@ -26,7 +26,7 @@ import { getAboutPanelStyles } from './viewer-styles-about';
 import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
 import { getRecurringPanelStyles } from './viewer-styles-recurring';
 import { getPerformancePanelStyles } from './viewer-styles-performance';
-import { getInsightPanelStyles } from './viewer-styles-signal';
+import { getSignalPanelStyles } from './viewer-styles-signal';
 import { getAiStyles } from './viewer-styles-ai';
 import { getRunSeparatorStyles } from './viewer-styles-run-separator';
 import { getContextPopoverStyles } from './viewer-styles-ui';
@@ -172,5 +172,5 @@ body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + getLineStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneInsightStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getInsightPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles();
+` + getLineStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles();
 }

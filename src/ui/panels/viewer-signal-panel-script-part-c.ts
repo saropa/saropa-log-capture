@@ -1,24 +1,24 @@
 /**
  * Insight panel script part C: performance hero, list click handlers, message handler.
- * Concatenated by viewer-insight-panel-script.ts to stay under max-lines.
+ * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
 /** Returns the third fragment of the Insight panel IIFE (hero, delegates, messages). */
-export function getInsightScriptPartC(): string {
+export function getSignalScriptPartC(): string {
     return /* js */ `
     function renderPerformanceHero() {
-        var heroEl = document.getElementById('insight-performance-hero');
+        var heroEl = document.getElementById('signal-performance-hero');
         if (!heroEl) return;
         if (!hasLog) { heroEl.style.display = 'none'; heroEl.innerHTML = ''; return; }
         if (heroLoading) {
-            heroEl.innerHTML = '<span class="insight-hero-metrics">' + esc(INSIGHT_STRINGS.heroLoading) + '</span>';
+            heroEl.innerHTML = '<span class="signal-hero-metrics">' + esc(SIGNAL_STRINGS.heroLoading) + '</span>';
             heroEl.style.display = '';
             return;
         }
         var parts = [];
         if (typeof heroErrorCount === 'number') parts.push('\\uD83D\\uDD34 Errors: ' + heroErrorCount);
         if (typeof heroWarningCount === 'number') parts.push('\\uD83D\\uDFE1 Warnings: ' + heroWarningCount);
-        if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push(esc(INSIGHT_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded'));
+        if (parts.length === 0 && hasLog && typeof heroErrorCount !== 'number' && typeof heroWarningCount !== 'number') parts.push(esc(SIGNAL_STRINGS.heroNoErrorsWarnings || 'No errors or warnings recorded'));
         if (heroSnapshotSummary) parts.push(heroSnapshotSummary);
         var hasSparkline = heroSparklineData && Array.isArray(heroSparklineData.freememMb) && heroSparklineData.freememMb.length >= 2;
         var sparklineHtml = '';
@@ -35,19 +35,19 @@ export function getInsightScriptPartC(): string {
                 var y = h - norm * h;
                 pts.push(x.toFixed(1) + ',' + y.toFixed(1));
             }
-            var sparkTitle = esc(INSIGHT_STRINGS.heroSparklineTitle);
-            var trendLabel = esc(INSIGHT_STRINGS.sessionTrendLabel || 'Session trend');
-            sparklineHtml = '<span class="insight-hero-sparkline-wrap"><span class="insight-hero-sparkline-label">' + trendLabel + '</span><svg class="insight-hero-sparkline" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" aria-hidden="true"><title>' + sparkTitle + '</title><path fill="none" stroke="currentColor" stroke-width="1.5" d="M' + pts.join(' L') + '"/></svg></span>';
+            var sparkTitle = esc(SIGNAL_STRINGS.heroSparklineTitle);
+            var trendLabel = esc(SIGNAL_STRINGS.sessionTrendLabel || 'Session trend');
+            sparklineHtml = '<span class="signal-hero-sparkline-wrap"><span class="signal-hero-sparkline-label">' + trendLabel + '</span><svg class="signal-hero-sparkline" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" aria-hidden="true"><title>' + sparkTitle + '</title><path fill="none" stroke="currentColor" stroke-width="1.5" d="M' + pts.join(' L') + '"/></svg></span>';
         }
         var hintHtml = '';
-        if (!hasSparkline && parts.length === 0) hintHtml = '<span class="insight-hero-hint">' + esc(INSIGHT_STRINGS.heroNoSamplingHint) + '</span>';
-        if (parts.length === 0 && !sparklineHtml && !hintHtml) { heroEl.style.display = 'none'; heroEl.innerHTML = ''; heroEl.parentElement && heroEl.parentElement.classList.remove('insight-hero-has-errors', 'insight-hero-has-warnings'); return; }
-        heroEl.innerHTML = sparklineHtml + (parts.length > 0 ? '<span class="insight-hero-metrics">' + parts.join(' \\u00b7 ') + '</span>' : '') + hintHtml;
+        if (!hasSparkline && parts.length === 0) hintHtml = '<span class="signal-hero-hint">' + esc(SIGNAL_STRINGS.heroNoSamplingHint) + '</span>';
+        if (parts.length === 0 && !sparklineHtml && !hintHtml) { heroEl.style.display = 'none'; heroEl.innerHTML = ''; heroEl.parentElement && heroEl.parentElement.classList.remove('signal-hero-has-errors', 'signal-hero-has-warnings'); return; }
+        heroEl.innerHTML = sparklineHtml + (parts.length > 0 ? '<span class="signal-hero-metrics">' + parts.join(' \\u00b7 ') + '</span>' : '') + hintHtml;
         heroEl.style.display = '';
-        var heroBlock = document.getElementById('insight-hero-block');
+        var heroBlock = document.getElementById('signal-hero-block');
         if (heroBlock) {
-            heroBlock.classList.toggle('insight-hero-has-errors', typeof heroErrorCount === 'number' && heroErrorCount > 0);
-            heroBlock.classList.toggle('insight-hero-has-warnings', typeof heroWarningCount === 'number' && heroWarningCount > 0);
+            heroBlock.classList.toggle('signal-hero-has-errors', typeof heroErrorCount === 'number' && heroErrorCount > 0);
+            heroBlock.classList.toggle('signal-hero-has-warnings', typeof heroWarningCount === 'number' && heroWarningCount > 0);
         }
     }
 
@@ -87,14 +87,14 @@ export function getInsightScriptPartC(): string {
                 lines.push('');
             }
         }
-        var errorsInLog = (insightDataCache.errorsInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
-        var recurringInLog = (insightDataCache.recurringInThisLog || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var errorsInLog = (signalDataCache.errorsInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var recurringInLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
         if (hasLog && (errorsInLog.length > 0 || recurringInLog.length > 0)) {
             lines.push('## This log');
             lines.push('');
             if (errorsInLog.length > 0) {
                 lines.push('### Errors in this log');
-                var totalErr = insightDataCache.errorsInThisLogTotal != null ? insightDataCache.errorsInThisLogTotal : errorsInLog.length;
+                var totalErr = signalDataCache.errorsInThisLogTotal != null ? signalDataCache.errorsInThisLogTotal : errorsInLog.length;
                 if (totalErr > errorsInLog.length) lines.push('Top ' + errorsInLog.length + ' of ' + totalErr + ':');
                 for (var i = 0; i < errorsInLog.length; i++) {
                     var err = errorsInLog[i];
@@ -120,8 +120,8 @@ export function getInsightScriptPartC(): string {
             for (var k = 0; k < invs.length; k++) lines.push('- ' + (invs[k].name || 'Unnamed'));
             lines.push('');
         }
-        var recurring = (insightDataCache.errors || []).filter(function(e) { return (insightDataCache.statuses || {})[e.hash] !== 'muted'; });
-        var hotFiles = insightDataCache.hotFiles || [];
+        var recurring = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.hash] !== 'muted'; });
+        var hotFiles = signalDataCache.hotFiles || [];
         if (recurring.length > 0 || hotFiles.length > 0) {
             lines.push('## Across your logs');
             lines.push('');
@@ -143,9 +143,9 @@ export function getInsightScriptPartC(): string {
                 lines.push('');
             }
         }
-        var platforms = insightDataCache.platforms || [];
-        var sdks = insightDataCache.sdkVersions || [];
-        var adapters = insightDataCache.debugAdapters || [];
+        var platforms = signalDataCache.platforms || [];
+        var sdks = signalDataCache.sdkVersions || [];
+        var adapters = signalDataCache.debugAdapters || [];
         if (platforms.length > 0 || sdks.length > 0 || adapters.length > 0) {
             lines.push('## Environment');
             lines.push('');
@@ -156,20 +156,20 @@ export function getInsightScriptPartC(): string {
         return lines.join('\\n');
     }
 
-    /* Open in new tab: opens Insights as a main editor tab; extension handles via onOpenInsightTabRequest. */
-    var openTabBtn = document.getElementById('insight-panel-open-tab');
+    /* Open in new tab: opens Insights as a main editor tab; extension handles via onOpenSignalTabRequest. */
+    var openTabBtn = document.getElementById('signal-panel-open-tab');
     if (openTabBtn) openTabBtn.addEventListener('click', function() {
-        vscodeApi.postMessage({ type: 'openInsightTab' });
+        vscodeApi.postMessage({ type: 'openSignalTab' });
     });
 
     /* Copy entire Insights case to clipboard as markdown (header button). */
-    var copyMdBtn = document.getElementById('insight-panel-copy-md');
+    var copyMdBtn = document.getElementById('signal-panel-copy-md');
     if (copyMdBtn) copyMdBtn.addEventListener('click', function() {
         var md = buildInsightMarkdown();
         if (md) vscodeApi.postMessage({ type: 'copyToClipboard', text: md });
     });
 
-    var recurringListEl = document.getElementById('insight-recurring-list');
+    var recurringListEl = document.getElementById('signal-recurring-list');
     if (recurringListEl) recurringListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
         if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
@@ -178,12 +178,12 @@ export function getInsightScriptPartC(): string {
         e.stopPropagation();
         vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: act.dataset.hash, status: act.dataset.status });
     });
-    var hotfilesListEl = document.getElementById('insight-hotfiles-list');
+    var hotfilesListEl = document.getElementById('signal-hotfiles-list');
     if (hotfilesListEl) hotfilesListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
         if (addBtn) { e.preventDefault(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'hotfile', filename: addBtn.dataset.filename || '' } }); }
     });
-    var recurringInLogListEl = document.getElementById('insight-recurring-in-log-list');
+    var recurringInLogListEl = document.getElementById('signal-recurring-in-log-list');
     if (recurringInLogListEl) recurringInLogListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
         if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
@@ -192,43 +192,43 @@ export function getInsightScriptPartC(): string {
         e.stopPropagation();
         vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: act.dataset.hash, status: act.dataset.status });
     });
-    var errorsInLogListEl = document.getElementById('insight-errors-in-log-list');
+    var errorsInLogListEl = document.getElementById('signal-errors-in-log-list');
     if (errorsInLogListEl) errorsInLogListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
         if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); }
     });
 
-    var exportSummaryEl = document.getElementById('insight-export-summary');
+    var exportSummaryEl = document.getElementById('signal-export-summary');
     if (exportSummaryEl) exportSummaryEl.addEventListener('click', function() {
         vscodeApi.postMessage({ type: 'exportSignalsSummary' });
     });
 
     window.addEventListener('message', function(e) {
         if (!e.data) return;
-        if (e.data.type === 'openInsight') {
-            openInsightPanel();
+        if (e.data.type === 'openSignalPanel') {
+            openSignalPanel();
             if (e.data.tab) setInsightTab(e.data.tab);
             return;
         }
         if (e.data.type === 'currentLogChanged') {
             if (hasLog) { heroLoading = true; renderPerformanceHero(); }
             vscodeApi.postMessage({ type: 'requestPerformanceData' });
-            vscodeApi.postMessage({ type: 'requestInsightData' });
+            vscodeApi.postMessage({ type: 'requestSignalData' });
             return;
         }
-        if (e.data.type === 'insightRefreshRecurring') {
-            var loadEl = document.getElementById('insight-recurring-loading');
-            var listEl = document.getElementById('insight-recurring-list');
-            var emptyEl = document.getElementById('insight-recurring-empty');
+        if (e.data.type === 'signalRefreshRecurring') {
+            var loadEl = document.getElementById('signal-recurring-loading');
+            var listEl = document.getElementById('signal-recurring-list');
+            var emptyEl = document.getElementById('signal-recurring-empty');
             if (loadEl) loadEl.style.display = '';
             if (listEl) listEl.innerHTML = '';
             if (emptyEl) emptyEl.style.display = 'none';
-            vscodeApi.postMessage({ type: 'requestInsightData' });
+            vscodeApi.postMessage({ type: 'requestSignalData' });
             return;
         }
         if (e.data.type === 'investigationsList') {
             setCreateInvestigationLoading(false);
-            var casesLoad = document.getElementById('insight-cases-loading');
+            var casesLoad = document.getElementById('signal-cases-loading');
             if (casesLoad) casesLoad.style.display = 'none';
             investigationsData = { investigations: e.data.investigations || [], activeId: e.data.activeId || '' };
             renderCasesList();
@@ -238,36 +238,36 @@ export function getInsightScriptPartC(): string {
         }
         if (e.data.type === 'createInvestigationSucceeded') {
             expandCasesAndScrollToNew();
-            var listEl = document.getElementById('insight-cases-list');
+            var listEl = document.getElementById('signal-cases-list');
             var lastItem = listEl && listEl.lastElementChild;
             if (lastItem) lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
         if (e.data.type === 'createInvestigationError') {
             setCreateInvestigationLoading(false);
-            var casesLoad = document.getElementById('insight-cases-loading');
+            var casesLoad = document.getElementById('signal-cases-loading');
             if (casesLoad) casesLoad.style.display = 'none';
-            var errEl = document.getElementById('insight-cases-create-error');
+            var errEl = document.getElementById('signal-cases-create-error');
             if (errEl) { errEl.textContent = e.data.message || 'Failed to create'; errEl.style.display = ''; }
         }
-        if (e.data.type === 'insightData') {
+        if (e.data.type === 'signalData') {
             var d = e.data;
-            insightDataCache = {
+            signalDataCache = {
                 errors: d.errors || [], statuses: d.statuses || {}, hotFiles: d.hotFiles || [],
                 recurringInThisLog: d.recurringInThisLog || [], errorsInThisLog: d.errorsInThisLog || [],
                 errorsInThisLogTotal: d.errorsInThisLogTotal, platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
                 debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {}, recurringSignals: d.recurringSignals || [],
                 signalSessionCount: d.signalSessionCount || 0, allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || []
             };
-            var loadEl = document.getElementById('insight-recurring-loading');
+            var loadEl = document.getElementById('signal-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';
             renderRecurringList(); renderHotFiles(); renderRecurringInLog();
             renderErrorsInLog(); renderThisLogEmptyState(); renderSignalsInThisLog();
             renderEnvironment(); renderSignalTrends();
         }
         if (e.data.type === 'recurringErrorsData') {
-            insightDataCache.errors = e.data.errors || [];
-            insightDataCache.statuses = e.data.statuses || {};
-            var loadEl = document.getElementById('insight-recurring-loading');
+            signalDataCache.errors = e.data.errors || [];
+            signalDataCache.statuses = e.data.statuses || {};
+            var loadEl = document.getElementById('signal-recurring-loading');
             if (loadEl) loadEl.style.display = 'none';
             renderRecurringList();
             renderRecurringInLog();
@@ -281,7 +281,7 @@ export function getInsightScriptPartC(): string {
             heroWarningCount = e.data.heroWarningCount;
             heroSnapshotSummary = (e.data.heroSnapshotSummary != null && e.data.heroSnapshotSummary !== '') ? String(e.data.heroSnapshotSummary) : '';
             heroSparklineData = e.data.heroSparklineData || undefined;
-            var scopeEl = document.getElementById('insight-performance-scope');
+            var scopeEl = document.getElementById('signal-performance-scope');
             var labelEl = document.getElementById('insight-current-log-label');
             if (scopeEl && labelEl) {
                 if (hasLog && currentLogLabel) { labelEl.textContent = currentLogLabel; scopeEl.style.display = ''; }

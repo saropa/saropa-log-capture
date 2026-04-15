@@ -3,14 +3,14 @@
  * Used by the Export Insights Summary command.
  */
 
-import type { InsightsSummary } from '../signals/signals-summary';
+import type { SignalsSummary } from '../signals/signals-summary';
 import { escapeCsvField } from './export-formats';
 
 /**
  * Serialize insights summary to CSV.
  * Two sections: errors (signature, count, sessions, sampleLine, firstSeen, lastSeen, category), then files (path, sessionCount).
  */
-export function formatInsightsSummaryToCsv(summary: InsightsSummary): string {
+export function formatSignalsSummaryToCsv(summary: SignalsSummary): string {
     const lines: string[] = [];
 
     lines.push('errors');
@@ -42,7 +42,7 @@ export function formatInsightsSummaryToCsv(summary: InsightsSummary): string {
  * Serialize insights summary to JSON.
  * Structure: { errors: ErrorSummary[], files: FileSummary[], meta: { sessionCount, timeRange, exportedAt } }.
  */
-export function formatInsightsSummaryToJson(summary: InsightsSummary): string {
+export function formatSignalsSummaryToJson(summary: SignalsSummary): string {
     return JSON.stringify(
         {
             errors: summary.errors,
