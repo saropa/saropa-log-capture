@@ -3,11 +3,11 @@
  */
 
 import * as assert from 'assert';
-import { buildInsightsSummary } from '../../../modules/signals/signals-summary';
-import { formatInsightsSummaryToCsv, formatInsightsSummaryToJson } from '../../../modules/export/signals-export-formats';
-import type { CrossSessionInsights } from '../../../modules/misc/cross-session-aggregator';
+import { buildSignalsSummary } from '../../../modules/signals/signals-summary';
+import { formatSignalsSummaryToCsv, formatSignalsSummaryToJson } from '../../../modules/export/signals-export-formats';
+import type { CrossSessionSignals } from '../../../modules/misc/cross-session-aggregator';
 
-function mockInsights(overrides?: Partial<CrossSessionInsights>): CrossSessionInsights {
+function mockInsights(overrides?: Partial<CrossSessionSignals>): CrossSessionSignals {
     return {
         hotFiles: [
             { filename: 'lib/foo.dart', sessionCount: 3, sessions: [] },
@@ -41,11 +41,11 @@ function mockInsights(overrides?: Partial<CrossSessionInsights>): CrossSessionIn
     };
 }
 
-suite('InsightsSummary', () => {
-    suite('buildInsightsSummary', () => {
+suite('SignalsSummary', () => {
+    suite('buildSignalsSummary', () => {
         test('builds summary from insights with default caps', () => {
             const insights = mockInsights();
-            const summary = buildInsightsSummary(insights);
+            const summary = buildSignalsSummary(insights);
             assert.strictEqual(summary.errors.length, 1);
             assert.strictEqual(summary.errors[0].signature, 'a1b2c3d4');
             assert.strictEqual(summary.errors[0].count, 5);
@@ -59,7 +59,7 @@ suite('InsightsSummary', () => {
 
         test('applies timeRangeLabel option', () => {
             const insights = mockInsights();
-            const summary = buildInsightsSummary(insights, { timeRangeLabel: '7d' });
+            const summary = buildSignalsSummary(insights, { timeRangeLabel: '7d' });
             assert.strictEqual(summary.meta.timeRange, '7d');
         });
 
@@ -80,17 +80,17 @@ suite('InsightsSummary', () => {
                 sessions: [] as { filename: string; uri: string }[],
             }));
             const insights = mockInsights({ recurringErrors: manyErrors, hotFiles: manyFiles });
-            const summary = buildInsightsSummary(insights, { maxErrors: 3, maxFiles: 2 });
+            const summary = buildSignalsSummary(insights, { maxErrors: 3, maxFiles: 2 });
             assert.strictEqual(summary.errors.length, 3);
             assert.strictEqual(summary.files.length, 2);
         });
     });
 
-    suite('formatInsightsSummaryToCsv', () => {
+    suite('formatSignalsSummaryToCsv', () => {
         test('produces errors section then files section', () => {
             const insights = mockInsights();
-            const summary = buildInsightsSummary(insights);
-            const csv = formatInsightsSummaryToCsv(summary);
+            const summary = buildSignalsSummary(insights);
+            const csv = formatSignalsSummaryToCsv(summary);
             assert.ok(csv.includes('errors'));
             assert.ok(csv.includes('signature,count,sessions,sampleLine,firstSeen,lastSeen,category'));
             assert.ok(csv.includes('a1b2c3d4'));
@@ -100,11 +100,11 @@ suite('InsightsSummary', () => {
         });
     });
 
-    suite('formatInsightsSummaryToJson', () => {
+    suite('formatSignalsSummaryToJson', () => {
         test('produces valid JSON with errors, files, meta', () => {
             const insights = mockInsights();
-            const summary = buildInsightsSummary(insights);
-            const json = formatInsightsSummaryToJson(summary);
+            const summary = buildSignalsSummary(insights);
+            const json = formatSignalsSummaryToJson(summary);
             const parsed = JSON.parse(json);
             assert.ok(Array.isArray(parsed.errors));
             assert.ok(Array.isArray(parsed.files));

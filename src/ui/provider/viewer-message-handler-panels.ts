@@ -57,10 +57,10 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "crashlyticsPanelOpened": panelHandlers.startCrashlyticsAutoRefresh(ctx.post); return true;
       case "crashlyticsPanelClosed": panelHandlers.stopCrashlyticsAutoRefresh(); return true;
       case "requestRecurringErrors": panelHandlers.handleRecurringRequest(ctx.post).catch(() => {}); return true;
-      case "requestInsightData": panelHandlers.handleInsightDataRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
+      case "requestSignalData": panelHandlers.handleSignalDataRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post).catch(() => {}); return true;
-      case "openInsights": ctx.post({ type: 'openInsight', tab: 'recurring' }); return true;
+      case "openSignals": ctx.post({ type: 'openSignalPanel', tab: 'recurring' }); return true;
       case "addSignalItemToCase":
         vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCase', msg.payload);
         return true;

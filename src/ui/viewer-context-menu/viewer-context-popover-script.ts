@@ -20,7 +20,7 @@
  */
 
 import { getContextPopoverBrowserScript } from './viewer-context-popover-browser';
-import { getContextPopoverDbInsightScript } from './viewer-context-popover-db-signal';
+import { getContextPopoverDbSignalScript } from './viewer-context-popover-db-signal';
 import { getContextPopoverDatabaseQueriesScript, getContextPopoverSecurityScript, getRelatedQueriesPopoverScript } from './viewer-context-popover-integration-sections';
 import { getContextPopoverSharedScript } from './viewer-context-popover-shared-script';
 import { getQualityPopoverScript } from './viewer-quality-popover-script';
@@ -29,7 +29,7 @@ import { getQualityPopoverScript } from './viewer-quality-popover-script';
  * Returns the JavaScript code for the context popover in the webview.
  */
 export function getContextPopoverScript(): string {
-    return getContextPopoverBrowserScript() + getContextPopoverDbInsightScript() + getContextPopoverDatabaseQueriesScript() + getContextPopoverSecurityScript() + getRelatedQueriesPopoverScript() + (
+    return getContextPopoverBrowserScript() + getContextPopoverDbSignalScript() + getContextPopoverDatabaseQueriesScript() + getContextPopoverSecurityScript() + getRelatedQueriesPopoverScript() + (
         /* javascript */ `
 var contextPopoverEl = null;
 var contextPopoverLineIdx = -1;
