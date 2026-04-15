@@ -52,6 +52,21 @@ export function getExclusionChipStyles(): string {
     border-radius: 2px;
     margin: 4px 0;
 }
+
+/* Checkbox toggle inline with the exclusion text input */
+.exclusion-toggle {
+    display: flex;
+    align-items: center;
+    padding: 4px 2px 4px 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.exclusion-toggle input[type="checkbox"] {
+    accent-color: var(--vscode-button-background);
+    cursor: pointer;
+    margin: 0;
+}
+
 .exclusion-input-wrapper:focus-within {
     border-color: var(--vscode-focusBorder);
 }
