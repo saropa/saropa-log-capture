@@ -59,7 +59,7 @@ export interface ViewerTarget {
   setMinimapViewportRedOutline(show: boolean): void;
   setMinimapViewportOutsideArrow(show: boolean): void;
   setViewerRepeatThresholds(thresholds: ViewerRepeatThresholds): void;
-  setViewerDbInsightsEnabled(enabled: boolean): void;
+  setViewerDbSignalsEnabled(enabled: boolean): void;
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void;
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void;
   setViewerSlowBurstThresholds(thresholds: ViewerSlowBurstThresholds): void;

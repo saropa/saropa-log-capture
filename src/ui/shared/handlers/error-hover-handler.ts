@@ -7,7 +7,7 @@
  */
 
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from '../../../modules/analysis/error-fingerprint';
-import { aggregateSignals, type RecurringError } from '../../../modules/misc/cross-session-aggregator';
+import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, type ErrorStatus } from '../../../modules/misc/error-status-store';
 import { getRegressionHintsForError, type RegressionHintsResult } from '../../../modules/regression/regression-hint-service';
 import { extractSourceReference } from '../../../modules/source/source-linker';
@@ -60,7 +60,8 @@ export async function handleErrorHoverRequest(
         getErrorStatusBatch([hash]).catch(() => ({} as Record<string, ErrorStatus>)),
     ]);
 
-    const match: RecurringError | undefined = aggregated?.recurringErrors.find(e => e.hash === hash);
+    // Find matching error signal by fingerprint (which is the raw hash for error-kind signals)
+    const match = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
     const triageStatus = statuses[hash] ?? 'open';
 
     const resolveUrls = getConfig().integrationsGit?.commitLinks ?? true;

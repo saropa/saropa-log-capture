@@ -2,7 +2,7 @@
  * Embedded DB detector framework (plan **DB_15**).
  *
  * **Load order:** This script is concatenated after `getNPlusOneDetectorScript` so globals such as
- * `detectNPlusOneSignal`, `parseSqlFingerprint`, and `updateDbInsightRollup` already exist. Detector
+ * `detectNPlusOneSignal`, `parseSqlFingerprint`, and `updateDbSignalRollup` already exist. Detector
  * registration order is by `priority`; results are merged by `stableKey` like the TypeScript
  * `runDbDetectors` / `mergeDbDetectorResultsByStableKey` (merge is **codegen** from `db-detector-merge-stable-key.ts`).
  *
@@ -13,10 +13,10 @@
  *
  * **Session rollup patches:** Each qualifying Drift ingest applies a primary `db.ingest-rollup` patch first
  * (in `emitDbLineDetectors`), then registered detectors; `applyDbSessionRollupPatches` calls
- * `updateDbInsightRollup` up to 1000 repeats per payload. Detector results apply in **phases** (rollup patches,
+ * `updateDbSignalRollup` up to 1000 repeats per payload. Detector results apply in **phases** (rollup patches,
  * then `annotate-line`, synthetic, marker), sorted by `priority` within each phase.
  *
- * **State:** `resetDbInsightDetectorSession` clears disabled flags, N+1/slow-burst accumulators, rollup
+ * **State:** `resetDbSignalDetectorSession` clears disabled flags, N+1/slow-burst accumulators, rollup
  * map, and baseline hint dedupe; it does not clear the host-provided baseline object/map (host sends null
  * to clear).
  */
@@ -31,11 +31,11 @@ import { getTimestampBurstDetectorEmbedJs } from "./viewer-db-detector-timestamp
 const BASELINE_VOLUME_HINT_ID = "db.baseline-volume-hint";
 
 export function getViewerDbDetectorFrameworkScript(
-  dbInsightsEnabled: boolean,
+  dbSignalsEnabled: boolean,
   slowBurstThresholds?: Partial<ViewerSlowBurstThresholds>,
   detectorToggles?: Partial<ViewerDbDetectorToggles>,
 ): string {
-  const enabledJs = dbInsightsEnabled ? "true" : "false";
+  const enabledJs = dbSignalsEnabled ? "true" : "false";
   const sb = normalizeViewerSlowBurstThresholds(slowBurstThresholds);
   const burstJson = JSON.stringify({
     slowQueryMs: sb.slowQueryMs,
@@ -94,10 +94,10 @@ function registerDbDetector(detector) {
     dbDetectorRegistry.push(detector);
 }
 ${EMBED_MERGE_DB_DETECTOR_RESULTS_JS}
-/** Apply session-rollup-patch results into dbInsightSessionRollup (same math as live Drift lines). */
+/** Apply session-rollup-patch results into dbSignalSessionRollup (same math as live Drift lines). */
 function applyDbSessionRollupPatches(results) {
     if (!results || !results.length) return;
-    if (typeof updateDbInsightRollup !== 'function') return;
+    if (typeof updateDbSignalRollup !== 'function') return;
     var i, r, p, k, reps, j;
     for (i = 0; i < results.length; i++) {
         r = results[i];
@@ -106,7 +106,7 @@ function applyDbSessionRollupPatches(results) {
         if (!p.fingerprint) continue;
         reps = (typeof p.repeatCount === 'number' && p.repeatCount > 0) ? Math.min(p.repeatCount, 1000) : 1;
         for (j = 0; j < reps; j++) {
-            updateDbInsightRollup(p.fingerprint, p.elapsedMs);
+            updateDbSignalRollup(p.fingerprint, p.elapsedMs);
         }
     }
 }
@@ -167,7 +167,7 @@ function pruneDbDetectorStateAfterTrim(oldestKeptTs) {
     }
 }
 /** Reset detector session flags and DB-specific accumulators when the log is cleared. */
-function resetDbInsightDetectorSession() {
+function resetDbSignalDetectorSession() {
     var k;
     for (k in dbDetectorSessionDisabled) {
         if (Object.prototype.hasOwnProperty.call(dbDetectorSessionDisabled, k)) delete dbDetectorSessionDisabled[k];
@@ -184,8 +184,8 @@ function resetDbInsightDetectorSession() {
     if (typeof tsBurstBySession !== 'undefined') {
         tsBurstBySession = Object.create(null);
     }
-    if (typeof dbInsightSessionRollup !== 'undefined') {
-        dbInsightSessionRollup = Object.create(null);
+    if (typeof dbSignalSessionRollup !== 'undefined') {
+        dbSignalSessionRollup = Object.create(null);
     }
     baselineVolumeHintEmitted = Object.create(null);
 }
@@ -243,7 +243,7 @@ ${getTimestampBurstDetectorEmbedJs()}
             var bEnt = ctx.baselineFingerprintSummary.get(fp);
             if (!bEnt || typeof bEnt.count !== 'number' || bEnt.count < 3) return [];
             if (baselineVolumeHintEmitted[fp]) return [];
-            var roll = typeof dbInsightSessionRollup !== 'undefined' ? dbInsightSessionRollup[fp] : null;
+            var roll = typeof dbSignalSessionRollup !== 'undefined' ? dbSignalSessionRollup[fp] : null;
             var cur = roll && typeof roll.count === 'number' ? roll.count : 0;
             if (cur <= bEnt.count) return [];
             baselineVolumeHintEmitted[fp] = true;

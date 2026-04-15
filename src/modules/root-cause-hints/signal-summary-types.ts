@@ -43,5 +43,43 @@ export interface PersistedSignalSummaryV1 {
 export function isPersistedSignalSummaryV1(v: unknown): v is PersistedSignalSummaryV1 {
     if (!v || typeof v !== 'object') { return false; }
     const obj = v as Record<string, unknown>;
-    return obj.schemaVersion === SIGNAL_SUMMARY_SCHEMA_VERSION && typeof obj.counts === 'object' && obj.counts !== null;
+    return typeof obj.schemaVersion === 'number' && typeof obj.counts === 'object' && obj.counts !== null;
+}
+
+// --- V2: persists actual signal entries alongside counts so cross-session views
+// have detail without re-scanning. Backwards-compatible with V1 readers (same
+// schemaVersion field check, extra fields ignored). ---
+
+/** Schema version for V2 summaries. */
+export const SIGNAL_SUMMARY_SCHEMA_VERSION_V2 = 2 as const;
+
+/** A compact signal entry persisted to metadata. */
+export interface PersistedSignalEntryV2 {
+    readonly kind: string;
+    readonly fingerprint: string;
+    readonly label: string;
+    readonly detail?: string;
+    readonly count: number;
+    readonly category?: string;
+    readonly avgDurationMs?: number;
+    readonly maxDurationMs?: number;
+}
+
+/**
+ * V2 signal summary: extends V1 with actual entries for signal types that
+ * previously only stored counts (network failures, memory events, slow ops, etc.).
+ * Error/warning/perf/SQL fingerprints are already persisted separately in metadata,
+ * so V2 entries focus on count-only signal types.
+ */
+export interface PersistedSignalSummaryV2 extends Omit<PersistedSignalSummaryV1, 'schemaVersion'> {
+    readonly schemaVersion: typeof SIGNAL_SUMMARY_SCHEMA_VERSION_V2;
+    /** Top signal entries with full detail for count-only types. Max 20. */
+    readonly entries?: readonly PersistedSignalEntryV2[];
+}
+
+/** Type guard for V2 summaries (V1 summaries also pass isPersistedSignalSummaryV1). */
+export function isPersistedSignalSummaryV2(v: unknown): v is PersistedSignalSummaryV2 {
+    if (!v || typeof v !== 'object') { return false; }
+    const obj = v as Record<string, unknown>;
+    return obj.schemaVersion === SIGNAL_SUMMARY_SCHEMA_VERSION_V2 && typeof obj.counts === 'object' && obj.counts !== null;
 }

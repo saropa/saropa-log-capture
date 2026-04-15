@@ -31,15 +31,15 @@ function truncateSqlHistoryPreviewString(s) {
 function extractSqlHistoryFingerprint(it) {
     if (!it || it.sourceTag !== 'database') return null;
     if (it.type !== 'line' && it.type !== 'repeat-notification' && it.type !== 'n-plus-one-signal') return null;
-    if (it.dbInsight && it.dbInsight.fingerprint) return it.dbInsight.fingerprint;
+    if (it.dbSignal && it.dbSignal.fingerprint) return it.dbSignal.fingerprint;
     if (it.sqlHistoryFp) return it.sqlHistoryFp;
-    if (it.insightMeta && it.insightMeta.fingerprint) return it.insightMeta.fingerprint;
+    if (it.signalMeta && it.signalMeta.fingerprint) return it.signalMeta.fingerprint;
     return null;
 }
 
 function extractSqlHistoryPreview(it, fp) {
     var raw = '';
-    if (it.dbInsight && it.dbInsight.sqlSnippet) raw = it.dbInsight.sqlSnippet;
+    if (it.dbSignal && it.dbSignal.sqlSnippet) raw = it.dbSignal.sqlSnippet;
     else if (it.sqlHistoryPreview) raw = it.sqlHistoryPreview;
     else raw = fp || '';
     return truncateSqlHistoryPreviewString(raw);
@@ -47,7 +47,7 @@ function extractSqlHistoryPreview(it, fp) {
 
 function extractSqlHistorySampleSql(it) {
     if (!it) return '';
-    if (it.dbInsight && it.dbInsight.sqlSnippet) return String(it.dbInsight.sqlSnippet).trim();
+    if (it.dbSignal && it.dbSignal.sqlSnippet) return String(it.dbSignal.sqlSnippet).trim();
     if (it.sqlRepeatDrilldown && it.sqlRepeatDrilldown.sqlSnippet) {
         return String(it.sqlRepeatDrilldown.sqlSnippet).trim();
     }

@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from '../../modules/analysis/error-fingerprint';
-import { aggregateSignals, type RecurringError } from '../../modules/misc/cross-session-aggregator';
+import { aggregateSignals } from '../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, type ErrorStatus } from '../../modules/misc/error-status-store';
 import type { SectionData } from '../../modules/analysis/analysis-relevance';
 import type { StreamCtx } from './analysis-panel-streams';
@@ -65,7 +65,8 @@ export async function runErrorTimeline(
     progress('error-timeline', '📊 Loading error history...');
     const aggregated = await aggregateSignals('all').catch(() => undefined);
     if (signal.aborted) { return {}; }
-    const match: RecurringError | undefined = aggregated?.recurringErrors.find(e => e.hash === errCtx.hash);
+    // Find matching error signal by fingerprint (which is the raw hash for error-kind signals)
+    const match = aggregated?.allSignals.find(s => s.kind === 'error' && s.fingerprint === errCtx.hash);
     if (!match) {
         post('error-timeline', emptySlot('error-timeline', '📊 First occurrence — no history yet'));
         return {};

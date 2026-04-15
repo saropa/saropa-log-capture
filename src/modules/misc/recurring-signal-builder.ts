@@ -12,6 +12,7 @@ import type { PerfFingerprintEntry } from './perf-fingerprint';
 import { isPersistedDriftSqlFingerprintSummaryV1 } from '../db/drift-sql-fingerprint-summary-persist';
 import type { PersistedDriftSqlFingerprintEntryV1 } from '../db/drift-sql-fingerprint-summary-persist';
 import { isPersistedSignalSummaryV1 } from '../root-cause-hints/signal-summary-types';
+import type { PersistedSignalEntryV2 } from '../root-cause-hints/signal-summary-types';
 import { parseSessionDate, type LoadedMeta } from '../session/metadata-loader';
 
 /** Every detection type in the unified signal system. */
@@ -20,9 +21,13 @@ export type SignalKind = 'error' | 'warning' | 'perf' | 'sql' | 'network' | 'mem
 /** Auto-classified severity based on cross-session frequency and signal kind. */
 export type SignalSeverity = 'critical' | 'high' | 'medium' | 'low';
 
-/** A signal entry that recurs across multiple sessions — the unified replacement for RecurringError + RecurringSignal. */
+/** Trend direction: is this signal getting worse, better, or holding steady? */
+export type SignalTrend = 'increasing' | 'stable' | 'decreasing';
+
+/** A signal entry that recurs across multiple sessions — the unified type for all cross-session signals. */
 export interface RecurringSignalEntry {
     readonly kind: SignalKind;
+    /** Raw identifier for this signal (error hash, SQL pattern, perf op name, etc.). */
     readonly fingerprint: string;
     readonly label: string;
     readonly detail?: string;
@@ -30,6 +35,8 @@ export interface RecurringSignalEntry {
     readonly totalOccurrences: number;
     readonly firstSeen: string;
     readonly lastSeen: string;
+    readonly firstSeenVersion?: string;
+    readonly lastSeenVersion?: string;
     readonly category?: string;
     readonly avgDurationMs?: number;
     readonly maxDurationMs?: number;
@@ -37,6 +44,8 @@ export interface RecurringSignalEntry {
     readonly severity: SignalSeverity;
     /** True if this signal appears in 5+ sessions — flagged for attention. */
     readonly recurring: boolean;
+    /** Trend direction based on comparing older vs newer half of timeline. */
+    readonly trend?: SignalTrend;
     readonly timeline: readonly { readonly session: string; readonly count: number }[];
 }
 
@@ -48,6 +57,8 @@ type Accum = {
     category?: string; avgMs?: number; maxMs?: number;
     /** Running weighted sum for avgMs aggregation across sessions. */
     weightedMsSum?: number; weightedMsCount?: number;
+    /** App version from the first and last session where this signal appeared. */
+    firstVer?: string; lastVer?: string;
 };
 
 /** Build a unified list of recurring signals from all metadata sources. */
@@ -55,13 +66,14 @@ export function buildAllRecurringSignals(metas: readonly LoadedMeta[]): Recurrin
     const map = new Map<string, Accum>();
 
     for (const { filename, meta } of metas) {
+        const ver = meta.appVersion;
         // Error fingerprints → error signals
         for (const fp of meta.fingerprints ?? []) {
-            accumulateFp(map, { kind: 'error', fp, session: filename, category: fp.cat });
+            accumulateFp(map, { kind: 'error', fp, session: filename, category: fp.cat, version: ver });
         }
         // Warning fingerprints → warning signals
         for (const fp of meta.warningFingerprints ?? []) {
-            accumulateFp(map, { kind: 'warning', fp, session: filename });
+            accumulateFp(map, { kind: 'warning', fp, session: filename, version: ver });
         }
         // Perf fingerprints → perf signals
         for (const pf of meta.perfFingerprints ?? []) {
@@ -79,11 +91,14 @@ export function buildAllRecurringSignals(metas: readonly LoadedMeta[]): Recurrin
 }
 
 /** Params for accumulating a fingerprint entry. */
-interface FpAccumOpts { readonly kind: SignalKind; readonly fp: FingerprintEntry; readonly session: string; readonly category?: string; }
+interface FpAccumOpts {
+    readonly kind: SignalKind; readonly fp: FingerprintEntry;
+    readonly session: string; readonly category?: string; readonly version?: string;
+}
 
-/** Accumulate an error or warning fingerprint entry. */
+/** Accumulate an error or warning fingerprint entry, tracking app version for regression info. */
 function accumulateFp(map: Map<string, Accum>, opts: FpAccumOpts): void {
-    const { kind, fp, session, category } = opts;
+    const { kind, fp, session, category, version } = opts;
     const key = `${kind}::${fp.h}`;
     const existing = map.get(key);
     if (existing) {
@@ -91,10 +106,12 @@ function accumulateFp(map: Map<string, Accum>, opts: FpAccumOpts): void {
         if (!existing.timeline.some(t => t.session === session)) {
             existing.timeline.push({ session, count: fp.c });
         }
+        if (version) { existing.lastVer = version; }
     } else {
         map.set(key, {
             kind, label: fp.n, detail: fp.e, total: fp.c,
             timeline: [{ session, count: fp.c }], category,
+            firstVer: version, lastVer: version,
         });
     }
 }
@@ -169,25 +186,50 @@ function accumulateAnrRisk(map: Map<string, Accum>, level: string, session: stri
     }
 }
 
-/** Signal summary count-only signals (network, memory, slow-op, etc.) + ANR risk. */
+/** Accumulate a V2 signal entry with full detail (label, fingerprint, duration). */
+function accumulateV2Entry(map: Map<string, Accum>, entry: PersistedSignalEntryV2, session: string): void {
+    const kind = entry.kind as SignalKind;
+    const key = `${kind}::${entry.fingerprint}`;
+    const existing = map.get(key);
+    if (existing) {
+        existing.total += entry.count;
+        if (!existing.timeline.some(t => t.session === session)) { existing.timeline.push({ session, count: entry.count }); }
+    } else {
+        map.set(key, { kind, label: entry.label, detail: entry.detail, total: entry.count, timeline: [{ session, count: entry.count }], category: entry.category, avgMs: entry.avgDurationMs, maxMs: entry.maxDurationMs });
+    }
+}
+
+/** V1 fallback: accumulate count-only signals grouped by kind (no detail). */
+function accumulateV1CountSignal(map: Map<string, Accum>, kind: SignalKind, val: number, session: string): void {
+    const key = `${kind}::count`;
+    const existing = map.get(key);
+    if (existing) {
+        existing.total += val;
+        if (!existing.timeline.some(t => t.session === session)) { existing.timeline.push({ session, count: val }); }
+    } else {
+        map.set(key, { kind, label: kind, total: val, timeline: [{ session, count: val }] });
+    }
+}
+
+/** Signal summary signals (network, memory, slow-op, etc.) + ANR risk.
+ *  V2 summaries have actual entries; V1 only has counts (fall back to count-based aggregation). */
 function accumulateSummaryCounts(map: Map<string, Accum>, meta: LoadedMeta['meta'], session: string): void {
     const s = meta.signalSummary;
     if (!s || !isPersistedSignalSummaryV1(s)) { return; }
-    const countKinds: [string, SignalKind][] = [
-        ['networkFailures', 'network'], ['memoryEvents', 'memory'],
-        ['slowOperations', 'slow-op'], ['permissionDenials', 'permission'],
-        ['classifiedErrors', 'classified'],
-    ];
-    for (const [field, kind] of countKinds) {
-        const val = (s.counts as Record<string, number | undefined>)[field];
-        if (typeof val !== 'number' || val <= 0) { continue; }
-        const key = `${kind}::count`;
-        const existing = map.get(key);
-        if (existing) {
-            existing.total += val;
-            if (!existing.timeline.some(t => t.session === session)) { existing.timeline.push({ session, count: val }); }
-        } else {
-            map.set(key, { kind, label: kind, total: val, timeline: [{ session, count: val }] });
+    // V2 adds an `entries` field — access via unknown cast since V1 type doesn't declare it
+    const v2Entries = (s as unknown as { entries?: readonly PersistedSignalEntryV2[] }).entries;
+    if (Array.isArray(v2Entries) && v2Entries.length > 0) {
+        for (const entry of v2Entries) { accumulateV2Entry(map, entry, session); }
+    } else {
+        // V1 fallback: count-only signals grouped by kind
+        const countKinds: [string, SignalKind][] = [
+            ['networkFailures', 'network'], ['memoryEvents', 'memory'],
+            ['slowOperations', 'slow-op'], ['permissionDenials', 'permission'],
+            ['classifiedErrors', 'classified'],
+        ];
+        for (const [field, kind] of countKinds) {
+            const val = (s.counts as Record<string, number | undefined>)[field];
+            if (typeof val === 'number' && val > 0) { accumulateV1CountSignal(map, kind, val, session); }
         }
     }
     if (s.anrRiskLevel && s.anrRiskLevel !== 'low') { accumulateAnrRisk(map, s.anrRiskLevel, session); }
@@ -258,6 +300,22 @@ function classifySeverity(kind: SignalKind, sessionCount: number, category?: str
     return 'low';
 }
 
+/**
+ * Compute trend by comparing average count in the older half vs newer half of the timeline.
+ * Needs 3+ data points to be meaningful — returns undefined otherwise.
+ */
+function computeTrend(timeline: readonly { count: number }[]): SignalTrend | undefined {
+    if (timeline.length < 3) { return undefined; }
+    const mid = Math.floor(timeline.length / 2);
+    const olderAvg = timeline.slice(0, mid).reduce((s, t) => s + t.count, 0) / mid;
+    const newerAvg = timeline.slice(mid).reduce((s, t) => s + t.count, 0) / (timeline.length - mid);
+    // 20% threshold to avoid noise — small fluctuations are "stable"
+    const ratio = olderAvg > 0 ? newerAvg / olderAvg : newerAvg > 0 ? 2 : 1;
+    if (ratio > 1.2) { return 'increasing'; }
+    if (ratio < 0.8) { return 'decreasing'; }
+    return 'stable';
+}
+
 /** Rank signals by cross-session impact and finalize the output. */
 function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
     return [...map.entries()]
@@ -269,19 +327,24 @@ function rankSignals(map: Map<string, Accum>): RecurringSignalEntry[] {
             const sev = classifySeverity(a.kind, sessionCount, a.category);
             return {
                 kind: a.kind,
-                fingerprint: fp,
+                // Strip the "kind::" prefix so fingerprint is the raw identifier
+                // (error hash, SQL pattern, perf op name, etc.)
+                fingerprint: fp.replace(/^[^:]+::/, ''),
                 label: a.label,
                 detail: a.detail,
                 sessionCount,
                 totalOccurrences: a.total,
                 firstSeen: a.timeline[0].session,
                 lastSeen: a.timeline[a.timeline.length - 1].session,
+                firstSeenVersion: a.firstVer,
+                lastSeenVersion: a.lastVer,
                 category: a.category,
                 avgDurationMs: a.weightedMsSum && a.weightedMsCount
                     ? Math.round(a.weightedMsSum / a.weightedMsCount) : a.avgMs,
                 maxDurationMs: a.maxMs,
                 severity: sev,
                 recurring: sessionCount >= recurringThreshold,
+                trend: computeTrend(a.timeline),
                 timeline: a.timeline,
             };
         })

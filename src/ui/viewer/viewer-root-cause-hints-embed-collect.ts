@@ -33,11 +33,11 @@ function clearRootCauseHintHostFields() {
 function collectSessionDiffRegressionFpsEmbedded() {
     var out = [];
     if (typeof dbBaselineFingerprintSummary === 'undefined' || !dbBaselineFingerprintSummary) return out;
-    if (typeof dbInsightSessionRollup === 'undefined' || !dbInsightSessionRollup) return out;
+    if (typeof dbSignalSessionRollup === 'undefined' || !dbSignalSessionRollup) return out;
     var fp, cur, baseEnt, baseC, curC, delta;
-    for (fp in dbInsightSessionRollup) {
-        if (!Object.prototype.hasOwnProperty.call(dbInsightSessionRollup, fp)) continue;
-        cur = dbInsightSessionRollup[fp];
+    for (fp in dbSignalSessionRollup) {
+        if (!Object.prototype.hasOwnProperty.call(dbSignalSessionRollup, fp)) continue;
+        cur = dbSignalSessionRollup[fp];
         if (!cur || typeof cur.count !== 'number') continue;
         curC = cur.count;
         if (curC < ${MIN_FP}) continue;
@@ -50,7 +50,7 @@ function collectSessionDiffRegressionFpsEmbedded() {
         }
     }
     out.sort(function(a, b) {
-        return dbInsightSessionRollup[b].count - dbInsightSessionRollup[a].count;
+        return dbSignalSessionRollup[b].count - dbSignalSessionRollup[a].count;
     });
     if (out.length > 8) out = out.slice(0, 8);
     return out;
@@ -79,8 +79,8 @@ function collectRootCauseHintBundleEmbedded() {
 
         for (i = 0; i < allLines.length; i++) {
             row = allLines[i];
-            if (!row || row.type !== 'n-plus-one-signal' || !row.insightMeta) continue;
-            im = row.insightMeta;
+            if (!row || row.type !== 'n-plus-one-signal' || !row.signalMeta) continue;
+            im = row.signalMeta;
             nPlusOneHints.push({
                 lineIndex: i,
                 fingerprint: im.fingerprint,
@@ -92,16 +92,16 @@ function collectRootCauseHintBundleEmbedded() {
         }
     }
 
-    if (typeof dbInsightSessionRollup !== 'undefined' && dbInsightSessionRollup && typeof allLines !== 'undefined') {
-        keys = Object.keys(dbInsightSessionRollup);
+    if (typeof dbSignalSessionRollup !== 'undefined' && dbSignalSessionRollup && typeof allLines !== 'undefined') {
+        keys = Object.keys(dbSignalSessionRollup);
         for (i = 0; i < keys.length; i++) {
             fp = keys[i];
-            eEnt = dbInsightSessionRollup[fp];
+            eEnt = dbSignalSessionRollup[fp];
             if (!eEnt || eEnt.count < ${MIN_FP}) continue;
             sampleIdx = -1;
             for (j = allLines.length - 1; j >= 0; j--) {
                 line = allLines[j];
-                if (!line || line.type !== 'line' || !line.dbInsight || line.dbInsight.fingerprint !== fp) continue;
+                if (!line || line.type !== 'line' || !line.dbSignal || line.dbSignal.fingerprint !== fp) continue;
                 sampleIdx = j;
                 break;
             }

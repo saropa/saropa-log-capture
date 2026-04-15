@@ -22,7 +22,7 @@ export interface DbFingerprintSummaryEntry {
   readonly slowQueryCount?: number;
 }
 
-/** Payload for `DbDetectorResult` with `kind: 'session-rollup-patch'` (embed applies via `updateDbInsightRollup`). */
+/** Payload for `DbDetectorResult` with `kind: 'session-rollup-patch'` (embed applies via `updateDbSignalRollup`). */
 export interface DbSessionRollupPatchPayload {
   readonly fingerprint: string;
   /** Apply rollup this many times (default 1). */
@@ -36,7 +36,7 @@ export interface DbSessionRollupPatchPayload {
  */
 export interface DbAnnotateLinePayload {
   readonly targetSeq: number;
-  /** Shallow-merged onto the line item (e.g. `html`, `level`, `dbInsight`). */
+  /** Shallow-merged onto the line item (e.g. `html`, `level`, `dbSignal`). */
   readonly patch: Readonly<Record<string, unknown>>;
 }
 

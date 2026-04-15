@@ -1,11 +1,12 @@
 /**
- * Insights summary: structured data for export (recurring errors + hot files).
+ * Signals summary: structured data for export (unified signals + hot files).
  * Built from CrossSessionSignals with optional caps for large scopes.
  */
 
-import type { CrossSessionSignals, HotFile, RecurringError } from '../misc/cross-session-aggregator';
+import type { CrossSessionSignals, HotFile } from '../misc/cross-session-aggregator';
+import type { RecurringSignalEntry } from '../misc/recurring-signal-builder';
 
-/** One row for the errors table: signature, count, sessions, sample. */
+/** One row for the signals table: signature, count, sessions, sample. */
 export interface ErrorSummary {
     readonly signature: string;
     readonly count: number;
@@ -14,6 +15,7 @@ export interface ErrorSummary {
     readonly firstSeen: string;
     readonly lastSeen: string;
     readonly category?: string;
+    readonly kind?: string;
 }
 
 /** One row for the files table: path, session count (hot files from correlation tags). */
@@ -48,14 +50,16 @@ export function buildSignalsSummary(
     const maxFiles = options?.maxFiles ?? defaultMaxFiles;
     const timeRangeLabel = options?.timeRangeLabel ?? 'all';
 
-    const errors: ErrorSummary[] = aggregated.recurringErrors.slice(0, maxErrors).map((e: RecurringError) => ({
-        signature: e.hash,
-        count: e.totalOccurrences,
-        sessions: e.timeline.map(t => t.session),
-        sampleLine: e.exampleLine,
-        firstSeen: e.firstSeen,
-        lastSeen: e.lastSeen,
-        category: e.category,
+    // Export all signal kinds, not just errors — gives full picture in exports
+    const errors: ErrorSummary[] = aggregated.allSignals.slice(0, maxErrors).map((s: RecurringSignalEntry) => ({
+        signature: s.fingerprint,
+        count: s.totalOccurrences,
+        sessions: s.timeline.map(t => t.session),
+        sampleLine: s.detail ?? s.label,
+        firstSeen: s.firstSeen,
+        lastSeen: s.lastSeen,
+        category: s.category,
+        kind: s.kind,
     }));
 
     const files: FileSummary[] = aggregated.hotFiles.slice(0, maxFiles).map((f: HotFile) => ({
