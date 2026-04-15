@@ -5,6 +5,12 @@
  * stack frames. Patterns: "AppBadgeService.load()" → class + method,
  * "ResizeImage()" → constructor. Generic lifecycle methods are blacklisted.
  *
+ * Solo (double-click) behavior:
+ * - Double-click a chip to solo it (hide all other tags). The previous hidden
+ *   state is saved so a second double-click on the same chip restores it.
+ * - Single-click chip toggles are delayed 250ms to distinguish from double-click;
+ *   any manual filter change (toggle, All, None, reset) clears the saved solo state.
+ *
  * Integration points:
  * - addToData() calls parseClassTags() and registerClassTags() for each line
  * - calcItemHeight() checks item.classFiltered flag
@@ -21,6 +27,11 @@ var classTagOtherKey = '__classother__';
 var classTagMinChip = 2;
 var classTagShowAll = false;
 var classTagMaxChips = 20;
+
+/** Saved hidden state before a solo action, so double-tap-again restores it. */
+var savedHiddenClassTags = null;
+/** Which class tag is currently solo'd (null if none). */
+var soloedClassTag = null;
 
 /** Known file extensions to reject as false positives. */
 var classTagExtensions = /^(?:dart|ts|tsx|js|jsx|py|java|go|cs|kt|swift|rb|rs|cpp|c|h|m|mm)$/;
@@ -105,6 +116,9 @@ function applyClassTagFilter() {
 
 /** Toggle a single class tag on/off and re-apply the filter. */
 function toggleClassTag(tag) {
+    /* Manual toggle breaks any active solo — discard saved state. */
+    savedHiddenClassTags = null;
+    soloedClassTag = null;
     if (hiddenClassTags[tag]) {
         delete hiddenClassTags[tag];
     } else {
@@ -118,6 +132,8 @@ function toggleClassTag(tag) {
 
 /** Show all class tags (remove all from hidden set). */
 function selectAllClassTags() {
+    savedHiddenClassTags = null;
+    soloedClassTag = null;
     hiddenClassTags = {};
     applyClassTagFilter();
     rebuildClassTagChips();
@@ -125,6 +141,8 @@ function selectAllClassTags() {
 
 /** Hide all class tags (add all to hidden set). */
 function deselectAllClassTags() {
+    savedHiddenClassTags = null;
+    soloedClassTag = null;
     var keys = Object.keys(classTagCounts);
     for (var i = 0; i < keys.length; i++) {
         hiddenClassTags[keys[i]] = true;
@@ -133,15 +151,22 @@ function deselectAllClassTags() {
     rebuildClassTagChips();
 }
 
-/** Solo a class tag: show only lines with this tag. Click again to clear. */
+/**
+ * Solo a class tag: show only lines with this tag, hiding everything else.
+ * Double-tap the same tag again to restore the filter state from before the solo.
+ */
 function soloClassTag(tag) {
-    var keys = Object.keys(classTagCounts);
-    var hiddenCount = Object.keys(hiddenClassTags).length;
-    var isSolo = hiddenCount === keys.length - 1 && !hiddenClassTags[tag];
-    if (isSolo) {
-        hiddenClassTags = {};
+    if (soloedClassTag === tag && savedHiddenClassTags !== null) {
+        /* Already solo'd on this tag — restore the previous filter state. */
+        hiddenClassTags = savedHiddenClassTags;
+        savedHiddenClassTags = null;
+        soloedClassTag = null;
     } else {
+        /* Save current state so a second double-tap can restore it. */
+        savedHiddenClassTags = Object.assign({}, hiddenClassTags);
+        soloedClassTag = tag;
         hiddenClassTags = {};
+        var keys = Object.keys(classTagCounts);
         for (var i = 0; i < keys.length; i++) {
             if (keys[i] !== tag) hiddenClassTags[keys[i]] = true;
         }
@@ -206,18 +231,40 @@ function rebuildClassTagChips() {
     updateClassTagSummary();
 }
 
-/* Event delegation for class tag chip clicks. */
+/* Event delegation for class tag chip clicks.
+ * Chip clicks are delayed 250ms so a double-click can cancel the pending
+ * toggle and run soloClassTag instead — avoids the race where two toggles
+ * fire before dblclick and corrupt saved solo state. Action buttons (All,
+ * None, Show all) fire immediately since they have no double-click meaning. */
 (function() {
     var chipsEl = document.getElementById('class-tag-chips');
     if (!chipsEl) return;
+    var chipClickTimer = null;
     chipsEl.addEventListener('click', function(e) {
         var chip = e.target.closest('[data-classtag]');
-        if (chip && chip.dataset.classtag) { toggleClassTag(chip.dataset.classtag); return; }
+        if (chip && chip.dataset.classtag) {
+            var tag = chip.dataset.classtag;
+            clearTimeout(chipClickTimer);
+            chipClickTimer = setTimeout(function() {
+                chipClickTimer = null;
+                toggleClassTag(tag);
+            }, 250);
+            return;
+        }
         var btn = e.target.closest('[data-classaction]');
         if (!btn) return;
         if (btn.dataset.classaction === 'all') { selectAllClassTags(); }
         else if (btn.dataset.classaction === 'none') { deselectAllClassTags(); }
         else if (btn.dataset.classaction === 'toggle-all') { classTagShowAll = !classTagShowAll; rebuildClassTagChips(); }
+    });
+    chipsEl.addEventListener('dblclick', function(e) {
+        var chip = e.target.closest('[data-classtag]');
+        if (chip && chip.dataset.classtag) {
+            /* Cancel the pending single-click toggle — this is a solo action. */
+            clearTimeout(chipClickTimer);
+            chipClickTimer = null;
+            soloClassTag(chip.dataset.classtag);
+        }
     });
 })();
 
@@ -225,6 +272,8 @@ function rebuildClassTagChips() {
 function resetClassTags() {
     classTagCounts = {};
     hiddenClassTags = {};
+    savedHiddenClassTags = null;
+    soloedClassTag = null;
     var section = document.getElementById('class-tags-section');
     if (section) { section.style.display = 'none'; }
     var container = document.getElementById('class-tag-chips');
