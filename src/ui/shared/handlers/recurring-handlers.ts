@@ -78,6 +78,8 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
     let errorsInThisLog: ErrorInThisLogItem[] | undefined;
     let errorsInThisLogTotal: number | undefined;
     let signalsInThisLog: RecurringSignalEntry[] | undefined;
+    /** Correlation tags from the current session — `file:lib/foo.dart` entries for stack trace files. */
+    let sessionCorrelationTags: readonly string[] = [];
     if (currentFileUri) {
         const folder = vscode.workspace.workspaceFolders?.[0];
         if (folder) {
@@ -104,6 +106,9 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
                 errorsInThisLog = top3;
             }
             errorsInThisLogTotal = fps.length;
+            // Capture correlation tags for lint enrichment — these are the source files
+            // from stack traces that saropa_lints and the Dart analyzer should analyze
+            sessionCorrelationTags = meta?.correlationTags ?? [];
             // Build unified signals for this session from all metadata sources
             const sessionFilename = path.basename(currentFileUri.fsPath);
             const thisSessionSignals = buildAllRecurringSignals([{ filename: sessionFilename, meta }]);
@@ -129,11 +134,11 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         regressionHints,
         recurringSignals: insights?.recurringSignals ?? [],
         signalSessionCount: insights?.signalSessionCount ?? 0,
-        // Enrich signals with lint diagnostics from referenced source files.
-        // Opens unanalyzed files to trigger saropa_lints / Dart analyzer / ESLint
-        // and waits up to 2s for results. Runs in parallel for both signal lists.
-        allSignals: await enrichSignalsWithLintContext([...(insights?.allSignals ?? [])]),
-        signalsInThisLog: await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])]),
+        // Enrich signals with lint diagnostics from ALL source files in the session's
+        // stack traces (correlation tags). Opens unanalyzed files to trigger saropa_lints /
+        // Dart analyzer / ESLint, waits up to 2s for results.
+        allSignals: await enrichSignalsWithLintContext([...(insights?.allSignals ?? [])], sessionCorrelationTags),
+        signalsInThisLog: await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
     });
 }
 
