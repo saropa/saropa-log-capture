@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceId": "reports",
-  "buildTime": 1774906493724,
+  "buildTime": 1776282517274,
   "files": [
     {
       "relativePath": "reports/20260307/20260307_214522_saropa-log-capture.log",
@@ -96,6 +96,27 @@
       "mtime": 1774906493609,
       "correlationTokens": [],
       "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260415/20260415_151144_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260415/20260415_151144_saropa-log-capture.log",
+      "sizeBytes": 3191,
+      "mtime": 1776281284401,
+      "correlationTokens": [],
+      "fingerprints": [
+        "__breakOnConditionalError: false",
+        "Uncommitted: <N> file(s) — vscode/settings.json, CHANGELOG.md, srcerror-rate-alert.ts, srcrecurring-signal-builder.test.ts, srcsignal-summary-extract.test.ts, srcviewer-element-wiring.test.ts, srcviewer-session-panel-runtime.test.ts, images20260414_project_log_view.png, plans/007_plan-docker-inspect-and-until.md, plans/029_plan-incremental-index-search.md (+4 more)"
+      ]
+    },
+    {
+      "relativePath": "reports/20260415/20260415_153645_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260415/20260415_153645_saropa-log-capture.log",
+      "sizeBytes": 3114,
+      "mtime": 1776282517149,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
     }
   ]
 }

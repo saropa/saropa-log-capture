@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.0.0]
+
+Overhauls the filter panel into focused sections with a dedicated Tags & Origins side panel, adds drag-to-resize scroll map, and replaces the old Insights panel with a unified Signals system — cross-session trends, co-occurrence detection, severity classification, recurring signal notifications, full markdown reports with evidence context and stack traces, and Drift Advisor integration for SQL signals. [log](https://github.com/saropa/saropa-log-capture/blob/v7.0.0/CHANGELOG.md)
 
 ### Changed
 
@@ -84,6 +86,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+
+- **Warning detection now recognizes logcat `W/` prefix.** `isWarningLine` previously only matched lines containing the substring "warn", missing Android logcat warnings that use the `W/Tag:` format.
+- **Error detection now recognizes logcat `E/`, `F/`, `A/` prefixes.** `isErrorLine` previously only matched keyword substrings ("error", "exception", "fatal", "failed"), missing Android logcat errors, fatal, and assert lines that use the single-letter prefix format.
 - **"Show native scrollbar" toggle now applies immediately.** The context menu toggle sent the new value to the extension but did not optimistically update the body class, so the CSS change and the checkbox state both lagged behind the round-trip — making the toggle appear stuck.
 - **Jump buttons now clear the native scrollbar.** When "Show native scrollbar" was on, the Top/Bottom jump buttons overlapped the 10px scrollbar because `getBoundingClientRect()` does not reliably reflect `::-webkit-scrollbar` width changes in Chromium. The inset calculation now reads the `--scrollbar-w` CSS variable explicitly.
 - **Context menu checkmarks no longer look like submenu arrows.** Toggle items (Proportional, SQL density, etc.) placed the `codicon-check` icon at `right: 8px` — the same position used for submenu `▸` indicators. Checked items appeared to have an expandable submenu that never opened. The checkmark now sits inline between the leading icon and the label (VS Code convention).

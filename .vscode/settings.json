@@ -42,6 +42,7 @@
     "hotfiles",
     "idevicesyslog",
     "inlines",
+    "Jaccard",
     "jank",
     "journalctl",
     "Kykto",
