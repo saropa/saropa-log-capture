@@ -87,31 +87,16 @@ export function getSignalScriptPartC(): string {
                 lines.push('');
             }
         }
-        var errorsInLog = (signalDataCache.errorsInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
-        var recurringInLog = (signalDataCache.recurringInThisLog || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
-        if (hasLog && (errorsInLog.length > 0 || recurringInLog.length > 0)) {
-            lines.push('## This log');
+        var signalsInLog = signalDataCache.signalsInThisLog || [];
+        if (hasLog && signalsInLog.length > 0) {
+            lines.push('## Signals in this log');
             lines.push('');
-            if (errorsInLog.length > 0) {
-                lines.push('### Errors in this log');
-                var totalErr = signalDataCache.errorsInThisLogTotal != null ? signalDataCache.errorsInThisLogTotal : errorsInLog.length;
-                if (totalErr > errorsInLog.length) lines.push('Top ' + errorsInLog.length + ' of ' + totalErr + ':');
-                for (var i = 0; i < errorsInLog.length; i++) {
-                    var err = errorsInLog[i];
-                    var text = (err.normalizedText || err.exampleLine || '').trim();
-                    if (text) lines.push('- ' + text);
-                }
-                lines.push('');
+            for (var i = 0; i < signalsInLog.length; i++) {
+                var sig = signalsInLog[i];
+                var sigText = (sig.label || sig.detail || '').trim();
+                if (sigText) lines.push('- [' + sig.kind + '] ' + sigText + ' (' + sig.totalOccurrences + 'x)');
             }
-            if (recurringInLog.length > 0) {
-                lines.push('### Recurring in this log');
-                for (var j = 0; j < recurringInLog.length; j++) {
-                    var rec = recurringInLog[j];
-                    var recText = (rec.label || rec.detail || '').trim();
-                    if (recText) lines.push('- ' + recText);
-                }
-                lines.push('');
-            }
+            lines.push('');
         }
         var invs = (investigationsData.investigations || []);
         if (invs.length > 0) {
@@ -120,24 +105,23 @@ export function getSignalScriptPartC(): string {
             for (var k = 0; k < invs.length; k++) lines.push('- ' + (invs[k].name || 'Unnamed'));
             lines.push('');
         }
-        var recurring = (signalDataCache.errors || []).filter(function(e) { return (signalDataCache.statuses || {})[e.fingerprint] !== 'muted'; });
+        var allSigs = (signalDataCache.allSignals || []).filter(function(s) { return s.kind !== 'error' && s.kind !== 'warning' || (signalDataCache.statuses || {})[s.fingerprint] !== 'muted'; });
         var hotFiles = signalDataCache.hotFiles || [];
-        if (recurring.length > 0 || hotFiles.length > 0) {
+        if (allSigs.length > 0 || hotFiles.length > 0) {
             lines.push('## Across your logs');
             lines.push('');
-            if (recurring.length > 0) {
-                lines.push('### Recurring errors');
-                for (var r = 0; r < recurring.length; r++) {
-                    var t = (recurring[r].label || recurring[r].detail || '').trim();
-                    if (t) lines.push('- ' + t);
+            if (allSigs.length > 0) {
+                lines.push('### All signals');
+                for (var r = 0; r < allSigs.length; r++) {
+                    var sig = allSigs[r];
+                    lines.push('- [' + sig.kind + '] ' + (sig.label || '').trim() + ' (' + sig.sessionCount + ' sessions, ' + sig.totalOccurrences + ' total)');
                 }
                 lines.push('');
             }
             if (hotFiles.length > 0) {
                 lines.push('### Frequently modified files');
                 for (var h = 0; h < hotFiles.length; h++) {
-                    var f = hotFiles[h];
-                    var fn = (f.filename || f.path || '').trim();
+                    var fn = (hotFiles[h].filename || hotFiles[h].path || '').trim();
                     if (fn) lines.push('- ' + fn);
                 }
                 lines.push('');
@@ -169,33 +153,10 @@ export function getSignalScriptPartC(): string {
         if (md) vscodeApi.postMessage({ type: 'copyToClipboard', text: md });
     });
 
-    var recurringListEl = document.getElementById('signal-recurring-list');
-    if (recurringListEl) recurringListEl.addEventListener('click', function(e) {
-        var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
-        var act = e.target.closest('.re-action');
-        if (!act) return;
-        e.stopPropagation();
-        vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: act.dataset.hash, status: act.dataset.status });
-    });
     var hotfilesListEl = document.getElementById('signal-hotfiles-list');
     if (hotfilesListEl) hotfilesListEl.addEventListener('click', function(e) {
         var addBtn = e.target.closest('.re-add-to-case');
         if (addBtn) { e.preventDefault(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'hotfile', filename: addBtn.dataset.filename || '' } }); }
-    });
-    var recurringInLogListEl = document.getElementById('signal-recurring-in-log-list');
-    if (recurringInLogListEl) recurringInLogListEl.addEventListener('click', function(e) {
-        var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); return; }
-        var act = e.target.closest('.re-action');
-        if (!act) return;
-        e.stopPropagation();
-        vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: act.dataset.hash, status: act.dataset.status });
-    });
-    var errorsInLogListEl = document.getElementById('signal-errors-in-log-list');
-    if (errorsInLogListEl) errorsInLogListEl.addEventListener('click', function(e) {
-        var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.stopPropagation(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'recurring', normalizedText: addBtn.dataset.normalized || '', exampleLine: addBtn.dataset.example || '' } }); }
     });
 
     var exportSummaryEl = document.getElementById('signal-export-summary');
@@ -252,27 +213,14 @@ export function getSignalScriptPartC(): string {
         if (e.data.type === 'signalData') {
             var d = e.data;
             signalDataCache = {
-                errors: d.errors || [], statuses: d.statuses || {}, hotFiles: d.hotFiles || [],
-                recurringInThisLog: d.recurringInThisLog || [], errorsInThisLog: d.errorsInThisLog || [],
-                errorsInThisLogTotal: d.errorsInThisLogTotal, platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
-                debugAdapters: d.debugAdapters || [], regressionHints: d.regressionHints || {},
+                statuses: d.statuses || {}, hotFiles: d.hotFiles || [],
+                platforms: d.platforms || [], sdkVersions: d.sdkVersions || [],
+                debugAdapters: d.debugAdapters || [],
                 allSignals: d.allSignals || [], signalsInThisLog: d.signalsInThisLog || [],
                 coOccurrences: d.coOccurrences || []
             };
-            var loadEl = document.getElementById('signal-recurring-loading');
-            if (loadEl) loadEl.style.display = 'none';
-            renderRecurringList(); renderHotFiles(); renderRecurringInLog();
-            renderErrorsInLog(); renderThisLogEmptyState(); renderSignalsInThisLog();
+            renderHotFiles(); renderSignalsInThisLog();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
-        }
-        if (e.data.type === 'recurringErrorsData') {
-            signalDataCache.errors = e.data.errors || [];
-            signalDataCache.statuses = e.data.statuses || {};
-            var loadEl = document.getElementById('signal-recurring-loading');
-            if (loadEl) loadEl.style.display = 'none';
-            renderRecurringList();
-            renderRecurringInLog();
-            renderThisLogEmptyState();
         }
         if (e.data.type === 'performanceData') {
             heroLoading = false;
