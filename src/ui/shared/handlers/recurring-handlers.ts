@@ -1,25 +1,26 @@
 /**
- * Recurring Errors Handlers
+ * Recurring Signal Handlers
  *
- * Handlers for recurring errors panel operations.
+ * Handlers for recurring signals panel operations.
+ * All signal kinds (error, warning, perf, SQL, etc.) go through the unified RecurringSignalEntry type.
  */
 
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { getConfig, getLogDirectoryUri } from '../../../modules/config/config';
-import type { RecurringError } from '../../../modules/misc/cross-session-aggregator';
 import { aggregateSignals } from '../../../modules/misc/cross-session-aggregator';
+import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
+import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
 import { getErrorStatusBatch, setErrorStatus, type ErrorStatus } from '../../../modules/misc/error-status-store';
 import { getFirstSeenHintsForErrors } from '../../../modules/regression/regression-hint-service';
 import { SessionMetadataStore } from '../../../modules/session/session-metadata';
 import { loadFilteredMetas, parseSessionDate } from '../../../modules/session/metadata-loader';
 import { isPersistedSignalSummaryV1 } from '../../../modules/root-cause-hints/signal-summary-types';
-import { buildAllRecurringSignals } from '../../../modules/misc/recurring-signal-builder';
-import type { RecurringSignalEntry } from '../../../modules/misc/recurring-signal-builder';
 import { enrichSignalsWithLintContext } from '../../../modules/diagnostics/signal-lint-enricher';
+import { enrichSignalsWithDaContext } from '../../../modules/diagnostics/signal-da-enricher';
 import type { PostFn } from './crashlytics-handlers';
 
-/** First-seen regression hint for display in Insights (commit for session where error first appeared). */
+/** First-seen regression hint for display in Signals (commit for session where error first appeared). */
 export interface RegressionHintPayload {
     readonly hash: string;
     readonly session: string;
@@ -38,17 +39,17 @@ function normSession(s: string): string {
     return s.replace(/\\/g, '/');
 }
 
-/** Recurring errors that appear in the given session (timeline contains session path). */
-function filterRecurringInSession(errors: readonly RecurringError[], sessionRelPath: string): RecurringError[] {
+/** Signals that appear in the given session (timeline contains session path). */
+function filterSignalsInSession(signals: readonly RecurringSignalEntry[], sessionRelPath: string): RecurringSignalEntry[] {
     const norm = normSession(sessionRelPath);
-    return errors.filter(e => e.timeline.some(t => normSession(t.session) === norm || normSession(t.session).endsWith(norm)));
+    return signals.filter(s => s.timeline.some(t => normSession(t.session) === norm || normSession(t.session).endsWith(norm)));
 }
 
-/** Aggregate recurring errors and send to webview. */
+/** Aggregate recurring errors and send to webview (used by the standalone recurring panel). */
 export async function handleRecurringRequest(post: PostFn): Promise<void> {
     const aggregated = await aggregateSignals('all').catch(() => undefined);
-    const errors = aggregated?.recurringErrors ?? [];
-    const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
+    const errors = (aggregated?.allSignals ?? []).filter(s => s.kind === 'error');
+    const statuses = await getErrorStatusBatch(errors.map(e => e.fingerprint));
     post({ type: 'recurringErrorsData', errors, statuses });
 }
 
@@ -58,23 +59,24 @@ export async function handleSetErrorStatus(hash: string, status: string, post: P
     await handleRecurringRequest(post);
 }
 
-/** Full signal payload (recurring + hot files + environment + optional recurringInThisLog). */
+/** Full signal payload (unified signals + hot files + environment). */
 export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
     const aggregated = await aggregateSignals('all').catch(() => undefined);
-    const errors = aggregated?.recurringErrors ?? [];
+    const allSignals = aggregated?.allSignals ?? [];
+    const errorSignals = allSignals.filter(s => s.kind === 'error');
     const hotFiles = aggregated?.hotFiles ?? [];
     const platforms = aggregated?.platforms ?? [];
     const sdkVersions = aggregated?.sdkVersions ?? [];
     const debugAdapters = aggregated?.debugAdapters ?? [];
-    const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
+    const statuses = await getErrorStatusBatch(errorSignals.map(e => e.fingerprint));
 
     const commitLinks = getConfig().integrationsGit?.commitLinks ?? true;
-    const regressionHints = await getFirstSeenHintsForErrors(errors.map(e => e.hash), {
+    const regressionHints = await getFirstSeenHintsForErrors(errorSignals.map(e => e.fingerprint), {
         resolveCommitUrls: commitLinks,
         cap: 15,
     }).catch(() => ({}));
 
-    let recurringInThisLog: RecurringError[] | undefined;
+    let recurringInThisLog: RecurringSignalEntry[] | undefined;
     let errorsInThisLog: ErrorInThisLogItem[] | undefined;
     let errorsInThisLogTotal: number | undefined;
     let signalsInThisLog: RecurringSignalEntry[] | undefined;
@@ -87,7 +89,7 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
             const rel = path.relative(logDir.fsPath, currentFileUri.fsPath);
             const sessionRel = normSession(rel);
             if (!rel.startsWith('..') && sessionRel.length > 0) {
-                recurringInThisLog = filterRecurringInSession(errors, sessionRel);
+                recurringInThisLog = filterSignalsInSession(errorSignals, sessionRel);
             }
         }
         try {
@@ -122,7 +124,8 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
 
     post({
         type: 'signalData',
-        errors,
+        // Error signals sent as 'errors' for webview recurring-error cards
+        errors: errorSignals,
         statuses,
         hotFiles,
         platforms,
@@ -132,13 +135,17 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
         errorsInThisLog,
         errorsInThisLogTotal,
         regressionHints,
-        recurringSignals: aggregated?.recurringSignals ?? [],
-        signalSessionCount: aggregated?.signalSessionCount ?? 0,
         // Enrich signals with lint diagnostics from ALL source files in the session's
         // stack traces (correlation tags). Opens unanalyzed files to trigger saropa_lints /
         // Dart analyzer / ESLint, waits up to 2s for results.
-        allSignals: await enrichSignalsWithLintContext([...(aggregated?.allSignals ?? [])], sessionCorrelationTags),
-        signalsInThisLog: await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
+        // Then enrich SQL signals with Drift Advisor table metadata (schema info,
+        // index suggestions) when the DA extension is installed.
+        allSignals: await enrichSignalsWithDaContext(
+            await enrichSignalsWithLintContext([...allSignals], sessionCorrelationTags),
+        ),
+        signalsInThisLog: await enrichSignalsWithDaContext(
+            await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
+        ),
     });
 }
 

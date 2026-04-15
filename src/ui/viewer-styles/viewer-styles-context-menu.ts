@@ -100,12 +100,14 @@ export function getContextMenuStyles(): string {
 .context-menu.flip-submenu-vertical:not(.flip-submenu-vertical-top) .context-menu-submenu-content { top: auto; bottom: 0; }
 
 /* --- Toggle items (checkmark + label) --- */
+/* Check sits left of the label (VS Code convention): icon → ✓ → label.
+   Previously absolute-positioned at right:8px, which looked like a submenu ▸ arrow
+   and caused users to expect a flyout that never appeared. */
 .context-menu-toggle { position: relative; }
 .context-menu-toggle .context-menu-check {
-    position: absolute;
-    right: 8px;
     font-size: 14px;
     opacity: 0;
+    margin-right: -4px; /* tighten gap between check and label */
 }
 .context-menu-toggle.checked .context-menu-check { opacity: 0.8; }
 /* Explicit flex item so the text label is never collapsed by the flex layout.

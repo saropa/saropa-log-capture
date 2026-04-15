@@ -137,6 +137,11 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "openQualityReport":
         void vscode.commands.executeCommand('saropaLogCapture.openQualityReport');
         return true;
+      case "openLintRule":
+        // Open VS Code settings filtered to the lint rule name so the user can
+        // find the saropa_lints rule configuration and documentation
+        void vscode.commands.executeCommand('workbench.action.openSettings', String(msg.rule ?? ''));
+        return true;
       case "openDriftAdvisor":
         void vscode.commands.executeCommand(DRIFT_ADVISOR_OPEN_COMMAND).then(undefined, () => {});
         return true;

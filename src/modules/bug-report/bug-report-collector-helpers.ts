@@ -69,7 +69,8 @@ export async function collectWorkspaceData(
         aggregateSignals(),
         uri ? extractImports(uri).catch(() => undefined) : Promise.resolve(undefined),
     ]);
-    const match = aggregated.recurringErrors.find(e => e.hash === fingerprint);
+    // Find matching error signal by fingerprint (raw hash for error-kind signals)
+    const match = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === fingerprint);
     const crossMatch = match ? {
         sessionCount: match.sessionCount, totalOccurrences: match.totalOccurrences,
         firstSeen: match.firstSeen, lastSeen: match.lastSeen,

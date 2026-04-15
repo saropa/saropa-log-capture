@@ -217,7 +217,7 @@ export class PopOutPanel implements ViewerTarget, vscode.Disposable {
   setMinimapViewportRedOutline(show: boolean): void { this.post({ type: "minimapViewportRedOutline", show }); }
   setMinimapViewportOutsideArrow(show: boolean): void { this.post({ type: "minimapViewportOutsideArrow", show }); }
   setViewerRepeatThresholds(t: ViewerRepeatThresholds): void { postViewerRepeatThresholds(this, t); }
-  setViewerDbInsightsEnabled(enabled: boolean): void { this.post({ type: "setViewerDbInsightsEnabled", enabled }); }
+  setViewerDbSignalsEnabled(enabled: boolean): void { this.post({ type: "setViewerDbSignalsEnabled", enabled }); }
   setStaticSqlFromFingerprintEnabled(enabled: boolean): void { this.post({ type: "setStaticSqlFromFingerprintEnabled", enabled }); }
   setViewerDbDetectorToggles(toggles: ViewerDbDetectorToggles): void { postViewerDbDetectorToggles(this, toggles); }
   setDbBaselineFingerprintSummary(entries: Readonly<Record<string, PersistedDriftSqlFingerprintEntryV1>> | null): void { postDbBaselineFingerprintSummary(this, entries); }

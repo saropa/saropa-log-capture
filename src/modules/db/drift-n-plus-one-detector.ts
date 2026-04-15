@@ -75,7 +75,7 @@ export interface NPlusOneSignal {
 
 interface FingerprintEntry {
     hits: { ts: number; argsKey: string }[];
-    lastInsightTs: number;
+    lastSignalTs: number;
 }
 
 /**
@@ -166,7 +166,7 @@ export class NPlusOneDetector {
         const now = ts;
         let entry = this.byFingerprint.get(fingerprint);
         if (!entry) {
-            entry = { hits: [], lastInsightTs: 0 };
+            entry = { hits: [], lastSignalTs: 0 };
             this.byFingerprint.set(fingerprint, entry);
         }
         entry.hits.push({ ts: now, argsKey: argsKey || '[]' });
@@ -190,11 +190,11 @@ export class NPlusOneDetector {
             return null;
         }
         /* Cooldown only after at least one signal (0 means "never fired"). */
-        if (entry.lastInsightTs > 0 && now - entry.lastInsightTs < this.cfg.cooldownMs) {
+        if (entry.lastSignalTs > 0 && now - entry.lastSignalTs < this.cfg.cooldownMs) {
             this.pruneFingerprints(now);
             return null;
         }
-        entry.lastInsightTs = now;
+        entry.lastSignalTs = now;
         const windowSpanMs = entry.hits[entry.hits.length - 1].ts - entry.hits[0].ts;
         const signal: NPlusOneSignal = {
             repeats,
