@@ -226,7 +226,11 @@ export function getSessionRenderingScript(): string {
         return result;
     }
 
-    /** Render a lightweight preview list (filenames only, shimmer on metadata). */
+    /**
+     * Render a lightweight preview list (filenames only, shimmer on metadata).
+     * Called once per directory level during streaming scan — appends to existing
+     * items so the first filenames appear immediately while subdirectories continue loading.
+     */
     function renderSessionListPreview(previews) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
@@ -243,7 +247,8 @@ export function getSessionRenderingScript(): string {
                 + '<span class="session-item-meta session-shimmer-meta"></span>'
                 + '</div></div>';
         }).join('');
-        sessionListEl.innerHTML = html;
+        /* Append instead of replace — multiple batches arrive as directories are scanned. */
+        sessionListEl.insertAdjacentHTML('beforeend', html);
     }
 
     /** Update preview items in-place with resolved metadata (progressive loading). */

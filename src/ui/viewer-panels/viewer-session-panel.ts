@@ -92,6 +92,8 @@ export function getSessionPanelScript(): string {
     function requestSessionList() {
         if (sessionLoadingEl) sessionLoadingEl.style.display = '';
         if (sessionEmptyEl) sessionEmptyEl.style.display = 'none';
+        /* Clear stale items so streaming preview batches don't append after old content. */
+        if (sessionListEl) sessionListEl.innerHTML = '';
         vscodeApi.postMessage({ type: 'requestSessionList' });
     }
 
