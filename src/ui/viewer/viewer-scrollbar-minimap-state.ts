@@ -73,6 +73,15 @@ function handleMinimapShowSqlDensity(msg) {
     if (prev !== mmShowSqlDensity) scheduleMinimap();
 }
 
+/** Restore custom drag-to-resize pixel width from workspace state (overrides the preset). */
+function handleMinimapWidthPx(msg) {
+    if (typeof msg.px !== 'number' || msg.px < 20 || msg.px > 160 || !minimapEl) return;
+    mmWidthPx = msg.px;
+    minimapEl.style.width = msg.px + 'px';
+    syncMmColumnWidth();
+    scheduleMinimap();
+}
+
 /** minimapProportionalLines setting: narrow bars by text length vs log pane width (VS Code–style silhouette). */
 function handleMinimapProportionalLines(msg) {
     var next = msg.show !== false;
