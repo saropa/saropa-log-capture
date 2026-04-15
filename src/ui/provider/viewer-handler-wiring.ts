@@ -224,14 +224,14 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
         }).catch(() => {}),
       );
     };
-    const onFilesListed = (files: readonly string[], logDir: vscode.Uri): void => {
+    const onFilesFound = (files: readonly string[], logDir: vscode.Uri): void => {
       const previews = files.map(f => ({
         filename: f,
         uriString: vscode.Uri.joinPath(logDir, f).toString(),
       }));
       broadcaster.postToWebview({ type: 'sessionListPreview', previews });
     };
-    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesListed);
+    const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesFound);
     await Promise.all(recordPromises);
     flush();
     // When cache was hit, callbacks never fired — build payload from returned items.

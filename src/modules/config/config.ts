@@ -251,4 +251,4 @@ export function errorRateConfigFromConfig(cfg: SaropaLogCaptureConfig): ErrorRat
   };
 }
 
-export { isTrackedFile, readTrackedFiles, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';
+export { isTrackedFile, readTrackedFiles, readTrackedFilesStreaming, getFileTypeGlob, shouldRedactEnvVar } from './config-file-utils';

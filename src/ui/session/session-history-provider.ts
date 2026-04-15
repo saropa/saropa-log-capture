@@ -191,10 +191,10 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
     async getAllChildrenStreaming(
         onItemLoaded: OnItemLoaded,
         logDirOverride?: vscode.Uri,
-        onFilesListed?: FetchCallbacks['onFilesListed'],
+        onFilesFound?: FetchCallbacks['onFilesFound'],
     ): Promise<TreeItem[]> {
         if (!logDirOverride && this.itemsCache) { return this.itemsCache; }
-        const items = await fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesListed });
+        const items = await fetchItemsCore(this, logDirOverride, { onItemLoaded, onFilesFound });
         if (!logDirOverride) {
             this.itemsCache = items;
             this.fetchInFlight = undefined;
