@@ -35,8 +35,15 @@ export function getSignalScriptPartD(): string {
                 });
                 return;
             }
+            /* Triage action (Close/Mute/Re-open) on error/warning signal rows */
+            var triageBtn = e.target.closest('.re-action[data-hash]');
+            if (triageBtn && triageBtn.dataset.hash && triageBtn.dataset.status) {
+                e.stopPropagation();
+                vscodeApi.postMessage({ type: 'setRecurringErrorStatus', hash: triageBtn.dataset.hash, status: triageBtn.dataset.status });
+                return;
+            }
             /* Row click — open the most recent session with this signal type */
-            var row = e.target.closest('.signal-signal-trend-row');
+            var row = e.target.closest('.signal-trend-row');
             if (!row || !row.dataset.signalType) { return; }
             e.stopPropagation();
             vscodeApi.postMessage({ type: 'openSessionForSignalType', signalType: row.dataset.signalType });
