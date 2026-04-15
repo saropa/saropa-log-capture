@@ -32,6 +32,7 @@ import { writeUnifiedSessionLogIfEnabled } from './unified-session-log-writer';
 import { scanAndPersistDriftSqlFingerprintSummary } from './session-drift-sql-fingerprint-persist';
 import { getLastSignalBundle, getLastSignalHypotheses } from '../../ui/provider/viewer-message-handler-actions';
 import { extractSignalSummary } from '../root-cause-hints/signal-summary-extract';
+import { scanForGeneralSignals } from '../analysis/general-signal-scanner';
 
 /** Parameters for session finalization. */
 export interface FinalizeSessionParams {
@@ -162,18 +163,21 @@ export async function finalizeSession(
 
     const pDriftSql = scanAndPersistDriftSqlFingerprintSummary(logSession.fileUri, metadataStore, outputChannel);
 
-    // Persist signal summary from the last viewer-collected root-cause hint bundle.
-    // If the viewer was never opened for this session, getLastSignalBundle() returns
-    // undefined and we skip — same as fingerprints when no errors found.
+    // Persist signal summary: prefer the viewer-collected bundle (richer data with
+    // hypothesis template IDs, N+1 fingerprints, slow op names). If the viewer was
+    // never opened, fallback to extension-side general signal scanning so network
+    // failures, memory events, slow ops, etc. are still captured.
     const pSignal = Promise.resolve().then(async () => {
         const bundle = getLastSignalBundle();
-        if (!bundle) { return; }
-        const summary = extractSignalSummary(bundle, getLastSignalHypotheses());
+        const summary = bundle
+            ? extractSignalSummary(bundle, getLastSignalHypotheses())
+            : await scanForGeneralSignals(logSession.fileUri);
         if (!summary) { return; }
         const meta = await metadataStore.loadMetadata(logSession.fileUri);
         meta.signalSummary = summary;
         await metadataStore.saveMetadata(logSession.fileUri, meta);
-        outputChannel.appendLine(`Signal summary: ${JSON.stringify(summary.counts)}`);
+        const source = bundle ? 'viewer' : 'extension-scan';
+        outputChannel.appendLine(`Signal summary (${source}): ${JSON.stringify(summary.counts)}`);
     }).catch((err) => {
         outputChannel.appendLine(`Failed to persist signal summary: ${err}`);
     });
