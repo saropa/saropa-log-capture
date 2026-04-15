@@ -69,6 +69,7 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 - [Screenshots](#screenshots)
 - [Overview](#overview)
 - [Features](#features)
+- [Works best with](#works-best-with)
 - [Requirements](#requirements)
 - [Remote development](#remote-development-ssh-wsl-dev-containers)
 - [Usage](#usage)
@@ -237,6 +238,16 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 </details>
 
 ---
+
+## Works best with
+
+Saropa Log Capture works standalone, but unlocks richer diagnostics when paired with these companion extensions:
+
+| Extension | What it adds to Log Capture |
+|---|---|
+| **[Saropa Lints](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-lints)** | Bug reports include lint violations filtered by impact, OWASP executive summaries, health scores, and one-click "Explain rule" links. Stale lint data is refreshed automatically before report generation. |
+| **[Saropa Drift Advisor](https://marketplace.visualstudio.com/items?itemName=saropa.drift-viewer)** | Session metadata and sidecar files carry query performance stats, schema summaries, anomaly counts, index suggestions, and diagnostic issues. Right-click SQL lines for "Open in Drift Advisor". Root-cause hints reference Drift issues. |
+> **One-click install:** Get all three with the [Saropa Suite](https://marketplace.visualstudio.com/items?itemName=saropa.saropa-suite) extension pack.
 
 ## Requirements
 

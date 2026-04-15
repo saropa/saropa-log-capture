@@ -168,6 +168,36 @@ test("buildSignalReportShell: should include both copy and save buttons in btn-r
   assert.ok(html.includes('id="save-report-btn"'));
 });
 
+test("buildSignalReportShell: should include ecosystem section slot for companion extensions", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::eco",
+    },
+  });
+  assert.ok(html.includes('id="section-ecosystem"'), 'should have ecosystem section slot');
+  assert.ok(html.includes('Companion Extensions'), 'should show companion extensions heading');
+  assert.ok(html.includes('Checking installed extensions'), 'should show loading text');
+});
+
+test("buildSignalReportShell: should include ecosystem link click handler in script", () => {
+  const html = buildSignalReportShell({
+    nonce: "n",
+    hypothesis: {
+      templateId: "test",
+      text: "Test",
+      evidenceLineIds: [],
+      hypothesisKey: "test::eco2",
+    },
+  });
+  // The delegated click handler for ecosystem install links
+  assert.ok(html.includes('ecosystem-prompt-link'), 'should have ecosystem link handler');
+  assert.ok(html.includes("type: 'openUrl'"), 'should post openUrl message');
+});
+
 // --- resolveSourcePaths ---
 
 test("resolveSourcePaths: should resolve relative dart path to absolute", () => {
