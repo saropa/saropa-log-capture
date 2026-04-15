@@ -204,4 +204,46 @@ suite('RecurringSignalBuilder', () => {
         assert.strictEqual(sig.fingerprint, 'rawHash1');
         assert.ok(!sig.fingerprint.includes('::'), 'fingerprint should not contain :: prefix');
     });
+
+    test('should aggregate V2 entry durations across sessions via weighted average', () => {
+        // Two sessions with the same slow-op, different durations — weighted avg should combine
+        const metas = [
+            mockMeta('20260401_100000.log', {
+                signalSummary: {
+                    schemaVersion: 2, counts: { slowOperations: 2 },
+                    entries: [{ kind: 'slow-op', fingerprint: 'dbQuery', label: 'dbQuery', count: 2, avgDurationMs: 100, maxDurationMs: 150 }],
+                },
+            }),
+            mockMeta('20260402_100000.log', {
+                signalSummary: {
+                    schemaVersion: 2, counts: { slowOperations: 3 },
+                    entries: [{ kind: 'slow-op', fingerprint: 'dbQuery', label: 'dbQuery', count: 3, avgDurationMs: 200, maxDurationMs: 400 }],
+                },
+            }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.kind === 'slow-op' && s.fingerprint === 'dbQuery');
+        assert.ok(sig, 'should find dbQuery slow-op signal');
+        assert.strictEqual(sig.totalOccurrences, 5);
+        // Weighted avg: (100*2 + 200*3) / 5 = 800/5 = 160
+        assert.strictEqual(sig.avgDurationMs, 160);
+        // Max should be the highest across both sessions
+        assert.strictEqual(sig.maxDurationMs, 400);
+    });
+
+    test('should propagate lineIndices from V2 entries', () => {
+        const metas = [
+            mockMeta('20260401_100000.log', {
+                signalSummary: {
+                    schemaVersion: 2, counts: { networkFailures: 1 },
+                    entries: [{ kind: 'network', fingerprint: 'SocketException', label: 'SocketException', count: 1, lineIndices: [42, 99] }],
+                },
+            }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.kind === 'network');
+        assert.ok(sig, 'should find network signal');
+        assert.ok(sig.lineIndices, 'should have lineIndices');
+        assert.deepStrictEqual(sig.lineIndices, [42, 99]);
+    });
 });
