@@ -400,6 +400,8 @@
   "config.viewerDbDetectorNPlusOneEnabled.title": "Log viewer: N+1 query detector",
   "config.viewerDbDetectorSlowBurstEnabled.description": "When database signals are on, emit slow-query burst marker rows using the slow-burst thresholds.",
   "config.viewerDbDetectorSlowBurstEnabled.title": "Log viewer: slow query burst markers",
+  "config.signalAutoTrack.description": "Automatically persist detected signals (errors, warnings, performance, SQL patterns) to session metadata for cross-session tracking. Disable to only track signals you manually pin to cases.",
+  "config.signalAutoTrack.title": "Auto-track signals across sessions",
   "config.viewerDbSignalsEnabled.description": "When enabled, the log viewer runs DB signal detectors (e.g. N+1 query hints) and enriches database-tagged lines with SQL fingerprint rollup stats.",
   "config.viewerDbSignalsEnabled.title": "Enable database signals in the log viewer",
   "config.viewerDetectAsciiArt.description": "Experimental: detect pixel-based ASCII art (logos, figlet banners) using entropy heuristics and group them as art blocks. May increase CPU usage on large logs. Default off. Reload the log viewer after changing.",
