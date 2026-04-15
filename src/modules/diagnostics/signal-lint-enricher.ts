@@ -25,29 +25,48 @@ function resolveToAbsolute(filePath: string): string | undefined {
     return vscode.Uri.joinPath(folders[0].uri, filePath).fsPath;
 }
 
-/** Format a single diagnostic as a compact string: "code (severity, source)". */
+/**
+ * Format a single diagnostic with full detail — rule code, severity, source,
+ * AND the actionable message text (e.g. "Avoid using dynamic calls. Try casting
+ * to a specific type."). This gives the user enough context to act on the lint
+ * finding without opening the source file.
+ */
 function formatDiag(d: vscode.Diagnostic): string {
     const code = typeof d.code === 'object' ? String(d.code.value) : String(d.code ?? '');
     const sev = d.severity === vscode.DiagnosticSeverity.Error ? 'error'
         : d.severity === vscode.DiagnosticSeverity.Warning ? 'warning' : 'info';
-    const src = d.source ? `, ${d.source}` : '';
-    // Prefer code (e.g. "avoid_dynamic_calls") over message (which can be long)
-    const label = code || d.message.slice(0, 60);
-    return `${label} (${sev}${src})`;
+    const src = d.source ?? '';
+    // Include the full message — this is where the actionable advice lives
+    // (e.g. "Avoid using dynamic calls" from saropa_lints, or
+    // "The argument type 'String?' can't be assigned to 'String'" from dart)
+    const msg = d.message.length > 120 ? d.message.slice(0, 117) + '...' : d.message;
+    // Format: "[source] code (severity): message" or "[source] (severity): message" if no code
+    const prefix = src ? `[${src}] ` : '';
+    const codeStr = code ? `${code} (${sev})` : `(${sev})`;
+    return `${prefix}${codeStr}: ${msg}`;
 }
 
-/** Query diagnostics for a source file at a specific line. Returns formatted summary or undefined. */
+/**
+ * Query diagnostics for a source file, prioritizing those at the referenced line.
+ * Returns diagnostics sorted by proximity: exact line first, then nearby (±5 lines),
+ * then file-level findings. This surfaces both the specific lint at the error location
+ * AND broader file-level issues that may be contributing factors.
+ */
 function queryDiagsForRef(filePath: string, line: number): string | undefined {
     const absPath = resolveToAbsolute(filePath);
     if (!absPath) { return undefined; }
     try {
         const uri = vscode.Uri.file(absPath);
         const diags = vscode.languages.getDiagnostics(uri);
-        // Filter to diagnostics at or near the referenced line (±2 lines for tolerance)
-        const nearby = diags.filter(d => Math.abs(d.range.start.line + 1 - line) <= 2);
-        if (nearby.length === 0) { return undefined; }
-        const formatted = nearby.slice(0, maxDiagsPerSignal).map(formatDiag);
-        return 'Lint: ' + formatted.join('; ');
+        if (diags.length === 0) { return undefined; }
+        // Sort by proximity to the referenced line — nearest first
+        const sorted = [...diags].sort((a, b) => {
+            const distA = Math.abs(a.range.start.line + 1 - line);
+            const distB = Math.abs(b.range.start.line + 1 - line);
+            return distA - distB;
+        });
+        const formatted = sorted.slice(0, maxDiagsPerSignal).map(formatDiag);
+        return 'Lint: ' + formatted.join(' | ');
     } catch {
         return undefined;
     }
