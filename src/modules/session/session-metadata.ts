@@ -2,11 +2,15 @@ import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
 import type { FingerprintEntry } from '../analysis/error-fingerprint';
-import { parseJSONOrDefault } from '../misc/safe-json';
 import { logExtensionError } from '../misc/extension-logger';
 import type { PerfFingerprintEntry } from '../misc/perf-fingerprint';
 import type { PersistedDriftSqlFingerprintSummaryV1 } from '../db/drift-sql-fingerprint-summary-persist';
 import type { PersistedSignalSummaryV1, PersistedSignalSummaryV2 } from '../root-cause-hints/signal-summary-types';
+import {
+    getCentralMetaUri, relativeKey, fallbackSidecarUri,
+    readCentral, writeCentral, loadSidecar,
+    type MetaMap,
+} from './session-metadata-io';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -56,7 +60,7 @@ export interface SessionMeta {
     signalSummary?: PersistedSignalSummaryV1 | PersistedSignalSummaryV2;
 }
 
-type MetaMap = Record<string, SessionMeta>;
+// MetaMap type imported from session-metadata-io.ts
 
 /**
  * Whether performance integration payload contains meaningful session-level data.
@@ -83,15 +87,15 @@ export class SessionMetadataStore {
 
     /** URI of the central metadata file. Returns undefined if no workspace folder is available. */
     getMetaUri(logUri: vscode.Uri): vscode.Uri | undefined {
-        return this.getCentralMetaUri(logUri);
+        return getCentralMetaUri(logUri);
     }
 
     /** Load metadata for a log file from central store. Migrates legacy sidecar on first read. */
     async loadMetadata(logUri: vscode.Uri): Promise<SessionMeta> {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = getCentralMetaUri(logUri);
         if (!centralUri) { return {}; }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = relativeKey(logUri);
+        const data = await readCentral(centralUri);
         let meta = data[key] ? { ...data[key] } : {};
         if (Object.keys(meta).length === 0) {
             meta = await this.migrateSidecarToCentral(logUri, centralUri, key, data);
@@ -100,32 +104,32 @@ export class SessionMetadataStore {
     }
 
     private async migrateSidecarToCentral(logUri: vscode.Uri, centralUri: vscode.Uri, key: string, data: MetaMap): Promise<SessionMeta> {
-        const sidecar = await this.loadSidecar(logUri);
+        const sidecar = await loadSidecar(logUri);
         if (Object.keys(sidecar).length === 0) { return {}; }
         data[key] = sidecar;
-        await this.writeCentral(centralUri, data);
-        try { await vscode.workspace.fs.delete(this.fallbackSidecarUri(logUri)); } catch { /* ignore */ }
+        await writeCentral(centralUri, data);
+        try { await vscode.workspace.fs.delete(fallbackSidecarUri(logUri)); } catch { /* ignore */ }
         return sidecar;
     }
 
     /** Save metadata for a log file. Writes to central store only; never creates sidecar files. */
     async saveMetadata(logUri: vscode.Uri, meta: SessionMeta): Promise<void> {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = getCentralMetaUri(logUri);
         if (!centralUri) { return; }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = relativeKey(logUri);
+        const data = await readCentral(centralUri);
         data[key] = meta;
-        await this.writeCentral(centralUri, data);
+        await writeCentral(centralUri, data);
     }
 
     /** Remove metadata for a log file (e.g. after permanent delete or rename). */
     async deleteMetadata(logUri: vscode.Uri): Promise<void> {
-        const centralUri = this.getCentralMetaUri(logUri);
+        const centralUri = getCentralMetaUri(logUri);
         if (!centralUri) { return; }
-        const key = this.relativeKey(logUri);
-        const data = await this.readCentral(centralUri);
+        const key = relativeKey(logUri);
+        const data = await readCentral(centralUri);
         delete data[key];
-        await this.writeCentral(centralUri, data);
+        await writeCentral(centralUri, data);
     }
 
     async setDisplayName(logUri: vscode.Uri, name: string): Promise<void> {
@@ -250,54 +254,7 @@ export class SessionMetadataStore {
         const folder = vscode.workspace.getWorkspaceFolder(logDir) ?? vscode.workspace.workspaceFolders?.[0];
         if (!folder) { return new Map(); }
         const centralUri = vscode.Uri.joinPath(getLogDirectoryUri(folder), '.session-metadata.json');
-        const data = await this.readCentral(centralUri);
+        const data = await readCentral(centralUri);
         return new Map(Object.entries(data));
-    }
-
-    private getCentralMetaUri(logUri: vscode.Uri): vscode.Uri | undefined {
-        const folder = vscode.workspace.getWorkspaceFolder(logUri) ?? vscode.workspace.workspaceFolders?.[0];
-        if (!folder) { return undefined; }
-        const logDir = getLogDirectoryUri(folder);
-        return vscode.Uri.joinPath(logDir, '.session-metadata.json');
-    }
-
-    private relativeKey(logUri: vscode.Uri): string {
-        return vscode.workspace.asRelativePath(logUri).replace(/\\/g, '/');
-    }
-
-    private fallbackSidecarUri(logUri: vscode.Uri): vscode.Uri {
-        const str = logUri.toString();
-        const dotIdx = str.lastIndexOf('.');
-        if (dotIdx === -1) { return vscode.Uri.parse(str + '.meta.json'); }
-        return vscode.Uri.parse(str.slice(0, dotIdx) + '.meta.json');
-    }
-
-    private async readCentral(uri: vscode.Uri): Promise<MetaMap> {
-        try {
-            const data = await vscode.workspace.fs.readFile(uri);
-            const parsed = parseJSONOrDefault<MetaMap>(Buffer.from(data), {});
-            return typeof parsed === 'object' && parsed !== null ? parsed : {};
-        } catch {
-            return {};
-        }
-    }
-
-    private async writeCentral(uri: vscode.Uri, data: MetaMap): Promise<void> {
-        const dir = vscode.Uri.joinPath(uri, '..');
-        try { await vscode.workspace.fs.createDirectory(dir); } catch { /* may exist */ }
-        const json = JSON.stringify(data, null, 2);
-        await vscode.workspace.fs.writeFile(uri, Buffer.from(json, 'utf-8'));
-    }
-
-    /** Read a legacy .meta.json sidecar (migration only — never written by new code). */
-    private async loadSidecar(logUri: vscode.Uri): Promise<SessionMeta> {
-        const metaUri = this.fallbackSidecarUri(logUri);
-        try {
-            const data = await vscode.workspace.fs.readFile(metaUri);
-            const parsed = parseJSONOrDefault<SessionMeta>(Buffer.from(data), {});
-            return typeof parsed === 'object' && parsed !== null ? parsed : {};
-        } catch {
-            return {};
-        }
     }
 }
