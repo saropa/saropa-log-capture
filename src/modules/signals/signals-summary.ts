@@ -1,9 +1,9 @@
 /**
  * Insights summary: structured data for export (recurring errors + hot files).
- * Built from CrossSessionInsights with optional caps for large scopes.
+ * Built from CrossSessionSignals with optional caps for large scopes.
  */
 
-import type { CrossSessionInsights, HotFile, RecurringError } from '../misc/cross-session-aggregator';
+import type { CrossSessionSignals, HotFile, RecurringError } from '../misc/cross-session-aggregator';
 
 /** One row for the errors table: signature, count, sessions, sample. */
 export interface ErrorSummary {
@@ -23,7 +23,7 @@ export interface FileSummary {
 }
 
 /** Full summary for export: errors, files, and meta. */
-export interface InsightsSummary {
+export interface SignalsSummary {
     readonly errors: readonly ErrorSummary[];
     readonly files: readonly FileSummary[];
     readonly meta: {
@@ -40,10 +40,10 @@ const defaultMaxFiles = 500;
  * Build an exportable summary from cross-session insights.
  * Caps errors and files to avoid huge exports.
  */
-export function buildInsightsSummary(
-    insights: CrossSessionInsights,
+export function buildSignalsSummary(
+    insights: CrossSessionSignals,
     options?: { maxErrors?: number; maxFiles?: number; timeRangeLabel?: string },
-): InsightsSummary {
+): SignalsSummary {
     const maxErrors = options?.maxErrors ?? defaultMaxErrors;
     const maxFiles = options?.maxFiles ?? defaultMaxFiles;
     const timeRangeLabel = options?.timeRangeLabel ?? 'all';

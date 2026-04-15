@@ -7,7 +7,7 @@
  */
 
 import { normalizeLine, hashFingerprint, classifyCategory, type CrashCategory } from '../../../modules/analysis/error-fingerprint';
-import { aggregateInsights, type RecurringError } from '../../../modules/misc/cross-session-aggregator';
+import { aggregateSignals, type RecurringError } from '../../../modules/misc/cross-session-aggregator';
 import { getErrorStatusBatch, type ErrorStatus } from '../../../modules/misc/error-status-store';
 import { getRegressionHintsForError, type RegressionHintsResult } from '../../../modules/regression/regression-hint-service';
 import { extractSourceReference } from '../../../modules/source/source-linker';
@@ -56,7 +56,7 @@ export async function handleErrorHoverRequest(
 
     // Parallel: cross-session lookup + triage status
     const [insights, statuses] = await Promise.all([
-        aggregateInsights('all').catch(() => undefined),
+        aggregateSignals('all').catch(() => undefined),
         getErrorStatusBatch([hash]).catch(() => ({} as Record<string, ErrorStatus>)),
     ]);
 

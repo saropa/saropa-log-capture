@@ -12,7 +12,7 @@ import { registerShareCommands } from './investigation-commands-share';
 import { registerExportInvestigationCommand } from './investigation-commands-export';
 import { getInvestigationsListPayload } from './ui/provider/viewer-message-handler-investigation';
 import {
-    formatInsightItemLine,
+    formatSignalItemLine,
     resolveOrPickInvestigation,
 } from './investigation-commands-helpers';
 import { tryPinSaropaLintsViolationsSnapshot } from './commands-investigation-lints';
@@ -58,7 +58,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 const investigation = await investigationStore.createInvestigation({ name });
                 await investigationStore.setActiveInvestigationId(investigation.id);
                 await showInvestigationPanel(investigationStore);
-                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
+                viewerProvider?.postMessage({ type: 'openSignalPanel', tab: 'cases' });
                 vscode.window.showInformationMessage(t('msg.investigationCreated', name));
             } catch (e) {
                 vscode.window.showErrorMessage(t('msg.investigationCreateFailed', e instanceof Error ? e.message : String(e)));
@@ -95,7 +95,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
             if (picked) {
                 await investigationStore.setActiveInvestigationId(picked.investigation.id);
                 await showInvestigationPanel(investigationStore);
-                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
+                viewerProvider?.postMessage({ type: 'openSignalPanel', tab: 'cases' });
             }
         }),
 
@@ -150,7 +150,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 }
 
                 await refreshInvestigationPanelIfOpen();
-                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
+                viewerProvider?.postMessage({ type: 'openSignalPanel', tab: 'cases' });
                 vscode.window.showInformationMessage(t('msg.sourceAddedToInvestigation', label, investigation.name));
             } catch (e) {
                 vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
@@ -238,7 +238,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
         }),
 
         vscode.commands.registerCommand('saropaLogCapture.addSignalItemToCase', async (payload?: AddSignalItemToCasePayload) => {
-            const line = formatInsightItemLine(payload);
+            const line = formatSignalItemLine(payload);
             if (!line) {
                 vscode.window.showWarningMessage(t('msg.nothingToAddToCase'));
                 return;
@@ -272,7 +272,7 @@ export function registerInvestigationCommands(deps: InvestigationCommandDeps): v
                 await investigationStore.updateNotes(inv.id, newNotes);
                 await investigationStore.setActiveInvestigationId(inv.id);
                 await showInvestigationPanel(investigationStore);
-                viewerProvider?.postMessage({ type: 'openInsight', tab: 'cases' });
+                viewerProvider?.postMessage({ type: 'openSignalPanel', tab: 'cases' });
                 const listPayload = await getInvestigationsListPayload(investigationStore);
                 viewerProvider?.postMessage(listPayload);
                 viewerProvider?.postMessage({ type: 'addToCaseCompleted' });

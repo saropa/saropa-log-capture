@@ -1,11 +1,11 @@
 import * as assert from 'assert';
 import {
-    formatInsightsSummaryToCsv,
-    formatInsightsSummaryToJson,
+    formatSignalsSummaryToCsv,
+    formatSignalsSummaryToJson,
 } from '../../../modules/export/signals-export-formats';
-import type { InsightsSummary } from '../../../modules/signals/signals-summary';
+import type { SignalsSummary } from '../../../modules/signals/signals-summary';
 
-function minimalSummary(overrides?: Partial<InsightsSummary>): InsightsSummary {
+function minimalSummary(overrides?: Partial<SignalsSummary>): SignalsSummary {
     return {
         errors: [],
         files: [],
@@ -20,9 +20,9 @@ function minimalSummary(overrides?: Partial<InsightsSummary>): InsightsSummary {
 
 suite('InsightsExportFormats', () => {
 
-    suite('formatInsightsSummaryToCsv', () => {
+    suite('formatSignalsSummaryToCsv', () => {
         test('should produce CSV with headers for empty summary', () => {
-            const csv = formatInsightsSummaryToCsv(minimalSummary());
+            const csv = formatSignalsSummaryToCsv(minimalSummary());
             assert.ok(csv.includes('errors'));
             assert.ok(csv.includes('signature,count,sessions'));
             assert.ok(csv.includes('files'));
@@ -30,7 +30,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include error rows', () => {
-            const csv = formatInsightsSummaryToCsv(minimalSummary({
+            const csv = formatSignalsSummaryToCsv(minimalSummary({
                 errors: [{
                     signature: 'NullPointerException',
                     count: 5,
@@ -46,7 +46,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include file rows', () => {
-            const csv = formatInsightsSummaryToCsv(minimalSummary({
+            const csv = formatSignalsSummaryToCsv(minimalSummary({
                 files: [{ path: 'src/app.ts', sessionCount: 3 }],
             }));
             assert.ok(csv.includes('src/app.ts'));
@@ -54,7 +54,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should escape CSV fields with commas', () => {
-            const csv = formatInsightsSummaryToCsv(minimalSummary({
+            const csv = formatSignalsSummaryToCsv(minimalSummary({
                 errors: [{
                     signature: 'Error, with comma',
                     count: 1,
@@ -68,7 +68,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include category when present', () => {
-            const csv = formatInsightsSummaryToCsv(minimalSummary({
+            const csv = formatSignalsSummaryToCsv(minimalSummary({
                 errors: [{
                     signature: 'Err',
                     count: 1,
@@ -83,9 +83,9 @@ suite('InsightsExportFormats', () => {
         });
     });
 
-    suite('formatInsightsSummaryToJson', () => {
+    suite('formatSignalsSummaryToJson', () => {
         test('should produce valid JSON for empty summary', () => {
-            const json = formatInsightsSummaryToJson(minimalSummary());
+            const json = formatSignalsSummaryToJson(minimalSummary());
             const parsed = JSON.parse(json);
             assert.ok(Array.isArray(parsed.errors));
             assert.ok(Array.isArray(parsed.files));
@@ -93,7 +93,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include errors in JSON', () => {
-            const json = formatInsightsSummaryToJson(minimalSummary({
+            const json = formatSignalsSummaryToJson(minimalSummary({
                 errors: [{
                     signature: 'NPE',
                     count: 3,
@@ -110,7 +110,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include files in JSON', () => {
-            const json = formatInsightsSummaryToJson(minimalSummary({
+            const json = formatSignalsSummaryToJson(minimalSummary({
                 files: [{ path: 'src/lib.ts', sessionCount: 7 }],
             }));
             const parsed = JSON.parse(json);
@@ -119,7 +119,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should include meta in JSON', () => {
-            const json = formatInsightsSummaryToJson(minimalSummary({
+            const json = formatSignalsSummaryToJson(minimalSummary({
                 meta: {
                     sessionCount: 10,
                     timeRange: '7d',
@@ -132,7 +132,7 @@ suite('InsightsExportFormats', () => {
         });
 
         test('should produce pretty-printed JSON', () => {
-            const json = formatInsightsSummaryToJson(minimalSummary());
+            const json = formatSignalsSummaryToJson(minimalSummary());
             assert.ok(json.includes('\n'));
             assert.ok(json.includes('  '));
         });

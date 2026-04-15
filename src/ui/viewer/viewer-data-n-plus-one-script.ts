@@ -1,7 +1,7 @@
 /**
  * Embedded webview script: Drift SQL N+1 burst detector.
  *
- * Emits `parseSqlFingerprint` / `detectNPlusOneInsight` into the same scope as
+ * Emits `parseSqlFingerprint` / `detectNPlusOneSignal` into the same scope as
  * `addToData` (see `viewer-data-helpers.ts` load order). Thresholds are interpolated
  * from `N_PLUS_ONE_EMBED_CONFIG` in `modules/db/drift-n-plus-one-detector.ts` so the
  * extension and unit tests agree on numbers; **function bodies must stay aligned**
@@ -183,7 +183,7 @@ function pruneNPlusOneFingerprints(now) {
         keys = Object.keys(nPlusOneDetector.byFingerprint);
     }
 }
-function detectNPlusOneInsight(ts, fingerprint, argsKey) {
+function detectNPlusOneSignal(ts, fingerprint, argsKey) {
     if (!fingerprint) return null;
     var now = ts || Date.now();
     var entry = nPlusOneDetector.byFingerprint[fingerprint];

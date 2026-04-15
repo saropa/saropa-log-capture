@@ -6,7 +6,7 @@
  */
 
 /** Returns the JavaScript for `buildDatabaseInsightPopoverSection()`. */
-export function getContextPopoverDbInsightScript(): string {
+export function getContextPopoverDbSignalScript(): string {
     return /* javascript */ `
 function buildDatabaseInsightPopoverSection(lineIdx) {
     var row = (typeof allLines !== 'undefined' && lineIdx >= 0 && lineIdx < allLines.length) ? allLines[lineIdx] : null;

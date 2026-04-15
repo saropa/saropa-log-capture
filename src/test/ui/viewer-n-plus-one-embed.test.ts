@@ -13,11 +13,11 @@ import { VIEWER_SLOW_BURST_DEFAULTS } from '../../modules/db/drift-db-slow-burst
 import { SLOW_QUERY_BURST_DETECTOR_ID } from '../../modules/db/drift-db-slow-burst-detector';
 
 suite('Viewer N+1 detector embed', () => {
-    test('embed defines parseSqlFingerprint and detectNPlusOneInsight', () => {
+    test('embed defines parseSqlFingerprint and detectNPlusOneSignal', () => {
         const chunk = getNPlusOneDetectorScript();
         assert.ok(chunk.includes('function parseSqlFingerprint'));
         assert.ok(chunk.includes('function normalizeDriftSqlFingerprintSql'));
-        assert.ok(chunk.includes('function detectNPlusOneInsight'));
+        assert.ok(chunk.includes('function detectNPlusOneSignal'));
         assert.ok(chunk.includes('function pruneNPlusOneFingerprints'));
         assert.ok(chunk.includes('sqlSnippet'));
         assert.ok(chunk.includes('function updateDbInsightRollup'));

@@ -11,7 +11,7 @@ import { setGlobalProjectIndexer } from './modules/project-indexer/project-index
 import { runActivation, ActivationRefs } from './extension-activation';
 import { disposeComparisonPanel } from './ui/session/session-comparison';
 import { disposeAnalysisPanel } from './ui/analysis/analysis-panel';
-import { disposeInsightTabPanel } from './ui/viewer-panels/signal-tab-panel';
+import { disposeSignalTabPanel } from './ui/viewer-panels/signal-tab-panel';
 import { disposeBugReportPanel } from './ui/panels/bug-report-panel';
 import { disposeTimelinePanel } from './ui/panels/timeline-panel';
 import { disposeSignalReportPanel } from './ui/signals/signal-report-panel';
@@ -43,7 +43,7 @@ export function deactivate(): void {
     // Dispose editor panels that are not tied to activationRefs.
     disposeComparisonPanel();
     disposeAnalysisPanel();
-    disposeInsightTabPanel();
+    disposeSignalTabPanel();
     disposeBugReportPanel();
     disposeTimelinePanel();
     disposeSignalReportPanel();

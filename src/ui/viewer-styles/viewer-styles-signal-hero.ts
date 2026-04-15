@@ -3,7 +3,7 @@
  */
 
 /** Return CSS for Insight panel hero and add-to-case styles. */
-export function getInsightHeroStyles(): string {
+export function getSignalHeroStyles(): string {
     return /* css */ `
 
 /* Inline add-to-case button on recurring cards */
@@ -18,7 +18,7 @@ export function getInsightHeroStyles(): string {
 }
 
 /* Embedded performance panel inside Insight */
-.insight-hero-block {
+.signal-hero-block {
     padding-bottom: 6px;
     padding-left: 8px;
     margin-left: -8px;
@@ -27,19 +27,19 @@ export function getInsightHeroStyles(): string {
     margin-bottom: 4px;
 }
 
-.insight-hero-block.insight-hero-has-errors {
+.signal-hero-block.signal-hero-has-errors {
     border-left-color: var(--vscode-errorForeground, #f14c4c);
 }
 
-.insight-hero-block.insight-hero-has-warnings {
+.signal-hero-block.signal-hero-has-warnings {
     border-left-color: var(--vscode-editorWarning-foreground, #cca700);
 }
 
-.insight-hero-block.insight-hero-has-errors.insight-hero-has-warnings {
+.signal-hero-block.signal-hero-has-errors.signal-hero-has-warnings {
     border-left-color: var(--vscode-errorForeground, #f14c4c);
 }
 
-.insight-section-session-details .performance-panel {
+.signal-section-session-details .performance-panel {
     display: flex !important;
     min-width: 0;
     border: none;
@@ -47,11 +47,11 @@ export function getInsightHeroStyles(): string {
     background: transparent;
 }
 
-.insight-section-session-details .performance-panel-header {
+.signal-section-session-details .performance-panel-header {
     padding: 4px 0 8px;
 }
 
-.insight-section-session-details .pp-close {
+.signal-section-session-details .pp-close {
     display: none;
 }
 `;

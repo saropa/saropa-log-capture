@@ -66,7 +66,7 @@ import { getFiltersPanelScript } from '../viewer-search-filter/viewer-filters-pa
 import { getToolbarScript } from '../viewer-toolbar/viewer-toolbar-script';
 import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
-import { getInsightPanelScript } from '../panels/viewer-signal-panel';
+import { getSignalPanelScript } from '../panels/viewer-signal-panel';
 import { getPerformancePanelScript } from '../panels/viewer-performance-panel';
 import { getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
 import { getIconBarScript } from '../viewer-nav/viewer-icon-bar';
@@ -201,9 +201,9 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getFiltersPanelScript()) +
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
-        scriptTag(nonce, getInsightPanelScript()) +
+        scriptTag(nonce, getSignalPanelScript()) +
         // Performance UI lives only inside Insight (insight-pp-*); standalone performance-panel was removed.
-        scriptTag(nonce, getPerformancePanelScript('insight-')) +
+        scriptTag(nonce, getPerformancePanelScript('signal-')) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +
         scriptTag(nonce, getToolbarScript()) +

@@ -26,7 +26,7 @@ export interface PerfTimelineEntry {
 }
 
 /** Aggregated cross-session performance insights. */
-export interface PerfInsights {
+export interface PerfSignals {
     readonly trends: readonly PerfTrend[];
     readonly sessionCount: number;
     readonly queriedAt: number;
@@ -35,7 +35,7 @@ export interface PerfInsights {
 const maxTrends = 30;
 
 /** Aggregate performance fingerprints across all session metadata files. */
-export async function aggregatePerformance(timeRange: TimeRange = 'all'): Promise<PerfInsights> {
+export async function aggregatePerformance(timeRange: TimeRange = 'all'): Promise<PerfSignals> {
     const filtered = await loadFilteredMetas(timeRange);
     return {
         trends: buildPerfTrends(filtered),

@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { getGitBlame } from '../git/git-blame';
 import { getCommitUrl, getRemoteBaseUrl } from '../integrations/providers/git-source-code';
-import { aggregateInsights } from '../misc/cross-session-aggregator';
+import { aggregateSignals } from '../misc/cross-session-aggregator';
 import { getLogDirectoryUri } from '../config/config';
 import { loadMeta } from '../session/metadata-loader';
 import { SessionMetadataStore } from '../session/session-metadata';
@@ -80,7 +80,7 @@ export async function getFirstSeenCommitForError(
     errorHash: string,
     options?: { resolveCommitUrl?: boolean },
 ): Promise<FirstSeenHint | undefined> {
-    const insights = await aggregateInsights('all').catch(() => undefined);
+    const insights = await aggregateSignals('all').catch(() => undefined);
     const error = insights?.recurringErrors.find(e => e.hash === errorHash);
     if (!error?.firstSeen) { return undefined; }
 
@@ -141,7 +141,7 @@ export async function getFirstSeenHintsForErrors(
 ): Promise<Record<string, FirstSeenHint>> {
     const cap = options?.cap ?? 15;
     const resolve = options?.resolveCommitUrls ?? true;
-    const insights = await aggregateInsights('all').catch(() => undefined);
+    const insights = await aggregateSignals('all').catch(() => undefined);
     if (!insights) { return {}; }
 
     const toFetch = errorHashes.slice(0, cap).filter(h => {

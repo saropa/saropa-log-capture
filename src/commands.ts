@@ -10,7 +10,7 @@ import { t } from './l10n';
 import type { CommandDeps } from './commands-deps';
 import { scanForCorrelationTags } from './modules/analysis/correlation-scanner';
 import { comparisonCommands } from './commands-comparison';
-import { insightsCommands } from './commands-signals';
+import { signalsCommands } from './commands-signals';
 import { bugReportCommands } from './commands-bug-report';
 import { qualityCommands } from './commands-quality';
 import { timelineCommands } from './commands-timeline';
@@ -35,7 +35,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...exportCommands(deps),
         ...comparisonCommands(context.extensionUri, deps.broadcaster),
         ...correlationCommands(deps),
-        ...insightsCommands(deps),
+        ...signalsCommands(deps),
         ...bugReportCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri(), context }),
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),

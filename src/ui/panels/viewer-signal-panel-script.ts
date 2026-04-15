@@ -10,14 +10,14 @@
  * label; export confirmation (handled in command). Section order State A: Cases → Across → Env.
  */
 
-import { getInsightScriptPartA } from './viewer-signal-panel-script-part-a';
-import { getInsightScriptPartB } from './viewer-signal-panel-script-part-b';
-import { getInsightScriptPartC } from './viewer-signal-panel-script-part-c';
-import { getInsightScriptPartD } from './viewer-signal-panel-script-part-d';
+import { getSignalScriptPartA } from './viewer-signal-panel-script-part-a';
+import { getSignalScriptPartB } from './viewer-signal-panel-script-part-b';
+import { getSignalScriptPartC } from './viewer-signal-panel-script-part-c';
+import { getSignalScriptPartD } from './viewer-signal-panel-script-part-d';
 
 const MAX_RECURRING_TEXT_LEN = 90;
 
-export interface InsightScriptStrings {
+export interface SignalScriptStrings {
     addToCase: string;
     heroSparklineTitle: string;
     heroLoading: string;
@@ -35,7 +35,7 @@ export interface InsightScriptStrings {
     sectionErrorsInLog: string;
 }
 
-const DEFAULT_INSIGHT_STRINGS: InsightScriptStrings = {
+const DEFAULT_SIGNAL_STRINGS: SignalScriptStrings = {
     addToCase: 'Add to case',
     heroSparklineTitle: 'Free memory over session',
     heroLoading: 'Loading…',
@@ -54,15 +54,15 @@ const DEFAULT_INSIGHT_STRINGS: InsightScriptStrings = {
 };
 
 /** Generate the Insight panel script. Single scroll; State A vs B. */
-export function getInsightPanelScriptContent(storageKey: string, strings?: InsightScriptStrings): string {
-    const s = strings ?? DEFAULT_INSIGHT_STRINGS;
+export function getSignalPanelScriptContent(storageKey: string, strings?: SignalScriptStrings): string {
+    const s = strings ?? DEFAULT_SIGNAL_STRINGS;
     const scriptStringsJson = JSON.stringify(s);
     return (
         /* js */ `(function() {\n` +
-        getInsightScriptPartA(storageKey, scriptStringsJson) +
-        getInsightScriptPartB(MAX_RECURRING_TEXT_LEN) +
-        getInsightScriptPartC() +
-        getInsightScriptPartD() +
+        getSignalScriptPartA(storageKey, scriptStringsJson) +
+        getSignalScriptPartB(MAX_RECURRING_TEXT_LEN) +
+        getSignalScriptPartC() +
+        getSignalScriptPartD() +
         `})();\n`
     );
 }

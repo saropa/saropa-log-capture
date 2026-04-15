@@ -49,14 +49,14 @@ test("mergeDbDetectorResultsByStableKey: higher-priority result wins same stable
     detectorId: "a",
     stableKey: "k1",
     priority: 0,
-    payload: { syntheticType: "n-plus-one-insight" },
+    payload: { syntheticType: "n-plus-one-signal" },
   };
   const high: DbDetectorResult = {
     kind: "synthetic-line",
     detectorId: "b",
     stableKey: "k1",
     priority: 10,
-    payload: { syntheticType: "n-plus-one-insight" },
+    payload: { syntheticType: "n-plus-one-signal" },
   };
   const merged = mergeDbDetectorResultsByStableKey([low, high]);
   assert.strictEqual(merged.length, 1);

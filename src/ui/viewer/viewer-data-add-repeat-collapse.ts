@@ -9,7 +9,8 @@ export function getRepeatCollapseBranchScript(): string {
     return /* javascript */ `
 function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, tier, lvl, sTag, lTag, cTags, sqlMeta, catFiltered, plain, minN) {
     var lineSource = source || 'debug';
-    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : undefined));
+    /* Mirror addToData: non-debug-console sources get 'external' tier. */
+    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
     // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
     if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&

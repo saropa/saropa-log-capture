@@ -3,50 +3,50 @@
  */
 
 /** Return CSS for Insight panel section content (view-all, lists, hero, env). */
-export function getInsightSectionsStyles(): string {
+export function getSignalSectionsStyles(): string {
     return /* css */ `
 
-.insight-view-all {
+.signal-view-all {
     margin: 4px 0;
     font-size: 12px;
 }
 
-.insight-view-all span {
+.signal-view-all span {
     color: var(--vscode-textLink-foreground, #3794ff);
     cursor: pointer;
 }
 
-.insight-view-all span:hover {
+.signal-view-all span:hover {
     text-decoration: underline;
 }
 
-.insight-recurring-inner,
-.insight-section-body .recurring-list-inner {
+.signal-recurring-inner,
+.signal-section-body .recurring-list-inner {
     min-height: 0;
 }
 
-.insight-recurring-footer {
+.signal-recurring-footer {
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid var(--vscode-panel-border);
     font-size: 12px;
 }
 
-.insight-recurring-footer .recurring-footer-action {
+.signal-recurring-footer .recurring-footer-action {
     color: var(--vscode-textLink-foreground, #3794ff);
     cursor: pointer;
 }
 
-.insight-recurring-footer .recurring-footer-action:hover {
+.signal-recurring-footer .recurring-footer-action:hover {
     text-decoration: underline;
 }
 
 /* Hot files list */
-.insight-hotfiles-list {
+.signal-hotfiles-list {
     font-size: 12px;
 }
 
-.insight-hotfile-item {
+.signal-hotfile-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -55,42 +55,42 @@ export function getInsightSectionsStyles(): string {
     gap: 6px;
 }
 
-.insight-hotfile-add {
+.signal-hotfile-add {
     flex-shrink: 0;
 }
 
-.insight-hotfile-item:last-child {
+.signal-hotfile-item:last-child {
     border-bottom: none;
 }
 
-.insight-hotfile-name {
+.signal-hotfile-name {
     font-family: var(--vscode-editor-font-family);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.insight-hotfile-meta {
+.signal-hotfile-meta {
     color: var(--vscode-descriptionForeground);
     flex-shrink: 0;
     margin-left: 8px;
 }
 
-.insight-hotfiles-empty {
+.signal-hotfiles-empty {
     color: var(--vscode-descriptionForeground);
     font-size: 12px;
     margin: 0;
 }
 
 /* Scope label (Current log: filename) */
-.insight-scope-label {
+.signal-scope-label {
     font-size: 11px;
     color: var(--vscode-descriptionForeground);
     margin-bottom: 6px;
 }
 
 /* Compact Performance hero (sparkline + Errors · Warnings · Snapshot) */
-.insight-performance-hero {
+.signal-performance-hero {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -99,29 +99,29 @@ export function getInsightSectionsStyles(): string {
     margin-bottom: 8px;
 }
 
-.insight-hero-sparkline-wrap {
+.signal-hero-sparkline-wrap {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 
-.insight-hero-sparkline-label {
+.signal-hero-sparkline-label {
     font-size: 10px;
     color: var(--vscode-descriptionForeground);
     white-space: nowrap;
 }
 
-.insight-hero-sparkline {
+.signal-hero-sparkline {
     display: block;
     stroke: var(--vscode-charts-blue, #3794ff);
 }
 
-.insight-hero-metrics {
+.signal-hero-metrics {
     min-width: 0;
 }
 
-.insight-hero-hint {
+.signal-hero-hint {
     display: inline-flex;
     align-items: center;
     font-size: 10px;
@@ -130,7 +130,7 @@ export function getInsightSectionsStyles(): string {
 }
 
 /* Errors in this log: cap height and scroll */
-.insight-errors-in-log-list {
+.signal-errors-in-log-list {
     max-height: 180px;
     overflow-y: auto;
 }
@@ -143,24 +143,24 @@ export function getInsightSectionsStyles(): string {
 }
 
 /* This log: single empty state when no errors and no recurring */
-.insight-this-log-empty {
+.signal-this-log-empty {
     margin-bottom: 8px;
 }
 
-.insight-this-log-content {
+.signal-this-log-content {
     /* wrapper for errors + recurring blocks */
 }
 
 /* Narrative blocks (grouped content within one section) */
-.insight-narrative-block {
+.signal-narrative-block {
     margin-bottom: 12px;
 }
 
-.insight-narrative-block:last-child {
+.signal-narrative-block:last-child {
     margin-bottom: 0;
 }
 
-.insight-narrative-subtitle {
+.signal-narrative-subtitle {
     font-size: 11px;
     font-weight: 600;
     color: var(--vscode-descriptionForeground);
@@ -168,7 +168,7 @@ export function getInsightSectionsStyles(): string {
 }
 
 /* Recurring in this log (inside This log section) */
-.insight-section-this-log .recurring-list-inner {
+.signal-section-this-log .recurring-list-inner {
     min-height: 0;
 }
 
@@ -177,24 +177,24 @@ export function getInsightSectionsStyles(): string {
     font-size: 12px;
 }
 
-.insight-env-group {
+.signal-env-group {
     margin-bottom: 8px;
 }
 
-.insight-env-title {
+.signal-env-title {
     font-weight: 600;
     margin-bottom: 4px;
     color: var(--vscode-foreground);
 }
 
-.insight-env-row {
+.signal-env-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 2px 0;
 }
 
-.insight-env-row span:first-child {
+.signal-env-row span:first-child {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
