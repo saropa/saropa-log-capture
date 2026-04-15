@@ -38,6 +38,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+- **"Works best with" section in README.** Lists companion Saropa extensions (Lints, Drift Advisor, Claude Guard) and what each unlocks when installed alongside Log Capture. Links to the Saropa Suite extension pack for one-click install.
+- **Companion extensions in Integrations panel.** The Options > Integrations screen now shows a "Companion extensions" section above the adapter list with Marketplace links to install Saropa Lints, Drift Advisor, and Claude Guard.
 - **Signal report: Session Overview section.** Shows aggregate stats from the session bundle — total log lines, error/warning/network/memory/slow-op counts, SQL burst and N+1 counts, ANR risk score, and Drift Advisor issues — rendered as stat cards at the top of the report.
 - **Signal report: Signal Details section.** Shows type-specific data not visible in Evidence or Related: N+1 query fingerprint/repeats/distinct-args/window, SQL burst fingerprint/count/window, fingerprint leader counts, ANR score/level/contributing-factors list. Also includes distribution analysis (first/last occurrence, span, clustered vs spread pattern) for signals with multiple occurrences.
 - **Signal report: Other Signals section.** Lists other hypotheses detected in the same session (excluding the current one) with confidence badges, so you can see correlated issues without opening separate reports.
@@ -52,6 +54,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 - **Automated signal severity classification.** Each recurring signal is auto-classified as critical (fatal/ANR/OOM), high (errors in 5+ sessions, classified errors), medium (frequent warnings/perf), or low. Critical and high signals sort to the top and get colored left-border indicators (red for critical, orange for high). Signals appearing in 5+ sessions are flagged as "recurring" with a ↻ badge.
 - **"All signals in this log" section.** The "This log" panel section now shows a unified signal summary for the current session — errors, warnings, perf fingerprints, and SQL fingerprints from this session's metadata — alongside the existing "Errors in this log" and "Recurring in this log" blocks.
 - **Drift Advisor integration in unified signals.** When Saropa Drift Advisor is installed and connected, its session data (slow queries with SQL and duration, diagnostic issues with severity breakdown) is pulled into the unified signal list alongside log-derived signals. Slow queries from Drift Advisor appear as SQL signals with `max` duration; diagnostic issues appear as classified signals with severity counts.
+- **Standalone insights panel retired.** The legacy standalone insights WebviewPanel (7 files in `src/ui/insights/`) has been removed. All functionality is served by the viewer's built-in Signals panel and the Signals tab. The `showSignals` command routes to the viewer panel; `openSignalsInTab` opens the full-page tab.
+- **Extension-side general signal scanning.** Network failures, memory events, slow operations, permission denials, and classified errors are now detected by the extension host during session finalization — not just by the webview. Sessions where the viewer was never opened now get signal data for these types alongside the existing error/warning/perf/SQL fingerprints. The viewer-collected bundle is preferred when available (richer data); the extension-side scan is the fallback.
 
 ### Fixed
 
