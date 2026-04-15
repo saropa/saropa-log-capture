@@ -17,6 +17,7 @@ import { getLogDirectoryUri } from '../../modules/config/config';
 import { logExtensionError } from '../../modules/misc/extension-logger';
 import { loadSignalHistory } from './signal-report-history-loader';
 import { buildHistoryHtml } from './signal-report-history';
+import { buildEcosystemHtml } from './signal-report-ecosystem';
 
 /** Per-panel state for save/copy actions. Includes bundle for full markdown export. */
 interface PanelState {
@@ -103,7 +104,11 @@ async function populateSections(
   const recsHtml = renderRecommendations(hypothesis.templateId);
   postSection(panel, 'recommendations', 'Recommendations', recsHtml);
 
-  // 7. Cross-session history — other sessions with the same signal type
+  // 7. Companion extensions — Drift Advisor + Saropa Lints status / install prompts
+  const ecosystemHtml = buildEcosystemHtml(bundle);
+  postSection(panel, 'ecosystem', 'Companion Extensions', ecosystemHtml);
+
+  // 8. Cross-session history — other sessions with the same signal type
   const history = await loadSignalHistory(hypothesis.templateId);
   const historyHtml = buildHistoryHtml({
     sessions: history.sessions,
@@ -188,6 +193,13 @@ function handleMessage(msg: Record<string, unknown>, state: PanelState): void {
   if (msg.type === 'openSessionFromHistory') {
     const uri = msg.uriString as string;
     if (uri) { vscode.commands.executeCommand('saropaLogCapture.openLog', vscode.Uri.parse(uri)); }
+  }
+  if (msg.type === 'openUrl') {
+    const url = msg.url as string;
+    // Only allow marketplace URLs from ecosystem install links
+    if (url && url.startsWith('https://marketplace.visualstudio.com/')) {
+      vscode.env.openExternal(vscode.Uri.parse(url)).then(undefined, () => {});
+    }
   }
 }
 
