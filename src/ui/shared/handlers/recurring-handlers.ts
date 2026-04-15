@@ -129,10 +129,11 @@ export async function handleInsightDataRequest(post: PostFn, currentFileUri?: vs
         regressionHints,
         recurringSignals: insights?.recurringSignals ?? [],
         signalSessionCount: insights?.signalSessionCount ?? 0,
-        // Enrich signals with lint diagnostics from referenced source files
-        // (saropa_lints, Dart analyzer, ESLint, etc. — any active VS Code diagnostic provider)
-        allSignals: enrichSignalsWithLintContext([...(insights?.allSignals ?? [])]),
-        signalsInThisLog: enrichSignalsWithLintContext([...(signalsInThisLog ?? [])]),
+        // Enrich signals with lint diagnostics from referenced source files.
+        // Opens unanalyzed files to trigger saropa_lints / Dart analyzer / ESLint
+        // and waits up to 2s for results. Runs in parallel for both signal lists.
+        allSignals: await enrichSignalsWithLintContext([...(insights?.allSignals ?? [])]),
+        signalsInThisLog: await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])]),
     });
 }
 
