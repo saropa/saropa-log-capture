@@ -1,9 +1,9 @@
 /**
  * Extract a compact signal summary from a root-cause hint bundle.
  *
- * Pure function: takes a bundle + hypotheses, returns a PersistedSignalSummaryV1
- * suitable for saving to SessionMeta. Returns undefined if the bundle contains
- * no meaningful signal data (all counts zero, no hypotheses).
+ * Pure function: takes a bundle + hypotheses, returns a PersistedSignalSummaryV2
+ * suitable for saving to SessionMeta. V2 includes actual entries for count-only
+ * signal types. Returns undefined if the bundle contains no meaningful signal data.
  */
 
 import type { RootCauseHintBundle, RootCauseHypothesis } from './root-cause-hint-types';

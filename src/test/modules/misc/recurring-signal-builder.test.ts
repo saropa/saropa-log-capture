@@ -75,7 +75,8 @@ suite('RecurringSignalBuilder', () => {
             }),
         ];
         const result = buildAllRecurringSignals(metas);
-        const fatal = result.find(s => s.fingerprint === 'error::fatal123');
+        // Fingerprint is the raw hash — kind:: prefix was stripped in rankSignals
+        const fatal = result.find(s => s.kind === 'error' && s.fingerprint === 'fatal123');
         assert.ok(fatal);
         assert.strictEqual(fatal.severity, 'critical');
     });
@@ -88,7 +89,7 @@ suite('RecurringSignalBuilder', () => {
             }),
         );
         const result = buildAllRecurringSignals(metas);
-        const sig = result.find(s => s.fingerprint === 'error::recur123');
+        const sig = result.find(s => s.kind === 'error' && s.fingerprint === 'recur123');
         assert.ok(sig);
         assert.strictEqual(sig.recurring, true);
         assert.strictEqual(sig.sessionCount, 6);
@@ -139,9 +140,68 @@ suite('RecurringSignalBuilder', () => {
             }),
         ];
         const result = buildAllRecurringSignals(metas);
-        const daIssues = result.find(s => s.fingerprint === 'classified::drift-advisor-issues');
+        // Fingerprint is the raw identifier — kind:: prefix was stripped in rankSignals
+        const daIssues = result.find(s => s.kind === 'classified' && s.fingerprint === 'drift-advisor-issues');
         assert.ok(daIssues, 'should find Drift Advisor issues signal');
         assert.strictEqual(daIssues.totalOccurrences, 3);
         assert.ok(daIssues.detail?.includes('1 error'));
+    });
+
+    test('should track app version as firstSeenVersion/lastSeenVersion', () => {
+        const metas = [
+            mockMeta('20260401_100000.log', {
+                appVersion: '1.0.0',
+                fingerprints: [{ h: 'ver12345', n: 'version test', e: 'Error: ver', c: 1 }],
+            }),
+            mockMeta('20260403_100000.log', {
+                appVersion: '1.2.0',
+                fingerprints: [{ h: 'ver12345', n: 'version test', e: 'Error: ver', c: 1 }],
+            }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.fingerprint === 'ver12345');
+        assert.ok(sig);
+        assert.strictEqual(sig.firstSeenVersion, '1.0.0');
+        assert.strictEqual(sig.lastSeenVersion, '1.2.0');
+    });
+
+    test('should compute trend as increasing when newer sessions have more occurrences', () => {
+        // 5 sessions: older 3 have 1 each, newer 2 have 10 each → increasing
+        const metas = [
+            mockMeta('20260401_100000.log', { fingerprints: [{ h: 'trend01', n: 'trend', e: 'err', c: 1 }] }),
+            mockMeta('20260402_100000.log', { fingerprints: [{ h: 'trend01', n: 'trend', e: 'err', c: 1 }] }),
+            mockMeta('20260403_100000.log', { fingerprints: [{ h: 'trend01', n: 'trend', e: 'err', c: 1 }] }),
+            mockMeta('20260404_100000.log', { fingerprints: [{ h: 'trend01', n: 'trend', e: 'err', c: 10 }] }),
+            mockMeta('20260405_100000.log', { fingerprints: [{ h: 'trend01', n: 'trend', e: 'err', c: 10 }] }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.fingerprint === 'trend01');
+        assert.ok(sig);
+        assert.strictEqual(sig.trend, 'increasing');
+    });
+
+    test('should compute trend as undefined for fewer than 3 sessions', () => {
+        const metas = [
+            mockMeta('20260401_100000.log', { fingerprints: [{ h: 'few123', n: 'few', e: 'err', c: 5 }] }),
+            mockMeta('20260402_100000.log', { fingerprints: [{ h: 'few123', n: 'few', e: 'err', c: 5 }] }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.fingerprint === 'few123');
+        assert.ok(sig);
+        assert.strictEqual(sig.trend, undefined);
+    });
+
+    test('should strip kind:: prefix from fingerprint output', () => {
+        const metas = [
+            mockMeta('20260401_100000.log', {
+                fingerprints: [{ h: 'rawHash1', n: 'test', e: 'err', c: 1 }],
+            }),
+        ];
+        const result = buildAllRecurringSignals(metas);
+        const sig = result.find(s => s.kind === 'error');
+        assert.ok(sig);
+        // Fingerprint should be the raw hash, not "error::rawHash1"
+        assert.strictEqual(sig.fingerprint, 'rawHash1');
+        assert.ok(!sig.fingerprint.includes('::'), 'fingerprint should not contain :: prefix');
     });
 });
