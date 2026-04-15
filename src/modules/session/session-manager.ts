@@ -9,7 +9,8 @@ import { ExclusionRule } from '../features/exclusion-matcher';
 import { AutoTagger } from '../misc/auto-tagger';
 import { DapDirection } from '../capture/dap-formatter';
 import { SessionMetadataStore } from './session-metadata';
-import { LineData, LineListener, SplitListener, EarlyOutputBuffer } from './session-event-bus';
+import { LineData, EarlyOutputBuffer } from './session-event-bus';
+import { addListener, removeListener, type LineListener, type SplitListener } from './session-manager-listeners';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
 import { resolveEffectiveSessionId } from './session-manager-routing';
 import { startSessionImpl, type StartSessionDeps } from './session-manager-start';
@@ -96,22 +97,16 @@ export class SessionManagerImpl implements SessionManager {
     logToOutputChannel(message: string): void { this.outputChannel.appendLine(message); }
 
     /** Register a listener that receives every line written to the log. */
-    addLineListener(listener: LineListener): void { this.lineListeners.push(listener); }
+    addLineListener(listener: LineListener): void { addListener(this.lineListeners, listener); }
 
     /** Remove a previously registered line listener. */
-    removeLineListener(listener: LineListener): void {
-        const idx = this.lineListeners.indexOf(listener);
-        if (idx >= 0) { this.lineListeners.splice(idx, 1); }
-    }
+    removeLineListener(listener: LineListener): void { removeListener(this.lineListeners, listener); }
 
     /** Register a listener for file split events. */
-    addSplitListener(listener: SplitListener): void { this.splitListeners.push(listener); }
+    addSplitListener(listener: SplitListener): void { addListener(this.splitListeners, listener); }
 
     /** Remove a previously registered split listener. */
-    removeSplitListener(listener: SplitListener): void {
-        const idx = this.splitListeners.indexOf(listener);
-        if (idx >= 0) { this.splitListeners.splice(idx, 1); }
-    }
+    removeSplitListener(listener: SplitListener): void { removeListener(this.splitListeners, listener); }
 
     /** Called by the DAP tracker for every output event. */
     onOutputEvent(sessionId: string, body: DapOutputBody): void {

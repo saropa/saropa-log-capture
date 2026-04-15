@@ -1,16 +1,31 @@
 /**
- * Filters panel for the log viewer.
+ * Tags & Origins panel for the log viewer.
  *
- * Provides a slide-out panel with filter controls:
- *   - Quick Filters (presets + reset)
- *   - Log Inputs (merged sources + DAP category checkboxes)
- *   - Exclusions (exclusion patterns)
+ * Provides a slide-out panel (opened from the icon bar) with
+ * chip-heavy browsing sections:
  *   - Message Tags (source tag chips with search)
  *   - Code Origins (class/method tag chips with search)
- *   - File Scope (code location narrowing)
  *   - SQL Commands (query type chips)
+ *   - Individual Sources (per-category toggles — placeholder)
+ *
+ * Also re-exports the panel script which wires tier radio and
+ * exclusion controls that live in the filter drawer.
  */
-import { getFiltersPanelHtml } from './viewer-filters-panel-html';
-import { getFiltersPanelScript } from './viewer-filters-panel-script';
+import { getTagsPanelHtml } from './viewer-filters-panel-html';
+import { getTagsPanelScript } from './viewer-filters-panel-script';
 
-export { getFiltersPanelHtml, getFiltersPanelScript };
+/**
+ * @deprecated Use getTagsPanelHtml — kept for backward compatibility.
+ */
+export function getFiltersPanelHtml(): string {
+    return getTagsPanelHtml();
+}
+
+/**
+ * @deprecated Use getTagsPanelScript — kept for backward compatibility.
+ */
+export function getFiltersPanelScript(): string {
+    return getTagsPanelScript();
+}
+
+export { getTagsPanelHtml, getTagsPanelScript };

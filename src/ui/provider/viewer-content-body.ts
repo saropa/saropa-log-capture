@@ -17,6 +17,7 @@ import { getOptionsPanelHtml } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelHtml } from '../panels/viewer-crashlytics-panel';
 import { getSignalPanelHtml } from '../panels/viewer-signal-panel';
 import { getAboutPanelHtml } from '../viewer-panels/viewer-about-panel';
+import { getTagsPanelHtml } from '../viewer-search-filter/viewer-filters-panel-html';
 import { getScrollbarMinimapHtml } from '../viewer/viewer-scrollbar-minimap';
 import { getGotoLineHtml } from '../viewer/viewer-goto-line';
 import { getReplayBarHtml } from '../viewer/viewer-replay';
@@ -50,6 +51,7 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getCrashlyticsPanelHtml()}
     ${getSignalPanelHtml()}
     ${getAboutPanelHtml()}
+    ${getTagsPanelHtml()}
     </div>
     <div id="log-area-with-footer">
     ${getToolbarHtml({ version })}
