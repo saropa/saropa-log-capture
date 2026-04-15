@@ -35,7 +35,7 @@ export function getIconBarHtml(): string {
         <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
     </button>
     <button id="ib-signal" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
-        <span class="codicon codicon-lightbulb"></span><span class="ib-label">Signals</span>
+        <span class="codicon codicon-pulse"></span><span class="ib-label">Signals</span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>
