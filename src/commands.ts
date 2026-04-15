@@ -1,7 +1,7 @@
 /**
  * Command registration for the Saropa Log Capture extension.
  * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
- * history browse/edit, export, comparison, correlation, insights, bug report, timeline, trash,
+ * history browse/edit, export, comparison, correlation, signals, bug report, timeline, trash,
  * investigation, tools.
  */
 

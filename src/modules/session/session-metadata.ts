@@ -6,7 +6,7 @@ import { parseJSONOrDefault } from '../misc/safe-json';
 import { logExtensionError } from '../misc/extension-logger';
 import type { PerfFingerprintEntry } from '../misc/perf-fingerprint';
 import type { PersistedDriftSqlFingerprintSummaryV1 } from '../db/drift-sql-fingerprint-summary-persist';
-import type { PersistedSignalSummaryV1 } from '../root-cause-hints/signal-summary-types';
+import type { PersistedSignalSummaryV1, PersistedSignalSummaryV2 } from '../root-cause-hints/signal-summary-types';
 
 /** A single annotation attached to a log line. */
 export interface Annotation {
@@ -52,8 +52,8 @@ export interface SessionMeta {
     integrations?: Record<string, unknown>;
     /** Drift `Sent` SQL fingerprint rollup (plan DB_10); validate `schemaVersion` on read. */
     driftSqlFingerprintSummary?: PersistedDriftSqlFingerprintSummaryV1;
-    /** Signal summary from root-cause hints bundle; validate `schemaVersion` on read. */
-    signalSummary?: PersistedSignalSummaryV1;
+    /** Signal summary from root-cause hints bundle; V2 includes entries, V1 is counts-only. */
+    signalSummary?: PersistedSignalSummaryV1 | PersistedSignalSummaryV2;
 }
 
 type MetaMap = Record<string, SessionMeta>;

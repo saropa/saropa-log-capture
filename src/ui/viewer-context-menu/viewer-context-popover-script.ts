@@ -7,9 +7,9 @@
  *
  * ## Database signal (line-local)
  *
- * Rows with `sourceTag === 'database'` (Drift `Sent` SQL) carry `dbInsight` from the data layer
+ * Rows with `sourceTag === 'database'` (Drift `Sent` SQL) carry `dbSignal` from the data layer
  * (fingerprint, session seen-count, optional avg/max `elapsedMs`, `sqlSnippet`). The embedded
- * `buildDatabaseInsightPopoverSection` function renders only when `row.dbInsight` exists; non-DB lines never get that section. SQL is truncated in the body with
+ * `buildDatabaseSignalPopoverSection` function renders only when `row.dbSignal` exists; non-DB lines never get that section. SQL is truncated in the body with
  * the full string on `title` for hover/copy; fingerprint uses the same pattern.
  *
  * ## Drift Advisor CTA
@@ -287,10 +287,10 @@ function buildPopoverContent(lineIdx, data) {
         html += securityHtml;
     }
 
-    var dbInsightHtml = buildDatabaseInsightPopoverSection(lineIdx);
-    if (dbInsightHtml) {
+    var dbSignalHtml = buildDatabaseSignalPopoverSection(lineIdx);
+    if (dbSignalHtml) {
         hasContent = true;
-        html += dbInsightHtml;
+        html += dbSignalHtml;
     }
 
     var driftAdvisorAvail = (typeof window !== 'undefined' && window.driftAdvisorAvailable);

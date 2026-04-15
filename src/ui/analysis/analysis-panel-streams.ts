@@ -130,7 +130,8 @@ export async function runCrossSessionLookup(
         const hash = hashFingerprint(normalized);
         progress('trend', '📊 Reading session metadata...');
         const aggregated = await aggregateSignals();
-        const match = aggregated.recurringErrors.find(e => e.hash === hash);
+        // Find matching error signal by fingerprint (raw hash for error-kind signals)
+        const match = aggregated.allSignals.find(s => s.kind === 'error' && s.fingerprint === hash);
         if (!match) { return {}; }
         const firstDate = extractDateFromFilename(match.firstSeen);
         const trend = match.timeline

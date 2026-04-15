@@ -191,7 +191,7 @@ function showContextMenu(x, y, lineIdx, sourceLink) {
         el.style.display = (hasLine && driftLineCat && driftAvailable) ? '' : 'none';
     });
 
-    var hasSqlFingerprint = !!(lineData && lineData.dbInsight && lineData.dbInsight.fingerprint);
+    var hasSqlFingerprint = !!(lineData && lineData.dbSignal && lineData.dbSignal.fingerprint);
     var staticSqlOn = (typeof staticSqlFromFingerprintEnabled !== 'undefined' && staticSqlFromFingerprintEnabled);
     contextMenuEl.querySelectorAll('[data-static-sql-line-action]').forEach(function(el) {
         el.style.display = (hasLine && hasSqlFingerprint && staticSqlOn) ? '' : 'none';

@@ -99,7 +99,7 @@ export interface ViewerScriptsOptions {
     /** Experimental: detect pixel-based ASCII art via entropy heuristics (default false). */
     readonly viewerDetectAsciiArt?: boolean;
     readonly viewerRepeatThresholds?: Partial<ViewerRepeatThresholds>;
-  /** When false, DB detector pipeline and per-line dbInsight rollup are off (plan DB_15). */
+  /** When false, DB detector pipeline and per-line dbSignal rollup are off (plan DB_15). */
   readonly viewerDbSignalsEnabled?: boolean;
   /** DB_12: static SQL source search affordance in N+1 rows (default true). */
   readonly staticSqlFromFingerprintEnabled?: boolean;
@@ -202,7 +202,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
         scriptTag(nonce, getSignalPanelScript()) +
-        // Performance UI lives only inside Insight (signal-pp-*); standalone performance-panel was removed.
+        // Performance UI lives only inside Signal panel (signal-pp-*); standalone performance-panel was removed.
         scriptTag(nonce, getPerformancePanelScript('signal-')) +
         scriptTag(nonce, getAboutPanelScript()) +
         scriptTag(nonce, getIconBarScript()) +
