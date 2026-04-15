@@ -1,8 +1,8 @@
 /**
- * Insight panel CSS: panel container, header, content, accordion section structure.
+ * Signal panel CSS: panel container, header, content, accordion section structure.
  */
 
-/** Return CSS for Insight panel layout and accordion structure. */
+/** Return CSS for Signal panel layout and accordion structure. */
 export function getSignalLayoutStyles(): string {
     return /* css */ `
 

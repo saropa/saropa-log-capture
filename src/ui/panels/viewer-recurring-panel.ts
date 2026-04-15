@@ -1,7 +1,7 @@
 /**
  * Recurring Errors panel HTML and script for the webview.
  *
- * Superseded by the unified Insight panel (Recurring tab). This file is no longer
+ * Superseded by the unified Signal panel (Recurring tab). This file is no longer
  * loaded; kept for reference. Styles in viewer-styles-recurring.ts are still used by Insight.
  */
 

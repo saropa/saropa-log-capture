@@ -1,5 +1,5 @@
 /**
- * Insight panel: single-scroll unified view (Unified Insight Model).
+ * Signal panel: single-scroll unified view (Unified Insight Model).
  * One narrative — Cases, Recurring errors, Hot files, Performance — no tabs.
  * State A (no log): Cases + Recurring + Hot files. State B (log selected): Performance + Recurring + Cases.
  * Plan: bugs/history/20260317/041_plan-unify-investigation-recurring-performance.md
@@ -10,7 +10,7 @@ import { getSignalPanelScriptContent, type SignalScriptStrings } from './viewer-
 
 const SIGNAL_STORAGE_KEY = 'signalSectionState';
 
-/** Generate the Insight panel HTML: one narrative (This log → Your cases → Across your logs → Environment). */
+/** Generate the Signal panel HTML: one narrative (This log → Your cases → Across your logs → Environment). */
 export function getSignalPanelHtml(): string {
     const sectionErrorsInLog = t('signal.sectionErrorsInLog');
     const errorsInLogEmpty = t('signal.errorsInLogEmpty');
@@ -40,7 +40,7 @@ export function getSignalPanelHtml(): string {
     <div id="signal-scroll" class="signal-panel-content">
         <!-- Current log at a glance (no section header) -->
         <div id="signal-hero-block" class="signal-hero-block" aria-hidden="true" style="display:none">
-            <div id="signal-performance-scope" class="signal-scope-label" style="display:none">Current log: <span id="insight-current-log-label"></span></div>
+            <div id="signal-performance-scope" class="signal-scope-label" style="display:none">Current log: <span id="signal-current-log-label"></span></div>
             <div id="signal-performance-hero" class="signal-performance-hero" style="display:none" aria-live="polite"></div>
         </div>
         <!-- Session details (collapsed by default) -->
@@ -51,7 +51,7 @@ export function getSignalPanelHtml(): string {
                 <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
             <div id="signal-body-session-details" class="signal-section-body" style="display:none">
-                <p class="insight-session-details-hint">${sessionDetailsHint}</p>
+                <p class="signal-session-details-hint">${sessionDetailsHint}</p>
                 ${getPerformancePanelHtml('signal-')}
             </div>
         </section>
@@ -141,18 +141,18 @@ export function getSignalPanelHtml(): string {
         <section id="signal-section-environment" class="signal-section">
             <button type="button" class="signal-section-header" id="signal-header-environment" aria-expanded="false" aria-controls="signal-body-environment">
                 <span class="signal-section-emoji" aria-hidden="true">⚙️</span>
-                <span class="signal-section-title" id="insight-environment-summary">Environment</span>
+                <span class="signal-section-title" id="signal-environment-summary">Environment</span>
                 <span class="signal-section-toggle" aria-hidden="true"></span>
             </button>
             <div id="signal-body-environment" class="signal-section-body" style="display:none">
-                <div id="insight-environment-list" class="insight-environment-list"></div>
+                <div id="signal-environment-list" class="signal-environment-list"></div>
             </div>
         </section>
     </div>
 </div>`;
 }
 
-/** Generate the Insight panel script. Single scroll; context-aware sections (State A vs B). */
+/** Generate the Signal panel script. Single scroll; context-aware sections (State A vs B). */
 export function getSignalPanelScript(): string {
     const strings: SignalScriptStrings = {
         addToCase: t('signal.addToCase'),

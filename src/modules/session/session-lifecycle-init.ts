@@ -20,7 +20,6 @@ import {
 } from '../integrations';
 import { startTerminalCapture } from '../integrations/terminal-capture';
 import { startExternalLogTailers } from '../integrations/external-log-tailer';
-import { isAdbAvailable, startLogcatCapture } from '../integrations/adb-logcat-capture';
 import { collectDevEnvironment } from '../misc/environment-collector';
 
 /** Result of initializing a new log session. */
@@ -131,16 +130,12 @@ export async function initializeSession(
                 outputChannel,
             );
         }
-        const adbExplicit = config.integrationsAdapters?.includes('adbLogcat');
-        const adbAutoDetect = session.type === 'dart';
-        if ((adbExplicit || adbAutoDetect) && isAdbAvailable()) {
-            const lc = config.integrationsAdbLogcat;
-            startLogcatCapture({
-                ...lc,
-                outputChannel,
-                onLine: (raw) => logSession.appendLine(raw, 'logcat', new Date()),
-            });
-        }
+        // Streaming providers (e.g. adb logcat) spawn child processes and
+        // push lines via the writer; the registry gates on isEnabled.
+        integrationRegistry.runOnSessionStartStreaming(integrationContext, {
+            writeLine: (text, category, timestamp) =>
+                logSession.appendLine(text, category, timestamp ?? new Date()),
+        });
         return { logSession, exclusionRules, autoTagger, integrationContributorIds };
     } catch (err) {
         outputChannel.appendLine(`Failed to start log session: ${err}`);

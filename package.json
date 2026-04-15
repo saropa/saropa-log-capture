@@ -1434,11 +1434,11 @@
           "type": "boolean",
           "title": "%config.viewerDetectAsciiArt.title%"
         },
-        "saropaLogCapture.viewerDbInsightsEnabled": {
+        "saropaLogCapture.viewerDbSignalsEnabled": {
           "default": true,
-          "description": "%config.viewerDbInsightsEnabled.description%",
+          "description": "%config.viewerDbSignalsEnabled.description%",
           "type": "boolean",
-          "title": "%config.viewerDbInsightsEnabled.title%"
+          "title": "%config.viewerDbSignalsEnabled.title%"
         },
         "saropaLogCapture.staticSqlFromFingerprint.enabled": {
           "default": true,

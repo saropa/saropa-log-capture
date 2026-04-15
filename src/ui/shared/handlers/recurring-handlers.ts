@@ -46,8 +46,8 @@ function filterRecurringInSession(errors: readonly RecurringError[], sessionRelP
 
 /** Aggregate recurring errors and send to webview. */
 export async function handleRecurringRequest(post: PostFn): Promise<void> {
-    const insights = await aggregateSignals('all').catch(() => undefined);
-    const errors = insights?.recurringErrors ?? [];
+    const aggregated = await aggregateSignals('all').catch(() => undefined);
+    const errors = aggregated?.recurringErrors ?? [];
     const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
     post({ type: 'recurringErrorsData', errors, statuses });
 }
@@ -58,14 +58,14 @@ export async function handleSetErrorStatus(hash: string, status: string, post: P
     await handleRecurringRequest(post);
 }
 
-/** Full insight payload (recurring + hot files + environment + optional recurringInThisLog). */
+/** Full signal payload (recurring + hot files + environment + optional recurringInThisLog). */
 export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vscode.Uri): Promise<void> {
-    const insights = await aggregateSignals('all').catch(() => undefined);
-    const errors = insights?.recurringErrors ?? [];
-    const hotFiles = insights?.hotFiles ?? [];
-    const platforms = insights?.platforms ?? [];
-    const sdkVersions = insights?.sdkVersions ?? [];
-    const debugAdapters = insights?.debugAdapters ?? [];
+    const aggregated = await aggregateSignals('all').catch(() => undefined);
+    const errors = aggregated?.recurringErrors ?? [];
+    const hotFiles = aggregated?.hotFiles ?? [];
+    const platforms = aggregated?.platforms ?? [];
+    const sdkVersions = aggregated?.sdkVersions ?? [];
+    const debugAdapters = aggregated?.debugAdapters ?? [];
     const statuses = await getErrorStatusBatch(errors.map(e => e.hash));
 
     const commitLinks = getConfig().integrationsGit?.commitLinks ?? true;
@@ -132,12 +132,12 @@ export async function handleSignalDataRequest(post: PostFn, currentFileUri?: vsc
         errorsInThisLog,
         errorsInThisLogTotal,
         regressionHints,
-        recurringSignals: insights?.recurringSignals ?? [],
-        signalSessionCount: insights?.signalSessionCount ?? 0,
+        recurringSignals: aggregated?.recurringSignals ?? [],
+        signalSessionCount: aggregated?.signalSessionCount ?? 0,
         // Enrich signals with lint diagnostics from ALL source files in the session's
         // stack traces (correlation tags). Opens unanalyzed files to trigger saropa_lints /
         // Dart analyzer / ESLint, waits up to 2s for results.
-        allSignals: await enrichSignalsWithLintContext([...(insights?.allSignals ?? [])], sessionCorrelationTags),
+        allSignals: await enrichSignalsWithLintContext([...(aggregated?.allSignals ?? [])], sessionCorrelationTags),
         signalsInThisLog: await enrichSignalsWithLintContext([...(signalsInThisLog ?? [])], sessionCorrelationTags),
     });
 }

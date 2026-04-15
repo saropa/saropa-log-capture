@@ -129,8 +129,8 @@ export async function runCrossSessionLookup(
         if (normalized.length < 5) { return {}; }
         const hash = hashFingerprint(normalized);
         progress('trend', '📊 Reading session metadata...');
-        const insights = await aggregateSignals();
-        const match = insights.recurringErrors.find(e => e.hash === hash);
+        const aggregated = await aggregateSignals();
+        const match = aggregated.recurringErrors.find(e => e.hash === hash);
         if (!match) { return {}; }
         const firstDate = extractDateFromFilename(match.firstSeen);
         const trend = match.timeline

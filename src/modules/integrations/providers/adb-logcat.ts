@@ -1,16 +1,30 @@
 /**
  * Integration provider for adb logcat: captures Android system log alongside
- * the debug session. Live lines are streamed via onLine callback (set up in
- * session-lifecycle-init); this provider handles header and sidecar at
- * session boundaries.
+ * the debug session. Streaming lines are spawned via onSessionStartStreaming
+ * (Phase 2 provider pattern); header and sidecar are handled at session
+ * boundaries.
  */
 
 import { execFileSync } from 'child_process';
-import type { IntegrationProvider, IntegrationContext, IntegrationEndContext, Contribution } from '../types';
-import { getLogcatBuffer, clearLogcatBuffer, stopLogcatCapture } from '../adb-logcat-capture';
+import type {
+    IntegrationProvider, IntegrationContext, IntegrationEndContext,
+    Contribution, StreamingWriter,
+} from '../types';
+import {
+    isAdbAvailable, startLogcatCapture, setLogcatPidFilter,
+    getLogcatBuffer, clearLogcatBuffer, stopLogcatCapture,
+} from '../adb-logcat-capture';
 
-function isEnabled(context: IntegrationContext): boolean {
-    return (context.config.integrationsAdapters ?? []).includes('adbLogcat');
+/**
+ * Enabled when explicitly listed in integrations.adapters OR when the
+ * debug adapter is Dart/Flutter (auto-detect). The isAdbAvailable() check
+ * is deferred to onSessionStartStreaming to avoid spawning a process on
+ * every isEnabled call.
+ */
+function checkEnabled(context: IntegrationContext): boolean {
+    const explicit = (context.config.integrationsAdapters ?? []).includes('adbLogcat');
+    const autoDetect = context.sessionContext.debugAdapterType === 'dart';
+    return explicit || autoDetect;
 }
 
 function getAdbVersion(): string | undefined {
@@ -27,18 +41,32 @@ export const adbLogcatProvider: IntegrationProvider = {
     id: 'adbLogcat',
 
     isEnabled(context: IntegrationContext): boolean {
-        return isEnabled(context);
+        return checkEnabled(context);
     },
 
     onSessionStartSync(context: IntegrationContext): Contribution[] | undefined {
-        if (!isEnabled(context)) { return undefined; }
+        if (!checkEnabled(context)) { return undefined; }
         const version = getAdbVersion();
         if (!version) { return undefined; }
         return [{ kind: 'header', lines: [`adb: ${version}`] }];
     },
 
+    onSessionStartStreaming(context: IntegrationContext, writer: StreamingWriter): void {
+        if (!isAdbAvailable()) { return; }
+        const lc = context.config.integrationsAdbLogcat;
+        startLogcatCapture({
+            ...lc,
+            outputChannel: context.outputChannel,
+            onLine: (raw) => writer.writeLine(raw, 'logcat', new Date()),
+        });
+    },
+
+    onProcessId(processId: number): void {
+        setLogcatPidFilter(processId);
+    },
+
     async onSessionEnd(context: IntegrationEndContext): Promise<Contribution[] | undefined> {
-        if (!isEnabled(context)) { return undefined; }
+        if (!checkEnabled(context)) { return undefined; }
 
         stopLogcatCapture();
         const lines = getLogcatBuffer();

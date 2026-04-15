@@ -18,7 +18,7 @@ function minimalSummary(overrides?: Partial<SignalsSummary>): SignalsSummary {
     };
 }
 
-suite('InsightsExportFormats', () => {
+suite('SignalsExportFormats', () => {
 
     suite('formatSignalsSummaryToCsv', () => {
         test('should produce CSV with headers for empty summary', () => {

@@ -1,5 +1,5 @@
 /**
- * Insight panel script part D: signal trend click handler.
+ * Signal panel script part D: signal trend click handler.
  * Clicking a signal trend row opens the most recent session with that signal type.
  * Split from part C because that file is at the 300-line limit.
  */
@@ -22,7 +22,7 @@ export function getSignalScriptPartD(): string {
                 return;
             }
             /* Row click — open the most recent session with this signal type */
-            var row = e.target.closest('.insight-signal-trend-row');
+            var row = e.target.closest('.signal-signal-trend-row');
             if (!row || !row.dataset.signalType) { return; }
             e.stopPropagation();
             vscodeApi.postMessage({ type: 'openSessionForSignalType', signalType: row.dataset.signalType });

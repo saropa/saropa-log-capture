@@ -77,5 +77,36 @@ suite('session-display', () => {
             assert.strictEqual((0, session_display_1.formatRelativeTime)(Date.now() + 60_000), '');
         });
     });
+    suite('normalizeFilename', () => {
+        test('should replace underscores with spaces and Title Case', () => {
+            assert.strictEqual((0, session_display_1.normalizeFilename)('my_app_name.log'), 'My App Name.log');
+        });
+        test('should replace hyphens with spaces and Title Case', () => {
+            assert.strictEqual((0, session_display_1.normalizeFilename)('my-app-name.log'), 'My App Name.log');
+        });
+        test('should replace dots with spaces and Title Case', () => {
+            // Bug fix: "contacts.drift-advisor" was showing as "Contacts.drift Advisor"
+            assert.strictEqual((0, session_display_1.normalizeFilename)('contacts.drift-advisor.json'), 'Contacts Drift Advisor.json');
+        });
+        test('should handle mixed separators', () => {
+            assert.strictEqual((0, session_display_1.normalizeFilename)('my_app.sub-module.log'), 'My App Sub Module.log');
+        });
+        test('should collapse consecutive separators', () => {
+            assert.strictEqual((0, session_display_1.normalizeFilename)('foo__bar--baz.log'), 'Foo Bar Baz.log');
+        });
+        test('should preserve extension for known types', () => {
+            assert.strictEqual((0, session_display_1.normalizeFilename)('test.json'), 'Test.json');
+            assert.strictEqual((0, session_display_1.normalizeFilename)('test.log'), 'Test.log');
+            assert.strictEqual((0, session_display_1.normalizeFilename)('test.csv'), 'Test.csv');
+        });
+        test('should handle name with no known extension', () => {
+            // No known extension — the whole string is the base
+            assert.strictEqual((0, session_display_1.normalizeFilename)('my_app'), 'My App');
+        });
+        test('should fall back to original base when separators produce empty string', () => {
+            // Edge case: name is only separators plus extension — falls back to raw base
+            assert.strictEqual((0, session_display_1.normalizeFilename)('___.log'), '___.log');
+        });
+    });
 });
 //# sourceMappingURL=session-display.test.js.map
