@@ -198,9 +198,16 @@ function accumulateV2Entry(map: Map<string, Accum>, entry: PersistedSignalEntryV
     if (existing) {
         existing.total += entry.count;
         if (!existing.timeline.some(t => t.session === session)) { existing.timeline.push({ session, count: entry.count }); }
+        // Aggregate duration stats across sessions (weighted avg, running max)
+        if (entry.avgDurationMs !== undefined) {
+            existing.weightedMsSum = (existing.weightedMsSum ?? 0) + entry.avgDurationMs * entry.count;
+            existing.weightedMsCount = (existing.weightedMsCount ?? 0) + entry.count;
+        }
+        if (entry.maxDurationMs !== undefined) { existing.maxMs = Math.max(existing.maxMs ?? 0, entry.maxDurationMs); }
     } else {
         const lines = entry.lineIndices ? [...entry.lineIndices] : undefined;
-        map.set(key, { kind, label: entry.label, detail: entry.detail, total: entry.count, timeline: [{ session, count: entry.count }], category: entry.category, avgMs: entry.avgDurationMs, maxMs: entry.maxDurationMs, lineIdxs: lines });
+        const wSum = entry.avgDurationMs !== undefined ? entry.avgDurationMs * entry.count : undefined;
+        map.set(key, { kind, label: entry.label, detail: entry.detail, total: entry.count, timeline: [{ session, count: entry.count }], category: entry.category, avgMs: entry.avgDurationMs, maxMs: entry.maxDurationMs, weightedMsSum: wSum, weightedMsCount: wSum !== undefined ? entry.count : undefined, lineIdxs: lines });
     }
 }
 
