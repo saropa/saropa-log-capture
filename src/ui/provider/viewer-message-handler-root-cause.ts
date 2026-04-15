@@ -12,6 +12,8 @@ import { buildHypotheses } from '../../modules/root-cause-hints/build-hypotheses
 import type { RootCauseHintBundle, RootCauseHypothesis } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { clearHostSignalCache, enrichBundleWithHostSignals } from '../../modules/root-cause-hints/signal-host-collectors';
 import { isPersistedSignalSummaryV1 } from '../../modules/root-cause-hints/signal-summary-types';
+import { extractSignalSummary } from '../../modules/root-cause-hints/signal-summary-extract';
+import { SessionMetadataStore } from '../../modules/session/session-metadata';
 import { loadFilteredMetas } from '../../modules/session/metadata-loader';
 import { showSignalReport } from '../signals/signal-report-panel';
 import { runExplainRootCauseHypotheses } from './viewer-message-handler-root-cause-ai';
@@ -54,6 +56,32 @@ async function refreshTrendsIfStale(): Promise<Record<string, number>> {
     return map;
 }
 
+// --- Periodic signal persistence (crash resilience) ---
+// Writes signal summary to metadata every 30s while signals are being collected,
+// so data survives VS Code / session crashes without waiting for finalization.
+
+let persistTimer: ReturnType<typeof setTimeout> | undefined;
+const persistIntervalMs = 30_000;
+
+/** Debounced persist: writes the current signal summary to session metadata. Respects signalAutoTrack setting. */
+function schedulePersist(fileUri: vscode.Uri | undefined): void {
+    if (persistTimer || !fileUri) { return; }
+    // Check if auto-tracking is enabled — user can disable to only track manually pinned signals
+    const autoTrack = vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('signalAutoTrack', true);
+    if (!autoTrack) { return; }
+    persistTimer = setTimeout(() => {
+        persistTimer = undefined;
+        if (!lastRchBundle) { return; }
+        const summary = extractSignalSummary(lastRchBundle, lastRchHypotheses);
+        if (!summary) { return; }
+        const store = new SessionMetadataStore();
+        store.loadMetadata(fileUri).then(meta => {
+            meta.signalSummary = summary;
+            return store.saveMetadata(fileUri, meta);
+        }).catch(() => {});
+    }, persistIntervalMs);
+}
+
 /** Coerce message field to string. Duplicated here to avoid cross-file dependency on a private helper. */
 function msgStr(m: Record<string, unknown>, key: string, fallback = ""): string {
     const v = m[key];
@@ -76,6 +104,8 @@ function handleRootCauseBundle(msg: Record<string, unknown>, ctx: ViewerMessageC
     enrichBundleWithHostSignals(incomingBundle, ctx.currentFileUri).then(enriched => {
         lastRchBundle = enriched;
         lastRchHypotheses = buildHypotheses(enriched);
+        // Schedule periodic persist so signal data survives crashes
+        schedulePersist(ctx.currentFileUri);
         return refreshTrendsIfStale();
     }).then(trends => {
         ctx.post({ type: 'rootCauseHypothesesResult', hypotheses: lastRchHypotheses, trends });

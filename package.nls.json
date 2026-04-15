@@ -394,6 +394,8 @@
   "config.viewerGroupAsciiArt.title": "Group consecutive ASCII art lines into visual blocks",
   "config.viewerDetectAsciiArt.description": "Experimental: detect pixel-based ASCII art (logos, figlet banners) using entropy heuristics and group them as art blocks. May increase CPU usage on large logs. Default off. Reload the log viewer after changing.",
   "config.viewerDetectAsciiArt.title": "Detect pixel-based ASCII art in logs",
+  "config.signalAutoTrack.description": "Automatically persist detected signals (errors, warnings, performance, SQL patterns) to session metadata for cross-session tracking. Disable to only track signals you manually pin to cases.",
+  "config.signalAutoTrack.title": "Auto-track signals across sessions",
   "config.viewerDbSignalsEnabled.description": "When enabled, the log viewer runs DB signal detectors (e.g. N+1 query hints) and enriches database-tagged lines with SQL fingerprint rollup stats.",
   "config.viewerDbSignalsEnabled.title": "Enable database signals in the log viewer",
   "config.staticSqlFromFingerprint.enabled.description": "When enabled, the log viewer can offer “Static sources” from SQL fingerprints (project index search; suggestive only). When disabled, that affordance is hidden and the host skips static search.",

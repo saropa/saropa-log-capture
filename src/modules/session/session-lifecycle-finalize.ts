@@ -168,6 +168,9 @@ export async function finalizeSession(
     // never opened, fallback to extension-side general signal scanning so network
     // failures, memory events, slow ops, etc. are still captured.
     const pSignal = Promise.resolve().then(async () => {
+        // Respect the signalAutoTrack setting — skip persistence if disabled
+        const autoTrack = vscode.workspace.getConfiguration('saropaLogCapture').get<boolean>('signalAutoTrack', true);
+        if (!autoTrack) { return; }
         const bundle = getLastSignalBundle();
         const summary = bundle
             ? extractSignalSummary(bundle, getLastSignalHypotheses())
