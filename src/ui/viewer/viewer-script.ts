@@ -21,6 +21,22 @@ var viewportEl = document.getElementById('viewport');
 var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
+/** Toggle the scrollbar-visible body class and force Chromium to re-render the scrollbar.
+ *  Chromium caches ::-webkit-scrollbar pseudo-element styles at paint time; toggling an
+ *  ancestor class does NOT cause a re-evaluation. Briefly cycling overflow-y on #log-content
+ *  destroys and re-creates the scrollbar track so the new width:0 / width:10px takes effect. */
+function applyScrollbarVisible(show) {
+    document.body.classList.toggle('scrollbar-visible', !!show);
+    if (logEl) {
+        var prev = logEl.style.overflowY;
+        logEl.style.overflowY = 'hidden';
+        /* Force a synchronous reflow so Chromium destroys the scrollbar layer */
+        void logEl.offsetHeight;
+        logEl.style.overflowY = prev || '';
+    }
+    syncJumpButtonInset();
+}
+
 /* Pin jump buttons to the log pane top-right / bottom-right using viewport coordinates.
    position:fixed plus #log-content getBoundingClientRect avoids bad containing blocks (some webviews
    mis-resolve absolute + right so controls appear on the text left edge). */

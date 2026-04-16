@@ -12,25 +12,32 @@ import { getScrollbarMinimapScript, getScrollbarMinimapHtml } from '../../ui/vie
 import { getViewerScript } from '../../ui/viewer/viewer-script';
 
 suite('ScrollbarToggleOptimisticUpdate', () => {
-    test('toggle-show-scrollbar applies body class before postBool', () => {
+    test('applyScrollbarVisible forces overflow reflow to re-render Chromium scrollbar', () => {
+        const script = getViewerScript(5000);
+        /* Chromium caches ::-webkit-scrollbar pseudo-element styles. Toggling a body class
+           does NOT trigger re-evaluation. applyScrollbarVisible must cycle overflow-y to force
+           the compositor to destroy and re-create the scrollbar track. */
+        assert.ok(script.includes('function applyScrollbarVisible'), 'function must exist');
+        assert.ok(script.includes("overflowY = 'hidden'"), 'must set overflow-y:hidden to destroy scrollbar');
+        assert.ok(script.includes('offsetHeight'), 'must read offsetHeight to force synchronous reflow');
+    });
+
+    test('scrollbarVisible message handler uses applyScrollbarVisible', () => {
+        const script = getViewerScript(5000);
+        assert.ok(script.includes('applyScrollbarVisible(msg.show'), 'round-trip handler must use applyScrollbarVisible');
+    });
+
+    test('toggle-show-scrollbar calls applyScrollbarVisible before postBool', () => {
         const script = getContextMenuScript();
         /* Before fix: postBool was called without setting the class, so syncContextMenuToggles
            (inside postBool) read stale state and the checkbox never toggled.
-           After fix: classList.toggle happens before postBool. */
-        const classToggle = script.indexOf("document.body.classList.toggle('scrollbar-visible', nextSb)");
+           After fix: applyScrollbarVisible toggles the class AND forces a Chromium scrollbar
+           re-render before postBool so the checkbox and the scrollbar both update immediately. */
+        const apply = script.indexOf('applyScrollbarVisible(nextSb)');
         const postBool = script.indexOf("postBool('setShowScrollbar', nextSb)");
-        assert.ok(classToggle >= 0, 'must optimistically toggle scrollbar-visible class');
+        assert.ok(apply >= 0, 'must call applyScrollbarVisible for optimistic update + reflow');
         assert.ok(postBool >= 0, 'must still post the value to the extension');
-        assert.ok(classToggle < postBool, 'class toggle must happen BEFORE postBool so syncContextMenuToggles reads correct state');
-    });
-
-    test('toggle-show-scrollbar calls syncJumpButtonInset before postBool', () => {
-        const script = getContextMenuScript();
-        /* Jump buttons must reposition when the scrollbar appears/disappears. */
-        const jumpSync = script.indexOf('syncJumpButtonInset()');
-        const postBool = script.indexOf("postBool('setShowScrollbar', nextSb)");
-        assert.ok(jumpSync >= 0, 'must call syncJumpButtonInset');
-        assert.ok(jumpSync < postBool, 'jump button sync must happen before posting to extension');
+        assert.ok(apply < postBool, 'applyScrollbarVisible must happen BEFORE postBool');
     });
 });
 
