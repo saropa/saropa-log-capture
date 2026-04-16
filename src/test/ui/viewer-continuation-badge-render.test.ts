@@ -2,10 +2,11 @@
  * Tests for continuation badge rendering in `renderItem` (embedded webview script).
  *
  * Verifies that the continuation collapse/expand badge:
- * - Shows only `[+]` / `[−]` as visible text (no inline count)
- * - Includes the line count in the tooltip only
+ * - Shows the count inline (e.g. "+7" / "−7") so users don't need to hover
+ * - Includes descriptive tooltip for accessibility
  * - Is positioned inline next to the decoration prefix, not at the end of the line
  * - Uses the `.cont-badge` class for click handling
+ * - Scales with zoom (em-based font-size, not fixed px)
  */
 import * as assert from 'node:assert';
 import { getViewerDataHelpersRender } from '../../ui/viewer/viewer-data-helpers-render';
@@ -14,25 +15,21 @@ import { getDecorationBarStyles } from '../../ui/viewer-styles/viewer-styles-dec
 suite('Continuation badge rendering', () => {
     const renderScript = getViewerDataHelpersRender();
 
-    test('should show [+] label without inline count when collapsed', () => {
-        /* The collapsed label should be exactly '[+]' — no line count in the visible text.
-           The old format was '[+' + count + ' lines]' which cluttered the UI. */
+    test('should show +N label with inline count when collapsed', () => {
+        /* The collapsed label shows the count directly (e.g. "+7") so the
+           user sees how many lines are hidden without needing to hover. */
         assert.ok(
-            renderScript.includes("'[+]'"),
-            'collapsed contLabel should be [+] without count',
-        );
-        assert.ok(
-            !renderScript.includes("'[+' + item.contChildCount"),
-            'collapsed label must NOT embed contChildCount in visible text',
+            renderScript.includes("'+' + item.contChildCount"),
+            'collapsed contLabel should show + followed by contChildCount',
         );
     });
 
-    test('should show [−] label without inline count when expanded', () => {
-        /* The expanded label should be exactly '[−]' (unicode minus \u2212).
-           The old format was '[−' + count + ' lines]'. */
+    test('should show −N label with inline count when expanded', () => {
+        /* The expanded label shows minus + count (e.g. "−7") using
+           unicode minus \\u2212, matching the collapsed format. */
         assert.ok(
-            renderScript.includes("'[\\u2212]'"),
-            'expanded contLabel should be [−] without count',
+            renderScript.includes("'\\u2212' + item.contChildCount"),
+            'expanded contLabel should show − followed by contChildCount',
         );
     });
 
@@ -91,6 +88,16 @@ suite('Continuation badge CSS', () => {
         assert.ok(
             !contRule.includes('right:') && !contRule.includes('right :'),
             '.cont-badge must NOT use right positioning (old floating style)',
+        );
+    });
+
+    test('should use em-based font-size for zoom scaling', () => {
+        /* Fixed px font-size (e.g. 10px) doesn't scale with the viewer's
+           zoom level, making the badge too small or too large. */
+        const contRule = css.match(/\.cont-badge\s*\{[^}]*\}/s)?.[0] ?? '';
+        assert.ok(
+            /font-size:\s*[\d.]+em/.test(contRule),
+            '.cont-badge font-size should use em units, not fixed px',
         );
     });
 
