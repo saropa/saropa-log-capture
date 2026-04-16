@@ -28,11 +28,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+---
+
+## [7.1.1]
+
 ### Fixed
 
+- **Network failure signals no longer false-positive on Android PIDs.** The HTTP status code detector (e.g. 502) now requires an HTTP context keyword (HTTP, status, response, GET, POST, etc.) on the same line. Previously, bare numbers in logcat CPU dumps (e.g. PID 502 in `3% 502/android.hardware.sensors`) matched as HTTP 502 "Bad Gateway".
+- **Extension-side signal scanner now filters by logcat level.** Network, memory, permission, and error pattern matching is restricted to error-class logcat lines (E/F/A). Info-level system noise like ActivityManager process starts no longer contributes to signal counts. Slow-op detection still runs at any level.
 - **Continuation badge no longer overlaps timestamp text.** The `[+]` badge used fixed `font-size: 10px` which didn't scale with zoom and could overlap the decoration prefix. Now uses `0.75em` so it scales with the viewer's font size.
 - **Continuation badge now shows count inline.** Changed from `[+]` (count hidden in tooltip) to `+7` / `−7` so the user sees how many lines are collapsed without hovering.
 - **Category badge (`category-badge`) now scales with zoom.** Changed from fixed `9px` / `4px` to em-based units (`0.7em` / `0.3em`).
+- **Signal reports no longer triplicate for a single ANR event.** When a high-confidence ANR hypothesis exists, redundant `error-recent` hypotheses (typically ANR dump lines like CPU stats and IO pressure) are merged into the ANR report. The user sees one consolidated report with evidence links to all the dump lines.
 
 ---
 

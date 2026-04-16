@@ -59,6 +59,10 @@ var rchHttpErrorCodes = {
 };
 var rchHttpCodeRe = new RegExp('\\\\b(' + Object.keys(rchHttpErrorCodes).join('|') + ')\\\\b');
 
+/** HTTP context keywords — the line must contain one of these for a bare status code to count.
+ *  Without this guard, PIDs and percentages in logcat (e.g. "502/android.hardware...") false-positive. */
+var rchHttpContextRe = /\\b(HTTP|HTTPS|status|response|request|GET|POST|PUT|DELETE|PATCH|HEAD|REST|API|fetch|url|endpoint)\\b/i;
+
 /** Truncate text to a max-200-char excerpt for bundle payloads. */
 function rchExcerpt(text) {
     return text.length > 200 ? text.substring(0, 197) + '...' : text;
@@ -147,11 +151,12 @@ function collectGeneralSignals() {
             }
         }
 
-        /* HTTP status code detection — runs at any level except database,
-           which can contain numeric values that match codes in SQL result sets.
-           Stack frames are already excluded by the row.type !== 'line' guard above. */
+        /* HTTP status code detection — requires an HTTP context keyword on the same line.
+           Without the context check, bare numbers like PID 502 in Android logcat
+           (e.g. "3% 502/android.hardware.sensors...") false-positive as HTTP 502.
+           Database lines are also excluded (numeric values in SQL result sets). */
         var httpMatch = plain.match(rchHttpCodeRe);
-        if (httpMatch && row.level !== 'database' && networkFailures.length < 20) {
+        if (httpMatch && row.level !== 'database' && rchHttpContextRe.test(plain) && networkFailures.length < 20) {
             var httpCode = httpMatch[1];
             var httpReason = rchHttpErrorCodes[httpCode] || httpCode;
             networkFailures.push({ lineIndex: i, excerpt: rchExcerpt(plain), pattern: httpCode + ' ' + httpReason });
