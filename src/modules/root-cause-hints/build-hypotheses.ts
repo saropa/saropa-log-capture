@@ -124,6 +124,41 @@ function dedupeAndMerge(work: WorkingHypothesis[]): WorkingHypothesis[] {
   return Array.from(byKey.values());
 }
 
+/**
+ * Bug 002 fix: when a high-confidence ANR hypothesis exists, error-recent
+ * hypotheses are almost certainly ANR dump lines (CPU stats, IO pressure,
+ * process list). Instead of showing them as separate reports, merge their
+ * evidence line IDs into the ANR hypothesis so the single ANR report links
+ * to the actual dump lines. No information is lost — the user sees one
+ * consolidated report instead of three overlapping ones.
+ */
+function mergeErrorsIntoAnr(work: WorkingHypothesis[]): WorkingHypothesis[] {
+  const anrIdx = work.findIndex(
+    (h) => h.hypothesisKey === 'anr::risk' && h.confidence === 'high',
+  );
+  if (anrIdx < 0) { return work; }
+
+  // Collect all error-recent evidence line IDs into the ANR hypothesis.
+  const errorIds: number[] = [];
+  for (const h of work) {
+    if (h.templateId === 'error-recent') {
+      errorIds.push(...h.evidenceLineIds);
+    }
+  }
+  if (errorIds.length === 0) { return work; }
+
+  const anr = work[anrIdx];
+  const merged = new Set([...anr.evidenceLineIds, ...errorIds]);
+  const ids = Array.from(merged).filter((n) => n >= 0).slice(0, MAX_EVIDENCE_IDS);
+  const updated: WorkingHypothesis = { ...anr, evidenceLineIds: ids };
+
+  return work.map((h, i) => {
+    if (i === anrIdx) { return updated; }
+    // Remove error-recent — their evidence now lives in the ANR hypothesis.
+    return h;
+  }).filter((h) => h.templateId !== 'error-recent');
+}
+
 function capEvidence(ids: readonly number[]): number[] {
   const u = Array.from(
     new Set(
@@ -179,7 +214,7 @@ export function buildHypotheses(bundle: RootCauseHintBundle): RootCauseHypothesi
     ...anrHypotheses(bundle, MAX_TEXT_LEN),
   ];
 
-  const merged = dedupeAndMerge(parts);
+  const merged = mergeErrorsIntoAnr(dedupeAndMerge(parts));
   merged.sort((a, b) => {
     if (a.tier !== b.tier) { return a.tier - b.tier; }
     return a.hypothesisKey.localeCompare(b.hypothesisKey);

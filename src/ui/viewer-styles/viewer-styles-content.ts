@@ -187,10 +187,10 @@ export function getContentStyles(): string {
    =================================================================== */
 .category-badge {
     display: inline-block;
-    padding: 0 4px;
-    margin-right: 4px;
-    border-radius: 3px;
-    font-size: 9px;
+    padding: 0 0.3em;
+    margin-right: 0.3em;
+    border-radius: 0.25em;
+    font-size: 0.7em;
     font-weight: 600;
     vertical-align: middle;
     color: var(--cat-clr, #888);

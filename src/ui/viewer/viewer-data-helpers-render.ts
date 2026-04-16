@@ -218,8 +218,14 @@ function renderItem(item, idx, prevVis) {
     var contBadge = '';
     if (item.contChildCount > 0 && item.contGroupId >= 0) {
         var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
-        var contLabel = item.contCollapsed ? '[+]' : '[\\u2212]';
-        var contTip = item.contCollapsed ? 'Click to expand ' + item.contChildCount + ' continuation lines' : 'Click to collapse ' + item.contChildCount + ' continuation lines';
+        /* Show count inline so the user doesn't need to hover.
+           Collapsed: "+7" (click to expand). Expanded: "−7" (click to collapse). */
+        var contLabel = item.contCollapsed
+            ? '+' + item.contChildCount
+            : '\\u2212' + item.contChildCount;
+        var contTip = item.contCollapsed
+            ? 'Click to expand ' + item.contChildCount + ' continuation lines'
+            : 'Click to collapse ' + item.contChildCount + ' continuation lines';
         contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
     var catBadge = getCategoryBadge(item);
