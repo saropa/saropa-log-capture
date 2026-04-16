@@ -26,6 +26,16 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Continuation badge no longer overlaps timestamp text.** The `[+]` badge used fixed `font-size: 10px` which didn't scale with zoom and could overlap the decoration prefix. Now uses `0.75em` so it scales with the viewer's font size.
+- **Continuation badge now shows count inline.** Changed from `[+]` (count hidden in tooltip) to `+7` / `−7` so the user sees how many lines are collapsed without hovering.
+- **Category badge (`category-badge`) now scales with zoom.** Changed from fixed `9px` / `4px` to em-based units (`0.7em` / `0.3em`).
+
+---
+
 ## [7.1.0]
 
 ### Fixed
@@ -107,7 +117,7 @@ Overhauls the filter panel into focused sections with a dedicated Tags & Origins
 
 - **Warning detection now recognizes logcat `W/` prefix.** `isWarningLine` previously only matched lines containing the substring "warn", missing Android logcat warnings that use the `W/Tag:` format.
 - **Error detection now recognizes logcat `E/`, `F/`, `A/` prefixes.** `isErrorLine` previously only matched keyword substrings ("error", "exception", "fatal", "failed"), missing Android logcat errors, fatal, and assert lines that use the single-letter prefix format.
-- **"Show native scrollbar" toggle now applies immediately.** The context menu toggle sent the new value to the extension but did not optimistically update the body class, so the CSS change and the checkbox state both lagged behind the round-trip — making the toggle appear stuck.
+- **"Show native scrollbar" toggle now applies immediately.** The context menu toggle sent the new value to the extension but did not optimistically update the body class, so the CSS change and the checkbox state both lagged behind the round-trip — making the toggle appear stuck. Additionally, Chromium caches `::-webkit-scrollbar` pseudo-element styles and does not re-evaluate them when an ancestor class changes; the toggle now forces a reflow by cycling `overflow-y` on `#log-content` so the scrollbar track is destroyed and re-created.
 - **Jump buttons now clear the native scrollbar.** When "Show native scrollbar" was on, the Top/Bottom jump buttons overlapped the 10px scrollbar because `getBoundingClientRect()` does not reliably reflect `::-webkit-scrollbar` width changes in Chromium. The inset calculation now reads the `--scrollbar-w` CSS variable explicitly.
 - **Context menu checkmarks no longer look like submenu arrows.** Toggle items (Proportional, SQL density, etc.) placed the `codicon-check` icon at `right: 8px` — the same position used for submenu `▸` indicators. Checked items appeared to have an expandable submenu that never opened. The checkmark now sits inline between the leading icon and the label (VS Code convention).
 - **DriftDebugInterceptor SQL lines now recognized.** The SQL pipeline (source tag classification, level classification, SQL fingerprinting, SQL Query History, N+1 detection, args dimming) only recognized the standard Drift `LogInterceptor` format (`Drift: Sent SELECT … with args [...]`). Lines from `DriftDebugInterceptor` (`Drift SELECT: SELECT …; | args: [...]`) were silently ignored — no `database` source tag, no SQL History entries, no repeat compression. Now both formats are recognized across all six parser locations (extension-side and webview-side).
