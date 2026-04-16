@@ -120,14 +120,14 @@ export function getDecorationBarStyles(): string {
     z-index: 3;
 }
 
-/* Continuation line collapse badge — inline pill next to the line counter.
-   Toggles group visibility on click; count shown in tooltip only. */
+/* Continuation line collapse badge — inline pill showing hidden line count.
+   Toggles group visibility on click. Uses em so it scales with zoom. */
 .cont-badge {
     display: inline-block;
-    padding: 1px 4px;
-    margin: 0 4px;
-    border-radius: 3px;
-    font-size: 10px;
+    padding: 0.05em 0.35em;
+    margin: 0 0.35em;
+    border-radius: 0.25em;
+    font-size: 0.75em;
     font-weight: 600;
     cursor: pointer;
     color: var(--vscode-descriptionForeground, #888);

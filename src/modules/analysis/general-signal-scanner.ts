@@ -20,6 +20,30 @@ import {
 const maxScanLines = 5000;
 const maxEntriesPerKind = 5;
 
+/**
+ * Logcat level detection: matches "V/tag", "I tag:", and threadtime format
+ * "04-15 19:00:41.400 690 720 I ActivityManager:".
+ * Returns the single-letter level (V/D/I/W/E/F/A) or undefined for non-logcat lines.
+ */
+const logcatLevelRe = /^(?:[VDIWEFA])\/|^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+([VDIWEFA])\s/;
+/** Exported for testing — extracts logcat level letter or undefined for non-logcat lines. */
+export function getLogcatLevel(line: string): string | undefined {
+    const m = logcatLevelRe.exec(line);
+    if (m) { return m[1] ?? line.charAt(0); }
+    return undefined;
+}
+
+/** True if the line is a logcat line at error/fatal/assert level, or is not a logcat line at all.
+ *  Non-logcat lines pass through so that non-Android logs still get scanned.
+ *  Exported for testing. */
+export function isErrorLevelOrNonLogcat(line: string): boolean {
+    const level = getLogcatLevel(line);
+    /* Not logcat — let it through (could be Dart, Node, etc.) */
+    if (!level) { return true; }
+    /* E = Error, F = Fatal (WTF), A = Assert — all are error-class */
+    return level === 'E' || level === 'F' || level === 'A';
+}
+
 /** Patterns mirroring the webview's rchNetworkPatterns, rchMemoryPatterns, etc. */
 const networkPatterns = [
     'SocketException', 'ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND',
@@ -87,8 +111,21 @@ function accum(map: Map<string, PersistedSignalEntryV2 & { count: number; _lines
 
 type EntryMap = Map<string, PersistedSignalEntryV2 & { count: number; _lines: number[] }>;
 
-/** Classify a line and accumulate into the entry map. */
+/** Classify a line and accumulate into the entry map.
+ *  Network, memory, permission, and error patterns only run on error-level logcat lines
+ *  (or non-logcat lines). This matches the webview's signalLevel === 'error' guard and
+ *  prevents Info-level system noise (e.g. ActivityManager CPU dumps) from false-positive. */
 function classifyLine(line: string, lineIdx: number, entries: EntryMap, counts: Record<string, number>): void {
+    const errorLevel = isErrorLevelOrNonLogcat(line);
+    if (errorLevel) {
+        classifyErrorPatterns(line, lineIdx, entries, counts);
+    }
+    /* Slow-op detection runs at any level — a slow operation is noteworthy regardless of log level. */
+    classifySlowOps(line, lineIdx, entries, counts);
+}
+
+/** Classify network, memory, permission, and error patterns (error-level only). */
+function classifyErrorPatterns(line: string, lineIdx: number, entries: EntryMap, counts: Record<string, number>): void {
     const netMatch = firstMatch(line, networkPatterns);
     if (netMatch) {
         counts.networkFailures = (counts.networkFailures ?? 0) + 1;
@@ -107,11 +144,11 @@ function classifyLine(line: string, lineIdx: number, entries: EntryMap, counts: 
         const label = line.trim().slice(0, 120) || 'Permission denied';
         accum(entries, { kind: 'permission', fingerprint: permMatch, label, count: 1 }, lineIdx);
     }
-    classifyErrorOrSlow(line, lineIdx, entries, counts);
+    classifyCriticalOrBug(line, lineIdx, entries, counts);
 }
 
-/** Classify critical/bug errors and slow operations (separate function for nesting compliance). */
-function classifyErrorOrSlow(line: string, lineIdx: number, entries: EntryMap, counts: Record<string, number>): void {
+/** Classify critical/bug errors (separate function for nesting compliance). */
+function classifyCriticalOrBug(line: string, lineIdx: number, entries: EntryMap, counts: Record<string, number>): void {
     const critMatch = firstMatch(line, criticalPatterns) ?? firstMatch(line, bugPatterns);
     if (critMatch) {
         counts.classifiedErrors = (counts.classifiedErrors ?? 0) + 1;
@@ -119,6 +156,10 @@ function classifyErrorOrSlow(line: string, lineIdx: number, entries: EntryMap, c
         const cat = criticalPatterns.includes(critMatch) ? 'critical' : 'bug';
         accum(entries, { kind: 'classified', fingerprint: critMatch, label, count: 1, category: cat }, lineIdx);
     }
+}
+
+/** Classify slow operations — runs at any log level since slowness is level-independent. */
+function classifySlowOps(line: string, lineIdx: number, entries: EntryMap, counts: Record<string, number>): void {
     const dur = extractDurationMs(line);
     if (dur && dur.ms >= defaultSlowThresholdMs) {
         counts.slowOperations = (counts.slowOperations ?? 0) + 1;
