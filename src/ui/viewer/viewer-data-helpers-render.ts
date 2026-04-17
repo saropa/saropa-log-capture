@@ -174,6 +174,12 @@ function renderItem(item, idx, prevVis) {
     if (item.compressDupCount > 1) {
         compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
     }
+    /* Inline repeat count badge: shown on the original line when consecutive duplicates
+       were collapsed into it (non-SQL path). Uses same visual style as compress-dup. */
+    var repeatBadge = '';
+    if (item.inlineRepeatCount > 1) {
+        repeatBadge = '<span class="compress-dup-badge" title="' + item.inlineRepeatCount + ' consecutive identical lines">(\\u00d7' + item.inlineRepeatCount + ')</span> ';
+    }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
     if (typeof getQualityBadge === 'function') badge += getQualityBadge(item);
@@ -229,7 +235,7 @@ function renderItem(item, idx, prevVis) {
         contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
     }
     var catBadge = getCategoryBadge(item);
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + contBadge + deco + elapsed + badge + compressDupBadge + repeatBadge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }

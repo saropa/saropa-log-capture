@@ -70,12 +70,16 @@ function cleanupTrailingRepeats() {
     if (repeatTracker.count <= 1 || repeatTracker.lastLineIndex < 0) return;
     if (repeatTracker.lastLineIndex < allLines.length) {
         var orig = allLines[repeatTracker.lastLineIndex];
+        /* SQL path: original was hidden behind a notification row — restore it. */
         if (orig && orig.repeatHidden) {
             orig.repeatHidden = false;
             orig.height = calcItemHeight(orig);
             totalHeight += orig.height;
         }
+        /* Non-SQL path: inlineRepeatCount badge persists — it is lightweight
+           historical info and does not need cleanup across marker boundaries. */
     }
+    /* SQL path: hide trailing notification rows that were replaced by the restored original. */
     for (var ri = allLines.length - 1; ri >= 0; ri--) {
         if (allLines[ri].type !== 'repeat-notification') break;
         totalHeight -= allLines[ri].height;
