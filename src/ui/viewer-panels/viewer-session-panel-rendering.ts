@@ -136,7 +136,7 @@ export function getSessionRenderingScript(): string {
         var collapsed = !!collapsedDays[dateKey];
         var cls = 'session-day-group' + (collapsed ? ' collapsed' : '');
         return '<div class="' + cls + '" data-day-key="' + escapeAttr(dateKey) + '">'
-            + renderDayHeading(dateKey, collapsed)
+            + renderDayHeading(dateKey, collapsed, itemsHtml.length)
             + '<div class="session-day-items">' + itemsHtml.join('') + '</div>'
             + '</div>';
     }
@@ -167,11 +167,15 @@ export function getSessionRenderingScript(): string {
             + '</div></div>';
     }
 
-    function renderDayHeading(dateKey, collapsed) {
+    function renderDayHeading(dateKey, collapsed, count) {
         var chevron = collapsed ? 'codicon-chevron-right' : 'codicon-chevron-down';
+        /* Show file count dimmed in parentheses after the date label. */
+        var countText = typeof count === 'number' && count > 0
+            ? ' <span class="session-day-count">(' + count + ')</span>' : '';
         return '<div class="session-day-heading" role="button" tabindex="0" aria-expanded="' + (!collapsed) + '">'
             + '<span class="session-day-chevron codicon ' + chevron + '"></span>'
             + escapeHtmlText(formatDayHeading(dateKeyToEpoch(dateKey)))
+            + countText
             + '</div>';
     }
 
