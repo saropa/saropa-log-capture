@@ -32,6 +32,10 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 - **Capture on/off toggle in the status bar.** A persistent `$(circle-filled)` / `$(circle-outline)` icon now sits in the status bar (right side, priority 52). Click it to flip `saropaLogCapture.enabled` for the current workspace — no more hunting through Settings to find a workspace override silently keeping capture disabled. The icon turns orange-warning when capture is off. Also available via the command palette: "Saropa Log Capture: Toggle Capture On/Off".
 
+### Fixed
+
+- **Continuation collapse button moved to left gutter.** The `+N` / `−N` expand/collapse button was positioned to the right of the `»` chevron, overlapping with the timestamp. It is now absolutely positioned in the left gutter (after the severity dot, before line numbers) where it cannot overlap with the decoration prefix.
+
 ### Changed
 
 - **Repeated log lines now show inline (×N) badge instead of a separate "N × Repeated:" row.** Non-SQL duplicate lines keep the original line visible with its line number, decoration, and severity bar, and add a small `(×N)` badge. This eliminates the confusing separate notification row, whitespace gaps, and missing original line content. SQL fingerprint repeats still use the expandable drilldown row.
@@ -40,6 +44,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 - **Date group headings show file count.** Collapsible day sections in the Project Logs panel now display the number of files in each group, right-aligned as a subtle badge.
 - **Presets moved from filter drawer to kebab menu.** The "Saved Filters" dropdown at the bottom of the filter drawer is replaced by a "Presets" flyout submenu in the kebab (three-dot) actions menu. Each preset shows a tooltip describing what filters it changes.
 - **Kebab dropdown aligned to button.** The actions dropdown now opens directly below the three-dot icon instead of anchoring to the far right of the page.
+- **Session summary button order swapped.** "Copy Log Path" now appears before "Open Log" in the post-session notification dialog.
 
 ---
 
