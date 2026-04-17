@@ -8,9 +8,8 @@
  * ingest both call `emitDbLineDetectors` so arg-variant bursts still register when rows
  * fold into `repeat-notification`. Synthetic rows are built in `viewer-data-add-db-detectors.ts`.
  *
- * **Repeat UI:** After the collapse threshold, the streak uses **one** `repeat-notification` row
- * (`repeatTracker.lastRepeatNotificationIndex`) updated in place with **N × Repeated:** / **N × SQL repeated:**
- * so long runs do not spam one line per duplicate.
+ * **Repeat UI:** Non-SQL repeats add an inline `(×N)` badge on the original line (no notification row).
+ * SQL fingerprint repeats still use one `repeat-notification` row updated in place with drilldown.
  */
 import { getContinuationScript } from './viewer-data-add-continuation';
 import { getViewerDataAddDbDetectorsScript } from './viewer-data-add-db-detectors';

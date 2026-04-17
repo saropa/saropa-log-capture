@@ -30,6 +30,8 @@ export interface LineItemVm {
     html?: string;
     height: number;
     repeatHidden?: boolean;
+    /** Non-SQL repeat badge count set on the original (anchor) line. */
+    inlineRepeatCount?: number;
     seq?: number;
     sqlRepeatDrilldown?: SqlRepeatDrilldownVm;
     sqlRepeatDrilldownOpen?: boolean;

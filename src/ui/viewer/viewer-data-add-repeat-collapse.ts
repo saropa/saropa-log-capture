@@ -1,7 +1,11 @@
 /**
- * Repeat-collapse branch for addToData: when the streak exceeds minN, the anchor row
- * is hidden and a single `repeat-notification` row is created/updated in place.
- * Extracted from viewer-data-add.ts to keep the file under the line limit.
+ * Repeat-collapse branch for addToData, extracted to keep the file under the line limit.
+ *
+ * **Non-SQL repeats:** the original (anchor) line stays visible and gets an `inlineRepeatCount`
+ * property that `renderItem()` renders as a (×N) badge — no separate notification row.
+ *
+ * **SQL fingerprint repeats:** the anchor is hidden and a single `repeat-notification` row
+ * with drilldown is created/updated in place (unchanged behavior).
  */
 
 /** Get the embedded JavaScript for the repeat-collapse branch of addToData. */
@@ -12,25 +16,42 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
     /* Mirror addToData: non-debug-console sources get 'external' tier. */
     var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
+
+    /* --- Non-SQL repeats: inline badge on original line, no notification row --- */
+    if (!repeatTracker.streakSqlFp) {
+        /* Update the original (anchor) line with the current repeat count.
+           renderItem() reads inlineRepeatCount to show a (×N) badge. */
+        if (repeatTracker.lastLineIndex >= 0 && repeatTracker.lastLineIndex < allLines.length) {
+            var origItem = allLines[repeatTracker.lastLineIndex];
+            if (origItem) {
+                origItem.inlineRepeatCount = repeatTracker.count;
+            }
+        }
+        resetCompressDupStreak();
+        /* Still feed DB detectors so session rollup and N+1 detection see the duplicate data. */
+        var scopeFiltInline = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
+        var origSeq = (repeatTracker.lastLineIndex >= 0 && repeatTracker.lastLineIndex < allLines.length && allLines[repeatTracker.lastLineIndex])
+            ? allLines[repeatTracker.lastLineIndex].seq : nextSeq++;
+        emitDbLineDetectors(ts || Date.now(), sqlMeta, 'database', scopeFiltInline, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '', origSeq, null);
+        return;
+    }
+
+    /* --- SQL fingerprint repeats: notification row with drilldown (unchanged) --- */
+
     // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
     if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
         repeatTracker.lastLineIndex < allLines.length) {
-        var origItem = allLines[repeatTracker.lastLineIndex];
-        if (origItem && origItem.height > 0) {
-            totalHeight -= origItem.height;
-            origItem.height = 0;
-            origItem.repeatHidden = true;
+        var sqlOrigItem = allLines[repeatTracker.lastLineIndex];
+        if (sqlOrigItem && sqlOrigItem.height > 0) {
+            totalHeight -= sqlOrigItem.height;
+            sqlOrigItem.height = 0;
+            sqlOrigItem.repeatHidden = true;
         }
     }
 
-    var preview;
-    if (repeatTracker.streakSqlFp && repeatTracker.sqlRepeatPreview) {
-        preview = repeatTracker.sqlRepeatPreview;
-    } else {
-        preview = (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
-        if (repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
-            preview += '...';
-        }
+    var preview = repeatTracker.sqlRepeatPreview || (repeatTracker.lastPlainText || '').substring(0, repeatPreviewLength);
+    if (!repeatTracker.sqlRepeatPreview && repeatTracker.lastPlainText && repeatTracker.lastPlainText.length > repeatPreviewLength) {
+        preview += '...';
     }
     var isUpdate = repeatTracker.count > minN && repeatTracker.lastRepeatNotificationIndex >= 0
         && repeatTracker.lastRepeatNotificationIndex < allLines.length;
@@ -41,22 +62,15 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
         repeatItem = null;
     }
     var repeatSeq = isUpdate && repeatItem ? repeatItem.seq : nextSeq++;
-    var repeatHtml;
-    var sqlDrill = null;
-    if (repeatTracker.streakSqlFp && typeof snapshotSqlRepeatDrilldown === 'function' && typeof buildSqlRepeatNotificationRowHtml === 'function') {
-        sqlDrill = snapshotSqlRepeatDrilldown(ts);
-        repeatHtml = buildSqlRepeatNotificationRowHtml({
+    var sqlDrill = (typeof snapshotSqlRepeatDrilldown === 'function') ? snapshotSqlRepeatDrilldown(ts) : null;
+    var repeatHtml = (sqlDrill && typeof buildSqlRepeatNotificationRowHtml === 'function')
+        ? buildSqlRepeatNotificationRowHtml({
             sqlRepeatDrilldown: sqlDrill,
             sqlRepeatDrilldownOpen: isUpdate && repeatItem ? !!repeatItem.sqlRepeatDrilldownOpen : false,
             repeatPreviewText: preview || '\\u2026',
             seq: repeatSeq
-        });
-    } else {
-        var countLabel = repeatTracker.count + ' \\u00d7 Repeated:';
-        repeatHtml = '<span class="repeat-notification">' +
-            countLabel +
-            ' <span class="repeat-preview">' + escapeHtml(preview || '\\u2026') + '</span></span>';
-    }
+        })
+        : '<span class="repeat-notification">' + repeatTracker.count + ' \\u00d7 SQL repeated: <span class="repeat-preview">' + escapeHtml(preview || '\\u2026') + '</span></span>';
     var repeatAutoHide = (typeof testAutoHide === 'function' && repeatTracker.lastPlainText) ? testAutoHide(repeatTracker.lastPlainText) : false;
     if (isUpdate && repeatItem) {
         var oldH = repeatItem.height;
@@ -99,7 +113,7 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             repeatItem.repeatPreviewText = preview || '\\u2026';
         }
         /* DB_11: fingerprint + preview on repeat rows for query history rebuild after trim (no dbSignal on these rows). */
-        if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
+        if (sqlMeta && sqlMeta.fingerprint) {
             repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
             var histPvwNew = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
             repeatItem.sqlHistoryPreview = histPvwNew.length > 120 ? histPvwNew.substring(0, 117) + '...' : histPvwNew;
@@ -119,7 +133,7 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
             repeatItem.sqlRepeatDrilldown = sqlDrill;
             repeatItem.repeatPreviewText = preview || '\\u2026';
         }
-        if (repeatTracker.streakSqlFp && sqlMeta && sqlMeta.fingerprint) {
+        if (sqlMeta && sqlMeta.fingerprint) {
             repeatItem.sqlHistoryFp = sqlMeta.fingerprint;
             var histPvwUp = (sqlMeta.sqlSnippet || repeatTracker.sqlStreakSqlSnippet || '').trim();
             repeatItem.sqlHistoryPreview = histPvwUp.length > 120 ? histPvwUp.substring(0, 117) + '...' : histPvwUp;

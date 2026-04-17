@@ -13,10 +13,9 @@
  * - Fingerprint-keyed streaks merge arg variants; labels use **N × SQL repeated:** on one row.
  * - Distinct normalized fingerprints start **separate** streaks (see comment on quoted
  *   identifiers vs column names — DB_02 normalization can collapse `"a"` / `"b"` table names).
- * - Null `parseSqlFingerprint` on an otherwise Drift-shaped line falls back to **N × Repeated:**
- *   (simulated via a scoped wrapper — host `parseDriftSqlFingerprint` cannot return null for
- *   valid `Sent` lines, but the embed branch must stay defensive).
- * - Non–`database`-tagged duplicates use **N × Repeated:** on one row.
+ * - Null `parseSqlFingerprint` on an otherwise Drift-shaped line falls back to inline `(×N)`
+ *   badge on the original line (no notification row).
+ * - Non–`database`-tagged duplicates get an inline `(×N)` badge on the original line.
  * - `cleanupTrailingRepeats` + marker ingest: tracker reset, anchor row height restored,
  *   no visible `repeat-notification` rows after the marker.
  * - **False positives:** gaps beyond `repeatWindowMs` reset the streak; Drift text without
@@ -52,20 +51,21 @@ function driftSelectWhereColumn(col: string): string {
 }
 
 suite('Viewer SQL repeat compression (DB_03)', () => {
-    test('many identical plain lines yield one repeat row (not one row per duplicate after threshold)', () => {
+    test('many identical plain lines get an inline repeat badge on the original (no notification row)', () => {
         const s = loadViewerRepeatSandbox();
         const t0 = 11_000_000;
         const msg = 'flutter accessibility_bridge duplicate line';
         for (let i = 0; i < 10; i++) {
             s.addToData(msg, false, 'stdout', t0 + i * 50, false, null, undefined, undefined, 'debug');
         }
+        /* Non-SQL repeats no longer create repeat-notification rows — the original
+           line stays visible with an inlineRepeatCount badge instead. */
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(
-            repeats.length,
-            1,
-            'legacy behavior appended a new repeat-notification per duplicate; expect a single row updated in place',
-        );
-        assert.ok(repeats[0].html?.includes('10 × Repeated:'), repeats[0].html);
+        assert.strictEqual(repeats.length, 0, 'non-SQL repeats should not create notification rows');
+        const lines = s.allLines.filter((l) => l.type === 'line');
+        assert.strictEqual(lines.length, 1, 'only the original anchor line should exist');
+        assert.strictEqual(lines[0].inlineRepeatCount, 10, 'badge count should reflect all 10 occurrences');
+        assert.strictEqual(lines[0].height, ROW_HEIGHT_EXPECTED, 'original line stays visible');
     });
 
     test('same SQL shape with different args stays one fingerprint-keyed streak (N × SQL repeated:)', () => {
@@ -100,7 +100,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(lines.every((l) => l.repeatHidden === true));
     });
 
-    test('database line with forced null fingerprint falls back to plain repeat hash (× Repeated:, not SQL repeated)', () => {
+    test('database line with forced null fingerprint falls back to inline repeat badge (not SQL drilldown)', () => {
         const s = loadViewerRepeatSandbox();
         const realParse = s.parseSqlFingerprint;
         assert.ok(typeof realParse === 'function');
@@ -116,10 +116,12 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(line, false, 'stdout', t0 + 50, false, null, undefined, undefined, 'debug');
         s.addToData(line, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
+        /* Null fingerprint means non-SQL path: inline badge, no notification row. */
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 1);
-        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
-        assert.ok(!repeats[0].html?.includes('SQL repeated'));
+        assert.strictEqual(repeats.length, 0, 'null-fingerprint lines should use inline badge, not notification row');
+        const lines = s.allLines.filter((l) => l.type === 'line');
+        assert.strictEqual(lines.length, 1);
+        assert.strictEqual(lines[0].inlineRepeatCount, 3);
     });
 
     test('gap beyond repeatWindowMs starts a new streak (does not extend SQL repeated count)', () => {
@@ -139,7 +141,7 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         assert.ok(visibleTail[0].html?.includes('Drift: Sent'));
     });
 
-    test('Drift-shaped text without logcat prefix is not database-tagged (no SQL repeated label)', () => {
+    test('Drift-shaped text without logcat prefix is not database-tagged (inline badge, not SQL drilldown)', () => {
         const s = loadViewerRepeatSandbox();
         const t0 = 7_000_000;
         const bare = 'Drift: Sent SELECT 1 with args [x]';
@@ -147,13 +149,15 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(bare, false, 'stdout', t0 + 50, false, null, undefined, undefined, 'debug');
         s.addToData(bare, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
+        /* Without logcat prefix, not database-tagged — non-SQL inline badge path. */
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 1);
-        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
-        assert.ok(!repeats[0].html?.includes('SQL repeated'));
+        assert.strictEqual(repeats.length, 0, 'non-database lines should use inline badge, not notification row');
+        const lines = s.allLines.filter((l) => l.type === 'line');
+        assert.strictEqual(lines.length, 1);
+        assert.strictEqual(lines[0].inlineRepeatCount, 3);
     });
 
-    test('non-database identical lines use legacy repeat suppression wording', () => {
+    test('non-database identical lines use inline repeat badge (no notification row)', () => {
         const s = loadViewerRepeatSandbox();
         const t0 = 4_000_000;
         const msg = 'plain duplicate line without logcat prefix';
@@ -161,11 +165,13 @@ suite('Viewer SQL repeat compression (DB_03)', () => {
         s.addToData(msg, false, 'stdout', t0 + 50, false, null, undefined, undefined, 'debug');
         s.addToData(msg, false, 'stdout', t0 + 100, false, null, undefined, undefined, 'debug');
 
+        /* Non-database lines: inline badge on original, no notification row at all. */
         const repeats = s.allLines.filter((l) => l.type === 'repeat-notification');
-        assert.strictEqual(repeats.length, 1);
-        assert.ok(repeats[0].html?.includes('3 × Repeated:'));
-        assert.ok(!repeats[0].html?.includes('SQL repeated'));
-        assert.ok(!repeats[0].html?.includes('sql-repeat-drilldown-toggle'));
+        assert.strictEqual(repeats.length, 0, 'plain lines should not create notification rows');
+        const lines = s.allLines.filter((l) => l.type === 'line');
+        assert.strictEqual(lines.length, 1);
+        assert.strictEqual(lines[0].inlineRepeatCount, 3);
+        assert.strictEqual(lines[0].height, ROW_HEIGHT_EXPECTED, 'original line stays visible');
     });
 
     test('DB_06: SQL repeat rows carry drilldown snapshot and toggle; expand increases height', () => {
