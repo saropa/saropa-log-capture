@@ -116,6 +116,11 @@ export function getSessionListStyles(): string {
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
+/* File count shown dimmed in parentheses beside the date label. */
+.session-day-count {
+    font-weight: 400;
+    opacity: 0.5;
+}
 
 /* Collapsed day group: hide session items. */
 .session-day-group.collapsed > .session-day-items {
