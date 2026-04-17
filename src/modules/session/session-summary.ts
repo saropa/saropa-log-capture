@@ -154,8 +154,8 @@ export function showSummaryNotification(summary: SessionSummary): void {
 
     vscode.window.showInformationMessage(
         message,
-        openLabel,
         copyLabel,
+        openLabel,
     ).then((selection) => {
         if (selection === openLabel) {
             // After finalize there is no active session; open the finalized log when we have its URI.
