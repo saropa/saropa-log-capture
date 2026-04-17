@@ -34,6 +34,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Changed
 
+- **Repeated log lines now show inline (×N) badge instead of a separate "N × Repeated:" row.** Non-SQL duplicate lines keep the original line visible with its line number, decoration, and severity bar, and add a small `(×N)` badge. This eliminates the confusing separate notification row, whitespace gaps, and missing original line content. SQL fingerprint repeats still use the expandable drilldown row.
 - **Log Sources panel layout improved.** Source type descriptions (stdout, stderr, console / Logcat, Android system logs / etc.) now appear inline after the tier name with a dash separator instead of on a separate line. Device and External tiers have visual spacing separators.
 - **Filter accordion sections displayed side-by-side.** Log Sources, Text Exclusions, and File Scope now use a 3-column grid layout. Multiple sections can be expanded simultaneously instead of collapsing others.
 - **Date group headings show file count.** Collapsible day sections in the Project Logs panel now display the number of files in each group, right-aligned as a subtle badge.
