@@ -28,6 +28,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [Unreleased]
 
+### Added
+
+- **Capture on/off toggle in the status bar.** A persistent `$(circle-filled)` / `$(circle-outline)` icon now sits in the status bar (right side, priority 52). Click it to flip `saropaLogCapture.enabled` for the current workspace — no more hunting through Settings to find a workspace override silently keeping capture disabled. The icon turns orange-warning when capture is off. Also available via the command palette: "Saropa Log Capture: Toggle Capture On/Off".
+
+### Changed
+
+- **Log Sources panel layout improved.** Source type descriptions (stdout, stderr, console / Logcat, Android system logs / etc.) now appear inline after the tier name with a dash separator instead of on a separate line. Device and External tiers have visual spacing separators.
+- **Filter accordion sections displayed side-by-side.** Log Sources, Text Exclusions, and File Scope now use a 3-column grid layout. Multiple sections can be expanded simultaneously instead of collapsing others.
+- **Date group headings show file count.** Collapsible day sections in the Project Logs panel now display the number of files in each group, right-aligned as a subtle badge.
+- **Presets moved from filter drawer to kebab menu.** The "Saved Filters" dropdown at the bottom of the filter drawer is replaced by a "Presets" flyout submenu in the kebab (three-dot) actions menu. Each preset shows a tooltip describing what filters it changes.
+- **Kebab dropdown aligned to button.** The actions dropdown now opens directly below the three-dot icon instead of anchoring to the far right of the page.
+
 ---
 
 ## [7.1.1]
