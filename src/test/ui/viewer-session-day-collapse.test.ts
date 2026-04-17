@@ -178,4 +178,35 @@ suite('Collapsible day groups', () => {
         const groupCount = (html.match(/class="session-day-group/g) || []).length;
         assert.strictEqual(groupCount, 1, 'Single day should produce exactly one group');
     });
+
+    test('should show file count in day heading for today group', () => {
+        const { elements } = bootWithSessions(twoDaySessions);
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        /* Today has 2 sessions, yesterday has 1. Both should show counts in parentheses. */
+        assert.ok(html.includes('session-day-count'), 'Day headings should include count badge');
+        assert.ok(html.includes('(2)'), 'Today group should show count (2)');
+        assert.ok(html.includes('(1)'), 'Yesterday group should show count (1)');
+    });
+
+    test('should not show file count when day headings are off', () => {
+        const { sandbox: _sb, elements, messageHandlers } = buildSandbox();
+        bootPanel(_sb);
+        for (const handler of messageHandlers) {
+            handler({
+                data: {
+                    type: 'sessionDisplayOptions',
+                    options: {
+                        stripDatetime: true, normalizeNames: true,
+                        showDayHeadings: false, reverseSort: false,
+                        showLatestOnly: false, dateRange: 'all',
+                    },
+                },
+            });
+        }
+        for (const handler of messageHandlers) {
+            handler({ data: { type: 'sessionList', sessions: twoDaySessions } });
+        }
+        const html = String(elements.get('session-list')?.innerHTML ?? '');
+        assert.ok(!html.includes('session-day-count'), 'Flat mode should not render count badges');
+    });
 });
