@@ -60,8 +60,8 @@ export function dispatchPanelMessage(msg: Record<string, unknown>, ctx: PanelMes
       case "requestPerformanceData": panelHandlers.handlePerformanceRequest(ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "setRecurringErrorStatus": panelHandlers.handleSetErrorStatus(String(msg.hash ?? ''), String(msg.status ?? 'open'), ctx.post, ctx.currentFileUri).catch(() => {}); return true;
       case "openSignals": ctx.post({ type: 'openSignalPanel', tab: 'recurring' }); return true;
-      case "addSignalItemToCase":
-        vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCase', msg.payload);
+      case "addSignalItemToCollection":
+        vscode.commands.executeCommand('saropaLogCapture.addSignalItemToCollection', msg.payload);
         return true;
       case "exportSignalsSummary": vscode.commands.executeCommand('saropaLogCapture.exportSignalsSummary'); return true;
       case "requestAboutContent":

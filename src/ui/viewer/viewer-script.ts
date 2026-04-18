@@ -137,6 +137,10 @@ var nextGroupId = 0, activeGroupHeader = null, groupHeaderMap = {};
 var lastStart = -1, lastEnd = -1, rafPending = false;
 var currentFilename = '', nextSeq = 1, scrollMemory = {};
 var loadTruncatedInfo = null;
+/** Structured file mode (plan 051): 'log' | 'markdown' | 'json' | 'csv' | 'html'. Non-log modes skip analysis. */
+var fileMode = 'log';
+/** Whether the format toggle is on for the current non-log file. */
+var formatEnabled = false;
 var correlationByLineIndex = {};
 /* When true, paired "│ … │" banner rows are not stack frames (see isStackFrameText). Baked from host config. */
 var viewerPreserveAsciiBoxArt = ${viewerPreserveAsciiBoxArt ? 'true' : 'false'};

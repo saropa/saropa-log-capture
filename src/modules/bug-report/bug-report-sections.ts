@@ -226,7 +226,7 @@ export function escapePipe(text: string): string { return text.replaceAll('|', S
 export function formatFooter(filename: string, lineNumber: number): string {
     const origin = filename
         ? `Report generated from \`${filename}\` at line ${lineNumber}`
-        : 'Report generated from investigation context';
+        : 'Report generated from collection context';
     return [
         '---',
         `*${origin}*`,

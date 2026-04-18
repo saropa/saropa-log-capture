@@ -18,20 +18,20 @@ suite('slc-bundle', () => {
             assert.strictEqual(isSlcManifestValid({ version: 0, mainLog: 'x.log', parts: [] }), false);
         });
 
-        test('accepts valid v3 investigation manifest', () => {
+        test('accepts valid v3 collection manifest', () => {
             assert.strictEqual(
                 isSlcManifestValid({
                     version: 3,
-                    type: 'investigation',
-                    investigation: { name: 'My Investigation', sources: [] },
+                    type: 'collection',
+                    collection: { name: 'My Collection', sources: [] },
                 }),
                 true,
             );
             assert.strictEqual(
                 isSlcManifestValid({
                     version: 3,
-                    type: 'investigation',
-                    investigation: { name: 'X', sources: [{ type: 'session', filename: 'a.log', label: 'A' }] },
+                    type: 'collection',
+                    collection: { name: 'X', sources: [{ type: 'session', filename: 'a.log', label: 'A' }] },
                 }),
                 true,
             );

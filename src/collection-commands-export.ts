@@ -1,22 +1,22 @@
 /**
- * Investigation export command: export active investigation to .slc file.
+ * Collection export command: export active collection to .slc file.
  */
 
 import * as vscode from 'vscode';
 import { t } from './l10n';
-import { exportInvestigationToSlc } from './modules/export/slc-bundle';
-import type { InvestigationStore } from './modules/investigation/investigation-store';
+import { exportCollectionToSlc } from './modules/export/slc-bundle';
+import type { CollectionStore } from './modules/collection/collection-store';
 
-export function registerExportInvestigationCommand(investigationStore: InvestigationStore): vscode.Disposable {
-    return vscode.commands.registerCommand('saropaLogCapture.exportInvestigation', async () => {
-        const investigation = await investigationStore.getActiveInvestigation();
-        if (!investigation) {
-            vscode.window.showWarningMessage(t('msg.noActiveInvestigation'));
+export function registerExportCollectionCommand(collectionStore: CollectionStore): vscode.Disposable {
+    return vscode.commands.registerCommand('saropaLogCapture.exportCollection', async () => {
+        const collection = await collectionStore.getActiveCollection();
+        if (!collection) {
+            vscode.window.showWarningMessage(t('msg.noActiveCollection'));
             return;
         }
 
-        if (investigation.sources.length === 0) {
-            vscode.window.showWarningMessage(t('msg.noSourcesInInvestigation'));
+        if (collection.sources.length === 0) {
+            vscode.window.showWarningMessage(t('msg.noSourcesInCollection'));
             return;
         }
 
@@ -28,8 +28,8 @@ export function registerExportInvestigationCommand(investigationStore: Investiga
 
         try {
             const outUri = await vscode.window.withProgress(
-                { location: vscode.ProgressLocation.Notification, title: t('progress.exportInvestigation') },
-                () => exportInvestigationToSlc(investigation, folder.uri),
+                { location: vscode.ProgressLocation.Notification, title: t('progress.exportCollection') },
+                () => exportCollectionToSlc(collection, folder.uri),
             );
             if (outUri) {
                 const action = await vscode.window.showInformationMessage(

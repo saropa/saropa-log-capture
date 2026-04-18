@@ -94,6 +94,18 @@ if (viewportEl) viewportEl.addEventListener('click', function(e) {
         });
         return;
     }
+    /* Markdown heading collapse (plan 051). */
+    var mdHeading = e.target.closest('[data-md-section]');
+    if (mdHeading && typeof toggleMdSection === 'function') {
+        toggleMdSection(parseInt(mdHeading.dataset.mdSection));
+        return;
+    }
+    /* JSON brace-pair collapse (plan 051). */
+    var jsonNode = e.target.closest('[data-json-section]');
+    if (jsonNode && typeof toggleJsonSection === 'function') {
+        toggleJsonSection(parseInt(jsonNode.dataset.jsonSection));
+        return;
+    }
     var header = e.target.closest('.stack-header');
     if (header && header.dataset.gid !== undefined) {
         toggleStackGroup(parseInt(header.dataset.gid));

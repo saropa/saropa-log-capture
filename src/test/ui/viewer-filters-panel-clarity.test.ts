@@ -1,21 +1,45 @@
 import * as assert from 'assert';
-import { getTagsPanelHtml } from '../../ui/viewer-search-filter/viewer-filters-panel-html';
 import { getTagsPanelScript } from '../../ui/viewer-search-filter/viewer-filters-panel-script';
 import { getScopeFilterScript } from '../../ui/viewer-search-filter/viewer-scope-filter';
 import { getScopeFilterHintScript } from '../../ui/viewer-search-filter/viewer-scope-filter-hint';
-import { getFilterScript } from '../../ui/viewer-search-filter/viewer-filter';
 import { getExclusionScript } from '../../ui/viewer-search-filter/viewer-exclusions';
 import { getToolbarScript } from '../../ui/viewer-toolbar/viewer-toolbar-script';
 import { getFilterDrawerHtml } from '../../ui/viewer-toolbar/viewer-toolbar-filter-drawer-html';
 import { getPresetsScript } from '../../ui/viewer-search-filter/viewer-presets';
 
 suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
-    test('Tags panel HTML has Message Tags, Code Origins, and SQL sections', () => {
-        const html = getTagsPanelHtml();
-        assert.ok(html.includes('Message Tags'));
-        assert.ok(html.includes('Code Origins'));
-        assert.ok(html.includes('SQL Commands'));
-        assert.ok(html.includes('id="tags-panel"'), 'panel should have tags-panel id');
+    test('Filter drawer tab bar should have all 6 tabs with icons', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('filter-tab-log-sources'), 'should have Log Sources tab');
+        assert.ok(html.includes('filter-tab-exclusions'), 'should have Exclusions tab');
+        assert.ok(html.includes('filter-tab-scope'), 'should have File Scope tab');
+        assert.ok(html.includes('filter-tab-log-tags'), 'should have Message Tags tab');
+        assert.ok(html.includes('filter-tab-class-tags'), 'should have Source Classes tab');
+        assert.ok(html.includes('filter-tab-sql-patterns'), 'should have SQL Commands tab');
+        /* Each tab should have a codicon */
+        assert.ok(html.includes('codicon-broadcast'), 'Log Sources tab should have broadcast icon');
+        assert.ok(html.includes('codicon-exclude'), 'Exclusions tab should have exclude icon');
+        assert.ok(html.includes('codicon-folder-opened'), 'File Scope tab should have folder icon');
+        assert.ok(html.includes('codicon-tag'), 'Message Tags tab should have tag icon');
+        assert.ok(html.includes('codicon-symbol-class'), 'Source Classes tab should have class icon');
+        assert.ok(html.includes('codicon-database'), 'SQL Commands tab should have database icon');
+    });
+
+    test('Filter drawer should contain tag/origin/SQL tab panels', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('source-tag-chips'), 'should have source tag chips container');
+        assert.ok(html.includes('class-tag-chips'), 'should have class tag chips container');
+        assert.ok(html.includes('sql-pattern-chips'), 'should have SQL pattern chips container');
+    });
+
+    test('Each tab should have a count suffix span', () => {
+        const html = getFilterDrawerHtml();
+        assert.ok(html.includes('filter-tab-count-log-sources'), 'Log Sources tab count');
+        assert.ok(html.includes('filter-tab-count-exclusions'), 'Exclusions tab count');
+        assert.ok(html.includes('filter-tab-count-scope'), 'File Scope tab count');
+        assert.ok(html.includes('filter-tab-count-log-tags'), 'Message Tags tab count');
+        assert.ok(html.includes('filter-tab-count-class-tags'), 'Source Classes tab count');
+        assert.ok(html.includes('filter-tab-count-sql-patterns'), 'SQL Commands tab count');
     });
 
     test('Tags panel script wires tier radio event handlers', () => {
@@ -47,15 +71,27 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(script.includes('Reset to All logs'));
     });
 
-    test('toolbar script should define setAccordionSummary helper', () => {
+    test('toolbar script should define setAccordionSummary that updates tab counts', () => {
         const script = getToolbarScript();
         assert.ok(
             script.includes('function setAccordionSummary(sectionId, text)'),
-            'toolbar script must define setAccordionSummary for use by filter sections',
+            'toolbar script must define setAccordionSummary for backward compat',
         );
         assert.ok(
-            script.includes('.filter-accordion-summary'),
-            'setAccordionSummary should target the .filter-accordion-summary span',
+            script.includes('filter-tab-count-'),
+            'setAccordionSummary should target filter-tab-count elements',
+        );
+    });
+
+    test('toolbar script should define activateFilterTab for tab switching', () => {
+        const script = getToolbarScript();
+        assert.ok(
+            script.includes('function activateFilterTab(key)'),
+            'toolbar script must define activateFilterTab',
+        );
+        assert.ok(
+            script.includes('initFilterTabs'),
+            'toolbar script must call initFilterTabs',
         );
     });
 
@@ -67,19 +103,11 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         );
     });
 
-    test('category filter script should show log-sources-section on categories', () => {
-        const script = getFilterScript();
-        assert.ok(
-            script.includes('log-sources-section'),
-            'handleSetCategories should show the log-sources-section',
-        );
-    });
-
     test('exclusion script should set accordion summary', () => {
         const script = getExclusionScript();
         assert.ok(
             script.includes("setAccordionSummary('exclusions-section'"),
-            'exclusion rebuild should update accordion summary',
+            'exclusion rebuild should update tab count via setAccordionSummary',
         );
     });
 
@@ -87,18 +115,17 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         const script = getScopeFilterScript();
         assert.ok(
             script.includes("setAccordionSummary('scope-section'"),
-            'scope filter should update accordion summary',
+            'scope filter should update tab count via setAccordionSummary',
         );
-        // resetScopeFilter should also clear the summary
         const resetIdx = script.indexOf('function resetScopeFilter');
         const resetBody = script.substring(resetIdx, script.indexOf('}', resetIdx + 30) + 1);
         assert.ok(
             resetBody.includes("setAccordionSummary('scope-section', '')"),
-            'resetScopeFilter should clear accordion summary',
+            'resetScopeFilter should clear tab count',
         );
     });
 
-    test('drawer HTML should use new section names and not old ones', () => {
+    test('drawer HTML should use correct section names and not old ones', () => {
         const html = getFilterDrawerHtml();
         assert.ok(!html.includes('Log Streams'), 'drawer should not use old "Log Streams" title');
         assert.ok(!html.includes('Output Channels'), 'drawer should not use old "Output Channels" title');
@@ -106,28 +133,7 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(!html.includes('sidecar'), 'drawer should not contain sidecar jargon');
         assert.ok(!html.includes('Log Inputs'), 'drawer should not use old "Log Inputs" title');
         assert.ok(html.includes('Log Sources'), 'drawer should use "Log Sources" title');
-        assert.ok(html.includes('Text Exclusions'), 'drawer should use "Text Exclusions" title');
         assert.ok(html.includes('File Scope'), 'drawer should use "File Scope" title');
-    });
-
-    test('drawer should NOT contain tag/origin/SQL sections (moved to Tags panel)', () => {
-        const html = getFilterDrawerHtml();
-        assert.ok(!html.includes('Message Tags'), 'Message Tags moved to Tags panel');
-        assert.ok(!html.includes('Code Origins'), 'Code Origins moved to Tags panel');
-        assert.ok(!html.includes('SQL Commands'), 'SQL Commands moved to Tags panel');
-    });
-
-    test('Tags panel should not contain filter drawer controls', () => {
-        const html = getTagsPanelHtml();
-        assert.ok(!html.includes('Log Streams'), 'panel should not use old "Log Streams" title');
-        assert.ok(!html.includes('Output Channels'), 'panel should not use old "Output Channels" title');
-        assert.ok(!html.includes('Code Tags'), 'panel should not use old "Code Tags" title');
-        assert.ok(!html.includes('output-channels-list'), 'panel should not have channel checkboxes');
-        assert.ok(!html.includes('source-filter-list'), 'panel should not have source checkboxes');
-        assert.ok(!html.includes('tier-flutter'), 'tier radios belong in the filter drawer');
-        assert.ok(!html.includes('opt-exclusions'), 'exclusions belong in the filter drawer');
-        assert.ok(html.includes('Message Tags'), 'panel should have Message Tags');
-        assert.ok(html.includes('Code Origins'), 'panel should have Code Origins');
     });
 
     test('Tags panel script should not contain source checkbox code', () => {
@@ -138,11 +144,14 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(!script.includes('syncSourceFilterUi'), 'source filter sync removed');
     });
 
-    test('toolbar script should hide level dots when filter drawer opens', () => {
+    test('toolbar filter button should toggle filter panel via setActivePanel', () => {
         const script = getToolbarScript();
-        assert.ok(script.includes("levelMenuBtn"), 'should reference level-menu-btn element');
-        assert.ok(script.includes("levelMenuBtn.classList.add('u-hidden')"), 'should hide dots on drawer open');
-        assert.ok(script.includes("levelMenuBtn.classList.remove('u-hidden')"), 'should show dots on drawer close');
+        /* Filter panel is a sidebar, not a dropdown — toolbar button
+         * calls setActivePanel('filters') to open it in panel-slot. */
+        assert.ok(
+            script.includes("setActivePanel('filters')"),
+            'filter button should toggle via setActivePanel',
+        );
     });
 
     test('Log Sources should contain all three tier radio groups with hints', () => {
@@ -150,10 +159,8 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(html.includes('name="tier-flutter"'), 'should contain Flutter DAP radio group');
         assert.ok(html.includes('name="tier-device"'), 'should contain Device radio group');
         assert.ok(html.includes('name="tier-external"'), 'should contain External radio group');
-        /* Flutter DAP label with DAP tooltip */
         assert.ok(html.includes('Flutter DAP'), 'should use "Flutter DAP" label');
         assert.ok(html.includes('Debug Adapter Protocol'), 'Flutter DAP should have DAP tooltip');
-        /* Descriptions explain what each tier includes */
         assert.ok(html.includes('stdout, stderr, console'), 'Flutter DAP should list DAP categories');
         assert.ok(html.includes('Logcat'), 'Device should mention logcat');
         assert.ok(html.includes('Saved logs'), 'External should mention saved logs');
@@ -165,17 +172,14 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
         assert.ok(!html.includes('output-channels-list'), 'category checkboxes removed from drawer');
     });
 
-    test('Text Exclusions accordion should contain exclusion controls', () => {
+    test('Exclusions tab panel should contain exclusion controls', () => {
         const html = getFilterDrawerHtml();
         assert.ok(html.includes('exclusions-section'), 'should have exclusions-section');
-        assert.ok(html.includes('opt-exclusions'), 'Text Exclusions should contain exclusion checkbox');
+        assert.ok(html.includes('opt-exclusions'), 'Exclusions panel should contain exclusion checkbox');
     });
 
     test('exclusion checkbox should be inline with text input in drawer', () => {
         const html = getFilterDrawerHtml();
-        /* The checkbox label must be INSIDE the exclusion-input-wrapper,
-         * not in a separate options-row above it. Verify ordering:
-         * exclusion-toggle appears before exclusion-add-input, both inside the wrapper. */
         const wrapperStart = html.indexOf('exclusion-input-wrapper');
         const togglePos = html.indexOf('exclusion-toggle', wrapperStart);
         const inputPos = html.indexOf('exclusion-add-input', wrapperStart);
@@ -186,15 +190,14 @@ suite('Filters panel clarity (inputs, scope, noise reduction)', () => {
 
     test('exclusion label should be screen-reader-only in drawer', () => {
         const drawerHtml = getFilterDrawerHtml();
-        /* The exclusion-label span uses u-sr-only so the accordion header
-         * provides the visible label while screen readers still get text. */
         assert.ok(drawerHtml.includes('u-sr-only'), 'drawer exclusion label should use u-sr-only');
     });
 
     test('drawer footer should say "Saved Filters" with "Default" option, no Reset button', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(html.includes('>Saved Filters:</span>'), 'footer label should read "Saved Filters:"');
+        assert.ok(html.includes('id="preset-select"'), 'hidden preset select must exist');
         assert.ok(html.includes('>Default</option>'), 'default option should read "Default"');
+        assert.ok(!html.includes('filter-drawer-footer-label'), 'old footer label should be removed');
         assert.ok(!html.includes('reset-all-filters'), 'Reset all button should be removed');
     });
 

@@ -16,8 +16,9 @@ import { getTrashPanelHtml } from '../viewer-panels/viewer-trash-panel';
 import { getOptionsPanelHtml } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelHtml } from '../panels/viewer-crashlytics-panel';
 import { getSignalPanelHtml } from '../panels/viewer-signal-panel';
+import { getCollectionsPanelHtml } from '../viewer-panels/viewer-collections-panel';
 import { getAboutPanelHtml } from '../viewer-panels/viewer-about-panel';
-import { getTagsPanelHtml } from '../viewer-search-filter/viewer-filters-panel-html';
+
 import { getScrollbarMinimapHtml } from '../viewer/viewer-scrollbar-minimap';
 import { getGotoLineHtml } from '../viewer/viewer-goto-line';
 import { getReplayBarHtml } from '../viewer/viewer-replay';
@@ -49,14 +50,14 @@ export function getViewerBodyHtml(opts: ViewerBodyOptions): string {
     ${getTrashPanelHtml()}
     ${getOptionsPanelHtml()}
     ${getCrashlyticsPanelHtml()}
+    ${getCollectionsPanelHtml()}
     ${getSignalPanelHtml()}
     ${getAboutPanelHtml()}
-    ${getTagsPanelHtml()}
+    ${getFilterDrawerHtml()}
     </div>
     <div id="log-area-with-footer">
     ${getToolbarHtml({ version })}
     ${getSearchFlyoutHtml()}
-    ${getFilterDrawerHtml()}
     ${getActionsDropdownHtml()}
     <div id="compress-suggest-banner" class="compress-suggest-banner u-hidden" role="status" aria-live="polite">
         <span class="compress-suggest-msg">Many identical lines in a row — try <strong>Compress lines</strong> (Options \u2192 Layout or right-click \u2192 Options).</span>

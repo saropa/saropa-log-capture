@@ -34,6 +34,16 @@ function getCategoryBadge(item) {
 
 function renderItem(item, idx, prevVis) {
     var idxAttr = ' data-idx="' + idx + '"';
+    /* Structured file formatting (plan 051): when format toggle is on for
+       a non-log file, delegate to the mode-specific formatter. */
+    if (fileMode !== 'log' && formatEnabled && item.type === 'line') {
+        var fmtHtml = '';
+        if (fileMode === 'markdown' && typeof formatMarkdownLine === 'function') fmtHtml = formatMarkdownLine(item, idx);
+        else if (fileMode === 'json' && typeof formatJsonLine === 'function') fmtHtml = formatJsonLine(item, idx);
+        else if (fileMode === 'csv' && typeof formatCsvLine === 'function') fmtHtml = formatCsvLine(item, idx);
+        else fmtHtml = item.html;
+        return '<div class="line fmt-' + fileMode + '"' + idxAttr + '>' + fmtHtml + '</div>';
+    }
     var rawHtml = item.html;
     /* Structured line parsing: strip the detected prefix (timestamp, PID, TID, level, tag).
        When active, this subsumes source-tag stripping for structured formats.
@@ -102,6 +112,12 @@ function renderItem(item, idx, prevVis) {
     if (item.type === 'repeat-notification' || item.type === 'n-plus-one-signal') {
         return '<div class="line' + matchCls + '"' + idxAttr + '>' + html + '</div>';
     }
+    /* Stack gutter: when any stack groups exist, non-header lines get an
+       invisible spacer matching the arrow width so line numbers stay aligned. */
+    var stackGutter = '';
+    if (typeof nextGroupId !== 'undefined' && nextGroupId > 0 && item.type !== 'stack-header') {
+        stackGutter = '<span class="stack-gutter-spacer">\\u25b6 </span>';
+    }
     var isBlank = isLineContentBlank(item);
     var barCls = '';
     // Blank lines get no bar class here; the connector bridge in renderViewport() adds the
@@ -139,7 +155,7 @@ function renderItem(item, idx, prevVis) {
     if (item.type === 'stack-frame') {
         var sfQb = (typeof getQualityBadge === 'function') ? getQualityBadge(item) : '';
         var sfHeat = (item.qualityPercent != null && typeof decoShowQuality !== 'undefined' && decoShowQuality) ? (item.qualityPercent >= 80 ? ' line-quality-high' : (item.qualityPercent >= 50 ? ' line-quality-med' : ' line-quality-low')) : '';
-        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + sfHeat + '"' + idxAttr + '>' + sfQb + html + '</div>';
+        return '<div class="line stack-line' + (item.fw ? ' framework-frame' : '') + matchCls + barCls + sfHeat + '"' + idxAttr + '>' + stackGutter + sfQb + html + '</div>';
     }
     if (item.category && item.category.indexOf('ai-') === 0) {
         var aiCat = item.category;
@@ -235,7 +251,13 @@ function renderItem(item, idx, prevVis) {
         blankCls += ' recent-error-context';
     }
     var catBadge = getCategoryBadge(item);
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + contBadge + deco + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
+    /* Render order: deco first, then contBadge. When deco exists the badge is
+       already spliced into it (left of the » chevron) and the standalone
+       contBadge variable is cleared — so this tail position only applies to
+       art-continuation lines where deco is empty. The order 'deco then
+       contBadge' (not the reverse) preserves the invariant that the badge
+       never precedes the decoration prefix in the output string. */
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + stackGutter + deco + contBadge + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }

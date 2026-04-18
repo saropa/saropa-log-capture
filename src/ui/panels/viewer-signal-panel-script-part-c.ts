@@ -98,13 +98,6 @@ export function getSignalScriptPartC(): string {
             }
             lines.push('');
         }
-        var invs = (investigationsData.investigations || []);
-        if (invs.length > 0) {
-            lines.push('## Your cases');
-            lines.push('');
-            for (var k = 0; k < invs.length; k++) lines.push('- ' + (invs[k].name || 'Unnamed'));
-            lines.push('');
-        }
         var allSigs = (signalDataCache.allSignals || []).filter(function(s) { return s.kind !== 'error' && s.kind !== 'warning' || (signalDataCache.statuses || {})[s.fingerprint] !== 'muted'; });
         var hotFiles = signalDataCache.hotFiles || [];
         if (allSigs.length > 0 || hotFiles.length > 0) {
@@ -153,12 +146,6 @@ export function getSignalScriptPartC(): string {
         if (md) vscodeApi.postMessage({ type: 'copyToClipboard', text: md });
     });
 
-    var hotfilesListEl = document.getElementById('signal-hotfiles-list');
-    if (hotfilesListEl) hotfilesListEl.addEventListener('click', function(e) {
-        var addBtn = e.target.closest('.re-add-to-case');
-        if (addBtn) { e.preventDefault(); vscodeApi.postMessage({ type: 'addSignalItemToCase', payload: { type: 'hotfile', filename: addBtn.dataset.filename || '' } }); }
-    });
-
     var exportSummaryEl = document.getElementById('signal-export-summary');
     if (exportSummaryEl) exportSummaryEl.addEventListener('click', function() {
         vscodeApi.postMessage({ type: 'exportSignalsSummary' });
@@ -187,29 +174,6 @@ export function getSignalScriptPartC(): string {
             vscodeApi.postMessage({ type: 'requestSignalData' });
             return;
         }
-        if (e.data.type === 'investigationsList') {
-            setCreateInvestigationLoading(false);
-            var casesLoad = document.getElementById('signal-cases-loading');
-            if (casesLoad) casesLoad.style.display = 'none';
-            investigationsData = { investigations: e.data.investigations || [], activeId: e.data.activeId || '' };
-            renderCasesList();
-        }
-        if (e.data.type === 'addToCaseCompleted') {
-            expandCasesAndScrollToNew();
-        }
-        if (e.data.type === 'createInvestigationSucceeded') {
-            expandCasesAndScrollToNew();
-            var listEl = document.getElementById('signal-cases-list');
-            var lastItem = listEl && listEl.lastElementChild;
-            if (lastItem) lastItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-        if (e.data.type === 'createInvestigationError') {
-            setCreateInvestigationLoading(false);
-            var casesLoad = document.getElementById('signal-cases-loading');
-            if (casesLoad) casesLoad.style.display = 'none';
-            var errEl = document.getElementById('signal-cases-create-error');
-            if (errEl) { errEl.textContent = e.data.message || 'Failed to create'; errEl.style.display = ''; }
-        }
         if (e.data.type === 'signalData') {
             var d = e.data;
             signalDataCache = {
@@ -221,6 +185,9 @@ export function getSignalScriptPartC(): string {
             };
             renderHotFiles(); renderSignalsInThisLog();
             renderEnvironment(); renderSignalTrends(); renderCoOccurrences();
+            /* Update icon bar badge with total signal count (this log + all signals). */
+            var sigTotal = (signalDataCache.signalsInThisLog || []).length + (signalDataCache.allSignals || []).length;
+            if (typeof updateIconBadge === 'function') updateIconBadge('ib-signal-badge', 'ib-signal-count', sigTotal);
         }
         if (e.data.type === 'performanceData') {
             heroLoading = false;

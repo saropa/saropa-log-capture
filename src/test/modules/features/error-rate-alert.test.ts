@@ -108,8 +108,24 @@ suite('isErrorLine', () => {
         assert.strictEqual(isErrorLine('An error occurred', 'stdout'), true);
     });
 
+    test('should detect errors plural', () => {
+        assert.strictEqual(isErrorLine('Build completed with 3 errors', 'stdout'), true);
+    });
+
     test('should detect exception keyword', () => {
         assert.strictEqual(isErrorLine('NullPointerException', 'stdout'), true);
+    });
+
+    test('should detect standalone exception', () => {
+        assert.strictEqual(isErrorLine('Unhandled exception in thread', 'stdout'), true);
+    });
+
+    test('should detect PascalCase error types like TypeError', () => {
+        assert.strictEqual(isErrorLine('TypeError: Cannot read properties of null', 'stdout'), true);
+    });
+
+    test('should detect PascalCase error types like SyntaxError', () => {
+        assert.strictEqual(isErrorLine('SyntaxError: Unexpected token', 'stdout'), true);
     });
 
     test('should detect fatal keyword', () => {
@@ -123,6 +139,16 @@ suite('isErrorLine', () => {
     test('should not match regular text', () => {
         assert.strictEqual(isErrorLine('Everything is fine', 'stdout'), false);
     });
+
+    // False-positive regression: camelCase identifiers containing "error"
+    // should not trigger — they are config properties, not real errors
+    test('should not match camelCase identifiers containing error', () => {
+        assert.strictEqual(isErrorLine('  __breakOnConditionalError: false', 'stdout'), false);
+    });
+
+    test('should not match camelCase identifiers like showErrorDialog', () => {
+        assert.strictEqual(isErrorLine('  showErrorDialog: true', 'stdout'), false);
+    });
 });
 
 suite('isWarningLine', () => {
@@ -135,7 +161,16 @@ suite('isWarningLine', () => {
         assert.strictEqual(isWarningLine('WARN: something'), true);
     });
 
+    test('should detect PascalCase warning types like DeprecationWarning', () => {
+        assert.strictEqual(isWarningLine('DeprecationWarning: Buffer() is deprecated'), true);
+    });
+
     test('should not match regular text', () => {
         assert.strictEqual(isWarningLine('All good'), false);
+    });
+
+    // False-positive regression: camelCase identifiers containing "warn"
+    test('should not match camelCase identifiers like showWarningDialog', () => {
+        assert.strictEqual(isWarningLine('  showWarningDialog: true'), false);
     });
 });

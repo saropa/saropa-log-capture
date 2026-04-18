@@ -58,7 +58,7 @@ export function registerNoRestoreSerializers(context: vscode.ExtensionContext): 
     for (const viewType of [
         'saropaLogCapture.signals', 'saropaLogCapture.signalTab', 'saropaLogCapture.bugReport',
         'saropaLogCapture.analysis', 'saropaLogCapture.timeline',
-        'saropaLogCapture.comparison', 'saropaLogCapture.investigation',
+        'saropaLogCapture.comparison', 'saropaLogCapture.collection',
         'saropaLogCapture.popOutViewer',
     ]) {
         context.subscriptions.push(

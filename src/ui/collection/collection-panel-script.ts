@@ -1,5 +1,5 @@
-/** Client-side script for the investigation panel webview. */
-export function getInvestigationPanelScript(): string {
+/** Client-side script for the collection panel webview. */
+export function getCollectionPanelScript(): string {
     return /* js */ `
 (function() {
     const vscode = acquireVsCodeApi();

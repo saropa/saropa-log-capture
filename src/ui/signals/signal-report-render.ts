@@ -17,6 +17,9 @@ export function buildSignalReportShell(opts: ShellOptions): string {
   const { nonce, hypothesis } = opts;
   const conf = hypothesis.confidence ?? 'low';
   const confLabel = conf === 'high' ? 'High confidence' : conf === 'medium' ? 'Medium confidence' : 'Low confidence';
+  const reasonHtml = hypothesis.confidenceReason
+    ? `<div class="conf-reason">${escapeHtml(hypothesis.confidenceReason)}</div>`
+    : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,6 +32,7 @@ export function buildSignalReportShell(opts: ShellOptions): string {
 <div class="signal-summary">
   <span>${escapeHtml(hypothesis.text)}</span>
   <span class="conf-badge conf-badge--${escapeHtml(conf)}">${escapeHtml(confLabel)}</span>
+  ${reasonHtml}
 </div>
 
 <div id="section-overview" class="section-slot">
@@ -126,14 +130,33 @@ interface EvidenceLine {
   readonly isTarget: boolean;
 }
 
-/** Render evidence lines with surrounding context. */
-export function renderEvidenceSection(groups: readonly EvidenceLine[][]): string {
+/** Metadata shown above each evidence block (timeline position, preceding action). */
+export interface EvidenceGroupMeta {
+  readonly timelinePosition?: string;
+  readonly precedingAction?: string;
+}
+
+/** Single evidence group: the context lines plus optional metadata. */
+export interface EvidenceGroup {
+  readonly lines: readonly EvidenceLine[];
+  readonly meta?: EvidenceGroupMeta;
+}
+
+/** Render evidence lines with surrounding context and optional metadata annotations. */
+export function renderEvidenceSection(groups: readonly EvidenceGroup[]): string {
   if (groups.length === 0) { return '<div class="no-data">No evidence lines found</div>'; }
   const parts: string[] = [];
   for (const group of groups) {
     parts.push('<div class="evidence-block">');
+    // Metadata annotations above the code block
+    if (group.meta?.timelinePosition) {
+      parts.push(`<div class="evidence-meta">${escapeHtml(group.meta.timelinePosition)}</div>`);
+    }
+    if (group.meta?.precedingAction) {
+      parts.push(`<div class="evidence-meta">Preceding action: ${escapeHtml(group.meta.precedingAction)}</div>`);
+    }
     parts.push('<div class="evidence-lines">');
-    for (const line of group) {
+    for (const line of group.lines) {
       const cls = line.isTarget ? ' evidence-line--target' : '';
       const num = `<span class="evidence-line-num">${line.lineIndex + 1}</span>`;
       parts.push(`<div class="evidence-line${cls}">${num}${escapeHtml(line.text)}</div>`);
@@ -143,9 +166,13 @@ export function renderEvidenceSection(groups: readonly EvidenceLine[][]): string
   return parts.join('');
 }
 
-/** Render recommendations based on signal type. */
-export function renderRecommendations(templateId: string): string {
-  const recs = getRecommendation(templateId);
+/**
+ * Render recommendations based on signal type.
+ * For error-recent signals, the recommendation is tailored to the crash category
+ * (fatal, anr, oom, native, non-fatal) when available.
+ */
+export function renderRecommendations(templateId: string, errorCategory?: string): string {
+  const recs = getRecommendation(templateId, errorCategory);
   if (!recs) { return '<div class="no-data">No specific recommendations</div>'; }
   return `<div class="recommendation">${escapeHtml(recs)}</div>`;
 }
@@ -159,7 +186,12 @@ export function resolveSourcePaths(line: string, wsRoot: string): string {
   );
 }
 
-function getRecommendation(templateId: string): string | undefined {
+function getRecommendation(templateId: string, errorCategory?: string): string | undefined {
+  // Category-specific recommendations for error-recent signals
+  if (templateId === 'error-recent' && errorCategory) {
+    const catRec = errorCategoryRecommendation(errorCategory);
+    if (catRec) { return catRec; }
+  }
   const map: Record<string, string> = {
     'error-recent': 'Check the stack trace for the root cause. If the error repeats, consider adding error handling or fixing the underlying issue.',
     'warning-recurring': 'Recurring warnings often indicate deprecated APIs or configuration issues. Address them to prevent future breakage.',
@@ -171,8 +203,20 @@ function getRecommendation(templateId: string): string | undefined {
     'n-plus-one': 'Use eager loading (joins) or batch queries instead of issuing one query per item in a loop.',
     'sql-burst': 'Consider debouncing or batching these queries. Check if the same query is being called redundantly.',
     'fingerprint-leader': 'This query runs very frequently. Consider caching results or batching multiple calls.',
-    'classified-critical': 'This is a critical error that likely causes crashes or data loss. Prioritize investigation.',
+    'classified-critical': 'This is a critical error that likely causes crashes or data loss. Prioritize collection.',
     'classified-bug': 'This pattern typically indicates a programming error. Check for null/undefined handling and type safety.',
   };
   return map[templateId];
+}
+
+/** Tailored advice based on the crash category for error-recent signals. */
+function errorCategoryRecommendation(cat: string): string | undefined {
+  const catMap: Record<string, string> = {
+    'fatal': 'This is a fatal/unhandled exception — the app likely crashed. Check the stack trace for the throw site and add a top-level error handler.',
+    'anr': 'This error is associated with an ANR (Application Not Responding). Move the blocking operation off the main thread.',
+    'oom': 'This is an out-of-memory error. Profile heap usage, check for retained references, and consider reducing allocation in hot paths.',
+    'native': 'This is a native crash (SIGSEGV/SIGABRT). Check for use-after-free, null pointer dereference, or incompatible native library versions.',
+    'non-fatal': 'This is a non-fatal error. Check for null/undefined values at the call site shown in the stack trace.',
+  };
+  return catMap[cat];
 }

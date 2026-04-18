@@ -23,6 +23,8 @@ export interface WorkingHypothesis {
   readonly text: string;
   readonly evidenceLineIds: readonly number[];
   readonly confidence?: RootCauseHypothesisConfidence;
+  /** Human-readable reason for the confidence level. */
+  readonly confidenceReason?: string;
   readonly hypothesisKey: string;
   readonly tier: Tier;
 }

@@ -1,11 +1,11 @@
 /**
- * Investigation mode data model types.
- * An investigation is a named collection of pinned sources (sessions and files)
+ * Collection mode data model types.
+ * a collection is a named collection of pinned sources (sessions and files)
  * that can be searched together and exported as a bundle.
  */
 
-/** A source pinned to an investigation. */
-export interface InvestigationSource {
+/** A source pinned to a collection. */
+export interface CollectionSource {
     /** Source type: 'session' auto-includes sidecars, 'file' is standalone. */
     readonly type: 'session' | 'file';
     /** Path relative to workspace root (portable across machines). */
@@ -16,8 +16,8 @@ export interface InvestigationSource {
     readonly pinnedAt: number;
 }
 
-/** A named investigation containing pinned sources. */
-export interface Investigation {
+/** A named collection containing pinned sources. */
+export interface Collection {
     /** Unique identifier (UUID). */
     readonly id: string;
     /** User-provided name, e.g. "Auth Timeout Bug #1234". */
@@ -26,38 +26,38 @@ export interface Investigation {
     readonly createdAt: number;
     /** Last modification timestamp (epoch ms). */
     readonly updatedAt: number;
-    /** Pinned sources in this investigation. */
-    readonly sources: readonly InvestigationSource[];
+    /** Pinned sources in this collection. */
+    readonly sources: readonly CollectionSource[];
     /** User notes/description (optional). */
     readonly notes?: string;
     /** Last search query for restoring state (optional). */
     readonly lastSearchQuery?: string;
 }
 
-/** Input for creating a new investigation. */
-export interface CreateInvestigationInput {
+/** Input for creating a new collection. */
+export interface CreateCollectionInput {
     readonly name: string;
     readonly notes?: string;
 }
 
-/** Input for adding a source to an investigation. */
+/** Input for adding a source to a collection. */
 export interface AddSourceInput {
     readonly type: 'session' | 'file';
     readonly relativePath: string;
     readonly label: string;
 }
 
-/** Persisted format of the investigations file. */
-export interface InvestigationsFile {
+/** Persisted format of the collections file. */
+export interface CollectionsFile {
     readonly version: 1;
-    readonly investigations: Investigation[];
+    readonly collections: Collection[];
 }
 
-/** Maximum number of investigations per workspace. */
-export const MAX_INVESTIGATIONS = 50;
+/** Maximum number of collections per workspace. */
+export const MAX_COLLECTIONS = 50;
 
-/** Maximum number of sources per investigation. */
-export const MAX_SOURCES_PER_INVESTIGATION = 20;
+/** Maximum number of sources per collection. */
+export const MAX_SOURCES_PER_COLLECTION = 20;
 
 /** Maximum file size to search fully (bytes). Files larger than this show a warning. */
 export const MAX_SEARCH_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -88,7 +88,7 @@ export interface SearchMatch {
 
 /** Search results for a single source file (may be main log or sidecar). */
 export interface SourceSearchResult {
-    readonly source: InvestigationSource;
+    readonly source: CollectionSource;
     readonly sourceFile: string;
     readonly matches: readonly SearchMatch[];
     readonly truncated: boolean;
@@ -96,7 +96,7 @@ export interface SourceSearchResult {
 }
 
 /** Aggregated search results across all sources. */
-export interface InvestigationSearchResult {
+export interface CollectionSearchResult {
     readonly results: readonly SourceSearchResult[];
     readonly totalMatches: number;
     readonly totalSources: number;

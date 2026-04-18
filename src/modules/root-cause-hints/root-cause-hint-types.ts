@@ -128,5 +128,7 @@ export interface RootCauseHypothesis {
   readonly text: string;
   readonly evidenceLineIds: readonly number[];
   readonly confidence?: RootCauseHypothesisConfidence;
+  /** Human-readable reason for the confidence level (e.g. "fatal crash, 3 occurrences"). */
+  readonly confidenceReason?: string;
   readonly hypothesisKey: string;
 }

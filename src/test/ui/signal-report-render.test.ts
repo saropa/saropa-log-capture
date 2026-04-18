@@ -14,11 +14,13 @@ test("renderEvidenceSection: should return no-data message for empty groups", ()
 
 test("renderEvidenceSection: should render target line with highlight class", () => {
   const html = renderEvidenceSection([
-    [
-      { lineIndex: 9, text: "context before", isTarget: false },
-      { lineIndex: 10, text: "the error line", isTarget: true },
-      { lineIndex: 11, text: "context after", isTarget: false },
-    ],
+    {
+      lines: [
+        { lineIndex: 9, text: "context before", isTarget: false },
+        { lineIndex: 10, text: "the error line", isTarget: true },
+        { lineIndex: 11, text: "context after", isTarget: false },
+      ],
+    },
   ]);
   assert.ok(html.includes("evidence-line--target"));
   assert.ok(html.includes("the error line"));
@@ -28,7 +30,7 @@ test("renderEvidenceSection: should render target line with highlight class", ()
 
 test("renderEvidenceSection: should escape HTML in line text", () => {
   const html = renderEvidenceSection([
-    [{ lineIndex: 0, text: "<script>alert(1)</script>", isTarget: true }],
+    { lines: [{ lineIndex: 0, text: "<script>alert(1)</script>", isTarget: true }] },
   ]);
   assert.ok(!html.includes("<script>"));
   assert.ok(html.includes("&lt;script&gt;"));
@@ -36,8 +38,8 @@ test("renderEvidenceSection: should escape HTML in line text", () => {
 
 test("renderEvidenceSection: should render multiple evidence groups", () => {
   const html = renderEvidenceSection([
-    [{ lineIndex: 5, text: "first group", isTarget: true }],
-    [{ lineIndex: 20, text: "second group", isTarget: true }],
+    { lines: [{ lineIndex: 5, text: "first group", isTarget: true }] },
+    { lines: [{ lineIndex: 20, text: "second group", isTarget: true }] },
   ]);
   const blockCount = (html.match(/evidence-block/g) || []).length;
   assert.strictEqual(blockCount, 2);
