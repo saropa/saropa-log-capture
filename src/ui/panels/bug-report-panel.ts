@@ -37,11 +37,11 @@ export async function showBugReport(
     vscode.window.showInformationMessage(t('msg.bugReportCopied'));
 }
 
-/** Show the bug report panel with pre-built markdown (e.g. from investigation context). */
+/** Show the bug report panel with pre-built markdown (e.g. from collection context). */
 export function showBugReportFromMarkdown(markdown: string): void {
     ensurePanel();
     lastMarkdown = markdown;
-    lastSubject = 'investigation';
+    lastSubject = 'collection';
     if (panel) { panel.webview.html = buildPreviewHtml(lastMarkdown); }
     vscode.env.clipboard.writeText(lastMarkdown);
     vscode.window.showInformationMessage(t('msg.bugReportCopied'));

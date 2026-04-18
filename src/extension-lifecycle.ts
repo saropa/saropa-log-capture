@@ -74,7 +74,7 @@ export function applySessionStartedState(
     broadcaster.setContextViewLines(cfg.contextViewLines);
     broadcaster.setCopyContextLines(cfg.copyContextLines);
     broadcaster.setPresets(loadPresets());
-    // Clear any stale Project Logs panel root override so the panel reverts to the
+    // Clear any stale Logs panel root override so the panel reverts to the
     // workspace default — which matches the session's log directory for standalone
     // workspaces. Without this, a folder previously chosen via "Browse" persists
     // across debug sessions and shows logs from a different project.
@@ -154,7 +154,7 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
  * If a debug session is already active when the extension activates (e.g. after
  * a window reload or extension host restart), start capture for it immediately.
  * Without this, onDidStartDebugSession never fires for the pre-existing session
- * and the session is invisible in the Project Logs panel.
+ * and the log is invisible in the Logs panel.
  */
 function attachToExistingSession(deps: DebugLifecycleDeps): void {
     const { context, sessionManager, broadcaster } = deps;

@@ -6,10 +6,30 @@ import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import type { CommandDeps } from './commands-deps';
 import { handleDeleteCommand } from './modules/features/delete-command';
 import { updateLastViewed } from './ui/provider/viewer-provider-helpers';
+import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
-export function sessionLifecycleCommands(deps: CommandDeps): vscode.Disposable[] {
+export function sessionLifecycleCommands(
+    deps: CommandDeps,
+    captureToggle: CaptureToggleStatusBar,
+): vscode.Disposable[] {
     const { context, sessionManager, viewerProvider } = deps;
     return [
+        vscode.commands.registerCommand('saropaLogCapture.toggleCapture', async () => {
+            const cfg = vscode.workspace.getConfiguration('saropaLogCapture');
+            const current = cfg.get<boolean>('enabled', true);
+            const newValue = !current;
+            /* Write to Workspace scope when a workspace is open, otherwise Global.
+             * This fixes the common pitfall where the user enables at User level
+             * but a workspace override silently keeps it disabled. */
+            const target = vscode.workspace.workspaceFolders
+                ? vscode.ConfigurationTarget.Workspace
+                : vscode.ConfigurationTarget.Global;
+            await cfg.update('enabled', newValue, target);
+            captureToggle.setEnabled(newValue);
+            vscode.window.showInformationMessage(
+                newValue ? t('captureToggle.enabled') : t('captureToggle.disabled'),
+            );
+        }),
         vscode.commands.registerCommand('saropaLogCapture.start', () => {
             const active = vscode.debug.activeDebugSession;
             if (active && !sessionManager.hasSession(active.id)) {

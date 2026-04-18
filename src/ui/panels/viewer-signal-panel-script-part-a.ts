@@ -16,10 +16,8 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     var signalPanelOpen = false;
     var hasLog = false;
     var heroLoading = false;
-    var createInvestigationInProgress = false;
-    var investigationsData = { investigations: [], activeId: '' };
     var signalDataCache = { statuses: {}, hotFiles: [], platforms: [], sdkVersions: [], debugAdapters: [], allSignals: [], signalsInThisLog: [], coOccurrences: [] };
-    var sectionExpanded = { 'session-details': false, 'this-log': true, cases: true, 'across-logs': true, environment: false };
+    var sectionExpanded = { 'session-details': false, 'this-log': true, 'across-logs': true, environment: false };
     var currentLogLabel = '';
     var heroErrorCount = undefined, heroWarningCount = undefined, heroSnapshotSummary = '';
     var heroSparklineData = undefined;
@@ -55,8 +53,6 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
             sectionThisLog.style.display = hasLog ? '' : 'none';
             sectionThisLog.setAttribute('aria-hidden', hasLog ? 'false' : 'true');
         }
-        setSectionExpanded('cases', hasLog ? false : true);
-        renderSectionAccordion('cases');
         renderSectionAccordion('session-details');
         renderSectionAccordion('this-log');
         if (hasLog) { renderRecurringInLog(); renderErrorsInLog(); renderThisLogEmptyState(); }
@@ -86,14 +82,7 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
         var el = document.getElementById('signal-header-' + name);
         if (el) el.focus();
     }
-    function expandCasesAndScrollToNew() {
-        setSectionExpanded('cases', true);
-        renderSectionAccordion('cases');
-        setStoredSectionState(sectionExpanded);
-        var casesSection = document.getElementById('signal-section-cases');
-        if (casesSection) casesSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    var sectionNames = ['session-details', 'this-log', 'cases', 'across-logs', 'environment'];
+    var sectionNames = ['session-details', 'this-log', 'across-logs', 'environment'];
     sectionNames.forEach(function(name) {
         var header = document.getElementById('signal-header-' + name);
         if (header) {
@@ -117,16 +106,13 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
             if (stored.performance === true) sectionExpanded['session-details'] = true;
             if (stored['this-log'] === true) sectionExpanded['this-log'] = true;
             if (stored['recurring-in-log'] === true || stored['errors-in-log'] === true) sectionExpanded['this-log'] = true;
-            sectionExpanded.cases = stored.cases !== false;
             if (stored['across-logs'] === true) sectionExpanded['across-logs'] = true;
             if (stored.recurring === true || stored.hotfiles === true) sectionExpanded['across-logs'] = true;
             if (stored.environment === true) sectionExpanded.environment = true;
         }
-        vscodeApi.postMessage({ type: 'requestInvestigations' });
         vscodeApi.postMessage({ type: 'requestSignalData' });
         vscodeApi.postMessage({ type: 'requestPerformanceData' });
         applyStateAB();
-        renderSectionAccordion('cases');
         renderSectionAccordion('this-log');
         renderSectionAccordion('across-logs');
         renderSectionAccordion('environment');
@@ -145,7 +131,6 @@ export function getSignalScriptPartA(storageKey: string, scriptStringsJson: stri
     window.setSignalTab = function(tab) {
         if (!signalPanelOpen || !signalPanel || !signalPanel.classList.contains('visible')) return;
         if (tab === 'performance') { setSectionExpanded('session-details', true); renderSectionAccordion('session-details'); var el = document.getElementById('signal-section-session-details'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
-        else if (tab === 'cases') { setSectionExpanded('cases', true); renderSectionAccordion('cases'); var el = document.getElementById('signal-section-cases'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
         else if (tab === 'recurring') { setSectionExpanded('across-logs', true); renderSectionAccordion('across-logs'); var el = document.getElementById('signal-section-across-logs'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
     };
 

@@ -8,14 +8,20 @@
 import * as vscode from 'vscode';
 import type { RootCauseHypothesis, RootCauseHintBundle } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { getNonce } from '../provider/viewer-content';
-import { buildSignalReportShell, renderEvidenceSection, renderRecommendations } from './signal-report-render';
+import {
+  buildSignalReportShell,
+  renderEvidenceSection,
+  renderRecommendations,
+  type EvidenceGroup,
+} from './signal-report-render';
+import { describeTimelinePosition, findPrecedingAction, parseSessionHeader } from './signal-report-context';
 import { buildRelatedHtml } from './signal-report-related';
 import { buildOverviewHtml, buildOtherSignalsHtml } from './signal-report-overview';
 import { buildDetailsHtml } from './signal-report-details';
 import { buildFullMarkdownReport } from './signal-report-markdown';
 import { getLogDirectoryUri } from '../../modules/config/config';
 import { logExtensionError } from '../../modules/misc/extension-logger';
-import { loadSignalHistory } from './signal-report-history-loader';
+import { loadSignalHistory, loadLastCleanSessionUri } from './signal-report-history-loader';
 import { buildHistoryHtml } from './signal-report-history';
 import { buildEcosystemHtml } from './signal-report-ecosystem';
 
@@ -75,11 +81,12 @@ async function populateSections(
   const { hypothesis, bundle, fileUri } = state;
   const logLines = fileUri ? await readLogLines(fileUri) : [];
 
-  // 1. Session overview — aggregate stats from the bundle
+  // 1. Session overview — aggregate stats, timing, outcome, all errors
   const overviewHtml = buildOverviewHtml({
     bundle,
     logLineCount: logLines.length,
     logFilePath: fileUri?.fsPath,
+    logLines,
   });
   postSection(panel, 'overview', 'Session Overview', overviewHtml);
 
@@ -100,19 +107,30 @@ async function populateSections(
   const otherHtml = buildOtherSignalsHtml(hypothesis, bundle);
   postSection(panel, 'other-signals', 'Other Signals', otherHtml);
 
-  // 6. Recommendations — template-based advice
-  const recsHtml = renderRecommendations(hypothesis.templateId);
+  // 6. Recommendations — template-based advice, category-tailored for error-recent
+  const firstErrorCat = bundle.errors?.find(e => e?.category)?.category;
+  const recsHtml = renderRecommendations(hypothesis.templateId, firstErrorCat);
   postSection(panel, 'recommendations', 'Recommendations', recsHtml);
 
   // 7. Companion extensions — Drift Advisor + Saropa Lints status / install prompts
   const ecosystemHtml = buildEcosystemHtml(bundle);
   postSection(panel, 'ecosystem', 'Companion Extensions', ecosystemHtml);
 
-  // 8. Cross-session history — other sessions with the same signal type
+  // 8. Cross-session history + "what changed" diff
   const history = await loadSignalHistory(hypothesis.templateId);
+  const currentHeader = logLines.length > 0 ? parseSessionHeader(logLines) : undefined;
+  // Read the last clean session header for comparison
+  let cleanHeader: ReturnType<typeof parseSessionHeader> | undefined;
+  const cleanUri = await loadLastCleanSessionUri(hypothesis.templateId);
+  if (cleanUri) {
+    const cleanLines = await readLogLines(cleanUri);
+    if (cleanLines.length > 0) { cleanHeader = parseSessionHeader(cleanLines); }
+  }
   const historyHtml = buildHistoryHtml({
     sessions: history.sessions,
     totalSessionCount: history.totalSessionCount,
+    currentHeader,
+    cleanHeader,
   });
   postSection(panel, 'history', 'Cross-Session History', historyHtml);
 }
@@ -136,7 +154,7 @@ function buildEvidenceHtml(
   }
   const contextRadius = 10;
   const maxStackExtend = 30;
-  const groups: { lineIndex: number; text: string; isTarget: boolean }[][] = [];
+  const groups: EvidenceGroup[] = [];
   for (const targetIdx of ids) {
     if (targetIdx < 0 || targetIdx >= logLines.length) { continue; }
     const start = Math.max(0, targetIdx - contextRadius);
@@ -147,11 +165,19 @@ function buildEvidenceHtml(
       if (!isStackTraceLine(logLines[end + 1])) { break; }
       end++;
     }
-    const group: { lineIndex: number; text: string; isTarget: boolean }[] = [];
+    const lines: { lineIndex: number; text: string; isTarget: boolean }[] = [];
     for (let i = start; i <= end; i++) {
-      group.push({ lineIndex: i, text: logLines[i], isTarget: i === targetIdx });
+      lines.push({ lineIndex: i, text: logLines[i], isTarget: i === targetIdx });
     }
-    groups.push(group);
+    // Timeline position and preceding action metadata
+    const action = findPrecedingAction(logLines, targetIdx);
+    groups.push({
+      lines,
+      meta: {
+        timelinePosition: describeTimelinePosition(targetIdx, logLines.length),
+        precedingAction: action,
+      },
+    });
   }
   if (groups.length === 0) {
     // All indices were out of range — the log file may have been modified since signals ran
@@ -242,12 +268,20 @@ function buildSaveFilename(state: PanelState, now: Date): string {
 async function buildMarkdownReport(state: PanelState): Promise<string> {
   const logLines = state.fileUri ? await readLogLines(state.fileUri) : [];
   const wsRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  // Load clean session header for "what changed" diff in markdown export
+  let cleanHeader: ReturnType<typeof parseSessionHeader> | undefined;
+  const cleanUri = await loadLastCleanSessionUri(state.hypothesis.templateId);
+  if (cleanUri) {
+    const cleanLines = await readLogLines(cleanUri);
+    if (cleanLines.length > 0) { cleanHeader = parseSessionHeader(cleanLines); }
+  }
   return buildFullMarkdownReport({
     hypothesis: state.hypothesis,
     bundle: state.bundle,
     logLines,
     filePath: state.fileUri?.fsPath,
     wsRoot,
+    cleanHeader,
   });
 }
 

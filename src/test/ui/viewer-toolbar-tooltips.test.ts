@@ -48,29 +48,24 @@ suite('Viewer toolbar tooltips', () => {
         assert.ok(html.includes('title="Error — click to show/hide error'), 'Error toggle needs descriptive tooltip');
     });
 
-    test('filter drawer accordion headers should have tooltips', () => {
+    test('filter tabs should have title tooltips', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(html.includes('title="Click to expand or collapse the Log Sources'), 'Log Sources accordion needs tooltip');
-        assert.ok(html.includes('title="Click to expand or collapse the Text Exclusions'), 'Text Exclusions accordion needs tooltip');
+        assert.ok(html.includes('title="Log Sources"'), 'Log Sources tab needs tooltip');
+        assert.ok(html.includes('title="Exclusions"'), 'Exclusions tab needs tooltip');
     });
 
-    test('accordion arrows should use codicon chevron-right', () => {
+    test('filter tabs should have codicon icons', () => {
         const html = getFilterDrawerHtml();
-        assert.ok(
-            html.includes('codicon codicon-chevron-right'),
-            'accordion arrows should use codicon chevron-right for visibility',
-        );
-        assert.ok(
-            !html.includes('\u25B8'),
-            'should not use small Unicode triangle for arrows',
-        );
+        assert.ok(html.includes('codicon-broadcast'), 'Log Sources tab needs broadcast icon');
+        assert.ok(html.includes('codicon-tag'), 'Message Tags tab needs tag icon');
+        assert.ok(html.includes('codicon-database'), 'SQL Commands tab needs database icon');
     });
 
-    test('accordion headers should have summary span for item counts', () => {
+    test('filter tabs should have count suffix spans', () => {
         const html = getFilterDrawerHtml();
         assert.ok(
-            html.includes('filter-accordion-summary'),
-            'accordion headers need a summary span for displaying counts',
+            html.includes('filter-tab-count'),
+            'tabs need count suffix spans for displaying counts',
         );
     });
 

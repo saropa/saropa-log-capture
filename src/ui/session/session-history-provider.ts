@@ -16,6 +16,16 @@ function getBasename(name: string): string {
     return idx >= 0 ? name.substring(idx + 1) : name;
 }
 
+/** Non-log structured document extensions (plan 051). */
+const structuredDocExts = new Set(['.md', '.json', '.jsonl', '.csv', '.html', '.htm']);
+
+/** True if the filename is a structured document, not a log stream. */
+function isStructuredDocFile(filename: string): boolean {
+    const dot = filename.lastIndexOf('.');
+    if (dot < 0) { return false; }
+    return structuredDocExts.has(filename.substring(dot).toLowerCase());
+}
+
 /** Tree data provider for listing past log sessions from the reports directory. */
 export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>, vscode.Disposable, FetchTarget {
     private readonly _onDidChange = new vscode.EventEmitter<void>();
@@ -91,6 +101,9 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         ti.description = isActive ? `ACTIVE · ${baseDescription}` : baseDescription;
         if (item.trashed) {
             ti.iconPath = new vscode.ThemeIcon('trash', new vscode.ThemeColor('disabledForeground'));
+        } else if (isStructuredDocFile(item.filename)) {
+            /* Non-log files (markdown, JSON, CSV, HTML) get a document icon (plan 051). */
+            ti.iconPath = new vscode.ThemeIcon('file');
         } else {
             ti.iconPath = new vscode.ThemeIcon(
                 isActive ? 'record' : (item.hasTimestamps ? 'history' : 'output'),
@@ -181,7 +194,7 @@ export class SessionHistoryProvider implements vscode.TreeDataProvider<TreeItem>
         return this.getCachedOrFetch();
     }
 
-    /** Like getAllChildren but from an optional root folder (for Project Logs panel override). */
+    /** Like getAllChildren but from an optional root folder (for Logs panel override). */
     async getAllChildrenFromRoot(logDirOverride: vscode.Uri | undefined): Promise<TreeItem[]> {
         if (logDirOverride) { return fetchItemsCore(this, logDirOverride); }
         return this.getCachedOrFetch();

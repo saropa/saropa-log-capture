@@ -28,14 +28,11 @@ function applyFilter() {
 
 /**
  * Handle setCategories message from extension.
- * Shows the Log Sources section when categories arrive so the tier
- * radios become visible. No longer creates per-category checkboxes.
+ * No-op — Log Sources tab is always visible; tab switching controls
+ * panel display. Kept as a stub because message handlers still call it.
  */
 function handleSetCategories(msg) {
-    var section = document.getElementById('log-sources-section');
-    if (section && msg.categories && msg.categories.length > 0) {
-        section.style.display = '';
-    }
+    void msg;
 }
 `;
 }

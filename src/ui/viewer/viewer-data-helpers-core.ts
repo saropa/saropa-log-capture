@@ -149,12 +149,16 @@ function calcItemHeight(item) {
     if (item.type === 'line' && item.timeRangeFiltered) return 0;
     var _peeking = (typeof isPeeking !== 'undefined' && isPeeking);
     if (!_peeking && (item.userHidden || item.autoHidden)) return 0;
-    var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);
-    if (hideBlanks && item.type === 'line' && isLineContentBlank(item)) return 0;
     if (item.contIsChild && item.contGroupId >= 0 && typeof contHeaderMap !== 'undefined') {
         var contHdr = contHeaderMap[item.contGroupId];
         if (contHdr && contHdr.contCollapsed) return 0;
     }
+    /* Blank lines always render at quarter height — compact enough to not
+     * waste space, tall enough to preserve paragraph breaks. Placed after
+     * the continuation-collapse gate so collapsed children stay fully hidden. */
+    if (item.type === 'line' && isLineContentBlank(item)) return Math.max(4, Math.floor(ROW_HEIGHT / 4));
+    /* Structured file collapse (plan 051): markdown sections and JSON brace pairs. */
+    if (item._mdSectionHidden || item._jsonSectionHidden) return 0;
     if (item.type === 'marker') return MARKER_HEIGHT;
     if (item.type === 'run-separator') return (typeof RUN_SEPARATOR_HEIGHT !== 'undefined') ? RUN_SEPARATOR_HEIGHT : 72;
     var _tierHidden = (typeof isTierHidden === 'function') ? isTierHidden(item) : false;

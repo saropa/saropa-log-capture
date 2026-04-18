@@ -5,8 +5,8 @@
 
 import * as vscode from 'vscode';
 import { t } from './l10n';
-import type { Investigation } from './modules/investigation/investigation-types';
-import type { InvestigationStore } from './modules/investigation/investigation-store';
+import type { Collection } from './modules/collection/collection-types';
+import type { CollectionStore } from './modules/collection/collection-store';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 
 export interface CiTokenCmdOptions {
@@ -70,23 +70,23 @@ export function fileExportCmd(
         });
 }
 
-/** Import an investigation from an SLC bundle result into the store. */
-export async function importInvestigationFromSlc(
-    inv: Investigation,
-    store: InvestigationStore,
+/** Import a collection from an SLC bundle result into the store. */
+export async function importCollectionFromSlc(
+    inv: Collection,
+    store: CollectionStore,
     historyProvider: SessionHistoryProvider,
 ): Promise<void> {
-    const created = await store.createInvestigation({ name: inv.name, notes: inv.notes });
+    const created = await store.createCollection({ name: inv.name, notes: inv.notes });
     try {
         for (const src of inv.sources) {
             await store.addSource(created.id, { type: src.type, relativePath: src.relativePath, label: src.label });
         }
-        await store.setActiveInvestigationId(created.id);
+        await store.setActiveCollectionId(created.id);
         historyProvider.refresh();
-        await vscode.commands.executeCommand('saropaLogCapture.openInvestigation');
-        vscode.window.showInformationMessage(t('msg.investigationImported', inv.name));
+        await vscode.commands.executeCommand('saropaLogCapture.openCollection');
+        vscode.window.showInformationMessage(t('msg.collectionImported', inv.name));
     } catch (e) {
-        await store.deleteInvestigation(created.id).catch(() => {});
+        await store.deleteCollection(created.id).catch(() => {});
         vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
     }
 }

@@ -14,6 +14,7 @@ import { disposeAnalysisPanel } from './ui/analysis/analysis-panel';
 import { disposeSignalTabPanel } from './ui/viewer-panels/signal-tab-panel';
 import { disposeBugReportPanel } from './ui/panels/bug-report-panel';
 import { disposeTimelinePanel } from './ui/panels/timeline-panel';
+import { disposeKeyboardShortcutsPanel } from './ui/panels/keyboard-shortcuts-panel';
 import { disposeSignalReportPanel } from './ui/signals/signal-report-panel';
 import type { SaropaLogCaptureApi } from './api-types';
 
@@ -47,4 +48,5 @@ export function deactivate(): void {
     disposeBugReportPanel();
     disposeTimelinePanel();
     disposeSignalReportPanel();
+    disposeKeyboardShortcutsPanel();
 }
