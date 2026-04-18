@@ -76,8 +76,8 @@ function cleanupTrailingRepeats() {
             orig.height = calcItemHeight(orig);
             totalHeight += orig.height;
         }
-        /* Non-SQL path: inlineRepeatCount badge persists — it is lightweight
-           historical info and does not need cleanup across marker boundaries. */
+        /* Non-SQL path: all duplicate lines are stored in allLines normally;
+           the compress dedup algorithm handles grouping. No cleanup needed. */
     }
     /* SQL path: hide trailing notification rows that were replaced by the restored original. */
     for (var ri = allLines.length - 1; ri >= 0; ri--) {

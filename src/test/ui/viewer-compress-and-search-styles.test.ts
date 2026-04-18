@@ -62,6 +62,29 @@ suite('Viewer compress lines (embedded script)', () => {
             dataScript.includes('row.levelFiltered'),
             'level filter must affect duplicate grouping',
         );
+        assert.ok(
+            dataScript.includes('row.metadataFiltered'),
+            'metadata filter must affect duplicate grouping (mirrors calcItemHeight)',
+        );
+    });
+
+    test('lineDedupeKey strips structured prefix so identical message bodies match (fix: prefix mismatch)', () => {
+        assert.ok(
+            dataScript.includes('structuredLineParsing'),
+            'lineDedupeKey must check structured-line parsing flag',
+        );
+        assert.ok(
+            dataScript.includes('row.structuredPrefixLen'),
+            'lineDedupeKey must use structuredPrefixLen to strip the prefix',
+        );
+        assert.ok(
+            dataScript.includes('stripHtmlPrefix'),
+            'lineDedupeKey must call stripHtmlPrefix for structured lines',
+        );
+        assert.ok(
+            dataScript.includes('stripSourceTagPrefix'),
+            'lineDedupeKey must fall back to source-tag bracket stripping',
+        );
     });
 
     test('addLines uses full recalc when compressLinesMode is on (not append-only prefix sums)', () => {

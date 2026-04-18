@@ -136,9 +136,20 @@ function applyCompressDedupModes() {
     var useGlobal = (typeof compressNonConsecutiveMode !== 'undefined') && compressNonConsecutiveMode;
     if (!useConsecutive && !useGlobal) return;
 
+    /** Build a dedup key from the visible message body — strip the same
+     *  structured/source-tag prefix that renderItem removes so lines that
+     *  look identical on screen produce the same key. */
     function lineDedupeKey(row) {
         if (!row || row.type !== 'line') return null;
-        var t = stripTags(row.html || '').replace(/\\s+/g, ' ').trim();
+        var html = row.html || '';
+        /* Strip structured prefix (timestamp/PID/tag) the same way renderItem does. */
+        var useStructured = (typeof structuredLineParsing !== 'undefined' && structuredLineParsing);
+        if (useStructured && row.structuredPrefixLen > 0 && typeof stripHtmlPrefix === 'function') {
+            html = stripHtmlPrefix(html, row.structuredPrefixLen);
+        } else if (typeof stripSourceTagPrefix !== 'undefined' && stripSourceTagPrefix && row.sourceTag) {
+            html = html.replace(/^(?:\\[[^\\]]+\\]\\s?)+/, '');
+        }
+        var t = stripTags(html).replace(/\\s+/g, ' ').trim();
         if (t.length === 0) return null;
         return t;
     }
@@ -150,7 +161,7 @@ function applyCompressDedupModes() {
      */
     function isLineEligibleForDupCompress(row) {
         if (!row || row.type !== 'line') return false;
-        if (row.filteredOut || row.excluded || row.levelFiltered || row.sourceFiltered || row.classFiltered || row.sqlPatternFiltered || row.searchFiltered || row.errorSuppressed || row.scopeFiltered || row.repeatHidden || (row.type === 'line' && row.timeRangeFiltered)) return false;
+        if (row.filteredOut || row.excluded || row.levelFiltered || row.sourceFiltered || row.classFiltered || row.sqlPatternFiltered || row.searchFiltered || row.errorSuppressed || row.scopeFiltered || row.repeatHidden || row.metadataFiltered || (row.type === 'line' && row.timeRangeFiltered)) return false;
         var peeking = (typeof isPeeking !== 'undefined' && isPeeking);
         if (!peeking && (row.userHidden || row.autoHidden)) return false;
         if ((typeof hideBlankLines !== 'undefined' && hideBlankLines) && isLineContentBlank(row)) return false;

@@ -166,19 +166,32 @@ function renderItem(item, idx, prevVis) {
     var isArtCont = (abp === 'middle' || abp === 'end');
     var gap = isArtCont ? '' : ((typeof getSlowGapHtml === 'function') ? getSlowGapHtml(item, idx) : '');
     var elapsed = isArtCont ? '' : ((typeof getElapsedPrefix === 'function') ? getElapsedPrefix(item, idx) : '');
+    /* Compute continuation badge early so it can be injected into the
+       decoration prefix (left of the » chevron, near the line numbers). */
+    var contBadge = '';
+    if (item.contChildCount > 0 && item.contGroupId >= 0) {
+        var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
+        var contLabel = item.contCollapsed
+            ? '+' + item.contChildCount
+            : '\\u2212' + item.contChildCount;
+        var contTip = item.contCollapsed
+            ? 'Click to expand ' + item.contChildCount + ' continuation lines'
+            : 'Click to collapse ' + item.contChildCount + ' continuation lines';
+        contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
+    }
     /* idx passed so decoration can show file line number (idx+1); blank-line counter gated by decoShowCounterOnBlank. */
     var deco = isArtCont ? '' : ((typeof getDecorationPrefix === 'function') ? getDecorationPrefix(item, idx) : '');
+    /* Splice continuation badge into the decoration prefix, left of the »
+       chevron, so it sits near the line numbers and never overlaps the timestamp. */
+    if (contBadge && deco) {
+        deco = deco.replace('\\u00BB </span>', contBadge + ' \\u00BB </span>');
+        contBadge = '';
+    }
     var annHtml = (typeof getAnnotationHtml === 'function') ? getAnnotationHtml(idx) : '';
     var badge = '';
     var compressDupBadge = '';
     if (item.compressDupCount > 1) {
         compressDupBadge = '<span class="compress-dup-badge" title="' + item.compressDupCount + ' identical lines">(×' + item.compressDupCount + ')</span> ';
-    }
-    /* Inline repeat count badge: shown on the original line when consecutive duplicates
-       were collapsed into it (non-SQL path). Uses same visual style as compress-dup. */
-    var repeatBadge = '';
-    if (item.inlineRepeatCount > 1) {
-        repeatBadge = '<span class="compress-dup-badge" title="' + item.inlineRepeatCount + ' consecutive identical lines">(\\u00d7' + item.inlineRepeatCount + ')</span> ';
     }
     if (typeof getErrorBadge === 'function' && item.errorClass) badge = getErrorBadge(item.errorClass);
     if (!badge && item.isAnr) badge = '<span class="error-badge error-badge-anr" title="ANR Pattern Detected">\\u23f1 ANR</span> ';
@@ -221,21 +234,8 @@ function renderItem(item, idx, prevVis) {
         && allLines[idx - 1].recentErrorContext && allLines[idx - 1].level === 'error') {
         blankCls += ' recent-error-context';
     }
-    var contBadge = '';
-    if (item.contChildCount > 0 && item.contGroupId >= 0) {
-        var contCls = item.contCollapsed ? 'cont-badge' : 'cont-badge cont-badge-expanded';
-        /* Show count inline so the user doesn't need to hover.
-           Collapsed: "+7" (click to expand). Expanded: "−7" (click to collapse). */
-        var contLabel = item.contCollapsed
-            ? '+' + item.contChildCount
-            : '\\u2212' + item.contChildCount;
-        var contTip = item.contCollapsed
-            ? 'Click to expand ' + item.contChildCount + ' continuation lines'
-            : 'Click to collapse ' + item.contChildCount + ' continuation lines';
-        contBadge = '<span class="' + contCls + '" data-cont-gid="' + item.contGroupId + '" title="' + contTip + '">' + contLabel + '</span>';
-    }
     var catBadge = getCategoryBadge(item);
-    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + contBadge + deco + elapsed + badge + compressDupBadge + repeatBadge + catBadge + html + '</div>' + annHtml;
+    return gap + '<div class="line' + cat + levelCls + sepCls + ctxCls + matchCls + tintCls + barCls + blankCls + spacingCls + '"' + idxAttr + titleAttr + '>' + contBadge + deco + elapsed + badge + compressDupBadge + catBadge + html + '</div>' + annHtml;
 }
 `;
 }
