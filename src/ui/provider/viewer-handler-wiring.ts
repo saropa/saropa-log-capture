@@ -206,14 +206,21 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     const activeStr = historyProvider.getActiveUri()?.toString();
     const opts = makePayloadOptions(deps);
     const allRecords: Record<string, unknown>[] = [];
-    /* The callback is async and awaited by each loadBatch worker, so each
-     * item reaches the webview before the worker starts the next file.
-     * This produces a progressive shimmer-to-detail cascade in the UI. */
+    /* Serialize UI updates: 8 workers load files in parallel, but only one
+     * posts to the webview at a time. Each post is followed by a macrotask
+     * yield (setTimeout) so the webview can render before the next update.
+     * Without serialization, all 8 workers finish near-simultaneously and
+     * the webview receives a burst that renders as a single pop-in. */
+    let sendChain = Promise.resolve();
     const onItemLoaded = async (item: SessionMetadata): Promise<void> => {
       try {
         const rec = await buildSessionItemRecord(item, activeStr, opts);
         allRecords.push(rec);
-        broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+        sendChain = sendChain.then(() => {
+          broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+          return new Promise<void>(r => setTimeout(r, 0));
+        }).catch(() => { /* keep chain alive if one post fails */ });
+        await sendChain;
       } catch { /* non-critical — row keeps its shimmer */ }
     };
     const onFilesFound = (files: readonly string[], logDir: vscode.Uri): void => {
