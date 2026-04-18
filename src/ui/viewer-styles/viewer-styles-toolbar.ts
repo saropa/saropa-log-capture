@@ -116,18 +116,32 @@ export function getToolbarStyles(): string {
 }
 .toolbar-badge:empty { display: none; }
 
+/* Decoration toggle — dimmed when all decorations are off */
+.toolbar-deco-inactive {
+    opacity: 0.35;
+}
+
 /* Nav label in toolbar */
 .viewer-toolbar .nav-bar-label { font-size: 11px; white-space: nowrap; }
 .viewer-toolbar .session-details-inline { font-size: 11px; opacity: 0.7; }
 
 /* ===================================================================
-   Search Flyout — drops below toolbar
+   Search Flyout — floating overlay anchored top-right of log area
    =================================================================== */
 .search-flyout {
-    background: var(--vscode-panel-background);
-    border-bottom: 1px solid var(--vscode-panel-border);
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 100;
+    width: 350px;
+    max-width: calc(100% - 16px);
+    background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
+    color: var(--vscode-editorWidget-foreground, var(--vscode-foreground));
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+    border-top: none;
+    border-radius: 0 0 4px 4px;
     padding: 4px 8px;
-    flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--vscode-widget-shadow, rgba(0, 0, 0, 0.36));
 }
 .search-flyout.u-hidden { display: none; }
 .search-flyout-row { display: flex; align-items: center; }
@@ -138,16 +152,16 @@ export function getToolbarStyles(): string {
    Actions Dropdown — positioned below actions button
    =================================================================== */
 .toolbar-actions-dropdown {
-    position: relative;
-    display: inline-flex;
+    position: absolute;
+    display: none;
+    z-index: 100;
+}
+.toolbar-actions-dropdown.toolbar-actions-visible {
+    display: block;
 }
 .toolbar-actions-popover {
     display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
     transform-origin: top;
-    margin-top: 4px;
     min-width: 200px;
     max-width: min(90vw, 420px);
     width: max-content;
@@ -156,7 +170,39 @@ export function getToolbarStyles(): string {
     border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
     background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    z-index: 100;
+}
+
+/* Preset submenu — flies out to the left from the Presets menu item */
+.toolbar-actions-submenu-trigger {
+    position: relative;
+}
+.toolbar-actions-submenu-trigger .codicon-chevron-right {
+    margin-left: auto;
+    font-size: 10px;
+    opacity: 0.6;
+}
+.toolbar-actions-submenu {
+    display: none;
+    position: absolute;
+    right: 100%;
+    top: -4px;
+    min-width: 180px;
+    width: max-content;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+    background: var(--vscode-editorWidget-background, var(--vscode-panel-background));
+    box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.25);
+    margin-right: 2px;
+}
+.toolbar-actions-submenu-trigger:hover > .toolbar-actions-submenu,
+.toolbar-actions-submenu-trigger.submenu-open > .toolbar-actions-submenu {
+    display: block;
+}
+/* Highlight the currently active preset */
+.preset-active {
+    background: var(--vscode-list-activeSelectionBackground, rgba(0, 122, 204, 0.3));
+    color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground));
 }
 /* toolbar-actions-open: toolbar script; footer-actions-open: replay script compat */
 .toolbar-actions-popover.toolbar-actions-open,

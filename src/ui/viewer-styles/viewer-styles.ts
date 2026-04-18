@@ -23,6 +23,7 @@ import { getBookmarkPanelStyles } from './viewer-styles-bookmarks';
 import { getSqlQueryHistoryPanelStyles } from './viewer-styles-sql-query-history';
 import { getTrashPanelStyles } from './viewer-styles-trash';
 import { getAboutPanelStyles } from './viewer-styles-about';
+import { getCollectionsPanelStyles } from './viewer-styles-collections';
 import { getCrashlyticsPanelStyles } from './viewer-styles-crashlytics';
 import { getRecurringPanelStyles } from './viewer-styles-recurring';
 import { getPerformancePanelStyles } from './viewer-styles-performance';
@@ -36,6 +37,7 @@ import { getToolbarStyles } from './viewer-styles-toolbar';
 import { getFilterDrawerStyles } from './viewer-styles-filter-drawer';
 import { getLineStyles } from './viewer-styles-lines';
 import { getAsciiArtStyles } from './viewer-styles-ascii-art';
+import { getFormatStyles } from './viewer-styles-format';
 
 export function getViewerStyles(): string {
     return /* css */ `
@@ -106,6 +108,8 @@ body[data-icon-bar=”right”] #panel-content-row {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    /* Positioning context for the floating search overlay */
+    position: relative;
 }
 
 /* ===================================================================
@@ -185,5 +189,5 @@ body.scrollbar-visible #log-content::-webkit-scrollbar { width: 10px; height: 10
     background: var(--vscode-scrollbarSlider-hoverBackground);
 }
 #log-content::-webkit-scrollbar-track { background: transparent; }
-` + getLineStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles();
+` + getLineStyles() + getAsciiArtStyles() + getContentStyles() + getNPlusOneSignalStyles() + getSqlRepeatDrilldownStyles() + getReplayStyles() + getComponentStyles() + getOverlayStyles() + getTagStyles() + getOptionsStyles() + getErrorStyles() + getIconBarStyles() + getSessionPanelStyles() + getFindPanelStyles() + getBookmarkPanelStyles() + getSqlQueryHistoryPanelStyles() + getTrashPanelStyles() + getAboutPanelStyles() + getCollectionsPanelStyles() + getCrashlyticsPanelStyles() + getRecurringPanelStyles() + getPerformancePanelStyles() + getSignalPanelStyles() + getAiStyles() + getRunSeparatorStyles() + getContextPopoverStyles() + getRootCauseHypothesesStyles() + getToolbarStyles() + getFilterDrawerStyles() + getFormatStyles();
 }

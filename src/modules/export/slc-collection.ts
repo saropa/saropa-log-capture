@@ -1,26 +1,26 @@
 /**
- * Investigation .slc bundle: build ZIP buffer, export to file, import from bundle.
+ * Collection .slc bundle: build ZIP buffer, export to file, import from bundle.
  */
 
 import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { t } from '../../l10n';
 import { getLogDirectoryUri } from '../config/config';
-import type { Investigation, InvestigationSource } from '../investigation/investigation-types';
+import type { Collection, CollectionSource } from '../collection/collection-types';
 import { findSidecarUris } from './slc-session-files';
 import {
-    MANIFEST_VERSION_INVESTIGATION,
+    MANIFEST_VERSION_COLLECTION,
     MANIFEST_FILENAME,
-    INVESTIGATION_JSON_FILENAME,
+    COLLECTION_JSON_FILENAME,
     SOURCES_FOLDER,
     type SlcManifest,
-    type SlcManifestInvestigationSource,
-    type SlcManifestInvestigation,
-    type ImportInvestigationResult,
+    type SlcManifestCollectionSource,
+    type SlcManifestCollection,
+    type ImportCollectionResult,
 } from './slc-types';
 
-async function resolveInvestigationSourceUris(
-    source: InvestigationSource,
+async function resolveCollectionSourceUris(
+    source: CollectionSource,
     workspaceUri: vscode.Uri,
 ): Promise<vscode.Uri[]> {
     const mainUri = vscode.Uri.joinPath(workspaceUri, source.relativePath);
@@ -34,13 +34,13 @@ async function resolveInvestigationSourceUris(
 }
 
 /**
- * Build an investigation .slc (ZIP) bundle in memory. Used for file export and Gist upload.
+ * Build a collection .slc (ZIP) bundle in memory. Used for file export and Gist upload.
  */
-export async function buildInvestigationZipBuffer(
-    investigation: Investigation,
+export async function buildCollectionZipBuffer(
+    collection: Collection,
     workspaceUri: vscode.Uri,
 ): Promise<Buffer> {
-    const manifestSources: SlcManifestInvestigationSource[] = [];
+    const manifestSources: SlcManifestCollectionSource[] = [];
     const zip = new JSZip();
     const seenBasenames = new Map<string, number>();
 
@@ -50,8 +50,8 @@ export async function buildInvestigationZipBuffer(
         return count === 0 ? basename : `${count}_${basename}`;
     }
 
-    for (const source of investigation.sources) {
-        const uris = await resolveInvestigationSourceUris(source, workspaceUri);
+    for (const source of collection.sources) {
+        const uris = await resolveCollectionSourceUris(source, workspaceUri);
         const mainUri = uris[0];
         let mainBasename: string;
         try {
@@ -78,50 +78,50 @@ export async function buildInvestigationZipBuffer(
     }
 
     const manifest: SlcManifest = {
-        version: MANIFEST_VERSION_INVESTIGATION,
-        type: 'investigation',
-        investigation: {
-            name: investigation.name,
-            notes: investigation.notes,
-            lastSearchQuery: investigation.lastSearchQuery,
+        version: MANIFEST_VERSION_COLLECTION,
+        type: 'collection',
+        collection: {
+            name: collection.name,
+            notes: collection.notes,
+            lastSearchQuery: collection.lastSearchQuery,
             sources: manifestSources,
         },
     };
-    const investigationJson = {
-        name: investigation.name,
-        notes: investigation.notes,
-        lastSearchQuery: investigation.lastSearchQuery,
-        sources: investigation.sources.map(s => ({
+    const collectionJson = {
+        name: collection.name,
+        notes: collection.notes,
+        lastSearchQuery: collection.lastSearchQuery,
+        sources: collection.sources.map(s => ({
             type: s.type,
             label: s.label,
             pinnedAt: s.pinnedAt,
         })),
     };
     zip.file(MANIFEST_FILENAME, JSON.stringify(manifest, null, 2));
-    zip.file(INVESTIGATION_JSON_FILENAME, JSON.stringify(investigationJson, null, 2));
+    zip.file(COLLECTION_JSON_FILENAME, JSON.stringify(collectionJson, null, 2));
     const blob = await zip.generateAsync({ type: 'nodebuffer' });
     return Buffer.from(blob);
 }
 
 /**
- * Export an investigation to a .slc (ZIP) buffer in memory. Use for Gist upload or other in-memory use.
+ * Export a collection to a .slc (ZIP) buffer in memory. Use for Gist upload or other in-memory use.
  */
-export async function exportInvestigationToBuffer(
-    investigation: Investigation,
+export async function exportCollectionToBuffer(
+    collection: Collection,
     workspaceUri: vscode.Uri,
 ): Promise<Buffer> {
-    return buildInvestigationZipBuffer(investigation, workspaceUri);
+    return buildCollectionZipBuffer(collection, workspaceUri);
 }
 
 /**
- * Export an investigation to a .slc (ZIP) bundle with manifest v3, investigation.json, and sources/.
+ * Export a collection to a .slc (ZIP) bundle with manifest v3, collection.json, and sources/.
  * Returns the saved file URI, or undefined if cancelled or failed.
  */
-export async function exportInvestigationToSlc(
-    investigation: Investigation,
+export async function exportCollectionToSlc(
+    collection: Collection,
     workspaceUri: vscode.Uri,
 ): Promise<vscode.Uri | undefined> {
-    const defaultName = (investigation.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'investigation') + '.slc';
+    const defaultName = (collection.name.replace(/[^a-zA-Z0-9_\- .]/g, '_').trim() || 'collection') + '.slc';
     const picked = await vscode.window.showSaveDialog({
         defaultUri: workspaceUri ? vscode.Uri.joinPath(workspaceUri, defaultName) : undefined,
         filters: { [t('filter.slcBundles')]: ['slc'] },
@@ -133,18 +133,18 @@ export async function exportInvestigationToSlc(
         targetUri = vscode.Uri.file(targetUri.fsPath + '.slc');
     }
 
-    const buffer = await buildInvestigationZipBuffer(investigation, workspaceUri);
+    const buffer = await buildCollectionZipBuffer(collection, workspaceUri);
     await vscode.workspace.fs.writeFile(targetUri, buffer);
     return targetUri;
 }
 
 /**
- * Import an investigation .slc bundle: extract sources into workspace log directory and create investigation.
+ * Import a collection .slc bundle: extract sources into workspace log directory and create collection.
  */
-export async function importInvestigationFromSlc(
+export async function importCollectionFromSlc(
     zip: JSZip,
-    manifest: SlcManifest & { type: 'investigation'; investigation: SlcManifestInvestigation },
-): Promise<ImportInvestigationResult | undefined> {
+    manifest: SlcManifest & { type: 'collection'; collection: SlcManifestCollection },
+): Promise<ImportCollectionResult | undefined> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
         vscode.window.showErrorMessage(t('msg.slcImportNoWorkspace'));
@@ -155,10 +155,10 @@ export async function importInvestigationFromSlc(
         await vscode.workspace.fs.createDirectory(logDir);
     } catch { /* may exist */ }
 
-    const invMeta = manifest.investigation;
+    const invMeta = manifest.collection;
     const now = Date.now();
-    const investigationId = `${now}-${Math.random().toString(36).slice(2, 11)}`;
-    const sources: InvestigationSource[] = [];
+    const collectionId = `${now}-${Math.random().toString(36).slice(2, 11)}`;
+    const sources: CollectionSource[] = [];
     const extractedPaths = new Set<string>();
 
     for (const src of invMeta.sources) {
@@ -194,8 +194,8 @@ export async function importInvestigationFromSlc(
         });
     }
 
-    const investigation: Investigation = {
-        id: investigationId,
+    const collection: Collection = {
+        id: collectionId,
         name: invMeta.name,
         createdAt: now,
         updatedAt: now,
@@ -203,5 +203,5 @@ export async function importInvestigationFromSlc(
         notes: invMeta.notes,
         lastSearchQuery: invMeta.lastSearchQuery,
     };
-    return { investigation };
+    return { collection };
 }

@@ -2,7 +2,7 @@
  * .slc session bundle export and import. Export produces a ZIP with manifest.json,
  * metadata.json, log file(s), and integration sidecar files; import extracts into
  * the workspace log directory and merges metadata.
- * v3: investigation bundles (type 'investigation') with investigation.json and sources/.
+ * v3: collection bundles (type 'collection') with collection.json and sources/.
  * Invoked by exportSlc command and session panel "Export as SLC".
  */
 
@@ -10,44 +10,44 @@ import * as vscode from 'vscode';
 import JSZip from 'jszip';
 import { t } from '../../l10n';
 import {
-    MANIFEST_VERSION_INVESTIGATION,
+    MANIFEST_VERSION_COLLECTION,
     MANIFEST_FILENAME,
     type SlcManifest,
     type SlcManifestSession,
-    type SlcManifestInvestigationSource,
-    type SlcManifestInvestigation,
+    type SlcManifestCollectionSource,
+    type SlcManifestCollection,
     type ImportSessionResult,
-    type ImportInvestigationResult,
+    type ImportCollectionResult,
     type ImportSlcResult,
 } from './slc-types';
 import { exportSessionToSlc, importSessionFromSlc } from './slc-session';
 import {
-    exportInvestigationToSlc,
-    exportInvestigationToBuffer,
-    importInvestigationFromSlc,
-} from './slc-investigation';
+    exportCollectionToSlc,
+    exportCollectionToBuffer,
+    importCollectionFromSlc,
+} from './slc-collection';
 
-export type { SlcManifestSession, SlcManifestInvestigationSource, SlcManifestInvestigation, SlcManifest };
-export type { ImportSessionResult, ImportInvestigationResult, ImportSlcResult };
+export type { SlcManifestSession, SlcManifestCollectionSource, SlcManifestCollection, SlcManifest };
+export type { ImportSessionResult, ImportCollectionResult, ImportSlcResult };
 
 /** Returns true if manifest has supported version and required fields. */
 export function isSlcManifestValid(manifest: SlcManifest): boolean {
-    if (manifest.version === MANIFEST_VERSION_INVESTIGATION && manifest.type === 'investigation') {
+    if (manifest.version === MANIFEST_VERSION_COLLECTION && manifest.type === 'collection') {
         return !!(
-            manifest.investigation?.name &&
-            Array.isArray(manifest.investigation.sources)
+            manifest.collection?.name &&
+            Array.isArray(manifest.collection.sources)
         );
     }
     const validVersion = manifest.version === 1 || manifest.version === 2;
     return validVersion && typeof manifest.mainLog === 'string' && manifest.mainLog.length > 0;
 }
 
-function isInvestigationManifest(m: SlcManifest): m is SlcManifest & { type: 'investigation'; investigation: SlcManifestInvestigation } {
-    return m.version === MANIFEST_VERSION_INVESTIGATION && m.type === 'investigation' && !!m.investigation;
+function isCollectionManifest(m: SlcManifest): m is SlcManifest & { type: 'collection'; collection: SlcManifestCollection } {
+    return m.version === MANIFEST_VERSION_COLLECTION && m.type === 'collection' && !!m.collection;
 }
 
 /**
- * Import a .slc bundle: dispatches to session or investigation import based on manifest type.
+ * Import a .slc bundle: dispatches to session or collection import based on manifest type.
  */
 export async function importSlcBundle(slcUri: vscode.Uri): Promise<ImportSlcResult | undefined> {
     let raw: Uint8Array;
@@ -82,10 +82,10 @@ export async function importSlcBundle(slcUri: vscode.Uri): Promise<ImportSlcResu
         vscode.window.showErrorMessage(t('msg.slcImportInvalidManifest'));
         return undefined;
     }
-    if (isInvestigationManifest(manifest)) {
-        return importInvestigationFromSlc(zip, manifest);
+    if (isCollectionManifest(manifest)) {
+        return importCollectionFromSlc(zip, manifest);
     }
     return importSessionFromSlc(zip, manifest);
 }
 
-export { exportSessionToSlc, exportInvestigationToSlc, exportInvestigationToBuffer };
+export { exportSessionToSlc, exportCollectionToSlc, exportCollectionToBuffer };

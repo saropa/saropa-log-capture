@@ -24,7 +24,7 @@ import { getFirebaseContext } from '../crashlytics/firebase-crashlytics';
 import { findLintMatches, type LintReportData } from '../misc/lint-violation-reader';
 import { getHealthScoreParamsForWorkspace, type HealthScoreParams } from '../misc/health-score';
 import { offerSaropaLintRefreshIfNeeded } from '../misc/saropa-lints-refresh-prompt';
-import { InvestigationStore } from '../investigation/investigation-store';
+import { CollectionStore } from '../collection/collection-store';
 import {
     collectFileAnalyses,
     collectWorkspaceData,
@@ -36,8 +36,8 @@ import {
 import type { SourceCodePreview, GitCommit } from '../misc/workspace-analyzer';
 import type { BlameLine } from '../git/git-blame';
 
-/** Investigation context for bug report when an investigation is active. */
-export interface InvestigationContext {
+/** Collection context for bug report when a collection is active. */
+export interface CollectionContext {
     readonly name: string;
     readonly createdAt: number;
     readonly sources: readonly { label: string; type: string; pinnedAt: number }[];
@@ -46,9 +46,9 @@ export interface InvestigationContext {
     readonly notes?: string;
 }
 
-/** Collect active investigation context for bug report, if any. */
-export async function collectInvestigationContext(store: InvestigationStore): Promise<InvestigationContext | undefined> {
-    const active = await store.getActiveInvestigation();
+/** Collect active collection context for bug report, if any. */
+export async function collectCollectionContext(store: CollectionStore): Promise<CollectionContext | undefined> {
+    const active = await store.getActiveCollection();
     if (!active) { return undefined; }
     return {
         name: active.name,
@@ -126,7 +126,7 @@ export interface BugReportData {
     readonly lintMatches?: LintReportData;
     /** Health-score constants for the lint header. Prefer consumer_contract.json when available. */
     readonly lintHealthScoreParams?: HealthScoreParams;
-    readonly investigationContext?: InvestigationContext;
+    readonly collectionContext?: CollectionContext;
     /** Quality summary for referenced files with low coverage or lint issues (when includeInBugReport). */
     readonly qualitySummary?: readonly QualitySummaryEntry[];
 }
@@ -203,13 +203,13 @@ export async function collectBugReportData(
     const tokenNames = tokens.map(t => t.value);
     const wsFolder = vscode.workspace.workspaceFolders?.[0];
     const errorTokens = tokens.filter(t => t.type === 'error-class' || t.type === 'quoted-string').map(t => t.value);
-    const investigationPromise = extensionContext
-        ? collectInvestigationContext(new InvestigationStore(extensionContext))
+    const collectionPromise = extensionContext
+        ? collectCollectionContext(new CollectionStore(extensionContext))
         : Promise.resolve(undefined);
     if (wsFolder) {
         await offerSaropaLintRefreshIfNeeded(wsFolder.uri, stackTrace);
     }
-    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, investigationContext, qualitySummary] = await Promise.all([
+    const [wsData, devEnv, docMatches, resolvedSymbols, fileAnalyses, fbCtx, lintMatches, lintHealthScoreParams, collectionContext, qualitySummary] = await Promise.all([
         collectWorkspaceData(sourceRef?.filePath, sourceRef?.line, fingerprint),
         collectDevEnvironment().then(formatDevEnvironment).catch(() => ({})),
         wsFolder ? scanDocsForTokens(tokenNames, wsFolder).catch(() => undefined) : Promise.resolve(undefined),
@@ -218,7 +218,7 @@ export async function collectBugReportData(
         getFirebaseContext(errorTokens).catch(() => undefined),
         wsFolder ? findLintMatches(stackTrace, wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
         wsFolder ? getHealthScoreParamsForWorkspace(wsFolder.uri).catch(() => undefined) : Promise.resolve(undefined),
-        investigationPromise,
+        collectionPromise,
         collectQualitySummary(fileUri, referencedPaths),
     ]);
     const [sourcePreview, blame, gitHistory, crossSessionMatch, lineRangeHistory, imports] = wsData;
@@ -235,7 +235,7 @@ export async function collectBugReportData(
         resolvedSymbols, fileAnalyses, primarySourcePath: sourceRef?.filePath,
         logFilename, lineNumber: fileLineIndex + 1, firebaseMatch, lintMatches,
         lintHealthScoreParams,
-        investigationContext, qualitySummary,
+        collectionContext, qualitySummary,
     };
 }
 

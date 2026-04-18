@@ -11,7 +11,7 @@ import type { SessionHistoryProvider } from './ui/session/session-history-provid
 import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 import type { PopOutPanel } from './ui/viewer-panels/pop-out-panel';
 import type { ViewerBroadcaster } from './ui/provider/viewer-broadcaster';
-import type { InvestigationStore } from './modules/investigation/investigation-store';
+import type { CollectionStore } from './modules/collection/collection-store';
 
 export interface CommandDeps {
     readonly context: vscode.ExtensionContext;
@@ -20,6 +20,6 @@ export interface CommandDeps {
     readonly historyProvider: SessionHistoryProvider;
     readonly inlineDecorations: InlineDecorationsProvider;
     readonly popOutPanel: PopOutPanel;
-    readonly investigationStore: InvestigationStore;
+    readonly collectionStore: CollectionStore;
     readonly broadcaster: ViewerBroadcaster;
 }

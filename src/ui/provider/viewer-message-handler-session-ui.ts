@@ -13,6 +13,7 @@ import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import type { ViewerMessageContext } from './viewer-message-types';
 import { handleQuickExportLogs } from './viewer-quick-export';
 import { getInteractionTracker } from '../../modules/learning/learning-runtime';
+import { showKeyboardShortcutsPanel } from '../panels/keyboard-shortcuts-panel';
 import { handleOpenSessionForSignalType } from '../shared/handlers/recurring-handlers';
 import { SAROPA_BOOL_SETTING_BY_MSG_TYPE } from "./viewer-workspace-bool-message-map";
 
@@ -154,6 +155,9 @@ export function handleSessionAndUiActions(type: string, msg: Record<string, unkn
       if (ctx.currentFileUri) {
         vscode.commands.executeCommand('revealFileInOS', ctx.currentFileUri).then(() => {}, () => {});
       }
+      return true;
+    case "showKeyboardShortcuts":
+      showKeyboardShortcutsPanel();
       return true;
     case "openSidecarFile": {
       const sidecar = msgStr(msg, "filename");

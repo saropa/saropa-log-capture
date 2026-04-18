@@ -101,8 +101,8 @@ function formatAnalysis(data: ReportFileData): string {
     } else {
         parts.push('*First occurrence — no cross-session matches found.*');
     }
-    if (d.investigationContext) {
-        parts.push(formatInvestigationBrief(d.investigationContext));
+    if (d.collectionContext) {
+        parts.push(formatCollectionBrief(d.collectionContext));
     }
     if (d.firebaseMatch) {
         parts.push(formatProductionImpact(d.firebaseMatch));
@@ -110,10 +110,10 @@ function formatAnalysis(data: ReportFileData): string {
     return parts.join('\n\n');
 }
 
-function formatInvestigationBrief(inv: BugReportData['investigationContext']): string {
+function formatCollectionBrief(inv: BugReportData['collectionContext']): string {
     if (!inv) { return ''; }
     return [
-        `### Active Investigation: ${inv.name}`,
+        `### Active Collection: ${inv.name}`,
         `- Sources: ${inv.sources.length}`,
         inv.lastSearchQuery ? `- Last search: \`${inv.lastSearchQuery}\`` : '',
         inv.notes?.trim() ? `- Notes: ${inv.notes.trim()}` : '',

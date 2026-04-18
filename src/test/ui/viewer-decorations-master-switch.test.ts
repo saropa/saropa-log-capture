@@ -88,6 +88,39 @@ suite('Decoration master switch removal', () => {
         });
     });
 
+    suite('script load order: settings before decorations', () => {
+
+        test('should declare decoShowDot before areDecorationsOn references it', () => {
+            // Simulate the concatenated webview scope: deco-settings must
+            // come first so its variable declarations exist when
+            // areDecorationsOn() is defined and executed.
+            const combined = settingsScript + '\n' + decoScript;
+            const declPos = combined.indexOf('var decoShowDot');
+            const usePos = combined.indexOf('function areDecorationsOn');
+            assert.ok(
+                declPos < usePos,
+                `decoShowDot declaration (${declPos}) must precede areDecorationsOn (${usePos})`,
+            );
+        });
+
+        test('should declare all toggle vars before areDecorationsOn', () => {
+            const combined = settingsScript + '\n' + decoScript;
+            const usePos = combined.indexOf('function areDecorationsOn');
+            const vars = [
+                'decoShowDot', 'decoShowCounter', 'decoShowCounterOnBlank',
+                'decoShowTimestamp', 'showElapsed', 'decoShowSessionElapsed',
+                'decoShowBar', 'decoLineColorMode',
+            ];
+            for (const v of vars) {
+                const declPos = combined.indexOf(`var ${v}`);
+                assert.ok(
+                    declPos !== -1 && declPos < usePos,
+                    `${v} must be declared before areDecorationsOn`,
+                );
+            }
+        });
+    });
+
     suite('footer Deco button opens settings panel directly', () => {
 
         test('should call toggleDecoSettings on click', () => {
