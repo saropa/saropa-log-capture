@@ -1,11 +1,12 @@
 /**
  * Repeat-collapse branch for addToData, extracted to keep the file under the line limit.
  *
- * **Non-SQL repeats:** the original (anchor) line stays visible and gets an `inlineRepeatCount`
- * property that `renderItem()` renders as a (×N) badge — no separate notification row.
+ * Only SQL fingerprint repeats reach this function. Non-SQL repeats are always
+ * stored individually in allLines (the compress dedup algorithm handles grouping
+ * when the user toggles compress mode on).
  *
  * **SQL fingerprint repeats:** the anchor is hidden and a single `repeat-notification` row
- * with drilldown is created/updated in place (unchanged behavior).
+ * with drilldown is created/updated in place.
  */
 
 /** Get the embedded JavaScript for the repeat-collapse branch of addToData. */
@@ -17,26 +18,7 @@ function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, 
     var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
 
-    /* --- Non-SQL repeats: inline badge on original line, no notification row --- */
-    if (!repeatTracker.streakSqlFp) {
-        /* Update the original (anchor) line with the current repeat count.
-           renderItem() reads inlineRepeatCount to show a (×N) badge. */
-        if (repeatTracker.lastLineIndex >= 0 && repeatTracker.lastLineIndex < allLines.length) {
-            var origItem = allLines[repeatTracker.lastLineIndex];
-            if (origItem) {
-                origItem.inlineRepeatCount = repeatTracker.count;
-            }
-        }
-        resetCompressDupStreak();
-        /* Still feed DB detectors so session rollup and N+1 detection see the duplicate data. */
-        var scopeFiltInline = (typeof calcScopeFiltered === 'function') ? calcScopeFiltered(sp) : false;
-        var origSeq = (repeatTracker.lastLineIndex >= 0 && repeatTracker.lastLineIndex < allLines.length && allLines[repeatTracker.lastLineIndex])
-            ? allLines[repeatTracker.lastLineIndex].seq : nextSeq++;
-        emitDbLineDetectors(ts || Date.now(), sqlMeta, 'database', scopeFiltInline, ts, sp, lineSource, lvl, elapsedMs, repeatTracker.lastPlainText || '', origSeq, null);
-        return;
-    }
-
-    /* --- SQL fingerprint repeats: notification row with drilldown (unchanged) --- */
+    /* --- SQL fingerprint repeats: notification row with drilldown --- */
 
     // First line that enters repeat-collapse: hide the anchor row; further repeats update one notification row.
     if (repeatTracker.count === minN && repeatTracker.lastLineIndex >= 0 &&
