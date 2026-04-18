@@ -176,12 +176,6 @@ function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   };
 }
 
-/** Batch size for streaming session metadata to the webview.
- * Use 1 so each item appears as soon as its metadata loads,
- * giving the user a progressive visual update instead of a
- * burst of details after a long delay. */
-const streamBatchSize = 1;
-
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
   const { historyProvider, broadcaster, sessionManager } = deps;
@@ -211,21 +205,16 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
     const overrideUri = overrideUriStr ? vscode.Uri.parse(overrideUriStr) : undefined;
     const activeStr = historyProvider.getActiveUri()?.toString();
     const opts = makePayloadOptions(deps);
-    const pending: Record<string, unknown>[] = [];
     const allRecords: Record<string, unknown>[] = [];
-    const recordPromises: Promise<void>[] = [];
-    const flush = (): void => {
-      if (pending.length === 0) { return; }
-      broadcaster.postToWebview({ type: 'sessionListBatch', items: pending.splice(0) });
-    };
-    const onItemLoaded = (item: SessionMetadata): void => {
-      recordPromises.push(
-        buildSessionItemRecord(item, activeStr, opts).then(rec => {
-          allRecords.push(rec);
-          pending.push(rec);
-          if (pending.length >= streamBatchSize) { flush(); }
-        }).catch(() => {}),
-      );
+    /* The callback is async and awaited by each loadBatch worker, so each
+     * item reaches the webview before the worker starts the next file.
+     * This produces a progressive shimmer-to-detail cascade in the UI. */
+    const onItemLoaded = async (item: SessionMetadata): Promise<void> => {
+      try {
+        const rec = await buildSessionItemRecord(item, activeStr, opts);
+        allRecords.push(rec);
+        broadcaster.postToWebview({ type: 'sessionListBatch', items: [rec] });
+      } catch { /* non-critical — row keeps its shimmer */ }
     };
     const onFilesFound = (files: readonly string[], logDir: vscode.Uri): void => {
       const previews = files.map(f => ({
@@ -235,8 +224,6 @@ function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void
       broadcaster.postToWebview({ type: 'sessionListPreview', previews });
     };
     const items = await historyProvider.getAllChildrenStreaming(onItemLoaded, overrideUri, onFilesFound);
-    await Promise.all(recordPromises);
-    flush();
     // When cache was hit, callbacks never fired — build payload from returned items.
     if (allRecords.length === 0 && items.length > 0) {
       const payload = await buildSessionListPayload(items, historyProvider.getActiveUri(), opts);

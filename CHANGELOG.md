@@ -30,6 +30,7 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Added
 
+- **Structured file modes for non-log documents.** Markdown (`.md`), JSON (`.json`, `.jsonl`), CSV (`.csv`), and HTML (`.html`) files are now recognized as structured documents, not log streams. When opened in the viewer, they skip the entire log analysis pipeline — no false error/warning classifications, no phantom SQL fingerprints, no bogus signals from prose content. A Format toggle button (`$(open-preview)`) appears in the toolbar for non-log files; when enabled, markdown renders headings (collapsible), bullets, bold/italic, inline code, blockquotes, and tables; JSON shows indented syntax-colored lines with collapsible brace pairs; CSV shows a bold header row with column-aligned cells. Non-log files display a distinct `$(file)` icon in the session panel tree view.
 - **Collapse/expand all toggle.** The "Collapse All Sections" button in the view title bar now toggles: after collapsing, the icon switches to `$(expand-all)` and clicking it expands all sections back. The context key `saropaLogCapture.allCollapsed` drives the swap.
 - **Maximize Panel button.** A `$(screen-full)` button in the view title bar toggles VS Code's maximized-panel mode for the log viewer.
 - **Floating search overlay.** A `$(search)` icon in the view title bar toggles a floating search panel that overlays the top-right of the log viewer (like VS Code's Ctrl+F). Includes case sensitivity, whole word, and regex toggles, match navigation, and a clear [x] button that appears when the input has text.
@@ -43,7 +44,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
-- **Session list details load progressively.** File metadata (dots, severity counts, tags) now streams to the session panel one item at a time instead of batching five at once. Previously all details popped in together after a long delay; now each row updates as soon as its metadata is ready.
+- **Hide blank lines now shows a tiny gap instead of fully hiding.** When "Hide blank lines" is toggled on, blank lines are compacted to a small visual break (1/4 of normal row height) instead of disappearing completely. Paragraph breaks are preserved without wasting vertical space.
+- **File views no longer collapse lines into continuation groups.** When viewing a saved log file, all lines share the same load timestamp, which caused the continuation detector to group the entire file and auto-collapse most of the content. Continuation grouping is now skipped for file views.
+- **Session list details load progressively.** File metadata (dots, severity counts, tags) now streams to the session panel as each file finishes loading. Previously the `onItemLoaded` callback was fire-and-forget — all 8 parallel workers raced ahead while record-building promises piled up on the microtask queue, causing every detail to pop in at once. Now each worker awaits the build-and-send before starting the next file, producing a visible shimmer-to-detail cascade.
 
 ### Changed
 

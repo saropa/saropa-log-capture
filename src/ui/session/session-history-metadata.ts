@@ -14,8 +14,10 @@ export interface LoadMetadataTarget {
     readonly metaCache: Map<string, SessionMetadata>;
 }
 
-/** Callback fired after each item finishes loading (index is the original file order). */
-export type OnItemLoaded = (item: SessionMetadata, index: number) => void;
+/** Callback fired after each item finishes loading (index is the original file order).
+ * Returning a promise is supported — the worker awaits it before loading the next
+ * file so each item can be sent to the webview before the next one starts. */
+export type OnItemLoaded = (item: SessionMetadata, index: number) => void | Promise<void>;
 
 /** Options for loadBatch beyond the required parameters. */
 export interface LoadBatchOptions {
@@ -38,7 +40,9 @@ export async function loadBatch(
         while (index < files.length) {
             const i = index++;
             results[i] = await loadMetadata(target, logDir, files[i], centralMeta);
-            onItemLoaded?.(results[i], i);
+            /* Await the callback so each item reaches the webview before the
+             * worker moves on to the next file — gives progressive UI updates. */
+            await onItemLoaded?.(results[i], i);
         }
     };
     const count = Math.min(limit, files.length);
