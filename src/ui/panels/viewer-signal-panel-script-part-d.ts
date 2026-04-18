@@ -4,7 +4,7 @@
  * Split from part C because that file is at the 300-line limit.
  */
 
-/** Returns JS that attaches click handlers to signal trend rows and add-to-case buttons. */
+/** Returns JS that attaches click handlers to signal trend rows. */
 export function getSignalScriptPartD(): string {
     return /* js */ `
     /* Signal trend rows — click to open the most recent session with this signal type */
@@ -23,16 +23,6 @@ export function getSignalScriptPartD(): string {
             if (daLink) {
                 e.stopPropagation();
                 vscodeApi.postMessage({ type: 'openDriftAdvisor' });
-                return;
-            }
-            /* Add-to-case "+" button on signal rows — sends signal payload to case system */
-            var addBtn = e.target.closest('.re-add-to-case-signal');
-            if (addBtn && addBtn.dataset.kind) {
-                e.stopPropagation();
-                vscodeApi.postMessage({
-                    type: 'addSignalItemToCase',
-                    payload: { type: 'signal', kind: addBtn.dataset.kind, label: addBtn.dataset.label || '', detail: addBtn.dataset.detail || '', fingerprint: addBtn.dataset.fp || '' }
-                });
                 return;
             }
             /* Triage action (Close/Mute/Re-open) on error/warning signal rows */

@@ -1,37 +1,37 @@
 /**
- * Investigation share commands: share (gist, file, LAN, upload, etc.), clear history, new from sessions.
+ * Collection share commands: share (gist, file, LAN, upload, etc.), clear history, new from sessions.
  */
 
 import * as vscode from 'vscode';
 import { t } from './l10n';
-import { exportInvestigationToSlc, exportInvestigationToBuffer } from './modules/export/slc-bundle';
+import { exportCollectionToSlc, exportCollectionToBuffer } from './modules/export/slc-bundle';
 import { shareViaGist } from './modules/share/gist-uploader';
 import { getShareHistory, addToShareHistory, clearShareHistory } from './modules/share/share-history';
 import { startShareServer } from './modules/share/lan-server';
 import { uploadBufferToPutUrl } from './modules/share/upload-url';
 import { saveToSharedFolder } from './modules/share/shared-folder';
-import { showInvestigationPanel } from './ui/investigation/investigation-panel';
+import { showCollectionPanel } from './ui/collection/collection-panel';
 import { isSplitGroup, type SessionMetadata, type TreeItem } from './ui/session/session-history-grouping';
-import type { InvestigationStore } from './modules/investigation/investigation-store';
+import type { CollectionStore } from './modules/collection/collection-store';
 
 export interface ShareCommandsDeps {
     readonly context: vscode.ExtensionContext;
-    readonly investigationStore: InvestigationStore;
+    readonly collectionStore: CollectionStore;
     readonly historyProvider?: { getAllChildren(): Promise<readonly TreeItem[]> };
 }
 
 export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposable[] {
-    const { context, investigationStore, historyProvider } = deps;
+    const { context, collectionStore, historyProvider } = deps;
 
     return [
-        vscode.commands.registerCommand('saropaLogCapture.shareInvestigation', async () => {
-            const investigation = await investigationStore.getActiveInvestigation();
-            if (!investigation) {
-                vscode.window.showWarningMessage(t('msg.noActiveInvestigation'));
+        vscode.commands.registerCommand('saropaLogCapture.shareCollection', async () => {
+            const collection = await collectionStore.getActiveCollection();
+            if (!collection) {
+                vscode.window.showWarningMessage(t('msg.noActiveCollection'));
                 return;
             }
-            if (investigation.sources.length === 0) {
-                vscode.window.showWarningMessage(t('msg.noSourcesInInvestigation'));
+            if (collection.sources.length === 0) {
+                vscode.window.showWarningMessage(t('msg.noSourcesInCollection'));
                 return;
             }
             const folder = vscode.workspace.workspaceFolders?.[0];
@@ -62,7 +62,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                 items.push({ label: '$(trash) ' + t('action.clearShareHistory'), value: 'clear-history' });
             }
 
-            const choice = await vscode.window.showQuickPick(items, { title: t('title.shareInvestigation') });
+            const choice = await vscode.window.showQuickPick(items, { title: t('title.shareCollection') });
             if (!choice) { return; }
 
             if (choice.value === 'clear-history') {
@@ -74,7 +74,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             if (choice.value === 'recent') {
                 const picked = await vscode.window.showQuickPick(
                     recent.map((e) => ({
-                        label: e.investigationName,
+                        label: e.collectionName,
                         description: new Date(e.sharedAt).toLocaleString(),
                         value: e.deepLinkUrl,
                         gistUrl: e.gistUrl,
@@ -89,15 +89,15 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             }
 
             if (choice.value === 'file') {
-                await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
+                await vscode.commands.executeCommand('saropaLogCapture.exportCollection');
                 return;
             }
 
             if (choice.value === 'copy-deep-link-local') {
                 try {
                     const outUri = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.exportInvestigation') },
-                        () => exportInvestigationToSlc(investigation, folder.uri),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.exportCollection') },
+                        () => exportCollectionToSlc(collection, folder.uri),
                     );
                     if (outUri) {
                         const deepLink = `vscode://saropa.saropa-log-capture/import?url=${encodeURIComponent(outUri.toString())}`;
@@ -113,8 +113,8 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             if (choice.value === 'lan') {
                 try {
                     const { url, stop } = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
-                        () => startShareServer(investigation, folder.uri),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareCollection') },
+                        () => startShareServer(collection, folder.uri),
                     );
                     const action = await vscode.window.showInformationMessage(
                         t('msg.lanServerStarted', url),
@@ -140,8 +140,8 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                 }
                 try {
                     const buffer = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
-                        () => exportInvestigationToBuffer(investigation, folder.uri),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareCollection') },
+                        () => exportCollectionToBuffer(collection, folder.uri),
                     );
                     const resultUrl = await uploadBufferToPutUrl(buffer, uploadPutUrl);
                     await vscode.env.clipboard.writeText(resultUrl);
@@ -159,8 +159,8 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                 }
                 try {
                     const fileUri = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
-                        () => saveToSharedFolder(investigation, folder.uri, sharedFolderPath),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareCollection') },
+                        () => saveToSharedFolder(collection, folder.uri, sharedFolderPath),
                     );
                     vscode.window.showInformationMessage(t('msg.savedToSharedFolder') + ' ' + fileUri.fsPath);
                 } catch (e) {
@@ -173,26 +173,26 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
                 try {
                     const sizeLimitWarnMb = 50;
                     const buffer = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
-                        () => exportInvestigationToBuffer(investigation, folder.uri),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareCollection') },
+                        () => exportCollectionToBuffer(collection, folder.uri),
                     );
                     const sizeMb = Math.round(buffer.length / (1024 * 1024));
                     if (sizeMb > sizeLimitWarnMb) {
                         const continueLabel = t('action.continue');
                         const chosen = await vscode.window.showWarningMessage(
-                            t('msg.investigationTooLargeWarning', String(sizeMb)),
+                            t('msg.collectionTooLargeWarning', String(sizeMb)),
                             continueLabel,
                             t('action.cancel'),
                         );
                         if (chosen !== continueLabel) { return; }
                     }
                     const result = await vscode.window.withProgress(
-                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareInvestigation') },
-                        () => shareViaGist(investigation, folder.uri, context, buffer),
+                        { location: vscode.ProgressLocation.Notification, title: t('progress.shareCollection') },
+                        () => shareViaGist(collection, folder.uri, context, buffer),
                     );
-                    await addToShareHistory(context, result, investigation.name);
+                    await addToShareHistory(context, result, collection.name);
                     const action = await vscode.window.showInformationMessage(
-                        t('msg.investigationShared'),
+                        t('msg.collectionShared'),
                         t('action.copyLink'),
                         t('action.openGist'),
                     );
@@ -213,7 +213,7 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             vscode.window.showInformationMessage(t('msg.shareHistoryCleared'));
         }),
 
-        vscode.commands.registerCommand('saropaLogCapture.newInvestigationFromSessions', async () => {
+        vscode.commands.registerCommand('saropaLogCapture.newCollectionFromSessions', async () => {
             if (!historyProvider) {
                 vscode.window.showWarningMessage(t('msg.noSessionsToAdd'));
                 return;
@@ -238,29 +238,29 @@ export function registerShareCommands(deps: ShareCommandsDeps): vscode.Disposabl
             if (!folder) { return; }
             const picks = await vscode.window.showQuickPick(
                 sessions.map((s) => ({ label: (s.filename || s.uri.path.split(/[/\\]/).pop()) ?? '', uri: s.uri })),
-                { canPickMany: true, placeHolder: t('prompt.selectSessionsForInvestigation') },
+                { canPickMany: true, placeHolder: t('prompt.selectSessionsForCollection') },
             );
             if (!picks?.length) { return; }
             const name = await vscode.window.showInputBox({
-                prompt: t('prompt.investigationName'),
-                placeHolder: t('placeholder.investigationName'),
+                prompt: t('prompt.collectionName'),
+                placeHolder: t('placeholder.collectionName'),
                 validateInput: (v) => (!v || !v.trim() ? t('validation.nameRequired') : undefined),
             });
             if (!name?.trim()) { return; }
             try {
-                const investigation = await investigationStore.createInvestigation({ name: name.trim() });
-                await investigationStore.setActiveInvestigationId(investigation.id);
+                const collection = await collectionStore.createCollection({ name: name.trim() });
+                await collectionStore.setActiveCollectionId(collection.id);
                 for (const p of picks) {
                     const relativePath = vscode.workspace.asRelativePath(p.uri, false);
                     const label = p.uri.path.split(/[/\\]/).pop() ?? relativePath;
-                    await investigationStore.addSource(investigation.id, {
+                    await collectionStore.addSource(collection.id, {
                         type: 'session',
                         relativePath,
                         label,
                     });
                 }
-                await showInvestigationPanel(investigationStore);
-                vscode.window.showInformationMessage(t('msg.investigationCreated', name.trim()));
+                await showCollectionPanel(collectionStore);
+                vscode.window.showInformationMessage(t('msg.collectionCreated', name.trim()));
             } catch (e) {
                 vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
             }

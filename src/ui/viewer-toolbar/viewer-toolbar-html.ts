@@ -44,6 +44,12 @@ export function getToolbarHtml(opts: ToolbarHtmlOptions): string {
             <span class="codicon codicon-pulse" aria-hidden="true"></span>
             <span id="toolbar-signals-count" class="toolbar-badge" title="Number of detected signals"></span>
         </button>
+        <button type="button" id="toolbar-deco-btn" class="toolbar-icon-btn" title="Toggle line decorations on/off" aria-label="Toggle decorations">
+            <span class="codicon codicon-symbol-color" aria-hidden="true"></span>
+        </button>
+        <button type="button" id="toolbar-format-btn" class="toolbar-icon-btn" style="display:none" title="Toggle formatted view for this document (markdown, JSON, CSV)" aria-label="Toggle formatted view">
+            <span class="codicon codicon-open-preview" aria-hidden="true"></span>
+        </button>
         <button type="button" id="toolbar-actions-btn" class="toolbar-icon-btn toolbar-actions-trigger" title="Open actions menu for replay, quality report, and export" aria-label="Actions menu" aria-haspopup="true" aria-expanded="false">
             <span class="codicon codicon-kebab-vertical" aria-hidden="true"></span>
         </button>

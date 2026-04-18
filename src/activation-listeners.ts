@@ -17,6 +17,7 @@ import { extractSourceReference } from './modules/source/source-linker';
 import { buildScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
+import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
 export interface ListenerDeps {
     context: vscode.ExtensionContext;
@@ -68,11 +69,17 @@ export function setupConfigListener(
     context: vscode.ExtensionContext,
     sessionManager: SessionManagerImpl,
     broadcaster: ViewerBroadcaster,
+    captureToggle: CaptureToggleStatusBar,
 ): void {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
         if (!e.affectsConfiguration('saropaLogCapture')) { return; }
         const cfg = getConfig();
         sessionManager.refreshConfig(cfg);
+        if (e.affectsConfiguration('saropaLogCapture.enabled')) {
+            /* Keep the status bar toggle in sync when the setting changes
+             * externally (e.g. via the Settings UI or settings.json edit). */
+            captureToggle.setEnabled(cfg.enabled);
+        }
         if (e.affectsConfiguration('saropaLogCapture.iconBarPosition')) {
             broadcaster.setIconBarPosition(cfg.iconBarPosition);
         }

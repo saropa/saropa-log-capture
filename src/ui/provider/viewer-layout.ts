@@ -69,10 +69,10 @@ function measureRowHeight() {
 
 /**
  * Set the font size for all log lines.
- * @param {number} size - Font size in pixels (8-22)
+ * @param {number} size - Font size in pixels (4-42)
  */
 function setFontSize(size) {
-    logFontSize = Math.max(8, Math.min(22, size));
+    logFontSize = Math.max(4, Math.min(42, size));
     document.documentElement.style.setProperty('--log-font-size', logFontSize + 'px');
     measureRowHeight();
     if (typeof recalcAndRender === 'function') {

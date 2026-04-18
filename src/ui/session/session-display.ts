@@ -20,7 +20,7 @@ export interface SessionDisplayOptions {
     readonly panelWidth?: number;
     /** Filter sessions by modified time: all, last 7 days, or last 30 days. */
     readonly dateRange?: SessionDateRange;
-    /** Sessions per page in Project Logs list (pagination). Default 100. */
+    /** Logs per page in Logs panel (pagination). Default 100. */
     readonly sessionListPageSize?: number;
     /** Day groups the user has collapsed in the session list, keyed by YYYY-MM-DD. */
     readonly collapsedDays?: Readonly<Record<string, boolean>>;

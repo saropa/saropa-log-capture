@@ -90,8 +90,9 @@ function resetSourceTags() {
     hiddenSourceTags = {};
     savedHiddenSourceTags = null;
     soloedSourceTag = null;
-    var section = document.getElementById('log-tags-section');
-    if (section) { section.style.display = 'none'; }
+    /* Hide the tab button when tags are cleared */
+    var tab = document.getElementById('filter-tab-log-tags');
+    if (tab) { tab.style.display = 'none'; }
     var container = document.getElementById('source-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateTagSummary();
