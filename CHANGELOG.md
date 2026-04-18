@@ -43,6 +43,16 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ### Fixed
 
+- **Session list details load progressively.** File metadata (dots, severity counts, tags) now streams to the session panel one item at a time instead of batching five at once. Previously all details popped in together after a long delay; now each row updates as soon as its metadata is ready.
+
+### Changed
+
+- **Collections explainer condensed.** The "What are Collections?" banner is now shorter (two lines instead of a bulleted list) and has a dismiss [x] button so users can hide it without creating a collection first. Removed the standalone "New Collection" button — collections are created from the session list context menu ("Add to Collection") where they get an initial source.
+- **Code Origins tab shows selected count.** The tab header and body summary now display the number of selected (visible) tags instead of the total count. Shows nothing when no tags are selected (never shows zero).
+- **Log Sources layout.** Radio buttons (All / Warn+ / None) now sit below each source title instead of inline, indented under the legend. Increased vertical spacing between all source groups and added container padding.
+
+### Fixed
+
 - **Decoration toggle crash on viewer load.** The decoration settings variables (`decoShowDot`, `decoShowCounter`, etc.) were declared in `viewer-deco-settings.ts` but referenced earlier by `areDecorationsOn()` in `viewer-decorations.ts`. The webview scripts loaded in the wrong order, causing `ReferenceError: decoShowDot is not defined` on startup. Swapped the script load order so settings are defined before they are read.
 - **False-positive error signals on config properties.** `isErrorLine()` and `isWarningLine()` used naive substring matching, so identifiers like `__breakOnConditionalError` or `showWarningDialog` triggered false error/warning signals. Now uses word-boundary regex plus explicit PascalCase compound-type patterns (TypeError, NullPointerException, DeprecationWarning) so real errors still match but embedded substrings in camelCase identifiers do not.
 - **Signal report: 12 debugging improvements.** The signal report now includes substantially more diagnostic context for error debugging:
