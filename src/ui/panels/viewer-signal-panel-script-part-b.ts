@@ -1,5 +1,5 @@
 /**
- * Signal panel script part B: utils, cases list/form, hot files, environment, and unified signal renderers.
+ * Signal panel script part B: utils, hot files, environment, and unified signal renderers.
  * Concatenated by viewer-signal-panel-script.ts to stay under max-lines.
  */
 
@@ -20,105 +20,6 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         return Math.floor(d / 604800000) + 'w ago';
     }
 
-    function setCreateInvestigationLoading(loading) {
-        createInvestigationInProgress = loading;
-        var input = document.getElementById('signal-cases-name-input');
-        var confirmBtn = document.getElementById('signal-cases-create-confirm');
-        if (input) input.disabled = loading;
-        if (confirmBtn) { confirmBtn.disabled = loading; confirmBtn.textContent = loading ? 'Creating…' : 'Create'; }
-    }
-    function showCreateInvestigationForm(show) {
-        var row = document.getElementById('signal-cases-create-row');
-        var form = document.getElementById('signal-cases-create-form');
-        var input = document.getElementById('signal-cases-name-input');
-        var errEl = document.getElementById('signal-cases-create-error');
-        if (row) row.style.display = show ? 'none' : '';
-        if (form) form.style.display = show ? 'flex' : 'none';
-        if (input) { input.value = ''; input.disabled = createInvestigationInProgress; if (show) input.focus(); }
-        if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-        var confirmBtn = document.getElementById('signal-cases-create-confirm');
-        if (confirmBtn) { confirmBtn.disabled = createInvestigationInProgress; confirmBtn.textContent = createInvestigationInProgress ? 'Creating…' : 'Create'; }
-    }
-    function renderCasesList() {
-        var listEl = document.getElementById('signal-cases-list');
-        var emptyEl = document.getElementById('signal-cases-empty');
-        var viewAllRow = document.getElementById('signal-cases-view-all');
-        var viewAllLink = document.getElementById('signal-cases-view-all-link');
-        var createBtn = document.getElementById('signal-cases-create');
-        if (!listEl) return;
-        var invs = (investigationsData.investigations || []);
-        var activeId = investigationsData.activeId || '';
-        var showCount = Math.min(3, invs.length);
-        var toShow = invs.slice(0, showCount);
-        if (emptyEl) emptyEl.style.display = invs.length === 0 ? '' : 'none';
-        if (toShow.length === 0) listEl.innerHTML = '';
-        else listEl.innerHTML = toShow.map(function(inv) { return buildCaseItemHtml(inv, activeId); }).join('');
-        if (viewAllRow) viewAllRow.style.display = invs.length > 3 ? '' : 'none';
-        if (viewAllLink) viewAllLink.textContent = 'View All (' + invs.length + ')';
-        if (createBtn) createBtn.onclick = function() { showCreateInvestigationForm(true); };
-        listEl.querySelectorAll('.session-investigation-item').forEach(function(el) {
-            el.addEventListener('click', function() {
-                var id = el.getAttribute('data-investigation-id');
-                if (id) vscodeApi.postMessage({ type: 'openInvestigationById', id: id });
-            });
-        });
-        showCreateInvestigationForm(false);
-    }
-    function bindCreateInvestigationForm() {
-        var form = document.getElementById('signal-cases-create-form');
-        var input = document.getElementById('signal-cases-name-input');
-        var confirmBtn = document.getElementById('signal-cases-create-confirm');
-        var cancelBtn = document.getElementById('signal-cases-create-cancel');
-        var errEl = document.getElementById('signal-cases-create-error');
-        if (!form || !input || !confirmBtn || !cancelBtn || !errEl) return;
-        function hideError() { errEl.style.display = 'none'; errEl.textContent = ''; }
-        function showError(msg) { errEl.textContent = msg; errEl.style.display = ''; }
-        function submit() {
-            if (createInvestigationInProgress) return;
-            var name = (input.value || '').trim();
-            if (!name) { showError('Name is required'); return; }
-            if (name.length > 100) { showError('Name must be 100 characters or less'); return; }
-            hideError();
-            setCreateInvestigationLoading(true);
-            vscodeApi.postMessage({ type: 'createInvestigationWithName', name: name });
-        }
-        confirmBtn.addEventListener('click', submit);
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); submit(); }
-            if (e.key === 'Escape') { e.preventDefault(); showCreateInvestigationForm(false); }
-        });
-        cancelBtn.addEventListener('click', function() { showCreateInvestigationForm(false); });
-    }
-    function buildCaseItemHtml(inv, activeId) {
-        var active = inv.id === (activeId || '') ? ' session-investigation-active' : '';
-        var srcStr = (inv.sourceCount != null) ? (SIGNAL_STRINGS.sourcesCount || '{0} source(s)').replace('{0}', String(inv.sourceCount)) : '';
-        var upStr = (inv.updatedAt != null) ? (SIGNAL_STRINGS.updatedAgo || 'Updated {0}').replace('{0}', formatUpdatedAgo(inv.updatedAt)) : '';
-        var meta = [srcStr, upStr].filter(Boolean).join(' \\u00b7 ');
-        var label = inv.name + (meta ? ' \\u00b7 ' + meta : '');
-        var activeMark = inv.id === (activeId || '') ? ' <span class="session-investigation-check">&#10003;</span>' : '';
-        return '<div class="session-investigation-item' + active + '" data-investigation-id="' + escapeAttr(inv.id) + '">' + esc(label) + activeMark + '</div>';
-    }
-    var viewAllLinkEl = document.getElementById('signal-cases-view-all-link');
-    if (viewAllLinkEl) viewAllLinkEl.addEventListener('click', function() {
-        setSectionExpanded('cases', true);
-        renderSectionAccordion('cases');
-        var listEl = document.getElementById('signal-cases-list');
-        if (listEl) {
-            var invs = (investigationsData.investigations || []);
-            var activeId = investigationsData.activeId || '';
-            listEl.innerHTML = invs.map(function(inv) { return buildCaseItemHtml(inv, activeId); }).join('');
-            listEl.querySelectorAll('.session-investigation-item').forEach(function(el) {
-                el.addEventListener('click', function() {
-                    var id = el.getAttribute('data-investigation-id');
-                    if (id) vscodeApi.postMessage({ type: 'openInvestigationById', id: id });
-                });
-            });
-        }
-        var vw = document.getElementById('signal-cases-view-all');
-        if (vw) vw.style.display = 'none';
-    });
-    bindCreateInvestigationForm();
-
     function renderHotFiles() {
         var summaryEl = document.getElementById('signal-hotfiles-summary');
         var emptyEl = document.getElementById('signal-hotfiles-empty');
@@ -129,7 +30,7 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
         if (emptyEl) emptyEl.style.display = toShow.length === 0 ? '' : 'none';
         if (listEl) {
             listEl.innerHTML = toShow.length === 0 ? '' : toShow.map(function(f) {
-                return '<div class="signal-hotfile-item"><span class="re-action re-add-to-case signal-hotfile-add" role="button" title="' + esc(SIGNAL_STRINGS.addToCase) + '" aria-label="' + esc(SIGNAL_STRINGS.addToCase) + '" data-filename="' + esc(f.filename || '') + '">+</span><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + (f.sessionCount || 0) + ' session' + (f.sessionCount === 1 ? '' : 's') + '</span></div>';
+                return '<div class="signal-hotfile-item"><span class="signal-hotfile-name">' + esc(f.filename) + '</span><span class="signal-hotfile-meta">' + (f.sessionCount || 0) + ' session' + (f.sessionCount === 1 ? '' : 's') + '</span></div>';
             }).join('');
         }
     }
@@ -203,12 +104,11 @@ export function getSignalScriptPartB(maxRecurringTextLen: number): string {
             if (s.trend === 'increasing') { trendBadge = ' <span class="signal-trend-up" title="Increasing">\u2191</span>'; }
             else if (s.trend === 'decreasing') { trendBadge = ' <span class="signal-trend-down" title="Decreasing">\u2193</span>'; }
             else if (s.trend === 'stable') { trendBadge = ' <span class="signal-trend-stable" title="Stable">\u2014</span>'; }
-            var addBtn = '<span class="re-action re-add-to-case-signal" data-kind="' + esc(s.kind) + '" data-label="' + esc(s.label) + '" data-detail="' + esc(s.detail || '') + '" data-fp="' + esc(s.fingerprint || '') + '" title="' + SIGNAL_STRINGS.addToCase + '">+</span>';
             var triageHtml = buildTriageHtml(s);
             var dimCls = (signalDataCache.statuses || {})[s.fingerprint] === 'closed' ? ' re-closed' : '';
             return '<div class="signal-env-row signal-trend-row' + sevCls + dimCls + '" data-signal-type="' + esc(s.kind) + '" title="' + esc(s.label) + '">'
                 + '<span>' + icon + recurBadge + trendBadge + ' ' + esc(text) + '</span>'
-                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + addBtn + triageHtml + '</div>';
+                + '<span class="signal-hotfile-meta">' + meta + '</span>' + lintBtn + daBtn + triageHtml + '</div>';
         }).join('');
     }
 

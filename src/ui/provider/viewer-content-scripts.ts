@@ -50,6 +50,7 @@ import { getScopeFilterHintScript } from '../viewer-search-filter/viewer-scope-f
 import { getSessionTimeBucketsScript } from '../../modules/viewer/session-time-buckets';
 import { getViewerTimeRangeFilterScript } from '../viewer/viewer-time-range-filter';
 import { getPresetsScript } from '../viewer-search-filter/viewer-presets';
+import { getPresetsSubmenuScript } from '../viewer-search-filter/viewer-presets-submenu';
 import { getFilterBadgeScript } from '../viewer-search-filter/viewer-filter-badge';
 import { getContextModalScript } from '../viewer-context-menu/viewer-context-modal';
 import { getContextPopoverScript } from '../viewer-context-menu/viewer-context-popover';
@@ -68,6 +69,7 @@ import { getOptionsPanelScript } from '../viewer-panels/viewer-options-panel';
 import { getCrashlyticsPanelScript } from '../panels/viewer-crashlytics-panel';
 import { getSignalPanelScript } from '../panels/viewer-signal-panel';
 import { getPerformancePanelScript } from '../panels/viewer-performance-panel';
+import { getCollectionsPanelScript } from '../viewer-panels/viewer-collections-panel-script';
 import { getAboutPanelScript } from '../viewer-panels/viewer-about-panel';
 import { getIconBarScript } from '../viewer-nav/viewer-icon-bar';
 import { getErrorBreakpointScript } from '../viewer-decorations/viewer-error-breakpoint';
@@ -82,6 +84,9 @@ import { getGotoLineScript } from '../viewer/viewer-goto-line';
 import { getRunNavScript } from '../viewer-nav/viewer-run-nav';
 import { getStructuredLineParserScript } from '../viewer/viewer-structured-line-parser';
 import { getMetadataFilterScript } from '../viewer-search-filter/viewer-metadata-filter';
+import { getViewerFormatMarkdownScript } from '../viewer/viewer-format-markdown';
+import { getViewerFormatJsonScript } from '../viewer/viewer-format-json';
+import { getViewerFormatCsvScript } from '../viewer/viewer-format-csv';
 
 function scriptTag(nonce: string, ...parts: string[]): string {
     return `<script nonce="${nonce}">${parts.join('\n')}</script>`;
@@ -155,8 +160,8 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getAnnotationScript()) +
         scriptTag(nonce, getTimingScript()) +
         scriptTag(nonce, getReplayScript()) +
-        scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsScript()) +
+        scriptTag(nonce, getDecorationsScript()) +
         scriptTag(nonce, getDecoSettingsListenersScript()) +
         scriptTag(nonce, getQualityBadgeScript()) +
         scriptTag(nonce, getLintBadgeScript()) +
@@ -186,6 +191,7 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getSessionTimeBucketsScript()) +
         scriptTag(nonce, getViewerTimeRangeFilterScript()) +
         scriptTag(nonce, getPresetsScript()) +
+        scriptTag(nonce, getPresetsSubmenuScript()) +
         scriptTag(nonce, getFilterBadgeScript()) +
         scriptTag(nonce, getContextModalScript()) +
         scriptTag(nonce, getContextPopoverScript()) +
@@ -201,10 +207,14 @@ export function getViewerScriptTags(opts: ViewerScriptsOptions): string {
         scriptTag(nonce, getFiltersPanelScript()) +
         scriptTag(nonce, getOptionsPanelScript()) +
         scriptTag(nonce, getCrashlyticsPanelScript()) +
+        scriptTag(nonce, getCollectionsPanelScript()) +
         scriptTag(nonce, getSignalPanelScript()) +
         // Performance UI lives only inside Signal panel (signal-pp-*); standalone performance-panel was removed.
         scriptTag(nonce, getPerformancePanelScript('signal-')) +
         scriptTag(nonce, getAboutPanelScript()) +
+        scriptTag(nonce, getViewerFormatMarkdownScript()) +
+        scriptTag(nonce, getViewerFormatJsonScript()) +
+        scriptTag(nonce, getViewerFormatCsvScript()) +
         scriptTag(nonce, getIconBarScript()) +
         scriptTag(nonce, getToolbarScript()) +
         scriptTag(nonce, getErrorBreakpointScript()) +

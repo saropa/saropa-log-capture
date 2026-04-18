@@ -15,17 +15,17 @@ import {
     setBuildCiGitlabToken, deleteBuildCiGitlabToken,
 } from './modules/integrations/providers/build-ci';
 import { exportSignalsSummaryCmd } from './commands-export-signals';
-import { htmlExportCmd, fileExportCmd, buildCiTokenCmd, importInvestigationFromSlc } from './commands-export-helpers';
+import { htmlExportCmd, fileExportCmd, buildCiTokenCmd, importCollectionFromSlc } from './commands-export-helpers';
 
 export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
-    const { context, viewerProvider, historyProvider, investigationStore } = deps;
+    const { context, viewerProvider, historyProvider, collectionStore } = deps;
     return [
         htmlExportCmd('exportHtml', exportToHtml),
         htmlExportCmd('exportHtmlInteractive', exportToInteractiveHtml),
         fileExportCmd('exportCsv', exportToCsv),
         fileExportCmd('exportJson', exportToJson),
         fileExportCmd('exportJsonl', exportToJsonl),
-        exportSignalsSummaryCmd(viewerProvider, investigationStore),
+        exportSignalsSummaryCmd(viewerProvider, collectionStore),
         vscode.commands.registerCommand('saropaLogCapture.exportSlc',
             async (item: { uri: vscode.Uri } | undefined) => {
                 const uri = item?.uri ?? viewerProvider.getCurrentFileUri();
@@ -67,7 +67,7 @@ export function exportCommands(deps: CommandDeps): vscode.Disposable[] {
                 await vscode.commands.executeCommand('saropaLogCapture.logViewer.focus');
                 await viewerProvider.loadFromFile(lastResult.mainLogUri);
             } else if (lastResult) {
-                await importInvestigationFromSlc(lastResult.investigation, investigationStore, historyProvider);
+                await importCollectionFromSlc(lastResult.collection, collectionStore, historyProvider);
             }
         }),
         vscode.commands.registerCommand('saropaLogCapture.exportToLoki',

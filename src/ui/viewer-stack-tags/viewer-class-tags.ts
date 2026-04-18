@@ -190,12 +190,20 @@ function updateClassTagSummary() {
     for (var hi = 0; hi < hiddenKeys.length; hi++) {
         if (classTagCounts[hiddenKeys[hi]]) hidden++;
     }
-    var summary = chipCount + ' tag' + (chipCount !== 1 ? 's' : '')
-        + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
+    /* Show selected (visible) count; hide summary when nothing is selected */
+    var selected = chipCount - hidden;
+    var summary = selected > 0
+        ? selected + ' selected'
+        : '';
     el.textContent = summary;
-    if (typeof setAccordionSummary === 'function') setAccordionSummary('class-tags-section', summary);
-    var section = document.getElementById('class-tags-section');
-    if (section) { section.style.display = chipCount > 0 ? '' : 'none'; }
+    /* Tab header mirrors the body: selected count or nothing */
+    var accordionText = selected > 0
+        ? selected + ' selected'
+        : '';
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('class-tags-section', accordionText);
+    /* Show/hide the tab button based on whether class tags exist */
+    var tab = document.getElementById('filter-tab-class-tags');
+    if (tab) { tab.style.display = chipCount > 0 ? '' : 'none'; }
 }
 
 function rebuildClassTagChips() {
@@ -274,8 +282,9 @@ function resetClassTags() {
     hiddenClassTags = {};
     savedHiddenClassTags = null;
     soloedClassTag = null;
-    var section = document.getElementById('class-tags-section');
-    if (section) { section.style.display = 'none'; }
+    /* Hide the tab button when class tags are cleared */
+    var tab = document.getElementById('filter-tab-class-tags');
+    if (tab) { tab.style.display = 'none'; }
     var container = document.getElementById('class-tag-chips');
     if (container) { container.innerHTML = ''; }
     updateClassTagSummary();

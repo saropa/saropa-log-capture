@@ -1,14 +1,21 @@
 /**
  * Builds detailed HTML for the "Related Lines" section of signal reports.
  * Shows actual items with excerpts and line numbers instead of summary counts.
+ * Errors are grouped by fingerprint with category, origin, and normalized-key badges.
  */
 
 import { escapeHtml } from '../../modules/capture/ansi';
 import type {
   RootCauseHintBundle,
   RootCauseHypothesis,
+  RootCauseHintError,
 } from '../../modules/root-cause-hints/root-cause-hint-types';
 import { excerptKey } from '../../modules/root-cause-hints/build-hypotheses-text';
+import { hashFingerprint, normalizeLine } from '../../modules/analysis/error-fingerprint-pure';
+import {
+  classifyErrorOrigin,
+  buildFingerprintNote,
+} from './signal-report-context';
 
 /** Maximum related items to show before truncating with "...and N more". */
 const maxItems = 20;
@@ -46,17 +53,90 @@ export function buildRelatedHtml(
   return '<div class="no-data">No additional related lines found</div>';
 }
 
-/** Show all errors from the bundle with line numbers and log content. */
+/**
+ * Show all errors grouped by fingerprint. Each group shows the normalized
+ * fingerprint key, category, origin classification, and all occurrence lines.
+ */
 function buildErrorRelated(bundle: RootCauseHintBundle, logLines: readonly string[]): string {
   const errors = bundle.errors;
   if (!errors || errors.length === 0) {
     return '<div class="no-data">No error details available</div>';
   }
-  const rows = errors
+  const groups = groupErrorsByFingerprint(errors);
+  if (groups.length === 0) {
+    return '<div class="no-data">No error details available</div>';
+  }
+  const parts: string[] = [];
+  for (const g of groups) {
+    parts.push(buildErrorGroupHtml(g, logLines));
+  }
+  return parts.join('');
+}
+
+/** Group errors by fingerprint hash for display. */
+function groupErrorsByFingerprint(
+  errors: readonly RootCauseHintError[],
+): ErrorGroup[] {
+  const map = new Map<string, ErrorGroup>();
+  for (const e of errors) {
+    if (!e) { continue; }
+    const ex = (e.excerpt || '').trim();
+    const fp = e.fingerprint ?? hashFingerprint(normalizeLine(ex));
+    const existing = map.get(fp);
+    if (existing) {
+      existing.items.push(e);
+    } else {
+      map.set(fp, {
+        fingerprint: fp,
+        excerpt: ex,
+        category: e.category,
+        items: [e],
+      });
+    }
+  }
+  // Sort groups by occurrence count (most frequent first)
+  return Array.from(map.values()).sort((a, b) => b.items.length - a.items.length);
+}
+
+interface ErrorGroup {
+  readonly fingerprint: string;
+  readonly excerpt: string;
+  readonly category: string | undefined;
+  readonly items: RootCauseHintError[];
+}
+
+/** Render a single fingerprint group with badges and occurrence list. */
+function buildErrorGroupHtml(group: ErrorGroup, logLines: readonly string[]): string {
+  const badges: string[] = [];
+  if (group.category) {
+    badges.push(`<span class="error-cat-badge">${escapeHtml(group.category)}</span>`);
+  }
+  // Origin classification from the first occurrence
+  const firstItem = group.items[0];
+  if (firstItem && logLines.length > 0) {
+    const origin = classifyErrorOrigin(
+      resolveText(logLines, firstItem.lineIndex, firstItem.excerpt),
+      logLines,
+      firstItem.lineIndex,
+    );
+    if (origin !== 'unknown') {
+      badges.push(`<span class="related-badge">${escapeHtml(origin)}</span>`);
+    }
+  }
+  // Fingerprint transparency — show normalized form
+  const fpNote = buildFingerprintNote(group.excerpt);
+  if (fpNote) {
+    badges.push(`<span class="fp-note">${escapeHtml(fpNote)}</span>`);
+  }
+  const badgeHtml = badges.length > 0 ? ` ${badges.join(' ')}` : '';
+  const summary = `${group.items.length} occurrence(s): ${group.excerpt}`;
+  const rows = group.items
     .slice(0, maxItems)
-    .filter((e): e is NonNullable<typeof e> => !!e)
     .map(e => itemRow(e.lineIndex, resolveText(logLines, e.lineIndex, e.excerpt)));
-  return wrapList(`${errors.length} error(s) in this session`, rows, errors.length);
+  return (
+    `<div class="related-summary">${escapeHtml(summary)}${badgeHtml}</div>` +
+    `<div class="related-list">${rows.join('')}</div>`
+  );
 }
 
 /** Show all occurrences of the matching warning group with actual log lines. */

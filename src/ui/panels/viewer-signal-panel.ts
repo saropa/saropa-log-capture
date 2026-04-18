@@ -2,7 +2,7 @@
  * Signal panel: single-scroll unified view.
  * Two signal lists: "Signals in this log" (current session) and "All signals" (cross-session).
  * No duplication — every signal kind rendered through the same unified RecurringSignalEntry list.
- * State A (no log): Cases + All signals + Hot files. State B (log open): Performance + This log + Cases + All signals.
+ * State A (no log): All signals + Hot files. State B (log open): Performance + This log + All signals.
  */
 import { t } from '../../l10n';
 import { getPerformancePanelHtml } from './viewer-performance-panel';
@@ -10,15 +10,13 @@ import { getSignalPanelScriptContent, type SignalScriptStrings } from './viewer-
 
 const SIGNAL_STORAGE_KEY = 'signalSectionState';
 
-/** Generate the Signal panel HTML: one narrative (This log → Your cases → Across your logs → Environment). */
+/** Generate the Signal panel HTML: one narrative (This log → Across your logs → Environment). */
 export function getSignalPanelHtml(): string {
     const sessionDetails = t('signal.sessionDetails');
     const sessionDetailsHint = t('signal.sessionDetailsHint');
     const thisLog = t('signal.thisLog');
     const thisLogEmpty = t('signal.thisLogEmpty');
-    const yourCases = t('signal.yourCases');
     const acrossYourLogs = t('signal.acrossYourLogs');
-    const emptyCases = t('signal.emptyCases');
     const emptyHotFiles = t('signal.emptyHotFiles');
     return /* html */ `
 <div id="signal-panel" class="signal-panel" role="region" aria-label="Signals">
@@ -67,34 +65,6 @@ export function getSignalPanelHtml(): string {
                 </div>
             </div>
         </section>
-        <!-- Your cases -->
-        <section id="signal-section-cases" class="signal-section">
-            <button type="button" class="signal-section-header" id="signal-header-cases" aria-expanded="true" aria-controls="signal-body-cases">
-                <span class="signal-section-emoji" aria-hidden="true">📌</span>
-                <span class="signal-section-title">${yourCases}</span>
-                <span class="signal-section-toggle" aria-hidden="true"></span>
-            </button>
-            <div id="signal-body-cases" class="signal-section-body">
-                <div class="session-investigations">
-                    <p id="signal-cases-hint" class="session-investigations-hint">Pin sessions and files to search and export together.</p>
-                    <div id="signal-cases-loading" class="session-loading-label" style="display:none">Loading…</div>
-                    <div id="signal-cases-empty" class="signal-hotfiles-empty" style="display:none">${emptyCases}</div>
-                    <div id="signal-cases-list" class="session-investigations-list"></div>
-                    <div id="signal-cases-view-all" class="signal-view-all" style="display:none"><span id="signal-cases-view-all-link">View All</span></div>
-                    <div id="signal-cases-create-row" class="session-investigations-create-row">
-                        <button id="signal-cases-create" class="session-investigations-create">+ Create Investigation...</button>
-                    </div>
-                    <div id="signal-cases-create-form" class="session-investigations-create-form" style="display:none">
-                        <input type="text" id="signal-cases-name-input" class="session-investigations-name-input" placeholder="e.g., Auth Timeout Bug #1234" maxlength="100" />
-                        <div class="session-investigations-create-form-actions">
-                            <button type="button" id="signal-cases-create-confirm" class="session-investigations-create-confirm">Create</button>
-                            <button type="button" id="signal-cases-create-cancel" class="session-investigations-create-cancel">Cancel</button>
-                        </div>
-                        <div id="signal-cases-create-error" class="session-investigations-create-error" style="display:none"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
         <!-- Across your logs: recurring errors + hot files -->
         <section id="signal-section-across-logs" class="signal-section">
             <button type="button" class="signal-section-header" id="signal-header-across-logs" aria-expanded="true" aria-controls="signal-body-across-logs">
@@ -140,19 +110,15 @@ export function getSignalPanelHtml(): string {
 /** Generate the Signal panel script. Single scroll; context-aware sections (State A vs B). */
 export function getSignalPanelScript(): string {
     const strings: SignalScriptStrings = {
-        addToCase: t('signal.addToCase'),
         heroSparklineTitle: t('signal.heroSparklineTitle'),
         heroLoading: t('signal.heroLoading'),
         heroNoSamplingHint: t('signal.heroNoSamplingHint'),
         errorsInLogEmpty: t('signal.errorsInLogEmpty'),
-        emptyCases: t('signal.emptyCases'),
         emptyRecurring: t('signal.emptyRecurring'),
         emptyHotFiles: t('signal.emptyHotFiles'),
         thisLogEmpty: t('signal.thisLogEmpty'),
         sessionTrendLabel: t('signal.sessionTrendLabel'),
         topOfTotal: t('signal.topOfTotal'),
-        sourcesCount: t('signal.sourcesCount'),
-        updatedAgo: t('signal.updatedAgo'),
         heroNoErrorsWarnings: t('signal.heroNoErrorsWarnings'),
         sectionErrorsInLog: t('signal.sectionErrorsInLog'),
     };

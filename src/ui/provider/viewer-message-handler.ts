@@ -7,7 +7,7 @@
 import { logExtensionWarn } from '../../modules/misc/extension-logger';
 import { assertDefined } from '../../modules/misc/assert';
 import { dispatchPanelMessage } from './viewer-message-handler-panels';
-import { dispatchInvestigationMessage } from './viewer-message-handler-investigation';
+import { dispatchCollectionMessage } from './viewer-message-handler-collection';
 import { dispatchViewerActionMessage } from './viewer-message-handler-actions';
 import type { ViewerMessageContext } from './viewer-message-types';
 import { handleTrackInteractionRecord } from '../../modules/learning/learning-viewer-message';
@@ -25,7 +25,7 @@ export function dispatchViewerMessage(msg: Record<string, unknown>, ctx: ViewerM
     logExtensionWarn('viewerMessage', 'Ignoring message with missing or invalid type');
     return;
   }
-  if (dispatchInvestigationMessage(msg, ctx)) { return; }
+  if (dispatchCollectionMessage(msg, ctx)) { return; }
   if (msg.type === 'trackInteraction') {
     handleTrackInteractionRecord(msg);
     return;

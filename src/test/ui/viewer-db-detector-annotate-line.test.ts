@@ -33,6 +33,7 @@ var suppressTransientErrors = false;
 var viewerPreserveAsciiBoxArt = true;
 var viewerGroupAsciiArt = true;
 var viewerDetectAsciiArt = false;
+var fileMode = 'log';
 var showFlutter = 'all';
 var showDevice = 'warnplus';
 var showExternal = 'warnplus';

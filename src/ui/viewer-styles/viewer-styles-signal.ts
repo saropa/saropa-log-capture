@@ -1,6 +1,6 @@
 /**
  * CSS styles for the Signal panel — single-scroll unified view (Unified Signal Model).
- * Accordion sections; no tabs. Reuses session-investigation and recurring card classes.
+ * Accordion sections; no tabs. Reuses session-collection and recurring card classes.
  */
 
 import { getSignalLayoutStyles } from './viewer-styles-signal-layout';

@@ -1,24 +1,24 @@
 /**
- * Investigation cross-source search.
- * Searches across all pinned sources in an investigation, including session sidecars.
+ * Collection cross-source search.
+ * Searches across all pinned sources in a collection, including session sidecars.
  * Supports cancellation, progress reporting, and large file handling.
  */
 
 import * as vscode from 'vscode';
 import {
-    Investigation,
-    InvestigationSource,
+    Collection,
+    CollectionSource,
     SearchOptions,
     SourceSearchResult,
-    InvestigationSearchResult,
+    CollectionSearchResult,
     MAX_RESULTS_PER_SOURCE,
-} from './investigation-types';
+} from './collection-types';
 import {
     resolveSearchableFiles,
     searchFile,
     searchJsonSidecar,
     type FileSearchParams,
-} from './investigation-search-file';
+} from './collection-search-file';
 
 /** Escape special regex characters in a string. */
 export function escapeRegex(str: string): string {
@@ -32,14 +32,14 @@ function createSearchRegex(query: string, options: SearchOptions): RegExp {
 }
 
 /**
- * Search across all sources in an investigation.
+ * Search across all sources in a collection.
  */
-export async function searchInvestigation(
-    investigation: Investigation,
+export async function searchCollection(
+    collection: Collection,
     options: SearchOptions,
     token?: vscode.CancellationToken,
     progress?: (current: number, total: number, currentFile: string) => void,
-): Promise<InvestigationSearchResult> {
+): Promise<CollectionSearchResult> {
     const startTime = Date.now();
     const folder = vscode.workspace.workspaceFolders?.[0];
 
@@ -69,8 +69,8 @@ export async function searchInvestigation(
     const contextLines = options.contextLines ?? 2;
     const maxResults = options.maxResultsPerSource ?? MAX_RESULTS_PER_SOURCE;
 
-    const allFiles: { source: InvestigationSource; uri: vscode.Uri; isSidecar: boolean }[] = [];
-    for (const source of investigation.sources) {
+    const allFiles: { source: CollectionSource; uri: vscode.Uri; isSidecar: boolean }[] = [];
+    for (const source of collection.sources) {
         const files = await resolveSearchableFiles(source, folder.uri);
         for (const file of files) {
             allFiles.push({ source, ...file });
@@ -123,7 +123,7 @@ export async function searchInvestigation(
  * Check if a source file exists and is readable.
  */
 export async function checkSourceExists(
-    source: InvestigationSource,
+    source: CollectionSource,
     workspaceUri: vscode.Uri,
 ): Promise<boolean> {
     const uri = vscode.Uri.joinPath(workspaceUri, source.relativePath);

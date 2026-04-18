@@ -55,6 +55,13 @@ function isDecorativeExcerpt(s: string): boolean {
   return !/[a-zA-Z0-9]/.test(s);
 }
 
+/** Build a human-readable reason for the confidence level. */
+function buildConfidenceReason(cat: string, occurrences: number): string {
+  const catLabel = cat === 'non-fatal' ? 'non-fatal error' : `${cat} crash`;
+  const countLabel = occurrences === 1 ? '1 occurrence' : `${occurrences} occurrences`;
+  return `${catLabel}, ${countLabel}`;
+}
+
 /** Map crash category to confidence level. */
 function categoryConfidence(cat: string): RootCauseHypothesisConfidence {
   if (cat === 'fatal' || cat === 'anr' || cat === 'oom' || cat === 'native') {
@@ -89,6 +96,7 @@ function errorHypotheses(bundle: RootCauseHintBundle): WorkingHypothesis[] {
     text: truncateText(`Error: ${excerpt}`, MAX_TEXT_LEN),
     evidenceLineIds: lineIds.slice().sort((a, b) => a - b),
     confidence: categoryConfidence(cat),
+    confidenceReason: buildConfidenceReason(cat, lineIds.length),
     hypothesisKey: `err::${key}`,
     tier: 0 as Tier,
   }));
@@ -176,6 +184,7 @@ function stripWorking(h: WorkingHypothesis): RootCauseHypothesis {
     text: h.text,
     evidenceLineIds: capEvidence(h.evidenceLineIds),
     confidence: h.confidence,
+    confidenceReason: h.confidenceReason,
     hypothesisKey: h.hypothesisKey,
   };
 }

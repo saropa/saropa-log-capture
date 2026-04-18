@@ -5,7 +5,7 @@
  * suitable for pasting into GitHub Issues, StackOverflow, or Slack.
  */
 
-import type { BugReportData, StackFrame, InvestigationContext } from './bug-report-collector';
+import type { BugReportData, StackFrame, CollectionContext } from './bug-report-collector';
 import type { LintReportData } from '../misc/lint-violation-reader';
 import { getConfig } from '../config/config';
 import { buildMarkdownFileLink } from '../source/link-helpers';
@@ -50,7 +50,7 @@ export function formatBugReport(data: BugReportData): string {
         const owaspSection = formatOwaspSection(data.lintMatches.matches, data.primarySourcePath);
         if (owaspSection) { sections.push(owaspSection); }
     }
-    if (data.investigationContext) { sections.push(formatInvestigationContext(data.investigationContext)); }
+    if (data.collectionContext) { sections.push(formatCollectionContext(data.collectionContext)); }
     if (data.qualitySummary?.length) { sections.push(formatCodeQualitySection(data.qualitySummary)); }
     if (data.crossSessionMatch) { sections.push(formatCrossSession(data.crossSessionMatch)); }
     if (data.firebaseMatch) { sections.push(formatProductionImpact(data.firebaseMatch)); }
@@ -109,7 +109,7 @@ function collectSourcePaths(data: BugReportData): string[] {
     return paths;
 }
 
-function formatInvestigationContext(inv: InvestigationContext): string {
+function formatCollectionContext(inv: CollectionContext): string {
     const created = new Date(inv.createdAt).toISOString();
     const rows = inv.sources.map(s => {
         const pinned = new Date(s.pinnedAt).toISOString();
@@ -117,8 +117,8 @@ function formatInvestigationContext(inv: InvestigationContext): string {
     }).join('\n');
     const table = `| Source | Type | Pinned |\n|--------|------|--------|\n${rows}`;
     const parts = [
-        '## Investigation Context',
-        `**Investigation:** ${inv.name}`,
+        '## Collection Context',
+        `**Collection:** ${inv.name}`,
         `**Created:** ${created}`,
         `### Pinned Sources (${inv.sources.length})`,
         table,
@@ -134,7 +134,7 @@ function formatInvestigationContext(inv: InvestigationContext): string {
         parts.push(recentSearchLines.join('\n'));
     }
     if (inv.notes?.trim()) {
-        parts.push('### Investigation Notes\n' + inv.notes.trim());
+        parts.push('### Collection Notes\n' + inv.notes.trim());
     }
     return parts.join('\n\n');
 }

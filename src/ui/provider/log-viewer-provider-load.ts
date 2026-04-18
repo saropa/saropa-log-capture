@@ -53,6 +53,21 @@ export interface LoadResultFirstError {
 
 type LoadContentResult = LoadContentResultLike & LoadResultFirstError;
 
+/** File mode types for structured-file rendering (plan 051). */
+export type FileMode = 'log' | 'markdown' | 'json' | 'csv' | 'html';
+
+/** Detect the viewer file mode from extension. Non-log modes skip the analysis pipeline. */
+export function detectFileMode(uri: vscode.Uri): FileMode {
+  const ext = uri.fsPath.toLowerCase().split('.').pop();
+  switch (ext) {
+    case 'md': return 'markdown';
+    case 'json': case 'jsonl': return 'json';
+    case 'csv': return 'csv';
+    case 'html': case 'htm': return 'html';
+    default: return 'log';
+  }
+}
+
 /**
  * Execute the core load: read file, parse header, send content lines, run boundaries.
  * Returns { sessionMidnightMs, contentLength, firstError?, firstWarning? } for optional tailing and smart bookmarks.
@@ -67,6 +82,12 @@ export async function executeLoadContent(
   const text = Buffer.from(raw).toString("utf-8");
   target.postMessage({ type: "setViewingMode", viewing: true });
   target.setFilename(vscode.workspace.asRelativePath(uri, false));
+
+  /* Notify the webview of the file mode so it can skip log analysis for
+     structured documents (markdown, JSON, CSV, HTML). Sent before lines
+     so the mode is set when addToData() receives the first line. */
+  const fileMode = detectFileMode(uri);
+  target.postMessage({ type: "setFileMode", mode: fileMode });
 
   if (uri.fsPath.toLowerCase().endsWith(UNIFIED_SESSION_LOG_SUFFIX.toLowerCase())) {
     return await loadUnifiedSessionJsonlContent(target, uri, text, checkGen);

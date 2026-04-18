@@ -13,13 +13,13 @@ import { aggregateSignals, buildSignalsFromMetas, type CrossSessionSignals } fro
 import { loadMetasForPaths } from './modules/session/metadata-loader';
 import { buildSignalsSummary } from './modules/signals/signals-summary';
 
-export type ScopeChoice = 'currentSession' | 'investigation' | '7d' | 'all';
+export type ScopeChoice = 'currentSession' | 'collection' | '7d' | 'all';
 
-/** Resolve cross-session signals for the chosen scope (current session, investigation, 7d, or all). */
+/** Resolve cross-session signals for the chosen scope (current session, collection, 7d, or all). */
 export async function resolveSignals(
     scope: ScopeChoice,
     viewerProvider: CommandDeps['viewerProvider'],
-    investigationStore: CommandDeps['investigationStore'],
+    collectionStore: CommandDeps['collectionStore'],
 ): Promise<CrossSessionSignals | null> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return null; }
@@ -35,8 +35,8 @@ export async function resolveSignals(
         return metas.length > 0 ? buildSignalsFromMetas(metas) : null;
     }
 
-    if (scope === 'investigation') {
-        const inv = await investigationStore.getActiveInvestigation();
+    if (scope === 'collection') {
+        const inv = await collectionStore.getActiveCollection();
         if (!inv?.sources?.length) { return null; }
         const sessionPaths = inv.sources
             .filter(s => s.type === 'session')
@@ -54,13 +54,13 @@ export async function resolveSignals(
 
 export function exportSignalsSummaryCmd(
     viewerProvider: CommandDeps['viewerProvider'],
-    investigationStore: CommandDeps['investigationStore'],
+    collectionStore: CommandDeps['collectionStore'],
 ): vscode.Disposable {
     return vscode.commands.registerCommand('saropaLogCapture.exportSignalsSummary', async () => {
         const scopeItem = await vscode.window.showQuickPick(
             [
                 { label: t('signalsExport.scope.currentSession'), value: 'currentSession' as ScopeChoice },
-                { label: t('signalsExport.scope.investigation'), value: 'investigation' as ScopeChoice },
+                { label: t('signalsExport.scope.collection'), value: 'collection' as ScopeChoice },
                 { label: t('signalsExport.scope.last7Days'), value: '7d' as ScopeChoice },
                 { label: t('signalsExport.scope.all'), value: 'all' as ScopeChoice },
             ],
@@ -70,7 +70,7 @@ export function exportSignalsSummaryCmd(
 
         const aggregated = await vscode.window.withProgress(
             { location: vscode.ProgressLocation.Notification, title: t('signalsExport.progress') },
-            async () => resolveSignals(scopeItem.value, viewerProvider, investigationStore),
+            async () => resolveSignals(scopeItem.value, viewerProvider, collectionStore),
         );
 
         if (!aggregated) {
@@ -87,7 +87,7 @@ export function exportSignalsSummaryCmd(
         );
         if (!formatItem) { return; }
 
-        const timeRangeLabel = scopeItem.value === '7d' ? '7d' : scopeItem.value === 'all' ? 'all' : scopeItem.value === 'investigation' ? 'investigation' : 'session';
+        const timeRangeLabel = scopeItem.value === '7d' ? '7d' : scopeItem.value === 'all' ? 'all' : scopeItem.value === 'collection' ? 'collection' : 'session';
         const summary = buildSignalsSummary(aggregated, { timeRangeLabel });
         const ext = formatItem.value;
         const defaultName = `signals-summary.${ext}`;

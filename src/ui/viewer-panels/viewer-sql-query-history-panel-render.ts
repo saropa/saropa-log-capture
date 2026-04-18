@@ -10,6 +10,8 @@ export function getSqlQueryHistoryPanelRenderScript(): string {
         if (!listEl || !tbodyEl || !emptyEl) return;
         var q = (searchEl && searchEl.value ? searchEl.value : '').toLowerCase().trim();
         var rows = getSqlQueryHistoryRowsForRender();
+        /* Update icon bar badge with total distinct SQL query count (unfiltered). */
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-sql-badge', 'ib-sql-count', rows.length);
         rows = sortSqlHistoryRows(rows);
         var filtered = [];
         var i, r;

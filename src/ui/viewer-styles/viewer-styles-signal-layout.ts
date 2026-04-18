@@ -151,7 +151,7 @@ export function getSignalLayoutStyles(): string {
     overflow: hidden;
 }
 
-.signal-section .session-investigations {
+.signal-section .session-collections {
     flex: 0 0 auto;
 }
 `;

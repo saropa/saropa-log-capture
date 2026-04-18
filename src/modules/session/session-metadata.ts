@@ -50,7 +50,7 @@ export interface SessionMeta {
     debugAdapterType?: string;
     /** Target device or emulator detected from launch config or output. */
     debugTarget?: string;
-    /** Hidden from the Project Logs tree; permanently deleted on "Empty Trash". */
+    /** Hidden from the Logs tree; permanently deleted on "Empty Trash". */
     trashed?: boolean;
     /** Integration provider payloads keyed by provider id (e.g. buildCi, windowsEvents). */
     integrations?: Record<string, unknown>;

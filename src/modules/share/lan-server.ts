@@ -1,13 +1,13 @@
 /**
- * Temporary LAN HTTP server to serve an investigation .slc file so teammates on the same network can download it.
+ * Temporary LAN HTTP server to serve a collection .slc file so teammates on the same network can download it.
  * Use for enterprise / no-GitHub sharing. Call stopLanShareServer() to stop the server.
  */
 
 import * as http from 'http';
 import * as os from 'os';
 import * as vscode from 'vscode';
-import type { Investigation } from '../investigation/investigation-types';
-import { exportInvestigationToBuffer } from '../export/slc-bundle';
+import type { Collection } from '../collection/collection-types';
+import { exportCollectionToBuffer } from '../export/slc-bundle';
 
 let activeServer: http.Server | null = null;
 
@@ -27,14 +27,14 @@ export function getLocalIP(): string {
 }
 
 /**
- * Start a temporary HTTP server that serves the investigation as .slc. Returns the download URL and a stop function.
+ * Start a temporary HTTP server that serves the collection as .slc. Returns the download URL and a stop function.
  * Only one server can be active at a time; starting another stops the previous one.
  */
 export async function startShareServer(
-    investigation: Investigation,
+    collection: Collection,
     workspaceUri: vscode.Uri,
 ): Promise<{ url: string; stop: () => void }> {
-    const buffer = await exportInvestigationToBuffer(investigation, workspaceUri);
+    const buffer = await exportCollectionToBuffer(collection, workspaceUri);
 
     if (activeServer) {
         activeServer.close();
@@ -42,9 +42,9 @@ export async function startShareServer(
     }
 
     const server = http.createServer((req, res) => {
-        if (req.url === '/' || req.url === '/investigation.slc') {
+        if (req.url === '/' || req.url === '/collection.slc') {
             res.setHeader('Content-Type', 'application/octet-stream');
-            res.setHeader('Content-Disposition', 'attachment; filename="investigation.slc"');
+            res.setHeader('Content-Disposition', 'attachment; filename="collection.slc"');
             res.end(buffer);
         } else {
             res.writeHead(404);
@@ -72,7 +72,7 @@ export async function startShareServer(
 
     activeServer = server;
     const ip = getLocalIP();
-    const url = `http://${ip}:${port}/investigation.slc`;
+    const url = `http://${ip}:${port}/collection.slc`;
 
     const stop = (): void => {
         if (activeServer === server) {

@@ -254,8 +254,23 @@ if (searchFunnelBtn) {
     });
 }
 
+/** Show or hide the [x] clear button based on whether the search input has text. */
 function updateClearButton() {
-    /* no-op — retained for compatibility with search history input handler */
+    var btn = document.getElementById('search-clear-btn');
+    if (!btn) return;
+    btn.style.display = (searchInputEl && searchInputEl.value) ? '' : 'none';
+}
+
+var searchClearBtn = document.getElementById('search-clear-btn');
+if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', function() {
+        if (searchInputEl) { searchInputEl.value = ''; searchInputEl.focus(); }
+        clearSearchState();
+        clearSearchFilteredFlags();
+        renderViewport(true);
+        updateClearButton();
+        syncSearchMatchOptionsVisibility();
+    });
 }
 
 /* Prevent clicks inside the session search strip from reaching the

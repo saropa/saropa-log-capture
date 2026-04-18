@@ -1,18 +1,18 @@
 /**
- * Investigation Panel HTML
+ * Collection Panel HTML
  *
- * HTML generation functions for the investigation panel webview.
+ * HTML generation functions for the collection panel webview.
  */
 
 import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
 import { getNonce } from '../provider/viewer-content';
-import { getInvestigationPanelStyles } from './investigation-panel-styles';
-import { getInvestigationPanelScript } from './investigation-panel-script';
-import type { Investigation, InvestigationSource } from '../../modules/investigation/investigation-types';
-import { renderEmptyResults } from './investigation-panel-handlers';
+import { getCollectionPanelStyles } from './collection-panel-styles';
+import { getCollectionPanelScript } from './collection-panel-script';
+import type { Collection, CollectionSource } from '../../modules/collection/collection-types';
+import { renderEmptyResults } from './collection-panel-handlers';
 
-export function renderSourceItem(source: InvestigationSource, isMissing: boolean = false): string {
+export function renderSourceItem(source: CollectionSource, isMissing: boolean = false): string {
     const icon = source.type === 'session' ? '📄' : '📎';
     const typeLabel = source.type === 'session' ? 'session' : 'file';
     const missingClass = isMissing ? ' source-missing' : '';
@@ -26,7 +26,7 @@ export function renderSourceItem(source: InvestigationSource, isMissing: boolean
 </div>`;
 }
 
-export function buildInvestigationHtml(inv: Investigation, missingSources: string[] = []): string {
+export function buildCollectionHtml(inv: Collection, missingSources: string[] = []): string {
     const nonce = getNonce();
     const missingSet = new Set(missingSources);
     const sourcesHtml = inv.sources.length > 0
@@ -35,16 +35,16 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
 
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getInvestigationPanelStyles()}</style>
+<style nonce="${nonce}">${getCollectionPanelStyles()}</style>
 </head><body>
-<div role="main" aria-label="Investigation">
+<div role="main" aria-label="Collection">
 <div class="header">
     <div class="header-left">
         <div class="title"><span class="title-icon" aria-hidden="true">🔍</span>${escapeHtml(inv.name)}</div>
-        <div class="subtitle">${t('msg.investigationSources', String(inv.sources.length))}</div>
+        <div class="subtitle">${t('msg.collectionSources', String(inv.sources.length))}</div>
     </div>
     <div class="header-right">
-        <button class="close-btn" title="${t('action.closeInvestigation')}" aria-label="${t('action.closeInvestigation')}">✕</button>
+        <button class="close-btn" title="${t('action.closeCollection')}" aria-label="${t('action.closeCollection')}">✕</button>
     </div>
 </div>
 <div class="content">
@@ -85,33 +85,33 @@ export function buildInvestigationHtml(inv: Investigation, missingSources: strin
     </div>
     <div class="section notes-section">
         <div class="section-title">📝 ${t('label.notes')}</div>
-        <textarea class="notes-textarea" placeholder="${t('placeholder.investigationNotes')}">${escapeHtml(inv.notes ?? '')}</textarea>
+        <textarea class="notes-textarea" placeholder="${t('placeholder.collectionNotes')}">${escapeHtml(inv.notes ?? '')}</textarea>
     </div>
 </div>
 <div class="actions-bar">
     <button class="btn open-slc-btn">📥 ${t('action.openSlcFile')}</button>
-    <button class="btn share-btn">📤 ${t('action.shareInvestigation')}</button>
+    <button class="btn share-btn">📤 ${t('action.shareCollection')}</button>
     <button class="btn export-btn">📦 ${t('action.exportSlc')}</button>
     <button class="btn report-btn">📋 ${t('action.generateBugReport')}</button>
 </div>
 </div>
-<script nonce="${nonce}">${getInvestigationPanelScript()}</script>
+<script nonce="${nonce}">${getCollectionPanelScript()}</script>
 </body></html>`;
 }
 
-export function buildNoInvestigationHtml(): string {
+export function buildNoCollectionHtml(): string {
     const nonce = getNonce();
     return `<!DOCTYPE html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}';">
-<style nonce="${nonce}">${getInvestigationPanelStyles()}</style>
+<style nonce="${nonce}">${getCollectionPanelStyles()}</style>
 </head><body>
-<div class="no-investigation">
-    <div class="no-investigation-icon">🔍</div>
-    <div class="no-investigation-title">${t('title.noActiveInvestigation')}</div>
-    <div class="no-investigation-text">${t('msg.noActiveInvestigationDesc')}</div>
-    <button class="btn create-btn">+ ${t('action.createInvestigation')}</button>
+<div class="no-collection">
+    <div class="no-collection-icon">🔍</div>
+    <div class="no-collection-title">${t('title.noActiveCollection')}</div>
+    <div class="no-collection-text">${t('msg.noActiveCollectionDesc')}</div>
+    <button class="btn create-btn">+ ${t('action.createCollection')}</button>
     <button class="btn open-slc-btn">📥 ${t('action.openSlcFile')}</button>
 </div>
-<script nonce="${nonce}">${getInvestigationPanelScript()}</script>
+<script nonce="${nonce}">${getCollectionPanelScript()}</script>
 </body></html>`;
 }

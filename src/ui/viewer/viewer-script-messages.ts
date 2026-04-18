@@ -56,6 +56,7 @@ window.addEventListener('message', function(event) {
             if (typeof window.exitReplayMode === 'function') window.exitReplayMode();
             if (currentFilename && !autoScroll) { scrollMemory[currentFilename] = logEl.scrollTop; }
             autoScroll = true;
+            fileMode = 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility();
             allLines.length = 0; totalHeight = 0; lineCount = 0; activeGroupHeader = null; nextSeq = 1; sessionStartTs = 0;
             if (typeof applyDecorationLayoutWidth === 'function') applyDecorationLayoutWidth();
             lastStart = -1; lastEnd = -1; groupHeaderMap = {}; prefixSums = null;
@@ -135,6 +136,8 @@ window.addEventListener('message', function(event) {
             break;
         case 'triggerCopyAllFiltered': if (typeof copyAllFilteredWithCount === 'function') copyAllFilteredWithCount(); break;
         case 'triggerCollapseAllSections': if (typeof collapseAllSections === 'function') collapseAllSections(); break;
+        case 'triggerExpandAllSections': if (typeof expandAllSections === 'function') expandAllSections(); break;
+        case 'triggerToggleSearch': if (typeof toggleSearchPanel === 'function') toggleSearchPanel(); break;
         case 'triggerExplainRootCauseHypotheses':
             if (typeof runTriggerExplainRootCauseHypothesesFromHost === 'function') runTriggerExplainRootCauseHypothesesFromHost();
             break;
@@ -145,9 +148,10 @@ window.addEventListener('message', function(event) {
             currentFilename = msg.filename || '';
             updateFooterText();
             break;
+        case 'setFileMode': fileMode = msg.mode || 'log'; formatEnabled = false; if (typeof updateFormatToggleVisibility === 'function') updateFormatToggleVisibility(); break;
         case 'setSources':
             if (typeof window !== 'undefined') { window.availableSources = Array.isArray(msg.sources) ? msg.sources : []; window.enabledSources = Array.isArray(msg.enabledSources) ? msg.enabledSources : null; }
-            var _srcSec = document.getElementById('log-sources-section'); if (_srcSec) _srcSec.style.display = '';
+            /* Log Sources tab is always visible — no need to toggle panel display */
             if (typeof recalcHeights === 'function') recalcHeights();
             if (typeof renderViewport === 'function') renderViewport(true);
             if (typeof updateFooterText === 'function') updateFooterText();

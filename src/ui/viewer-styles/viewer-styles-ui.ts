@@ -199,22 +199,27 @@ body.mm-resizing, body.mm-resizing * { cursor: col-resize !important; }
 }
 .minimap-viewport {
     position: absolute; left: 0; right: 0; pointer-events: none; min-height: 10px;
+    /* z-index ensures viewport renders above the canvas compositing layer */
+    z-index: 1;
     /* Slightly more transparent than default theme slider so the log map shows through */
     background: var(--vscode-scrollbarSlider-background, rgba(121, 121, 121, 0.34));
     transition: top 0.08s linear;
+    /* Reserve border space so toggling the outline doesn't shift size */
+    border: 2px solid transparent;
+    box-sizing: border-box;
 }
 .minimap-viewport.minimap-viewport--red-outline {
-    box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.95);
+    border-color: rgba(239, 68, 68, 0.95);
     background: rgba(121, 121, 121, 0.30);
 }
 .scrollbar-minimap:hover .minimap-viewport { background: var(--vscode-scrollbarSlider-hoverBackground, rgba(100, 100, 100, 0.58)); }
 .scrollbar-minimap:hover .minimap-viewport.minimap-viewport--red-outline {
     background: rgba(100, 100, 100, 0.38);
-    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+    border-color: rgba(255, 82, 82, 1);
 }
 .scrollbar-minimap.mm-dragging .minimap-viewport { background: var(--vscode-scrollbarSlider-activeBackground, rgba(191, 191, 191, 0.32)); }
 .scrollbar-minimap.mm-dragging .minimap-viewport.minimap-viewport--red-outline {
-    box-shadow: inset 0 0 0 2px rgba(255, 82, 82, 1);
+    border-color: rgba(255, 82, 82, 1);
 }
 
 /* ===================================================================

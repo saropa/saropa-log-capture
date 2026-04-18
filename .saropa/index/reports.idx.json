@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceId": "reports",
-  "buildTime": 1776282517274,
+  "buildTime": 1776532537951,
   "files": [
     {
       "relativePath": "reports/20260307/20260307_214522_saropa-log-capture.log",
@@ -115,6 +115,145 @@
       "mtime": 1776282517149,
       "correlationTokens": [],
       "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260417/20260417_204907_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260417/20260417_204907_saropa-log-capture.log",
+      "sizeBytes": 3009,
+      "mtime": 1776475649257,
+      "correlationTokens": [],
+      "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260417/20260417_215229_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260417/20260417_215229_saropa-log-capture.log",
+      "sizeBytes": 3015,
+      "mtime": 1776478070477,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_000131_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_000131_saropa-log-capture.log",
+      "sizeBytes": 2997,
+      "mtime": 1776485713605,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_002142_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_002142_saropa-log-capture.log",
+      "sizeBytes": 3005,
+      "mtime": 1776486684701,
+      "correlationTokens": [],
+      "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260418/20260418_003151_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_003151_saropa-log-capture.log",
+      "sizeBytes": 2993,
+      "mtime": 1776486822029,
+      "correlationTokens": [],
+      "fingerprints": [
+        "__breakOnConditionalError: false"
+      ],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_004151_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_004151_saropa-log-capture.log",
+      "sizeBytes": 5535,
+      "mtime": 1776489842266,
+      "correlationTokens": [
+        "error:CodeExpectedError",
+        "file:workbench.desktop.main.js"
+      ],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_014942_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_014942_saropa-log-capture.log",
+      "sizeBytes": 2993,
+      "mtime": 1776491660981,
+      "correlationTokens": [],
+      "fingerprints": [
+        "__breakOnConditionalError: false"
+      ],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_020243_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_020243_saropa-log-capture.log",
+      "sizeBytes": 2993,
+      "mtime": 1776493619326,
+      "correlationTokens": [],
+      "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260418/20260418_022735_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_022735_saropa-log-capture.log",
+      "sizeBytes": 2940,
+      "mtime": 1776494853935,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_024801_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_024801_saropa-log-capture.log",
+      "sizeBytes": 2928,
+      "mtime": 1776495692393,
+      "correlationTokens": [],
+      "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260418/20260418_030155_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_030155_saropa-log-capture.log",
+      "sizeBytes": 2993,
+      "mtime": 1776495876108,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_030523_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_030523_saropa-log-capture.log",
+      "sizeBytes": 3055,
+      "mtime": 1776531450900,
+      "correlationTokens": [],
+      "fingerprints": []
+    },
+    {
+      "relativePath": "reports/20260418/20260418_125755_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_125755_saropa-log-capture.log",
+      "sizeBytes": 3002,
+      "mtime": 1776532340835,
+      "correlationTokens": [],
+      "fingerprints": [],
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260418/20260418_131254_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260418/20260418_131254_saropa-log-capture.log",
+      "sizeBytes": 3002,
+      "mtime": 1776532537862,
+      "correlationTokens": [],
+      "fingerprints": [
+        "__breakOnConditionalError: false"
+      ],
       "errorCount": 0,
       "warningCount": 0
     }

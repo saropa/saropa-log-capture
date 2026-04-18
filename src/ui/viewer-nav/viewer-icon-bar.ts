@@ -12,33 +12,33 @@
 export function getIconBarHtml(): string {
     return /* html */ `
 <div id="icon-bar" role="toolbar" aria-label="Log viewer tools" title="Click bar to show or hide icon labels">
-    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Project Logs">
-        <span class="codicon codicon-files"></span><span class="ib-label">Project Logs</span>
+    <button id="ib-sessions" class="ib-icon" tabindex="0" title="Click to open/close — browse and switch between log sessions in this project" aria-label="Logs">
+        <span class="codicon codicon-files"></span><span id="ib-sessions-badge" class="ib-badge"></span><span class="ib-label">Logs<span id="ib-sessions-count" class="ib-count"></span></span>
     </button>
     <button id="ib-find" class="ib-icon" tabindex="0" title="Click to open/close — search across all log files in this project (Ctrl+Shift+F)" aria-label="Find in Files (Ctrl+Shift+F)">
         <span class="codicon codicon-list-filter"></span><span class="ib-label">Find</span>
     </button>
     <button id="ib-bookmarks" class="ib-icon" tabindex="0" title="Click to open/close — view and manage bookmarked log lines" aria-label="Bookmarks">
-        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks</span>
+        <span class="codicon codicon-bookmark"></span><span id="ib-bookmarks-badge" class="ib-badge"></span><span class="ib-label">Bookmarks<span id="ib-bookmarks-count" class="ib-count"></span></span>
     </button>
     <button id="ib-sql-query-history" class="ib-icon" tabindex="0" title="Click to open/close — browse SQL queries captured during this session" aria-label="SQL Query History">
-        <span class="codicon codicon-database"></span><span class="ib-label">SQL History</span>
+        <span class="codicon codicon-database"></span><span id="ib-sql-badge" class="ib-badge"></span><span class="ib-label">SQL History<span id="ib-sql-count" class="ib-count"></span></span>
     </button>
     <button id="ib-trash" class="ib-icon" tabindex="0" title="Click to open/close — view and restore deleted log sessions" aria-label="Trash">
-        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash</span>
+        <span class="codicon codicon-trash"></span><span id="ib-trash-badge" class="ib-badge"></span><span class="ib-label">Trash<span id="ib-trash-count" class="ib-count"></span></span>
     </button>
     <button id="ib-options" class="ib-icon" tabindex="0" title="Click to open/close — display, layout, and audio settings" aria-label="Options">
         <span class="codicon codicon-settings-gear"></span><span class="ib-label">Options</span>
     </button>
-    <button id="ib-tags" class="ib-icon" tabindex="0" title="Click to open/close — browse and filter by message tags, code origins, and SQL commands" aria-label="Tags &amp; Origins">
-        <span class="codicon codicon-tag"></span><span class="ib-label">Tags</span>
-    </button>
     <div class="ib-separator"></div>
     <button id="ib-crashlytics" class="ib-icon" tabindex="0" title="Click to open/close — Firebase Crashlytics crash reports" aria-label="Crashlytics">
-        <span class="codicon codicon-flame"></span><span class="ib-label">Crashlytics</span>
+        <span class="codicon codicon-flame"></span><span id="ib-crashlytics-badge" class="ib-badge"></span><span class="ib-label">Crashlytics<span id="ib-crashlytics-count" class="ib-count"></span></span>
+    </button>
+    <button id="ib-collections" class="ib-icon" tabindex="0" title="Click to open/close — group related log sessions and files into named collections" aria-label="Collections">
+        <span class="codicon codicon-folder-library"></span><span id="ib-collections-badge" class="ib-badge"></span><span class="ib-label">Collections<span id="ib-collections-count" class="ib-count"></span></span>
     </button>
     <button id="ib-signal" class="ib-icon" tabindex="0" title="Click to open/close — signals, errors, warnings, and performance analysis" aria-label="Signals">
-        <span class="codicon codicon-pulse"></span><span class="ib-label">Signals</span>
+        <span class="codicon codicon-pulse"></span><span id="ib-signal-badge" class="ib-badge"></span><span class="ib-label">Signals<span id="ib-signal-count" class="ib-count"></span></span>
     </button>
     <button id="ib-about" class="ib-icon" tabindex="0" title="Click to open/close — version info, links, and help" aria-label="About Saropa">
         <span class="codicon codicon-home"></span><span class="ib-label">About</span>
@@ -54,6 +54,25 @@ export function getIconBarScript(): string {
     var panelSlot = document.getElementById('panel-slot');
     var iconBar = document.getElementById('icon-bar');
     var MIN_PANEL_WIDTH = 560;
+
+    /**
+     * Update both the overlay badge (icons-only mode) and inline count label
+     * (labels-visible mode) for an icon bar button.
+     * Badge ID convention: ib-{name}-badge, count ID: ib-{name}-count.
+     * Caps display at 99; shows "99+" for counts above 99.
+     */
+    window.updateIconBadge = function(badgeId, countId, count) {
+        var text = count > 99 ? '99+' : String(count);
+        var badge = document.getElementById(badgeId);
+        if (badge) {
+            badge.textContent = text;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+        var countEl = document.getElementById(countId);
+        if (countEl) {
+            countEl.textContent = count > 0 ? ' (' + text + ')' : '';
+        }
+    };
 
     /** Restore and persist icon bar label visibility (uses same webview state as other viewer UI). */
     var api = typeof vscodeApi !== 'undefined' ? vscodeApi : (window._vscodeApi || null);
@@ -128,7 +147,8 @@ export function getIconBarScript(): string {
         sqlHistory: document.getElementById('ib-sql-query-history'),
         trash: document.getElementById('ib-trash'),
         options: document.getElementById('ib-options'),
-        tags: document.getElementById('ib-tags'),
+
+        collections: document.getElementById('ib-collections'),
         crashlytics: document.getElementById('ib-crashlytics'),
         signal: document.getElementById('ib-signal'),
         about: document.getElementById('ib-about'),
@@ -138,11 +158,11 @@ export function getIconBarScript(): string {
         if (typeof closeSearch === 'function') closeSearch();
         if (typeof closeFindPanel === 'function') closeFindPanel();
         if (typeof closeBookmarkPanel === 'function') closeBookmarkPanel();
-        /* closeFiltersPanel is a backward-compat alias for closeTagsPanel — call only the canonical name */
-        if (typeof closeTagsPanel === 'function') closeTagsPanel();
+        if (typeof closeFiltersSlideout === 'function') closeFiltersSlideout();
         if (typeof closeSqlQueryHistoryPanel === 'function') closeSqlQueryHistoryPanel();
         if (typeof closeOptionsPanel === 'function') closeOptionsPanel();
         if (typeof closeTrashPanel === 'function') closeTrashPanel();
+        if (typeof closeCollectionsPanel === 'function') closeCollectionsPanel();
         if (typeof closeCrashlyticsPanel === 'function') closeCrashlyticsPanel();
         if (typeof closeSignalPanel === 'function') closeSignalPanel();
         if (typeof closeAboutPanel === 'function') closeAboutPanel();
@@ -182,14 +202,16 @@ export function getIconBarScript(): string {
             openTrashPanel();
         } else if (name === 'options' && typeof openOptionsPanel === 'function') {
             openOptionsPanel();
-        } else if (name === 'tags' && typeof openTagsPanel === 'function') {
-            openTagsPanel();
+        } else if (name === 'collections' && typeof openCollectionsPanel === 'function') {
+            openCollectionsPanel();
         } else if (name === 'crashlytics' && typeof openCrashlyticsPanel === 'function') {
             openCrashlyticsPanel();
         } else if (name === 'signal' && typeof openSignalPanel === 'function') {
             openSignalPanel();
         } else if (name === 'about' && typeof openAboutPanel === 'function') {
             openAboutPanel();
+        } else if (name === 'filters' && typeof openFiltersSlideout === 'function') {
+            openFiltersSlideout();
         }
     };
 
@@ -233,8 +255,8 @@ export function getIconBarScript(): string {
     if (iconButtons.options) {
         iconButtons.options.addEventListener('click', function() { setActivePanel('options'); });
     }
-    if (iconButtons.tags) {
-        iconButtons.tags.addEventListener('click', function() { setActivePanel('tags'); });
+    if (iconButtons.collections) {
+        iconButtons.collections.addEventListener('click', function() { setActivePanel('collections'); });
     }
     if (iconButtons.crashlytics) {
         iconButtons.crashlytics.addEventListener('click', function() { setActivePanel('crashlytics'); });

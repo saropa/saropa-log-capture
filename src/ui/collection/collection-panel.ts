@@ -1,16 +1,16 @@
 /**
- * Investigation mode webview panel.
+ * Collection mode webview panel.
  * Shows pinned sources, cross-source search, notes, and export actions.
  */
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
-import { InvestigationStore } from '../../modules/investigation/investigation-store';
-import { collectInvestigationContext } from '../../modules/bug-report/bug-report-collector';
+import { CollectionStore } from '../../modules/collection/collection-store';
+import { collectCollectionContext } from '../../modules/bug-report/bug-report-collector';
 import { formatBugReport } from '../../modules/bug-report/bug-report-formatter';
 import type { BugReportData } from '../../modules/bug-report/bug-report-collector';
 import { showBugReportFromMarkdown } from '../panels/bug-report-panel';
-import { buildInvestigationHtml, buildNoInvestigationHtml } from './investigation-panel-html';
+import { buildCollectionHtml, buildNoCollectionHtml } from './collection-panel-html';
 import {
     promptAddSource,
     handleRemoveSource,
@@ -24,20 +24,20 @@ import {
     checkMissingSources,
     renderSearchResultsCompact,
     type SearchOptionsMessage,
-} from './investigation-panel-handlers';
+} from './collection-panel-handlers';
 
 let panel: vscode.WebviewPanel | undefined;
-let currentStore: InvestigationStore | undefined;
+let currentStore: CollectionStore | undefined;
 
-/** Show the investigation panel for the active investigation. */
-export async function showInvestigationPanel(store: InvestigationStore): Promise<void> {
+/** Show the collection panel for the active collection. */
+export async function showCollectionPanel(store: CollectionStore): Promise<void> {
     currentStore = store;
     ensurePanel();
     await refreshPanel();
 }
 
 /** Dispose the singleton panel. */
-export function disposeInvestigationPanel(): void {
+export function disposeCollectionPanel(): void {
     panel?.dispose();
     panel = undefined;
 }
@@ -48,8 +48,8 @@ function ensurePanel(): void {
         return;
     }
     panel = vscode.window.createWebviewPanel(
-        'saropaLogCapture.investigation',
-        'Investigation',
+        'saropaLogCapture.collection',
+        'Collection',
         vscode.ViewColumn.Beside,
         { enableScripts: true, localResourceRoots: [] },
     );
@@ -59,26 +59,26 @@ function ensurePanel(): void {
 
 async function refreshPanel(): Promise<void> {
     if (!panel || !currentStore) { return; }
-    const investigation = await currentStore.getActiveInvestigation();
-    panel.title = investigation ? `Investigation: ${investigation.name}` : 'Investigation';
+    const collection = await currentStore.getActiveCollection();
+    panel.title = collection ? `Collection: ${collection.name}` : 'Collection';
 
     let missingSources: string[] = [];
-    if (investigation) {
-        missingSources = await checkMissingSources(investigation);
+    if (collection) {
+        missingSources = await checkMissingSources(collection);
     }
 
-    panel.webview.html = investigation
-        ? buildInvestigationHtml(investigation, missingSources)
-        : buildNoInvestigationHtml();
+    panel.webview.html = collection
+        ? buildCollectionHtml(collection, missingSources)
+        : buildNoCollectionHtml();
 
-    if (investigation?.lastSearchQuery) {
-        const result = await performSearch(investigation, { query: investigation.lastSearchQuery });
-        panel.webview.postMessage({ type: 'searchResults', html: renderSearchResultsCompact(result, investigation.lastSearchQuery) });
+    if (collection?.lastSearchQuery) {
+        const result = await performSearch(collection, { query: collection.lastSearchQuery });
+        panel.webview.postMessage({ type: 'searchResults', html: renderSearchResultsCompact(result, collection.lastSearchQuery) });
     }
 }
 
 /** Refresh the panel if it's currently open (called after external changes). */
-export async function refreshInvestigationPanelIfOpen(): Promise<void> {
+export async function refreshCollectionPanelIfOpen(): Promise<void> {
     if (panel && currentStore) {
         await refreshPanel();
     }
@@ -89,8 +89,8 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
 
     switch (msg.type) {
         case 'close':
-            await currentStore.setActiveInvestigationId(undefined);
-            disposeInvestigationPanel();
+            await currentStore.setActiveCollectionId(undefined);
+            disposeCollectionPanel();
             break;
 
         case 'addSource':
@@ -141,22 +141,22 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
             break;
 
         case 'export':
-            await vscode.commands.executeCommand('saropaLogCapture.exportInvestigation');
+            await vscode.commands.executeCommand('saropaLogCapture.exportCollection');
             break;
 
         case 'openSlc':
-            // Opens file picker for .slc (session or investigation bundle); same as Command Palette → Import .slc Bundle
+            // Opens file picker for .slc (session or collection bundle); same as Command Palette → Import .slc Bundle
             await vscode.commands.executeCommand('saropaLogCapture.importSlc');
             break;
 
         case 'share':
-            await vscode.commands.executeCommand('saropaLogCapture.shareInvestigation');
+            await vscode.commands.executeCommand('saropaLogCapture.shareCollection');
             break;
 
         case 'generateReport': {
-            const invContext = await collectInvestigationContext(currentStore);
+            const invContext = await collectCollectionContext(currentStore);
             if (!invContext) {
-                vscode.window.showWarningMessage(t('msg.noActiveInvestigation'));
+                vscode.window.showWarningMessage(t('msg.noActiveCollection'));
                 break;
             }
             const minimalData: BugReportData = {
@@ -171,7 +171,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
                 gitHistory: [],
                 lineRangeHistory: [],
                 fileAnalyses: [],
-                investigationContext: invContext,
+                collectionContext: invContext,
             };
             const markdown = formatBugReport(minimalData);
             showBugReportFromMarkdown(markdown);
@@ -179,7 +179,7 @@ async function handleMessage(msg: Record<string, unknown>): Promise<void> {
         }
 
         case 'create':
-            await vscode.commands.executeCommand('saropaLogCapture.createInvestigation');
+            await vscode.commands.executeCommand('saropaLogCapture.createCollection');
             break;
     }
 }

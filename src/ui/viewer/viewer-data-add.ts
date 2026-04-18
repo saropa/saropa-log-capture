@@ -72,6 +72,17 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
         totalHeight += MARKER_HEIGHT;
         return;
     }
+    /* Structured file mode (plan 051): skip all log analysis for non-log files.
+       Creates a plain info-level item with the same shape as a log item so
+       calcItemHeight(), filters, search, and viewport work unchanged. */
+    if (fileMode !== 'log') {
+        if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
+        var docItem = { html: html, rawText: rawText || null, type: 'line', height: catFiltered ? 0 : ROW_HEIGHT, category: category, groupId: -1, timestamp: ts, level: 'info', seq: nextSeq++, sourceTag: null, logcatTag: null, sqlVerb: null, tier: undefined, filteredOut: catFiltered, sourceFiltered: false, sqlPatternFiltered: false, classFiltered: false, classTags: [], isSeparator: false, errorClass: null, errorSuppressed: false, fw: undefined, sourcePath: sp || null, scopeFiltered: false, isAnr: false, autoHidden: false, source: lineSource, timeRangeFiltered: false, recentErrorContext: false };
+        if (elapsedMs !== undefined && elapsedMs >= 0) docItem.elapsedMs = elapsedMs;
+        allLines.push(docItem);
+        totalHeight += docItem.height;
+        return;
+    }
     if (isStackFrameText(html)) {
         resetCompressDupStreak();
         if (typeof breakContinuationGroup === 'function') breakContinuationGroup();

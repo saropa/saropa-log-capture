@@ -1,18 +1,18 @@
 /**
  * Session history panel HTML template for the webview.
  * Used by viewer-session-panel.ts.
- * Header: "Project Logs" plus optional " · <path>" (hidden when default folder); whole header span is clickable.
+ * Header: "Logs" plus optional " · <path>" (hidden when default folder); whole header span is clickable.
  * Includes a date-range select (1h / 4h / 24h / 7d / 30d / 3m / 6m / 1y / All time) persisted with session display options.
  */
 
 /** Generate the session panel HTML. */
 export function getSessionPanelHtml(): string {
     return /* html */ `
-<div id="session-panel" class="session-panel" role="region" aria-label="Project Logs">
+<div id="session-panel" class="session-panel" role="region" aria-label="Logs">
     <div id="session-resize" class="session-panel-resize" aria-hidden="true"></div>
     <div class="session-panel-header">
         <span id="session-header-clickable" class="session-header-clickable" title="Click to choose folder">
-            <span class="session-panel-title">Project Logs</span>
+            <span class="session-panel-title">Logs</span>
             <span id="session-header-path" class="session-header-path" style="display:none"><span class="session-path-sep" aria-hidden="true"> · </span><span id="session-path-text"></span></span>
         </span>
         <button id="session-reset-root" class="session-panel-action" type="button" title="Use default folder" aria-label="Use default folder" style="display:none">
@@ -22,7 +22,7 @@ export function getSessionPanelHtml(): string {
             <button id="session-refresh" class="session-panel-action" type="button" title="Refresh" aria-label="Refresh session list">
                 <span class="codicon codicon-refresh"></span>
             </button>
-            <button id="session-close" class="session-panel-close" type="button" title="Close" aria-label="Close Project Logs"><span class="codicon codicon-close"></span></button>
+            <button id="session-close" class="session-panel-close" type="button" title="Close" aria-label="Close Logs"><span class="codicon codicon-close"></span></button>
         </div>
     </div>
     <div class="session-panel-toggles">

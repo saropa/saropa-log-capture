@@ -1,16 +1,16 @@
 /**
- * File-level search for investigation sources (single file and JSON sidecar).
- * Extracted to keep investigation-search.ts under the line limit.
+ * File-level search for collection sources (single file and JSON sidecar).
+ * Extracted to keep collection-search.ts under the line limit.
  */
 
 import * as vscode from 'vscode';
 import {
-    InvestigationSource,
+    CollectionSource,
     SearchMatch,
     SEARCHABLE_SIDECAR_EXTENSIONS,
     SKIP_SIDECAR_EXTENSIONS,
     MAX_SEARCH_FILE_SIZE,
-} from './investigation-types';
+} from './collection-types';
 
 /** Gather surrounding context lines around an index, truncated to 200 chars. */
 export function gatherContext(
@@ -28,12 +28,12 @@ export function gatherContext(
 }
 
 /**
- * Resolve all searchable files for an investigation source.
+ * Resolve all searchable files for a collection source.
  * For 'session' type, includes the main log and all searchable sidecars.
  * For 'file' type, returns just the file itself.
  */
 export async function resolveSearchableFiles(
-    source: InvestigationSource,
+    source: CollectionSource,
     workspaceUri: vscode.Uri,
 ): Promise<{ uri: vscode.Uri; isSidecar: boolean }[]> {
     const mainUri = vscode.Uri.joinPath(workspaceUri, source.relativePath);

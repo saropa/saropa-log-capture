@@ -11,6 +11,9 @@ export function getSessionRenderingScript(): string {
     function renderSessionList(sessions) {
         if (sessionLoadingEl) sessionLoadingEl.style.display = 'none';
         if (!sessionListEl) return;
+        /* Update icon bar badge with total session count (including empty list). */
+        var sessionBadgeCount = (sessions || []).filter(function(s) { return !s.trashed; }).length;
+        if (typeof updateIconBadge === 'function') updateIconBadge('ib-sessions-badge', 'ib-sessions-count', sessionBadgeCount);
         if (!sessions || sessions.length === 0) {
             sessionListEl.innerHTML = '';
             if (sessionListPaginationEl) sessionListPaginationEl.style.display = 'none';

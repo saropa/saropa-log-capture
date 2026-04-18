@@ -39,7 +39,7 @@ export interface CrossSessionSignals {
 
 const maxHotFiles = 20;
 
-/** Build signals from an existing list of loaded session metas (e.g. for a single session or investigation). */
+/** Build signals from an existing list of loaded session metas (e.g. for a single session or collection). */
 export function buildSignalsFromMetas(metas: readonly LoadedMeta[]): CrossSessionSignals {
     const envStats = buildEnvironmentStats(metas);
     const allSignals = buildAllRecurringSignals(metas);

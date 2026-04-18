@@ -200,9 +200,14 @@ function updateSqlPatternSummary() {
     var summary = total + ' command type' + (total !== 1 ? 's' : '')
         + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
     el.textContent = summary;
-    if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', summary);
-    var section = document.getElementById('sql-patterns-section');
-    if (section) section.style.display = total > 0 ? '' : 'none';
+    /* Accordion header shows concise count: "2 of 6 hidden" or total */
+    var accordionText = hidden > 0
+        ? hidden + ' of ' + total + ' hidden'
+        : total + ' type' + (total !== 1 ? 's' : '');
+    if (typeof setAccordionSummary === 'function') setAccordionSummary('sql-patterns-section', accordionText);
+    /* Show/hide the tab button based on whether SQL patterns exist */
+    var tab = document.getElementById('filter-tab-sql-patterns');
+    if (tab) { tab.style.display = total > 0 ? '' : 'none'; }
 }
 
 (function() {
@@ -221,8 +226,9 @@ function updateSqlPatternSummary() {
 function resetSqlPatternTags() {
     sqlVerbCounts = {};
     hiddenSqlVerbs = {};
-    var section = document.getElementById('sql-patterns-section');
-    if (section) section.style.display = 'none';
+    /* Hide the tab button when SQL patterns are cleared */
+    var tab = document.getElementById('filter-tab-sql-patterns');
+    if (tab) tab.style.display = 'none';
     var container = document.getElementById('sql-pattern-chips');
     if (container) container.innerHTML = '';
     var sum = document.getElementById('sql-pattern-summary');

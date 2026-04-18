@@ -8,6 +8,7 @@ import { getConfig, getLogDirectoryUri } from './modules/config/config';
 import { SaropaTrackerFactory } from './modules/capture/tracker';
 import { SessionManagerImpl } from './modules/session/session-manager';
 import { StatusBar } from './ui/shared/status-bar';
+import { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 import { SessionHistoryProvider } from './ui/session/session-history-provider';
 import { createUriHandler } from './modules/features/deep-links';
 import { importFromGist, importFromUrl } from './modules/share/gist-importer';
@@ -31,8 +32,8 @@ import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
 import { createApi } from './api';
 import type { SaropaLogCaptureApi, SaropaSessionEvent } from './api-types';
-import { InvestigationStore } from './modules/investigation/investigation-store';
-import { disposeInvestigationPanel } from './ui/investigation/investigation-panel';
+import { CollectionStore } from './modules/collection/collection-store';
+import { disposeCollectionPanel } from './ui/collection/collection-panel';
 import { setupWebviewProviders, registerNoRestoreSerializers } from './activation-providers';
 import { setupLineListeners, setupConfigListener, setupScopeContextListener, setupDiagnosticListener } from './activation-listeners';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
@@ -55,7 +56,8 @@ export interface ActivationRefs {
 
 export function runActivation(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): ActivationRefs {
     const statusBar = new StatusBar();
-    context.subscriptions.push(statusBar, outputChannel);
+    const captureToggle = new CaptureToggleStatusBar(getConfig().enabled);
+    context.subscriptions.push(statusBar, captureToggle, outputChannel);
 
     const sessionManager = new SessionManagerImpl(statusBar, outputChannel);
     initLearningRuntime(context, sessionManager);
@@ -118,12 +120,12 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
     context.subscriptions.push(bookmarkStore);
     bookmarkStore.onDidChange(() => { broadcaster.sendBookmarkList(bookmarkStore.getAll() as Record<string, unknown>); });
 
-    const investigationStore = new InvestigationStore(context);
-    context.subscriptions.push(investigationStore, { dispose: disposeInvestigationPanel });
+    const collectionStore = new CollectionStore(context);
+    context.subscriptions.push(collectionStore, { dispose: disposeCollectionPanel });
 
     const importHandlers = {
-        importFromGist: (gistId: string) => importFromGist(gistId, investigationStore),
-        importFromUrl: (url: string) => importFromUrl(url, investigationStore),
+        importFromGist: (gistId: string) => importFromGist(gistId, collectionStore),
+        importFromUrl: (url: string) => importFromUrl(url, collectionStore),
     };
     context.subscriptions.push(
         vscode.window.registerUriHandler(createUriHandler(importHandlers)),
@@ -145,7 +147,7 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         broadcaster.postToWebview({ type: 'minimapWidthPx', px: customMmPx });
     }
 
-    setupConfigListener(context, sessionManager, broadcaster);
+    setupConfigListener(context, sessionManager, broadcaster, captureToggle);
     setupLineListeners({ context, sessionManager, broadcaster, historyProvider, inlineDecorations });
     setupScopeContextListener(context, broadcaster);
     setupDiagnosticListener(context, diagnosticCache, broadcaster);
@@ -208,9 +210,9 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         historyProvider,
         inlineDecorations,
         popOutPanel,
-        investigationStore,
+        collectionStore,
         broadcaster,
-    });
+    }, captureToggle);
 
     scheduleLearningSuggestionCheck(context, broadcaster);
 

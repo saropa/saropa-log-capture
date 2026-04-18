@@ -1,34 +1,34 @@
 /**
- * Investigation persistence layer.
- * Stores investigations in .saropa/investigations.json (portable, can commit to repo).
- * Active investigation ID is stored in workspace state (user-specific).
+ * Collection persistence layer.
+ * Stores collections in .saropa/collections.json (portable, can commit to repo).
+ * Active collection ID is stored in workspace state (user-specific).
  */
 
 import * as vscode from 'vscode';
 import {
-    Investigation,
-    InvestigationSource,
-    InvestigationsFile,
-    CreateInvestigationInput,
+    Collection,
+    CollectionSource,
+    CollectionsFile,
+    CreateCollectionInput,
     AddSourceInput,
-    MAX_INVESTIGATIONS,
-    MAX_SOURCES_PER_INVESTIGATION,
-} from './investigation-types';
-import { loadInvestigationsFile, saveInvestigationsFile } from './investigation-store-io';
+    MAX_COLLECTIONS,
+    MAX_SOURCES_PER_COLLECTION,
+} from './collection-types';
+import { loadCollectionsFile, saveCollectionsFile } from './collection-store-io';
 import {
-    getActiveInvestigationId as getActiveId,
-    setActiveInvestigationId as setActiveId,
-    getRecentInvestigationIds as getRecentIds,
+    getActiveCollectionId as getActiveId,
+    setActiveCollectionId as setActiveId,
+    getRecentCollectionIds as getRecentIds,
     getSearchHistory as getSearchHistoryState,
     addToSearchHistory as addToSearchHistoryState,
     clearSearchHistory as clearSearchHistoryState,
-} from './investigation-store-workspace';
+} from './collection-store-workspace';
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export class InvestigationStore implements vscode.Disposable {
+export class CollectionStore implements vscode.Disposable {
     private readonly _onDidChange = new vscode.EventEmitter<void>();
     readonly onDidChange = this._onDidChange.event;
 
@@ -38,14 +38,14 @@ export class InvestigationStore implements vscode.Disposable {
         this._onDidChange.dispose();
     }
 
-    /** Create a new investigation. Returns the created investigation. */
-    async createInvestigation(input: CreateInvestigationInput): Promise<Investigation> {
-        const file = await loadInvestigationsFile();
-        if (file.investigations.length >= MAX_INVESTIGATIONS) {
-            throw new Error(`Maximum of ${MAX_INVESTIGATIONS} investigations reached.`);
+    /** Create a new collection. Returns the created collection. */
+    async createCollection(input: CreateCollectionInput): Promise<Collection> {
+        const file = await loadCollectionsFile();
+        if (file.collections.length >= MAX_COLLECTIONS) {
+            throw new Error(`Maximum of ${MAX_COLLECTIONS} collections reached.`);
         }
         const now = Date.now();
-        const investigation: Investigation = {
+        const collection: Collection = {
             id: generateId(),
             name: input.name.trim(),
             createdAt: now,
@@ -53,208 +53,237 @@ export class InvestigationStore implements vscode.Disposable {
             sources: [],
             notes: input.notes?.trim(),
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [...file.investigations, investigation],
+            collections: [...file.collections, collection],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
-        return investigation;
+        return collection;
     }
 
-    /** List all investigations, sorted by updatedAt descending (most recent first). */
-    async listInvestigations(): Promise<Investigation[]> {
-        const file = await loadInvestigationsFile();
-        return [...file.investigations].sort((a, b) => b.updatedAt - a.updatedAt);
+    /** List all collections, sorted by updatedAt descending (most recent first). */
+    async listCollections(): Promise<Collection[]> {
+        const file = await loadCollectionsFile();
+        return [...file.collections].sort((a, b) => b.updatedAt - a.updatedAt);
     }
 
-    /** Get a specific investigation by ID. */
-    async getInvestigation(id: string): Promise<Investigation | undefined> {
-        const file = await loadInvestigationsFile();
-        return file.investigations.find(inv => inv.id === id);
+    /** Get a specific collection by ID. */
+    async getCollection(id: string): Promise<Collection | undefined> {
+        const file = await loadCollectionsFile();
+        return file.collections.find(inv => inv.id === id);
     }
 
-    /** Add an existing investigation (e.g. from import). Fails if at MAX_INVESTIGATIONS. */
-    async addInvestigation(investigation: Investigation): Promise<void> {
-        const file = await loadInvestigationsFile();
-        if (file.investigations.length >= MAX_INVESTIGATIONS) {
-            throw new Error(`Maximum of ${MAX_INVESTIGATIONS} investigations reached.`);
+    /** Add an existing collection (e.g. from import). Fails if at MAX_COLLECTIONS. */
+    async addCollection(collection: Collection): Promise<void> {
+        const file = await loadCollectionsFile();
+        if (file.collections.length >= MAX_COLLECTIONS) {
+            throw new Error(`Maximum of ${MAX_COLLECTIONS} collections reached.`);
         }
-        if (file.investigations.some(inv => inv.id === investigation.id)) {
+        if (file.collections.some(inv => inv.id === collection.id)) {
             return;
         }
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [...file.investigations, investigation],
+            collections: [...file.collections, collection],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Add a source to an investigation. */
-    async addSource(investigationId: string, input: AddSourceInput): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const idx = file.investigations.findIndex(inv => inv.id === investigationId);
+    /** Add a source to a collection. */
+    async addSource(collectionId: string, input: AddSourceInput): Promise<void> {
+        const file = await loadCollectionsFile();
+        const idx = file.collections.findIndex(inv => inv.id === collectionId);
         if (idx < 0) {
-            throw new Error('Investigation not found.');
+            throw new Error('Collection not found.');
         }
-        const inv = file.investigations[idx];
-        if (inv.sources.length >= MAX_SOURCES_PER_INVESTIGATION) {
-            throw new Error(`Maximum of ${MAX_SOURCES_PER_INVESTIGATION} sources per investigation.`);
+        const inv = file.collections[idx];
+        if (inv.sources.length >= MAX_SOURCES_PER_COLLECTION) {
+            throw new Error(`Maximum of ${MAX_SOURCES_PER_COLLECTION} sources per collection.`);
         }
         if (inv.sources.some(s => s.relativePath === input.relativePath)) {
             return;
         }
-        const source: InvestigationSource = {
+        const source: CollectionSource = {
             type: input.type,
             relativePath: input.relativePath,
             label: input.label,
             pinnedAt: Date.now(),
         };
-        const updatedInv: Investigation = {
+        const updatedInv: Collection = {
             ...inv,
             updatedAt: Date.now(),
             sources: [...inv.sources, source],
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [
-                ...file.investigations.slice(0, idx),
+            collections: [
+                ...file.collections.slice(0, idx),
                 updatedInv,
-                ...file.investigations.slice(idx + 1),
+                ...file.collections.slice(idx + 1),
             ],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Remove a source from an investigation by relative path. */
-    async removeSource(investigationId: string, relativePath: string): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const idx = file.investigations.findIndex(inv => inv.id === investigationId);
+    /** Remove a source from a collection by relative path. */
+    async removeSource(collectionId: string, relativePath: string): Promise<void> {
+        const file = await loadCollectionsFile();
+        const idx = file.collections.findIndex(inv => inv.id === collectionId);
         if (idx < 0) { return; }
-        const inv = file.investigations[idx];
+        const inv = file.collections[idx];
         const filtered = inv.sources.filter(s => s.relativePath !== relativePath);
         if (filtered.length === inv.sources.length) { return; }
-        const updatedInv: Investigation = {
+        const updatedInv: Collection = {
             ...inv,
             updatedAt: Date.now(),
             sources: filtered,
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [
-                ...file.investigations.slice(0, idx),
+            collections: [
+                ...file.collections.slice(0, idx),
                 updatedInv,
-                ...file.investigations.slice(idx + 1),
+                ...file.collections.slice(idx + 1),
             ],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Delete an investigation. */
-    async deleteInvestigation(id: string): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const filtered = file.investigations.filter(inv => inv.id !== id);
-        if (filtered.length === file.investigations.length) { return; }
-        const updated: InvestigationsFile = { ...file, investigations: filtered };
-        await saveInvestigationsFile(updated);
+    /** Delete a collection. */
+    async deleteCollection(id: string): Promise<void> {
+        const file = await loadCollectionsFile();
+        const filtered = file.collections.filter(inv => inv.id !== id);
+        if (filtered.length === file.collections.length) { return; }
+        const updated: CollectionsFile = { ...file, collections: filtered };
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
         const activeId = await getActiveId(this.context);
         if (activeId === id) {
-            await this.setActiveInvestigationId(undefined);
+            await this.setActiveCollectionId(undefined);
         }
     }
 
-    /** Update an investigation's notes. */
+    /** Update a collection's notes. */
     async updateNotes(id: string, notes: string): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const idx = file.investigations.findIndex(inv => inv.id === id);
+        const file = await loadCollectionsFile();
+        const idx = file.collections.findIndex(inv => inv.id === id);
         if (idx < 0) { return; }
-        const inv = file.investigations[idx];
-        const updatedInv: Investigation = {
+        const inv = file.collections[idx];
+        const updatedInv: Collection = {
             ...inv,
             updatedAt: Date.now(),
             notes: notes.trim() || undefined,
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [
-                ...file.investigations.slice(0, idx),
+            collections: [
+                ...file.collections.slice(0, idx),
                 updatedInv,
-                ...file.investigations.slice(idx + 1),
+                ...file.collections.slice(idx + 1),
             ],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Update an investigation's name. */
+    /** Update a collection's name. */
     async updateName(id: string, name: string): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const idx = file.investigations.findIndex(inv => inv.id === id);
+        const file = await loadCollectionsFile();
+        const idx = file.collections.findIndex(inv => inv.id === id);
         if (idx < 0) { return; }
-        const inv = file.investigations[idx];
-        const updatedInv: Investigation = {
+        const inv = file.collections[idx];
+        const updatedInv: Collection = {
             ...inv,
             updatedAt: Date.now(),
             name: name.trim(),
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [
-                ...file.investigations.slice(0, idx),
+            collections: [
+                ...file.collections.slice(0, idx),
                 updatedInv,
-                ...file.investigations.slice(idx + 1),
+                ...file.collections.slice(idx + 1),
             ],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Update an investigation's last search query. */
+    /** Merge source collection into target: move all sources, then delete source.
+     * If the source was the active collection, the target becomes active. */
+    async mergeCollections(sourceId: string, targetId: string): Promise<void> {
+        const source = await this.getCollection(sourceId);
+        const target = await this.getCollection(targetId);
+        if (!source || !target) {
+            throw new Error('Collection not found.');
+        }
+        /* Switch active before delete so deleteCollection doesn't clear it */
+        const wasActive = (await this.getActiveCollectionId()) === sourceId;
+        /* Add each source that isn't already in the target */
+        for (const s of source.sources) {
+            const alreadyExists = target.sources.some(
+                t => t.relativePath === s.relativePath,
+            );
+            if (!alreadyExists) {
+                await this.addSource(targetId, {
+                    type: s.type,
+                    relativePath: s.relativePath,
+                    label: s.label,
+                });
+            }
+        }
+        await this.deleteCollection(sourceId);
+        if (wasActive) {
+            await this.setActiveCollectionId(targetId);
+        }
+    }
+
+    /** Update a collection's last search query. */
     async updateLastSearchQuery(id: string, query: string | undefined): Promise<void> {
-        const file = await loadInvestigationsFile();
-        const idx = file.investigations.findIndex(inv => inv.id === id);
+        const file = await loadCollectionsFile();
+        const idx = file.collections.findIndex(inv => inv.id === id);
         if (idx < 0) { return; }
-        const inv = file.investigations[idx];
-        const updatedInv: Investigation = {
+        const inv = file.collections[idx];
+        const updatedInv: Collection = {
             ...inv,
             lastSearchQuery: query?.trim() || undefined,
         };
-        const updated: InvestigationsFile = {
+        const updated: CollectionsFile = {
             ...file,
-            investigations: [
-                ...file.investigations.slice(0, idx),
+            collections: [
+                ...file.collections.slice(0, idx),
                 updatedInv,
-                ...file.investigations.slice(idx + 1),
+                ...file.collections.slice(idx + 1),
             ],
         };
-        await saveInvestigationsFile(updated);
+        await saveCollectionsFile(updated);
         this._onDidChange.fire();
     }
 
-    /** Get the active investigation ID (stored in workspace state). */
-    async getActiveInvestigationId(): Promise<string | undefined> {
+    /** Get the active collection ID (stored in workspace state). */
+    async getActiveCollectionId(): Promise<string | undefined> {
         return getActiveId(this.context);
     }
 
-    /** Set the active investigation ID. Pass undefined to deactivate. */
-    async setActiveInvestigationId(id: string | undefined): Promise<void> {
+    /** Set the active collection ID. Pass undefined to deactivate. */
+    async setActiveCollectionId(id: string | undefined): Promise<void> {
         await setActiveId(this.context, id);
         this._onDidChange.fire();
     }
 
-    /** Get the active investigation (convenience method). */
-    async getActiveInvestigation(): Promise<Investigation | undefined> {
-        const id = await this.getActiveInvestigationId();
+    /** Get the active collection (convenience method). */
+    async getActiveCollection(): Promise<Collection | undefined> {
+        const id = await this.getActiveCollectionId();
         if (!id) { return undefined; }
-        return this.getInvestigation(id);
+        return this.getCollection(id);
     }
 
-    /** Get recent investigation IDs (most recent first, max 5). */
-    async getRecentInvestigationIds(): Promise<string[]> {
+    /** Get recent collection IDs (most recent first, max 5). */
+    async getRecentCollectionIds(): Promise<string[]> {
         return getRecentIds(this.context);
     }
 

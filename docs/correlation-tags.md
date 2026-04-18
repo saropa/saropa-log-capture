@@ -24,7 +24,7 @@ Tags are stored in a `.meta.json` sidecar file next to each log file and persist
 
 ## Filtering sessions by tag
 
-1. Open the **Project Logs** panel
+1. Open the **Logs** panel
 2. Click the **Tags** button (filter icon) in the toolbar
 3. A chip bar appears showing correlation tags across your sessions, with a count of how many sessions contain each tag (up to 20 chips; additional tags show a "+N more" indicator)
 4. Click a chip to deselect it — a session stays visible if it matches **any** of the remaining selected tags
@@ -36,7 +36,7 @@ This is useful when you have many sessions and want to find the ones that refere
 
 Tags are generated automatically when a session ends. For older sessions saved before this feature existed, or to refresh tags after a scanner update:
 
-1. Right-click a session in the Project Logs panel
+1. Right-click a log in the Logs panel
 2. Select **Rescan Tags**
 
 The extension will re-scan the file and update the stored tags.

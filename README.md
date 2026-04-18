@@ -149,7 +149,7 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 
 ### Viewer
 - **Live sidebar viewer:** Real-time output with virtual scrolling (100K+ lines), auto-scroll, and theme support (click the Saropa icon on the activity bar). Virtual scroll rebuilds only when the visible line range changes (stable when filters hide most lines); tail-follow uses hysteresis so it does not thrash near the end of the log.
-- **Icon bar:** Activity-bar-style vertical icon bar with icons for Project Logs, Find in Files, filters, bookmarks, trash, Options, and Pop Out. In-log search lives in the **session bar** (not a slide-out): **Ctrl+F** focuses the field; **case / whole word / regex** show while the field is focused or has text (or always if **`saropaLogCapture.viewerAlwaysShowSearchMatchOptions`** is on). **Compress lines** (hide blanks + collapse consecutive duplicates) is a toggle on the **log pane** (top-left), also available under Options → Layout. Clicking an icon toggles its slide-out panel where applicable. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
+- **Icon bar:** Activity-bar-style vertical icon bar with icons for Logs, Find in Files, filters, bookmarks, trash, Options, and Pop Out. In-log search lives in the **session bar** (not a slide-out): **Ctrl+F** focuses the field; **case / whole word / regex** show while the field is focused or has text (or always if **`saropaLogCapture.viewerAlwaysShowSearchMatchOptions`** is on). **Compress lines** (hide blanks + collapse consecutive duplicates) is a toggle on the **log pane** (top-left), also available under Options → Layout. Clicking an icon toggles its slide-out panel where applicable. Optional text labels: click the bar background (not an icon) to show or hide labels; preference is remembered.
 - **Session log navigation:** **Log *n* of *N*** in the session bar uses **chevron-only** prev/next buttons (full wording in tooltips for screen readers).
 - **Drift SQL N+1 hint:** Bursts of the same normalized `Drift: Sent …` query with different `with args` payloads may insert a synthetic signal row (confidence label + **Focus DB** / **Find fingerprint** / **Static sources** — workspace index search for possible call sites; suggestive only). Sample lines: `examples/drift-n-plus-one-sample-lines.txt`.
 - **Slow query burst marker (DB_08):** When **`database`**-tagged lines include replay/capture **`[+Nms]`** durations, five or more “slow” queries (default ≥ 50ms) inside a 2s window insert a green **Slow query burst** marker; click scrolls to the completing line. Settings: `saropaLogCapture.viewerSlowBurst*`. Sample: `examples/drift-slow-burst-sample-lines.txt`.
@@ -203,9 +203,9 @@ But this is not just a log saver. It is a **full diagnostic workstation** built 
 - **Options panel actions:** Reset to default (viewer options only) and Reset extension settings (all extension settings to defaults).
 
 ### Session Management
-- **Project Logs panel:** Slide-out panel listing past sessions with filename, debug adapter, file size, date, and timestamp availability. Ctrl/Cmd-click to select multiple sessions; context menu applies to the selection (copy links/paths, export, tag, open, replay). Active sessions highlighted with a recording icon. **Orange dot** = log has new lines since you last viewed it; **red dot** = log updated in the last minute. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
+- **Logs panel:** Slide-out panel listing past logs with filename, debug adapter, file size, date, and timestamp availability. Ctrl/Cmd-click to select multiple sessions; context menu applies to the selection (copy links/paths, export, tag, open, replay). Active sessions highlighted with a recording icon. **Orange dot** = log has new lines since you last viewed it; **red dot** = log updated in the last minute. Date filter dropdown: All time, Last 7 days, Last 30 days (persisted with display options).
 - **Insight: Cases, Recurring, Hot files, Performance:** One **Insight** panel, one scroll (no tabs). Accordion sections: **Cases** = named investigations—pin sessions and files, search and export. **Recurring** = aggregated error patterns. **Frequently modified files** = hot files across sessions. **Performance** = perf data when a log is open (moves to top; includes **Errors** tab with time-bucketed error/warning chart and spike detection). Command **Open Insight** opens the panel; Add to Investigation and create/open investigation focus the Cases section.
-- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a session in Project Logs → **Replay** to play it back with optional timing; use the **Replay** action in the toolbar actions dropdown to show the horizontal replay panel (play/pause, scrubber, speed).
+- **Historical log viewing:** Open sessions into the panel viewer with parsed timestamps, proper coloring, and async loading. **Session replay:** Right-click a log in the Logs panel → **Replay** to play it back with optional timing; use the **Replay** action in the toolbar actions dropdown to show the horizontal replay panel (play/pause, scrubber, speed).
 - **Session renaming/tagging:** Right-click to rename or tag sessions. Auto-tags by content patterns.
 - **Session comparison:** Side-by-side diff view with color highlighting.
 - **Session templates:** Save/load project-specific configurations (Flutter, Node.js, Python built-in).
@@ -276,27 +276,50 @@ This is useful for troubleshooting, framework debugging, or when you want a comp
 
 ### Power Shortcuts (Panel Viewer)
 
-Open **Options** → **Keyboard shortcuts…** in the viewer for the full reference (power shortcuts and Command Palette commands). Double-click a power shortcut row to rebind it; double-click a command row to open Keyboard Shortcuts for that command. Overrides are stored in `saropaLogCapture.viewerKeybindings`.
+Open **Options** → **Keyboard shortcuts…** in the viewer for the full reference (power shortcuts and Command Palette commands). Press **F1** inside the viewer to open a standalone reference panel with descriptions. Double-click a power shortcut row to rebind it; double-click a command row to open Keyboard Shortcuts for that command. Overrides are stored in `saropaLogCapture.viewerKeybindings`.
 
-| Key           | Action                              |
-| ------------- | ----------------------------------- |
-| Ctrl+F        | Open search panel                   |
-| F3 / Shift+F3 | Next / previous search match        |
-| Escape        | Close search panel / inline peek    |
-| Space         | Toggle pause/resume                 |
-| W             | Toggle word wrap                    |
-| M             | Insert marker                       |
-| P             | Pin/unpin center line               |
-| Shift+Click   | Select line range                   |
-| Ctrl+C        | Copy selection as plain text        |
-| Ctrl+Shift+C  | Copy selection as markdown          |
-| Ctrl+Alt+C    | Copy selection as raw text          |
-| Ctrl+Shift+A  | Copy all visible lines to clipboard |
-| N             | Annotate center line                |
-| A             | Toggle app-only stack trace mode    |
-| Double-click  | Open inline peek with context lines |
-| Home          | Scroll to top                       |
-| End           | Scroll to bottom                    |
+| Key                  | Action                              |
+| -------------------- | ----------------------------------- |
+| F1                   | Open keyboard shortcuts reference   |
+| Ctrl+F               | Open search panel                   |
+| Ctrl+Shift+F         | Find in files (all sessions)        |
+| F3 / Shift+F3        | Next / previous search match        |
+| Escape               | Close panel / peek / search         |
+| Ctrl+G               | Go to line                          |
+| Space                | Toggle pause/resume                 |
+| W                    | Toggle word wrap                    |
+| M                    | Insert marker                       |
+| P                    | Pin/unpin center line               |
+| N                    | Annotate center line                |
+| Ctrl+B               | Bookmark center line                |
+| A                    | Cycle device logs (None/Warn+/All)  |
+| C                    | Toggle compress duplicates          |
+| H                    | Toggle hide blank lines             |
+| V                    | Toggle visual spacing               |
+| O                    | Toggle options panel                |
+| F                    | Toggle filters panel                |
+| S                    | Toggle signals panel                |
+| B                    | Toggle bookmarks panel              |
+| L                    | Toggle project logs panel           |
+| I                    | Toggle collections panel            |
+| Q                    | Toggle SQL history panel            |
+| T                    | Toggle trash panel                  |
+| [ / ]                | Previous / next session             |
+| Shift+[ / Shift+]    | Previous / next file part           |
+| Ctrl+C               | Copy selection as plain text        |
+| Ctrl+Shift+C         | Copy selection as markdown          |
+| Ctrl+Alt+C           | Copy selection as raw text          |
+| Ctrl+Shift+A         | Copy all visible lines to clipboard |
+| Ctrl+Shift+P         | Copy log file path                  |
+| Ctrl+Shift+E         | Reveal log file in explorer         |
+| Ctrl+= / Ctrl+-      | Increase / decrease font size       |
+| Ctrl+0               | Reset font size                     |
+| Ctrl+Shift+= / -     | Increase / decrease line height     |
+| Ctrl+Shift+0         | Reset line height                   |
+| Shift+Click          | Select line range                   |
+| Double-click         | Open inline peek with context lines |
+| Home / End           | Scroll to top / bottom              |
+| Page Up / Page Down  | Scroll by page                      |
 
 ---
 
@@ -474,30 +497,30 @@ See [api-types.ts](src/api-types.ts) for the full type definitions.
 
 ### Keyboard shortcuts and accessibility
 
-**Accessibility:** The webview viewer is built for keyboard and assistive tech use. The main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` and a live region that announces line-count updates when filtering or loading. Slide-out panels (Options, Project Logs, etc.) have `region` landmarks and labeled controls; when you open a panel, focus moves into it, and **Escape** or the panel’s Close button returns focus to the icon bar. Native controls (buttons, selects, range inputs) are focusable and operable with Enter/Space. Replay controls, session/split navigation, and level filters are labeled. VS Code’s webview hosts this UI, so focus behavior at the editor boundary follows the host. For a full audit and remaining work, see [plans/028_plan-webview-accessibility.md](plans/028_plan-webview-accessibility.md) and [plans/028_webview-a11y-audit.md](plans/028_webview-a11y-audit.md).
+**Accessibility:** The webview viewer is built for keyboard and assistive tech use. The main content has a `main` landmark; the icon bar is a `toolbar`; the log area has `role="log"` and a live region that announces line-count updates when filtering or loading. Slide-out panels (Options, Logs, etc.) have `region` landmarks and labeled controls; when you open a panel, focus moves into it, and **Escape** or the panel’s Close button returns focus to the icon bar. Native controls (buttons, selects, range inputs) are focusable and operable with Enter/Space. Replay controls, session/split navigation, and level filters are labeled. VS Code’s webview hosts this UI, so focus behavior at the editor boundary follows the host. For a full audit and remaining work, see [plans/028_plan-webview-accessibility.md](plans/028_plan-webview-accessibility.md) and [plans/028_webview-a11y-audit.md](plans/028_webview-a11y-audit.md).
 
 **Keyboard shortcuts** (when the log viewer has focus):
 
-| Shortcut                             | Action                                                              |
-| ------------------------------------ | ------------------------------------------------------------------- |
-| **Ctrl+F** / **F3**                  | Open search panel                                                   |
-| **Ctrl+Shift+F**                     | Find in Files                                                       |
-| **Ctrl+G**                           | Go to line                                                          |
-| **Escape**                           | Close search, options, go-to-line, peek, or session panel           |
-| **Ctrl+C**                           | Copy selection; if no selection, copy current line (when supported) |
-| **Ctrl+Shift+C**                     | Copy selection as Markdown                                          |
-| **Ctrl+Alt+C**                       | Copy selection as raw (unprocessed) text                            |
-| **Ctrl+Shift+A**                     | Copy full log to clipboard                                          |
-| **Ctrl+A**                           | Select all (in viewer)                                              |
-| **Ctrl++** / **Ctrl+-** / **Ctrl+0** | Increase / decrease / reset font size                               |
-| **Space**                            | Toggle pause (live capture)                                         |
-| **W**                                | Toggle word wrap                                                    |
-| **Home** / **End**                   | Jump to top / bottom                                                |
-| **Page Up** / **Page Down**          | Scroll by page                                                      |
-| **M**                                | Insert marker at current position                                   |
-| **P**                                | Pin line at center                                                  |
-| **N**                                | Add annotation to line at center                                    |
-| **Ctrl+scroll**                      | Zoom font size (when not over an input)                             |
+Press **F1** inside the viewer to open a standalone reference panel with grouped categories and full descriptions. The table below is a summary — see the [Power Shortcuts](#power-shortcuts-panel-viewer) section for the complete list of 45 rebindable shortcuts.
+
+| Shortcut                                      | Action                                                    |
+| --------------------------------------------- | --------------------------------------------------------- |
+| **F1**                                        | Open keyboard shortcuts reference panel                   |
+| **Ctrl+F** / **F3**                           | Open search panel / next match                            |
+| **Ctrl+Shift+F**                              | Find in files (all sessions)                              |
+| **Ctrl+G**                                    | Go to line                                                |
+| **Escape**                                    | Close search, options, go-to-line, peek, or session panel |
+| **Ctrl+C** / **Ctrl+Shift+C** / **Ctrl+Alt+C** | Copy as plain / markdown / raw text                     |
+| **Ctrl+Shift+A** / **Ctrl+A**                 | Copy all visible / select all                             |
+| **Ctrl+= / - / 0**                            | Increase / decrease / reset font size                     |
+| **Ctrl+Shift+= / - / 0**                      | Increase / decrease / reset line height                   |
+| **Space**                                      | Toggle pause (live capture)                               |
+| **O / F / S / B / L / I / Q / T**             | Toggle panels (Options/Filters/Signals/Bookmarks/Logs/Collections/SQL/Trash) |
+| **W / C / H / V / A**                         | Toggle wrap / compress / blank lines / spacing / device logs |
+| **M / P / N / Ctrl+B**                        | Insert marker / pin / annotate / bookmark center line     |
+| **[ / ]** / **Shift+[ / ]**                   | Previous/next session / file part                         |
+| **Home / End / Page Up / Page Down**           | Navigation                                                |
+| **Ctrl+scroll**                                | Zoom font size (when not over an input)                   |
 
 On macOS use **Cmd** instead of **Ctrl**. Open **Options** → **Keyboard shortcuts…** in the viewer for the full shortcut and Command Palette reference.
 

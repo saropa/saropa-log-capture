@@ -269,9 +269,14 @@ function updateTagSummary() {
         var summary = total + ' tag' + (total !== 1 ? 's' : '')
             + (hidden > 0 ? ' (' + hidden + ' hidden)' : '');
         el.textContent = summary;
-        if (typeof setAccordionSummary === 'function') setAccordionSummary('log-tags-section', summary);
-        var section = document.getElementById('log-tags-section');
-        if (section) { section.style.display = total > 0 ? '' : 'none'; }
+        /* Accordion header shows concise count: "5 hidden" or total */
+        var accordionText = hidden > 0
+            ? hidden + ' of ' + total + ' hidden'
+            : total + ' tag' + (total !== 1 ? 's' : '');
+        if (typeof setAccordionSummary === 'function') setAccordionSummary('log-tags-section', accordionText);
+        /* Show/hide the tab button based on whether tags exist */
+        var tab = document.getElementById('filter-tab-log-tags');
+        if (tab) { tab.style.display = total > 0 ? '' : 'none'; }
     }
 }
 

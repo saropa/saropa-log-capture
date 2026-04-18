@@ -1,25 +1,25 @@
 /**
- * Investigation Panel Handlers
+ * Collection Panel Handlers
  *
  * Message handlers for source management and search operations
- * in the investigation panel.
+ * in the collection panel.
  */
 
 import * as vscode from 'vscode';
 import { t } from '../../l10n';
 import { escapeHtml } from '../../modules/capture/ansi';
-import { InvestigationStore } from '../../modules/investigation/investigation-store';
-import { searchInvestigation, checkSourceExists, escapeRegex } from '../../modules/investigation/investigation-search';
-import type { Investigation, SearchOptions, SearchMatch, InvestigationSearchResult } from '../../modules/investigation/investigation-types';
+import { CollectionStore } from '../../modules/collection/collection-store';
+import { searchCollection, checkSourceExists, escapeRegex } from '../../modules/collection/collection-search';
+import type { Collection, SearchOptions, SearchMatch, CollectionSearchResult } from '../../modules/collection/collection-types';
 
 let currentSearchCancellation: vscode.CancellationTokenSource | undefined;
 
 export async function promptAddSource(
-    store: InvestigationStore,
+    store: CollectionStore,
     refreshPanel: () => Promise<void>,
 ): Promise<void> {
-    const investigation = await store.getActiveInvestigation();
-    if (!investigation) { return; }
+    const collection = await store.getActiveCollection();
+    if (!collection) { return; }
 
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return; }
@@ -38,7 +38,7 @@ export async function promptAddSource(
         const relativePath = vscode.workspace.asRelativePath(uri, false);
         const label = uri.path.split('/').pop() ?? relativePath;
         const isSession = uri.fsPath.endsWith('.log');
-        await store.addSource(investigation.id, {
+        await store.addSource(collection.id, {
             type: isSession ? 'session' : 'file',
             relativePath,
             label,
@@ -48,14 +48,14 @@ export async function promptAddSource(
 }
 
 export async function handleRemoveSource(
-    store: InvestigationStore,
+    store: CollectionStore,
     relativePath: string,
     refreshPanel: () => Promise<void>,
 ): Promise<void> {
     if (!relativePath) { return; }
-    const investigation = await store.getActiveInvestigation();
-    if (!investigation) { return; }
-    await store.removeSource(investigation.id, relativePath);
+    const collection = await store.getActiveCollection();
+    if (!collection) { return; }
+    await store.removeSource(collection.id, relativePath);
     await refreshPanel();
 }
 
@@ -93,17 +93,17 @@ export interface SearchOptionsMessage {
 }
 
 export async function handleSearch(
-    store: InvestigationStore,
+    store: CollectionStore,
     options: SearchOptionsMessage,
     panel: vscode.WebviewPanel,
 ): Promise<void> {
-    const investigation = await store.getActiveInvestigation();
-    if (!investigation) { return; }
+    const collection = await store.getActiveCollection();
+    if (!collection) { return; }
 
     currentSearchCancellation?.cancel();
     currentSearchCancellation?.dispose();
 
-    await store.updateLastSearchQuery(investigation.id, options.query || undefined);
+    await store.updateLastSearchQuery(collection.id, options.query || undefined);
 
     if (!options.query.trim()) {
         panel.webview.postMessage({ type: 'searchResults', html: renderEmptyResults() });
@@ -116,7 +116,7 @@ export async function handleSearch(
 
     panel.webview.postMessage({ type: 'searchProgress', searching: true, message: t('msg.searching') });
 
-    const result = await performSearch(investigation, options, currentSearchCancellation.token, (current, total, _file) => {
+    const result = await performSearch(collection, options, currentSearchCancellation.token, (current, total, _file) => {
         panel.webview.postMessage({
             type: 'searchProgress',
             searching: true,
@@ -131,11 +131,11 @@ export async function handleSearch(
 }
 
 export async function performSearch(
-    investigation: Investigation,
+    collection: Collection,
     options: SearchOptionsMessage,
     token?: vscode.CancellationToken,
     progress?: (current: number, total: number, file: string) => void,
-): Promise<InvestigationSearchResult> {
+): Promise<CollectionSearchResult> {
     const searchOptions: SearchOptions = {
         query: options.query,
         caseSensitive: options.caseSensitive ?? false,
@@ -143,10 +143,10 @@ export async function performSearch(
         contextLines: options.contextLines ?? 2,
     };
 
-    return searchInvestigation(investigation, searchOptions, token, progress);
+    return searchCollection(collection, searchOptions, token, progress);
 }
 
-function renderSearchResults(result: InvestigationSearchResult, query: string): string {
+function renderSearchResults(result: CollectionSearchResult, query: string): string {
     if (result.cancelled) {
         return `<div class="search-cancelled">${t('msg.searchCancelled')}</div>`;
     }
@@ -230,7 +230,7 @@ export function renderEmptyResults(): string {
 }
 
 /** Render search results without context lines (for panel refresh). */
-export function renderSearchResultsCompact(result: InvestigationSearchResult, query: string): string {
+export function renderSearchResultsCompact(result: CollectionSearchResult, query: string): string {
     if (result.results.length === 0) {
         return `<div class="empty-sources">${t('msg.noSearchResults')}</div>`;
     }
@@ -256,13 +256,13 @@ export function renderSearchResultsCompact(result: InvestigationSearchResult, qu
     return html;
 }
 
-export async function handleUpdateNotes(store: InvestigationStore, notes: string): Promise<void> {
-    const investigation = await store.getActiveInvestigation();
-    if (!investigation) { return; }
-    await store.updateNotes(investigation.id, notes);
+export async function handleUpdateNotes(store: CollectionStore, notes: string): Promise<void> {
+    const collection = await store.getActiveCollection();
+    if (!collection) { return; }
+    await store.updateNotes(collection.id, notes);
 }
 
-export async function getSearchHistoryHtml(store: InvestigationStore): Promise<string> {
+export async function getSearchHistoryHtml(store: CollectionStore): Promise<string> {
     const history = await store.getSearchHistory();
     if (history.length === 0) {
         return `<div class="history-empty">${t('msg.noSearchHistory')}</div>`;
@@ -276,17 +276,17 @@ export async function getSearchHistoryHtml(store: InvestigationStore): Promise<s
     return html;
 }
 
-export async function handleClearSearchHistory(store: InvestigationStore): Promise<void> {
+export async function handleClearSearchHistory(store: CollectionStore): Promise<void> {
     await store.clearSearchHistory();
 }
 
 /** Check which sources are missing and return their paths (parallel checks). */
-export async function checkMissingSources(investigation: Investigation): Promise<string[]> {
+export async function checkMissingSources(collection: Collection): Promise<string[]> {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) { return []; }
 
     const checks = await Promise.all(
-        investigation.sources.map(async (source) => ({
+        collection.sources.map(async (source) => ({
             path: source.relativePath,
             exists: await checkSourceExists(source, folder.uri),
         })),

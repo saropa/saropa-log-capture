@@ -284,7 +284,7 @@ Every element that looks clickable must be clickable, and vice versa:
 |---------|-------------|-------------|
 | Watch chips (`.watch-chip`) | Yes | Opens search with keyword pre-filled |
 | Level dots (`.level-dot`) | Yes | Opens level filter fly-up menu |
-| Footer status text | Yes | Opens Project Logs session panel |
+| Footer status text | Yes | Opens Logs panel |
 | Filter badge | Yes | Opens options panel (or level flyup if only level filter active) |
 
 **Rules:**

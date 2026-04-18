@@ -122,9 +122,9 @@ export async function handleSessionAction(
             }
             break;
         }
-        case 'addToInvestigation':
+        case 'addToCollection':
             for (const item of items) {
-                await vscode.commands.executeCommand('saropaLogCapture.addToInvestigation', { uri: item.uri });
+                await vscode.commands.executeCommand('saropaLogCapture.addToCollection', { uri: item.uri });
             }
             break;
     }

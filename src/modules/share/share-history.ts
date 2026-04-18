@@ -12,7 +12,7 @@ export interface ShareHistoryEntry {
     readonly gistId: string;
     readonly deepLinkUrl: string;
     readonly gistUrl: string;
-    readonly investigationName: string;
+    readonly collectionName: string;
     readonly sharedAt: number;
 }
 
@@ -24,13 +24,13 @@ export async function getShareHistory(context: vscode.ExtensionContext): Promise
 export async function addToShareHistory(
     context: vscode.ExtensionContext,
     result: GistShareResult,
-    investigationName: string,
+    collectionName: string,
 ): Promise<void> {
     const entry: ShareHistoryEntry = {
         gistId: result.gistId,
         deepLinkUrl: result.deepLinkUrl,
         gistUrl: result.gistUrl,
-        investigationName,
+        collectionName,
         sharedAt: Date.now(),
     };
     const list = await getShareHistory(context);

@@ -1,4 +1,4 @@
-/** Right-click context menu for session items in the Project Logs panel. */
+/** Right-click context menu for log items in the Logs panel. */
 
 /** Returns the HTML for the session context menu element. */
 export function getSessionContextMenuHtml(): string {
@@ -50,8 +50,8 @@ export function getSessionContextMenuHtml(): string {
         <span class="codicon codicon-eye"></span> Show Only This Name
     </div>
     <div class="context-menu-separator session-normal-only"></div>
-    <div class="context-menu-item session-normal-only" data-session-action="addToInvestigation">
-        <span class="codicon codicon-pin"></span> Add to Investigation
+    <div class="context-menu-item session-normal-only" data-session-action="addToCollection">
+        <span class="codicon codicon-pin"></span> Add to Collection
     </div>
     <div class="context-menu-separator session-normal-only"></div>
     <div class="context-menu-item session-normal-only" data-session-action="trash">

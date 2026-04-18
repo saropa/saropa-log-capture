@@ -108,34 +108,33 @@ function applyPreset(presetName) {
 }
 
 /**
- * Update the preset dropdown to reflect current state.
+ * Update both the hidden preset dropdown (backward compat) and the
+ * kebab menu presets submenu to reflect current state.
  */
 function updatePresetDropdown() {
+    /* Hidden dropdown — kept for backward compat */
     var dropdown = document.getElementById('preset-select');
-    if (!dropdown) {
-        return;
+    if (dropdown) {
+        dropdown.innerHTML = '';
+        var noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = 'None';
+        dropdown.appendChild(noneOpt);
+        for (var i = 0; i < filterPresets.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = filterPresets[i].name;
+            opt.textContent = filterPresets[i].name;
+            dropdown.appendChild(opt);
+        }
+        var saveOpt = document.createElement('option');
+        saveOpt.value = '__save__';
+        saveOpt.textContent = '+ Save current filters...';
+        dropdown.appendChild(saveOpt);
+        dropdown.value = activePresetName || '';
     }
 
-    dropdown.innerHTML = '';
-
-    var noneOpt = document.createElement('option');
-    noneOpt.value = '';
-    noneOpt.textContent = 'None';
-    dropdown.appendChild(noneOpt);
-
-    for (var i = 0; i < filterPresets.length; i++) {
-        var opt = document.createElement('option');
-        opt.value = filterPresets[i].name;
-        opt.textContent = filterPresets[i].name;
-        dropdown.appendChild(opt);
-    }
-
-    var saveOpt = document.createElement('option');
-    saveOpt.value = '__save__';
-    saveOpt.textContent = '+ Save current filters...';
-    dropdown.appendChild(saveOpt);
-
-    dropdown.value = activePresetName || '';
+    /* Kebab menu presets submenu — populated by viewer-presets-submenu.ts */
+    if (typeof updatePresetsSubmenu === 'function') updatePresetsSubmenu();
 }
 
 /**

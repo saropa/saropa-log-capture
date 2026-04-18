@@ -4,7 +4,7 @@ import { getSourceTagsScript } from '../../ui/viewer-stack-tags/viewer-source-ta
 import { getTagSelectionGuardScript } from '../../ui/viewer-stack-tags/viewer-tag-selection-guard';
 
 /**
- * Tests for double-click solo behavior on Code Origins (class tags) and
+ * Tests for double-click solo behavior on Source Classes (class tags) and
  * Message Tags (source tags) filter chips.
  *
  * The solo functions live in webview JS emitted by template literals, so we
@@ -97,7 +97,7 @@ function createSourceTagRuntime(): SourceTagRuntime {
     return factory();
 }
 
-suite('Viewer Tag Solo — Class Tags (Code Origins)', () => {
+suite('Viewer Tag Solo — Class Tags (Source Classes)', () => {
     test('should solo a tag by hiding all others', () => {
         const rt = createClassTagRuntime();
         rt.classTagCounts = { Alpha: 5, Beta: 3, Gamma: 2 };

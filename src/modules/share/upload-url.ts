@@ -1,5 +1,5 @@
 /**
- * Upload investigation .slc buffer to a configurable PUT URL (e.g. presigned S3/Azure Blob URL).
+ * Upload collection .slc buffer to a configurable PUT URL (e.g. presigned S3/Azure Blob URL).
  * No SDK dependency: plain fetch PUT. User configures URL in settings.
  */
 

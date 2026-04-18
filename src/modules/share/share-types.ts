@@ -1,5 +1,5 @@
 /**
- * Share investigation types: Gist result and import handlers.
+ * Share collection types: Gist result and import handlers.
  */
 
 export interface GistShareResult {

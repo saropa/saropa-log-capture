@@ -1,15 +1,15 @@
 /**
- * Import investigation from GitHub Gist or from a URL (raw .slc or base64).
- * Shared flow: fetch or read (file://) → temp file → importSlcBundle → persist investigation and set active.
+ * Import collection from GitHub Gist or from a URL (raw .slc or base64).
+ * Shared flow: fetch or read (file://) → temp file → importSlcBundle → persist collection and set active.
  * URL import allows: https (any host); http only for same-network LAN (127.0.0.1, 192.168.x.x, 10.x.x.x, 172.16–31.x.x); file:// for local .slc.
  */
 
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import { importSlcBundle, type ImportInvestigationResult } from '../export/slc-bundle';
-import type { Investigation } from '../investigation/investigation-types';
-import type { InvestigationStore } from '../investigation/investigation-store';
+import { importSlcBundle, type ImportCollectionResult } from '../export/slc-bundle';
+import type { Collection } from '../collection/collection-types';
+import type { CollectionStore } from '../collection/collection-store';
 import { t } from '../../l10n';
 
 const GIST_API = 'https://api.github.com/gists';
@@ -25,32 +25,32 @@ async function writeTempFile(data: Uint8Array | Buffer, suffix: string): Promise
     return uri;
 }
 
-/** If result is an investigation bundle, persist it and set as active; show toast. Returns the investigation or undefined. */
-async function persistAndActivateInvestigation(
+/** If result is a collection bundle, persist it and set as active; show toast. Returns the collection or undefined. */
+async function persistAndActivateCollection(
     result: import('../export/slc-bundle').ImportSlcResult | undefined,
-    store: InvestigationStore,
-): Promise<Investigation | undefined> {
-    if (!result || !('investigation' in result)) {
+    store: CollectionStore,
+): Promise<Collection | undefined> {
+    if (!result || !('collection' in result)) {
         return undefined;
     }
-    const invResult = result as ImportInvestigationResult;
-    await store.addInvestigation(invResult.investigation);
-    await store.setActiveInvestigationId(invResult.investigation.id);
-    vscode.window.showInformationMessage(t('msg.investigationImported', invResult.investigation.name));
-    return invResult.investigation;
+    const invResult = result as ImportCollectionResult;
+    await store.addCollection(invResult.collection);
+    await store.setActiveCollectionId(invResult.collection.id);
+    vscode.window.showInformationMessage(t('msg.collectionImported', invResult.collection.name));
+    return invResult.collection;
 }
 
 /** Run import from a temp .slc URI; always deletes the temp file. */
 async function importFromSlcUri(
     tempUri: vscode.Uri,
-    store: InvestigationStore,
-): Promise<Investigation | undefined> {
+    store: CollectionStore,
+): Promise<Collection | undefined> {
     try {
         const result = await importSlcBundle(tempUri);
         if (result && 'mainLogUri' in result) {
-            vscode.window.showInformationMessage(t('msg.investigationImported', 'Session'));
+            vscode.window.showInformationMessage(t('msg.collectionImported', 'Session'));
         }
-        return persistAndActivateInvestigation(result, store);
+        return persistAndActivateCollection(result, store);
     } finally {
         try {
             await vscode.workspace.fs.delete(tempUri);
@@ -62,15 +62,15 @@ async function importFromSlcUri(
 
 export async function importFromGist(
     gistId: string,
-    store: InvestigationStore,
-): Promise<Investigation | undefined> {
+    store: CollectionStore,
+): Promise<Collection | undefined> {
     const res = await fetch(`${GIST_API}/${gistId}`);
     if (!res.ok) {
         throw new Error(t('msg.importGistNotFound'));
     }
 
     const gist = (await res.json()) as { files?: Record<string, { raw_url?: string }> };
-    const slcFile = gist.files?.['investigation.slc.b64'];
+    const slcFile = gist.files?.['collection.slc.b64'];
     if (!slcFile?.raw_url) {
         throw new Error(t('msg.importGistInvalid'));
     }
@@ -136,8 +136,8 @@ function isAllowedImportUrl(urlStr: string): { allowed: boolean; isFile: boolean
 /** Import from URL: https, same-network http (LAN), or file://. Validates scheme/host then fetches or reads file. */
 export async function importFromUrl(
     url: string,
-    store: InvestigationStore,
-): Promise<Investigation | undefined> {
+    store: CollectionStore,
+): Promise<Collection | undefined> {
     const { allowed, isFile } = isAllowedImportUrl(url);
     if (!allowed) {
         throw new Error(t('msg.importOnlyHttps'));
