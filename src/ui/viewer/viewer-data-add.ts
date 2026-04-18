@@ -227,7 +227,11 @@ function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPerce
     }
 
     var minN = repeatTracker.streakMinN;
-    var shouldShowNormalLine = repeatTracker.count < minN;
+    /* Non-SQL repeats always add normally — the compress dedup algorithm
+       (applyCompressDedupModes) groups them when compress mode is on,
+       and all lines stay visible when it is off. Only SQL fingerprint
+       repeats use handleRepeatCollapse for the drilldown notification row. */
+    var shouldShowNormalLine = repeatTracker.count < minN || !repeatTracker.streakSqlFp;
 
     if (!shouldShowNormalLine) {
         handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, tier, lvl, sTag, lTag, cTags, sqlMeta, catFiltered, plain, minN);
