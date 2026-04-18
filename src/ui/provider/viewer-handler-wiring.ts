@@ -176,8 +176,11 @@ function makePayloadOptions(deps: HandlerDeps): SessionListPayloadOptions {
   };
 }
 
-/** Batch size for streaming session metadata to the webview. */
-const streamBatchSize = 5;
+/** Batch size for streaming session metadata to the webview.
+ * Use 1 so each item appears as soon as its metadata loads,
+ * giving the user a progressive visual update instead of a
+ * burst of details after a long delay. */
+const streamBatchSize = 1;
 
 /** Wire session list, browse root, clear root, and session action handlers. */
 function wireSessionListHandlers(target: HandlerTarget, deps: HandlerDeps): void {
