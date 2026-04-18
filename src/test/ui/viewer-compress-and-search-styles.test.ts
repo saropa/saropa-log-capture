@@ -247,11 +247,12 @@ suite('Viewer compress streak (embedded script)', () => {
         );
     });
 
-    test('blank-line hiding remains independent from compression modes', () => {
+    test('blank lines always render at quarter height (not gated on toggle)', () => {
         const dataHelpers = getViewerDataScript();
+        /* Blank lines are unconditionally compact — no hideBlankLines gate. */
         assert.ok(
-            dataHelpers.includes("var hideBlanks = (typeof hideBlankLines !== 'undefined' && hideBlankLines);"),
-            'compression toggles must not implicitly hide blanks',
+            dataHelpers.includes('isLineContentBlank(item)') && dataHelpers.includes('ROW_HEIGHT / 4'),
+            'calcItemHeight must return quarter height for blank lines unconditionally',
         );
     });
 

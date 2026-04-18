@@ -1,6 +1,344 @@
 # Changelog Archive
 
-Versions 5.0.3 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+Versions 5.6.3 and prior. For current changes see [CHANGELOG.md](./CHANGELOG.md).
+
+---
+
+## [5.6.3]
+
+Adds an experimental ASCII art detector with improved majority-in-window scoring.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.3/CHANGELOG.md)
+
+### Added
+
+- New `viewerDetectAsciiArt` setting (default off) — experimental heuristic that detects pixel-based ASCII art (logos, figlet banners) and groups them as art blocks with the existing shimmer/yellow treatment
+
+### Changed
+
+- ASCII art detector uses majority-in-window (70%) instead of strict consecutive runs, so one weak line inside an art block no longer breaks detection
+- ASCII art scoring adds low-token-count heuristic (+15 for long lines with ≤2 tokens) and vertical-uniformity window bonus (+10 when line lengths cluster tightly)
+
+---
+
+## [5.6.2]
+
+Fixes ASCII art block grouping not working for logcat-prefixed lines.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.2/CHANGELOG.md)
+
+### Fixed
+
+- Fixed ASCII art block grouping not working for logcat-prefixed lines (e.g. `I/flutter (13876): │ text │`) — separator detection now strips the logcat/bracket prefix before checking art-char ratio
+
+---
+
+## [5.6.1]
+
+Housekeeping — split oversized files and fixed a test that broke under minification.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.1/CHANGELOG.md)
+
+### Fixed
+
+- Fixed `viewer-performance-panel` test using brittle `.toString()` source inspection that breaks after esbuild minification — now tests actual function output instead
+- Fixed signals treating decorative separator lines (`═══════`, `────────`, etc.) as error hypotheses — excerpts with no alphanumeric characters are now filtered out, and lines with the `isSeparator` flag are excluded from error collection
+- Fixed `isAsciiBoxDrawingDecorLine` only matching single-vertical `│` borders — now also matches double-vertical `║` borders (e.g. Isar Connect banners), preventing text-heavy box content lines from being misclassified as errors
+
+<details>
+<summary>Maintenance</summary>
+
+- Modularized 6 files that exceeded the 300-line code limit: extracted edit modal styles, SQL drilldown UI, scope filter hint system, broadcaster config, and split large test files
+</details>
+
+---
+
+## [5.6.0]
+
+Auto-loads your active session when you switch to the tab, groups ASCII art into tidy blocks, and adds a Copy All Filtered button.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.6.0/CHANGELOG.md)
+
+### Added
+
+- Auto-load the active recording session when the Saropa Log Capture tab becomes visible
+- Copy All Filtered Lines button in the viewer title bar to copy all visible (filtered) lines to the clipboard with a toast showing the line count
+- **ASCII art block grouping** — consecutive separator/box-art lines with the same timestamp are now rendered as a single visual block: the first line keeps its decoration, subsequent lines show only the art content with a shimmer effect, continuous gutter bar, and subtle tinted background. New setting `saropaLogCapture.viewerGroupAsciiArt` (default on)
+
+### Changed
+
+- Renamed filter section "Noise Reduction" to "Exclusions" in both the toolbar filter drawer and the filters panel
+- Deprecated `deemphasizeFrameworkLevels` setting — the device tier system now handles severity demotion automatically (device-other lines demoted to info, device-critical lines keep real severity)
+
+### Fixed
+
+- ASCII art lines (e.g. Drift debug server banner) no longer get inconsistent colors — separator lines are always classified as `info` level regardless of text content like "DEBUG" or "database"
+
+<details>
+<summary>Maintenance</summary>
+
+- Removed deprecated `appOnlyMode` setting definition from `package.json` (TS migration for old saved presets retained)
+- Removed dead `setCaptureAll` message handler that was no longer invoked
+</details>
+
+---
+
+## [5.5.3]
+
+Merges duplicate logcat error hints that only differ by timestamp.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.3/CHANGELOG.md)
+
+### Fixed
+
+- Root-cause hints now merge logcat errors that differ only by leading timestamp into a single hypothesis
+
+---
+
+## [5.5.2]
+
+Internal cleanup — trimmed oversized parameter lists and split large files.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.2/CHANGELOG.md)
+
+<details>
+<summary>Maintenance</summary>
+
+- Refactored `setErrorClassificationSettings` from 5 positional params to `ErrorClassificationSettings` options object across viewer target, broadcaster, providers, and all callers
+- Refactored `PopOutPanel` constructor from 5 positional params to `PopOutPanelOptions` options object
+- Refactored `parseLogLineToEvent` from 5 positional params to `ParseLogLineOptions` options object
+- Refactored `getViewerDataScript` from 5 positional params to `ViewerDataScriptOptions` options object
+- Refactored `recordSqlQueryHistoryObservation` (embedded JS + test interface) from 6 positional params to observation object
+- Refactored 9 files exceeding eslint `max-lines` limits by extracting cohesive sections into separate modules — no functional changes
+</details>
+
+---
+
+## [5.5.1]
+
+Fixes false error badges on device system logs and a broken SocketException pattern.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.1/CHANGELOG.md)
+
+### Fixed
+
+- Fixed device-other lines (e.g. `E/gralloc4`) getting false error badges and critical notifications in loose detection mode — `classifyError()` and `checkCriticalError()` now skip device-other tier lines entirely
+- Fixed `SocketException` transient pattern matching deterministic bind/listen failures (e.g. hot-restart port conflicts) — pattern now requires known-transient indicators like "Connection refused" or "timed out"
+- Fixed missing `captureDeviceOther` NLS key in all non-English locale files (de, es, fr, it, ja, ko, pt-br, ru, zh-cn, zh-tw)
+
+### Changed
+
+- Promoted `Choreographer` to device-critical tier — frame skip warnings report app main-thread jank and should keep their `performance` level rather than being suppressed as device noise
+
+---
+
+## [5.5.0]
+
+Sorts device logs into three tiers so system noise stays out of the way and real crashes always show up.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.5.0/CHANGELOG.md)
+
+### Added
+
+- **Device log triage:** Three-tier classification for logcat lines — Flutter (app), device-critical (always visible), device-other (hidden by default). Device-critical tags (`AndroidRuntime`, `ActivityManager`, `art`, etc.) are never hidden, so real crashes surface even with Device unchecked
+- **Flutter/Device checkboxes** in Log Inputs section replace the old "App only" toggle. Flutter is checked by default; Device is unchecked by default
+- **Device severity demotion:** Device-other lines (e.g. `E/SettingsState`) are demoted to info severity regardless of logcat level — no more false red errors from system noise
+- **Capture-level filtering:** New `integrations.adbLogcat.captureDeviceOther` setting (default: false) drops device-other lines at capture time before they reach the viewer or log file
+- **Curated critical tag list** in `device-tag-tiers.ts` — editorial classification maintained in code, not a user responsibility
+
+### Changed
+
+- **Noise Reduction → Exclusions:** Renamed the filter section now that app-only is gone; only exclusion patterns remain
+- **"App only" toggle removed:** Replaced by the Flutter/Device checkboxes with tier-aware filtering
+- **"No Framework Noise" preset → "Flutter Only":** Built-in preset renamed and uses `deviceEnabled: false`
+- **Keyboard shortcut "A"** now toggles the Device checkbox instead of the removed app-only mode
+- **Signal analysis** skips device-other lines — no more false positives from system errors in error classification
+- **Line decorations — no master switch:** Removed the `showDecorations` master toggle from the context menu, options panel, and VS Code settings. Each decoration option (severity dot, counter, timestamp, session elapsed, severity bar, line coloring, badges) can now be toggled independently. Decorations render when any individual option is on; the footer Deco button now opens the settings panel directly.
+- **File Scope cleanup:** All five radio buttons are always visible (disabled ones are dimmed instead of hidden); removed three redundant hint/status lines; "Hide lines without file path" renamed to "Exclude lines with no source file" and disabled when scope is "All logs"; each radio shows the actual path segment in a dimmed suffix (e.g. "Only directory _(lib/src/)_"); accordion summary shows "Only main.dart" instead of generic "File"
+
+### Fixed
+
+- Fixed Log Inputs category filter (e.g. unchecking "logcat") not hiding lines that arrive after the filter is toggled — new lines now respect the active category filter on arrival
+- Fixed File Scope filter never matching any lines on Windows — `uri.path` produces `/d:/…` but DAP source paths are `d:\…`; path normalization now strips the leading slash before drive letters
+- Fixed File Scope filter silently changing when switching editor tabs — scope paths are now locked when the user picks a level; switching editors updates the suffix labels but does not re-apply the filter
+
+---
+
+## [5.4.2]
+
+Fixes duplicate and unstable entries in the signals panel — repeated errors now merge into one signal, ranked by how often they appear instead of how recently they arrived.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.4.2/CHANGELOG.md)
+
+### Fixed
+
+- Fixed duplicate signal hypotheses for the same error message appearing on different log lines (e.g. repeated connection-refused errors) — error signals now group by normalized message text instead of line index
+- Fixed signal hypotheses using timestamp-varying logcat lines as separate signals — grouping key uses the last 100 chars of the excerpt, which skips leading date/time/pid prefixes
+- Error signal hypotheses are now ranked by frequency (most repeated error first) rather than recency, making the signals panel more stable during live log streaming
+- Collection now samples up to 50 recent error lines (was 2) so the algorithm has enough occurrences to rank by frequency accurately
+- Fixed spurious `[+N lines]` continuation badges collapsing ASCII art and other plain stdout output — continuation grouping now requires both lines to have a logcat tag; source-only matching was collapsing unrelated lines that happened to share a wall-clock timestamp
+
+<details>
+<summary>Maintenance</summary>
+
+- Fixed CI build failure: added missing braces to `if` statements in `config-normalizers.ts` (eslint `curly` rule)
+- Fixed CI build failure: removed unused `logcatLetterAnywhere` regex in `level-classifier.ts` (eslint `no-unused-vars` rule)
+</details>
+
+---
+
+## [5.4.1]
+
+Fixes the Integrations panel expand/collapse toggle and resolves CI build failures from stale compiled files.
+[log](https://github.com/saropa/saropa-log-capture/blob/v5.4.1/CHANGELOG.md)
+
+### Fixed
+
+- Fixed Integrations panel more/less toggle not working — nested `<p>` tags broke the DOM, leaving descriptions always expanded and the toggle button disconnected
+
+<details>
+<summary>Maintenance</summary>
+
+- Fixed CI build failure caused by 750 stale compiled `.js` files committed to `src/` — removed from git, added to `.gitignore`
+- Fixed ESLint flat config applying rules to all file types instead of only `.ts` files
+- Updated CI workflow to Node.js 22 and latest GitHub Action versions (checkout v6, setup-node v6, upload-artifact v7) to resolve Node.js 20 deprecation warnings
+- Added log viewer SQL screenshot to README
+</details>
+
+---
+
+## [5.4.0]
+
+Adds lint diagnostic badges on log lines that reference source files with active VS Code diagnostics — errors and warnings from any linter show up right in the log viewer. [log](https://github.com/saropa/saropa-log-capture/blob/v5.4.0/CHANGELOG.md)
+
+### Added
+
+- **Lint diagnostic badges** on log lines — lines referencing source files with active VS Code diagnostics (errors, warnings from any linter) show a small coloured badge with the count; toggle via Decoration Settings → "Lint badge"
+- **Live diagnostic updates** — badges update automatically when diagnostics change in the editor (e.g. after saving a file or fixing a lint warning)
+
+---
+
+## [5.3.0]
+
+Signals panel with per-signal dismiss, search and filter count badges, database level classification, and a batch of resize and toolbar fixes. [log](https://github.com/saropa/saropa-log-capture/blob/v5.3.0/CHANGELOG.md)
+
+### Added
+
+- **Search match count badge** on the toolbar search icon — shows the number of matches when a search query is active
+- **Signals toolbar icon** (`codicon-pulse`) with count badge — shows the number of detected signals and toggles the signals panel on click
+- **Copy signals button** at the bottom of the signals panel — copies all signal texts to clipboard with a brief toast confirmation
+- **Evidence line flash highlight** — clicking a signal's "line N" evidence link now scrolls to the line and briefly flashes it so you can see exactly where you landed
+- **Dismiss individual signals** — hover a signal to reveal an X button; dismissed signals are hidden for the session with a "N dismissed — restore all" link to bring them back
+
+### Changed
+
+- Filter count badge now displays on the toolbar filter icon instead of a separate standalone badge
+- Signals panel visibility is now controlled by the toolbar icon — removed the internal header with expand/collapse toggle and "Explain with AI" button
+- Signal text templates rewritten as clear diagnostic messages — removed hedging language and internal jargon
+
+### Fixed
+
+- **Log viewer right-side clipping on window resize** — removed `scrollbar-width: none` that hid the horizontal scrollbar in Chromium 130+ (VS Code 1.97+), and added a `window.resize` fallback listener for edge cases where `ResizeObserver` misses webview dimension changes
+- Toolbar filename dotted underline no longer extends to the `●`/`⏸` status prefix — only the file path is underlined
+- Long-press to copy file path now works reliably — `preventDefault()` blocks Chromium drag initiation that was cancelling the 500 ms hold timer
+- Action buttons (Reset all, SQL Query History, etc.) no longer stretch to the full width of their container — they now size to their content
+- Action buttons use proper VS Code theme fallbacks so they never render as unstyled black rectangles when theme variables are missing
+- "Reset all" button in filter drawer footer is now visually separated from the preset dropdown with a spacer, since it applies globally to all filters
+- Accordion section counts (e.g. "2/2", "10 tags") now display as bracketed suffixes on the title (e.g. "Log Inputs (2/2)") instead of right-aligned
+
+### Changed
+
+- Context lines label in filter drawer shortened from "Context: 3 lines" to compact `±3` notation — saves toolbar space while tooltip still explains the control
+
+### Added
+
+- New **Database** level with cyan filter dot — Drift SQL lines, generic SQL statements (`SELECT…FROM`, `INSERT INTO`, `UPDATE…SET`, `DELETE FROM`, `CREATE TABLE`, `PRAGMA`), and any line with a `database` source tag now classify as `database`, giving a single toolbar dot and filter toggle for all SQL traffic
+- TODO marker filter now also catches **BUG**, **KLUDGE**, and **WORKAROUND** keywords (case-insensitive) in addition to TODO, FIXME, HACK, and XXX
+- Text casing conventions added to UI Style Guide — sentence case for action buttons, Title Case for panel/view names and section headings
+
+---
+
+## [5.2.0]
+
+Fixes trailing-CR tofu boxes, logcat level misclassification, and search box clearing; adds channel badge decoration, copy-as-raw-text, and quick-save export. [log](https://github.com/saropa/saropa-log-capture/blob/v5.2.0/CHANGELOG.md)
+
+### Fixed
+
+- Trailing carriage return (`\r`) rendered as a small blue tofu box at the end of every log line — DAP adapters that send `\r` without `\n` now have all trailing CR/LF stripped; `escapeHtml()` also strips control characters as defense-in-depth
+- Threadtime logcat lines (e.g. `03-30 07:34:58.588 4457 4457 D Android: …`) now correctly recognize the level prefix — previously the `D`/`I`/`W`/`E` was ignored, causing debug lines to misclassify as info and inherit nearby error coloring
+- Scroll map no longer floods with a single color — debug and notice bars now respect the "show info markers" toggle (off by default), so only error, warning, performance, and to-do markers appear
+- Search text box no longer clears itself after typing — `clearSearchFilter()` name collision between viewer-search and viewer-presets caused the presets version (which empties the input) to overwrite the search version; renamed to `clearSearchFilteredFlags()` and `presetClearSearchInputValue()`
+- ASCII box art (e.g. Drift debug server banner) no longer corrupted in viewer — empty `│   │` lines were misclassified as stack frames and consecutive box-art lines were collapsed by repeat tracking
+- Export modal now seeds level checkboxes from the viewer's current level filter instead of a hardcoded Error/Warning/Info default
+
+### Added
+
+- Channel badge decoration — small inline label (e.g. `stdout`, `logcat`, `ai-bash`) showing the DAP output channel for each log line; toggled from Decoration Settings panel (off by default)
+- Copy as raw text (`Ctrl+Alt+C`) — copies the original unprocessed text before ANSI stripping, HTML conversion, or linkification; falls back to plain text for synthetic items
+- Quick Save button in export modal — saves the current view as-is to the `reports/` folder as a markdown file with metadata header (project name, active filters, level breakdown, timestamps)
+
+### Changed
+
+- Filter drawer UX overhaul: merged "Log Streams" and "Output Channels" into single "Log Inputs" section, merged "App only" into "Noise Reduction" accordion, renamed "Log Tags" → "Message Tags", "Code Tags" → "Code Origins", "Scope" → "File Scope"
+- Toolbar level dots now hide when filter drawer is open to avoid redundant counts
+- Removed "sidecar" jargon from filter labels and README — external sources now show their name with "(external)" suffix
+- Moved "SQL Commands" to least prominent grid position in filter drawer
+- Drift SQL `with args [...]` suffix is now always visible but dimmed (40% opacity) instead of hidden behind a confusing ellipsis/tooltip fold
+- Filter drawer accordion arrows now use codicon chevrons at 14px for better visibility
+- Accordion section headers now show item counts/summaries when collapsed (tags, streams, channels, exclusions, scope)
+- All checkboxes and radio buttons inside accordion expanders now have descriptive tooltips
+- Export modal "Include Levels" and "Export Options" sections are now collapsible accordions with selection counts (e.g. "5/7", "2/3")
+
+---
+
+## [5.1.2]
+
+New extension and sidebar icons — severity dots on a log file, matching Saropa brand colors. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.2/CHANGELOG.md)
+
+### Changed
+
+- Redesigned extension icon: new "4 severity dots on a log file" concept replacing the funnel design, matching Saropa open source brand colors
+- Redesigned sidebar icon to match new document-with-dots concept (monochrome `currentColor`)
+
+---
+
+## [5.1.1]
+
+Fixes publish script path after v5.1.0 restructure. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.1/CHANGELOG.md)
+
+### Fixed
+
+- Publish script Step 16 (store propagation check) failed with "Missing check-stores-version.ps1" — path not updated after v5.1.0 move to `scripts/modules/`
+
+<details>
+<summary>Maintenance</summary>
+
+- Split `viewer-continuation.test.ts` (326 lines) into static checks and behavioral eval files
+- Split `viewer-script-null-guards.test.ts` (602 lines) into three topical files: core viewer, interaction, and panels/nav
+</details>
+
+---
+
+## [5.1.0]
+
+Adds adb logcat integration for live Android log streaming, continuation line collapsing for split log output, hidden-lines chevron indicators on the severity bar, smooth toolbar animations, and SQL verb-category filter chips. [log](https://github.com/saropa/saropa-log-capture/blob/v5.1.0/CHANGELOG.md)
+
+### Added
+
+- Hidden-lines chevron indicator on the severity bar — a small `▸` marker appears between visible lines when non-blank lines are hidden by filters, with a tooltip showing the count and filter reasons
+- adb logcat integration: live-stream Android system logs alongside debug sessions with PID filtering, level filtering, tag filters, and `.logcat.log` sidecar at session end. Auto-connects for Dart/Flutter sessions when adb is on PATH
+- Continuation line collapsing: consecutive log lines with the same timestamp and logcat tag (e.g. Flutter splitting long SQL across 40+ lines) are grouped behind a clickable `[+N lines]` badge. Groups with more than 5 children auto-collapse; click the badge to expand/collapse. Search matches auto-expand collapsed groups
+
+### Changed
+
+- Smooth animations for toolbar UI: search flyout and filter drawer slide down/up, actions dropdown scales from top, accordion sections expand/collapse with height+opacity transitions, and Signals strip smoothly collapses when filter drawer opens. All animations respect `prefers-reduced-motion`
+- SQL filter chips replaced: fingerprint-based pattern chips replaced with simple verb-category chips (SELECT, INSERT, UPDATE, DELETE, Transaction, Other SQL) for immediate usability
+- Removed `viewerSqlPatternChipMinCount` and `viewerSqlPatternMaxChips` settings (no longer needed with fixed verb categories)
+- Toolbar severity dots increased from 10px to 12px for better visibility and click targets
+- Filter drawer level buttons are more compact — reduced padding and removed minimum count width
+- All tooltips now describe what interactions do — toolbar dots explain click (toggle) and double-click (solo), icon bar buttons say "click to open/close", filename shows click/double-click/long-press actions
+- Filter drawer accordion sections use bordered cards with visible expand arrow instead of plain text bullets
+- Filter drawer sections arranged in 2-column grid, expanding to full width when opened
+- Preset dropdown now has a visible "Preset:" label for context
+- "Reset all" button moved to far right of footer row, away from preset dropdown
+
+### Fixed
+
+- Fix severity bar connector gaps — dots now only connect when they share the same severity level, bridging correctly across blank and hidden lines instead of joining mismatched levels
+- SQL density minimap bands used bright blue (`rgba(90,180,255)`) which looked like selection highlights or errors — changed to soft pink (`rgba(200,120,180)`) so the overlay reads as a background annotation
+- SQL Query History panel column headers were garbled and required horizontal scrolling — `table-layout: fixed` with `width: 1%` made count and duration columns ~3px wide, causing text to overflow and overlap
+- "Hide blank lines" toggle was indented incorrectly in the Hide context submenu — the invisible checkmark span was taking up space in the flex layout, pushing the label right compared to regular menu items
 
 ---
 

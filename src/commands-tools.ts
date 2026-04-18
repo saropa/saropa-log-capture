@@ -129,6 +129,20 @@ export function toolCommands(deps: CommandDeps): vscode.Disposable[] {
         }),
         vscode.commands.registerCommand('saropaLogCapture.collapseAllSections', () => {
             broadcaster.postToWebview({ type: 'triggerCollapseAllSections' });
+            /* Toggle the context key so the view title bar swaps to the expand-all icon */
+            vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', true);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.expandAllSections', () => {
+            broadcaster.postToWebview({ type: 'triggerExpandAllSections' });
+            /* Toggle the context key so the view title bar swaps to the collapse-all icon */
+            vscode.commands.executeCommand('setContext', 'saropaLogCapture.allCollapsed', false);
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.maximizePanel', () => {
+            /* Delegate to VS Code's built-in panel maximize toggle */
+            vscode.commands.executeCommand('workbench.action.toggleMaximizedPanel');
+        }),
+        vscode.commands.registerCommand('saropaLogCapture.toggleSearchOverlay', () => {
+            broadcaster.postToWebview({ type: 'triggerToggleSearch' });
         }),
         vscode.commands.registerCommand('saropaLogCapture.popOutViewer', async () => { await popOutPanel.open(); }),
         vscode.commands.registerCommand('saropaLogCapture.searchLogs', async () => {

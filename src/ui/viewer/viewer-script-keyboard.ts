@@ -95,6 +95,42 @@ document.addEventListener('keydown', function(e) {
     if (action === 'annotate' && typeof promptAnnotation === 'function') { e.preventDefault(); promptAnnotation(getCenterIdx()); return; }
     /* Cycle device tier: none → warnplus → all → none */
     if (action === 'toggleDevice' && typeof setShowDevice === 'function') { e.preventDefault(); var _dm = showDevice === 'none' ? 'warnplus' : showDevice === 'warnplus' ? 'all' : 'none'; setShowDevice(_dm); var _dr = document.querySelector('input[name="tier-device"][value="' + _dm + '"]'); if (_dr) _dr.checked = true; return; }
+
+    /* Keyboard shortcuts reference — opens standalone panel in the main editor area */
+    if (action === 'showKeyboardShortcuts') { e.preventDefault(); vscodeApi.postMessage({ type: 'showKeyboardShortcuts' }); return; }
+
+    /* Panel toggles — each opens the panel or closes it if already active */
+    if (action === 'toggleOptions') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('options'); return; }
+    if (action === 'toggleFilters') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('filters'); return; }
+    if (action === 'toggleSignals') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('signal'); return; }
+    if (action === 'toggleBookmarks') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('bookmarks'); return; }
+    if (action === 'toggleSessions') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('sessions'); return; }
+    if (action === 'toggleCollections') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('collections'); return; }
+    if (action === 'toggleSqlHistory') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('sqlHistory'); return; }
+    if (action === 'toggleTrash') { e.preventDefault(); if (typeof setActivePanel === 'function') setActivePanel('trash'); return; }
+
+    /* Bookmark center line */
+    if (action === 'bookmark') { e.preventDefault(); var _bi = getCenterIdx(); var _bd = allLines[_bi]; var _bt = _bd ? (_bd.text || '') : ''; vscodeApi.postMessage({ type: 'addBookmark', lineIndex: _bi, text: _bt }); return; }
+
+    /* Display toggles */
+    if (action === 'toggleCompress' && typeof toggleCompressLines === 'function') { e.preventDefault(); toggleCompressLines(); return; }
+    if (action === 'toggleBlankLines' && typeof toggleHideBlankLines === 'function') { e.preventDefault(); toggleHideBlankLines(); return; }
+    if (action === 'toggleSpacing' && typeof toggleVisualSpacing === 'function') { e.preventDefault(); toggleVisualSpacing(); return; }
+
+    /* Session / split part navigation */
+    if (action === 'prevSession') { e.preventDefault(); vscodeApi.postMessage({ type: 'navigateSession', direction: -1 }); return; }
+    if (action === 'nextSession') { e.preventDefault(); vscodeApi.postMessage({ type: 'navigateSession', direction: 1 }); return; }
+    if (action === 'prevPart') { e.preventDefault(); if (typeof currentPart !== 'undefined' && currentPart > 1) vscodeApi.postMessage({ type: 'navigatePart', part: currentPart - 1 }); return; }
+    if (action === 'nextPart') { e.preventDefault(); if (typeof currentPart !== 'undefined' && typeof totalParts !== 'undefined' && currentPart < totalParts) vscodeApi.postMessage({ type: 'navigatePart', part: currentPart + 1 }); return; }
+
+    /* Line height adjustment — mirrors font size shortcuts */
+    if (action === 'lineHeightUp') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(logLineHeight + 0.1); return; }
+    if (action === 'lineHeightDown') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(logLineHeight - 0.1); return; }
+    if (action === 'lineHeightReset') { e.preventDefault(); if (typeof setLineHeight === 'function') setLineHeight(2.0); return; }
+
+    /* File actions */
+    if (action === 'copyFilePath') { e.preventDefault(); vscodeApi.postMessage({ type: 'copyCurrentFilePath' }); return; }
+    if (action === 'revealFile') { e.preventDefault(); vscodeApi.postMessage({ type: 'revealLogFile' }); return; }
 });
 `;
 }

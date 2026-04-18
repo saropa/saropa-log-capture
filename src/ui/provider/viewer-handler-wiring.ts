@@ -23,7 +23,7 @@ import type { BookmarkStore } from "../../modules/storage/bookmark-store";
 import { wireBookmarkHandlers } from "./viewer-handler-bookmarks";
 import { handleSessionAction } from "./viewer-handler-sessions";
 
-/** Workspace state: Project Logs panel root folder override (URI string). */
+/** Workspace state: Logs panel root folder override (URI string). */
 export const SESSION_PANEL_ROOT_KEY = "sessionPanelRootFolder";
 /** Workspace state: last folder used in browse dialog so defaultUri is never system default. */
 const SESSION_PANEL_LAST_BROWSE_KEY = "sessionPanelLastBrowseFolder";

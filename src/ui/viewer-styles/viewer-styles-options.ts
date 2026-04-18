@@ -145,11 +145,15 @@ export function getOptionsStyles(): string {
     background: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.05));
 }
 
-/* Tier radio groups (Flutter / Device) — inline radios with a legend label */
+/* Container for the tier source groups */
+.tier-filter-list {
+    padding: 6px 10px;
+}
+/* Tier radio groups (Flutter / Device / External) — radios below legend */
 .tier-radio-group {
     border: none;
     margin: 0;
-    padding: 4px 0;
+    padding: 8px 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -157,20 +161,24 @@ export function getOptionsStyles(): string {
     font-size: 12px;
 }
 .tier-radio-group legend {
-    /* Float legend inline with the radios instead of the default fieldset caption */
-    float: left;
-    padding: 0;
-    margin-right: 6px;
+    /* Legend sits on its own line above the radios */
+    width: 100%;
+    padding: 0 0 4px;
     font-weight: 600;
     font-size: 12px;
     color: var(--vscode-foreground);
 }
-/* Subdescription under the tier legend — explains what the tier includes */
+/* Inline hint after the tier legend — explains what the tier includes */
 .tier-hint {
-    width: 100%;
+    font-weight: normal;
     font-size: 11px;
-    opacity: 0.7;
-    margin: -2px 0 2px 0;
+    opacity: 0.6;
+}
+/* Vertical spacing before Device and External tiers */
+.tier-radio-group-spaced {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--vscode-panel-border);
 }
 .tier-radio-group label {
     display: flex;
@@ -178,6 +186,8 @@ export function getOptionsStyles(): string {
     gap: 4px;
     cursor: pointer;
     font-size: 12px;
+    /* Indent radios under the legend */
+    margin-left: 12px;
 }
 .tier-radio-group input[type="radio"] {
     accent-color: var(--vscode-button-background);

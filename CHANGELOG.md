@@ -26,7 +26,9 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
-## [Unreleased]
+## [7.2.0]
+
+Collections get their own slide-out panel, structured viewers render markdown/JSON/CSV/HTML files, a floating search overlay joins the toolbar, a capture on/off status-bar toggle makes workspace overrides visible, F1 opens a full keyboard shortcuts reference, and signal reports gain stack traces, fingerprint transparency, and cross-session history. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
 
 ### Added
 
@@ -46,16 +48,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 - **Hide blank lines now shows a tiny gap instead of fully hiding.** When "Hide blank lines" is toggled on, blank lines are compacted to a small visual break (1/4 of normal row height) instead of disappearing completely. Paragraph breaks are preserved without wasting vertical space.
 - **File views no longer collapse lines into continuation groups.** When viewing a saved log file, all lines share the same load timestamp, which caused the continuation detector to group the entire file and auto-collapse most of the content. Continuation grouping is now skipped for file views.
+- **Stack group toggle is now two-state (collapsed/expanded).** Clicking the arrow now toggles directly between fully collapsed and fully expanded. The previous 3-state cycle (collapsed → preview → expanded) required multiple clicks and the preview state often looked identical to collapsed for non-stack content.
 - **Session list details load progressively.** File metadata (dots, severity counts, tags) now streams to the session panel as each file finishes loading. Previously the `onItemLoaded` callback was fire-and-forget — all 8 parallel workers raced ahead while record-building promises piled up on the microtask queue, causing every detail to pop in at once. Now each worker awaits the build-and-send before starting the next file, producing a visible shimmer-to-detail cascade.
-
-### Changed
-
-- **Collections explainer condensed.** The "What are Collections?" banner is now shorter (two lines instead of a bulleted list) and has a dismiss [x] button so users can hide it without creating a collection first. Removed the standalone "New Collection" button — collections are created from the session list context menu ("Add to Collection") where they get an initial source.
-- **Code Origins tab shows selected count.** The tab header and body summary now display the number of selected (visible) tags instead of the total count. Shows nothing when no tags are selected (never shows zero).
-- **Log Sources layout.** Radio buttons (All / Warn+ / None) now sit below each source title instead of inline, indented under the legend. Increased vertical spacing between all source groups and added container padding.
-
-### Fixed
-
 - **Decoration toggle crash on viewer load.** The decoration settings variables (`decoShowDot`, `decoShowCounter`, etc.) were declared in `viewer-deco-settings.ts` but referenced earlier by `areDecorationsOn()` in `viewer-decorations.ts`. The webview scripts loaded in the wrong order, causing `ReferenceError: decoShowDot is not defined` on startup. Swapped the script load order so settings are defined before they are read.
 - **False-positive error signals on config properties.** `isErrorLine()` and `isWarningLine()` used naive substring matching, so identifiers like `__breakOnConditionalError` or `showWarningDialog` triggered false error/warning signals. Now uses word-boundary regex plus explicit PascalCase compound-type patterns (TypeError, NullPointerException, DeprecationWarning) so real errors still match but embedded substrings in camelCase identifiers do not.
 - **Signal report: 12 debugging improvements.** The signal report now includes substantially more diagnostic context for error debugging:
@@ -74,12 +68,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 - **Icon bar not scrollable.** When the viewport is short, bottom icon bar items (Signals, About) were clipped and unreachable. The icon bar now scrolls vertically when buttons exceed the available height.
 - **Icon bar separator barely visible.** The horizontal divider between the upper and lower icon groups used the panel border color, which is invisible in many themes. Now uses the inactive foreground color at reduced opacity so it is visible across light and dark themes.
 - **Minimap viewport red outline not visible.** The red outline on the minimap viewport slider was invisible because the canvas compositing layer obscured the `box-shadow`. Fixed by adding `z-index: 1` to the viewport element and switching from `inset box-shadow` to a real `border` for reliable rendering.
-- **Continuation collapse button moved left of `»` chevron.** The `+N` / `−N` expand/collapse button was positioned to the right of the `»` chevron, overlapping with the timestamp. It is now injected into the decoration prefix before the `»` so it sits near the line numbers and cannot overlap other elements.
+- **Continuation collapse button moved left of `»` chevron.** The `+N` / `−N` expand/collapse button was positioned to the right of the `»` chevron, overlapping with the timestamp. It is now injected into the decoration prefix before the `»` so it sits near the line numbers and cannot overlap other elements. The standalone contBadge token in the render string was also moved to sit after `deco` (not before), so the art-continuation fallback path — where `deco` is empty and the splice is skipped — matches the invariant that the badge never precedes the decoration prefix.
 - **Compress lines dedup missed structured-prefix lines.** The dedup key compared the full HTML text including structured prefixes (timestamps, PIDs, logcat tags). Lines with identical message bodies but different timestamps produced different keys and were not compressed. Now strips the structured prefix (and source-tag brackets) before comparing, matching what the user sees on screen. Also added `metadataFiltered` to the eligibility check so metadata-filtered lines are excluded from dedup grouping (mirrors `calcItemHeight`).
 - **Compress lines toggles were not reversible.** The streaming repeat tracker permanently swallowed non-SQL consecutive duplicates (never stored them in `allLines`), so unchecking "Compress lines" could not expand them back. Non-SQL duplicates are now always stored individually in `allLines`, and the compress dedup algorithm (`applyCompressDedupModes`) handles grouping when compress mode is toggled on. Unchecking compress now expands all lines. SQL fingerprint repeats retain their existing drilldown notification row behavior.
+- **Icon bar Bookmarks label test matched wrong structure.** The `getIconBarHtml` test asserted `>Bookmarks</span>` but the label wraps a nested count span (`<span class="ib-label">Bookmarks<span id="ib-bookmarks-count">...</span></span>`) to display the bookmark count next to the label. Loosened the assertion to `>Bookmarks<`, matching the existing loose pattern already used for the Logs label (which has the same nested count structure).
 
 ### Changed
 
+- **Collections explainer condensed.** The "What are Collections?" banner is now shorter (two lines instead of a bulleted list) and has a dismiss [x] button so users can hide it without creating a collection first. Removed the standalone "New Collection" button — collections are created from the session list context menu ("Add to Collection") where they get an initial source.
+- **Terminology dictionary.** Added `docs/guides/TERMINOLOGY.md` — canonical mapping of user-facing terms to internal code names, with a banned-terms section. "Session" → "log", "investigation"/"case" → "collection".
+- **Terminology standardized across UI.** Renamed "Project Logs" → "Logs" (panel header, icon bar, tooltips, keyboard shortcuts, settings descriptions, docs). Renamed "Code Origins" → "Source Classes" (filter drawer tab). Renamed "filter preset" → "Quick Filter" in all l10n strings.
+- **Source Classes tab shows selected count.** The tab header and body summary now display the number of selected (visible) tags instead of the total count. Shows nothing when no tags are selected (never shows zero).
+- **Log Sources layout.** Radio buttons (All / Warn+ / None) now sit below each source title instead of inline, indented under the legend. Increased vertical spacing between all source groups and added container padding.
 - **Wider font size zoom range.** The viewer font size range expanded from 8–22px to 4–42px, allowing more zoom out for overview and more zoom in for detail. Applies to keyboard shortcuts (Ctrl+/−), Ctrl+scroll wheel, and the Options panel slider.
 - **"Investigation" renamed to "Collection" everywhere.** All commands, UI text, types, and file names now use "Collection" instead of "Investigation" or "Cases". Command IDs changed (e.g. `saropaLogCapture.createInvestigation` → `saropaLogCapture.createCollection`). The `.saropa/collections.json` file format is unchanged.
 - **Collections removed from Signal panel.** The "Your cases" section and "Create Investigation" button no longer appear inside the Signals slide-out. Collections are now managed in their own dedicated panel.
@@ -95,6 +95,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ## [7.1.1]
 
+Stops false-positive HTTP signals from Android PID numbers, restricts extension-side signal scanning to error-level logcat lines, scales continuation and category badges with zoom, and consolidates duplicate ANR reports. [log](https://github.com/saropa/saropa-log-capture/blob/v7.1.1/CHANGELOG.md)
+
 ### Fixed
 
 - **Network failure signals no longer false-positive on Android PIDs.** The HTTP status code detector (e.g. 502) now requires an HTTP context keyword (HTTP, status, response, GET, POST, etc.) on the same line. Previously, bare numbers in logcat CPU dumps (e.g. PID 502 in `3% 502/android.hardware.sensors`) matched as HTTP 502 "Bad Gateway".
@@ -107,6 +109,8 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 ---
 
 ## [7.1.0]
+
+Simplifies the filter drawer to three core sections, adds a dedicated Tags & Origins slide-out panel for chip-heavy browsing, and renames log input categories for clarity. [log](https://github.com/saropa/saropa-log-capture/blob/v7.1.0/CHANGELOG.md)
 
 ### Fixed
 
@@ -183,7 +187,6 @@ Overhauls the filter panel into focused sections with a dedicated Tags & Origins
 - **Lint diagnostic enrichment on signals.** Error and warning signals whose example text references a source file (e.g. `lib/main.dart:42`) are enriched with VS Code diagnostics at that location. For files not yet analyzed, the enricher opens the document to trigger the language server (Dart analyzer + saropa_lints, ESLint, etc.) and waits up to 2s for diagnostics — so lint rules run on referenced files even if the user hasn't opened them. Diagnostics include full message text, rule code, severity, and source provider. Up to 5 files analyzed per pass, 3 diagnostics per signal.
 
 ### Fixed
-
 
 - **Warning detection now recognizes logcat `W/` prefix.** `isWarningLine` previously only matched lines containing the substring "warn", missing Android logcat warnings that use the `W/Tag:` format.
 - **Error detection now recognizes logcat `E/`, `F/`, `A/` prefixes.** `isErrorLine` previously only matched keyword substrings ("error", "exception", "fatal", "failed"), missing Android logcat errors, fatal, and assert lines that use the single-letter prefix format.

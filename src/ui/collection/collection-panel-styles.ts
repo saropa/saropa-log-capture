@@ -1,5 +1,5 @@
-/** CSS styles for the investigation panel webview. */
-export function getInvestigationPanelStyles(): string {
+/** CSS styles for the collection panel webview. */
+export function getCollectionPanelStyles(): string {
     return /* css */ `
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -263,13 +263,13 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.no-investigation {
+.no-collection {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; height: 100%; padding: 32px;
     text-align: center; color: var(--vscode-descriptionForeground);
 }
-.no-investigation-icon { font-size: 48px; opacity: 0.3; margin-bottom: 16px; }
-.no-investigation-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--vscode-foreground); }
-.no-investigation-text { font-size: 13px; margin-bottom: 16px; max-width: 280px; }
+.no-collection-icon { font-size: 48px; opacity: 0.3; margin-bottom: 16px; }
+.no-collection-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--vscode-foreground); }
+.no-collection-text { font-size: 13px; margin-bottom: 16px; max-width: 280px; }
 `;
 }

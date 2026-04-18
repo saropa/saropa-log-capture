@@ -61,3 +61,29 @@ export async function loadSignalHistory(templateId: string): Promise<{
         totalSessionCount: metas.length,
     };
 }
+
+/**
+ * Find the most recent session that does NOT have the given signal.
+ * Used for "what changed" — comparing the current (affected) session header
+ * against the last clean session header to highlight what's different.
+ * Returns the log file URI so the caller can read and parse the header.
+ */
+export async function loadLastCleanSessionUri(templateId: string): Promise<vscode.Uri | undefined> {
+    const metas = await loadFilteredMetas('all').catch(() => [] as const);
+    const folder = vscode.workspace.workspaceFolders?.[0];
+    if (!folder) { return undefined; }
+    const logDir = getLogDirectoryUri(folder);
+
+    // Find sessions without this signal, most recent first
+    const clean = metas
+        .filter(m => {
+            const s = m.meta.signalSummary;
+            if (!s || !isPersistedSignalSummaryV1(s)) { return true; }
+            return !s.hypothesisTemplateIds?.includes(templateId);
+        })
+        .map(m => ({ filename: m.filename, epoch: parseSessionDate(m.filename) }))
+        .sort((a, b) => b.epoch - a.epoch);
+
+    if (clean.length === 0) { return undefined; }
+    return vscode.Uri.joinPath(logDir, clean[0].filename);
+}

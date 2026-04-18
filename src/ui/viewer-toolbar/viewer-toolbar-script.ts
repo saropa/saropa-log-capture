@@ -1,9 +1,9 @@
 /**
  * Toolbar interaction script: flyout open/close, Signals mutual exclusion,
- * actions dropdown, and session nav wiring.
+ * actions dropdown, filter panel toggle, and tab bar wiring.
  *
- * Loaded after the icon bar script so it can override `openFiltersPanel` /
- * `closeFiltersPanel` with drawer equivalents for backward compatibility.
+ * The filter panel is a slide-out in #panel-slot (like Sessions, Bookmarks).
+ * The toolbar filter button toggles it via setActivePanel('filters').
  */
 
 /** Returns the toolbar interaction JavaScript. */
@@ -11,7 +11,6 @@ export function getToolbarScript(): string {
     return /* javascript */ `
 (function() {
     var searchFlyout = document.getElementById('search-flyout');
-    var filterDrawer = document.getElementById('filter-drawer');
     var signalsHost = document.getElementById('root-cause-hypotheses');
     var searchBtn = document.getElementById('toolbar-search-btn');
     var filterBtn = document.getElementById('toolbar-filter-btn');
@@ -80,40 +79,11 @@ export function getToolbarScript(): string {
         }
     }
 
-    /* ---- Filter drawer ---- */
+    /* ---- Filter panel (slide-out in panel-slot) ---- */
 
-    function openFilterDrawer() {
-        if (!filterDrawer) return;
-        closeActionsDropdown();
-        if (signalsHost && signalsUserVisible &&
-            !signalsHost.classList.contains('signals-drawer-hidden')) {
-            signalsWasVisible = true;
-            signalsHost.classList.add('signals-drawer-hidden');
-        }
-        animatedShow(filterDrawer, 'anim-flyout-open');
-        if (filterBtn) filterBtn.setAttribute('aria-expanded', 'true');
-        if (levelMenuBtn) levelMenuBtn.classList.add('u-hidden');
-        if (typeof syncFiltersPanelUi === 'function') syncFiltersPanelUi();
-    }
-
-    function closeFilterDrawer() {
-        if (!filterDrawer) return;
-        animatedHide(filterDrawer, 'anim-flyout-close');
-        if (filterBtn) filterBtn.setAttribute('aria-expanded', 'false');
-        if (levelMenuBtn) levelMenuBtn.classList.remove('u-hidden');
-        if (signalsWasVisible && signalsHost) {
-            signalsHost.classList.remove('signals-drawer-hidden');
-            signalsWasVisible = false;
-        }
-    }
-
-    function toggleFilterDrawer() {
-        if (!filterDrawer) return;
-        var closing = filterDrawer.classList.contains('anim-flyout-close');
-        if (filterDrawer.classList.contains('u-hidden') || closing) {
-            openFilterDrawer();
-        } else {
-            closeFilterDrawer();
+    function toggleFilterPanel() {
+        if (typeof setActivePanel === 'function') {
+            setActivePanel('filters');
         }
     }
 
@@ -122,7 +92,16 @@ export function getToolbarScript(): string {
     function openActionsDropdown() {
         if (!actionsPopover) return;
         closeSearchFlyout();
-        closeFilterDrawer();
+        var menu = document.getElementById('footer-actions-menu');
+        if (menu && actionsBtn) {
+            var btnRect = actionsBtn.getBoundingClientRect();
+            menu.classList.add('toolbar-actions-visible');
+            menu.style.top = btnRect.bottom + 'px';
+            menu.style.left = '';
+            menu.style.right = '';
+            var rightOffset = window.innerWidth - btnRect.right;
+            menu.style.right = rightOffset + 'px';
+        }
         actionsPopover.classList.remove('anim-dropdown-close');
         actionsPopover.classList.add('toolbar-actions-open');
         if (!reduceMotion.matches) actionsPopover.classList.add('anim-dropdown-open');
@@ -136,8 +115,10 @@ export function getToolbarScript(): string {
         var wasOpen = actionsOpen;
         actionsOpen = false;
         if (!wasOpen) return;
+        var menu = document.getElementById('footer-actions-menu');
         if (reduceMotion.matches) {
             actionsPopover.classList.remove('toolbar-actions-open');
+            if (menu) menu.classList.remove('toolbar-actions-visible');
         } else {
             actionsPopover.classList.remove('anim-dropdown-open');
             actionsPopover.classList.add('anim-dropdown-close');
@@ -175,40 +156,84 @@ export function getToolbarScript(): string {
         }
     }
 
-    /* ---- Accordion sections ---- */
+    /* ---- Filter tab bar ---- */
 
-    function initAccordions() {
-        var headers = document.querySelectorAll('.filter-accordion-header');
-        for (var i = 0; i < headers.length; i++) {
-            headers[i].addEventListener('click', handleAccordionClick);
+    var filterTabMap = {
+        'log-sources': 'log-sources-section',
+        'exclusions': 'exclusions-section',
+        'scope': 'scope-section',
+        'log-tags': 'log-tags-section',
+        'class-tags': 'class-tags-section',
+        'sql-patterns': 'sql-patterns-section',
+    };
+
+    function activateFilterTab(key) {
+        var tabs = document.querySelectorAll('.filter-tab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].setAttribute('aria-selected', 'false');
+        }
+        var tab = document.getElementById('filter-tab-' + key);
+        if (tab) tab.setAttribute('aria-selected', 'true');
+        for (var k in filterTabMap) {
+            var panel = document.getElementById(filterTabMap[k]);
+            if (panel) panel.style.display = (k === key) ? '' : 'none';
         }
     }
 
-    function handleAccordionClick(e) {
-        var header = e.currentTarget;
-        var section = header.parentElement;
-        if (!section) return;
-        var wasOpen = section.classList.contains('expanded');
-        collapseAllAccordions();
-        if (!wasOpen) {
-            section.classList.add('expanded');
-            header.setAttribute('aria-expanded', 'true');
-        }
+    function handleFilterTabClick(e) {
+        var btn = e.currentTarget;
+        if (!btn || !btn.id) return;
+        var key = btn.id.replace('filter-tab-', '');
+        activateFilterTab(key);
     }
 
-    function collapseAllAccordions() {
-        var sections = document.querySelectorAll('.filter-accordion');
-        for (var i = 0; i < sections.length; i++) {
-            sections[i].classList.remove('expanded');
-            var hdr = sections[i].querySelector('.filter-accordion-header');
-            if (hdr) hdr.setAttribute('aria-expanded', 'false');
+    /* ---- Filter tab label toggle (click whitespace to toggle) ---- */
+
+    var ftApi = typeof vscodeApi !== 'undefined' ? vscodeApi : (window._vscodeApi || null);
+    function getFilterTabLabelsVisible() {
+        if (!ftApi) return true;
+        var st = ftApi.getState();
+        /* Default to true (labels visible) */
+        return !st || st.filterTabLabelsVisible !== false;
+    }
+    function setFilterTabLabelsVisible(visible) {
+        if (!ftApi) return;
+        var st = ftApi.getState() || {};
+        st.filterTabLabelsVisible = !!visible;
+        ftApi.setState(st);
+    }
+    function applyFilterTabLabels() {
+        var bar = document.querySelector('.filter-tab-bar');
+        if (bar) bar.classList.toggle('ftb-labels-visible', getFilterTabLabelsVisible());
+    }
+
+    function initFilterTabs() {
+        var tabs = document.querySelectorAll('.filter-tab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].addEventListener('click', handleFilterTabClick);
+        }
+        activateFilterTab('log-sources');
+        applyFilterTabLabels();
+
+        /* Click on tab bar whitespace (not on a tab button) toggles labels */
+        var bar = document.querySelector('.filter-tab-bar');
+        if (bar) {
+            bar.addEventListener('click', function(e) {
+                var t = e.target;
+                while (t && t !== bar) {
+                    if (t.classList && t.classList.contains('filter-tab')) return;
+                    t = t.parentElement;
+                }
+                setFilterTabLabelsVisible(!getFilterTabLabelsVisible());
+                applyFilterTabLabels();
+            });
         }
     }
 
     /* ---- Button wiring ---- */
 
     if (searchBtn) searchBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSearchFlyout(); });
-    if (filterBtn) filterBtn.addEventListener('click', toggleFilterDrawer);
+    if (filterBtn) filterBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFilterPanel(); });
     if (signalsBtn) signalsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleSignalsPanel(); });
     if (actionsBtn) actionsBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleActionsDropdown(); });
 
@@ -217,11 +242,6 @@ export function getToolbarScript(): string {
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Escape') return;
         if (actionsOpen) { closeActionsDropdown(); e.preventDefault(); return; }
-        if (filterDrawer && !filterDrawer.classList.contains('u-hidden')) {
-            closeFilterDrawer();
-            e.preventDefault();
-            return;
-        }
     });
 
     /* ---- Outside click dismiss (actions only) ---- */
@@ -250,42 +270,72 @@ export function getToolbarScript(): string {
 
     /* ---- Backward-compat aliases ---- */
 
-    window.openFiltersPanel = openFilterDrawer;
-    window.closeFiltersPanel = closeFilterDrawer;
-    window.openFilterDrawer = openFilterDrawer;
-    window.closeFilterDrawer = closeFilterDrawer;
+    window.openFiltersPanel = function() { if (typeof setActivePanel === 'function') setActivePanel('filters'); };
+    window.closeFiltersPanel = function() { if (typeof closeFiltersSlideout === 'function') closeFiltersSlideout(); };
+    window.openFilterDrawer = window.openFiltersPanel;
+    window.closeFilterDrawer = window.closeFiltersPanel;
     window.toggleSearchFlyout = toggleSearchFlyout;
     window.openSearchFlyout = openSearchFlyout;
     window.closeSearchFlyout = closeSearchFlyout;
-    window.toggleFilterDrawer = toggleFilterDrawer;
+    window.toggleFilterDrawer = toggleFilterPanel;
     window.toggleSignalsPanel = toggleSignalsPanel;
     window.hideSignalsPanel = hideSignalsPanel;
     window.closeActionsDropdown = closeActionsDropdown;
-    /** Backward compat for replay script's action toggle. */
     window.setFooterActionsOpen = function(open) {
         if (open) openActionsDropdown(); else closeActionsDropdown();
     };
 
-    initAccordions();
+    /* ---- Format toggle (plan 051) ---- */
+
+    var formatBtn = document.getElementById('toolbar-format-btn');
+
+    /** Show/hide the format toggle based on the current file mode. */
+    window.updateFormatToggleVisibility = function() {
+        if (formatBtn) {
+            formatBtn.style.display = (fileMode === 'log') ? 'none' : '';
+            formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
+        }
+    };
+
+    function toggleFormat() {
+        formatEnabled = !formatEnabled;
+        if (formatBtn) formatBtn.classList.toggle('toolbar-icon-btn-active', formatEnabled);
+        /* Build or clear the mode-specific layout data. */
+        if (formatEnabled) {
+            if (fileMode === 'markdown' && typeof buildMdSections === 'function') buildMdSections();
+            if (fileMode === 'json' && typeof buildJsonBracePairs === 'function') buildJsonBracePairs();
+            if (fileMode === 'csv' && typeof buildCsvLayout === 'function') buildCsvLayout();
+        }
+        if (typeof recalcHeights === 'function') recalcHeights();
+        if (typeof buildPrefixSums === 'function') buildPrefixSums();
+        if (typeof renderViewport === 'function') renderViewport(true);
+    }
+
+    if (formatBtn) formatBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleFormat(); });
+
+    initFilterTabs();
     initAnimEnd(searchFlyout);
-    initAnimEnd(filterDrawer);
-    /* Actions popover uses toolbar-actions-open (not u-hidden) for its
-       base display:none state, so it needs its own animationend handler. */
     if (actionsPopover) {
         actionsPopover.addEventListener('animationend', function() {
             if (actionsPopover.classList.contains('anim-dropdown-close')) {
                 actionsPopover.classList.remove('toolbar-actions-open', 'anim-dropdown-close');
+                var menu = document.getElementById('footer-actions-menu');
+                if (menu) menu.classList.remove('toolbar-actions-visible');
             }
             actionsPopover.classList.remove('anim-dropdown-open');
         });
     }
 })();
 
-/** Set the summary text in an accordion section header (shown as bracketed suffix). */
+/**
+ * Update the count suffix on a filter tab.
+ * Maps panel section ID (e.g. 'log-sources-section') to the
+ * corresponding tab count span (e.g. 'filter-tab-count-log-sources').
+ * Kept as setAccordionSummary for backward compat with callers.
+ */
 function setAccordionSummary(sectionId, text) {
-    var sec = document.getElementById(sectionId);
-    if (!sec) return;
-    var el = sec.querySelector('.filter-accordion-summary');
+    var key = sectionId.replace(/-section$/, '');
+    var el = document.getElementById('filter-tab-count-' + key);
     if (el) el.textContent = text ? '(' + text + ')' : '';
 }
 `;

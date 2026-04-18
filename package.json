@@ -28,6 +28,11 @@
         "title": "%command.pause.title%"
       },
       {
+        "command": "saropaLogCapture.toggleCapture",
+        "icon": "$(circle-filled)",
+        "title": "%command.toggleCapture.title%"
+      },
+      {
         "command": "saropaLogCapture.open",
         "icon": "$(go-to-file)",
         "title": "%command.open.title%"
@@ -155,6 +160,21 @@
         "command": "saropaLogCapture.collapseAllSections",
         "icon": "$(collapse-all)",
         "title": "%command.collapseAllSections.title%"
+      },
+      {
+        "command": "saropaLogCapture.expandAllSections",
+        "icon": "$(expand-all)",
+        "title": "%command.expandAllSections.title%"
+      },
+      {
+        "command": "saropaLogCapture.maximizePanel",
+        "icon": "$(screen-full)",
+        "title": "%command.maximizePanel.title%"
+      },
+      {
+        "command": "saropaLogCapture.toggleSearchOverlay",
+        "icon": "$(search)",
+        "title": "%command.toggleSearchOverlay.title%"
       },
       {
         "command": "saropaLogCapture.showSignals",
@@ -345,49 +365,49 @@
         "title": "Debug Project Index Ranking"
       },
       {
-        "command": "saropaLogCapture.createInvestigation",
+        "command": "saropaLogCapture.createCollection",
         "icon": "$(new-folder)",
-        "title": "%command.createInvestigation.title%"
+        "title": "%command.createCollection.title%"
       },
       {
-        "command": "saropaLogCapture.openInvestigation",
+        "command": "saropaLogCapture.openCollection",
         "icon": "$(folder-opened)",
-        "title": "%command.openInvestigation.title%"
+        "title": "%command.openCollection.title%"
       },
       {
-        "command": "saropaLogCapture.closeInvestigation",
+        "command": "saropaLogCapture.closeCollection",
         "icon": "$(close)",
-        "title": "%command.closeInvestigation.title%"
+        "title": "%command.closeCollection.title%"
       },
       {
-        "command": "saropaLogCapture.switchInvestigation",
+        "command": "saropaLogCapture.switchCollection",
         "icon": "$(list-selection)",
-        "title": "%command.switchInvestigation.title%"
+        "title": "%command.switchCollection.title%"
       },
       {
-        "command": "saropaLogCapture.addToInvestigation",
+        "command": "saropaLogCapture.addToCollection",
         "icon": "$(pin)",
-        "title": "%command.addToInvestigation.title%"
+        "title": "%command.addToCollection.title%"
       },
       {
-        "command": "saropaLogCapture.addSignalItemToCase",
+        "command": "saropaLogCapture.addSignalItemToCollection",
         "icon": "$(add)",
-        "title": "%command.addSignalItemToCase.title%"
+        "title": "%command.addSignalItemToCollection.title%"
       },
       {
-        "command": "saropaLogCapture.removeFromInvestigation",
+        "command": "saropaLogCapture.removeFromCollection",
         "icon": "$(pinned)",
-        "title": "%command.removeFromInvestigation.title%"
+        "title": "%command.removeFromCollection.title%"
       },
       {
-        "command": "saropaLogCapture.exportInvestigation",
+        "command": "saropaLogCapture.exportCollection",
         "icon": "$(package)",
-        "title": "%command.exportInvestigation.title%"
+        "title": "%command.exportCollection.title%"
       },
       {
-        "command": "saropaLogCapture.shareInvestigation",
+        "command": "saropaLogCapture.shareCollection",
         "icon": "$(link-external)",
-        "title": "%command.shareInvestigation.title%"
+        "title": "%command.shareCollection.title%"
       },
       {
         "command": "saropaLogCapture.clearShareHistory",
@@ -395,14 +415,14 @@
         "title": "%command.clearShareHistory.title%"
       },
       {
-        "command": "saropaLogCapture.deleteInvestigation",
+        "command": "saropaLogCapture.deleteCollection",
         "icon": "$(trash)",
-        "title": "%command.deleteInvestigation.title%"
+        "title": "%command.deleteCollection.title%"
       },
       {
-        "command": "saropaLogCapture.newInvestigationFromSessions",
+        "command": "saropaLogCapture.newCollectionFromSessions",
         "icon": "$(folder-opened)",
-        "title": "%command.newInvestigationFromSessions.title%"
+        "title": "%command.newCollectionFromSessions.title%"
       },
       {
         "command": "saropaLogCapture.showFilterSuggestions",
@@ -1523,13 +1543,13 @@
         },
         "saropaLogCapture.share.gistPublic": {
           "default": false,
-          "description": "Create public gists (visible to anyone) vs. secret gists (link-only access) when sharing investigations via GitHub Gist.",
+          "description": "Create public gists (visible to anyone) vs. secret gists (link-only access) when sharing collections via GitHub Gist.",
           "type": "boolean",
           "title": "%config.share.gistPublic.title%"
         },
         "saropaLogCapture.share.includeNotes": {
           "default": true,
-          "description": "Include investigation notes in shared gist README.",
+          "description": "Include collection notes in shared gist README.",
           "type": "boolean",
           "title": "%config.share.includeNotes.title%"
         },
@@ -2449,18 +2469,33 @@
     "menus": {
       "view/title": [
         {
-          "command": "saropaLogCapture.copyAllFilteredLines",
-          "group": "navigation",
-          "when": "view == saropaLogCapture.logViewer"
-        },
-        {
-          "command": "saropaLogCapture.popOutViewer",
-          "group": "navigation",
+          "command": "saropaLogCapture.toggleSearchOverlay",
+          "group": "navigation@1",
           "when": "view == saropaLogCapture.logViewer"
         },
         {
           "command": "saropaLogCapture.collapseAllSections",
-          "group": "navigation",
+          "group": "navigation@2",
+          "when": "view == saropaLogCapture.logViewer && !saropaLogCapture.allCollapsed"
+        },
+        {
+          "command": "saropaLogCapture.expandAllSections",
+          "group": "navigation@2",
+          "when": "view == saropaLogCapture.logViewer && saropaLogCapture.allCollapsed"
+        },
+        {
+          "command": "saropaLogCapture.copyAllFilteredLines",
+          "group": "navigation@3",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
+          "command": "saropaLogCapture.maximizePanel",
+          "group": "navigation@4",
+          "when": "view == saropaLogCapture.logViewer"
+        },
+        {
+          "command": "saropaLogCapture.popOutViewer",
+          "group": "navigation@5",
           "when": "view == saropaLogCapture.logViewer"
         }
       ]
@@ -2637,5 +2672,5 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
   },
-  "version": "7.1.1"
+  "version": "7.2.0"
 }

@@ -2,7 +2,7 @@
  * Command registration for the Saropa Log Capture extension.
  * Groups: session lifecycle (start/stop, marker, pause), session actions (open, trash, export),
  * history browse/edit, export, comparison, correlation, signals, bug report, timeline, trash,
- * investigation, tools.
+ * collection, tools.
  */
 
 import * as vscode from 'vscode';
@@ -18,17 +18,18 @@ import { trashCommands } from './commands-trash';
 import { sessionLifecycleCommands, sessionActionCommands, historyBrowseCommands, historyEditCommands } from './commands-session';
 import { exportCommands } from './commands-export';
 import { toolCommands } from './commands-tools';
-import { registerInvestigationCommands } from './commands-investigation';
+import { registerCollectionCommands } from './commands-collection';
 import { externalLogsCommands } from './commands-external-logs';
 import { learningCommands } from './commands-learning';
+import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
 
 export type { CommandDeps } from './commands-deps';
 
 /** Register all extension commands. Called from extension-activation after handler wiring. */
-export function registerCommands(deps: CommandDeps): void {
-    const { context, investigationStore } = deps;
+export function registerCommands(deps: CommandDeps, captureToggle: CaptureToggleStatusBar): void {
+    const { context, collectionStore } = deps;
     context.subscriptions.push(
-        ...sessionLifecycleCommands(deps),
+        ...sessionLifecycleCommands(deps, captureToggle),
         ...sessionActionCommands(deps),
         ...historyBrowseCommands(deps),
         ...historyEditCommands(deps),
@@ -40,7 +41,7 @@ export function registerCommands(deps: CommandDeps): void {
         ...qualityCommands({ getFileUri: () => deps.viewerProvider.getCurrentFileUri() }),
         ...timelineCommands(),
         ...trashCommands(deps.historyProvider, () => deps.viewerProvider.getCurrentFileUri()),
-        ...registerInvestigationCommands({ context, investigationStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
+        ...registerCollectionCommands({ context, collectionStore, historyProvider: deps.historyProvider, viewerProvider: deps.viewerProvider }),
         ...toolCommands(deps),
         ...externalLogsCommands(deps),
         ...learningCommands(deps),
