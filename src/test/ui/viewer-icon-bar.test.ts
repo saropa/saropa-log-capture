@@ -20,7 +20,7 @@ suite('ViewerIconBar', () => {
             const html = getIconBarHtml();
             assert.ok(html.includes('class="ib-label"'));
             assert.ok(html.includes('>Logs<'), 'Logs label should be present');
-            assert.ok(html.includes('>Find</span>'));
+            assert.ok(html.includes('>Find in Files</span>'));
             assert.ok(!html.includes('id="ib-search"'), 'in-log search is session-nav only, not an icon bar tool');
             assert.ok(html.includes('>Bookmarks<'), 'Bookmarks label should be present');
             assert.ok(html.includes('>Options</span>'));
