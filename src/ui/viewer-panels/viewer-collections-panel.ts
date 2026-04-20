@@ -23,8 +23,7 @@ export function getCollectionsPanelHtml(): string {
                 <p class="collections-explainer-title">What are Collections?</p>
                 <button id="collections-explainer-close" class="collections-explainer-close" title="Dismiss" aria-label="Dismiss explainer">\u2715</button>
             </div>
-            <p>Group related log sessions and files together for a bug, feature, or incident.<br>
-            Right-click a session and choose "Add to Collection" to get started.</p>
+            <p>Group related log sessions and files together for a bug, feature, or incident. Right-click on a log and choose "Add to Collection" to get started.</p>
         </div>
         <!-- Merge controls (shown when 2+ collections exist) -->
         <div id="collections-merge-section" class="collections-merge-section" style="display:none">
