@@ -85,8 +85,11 @@ export function generateSummary(
         lines.push(`Exclusions applied: ${stats.exclusionsApplied}`);
     }
 
+    // Title uses "Log Captured" per TERMINOLOGY.md — "session" is banned in
+    // user-facing text. The internal concept stays "session" in code (see
+    // SessionSummary/SessionStats); only the displayed title is renamed.
     return {
-        title: `Session Complete: ${filename}`,
+        title: `Log Captured: ${filename}`,
         lines,
         stats,
     };
