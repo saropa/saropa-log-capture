@@ -64,7 +64,7 @@ suite('SessionSummary', () => {
                 durationMs: 60000,
             };
             const summary = generateSummary('test.log', stats);
-            assert.strictEqual(summary.title, 'Session Complete: test.log');
+            assert.strictEqual(summary.title, 'Log Captured: test.log');
             assert.ok(summary.lines.some(l => l.includes('1,234')));
             assert.ok(summary.lines.some(l => l.includes('Duration')));
         });
