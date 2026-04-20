@@ -151,3 +151,51 @@ export function applyStartResult(
     });
     state.clearBufferTimeoutState();
 }
+
+// Per-workspace async lock that serializes concurrent startSession calls.
+//
+// Why this exists: when a launch produces two debug sessions that fire
+// `onDidStartDebugSession` at nearly the same instant (e.g. Flutter's parent
+// + its Dart VM child, or a compound launch), both handlers can reach the
+// fall-through in `startSessionImpl` before the first handler's
+// `applyStartResult` has published its state to `sessions` / `ownerSessionIds`.
+// Both then call `initializeSession` and create separate `LogSession`
+// instances. Because `generateBaseFileName` uses per-second timestamp
+// granularity, same-second starts collide on a single filename; both writers
+// append to the same file, both become owners, and both fire a "Log Captured"
+// notification at termination — with identical paths but different per-session
+// line counts. Serializing start ensures the second handler sees the first
+// handler's `applyStartResult` and takes the alias branch instead.
+const startLocks = new Map<string, Promise<void>>();
+
+/**
+ * Serialize concurrent start sequences for a given workspace key. The caller's
+ * `run` is invoked only after any prior start for the same key has completed,
+ * so aliasing checks inside `run` see the previous session's published state.
+ */
+export async function withStartLock<T>(
+    key: string,
+    run: () => Promise<T>,
+): Promise<T> {
+    const prior = startLocks.get(key);
+    const started = (async () => {
+        // Prior failures should not block the next start — swallow and continue.
+        if (prior) { await prior.catch(() => { /* ignore */ }); }
+        return run();
+    })();
+    // Track completion as Promise<void> so future callers can await regardless
+    // of the result type and without observing our value or errors.
+    const tracker = started.then(() => { /* ok */ }, () => { /* swallow */ });
+    startLocks.set(key, tracker);
+    try {
+        return await started;
+    } finally {
+        // Only clear when we still own the slot — a chained call may have replaced it.
+        if (startLocks.get(key) === tracker) { startLocks.delete(key); }
+    }
+}
+
+/** Test-only: clear all in-flight start locks. */
+export function _resetStartLocksForTests(): void {
+    startLocks.clear();
+}
