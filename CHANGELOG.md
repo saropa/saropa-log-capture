@@ -26,6 +26,19 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [7.2.2]
+
+### Changed
+
+- **Icon bar reorganized.** Grouped the primary log tools (Logs, Find in Files, Signals, SQL History) above the first separator; grouped Crashlytics, Collections, Bookmarks, and Trash below it; added a second separator before Options and About to distinguish settings/info from tools. Moved Signals up above SQL History, moved Options above About, and relocated Bookmarks and Trash directly under Collections.
+- **Renamed "Find" icon to "Find in Files"** and changed its glyph from `list-filter` to `search` (magnifying glass) to match the panel title and better convey its purpose.
+
+### Fixed
+
+- **Duplicated count indicator on icon bar buttons when labels are visible.** Each count-bearing button (Logs, Bookmarks, SQL History, Trash, Collections, Crashlytics, Signals) was simultaneously rendering its circular overlay badge *and* the inline `(N)` suffix inside the label text, producing a doubled number next to every name. The overlay badge is now suppressed whenever `#icon-bar.ib-labels-visible` is active, so only the inline count appears in labels-visible mode; icons-only mode still shows the overlay badge as before.
+
+---
+
 ## [7.2.1]
 
 Fixes the duplicate end-of-capture notifications that could appear after a single debug run, and renames that notification from "Session Complete" to "Log Captured". [log](https://github.com/saropa/saropa-log-capture/blob/v7.2.1/CHANGELOG.md)
