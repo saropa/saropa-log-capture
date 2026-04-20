@@ -13,7 +13,6 @@ import { LineData, EarlyOutputBuffer } from './session-event-bus';
 import { addListener, removeListener, type LineListener, type SplitListener } from './session-manager-listeners';
 import { processOutputEvent, processApiWriteLine, processDapMessage } from './session-manager-events';
 import { resolveEffectiveSessionId } from './session-manager-routing';
-import { startSessionImpl, type StartSessionDeps } from './session-manager-start';
 import { stopSessionImpl, buildStopSessionDeps, type StopSessionDepsSource } from './session-manager-stop';
 import {
     getSingleRecentOwnerSession as getSingleRecentOwnerSessionImpl,
@@ -22,9 +21,10 @@ import {
     createWatcher as createWatcherImpl,
     broadcastLine as broadcastLineImpl,
     broadcastSplit as broadcastSplitImpl,
-    applyStartResult,
     withStartLock,
 } from './session-manager-internals';
+import { runStartSequenceImpl, type StartSequenceDeps } from './session-manager-start-sequence';
+import { togglePauseOn, stopAllSessions } from './session-manager-actions';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 import { getDefaultIntegrationRegistry } from '../integrations';
 export { LineData, LineListener, SplitListener };
@@ -162,34 +162,28 @@ export class SessionManagerImpl implements SessionManager {
         session: vscode.DebugSession,
         context: vscode.ExtensionContext,
     ): Promise<void> {
-        this.cachedConfig = getConfig();
-        const deps: StartSessionDeps = {
-            config: this.cachedConfig,
+        const deps: StartSequenceDeps = {
             sessions: this.sessions,
             ownerSessionIds: this.ownerSessionIds,
             ownerSessionCreatedAt: this.ownerSessionCreatedAt,
             childToParentId: this.childToParentId,
             earlyBuffer: this.earlyBuffer,
             outputChannel: this.outputChannel,
-            getSingleRecentOwnerSession: (windowMs) => this.getSingleRecentOwnerSession(windowMs),
             statusBar: this.statusBar,
+            floodGuard: this.floodGuard,
+            categoryCounts: this.categoryCounts,
+            getSingleRecentOwnerSession: (w) => this.getSingleRecentOwnerSession(w),
             broadcastSplit: (uri, totalParts) => this.broadcastSplit(uri, totalParts),
             onOutputEvent: (id, b) => this.onOutputEvent(id, b),
             clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+            setExclusionRules: (r) => { this.exclusionRules = r; },
+            setAutoTagger: (a) => { this.autoTagger = a; },
+            setSessionStartTime: (v) => { this.sessionStartTime = v; },
+            setFloodSuppressedTotal: (v) => { this.floodSuppressedTotal = v; },
         };
-        const outcome = await startSessionImpl(session, context, deps);
-        // startSessionImpl already logs the specific skip reason (disabled / init failed).
-        if (outcome.kind === 'skipped') { return; }
-        if (outcome.kind === 'aliased') { return; }
-        const onOut = (id: string, b: import('../capture/tracker').DapOutputBody) => this.onOutputEvent(id, b);
-        applyStartResult({
-            sessions: this.sessions, ownerSessionIds: this.ownerSessionIds, ownerSessionCreatedAt: this.ownerSessionCreatedAt,
-            childToParentId: this.childToParentId, earlyBuffer: this.earlyBuffer, outputChannel: this.outputChannel,
-            config: this.cachedConfig, onOutputEvent: onOut, clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
-            statusBar: this.statusBar, setExclusionRules: (r) => { this.exclusionRules = r; }, setAutoTagger: (a) => { this.autoTagger = a; },
-            floodGuard: this.floodGuard, categoryCounts: this.categoryCounts,
-            setSessionStartTime: (v) => { this.sessionStartTime = v; }, setFloodSuppressedTotal: (v) => { this.floodSuppressedTotal = v; },
-        }, session, outcome.result);
+        /* Re-sync cachedConfig to the snapshot the orchestrator started with,
+           so subsequent event handlers see the same values. */
+        this.cachedConfig = await runStartSequenceImpl(deps, session, context);
     }
 
     /** Stop and finalize a debug session's log file. */
@@ -246,17 +240,7 @@ export class SessionManagerImpl implements SessionManager {
     togglePause(): boolean | undefined {
         const logSession = this.getActiveSession();
         if (!logSession) { return undefined; }
-        if (logSession.state === 'recording') {
-            logSession.pause();
-            this.statusBar.setPaused(true);
-            return true;
-        }
-        if (logSession.state === 'paused') {
-            logSession.resume();
-            this.statusBar.setPaused(false);
-            return false;
-        }
-        return undefined;
+        return togglePauseOn({ logSession, setPaused: (v) => this.statusBar.setPaused(v) });
     }
 
     /** Clear the active session's line count and viewer. */
@@ -269,15 +253,15 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Stop all sessions (called on deactivate). */
     async stopAll(): Promise<void> {
-        this.earlyBuffer.clear();
-        this.childToParentId.clear();
-        this.ownerSessionCreatedAt.clear();
-        this.bufferingLoggedFor.clear();
-        this.clearBufferTimeoutState();
-        const unique = new Set<LogSession>(this.sessions.values());
-        await Promise.allSettled([...unique].map(s => s.stop()));
-        this.sessions.clear();
-        this.ownerSessionIds.clear();
+        await stopAllSessions({
+            sessions: this.sessions,
+            ownerSessionIds: this.ownerSessionIds,
+            ownerSessionCreatedAt: this.ownerSessionCreatedAt,
+            childToParentId: this.childToParentId,
+            bufferingLoggedFor: this.bufferingLoggedFor,
+            earlyBuffer: this.earlyBuffer,
+            clearBufferTimeoutState: () => this.clearBufferTimeoutState(),
+        });
     }
 
     /** Get the keyword watcher instance (for external access to counts). */
