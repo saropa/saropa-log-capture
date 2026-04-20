@@ -140,14 +140,20 @@ suite('Viewer toolbar', () => {
     });
 
     test('tab switching script defines activateFilterTab', () => {
-        const src = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
+        /* Filter tab logic lives in a concatenated sibling script. */
+        const tabs = readSrc('ui/viewer-toolbar/viewer-toolbar-filter-tabs-script.ts');
+        const main = readSrc('ui/viewer-toolbar/viewer-toolbar-script.ts');
         assert.ok(
-            src.includes('function activateFilterTab(key)'),
+            tabs.includes('function activateFilterTab(key)'),
             'activateFilterTab should switch visible panel',
         );
         assert.ok(
-            src.includes('initFilterTabs'),
+            tabs.includes('initFilterTabs'),
             'initFilterTabs should wire tab click handlers',
+        );
+        assert.ok(
+            main.includes('getFilterTabsScript'),
+            'toolbar script should concatenate the filter tabs script',
         );
     });
 
