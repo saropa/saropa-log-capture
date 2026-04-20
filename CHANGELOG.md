@@ -26,6 +26,20 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [7.2.1]
+
+Fixes the duplicate end-of-capture notifications that could appear after a single debug run, and renames that notification from "Session Complete" to "Log Captured". [log](https://github.com/saropa/saropa-log-capture/blob/v7.2.1/CHANGELOG.md)
+
+### Fixed
+
+- **Duplicate "Log Captured" notifications after a single debug run.** When a launch produced two debug sessions that fired `onDidStartDebugSession` within the same second (Flutter's parent session + its Dart VM child, or any compound launch), both handlers could race past the aliasing checks in `startSessionImpl` before the first handler's state had been published. Both then called `initializeSession`, generated the same timestamp-derived filename (`YYYYMMDD_HHMMSS_project.log`), and opened append-mode writers on the same file. On termination each owner finalized separately, producing two notifications with identical paths but different per-session line counts (e.g. `Lines captured: 8` and `Lines captured: 1` for the same file). Fixed by adding a per-workspace async lock (`withStartLock`) that serializes concurrent start sequences so the second handler sees the first's `applyStartResult` and takes the alias branch instead of creating a duplicate `LogSession`.
+
+### Changed
+
+- **End-of-capture notification title renamed.** The notification shown when a debug run ends now reads `Log Captured: <filename>` instead of `Session Complete: <filename>`, conforming to `docs/guides/TERMINOLOGY.md` which bans "session" in user-facing text. Internal code names (`SessionSummary`, `SessionStats`, `stopSession`, etc.) are unchanged.
+
+---
+
 ## [7.2.0]
 
 Collections get their own slide-out panel, structured viewers render markdown/JSON/CSV/HTML files, a floating search overlay joins the toolbar, a capture on/off status-bar toggle makes workspace overrides visible, F1 opens a full keyboard shortcuts reference, and signal reports gain stack traces, fingerprint transparency, and cross-session history. [log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
