@@ -23,6 +23,7 @@ import {
     broadcastLine as broadcastLineImpl,
     broadcastSplit as broadcastSplitImpl,
     applyStartResult,
+    withStartLock,
 } from './session-manager-internals';
 import type { ProjectIndexer } from '../project-indexer/project-indexer';
 import { getDefaultIntegrationRegistry } from '../integrations';
@@ -145,6 +146,19 @@ export class SessionManagerImpl implements SessionManager {
 
     /** Start capturing a debug session. */
     async startSession(
+        session: vscode.DebugSession,
+        context: vscode.ExtensionContext,
+    ): Promise<void> {
+        // Serialize starts per workspace. Without this, two simultaneous
+        // onDidStartDebugSession events (Flutter parent + Dart VM child, or
+        // compound launches) can both fall through aliasing checks and create
+        // duplicate LogSession instances for the same timestamp-derived filename.
+        const key = session.workspaceFolder?.uri.fsPath ?? '__no_workspace__';
+        await withStartLock(key, () => this.runStartSequence(session, context));
+    }
+
+    /** Run the aliasing-then-create sequence — serialized by startSession. */
+    private async runStartSequence(
         session: vscode.DebugSession,
         context: vscode.ExtensionContext,
     ): Promise<void> {
