@@ -23,6 +23,11 @@ import {
     addToSearchHistory as addToSearchHistoryState,
     clearSearchHistory as clearSearchHistoryState,
 } from './collection-store-workspace';
+import {
+    updateCollectionNotes,
+    updateCollectionName,
+    updateCollectionLastSearchQuery,
+} from './collection-store-updates';
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -169,48 +174,14 @@ export class CollectionStore implements vscode.Disposable {
 
     /** Update a collection's notes. */
     async updateNotes(id: string, notes: string): Promise<void> {
-        const file = await loadCollectionsFile();
-        const idx = file.collections.findIndex(inv => inv.id === id);
-        if (idx < 0) { return; }
-        const inv = file.collections[idx];
-        const updatedInv: Collection = {
-            ...inv,
-            updatedAt: Date.now(),
-            notes: notes.trim() || undefined,
-        };
-        const updated: CollectionsFile = {
-            ...file,
-            collections: [
-                ...file.collections.slice(0, idx),
-                updatedInv,
-                ...file.collections.slice(idx + 1),
-            ],
-        };
-        await saveCollectionsFile(updated);
-        this._onDidChange.fire();
+        const { changed } = await updateCollectionNotes(id, notes);
+        if (changed) { this._onDidChange.fire(); }
     }
 
     /** Update a collection's name. */
     async updateName(id: string, name: string): Promise<void> {
-        const file = await loadCollectionsFile();
-        const idx = file.collections.findIndex(inv => inv.id === id);
-        if (idx < 0) { return; }
-        const inv = file.collections[idx];
-        const updatedInv: Collection = {
-            ...inv,
-            updatedAt: Date.now(),
-            name: name.trim(),
-        };
-        const updated: CollectionsFile = {
-            ...file,
-            collections: [
-                ...file.collections.slice(0, idx),
-                updatedInv,
-                ...file.collections.slice(idx + 1),
-            ],
-        };
-        await saveCollectionsFile(updated);
-        this._onDidChange.fire();
+        const { changed } = await updateCollectionName(id, name);
+        if (changed) { this._onDidChange.fire(); }
     }
 
     /** Merge source collection into target: move all sources, then delete source.
@@ -244,24 +215,8 @@ export class CollectionStore implements vscode.Disposable {
 
     /** Update a collection's last search query. */
     async updateLastSearchQuery(id: string, query: string | undefined): Promise<void> {
-        const file = await loadCollectionsFile();
-        const idx = file.collections.findIndex(inv => inv.id === id);
-        if (idx < 0) { return; }
-        const inv = file.collections[idx];
-        const updatedInv: Collection = {
-            ...inv,
-            lastSearchQuery: query?.trim() || undefined,
-        };
-        const updated: CollectionsFile = {
-            ...file,
-            collections: [
-                ...file.collections.slice(0, idx),
-                updatedInv,
-                ...file.collections.slice(idx + 1),
-            ],
-        };
-        await saveCollectionsFile(updated);
-        this._onDidChange.fire();
+        const { changed } = await updateCollectionLastSearchQuery(id, query);
+        if (changed) { this._onDidChange.fire(); }
     }
 
     /** Get the active collection ID (stored in workspace state). */
