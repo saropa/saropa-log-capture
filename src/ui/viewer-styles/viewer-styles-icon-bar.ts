@@ -121,6 +121,13 @@ export function getIconBarStyles(): string {
     pointer-events: none;
 }
 
+/* When labels are visible, the inline "(N)" count beside each label already shows the number,
+   so suppress the overlay badge to avoid double-counting on every icon.
+   !important is required because updateIconBadge() sets display via inline style. */
+#icon-bar.ib-labels-visible .ib-badge {
+    display: none !important;
+}
+
 /* Inline count shown next to label text when labels are visible, e.g. "Signals (32)".
    Dimmed and smaller than the label to avoid visual clutter. */
 .ib-count {
