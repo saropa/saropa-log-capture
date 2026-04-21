@@ -12,6 +12,7 @@ import { LineData } from "../../modules/session/session-manager";
 import { HighlightRule } from "../../modules/storage/highlight-rules";
 import { FilterPreset } from "../../modules/storage/filter-presets";
 import { executeLoadContent, type LoadResultFirstError } from "./log-viewer-provider-load";
+import { mergedLoadFromFiles } from "./log-viewer-provider-load-group";
 import { type TailState, createTailState, stopTailing, startTailing } from "./log-viewer-provider-tailing";
 import { setupLogViewerWebview } from "./log-viewer-provider-setup";
 import { type PendingLine } from "../viewer/viewer-file-loader";
@@ -267,6 +268,15 @@ export class LogViewerProvider
     if (options?.replay) {
       this.postMessage({ type: "startReplay", replayConfig: this.getReplayConfig() });
     }
+  }
+
+  /**
+   * Load multiple log files as a single merged view (Phase 5 of the session-groups feature).
+   * Delegates to `mergedLoadFromFiles()` which orchestrates the sort-by-mtime + primary load +
+   * non-sidecar append sequence. See that helper for the full contract.
+   */
+  async loadFromFiles(uris: readonly vscode.Uri[]): Promise<void> {
+    await mergedLoadFromFiles(this, uris);
   }
   getTailLastLineCount(): number { return this.tail.tailLastLineCount; }
   setTailLastLineCount(n: number): void { this.tail.tailLastLineCount = n; }

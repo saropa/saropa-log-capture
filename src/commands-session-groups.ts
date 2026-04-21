@@ -11,6 +11,7 @@
 
 import * as vscode from 'vscode';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
+import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
 import { generateGroupId } from './modules/session/session-groups';
 
 /** Extract the Uri out of either a bare Uri or a context-menu item { uri }. Returns undefined for unknown input. */
@@ -47,14 +48,20 @@ function resolveUris(primary: unknown, selection: unknown): vscode.Uri[] {
     return uris;
 }
 
-/** Register the two session-group commands. Returns disposables for `context.subscriptions`. */
-export function sessionGroupCommands(historyProvider: SessionHistoryProvider): vscode.Disposable[] {
+/** Register the three session-group commands. Returns disposables for `context.subscriptions`. */
+export function sessionGroupCommands(
+    historyProvider: SessionHistoryProvider,
+    viewerProvider: LogViewerProvider,
+): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand('saropaLogCapture.groupSelectedSessions', (primary?: unknown, selection?: unknown) =>
             runGroupSelectedSessions(historyProvider, resolveUris(primary, selection)),
         ),
         vscode.commands.registerCommand('saropaLogCapture.ungroupSession', (primary?: unknown, selection?: unknown) =>
             runUngroupSession(historyProvider, resolveUris(primary, selection)),
+        ),
+        vscode.commands.registerCommand('saropaLogCapture.openSessionGroup', (primary?: unknown, selection?: unknown) =>
+            runOpenSessionGroup(historyProvider, viewerProvider, resolveUris(primary, selection)),
         ),
     ];
 }
@@ -147,5 +154,85 @@ export async function runUngroupSession(
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         vscode.window.showErrorMessage(`Could not ungroup: ${msg}`);
+    }
+}
+
+/**
+ * Open every file in the target's session group as a single merged view.
+ *
+ * Resolution rules:
+ *   - If a target URI carries a `groupId`, expand to every other file sharing
+ *     that groupId (the user likely clicked one member and wants the whole
+ *     bundle).
+ *   - Targets without a groupId are opened as-is: multi-selection of
+ *     standalone files becomes an ad-hoc merged view, which is useful when a
+ *     user wants a one-off merge without creating a persistent group.
+ *
+ * Delegates to `LogViewerProvider.loadFromFiles()` for the actual stream.
+ * Re-exported for tests.
+ */
+export async function runOpenSessionGroup(
+    historyProvider: SessionHistoryProvider,
+    viewerProvider: LogViewerProvider,
+    uris: readonly vscode.Uri[],
+): Promise<void> {
+    if (uris.length === 0) {
+        vscode.window.showWarningMessage('Select one or more log files to open as a merged group.');
+        return;
+    }
+    try {
+        const expanded = await expandGroupMembership(historyProvider, uris);
+        await viewerProvider.loadFromFiles(expanded);
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Could not open session group: ${msg}`);
+    }
+}
+
+/**
+ * Expand any group-member URI into the full set of its group's members.
+ * Non-grouped URIs pass through unchanged. Result preserves input order for
+ * the targets that had no group, with group expansions inserted at the
+ * position where the target appeared.
+ */
+async function expandGroupMembership(
+    historyProvider: SessionHistoryProvider,
+    uris: readonly vscode.Uri[],
+): Promise<vscode.Uri[]> {
+    if (uris.length === 0) { return []; }
+    const store = historyProvider.getMetaStore();
+    const logDir = vscode.Uri.joinPath(uris[0], '..');
+    const all = await store.loadAllMetadata(logDir);
+    const seen = new Set<string>();
+    const out: vscode.Uri[] = [];
+    const push = (u: vscode.Uri): void => {
+        const key = u.toString();
+        if (seen.has(key)) { return; }
+        seen.add(key);
+        out.push(u);
+    };
+    for (const target of uris) {
+        const relKey = vscode.workspace.asRelativePath(target).replace(/\\/g, '/');
+        const meta = all.get(relKey);
+        if (meta?.groupId) {
+            pushGroupMembers(all, meta.groupId, logDir, push);
+        } else {
+            push(target);
+        }
+    }
+    return out;
+}
+
+/** Push every file sharing `groupId` through the caller's dedupe function. */
+function pushGroupMembers(
+    all: ReadonlyMap<string, import('./modules/session/session-metadata').SessionMeta>,
+    groupId: string,
+    logDir: vscode.Uri,
+    push: (u: vscode.Uri) => void,
+): void {
+    for (const [relPath, other] of all) {
+        if (other.groupId === groupId) {
+            push(vscode.Uri.joinPath(logDir, relPath));
+        }
     }
 }
