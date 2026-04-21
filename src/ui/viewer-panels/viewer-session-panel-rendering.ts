@@ -167,7 +167,22 @@ export function getSessionRenderingScript(): string {
             + '<div class="session-item-info">'
             + '<span class="session-item-name">' + escapeHtmlText(name) + (s.isLatestOfName ? ' <span class="session-latest">(latest)</span>' : '') + perfBadge + '</span>'
             + (meta ? '<span class="session-item-meta">' + meta + '</span>' : '')
-            + '</div></div>';
+            + '</div>'
+            + renderSessionRowActions()
+            + '</div>';
+    }
+
+    /* Hover-revealed action buttons on a session row. Currently: reveal the log file
+       in the OS file explorer. Uses data-session-action so the parent click handler
+       can dispatch without duplicating logic from the context menu. */
+    function renderSessionRowActions() {
+        var label = typeof getRevealInOSLabel === 'function' ? getRevealInOSLabel() : 'Reveal in File Explorer';
+        var labelAttr = escapeAttr(label);
+        return '<span class="session-item-actions">'
+            + '<button type="button" class="session-item-action" data-session-action="revealInOS" '
+            + 'title="' + labelAttr + '" aria-label="' + labelAttr + '">'
+            + '<span class="codicon codicon-folder-opened"></span></button>'
+            + '</span>';
     }
 
     function renderDayHeading(dateKey, collapsed, count) {
@@ -252,7 +267,9 @@ export function getSessionRenderingScript(): string {
                 + '<div class="session-item-info">'
                 + '<span class="session-item-name">' + escapeHtmlText(name) + '</span>'
                 + '<span class="session-item-meta session-shimmer-meta"></span>'
-                + '</div></div>';
+                + '</div>'
+                + renderSessionRowActions()
+                + '</div>';
         }).join('');
         /* Append instead of replace — multiple batches arrive as directories are scanned. */
         sessionListEl.insertAdjacentHTML('beforeend', html);

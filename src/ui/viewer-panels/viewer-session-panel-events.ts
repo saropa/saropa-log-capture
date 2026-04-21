@@ -96,6 +96,22 @@ export function getSessionPanelEventsScript(): string {
             var item = e.target.closest('.session-item');
             if (!item) return;
             var uri = item.getAttribute('data-uri') || '';
+            /* Hover-action buttons (e.g. reveal in OS) live inside the row but must NOT
+               open the log. Dispatch their action directly and skip the row-open path. */
+            var actionBtn = e.target.closest('.session-item-action');
+            if (actionBtn && item.contains(actionBtn)) {
+                e.preventDefault();
+                e.stopPropagation();
+                var action = actionBtn.getAttribute('data-session-action') || '';
+                var filename = item.getAttribute('data-filename') || '';
+                if (action) {
+                    vscodeApi.postMessage({
+                        type: 'sessionAction', action: action,
+                        uriStrings: [uri], filenames: [filename],
+                    });
+                }
+                return;
+            }
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 selectedSessionUris[uri] = !selectedSessionUris[uri];
