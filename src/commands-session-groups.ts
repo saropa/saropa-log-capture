@@ -12,7 +12,10 @@
 import * as vscode from 'vscode';
 import type { SessionHistoryProvider } from './ui/session/session-history-provider';
 import type { LogViewerProvider } from './ui/provider/log-viewer-provider';
+import type { CollectionStore } from './modules/collection/collection-store';
 import { generateGroupId } from './modules/session/session-groups';
+import { resolveOrPickCollection } from './collection-commands-helpers';
+import { t } from './l10n';
 
 /** Extract the Uri out of either a bare Uri or a context-menu item { uri }. Returns undefined for unknown input. */
 function toUri(arg: unknown): vscode.Uri | undefined {
@@ -48,10 +51,11 @@ function resolveUris(primary: unknown, selection: unknown): vscode.Uri[] {
     return uris;
 }
 
-/** Register the three session-group commands. Returns disposables for `context.subscriptions`. */
+/** Register the four session-group commands. Returns disposables for `context.subscriptions`. */
 export function sessionGroupCommands(
     historyProvider: SessionHistoryProvider,
     viewerProvider: LogViewerProvider,
+    collectionStore: CollectionStore,
 ): vscode.Disposable[] {
     return [
         vscode.commands.registerCommand('saropaLogCapture.groupSelectedSessions', (primary?: unknown, selection?: unknown) =>
@@ -62,6 +66,9 @@ export function sessionGroupCommands(
         ),
         vscode.commands.registerCommand('saropaLogCapture.openSessionGroup', (primary?: unknown, selection?: unknown) =>
             runOpenSessionGroup(historyProvider, viewerProvider, resolveUris(primary, selection)),
+        ),
+        vscode.commands.registerCommand('saropaLogCapture.addGroupToCollection', (primary?: unknown, selection?: unknown) =>
+            runAddGroupToCollection(historyProvider, collectionStore, resolveUris(primary, selection)),
         ),
     ];
 }
@@ -235,4 +242,83 @@ function pushGroupMembers(
             push(vscode.Uri.joinPath(logDir, relPath));
         }
     }
+}
+
+/**
+ * Pin the target's session group to a collection as a single `type: 'group'` source.
+ *
+ * Resolution:
+ *   1. Look up each target's `groupId` in the central metadata map.
+ *   2. For each DISTINCT groupId found, pin ONE group source to the chosen collection.
+ *      A label is derived from the primary-looking member (first member with
+ *      `debugAdapterType` set, else earliest by filename) plus a member-count suffix.
+ *   3. Targets that are NOT part of any group surface an info message so the user
+ *      knows the "Add Group to Collection" action needs a grouped target; they can
+ *      fall back to "Add to Collection" for standalone pins.
+ *
+ * Re-exported for tests.
+ */
+export async function runAddGroupToCollection(
+    historyProvider: SessionHistoryProvider,
+    collectionStore: CollectionStore,
+    uris: readonly vscode.Uri[],
+): Promise<void> {
+    if (uris.length === 0) {
+        vscode.window.showWarningMessage('Select a grouped log file to pin its group to a collection.');
+        return;
+    }
+    try {
+        const store = historyProvider.getMetaStore();
+        const logDir = vscode.Uri.joinPath(uris[0], '..');
+        const all = await store.loadAllMetadata(logDir);
+        const groupLabels = collectGroupsToPin(uris, all);
+        if (groupLabels.size === 0) {
+            vscode.window.showInformationMessage('None of the selected logs are part of a group. Use "Add to Collection" for standalone files.');
+            return;
+        }
+        const collection = await resolveOrPickCollection(collectionStore, undefined);
+        if (!collection) { return; }
+        for (const [groupId, label] of groupLabels) {
+            await collectionStore.addSource(collection.id, { type: 'group', groupId, label });
+        }
+        const label = groupLabels.size === 1 ? [...groupLabels.values()][0] : `${groupLabels.size} groups`;
+        vscode.window.showInformationMessage(t('msg.sourceAddedToCollection', label, collection.name));
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        vscode.window.showErrorMessage(`Could not add group to collection: ${msg}`);
+    }
+}
+
+/** Map of groupId \u2192 display label, built by scanning the targets against the metadata map. */
+function collectGroupsToPin(
+    uris: readonly vscode.Uri[],
+    all: ReadonlyMap<string, import('./modules/session/session-metadata').SessionMeta>,
+): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const target of uris) {
+        const relKey = vscode.workspace.asRelativePath(target).replace(/\\/g, '/');
+        const meta = all.get(relKey);
+        if (!meta?.groupId || out.has(meta.groupId)) { continue; }
+        out.set(meta.groupId, buildGroupLabel(meta.groupId, all));
+    }
+    return out;
+}
+
+/** Compose "PrimaryName +N" from the group's members. */
+function buildGroupLabel(
+    groupId: string,
+    all: ReadonlyMap<string, import('./modules/session/session-metadata').SessionMeta>,
+): string {
+    // Prefer the DAP member's filename; else pick any member. Count total members for the suffix.
+    let total = 0, dapName = '', firstName = '';
+    for (const [relPath, meta] of all) {
+        if (meta.groupId !== groupId) { continue; }
+        total++;
+        const name = relPath.split('/').pop() ?? relPath;
+        if (!firstName) { firstName = name; }
+        if (meta.debugAdapterType && !dapName) { dapName = name; }
+    }
+    const base = dapName || firstName || 'Session Group';
+    const suffix = total > 1 ? ` +${total - 1}` : '';
+    return base + suffix;
 }

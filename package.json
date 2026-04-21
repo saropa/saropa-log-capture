@@ -405,6 +405,11 @@
         "title": "Saropa Log Capture: Open Session Group (Merged)"
       },
       {
+        "command": "saropaLogCapture.addGroupToCollection",
+        "icon": "$(pin)",
+        "title": "Saropa Log Capture: Add Group to Collection"
+      },
+      {
         "command": "saropaLogCapture.addSignalItemToCollection",
         "icon": "$(add)",
         "title": "%command.addSignalItemToCollection.title%"
