@@ -42,23 +42,21 @@ function makeTracker(opts: {
 } {
     const store = new FakeMetaStore();
     const logs: string[] = [];
-    const files = opts.files.map(f => ({
-        name: f.name,
-        mtime: f.mtime,
-        type: f.type ?? vscode.FileType.File,
-    }));
+    // Share opts.files by reference — some tests push to it after construction to simulate
+    // late-arriving sidecars. Copying via .map() would hide those mutations from the tracker.
+    const files = opts.files;
     const delayedSweeps: DelayedSweep[] = [];
     const deps: SessionGroupTrackerDeps = {
         metaStore: store as unknown as SessionMetadataStore,
         getSettings: () => opts.settings,
         log: (msg: string) => logs.push(msg),
-        readDirectory: async () => files.map(f => [f.name, f.type] as [string, vscode.FileType]),
+        readDirectory: async () => files.map(f => [f.name, f.type ?? vscode.FileType.File] as [string, vscode.FileType]),
         stat: async (uri: vscode.Uri) => {
             const name = uri.fsPath.split(/[\\/]/).pop()!;
             const hit = files.find(f => f.name === name);
             if (!hit) { throw new Error(`stat: ${name} not found`); }
             return {
-                type: hit.type,
+                type: hit.type ?? vscode.FileType.File,
                 ctime: hit.mtime,
                 mtime: hit.mtime,
                 size: 0,

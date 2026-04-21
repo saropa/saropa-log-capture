@@ -45,6 +45,16 @@ function mmLineOffset(i, hasPfx, cumH) {
     return hasPfx ? prefixSums[i] : cumH[i];
 }
 
+/**
+ * Bar height capped to leave a 1px gap below each marker when vertical space allows.
+ * Why: with a fixed 3px bar, adjacent lines at pitch ≥3px merge into a solid wall — the eye loses the
+ * sense of discrete rows. Subtracting 1 from the per-line pitch reserves a visual gap whenever the
+ * minimap has room for one; falls back to 1px (no gap) for sub-pixel pitch on long logs.
+ */
+function mmBarHeight(maxH, perLinePx) {
+    return Math.max(1, Math.min(maxH, perLinePx - 1));
+}
+
 var MM_SAMPLE_THRESHOLD = 50000;
 /** Paint all markers onto the canvas in a single pass. Skips when document hidden; samples when line count > MM_SAMPLE_THRESHOLD. */
 function paintMinimap() {
@@ -101,7 +111,10 @@ function paintMinimap() {
         if (!lv || !mmColors[lv]) continue;
         if ((lv === 'info' || lv === 'debug' || lv === 'notice') && !mmShowInfo) continue;
         if (!groups[lv]) groups[lv] = [];
-        groups[lv].push({ py: py, w: mmBarWidthFrac(it) });
+        /* Pitch to the next sampled line — drives mmBarHeight so adjacent bars leave a visual gap when room allows. */
+        var nextI = i + step;
+        var nextPy = nextI < allLines.length ? Math.round((mmLineOffset(nextI, hasPfx, cumH) / total) * mmH) : mmH;
+        groups[lv].push({ py: py, w: mmBarWidthFrac(it), h: mmBarHeight(3, nextPy - py) });
     }
 
     if (mmShowSqlDensity && sqlBuckets && slowSqlBuckets) {
@@ -115,7 +128,7 @@ function paintMinimap() {
         var arr = groups[lv];
         for (var j = 0; j < arr.length; j++) {
             var seg = arr[j];
-            mmCtx.fillRect(0, seg.py, mmW * seg.w, barH);
+            mmCtx.fillRect(0, seg.py, mmW * seg.w, seg.h);
         }
     }
 
@@ -129,8 +142,11 @@ function paintMinimap() {
             var nit = allLines[ni];
             if (nit.height === 0 || nit.type === 'stack-frame' || nit.type === 'marker') continue;
             var npy = Math.round((mmLineOffset(ni, hasPfx, cumH) / total) * mmH);
+            /* Per-line pitch → 1px gap between neutral bars when space allows; otherwise 1px bar, no gap. */
+            var nextNi = ni + step;
+            var nextNpy = nextNi < allLines.length ? Math.round((mmLineOffset(nextNi, hasPfx, cumH) / total) * mmH) : mmH;
             var nw = mmBarWidthFrac(nit);
-            mmCtx.fillRect(0, npy, mmW * nw, barN);
+            mmCtx.fillRect(0, npy, mmW * nw, mmBarHeight(barN, nextNpy - npy));
         }
     }
 
@@ -158,10 +174,12 @@ function paintSearchMarkers(hasPfx, cumH, total, mmW, mmH, barH) {
         var idx = matchIndices[si];
         if (idx < 0 || idx >= allLines.length || allLines[idx].height === 0) continue;
         var py = Math.round((mmLineOffset(idx, hasPfx, cumH) / total) * mmH);
+        /* Pitch to the very next line (search is not sampled — every match paints). */
+        var nextPy = idx + 1 < allLines.length ? Math.round((mmLineOffset(idx + 1, hasPfx, cumH) / total) * mmH) : mmH;
         var isCur = (typeof currentMatchIdx !== 'undefined') && currentMatchIdx === si;
         var sw = mmBarWidthFrac(allLines[idx]);
         mmCtx.fillStyle = isCur ? mmColors.currentMatch : mmColors.searchMatch;
-        mmCtx.fillRect(0, py, mmW * sw, barH);
+        mmCtx.fillRect(0, py, mmW * sw, mmBarHeight(barH, nextPy - py));
     }
 }
 `;
