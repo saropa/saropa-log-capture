@@ -149,7 +149,35 @@ function updateScopeRadios() {
     }
 }
 
+/* Per-radio reason shown as the label title when a radio is dimmed. Kept
+ * short because it also feeds the single-line status hint below. Ordered
+ * workspace → package → directory → file so we can surface the outermost
+ * missing piece when summarizing (a missing workspace implies a missing
+ * package, so that's the most useful thing to tell the user first). */
+var scopeDisabledReasons = {
+    workspace: 'This file is outside any workspace folder',
+    package: 'No package manifest (pubspec.yaml, package.json, etc.) was found above this file',
+    directory: 'No directory is associated with the active file',
+    file: 'No active source file'
+};
+
+/* Original title on each radio label — captured once so we can restore it
+ * when the radio becomes enabled again. Without this the enriched disabled-
+ * state title would leak into the enabled state and misinform the user. */
+var scopeEnabledTitles = null;
+
+function captureScopeEnabledTitles() {
+    if (scopeEnabledTitles) return;
+    scopeEnabledTitles = {};
+    var radios = document.querySelectorAll('input[name="scope"]');
+    for (var i = 0; i < radios.length; i++) {
+        var lbl = radios[i].closest('label');
+        if (lbl) scopeEnabledTitles[radios[i].value] = lbl.getAttribute('title') || '';
+    }
+}
+
 function updateScopeRadioDisabled() {
+    captureScopeEnabledTitles();
     var map = {
         workspace: !!scopeContext.workspaceFolder,
         package: !!scopeContext.packageRoot,
@@ -160,18 +188,51 @@ function updateScopeRadioDisabled() {
     for (var i = 0; i < radios.length; i++) {
         var v = radios[i].value;
         if (v === 'all') continue;
-        radios[i].disabled = !map[v];
+        var enabled = map[v];
+        radios[i].disabled = !enabled;
         var lbl = radios[i].closest('label');
-        if (lbl) lbl.classList.toggle('scope-disabled', !map[v]);
+        if (!lbl) continue;
+        lbl.classList.toggle('scope-disabled', !enabled);
+        /* When dimmed, swap the label's tooltip for the specific reason so
+         * hover explains exactly why this option is unavailable. Without
+         * this the user sees the generic "Show only logs from the current
+         * workspace" tooltip on a disabled control and the UI looks broken. */
+        if (!enabled) {
+            lbl.setAttribute('title', scopeDisabledReasons[v] || '');
+        } else if (scopeEnabledTitles && scopeEnabledTitles[v] != null) {
+            lbl.setAttribute('title', scopeEnabledTitles[v]);
+        }
     }
+}
+
+/** Build a single-line reason summarizing the first missing-context layer. */
+function scopeDimmedSummary() {
+    /* Order matters: pick the outermost missing piece. A missing workspace
+     * folder is strictly more informative than the package/directory/file
+     * consequences that follow from it. */
+    if (!scopeContext.workspaceFolder) return scopeDisabledReasons.workspace;
+    if (!scopeContext.packageRoot) return scopeDisabledReasons.package;
+    return '';
 }
 
 function updateScopeStatus() {
     var el = document.getElementById('scope-status');
     if (!el) return;
     if (!scopeContext.activeFilePath) {
+        /* No active editor — every non-'All logs' radio is dimmed. Explicit
+         * call-to-action keeps the user from thinking the UI is broken. */
         el.textContent = 'Open a source file to enable scope filters';
         el.removeAttribute('title');
+        return;
+    }
+    /* File is open but one of the broader scopes may still be unresolved
+     * (file outside a workspace, or workspace with no package manifest).
+     * Surface the specific reason so the dimmed radios read as expected
+     * behavior rather than a bug. */
+    var summary = scopeDimmedSummary();
+    if (summary) {
+        el.textContent = summary + ' — related scopes are unavailable';
+        el.setAttribute('title', 'Hover a dimmed option for its specific reason');
         return;
     }
     el.textContent = '';
