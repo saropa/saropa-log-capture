@@ -75,6 +75,9 @@ export function getSessionContextMenuHtml(): string {
     <div class="context-menu-item session-normal-only" data-session-action="addToCollection">
         <span class="codicon codicon-pin"></span> Add to Collection
     </div>
+    <div class="context-menu-item session-normal-only" data-session-action="addGroupToCollection">
+        <span class="codicon codicon-layers-active"></span> Add Group to Collection
+    </div>
     <!-- Session-group actions: Group joins selected logs under a shared groupId; Ungroup dismantles
          the group the targeted log belongs to. Both are always visible in the normal context; the
          group label pluralises when multi-select is active, and Ungroup is a friendly no-op on an
