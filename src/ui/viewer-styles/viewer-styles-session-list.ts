@@ -88,6 +88,42 @@ export function getSessionListStyles(): string {
     white-space: nowrap;
 }
 
+/* --- Row hover actions (reveal in OS, etc.) --- */
+/* Container sits beside the info column. Hidden by default; revealed on row hover
+   or keyboard focus. Rendered inline so it participates in the flex row without
+   overlaying the meta text. */
+.session-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    pointer-events: none;
+}
+.session-item:hover .session-item-actions,
+.session-item:focus-within .session-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+.session-item-action {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    cursor: pointer;
+    color: var(--vscode-icon-foreground, var(--vscode-foreground));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+.session-item-action:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(90, 93, 94, 0.31));
+}
+.session-item-action .codicon {
+    font-size: 14px;
+}
+
 /* --- Latest suffix --- */
 .session-latest { opacity: 0.5; font-style: italic; font-size: 11px; margin-left: 3px; }
 

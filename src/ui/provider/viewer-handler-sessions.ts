@@ -122,6 +122,16 @@ export async function handleSessionAction(
             }
             break;
         }
+        // Reveal each selected log in the OS file explorer (Explorer/Finder/containing folder).
+        // Runs the built-in VS Code command per item; failures are swallowed because the native
+        // OS call may not be available in restricted/remote contexts and a thrown error would
+        // be surfaced as a modal that isn't actionable.
+        case 'revealInOS': {
+            for (const item of items) {
+                await vscode.commands.executeCommand('revealFileInOS', item.uri).then(() => {}, () => {});
+            }
+            break;
+        }
         case 'addToCollection':
             for (const item of items) {
                 await vscode.commands.executeCommand('saropaLogCapture.addToCollection', { uri: item.uri });
