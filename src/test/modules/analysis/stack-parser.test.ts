@@ -26,6 +26,75 @@ suite('StackParser', () => {
             assert.strictEqual(isAsciiBoxDrawingDecorLine('│ #0  package:foo/main.dart  foo (package:foo/a.dart:1:1)'), false);
             assert.strictEqual(isAsciiBoxDrawingDecorLine('│  at Object.run (main.js:1:1)'), false);
         });
+
+        // --- Drift v3.3.3 rounded-corner banner (reported failing case) ---
+        test('detects rounded-corner top rule (╭──╮)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╭──────────────────────────────────────────────────╮'), true);
+        });
+        test('detects rounded-corner bottom rule (╰──╯)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╰──────────────────────────────────────────────────╯'), true);
+        });
+        test('detects T-connector divider rule (├──┤)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('├──────────────────────────────────────────────────┤'), true);
+        });
+
+        // --- Heavy variants ---
+        test('detects heavy top rule (┏━┓) and bottom rule (┗━┛)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┏━━━━━━━━━━━━━━━━━━━━┓'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┗━━━━━━━━━━━━━━━━━━━━┛'), true);
+        });
+        test('detects heavy bar-pair content line (┃ … ┃)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┃     HEAVY BANNER     ┃'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┃          ┃'), true);
+        });
+        test('detects heavy T-connector rule (┣━┫)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┣━━━━━━━━━━━━━━━━━━━━┫'), true);
+        });
+
+        // --- Mixed light/double (DOS-style) ---
+        test('detects light/double corners (╒══╕ ╘══╛)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╒══════════════════╕'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╘══════════════════╛'), true);
+        });
+        test('detects light/double T-connectors (╞══╡)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╞══════════════════╡'), true);
+        });
+
+        // --- Mixed light/heavy ---
+        test('detects mixed light/heavy corners (┍━┑ ┕━┙)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┍━━━━━━━━━━━━━━━━┑'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┕━━━━━━━━━━━━━━━━┙'), true);
+        });
+
+        // --- Boxen-style (title embedded in top rule) ---
+        test('detects classic light corner rule (┌──┐ └──┘)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('┌──────────────────┐'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('└──────────────────┘'), true);
+        });
+
+        // --- Indented banners (leading whitespace from DAP wrapping) ---
+        test('detects indented rounded-corner rule', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('    ╭────────╮'), true);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('\t\t├────────┤'), true);
+        });
+
+        // --- Dashed bar variants ---
+        test('detects dashed light bars (╎ … ╎)', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('╎     dashed bar     ╎'), true);
+        });
+
+        // --- Rejections: lines with ordinary content must not match pure-box-rule ---
+        test('does not match ordinary text mixed with single box char', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('some log line with a ─ in the middle'), false);
+        });
+        test('does not match single box-drawing char alone', () => {
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('─'), false);
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('│'), false);
+        });
+        test('does not match markdown table rows (ASCII | excluded)', () => {
+            // ASCII | is intentionally NOT in the bar class — markdown tables stay plain text.
+            assert.strictEqual(isAsciiBoxDrawingDecorLine('| col1 | col2 | col3 |'), false);
+        });
     });
 
     suite('isStackFrameLine — box art exemption', () => {

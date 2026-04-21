@@ -107,9 +107,17 @@ function cleanupTrailingRepeats() {
  * isLogViewerSeparatorLine in modules/analysis/log-viewer-separator-line.ts (unit-tested there).
  * Both copies strip the logcat/bracket prefix before detection — keep separatorPrefixRe in sync
  * with SOURCE_PREFIX in the TS module.
+ *
+ * Detection has two branches:
+ * 1. Bar-pair: a vertical bar char on each side (any of │┃║╎╏╽╿), content between.
+ * 2. Pure box-drawing rule: every non-whitespace char is in the Unicode box-drawing
+ *    block (U+2500–U+257F). Covers rounded (╭╮╰╯), T-connector (├┤), heavy (┏┗┛┓),
+ *    mixed light/heavy and light/double variants that corner-specific sets miss.
  */
 function isAsciiBoxDrawingDecorLine(plain) {
-    return /^\\s*[\\u2502\\u2551]\\s+(?:.*\\S\\s*)?[\\u2502\\u2551]\\s*$/.test(plain);
+    if (/^\\s*[\\u2502\\u2503\\u2551\\u254E\\u254F\\u257D\\u257F]\\s+(?:.*\\S\\s*)?[\\u2502\\u2503\\u2551\\u254E\\u254F\\u257D\\u257F]\\s*$/.test(plain)) return true;
+    /* Pure box-drawing rule line (≥ 2 box chars, only whitespace allowed between). */
+    return /^\\s*[\\u2500-\\u257F][\\u2500-\\u257F\\s]*[\\u2500-\\u257F]\\s*$/.test(plain);
 }
 /** Strip logcat / bracket prefix so separator detection works on the message body. */
 var separatorPrefixRe = /^(?:[VDIWEFA]\\/[^(:\\s]+\\s*(?:\\(\\s*\\d+\\))?:\\s|\\[[^\\]]+\\]\\s)/;
@@ -119,8 +127,9 @@ function isSeparatorLine(plainText) {
     if (isAsciiBoxDrawingDecorLine(body)) return true;
     var trimmed = body.trim();
     if (trimmed.length < 3) return false;
-    /* Light arcs / corners used in Drift and other Unicode box art (not only ┌┐). */
-    var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬╭╮╯╰\\\\-]/;
+    /* Art-char set: ASCII decoration symbols + full Unicode box-drawing block
+       (U+2500–U+257F) + block elements (U+2580–U+259F) for shaded art. */
+    var artChars = /[=+*_#~|/\\\\\\\\<>\\\\[\\\\]{}()^v\\u2500-\\u257F\\u2580-\\u259F\\\\-]/;
     var artCount = 0;
     for (var i = 0; i < trimmed.length; i++) {
         if (artChars.test(trimmed[i]) || trimmed[i] === ' ') artCount++;
