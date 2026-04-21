@@ -24,8 +24,12 @@ export function getDriftDebugServerFromLogScript(): string {
         return false;
     }
 
+    /* Strip the full Unicode box-drawing block (U+2500–U+257F) plus ASCII '-' so
+       URL extraction survives rounded corners (Drift v3.3.3: ╭╮╰╯), heavy variants,
+       and mixed light/double borders. Keep in sync with stripAsciiBoxNoise in
+       modules/db/drift-debug-server-log-parse.ts. */
     function stripBoxNoise(s) {
-        return s.replace(/[│┃║╔╗╚╝╠╣╦╩╬├┤┬┴┼═\\-]/g, ' ').replace(/\\s+/g, ' ').trim();
+        return s.replace(/[\\u2500-\\u257F\\-]/g, ' ').replace(/\\s+/g, ' ').trim();
     }
 
     function extractDriftViewerUrl(plain) {
