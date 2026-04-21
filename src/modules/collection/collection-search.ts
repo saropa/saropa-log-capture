@@ -19,6 +19,9 @@ import {
     searchJsonSidecar,
     type FileSearchParams,
 } from './collection-search-file';
+import { resolveCollectionSources } from './collection-source-resolver';
+import { SessionMetadataStore } from '../session/session-metadata';
+import { getLogDirectoryUri } from '../config/config';
 
 /** Escape special regex characters in a string. */
 export function escapeRegex(str: string): string {
@@ -69,8 +72,17 @@ export async function searchCollection(
     const contextLines = options.contextLines ?? 2;
     const maxResults = options.maxResultsPerSource ?? MAX_RESULTS_PER_SOURCE;
 
+    // Expand any session-group sources into their current member files before searching. Groups
+    // are resolved at query time so the collection reflects today's group composition, not a
+    // snapshot taken when the group was pinned.
+    const logDir = getLogDirectoryUri(folder);
+    const expandedSources = await resolveCollectionSources(
+        collection.sources,
+        logDir,
+        new SessionMetadataStore(),
+    );
     const allFiles: { source: CollectionSource; uri: vscode.Uri; isSidecar: boolean }[] = [];
-    for (const source of collection.sources) {
+    for (const source of expandedSources) {
         const files = await resolveSearchableFiles(source, folder.uri);
         for (const file of files) {
             allFiles.push({ source, ...file });
@@ -120,12 +132,17 @@ export async function searchCollection(
 }
 
 /**
- * Check if a source file exists and is readable.
+ * Check if a source is still reachable. File/session sources check that the referenced path
+ * still exists on disk. Group sources check that the group still has at least one member in the
+ * central metadata map \u2014 a group with zero remaining members would search zero files.
  */
 export async function checkSourceExists(
     source: CollectionSource,
     workspaceUri: vscode.Uri,
 ): Promise<boolean> {
+    if (source.type === 'group') {
+        return groupHasAnyMember(source.groupId, workspaceUri);
+    }
     const uri = vscode.Uri.joinPath(workspaceUri, source.relativePath);
     try {
         await vscode.workspace.fs.stat(uri);
@@ -133,4 +150,18 @@ export async function checkSourceExists(
     } catch {
         return false;
     }
+}
+
+/** True when the central metadata map has \u22651 file carrying `groupId`. */
+async function groupHasAnyMember(groupId: string, workspaceUri: vscode.Uri): Promise<boolean> {
+    try {
+        const store = new SessionMetadataStore();
+        const meta = await store.loadAllMetadata(
+            getLogDirectoryUri(vscode.workspace.getWorkspaceFolder(workspaceUri)),
+        );
+        for (const entry of meta.values()) {
+            if (entry.groupId === groupId) { return true; }
+        }
+    } catch { /* fall through to false */ }
+    return false;
 }

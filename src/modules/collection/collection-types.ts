@@ -4,17 +4,35 @@
  * that can be searched together and exported as a bundle.
  */
 
-/** A source pinned to a collection. */
-export interface CollectionSource {
-    /** Source type: 'session' auto-includes sidecars, 'file' is standalone. */
-    readonly type: 'session' | 'file';
-    /** Path relative to workspace root (portable across machines). */
-    readonly relativePath: string;
+/** Common fields for every source variant. */
+interface CollectionSourceCommon {
     /** Display name shown in UI. */
     readonly label: string;
     /** Timestamp when source was pinned (epoch ms). */
     readonly pinnedAt: number;
 }
+
+/** A source pointing at a single file on disk ('session' auto-includes sidecars, 'file' is standalone). */
+export interface CollectionFileSource extends CollectionSourceCommon {
+    readonly type: 'session' | 'file';
+    /** Path relative to workspace root (portable across machines). */
+    readonly relativePath: string;
+}
+
+/**
+ * A source pointing at a session group. At query time (search, export) the group
+ * expands to every file currently sharing `groupId` in the central metadata map.
+ * Dynamic expansion means the collection reflects the group's CURRENT members
+ * \u2014 if the user ungroups or manually re-groups later, the expansion changes.
+ */
+export interface CollectionGroupSource extends CollectionSourceCommon {
+    readonly type: 'group';
+    /** Session-group id. Members are resolved from SessionMetadataStore.loadAllMetadata(). */
+    readonly groupId: string;
+}
+
+/** A source pinned to a collection. */
+export type CollectionSource = CollectionFileSource | CollectionGroupSource;
 
 /** A named collection containing pinned sources. */
 export interface Collection {
@@ -40,12 +58,22 @@ export interface CreateCollectionInput {
     readonly notes?: string;
 }
 
-/** Input for adding a source to a collection. */
-export interface AddSourceInput {
+/** Input for adding a file-based source (session or standalone file) to a collection. */
+export interface AddFileSourceInput {
     readonly type: 'session' | 'file';
     readonly relativePath: string;
     readonly label: string;
 }
+
+/** Input for adding a session-group source to a collection. */
+export interface AddGroupSourceInput {
+    readonly type: 'group';
+    readonly groupId: string;
+    readonly label: string;
+}
+
+/** Input for adding a source to a collection. */
+export type AddSourceInput = AddFileSourceInput | AddGroupSourceInput;
 
 /** Persisted format of the collections file. */
 export interface CollectionsFile {

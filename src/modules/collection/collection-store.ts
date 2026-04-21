@@ -28,6 +28,12 @@ import {
     updateCollectionName,
     updateCollectionLastSearchQuery,
 } from './collection-store-updates';
+import {
+    collectionSourceKey,
+    isDuplicateSource,
+    toCollectionSource,
+    toAddSourceInput,
+} from './collection-source-helpers';
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -107,15 +113,10 @@ export class CollectionStore implements vscode.Disposable {
         if (inv.sources.length >= MAX_SOURCES_PER_COLLECTION) {
             throw new Error(`Maximum of ${MAX_SOURCES_PER_COLLECTION} sources per collection.`);
         }
-        if (inv.sources.some(s => s.relativePath === input.relativePath)) {
-            return;
-        }
-        const source: CollectionSource = {
-            type: input.type,
-            relativePath: input.relativePath,
-            label: input.label,
-            pinnedAt: Date.now(),
-        };
+        // Dedupe: file/session sources by relativePath, group sources by groupId. Group counts
+        // as one source against MAX_SOURCES_PER_COLLECTION even though it may expand to many.
+        if (isDuplicateSource(inv.sources, input)) { return; }
+        const source: CollectionSource = toCollectionSource(input);
         const updatedInv: Collection = {
             ...inv,
             updatedAt: Date.now(),
@@ -133,13 +134,17 @@ export class CollectionStore implements vscode.Disposable {
         this._onDidChange.fire();
     }
 
-    /** Remove a source from a collection by relative path. */
-    async removeSource(collectionId: string, relativePath: string): Promise<void> {
+    /**
+     * Remove a source from a collection. The key is either a relativePath (for file/session sources)
+     * or a synthetic `group:<groupId>` string (for group sources). Callers that have a CollectionSource
+     * should use `collectionSourceKey()` below to produce the right key.
+     */
+    async removeSource(collectionId: string, key: string): Promise<void> {
         const file = await loadCollectionsFile();
         const idx = file.collections.findIndex(inv => inv.id === collectionId);
         if (idx < 0) { return; }
         const inv = file.collections[idx];
-        const filtered = inv.sources.filter(s => s.relativePath !== relativePath);
+        const filtered = inv.sources.filter(s => collectionSourceKey(s) !== key);
         if (filtered.length === inv.sources.length) { return; }
         const updatedInv: Collection = {
             ...inv,
@@ -194,17 +199,15 @@ export class CollectionStore implements vscode.Disposable {
         }
         /* Switch active before delete so deleteCollection doesn't clear it */
         const wasActive = (await this.getActiveCollectionId()) === sourceId;
-        /* Add each source that isn't already in the target */
+        /* Add each source that isn't already in the target. Dedup compares on the source key
+           (relativePath for file/session sources, groupId for group sources) so merging mixed
+           collections doesn't silently drop either variant. */
         for (const s of source.sources) {
             const alreadyExists = target.sources.some(
-                t => t.relativePath === s.relativePath,
+                t => collectionSourceKey(t) === collectionSourceKey(s),
             );
             if (!alreadyExists) {
-                await this.addSource(targetId, {
-                    type: s.type,
-                    relativePath: s.relativePath,
-                    label: s.label,
-                });
+                await this.addSource(targetId, toAddSourceInput(s));
             }
         }
         await this.deleteCollection(sourceId);
