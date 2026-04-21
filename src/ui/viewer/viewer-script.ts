@@ -22,17 +22,30 @@ var spacerBottom = document.getElementById('spacer-bottom');
 var jumpBtn = document.getElementById('jump-btn');
 var jumpTopBtn = document.getElementById('jump-top-btn');
 /** Toggle the scrollbar-visible body class and force Chromium to re-render the scrollbar.
- *  Chromium caches ::-webkit-scrollbar pseudo-element styles at paint time; toggling an
- *  ancestor class does NOT cause a re-evaluation. Briefly cycling overflow-y on #log-content
- *  destroys and re-creates the scrollbar track so the new width:0 / width:10px takes effect. */
+ *  Chromium paints ::-webkit-scrollbar once per scroll container and caches the composited
+ *  layer. Cycling overflow-y forces a layout recalc but NOT a scrollbar repaint — that works
+ *  for 0 -> 10px (the layer must be created fresh) but fails for 10px -> 0, leaving a stale
+ *  10px scrollbar visible when the user turns the setting off. Briefly setting display:none
+ *  tears down the render tree so the scroll container is rebuilt and ::-webkit-scrollbar is
+ *  re-read from scratch. Preserve scrollTop because display:none resets it to 0. */
 function applyScrollbarVisible(show) {
     document.body.classList.toggle('scrollbar-visible', !!show);
     if (logEl) {
-        var prev = logEl.style.overflowY;
-        logEl.style.overflowY = 'hidden';
-        /* Force a synchronous reflow so Chromium destroys the scrollbar layer */
+        var sT = logEl.scrollTop;
+        var prev = logEl.style.display;
+        logEl.style.display = 'none';
+        /* Force synchronous reflow so the render tree is actually torn down before we
+           restore display — a bare style swap without this read leaves the layer alive. */
         void logEl.offsetHeight;
-        logEl.style.overflowY = prev || '';
+        logEl.style.display = prev || '';
+        /* Restoring scrollTop fires a scroll event. Flag both listeners so we do not
+           close the "Scroll map & scrollbar" context menu (which is designed to stay
+           open across toggles) and so the virtual-scroll render handler skips a pass
+           it does not need (position has not actually changed). */
+        if (window.setProgrammaticScroll) window.setProgrammaticScroll();
+        suppressScroll = true;
+        logEl.scrollTop = sT;
+        suppressScroll = false;
     }
     syncJumpButtonInset();
 }
