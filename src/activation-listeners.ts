@@ -14,7 +14,7 @@ import type { SessionHistoryProvider } from './ui/session/session-history-provid
 import type { InlineDecorationsProvider } from './ui/viewer-decorations/inline-decorations';
 import { DiagnosticCache } from './modules/diagnostics/diagnostic-cache';
 import { extractSourceReference } from './modules/source/source-linker';
-import { buildScopeContext } from './modules/storage/scope-context';
+import { buildScopeContext, type ScopeContext } from './modules/storage/scope-context';
 import { getLearningWebviewOptions } from './modules/learning/learning-webview-options';
 import { mergeIntegrationAdaptersForWebview } from './modules/integrations/integration-adapter-constants';
 import type { CaptureToggleStatusBar } from './ui/shared/capture-toggle-status-bar';
@@ -217,21 +217,63 @@ async function showSecurityAdapterNotice(
     }
 }
 
+/** Narrow shape of the broadcaster that the scope listener actually uses. */
+export interface ScopeContextBroadcaster {
+    setScopeContext(ctx: ScopeContext): void;
+}
+
+/**
+ * Build and broadcast scope context for the given editor, optionally skipping
+ * the broadcast when the editor is `undefined`.
+ *
+ * This is the invariant that fixes the File Scope radios being permanently
+ * greyed out once the log viewer has focus: VS Code fires
+ * `onDidChangeActiveTextEditor` with `undefined` whenever focus moves to a
+ * non-text surface (webviews, sidebar, settings UI). Before this guard, every
+ * such firing rebuilt an all-null context and wiped the
+ * workspace/package/directory/file paths the webview uses to decide which
+ * radios to enable — which is exactly the moment the user needs them usable.
+ *
+ * @param editor The editor VS Code handed to the listener (or `undefined`).
+ * @param broadcaster Receives the rebuilt scope context.
+ * @param options.allowNullEditor When `true`, broadcast even if `editor` is
+ *   undefined. Use for the initial seed (cold start with no file open shows the
+ *   "Open a source file to enable scope filters" hint). When `false`, skip the
+ *   broadcast so the previously-broadcast context stays in effect. Use for the
+ *   listener firings — focus moving away from a text editor is not a reason to
+ *   forget which editor the user last had open.
+ */
+export async function maybeBroadcastScopeContext(
+    editor: vscode.TextEditor | undefined,
+    broadcaster: ScopeContextBroadcaster,
+    options: { readonly allowNullEditor: boolean },
+): Promise<void> {
+    if (!editor && !options.allowNullEditor) { return; }
+    const ctx = await buildScopeContext(editor);
+    broadcaster.setScopeContext(ctx);
+}
+
 /**
  * Setup scope context listener for source-scope filter.
+ *
+ * Seeds the webview with the current active editor's context on startup, then
+ * re-broadcasts whenever the user moves to a different text editor. Ignores
+ * `undefined` editor firings — see `maybeBroadcastScopeContext` for why.
  */
 export function setupScopeContextListener(
     context: vscode.ExtensionContext,
     broadcaster: ViewerBroadcaster,
 ): void {
-    const updateScopeContext = async (): Promise<void> => {
-        const ctx = await buildScopeContext(vscode.window.activeTextEditor);
-        broadcaster.setScopeContext(ctx);
-    };
     context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(() => { updateScopeContext().catch(() => {}); }),
+        vscode.window.onDidChangeActiveTextEditor((editor) => {
+            maybeBroadcastScopeContext(editor, broadcaster, { allowNullEditor: false })
+                .catch(() => {});
+        }),
     );
-    updateScopeContext().catch(() => {});
+    // Initial seed: allow null so a cold start with no file open still shows
+    // the webview's "Open a source file…" hint.
+    maybeBroadcastScopeContext(vscode.window.activeTextEditor, broadcaster, { allowNullEditor: true })
+        .catch(() => {});
 }
 
 /**

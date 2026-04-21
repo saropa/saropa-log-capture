@@ -14,8 +14,11 @@ export function getRepeatCollapseBranchScript(): string {
     return /* javascript */ `
 function handleRepeatCollapse(category, ts, fw, sp, elapsedMs, source, rawText, tier, lvl, sTag, lTag, cTags, sqlMeta, catFiltered, plain, minN) {
     var lineSource = source || 'debug';
-    /* Mirror addToData: non-debug-console sources get 'external' tier. */
-    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
+    /* Mirror addToData tier resolution (keep these two in sync). Unclassified DAP stdout/stderr/console
+       lines fall back to 'flutter' so the Flutter DAP radio can hide them — see addToData for the full
+       rationale (bug: toggling Log Sources options had no effect because plain print() output was
+       tier=undefined and bypassed isTierHidden()). */
+    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : 'flutter')));
     if (typeof breakContinuationGroup === 'function') breakContinuationGroup();
 
     /* --- SQL fingerprint repeats: notification row with drilldown --- */

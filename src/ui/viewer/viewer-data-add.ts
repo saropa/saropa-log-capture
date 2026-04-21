@@ -50,9 +50,19 @@ function previousLineLevel() {
 function addToData(html, isMarker, category, ts, fw, sp, elapsedMs, qualityPercent, source, rawText, tier) {
     /* elapsedMs: per-line delay (from [+Nms]) for replay. qualityPercent: per-file line coverage (0-100) for badges. source: stream id for multi-source filter ('debug'|'terminal'|...). tier: 'flutter'|'device-critical'|'device-other'|'external' */
     var lineSource = source || 'debug';
-    /* Tier: explicit tier wins, then fw boolean, then non-debug-console
-       sources get 'external' so the External radio controls them. */
-    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : undefined)));
+    /* Tier resolution (controls which Log Sources radio — Flutter DAP / Device / External — gates visibility):
+       1. Explicit tier param wins.
+       2. fw === true  → 'device-other' (classifier matched logcat w/ non-flutter tag, Java/Android framework frame, etc.).
+       3. fw === false → 'flutter'      (classifier matched user app code: workspace stack frame, I/flutter logcat, ...).
+       4. Non-debug source (terminal, browser, drift-perf, saved log, ai-bash/ai-prompt/ai-edit, …) → 'external'.
+       5. Fallback for DAP stdout/stderr/console where classifyFrame() returned undefined (plain print() /
+          debugPrint() output — no logcat prefix, not a stack frame, not launch boilerplate): default to
+          'flutter'. Without this default those lines carried tier=undefined and isTierHidden() bailed out
+          via its early (!item.tier) return false, leaving the typical bulk of a Flutter app DAP output
+          uncontrollable by the Flutter DAP radio — toggling All/Warn+/None appeared to do nothing.
+          classifyLogLine() already tags launch boilerplate ("Launching…", VM Service connect) and logcat
+          lines explicitly as 'device-other', so the remainder reaching this branch is legitimate app output. */
+    var lineTier = tier || (fw === true ? 'device-other' : (fw === false ? 'flutter' : (lineSource !== 'debug' ? 'external' : 'flutter')));
     /* Category filter: lines arriving while a category is unchecked must start hidden. */
     var catFiltered = !!(typeof activeFilters !== 'undefined' && activeFilters && !isMarker && !activeFilters.has(category));
     if (ts && !sessionStartTs) sessionStartTs = ts;

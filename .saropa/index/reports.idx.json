@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sourceId": "reports",
-  "buildTime": 1776532537951,
+  "buildTime": 1776776525605,
   "files": [
     {
       "relativePath": "reports/20260307/20260307_214522_saropa-log-capture.log",
@@ -256,6 +256,14 @@
       ],
       "errorCount": 0,
       "warningCount": 0
+    },
+    {
+      "relativePath": "reports/20260421/20260421_090056_saropa-log-capture.log",
+      "uri": "file:///d%3A/src/saropa-log-capture/reports/20260421/20260421_090056_saropa-log-capture.log",
+      "sizeBytes": 3069,
+      "mtime": 1776776525529,
+      "correlationTokens": [],
+      "fingerprints": []
     }
   ]
 }
