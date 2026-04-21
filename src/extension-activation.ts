@@ -27,6 +27,7 @@ import { ProjectIndexer, setGlobalProjectIndexer } from './modules/project-index
 import { BookmarkStore } from './modules/storage/bookmark-store';
 import { buildSessionListPayload, LOG_LAST_VIEWED_KEY } from './ui/provider/viewer-provider-helpers';
 import { registerDebugLifecycle } from './extension-lifecycle';
+import { SessionGroupTracker } from './modules/session/session-group-tracker';
 import { AiWatcher } from './modules/ai/ai-watcher';
 import { formatAiEntry, filterAiEntries } from './modules/ai/ai-line-formatter';
 import { registerAllIntegrations } from './activation-integrations';
@@ -202,7 +203,14 @@ export function runActivation(context: vscode.ExtensionContext, outputChannel: v
         }
     });
 
-    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd });
+    // Session-group tracker \u2014 watches DAP start/stop and stamps related files with a shared groupId.
+    // Reads settings fresh on every call so users can tune lookback seconds mid-session without reloading.
+    const sessionGroupTracker = new SessionGroupTracker({
+        metaStore: historyProvider.getMetaStore(),
+        getSettings: () => getConfig().sessionGroups,
+        log: (msg: string) => outputChannel.appendLine(msg),
+    });
+    registerDebugLifecycle({ context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: apiHandle.fireSessionStart, fireSessionEnd: apiHandle.fireSessionEnd, sessionGroupTracker });
     registerCommands({
         context,
         sessionManager,

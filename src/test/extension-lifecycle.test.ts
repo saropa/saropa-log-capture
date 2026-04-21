@@ -52,6 +52,7 @@ function makeDeps(workspaceState: MockMemento): {
         aiWatcher: noopProxy as unknown as DebugLifecycleDeps['aiWatcher'],
         fireSessionStart: (e: unknown) => { firedEvents.sessionStart.push(e); },
         fireSessionEnd: noop,
+        sessionGroupTracker: noopProxy as unknown as DebugLifecycleDeps['sessionGroupTracker'],
     };
     return { deps, firedEvents };
 }
