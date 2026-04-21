@@ -88,43 +88,80 @@ Derived from `SessionMeta` entries. Never written to disk.
 
 ## Grouping rules
 
+### Time windows
+
+Auto-grouping uses **three windows** around the DAP debug session's
+lifetime:
+
+```
+       before           during           after
+  [ -N sec .. start ]  [ start .. end ]  [ end .. +N sec ]
+           \_______________|_______________/
+                    one session group
+```
+
+- **Before window** — `beforeSeconds` (default 10). Files with mtime
+  inside this range and no existing `groupId` are claimed at DAP start.
+  Catches sidecars that integration providers write a few seconds
+  ahead of the DAP session firing.
+- **During window** — no setting. Every log file written between DAP
+  start and DAP end is eligible. The immediate end-sweep picks these
+  up.
+- **After window** — `afterSeconds` (default 10). Keeps the group open
+  for this long after the DAP session ends. Catches late-flushed
+  sidecars like `adb-logcat.ts:onSessionEnd`'s `.logcat.log`. Implemented
+  as a `setTimeout` that runs one final sweep then releases the group.
+
 ### Anchored mode (DAP debug session present)
 
 When a debug adapter session starts:
 
 1. Mint a new `groupId` (UUID).
-2. Claim pre-existing files: scan `.session-metadata.json` for files whose
-   mtime is within `sessionGroupLookbackSeconds` of the debug session's start
-   time AND have no existing `groupId`. Stamp them with the new `groupId`.
-3. Stamp every log file created between debug-session start and stop with
-   the same `groupId`.
-4. On debug-session stop, the group is considered **closed**. No further
-   claims.
-
-The debug session is the unambiguous anchor. Start/stop events come from VS
-Code's DAP lifecycle, so there is no heuristic guessing.
+2. **Before-sweep:** scan the log directory, stamp every file whose
+   mtime ≥ `startMs - beforeSeconds * 1000` AND has no existing `groupId`.
+3. Store the active anchor `{ groupId, startMs }` so late-registered
+   commands (ungroup, manual group) can see which group is live.
+4. On DAP end, run an **immediate end-sweep** to claim any during-session
+   file the before-sweep missed (typically none, but defends against
+   slow sidecar flushes).
+5. Schedule a **delayed end-sweep** for `endMs + afterSeconds * 1000`.
+   The delayed sweep uses an upper-bound on mtime (`endMs + afterSeconds *
+   1000`) so files written deep into a later session cannot be
+   mis-claimed by this group.
+6. After the delayed sweep runs, clear the active anchor. The group is
+   now **closed** — no further automatic claims.
 
 ### Standalone mode (no debug session)
 
-Triggered only when **≥2 distinct integration providers** produce output
-within `sessionGroupLookbackSeconds` of each other. Single-provider activity
-never forms a standalone group (prevents "everything-today-is-one-group"
-drift).
+Not wired in this iteration. Currently every integration provider only
+fires inside a DAP session, so a "Drift Advisor + Logcat with no DAP"
+scenario cannot occur via the built-in providers. When an external
+extension starts its own `saropa-log-capture` session through the public
+API, the standalone trigger can be added without changing the data
+model.
 
-1. Watch new log-file creation events. Key them by integration provider id
-   (`driftAdvisor`, `adbLogcat`, future: `buildCi`, `windowsEvents`, etc.).
-2. When a second distinct provider fires within the lookback window of an
-   ungrouped file, mint a `groupId` and claim both files.
-3. Further files from any provider that arrive before the **idle timeout**
-   (`sessionGroupIdleSeconds`, default 60s of silence) get the same
-   `groupId`.
-4. When idle timeout elapses, the group is closed.
+### "Not already part of another session" — first-claim-wins
 
-### "Not already part of another session"
+A file with an existing `groupId` is **never re-claimed automatically**.
+This is the conflict-resolution rule:
 
-A file with an existing `groupId` is never re-claimed. This is the
-explicit rule the user called out. New groups can only consume ungrouped
-files.
+- When DAP session A ends and session B starts within A's after-window,
+  both trackers' sweeps can target the same mtime range. VS Code
+  serialises DAP events, so A's immediate end-sweep runs before B's
+  before-sweep. A claims everything it can see; B's before-sweep then
+  finds those files stamped with A's `groupId` and skips them. B's
+  window still covers files A's sweep couldn't see (e.g. created after
+  A's immediate sweep ran), so B catches the truly new ones.
+- A's **delayed** end-sweep runs later (at `A.endMs + A.afterSeconds`).
+  Its upper-bound on mtime prevents it from stealing files written deep
+  into B's session. Only files written in A's true after-window that
+  B's before-sweep didn't already claim are stamped for A.
+- **Net result:** files near the boundary belong to whichever session
+  sweep ran first. Unambiguous; easy to reason about; easy to reproduce
+  in tests.
+
+Users who disagree with an auto-assignment use **manual group** or
+**ungroup** (see below) to move files explicitly.
 
 ## Primary member
 
@@ -156,17 +193,26 @@ pure function, exhaustively tested.
 
 ## Settings
 
-Add to [`package.json`](../package.json) and
-[`config-types.ts`](../src/modules/config/config-types.ts):
+Just three user-facing keys. Everything else is derived:
 
 | Key | Type | Default | Meaning |
 |-----|------|---------|---------|
-| `saropaLogCapture.sessionGroups.enabled` | boolean | `true` | Master switch. |
-| `saropaLogCapture.sessionGroups.lookbackSeconds` | number | `20` | Claim files created this many seconds before the anchor. |
-| `saropaLogCapture.sessionGroups.idleSeconds` | number | `60` | Close a standalone group after this much silence. |
-| `saropaLogCapture.sessionGroups.standaloneEnabled` | boolean | `true` | Allow standalone (non-DAP) grouping. |
+| `saropaLogCapture.sessionGroups.enabled` | boolean | `true` | Master switch. When `false`, every log file stands alone exactly as it did before this feature existed. |
+| `saropaLogCapture.sessionGroups.beforeSeconds` | number | `10` | Claim ungrouped files whose last-write time is within this many seconds BEFORE the debug session starts. Range 0..600. |
+| `saropaLogCapture.sessionGroups.afterSeconds` | number | `10` | After the debug session ends, keep the group open for this many seconds and claim any late-written file that appears in that window. Range 0..600. |
 
-Settings read fresh on each use per project typescript rules.
+Settings read fresh on each use. Users can retune mid-session without a
+reload.
+
+### Settings dropped vs. earlier draft
+
+- `lookbackSeconds` → **renamed** to `beforeSeconds`. Default lowered from
+  20s to 10s (tighter default, less chance of false-joins).
+- `idleSeconds` → **removed**. Was for standalone-mode timeout; replaced
+  by the explicit `afterSeconds` window.
+- `standaloneEnabled` → **removed**. Standalone-mode isn't wired (see
+  "Standalone mode" above); flipping a flag does nothing useful. Will be
+  reintroduced if/when standalone paths exist.
 
 ## Logs panel visual treatment
 
@@ -309,20 +355,50 @@ being the length-1 case. Changes:
 File: [`log-viewer-provider.ts`](../src/ui/provider/log-viewer-provider.ts)
 and its load helpers.
 
+## Manual group (user override)
+
+The auto-grouping rule is a heuristic. When it gets something wrong —
+misses a sidecar, joins two unrelated captures, or users just want a
+different grouping — they run **Group Selected Sessions** on a multi-
+selection:
+
+1. User selects ≥1 log rows in the Logs list (ctrl-click toggle,
+   shift-click range).
+2. Right-click → **Group Selected Sessions** (also available from the
+   command palette as `saropaLogCapture.groupSelectedSessions`).
+3. The command:
+   a. **Clears any existing `groupId`** from every selected file
+      (overrides the first-claim-wins rule — user intent trumps the
+      heuristic).
+   b. Mints a new `groupId`.
+   c. Stamps every selected file with the new id in one batch write.
+4. **Orphan cleanup**: if clearing a file's old `groupId` left the old
+   group with fewer than 2 members, the old group effectively
+   disappears — `buildGroupIndex()` already skips singletons.
+5. **Collection fan-out** (same as ungroup, see below): any collection
+   that referenced the old group as `type: 'group'` is auto-converted
+   to individual `type: 'file'` sources.
+
+Single-file "manual group" is allowed but creates a singleton (skipped
+by `buildGroupIndex`), so effectively it just clears the file's `groupId`.
+
 ## Ungroup behavior
 
-Invoked from the group header:
+Invoked from a group header or any file that currently belongs to a
+group:
 
-1. Clear `groupId` from every member's `SessionMeta`.
-2. Rebuild the in-memory group index.
-3. Fire tree refresh — members collapse back to individual entries.
-4. **Collection fan-out**: if any collection contains this group as a
+1. Look up the target's `groupId`. If absent, no-op.
+2. Read all members of that `groupId` from the metadata map.
+3. Clear `groupId` from every member's `SessionMeta` in one batch write.
+4. Rebuild the in-memory group index.
+5. Fire tree refresh — members collapse back to individual entries.
+6. **Collection fan-out**: if any collection contains this group as a
    `type: 'group'` source, auto-convert that entry into N `type: 'file'`
-   sources (one per former member, preserving their labels). Notify the user
-   via an information message listing affected collections so they can audit.
+   sources (one per former member, preserving their labels). Notify the
+   user via an information message listing affected collections.
 
 Undo: not in scope for this iteration. Users can re-group manually via
-`groupSelectedSessions`.
+**Group Selected Sessions**.
 
 ## Collections integration
 
