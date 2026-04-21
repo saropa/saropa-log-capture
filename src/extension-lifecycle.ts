@@ -14,6 +14,7 @@ import type { AiWatcher } from './modules/ai/ai-watcher';
 import { hasClaudeProject } from './modules/ai/ai-session-resolver';
 import type { SaropaSessionEvent } from './api-types';
 import { SESSION_PANEL_ROOT_KEY } from './ui/provider/viewer-handler-wiring';
+import type { SessionGroupTracker } from './modules/session/session-group-tracker';
 
 export interface DebugLifecycleDeps {
     readonly context: vscode.ExtensionContext;
@@ -26,6 +27,8 @@ export interface DebugLifecycleDeps {
     readonly aiWatcher: AiWatcher;
     readonly fireSessionStart: (event: SaropaSessionEvent) => void;
     readonly fireSessionEnd: (event: SaropaSessionEvent) => void;
+    /** Session-group anchoring state machine \u2014 stamps groupIds on files around DAP session boundaries. */
+    readonly sessionGroupTracker: SessionGroupTracker;
 }
 
 /** Session ids we've already triggered a late start for (output arrived before onDidStartDebugSession). */
@@ -40,13 +43,18 @@ export function applySessionStartedState(
     deps: DebugLifecycleDeps,
     session: vscode.DebugSession,
 ): void {
-    const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, viewerProvider, aiWatcher, fireSessionStart, sessionGroupTracker } = deps;
     const activeSession = sessionManager.getActiveSession();
     const filename = sessionManager.getActiveFilename();
     if (filename) { broadcaster.setFilename(filename); }
     broadcaster.setSessionActive(true);
     viewerProvider.setSessionNavInfo(false, false, 0, 0);
     if (activeSession?.fileUri) { broadcaster.setCurrentFile(activeSession.fileUri); }
+    // Anchor a session group on this DAP session. Fire-and-forget: grouping is best-effort and
+    // must not delay or fail session startup. The tracker swallows and logs its own errors.
+    if (activeSession?.fileUri) {
+        sessionGroupTracker.onDapSessionStart(activeSession.fileUri, Date.now()).catch(() => {});
+    }
     broadcaster.setSplitInfo(1, 1);
     broadcaster.setSessionInfo({
         'Date': new Date().toISOString(),
@@ -92,7 +100,7 @@ export function applySessionStartedState(
 
 /** Register onDidStartDebugSession and onDidTerminateDebugSession handlers. */
 export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
-    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd } = deps;
+    const { context, sessionManager, broadcaster, historyProvider, inlineDecorations, viewerProvider: _viewerProvider, updateSessionNav, aiWatcher, fireSessionStart: _fireSessionStart, fireSessionEnd, sessionGroupTracker } = deps;
 
     // When output is buffered and no log session exists (e.g. Dart/Cursor never fired onDidStartDebugSession),
     // try to start capture using the active debug session so dart run and similar still get logs.
@@ -133,6 +141,13 @@ export function registerDebugLifecycle(deps: DebugLifecycleDeps): void {
                 projectName: session.workspaceFolder?.name ?? 'Unknown',
                 fileUri: ending?.fileUri,
             });
+            // Close the session group before stopSession() runs \u2014 the sweep re-scans the log
+            // directory to catch sidecars that integration providers wrote during the session
+            // (e.g. adb-logcat.ts:onSessionEnd creates `.logcat.log` at this moment).
+            // Best-effort: failures here must not block the session stop flow.
+            if (ending?.fileUri) {
+                await sessionGroupTracker.onDapSessionEnd(ending.fileUri).catch(() => {});
+            }
             // Session end: stop session, clear broadcaster/history/decorations, update nav.
             await sessionManager.stopSession(session);
             broadcaster.setSessionActive(false);

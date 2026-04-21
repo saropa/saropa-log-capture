@@ -58,6 +58,12 @@ export interface SessionMeta {
     driftSqlFingerprintSummary?: PersistedDriftSqlFingerprintSummaryV1;
     /** Signal summary from root-cause hints bundle; V2 includes entries, V1 is counts-only. */
     signalSummary?: PersistedSignalSummaryV1 | PersistedSignalSummaryV2;
+    /**
+     * Session group id (UUID) — all files sharing this id are one logical Session.
+     * See `modules/session/session-groups.ts` for grouping rules.
+     * Undefined = ungrouped (renders as a standalone entry in the Logs list).
+     */
+    groupId?: string;
 }
 
 // MetaMap type imported from session-metadata-io.ts
@@ -244,6 +250,55 @@ export class SessionMetadataStore {
             vscode.window.showErrorMessage(t('msg.failedRenameLogFile', msg));
             return logUri;
         }
+    }
+
+    /**
+     * Set (or clear when `groupId` is undefined) the `groupId` on a single entry.
+     * Used by ungroup flows on a per-file basis. For bulk stamping use `stampGroupIdBatch`.
+     */
+    async setGroupId(logUri: vscode.Uri, groupId: string | undefined): Promise<void> {
+        const meta = await this.loadMetadata(logUri);
+        if (groupId === undefined) { delete meta.groupId; } else { meta.groupId = groupId; }
+        await this.saveMetadata(logUri, meta);
+    }
+
+    /**
+     * Stamp the same `groupId` on many entries in one read-modify-write.
+     *
+     * Skips entries that already carry a different `groupId` (respects the
+     * "never re-claim a grouped file" rule). Returns the list of URIs that were
+     * actually stamped so the caller can log or display the claim outcome.
+     *
+     * `groupId === undefined` clears the field on every listed URI, used by the
+     * bulk-ungroup command. When clearing, the "respect existing groupId" guard
+     * is intentionally skipped \u2014 callers of the clear path are explicitly
+     * removing a known group.
+     */
+    async stampGroupIdBatch(logUris: readonly vscode.Uri[], groupId: string | undefined): Promise<vscode.Uri[]> {
+        if (logUris.length === 0) { return []; }
+        const centralUri = getCentralMetaUri(logUris[0]);
+        if (!centralUri) { return []; }
+        const data = await readCentral(centralUri);
+        const stamped: vscode.Uri[] = [];
+        for (const logUri of logUris) {
+            const key = relativeKey(logUri);
+            const existing: SessionMeta = data[key] ? { ...data[key] } : {};
+            if (groupId === undefined) {
+                if (existing.groupId === undefined) { continue; }
+                delete existing.groupId;
+            } else {
+                // Respect the "never re-claim" rule: skip files already in a different group.
+                if (existing.groupId !== undefined && existing.groupId !== groupId) { continue; }
+                if (existing.groupId === groupId) { continue; } // no-op when already stamped
+                existing.groupId = groupId;
+            }
+            data[key] = existing;
+            stamped.push(logUri);
+        }
+        if (stamped.length > 0) {
+            await writeCentral(centralUri, data);
+        }
+        return stamped;
     }
 
     /**
