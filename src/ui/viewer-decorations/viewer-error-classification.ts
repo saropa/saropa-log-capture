@@ -109,7 +109,13 @@ function getErrorBadge(classification) {
     if (!classification) return '';
 
     if (classification === 'critical') {
-        return '<span class="error-badge error-badge-critical error-badge-interactive" title="Critical Error \\u2014 hover for details">\\ud83d\\udd25 CRITICAL</span> ';
+        // Critical is rendered as a bare fire emoji positioned over the severity
+        // dot (see .critical-fire-icon in viewer-styles-decoration-bars.ts).
+        // WHY no "CRITICAL" text or red box: the inline badge previously
+        // overlapped the log content and duplicated the gutter severity dot.
+        // The fire icon alone replaces the dot; hover/click still opens the
+        // analysis panel because .error-badge-interactive is retained.
+        return '<span class="critical-fire-icon error-badge-interactive" title="Critical Error \\u2014 hover for details" aria-label="Critical Error">\\ud83d\\udd25</span>';
     }
     if (classification === 'transient') {
         return '<span class="error-badge error-badge-transient error-badge-interactive" title="Transient Error \\u2014 hover for details">\\u26a1 TRANSIENT</span> ';

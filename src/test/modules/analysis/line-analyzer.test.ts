@@ -93,6 +93,39 @@ suite('LineAnalyzer', () => {
             const tokens = extractAnalysisTokens('FormatError: unexpected character');
             assert.ok(tokens.some(t => t.value === 'FormatError'));
         });
+
+        // Fallback identifier extraction: only fires when no strong token
+        // (error-class/http/url/quoted/source-file/dotted method) matches.
+        // Regression guard for "No analyzable tokens found in this line."
+        // which previously blocked Analyze on framework slow-operation lines.
+        suite('camelCase / PascalCase fallback', () => {
+            test('should extract ActivityManager slow-op camelCase methods', () => {
+                const line = 'ActivityManager » Slow operation: 263ms so far, now at finishAttachApplicationInner: after updateOomAdjLocked';
+                const tokens = extractAnalysisTokens(line);
+                assert.ok(tokens.length > 0, 'expected fallback to produce tokens');
+                assert.ok(tokens.some(t => t.value === 'finishAttachApplicationInner'));
+                assert.ok(tokens.some(t => t.value === 'updateOomAdjLocked'));
+                assert.ok(tokens.some(t => t.value === 'ActivityManager'));
+            });
+
+            test('should not run fallback when strong tokens matched', () => {
+                // NullPointerException is an error-class match; ActivityManager
+                // should NOT appear as a fallback token because the fallback
+                // scan is skipped entirely when any strong token was found.
+                const line = 'ActivityManager got NullPointerException';
+                const tokens = extractAnalysisTokens(line);
+                assert.ok(tokens.some(t => t.type === 'error-class' && t.value === 'NullPointerException'));
+                assert.ok(!tokens.some(t => t.value === 'ActivityManager'),
+                    'fallback should not add class-name when strong token present');
+            });
+
+            test('should not match single-segment capitalized words', () => {
+                // "Slow", "Android" — single PascalCase word each, no second
+                // uppercase segment, so fallback must skip them.
+                const tokens = extractAnalysisTokens('Slow Android thing happened here');
+                assert.strictEqual(tokens.length, 0);
+            });
+        });
     });
 
     suite('extractAnalysisToken', () => {

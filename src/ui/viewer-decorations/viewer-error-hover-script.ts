@@ -196,7 +196,12 @@ function startHideTimer() {
 
 // Hover listeners on viewport for error badges
 viewportEl.addEventListener('mouseenter', function(e) {
-    var badge = e.target.closest('.error-badge');
+    // Match both the classic .error-badge (transient/bug/anr) and the new
+    // .critical-fire-icon which replaces the critical badge (see
+    // viewer-error-classification.ts). Both carry .error-badge-interactive
+    // when hover/analysis is enabled, so that class is the authoritative
+    // hook rather than the visual badge class.
+    var badge = e.target.closest('.error-badge-interactive');
     if (!badge) return;
     var lineEl = badge.closest('[data-idx]');
     if (!lineEl) return;
@@ -209,7 +214,12 @@ viewportEl.addEventListener('mouseenter', function(e) {
 }, true);
 
 viewportEl.addEventListener('mouseleave', function(e) {
-    var badge = e.target.closest('.error-badge');
+    // Match both the classic .error-badge (transient/bug/anr) and the new
+    // .critical-fire-icon which replaces the critical badge (see
+    // viewer-error-classification.ts). Both carry .error-badge-interactive
+    // when hover/analysis is enabled, so that class is the authoritative
+    // hook rather than the visual badge class.
+    var badge = e.target.closest('.error-badge-interactive');
     if (!badge) return;
     clearHoverTimer();
     if (errorHoverEl) { startHideTimer(); }
