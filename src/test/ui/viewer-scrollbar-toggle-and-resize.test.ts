@@ -12,14 +12,32 @@ import { getScrollbarMinimapScript, getScrollbarMinimapHtml } from '../../ui/vie
 import { getViewerScript } from '../../ui/viewer/viewer-script';
 
 suite('ScrollbarToggleOptimisticUpdate', () => {
-    test('applyScrollbarVisible forces overflow reflow to re-render Chromium scrollbar', () => {
+    test('applyScrollbarVisible cycles display:none to tear down the scroll container', () => {
         const script = getViewerScript(5000);
-        /* Chromium caches ::-webkit-scrollbar pseudo-element styles. Toggling a body class
-           does NOT trigger re-evaluation. applyScrollbarVisible must cycle overflow-y to force
-           the compositor to destroy and re-create the scrollbar track. */
+        /* Chromium caches the composited ::-webkit-scrollbar layer per scroll container.
+           Cycling overflow-y works for 0 -> 10px (layer created fresh) but NOT for 10px -> 0
+           (cached layer stays on screen). applyScrollbarVisible must set display:none briefly
+           so the render tree is torn down and ::-webkit-scrollbar is re-read on rebuild. */
         assert.ok(script.includes('function applyScrollbarVisible'), 'function must exist');
-        assert.ok(script.includes("overflowY = 'hidden'"), 'must set overflow-y:hidden to destroy scrollbar');
+        assert.ok(script.includes("display = 'none'"), 'must set display:none to tear down scroll container');
         assert.ok(script.includes('offsetHeight'), 'must read offsetHeight to force synchronous reflow');
+        assert.ok(script.includes('logEl.scrollTop = sT'), 'must restore scrollTop — display:none resets it to 0');
+    });
+
+    test('applyScrollbarVisible guards the scrollTop restore so the context menu stays open', () => {
+        const script = getViewerScript(5000);
+        /* The "Scroll map & scrollbar" submenu is designed to stay open across toggles
+           (the user may flip multiple settings in one session). Restoring scrollTop after
+           display:none fires a scroll event on #log-content — without these flags the
+           context-menu scroll listener would close the menu and the virtual-scroll render
+           handler would run an unnecessary pass. */
+        const apply = script.indexOf('function applyScrollbarVisible');
+        const end = script.indexOf('syncJumpButtonInset();', apply);
+        assert.ok(apply >= 0 && end > apply, 'applyScrollbarVisible body must be locatable');
+        const body = script.slice(apply, end);
+        assert.ok(body.includes('window.setProgrammaticScroll()'), 'must flag programmatic scroll so context menu stays open');
+        assert.ok(body.includes('suppressScroll = true'), 'must suppress virtual-scroll handler during the restore');
+        assert.ok(body.includes('suppressScroll = false'), 'must clear suppressScroll after the restore');
     });
 
     test('scrollbarVisible message handler uses applyScrollbarVisible', () => {
