@@ -137,6 +137,19 @@ export async function handleSessionAction(
                 await vscode.commands.executeCommand('saropaLogCapture.addToCollection', { uri: item.uri });
             }
             break;
+        // Session groups: Group and Ungroup take the full selection in a single invocation (not
+        // one command per item) because they mutate a shared groupId across multiple files.
+        // Running them per-item would produce N separate groups, defeating the point.
+        case 'group':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.groupSelectedSessions', items[0], items);
+            }
+            break;
+        case 'ungroup':
+            if (items.length > 0) {
+                await vscode.commands.executeCommand('saropaLogCapture.ungroupSession', items[0], items);
+            }
+            break;
     }
-    if (mutating.includes(action)) { await ctx.refreshList(); }
+    if (mutating.includes(action) || action === 'group' || action === 'ungroup') { await ctx.refreshList(); }
 }
