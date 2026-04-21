@@ -390,6 +390,16 @@
         "title": "%command.addToCollection.title%"
       },
       {
+        "command": "saropaLogCapture.groupSelectedSessions",
+        "icon": "$(layers-active)",
+        "title": "Saropa Log Capture: Group Selected Sessions"
+      },
+      {
+        "command": "saropaLogCapture.ungroupSession",
+        "icon": "$(layers-dot)",
+        "title": "Saropa Log Capture: Ungroup Session"
+      },
+      {
         "command": "saropaLogCapture.addSignalItemToCollection",
         "icon": "$(add)",
         "title": "%command.addSignalItemToCollection.title%"
@@ -2387,31 +2397,25 @@
         },
         "saropaLogCapture.sessionGroups.enabled": {
           "default": true,
-          "description": "Automatically group log files captured in the same time window (e.g. Drift Advisor + Logcat + debug session) into a single logical Session in the Logs list.",
+          "description": "Automatically group log files captured in the same time window (e.g. Drift Advisor + Logcat + debug session) into a single logical Session in the Logs list. When off, every log file stands alone.",
           "type": "boolean",
           "title": "Session Groups: Enabled"
         },
-        "saropaLogCapture.sessionGroups.lookbackSeconds": {
-          "default": 20,
-          "description": "When a new session starts, claim pre-existing ungrouped log files whose last-write time is within this many seconds. Only affects files that are not already part of another group.",
+        "saropaLogCapture.sessionGroups.beforeSeconds": {
+          "default": 10,
+          "description": "When a debug session starts, claim pre-existing ungrouped log files whose last-write time is within this many seconds BEFORE the start. Catches sidecars that integration providers write a few seconds ahead of the session. Files already in another group are never re-claimed.",
           "minimum": 0,
           "maximum": 600,
           "type": "number",
-          "title": "Session Groups: Lookback Seconds"
+          "title": "Session Groups: Before Seconds"
         },
-        "saropaLogCapture.sessionGroups.idleSeconds": {
-          "default": 60,
-          "description": "Close a standalone session group (one not anchored to a debug session) after this many seconds of silence. After closure, no new files can be added to the group.",
-          "minimum": 5,
-          "maximum": 3600,
+        "saropaLogCapture.sessionGroups.afterSeconds": {
+          "default": 10,
+          "description": "After a debug session ends, keep the group open for this many seconds and claim any late-written files (e.g. sidecars flushed in the provider's onSessionEnd hook). Files already claimed by a later session's before-window are not stolen back.",
+          "minimum": 0,
+          "maximum": 600,
           "type": "number",
-          "title": "Session Groups: Idle Timeout Seconds"
-        },
-        "saropaLogCapture.sessionGroups.standaloneEnabled": {
-          "default": true,
-          "description": "Allow groups to form without a debug session. A standalone group forms when \u22652 integration providers (e.g. Drift Advisor + Logcat) produce output within the lookback window.",
-          "type": "boolean",
-          "title": "Session Groups: Standalone Grouping"
+          "title": "Session Groups: After Seconds"
         },
         "saropaLogCapture.verboseDap": {
           "default": false,
