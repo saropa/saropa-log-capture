@@ -31,6 +31,48 @@ export function externalSidecarLabelFromFileName(mainLogBase: string, sidecarFil
     return 'external';
 }
 
+/**
+ * Pick a short, stable source-tag label for a session-group member that was NOT auto-picked
+ * up as a sidecar of the primary (i.e. filenames don't share a basename prefix).
+ *
+ * Rules, in order:
+ *   1. If the filename follows the sidecar convention against a known mainBase, return that label
+ *      (e.g. `Session.logcat.log` with `mainBase=Session` \u2192 `logcat`). Preserves parity with
+ *      auto-merged sidecars.
+ *   2. If the filename ends with `.logcat.log`, `.drift-advisor.log`, or similar multi-segment
+ *      suffixes, return the segment just before `.log`.
+ *   3. Otherwise, use the filename stem (without the trailing `.log`/`.txt`/`.json`) truncated to
+ *      a reasonable length.
+ *
+ * The returned label is fed to `parseExternalSidecarToPending(content, label)`, which tags every
+ * line with source id `external:<label>` so the existing source-tag filter picks it up.
+ */
+export function sourceTagForGroupMember(mainLogBase: string, memberFileName: string): string {
+    // Rule 1: standard sidecar pattern against the main log base.
+    if (memberFileName.startsWith(mainLogBase + '.') && memberFileName.endsWith('.log')) {
+        return memberFileName.slice(mainLogBase.length + 1, -4);
+    }
+    // Rule 2: `.something.log` \u2014 grab the segment before `.log`.
+    const lower = memberFileName.toLowerCase();
+    if (lower.endsWith('.log')) {
+        const stem = memberFileName.slice(0, -4);
+        const lastDot = stem.lastIndexOf('.');
+        if (lastDot > 0) { return stem.slice(lastDot + 1); }
+        return clampLabel(stem);
+    }
+    // Rule 3: stem of any other extension.
+    const extMatch = memberFileName.match(/\.(log|txt|md|csv|json|jsonl|html)$/i);
+    const stem = extMatch ? memberFileName.slice(0, extMatch.index) : memberFileName;
+    return clampLabel(stem);
+}
+
+/** Keep labels short so the source-filter UI doesn't overflow. */
+function clampLabel(raw: string): string {
+    const trimmed = raw.trim().replace(/[^A-Za-z0-9._-]+/g, '-');
+    if (trimmed.length === 0) { return 'external'; }
+    return trimmed.length > 32 ? trimmed.slice(0, 32) : trimmed;
+}
+
 export function parseExternalSidecarToPending(content: string, label: string): PendingLine[] {
     const sourceId = SOURCE_EXTERNAL_PREFIX + label;
     const lines = content.split(/\r?\n/).filter((s) => s.length > 0);

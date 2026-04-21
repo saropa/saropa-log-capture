@@ -400,6 +400,11 @@
         "title": "Saropa Log Capture: Ungroup Session"
       },
       {
+        "command": "saropaLogCapture.openSessionGroup",
+        "icon": "$(files)",
+        "title": "Saropa Log Capture: Open Session Group (Merged)"
+      },
+      {
         "command": "saropaLogCapture.addSignalItemToCollection",
         "icon": "$(add)",
         "title": "%command.addSignalItemToCollection.title%"
