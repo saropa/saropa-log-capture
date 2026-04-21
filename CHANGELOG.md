@@ -26,6 +26,18 @@ For older versions (5.0.3 and older), see [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARC
 
 ---
 
+## [Unreleased]
+
+Hover a log in the Logs panel and a new folder icon lets you jump straight to the file in your OS file explorer.
+
+### Added
+
+- **Reveal in File Explorer button on Logs panel rows.** Each session row in the Logs panel now shows a small folder-opened icon on hover (right-hand side); clicking it opens the log file's containing folder in the OS file explorer (Windows Explorer, macOS Finder, or Linux file manager — tooltip adapts to the platform). The same action is also available via the right-click context menu, where it honors multi-select. Clicking the icon doesn't open the log itself — only row-body clicks still open it.
+
+[log](https://github.com/saropa/saropa-log-capture/blob/main/CHANGELOG.md)
+
+---
+
 ## [7.2.2]
 
 ### Changed
