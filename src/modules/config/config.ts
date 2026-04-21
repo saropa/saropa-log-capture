@@ -186,11 +186,12 @@ export function getConfig(): SaropaLogCaptureConfig {
     },
     sessionGroups: {
       enabled: ensureBoolean(cfg.get("sessionGroups.enabled"), true),
-      // 20s covers realistic lookback (target files that arrived seconds before the anchor).
-      lookbackSeconds: clamp(cfg.get("sessionGroups.lookbackSeconds"), 0, 600, 20),
-      // 60s idle closes a standalone group; enough to ride out brief pauses, short enough to avoid chaining unrelated captures.
-      idleSeconds: clamp(cfg.get("sessionGroups.idleSeconds"), 5, 3600, 60),
-      standaloneEnabled: ensureBoolean(cfg.get("sessionGroups.standaloneEnabled"), true),
+      // 10s is a conservative default — wide enough to catch sidecar preamble writes, narrow enough
+      // to avoid falsely joining independent captures that just happen to land close in time.
+      beforeSeconds: clamp(cfg.get("sessionGroups.beforeSeconds"), 0, 600, 10),
+      // 10s after session end catches late-flushed sidecars (e.g. adb-logcat writes .logcat.log in
+      // its onSessionEnd hook, after the DAP session has already terminated).
+      afterSeconds: clamp(cfg.get("sessionGroups.afterSeconds"), 0, 600, 10),
     },
   };
 }

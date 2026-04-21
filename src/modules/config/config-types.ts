@@ -222,16 +222,17 @@ export interface ViewerDbDetectorToggles {
   readonly timestampBurstEnabled: boolean;
 }
 
-/** Auto-group related log files captured in the same time window into one logical Session. */
+/**
+ * Auto-group related log files captured in the same time window into one logical Session.
+ * See bugs/auto-group-related-sessions.md for the full behaviour spec.
+ */
 export interface SessionGroupsConfig {
-  /** Master switch. When false, every log file stands alone as today. */
+  /** Master switch. When false, every log file stands alone as before this feature existed. */
   readonly enabled: boolean;
-  /** Seconds before the anchor during which pre-existing ungrouped files are claimed. */
-  readonly lookbackSeconds: number;
-  /** Seconds of silence after which a standalone (non-DAP) group is closed. */
-  readonly idleSeconds: number;
-  /** Allow standalone grouping (triggered by \u22652 integration providers firing inside the lookback window). */
-  readonly standaloneEnabled: boolean;
+  /** Seconds BEFORE the debug-session start during which pre-existing ungrouped files are claimed. Range 0..600. */
+  readonly beforeSeconds: number;
+  /** Seconds AFTER the debug-session end during which late-written files (sidecars etc.) are still claimed into the group. Range 0..600. */
+  readonly afterSeconds: number;
 }
 
 /** Session replay defaults (loaded log playback with optional timing). */
